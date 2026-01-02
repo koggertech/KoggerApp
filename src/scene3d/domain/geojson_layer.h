@@ -31,11 +31,18 @@ public:
 
     struct Marker
     {
+        enum class Shape
+        {
+            Circle,
+            Plus
+        };
+
         QString featureId;
         int vertexIndex{-1};
         QVector3D world;
         QColor color;
         float sizePx{8.0f};
+        Shape shape{Shape::Circle};
     };
 
     struct RenderData
@@ -76,8 +83,10 @@ public:
         void clearData() override;
 
     private:
-        static void appendCrossNdc(QVector<QVector2D>& out, const QVector3D& world, float sizePx, const QMatrix4x4& model,
+        static void appendPlusNdc(QVector<QVector2D>& out, const QVector3D& world, float sizePx, const QMatrix4x4& model,
                                   const QMatrix4x4& view, const QMatrix4x4& projection, const QRectF& viewport);
+        static void appendCircleNdc(QVector<QVector2D>& out, const QVector3D& world, float sizePx, const QMatrix4x4& model,
+                                    const QMatrix4x4& view, const QMatrix4x4& projection, const QRectF& viewport);
 
     private:
         RenderData data_;
@@ -92,4 +101,3 @@ public slots:
     void setRenderData(RenderData data);
     void clear();
 };
-

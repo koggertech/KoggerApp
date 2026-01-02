@@ -593,6 +593,7 @@ ApplicationWindow  {
                     id:                       scene3DToolbar
                     // anchors.bottom:              parent.bottom
                     y:renderer.height - height - 2
+                    view: renderer
                     //anchors.horizontalCenter: parent.horizontalCenter
                     // anchors.rightMargin:      20
                     Keys.forwardTo:           [mousearea3D]

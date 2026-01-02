@@ -4,6 +4,7 @@
 #include <QModelIndex>
 #include <QString>
 #include <QVector>
+#include <QColor>
 #include <memory>
 
 #include "geojson_defs.h"
@@ -23,6 +24,15 @@ class GeoJsonController : public QObject
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
     Q_PROPERTY(QString selectedFeatureId READ selectedFeatureId NOTIFY selectionChanged)
     Q_PROPERTY(int selectedVertexIndex READ selectedVertexIndex NOTIFY selectionChanged)
+    Q_PROPERTY(QString selectedFeatureName READ selectedFeatureName NOTIFY selectionChanged)
+    Q_PROPERTY(QString selectedFeatureType READ selectedFeatureType NOTIFY selectionChanged)
+    Q_PROPERTY(QColor selectedStrokeColor READ selectedStrokeColor NOTIFY selectionChanged)
+    Q_PROPERTY(double selectedStrokeWidth READ selectedStrokeWidth NOTIFY selectionChanged)
+    Q_PROPERTY(double selectedStrokeOpacity READ selectedStrokeOpacity NOTIFY selectionChanged)
+    Q_PROPERTY(QColor selectedFillColor READ selectedFillColor NOTIFY selectionChanged)
+    Q_PROPERTY(double selectedFillOpacity READ selectedFillOpacity NOTIFY selectionChanged)
+    Q_PROPERTY(QColor selectedMarkerColor READ selectedMarkerColor NOTIFY selectionChanged)
+    Q_PROPERTY(double selectedMarkerSize READ selectedMarkerSize NOTIFY selectionChanged)
     Q_PROPERTY(QString currentFolderId READ currentFolderId NOTIFY currentFolderChanged)
     Q_PROPERTY(QString currentFolderName READ currentFolderName NOTIFY currentFolderChanged)
     Q_PROPERTY(QString selectedNodeId READ selectedNodeId NOTIFY selectionChanged)
@@ -51,12 +61,22 @@ public:
     void setTool(int tool);
 
     bool drawing() const;
+    QString drawingFeatureId() const;
 
     QString currentFile() const;
     QString lastError() const;
 
     QString selectedFeatureId() const;
     int selectedVertexIndex() const;
+    QString selectedFeatureName() const;
+    QString selectedFeatureType() const;
+    QColor selectedStrokeColor() const;
+    double selectedStrokeWidth() const;
+    double selectedStrokeOpacity() const;
+    QColor selectedFillColor() const;
+    double selectedFillOpacity() const;
+    QColor selectedMarkerColor() const;
+    double selectedMarkerSize() const;
     QString currentFolderId() const;
     QString currentFolderName() const;
     QString selectedNodeId() const;
@@ -87,6 +107,14 @@ public:
     Q_INVOKABLE void cancelDrawing();
     Q_INVOKABLE void undoLastVertex();
     Q_INVOKABLE void deleteSelectedFeature();
+    Q_INVOKABLE bool setSelectedFeatureName(const QString& name);
+    Q_INVOKABLE bool setSelectedStrokeColor(const QColor& color);
+    Q_INVOKABLE bool setSelectedStrokeWidth(double width);
+    Q_INVOKABLE bool setSelectedStrokeOpacity(double opacity);
+    Q_INVOKABLE bool setSelectedFillColor(const QColor& color);
+    Q_INVOKABLE bool setSelectedFillOpacity(double opacity);
+    Q_INVOKABLE bool setSelectedMarkerColor(const QColor& color);
+    Q_INVOKABLE bool setSelectedMarkerSize(double size);
 
     Q_INVOKABLE void selectFeature(const QString& id);
 
@@ -99,6 +127,7 @@ public:
     void setDraft(const QVector<GeoJsonCoord>& coords);
 
     bool updateVertex(const QString& featureId, int vertexIndex, const GeoJsonCoord& c);
+    bool insertVertex(const QString& featureId, int insertIndex, const GeoJsonCoord& c, int* outIndex = nullptr);
 
     QVector<const GeoJsonFeature*> visibleFeatures() const;
 
@@ -122,11 +151,18 @@ private:
     void setLastError(QString err);
     void clearLastError();
     void clearSelection();
+    GeoJsonFeature* selectedFeature();
+    const GeoJsonFeature* selectedFeature() const;
+    QString autoFeatureName(GeoJsonGeometryType t) const;
+    void syncFeatureProperties(GeoJsonFeature& f);
+    bool removeFeatureAndNode(const QString& id);
+    bool ensureDrawingFeature(const QVector<GeoJsonCoord>& seed);
     void syncModelFromDocument();
     bool removeFeatureById(const QString& id);
     GeoJsonFeature* findFeatureById(const QString& id);
     const GeoJsonFeature* findFeatureById(const QString& id) const;
     GeoJsonFeature* findFeatureByIdGlobal(const QString& id);
+    const GeoJsonFeature* findFeatureByIdGlobal(const QString& id) const;
     Folder* findFolderById(const QString& id) const;
     void rebuildTreeModel();
     void rebuildTreeNodes(Folder* folder, int depth, QVector<GeoJsonTreeNode>& out) const;
@@ -156,4 +192,7 @@ private:
     int selectedVertexIndex_{-1};
     QString selectedNodeId_;
     bool selectedNodeIsFolder_{false};
+
+    QString drawingFeatureId_;
+    GeoJsonGeometryType drawingGeomType_{GeoJsonGeometryType::Point};
 };

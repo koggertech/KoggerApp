@@ -24,6 +24,7 @@ Item  {
     property bool isFitViewCheckButtonHovered: false
     property bool isBoatTrackCheckButtonHovered: false
     property bool isBottomTrackCheckButtonHovered: false
+    property var view: null
 
     property bool toolbarHovered:
         Qt.platform.os === "android" ?
@@ -131,6 +132,72 @@ Item  {
 
                 Settings {
                     property alias geoJsonToolButton: geoJsonToolButton.checked
+                }
+            }
+
+            CheckButton {
+                id: geoJsonFinishButton
+                iconSource: "qrc:/icons/ui/file-check.svg"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checkable: false
+                implicitHeight: theme.controlHeight * 1.3
+                implicitWidth: theme.controlHeight * 1.3
+                visible: view && view.geoJsonEnabled
+                enabled: view && view.geoJsonController && view.geoJsonController.drawing
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Finish")
+                    popupPosition: "topRight"
+                }
+
+                onClicked: {
+                    if (view) view.geojsonFinishDrawing()
+                }
+            }
+
+            CheckButton {
+                id: geoJsonUndoButton
+                iconSource: "qrc:/icons/ui/repeat.svg"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checkable: false
+                implicitHeight: theme.controlHeight * 1.3
+                implicitWidth: theme.controlHeight * 1.3
+                visible: view && view.geoJsonEnabled
+                enabled: view && view.geoJsonController && view.geoJsonController.drawing
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Undo")
+                    popupPosition: "topRight"
+                }
+
+                onClicked: {
+                    if (view) view.geojsonUndoLastVertex()
+                }
+            }
+
+            CheckButton {
+                id: geoJsonCancelButton
+                iconSource: "qrc:/icons/ui/x.svg"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checkable: false
+                implicitHeight: theme.controlHeight * 1.3
+                implicitWidth: theme.controlHeight * 1.3
+                visible: view && view.geoJsonEnabled
+                enabled: view && view.geoJsonController && view.geoJsonController.drawing
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Cancel")
+                    popupPosition: "topRight"
+                }
+
+                onClicked: {
+                    if (view) view.geojsonCancelDrawing()
                 }
             }
 

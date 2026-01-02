@@ -254,6 +254,11 @@ bool parseFeatureCollection(const QJsonObject& root, GeoJsonDocument* outDoc, QS
             f.properties = QJsonObject();
         }
 
+        const QJsonValue nameVal = f.properties.value(QStringLiteral("name"));
+        if (nameVal.isString()) {
+            f.name = nameVal.toString();
+        }
+
         f.style = GeoJsonCss::parseStyle(f.properties);
         outDoc->features.push_back(std::move(f));
     }
@@ -275,6 +280,11 @@ QJsonObject writeFeatureCollection(const GeoJsonDocument& doc)
         }
 
         QJsonObject props = f.properties;
+        if (!f.name.isEmpty()) {
+            props.insert(QStringLiteral("name"), f.name);
+        } else {
+            props.remove(QStringLiteral("name"));
+        }
         GeoJsonCss::writeStyle(props, f.style);
         fo.insert(QStringLiteral("properties"), props);
 

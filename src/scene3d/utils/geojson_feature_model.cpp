@@ -20,6 +20,7 @@ QVariant GeoJsonFeatureModel::data(const QModelIndex& index, int role) const
     const auto& f = features_.at(index.row());
     switch (role) {
     case IdRole:          return f.id;
+    case NameRole:        return f.name;
     case TypeRole:        return typeToString(f.geomType);
     case VertexCountRole: return f.coords.size();
     case CoordsRole: {
@@ -37,7 +38,9 @@ QVariant GeoJsonFeatureModel::data(const QModelIndex& index, int role) const
     }
     case StrokeRole:      return f.style.stroke;
     case StrokeWidthRole: return f.style.strokeWidthPx;
+    case StrokeOpacityRole: return f.style.strokeOpacity;
     case FillRole:        return f.style.fill;
+    case FillOpacityRole: return f.style.fillOpacity;
     case MarkerColorRole: return f.style.markerColor;
     case MarkerSizeRole:  return f.style.markerSizePx;
     default:              return {};
@@ -48,12 +51,15 @@ QHash<int, QByteArray> GeoJsonFeatureModel::roleNames() const
 {
     return {
         {IdRole, "id"},
+        {NameRole, "name"},
         {TypeRole, "geomType"},
         {VertexCountRole, "vertexCount"},
         {CoordsRole, "coords"},
         {StrokeRole, "stroke"},
         {StrokeWidthRole, "strokeWidth"},
+        {StrokeOpacityRole, "strokeOpacity"},
         {FillRole, "fill"},
+        {FillOpacityRole, "fillOpacity"},
         {MarkerColorRole, "markerColor"},
         {MarkerSizeRole, "markerSize"},
     };

@@ -50,6 +50,7 @@ public:
     bool insertNode(const GeoJsonTreeNode& node);
     bool removeNode(const QString& id);
     bool updateNodeVisible(const QString& id, bool visible);
+    bool updateNodeName(const QString& id, const QString& name);
     bool updateNodeVertexCount(const QString& id, int vertexCount);
 
 private:

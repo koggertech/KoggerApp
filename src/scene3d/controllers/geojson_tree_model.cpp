@@ -232,6 +232,27 @@ bool GeoJsonTreeModel::updateNodeVisible(const QString& id, bool visible)
     return true;
 }
 
+bool GeoJsonTreeModel::updateNodeName(const QString& id, const QString& name)
+{
+    Node* node = idMap_.value(id, nullptr);
+    if (!node) {
+        return false;
+    }
+    if (node->data.name == name) {
+        return true;
+    }
+    node->data.name = name;
+    for (auto& n : nodes_) {
+        if (n.id == id) {
+            n.name = name;
+            break;
+        }
+    }
+    const QModelIndex idx = indexForNode(node);
+    emit dataChanged(idx, idx, {NameRole, Qt::DisplayRole});
+    return true;
+}
+
 bool GeoJsonTreeModel::updateNodeVertexCount(const QString& id, int vertexCount)
 {
     Node* node = idMap_.value(id, nullptr);

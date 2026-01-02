@@ -45,6 +45,7 @@ struct GeoJsonStyle
 struct GeoJsonFeature
 {
     QString id;
+    QString name;
     GeoJsonGeometryType geomType{GeoJsonGeometryType::Point};
     bool visible{true};
 

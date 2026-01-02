@@ -1,6 +1,7 @@
 #include "geojson_layer.h"
 
 #include <QHash>
+#include <cmath>
 
 #include "draw_utils.h"
 
@@ -24,7 +25,7 @@ void GeoJsonLayer::GeoJsonLayerRenderImplementation::clearData()
     data_ = RenderData{};
 }
 
-void GeoJsonLayer::GeoJsonLayerRenderImplementation::appendCrossNdc(
+void GeoJsonLayer::GeoJsonLayerRenderImplementation::appendPlusNdc(
     QVector<QVector2D>& out,
     const QVector3D& world,
     float sizePx,
@@ -50,6 +51,41 @@ void GeoJsonLayer::GeoJsonLayerRenderImplementation::appendCrossNdc(
     out.push_back({nx + dx, ny});
     out.push_back({nx, ny - dy});
     out.push_back({nx, ny + dy});
+}
+
+void GeoJsonLayer::GeoJsonLayerRenderImplementation::appendCircleNdc(
+    QVector<QVector2D>& out,
+    const QVector3D& world,
+    float sizePx,
+    const QMatrix4x4& model,
+    const QMatrix4x4& view,
+    const QMatrix4x4& projection,
+    const QRectF& viewport)
+{
+    const float halfW = viewport.width() * 0.5f;
+    const float halfH = viewport.height() * 0.5f;
+    if (halfW <= 0.0f || halfH <= 0.0f) {
+        return;
+    }
+
+    const QVector3D win = world.project(view * model, projection, viewport.toRect());
+    const float nx = (win.x() / halfW) - 1.0f;
+    const float ny = (win.y() / halfH) - 1.0f;
+
+    const float rx = sizePx / halfW;
+    const float ry = sizePx / halfH;
+
+    constexpr float kPi = 3.14159265f;
+    constexpr int segments = 12;
+    for (int i = 0; i < segments; ++i) {
+        const float a0 = float(i) * (kPi * 2.0f) / float(segments);
+        const float a1 = float(i + 1) * (kPi * 2.0f) / float(segments);
+        const QVector2D p0(nx + std::cos(a0) * rx, ny + std::sin(a0) * ry);
+        const QVector2D p1(nx + std::cos(a1) * rx, ny + std::sin(a1) * ry);
+        out.push_back({nx, ny});
+        out.push_back(p0);
+        out.push_back(p1);
+    }
 }
 
 void GeoJsonLayer::GeoJsonLayerRenderImplementation::render(
@@ -146,25 +182,33 @@ void GeoJsonLayer::GeoJsonLayerRenderImplementation::render(
 
     // Screen-space markers
     if (auto it2 = shaderProgramMap.find("static_sec"); it2 != shaderProgramMap.end() && it2.value()) {
-        QHash<QRgb, QVector<QVector2D>> byColor;
-        byColor.reserve(data_.markers.size() + 2);
+        QHash<QRgb, QVector<QVector2D>> circleByColor;
+        QHash<QRgb, QVector<QVector2D>> plusByColor;
+        circleByColor.reserve(data_.markers.size() + 1);
+        plusByColor.reserve(data_.markers.size() + 1);
 
         for (const auto& m : data_.markers) {
-            auto& vec = byColor[m.color.rgba()];
-            vec.reserve(vec.size() + 4);
-            appendCrossNdc(vec, m.world, m.sizePx, model, view, projection, viewport);
+            if (m.shape == Marker::Shape::Plus) {
+                auto& vec = plusByColor[m.color.rgba()];
+                vec.reserve(vec.size() + 4);
+                appendPlusNdc(vec, m.world, m.sizePx, model, view, projection, viewport);
+            } else {
+                auto& vec = circleByColor[m.color.rgba()];
+                vec.reserve(vec.size() + 3 * 12);
+                appendCircleNdc(vec, m.world, m.sizePx, model, view, projection, viewport);
+            }
         }
 
         if (data_.selectedActive) {
-            auto& vec = byColor[QColor(255, 215, 0, 230).rgba()];
-            vec.reserve(vec.size() + 4);
-            appendCrossNdc(vec, data_.selectedWorld, 14.0f, model, view, projection, viewport);
+            auto& vec = circleByColor[QColor(255, 215, 0, 230).rgba()];
+            vec.reserve(vec.size() + 3 * 12);
+            appendCircleNdc(vec, data_.selectedWorld, 14.0f, model, view, projection, viewport);
         }
 
         auto sp = it2.value();
-        for (auto it = byColor.constBegin(); it != byColor.constEnd(); ++it) {
-            const auto& markersNdc = it.value();
-            if (markersNdc.isEmpty()) {
+        for (auto it = circleByColor.constBegin(); it != circleByColor.constEnd(); ++it) {
+            const auto& circlesNdc = it.value();
+            if (circlesNdc.isEmpty()) {
                 continue;
             }
             if (!sp->bind()) {
@@ -174,9 +218,27 @@ void GeoJsonLayer::GeoJsonLayerRenderImplementation::render(
             const int colorLoc = sp->uniformLocation("color");
             sp->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor::fromRgba(it.key())));
             sp->enableAttributeArray(0);
-            sp->setAttributeArray(0, markersNdc.constData());
+            sp->setAttributeArray(0, circlesNdc.constData());
+            ctx->glDrawArrays(GL_TRIANGLES, 0, circlesNdc.size());
+            sp->disableAttributeArray(0);
+            sp->release();
+        }
+
+        for (auto it = plusByColor.constBegin(); it != plusByColor.constEnd(); ++it) {
+            const auto& plusNdc = it.value();
+            if (plusNdc.isEmpty()) {
+                continue;
+            }
+            if (!sp->bind()) {
+                break;
+            }
+
+            const int colorLoc = sp->uniformLocation("color");
+            sp->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor::fromRgba(it.key())));
+            sp->enableAttributeArray(0);
+            sp->setAttributeArray(0, plusNdc.constData());
             ctx->glLineWidth(2.0f);
-            ctx->glDrawArrays(GL_LINES, 0, markersNdc.size());
+            ctx->glDrawArrays(GL_LINES, 0, plusNdc.size());
             ctx->glLineWidth(1.0f);
             sp->disableAttributeArray(0);
             sp->release();

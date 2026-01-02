@@ -45,7 +45,7 @@ Item {
         clip: true
         enabled: root.expanded
         visible: root.expanded || width > 0
-        opacity: root.expanded ? 1.0 : 0.0
+        opacity: root.expanded ? 0.7 : 0.0
 
         Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutQuad } }
         Behavior on opacity { NumberAnimation { duration: 120 } }
@@ -233,7 +233,9 @@ Item {
                                     }
 
                                     CText {
-                                        text: model.isFolder ? model.name : model.geomType
+                                        text: model.isFolder
+                                              ? model.name
+                                              : (model.name !== "" ? model.name : model.geomType)
                                         small: true
 
                                         TapHandler {
@@ -312,6 +314,180 @@ Item {
                                         treeView.selectionModel.select(index, ItemSelectionModel.SelectCurrent)
                                     }
                                 }
+                            }
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+                        visible: geo && geo.selectedFeatureId !== ""
+
+                        property string selectedType: geo ? geo.selectedFeatureType : ""
+                        property bool isPoint: selectedType === "Point"
+                        property bool isLine: selectedType === "LineString"
+                        property bool isPolygon: selectedType === "Polygon"
+
+                        Label {
+                            text: "Properties"
+                            color: "white"
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            Label {
+                                text: "Name"
+                                color: theme.textColor
+                                Layout.preferredWidth: 60
+                            }
+
+                            CTextField {
+                                text: geo ? geo.selectedFeatureName : ""
+                                Layout.fillWidth: true
+                                onEditingFinished: {
+                                    if (geo) geo.setSelectedFeatureName(text)
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+                            visible: isLine || isPolygon
+
+                            Label {
+                                text: "Stroke"
+                                color: theme.textColor
+                                Layout.preferredWidth: 60
+                            }
+
+                            Rectangle {
+                                width: theme.controlHeight
+                                height: theme.controlHeight
+                                radius: 3
+                                color: geo ? geo.selectedStrokeColor : "white"
+                                border.color: theme.controlBorderColor
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: strokeColorDialog.open()
+                                }
+                            }
+
+                            SpinBoxCustom {
+                                from: 0
+                                to: 20
+                                value: geo ? geo.selectedStrokeWidth : 1
+                                onValueChanged: {
+                                    if (geo) geo.setSelectedStrokeWidth(value)
+                                }
+                            }
+
+                            Slider {
+                                Layout.fillWidth: true
+                                from: 0
+                                to: 1
+                                stepSize: 0.05
+                                value: geo ? geo.selectedStrokeOpacity : 1
+                                onValueChanged: {
+                                    if (geo) geo.setSelectedStrokeOpacity(value)
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+                            visible: isPolygon
+
+                            Label {
+                                text: "Fill"
+                                color: theme.textColor
+                                Layout.preferredWidth: 60
+                            }
+
+                            Rectangle {
+                                width: theme.controlHeight
+                                height: theme.controlHeight
+                                radius: 3
+                                color: geo ? geo.selectedFillColor : "white"
+                                border.color: theme.controlBorderColor
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: fillColorDialog.open()
+                                }
+                            }
+
+                            Slider {
+                                Layout.fillWidth: true
+                                from: 0
+                                to: 1
+                                stepSize: 0.05
+                                value: geo ? geo.selectedFillOpacity : 0
+                                onValueChanged: {
+                                    if (geo) geo.setSelectedFillOpacity(value)
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+                            visible: isPoint
+
+                            Label {
+                                text: "Marker"
+                                color: theme.textColor
+                                Layout.preferredWidth: 60
+                            }
+
+                            Rectangle {
+                                width: theme.controlHeight
+                                height: theme.controlHeight
+                                radius: 3
+                                color: geo ? geo.selectedMarkerColor : "white"
+                                border.color: theme.controlBorderColor
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: markerColorDialog.open()
+                                }
+                            }
+
+                            SpinBoxCustom {
+                                from: 1
+                                to: 30
+                                value: geo ? geo.selectedMarkerSize : 10
+                                onValueChanged: {
+                                    if (geo) geo.setSelectedMarkerSize(value)
+                                }
+                            }
+                        }
+
+                        ColorDialog {
+                            id: strokeColorDialog
+                            title: "Stroke color"
+                            onAccepted: {
+                                if (geo) geo.setSelectedStrokeColor(color)
+                            }
+                        }
+
+                        ColorDialog {
+                            id: fillColorDialog
+                            title: "Fill color"
+                            onAccepted: {
+                                if (geo) geo.setSelectedFillColor(color)
+                            }
+                        }
+
+                        ColorDialog {
+                            id: markerColorDialog
+                            title: "Marker color"
+                            onAccepted: {
+                                if (geo) geo.setSelectedMarkerColor(color)
                             }
                         }
                     }

@@ -6,10 +6,12 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QUuid>
+#include <algorithm>
 #include <functional>
 #include <vector>
 
 #include "geojson_io.h"
+#include "geojson_style.h"
 
 struct GeoJsonController::Folder
 {
@@ -77,13 +79,14 @@ int GeoJsonController::tool() const
 void GeoJsonController::setTool(int tool)
 {
     const auto next = static_cast<Tool>(tool);
-    if (tool_ == next) {
+    const auto prev = tool_;
+    if (prev == next) {
         return;
     }
 
     tool_ = next;
 
-    if (!isDrawTool(tool_)) {
+    if (!isDrawTool(tool_) || (isDrawTool(prev) && isDrawTool(next) && prev != next)) {
         cancelDrawing();
     }
 
@@ -92,7 +95,12 @@ void GeoJsonController::setTool(int tool)
 
 bool GeoJsonController::drawing() const
 {
-    return isDrawTool(tool_) && !draft_.isEmpty();
+    return isDrawTool(tool_) && !drawingFeatureId_.isEmpty();
+}
+
+QString GeoJsonController::drawingFeatureId() const
+{
+    return drawingFeatureId_;
 }
 
 QString GeoJsonController::currentFile() const
@@ -113,6 +121,60 @@ QString GeoJsonController::selectedFeatureId() const
 int GeoJsonController::selectedVertexIndex() const
 {
     return selectedVertexIndex_;
+}
+
+QString GeoJsonController::selectedFeatureName() const
+{
+    const auto* f = selectedFeature();
+    return f ? f->name : QString();
+}
+
+QString GeoJsonController::selectedFeatureType() const
+{
+    const auto* f = selectedFeature();
+    return f ? GeoJsonFeatureModel::typeToString(f->geomType) : QString();
+}
+
+QColor GeoJsonController::selectedStrokeColor() const
+{
+    const auto* f = selectedFeature();
+    return f ? f->style.stroke : QColor();
+}
+
+double GeoJsonController::selectedStrokeWidth() const
+{
+    const auto* f = selectedFeature();
+    return f ? f->style.strokeWidthPx : 0.0;
+}
+
+double GeoJsonController::selectedStrokeOpacity() const
+{
+    const auto* f = selectedFeature();
+    return f ? f->style.strokeOpacity : 0.0;
+}
+
+QColor GeoJsonController::selectedFillColor() const
+{
+    const auto* f = selectedFeature();
+    return f ? f->style.fill : QColor();
+}
+
+double GeoJsonController::selectedFillOpacity() const
+{
+    const auto* f = selectedFeature();
+    return f ? f->style.fillOpacity : 0.0;
+}
+
+QColor GeoJsonController::selectedMarkerColor() const
+{
+    const auto* f = selectedFeature();
+    return f ? f->style.markerColor : QColor();
+}
+
+double GeoJsonController::selectedMarkerSize() const
+{
+    const auto* f = selectedFeature();
+    return f ? f->style.markerSizePx : 0.0;
 }
 
 QString GeoJsonController::currentFolderId() const
@@ -385,7 +447,7 @@ bool GeoJsonController::importGeoJsonToFolder(const QString& path, const QString
         GeoJsonTreeNode fn;
         fn.id = f.id;
         fn.parentId = folder->id;
-        fn.name = QStringLiteral("Feature");
+        fn.name = f.name.isEmpty() ? QStringLiteral("Feature") : f.name;
         fn.geomType = GeoJsonFeatureModel::typeToString(f.geomType);
         fn.vertexCount = f.coords.size();
         fn.depth = depth + 1;
@@ -595,58 +657,53 @@ void GeoJsonController::setNodeVisible(const QString& nodeId, bool isFolder, boo
 
 void GeoJsonController::finishDrawing()
 {
-    if (!isDrawTool(tool_) || draft_.isEmpty()) {
-        return;
-    }
-    if (!currentFolder_) {
+    if (!isDrawTool(tool_) || drawingFeatureId_.isEmpty()) {
         return;
     }
 
-    const auto geomType = toolToGeomType(tool_);
-
-    if (geomType == GeoJsonGeometryType::LineString && draft_.size() < 2) {
+    auto* f = findFeatureById(drawingFeatureId_);
+    if (!f) {
+        draft_.clear();
+        previewActive_ = false;
+        drawingFeatureId_.clear();
+        emit drawingChanged();
+        emit documentChanged();
         return;
     }
-    if (geomType == GeoJsonGeometryType::Polygon && draft_.size() < 3) {
+
+    const int count = f->coords.size();
+    if (f->geomType == GeoJsonGeometryType::LineString && count < 2) {
+        removeFeatureAndNode(f->id);
+        draft_.clear();
+        previewActive_ = false;
+        drawingFeatureId_.clear();
+        emit drawingChanged();
+        emit documentChanged();
+        return;
+    }
+    if (f->geomType == GeoJsonGeometryType::Polygon && count < 3) {
+        removeFeatureAndNode(f->id);
+        draft_.clear();
+        previewActive_ = false;
+        drawingFeatureId_.clear();
+        emit drawingChanged();
+        emit documentChanged();
         return;
     }
 
-    GeoJsonFeature f;
-    f.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    f.geomType = geomType;
-    f.coords = draft_;
-    f.visible = true;
-    f.style = defaultStyleFor(geomType);
-
-    if (geomType == GeoJsonGeometryType::Polygon) {
-        ensurePolygonClosed(f);
+    if (f->geomType == GeoJsonGeometryType::Polygon) {
+        ensurePolygonClosed(*f);
     }
+    syncFeatureProperties(*f);
+    model_.upsertFeature(*f);
+    treeModel_.updateNodeVertexCount(f->id, f->coords.size());
 
-    currentFolder_->doc.features.push_back(f);
-    if (currentFolder_ == findFolderById(currentFolder_->id)) {
-        model_.upsertFeature(f);
-    }
+    draft_.clear();
+    previewActive_ = false;
+    drawingFeatureId_.clear();
+    drawingGeomType_ = GeoJsonGeometryType::Point;
 
-    cancelDrawing();
-    clearSelection();
-    int depth = 0;
-    Folder* p = currentFolder_->parent;
-    while (p && p != root_.get()) {
-        ++depth;
-        p = p->parent;
-    }
-
-    GeoJsonTreeNode fn;
-    fn.id = f.id;
-    fn.parentId = currentFolder_->id;
-    fn.name = QStringLiteral("Feature");
-    fn.geomType = GeoJsonFeatureModel::typeToString(f.geomType);
-    fn.vertexCount = f.coords.size();
-    fn.depth = depth + 1;
-    fn.isFolder = false;
-    fn.visible = f.visible;
-    treeModel_.insertNode(fn);
-    treeModel_.updateNodeVertexCount(currentFolder_->id, currentFolder_->doc.features.size());
+    emit drawingChanged();
     emit documentChanged();
 
     if (tool_ != Select) {
@@ -657,7 +714,12 @@ void GeoJsonController::finishDrawing()
 
 void GeoJsonController::cancelDrawing()
 {
-    const bool hadDrawing = drawing() || previewActive_;
+    const bool hadDrawing = drawing() || !drawingFeatureId_.isEmpty() || previewActive_;
+    if (!drawingFeatureId_.isEmpty()) {
+        removeFeatureAndNode(drawingFeatureId_);
+    }
+    drawingFeatureId_.clear();
+    drawingGeomType_ = GeoJsonGeometryType::Point;
     draft_.clear();
     previewActive_ = false;
 
@@ -669,10 +731,36 @@ void GeoJsonController::cancelDrawing()
 
 void GeoJsonController::undoLastVertex()
 {
-    if (!isDrawTool(tool_) || draft_.isEmpty()) {
+    if (!isDrawTool(tool_) || drawingFeatureId_.isEmpty()) {
         return;
     }
-    draft_.removeLast();
+
+    auto* f = findFeatureById(drawingFeatureId_);
+    if (!f || f->coords.isEmpty()) {
+        removeFeatureAndNode(drawingFeatureId_);
+        drawingFeatureId_.clear();
+        drawingGeomType_ = GeoJsonGeometryType::Point;
+        draft_.clear();
+        emit drawingChanged();
+        emit documentChanged();
+        return;
+    }
+
+    f->coords.removeLast();
+    draft_ = f->coords;
+
+    if (f->coords.isEmpty()) {
+        removeFeatureAndNode(f->id);
+        drawingFeatureId_.clear();
+        drawingGeomType_ = GeoJsonGeometryType::Point;
+        draft_.clear();
+    } else {
+        model_.upsertFeature(*f);
+        treeModel_.updateNodeVertexCount(f->id, f->coords.size());
+        selectedVertexIndex_ = f->coords.size() - 1;
+        emit selectionChanged();
+    }
+
     emit drawingChanged();
     emit documentChanged();
 }
@@ -681,6 +769,11 @@ void GeoJsonController::deleteSelectedFeature()
 {
     if (selectedFeatureId_.isEmpty()) {
         return;
+    }
+    if (selectedFeatureId_ == drawingFeatureId_) {
+        drawingFeatureId_.clear();
+        draft_.clear();
+        previewActive_ = false;
     }
     if (!removeFeatureById(selectedFeatureId_)) {
         return;
@@ -695,6 +788,143 @@ void GeoJsonController::deleteSelectedFeature()
     emit documentChanged();
 }
 
+bool GeoJsonController::setSelectedFeatureName(const QString& name)
+{
+    auto* f = selectedFeature();
+    if (!f) {
+        return false;
+    }
+    if (f->name == name) {
+        return true;
+    }
+    f->name = name;
+    syncFeatureProperties(*f);
+    model_.upsertFeature(*f);
+    treeModel_.updateNodeName(f->id, f->name.isEmpty() ? QStringLiteral("Feature") : f->name);
+    emit selectionChanged();
+    emit documentChanged();
+    return true;
+}
+
+bool GeoJsonController::setSelectedStrokeColor(const QColor& color)
+{
+    auto* f = selectedFeature();
+    if (!f) {
+        return false;
+    }
+    if (f->style.stroke == color) {
+        return true;
+    }
+    f->style.stroke = color;
+    syncFeatureProperties(*f);
+    model_.upsertFeature(*f);
+    emit selectionChanged();
+    emit documentChanged();
+    return true;
+}
+
+bool GeoJsonController::setSelectedStrokeWidth(double width)
+{
+    auto* f = selectedFeature();
+    if (!f) {
+        return false;
+    }
+    if (f->style.strokeWidthPx == width) {
+        return true;
+    }
+    f->style.strokeWidthPx = width;
+    syncFeatureProperties(*f);
+    model_.upsertFeature(*f);
+    emit selectionChanged();
+    emit documentChanged();
+    return true;
+}
+
+bool GeoJsonController::setSelectedStrokeOpacity(double opacity)
+{
+    auto* f = selectedFeature();
+    if (!f) {
+        return false;
+    }
+    if (f->style.strokeOpacity == opacity) {
+        return true;
+    }
+    f->style.strokeOpacity = opacity;
+    syncFeatureProperties(*f);
+    model_.upsertFeature(*f);
+    emit selectionChanged();
+    emit documentChanged();
+    return true;
+}
+
+bool GeoJsonController::setSelectedFillColor(const QColor& color)
+{
+    auto* f = selectedFeature();
+    if (!f) {
+        return false;
+    }
+    if (f->style.fill == color) {
+        return true;
+    }
+    f->style.fill = color;
+    syncFeatureProperties(*f);
+    model_.upsertFeature(*f);
+    emit selectionChanged();
+    emit documentChanged();
+    return true;
+}
+
+bool GeoJsonController::setSelectedFillOpacity(double opacity)
+{
+    auto* f = selectedFeature();
+    if (!f) {
+        return false;
+    }
+    if (f->style.fillOpacity == opacity) {
+        return true;
+    }
+    f->style.fillOpacity = opacity;
+    syncFeatureProperties(*f);
+    model_.upsertFeature(*f);
+    emit selectionChanged();
+    emit documentChanged();
+    return true;
+}
+
+bool GeoJsonController::setSelectedMarkerColor(const QColor& color)
+{
+    auto* f = selectedFeature();
+    if (!f) {
+        return false;
+    }
+    if (f->style.markerColor == color) {
+        return true;
+    }
+    f->style.markerColor = color;
+    syncFeatureProperties(*f);
+    model_.upsertFeature(*f);
+    emit selectionChanged();
+    emit documentChanged();
+    return true;
+}
+
+bool GeoJsonController::setSelectedMarkerSize(double size)
+{
+    auto* f = selectedFeature();
+    if (!f) {
+        return false;
+    }
+    if (f->style.markerSizePx == size) {
+        return true;
+    }
+    f->style.markerSizePx = size;
+    syncFeatureProperties(*f);
+    model_.upsertFeature(*f);
+    emit selectionChanged();
+    emit documentChanged();
+    return true;
+}
+
 void GeoJsonController::deleteNode(const QString& nodeId, bool isFolder)
 {
     if (nodeId.isEmpty()) {
@@ -703,6 +933,11 @@ void GeoJsonController::deleteNode(const QString& nodeId, bool isFolder)
 
     if (!isFolder) {
         selectNode(nodeId, false, currentFolderId());
+        if (nodeId == drawingFeatureId_) {
+            drawingFeatureId_.clear();
+            draft_.clear();
+            previewActive_ = false;
+        }
         if (!removeFeatureById(nodeId)) {
             return;
         }
@@ -776,7 +1011,28 @@ void GeoJsonController::addDraftVertex(const GeoJsonCoord& c)
         return;
     }
 
-    draft_.push_back(c);
+    if (drawingFeatureId_.isEmpty()) {
+        if (!ensureDrawingFeature({c})) {
+            return;
+        }
+        draft_ = {c};
+        emit drawingChanged();
+        emit documentChanged();
+        return;
+    }
+
+    auto* f = findFeatureById(drawingFeatureId_);
+    if (!f) {
+        return;
+    }
+
+    f->coords.push_back(c);
+    draft_ = f->coords;
+    selectedVertexIndex_ = f->coords.size() - 1;
+    syncFeatureProperties(*f);
+    model_.upsertFeature(*f);
+    treeModel_.updateNodeVertexCount(f->id, f->coords.size());
+    emit selectionChanged();
     emit drawingChanged();
     emit documentChanged();
 }
@@ -786,7 +1042,23 @@ void GeoJsonController::setDraft(const QVector<GeoJsonCoord>& coords)
     if (draft_ == coords) {
         return;
     }
+    if (coords.isEmpty()) {
+        return;
+    }
+    if (!ensureDrawingFeature(coords)) {
+        return;
+    }
+    auto* f = findFeatureById(drawingFeatureId_);
+    if (!f) {
+        return;
+    }
+    f->coords = coords;
     draft_ = coords;
+    selectedVertexIndex_ = f->coords.size() - 1;
+    syncFeatureProperties(*f);
+    model_.upsertFeature(*f);
+    treeModel_.updateNodeVertexCount(f->id, f->coords.size());
+    emit selectionChanged();
     emit drawingChanged();
     emit documentChanged();
 }
@@ -802,6 +1074,7 @@ bool GeoJsonController::updateVertex(const QString& featureId, int vertexIndex, 
     }
 
     const bool isPolygon = (f->geomType == GeoJsonGeometryType::Polygon);
+    const bool isDrawingPolygon = isPolygon && (featureId == drawingFeatureId_);
     const int lastIndex = f->coords.size() - 1;
     bool wasClosed = false;
     if (isPolygon && f->coords.size() >= 4) {
@@ -821,7 +1094,7 @@ bool GeoJsonController::updateVertex(const QString& featureId, int vertexIndex, 
         f->coords[vertexIndex].z = 0.0;
     }
 
-    if (isPolygon) {
+    if (isPolygon && !isDrawingPolygon) {
         if (wasClosed && (vertexIndex == 0 || vertexIndex == lastIndex)) {
             if (vertexIndex == 0) {
                 f->coords[lastIndex] = f->coords.first();
@@ -834,6 +1107,42 @@ bool GeoJsonController::updateVertex(const QString& featureId, int vertexIndex, 
     }
 
     model_.upsertFeature(*f);
+    emit documentChanged();
+    return true;
+}
+
+bool GeoJsonController::insertVertex(const QString& featureId, int insertIndex, const GeoJsonCoord& c, int* outIndex)
+{
+    auto* f = findFeatureById(featureId);
+    if (!f) {
+        return false;
+    }
+    if (insertIndex < 0 || insertIndex > f->coords.size()) {
+        return false;
+    }
+
+    GeoJsonCoord next = c;
+    if (!f->coords.isEmpty()) {
+        const int lastIndex = static_cast<int>(f->coords.size()) - 1;
+        const int refIndex = std::min(insertIndex, lastIndex);
+        const bool keepHasZ = f->coords[refIndex].hasZ;
+        if (!keepHasZ) {
+            next.hasZ = false;
+            next.z = 0.0;
+        }
+    }
+
+    f->coords.insert(insertIndex, next);
+    if (f->geomType == GeoJsonGeometryType::Polygon) {
+        ensurePolygonClosed(*f);
+    }
+
+    if (outIndex) {
+        *outIndex = insertIndex;
+    }
+
+    model_.upsertFeature(*f);
+    treeModel_.updateNodeVertexCount(featureId, f->coords.size());
     emit documentChanged();
     return true;
 }
@@ -967,6 +1276,114 @@ void GeoJsonController::clearSelection()
     emit selectionChanged();
 }
 
+GeoJsonFeature* GeoJsonController::selectedFeature()
+{
+    if (selectedFeatureId_.isEmpty()) {
+        return nullptr;
+    }
+    return findFeatureByIdGlobal(selectedFeatureId_);
+}
+
+const GeoJsonFeature* GeoJsonController::selectedFeature() const
+{
+    if (selectedFeatureId_.isEmpty()) {
+        return nullptr;
+    }
+    return findFeatureByIdGlobal(selectedFeatureId_);
+}
+
+QString GeoJsonController::autoFeatureName(GeoJsonGeometryType t) const
+{
+    const QString base = GeoJsonFeatureModel::typeToString(t);
+    int count = 0;
+    if (currentFolder_) {
+        for (const auto& f : currentFolder_->doc.features) {
+            if (f.geomType == t) {
+                ++count;
+            }
+        }
+    }
+    return QStringLiteral("%1 %2").arg(base).arg(count + 1);
+}
+
+void GeoJsonController::syncFeatureProperties(GeoJsonFeature& f)
+{
+    if (!f.name.isEmpty()) {
+        f.properties.insert(QStringLiteral("name"), f.name);
+    } else {
+        f.properties.remove(QStringLiteral("name"));
+    }
+    GeoJsonCss::writeStyle(f.properties, f.style);
+}
+
+bool GeoJsonController::removeFeatureAndNode(const QString& id)
+{
+    if (!removeFeatureById(id)) {
+        return false;
+    }
+    treeModel_.removeNode(id);
+    if (currentFolder_) {
+        treeModel_.updateNodeVertexCount(currentFolder_->id, currentFolder_->doc.features.size());
+    }
+    if (selectedFeatureId_ == id) {
+        clearSelection();
+    }
+    return true;
+}
+
+bool GeoJsonController::ensureDrawingFeature(const QVector<GeoJsonCoord>& seed)
+{
+    if (!drawingFeatureId_.isEmpty()) {
+        return true;
+    }
+    if (!currentFolder_) {
+        return false;
+    }
+
+    const auto geomType = toolToGeomType(tool_);
+    GeoJsonFeature f;
+    f.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    f.name = autoFeatureName(geomType);
+    f.geomType = geomType;
+    f.coords = seed;
+    f.visible = true;
+    f.style = defaultStyleFor(geomType);
+    syncFeatureProperties(f);
+
+    currentFolder_->doc.features.push_back(f);
+    if (currentFolder_ == findFolderById(currentFolder_->id)) {
+        model_.upsertFeature(f);
+    }
+
+    int depth = 0;
+    Folder* p = currentFolder_->parent;
+    while (p && p != root_.get()) {
+        ++depth;
+        p = p->parent;
+    }
+
+    GeoJsonTreeNode fn;
+    fn.id = f.id;
+    fn.parentId = currentFolder_->id;
+    fn.name = f.name.isEmpty() ? QStringLiteral("Feature") : f.name;
+    fn.geomType = GeoJsonFeatureModel::typeToString(f.geomType);
+    fn.vertexCount = f.coords.size();
+    fn.depth = depth + 1;
+    fn.isFolder = false;
+    fn.visible = f.visible;
+    treeModel_.insertNode(fn);
+    treeModel_.updateNodeVertexCount(currentFolder_->id, currentFolder_->doc.features.size());
+
+    drawingFeatureId_ = f.id;
+    drawingGeomType_ = f.geomType;
+    selectedFeatureId_ = f.id;
+    selectedNodeId_ = f.id;
+    selectedNodeIsFolder_ = false;
+    selectedVertexIndex_ = f.coords.isEmpty() ? -1 : (f.coords.size() - 1);
+    emit selectionChanged();
+    return true;
+}
+
 void GeoJsonController::syncModelFromDocument()
 {
     if (!currentFolder_) {
@@ -985,6 +1402,12 @@ bool GeoJsonController::removeFeatureById(const QString& id)
         if (currentFolder_->doc.features.at(i).id == id) {
             currentFolder_->doc.features.removeAt(i);
             model_.removeById(id);
+            if (id == drawingFeatureId_) {
+                drawingFeatureId_.clear();
+                drawingGeomType_ = GeoJsonGeometryType::Point;
+                draft_.clear();
+                previewActive_ = false;
+            }
             return true;
         }
     }
@@ -1018,6 +1441,32 @@ GeoJsonFeature* GeoJsonController::findFeatureByIdGlobal(const QString& id)
     while (!stack.isEmpty()) {
         Folder* f = stack.takeLast();
         for (auto& feat : f->doc.features) {
+            if (feat.id == id) {
+                return &feat;
+            }
+        }
+        for (const auto& cptr : f->children) {
+            stack.push_back(cptr.get());
+        }
+    }
+
+    return nullptr;
+}
+
+const GeoJsonFeature* GeoJsonController::findFeatureByIdGlobal(const QString& id) const
+{
+    if (!root_) {
+        return nullptr;
+    }
+
+    QVector<const Folder*> stack;
+    for (const auto& fptr : root_->children) {
+        stack.push_back(fptr.get());
+    }
+
+    while (!stack.isEmpty()) {
+        const Folder* f = stack.takeLast();
+        for (const auto& feat : f->doc.features) {
             if (feat.id == id) {
                 return &feat;
             }
@@ -1101,7 +1550,7 @@ void GeoJsonController::rebuildTreeNodes(Folder* folder, int depth, QVector<GeoJ
         GeoJsonTreeNode fn;
         fn.id = f.id;
         fn.parentId = folder->id;
-        fn.name = QStringLiteral("Feature");
+        fn.name = f.name.isEmpty() ? QStringLiteral("Feature") : f.name;
         fn.geomType = GeoJsonFeatureModel::typeToString(f.geomType);
         fn.vertexCount = f.coords.size();
         fn.depth = depth + 1;
