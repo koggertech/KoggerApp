@@ -60,9 +60,11 @@ bool SurfaceMesh::concatenate(kmath::MatrixParams &actualMatParams)
     const double S = double(tileSideMeterSize_);
 
     auto ceilTiles = [&](double delta)->int {
-        if (delta <= 0.0) return 0;
         const double epsS = S * 1e-6;
-        return int(std::floor((delta + epsS) / S));
+        if (delta <= epsS) {
+            return 0;
+        }
+        return int(std::ceil((delta - epsS) / S));
     };
 
     if (tileMatrix_.empty()) {
