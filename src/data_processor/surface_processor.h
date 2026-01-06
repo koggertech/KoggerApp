@@ -37,6 +37,7 @@ public:
     void setSurfaceStepSize(float val);
     void setThemeId(int val);
     void setExtraWidth(int val);
+    void evictIfNeeded();
     float getEdgeLimit() const;
     float getSurfaceStepSize() const;
     int getThemeId() const;

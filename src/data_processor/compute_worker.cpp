@@ -5,6 +5,11 @@
 #include <QMetaType>
 #include <QDebug>
 
+namespace {
+constexpr int kSurfaceMeshHighWM = 512;
+constexpr int kSurfaceMeshLowWM = 256;
+}
+
 ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
                              Dataset* dataset,
                              QObject* parent)
@@ -19,7 +24,7 @@ ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
 
-    surfaceMesh_.setLRUWatermarks(512, 256);
+    surfaceMesh_.setLRUWatermarks(kSurfaceMeshHighWM, kSurfaceMeshLowWM);
 
     surface_.setSurfaceMeshPtr(&surfaceMesh_);
     isobaths_.setSurfaceMeshPtr(&surfaceMesh_);
@@ -217,10 +222,39 @@ void ComputeWorker::processBundle(const WorkBundle& wb)
         isobaths_.onUpdatedBottomTrackData();
     }
 
+    surface_.evictIfNeeded(); //
+
     emit jobFinished();
 }
 
 void ComputeWorker::setVisibleTileKeys(const QSet<TileKey>& val)
 {
     visibleTileKeys_ = val;
+    if (visibleTileKeys_.isEmpty()) {
+        return;
+    }
+
+    // Keep visible tiles hot so eviction doesn't drop what's on screen.
+    QSet<SurfaceTile*> used;
+    used.reserve(visibleTileKeys_.size());
+    for (auto it = visibleTileKeys_.cbegin(); it != visibleTileKeys_.cend(); ++it) {
+        const auto& key = *it;
+        if (auto* t = surfaceMesh_.getTilePtrByKey(key); t && t->getIsInited()) {
+            used.insert(t);
+        }
+    }
+    if (!used.isEmpty()) {
+        surfaceMesh_.setTileUsed(used, false);
+    }
+
+    const int visCount = visibleTileKeys_.size();
+    int highWM = kSurfaceMeshHighWM;
+    int lowWM = kSurfaceMeshLowWM;
+    if (visCount > highWM) {
+        highWM = visCount;
+    }
+    if (visCount > lowWM) {
+        lowWM = std::min(highWM, visCount);
+    }
+    surfaceMesh_.setLRUWatermarks(highWM, lowWM);
 }
