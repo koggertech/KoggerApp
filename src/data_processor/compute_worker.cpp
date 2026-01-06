@@ -161,6 +161,16 @@ void ComputeWorker::setMosaicTileResolution(float res)
     mosaic_.setTileResolution(res);
 }
 
+void ComputeWorker::applySurfaceZoomChange(const TileMap& cached, bool fullCoverage)
+{
+    if (fullCoverage && !cached.isEmpty()) {
+        surface_.restoreTilesFromCache(cached);
+    }
+    else {
+        surface_.rebuildAfterResolutionChange();
+    }
+}
+
 void ComputeWorker::askColorTableForMosaic()
 {
     mosaic_.askColorTableForMosaic();

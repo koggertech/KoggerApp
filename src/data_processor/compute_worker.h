@@ -5,6 +5,7 @@
 #include <QPair>
 #include <QSet>
 #include "surface_processor.h"
+#include "surface_tile.h"
 #include "isobaths_processor.h"
 #include "mosaic_processor.h"
 #include "bottom_track_processor.h"
@@ -58,6 +59,7 @@ public slots:
     void setMosaicLowLevel(float v);
     void setMosaicHighLevel(float v);
     void setMosaicTileResolution(float res);
+    void applySurfaceZoomChange(const TileMap& cached, bool fullCoverage);
     void askColorTableForMosaic();
     void setMinZ(float v);
     void setMaxZ(float v);

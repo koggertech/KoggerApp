@@ -76,6 +76,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     dbWriter_(nullptr),
     engineVer_(1),
     lastZoom_(0),
+    surfaceZoomChangedPending_(false),
     dbIsReady_(false),
     prefetchTick_(0),
     lastDataZoomIndx_(0)
@@ -1204,6 +1205,41 @@ bool DataProcessor::isValidZoomIndx(int zoomIndx) const
     return zoomIndx >= mosaicIndexProvider_.getMaxZoom() && zoomIndx <= mosaicIndexProvider_.getMinZoom();
 }
 
+void DataProcessor::handleSurfaceZoomChangeIfReady(int zoom, const QSet<TileKey>& keys)
+{
+    if (!surfaceZoomChangedPending_) {
+        return;
+    }
+
+    if (!updateSurface_) {
+        surfaceZoomChangedPending_ = false;
+        return;
+    }
+
+    if (keys.isEmpty()) {
+        return;
+    }
+
+    for (const TileKey& k : keys) {
+        if (k.zoom != zoom) {
+            return;
+        }
+    }
+
+    QSet<TileKey> missing;
+    TileMap cached = hotCache_.getForKeys(keys, &missing);
+
+    const bool fullCoverage = missing.isEmpty() && !cached.isEmpty();
+    if (!fullCoverage) {
+        cached.clear();
+    }
+    QMetaObject::invokeMethod(worker_, "applySurfaceZoomChange", Qt::QueuedConnection,
+                              Q_ARG(TileMap, cached),
+                              Q_ARG(bool, fullCoverage));
+
+    surfaceZoomChangedPending_ = false;
+}
+
 void DataProcessor::nfTouch(const TileKey &k)
 {
     auto it = dbNotFoundPos_.find(k);
@@ -1250,7 +1286,7 @@ void DataProcessor::requestCancel() noexcept
     notifyPrefetchProgress(); // сообщить префетчерам
 }
 
-void DataProcessor::onUpdateMosaic(int zoom) // calc or db
+void DataProcessor::onUpdateDataZoom(int zoom) // calc or db
 {
     //return;
 
@@ -1273,6 +1309,9 @@ void DataProcessor::onUpdateMosaic(int zoom) // calc or db
 
     tileResolution_ = 1.0f / pxPerMeter;
     QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
+
+    surfaceZoomChangedPending_ = updateSurface_;
+    handleSurfaceZoomChangeIfReady(lastZoom_, lastKeys_);
 
     if (!updateMosaic_) {
         return;
@@ -1327,7 +1366,7 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
 
     // rect
     const QRectF viewRect(QPointF(minN, minE), QPointF(maxN, maxE));
-    if (viewRect == lastViewRect_) {
+    if (viewRect == lastViewRect_ && zoomIndx == lastZoom_) {
         return;
     }
 
@@ -1353,6 +1392,8 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
     lastViewRect_ = viewRect;
     lastKeys_     = tiles;
     lastZoom_     = zoomIndx;
+
+    handleSurfaceZoomChangeIfReady(zoomIndx, tiles);
 
     if (!updateSurface_ && !updateMosaic_) {
         return;

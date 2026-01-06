@@ -90,7 +90,7 @@ public slots:
     void requestCancel() noexcept;
 
     // zoom
-    void onUpdateMosaic(int zoom); // temp
+    void onUpdateDataZoom(int zoom); // temp
     void setFilePath(QString filePath);
 
     void onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp); // на движение камеры
@@ -199,6 +199,7 @@ private:
     void emitDelta(TileMap&& upserts, DataSource src);
     void pumpVisible();
     bool isValidZoomIndx(int zoomIndx) const;
+    void handleSurfaceZoomChangeIfReady(int zoom, const QSet<TileKey>& keys);
 
     // not found LRU
     inline void nfTouch(const TileKey& k);
@@ -270,6 +271,7 @@ private:
     int                    engineVer_;
     QRectF                 lastViewRect_;
     int                    lastZoom_;
+    bool                   surfaceZoomChangedPending_;
     QSet<TileKey>          lastKeys_;
     QSet<TileKey>          dbPendingKeys_;
     QSet<TileKey>          dbInWorkKeys_;

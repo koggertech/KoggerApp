@@ -291,6 +291,10 @@ void MosaicProcessor::postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<Surfa
                        int fromRow, QVector<QVector3D>& to, QVector<HeightType>& mTo,
                        int toRow, int hvSide)
     {
+        const int total = from.size();
+        if (total == 0 || to.size() != total || mTo.size() != total) {
+            return;
+        }
         const int fromStart = fromRow * hvSide;
         const int toStart   = toRow   * hvSide;
         for (int k = 0; k < hvSide; ++k) {
@@ -306,6 +310,10 @@ void MosaicProcessor::postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<Surfa
                        int fromCol, QVector<QVector3D>& to, QVector<HeightType>& mTo,
                        int toCol, int hvSide)
     {
+        const int total = from.size();
+        if (total == 0 || to.size() != total || mTo.size() != total) {
+            return;
+        }
         for (int k = 0; k < hvSide; ++k) {
             const int si = k * hvSide + fromCol;
             const int di = k * hvSide + toCol;
@@ -318,6 +326,9 @@ void MosaicProcessor::postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<Surfa
     auto copyCorner = [&](QVector<QVector3D>& from, int si,
                           QVector<QVector3D>& to,   QVector<HeightType>& mTo,   int di)
     {
+        if (si < 0 || si >= from.size() || di < 0 || di >= to.size() || di >= mTo.size()) {
+            return;
+        }
         if (!qFuzzyIsNull(from[si][2])) {
             to[di][2] = from[si][2];
             mTo[di]   = HeightType::kMosaic;
@@ -1186,8 +1197,16 @@ void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles) // может вы�
             memcpy(di.data(), si.data(), size_t(di.size()));
         }
         // heights & marks
-        dst->getHeightVerticesRef()     = src.getHeightVerticesCRef();
-        dst->getHeightMarkVerticesRef() = src.getHeightMarkVerticesCRef();
+        const auto& srcHeights = src.getHeightVerticesCRef();
+        const auto& srcMarks = src.getHeightMarkVerticesCRef();
+        auto& dstHeights = dst->getHeightVerticesRef();
+        auto& dstMarks = dst->getHeightMarkVerticesRef();
+        if (!srcHeights.isEmpty() && srcHeights.size() == dstHeights.size()) {
+            dstHeights = srcHeights;
+        }
+        if (!srcMarks.isEmpty() && srcMarks.size() == dstMarks.size()) {
+            dstMarks = srcMarks;
+        }
 
         dst->updateHeightIndices();
         dst->setIsUpdated(false);

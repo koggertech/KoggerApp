@@ -11,6 +11,7 @@
 #include "delaunay.h"
 #include "math_defs.h"
 #include "isobaths_defs.h"
+#include "surface_tile.h"
 
 
 class BottomTrack;
@@ -29,6 +30,8 @@ public:
     void setSurfaceMeshPtr(SurfaceMesh* surfaceMeshPtr);
     void onUpdatedBottomTrackData(const QVector<QPair<char, int>>& indxs); // работает по индексам кеша рендера трека дна!
     void setTileResolution(float tileResolution);
+    void rebuildAfterResolutionChange();
+    void restoreTilesFromCache(const TileMap& tiles);
     void setEdgeLimit(float val);
     void rebuildColorIntervals();
     void setSurfaceStepSize(float val);
