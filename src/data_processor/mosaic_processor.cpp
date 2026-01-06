@@ -979,7 +979,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     }
 
     // emit data
-    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res));
+    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
     //if (haveLastPair) {
     //    QMetaObject::invokeMethod(dataProcessor_, "postTraceLines", Qt::QueuedConnection,
     //        Q_ARG(QVector3D, lastLeftBeg),

@@ -891,7 +891,7 @@ void DataProcessor::postIsobathsLabels(const QVector<IsobathUtils::LabelParamete
     emit sendIsobathsLabels(labels);
 }
 
-void DataProcessor::postSurfaceTiles(TileMap tiles)
+void DataProcessor::postSurfaceTiles(TileMap tiles, bool isMosaic)
 {
     if (tiles.isEmpty()) {
         return;
@@ -901,21 +901,28 @@ void DataProcessor::postSurfaceTiles(TileMap tiles)
         nfErase(it.key());
     }
 
-    // в рендер — только видимые
-    TileMap prepaired;
-    for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) {
-        const auto& k = it.key();
-        if (lastKeys_.contains(k)) {
-            prepaired.insert(k, it.value());
+    bool canSendToRender = false;
+    if ((isMosaic && updateMosaic_) ||
+        (!isMosaic && updateSurface_ && !updateMosaic_)) {
+        canSendToRender = true;
+    }
+
+    if (canSendToRender) { // в рендер — только видимые
+        TileMap prepaired;
+        for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) {
+            const auto& k = it.key();
+            if (lastKeys_.contains(k)) {
+                prepaired.insert(k, it.value());
+            }
+        }
+
+        if (!prepaired.isEmpty()) {
+            emitDelta(std::move(prepaired), DataSource::kCalculation);
         }
     }
 
     hotCache_.putBatch(std::move(tiles), DataSource::kCalculation);
     notifyPrefetchProgress(); // сообщить префетчерам
-
-    if (!prepaired.isEmpty()) {
-        emitDelta(std::move(prepaired), DataSource::kCalculation);
-    }
 }
 
 void DataProcessor::postMinZ(float val)

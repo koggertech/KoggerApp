@@ -161,7 +161,7 @@ private slots:
     void postDistCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
     void postLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
     // Surface/Mosaic
-    void postSurfaceTiles(TileMap tiles);
+    void postSurfaceTiles(TileMap tiles, bool isMosaic);
     // Surface
     void postMinZ(float val);
     void postMaxZ(float val);
