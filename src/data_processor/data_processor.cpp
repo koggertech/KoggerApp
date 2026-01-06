@@ -236,10 +236,6 @@ void DataProcessor::onCameraMovedSec()
         pendingSurfaceIndxs_.insert(qMakePair('0', itm));
     }
 
-    if (updateSurface_ && !updateMosaic_) {
-        pendingIsobathsWork_ = true;
-    }
-
     //qDebug() << "add pending" << epIndxs.size();
 
     for (auto it = epTiles.cbegin(); it != epTiles.cend(); ++it) {
@@ -339,8 +335,6 @@ void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVec
         vertIndxsFromBottomTrack_.insert(itm);
         pendingSurfaceIndxs_.insert(qMakePair(isManual ? '1' : '0', itm));
     }
-
-    pendingIsobathsWork_ = true; // TODO
 
     scheduleLatest(WorkSet(WF_All));
 }
@@ -649,9 +643,11 @@ void DataProcessor::runCoalescedWork()
         }
     }
 
-    if (wantIsobaths && pendingIsobathsWork_ && updateIsobaths_ && !updateMosaic_) { // ?!
-        wb.doIsobaths = true;
-        pendingIsobathsWork_ = false;
+    if (wantIsobaths && updateIsobaths_ && !updateMosaic_) {
+        wb.doIsobaths = pendingIsobathsWork_ || !wb.surfaceVec.isEmpty();
+        if (pendingIsobathsWork_) {
+            pendingIsobathsWork_ = false;
+        }
     }
 
     if (wb.surfaceVec.isEmpty() && wb.mosaicVec.isEmpty() && !wb.doIsobaths) {
@@ -1243,6 +1239,11 @@ void DataProcessor::handleSurfaceZoomChangeIfReady(int zoom, const QSet<TileKey>
     QMetaObject::invokeMethod(worker_, "applySurfaceZoomChange", Qt::QueuedConnection,
                               Q_ARG(TileMap, cached),
                               Q_ARG(bool, fullCoverage));
+
+    if (updateIsobaths_ && !updateMosaic_) {
+        pendingIsobathsWork_ = true;
+        scheduleLatest(WorkSet(WF_Isobaths));
+    }
 
     surfaceZoomChangedPending_ = false;
 }

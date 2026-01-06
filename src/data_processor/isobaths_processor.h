@@ -38,9 +38,6 @@ private:
 private:
     DataProcessor* dataProcessor_;
     SurfaceMesh* surfaceMeshPtr_;
-    std::vector<QVector3D> vertPool_;
-    std::vector<HeightType> vertMark_;
-    std::vector<TrIndxs> tris_;
     QVector<QVector3D> lineSegments_;
     QVector<LabelParameters> labels_;
     float minZ_;

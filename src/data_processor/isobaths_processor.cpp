@@ -1,32 +1,9 @@
 #include "isobaths_processor.h"
 
 #include <algorithm>
-#include <unordered_map>
 #include <QtMath>
 #include "data_processor.h"
 #include "math_defs.h"
-
-
-static int findOrAddVertex(const QVector3D& vertice,
-                           HeightType heightType,
-                           std::unordered_map<VKey, int>& dict,
-                           std::vector<QVector3D>& vertPool,
-                           std::vector<HeightType>& vertMark)
-{
-    const double SCALE = 100.0;
-    VKey key{ int64_t(std::llround(vertice.x() * SCALE)),
-              int64_t(std::llround(vertice.y() * SCALE)) };
-
-    if (auto it = dict.find(key); it != dict.end()) {
-        return it->second;
-    }
-
-    int idx = int(vertPool.size());
-    dict.emplace(key, idx);
-    vertPool.push_back(vertice);
-    vertMark.push_back(heightType);
-    return idx;
-}
 
 IsobathsProcessor::IsobathsProcessor(DataProcessor* dataProcessorPtr):
     dataProcessor_(dataProcessorPtr),
@@ -43,9 +20,6 @@ void IsobathsProcessor::clear()
 {
     lineSegments_.clear();
     labels_.clear();
-    vertPool_.clear();
-    vertMark_.clear();
-    tris_.clear();
     //minZ_ = std::numeric_limits<float>::max();
     //maxZ_ = std::numeric_limits<float>::lowest();
 }
@@ -128,6 +102,9 @@ void IsobathsProcessor::edgeIntersection(const QVector3D& a,const QVector3D& b, 
 
 void IsobathsProcessor::fullRebuildLinesLabels()
 {
+    //QElapsedTimer t;
+    //t.start();
+
     if (!surfaceMeshPtr_ || (minZ_ >= maxZ_ - kmath::fltEps)) {
         return;
     }
@@ -140,61 +117,13 @@ void IsobathsProcessor::fullRebuildLinesLabels()
     const float labelStep = labelStepSize_;
     const bool labelsEnabled = std::isfinite(labelStep) && labelStep > kmath::fltEps;
 
-    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kIsobaths));
+    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
     auto postUndefined = [&]() {
         QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
     };
 
     lineSegments_.clear();
     labels_.clear();
-
-    //  уникальные вершины, список треугольников
-    vertPool_.clear();
-    vertMark_.clear();
-    tris_.clear();
-    std::unordered_map<VKey,int> vDict;
-    vDict.reserve(1 << 20); // 1 Mb
-
-    for (auto* tile: surfaceMeshPtr_->getTilesCRef()) {
-        const auto& V = tile->getHeightVerticesCRef();
-        const auto& M = tile->getHeightMarkVerticesRef();
-        const int N  = qRound(std::sqrt(V.size()));
-
-        if (N < 2) {
-            continue;
-        }
-
-        if (canceled()) {
-            postUndefined();
-            return;
-        }
-
-        for (int y = 0; y < N - 1; ++y) {
-            if (canceled()) {
-                postUndefined();
-                return;
-            }
-            for (int x = 0; x < N - 1; ++x) {
-                const int tl = y * N + x;
-                const int tr = tl + 1;
-                const int bl = (y + 1) * N + x;
-                const int br = bl + 1;
-
-                int v0 = findOrAddVertex(V[tl], M[tl], vDict, vertPool_, vertMark_);
-                int v1 = findOrAddVertex(V[bl], M[bl], vDict, vertPool_, vertMark_);
-                int v2 = findOrAddVertex(V[tr], M[tr], vDict, vertPool_, vertMark_);
-                int v3 = findOrAddVertex(V[br], M[br], vDict, vertPool_, vertMark_);
-
-                tris_.push_back({v0, v1, v2});
-                tris_.push_back({v2, v1, v3});
-            }
-        }
-    }
-
-    if (vertPool_.empty()) {
-        postUndefined();
-        return;
-    }
 
     const int levelCnt = static_cast<int>((maxZ_ - minZ_) / lineStep) + 1;
     if (levelCnt <= 0) {
@@ -203,31 +132,21 @@ void IsobathsProcessor::fullRebuildLinesLabels()
     }
     const float invLineStep = 1.0f / lineStep;
 
-    QHash<int, IsobathsSegVec> segsByLvl;
+    QVector<IsobathsSegVec> segsByLvl;
+    segsByLvl.resize(levelCnt);
 
-    for (const TrIndxs& t : tris_) { // пересечение для треугольника
-        const QVector3D A = vertPool_[t.a];
-        const QVector3D B = vertPool_[t.b];
-        const QVector3D C = vertPool_[t.c];
-        const HeightType mA = vertMark_[t.a];
-        const HeightType mB = vertMark_[t.b];
-        const HeightType mC = vertMark_[t.c];
-
-        if (canceled()) {
-            postUndefined();
-            return;
-        }
-
+    auto addTriSegments = [&](const QVector3D& A, const QVector3D& B, const QVector3D& C,
+                              HeightType mA, HeightType mB, HeightType mC) -> bool {
         if (mA == HeightType::kUndefined ||
             mB == HeightType::kUndefined ||
             mC == HeightType::kUndefined) {
-            continue;
+            return true;
         }
 
         const float triMin = std::min(A.z(), std::min(B.z(), C.z()));
         const float triMax = std::max(A.z(), std::max(B.z(), C.z()));
         if (triMax < minZ_ - kmath::fltEps || triMin > maxZ_ + kmath::fltEps) {
-            continue;
+            return true;
         }
 
         int lvlStart = static_cast<int>(std::floor((triMin - minZ_) * invLineStep));
@@ -238,7 +157,7 @@ void IsobathsProcessor::fullRebuildLinesLabels()
         for (int lvl = lvlStart; lvl <= lvlEnd; ++lvl) {
             if (canceled()) {
                 postUndefined();
-                return;
+                return false;
             }
 
             const float L = minZ_ + lvl * lineStep;
@@ -259,11 +178,94 @@ void IsobathsProcessor::fullRebuildLinesLabels()
                 }
             }
         }
+
+        return true;
+    };
+
+    bool hasMesh = false;
+    const float minZBound = minZ_ - kmath::fltEps;
+    const float maxZBound = maxZ_ + kmath::fltEps;
+
+    for (auto* tile: surfaceMeshPtr_->getTilesCRef()) {
+        const auto& V = tile->getHeightVerticesCRef();
+        const auto& M = tile->getHeightMarkVerticesCRef();
+        const int N  = qRound(std::sqrt(V.size()));
+
+        if (N < 2) {
+            continue;
+        }
+
+        hasMesh = true;
+
+        if (canceled()) {
+            postUndefined();
+            return;
+        }
+
+        // Fast tile-level range check to skip tiles outside min/max.
+        float tileMin = std::numeric_limits<float>::max();
+        float tileMax = std::numeric_limits<float>::lowest();
+        bool hasDefined = false;
+
+        for (int i = 0; i < V.size(); ++i) {
+            if (canceled()) {
+                postUndefined();
+                return;
+            }
+            if (M[i] == HeightType::kUndefined) {
+                continue;
+            }
+
+            hasDefined = true;
+            const float z = V[i].z();
+            tileMin = std::min(tileMin, z);
+            tileMax = std::max(tileMax, z);
+
+            if (tileMin <= maxZBound && tileMax >= minZBound) {
+                break;
+            }
+        }
+
+        if (!hasDefined) {
+            continue;
+        }
+        if (tileMax < minZBound || tileMin > maxZBound) {
+            continue;
+        }
+
+        for (int y = 0; y < N - 1; ++y) {
+            if (canceled()) {
+                postUndefined();
+                return;
+            }
+            for (int x = 0; x < N - 1; ++x) {
+                const int tl = y * N + x;
+                const int tr = tl + 1;
+                const int bl = (y + 1) * N + x;
+                const int br = bl + 1;
+
+                if (!addTriSegments(V[tl], V[bl], V[tr], M[tl], M[bl], M[tr])) {
+                    return;
+                }
+                if (!addTriSegments(V[tr], V[bl], V[br], M[tr], M[bl], M[br])) {
+                    return;
+                }
+            }
+        }
     }
 
-    QHash<int, IsobathsPolylines> polysByLvl; // полилинии и лейбы
-    for (auto it = segsByLvl.begin(); it != segsByLvl.end(); ++it) {
-        buildPolylines(it.value(), polysByLvl[it.key()]);
+    if (!hasMesh) {
+        postUndefined();
+        return;
+    }
+
+    QVector<IsobathsPolylines> polysByLvl;
+    polysByLvl.resize(levelCnt);
+    for (int lvl = 0; lvl < levelCnt; ++lvl) {
+        if (segsByLvl[lvl].isEmpty()) {
+            continue;
+        }
+        buildPolylines(segsByLvl[lvl], polysByLvl[lvl]);
         if (canceled()) {
             postUndefined();
             return;
@@ -273,10 +275,12 @@ void IsobathsProcessor::fullRebuildLinesLabels()
     QVector<QVector3D> resLines;
     QVector<LabelParameters> resLabels;
 
-    for (auto it = polysByLvl.begin(); it != polysByLvl.end(); ++it) {
-        const int lvl = it.key();
+    for (int lvl = 0; lvl < levelCnt; ++lvl) {
+        const auto& polys = polysByLvl[lvl];
+        if (polys.isEmpty()) {
+            continue;
+        }
         const float depth = minZ_ + lvl * lineStep;
-        const auto& polys = it.value();
 
         // линии
         for (const auto& p : polys) {
@@ -344,68 +348,96 @@ void IsobathsProcessor::fullRebuildLinesLabels()
 
     QMetaObject::invokeMethod(dataProcessor_, "postIsobathsLineSegments", Qt::QueuedConnection, Q_ARG(QVector<QVector3D>, lineSegments_));
     QMetaObject::invokeMethod(dataProcessor_, "postIsobathsLabels", Qt::QueuedConnection, Q_ARG(QVector<IsobathUtils::LabelParameters>, labels_));
+
+    //qDebug() << "el" << t.elapsed();
 }
 
 void IsobathsProcessor::buildPolylines(const IsobathsSegVec& segs, IsobathsPolylines& polys) const
 {
-    constexpr float EPS = 0.05f; // 5 см
+    constexpr float EPS = 0.05f; // 5 см поиск соседа
     auto eq = [&](const QVector3D& a, const QVector3D& b) {
         return (a - b).lengthSquared() < (EPS * EPS);
     };
-
+    const float invCell = 1.0f / EPS;
+    auto cellKey = [&](const QVector3D& p) {
+        return qMakePair(int(std::floor(p.x() * invCell)),
+                         int(std::floor(p.y() * invCell)));
+    };
+    QHash<QPair<int,int>, QVector<int>> segsByCell;
+    segsByCell.reserve(segs.size() * 2);
+    for (int i = 0; i < segs.size(); ++i) {
+        const auto k1 = cellKey(segs[i].first);
+        const auto k2 = cellKey(segs[i].second);
+        segsByCell[k1].append(i);
+        if (k2 != k1) {
+            segsByCell[k2].append(i);
+        }
+    }
     QVector<char> used(segs.size(), 0);
-
+    auto tryExtend = [&](QList<QVector3D>& poly, bool atBack) -> bool {
+        const QVector3D& p = atBack ? poly.back() : poly.front();
+        const auto base = cellKey(p);
+        for (int dx = -1; dx <= 1; ++dx) {
+            for (int dy = -1; dy <= 1; ++dy) {
+                auto it = segsByCell.constFind(qMakePair(base.first + dx, base.second + dy));
+                if (it == segsByCell.cend()) {
+                    continue;
+                }
+                const QVector<int>& cand = it.value();
+                for (int idx : cand) {
+                    if (used[idx]) {
+                        continue;
+                    }
+                    const auto& s = segs[idx];
+                    if (eq(p, s.first)) {
+                        used[idx] = 1;
+                        if (atBack) {
+                            poly << s.second;
+                        }
+                        else {
+                            poly.prepend(s.second);
+                        }
+                        return true;
+                    }
+                    if (eq(p, s.second)) {
+                        used[idx] = 1;
+                        if (atBack) {
+                            poly << s.first;
+                        }
+                        else {
+                            poly.prepend(s.first);
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    };
     for (int i = 0; i < segs.size(); ++i) {
         if (canceled()) {
             return;
         }
-
         if (used[i]) {
             continue;
         }
-
         QList<QVector3D> poly{ segs[i].first, segs[i].second };
         used[i] = 1;
         bool again = true;
         while (again) {
-            again = false;
             if (canceled()) {
                 return;
             }
-            for (int j = 0; j < segs.size(); ++j) {
-                if (used[j]) {
-                    continue;
-                }
-
-                if (eq(poly.back(), segs[j].first)) {
-                    poly << segs[j].second;
-                    used[j] = 1;
-                    again = true;
-                }
-                else if (eq(poly.back(), segs[j].second)) {
-                    poly << segs[j].first;
-                    used[j] = 1;
-                    again = true;
-                }
-                else if (eq(poly.front(),segs[j].second)) {
-                    poly.prepend(segs[j].first);
-                    used[j] = 1;
-                    again = true;
-                }
-                else if (eq(poly.front(),segs[j].first )) {
-                    poly.prepend(segs[j].second);
-                    used[j] = 1;
-                    again = true;
-                }
-            }
+            bool extended = false;
+            extended |= tryExtend(poly, true);
+            extended |= tryExtend(poly, false);
+            again = extended;
         }
-
         if (poly.size() > 1) {
             polys << QVector<QVector3D>(poly.begin(), poly.end());
         }
     }
 }
-
 void IsobathsProcessor::filterNearbyLabels(const QVector<LabelParameters>& in, QVector<LabelParameters>& out) const
 {
     const float cell = 20.f;
