@@ -66,6 +66,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     tileResolution_(defaultTileResolution),
     pendingIsobathsWork_(false),
     surfaceEdgeLimitDirty_(false),
+    bottomTrackFullRecalcPending_(false),
     cancelRequested_(false),
     jobRunning_(false),
     nextRunPending_(false),
@@ -327,6 +328,15 @@ void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVec
         return;
     }
 
+    if (bottomTrackFullRecalcPending_) {
+        surfaceTaskEpochIndxsByZoom_.clear();
+        surfaceManualEpochIndxsByZoom_.clear();
+        pendingSurfaceIndxs_.clear();
+        vertIndxsFromBottomTrack_.clear();
+        epIndxsFromBottomTrack_.clear();
+        bottomTrackFullRecalcPending_ = false;
+    }
+
     for (int itm : epIndxs) {
         epIndxsFromBottomTrack_.insert(itm);
         pendingMosaicIndxs_.insert(itm);
@@ -365,6 +375,10 @@ void DataProcessor::bottomTrackProcessing(const DatasetChannel &ch1, const Datas
     if (btBusy_) {
         //qDebug() << "bt skip - busy";
         return;
+    }
+
+    if (redrawAll) {
+        bottomTrackFullRecalcPending_ = true;
     }
 
     QMetaObject::invokeMethod(worker_, "bottomTrackProcessing", Qt::QueuedConnection,
