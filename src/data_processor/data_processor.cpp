@@ -65,6 +65,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     mosaicCounter_(0),
     tileResolution_(defaultTileResolution),
     pendingIsobathsWork_(false),
+    surfaceEdgeLimitDirty_(false),
     cancelRequested_(false),
     jobRunning_(false),
     nextRunPending_(false),
@@ -385,6 +386,8 @@ void DataProcessor::setSurfaceEdgeLimit(int val)
 
     surfaceTaskEpochIndxsByZoom_.clear();
     surfaceManualEpochIndxsByZoom_.clear();
+    surfaceEdgeLimitDirty_ = true;
+    surfaceEdgeLimitUpdatedZooms_.clear();
     pendingSurfaceIndxs_.clear();
     pendingIsobathsWork_ = true;
 
@@ -990,6 +993,7 @@ void DataProcessor::clearSurfaceProcessing()
     pendingSurfaceIndxs_.clear();
     surfaceTaskEpochIndxsByZoom_.clear();
     surfaceManualEpochIndxsByZoom_.clear();
+    surfaceEdgeLimitUpdatedZooms_.clear();
 
     QMetaObject::invokeMethod(worker_, "clearSurface", Qt::QueuedConnection);
 }
@@ -1003,6 +1007,8 @@ void DataProcessor::clearAllProcessings()
     pendingSurfaceIndxs_.clear();
     surfaceTaskEpochIndxsByZoom_.clear();
     surfaceManualEpochIndxsByZoom_.clear();
+    surfaceEdgeLimitDirty_ = false;
+    surfaceEdgeLimitUpdatedZooms_.clear();
     epIndxsFromBottomTrack_.clear();
     vertIndxsFromBottomTrack_.clear();
     bottomTrackWindowCounter_ = 0;
@@ -1233,12 +1239,16 @@ void DataProcessor::handleSurfaceZoomChangeIfReady(int zoom, const QSet<TileKey>
     TileMap cached = hotCache_.getForKeys(keys, &missing);
 
     const bool fullCoverage = missing.isEmpty() && !cached.isEmpty();
-    if (!fullCoverage) {
-        cached.clear();
-    }
     QMetaObject::invokeMethod(worker_, "applySurfaceZoomChange", Qt::QueuedConnection,
                               Q_ARG(TileMap, cached),
                               Q_ARG(bool, fullCoverage));
+
+    if (surfaceEdgeLimitDirty_ && !surfaceEdgeLimitUpdatedZooms_.contains(zoom)) {
+        surfaceEdgeLimitUpdatedZooms_.insert(zoom);
+        if (fullCoverage) {
+            QMetaObject::invokeMethod(worker_, "reapplySurfaceEdgeLimit", Qt::QueuedConnection);
+        }
+    }
 
     if (updateIsobaths_ && !updateMosaic_) {
         pendingIsobathsWork_ = true;

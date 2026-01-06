@@ -252,6 +252,8 @@ private:
     QSet<QPair<char, int>> pendingSurfaceIndxs_;
     QHash<int, QSet<int>>  surfaceTaskEpochIndxsByZoom_;
     QHash<int, QSet<int>>  surfaceManualEpochIndxsByZoom_;
+    bool                   surfaceEdgeLimitDirty_;
+    QSet<int>              surfaceEdgeLimitUpdatedZooms_;
     QSet<int>              pendingMosaicIndxs_;
     bool                   pendingIsobathsWork_;
     QTimer                 pendingWorkTimer_;

@@ -48,6 +48,7 @@ public slots:
     void setBottomTrackPtr(BottomTrack* bt);
     void setSurfaceThemeId(int id);
     void setSurfaceEdgeLimit(float v);
+    void reapplySurfaceEdgeLimit();
     void setSurfaceExtraWidth(int v);
     void setSurfaceIsobathsStepSize(float v);
     void setIsobathsLabelStepSize(float v);

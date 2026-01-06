@@ -95,6 +95,11 @@ void ComputeWorker::setSurfaceEdgeLimit(float v)
     surface_.setEdgeLimit(v);
 }
 
+void ComputeWorker::reapplySurfaceEdgeLimit()
+{
+    surface_.setEdgeLimit(surface_.getEdgeLimit());
+}
+
 void ComputeWorker::setSurfaceExtraWidth(int v)
 {
     surface_.setExtraWidth(v);
@@ -163,10 +168,10 @@ void ComputeWorker::setMosaicTileResolution(float res)
 
 void ComputeWorker::applySurfaceZoomChange(const TileMap& cached, bool fullCoverage)
 {
-    if (fullCoverage && !cached.isEmpty()) {
+    if (!cached.isEmpty()) {
         surface_.restoreTilesFromCache(cached);
     }
-    else {
+    if (!fullCoverage) {
         surface_.rebuildAfterResolutionChange();
     }
 }
