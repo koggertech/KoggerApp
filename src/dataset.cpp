@@ -1176,6 +1176,61 @@ void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist
     }
 }
 
+void Dataset::onDistCompletedBatch(const QVector<BottomTrackUpdate>& updates)
+{
+    if (updates.isEmpty()) {
+        return;
+    }
+
+    bool haveDepth = false;
+    float lastDepth = NAN;
+    int maxCompIndx = -1;
+
+    for (const auto& update : updates) {
+        Epoch* epPtr = fromIndex(update.epochIndex);
+        if (!epPtr) {
+            continue;
+        }
+
+        bool settedChart = false;
+        const int numSubChs = epPtr->getChartsSizeByChannelId(update.channelId);
+        for (int subChId = 0; subChId < numSubChs; ++subChId) {
+            if (epPtr->chartAvail(update.channelId, subChId)) {
+                Epoch::Echogram* chart = epPtr->chart(update.channelId, subChId);
+                if (chart) {
+                    chart->bottomProcessing.setDistance(update.distance, Epoch::DistProcessing::DistanceSource::DistanceSourceProcessing);
+                    settedChart = true;
+                }
+            }
+        }
+
+        if (!settedChart) {
+            continue;
+        }
+
+        lastDepth = update.distance;
+        haveDepth = true;
+
+        if (firstChannelId_.channelId_ != update.channelId) {
+            continue;
+        }
+
+        const int guardInterval = bottomTrackParam_.windowSize;
+        const int compIndx = update.epochIndex > guardInterval ? update.epochIndex - guardInterval : update.epochIndex;
+        if (compIndx > maxCompIndx) {
+            maxCompIndx = compIndx;
+        }
+    }
+
+    if (haveDepth) {
+        setLastDepth(lastDepth);
+    }
+
+    if (maxCompIndx >= 0) {
+        emit bottomTrackAdded(maxCompIndx);
+    }
+}
+
 void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll)
 {
     bottomTrackParam_ = btP;

@@ -323,6 +323,20 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
         epoch_stop_index = size;
     }
 
+    const bool flushEachEpoch = datasetPtr_->getState() == Dataset::DatasetState::kConnection;
+    const int batchLimit = flushEachEpoch ? 0 : 512;
+
+    QVector<BottomTrackUpdate> batch;
+    batch.reserve(batchLimit > 0 ? batchLimit : 8);
+    auto flushBatch = [&]() {
+        if (!dataProcessor_ || batch.isEmpty()) {
+            return;
+        }
+        QMetaObject::invokeMethod(dataProcessor_, "postDistCompletedByProcessingBatch", Qt::QueuedConnection,
+                                  Q_ARG(QVector<BottomTrackUpdate>, batch));
+        batch.clear();
+    };
+
     for(int iepoch = epoch_start_index; iepoch < epoch_stop_index; iepoch++) {
         Epoch epPtr = datasetPtr_->fromIndexCopy(iepoch);
 
@@ -330,10 +344,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
             Epoch::Echogram* chart = epPtr.chart(channel1.channelId_, channel1.subChannelId_);
             if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSource::DistanceSourceDirectHand) {
                 float dist = bottom_track[iepoch - epoch_min_index];
-                QMetaObject::invokeMethod(dataProcessor_, "postDistCompletedByProcessing", Qt::QueuedConnection,
-                                          Q_ARG(int, iepoch),
-                                          Q_ARG(ChannelId, channel1.channelId_),
-                                          Q_ARG(float, dist));
+                batch.push_back(BottomTrackUpdate{iepoch, channel1.channelId_, dist});
             }
         }
 
@@ -341,13 +352,21 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
             Epoch::Echogram* chart = epPtr.chart(channel2.channelId_, channel2.subChannelId_);
             if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSource::DistanceSourceDirectHand) {
                 float dist = bottom_track[iepoch - epoch_min_index];
-                QMetaObject::invokeMethod(dataProcessor_, "postDistCompletedByProcessing", Qt::QueuedConnection,
-                                          Q_ARG(int, iepoch),
-                                          Q_ARG(ChannelId, channel2.channelId_),
-                                          Q_ARG(float, dist));
+                batch.push_back(BottomTrackUpdate{iepoch, channel2.channelId_, dist});
             }
         }
+
+        if (flushEachEpoch) {
+            flushBatch();
+            continue;
+        }
+
+        if (batchLimit > 0 && batch.size() >= batchLimit) {
+            flushBatch();
+        }
     }
+
+    flushBatch();
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
     QMetaObject::invokeMethod(dataProcessor_, "postLastBottomTrackEpochChanged", Qt::QueuedConnection,

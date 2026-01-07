@@ -87,6 +87,8 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     qRegisterMetaType<DatasetChannel>("DatasetChannel");
     qRegisterMetaType<ChannelId>("ChannelId");
     qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
+    qRegisterMetaType<BottomTrackUpdate>("BottomTrackUpdate");
+    qRegisterMetaType<QVector<BottomTrackUpdate>>("QVector<BottomTrackUpdate>");
     qRegisterMetaType<QVector<IsobathUtils::LabelParameters>>("QVector<IsobathUtils::LabelParameters>");
     qRegisterMetaType<TileMap>("TileMap");
     qRegisterMetaType<Dataset*>("Dataset*");
@@ -810,6 +812,15 @@ void DataProcessor::postState(DataProcessorType s)
 void DataProcessor::postDistCompletedByProcessing(int epIndx, const ChannelId &channelId, float dist)
 {
     emit distCompletedByProcessing(epIndx, channelId, dist);
+}
+
+void DataProcessor::postDistCompletedByProcessingBatch(const QVector<BottomTrackUpdate>& updates)
+{
+    if (updates.isEmpty()) {
+        return;
+    }
+
+    emit distCompletedByProcessingBatch(updates);
 }
 
 void DataProcessor::postLastBottomTrackEpochChanged(const ChannelId &channelId, int val, const BottomTrackParam &btP, bool manual, bool redrawAll)

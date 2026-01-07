@@ -278,6 +278,7 @@ public slots:
     QStringList channelsNameList();
 
     void onDistCompleted(int epIndx, const ChannelId& channelId, float dist);
+    void onDistCompletedBatch(const QVector<BottomTrackUpdate>& updates);
     void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
     void onDimensionRectCanCalc(uint64_t indx);
 

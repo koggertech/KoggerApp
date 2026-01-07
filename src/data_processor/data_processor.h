@@ -129,6 +129,7 @@ signals:
     void allProcessingCleared();
     // BottomTrackProcessor
     void distCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
+    void distCompletedByProcessingBatch(const QVector<BottomTrackUpdate>& updates);
     void lastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
     // SurfaceProcessor
     void sendSurfaceMinZ(float minZ);
@@ -159,6 +160,7 @@ private slots:
     void postState(DataProcessorType s);
     // BottomTrack
     void postDistCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
+    void postDistCompletedByProcessingBatch(const QVector<BottomTrackUpdate>& updates);
     void postLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
     // Surface/Mosaic
     void postSurfaceTiles(TileMap tiles, bool isMosaic);

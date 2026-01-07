@@ -484,6 +484,14 @@ struct BottomTrackParam {
     } offset;
 };
 
+struct BottomTrackUpdate {
+    int       epochIndex = -1;
+    ChannelId channelId;
+    float     distance = NAN;
+};
+Q_DECLARE_METATYPE(BottomTrackUpdate)
+Q_DECLARE_METATYPE(QVector<BottomTrackUpdate>)
+
 typedef struct ComplexSignal {
     uint32_t globalOffset = 0;
     float sampleRate = 0;
