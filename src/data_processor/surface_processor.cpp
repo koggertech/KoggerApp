@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstring>
 #include <QDebug>
+#include <QThread>
 #include "data_processor.h"
 #include "data_processor_defs.h"
 #include "bottom_track.h"
@@ -164,9 +165,16 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
 
     // Delaunay processing
     QVector<QVector3D> bTrData; // работает по кешу рендера трека дна!!!
-    {
-        QReadLocker rl(&lock_);
-        bTrData = bottomTrackPtr_ ? bottomTrackPtr_->cdata() : QVector<QVector3D>();
+    if (bottomTrackPtr_) {
+        BottomTrack* bt = bottomTrackPtr_;
+        if (bt->thread() == QThread::currentThread()) {
+            bTrData = bt->data();
+        }
+        else {
+            QMetaObject::invokeMethod(bt, [&bTrData, bt]() {
+                bTrData = bt->data();
+            }, Qt::BlockingQueuedConnection);
+        }
     }
     if (bTrData.empty()) {
         return;

@@ -4,7 +4,6 @@
 #include <QHash>
 #include <QPair>
 #include <QPointF>
-#include <QReadWriteLock>
 #include <QSet>
 #include <QVector>
 #include <QVector3D>
@@ -58,7 +57,6 @@ private:
     SurfaceMesh* surfaceMeshPtr_;
     delaunay::Delaunay delaunayProc_;
     kmath::MatrixParams lastMatParams_;
-    QReadWriteLock lock_;
     QHash<uint64_t, QVector<int>> pointToTris_;
     QHash<QPair<int,int>, QVector3D>  cellPoints_; // fir - virt indx, sec - indx in tr
     QHash<QPair<int,int>, int>  cellPointsInTri_;
