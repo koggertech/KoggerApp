@@ -668,6 +668,11 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     { // mark tiles
         for (auto it = visAndPrefTileKeys.cbegin(); it != visAndPrefTileKeys.cend(); ++it) {
             if (auto* t = surfaceMeshPtr_->getTilePtrByKey(*it); t) {
+                if (t->getIsInited()) {
+                    if (t->getMosaicImageDataCRef().empty()) {
+                        t->initImageData(t->sidePixelSize(), t->heightMatrixRatio());
+                    }
+                }
                 t->setInFov(true);
             }
         }
@@ -1195,8 +1200,13 @@ void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles) // может вы�
         // image
         auto& di = dst->getMosaicImageDataRef();
         const auto& si = src.getMosaicImageDataCRef();
-        if (di.size() == si.size() && !si.empty()) {
-            memcpy(di.data(), si.data(), size_t(di.size()));
+        if (!si.empty()) {
+            if (di.size() != si.size()) {
+                dst->initImageData(dst->sidePixelSize(), dst->heightMatrixRatio());
+            }
+            if (di.size() == si.size()) {
+                memcpy(di.data(), si.data(), size_t(di.size()));
+            }
         }
         // heights & marks
         const auto& srcHeights = src.getHeightVerticesCRef();

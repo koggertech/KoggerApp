@@ -71,9 +71,13 @@ void SurfaceProcessor::ensureTileInited(SurfaceTile* tile, int tileSidePix)
 
         auto& di = tile->getMosaicImageDataRef();
         const auto& si = src.getMosaicImageDataCRef();
-        if (di.size() == si.size() && !si.empty()) {
-            tile->initImageData(tileSidePix, tileHeightMatrixRatio_);
-            memcpy(di.data(), si.data(), size_t(di.size()));
+        if (!si.empty()) {
+            if (di.size() != si.size()) {
+                tile->initImageData(tileSidePix, tileHeightMatrixRatio_);
+            }
+            if (di.size() == si.size()) {
+                memcpy(di.data(), si.data(), size_t(di.size()));
+            }
         }
 
         const auto& srcHeights = src.getHeightVerticesCRef();
@@ -786,9 +790,13 @@ void SurfaceProcessor::restoreTilesFromCache(const TileMap& tiles)
 
         auto& di = dst->getMosaicImageDataRef();
         const auto& si = src.getMosaicImageDataCRef();
-        if (di.size() == si.size() && !si.empty()) {
-            dst->initImageData(tileSidePixelSize_, tileHeightMatrixRatio_);
-            memcpy(di.data(), si.data(), size_t(di.size()));
+        if (!si.empty()) {
+            if (di.size() != si.size()) {
+                dst->initImageData(tileSidePixelSize_, tileHeightMatrixRatio_);
+            }
+            if (di.size() == si.size()) {
+                memcpy(di.data(), si.data(), size_t(di.size()));
+            }
         }
 
         const auto& srcHeights = src.getHeightVerticesCRef();

@@ -560,6 +560,12 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         if (mVis_) {
             auto& shP = mShP;
 
+            const auto& texVerts = itm.getMosaicTextureVerticesCRef();
+            const auto& heightVerts = itm.getHeightVerticesCRef();
+            if (texVerts.isEmpty() || texVerts.size() != heightVerts.size()) {
+                continue;
+            }
+
             shP->bind();
             shP->setUniformValue("mvp", mvp);
 
@@ -569,8 +575,8 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
             shP->enableAttributeArray(positionLoc);
             shP->enableAttributeArray(texCoordLoc);
 
-            shP->setAttributeArray(positionLoc, itm.getHeightVerticesCRef().constData());
-            shP->setAttributeArray(texCoordLoc, itm.getMosaicTextureVerticesCRef().constData());
+            shP->setAttributeArray(positionLoc, heightVerts.constData());
+            shP->setAttributeArray(texCoordLoc, texVerts.constData());
 
             QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
 
