@@ -598,9 +598,6 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         t->updateHeightIndices();
         t->setIsUpdated(false);
     }
-    if (surfaceMeshPtr_ && !changedTiles.isEmpty()) {
-        surfaceMeshPtr_->setTileUsed(changedTiles, false);
-    }
 
     if (beenManualChanged) {
         float currMin = std::numeric_limits<float>::max();
@@ -864,16 +861,6 @@ void SurfaceProcessor::setExtraWidth(int val)
     extraWidth_ = val;
 }
 
-void SurfaceProcessor::evictIfNeeded()
-{
-    if (!surfaceMeshPtr_) {
-        return;
-    }
-
-    QSet<SurfaceTile*> none;
-    surfaceMeshPtr_->setTileUsed(none, true);
-}
-
 float SurfaceProcessor::getEdgeLimit() const
 {
     return edgeLimit_;
@@ -1117,9 +1104,6 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
 
     for (SurfaceTile* t : std::as_const(changedTiles)) {
         t->updateHeightIndices();
-    }
-    if (surfaceMeshPtr_ && !changedTiles.isEmpty()) {
-        surfaceMeshPtr_->setTileUsed(changedTiles, false);
     }
 
     float lastMinZ = minZ_;

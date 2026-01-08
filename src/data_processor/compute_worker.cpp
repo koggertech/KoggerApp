@@ -214,15 +214,13 @@ void ComputeWorker::processBundle(const WorkBundle& wb)
         surface_.rebuildColorIntervals();
     }
 
-    if (!wb.mosaicVec.isEmpty() && !isCanceled()) {
-        mosaic_.updateDataWrapper(wb.mosaicVec);
-    }
-
     if (wb.doIsobaths && !isCanceled()) {
         isobaths_.onUpdatedBottomTrackData();
     }
 
-    surface_.evictIfNeeded(); //
+    if (!wb.mosaicVec.isEmpty() && !isCanceled()) {
+        mosaic_.updateDataWrapper(wb.mosaicVec);
+    }
 
     emit jobFinished();
 }
@@ -230,31 +228,4 @@ void ComputeWorker::processBundle(const WorkBundle& wb)
 void ComputeWorker::setVisibleTileKeys(const QSet<TileKey>& val)
 {
     visibleTileKeys_ = val;
-    if (visibleTileKeys_.isEmpty()) {
-        return;
-    }
-
-    // Keep visible tiles hot so eviction doesn't drop what's on screen.
-    QSet<SurfaceTile*> used;
-    used.reserve(visibleTileKeys_.size());
-    for (auto it = visibleTileKeys_.cbegin(); it != visibleTileKeys_.cend(); ++it) {
-        const auto& key = *it;
-        if (auto* t = surfaceMesh_.getTilePtrByKey(key); t && t->getIsInited()) {
-            used.insert(t);
-        }
-    }
-    if (!used.isEmpty()) {
-        surfaceMesh_.setTileUsed(used, false);
-    }
-
-    const int visCount = visibleTileKeys_.size();
-    int highWM = kSurfaceMeshHighWM;
-    int lowWM = kSurfaceMeshLowWM;
-    if (visCount > highWM) {
-        highWM = visCount;
-    }
-    if (visCount > lowWM) {
-        lowWM = std::min(highWM, visCount);
-    }
-    surfaceMesh_.setLRUWatermarks(highWM, lowWM);
 }
