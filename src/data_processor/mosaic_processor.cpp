@@ -658,6 +658,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                 if (auto* tile = surfaceMeshPtr_->getTilePtrByKey(*it); tile) {
                     if (!tile->getIsInited()) {
                         tile->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+                        tile->initImageData(tileSidePixelSize_, tileHeightMatrixRatio_);
                     }
                 }
             }
@@ -1186,6 +1187,7 @@ void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles) // может вы�
         if (!dst->getIsInited()) {
             dst->setOrigin(src.getOrigin()); //
             dst->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+            dst->initImageData(tileSidePixelSize_, tileHeightMatrixRatio_);
         }
 
         dst->setHeadIndx(src.getHeadIndx());

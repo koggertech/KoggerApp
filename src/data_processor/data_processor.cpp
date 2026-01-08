@@ -742,6 +742,7 @@ void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
         tile.init(dt.tilePx, dt.hmRatio, mppFromZoom(dt.key.zoom));
         if (dt.headIndx != -1 &&!dt.mosaicBlob.isEmpty()) {
             auto bytes = MosaicDB::unpackRaw8(dt.mosaicBlob);
+            tile.initImageData(dt.tilePx, dt.hmRatio);
             auto& img = tile.getMosaicImageDataRef();
             if (static_cast<int>(bytes.size()) == int(img.size())) {
                 memcpy(img.data(), bytes.data(), size_t(bytes.size()));

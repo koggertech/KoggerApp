@@ -72,6 +72,7 @@ void SurfaceProcessor::ensureTileInited(SurfaceTile* tile, int tileSidePix)
         auto& di = tile->getMosaicImageDataRef();
         const auto& si = src.getMosaicImageDataCRef();
         if (di.size() == si.size() && !si.empty()) {
+            tile->initImageData(tileSidePix, tileHeightMatrixRatio_);
             memcpy(di.data(), si.data(), size_t(di.size()));
         }
 
@@ -153,6 +154,7 @@ void SurfaceProcessor::ensureTileInited(SurfaceTile* tile, int tileSidePix)
     }
 
     tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
+//    tile->initImageData(tileSidePix, tileHeightMatrixRatio_); // TODO ???
 }
 
 void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> &indxs)
@@ -785,6 +787,7 @@ void SurfaceProcessor::restoreTilesFromCache(const TileMap& tiles)
         auto& di = dst->getMosaicImageDataRef();
         const auto& si = src.getMosaicImageDataCRef();
         if (di.size() == si.size() && !si.empty()) {
+            dst->initImageData(tileSidePixelSize_, tileHeightMatrixRatio_);
             memcpy(di.data(), si.data(), size_t(di.size()));
         }
 

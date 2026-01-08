@@ -36,6 +36,7 @@ public:
     SurfaceTile(QVector3D origin);
     SurfaceTile(const TileKey& key, QVector3D origin);
     void init(int sidePixelSize, int heightMatrixRatio, float resolution);
+    void initImageData(int sidePixelSize, int heightMatrixRatio);
     void updateHeightIndices(); // обновляет индексы для отрисовки
 
     void       resetInitData();

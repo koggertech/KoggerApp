@@ -45,9 +45,6 @@ SurfaceTile::SurfaceTile(const TileKey& key, QVector3D origin) :
 
 void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolution)
 {
-    // image data
-    imageData_.resize(sidePixelSize * sidePixelSize, 0);
-
     // height vertices
     const int   heightMatSideSize = heightMatrixRatio + 1;
     const float heightPixelStep = (sidePixelSize / heightMatrixRatio) * resolution;
@@ -64,6 +61,22 @@ void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolutio
         }
     }
 
+    sidePixelSize_     = sidePixelSize;
+    heightMatrixRatio_ = heightMatrixRatio;
+    resolution_        = resolution;
+    isInited_          = true;
+    isUpdated_         = false;
+
+    updateHeightIndices();
+}
+
+void SurfaceTile::initImageData(int sidePixelSize, int heightMatrixRatio)
+{
+    const int   heightMatSideSize = heightMatrixRatio + 1;
+
+    // image data
+    imageData_.resize(sidePixelSize * sidePixelSize, 0);
+
     // texture vertices
     textureVertices_.clear();
     textureVertices_.reserve(heightMatSideSize * heightMatSideSize);
@@ -73,14 +86,6 @@ void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolutio
                                               float(i) / (heightMatSideSize - 1)));
         }
     }
-
-    sidePixelSize_     = sidePixelSize;
-    heightMatrixRatio_ = heightMatrixRatio;
-    resolution_        = resolution;
-    isInited_          = true;
-    isUpdated_         = false;
-
-    updateHeightIndices();
 }
 
 void SurfaceTile::updateHeightIndices()
