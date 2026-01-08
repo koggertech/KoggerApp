@@ -19,7 +19,7 @@ class SurfaceTile;
 using TileMap = QHash<TileKey, SurfaceTile>;
 
 static constexpr int   defaultTileSidePixelSize     = 256;
-static constexpr int   defaultTileHeightMatrixRatio = 16;
+static constexpr int   defaultTileHeightMatrixRatio = 8;
 static constexpr float defaultTileResolution        = 1.0f / 10.f;
 
 enum class HeightType {
