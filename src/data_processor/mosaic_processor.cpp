@@ -540,7 +540,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     QVector<char>       isOdds; // 0 - even, 1 - odd
     QVector<int>        epochIndxs;
     QVector3D           lastLeftBeg, lastLeftEnd, lastRightBeg, lastRightEnd;
-    bool                haveLastPair = false;
+    //bool                haveLastPair = false;
 
     // update matrix
     for (const auto& i : indxs) {
@@ -590,9 +590,9 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                 lastAcceptedEpoch_ = std::max(lastAcceptedEpoch_, i);
             }
 
-            if (acceptedEven && acceptedOdd) {
-                haveLastPair = true;
-            }
+            //if (acceptedEven && acceptedOdd) {
+            //    haveLastPair = true;
+            //}
         }
     }
 
