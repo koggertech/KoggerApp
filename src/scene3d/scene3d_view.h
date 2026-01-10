@@ -377,6 +377,7 @@ private:
     bool geoJsonEnabled_{false};
     bool geoJsonIgnoreNextLeftRelease_{false};
     bool geoJsonDragging_{false};
+    bool geoJsonBlockCameraMove_{false};
     QString geoJsonDragFeatureId_;
     int geoJsonDragVertexIndex_{-1};
     float geoJsonDragPlaneZ_{0.0f};

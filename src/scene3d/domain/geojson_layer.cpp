@@ -153,6 +153,30 @@ void GeoJsonLayer::GeoJsonLayerRenderImplementation::render(
                 ctx->glLineWidth(1.0f);
             }
 
+            // Highlight (lines + polygons)
+            for (const auto& line : data_.highlightLines) {
+                if (line.points.size() < 2) {
+                    continue;
+                }
+                sp->setUniformValue(colorLoc, DrawUtils::colorToVector4d(line.color));
+                sp->setAttributeArray(posLoc, line.points.constData());
+                ctx->glLineWidth(line.widthPx);
+                ctx->glDrawArrays(GL_LINE_STRIP, 0, line.points.size());
+                ctx->glLineWidth(1.0f);
+            }
+
+            for (const auto& poly : data_.highlightPolygons) {
+                const auto& ring = poly.ring;
+                if (ring.size() < 2) {
+                    continue;
+                }
+                sp->setUniformValue(colorLoc, DrawUtils::colorToVector4d(poly.strokeColor));
+                sp->setAttributeArray(posLoc, ring.constData());
+                ctx->glLineWidth(poly.strokeWidthPx);
+                ctx->glDrawArrays(GL_LINE_LOOP, 0, ring.size());
+                ctx->glLineWidth(1.0f);
+            }
+
             // Draft polyline
             if (data_.draftActive) {
                 QVector<QVector3D> pts = data_.draftPoints;

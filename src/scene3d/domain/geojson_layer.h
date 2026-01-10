@@ -52,6 +52,8 @@ public:
         QVector<Line> lines;
         QVector<Polygon> polygons;
         QVector<Marker> markers;
+        QVector<Line> highlightLines;
+        QVector<Polygon> highlightPolygons;
 
         // Draft (draw preview)
         bool draftActive{false};

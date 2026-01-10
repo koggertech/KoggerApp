@@ -100,6 +100,47 @@ Item {
                 }
             }
         }
+
+        ColumnLayout {
+            spacing: 6
+            visible: geo ? geo.drawing : false
+
+            CheckButton {
+                checkable: false
+                iconSource: "qrc:/icons/ui/file-check.svg"
+                implicitWidth: buttonSize
+                implicitHeight: buttonSize
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                enabled: geo ? geo.drawing : false
+                onClicked: if (geo) geo.finishDrawing()
+            }
+
+            CheckButton {
+                checkable: false
+                iconSource: "qrc:/icons/ui/repeat.svg"
+                implicitWidth: buttonSize
+                implicitHeight: buttonSize
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                enabled: geo ? geo.drawing : false
+                onClicked: if (geo) geo.undoLastVertex()
+            }
+
+            CheckButton {
+                checkable: false
+                iconSource: "qrc:/icons/ui/x.svg"
+                implicitWidth: buttonSize
+                implicitHeight: buttonSize
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                enabled: geo ? geo.drawing : false
+                onClicked: if (geo) geo.cancelDrawing()
+            }
+        }
     }
 
     Scene3DLayerPanel {

@@ -12,6 +12,7 @@ Item {
     property bool expanded: false
     property real panelWidth: theme.controlHeight * 12
     property real panelPadding: 10
+    property var addMenuState: ({})
 
     function toLocalPath(url) {
         var s = url.toString()
@@ -30,6 +31,16 @@ Item {
             return geo.selectedNodeId
         }
         return geo.currentFolderId
+    }
+
+    function isAddMenuOpen(folderId) {
+        return addMenuState[folderId] === true
+    }
+
+    function setAddMenuOpen(folderId, open) {
+        var state = Object.assign({}, addMenuState)
+        state[folderId] = open
+        addMenuState = state
     }
 
     Rectangle {
@@ -291,9 +302,32 @@ Item {
                                     Item { Layout.fillWidth: true }
 
                                     CheckButton {
+                                        id: add_button
                                         visible: model.isFolder
                                         checkable: false
+                                        // checked: root.isAddMenuOpen(model.id)
                                         iconSource: "qrc:/icons/ui/plus.svg"
+                                        implicitWidth: theme.controlHeight
+                                        implicitHeight: theme.controlHeight
+                                        backColor: "transparent"
+                                        borderColor: "transparent"
+                                        checkedBorderColor: "transparent"
+                                        onClicked: {
+                                            root.setAddMenuOpen(model.id, !root.isAddMenuOpen(model.id))
+                                            focus = true
+                                        }
+                                        onFocusChanged: {
+                                            if (!focused) {
+                                                root.setAddMenuOpen(model.id, false)
+                                            }
+                                        }
+                                    }
+
+                                    CheckButton {
+                                        id: add_folder_button
+                                        visible: model.isFolder && root.isAddMenuOpen(model.id)
+                                        checkable: false
+                                        iconSource: "qrc:/icons/ui/folder-plus.svg"
                                         implicitWidth: theme.controlHeight
                                         implicitHeight: theme.controlHeight
                                         backColor: "transparent"
@@ -304,13 +338,17 @@ Item {
                                                 let index = treeView.index(row, column)
                                                 tree.selectionModel.setCurrentIndex(index, ItemSelectionModel.Current)
                                                 geo.addFolderToCurrent()
+                                                tree.expand(row)
+
                                             }
                                         }
                                     }
 
                                     CheckButton {
+                                        id: add_file_button
+                                        visible: model.isFolder && root.isAddMenuOpen(model.id)
                                         checkable: false
-                                        iconSource: "qrc:/icons/ui/x.svg"
+                                        iconSource: "qrc:/icons/ui/file_plus.svg"
                                         implicitWidth: theme.controlHeight
                                         implicitHeight: theme.controlHeight
                                         backColor: "transparent"
@@ -318,11 +356,30 @@ Item {
                                         checkedBorderColor: "transparent"
                                         onClicked: {
                                             if (geo) {
-                                                geo.selectNode(model.id, model.isFolder, model.parentId)
-                                                geo.deleteNode(model.id, model.isFolder)
+                                                let index = treeView.index(row, column)
+                                                tree.selectionModel.setCurrentIndex(index, ItemSelectionModel.Current)
+                                                // import file to this folder
                                             }
                                         }
                                     }
+
+
+
+                                    // CheckButton {
+                                    //     checkable: false
+                                    //     iconSource: "qrc:/icons/ui/x.svg"
+                                    //     implicitWidth: theme.controlHeight
+                                    //     implicitHeight: theme.controlHeight
+                                    //     backColor: "transparent"
+                                    //     borderColor: "transparent"
+                                    //     checkedBorderColor: "transparent"
+                                    //     onClicked: {
+                                    //         if (geo) {
+                                    //             geo.selectNode(model.id, model.isFolder, model.parentId)
+                                    //             geo.deleteNode(model.id, model.isFolder)
+                                    //         }
+                                    //     }
+                                    // }
                                 }
 
                                 TapHandler {
@@ -509,38 +566,7 @@ Item {
                         }
                     }
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
-                        visible: geo ? geo.tool !== 0 : false
-
-                        CheckButton {
-                            checkable: false
-                            iconSource: "qrc:/icons/ui/file-check.svg"
-                            implicitWidth: theme.controlHeight * 1.1
-                            implicitHeight: theme.controlHeight * 1.1
-                            enabled: geo ? geo.drawing : false
-                            onClicked: if (geo) geo.finishDrawing()
-                        }
-
-                        CheckButton {
-                            checkable: false
-                            iconSource: "qrc:/icons/ui/repeat.svg"
-                            implicitWidth: theme.controlHeight * 1.1
-                            implicitHeight: theme.controlHeight * 1.1
-                            enabled: geo ? geo.drawing : false
-                            onClicked: if (geo) geo.undoLastVertex()
-                        }
-
-                        CheckButton {
-                            checkable: false
-                            iconSource: "qrc:/icons/ui/x.svg"
-                            implicitWidth: theme.controlHeight * 1.1
-                            implicitHeight: theme.controlHeight * 1.1
-                            enabled: geo ? geo.tool !== 0 : false
-                            onClicked: if (geo) geo.cancelDrawing()
-                        }
-                    }
+                    Item { Layout.preferredHeight: 1 }
                 }
 
                 Item {
