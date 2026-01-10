@@ -916,6 +916,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::attitudeComplete, this, &DeviceManager::attitudeComplete);
     connect(dev, &DevQProperty::tempComplete, this, &DeviceManager::tempComplete);
     connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete);
+    connect(dev, &DevQProperty::encoderComplete, this, &DeviceManager::encoderComplete);
     connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete);
     connect(dev, &DevQProperty::beaconActivationComplete, this, &DeviceManager::beaconActivationReceive);
     connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete);

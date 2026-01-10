@@ -327,7 +327,24 @@ protected:
     float m_temp;
 };
 
+class IDBinEncoder : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinEncoder() : IDBin() {
+    }
 
+    struct Encoder {
+        float e1 = NAN, e2 = NAN, e3 = NAN;
+    };
+
+    ID id() override { return Parsers::ID_ENCODER; }
+    Resp  parsePayload(FrameParser &proto) override;
+
+    Encoder get() { return data; }
+protected:
+    Encoder data;
+};
 
 class IDBinDataset : public IDBin
 {

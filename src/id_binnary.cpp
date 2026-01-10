@@ -421,6 +421,25 @@ Resp IDBinTemp::parsePayload(FrameParser &proto) {
     return respOk;
 }
 
+Resp IDBinEncoder::parsePayload(FrameParser &proto) {
+    if(proto.ver() == v0) {
+        Encoder tmp;
+        if(proto.readAvailable() >= 4) {
+            tmp.e1 = proto.read<F4>();
+        }
+        if(proto.readAvailable() >= 4) {
+            tmp.e2 = proto.read<F4>();
+        }
+        if(proto.readAvailable() >= 4) {
+            tmp.e3 = proto.read<F4>();
+        }
+        data = tmp;
+    } else {
+        return respErrorVersion;
+    }
+
+    return respOk;
+}
 
 Resp IDBinNav::parsePayload(FrameParser &proto) {
     if(SimpleNav::getVer()) {
