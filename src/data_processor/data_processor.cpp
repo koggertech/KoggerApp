@@ -3,6 +3,7 @@
 #include <cmath>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QMetaObject>
+#include <QEventLoop>
 #include <QDebug>
 #include <QtGlobal>
 #include <cmath>
@@ -68,6 +69,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     bottomTrackFullRecalcPending_(false),
     pendingIsobathsWork_(false),
     cancelRequested_(false),
+    shuttingDown_(false),
     jobRunning_(false),
     nextRunPending_(false),
     requestedMask_(0),
@@ -576,6 +578,10 @@ void DataProcessor::runCoalescedWork()
 {
     //qDebug() << "DataProcessor::runCoalescedWork";
 
+    if (shuttingDown_.load()) {
+        return;
+    }
+
     if (jobRunning_.load()) {
         return;
     }
@@ -721,13 +727,19 @@ void DataProcessor::onWorkerFinished()
 {
     jobRunning_.store(false);
 
-    if (nextRunPending_.load()) {
+    if (nextRunPending_.load() && !shuttingDown_.load()) {
         startTimerIfNeeded();
     }
 }
 
 void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
 {
+    if (shuttingDown_.load()) {
+        dbReaderInWork_ = false;
+        dbInWorkKeys_.clear();
+        return;
+    }
+
     dbReaderInWork_ = false;
     const QSet<TileKey> requestedNow = dbInWorkKeys_;
     dbInWorkKeys_.clear();
@@ -856,7 +868,7 @@ void DataProcessor::onSendSavedKeys(QVector<TileKey> savedKeys)
 
 void DataProcessor::requestTilesFromDB(const QSet<TileKey>& keys)
 {
-    if (!dbReader_ || keys.isEmpty()) {
+    if (shuttingDown_.load() || !dbReader_ || keys.isEmpty()) {
         return;
     }
 
@@ -876,13 +888,16 @@ void DataProcessor::prefetchWait(quint64 lastTick)
 
     // ждём пока тик изменится (или разбудят)
     while (prefetchTick_.load(std::memory_order_relaxed) == lastTick) {
-        prefetchCv_.wait(&prefetchMu_);
+        if (shuttingDown_.load() || isCancelRequested()) {
+            break;
+        }
+        prefetchCv_.wait(&prefetchMu_, 200);
     }
 }
 
 void DataProcessor::flushPendingDbKeys()
 {
-    if (!dbReader_ || dbPendingKeys_.isEmpty() || dbReaderInWork_) {
+    if (shuttingDown_.load() || !dbReader_ || dbPendingKeys_.isEmpty() || dbReaderInWork_) {
         return;
     }
 
@@ -1077,6 +1092,10 @@ void DataProcessor::clearAllProcessings()
 
 void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnrequestedPending) noexcept
 {
+    if (shuttingDown_.load()) {
+        return;
+    }
+
     const uint32_t m = toMask(mask);
     if (replace) {
         requestedMask_.store(m);
@@ -1108,7 +1127,7 @@ void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnreque
 
 void DataProcessor::openDB()
 {
-    if (dbReader_ || dbWriter_ || filePath_.isEmpty()) {
+    if (shuttingDown_.load() || dbReader_ || dbWriter_ || filePath_.isEmpty()) {
         return;
     }
 
@@ -1159,6 +1178,9 @@ void DataProcessor::openDB()
 
 void DataProcessor::closeDB()
 {
+    dbReadThread_.requestInterruption();
+    dbWriteThread_.requestInterruption();
+
     // Reader
     if (dbReader_) {
         QMetaObject::invokeMethod(dbReader_, "finalizeAndClose", Qt::BlockingQueuedConnection);
@@ -1455,6 +1477,10 @@ void DataProcessor::tryCalcTiles()
 {
     //qDebug() << "DataProcessor::tryCalcTiles";
 
+    if (shuttingDown_.load()) {
+        return;
+    }
+
     emit isobathsProcessingCleared();
     emit surfaceProcessingCleared();
     emit mosaicProcessingCleared();
@@ -1498,24 +1524,70 @@ void DataProcessor::shutdown()
 {
     //qDebug() << "DataProcessor::shutdown()";
 
+    shuttingDown_.store(true);
+    pendingWorkTimer_.stop();
+    notifyPrefetchProgress();
+
+    updateBottomTrack_ = false;
+    updateSurface_ = false;
+    updateIsobaths_ = false;
+    updateMosaic_ = false;
+
+    pendingSurfaceIndxs_.clear();
+    pendingMosaicIndxs_.clear();
+    pendingIsobathsWork_ = false;
+    requestedMask_.store(0);
+    nextRunPending_.store(false);
+
     requestCancel();
+    computeThread_.requestInterruption();
+    dbReadThread_.requestInterruption();
+    dbWriteThread_.requestInterruption();
+
+    auto waitForThread = [](QThread& thread, int timeoutMs) -> bool {
+        if (!thread.isRunning()) {
+            return true;
+        }
+
+        QEventLoop loop;
+        QTimer timer;
+        timer.setSingleShot(true);
+        QObject::connect(&thread, &QThread::finished, &loop, &QEventLoop::quit);
+        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        timer.start(timeoutMs);
+        if (!thread.isRunning()) {
+            return true;
+        }
+        loop.exec();
+        return !thread.isRunning();
+    };
+
+    computeThread_.quit();
+    if (!waitForThread(computeThread_, 3000)) {
+        computeThread_.terminate();
+        computeThread_.wait();
+    }
 
     if (dbReader_) {
         QMetaObject::invokeMethod(dbReader_, "finalizeAndClose", Qt::BlockingQueuedConnection);
         dbReadThread_.quit();
-        dbReadThread_.wait();
+        if (!waitForThread(dbReadThread_, 2000)) {
+            dbReadThread_.terminate();
+            dbReadThread_.wait();
+        }
         dbReader_ = nullptr;
     }
 
     if (dbWriter_) {
         QMetaObject::invokeMethod(dbWriter_, "finalizeAndClose", Qt::BlockingQueuedConnection);
         dbWriteThread_.quit();
-        dbWriteThread_.wait();
+        if (!waitForThread(dbWriteThread_, 2000)) {
+            dbWriteThread_.terminate();
+            dbWriteThread_.wait();
+        }
         dbWriter_ = nullptr;
     }
 
-    computeThread_.quit();
-    computeThread_.wait();
     worker_->deleteLater();
 
     dbIsReady_ = false;
@@ -1578,6 +1650,9 @@ bool DataProcessor::isDbReady() const noexcept
 
 void DataProcessor::onDbSaveTiles(const QHash<TileKey, SurfaceTile> &tiles)
 {
+    if (shuttingDown_.load()) {
+        return;
+    }
     emit dbSaveTiles(engineVer_, tiles, true, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
 }
 
@@ -1654,6 +1729,12 @@ QVector<QPair<int, QSet<TileKey>>> DataProcessor::collectEpochsForTiles(int zoom
 
 void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)
 {
+    if (shuttingDown_.load()) {
+        dbReaderInWork_ = false;
+        dbInWorkKeys_.clear();
+        return;
+    }
+
     qDebug() << "DataProcessor::onDbTilesLoadedForZoom size" << dbTiles.size();
     dbReaderInWork_ = false;
 
@@ -1684,6 +1765,10 @@ void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTile
 void DataProcessor::onDbAnyTileForZoom(int zoom, bool exists)
 {
     Q_UNUSED(zoom)
+
+    if (shuttingDown_.load()) {
+        return;
+    }
 
     //qDebug() << "DataProcessor::onDbAnyTileForZoom, zoom" << zoom << "exist" << exists;
 

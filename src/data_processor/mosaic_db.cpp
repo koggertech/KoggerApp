@@ -6,6 +6,7 @@
 #include <QtEndian>
 #include <QDebug>
 #include <QStandardPaths>
+#include <QThread>
 
 
 static bool runWalCheckpoint(QSqlDatabase& db, const char* mode, int& busy, int& log, int& ckpt)
@@ -26,6 +27,11 @@ static bool runWalCheckpoint(QSqlDatabase& db, const char* mode, int& busy, int&
     q.finish();
 
     return true;
+}
+
+static inline bool stopRequested()
+{
+    return QThread::currentThread()->isInterruptionRequested();
 }
 
 static QString makeXYOrClause(int pairCount) {
@@ -182,6 +188,11 @@ void MosaicDB::finalizeAndClose()
 void MosaicDB::checkAnyTileForZoom(int zoom)
 {
     bool exists = false;
+
+    if (stopRequested()) {
+        emit anyTileForZoom(zoom, false);
+        return;
+    }
 
     if (db_.isOpen()) {
         QSqlQuery q(db_);
@@ -345,6 +356,10 @@ bool MosaicDB::removeDbFiles(const QString& dbPath)
 
 void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tilePx, int hmRatio)
 {
+    if (stopRequested() || tiles.isEmpty() || !db_.isOpen()) {
+        return;
+    }
+
     QSqlQuery q(db_);
     db_.transaction();
     q.prepare(
@@ -370,6 +385,11 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
     savedKeys.reserve(tiles.size());
 
     for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) {
+        if (stopRequested()) {
+            db_.rollback();
+            return;
+        }
+
         const TileKey& k = it.key();
         const SurfaceTile& t = it.value();
 
@@ -428,6 +448,11 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
         q.finish();
     }
 
+    if (stopRequested()) {
+        db_.rollback();
+        return;
+    }
+
     db_.commit();
 
     checkpointIfWalTooBig(128ll * 1024 * 1024); // порог 128
@@ -437,6 +462,11 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
 
 void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
 {
+    if (stopRequested()) {
+        emit tilesLoadedForKeys({});
+        return;
+    }
+
     if (!db_.isOpen() || keys.isEmpty()) {
         emit tilesLoadedForKeys({});
         return;
@@ -458,6 +488,11 @@ void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
         const QVector<TileKey>& list = it.value();
 
         for (int start = 0; start < list.size(); start += kMaxPairsPerBatch_) { // step by batch
+            if (stopRequested()) {
+                emit tilesLoadedForKeys({});
+                return;
+            }
+
             const int count = std::min(kMaxPairsPerBatch_, static_cast<int>(list.size() - start));
 
             const QString sql =
@@ -488,6 +523,11 @@ void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
             }
 
             while (q.next()) {
+                if (stopRequested()) {
+                    emit tilesLoadedForKeys({});
+                    return;
+                }
+
                 DbTile t;
                 t.key.x    = q.value(0).toInt();
                 t.key.y    = q.value(1).toInt();

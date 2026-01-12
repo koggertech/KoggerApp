@@ -34,7 +34,9 @@ public:
     ~DataProcessor() override;
 
     void setDatasetPtr(Dataset* datasetPtr);
-    inline bool isCancelRequested() const noexcept { return cancelRequested_.load(); }
+    inline bool isCancelRequested() const noexcept {
+        return cancelRequested_.load() || QThread::currentThread()->isInterruptionRequested();
+    }
 
     void onDbSaveTiles(const QHash<TileKey, SurfaceTile>& tiles);
     bool isDbReady() const noexcept;
@@ -261,6 +263,7 @@ private:
     bool                   pendingIsobathsWork_;
     QTimer                 pendingWorkTimer_;
     std::atomic_bool       cancelRequested_;
+    std::atomic_bool       shuttingDown_;
     std::atomic_bool       jobRunning_;
     std::atomic_bool       nextRunPending_;
     std::atomic<uint32_t>  requestedMask_;
