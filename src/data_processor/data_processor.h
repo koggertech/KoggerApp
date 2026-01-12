@@ -35,15 +35,17 @@ public:
 
     void setDatasetPtr(Dataset* datasetPtr);
     inline bool isCancelRequested() const noexcept {
-        return cancelRequested_.load() || QThread::currentThread()->isInterruptionRequested();
+        return cancelRequested_.load() || suppressResults_.load()
+            || QThread::currentThread()->isInterruptionRequested();
     }
-
     void onDbSaveTiles(const QHash<TileKey, SurfaceTile>& tiles);
     bool isDbReady() const noexcept;
 
 public slots:
     // this
     void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
+    void setSuppressResults(bool state) noexcept;
+    void prepareForFileClose(int timeoutMs);
     void clearProcessing(DataProcessorType = DataProcessorType::kUndefined);
 
     // from 3d controller (visibility)
@@ -264,6 +266,7 @@ private:
     QTimer                 pendingWorkTimer_;
     std::atomic_bool       cancelRequested_;
     std::atomic_bool       shuttingDown_;
+    std::atomic_bool       suppressResults_;
     std::atomic_bool       jobRunning_;
     std::atomic_bool       nextRunPending_;
     std::atomic<uint32_t>  requestedMask_;

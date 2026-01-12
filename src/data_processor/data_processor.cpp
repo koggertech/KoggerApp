@@ -70,6 +70,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     pendingIsobathsWork_(false),
     cancelRequested_(false),
     shuttingDown_(false),
+    suppressResults_(false),
     jobRunning_(false),
     nextRunPending_(false),
     requestedMask_(0),
@@ -127,6 +128,38 @@ void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 
     QMetaObject::invokeMethod(worker_, "setDatasetPtr", Qt::QueuedConnection, Q_ARG(Dataset*, datasetPtr_));
+}
+
+void DataProcessor::setSuppressResults(bool state) noexcept
+{
+    suppressResults_.store(state);
+    if (state) {
+        notifyPrefetchProgress();
+    }
+}
+
+void DataProcessor::prepareForFileClose(int timeoutMs)
+{
+    if (timeoutMs < 0) {
+        timeoutMs = 0;
+    }
+
+    suppressResults_.store(true);
+    pendingWorkTimer_.stop();
+    requestCancel();
+    notifyPrefetchProgress();
+
+    if (!jobRunning_.load()) {
+        return;
+    }
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    QObject::connect(worker_, &ComputeWorker::jobFinished, &loop, &QEventLoop::quit);
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timer.start(timeoutMs);
+    loop.exec();
 }
 
 void DataProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
@@ -734,9 +767,10 @@ void DataProcessor::onWorkerFinished()
 
 void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
 {
-    if (shuttingDown_.load()) {
+    if (shuttingDown_.load() || suppressResults_.load()) {
         dbReaderInWork_ = false;
         dbInWorkKeys_.clear();
+        notifyPrefetchProgress();
         return;
     }
 
@@ -868,7 +902,7 @@ void DataProcessor::onSendSavedKeys(QVector<TileKey> savedKeys)
 
 void DataProcessor::requestTilesFromDB(const QSet<TileKey>& keys)
 {
-    if (shuttingDown_.load() || !dbReader_ || keys.isEmpty()) {
+    if (shuttingDown_.load() || suppressResults_.load() || !dbReader_ || keys.isEmpty()) {
         return;
     }
 
@@ -897,7 +931,7 @@ void DataProcessor::prefetchWait(quint64 lastTick)
 
 void DataProcessor::flushPendingDbKeys()
 {
-    if (shuttingDown_.load() || !dbReader_ || dbPendingKeys_.isEmpty() || dbReaderInWork_) {
+    if (shuttingDown_.load() || suppressResults_.load() || !dbReader_ || dbPendingKeys_.isEmpty() || dbReaderInWork_) {
         return;
     }
 
@@ -934,6 +968,10 @@ void DataProcessor::postIsobathsLabels(const QVector<IsobathUtils::LabelParamete
 void DataProcessor::postSurfaceTiles(TileMap tiles, bool isMosaic)
 {
     if (tiles.isEmpty()) {
+        return;
+    }
+    if (suppressResults_.load()) {
+        notifyPrefetchProgress();
         return;
     }
 
@@ -1650,7 +1688,7 @@ bool DataProcessor::isDbReady() const noexcept
 
 void DataProcessor::onDbSaveTiles(const QHash<TileKey, SurfaceTile> &tiles)
 {
-    if (shuttingDown_.load()) {
+    if (shuttingDown_.load() || suppressResults_.load()) {
         return;
     }
     emit dbSaveTiles(engineVer_, tiles, true, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
@@ -1729,9 +1767,10 @@ QVector<QPair<int, QSet<TileKey>>> DataProcessor::collectEpochsForTiles(int zoom
 
 void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)
 {
-    if (shuttingDown_.load()) {
+    if (shuttingDown_.load() || suppressResults_.load()) {
         dbReaderInWork_ = false;
         dbInWorkKeys_.clear();
+        notifyPrefetchProgress();
         return;
     }
 
@@ -1766,7 +1805,7 @@ void DataProcessor::onDbAnyTileForZoom(int zoom, bool exists)
 {
     Q_UNUSED(zoom)
 
-    if (shuttingDown_.load()) {
+    if (shuttingDown_.load() || suppressResults_.load()) {
         return;
     }
 
