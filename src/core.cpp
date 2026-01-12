@@ -310,6 +310,7 @@ void Core::onFileOpened()
 
 void Core::onFileReadEnough()
 {
+    QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
     datasetPtr_->setRefPositionByFirstValid();
     // datasetPtr_->usblProcessing();
     if (scene3dViewPtr_) {
