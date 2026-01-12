@@ -273,13 +273,10 @@ void DataProcessor::onCameraMovedSec()
     for (auto it = epTiles.cbegin(); it != epTiles.cend(); ++it) {
         auto itm = (*it).first;
         pendingSurfaceIndxs_.insert(qMakePair('0', itm));
+        pendingMosaicIndxs_.insert(itm);
     }
 
     //qDebug() << "add pending" << epIndxs.size();
-
-    for (auto it = epTiles.cbegin(); it != epTiles.cend(); ++it) {
-        pendingMosaicIndxs_.insert((*it).first);
-    }
 
     scheduleLatest(WorkSet(WF_All)); // all?
 }
@@ -1107,7 +1104,6 @@ void DataProcessor::clearAllProcessings()
     jobRunning_ = false;
     nextRunPending_ = false;
     requestedMask_ = 0;
-
     hotCache_.clear();
     filePath_.clear();
     dbReaderInWork_ = false;

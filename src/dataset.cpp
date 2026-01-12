@@ -892,6 +892,7 @@ void Dataset::resetDataset()
     lastDepth_            = 0.0f;
 
     sonarPosIndx_ = 0;
+    lastDimRectindx_ = 0;
 
     emit lastDepthChanged();
     emit channelsUpdated();
@@ -900,7 +901,7 @@ void Dataset::resetDataset()
     emit activeContactChanged();
 }
 
-void Dataset::softResetDataset()
+void Dataset::softResetDataset() // for long-distance camera movement
 {
     {
         QWriteLocker locker(&lock_);
