@@ -86,6 +86,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     lastDataZoomIndx_(0)
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
+    qRegisterMetaType<DataProcessorType>("DataProcessorType");
     qRegisterMetaType<DatasetChannel>("DatasetChannel");
     qRegisterMetaType<ChannelId>("ChannelId");
     qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
@@ -131,9 +132,14 @@ void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
 
 void DataProcessor::setSuppressResults(bool state) noexcept
 {
+    const bool wasSuppressed = suppressResults_.load();
     suppressResults_.store(state);
     if (state) {
         notifyPrefetchProgress();
+        return;
+    }
+    if (wasSuppressed) {
+        startTimerIfNeeded();
     }
 }
 
@@ -271,16 +277,11 @@ void DataProcessor::onCameraMoved()
 
     for (auto it = epTiles.cbegin(); it != epTiles.cend(); ++it) {
         auto itm = (*it).first;
-
-        if (updateSurface_) {
-            pendingSurfaceIndxs_.insert(qMakePair('0', itm));
-        }
-        if (updateMosaic_) {
-            pendingMosaicIndxs_.insert(itm);
-        }
+        pendingSurfaceIndxs_.insert(qMakePair('0', itm));
+        pendingMosaicIndxs_.insert(itm);
     }
 
-    //qDebug() << "add pending" << epIndxs.size();
+    //qDebug() << "add pending" << pendingSurfaceIndxs_.size() << pendingMosaicIndxs_.size();
 
     scheduleLatest(WorkSet(WF_All)); // all?
 }
@@ -583,6 +584,10 @@ void DataProcessor::runCoalescedWork()
     }
 
     if (jobRunning_.load()) {
+        return;
+    }
+
+    if (suppressResults_.load()) {
         return;
     }
 

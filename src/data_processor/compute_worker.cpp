@@ -173,12 +173,16 @@ void ComputeWorker::setMosaicTileResolution(float res)
 
 void ComputeWorker::applySurfaceZoomChange(const TileMap& cached, bool fullCoverage)
 {
+    QMetaObject::invokeMethod(dp_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
+
     if (!cached.isEmpty()) {
         surface_.restoreTilesFromCache(cached);
     }
     if (!fullCoverage) {
         surface_.rebuildAfterResolutionChange();
     }
+
+    QMetaObject::invokeMethod(dp_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
 
 void ComputeWorker::askColorTableForMosaic()

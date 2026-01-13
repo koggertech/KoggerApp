@@ -1,6 +1,7 @@
 #pragma once
 #include <QHash>
 #include <QDebug>
+#include <QMetaType>
 #include <cmath>
 #include <QVector2D>
 
@@ -19,6 +20,8 @@ enum class DataProcessorType {
     kMosaic,
     kSurface
 };
+
+Q_DECLARE_METATYPE(DataProcessorType)
 
 enum WorkFlag : quint32 {
     WF_None     = 0,
