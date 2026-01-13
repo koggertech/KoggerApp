@@ -259,7 +259,6 @@ public Q_SLOTS:
     void setQmlRootObject(QObject* object);
     void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
-    void updateSurfaceView();
     void calcVisEpochIndxs();
     void updateViews();
     void onCameraMoved();
@@ -272,7 +271,7 @@ public Q_SLOTS:
 
 signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
-    void sendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp);
+    void sendDataRectRequest(float minX, float minY, float maxX, float maxY);
     void sendLlaRef(LLARef viewLlaRef);
     void sendDataZoom(int zoom);
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);

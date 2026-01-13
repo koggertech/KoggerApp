@@ -56,9 +56,7 @@ public slots:
 
     void setIsOpeningFile (bool state);
     //
-    void onCameraMovedSec();
-    void onCameraMoved(const QVector<QPair<int, QSet<TileKey>>>& epTiles);
-    void onSendVisibleTileKeys(int zoomIndx, const QSet<TileKey>& visTileKeys);
+    void onCameraMoved();
 
     // from DataHorizon
     void onChartsAdded(uint64_t indx); // external calling realtime
@@ -97,7 +95,7 @@ public slots:
     void onUpdateDataZoom(int zoom); // temp
     void setFilePath(QString filePath);
 
-    void onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp); // на движение камеры
+    void onSendDataRectRequest(float minX, float minY, float maxX, float maxY); // на движение камеры
     void tryCalcTiles();
 
     TileMap fetchFromHotCache(const QSet<TileKey>& keys, QSet<TileKey>* missing);
@@ -281,9 +279,7 @@ private:
     QString                filePath_;
     int                    engineVer_;
     QRectF                 lastViewRect_;
-    int                    lastZoom_;
     bool                   surfaceZoomChangedPending_;
-    QSet<TileKey>          lastKeys_;
     QSet<TileKey>          dbPendingKeys_;
     QSet<TileKey>          dbInWorkKeys_;
     QSet<TileKey>          renderedKeys_;

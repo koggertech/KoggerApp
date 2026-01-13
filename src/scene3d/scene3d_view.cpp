@@ -1038,8 +1038,6 @@ void GraphicsScene3dView::onCameraMoved()
     }
 
     updateMapView();
-    updateSurfaceView();
-    calcVisEpochIndxs();
     updateViews();
 }
 
@@ -1087,77 +1085,17 @@ void GraphicsScene3dView::updateMapView()
     emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_, cameraIsMoveUp_, m_camera->getCameraTilt());
 }
 
-void GraphicsScene3dView::updateSurfaceView()
-{
-    if (!surfaceView_->isVisible()) {
-        return;
-    }
-
-    float dist = m_camera->distForMapView();
-    if (dist > 3200.0f) {
-        return;
-    }
-
-    NED ltNed(lastMinX_, lastMinY_, 0.0);
-    NED lbNed(lastMinX_, lastMaxY_, 0.0);
-    NED rbNed(lastMaxX_, lastMaxY_, 0.0);
-    NED rtNed(lastMaxX_, lastMinY_, 0.0);
-
-    // qDebug() << zoomData_;
-    // qDebug() << minX << maxX << minY << maxY;
-    // qDebug() << "";
-
-    QVector<NED> nedVerts = { ltNed, lbNed, rbNed, rtNed };
-
-    emit sendDataRectRequest(nedVerts, dataZoomIndx_, cameraIsMoveUp_ /*from upd map*/);
-}
-
 void GraphicsScene3dView::calcVisEpochIndxs()
 {
-    if (!isUpdateMosaic_ && !isUpdateSurface_) {
-        return;
-    }
 
-    if (!datasetPtr_) {
-        return;
-    }
-    if (!datasetPtr_->size()) {
-        return;
-    }
-
-    // been
-    //const QRectF visRect(QPointF(lastMinX_, lastMinY_), QPointF(lastMaxX_, lastMaxY_));
-    //auto visTiles = core.getMosaicIndexProviderPtr()->tilesInRectNed(visRect, dataZoomIndx_, 1); // TILES
-
-    // now
-    std::array<QPointF, 4> visQuad;
-    NED ltNed(lastMinX_, lastMinY_, 0.0);
-    NED lbNed(lastMinX_, lastMaxY_, 0.0);
-    NED rbNed(lastMaxX_, lastMaxY_, 0.0);
-    NED rtNed(lastMaxX_, lastMinY_, 0.0);
-    visQuad[0] = {ltNed.n, ltNed.e};
-    visQuad[1] = {rtNed.n, rtNed.e};
-    visQuad[2] = {rbNed.n, rbNed.e};
-    visQuad[3] = {lbNed.n, lbNed.e};
-
-    // qDebug() << zoomData_;
-    // qDebug() << minX << maxX << minY << maxY;
-    // qDebug() << "";
-
-    auto visTiles = core.getMosaicIndexProviderPtr()->tilesInQuadNed(visQuad, dataZoomIndx_, 1); // TILES
-
-//    qDebug() << "vt";
-//    qDebug() << visTiles.size();
-//    qDebug() << visTiles;
-
-    if (visTiles != lastVisTileKeys_) {
-        lastVisTileKeys_ = visTiles;
-        emit sendVisibleTileKeys(dataZoomIndx_, lastVisTileKeys_); // for processor
-    }
 }
 
 void GraphicsScene3dView::updateViews()
 {
+    if (isUpdateMosaic_ || isUpdateSurface_) {
+        emit sendDataRectRequest(lastMinX_, lastMinY_, lastMaxX_, lastMaxY_);
+    }
+
     if (isobathsView_) {
         isobathsView_->setCameraDistToFocusPoint(m_camera->distForMapView());
     }
