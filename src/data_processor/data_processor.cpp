@@ -275,10 +275,6 @@ void DataProcessor::onCameraMoved()
         pendingMosaicIndxs_.insert(itm);
     }
 
-    if (updateSurface_) { //
-        enqueueSurfaceMissingForZoom(lastDataZoomIndx_);
-    }
-
     //qDebug() << "add pending" << epIndxs.size();
 
     scheduleLatest(WorkSet(WF_All)); // all?
@@ -1379,6 +1375,9 @@ void DataProcessor::onUpdateDataZoom(int zoom) // calc or db
 
     surfaceZoomChangedPending_ = updateSurface_;
     handleSurfaceZoomChangeIfReady(lastDataZoomIndx_, lastVisTileKeys_);
+    if (updateSurface_) {
+        enqueueSurfaceMissingForZoom(lastDataZoomIndx_);
+    }
 
     if (!updateMosaic_) {
         return;
