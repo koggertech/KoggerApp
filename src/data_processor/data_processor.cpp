@@ -271,8 +271,13 @@ void DataProcessor::onCameraMoved()
 
     for (auto it = epTiles.cbegin(); it != epTiles.cend(); ++it) {
         auto itm = (*it).first;
-        pendingSurfaceIndxs_.insert(qMakePair('0', itm));
-        pendingMosaicIndxs_.insert(itm);
+
+        if (updateSurface_) {
+            pendingSurfaceIndxs_.insert(qMakePair('0', itm));
+        }
+        if (updateMosaic_) {
+            pendingMosaicIndxs_.insert(itm);
+        }
     }
 
     //qDebug() << "add pending" << epIndxs.size();
