@@ -44,7 +44,7 @@ public:
 private:
     void postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<SurfaceTile*>& changedOut);
     void updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const;
-    void updateData(const QVector<int>& indxs);
+    void updateData(const QVector<int>& indxs, QSet<int>& usedEpochs, QSet<int>& blockedEpochs);
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
     bool canceled() const noexcept;
 

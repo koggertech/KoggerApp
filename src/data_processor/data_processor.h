@@ -85,6 +85,7 @@ public slots:
     void setMosaicLowLevel(float val);
     void setMosaicHighLevel(float val);
     void askColorTableForMosaic();
+    void onMosaicEpochsProcessed(const QVector<int>& indxs, int zoom);
 
     //
     void onIsobathsUpdated();
@@ -256,10 +257,12 @@ private:
     QSet<QPair<char, int>> pendingSurfaceIndxs_;
     QHash<int, QSet<int>>  surfaceTaskEpochIndxsByZoom_;
     QHash<int, QSet<int>>  surfaceManualEpochIndxsByZoom_;
+    QHash<int, QSet<int>>  mosaicTaskEpochIndxsByZoom_;
     bool                   surfaceEdgeLimitDirty_;
     QSet<int>              surfaceEdgeLimitUpdatedZooms_;
     bool                   bottomTrackFullRecalcPending_;
     QSet<int>              pendingMosaicIndxs_;
+    QSet<int>              mosaicInFlightIndxs_;
     bool                   pendingIsobathsWork_;
     QTimer                 pendingWorkTimer_;
     std::atomic_bool       cancelRequested_;

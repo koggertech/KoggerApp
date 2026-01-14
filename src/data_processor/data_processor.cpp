@@ -97,6 +97,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     qRegisterMetaType<Dataset*>("Dataset*");
     qRegisterMetaType<std::uint8_t>("std::uint8_t");
     qRegisterMetaType<QSet<TileKey>>("QSet<TileKey>");
+    qRegisterMetaType<QVector<int>>("QVector<int>");
 
     hotCache_.setDataProcessorPtr(this);
 
@@ -202,6 +203,8 @@ void DataProcessor::clearProcessing(DataProcessorType procType)
     tileEpochIndxsByZoom_.shrink_to_fit();
     surfaceTaskEpochIndxsByZoom_.clear();
     surfaceManualEpochIndxsByZoom_.clear();
+    mosaicTaskEpochIndxsByZoom_.clear();
+    mosaicInFlightIndxs_.clear();
 
     postState(DataProcessorType::kUndefined); //
 }
@@ -274,11 +277,21 @@ void DataProcessor::onCameraMoved()
     }
 
     auto epTiles =  collectEpochsForTiles(lastDataZoomIndx_, lastVisTileKeys_);
+    int zoom = lastDataZoomIndx_;
+    if (zoom <= 0) {
+        zoom = zoomFromMpp(tileResolution_);
+    }
+    auto& processedSurface = surfaceTaskEpochIndxsByZoom_[zoom];
+    auto& processedMosaic = mosaicTaskEpochIndxsByZoom_[zoom];
 
     for (auto it = epTiles.cbegin(); it != epTiles.cend(); ++it) {
         auto itm = (*it).first;
-        pendingSurfaceIndxs_.insert(qMakePair('0', itm));
-        pendingMosaicIndxs_.insert(itm);
+        if (!processedSurface.contains(itm)) {
+            pendingSurfaceIndxs_.insert(qMakePair('0', itm));
+        }
+        if (!processedMosaic.contains(itm)) {
+            pendingMosaicIndxs_.insert(itm);
+        }
     }
 
     //qDebug() << "add pending" << pendingSurfaceIndxs_.size() << pendingMosaicIndxs_.size();
@@ -461,6 +474,8 @@ void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const 
 
     QMetaObject::invokeMethod(worker_, "clearAll", Qt::QueuedConnection);
 
+    mosaicTaskEpochIndxsByZoom_.clear();
+    mosaicInFlightIndxs_.clear();
     surfaceTaskEpochIndxsByZoom_.clear();
     surfaceManualEpochIndxsByZoom_.clear();
 
@@ -575,6 +590,23 @@ void DataProcessor::onMosaicUpdated() {
     scheduleLatest(WorkSet(WF_Mosaic));
 }
 
+void DataProcessor::onMosaicEpochsProcessed(const QVector<int>& indxs, int zoom)
+{
+    if (indxs.isEmpty()) {
+        return;
+    }
+    if (zoom <= 0) {
+        zoom = zoomFromMpp(tileResolution_);
+    }
+
+    auto& processed = mosaicTaskEpochIndxsByZoom_[zoom];
+    for (int idx : indxs) {
+        processed.insert(idx);
+        pendingMosaicIndxs_.remove(idx);
+        mosaicInFlightIndxs_.remove(idx);
+    }
+}
+
 void DataProcessor::runCoalescedWork()
 {
     //qDebug() << "DataProcessor::runCoalescedWork";
@@ -655,12 +687,28 @@ void DataProcessor::runCoalescedWork()
     }
 
     if (wantMosaic && !pendingMosaicIndxs_.isEmpty() && updateMosaic_) {
+        int mosaicZoom = lastDataZoomIndx_;
+        if (mosaicZoom <= 0) {
+            mosaicZoom = zoomFromMpp(tileResolution_);
+        }
+        auto& processedMosaic = mosaicTaskEpochIndxsByZoom_[mosaicZoom];
+
         auto it = pendingMosaicIndxs_.begin();
         while (it != pendingMosaicIndxs_.end()) {
             const int idx = *it;
 
+            if (processedMosaic.contains(idx)) {
+                it = pendingMosaicIndxs_.erase(it);
+                continue;
+            }
+            if (mosaicInFlightIndxs_.contains(idx)) {
+                ++it;
+                continue;
+            }
+
             if (idx <= mosaicCounter_) {
                 wb.mosaicVec.append(idx);
+                mosaicInFlightIndxs_.insert(idx);
                 it = pendingMosaicIndxs_.erase(it);
             }
             else {
@@ -731,6 +779,11 @@ void DataProcessor::startTimerIfNeeded()
 void DataProcessor::onWorkerFinished()
 {
     jobRunning_.store(false);
+
+    if (!mosaicInFlightIndxs_.isEmpty()) {
+        pendingMosaicIndxs_.unite(mosaicInFlightIndxs_);
+        mosaicInFlightIndxs_.clear();
+    }
 
     if (nextRunPending_.load() && !shuttingDown_.load()) {
         startTimerIfNeeded();
@@ -1035,6 +1088,8 @@ void DataProcessor::clearIsobathsProcessing()
 void DataProcessor::clearMosaicProcessing()
 {
     pendingMosaicIndxs_.clear();
+    mosaicTaskEpochIndxsByZoom_.clear();
+    mosaicInFlightIndxs_.clear();
 
     QMetaObject::invokeMethod(worker_, "clearMosaic", Qt::QueuedConnection);
 }
@@ -1055,6 +1110,8 @@ void DataProcessor::clearAllProcessings()
     pendingWorkTimer_.stop();
     pendingIsobathsWork_ = false;
     pendingMosaicIndxs_.clear();
+    mosaicTaskEpochIndxsByZoom_.clear();
+    mosaicInFlightIndxs_.clear();
     pendingSurfaceIndxs_.clear();
     surfaceTaskEpochIndxsByZoom_.clear();
     surfaceManualEpochIndxsByZoom_.clear();

@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QThread>
 #include "data_processor.h"
+#include "data_processor_defs.h"
 #include "dataset.h"
 #include "compute_worker.h"
 
@@ -142,27 +143,40 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     //   }
     //}
 
-    const int kStep = 10; // почанково
+    // чанкование задачи, отслеживание разрывов
+    const int kStep = 10;
+    QSet<int> usedEpochs;
+    QSet<int> blockedEpochs;
     QVector<int> chunk;
 
-    int start = 0;
-    const int last = vec.size() - 1;
-
-    while (start <= last) {
-        int end = qMin(start + kStep, last);
-
-        chunk.clear();
-        chunk.reserve(end - start + 1);
-        for (int i = start; i <= end; ++i) {
-            chunk.push_back(vec[i]);
+    int prev = 0;
+    bool chunkHasNew = false;
+    for (int idx : std::as_const(vec)) {
+        if (!chunk.isEmpty() && idx != prev + 1) {
+            if (chunkHasNew) {
+                updateData(chunk, usedEpochs, blockedEpochs);
+                if (canceled()) {
+                    break;
+                }
+            }
+            chunk.clear();
         }
-
-        updateData(chunk);
-
-        if (end == last) {
-            break;
+        chunk.push_back(idx);
+        chunkHasNew = true;
+        prev = idx;
+        if (chunk.size() >= kStep) {
+            updateData(chunk, usedEpochs, blockedEpochs);
+            if (canceled()) {
+                break;
+            }
+            const int lastIdx = chunk.back();
+            chunk.clear();
+            chunk.push_back(lastIdx);
+            chunkHasNew = false;
         }
-        start = end;
+    }
+    if (!canceled() && chunkHasNew && !chunk.isEmpty()) {
+        updateData(chunk, usedEpochs, blockedEpochs);
     }
 
     // TODO
@@ -174,6 +188,23 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     // for (const auto& seg : segments) {
     //     updateData(seg);
     // }
+
+    if (!blockedEpochs.isEmpty()) {
+        usedEpochs.subtract(blockedEpochs);
+    }
+
+    if (!usedEpochs.isEmpty() && !canceled()) {
+        QVector<int> usedVec;
+        usedVec.reserve(usedEpochs.size());
+        for (int idx : std::as_const(usedEpochs)) {
+            usedVec.append(idx);
+        }
+        std::sort(usedVec.begin(), usedVec.end());
+        const int zoom = zoomFromMpp(tileResolution_);
+        QMetaObject::invokeMethod(dataProcessor_, "onMosaicEpochsProcessed", Qt::QueuedConnection,
+                                  Q_ARG(QVector<int>, usedVec),
+                                  Q_ARG(int, zoom));
+    }
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
@@ -511,11 +542,13 @@ void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
     }
 }
 
-void MosaicProcessor::updateData(const QVector<int>& indxs)
+void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpochs, QSet<int>& blockedEpochs)
 {
-    // qDebug() << "MosaicProcessor::updateData"
-    //          << "thread =" << QThread::currentThread()
-    //          << "size =" << indxs.size();
+    //qDebug() << "MosaicProcessor::updateData"
+    //         << "thread =" << QThread::currentThread()
+    //         << "size =" << indxs.size();
+    //qDebug() << indxs;
+    //qDebug() << "";
 
     bool bench = false;
     QElapsedTimer et; // test
@@ -683,16 +716,17 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     // after expand by martix
     const int numHeightTiles = surfaceMeshPtr_->getNumHeightTiles();
     const int stepSizeHeightMatrix = surfaceMeshPtr_->getStepSizeHeightMatrix();
+    bool* pairOutOfFovPtr = nullptr;
 
     // helpers
     auto putPixel = [&](int x, int y, uint8_t color, int headIndx) -> SurfaceTile* {
         const int meshX = x / tileSidePixelSize_;
         const int meshY = (numHeightTiles - 1) - (y / tileSidePixelSize_);
         SurfaceTile* t  = surfaceMeshPtr_->getTileByXYIndxs(meshY, meshX);
-        if (!t) {
-            return nullptr;
-        }
-        if (!t->getInFov()) {
+        if (!t || !t->getInFov()) {
+            if (pairOutOfFovPtr) {
+                *pairOutOfFovPtr = true;
+            }
             return nullptr;
         }
 
@@ -707,9 +741,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
 
             return t;
         }
-        else {
-            return nullptr;
-        }
+        return nullptr;
     };
 
     if (bench) {
@@ -863,6 +895,9 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
         };
 
         const int freshEpIndx = epochIndxs[segSIndx];
+        bool pairUsed = false;
+        bool pairOutOfFov = false;
+        pairOutOfFovPtr = &pairOutOfFov;
 
         while (true) { // follow the biggest segment
             const float rem = std::sqrt(float((bigX2 - bigX1) * (bigX2 - bigX1) + (bigY2 - bigY1) * (bigY2 - bigY1))); // moving on longest line
@@ -904,6 +939,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                     auto* t = putPixel(x0, y0, iClrIndx, freshEpIndx);
 
                     if (t) {
+                        pairUsed = true;
                         if (!(stepsDone % tileHeightMatrixRatio_)) {
                             usedTiles.insert(t);
                             lastHead = epochIndxs[segFIndx];
@@ -932,6 +968,13 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                 break;
             }
         } // while interp line
+        if (pairOutOfFov) {
+            blockedEpochs.insert(epochIndxs[segFIndx]);
+            blockedEpochs.insert(epochIndxs[segSIndx]);
+        } else if (pairUsed) {
+            usedEpochs.insert(epochIndxs[segFIndx]);
+            usedEpochs.insert(epochIndxs[segSIndx]);
+        }
     } // for rays
 
     { // unmark tiles
