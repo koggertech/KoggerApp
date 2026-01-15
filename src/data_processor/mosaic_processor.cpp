@@ -105,6 +105,7 @@ void MosaicProcessor::setChannels(const ChannelId& firstChId, uint8_t firstSubCh
 
 void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
 {
+    //qDebug() << "";
     //qDebug() << "MosaicProcessor::updateDataWrapper" << indxs;
 
     if (!datasetPtr_ || indxs.isEmpty()) {
@@ -120,6 +121,12 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     if (lastAcceptedEpoch_ >= 0 && lastAcceptedEpoch_ < firstNow) {
         const int gap = firstNow - lastAcceptedEpoch_;
 
+
+        // if (gap == 1) {
+        //    vec.prepend(lastAcceptedEpoch_);
+        // }
+
+        //привязка эпох на разрыве слева
         if (gap > 1) { // дыра слева [lastAcceptedEpoch_, firstNow)
             QVector<int> left;
             left.reserve(gap);
@@ -547,6 +554,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
     //qDebug() << "MosaicProcessor::updateData"
     //         << "thread =" << QThread::currentThread()
     //         << "size =" << indxs.size();
+    //qDebug() << "MosaicProcessor::updateData";
     //qDebug() << indxs;
     //qDebug() << "";
 

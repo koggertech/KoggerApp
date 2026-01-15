@@ -1429,6 +1429,12 @@ void DataProcessor::onUpdateDataZoom(int zoom) // calc or db
         return;
     }
 
+    //
+    pendingIsobathsWork_ = false;
+    pendingMosaicIndxs_.clear();
+    mosaicInFlightIndxs_.clear();
+    pendingSurfaceIndxs_.clear();
+
     lastDataZoomIndx_ = zoom;
 
     const float pxPerMeter = ZL[zoom - 1].pxPerMeter;
@@ -1818,7 +1824,7 @@ void DataProcessor::onDbAnyTileForZoom(int zoom, bool exists)
         pumpVisible();
     }
     else {
-        tryCalcTiles();
+        //tryCalcTiles();
     }
 }
 
