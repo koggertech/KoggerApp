@@ -114,54 +114,24 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kMosaic));
 
-    // stitched chunks
-    QVector<int> vec = indxs;
-    const int firstNow = vec.first();
-
-    if (lastAcceptedEpoch_ >= 0 && lastAcceptedEpoch_ < firstNow) {
-        const int gap = firstNow - lastAcceptedEpoch_;
-
-
-        // if (gap == 1) {
-        //    vec.prepend(lastAcceptedEpoch_);
-        // }
-
-        //привязка эпох на разрыве слева
-        if (gap > 1) { // дыра слева [lastAcceptedEpoch_, firstNow)
-            QVector<int> left;
-            left.reserve(gap);
-            for (int i = lastAcceptedEpoch_; i < firstNow; ++i) {
-                left.push_back(i);
-            }
-
-            left += vec;
-            vec.swap(left);
-        }
-        else { // gap == 1
-            vec.prepend(lastAcceptedEpoch_); // стык одним элементом
-        }
-    }
-
-    //qDebug() << "task";
-    //qDebug() << vec;
-    //for (int i = 1; i < vec.size(); ++i) {
-    //   if (vec[i] != vec[i - 1] + 1) {
-    //       qWarning() << "Hole in mosaic task" << vec[i - 1] << "and" << vec[i];
-    //   }
-    //}
-
-    // чанкование задачи, отслеживание разрывов
+    // чанкование задачи
     const int kStep = 10;
     QSet<int> usedEpochs;
     QSet<int> blockedEpochs;
     QVector<int> chunk;
 
+    auto expandAndUpdate = [&]() {
+        chunk.push_front(chunk.front() - 1);
+        chunk.push_back(chunk.back() + 1);
+        updateData(chunk, usedEpochs, blockedEpochs);
+    };
+
     int prev = 0;
     bool chunkHasNew = false;
-    for (int idx : std::as_const(vec)) {
+    for (int idx : std::as_const(indxs)) {
         if (!chunk.isEmpty() && idx != prev + 1) {
             if (chunkHasNew) {
-                updateData(chunk, usedEpochs, blockedEpochs);
+                expandAndUpdate();
                 if (canceled()) {
                     break;
                 }
@@ -172,7 +142,7 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
         chunkHasNew = true;
         prev = idx;
         if (chunk.size() >= kStep) {
-            updateData(chunk, usedEpochs, blockedEpochs);
+            expandAndUpdate();
             if (canceled()) {
                 break;
             }
@@ -183,15 +153,13 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
         }
     }
     if (!canceled() && chunkHasNew && !chunk.isEmpty()) {
-        updateData(chunk, usedEpochs, blockedEpochs);
+        expandAndUpdate();
     }
 
     // TODO
     // constexpr int minSegmentLen = 2;
     // constexpr int maxSegmentLen = 100;
-
     // const auto segments = splitContinuousSegments(indxs, minSegmentLen, maxSegmentLen);
-
     // for (const auto& seg : segments) {
     //     updateData(seg);
     // }
