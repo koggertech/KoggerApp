@@ -1149,7 +1149,7 @@ void DataProcessor::clearAllProcessings()
     filePath_.clear();
     dbReaderInWork_ = false;
     lastViewRect_ = QRectF();
-    lastDataZoomIndx_ = 0;
+    //lastDataZoomIndx_ = 0;
     dbPendingKeys_.clear();
     dbInWorkKeys_.clear();
     renderedKeys_.clear();
@@ -1427,7 +1427,6 @@ void DataProcessor::requestCancel() noexcept
 
 void DataProcessor::onUpdateDataZoom(int zoom) // calc or db
 {
-    //return;
 
     if (!isValidZoomIndx(zoom)) {
         return;
