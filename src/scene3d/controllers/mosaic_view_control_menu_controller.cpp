@@ -109,6 +109,9 @@ void MosaicViewControlMenuController::onUpdateStateChanged(bool state)
         if (dataProcessorPtr_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateMosaic", Qt::QueuedConnection, Q_ARG(bool, updateState_));
         }
+        if (updateState_) {
+            graphicsSceneViewPtr_->onCameraMoved();
+        }
     }
     else {
         tryInitPendingLambda();
@@ -222,6 +225,9 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
                 }
                 if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsViewPtr(); isobathsPtr) {
                     isobathsPtr->setMVisible(visibility_);
+                }
+                if (updateState_) {
+                    graphicsSceneViewPtr_->onCameraMoved();
                 }
             }
         };
