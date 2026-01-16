@@ -1552,6 +1552,11 @@ void GraphicsScene3dView::Camera::rotate(const QVector2D& lastMouse, const QVect
 
     m_rotAngle += r;
 
+    const float kMinPitchRad = qDegreesToRadians(30.0f); // angle limit
+    if (m_rotAngle.y() > kMinPitchRad) {
+        m_rotAngle.setY(kMinPitchRad);
+    }
+
     tryResetRotateAngle();
     checkRotateAngle();
     updateCameraParams();
@@ -1791,7 +1796,18 @@ void GraphicsScene3dView::Camera::resetRotationAngle()
 
 void GraphicsScene3dView::Camera::updateCameraParams()
 {
-    distToGround_ = std::max(0.0f, std::fabs(-cosf(m_rotAngle.y()) * m_distToFocusPoint));
+    if (viewPtr_) { // zoom limit
+        const float kMinGroundDist = 50.0f;
+        const float kMinCos = 0.01f;
+        const float cosPitch = std::fabs(cosf(m_rotAngle.y()));
+
+        distToGround_ = std::max(0.0f, std::fabs(cosPitch * m_distToFocusPoint));
+        if (distToGround_ < kMinGroundDist) {
+            m_distToFocusPoint = kMinGroundDist / std::max(cosPitch, kMinCos);
+            distForMapView_ = m_distToFocusPoint;
+            distToGround_ = kMinGroundDist;
+        }
+    }
 
     float perspEdge = 5000.f;
     if (viewPtr_) {
