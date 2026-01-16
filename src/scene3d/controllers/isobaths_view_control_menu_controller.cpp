@@ -192,6 +192,10 @@ void IsobathsViewControlMenuController::onProcessStateChanged(bool state)
             QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateSurface",  Qt::QueuedConnection, Q_ARG(bool, processState_));
             QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateIsobaths", Qt::QueuedConnection, Q_ARG(bool, processState_));
         }
+
+        if (processState_) {
+            graphicsSceneViewPtr_->onCameraMoved();
+        }
     }
     else {
         tryInitPendingLambda();
