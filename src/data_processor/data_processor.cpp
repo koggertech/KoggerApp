@@ -279,12 +279,12 @@ void DataProcessor::onCameraMoved()
     if (updateMosaic_) {
         pendingMosaicIndxs_.clear();
     }
-    if (updateSurface_) {
-        pendingSurfaceIndxs_.clear();
-    }
-    if (updateIsobaths_) {
-        updateIsobaths_ = false;
-    }
+    //if (updateSurface_) {
+    //    pendingSurfaceIndxs_.clear();
+    //}
+    //if (updateIsobaths_) {
+    //    updateIsobaths_ = false;
+    //}
 
     auto epTiles =  collectEpochsForTiles(lastDataZoomIndx_, lastVisTileKeys_);
     int zoom = lastDataZoomIndx_;
