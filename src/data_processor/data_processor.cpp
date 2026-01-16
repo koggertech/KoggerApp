@@ -276,6 +276,16 @@ void DataProcessor::onCameraMoved()
         return;
     }
 
+    if (updateMosaic_) {
+        pendingMosaicIndxs_.clear();
+    }
+    if (updateSurface_) {
+        pendingSurfaceIndxs_.clear();
+    }
+    if (updateIsobaths_) {
+        updateIsobaths_ = false;
+    }
+
     auto epTiles =  collectEpochsForTiles(lastDataZoomIndx_, lastVisTileKeys_);
     int zoom = lastDataZoomIndx_;
     if (zoom <= 0) {
@@ -781,7 +791,6 @@ void DataProcessor::onWorkerFinished()
     jobRunning_.store(false);
 
     if (!mosaicInFlightIndxs_.isEmpty()) {
-        pendingMosaicIndxs_.unite(mosaicInFlightIndxs_);
         mosaicInFlightIndxs_.clear();
     }
 

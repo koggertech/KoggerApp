@@ -16,6 +16,14 @@ struct WorkBundle
     QVector<QPair<char,int>> surfaceVec;
     QVector<int>             mosaicVec;
     bool                     doIsobaths{false};
+
+    void clear() {
+        surfaceVec.clear();
+        surfaceVec.shrink_to_fit();
+        mosaicVec.clear();
+        mosaicVec.shrink_to_fit();
+        doIsobaths = false;
+    }
 };
 Q_DECLARE_METATYPE(WorkBundle)
 

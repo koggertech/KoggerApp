@@ -121,9 +121,19 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     QVector<int> chunk;
 
     auto expandAndUpdate = [&]() {
-        chunk.push_front(chunk.front() - 1);
-        chunk.push_back(chunk.back() + 1);
-        updateData(chunk, usedEpochs, blockedEpochs);
+        if (chunk.empty()) {
+            return;
+        }
+
+        const int firstIndx = chunk.front();
+        QVector<int> expandedChunk = { firstIndx - 3, firstIndx - 2, firstIndx - 1 };
+        expandedChunk.reserve(chunk.size() + 3);
+
+        for (const auto& itm : std::as_const(chunk)) {
+            expandedChunk.push_back(itm);
+        }
+
+        updateData(expandedChunk, usedEpochs, blockedEpochs);
     };
 
     int prev = 0;
