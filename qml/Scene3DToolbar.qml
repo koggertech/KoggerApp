@@ -350,6 +350,10 @@ Item  {
                     }
 
                     onCheckedChanged: {
+                        if (checked) {
+                            toolbarRoot.updateBottomTrack()
+                        }
+
                         IsobathsViewControlMenuController.onProcessStateChanged(checked); // calc state/calc
                         IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
                     }
@@ -446,6 +450,10 @@ Item  {
                     }
 
                     onCheckedChanged: {
+                        if (checked) {
+                            toolbarRoot.updateBottomTrack()
+                        }
+
                         MosaicViewControlMenuController.onUpdateStateChanged(checked) // calc state/calc
                         MosaicViewControlMenuController.onVisibilityChanged(checked)
                     }
