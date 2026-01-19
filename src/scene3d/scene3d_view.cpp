@@ -184,6 +184,11 @@ bool GraphicsScene3dView::sceneBoundingBoxVisible() const
     return m_isSceneBoundingBoxVisible;
 }
 
+bool GraphicsScene3dView::cameraPerspective() const
+{
+    return m_camera ? m_camera->getIsPerspective() : false;
+}
+
 Dataset *GraphicsScene3dView::dataset() const
 {
     return datasetPtr_;
@@ -1814,7 +1819,11 @@ void GraphicsScene3dView::Camera::updateCameraParams()
         perspEdge = viewPtr_->perspectiveEdge_;
     }
 
+    const bool prevPerspective = isPerspective_;
     isPerspective_ = distToGround_ < perspEdge;
+    if (viewPtr_ && prevPerspective != isPerspective_) {
+        emit viewPtr_->cameraPerspectiveChanged(isPerspective_);
+    }
 }
 
 void GraphicsScene3dView::Camera::tryToChangeViewLlaRef()

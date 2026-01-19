@@ -469,6 +469,11 @@ ApplicationWindow  {
                 focus:             true
 
                 property bool longPressTriggered: false
+                property int currentZoom: -1
+
+                onSendDataZoom: {
+                    currentZoom = zoom;
+                }
 
                 PinchArea {
                     id:           pinch3D
@@ -587,6 +592,32 @@ ApplicationWindow  {
                     //anchors.horizontalCenter: parent.horizontalCenter
                     // anchors.rightMargin:      20
                     Keys.forwardTo:           [mousearea3D]
+                }
+
+                Rectangle {
+                    id: mosaicQualityBadge
+                    visible: scene3DToolbar.mosaicEnabled
+                             && scene3DToolbar.showMosaicQualityLabel
+                             && renderer.cameraPerspective
+                             && renderer.currentZoom > 0
+                    color: "#00000080"
+                    radius: 4
+                    anchors.left: scene3DToolbar.right
+                    anchors.verticalCenter: scene3DToolbar.verticalCenter
+                    anchors.leftMargin: 8
+                    z: 1000
+                    implicitWidth: mosaicQualityText.implicitWidth + 12
+                    implicitHeight: mosaicQualityText.implicitHeight + 8
+
+                    Text {
+                        id: mosaicQualityText
+                        text: renderer.currentZoom > 0
+                              ? Math.pow(2, renderer.currentZoom - 1) + " cm/pix"
+                              : ""
+                        color: "#ffffff"
+                        font: theme.textFont
+                        anchors.centerIn: parent
+                    }
                 }
 
                 CContact {
