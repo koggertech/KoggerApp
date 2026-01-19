@@ -215,6 +215,7 @@ private:
 
     void enqueueSurfaceMissingForZoom(int zoom);
     QVector<QPair<int, QSet<TileKey>>> collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const;
+    void updateDataProcType();
 
 private:
     friend class SurfaceProcessor;

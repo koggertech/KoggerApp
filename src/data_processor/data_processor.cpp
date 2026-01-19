@@ -268,6 +268,8 @@ void DataProcessor::setUpdateMosaic(bool state)
 void DataProcessor::setIsOpeningFile(bool state)
 {
     isOpeningFile_ = state;
+
+    updateDataProcType();
 }
 
 void DataProcessor::onCameraMoved()
@@ -1692,18 +1694,7 @@ void DataProcessor::onDatasetStateChanged(int state)
 
     datasetState_ = state;
 
-#ifdef SEPARATE_READING
-    defProcType_ = false;
-#else
-    if (datasetState_ == 0 || datasetState_ == 1) {
-        defProcType_ = true;
-    }
-    if (datasetState_ == 2) {
-        defProcType_ = false;
-    }
-#endif
-
-    pendingWorkTimer_.setInterval(defProcType_ ? 333 : 10);
+    updateDataProcType();
 }
 
 bool DataProcessor::isDbReady() const noexcept
@@ -1788,6 +1779,22 @@ QVector<QPair<int, QSet<TileKey>>> DataProcessor::collectEpochsForTiles(int zoom
     }
 
     return result;
+}
+
+void DataProcessor::updateDataProcType()
+{
+#ifdef SEPARATE_READING
+    defProcType_ = false;
+#else
+    if (datasetState_ == 0 || datasetState_ == 1) {
+        defProcType_ = true;
+    }
+    if (datasetState_ == 2) {
+        defProcType_ = false;
+    }
+#endif
+
+    pendingWorkTimer_.setInterval(defProcType_ ? 333 : 10);
 }
 
 void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)
