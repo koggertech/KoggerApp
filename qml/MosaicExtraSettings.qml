@@ -13,7 +13,6 @@ MenuFrame {
     signal mosaicRAngleOffsetChanged(int val)
 
     property CheckButton mosaicViewCheckButton
-    property alias showQualityLabel: showQualityLabelCheck.checked
 
     function updateMosaic() {
         updateMosaicButton.clicked();
@@ -387,24 +386,6 @@ MenuFrame {
                     }
                 }
 
-                RowLayout {
-                    CCheck {
-                        id: showQualityLabelCheck
-                        Layout.fillWidth: true
-                        checked: true
-                        text: qsTr("Show quality label")
-
-                        onFocusChanged: {
-                            if (Qt.platform.os === 'android') {
-                                mosaicViewSettings.focus = true
-                            }
-                        }
-
-                        Settings {
-                            property alias showQualityLabelCheck: showQualityLabelCheck.checked
-                        }
-                    }
-                }
             }
         }
     }

@@ -10,6 +10,7 @@ MenuFrame {
     id: settings3DSettings
 
     property CheckButton settings3DCheckButton
+    property alias showQualityLabel: showQualityLabelCheck.checked
 
     visible: Qt.platform.os === "android"
              ? (settings3DCheckButton.settings3DLongPressTriggered)
@@ -74,6 +75,25 @@ MenuFrame {
 
             onClicked: {
                 Scene3dToolBarController.onCancelZoomButtonClicked()
+            }
+        }
+
+        CheckButton {
+            id: showQualityLabelCheck
+            objectName: "showQualityLabelCheck"
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            text: qsTr("Show surface quality")
+            Layout.fillWidth: true
+
+            onFocusChanged: {
+                settings3DSettings.focus = true
+            }
+
+            Settings {
+                property alias showQualityLabelCheck: showQualityLabelCheck.checked
             }
         }
 

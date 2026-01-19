@@ -33,7 +33,7 @@ Item  {
     property bool isBoatTrackCheckButtonHovered: false
     property bool isBottomTrackCheckButtonHovered: false
     property alias mosaicEnabled: mosaicViewCheckButton.checked
-    property alias showMosaicQualityLabel: mosaicViewSettings.showQualityLabel
+    property alias showMosaicQualityLabel: settings3DSettings.showQualityLabel
 
     property bool toolbarHovered:
         Qt.platform.os === "android" ?

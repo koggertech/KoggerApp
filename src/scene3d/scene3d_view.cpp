@@ -189,6 +189,11 @@ bool GraphicsScene3dView::cameraPerspective() const
     return m_camera ? m_camera->getIsPerspective() : false;
 }
 
+bool GraphicsScene3dView::updateSurface() const
+{
+    return isUpdateSurface_;
+}
+
 Dataset *GraphicsScene3dView::dataset() const
 {
     return datasetPtr_;
@@ -1174,7 +1179,12 @@ void GraphicsScene3dView::setIsUpdateMosaic(bool state)
 
 void GraphicsScene3dView::setIsUpdateSurface(bool state)
 {
+    if (isUpdateSurface_ == state) {
+        return;
+    }
+
     isUpdateSurface_ = state;
+    emit updateSurfaceChanged();
 }
 
 //---------------------Renderer---------------------------//

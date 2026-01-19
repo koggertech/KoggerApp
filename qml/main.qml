@@ -596,10 +596,18 @@ ApplicationWindow  {
 
                 Rectangle {
                     id: mosaicQualityBadge
-                    visible: scene3DToolbar.mosaicEnabled
-                             && scene3DToolbar.showMosaicQualityLabel
+                    visible: scene3DToolbar.showMosaicQualityLabel
                              && renderer.cameraPerspective
                              && renderer.currentZoom > 0
+                             && (scene3DToolbar.mosaicEnabled || renderer.updateSurface)
+                    readonly property int tileSidePx: 256
+                    readonly property int heightMatrixRatio: 8
+                    readonly property int mosaicCmPerPix: renderer.currentZoom > 0
+                                                           ? Math.pow(2, renderer.currentZoom - 1)
+                                                           : 0
+                    readonly property int surfaceCmPerCell: mosaicCmPerPix > 0
+                                                             ? Math.round(mosaicCmPerPix * tileSidePx / heightMatrixRatio)
+                                                             : 0
                     color: "#00000080"
                     radius: 4
                     anchors.left: scene3DToolbar.right
@@ -611,9 +619,16 @@ ApplicationWindow  {
 
                     Text {
                         id: mosaicQualityText
-                        text: renderer.currentZoom > 0
-                              ? Math.pow(2, renderer.currentZoom - 1) + qsTr(" cm/pix")
-                              : ""
+                        text: {
+                            var parts = [];
+                            if (renderer.currentZoom > 0 && scene3DToolbar.mosaicEnabled) {
+                                parts.push(qsTr("Mosaic: ") + mosaicQualityBadge.mosaicCmPerPix + qsTr(" cm/pix"));
+                            }
+                            if (renderer.currentZoom > 0 && renderer.updateSurface) {
+                                parts.push(qsTr("Surface: ") + mosaicQualityBadge.surfaceCmPerCell + qsTr(" cm/cell"));
+                            }
+                            return parts.join("\n");
+                        }
                         color: "#ffffff"
                         font: theme.textFont
                         anchors.centerIn: parent

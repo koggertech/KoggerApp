@@ -29,6 +29,7 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_OBJECT
     QML_NAMED_ELEMENT(GraphicsScene3dView)
     Q_PROPERTY(bool cameraPerspective READ cameraPerspective NOTIFY cameraPerspectiveChanged)
+    Q_PROPERTY(bool updateSurface READ updateSurface NOTIFY updateSurfaceChanged)
 
 public:
     //Camera
@@ -204,6 +205,7 @@ public:
     float verticalScale() const;
     bool sceneBoundingBoxVisible() const;
     bool cameraPerspective() const;
+    bool updateSurface() const;
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ) const;
@@ -273,6 +275,7 @@ public Q_SLOTS:
 
 signals:
     void cameraPerspectiveChanged(bool perspective);
+    void updateSurfaceChanged();
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
     void sendDataRectRequest(float minX, float minY, float maxX, float maxY);
     void sendLlaRef(LLARef viewLlaRef);
