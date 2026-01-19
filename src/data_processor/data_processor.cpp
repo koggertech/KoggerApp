@@ -1170,6 +1170,14 @@ void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnreque
     }
 
     const uint32_t m = toMask(mask);
+    if (defProcType_) { // interrupt previous task
+        if (jobRunning_.load()) {
+            cancelRequested_.store(true);
+            if (m & WF_Mosaic) {
+                mosaicInFlightIndxs_.clear();
+            }
+        }
+    }
     if (replace) {
         requestedMask_.store(m);
     }
