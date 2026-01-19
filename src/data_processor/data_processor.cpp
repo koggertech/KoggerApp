@@ -1784,7 +1784,7 @@ QVector<QPair<int, QSet<TileKey>>> DataProcessor::collectEpochsForTiles(int zoom
 void DataProcessor::updateDataProcType()
 {
 #ifdef SEPARATE_READING
-    defProcType_ = false;
+    defProcType_ = isOpeningFile_ ? false : true;
 #else
     if (datasetState_ == 0 || datasetState_ == 1) {
         defProcType_ = true;
