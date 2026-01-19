@@ -1016,9 +1016,10 @@ void DataProcessor::postSurfaceTiles(TileMap tiles, bool isMosaic)
     }
 
     bool canSendToRender = false;
-    if ((isMosaic && updateMosaic_) ||
-        (!isMosaic && updateSurface_ && !updateMosaic_)) {
-        canSendToRender = true;
+    if (isMosaic) {
+        canSendToRender = updateMosaic_;
+    } else {
+        canSendToRender = updateSurface_;
     }
 
     if (canSendToRender) { // в рендер — только видимые
