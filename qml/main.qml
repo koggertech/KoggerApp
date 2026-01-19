@@ -471,7 +471,7 @@ ApplicationWindow  {
                 property bool longPressTriggered: false
                 property int currentZoom: -1
 
-                onSendDataZoom: {
+                onSendDataZoom: function(zoom) {
                     currentZoom = zoom;
                 }
 
@@ -612,7 +612,7 @@ ApplicationWindow  {
                     Text {
                         id: mosaicQualityText
                         text: renderer.currentZoom > 0
-                              ? Math.pow(2, renderer.currentZoom - 1) + " cm/pix"
+                              ? Math.pow(2, renderer.currentZoom - 1) + qsTr(" cm/pix")
                               : ""
                         color: "#ffffff"
                         font: theme.textFont
