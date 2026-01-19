@@ -289,7 +289,7 @@ DevSettingsBox {
                     Layout.fillHeight: true
                     from: -1
                     to: 101
-                    value: dev ? dev.upgradeFWStatus : 0
+                    value: dev && dev.upgradeFWStatus !== undefined ? dev.upgradeFWStatus : 0
                 }
             }
 

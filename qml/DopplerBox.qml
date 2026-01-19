@@ -5,7 +5,7 @@ import QtQuick.Dialogs
 
 DevSettingsBox {
     id: control
-    isActive: dev ? dev.isDoppler : false
+    isActive: !!(dev && dev.isDoppler)
 
     ColumnLayout {
         id: columnItem

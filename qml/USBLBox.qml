@@ -6,7 +6,7 @@ import QtQuick.Dialogs
 
 DevSettingsBox {
     id: control
-    isActive: dev ? (dev.isUSBLBeacon || dev.isUSBL): false
+    isActive: !!(dev && (dev.isUSBLBeacon || dev.isUSBL))
 
     // property bool isUSBL: dev ? (dev.isUSBL) ? true : false : false
     // property bool isBeacon: dev ? (dev.isUSBLBeacon) ? true : false : false

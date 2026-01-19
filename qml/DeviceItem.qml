@@ -10,6 +10,14 @@ ColumnLayout {
     Layout.margins: 0
     property var dev: null
 
+    function safeNum(val, fallback) {
+        return (val === undefined || val === null) ? fallback : val
+    }
+
+    function safeBool(val) {
+        return val === true
+    }
+
     ParamGroup {
         groupName: qsTr("Echogram")
 
@@ -21,8 +29,8 @@ ColumnLayout {
                 to: 100
                 stepSize: 10
                 value: 0
-                devValue: dev !== null ? dev.chartResolution : 0
-                isValid: dev !== null ? dev.chartSetupState : false
+                devValue: safeNum(dev && dev.chartResolution, 0)
+                isValid: safeBool(dev && dev.chartSetupState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -41,8 +49,8 @@ ColumnLayout {
                 to: 15000
                 stepSize: 100
                 value: 0
-                devValue: dev !== null ? dev.chartSamples : 0
-                isValid: dev !== null ? dev.chartSetupState : false
+                devValue: safeNum(dev && dev.chartSamples, 0)
+                isValid: safeBool(dev && dev.chartSetupState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -61,8 +69,8 @@ ColumnLayout {
                 to: 10000
                 stepSize: 100
                 value:0
-                devValue: dev !== null ? dev.chartOffset : 0
-                isValid: dev !== null ? dev.chartSetupState : false
+                devValue: safeNum(dev && dev.chartOffset, 0)
+                isValid: safeBool(dev && dev.chartSetupState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -85,8 +93,8 @@ ColumnLayout {
                 to: 50000;
                 stepSize: 1000
                 value: 0
-                devValue: dev !== null ? dev.distMax : 0
-                isValid: dev !== null ? dev.distSetupState : false
+                devValue: safeNum(dev && dev.distMax, 0)
+                isValid: safeBool(dev && dev.distSetupState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -105,8 +113,8 @@ ColumnLayout {
                 to: 50000
                 stepSize: 100
                 value: 0
-                devValue: dev !== null ? dev.distDeadZone : 0
-                isValid: dev !== null ? dev.distSetupState : false
+                devValue: safeNum(dev && dev.distDeadZone, 0)
+                isValid: safeBool(dev && dev.distSetupState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -125,8 +133,8 @@ ColumnLayout {
                 to: 100
                 stepSize: 1
                 value: 0
-                devValue: dev !== null ? dev.distConfidence : 0
-                isValid: dev !== null ? dev.distSetupState : false
+                devValue: safeNum(dev && dev.distConfidence, 0)
+                isValid: safeBool(dev && dev.distSetupState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -149,8 +157,8 @@ ColumnLayout {
                 to: 5000
                 stepSize: 1
                 value: 0
-                devValue: dev !== null ? dev.transPulse : 0
-                isValid: dev !== null ? dev.transcState : false
+                devValue: safeNum(dev && dev.transPulse, 0)
+                isValid: safeBool(dev && dev.transcState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -169,8 +177,8 @@ ColumnLayout {
                 to: 6000
                 stepSize: 5
                 value: 0
-                devValue: dev !== null ? dev.transFreq : 0
-                isValid: dev !== null ? dev.transcState : false
+                devValue: safeNum(dev && dev.transFreq, 0)
+                isValid: safeBool(dev && dev.transcState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -191,8 +199,8 @@ ColumnLayout {
                 to: 1
                 stepSize: 1
                 value: 0
-                devValue: dev !== null ? dev.transBoost : 0
-                isValid: dev !== null ? dev.transcState : false
+                devValue: safeNum(dev && dev.transBoost, 0)
+                isValid: safeBool(dev && dev.transcState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -235,8 +243,8 @@ ColumnLayout {
                 to: 4
                 stepSize: 1
                 value: 0
-                devValue: dev !== null ? dev.dspHorSmooth : 0
-                isValid: dev !== null ? dev.dspState : false
+                devValue: safeNum(dev && dev.dspHorSmooth, 0)
+                isValid: safeBool(dev && dev.dspState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -255,8 +263,8 @@ ColumnLayout {
                 to: 6000
                 stepSize: 5
                 value: 0
-                devValue: dev !== null ? dev.soundSpeed / 1000 : 0
-                isValid: dev !== null ? dev.soundState : false
+                devValue: safeNum(dev && dev.soundSpeed !== undefined ? dev.soundSpeed / 1000 : undefined, 0)
+                isValid: safeBool(dev && dev.soundState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -279,8 +287,8 @@ ColumnLayout {
                 to: 2000
                 stepSize: 50
                 value: 0
-                devValue: dev !== null ? dev.ch1Period : 0
-                isValid: dev !== null ? dev.datasetState : false
+                devValue: safeNum(dev && dev.ch1Period, 0)
+                isValid: safeBool(dev && dev.datasetState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -299,8 +307,8 @@ ColumnLayout {
                 to: 1
                 stepSize: 1
                 value: 0
-                devValue: dev !== null ? dev.datasetChart === 1 : 0
-                isValid: dev !== null ? dev.datasetState : false
+                devValue: dev ? (dev.datasetChart === 1 ? 1 : 0) : 0
+                isValid: safeBool(dev && dev.datasetState)
                 editable: false
 
                 onValueChanged: {
@@ -330,8 +338,8 @@ ColumnLayout {
                 to: 2
                 stepSize: 1
                 value: 0
-                devValue: dev !== null ? (dev.datasetDist === 1 ? 1 : dev.datasetSDDBT === 1 ? 2 : 0) : 0
-                isValid: dev !== null ? dev.datasetState : false
+                devValue: dev ? (dev.datasetDist === 1 ? 1 : dev.datasetSDDBT === 1 ? 2 : 0) : 0
+                isValid: safeBool(dev && dev.datasetState)
                 editable: false
 
                 onValueChanged: {
@@ -366,8 +374,8 @@ ColumnLayout {
                 stepSize: 1
                 editable: false
                 value: 0
-                devValue: dev !== null ? ((dev.datasetEuler & 1) === 1) : 0
-                isValid: dev !== null ? dev.datasetState : false
+                devValue: dev ? ((dev.datasetEuler & 1) === 1 ? 1 : 0) : 0
+                isValid: safeBool(dev && dev.datasetState)
 
                 onValueChanged: {
                     if (!isDriverChanged) {
@@ -396,8 +404,8 @@ ColumnLayout {
                 to: 1
                 stepSize: 1
                 value: 0
-                devValue: dev !== null ? ((dev.datasetTemp & 1) === 1) : 0
-                isValid: dev !== null ? dev.datasetState : false
+                devValue: dev ? ((dev.datasetTemp & 1) === 1 ? 1 : 0) : 0
+                isValid: safeBool(dev && dev.datasetState)
                 editable: false
 
                 onValueChanged: {
@@ -427,8 +435,8 @@ ColumnLayout {
                 to: 1
                 stepSize: 1
                 value: 0
-                devValue: dev !== null ? ((dev.datasetTimestamp & 1) === 1) : 0
-                isValid: dev !== null ? dev.datasetState : false
+                devValue: dev ? ((dev.datasetTimestamp & 1) === 1 ? 1 : 0) : 0
+                isValid: safeBool(dev && dev.datasetState)
                 editable: false
 
                 onValueChanged: {

@@ -7,7 +7,7 @@ import QtQml.Models 2.15
 
 DevSettingsBox {
     id: control
-    isActive: dev ? dev.isRecorder : false
+    isActive: !!(dev && dev.isRecorder)
 
     ColumnLayout {
         id: columnItem
