@@ -738,12 +738,13 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
 
     QSet<SurfaceTile*> usedTiles;
     int lastHead = -1;
+    bool cancelPending = false;
+    int cancelEpochF = -1;
+    int cancelEpochS = -1;
+    char cancelSide = 0;
 
     // ray tracing
     for (int i = 0; i < measLinesVertices.size(); i += 2) {
-        if (canceled()) {
-            return;
-        }
         if (i + 5 > measLinesVertices.size() - 1) {
             break;
         }
@@ -771,8 +772,22 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
             continue;
         }
 
-        auto segFEpoch = datasetPtr_->fromIndexCopy(epochIndxs[segFIndx]);
-        auto segSEpoch = datasetPtr_->fromIndexCopy(epochIndxs[segSIndx]);
+        const int pairEpochF = epochIndxs[segFIndx];
+        const int pairEpochS = epochIndxs[segSIndx];
+        const char pairSide = isOdds[segFIndx];
+        bool stopAfterThis = false;
+        if (cancelPending) {
+            const bool isCounterpart = (pairEpochF == cancelEpochF &&
+                                        pairEpochS == cancelEpochS &&
+                                        pairSide != cancelSide);
+            if (!isCounterpart) {
+                break;
+            }
+            stopAfterThis = true;
+        }
+
+        auto segFEpoch = datasetPtr_->fromIndexCopy(pairEpochF);
+        auto segSEpoch = datasetPtr_->fromIndexCopy(pairEpochS);
         if (!segFEpoch.isValid() || !segSEpoch.isValid()) {
             continue;
         }
@@ -880,7 +895,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
             return false;
         };
 
-        const int freshEpIndx = epochIndxs[segSIndx];
+        const int freshEpIndx = pairEpochS;
         bool pairUsed = false;
         bool pairOutOfFov = false;
         pairOutOfFovPtr = &pairOutOfFov;
@@ -928,7 +943,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
                         pairUsed = true;
                         if (!(stepsDone % tileHeightMatrixRatio_)) {
                             usedTiles.insert(t);
-                            lastHead = epochIndxs[segFIndx];
+                            lastHead = pairEpochF;
 
                             const int tileX = x0 % tileSidePixelSize_;
                             const int tileY = y0 % tileSidePixelSize_;
@@ -955,11 +970,21 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
             }
         } // while interp line
         if (pairOutOfFov) {
-            blockedEpochs.insert(epochIndxs[segFIndx]);
-            blockedEpochs.insert(epochIndxs[segSIndx]);
+            blockedEpochs.insert(pairEpochF);
+            blockedEpochs.insert(pairEpochS);
         } else if (pairUsed) {
-            usedEpochs.insert(epochIndxs[segFIndx]);
-            usedEpochs.insert(epochIndxs[segSIndx]);
+            usedEpochs.insert(pairEpochF);
+            usedEpochs.insert(pairEpochS);
+        }
+
+        if (!cancelPending && canceled()) {
+            cancelPending = true;
+            cancelEpochF = pairEpochF;
+            cancelEpochS = pairEpochS;
+            cancelSide = pairSide;
+        }
+        if (stopAfterThis) {
+            break;
         }
     } // for rays
 
