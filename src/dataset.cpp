@@ -137,9 +137,19 @@ void Dataset::addEncoder(float angle1_deg, float angle2_deg, float angle3_deg) {
     }
     if(last_epoch->isEncodersSeted()) {
         last_epoch = addNewEpoch();
+
+        if(last_epoch->isUsblSolutionAvailable()) {
+            float usbl_az = last_epoch->usblSolution().azimuth_deg;
+            pool_[endIndex()].setEncoders(angle1_deg, angle2_deg, (angle1_deg+usbl_az)*10);
+        }
+    } else {
+        if(last_epoch->isUsblSolutionAvailable()) {
+            float usbl_az = last_epoch->usblSolution().azimuth_deg;
+            pool_[endIndex()].setEncoders(angle1_deg, angle2_deg, (angle1_deg+usbl_az)*10);
+        }
     }
 
-    last_epoch->setEncoders(angle1_deg, angle2_deg, angle3_deg);
+    // last_epoch->setEncoders(angle1_deg, angle2_deg, NAN);
     qDebug("Encoder was added");
     emit dataUpdate();
 }
@@ -490,6 +500,10 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
 
     pool_[endIndex()].setAtt(data.usbl_yaw, data.usbl_pitch, data.usbl_roll);
     pool_[endIndex()].set(data);
+    // float enc_az= pool_[endIndex()].encoder1();
+    // float enc_el= pool_[endIndex()].encoder2();
+    // float usbl_az = data.azimuth_deg;
+    // pool_[endIndex()].setEncoders(enc_az, enc_el, -enc_az+usbl_az);
     emit dataUpdate();
 }
 

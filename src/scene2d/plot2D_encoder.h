@@ -12,4 +12,5 @@ public:
 protected:
     PlotPen penYaw_ = PlotPen(PlotColor(255, 255, 0), 2, PlotPen::LineStyleSolid);
     PlotPen penPitch_ = PlotPen(PlotColor(255, 0, 255), 2, PlotPen::LineStyleSolid);
+    PlotPen penRoll_ = PlotPen(PlotColor(255, 255, 255), 4, PlotPen::LineStyleSolid);
 };
