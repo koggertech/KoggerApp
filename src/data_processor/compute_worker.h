@@ -61,15 +61,10 @@ public slots:
     void setSurfaceIsobathsStepSize(float v);
     void setIsobathsLabelStepSize(float v);
     void setMosaicChannels(const ChannelId& ch1, uint8_t sub1, const ChannelId& ch2, uint8_t sub2);
-    void setMosaicTheme(int id);
     void setMosaicLAngleOffset(float val);
     void setMosaicRAngleOffset(float val);
-    void setMosaicLevels(float lo, float hi);
-    void setMosaicLowLevel(float v);
-    void setMosaicHighLevel(float v);
     void setMosaicTileResolution(float res);
     void applySurfaceZoomChange(const TileMap& cached, bool fullCoverage);
-    void askColorTableForMosaic();
     void setMinZ(float v);
     void setMaxZ(float v);
 

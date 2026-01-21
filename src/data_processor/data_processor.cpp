@@ -96,6 +96,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     qRegisterMetaType<TileMap>("TileMap");
     qRegisterMetaType<Dataset*>("Dataset*");
     qRegisterMetaType<std::uint8_t>("std::uint8_t");
+    qRegisterMetaType<std::vector<uint8_t>>("std::vector<uint8_t>");
     qRegisterMetaType<QSet<TileKey>>("QSet<TileKey>");
     qRegisterMetaType<QVector<int>>("QVector<int>");
 
@@ -515,7 +516,12 @@ void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const 
 
 void DataProcessor::setMosaicTheme(int indx)
 {
-    QMetaObject::invokeMethod(worker_, "setMosaicTheme", Qt::QueuedConnection, Q_ARG(int, indx));
+    if (mosaicColorTable_.getTheme() == indx) {
+        return;
+    }
+
+    mosaicColorTable_.setTheme(indx);
+    emitMosaicColorTable();
 }
 
 void DataProcessor::setMosaicLAngleOffset(float val)
@@ -565,22 +571,45 @@ void DataProcessor::setMosaicTileResolution(float val)
 
 void DataProcessor::setMosaicLevels(float lowLevel, float highLevel)
 {
-    QMetaObject::invokeMethod(worker_, "setMosaicLevels", Qt::QueuedConnection, Q_ARG(float, lowLevel), Q_ARG(float, highLevel));
+    const auto levels = mosaicColorTable_.getLevels();
+    if (qFuzzyCompare(1.0f + levels.first, 1.0f + lowLevel) &&
+        qFuzzyCompare(1.0f + levels.second, 1.0f + highLevel)) {
+        return;
+    }
+
+    mosaicColorTable_.setLevels(lowLevel, highLevel);
+    emitMosaicColorTable();
 }
 
 void DataProcessor::setMosaicLowLevel(float val)
 {
-    QMetaObject::invokeMethod(worker_, "setMosaicLowLevel", Qt::QueuedConnection, Q_ARG(float, val));
+    if (qFuzzyCompare(1.0f + mosaicColorTable_.getLowLevel(), 1.0f + val)) {
+        return;
+    }
+
+    mosaicColorTable_.setLowLevel(val);
+    emitMosaicColorTable();
 }
 
 void DataProcessor::setMosaicHighLevel(float val)
 {
-    QMetaObject::invokeMethod(worker_, "setMosaicHighLevel", Qt::QueuedConnection, Q_ARG(float, val));
+    if (qFuzzyCompare(1.0f + mosaicColorTable_.getHighLevel(), 1.0f + val)) {
+        return;
+    }
+
+    mosaicColorTable_.setHighLevel(val);
+    emitMosaicColorTable();
 }
 
 void DataProcessor::askColorTableForMosaic()
 {
-    QMetaObject::invokeMethod(worker_, "askColorTableForMosaic", Qt::QueuedConnection);
+    emitMosaicColorTable();
+}
+
+void DataProcessor::emitMosaicColorTable()
+{
+    const auto table = mosaicColorTable_.getRgbaColors();
+    postMosaicColorTable(table);
 }
 
 void DataProcessor::onIsobathsUpdated()

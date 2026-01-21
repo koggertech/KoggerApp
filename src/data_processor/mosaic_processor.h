@@ -3,10 +3,7 @@
 #include "dataset_defs.h"
 #include "epoch.h"
 #include "surface_tile.h"
-#include "draw_utils.h"
 #include "math_defs.h"
-
-using namespace mosaic;
 
 
 class ComputeWorker;
@@ -27,16 +24,10 @@ public:
     // PROCESSING
     void setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId);
     void updateDataWrapper(const QVector<int>& indxs);
-    void setColorTableThemeById(int id);
-    void setColorTableLevels(float lowVal, float highVal);
-    void setColorTableLowLevel(float val);
-    void setColorTableHighLevel(float val);
     void setLAngleOffset(float val);
     void setRAngleOffset(float val);
     void setTileResolution(float tileResolution);
     void setGenerageGridContour(bool state);
-
-    void askColorTableForMosaic(); // first init colorTable in render
 
     QPair<ChannelId, uint8_t> getFirstChannelId()  const { return qMakePair(segFChannelId_, segFSubChannelId_); };
     QPair<ChannelId, uint8_t> getSecondChannelId() const { return qMakePair(segSChannelId_, segSSubChannelId_); };
@@ -56,7 +47,6 @@ private:
 
 private:
     const int expandMargin_ = 1;
-    mosaic::PlotColorTable colorTable_;
     ComputeWorker* computeWorker_;
     DataProcessor* dataProcessor_;
     Dataset* datasetPtr_;

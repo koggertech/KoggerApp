@@ -129,11 +129,6 @@ void ComputeWorker::setMosaicChannels(const ChannelId& ch1, uint8_t sub1,
     clearAll();
 }
 
-void ComputeWorker::setMosaicTheme(int id)
-{
-    mosaic_.setColorTableThemeById(id);
-}
-
 void ComputeWorker::setMosaicLAngleOffset(float val)
 {
     mosaic_.setLAngleOffset(val);
@@ -142,21 +137,6 @@ void ComputeWorker::setMosaicLAngleOffset(float val)
 void ComputeWorker::setMosaicRAngleOffset(float val)
 {
     mosaic_.setRAngleOffset(val);
-}
-
-void ComputeWorker::setMosaicLevels(float lo, float hi)
-{
-    mosaic_.setColorTableLevels(lo, hi);
-}
-
-void ComputeWorker::setMosaicLowLevel(float v)
-{
-    mosaic_.setColorTableLowLevel(v);
-}
-
-void ComputeWorker::setMosaicHighLevel(float v)
-{
-    mosaic_.setColorTableHighLevel(v);
 }
 
 void ComputeWorker::setMosaicTileResolution(float res)
@@ -183,11 +163,6 @@ void ComputeWorker::applySurfaceZoomChange(const TileMap& cached, bool fullCover
     }
 
     QMetaObject::invokeMethod(dp_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
-}
-
-void ComputeWorker::askColorTableForMosaic()
-{
-    mosaic_.askColorTableForMosaic();
 }
 
 void ComputeWorker::setMinZ(float v)

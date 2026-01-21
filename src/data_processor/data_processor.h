@@ -14,6 +14,7 @@
 #include <QWaitCondition>
 
 #include "dataset_defs.h"
+#include "draw_utils.h"
 #include "bottom_track_processor.h"
 #include "isobaths_processor.h"
 #include "mosaic_processor.h"
@@ -216,6 +217,7 @@ private:
     void enqueueSurfaceMissingForZoom(int zoom);
     QVector<QPair<int, QSet<TileKey>>> collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const;
     void updateDataProcType();
+    void emitMosaicColorTable();
 
 private:
     friend class SurfaceProcessor;
@@ -249,6 +251,7 @@ private:
     int bottomTrackWindowCounter_;
     // MosaicProcessor
     int mosaicCounter_;
+    mosaic::PlotColorTable mosaicColorTable_;
     // Surface
     float tileResolution_;
 

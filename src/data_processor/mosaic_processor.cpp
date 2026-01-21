@@ -64,7 +64,6 @@ MosaicProcessor::MosaicProcessor(DataProcessor* parent, ComputeWorker* computeWo
     rAngleOffset_(0.0f),
     generateGridContour_(false)
 {
-    qRegisterMetaType<std::vector<uint8_t>>("std::vector<uint8_t>");
     qRegisterMetaType<TileMap>("TileMap");
 }
 
@@ -194,52 +193,6 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
 
-void MosaicProcessor::setColorTableThemeById(int id)
-{
-    if (colorTable_.getTheme() == id) {
-        return;
-    }
-
-    colorTable_.setTheme(id);
-
-    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
-}
-
-void MosaicProcessor::setColorTableLevels(float lowVal, float highVal)
-{
-    auto levels = colorTable_.getLevels();
-    if (qFuzzyCompare(1.0 + levels.first, 1.0 + lowVal) &&
-        qFuzzyCompare(1.0 + levels.second, 1.0 + highVal)) {
-        return;
-    }
-
-    colorTable_.setLevels(lowVal, highVal);
-
-    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
-}
-
-void MosaicProcessor::setColorTableLowLevel(float val)
-{
-    if (qFuzzyCompare(1.0 + colorTable_.getLowLevel(), 1.0 + val)) {
-        return;
-    }
-
-    colorTable_.setLowLevel(val);
-
-    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
-}
-
-void MosaicProcessor::setColorTableHighLevel(float val)
-{
-    if (qFuzzyCompare(1.0 + colorTable_.getHighLevel(), 1.0 + val)) {
-        return;
-    }
-
-    colorTable_.setHighLevel(val);
-
-    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
-}
-
 void MosaicProcessor::setLAngleOffset(float val)
 {
     if (val < -90.0f || val > 90.0f) {
@@ -268,11 +221,6 @@ void MosaicProcessor::setTileResolution(float tileResolution)
 void MosaicProcessor::setGenerageGridContour(bool state)
 {
     generateGridContour_ = state;
-}
-
-void MosaicProcessor::askColorTableForMosaic()
-{
-    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
 }
 
 // Шьём только ВВЕРХ и ВЛЕВО и в тот угол
