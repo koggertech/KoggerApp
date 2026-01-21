@@ -10,7 +10,7 @@ mosaic::PlotColorTable::PlotColorTable()
 void mosaic::PlotColorTable::setTheme(int id)
 {
     ThemeId theme;
-    if (id >= static_cast<int>(ThemeId::kClassic) && id <= static_cast<int>(ThemeId::kBW)) {
+    if (id >= static_cast<int>(ThemeId::kClassic) && id <= static_cast<int>(ThemeId::kGreen)) {
         theme = static_cast<ThemeId>(id);
     }
     else {
@@ -33,6 +33,14 @@ void mosaic::PlotColorTable::setTheme(int id)
         break;
     }
     case ThemeId::kSepia: {
+        colors = { QColor::fromRgb(0,   0,   0),
+                   QColor::fromRgb(50,  50,  10),
+                   QColor::fromRgb(230, 200, 100),
+                   QColor::fromRgb(255, 255, 220) };
+        levels = { 0, 30, 130, 255 };
+        break;
+    }
+    case ThemeId::kSepiaNew: {
         colors = {
             QColor::fromRgb(  0,   0,   0),
             QColor::fromRgb( 28,  10,   0),
@@ -68,6 +76,48 @@ void mosaic::PlotColorTable::setTheme(int id)
                    QColor::fromRgb(70,  70,  70),
                    QColor::fromRgb(0,   0,   0) };
         levels = { 0, 150, 255 };
+        break;
+    }
+    case ThemeId::kDeepBlue: {
+        colors = { QColor::fromRgb(0,   0,   40),
+                   QColor::fromRgb(20,  0,   120),
+                   QColor::fromRgb(40,  0,   200),
+                   QColor::fromRgb(0,   90,  255),
+                   QColor::fromRgb(0,   200, 255),
+                   QColor::fromRgb(0,   255, 200),
+                   QColor::fromRgb(0,   255, 80),
+                   QColor::fromRgb(220, 255, 0),
+                   QColor::fromRgb(255, 120, 0),
+                   QColor::fromRgb(255, 40,  40),
+                   QColor::fromRgb(255, 255, 255) };
+        levels = { 0, 18, 36, 60, 90, 120, 150, 185, 210, 235, 255 };
+        break;
+    }
+    case ThemeId::kIce: {
+        colors = { QColor::fromRgb(0,   0,   70),
+                   QColor::fromRgb(0,   40,  150),
+                   QColor::fromRgb(0,   100, 230),
+                   QColor::fromRgb(0,   180, 255),
+                   QColor::fromRgb(0,   240, 255),
+                   QColor::fromRgb(80,  255, 230),
+                   QColor::fromRgb(170, 255, 255),
+                   QColor::fromRgb(230, 255, 255),
+                   QColor::fromRgb(255, 255, 255) };
+        levels = { 0, 30, 60, 95, 130, 170, 210, 235, 255 };
+        break;
+    }
+    case ThemeId::kGreen: {
+        colors = { QColor::fromRgb(0,   0,   0),
+                   QColor::fromRgb(0,   50,  0),
+                   QColor::fromRgb(0,   100, 0),
+                   QColor::fromRgb(0,   160, 0),
+                   QColor::fromRgb(0,   220, 0),
+                   QColor::fromRgb(0,   255, 0),
+                   QColor::fromRgb(120, 255, 0),
+                   QColor::fromRgb(200, 255, 0),
+                   QColor::fromRgb(255, 255, 80),
+                   QColor::fromRgb(255, 255, 255) };
+        levels = { 0, 20, 45, 70, 100, 130, 160, 190, 220, 255 };
         break;
     }
     default:

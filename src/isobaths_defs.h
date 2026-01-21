@@ -85,14 +85,23 @@ inline const QVector<QVector3D>& colorPalette(int themeId)
         },
         // 3: sepia
         {
-            QVector3D(0.314f,  0.1f,  0.0f),
-            QVector3D(0.402f,  0.206f,  0.1f),
-            QVector3D(0.702f,  0.506f,  0.2f),
-            QVector3D(0.902f,  0.706f,  0.396f),
-            QVector3D(0.980f,  0.941f,  0.745f),
-            QVector3D(1.0f,    1.0f,    1.0f)
+            QVector3D(0/255.0f,   0/255.0f,   0/255.0f),
+            QVector3D(50/255.0f,  50/255.0f,  10/255.0f),
+            QVector3D(230/255.0f, 200/255.0f, 100/255.0f),
+            QVector3D(255/255.0f, 255/255.0f, 220/255.0f)
         },
-        // 4: colored
+        // 4: sepia new
+        {
+            QVector3D(0/255.0f,   0/255.0f,   0/255.0f),
+            QVector3D(28/255.0f,  10/255.0f,  0/255.0f),
+            QVector3D(55/255.0f,  18/255.0f,  0/255.0f),
+            QVector3D(95/255.0f,  35/255.0f,  0/255.0f),
+            QVector3D(150/255.0f, 70/255.0f,  10/255.0f),
+            QVector3D(210/255.0f, 105/255.0f, 15/255.0f),
+            QVector3D(245/255.0f, 175/255.0f, 70/255.0f),
+            QVector3D(255/255.0f, 232/255.0f, 160/255.0f)
+        },
+        // 5: colored
         {
             QVector3D(0.4f,  0.1f,  0.5f),
             QVector3D(0.0f,  0.4f,  0.7f),
@@ -105,14 +114,14 @@ inline const QVector<QVector3D>& colorPalette(int themeId)
             QVector3D(1.0f,  0.0f,  0.2f),
             QVector3D(1.0f,  0.8f,  0.8f)
         },
-        // 5: bw
+        // 6: bw
         {
             QVector3D(0.1f,    0.1f,    0.1f),
             QVector3D(0.4f,  0.4f,  0.4f),
             QVector3D(0.745f,  0.784f,  0.784f),
             QVector3D(0.95f,  1.0f,    1.0f)
         },
-        // 6: standard
+        // 7: standard
         {
             QVector3D(0.0f,    0.0f,    0.3f),
             QVector3D(0.0f,    0.0f,    0.6f),
@@ -121,6 +130,45 @@ inline const QVector<QVector3D>& colorPalette(int themeId)
             QVector3D(1.0f,    1.0f,    0.0f),
             QVector3D(1.0f,    0.6f,    0.0f),
             QVector3D(0.8f,    0.2f,    0.0f)
+        },
+        // 8: deep blue
+        {
+            QVector3D(0/255.0f,   0/255.0f,   40/255.0f),
+            QVector3D(20/255.0f,  0/255.0f,   120/255.0f),
+            QVector3D(40/255.0f,  0/255.0f,   200/255.0f),
+            QVector3D(0/255.0f,   90/255.0f,  255/255.0f),
+            QVector3D(0/255.0f,   200/255.0f, 255/255.0f),
+            QVector3D(0/255.0f,   255/255.0f, 200/255.0f),
+            QVector3D(0/255.0f,   255/255.0f, 80/255.0f),
+            QVector3D(220/255.0f, 255/255.0f, 0/255.0f),
+            QVector3D(255/255.0f, 120/255.0f, 0/255.0f),
+            QVector3D(255/255.0f, 40/255.0f,  40/255.0f),
+            QVector3D(255/255.0f, 255/255.0f, 255/255.0f)
+        },
+        // 9: ice
+        {
+            QVector3D(0/255.0f,   0/255.0f,   70/255.0f),
+            QVector3D(0/255.0f,   40/255.0f,  150/255.0f),
+            QVector3D(0/255.0f,   100/255.0f, 230/255.0f),
+            QVector3D(0/255.0f,   180/255.0f, 255/255.0f),
+            QVector3D(0/255.0f,   240/255.0f, 255/255.0f),
+            QVector3D(80/255.0f,  255/255.0f, 230/255.0f),
+            QVector3D(170/255.0f, 255/255.0f, 255/255.0f),
+            QVector3D(230/255.0f, 255/255.0f, 255/255.0f),
+            QVector3D(255/255.0f, 255/255.0f, 255/255.0f)
+        },
+        // 10: green
+        {
+            QVector3D(0/255.0f,   0/255.0f,   0/255.0f),
+            QVector3D(0/255.0f,   50/255.0f,  0/255.0f),
+            QVector3D(0/255.0f,   100/255.0f, 0/255.0f),
+            QVector3D(0/255.0f,   160/255.0f, 0/255.0f),
+            QVector3D(0/255.0f,   220/255.0f, 0/255.0f),
+            QVector3D(0/255.0f,   255/255.0f, 0/255.0f),
+            QVector3D(120/255.0f, 255/255.0f, 0/255.0f),
+            QVector3D(200/255.0f, 255/255.0f, 0/255.0f),
+            QVector3D(255/255.0f, 255/255.0f, 80/255.0f),
+            QVector3D(255/255.0f, 255/255.0f, 255/255.0f)
         }
     };
 

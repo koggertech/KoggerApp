@@ -1083,6 +1083,26 @@
         <translation>Standard</translation>
     </message>
     <message>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="74"/>
+        <source>Sepia New</source>
+        <translation>Nowa Sepia</translation>
+    </message>
+    <message>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="74"/>
+        <source>DeepBlue</source>
+        <translation>Modry</translation>
+    </message>
+    <message>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="74"/>
+        <source>Ice</source>
+        <translation>Lód</translation>
+    </message>
+    <message>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="74"/>
+        <source>Green</source>
+        <translation>Zielony</translation>
+    </message>
+    <message>
         <location filename="../qml/IsobathsExtraSettings.qml" line="98"/>
         <source>Edge limit, m:</source>
         <translation>Limit krawędzi, m:</translation>
@@ -1253,6 +1273,26 @@
         <translation>Czarno-Biały</translation>
     </message>
     <message>
+        <location filename="../qml/MosaicExtraSettings.qml" line="135"/>
+        <source>Sepia New</source>
+        <translation>Nowa Sepia</translation>
+    </message>
+    <message>
+        <location filename="../qml/MosaicExtraSettings.qml" line="135"/>
+        <source>DeepBlue</source>
+        <translation>Modry</translation>
+    </message>
+    <message>
+        <location filename="../qml/MosaicExtraSettings.qml" line="135"/>
+        <source>Ice</source>
+        <translation>Lód</translation>
+    </message>
+    <message>
+        <location filename="../qml/MosaicExtraSettings.qml" line="135"/>
+        <source>Green</source>
+        <translation>Zielony</translation>
+    </message>
+    <message>
         <location filename="../qml/MosaicExtraSettings.qml" line="159"/>
         <source>Channels:</source>
         <translation>Kanał:</translation>
@@ -1350,6 +1390,26 @@
         <location filename="../qml/Plot2D.qml" line="530"/>
         <source>BlackWhite</source>
         <translation>Czarno-Biały</translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="530"/>
+        <source>Sepia New</source>
+        <translation>Nowa Sepia</translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="530"/>
+        <source>DeepBlue</source>
+        <translation>Modry</translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="530"/>
+        <source>Ice</source>
+        <translation>Lód</translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="530"/>
+        <source>Green</source>
+        <translation>Zielony</translation>
     </message>
     <message>
         <location filename="../qml/Plot2D.qml" line="547"/>

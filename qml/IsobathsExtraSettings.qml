@@ -71,7 +71,7 @@ MenuFrame {
             CCombo  {
                 id: isobathsTheme
                 Layout.preferredWidth: 200
-                model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("Standard")]
+                model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("Standard"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green")]
                 currentIndex: 0
                 onCurrentIndexChanged: {
                     IsobathsViewControlMenuController.onThemeChanged(currentIndex)
