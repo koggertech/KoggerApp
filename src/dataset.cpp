@@ -507,6 +507,17 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     emit dataUpdate();
 }
 
+void Dataset::addAcousticNavSolution(IDBinUsblSolution::AcousticNavSolution data) {
+    int pool_index = endIndex();
+    if(pool_index < 0 || pool_[pool_index].isAcousticNavSolutionAvailable() == true) {
+        addNewEpoch();
+        pool_index = endIndex();
+    }
+
+    pool_[pool_index].setAcousticNavSolution(data);
+    emit dataUpdate();
+}
+
 void Dataset::addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
     int pool_index = endIndex();
 

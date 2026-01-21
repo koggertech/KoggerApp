@@ -195,6 +195,7 @@ signals:
     void encoderComplete(float e1, float e2, float e3);
 
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
+    void acousticNavSolutionComplete(IDBinUsblSolution::AcousticNavSolution data);
     void beaconActivationComplete(uint8_t id);
 
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);

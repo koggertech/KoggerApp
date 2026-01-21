@@ -1051,6 +1051,34 @@ public:
         float beacon_e = NAN;
     } __attribute__((packed));
 
+    struct AcousticNavSolution {
+        static constexpr ID getId() { return ID_USBL_SOLUTION; }
+        static constexpr Version getVer() { return v1; }
+
+        uint8_t address = 0xFF;
+        uint8_t cmd_id = 0xFF;
+
+        uint32_t reserved = 0;
+
+        int64_t timestamp_us = 0;
+        int64_t carrier_us = 0;
+        int64_t carrier_counter = 0;
+
+        double lat = NAN;
+        double lon = NAN;
+        float depth = NAN;
+
+        float acousticAzimuth = NAN;
+        float geoAzimuth = NAN;
+        float heading = NAN;
+
+        float distance = NAN;
+
+        double baseLat = NAN;
+        double baseLon = NAN;
+        float baseDepth = NAN;
+    } __attribute__((packed));
+
     struct USBLRequestBeacon {
         uint8_t id = 0; // 0 is promisc mode
         uint8_t reserved = 0;
@@ -1073,8 +1101,27 @@ public:
         float timeout_s = 2;
     }  __attribute__((packed));
 
+    enum class UsbLSolutionPayloadKind {
+        None,
+        UsblSolution,
+        AcousticNavSolution,
+        BeaconActivationResponse
+    };
+
     UsblSolution usblSolution() {
         return _usblSolution;
+    }
+
+    AcousticNavSolution acousticNavSolution() {
+        return _acousticNavSolution;
+    }
+
+    BeaconActivationResponce beaconActivationResponse() {
+        return _beaconResponcel;
+    }
+
+    UsbLSolutionPayloadKind lastPayloadKind() const {
+        return lastPayloadKind_;
     }
 
     void askBeacon(USBLRequestBeacon ask);
@@ -1082,7 +1129,9 @@ public:
 
 protected:
     UsblSolution _usblSolution;
+    AcousticNavSolution _acousticNavSolution;
     BeaconActivationResponce _beaconResponcel;
+    UsbLSolutionPayloadKind lastPayloadKind_ = UsbLSolutionPayloadKind::None;
 };
 
 class IDBinUsblControl : public IDBin

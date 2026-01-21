@@ -1454,8 +1454,34 @@ void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::
         if(ver == Parsers::v0) {
             emit usblSolutionComplete(idUSBL->usblSolution());
         } else if(ver == Parsers::v1) {
-            qDebug("usbl p.ver %d", ver);
-            emit beaconActivationComplete(0);
+            const auto payload_kind = idUSBL->lastPayloadKind();
+            if (payload_kind == IDBinUsblSolution::UsbLSolutionPayloadKind::AcousticNavSolution) {
+                const auto sol = idUSBL->acousticNavSolution();
+#ifndef SEPARATE_READING
+                core.consoleInfo(QString("AcousticNavSolution: addr %1 cmd %2 res %3 ts_us %4 carrier_us %5 carrier_cnt %6 lat %7 lon %8 depth %9 acousticAz %10 geoAz %11 heading %12 distance %13 baseLat %14 baseLon %15 baseDepth %16")
+                                     .arg(sol.address)
+                                     .arg(sol.cmd_id)
+                                     .arg(sol.reserved)
+                                     .arg(QString::number(sol.timestamp_us))
+                                     .arg(QString::number(sol.carrier_us))
+                                     .arg(QString::number(sol.carrier_counter))
+                                     .arg(QString::number(sol.lat, 'f', 8))
+                                     .arg(QString::number(sol.lon, 'f', 8))
+                                     .arg(QString::number(sol.depth, 'f', 3))
+                                     .arg(QString::number(sol.acousticAzimuth, 'f', 3))
+                                     .arg(QString::number(sol.geoAzimuth, 'f', 3))
+                                     .arg(QString::number(sol.heading, 'f', 3))
+                                     .arg(QString::number(sol.distance, 'f', 3))
+                                     .arg(QString::number(sol.baseLat, 'f', 8))
+                                     .arg(QString::number(sol.baseLon, 'f', 8))
+                                     .arg(QString::number(sol.baseDepth, 'f', 3)));
+#endif
+                emit acousticNavSolutionComplete(sol);
+            } else if (payload_kind == IDBinUsblSolution::UsbLSolutionPayloadKind::BeaconActivationResponse) {
+                const auto resp_data = idUSBL->beaconActivationResponse();
+                qDebug("usbl p.ver %d", ver);
+                emit beaconActivationComplete(resp_data.id);
+            }
         }
     }
 
