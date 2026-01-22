@@ -8,6 +8,7 @@
         <file>shaders/mosaic.fsh</file>
         <file>shaders/mosaic.vsh</file>
         <file>shaders/static_color.fsh</file>
+        <file>shaders/usbl_arrow.fsh</file>
         <file>shaders/text.fsh</file>
         <file>shaders/text.vsh</file>
         <file>shaders/text_back.fsh</file>

@@ -23,6 +23,7 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer() :
     m_shaderProgramMap["height"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["static"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["static_sec"] = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["usbl_arrow"] = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["text"]       = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["text_back"]  = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["mosaic"]     = std::make_shared<QOpenGLShaderProgram>();
@@ -58,6 +59,15 @@ void GraphicsScene3dRenderer::initialize()
         qCritical() << "Error adding fragment shader from source file.";
     if (!m_shaderProgramMap["static_sec"]->link())
         qCritical() << "Error linking shaders in shader program.";
+    // usbl arrow
+    const char* usblArrowVertexPath = ":/shaders/base.vsh";
+    const char* usblArrowFragmentPath = ":/shaders/usbl_arrow.fsh";
+    if (!m_shaderProgramMap["usbl_arrow"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, usblArrowVertexPath))
+        qCritical() << "Error adding usbl_arrow vertex shader from source file.";
+    if (!m_shaderProgramMap["usbl_arrow"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, usblArrowFragmentPath))
+        qCritical() << "Error adding usbl_arrow fragment shader from source file.";
+    if (!m_shaderProgramMap["usbl_arrow"]->link())
+        qCritical() << "Error linking usbl_arrow shaders in shader program.";
     // height
     if (!m_shaderProgramMap["height"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh"))
         qCritical() << "Error adding vertex shader from source file.";
