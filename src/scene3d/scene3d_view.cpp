@@ -1812,7 +1812,7 @@ void GraphicsScene3dView::Camera::resetRotationAngle()
 void GraphicsScene3dView::Camera::updateCameraParams()
 {
     if (viewPtr_) { // zoom limit
-        const float kMinGroundDist = 50.0f;
+        const float kMinGroundDist = 1.0f;
         const float kMinCos = 0.01f;
         const float cosPitch = std::fabs(cosf(m_rotAngle.y()));
 
