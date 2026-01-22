@@ -45,14 +45,19 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
     auto subPointColor = QVector4D(0.9f, 0.9f, 0.9f, 1.0f);
 
     for (auto &itm : tracks_) {
+        if (itm.type_ == UsblView::UsblObjectType::kUndefined) {
+            continue;
+        }
+
         auto lineColor = QVector4D(itm.objectColor_.redF(), itm.objectColor_.greenF(), itm.objectColor_.blueF(), 1.0f);
 
         // point
-        bool isUsbl = itm.type_ == UsblView::UsblObjectType::kUsbl ? true : false;
+        bool isUsbl = itm.type_ == UsblView::UsblObjectType::kUsbl ? true : false; // true - circle, false - square
 
         ctx->glEnable(34370);
+        ctx->glEnable(34913);
 
-        shaderProgram->setUniformValue(isPointLoc, !isUsbl);
+        shaderProgram->setUniformValue(isPointLoc, isUsbl);
         QVector<QVector3D> point{ itm.data_.last() };
         // color point
         shaderProgram->setUniformValue(colorLoc, lineColor);
@@ -66,7 +71,8 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
         ctx->glDrawArrays(GL_POINTS, 0, point.size());
         shaderProgram->setUniformValue(isPointLoc, false);
 
-        ctx->glDisable(34370);
+        ctx->glDisable(34370); // GL_PROGRAM_POINT_SIZE
+        ctx->glDisable(34913); // GL_POINT_SPRITE
 
         // line
         if (itm.isTrackVisible_) {
