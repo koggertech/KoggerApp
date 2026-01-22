@@ -47,18 +47,23 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
 
     auto subPointColor = QVector4D(0.9f, 0.9f, 0.9f, 1.0f);
     constexpr float kDegToRad = 0.01745329252f;
+    constexpr float kArrowBaseScale = 0.8f;
+    constexpr float kArrowTipScale = 1.9f;
+    constexpr float kArrowHaloPaddingPx = 6.0f;
 
     int arrowPosLoc = -1;
     int arrowMatrixLoc = -1;
     int arrowColorLoc = -1;
     int arrowWidthLoc = -1;
     int arrowYawLoc = -1;
+    int arrowBaseScaleLoc = -1;
     if (arrowShaderProgram) {
         arrowPosLoc = arrowShaderProgram->attributeLocation("position");
         arrowMatrixLoc = arrowShaderProgram->uniformLocation("matrix");
         arrowColorLoc = arrowShaderProgram->uniformLocation("color");
         arrowWidthLoc = arrowShaderProgram->uniformLocation("width");
         arrowYawLoc = arrowShaderProgram->uniformLocation("yaw");
+        arrowBaseScaleLoc = arrowShaderProgram->uniformLocation("baseScale");
     }
 
     for (auto &itm : tracks_) {
@@ -92,38 +97,38 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
         }
 
         auto lineColor = QVector4D(itm.objectColor_.redF(), itm.objectColor_.greenF(), itm.objectColor_.blueF(), 1.0f);
+        bool hasYaw = arrowShaderProgram && std::isfinite(itm.yaw_);
+        float pointScale = hasYaw ? kArrowBaseScale : 1.0f;
+        float arrowScale = hasYaw ? kArrowTipScale : 1.0f;
+        float invPointRadius = (itm.pointRadius_ > 0.0f) ? (1.0f / itm.pointRadius_) : 0.0f;
+        //float arrowBaseScale = (arrowScale > 0.0f) ? (pointScale / arrowScale) : pointScale;
+        float arrowHaloScale = arrowScale + kArrowHaloPaddingPx * invPointRadius;
+        float arrowHaloBaseScale = (arrowHaloScale > 0.0f) ? (pointScale / arrowHaloScale) : pointScale;
 
         // point
         bool isUsbl = itm.type_ == UsblView::UsblObjectType::kUsbl ? true : false; // true - circle, false - square
 
-        shaderProgram->setUniformValue(isPointLoc, isUsbl);
         QVector<QVector3D> point{ itm.data_.last() };
-        // gray point (halo)
-        shaderProgram->setUniformValue(colorLoc, subPointColor);
-        shaderProgram->setUniformValue(widthLoc, itm.pointRadius_ + 3.0f);
-        shaderProgram->setAttributeArray(posLoc, point.constData());
-        ctx->glDrawArrays(GL_POINTS, 0, point.size());
-        // color point
-        shaderProgram->setUniformValue(colorLoc, lineColor);
-        shaderProgram->setUniformValue(widthLoc, itm.pointRadius_);
-        shaderProgram->setAttributeArray(posLoc, point.constData());
-        ctx->glDrawArrays(GL_POINTS, 0, point.size());
-        shaderProgram->setUniformValue(isPointLoc, false);
         //qDebug() << "arrowShaderProgram" << arrowShaderProgram << itm.yaw_;
-        if (arrowShaderProgram && std::isfinite(itm.yaw_)) {
-            float luminance = 0.2126f * lineColor.x() + 0.7152f * lineColor.y() + 0.0722f * lineColor.z();
-            QVector4D arrowColor = (luminance > 0.6f)
-                ? QVector4D(0.0f, 0.0f, 0.0f, 1.0f)
-                : QVector4D(1.0f, 1.0f, 1.0f, 1.0f);
-
+        if (arrowShaderProgram && hasYaw) {
             if (arrowShaderProgram->bind()) {
                 arrowShaderProgram->setUniformValue(arrowMatrixLoc, mvp);
-                arrowShaderProgram->setUniformValue(arrowColorLoc, arrowColor);
-                arrowShaderProgram->setUniformValue(arrowWidthLoc, itm.pointRadius_);
                 arrowShaderProgram->setUniformValue(arrowYawLoc, itm.yaw_ * kDegToRad);
+
+                // arrow halo (behind point halo)
+                arrowShaderProgram->setUniformValue(arrowBaseScaleLoc, arrowHaloBaseScale);
+                arrowShaderProgram->setUniformValue(arrowColorLoc, subPointColor);
+                arrowShaderProgram->setUniformValue(arrowWidthLoc, itm.pointRadius_ * arrowHaloScale);
                 arrowShaderProgram->enableAttributeArray(arrowPosLoc);
                 arrowShaderProgram->setAttributeArray(arrowPosLoc, point.constData());
                 ctx->glDrawArrays(GL_POINTS, 0, point.size());
+
+                //// arrow color (behind point)
+                //arrowShaderProgram->setUniformValue(arrowBaseScaleLoc, kArrowBaseScale);
+                //arrowShaderProgram->setUniformValue(arrowColorLoc, lineColor);
+                //arrowShaderProgram->setUniformValue(arrowWidthLoc, itm.pointRadius_ * arrowScale);
+                //ctx->glDrawArrays(GL_POINTS, 0, point.size());
+
                 arrowShaderProgram->disableAttributeArray(arrowPosLoc);
                 arrowShaderProgram->release();
 
@@ -133,6 +138,18 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
                 shaderProgram->setUniformValue(isTriangleLoc, false);
             }
         }
+
+        // point halo + point color (always)
+        shaderProgram->setUniformValue(isPointLoc, isUsbl);
+        shaderProgram->setUniformValue(colorLoc, subPointColor);
+        shaderProgram->setUniformValue(widthLoc, itm.pointRadius_ * pointScale + 3.0f);
+        shaderProgram->setAttributeArray(posLoc, point.constData());
+        ctx->glDrawArrays(GL_POINTS, 0, point.size());
+        shaderProgram->setUniformValue(colorLoc, lineColor);
+        shaderProgram->setUniformValue(widthLoc, itm.pointRadius_ * pointScale);
+        shaderProgram->setAttributeArray(posLoc, point.constData());
+        ctx->glDrawArrays(GL_POINTS, 0, point.size());
+        shaderProgram->setUniformValue(isPointLoc, false);
     }
 
     ctx->glDepthMask(prevDepthMask);

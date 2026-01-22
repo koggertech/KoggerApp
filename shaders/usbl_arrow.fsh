@@ -2,6 +2,7 @@
 
 uniform vec4 color;
 uniform float yaw;
+uniform float baseScale;
 
 void main()
 {
@@ -11,20 +12,18 @@ void main()
     float s = sin(yaw);
     vec2 p = vec2(coord.x * c - coord.y * s, coord.x * s + coord.y * c);
 
-    float headBaseY = 0.2;
-    float tipY = 0.9;
-    float headHalfWidth = 0.6;
+    float baseY = max(baseScale - 0.2, -0.2);
+    float tipY = 1.0;
+    float baseHalfWidth = baseScale * 0.95;
 
-    bool inHead = (p.y >= headBaseY && p.y <= tipY);
-    if (inHead) {
-        float t = (tipY - p.y) / (tipY - headBaseY);
-        float halfWidth = headHalfWidth * t;
-        inHead = abs(p.x) <= halfWidth;
+    bool inTriangle = (p.y >= baseY && p.y <= tipY);
+    if (inTriangle) {
+        float t = (tipY - p.y) / (tipY - baseY);
+        float halfWidth = baseHalfWidth * t;
+        inTriangle = abs(p.x) <= halfWidth;
     }
 
-    bool inTail = (p.y >= -0.6 && p.y <= headBaseY && abs(p.x) <= 0.15);
-
-    if (!(inHead || inTail)) {
+    if (!inTriangle) {
         discard;
     }
 

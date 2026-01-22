@@ -10,6 +10,7 @@
 
 uniform highp vec4 color;
 uniform highp float yaw;
+uniform highp float baseScale;
 
 out highp vec4 fragColor;
 
@@ -21,20 +22,18 @@ void main()
     highp float s = sin(yaw);
     highp vec2 p = vec2(coord.x * c - coord.y * s, coord.x * s + coord.y * c);
 
-    highp float headBaseY = 0.2;
-    highp float tipY = 0.9;
-    highp float headHalfWidth = 0.6;
+    highp float baseY = max(baseScale - 0.2, -0.2);
+    highp float tipY = 1.0;
+    highp float baseHalfWidth = baseScale * 0.95;
 
-    bool inHead = (p.y >= headBaseY && p.y <= tipY);
-    if (inHead) {
-        highp float t = (tipY - p.y) / (tipY - headBaseY);
-        highp float halfWidth = headHalfWidth * t;
-        inHead = abs(p.x) <= halfWidth;
+    bool inTriangle = (p.y >= baseY && p.y <= tipY);
+    if (inTriangle) {
+        highp float t = (tipY - p.y) / (tipY - baseY);
+        highp float halfWidth = baseHalfWidth * t;
+        inTriangle = abs(p.x) <= halfWidth;
     }
 
-    bool inTail = (p.y >= -0.6 && p.y <= headBaseY && abs(p.x) <= 0.15);
-
-    if (!(inHead || inTail)) {
+    if (!inTriangle) {
         discard;
     }
 
