@@ -429,8 +429,8 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     // tracks[data.id].data_.append(QVector3D(data.x_m, data.y_m, data.depth_m));
     tracks[-1].data_.append(QVector3D());
     tracks[-1].objectColor_ = QColor(0, 255, 255);
-    tracks[-1].type_ = UsblView::UsblObjectType::kUsbl;
-    tracks[-1].yaw_ = 0.0f;
+    tracks[-1].type_ = UsblView::UsblObjectType::kBeacon;
+    //tracks[-1].yaw_ = 100.0f;
 
 
     Position pos;
@@ -480,9 +480,10 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
 
         tracks[-4].data_.append(QVector3D(beacon_n, beacon_e, 0));
         tracks[-4].objectColor_ = QColor(200, 0, 0);
-        tracks[-4].lineWidth_ = 5;
-        tracks[-4].type_ = UsblView::UsblObjectType::kUsbl;
-        tracks[-4].yaw_ = 0.0f;
+        tracks[-4].lineWidth_ = 15;
+        tracks[-4].pointRadius_ = 50;
+        tracks[-4].type_ = UsblView::UsblObjectType::kBeacon;
+        tracks[-4].yaw_ = 90.0f;
 
 
         // Position pos_beacon;

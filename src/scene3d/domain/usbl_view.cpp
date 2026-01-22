@@ -25,6 +25,7 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
     }
 
     auto shaderProgram = shaderProgramMap.value("static", nullptr);
+    auto arrowShaderProgram = shaderProgramMap.value("usbl_arrow", nullptr);
 
     if (!shaderProgram) {
         qWarning() << "Shader program 'static' not found!";
@@ -33,16 +34,57 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
 
     shaderProgram->bind();
 
-    int posLoc     = shaderProgram->attributeLocation ("position");
-    int matrixLoc  = shaderProgram->uniformLocation   ("matrix");
-    int colorLoc   = shaderProgram->uniformLocation   ("color");
-    int widthLoc   = shaderProgram->uniformLocation   ("width");
-    int isPointLoc = shaderProgram->uniformLocation   ("isPoint");
+    int posLoc        = shaderProgram->attributeLocation ("position");
+    int matrixLoc     = shaderProgram->uniformLocation   ("matrix");
+    int colorLoc      = shaderProgram->uniformLocation   ("color");
+    int widthLoc      = shaderProgram->uniformLocation   ("width");
+    int isPointLoc    = shaderProgram->uniformLocation   ("isPoint");
+    int isTriangleLoc = shaderProgram->uniformLocation   ("isTriangle");
 
     shaderProgram->setUniformValue(matrixLoc, mvp);
     shaderProgram->enableAttributeArray(posLoc);
+    shaderProgram->setUniformValue(isTriangleLoc, false);
 
     auto subPointColor = QVector4D(0.9f, 0.9f, 0.9f, 1.0f);
+    constexpr float kDegToRad = 0.01745329252f;
+
+    int arrowPosLoc = -1;
+    int arrowMatrixLoc = -1;
+    int arrowColorLoc = -1;
+    int arrowWidthLoc = -1;
+    int arrowYawLoc = -1;
+    if (arrowShaderProgram) {
+        arrowPosLoc = arrowShaderProgram->attributeLocation("position");
+        arrowMatrixLoc = arrowShaderProgram->uniformLocation("matrix");
+        arrowColorLoc = arrowShaderProgram->uniformLocation("color");
+        arrowWidthLoc = arrowShaderProgram->uniformLocation("width");
+        arrowYawLoc = arrowShaderProgram->uniformLocation("yaw");
+    }
+
+    for (auto &itm : tracks_) {
+        if (itm.type_ == UsblView::UsblObjectType::kUndefined) {
+            continue;
+        }
+
+        auto lineColor = QVector4D(itm.objectColor_.redF(), itm.objectColor_.greenF(), itm.objectColor_.blueF(), 1.0f);
+        if (itm.isTrackVisible_) {
+            shaderProgram->setUniformValue(colorLoc, lineColor);
+            shaderProgram->setUniformValue(widthLoc, itm.lineWidth_);
+            shaderProgram->setAttributeArray(posLoc, itm.data_.constData());
+            ctx->glLineWidth(itm.lineWidth_);
+            ctx->glDrawArrays(GL_LINE_STRIP, 0, itm.data_.size());
+            ctx->glLineWidth(1.0f);
+        }
+    }
+
+    ctx->glEnable(34370);
+    ctx->glEnable(34913);
+    GLint prevDepthFunc = GL_LESS;
+    GLboolean prevDepthMask = GL_TRUE;
+    ctx->glGetIntegerv(GL_DEPTH_FUNC, &prevDepthFunc);
+    ctx->glGetBooleanv(GL_DEPTH_WRITEMASK, &prevDepthMask);
+    ctx->glDepthFunc(GL_ALWAYS);
+    ctx->glDepthMask(GL_FALSE);
 
     for (auto &itm : tracks_) {
         if (itm.type_ == UsblView::UsblObjectType::kUndefined) {
@@ -54,36 +96,49 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
         // point
         bool isUsbl = itm.type_ == UsblView::UsblObjectType::kUsbl ? true : false; // true - circle, false - square
 
-        ctx->glEnable(34370);
-        ctx->glEnable(34913);
-
         shaderProgram->setUniformValue(isPointLoc, isUsbl);
         QVector<QVector3D> point{ itm.data_.last() };
+        // gray point (halo)
+        shaderProgram->setUniformValue(colorLoc, subPointColor);
+        shaderProgram->setUniformValue(widthLoc, itm.pointRadius_ + 3.0f);
+        shaderProgram->setAttributeArray(posLoc, point.constData());
+        ctx->glDrawArrays(GL_POINTS, 0, point.size());
         // color point
         shaderProgram->setUniformValue(colorLoc, lineColor);
         shaderProgram->setUniformValue(widthLoc, itm.pointRadius_);
         shaderProgram->setAttributeArray(posLoc, point.constData());
         ctx->glDrawArrays(GL_POINTS, 0, point.size());
-        // gray point
-        shaderProgram->setUniformValue(colorLoc, subPointColor);
-        shaderProgram->setUniformValue(widthLoc, itm.pointRadius_ + 3.0f);
-        shaderProgram->setAttributeArray(posLoc, point.constData());
-        ctx->glDrawArrays(GL_POINTS, 0, point.size());
         shaderProgram->setUniformValue(isPointLoc, false);
+        //qDebug() << "arrowShaderProgram" << arrowShaderProgram << itm.yaw_;
+        if (arrowShaderProgram && std::isfinite(itm.yaw_)) {
+            float luminance = 0.2126f * lineColor.x() + 0.7152f * lineColor.y() + 0.0722f * lineColor.z();
+            QVector4D arrowColor = (luminance > 0.6f)
+                ? QVector4D(0.0f, 0.0f, 0.0f, 1.0f)
+                : QVector4D(1.0f, 1.0f, 1.0f, 1.0f);
 
-        ctx->glDisable(34370); // GL_PROGRAM_POINT_SIZE
-        ctx->glDisable(34913); // GL_POINT_SPRITE
+            if (arrowShaderProgram->bind()) {
+                arrowShaderProgram->setUniformValue(arrowMatrixLoc, mvp);
+                arrowShaderProgram->setUniformValue(arrowColorLoc, arrowColor);
+                arrowShaderProgram->setUniformValue(arrowWidthLoc, itm.pointRadius_);
+                arrowShaderProgram->setUniformValue(arrowYawLoc, itm.yaw_ * kDegToRad);
+                arrowShaderProgram->enableAttributeArray(arrowPosLoc);
+                arrowShaderProgram->setAttributeArray(arrowPosLoc, point.constData());
+                ctx->glDrawArrays(GL_POINTS, 0, point.size());
+                arrowShaderProgram->disableAttributeArray(arrowPosLoc);
+                arrowShaderProgram->release();
 
-        // line
-        if (itm.isTrackVisible_) {
-            shaderProgram->setUniformValue(colorLoc, lineColor);
-            shaderProgram->setUniformValue(widthLoc, itm.lineWidth_);
-            shaderProgram->setAttributeArray(posLoc, itm.data_.constData());
-            ctx->glLineWidth(itm.lineWidth_);
-            ctx->glDrawArrays(GL_LINE_STRIP, 0, itm.data_.size());
-            ctx->glLineWidth(1.0f);
+                shaderProgram->bind();
+                shaderProgram->setUniformValue(matrixLoc, mvp);
+                shaderProgram->enableAttributeArray(posLoc);
+                shaderProgram->setUniformValue(isTriangleLoc, false);
+            }
         }
     }
+
+    ctx->glDepthMask(prevDepthMask);
+    ctx->glDepthFunc(prevDepthFunc);
+    ctx->glDisable(34370); // GL_PROGRAM_POINT_SIZE
+    ctx->glDisable(34913); // GL_POINT_SPRITE
 
     shaderProgram->setUniformValue(isPointLoc, false);
 
