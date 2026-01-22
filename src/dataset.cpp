@@ -429,6 +429,7 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     // tracks[data.id].data_.append(QVector3D(data.x_m, data.y_m, data.depth_m));
     tracks[-1].data_.append(QVector3D());
     tracks[-1].objectColor_ = QColor(0, 255, 255);
+    tracks[-1].type_ = UsblView::UsblObjectType::kUsbl;
 
 
 
@@ -465,6 +466,7 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
 
         tracks[-2].data_.append(QVector3D(pos.ned.n, pos.ned.e, 0));
         tracks[-2].objectColor_ = QColor(0, 200, 0);
+        tracks[-2].type_ = UsblView::UsblObjectType::kUsbl;
 
         float beacon_n = data.beacon_n;
         float beacon_e = data.beacon_e;
@@ -477,6 +479,7 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         tracks[-4].data_.append(QVector3D(beacon_n, beacon_e, 0));
         tracks[-4].objectColor_ = QColor(200, 0, 0);
         tracks[-4].lineWidth_ = 5;
+        tracks[-4].type_ = UsblView::UsblObjectType::kUsbl;
 
 
         // Position pos_beacon;
@@ -515,6 +518,17 @@ void Dataset::addAcousticNavSolution(IDBinUsblSolution::AcousticNavSolution data
     }
 
     pool_[pool_index].setAcousticNavSolution(data);
+    emit dataUpdate();
+}
+
+void Dataset::addBaseToBeacon(IDBinUsblSolution::BaseToBeacon data) {
+    int pool_index = endIndex();
+    if(pool_index < 0 || pool_[pool_index].isBaseToBeaconAvailable() == true) {
+        addNewEpoch();
+        pool_index = endIndex();
+    }
+
+    pool_[pool_index].setBaseToBeacon(data);
     emit dataUpdate();
 }
 

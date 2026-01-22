@@ -1082,6 +1082,14 @@ Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
         } else {
             return respErrorPayload;
         }
+    } else if(proto.ver() == v2) {
+        if (proto.readAvailable() >= static_cast<int>(sizeof(BaseToBeacon))) {
+            _baseToBeacon = proto.read<BaseToBeacon>();
+            lastPayloadKind_ = UsbLSolutionPayloadKind::BaseToBeacon;
+            qInfo("Base to beacon:");
+        } else {
+            return respErrorPayload;
+        }
     } else {
         return respErrorVersion;
     }

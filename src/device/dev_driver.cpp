@@ -1453,18 +1453,29 @@ void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::
     if(resp == respNone) {
         if(ver == Parsers::v0) {
             emit usblSolutionComplete(idUSBL->usblSolution());
+#ifndef SEPARATE_READING
+            const auto sol = idUSBL->usblSolution();
+            core.consoleInfo(QString("UsblSolution: distance_m %1 azimuth_deg %2 elevation_deg %3 beacon_x_m %4 beacon_y_m %5 beacon_latitude %6 beacon_longitude %7 beacon_depth %8 usbl_yaw %9 usbl_latitude %10 usbl_longitude %11 beacon_n_m %12 beacon_e_m %13")
+                                 .arg(QString::number(sol.distance_m, 'f', 3))
+                                 .arg(QString::number(sol.azimuth_deg, 'f', 3))
+                                 .arg(QString::number(sol.elevation_deg, 'f', 3))
+                                 .arg(QString::number(sol.x_m, 'f', 3))
+                                 .arg(QString::number(sol.y_m, 'f', 3))
+                                 .arg(QString::number(sol.latitude_deg, 'f', 8))
+                                 .arg(QString::number(sol.longitude_deg, 'f', 8))
+                                 .arg(QString::number(sol.depth_m, 'f', 3))
+                                 .arg(QString::number(sol.usbl_yaw, 'f', 3))
+                                 .arg(QString::number(sol.usbl_latitude, 'f', 8))
+                                 .arg(QString::number(sol.usbl_longitude, 'f', 8))
+                                 .arg(QString::number(sol.beacon_n, 'f', 3))
+                                 .arg(QString::number(sol.beacon_e, 'f', 3)));
+#endif
         } else if(ver == Parsers::v1) {
             const auto payload_kind = idUSBL->lastPayloadKind();
             if (payload_kind == IDBinUsblSolution::UsbLSolutionPayloadKind::AcousticNavSolution) {
                 const auto sol = idUSBL->acousticNavSolution();
 #ifndef SEPARATE_READING
-                core.consoleInfo(QString("AcousticNavSolution: addr %1 cmd %2 res %3 ts_us %4 carrier_us %5 carrier_cnt %6 lat %7 lon %8 depth %9 acousticAz %10 geoAz %11 heading %12 distance %13 baseLat %14 baseLon %15 baseDepth %16")
-                                     .arg(sol.address)
-                                     .arg(sol.cmd_id)
-                                     .arg(sol.reserved)
-                                     .arg(QString::number(sol.timestamp_us))
-                                     .arg(QString::number(sol.carrier_us))
-                                     .arg(QString::number(sol.carrier_counter))
+                core.consoleInfo(QString("AcousticNavSolution: lat %1 lon %2 depth %3 acousticAz %4 geoAz %5 heading %6 distance %7 baseLat %8 baseLon %9 baseDepth %10")
                                      .arg(QString::number(sol.lat, 'f', 8))
                                      .arg(QString::number(sol.lon, 'f', 8))
                                      .arg(QString::number(sol.depth, 'f', 3))
@@ -1481,6 +1492,27 @@ void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::
                 const auto resp_data = idUSBL->beaconActivationResponse();
                 qDebug("usbl p.ver %d", ver);
                 emit beaconActivationComplete(resp_data.id);
+            }
+        } else if(ver == Parsers::v2) {
+            const auto payload_kind = idUSBL->lastPayloadKind();
+            if (payload_kind == IDBinUsblSolution::UsbLSolutionPayloadKind::BaseToBeacon) {
+                const auto sol = idUSBL->baseToBeacon();
+#ifndef SEPARATE_READING
+                core.consoleInfo(QString("BaseToBeacon: acousticAz %1 geoAz %2 beaconDist %3 beaconN %4 beaconE %5 beaconD %6 beaconLat %7 beaconLon %8 antYaw %9 antDepth %10 antLat %11 antLon %12")
+                                     .arg(QString::number(sol.acousticAzimuth, 'f', 3))
+                                     .arg(QString::number(sol.geoAzimuth, 'f', 3))
+                                     .arg(QString::number(sol.beaconDistance, 'f', 3))
+                                     .arg(QString::number(sol.beaconN, 'f', 3))
+                                     .arg(QString::number(sol.beaconE, 'f', 3))
+                                     .arg(QString::number(sol.BeaconD, 'f', 3))
+                                     .arg(QString::number(sol.beaconLat, 'f', 8))
+                                     .arg(QString::number(sol.beaconLon, 'f', 8))
+                                     .arg(QString::number(sol.antennaYaw, 'f', 3))
+                                     .arg(QString::number(sol.antennaDepth, 'f', 3))
+                                     .arg(QString::number(sol.antennaLat, 'f', 8))
+                                     .arg(QString::number(sol.antennaLon, 'f', 8)));
+#endif
+                emit baseToBeaconComplete(sol);
             }
         }
     }

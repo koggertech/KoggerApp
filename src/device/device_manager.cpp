@@ -27,6 +27,7 @@ DeviceManager::DeviceManager()
     qRegisterMetaType<QByteArray>("QByteArray");
     qRegisterMetaType<IDBinUsblSolution::UsblSolution>("IDBinUsblSolution::UsblSolution");
     qRegisterMetaType<IDBinUsblSolution::AcousticNavSolution>("IDBinUsblSolution::AcousticNavSolution");
+    qRegisterMetaType<IDBinUsblSolution::BaseToBeacon>("IDBinUsblSolution::BaseToBeacon");
     qRegisterMetaType<IDBinDVL::BeamSolution>("IDBinDVL::BeamSolution");
     qRegisterMetaType<uint16_t>("uint16_t");
     qRegisterMetaType<IDBinDVL::DVLSolution>("IDBinDVL::DVLSolution");
@@ -879,6 +880,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete, connType);
     connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete, connType);
     connect(dev, &DevQProperty::acousticNavSolutionComplete, this, &DeviceManager::acousticNavSolutionComplete, connType);
+    connect(dev, &DevQProperty::baseToBeaconComplete, this, &DeviceManager::baseToBeaconComplete, connType);
     connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete, connType);
     connect(dev, &DevQProperty::dvlSolutionComplete, this, &DeviceManager::dvlSolutionComplete, connType);
     connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged, connType);
@@ -921,6 +923,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::encoderComplete, this, &DeviceManager::encoderComplete);
     connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete);
     connect(dev, &DevQProperty::acousticNavSolutionComplete, this, &DeviceManager::acousticNavSolutionComplete);
+    connect(dev, &DevQProperty::baseToBeaconComplete, this, &DeviceManager::baseToBeaconComplete);
     connect(dev, &DevQProperty::beaconActivationComplete, this, &DeviceManager::beaconActivationReceive);
     connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete);
     connect(dev, &DevQProperty::dvlSolutionComplete, this, &DeviceManager::dvlSolutionComplete);
