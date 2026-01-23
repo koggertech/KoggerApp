@@ -1015,28 +1015,38 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
 
     auto copyRow = [&](SurfaceTile* src, SurfaceTile* dst, int rowFrom, int rowTo) {
         auto& vSrc = src->getHeightVerticesRef();
+        auto& mSrc = src->getHeightMarkVerticesRef();
         auto& vDst = dst->getHeightVerticesRef();
         auto& mDst = dst->getHeightMarkVerticesRef();
         for (int k = 0; k < hvSide; ++k) {
             int iFrom = rowFrom * hvSide + k;
             int iTo   = rowTo   * hvSide + k;
             if (!qFuzzyIsNull(vSrc[iFrom].z())) {
+                const auto srcMark = mSrc[iFrom];
+                if (!canOverwriteHeight(srcMark, mDst[iTo])) {
+                    continue;
+                }
                 vDst[iTo][2] = vSrc[iFrom][2];
-                mDst[iTo]    = HeightType::kExrtapolation;
+                mDst[iTo]    = srcMark;
             }
         }
     };
 
     auto copyCol = [&](SurfaceTile* src, SurfaceTile* dst, int colFrom, int colTo) {
         auto& vSrc = src->getHeightVerticesRef();
+        auto& mSrc = src->getHeightMarkVerticesRef();
         auto& vDst = dst->getHeightVerticesRef();
         auto& mDst = dst->getHeightMarkVerticesRef();
         for (int k = 0; k < hvSide; ++k) {
             int iFrom = k * hvSide + colFrom;
             int iTo   = k * hvSide + colTo;
             if (!qFuzzyIsNull(vSrc[iFrom].z())) {
+                const auto srcMark = mSrc[iFrom];
+                if (!canOverwriteHeight(srcMark, mDst[iTo])) {
+                    continue;
+                }
                 vDst[iTo][2] = vSrc[iFrom][2];
-                mDst[iTo]    = HeightType::kExrtapolation;
+                mDst[iTo]    = srcMark;
             }
         }
     };
@@ -1070,12 +1080,17 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
                 auto& vSrc = t->getHeightVerticesRef();
                 auto& vDst = topLeft->getHeightVerticesRef();
                 auto& mDst = topLeft->getHeightMarkVerticesRef();
+                auto& mSrc = t->getHeightMarkVerticesRef();
 
                 const int srcTL = 0;
                 const int dstBR = hvSide * hvSide - 1;
                 if (!qFuzzyIsNull(vSrc[srcTL].z())) {
+                    const auto srcMark = mSrc[srcTL];
+                    if (!canOverwriteHeight(srcMark, mDst[dstBR])) {
+                        continue;
+                    }
                     vDst[dstBR][2] = vSrc[srcTL][2];
-                    mDst[dstBR]    = HeightType::kExrtapolation;
+                    mDst[dstBR]    = srcMark;
                     topLeft->setIsUpdated(true);
                     changedTiles.insert(topLeft);
                 }

@@ -23,6 +23,26 @@ enum class DataProcessorType {
 
 Q_DECLARE_METATYPE(DataProcessorType)
 
+enum class HeightType {
+    kUndefined = 0,
+    kExrtapolation,
+    kMosaic,
+    kTriangulation
+};
+
+static inline bool canOverwriteHeight(HeightType srcMark, HeightType dstMark) {
+    if (srcMark == HeightType::kTriangulation) {
+        return true;
+    }
+    if (srcMark == HeightType::kMosaic) {
+        return dstMark != HeightType::kTriangulation;
+    }
+    if (srcMark == HeightType::kExrtapolation) {
+        return dstMark == HeightType::kExrtapolation || dstMark == HeightType::kUndefined;
+    }
+    return false;
+}
+
 enum WorkFlag : quint32 {
     WF_None     = 0,
     WF_Surface  = 1u << 0,

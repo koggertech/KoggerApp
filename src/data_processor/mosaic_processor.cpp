@@ -252,11 +252,12 @@ void MosaicProcessor::postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<Surfa
         return false;
     };
     auto copyRow = [&](QVector<QVector3D>& from,
-                       int fromRow, QVector<QVector3D>& to, QVector<HeightType>& mTo,
+                       const QVector<HeightType>& mFrom, int fromRow,
+                       QVector<QVector3D>& to, QVector<HeightType>& mTo,
                        int toRow, int hvSide)
     {
         const int total = from.size();
-        if (total == 0 || to.size() != total || mTo.size() != total) {
+        if (total == 0 || to.size() != total || mTo.size() != total || mFrom.size() != total) {
             return;
         }
         const int fromStart = fromRow * hvSide;
@@ -265,37 +266,50 @@ void MosaicProcessor::postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<Surfa
             const int si = fromStart + k;
             const int di = toStart   + k;
             if (!qFuzzyIsNull(from[si][2])) {
+                const auto srcMark = mFrom[si];
+                if (!canOverwriteHeight(srcMark, mTo[di])) {
+                    continue;
+                }
                 to[di][2] = from[si][2];
-                mTo[di]   = HeightType::kMosaic;
+                mTo[di]   = srcMark;
             }
         }
     };
     auto copyCol = [&](QVector<QVector3D>& from,
-                       int fromCol, QVector<QVector3D>& to, QVector<HeightType>& mTo,
+                       const QVector<HeightType>& mFrom, int fromCol,
+                       QVector<QVector3D>& to, QVector<HeightType>& mTo,
                        int toCol, int hvSide)
     {
         const int total = from.size();
-        if (total == 0 || to.size() != total || mTo.size() != total) {
+        if (total == 0 || to.size() != total || mTo.size() != total || mFrom.size() != total) {
             return;
         }
         for (int k = 0; k < hvSide; ++k) {
             const int si = k * hvSide + fromCol;
             const int di = k * hvSide + toCol;
             if (!qFuzzyIsNull(from[si][2])) {
+                const auto srcMark = mFrom[si];
+                if (!canOverwriteHeight(srcMark, mTo[di])) {
+                    continue;
+                }
                 to[di][2] = from[si][2];
-                mTo[di]   = HeightType::kMosaic;
+                mTo[di]   = srcMark;
             }
         }
     };
-    auto copyCorner = [&](QVector<QVector3D>& from, int si,
+    auto copyCorner = [&](QVector<QVector3D>& from, const QVector<HeightType>& mFrom, int si,
                           QVector<QVector3D>& to,   QVector<HeightType>& mTo,   int di)
     {
-        if (si < 0 || si >= from.size() || di < 0 || di >= to.size() || di >= mTo.size()) {
+        if (si < 0 || si >= from.size() || si >= mFrom.size() || di < 0 || di >= to.size() || di >= mTo.size()) {
             return;
         }
         if (!qFuzzyIsNull(from[si][2])) {
+            const auto srcMark = mFrom[si];
+            if (!canOverwriteHeight(srcMark, mTo[di])) {
+                return;
+            }
             to[di][2] = from[si][2];
-            mTo[di]   = HeightType::kMosaic;
+            mTo[di]   = srcMark;
         }
     };
 
@@ -310,6 +324,7 @@ void MosaicProcessor::postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<Surfa
         }
 
         auto& vSrc = tile->getHeightVerticesRef();
+        auto& mSrc = tile->getHeightMarkVerticesRef();
         const int n = vSrc.size();
         const int hvSide = int(std::sqrt(double(n)));
         if (hvSide * hvSide != n || hvSide <= 1) {
@@ -329,7 +344,7 @@ void MosaicProcessor::postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<Surfa
             if (top && top->getIsInited()) {
                 auto& vTop = top->getHeightVerticesRef();
                 auto& mTop = top->getHeightMarkVerticesRef();
-                copyRow(vSrc,
+                copyRow(vSrc, mSrc,
                         /*fromRow=*/0, vTop, mTop,
                         /*toRow=*/hvSide - 1, hvSide);
                 top->setIsUpdated(true);
@@ -355,7 +370,7 @@ void MosaicProcessor::postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<Surfa
             if (left && left->getIsInited()) {
                 auto& vLeft = left->getHeightVerticesRef();
                 auto& mLeft = left->getHeightMarkVerticesRef();
-                copyCol(vSrc,
+                copyCol(vSrc, mSrc,
                         /*fromCol=*/0, vLeft, mLeft,
                         /*toCol=*/hvSide - 1, hvSide);
                 left->setIsUpdated(true);
@@ -384,7 +399,7 @@ void MosaicProcessor::postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<Surfa
             if (diag && diag->getIsInited()) {
                 auto& vD = diag->getHeightVerticesRef();
                 auto& mD = diag->getHeightMarkVerticesRef();
-                copyCorner(vSrc, TL, vD, mD, BR);
+                copyCorner(vSrc, mSrc, TL, vD, mD, BR);
                 diag->setIsUpdated(true);
                 changedOut.insert(diag);
             }

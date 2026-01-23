@@ -22,13 +22,6 @@ static constexpr int   defaultTileSidePixelSize     = 256;
 static constexpr int   defaultTileHeightMatrixRatio = 8;
 static constexpr float defaultTileResolution        = 1.0f / 10.f;
 
-enum class HeightType {
-    kUndefined = 0,
-    kExrtapolation,
-    kMosaic,
-    kTriangulation
-};
-
 class SurfaceTile {
 public:
     /*methods*/
