@@ -1,12 +1,14 @@
-import QtQuick 2.15
-import QtQuick.Layouts 1.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
 import QtQuick.Dialogs
+import Qt.labs.qmlmodels
 
 
 DevSettingsBox {
     id: control
-    isActive: dev ? (dev.isUSBLBeacon || dev.isUSBL): false
+    // isActive: dev ? (dev.isUSBLBeacon || dev.isUSBL): false
+    isActive: true
 
     // property bool isUSBL: dev ? (dev.isUSBL) ? true : false : false
     // property bool isBeacon: dev ? (dev.isUSBLBeacon) ? true : false : false
@@ -19,6 +21,125 @@ DevSettingsBox {
         Layout.margins: 10
         Layout.topMargin: 0
         Layout.bottomMargin: 0
+
+        Item {
+            id: root
+
+            // your default timeout for acousticPingRequest
+            property int pingTimeoutMs: 0
+
+            // 0 = beacon first, 1 = sensor first
+            property int _phase: 0
+
+            function _doPing(address, cmd) {
+                // Replace/adjust as needed:
+                dev.acousticPingRequest(address, cmd, pingTimeoutMs)
+            }
+
+            function _tryPingBeacon() : bool {
+                if (!beaconEnabled.checked)
+                    return false
+                _doPing(beaconAddress.value, beaconCmd.value)
+                return true
+            }
+
+            function _tryPingSensor() : bool {
+                if (!sensorEnabled.checked)
+                    return false
+                _doPing(sensorAddress.value, sensorCmd.value)
+                return true
+            }
+
+            Timer {
+                id: pingTimer
+                interval: 1800
+                repeat: true
+                running: true  // set false if you want a master enable switch
+
+                onTriggered: {
+                    // Interleaved: try current phase first, then the other.
+                    var sent = false
+
+                    if (root._phase === 0) {
+                        sent = root._tryPingBeacon()
+                        if (!sent) sent = root._tryPingSensor()
+                    } else {
+                        sent = root._tryPingSensor()
+                        if (!sent) sent = root._tryPingBeacon()
+                    }
+
+                    // advance phase regardless; this preserves "interleaving" intention
+                    root._phase = 1 - root._phase
+                }
+            }
+        }
+
+        RowLayout {
+            CCheck {
+                id: beaconEnabled
+                text: "Beacon"
+                checked: false
+            }
+
+            SpinBoxCustom {
+                id: beaconAddress
+                from: 0
+                to: 7
+                value: 0
+            }
+
+            SpinBoxCustom {
+                id: beaconCmd
+                from: 0
+                to: 7
+                value: 0
+            }
+        }
+
+        RowLayout {
+            CCheck {
+                id: sensorEnabled
+                text: "Sensor"
+                checked: false
+            }
+
+            SpinBoxCustom {
+                id: sensorAddress
+                from: 0
+                to: 7
+                value: 0
+            }
+
+            SpinBoxCustom {
+                id: sensorCmd
+                from: 0
+                to: 7
+                value: 0
+            }
+        }
+
+        RowLayout {
+            CTextField {
+                id:modemResponsePayload
+                implicitWidth: 300
+                text: "modem"
+            }
+
+            CText {
+                // how many bytes in modemResponsePayload
+                width: 20
+                text: modemResponsePayload.text.length + " bytes"
+            }
+
+            CheckButton {
+                id:setModemResponse
+                checkable: false
+                text: "Set Modem Response"
+                onClicked: {
+                }
+            }
+        }
+
 
         RowLayout {
             CheckButton {
@@ -65,10 +186,10 @@ DevSettingsBox {
 
             property int addr: 0xFF
 
-            function pingRequest(address = 0) {
+            function pingRequest(address = 0, cmd = 0) {
                 addr = address
                 var timeout = timerEnableButton.checked ? 0xFFFFFFFF : 0
-                dev.acousticPingRequest(address, timeout)
+                dev.acousticPingRequest(address, cmd, timeout)
             }
 
             CheckButton {
@@ -124,6 +245,8 @@ DevSettingsBox {
                 text: "8"
                 onClicked: { usblControl.pingRequest(8); }
             }
+
+
 
             CheckButton {
                 id: timerEnableButton

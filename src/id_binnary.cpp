@@ -1124,10 +1124,10 @@ Resp IDBinUsblControl::parsePayload(FrameParser& proto)
     return respOk;
 }
 
-void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address) {
+void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id) {
     ProtoBinOut ping_req;
     ping_req.create(SETTING, USBLPingRequest::getVer(), id(), m_address);
-    USBLPingRequest req = {timeout_us, address};
+    USBLPingRequest req = {timeout_us, address, cmd_id};
     ping_req.write<USBLPingRequest>(req);
     ping_req.end();
 
@@ -1152,4 +1152,20 @@ void IDBinUsblControl::setResponseAddressFilter(uint8_t address) {
     ping_resp_a.end();
 
     emit binFrameOut(ping_resp_a);
+}
+
+void IDBinUsblControl::setCmdSlotAsModemResponse(uint8_t cmd_id, QByteArray byte_array, int bit_length) {
+    USBLCmdSlotConfig cmd_slot = {};
+    cmd_slot.cmd_id = cmd_id;
+    cmd_slot.eventFilter = USBLCmdSlotConfig::EventFilter::EventOnResponse;
+    cmd_slot.bit_length = bit_length;
+
+    int byte_length = (bit_length + 7) / 8;
+
+    ProtoBinOut proto_cmd_slot;
+    proto_cmd_slot.create(SETTING, USBLCmdSlotConfig::getVer(), id(), m_address);
+    proto_cmd_slot.write<USBLCmdSlotConfig>(cmd_slot);
+    proto_cmd_slot.write((uint8_t*)(byte_array.constData()), byte_length);
+    proto_cmd_slot.end();
+    emit binFrameOut(proto_cmd_slot);
 }

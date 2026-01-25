@@ -1191,6 +1191,7 @@ public:
         uint32_t timeout_us = 0;
         // 1-8 are addresses, 0: promisc address, 0xFF: disabled address slot
         uint8_t address = 0;
+        uint8_t cmd_id = 0;
     } __attribute__((packed));
 
     // Regular addresses
@@ -1221,9 +1222,56 @@ public:
         uint8_t address = 0;
     } __attribute__((packed));
 
-    void pingRequest(uint32_t timeout_us, uint8_t address);
+    struct USBLCmdSlotConfig  {
+        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr Version getVer() { return v6; }
+
+        enum EventFilter : uint8_t {
+            EventOnRequest = 1,
+            EventOnResponse = 2,
+        } eventFilter = EventOnRequest;
+
+        enum Type : uint8_t {
+            PayloadContainer = 0,
+            PayloadRequest = 1,
+        } type = PayloadContainer;
+
+        enum Function : uint8_t {
+            FunctionDisabled = 0,
+            FunctionSilent = 1,
+            FunctionNothing = 2,
+            FunctionBitArray = 3,
+            FunctionLLGeoAzimuth = 4
+        } function = FunctionNothing;
+
+        enum CmdAction : uint8_t {
+            CmdActionRepeat = 0,
+            CmdActionUseNext = 1
+        } cmdAction = CmdActionRepeat;
+
+        enum AddressAction : uint8_t {
+            AddressActionRepeat = 0,
+            AddressActionUseNext = 1,
+        } addressAction = AddressActionRepeat;
+
+        enum EventAction : uint8_t {
+            EventActionSwap = 0,
+            EventActionSame = 1,
+        } eventAction = EventActionSwap;
+
+        uint32_t reserved1 = 0; //  must be 0
+
+        uint8_t cmd_id = 0;
+        uint8_t cmd_id_next = 0;
+        uint8_t address_next = 0;
+        uint8_t reserved2 = 0; //  must be 0
+        uint16_t bit_length = 0; // for the next bytes
+    } __attribute__((packed));
+
+    void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id);
     void setResponseTimeout(uint32_t timeout_us);
     void setResponseAddressFilter(uint8_t address);
+    void setCmdSlotAsModemResponse(uint8_t cmd_id, QByteArray byte_array, int bit_length);
 
 protected:
 

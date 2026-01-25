@@ -486,7 +486,7 @@ void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask)
         return;
     }
 
-    idUSBLControl->pingRequest(0xFFFFFFFF, 0xFF);
+    // idUSBLControl->pingRequest(0xFFFFFFFF, 0xFF);
 }
 
 void DevDriver::enableBeaconOnce(float timeout)
@@ -499,9 +499,9 @@ void DevDriver::enableBeaconOnce(float timeout)
     }
 }
 
-void DevDriver::acousticPingRequest(uint8_t address, uint32_t timeout_us) {
+void DevDriver::acousticPingRequest(uint8_t address, uint8_t cmd_id, uint32_t timeout_us) {
     if(!m_state.connect) return;
-    idUSBLControl->pingRequest(timeout_us, address);
+    idUSBLControl->pingRequest(timeout_us, address, cmd_id);
 }
 
 void DevDriver::acousticResponceFilter(uint8_t address) {

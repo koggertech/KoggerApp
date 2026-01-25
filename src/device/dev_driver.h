@@ -258,7 +258,7 @@ public slots:
     void askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask);
     void enableBeaconOnce(float timeout);
 
-    void acousticPingRequest(uint8_t address, uint32_t timeout_us = 0xFFFFFFFF);
+    void acousticPingRequest(uint8_t address, uint8_t cmd_id, uint32_t timeout_us = 0xFFFFFFFF);
     void acousticResponceFilter(uint8_t address);
     void acousticResponceTimeout(uint32_t timeout_us = 0xFFFFFFFF);
 
