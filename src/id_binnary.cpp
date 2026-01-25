@@ -1157,7 +1157,9 @@ void IDBinUsblControl::setResponseAddressFilter(uint8_t address) {
 void IDBinUsblControl::setCmdSlotAsModemResponse(uint8_t cmd_id, QByteArray byte_array, int bit_length) {
     USBLCmdSlotConfig cmd_slot = {};
     cmd_slot.cmd_id = cmd_id;
+    cmd_slot.type = USBLCmdSlotConfig::Type::PayloadRequest;
     cmd_slot.eventFilter = USBLCmdSlotConfig::EventFilter::EventOnResponse;
+    cmd_slot.function = USBLCmdSlotConfig::Function::FunctionBitArray;
     cmd_slot.bit_length = bit_length;
 
     int byte_length = (bit_length + 7) / 8;

@@ -114,29 +114,46 @@ DevSettingsBox {
                 id: sensorCmd
                 from: 0
                 to: 7
-                value: 0
+                value: 2
             }
         }
 
         RowLayout {
+            spacing: 10
+            SpinBoxCustom {
+                id: modemCmdSlot
+                implicitWidth: 90
+                from: 0
+                to: 7
+                value: 2
+            }
             CTextField {
                 id:modemResponsePayload
-                implicitWidth: 300
+                // implicitWidth: 260
+                Layout.fillWidth: true
                 text: "modem"
             }
 
             CText {
                 // how many bytes in modemResponsePayload
                 width: 20
-                text: modemResponsePayload.text.length + " bytes"
+                text: modemResponsePayload.text.length + " B"
             }
 
             CheckButton {
                 id:setModemResponse
                 checkable: false
-                text: "Set Modem Response"
+                text: "Set MSG"
                 onClicked: {
+                    dev.setCmdSlotAsModemResponse(modemCmdSlot.value, modemResponsePayload.text)
                 }
+            }
+        }
+
+        RowLayout {
+            CText {
+                width: 300
+                text: ""
             }
         }
 

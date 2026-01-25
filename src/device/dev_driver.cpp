@@ -514,6 +514,12 @@ void DevDriver::acousticResponceTimeout(uint32_t timeout_us) {
     idUSBLControl->setResponseTimeout(timeout_us);
 }
 
+void DevDriver::setCmdSlotAsModemResponse(uint8_t cmd_id, const QString& payload) {
+    if(!m_state.connect) return;
+    const QByteArray data = payload.toUtf8();
+    idUSBLControl->setCmdSlotAsModemResponse(cmd_id, data, data.size() * 8);
+}
+
 void DevDriver::doRequestAll()
 {
     if (idVersion) {

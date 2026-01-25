@@ -261,6 +261,7 @@ public slots:
     void acousticPingRequest(uint8_t address, uint8_t cmd_id, uint32_t timeout_us = 0xFFFFFFFF);
     void acousticResponceFilter(uint8_t address);
     void acousticResponceTimeout(uint32_t timeout_us = 0xFFFFFFFF);
+    void setCmdSlotAsModemResponse(uint8_t cmd_id, const QString& payload);
 
 #ifdef SEPARATE_READING
     Q_INVOKABLE void initProcessTimerConnects();
