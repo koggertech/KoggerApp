@@ -54,6 +54,7 @@ DevDriver::DevDriver(QObject *parent)
     regID(idDVLMode = new IDBinDVLMode(), &DevDriver::receivedDVLMode);
 
     regID(idUSBL = new IDBinUsblSolution(), &DevDriver::receivedUSBL);
+    regID(idModemSolution = new IDBinModemSolution(), &DevDriver::receivedModemSolution);
 
     regID(idUSBLControl = new IDBinUsblControl(), &DevDriver::receivedUSBLControl);
 
@@ -185,6 +186,10 @@ QList<QTimer *> DevDriver::getChildTimers()
     if (idUSBL) {
         timers.append(idUSBL->getSetTimer());
         timers.append(idUSBL->getColdStartTimer());
+    }
+    if (idModemSolution) {
+        timers.append(idModemSolution->getSetTimer());
+        timers.append(idModemSolution->getColdStartTimer());
     }
 
     return timers;
@@ -478,6 +483,11 @@ QUuid DevDriver::getLinkUuid() const
     return linkUuid_;
 }
 
+QString DevDriver::modemLastPayload() const
+{
+    return QString::fromLatin1(modemLastPayload_);
+}
+
 void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask)
 {
     Q_UNUSED(ask)
@@ -518,6 +528,11 @@ void DevDriver::setCmdSlotAsModemResponse(uint8_t cmd_id, const QString& payload
     if(!m_state.connect) return;
     const QByteArray data = payload.toUtf8();
     idUSBLControl->setCmdSlotAsModemResponse(cmd_id, data, data.size() * 8);
+}
+
+void DevDriver::setCmdSlotAsModemReceiver(uint8_t cmd_id, int byte_length) {
+    if(!m_state.connect) return;
+    idUSBLControl->setCmdSlotAsModemReceiver(cmd_id, byte_length * 8);
 }
 
 void DevDriver::doRequestAll()
@@ -598,6 +613,9 @@ void DevDriver::initChildsTimersConnects()
     }
     if (idUSBL) {
         idUSBL->initTimersConnects();
+    }
+    if (idModemSolution) {
+        idModemSolution->initTimersConnects();
     }
 }
 #endif
@@ -1523,6 +1541,16 @@ void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::
         }
     }
 
+}
+
+void DevDriver::receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
+{
+    Q_UNUSED(type);
+
+    if (resp == respNone && ver == Parsers::v0) {
+        modemLastPayload_ = idModemSolution->payload();
+        emit modemSolutionChanged();
+    }
 }
 
 void DevDriver::receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)

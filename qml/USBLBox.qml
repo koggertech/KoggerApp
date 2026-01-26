@@ -7,8 +7,8 @@ import Qt.labs.qmlmodels
 
 DevSettingsBox {
     id: control
-    // isActive: dev ? (dev.isUSBLBeacon || dev.isUSBL): false
-    isActive: true
+    isActive: dev ? (dev.isUSBLBeacon || dev.isUSBL): false
+    // isActive: true
 
     // property bool isUSBL: dev ? (dev.isUSBL) ? true : false : false
     // property bool isBeacon: dev ? (dev.isUSBLBeacon) ? true : false : false
@@ -129,8 +129,8 @@ DevSettingsBox {
             }
             CTextField {
                 id:modemResponsePayload
-                // implicitWidth: 260
-                Layout.fillWidth: true
+                implicitWidth: 260
+                // Layout.fillWidth: true
                 text: "modem"
             }
 
@@ -153,7 +153,49 @@ DevSettingsBox {
         RowLayout {
             CText {
                 width: 300
-                text: ""
+                text: "Cmd"
+            }
+
+            SpinBoxCustom {
+                id: modemCmdReceiver
+                implicitWidth: 110
+                from: 0
+                to: 7
+                value: 2
+            }
+
+            CText {
+                width: 300
+                text: "Bytes"
+            }
+
+            SpinBoxCustom {
+                id: modemByteNumber
+                implicitWidth: 110
+                from: 0
+                to: 20
+                value: 12
+            }
+
+            CheckButton {
+                id:setModemReceiver
+                checkable: false
+                text: "Read"
+                onClicked: {
+                    dev.setCmdSlotAsModemReceiver(modemCmdReceiver.value, modemByteNumber.value)
+                }
+            }
+        }
+
+        RowLayout {
+            CText {
+                text: "Received:"
+            }
+
+            CText {
+                // id: receiveMsg
+                width: 300
+                text: dev ? dev.modemLastPayload : ""
             }
         }
 

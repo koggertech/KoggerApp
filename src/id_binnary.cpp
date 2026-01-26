@@ -1171,3 +1171,43 @@ void IDBinUsblControl::setCmdSlotAsModemResponse(uint8_t cmd_id, QByteArray byte
     proto_cmd_slot.end();
     emit binFrameOut(proto_cmd_slot);
 }
+
+void IDBinUsblControl::setCmdSlotAsModemReceiver(uint8_t cmd_id, int bit_length) {
+    USBLCmdSlotConfig cmd_slot = {};
+    cmd_slot.cmd_id = cmd_id;
+    cmd_slot.type = USBLCmdSlotConfig::Type::PayloadContainer;
+    cmd_slot.eventFilter = USBLCmdSlotConfig::EventFilter::EventOnRequest;
+    cmd_slot.function = USBLCmdSlotConfig::Function::FunctionBitArray;
+    cmd_slot.bit_length = bit_length;
+
+    ProtoBinOut proto_cmd_slot;
+    proto_cmd_slot.create(SETTING, USBLCmdSlotConfig::getVer(), id(), m_address);
+    proto_cmd_slot.write<USBLCmdSlotConfig>(cmd_slot);
+    proto_cmd_slot.end();
+    emit binFrameOut(proto_cmd_slot);
+}
+
+Resp IDBinModemSolution::parsePayload(FrameParser &proto) {
+    if (proto.ver() != v0) {
+        return respErrorVersion;
+    }
+
+    if (proto.readAvailable() < static_cast<int>(sizeof(ModemSolutionHeader))) {
+        return respErrorPayload;
+    }
+
+    header_ = proto.read<ModemSolutionHeader>();
+    const int byte_length = (header_.bit_length + 7) / 8;
+
+    if (proto.readAvailable() < byte_length) {
+        return respErrorPayload;
+    }
+
+    if (byte_length > 0) {
+        payload_ = QByteArray(reinterpret_cast<char*>(proto.read(byte_length)), byte_length);
+    } else {
+        payload_.clear();
+    }
+
+    return respOk;
+}

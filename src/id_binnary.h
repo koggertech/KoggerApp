@@ -1272,9 +1272,51 @@ public:
     void setResponseTimeout(uint32_t timeout_us);
     void setResponseAddressFilter(uint8_t address);
     void setCmdSlotAsModemResponse(uint8_t cmd_id, QByteArray byte_array, int bit_length);
+    void setCmdSlotAsModemReceiver(uint8_t cmd_id, int bit_length);
 
 protected:
 
+};
+
+class IDBinModemSolution : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinModemSolution() : IDBin() {
+    }
+
+    ID id() override { return ID_MODEM_SOLUTION; }
+    Resp  parsePayload(FrameParser &proto) override;
+
+    struct ModemSolutionHeader {
+        static constexpr ID getId() { return ID_MODEM_SOLUTION; }
+        static constexpr Version getVer() { return v0; }
+
+        int64_t timestamp_us = 0;
+        int64_t carrier_us = 0;
+        int64_t carrier_counter = 0;
+
+        uint64_t reserved1 = 0;
+
+        enum EventFilter : uint8_t {
+            EventOnRequest = 1,
+            EventOnResponse = 2,
+        } event = EventOnRequest;
+
+        uint8_t address_from = 0;
+        uint8_t address_to = 0;
+        uint8_t cmd_id_from = 0;
+
+        uint16_t bit_length = 0;
+        // payload bytes follow
+    } __attribute__((packed));
+
+    ModemSolutionHeader header() const { return header_; }
+    QByteArray payload() const { return payload_; }
+
+protected:
+    ModemSolutionHeader header_;
+    QByteArray payload_;
 };
 
 

@@ -70,6 +70,7 @@ public:
     Q_PROPERTY(bool isSoundSpeedSupport READ isSoundSpeedSupport NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isAddressSupport READ isAddressSupport NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isUpgradeSupport READ isUpgradeSupport NOTIFY deviceVersionChanged)
+    Q_PROPERTY(QString modemLastPayload READ modemLastPayload NOTIFY modemSolutionChanged)
 #endif
 
 };
