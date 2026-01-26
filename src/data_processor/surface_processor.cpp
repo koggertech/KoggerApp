@@ -167,6 +167,9 @@ void SurfaceProcessor::ensureTilesInitedBatch(const QHash<TileKey, SurfaceTile*>
         return;
     }
 
+    QSet<SurfaceTile*> initedNow;
+    initedNow.reserve(tiles.size());
+
     auto applyTile = [&](SurfaceTile* tile, const SurfaceTile& src) {
         if (!tile) {
             return;
@@ -201,6 +204,7 @@ void SurfaceProcessor::ensureTilesInitedBatch(const QHash<TileKey, SurfaceTile*>
 
         tile->updateHeightIndices();
         tile->setIsUpdated(false);
+        initedNow.insert(tile);
     };
 
     if (!dataProcessor_) {
@@ -208,7 +212,11 @@ void SurfaceProcessor::ensureTilesInitedBatch(const QHash<TileKey, SurfaceTile*>
             SurfaceTile* tile = it.value();
             if (tile && !tile->getIsInited()) {
                 tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
+                initedNow.insert(tile);
             }
+        }
+        if (!initedNow.isEmpty()) {
+            surfaceMeshPtr_->setTileUsed(initedNow, false);
         }
         return;
     }
@@ -298,6 +306,11 @@ void SurfaceProcessor::ensureTilesInitedBatch(const QHash<TileKey, SurfaceTile*>
             continue;
         }
         tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
+        initedNow.insert(tile);
+    }
+
+    if (!initedNow.isEmpty()) {
+        surfaceMeshPtr_->setTileUsed(initedNow, false);
     }
 }
 
@@ -687,6 +700,40 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         return;
     }
 
+    auto postTiles = [&](const QSet<SurfaceTile*>& tiles) {
+        if (!dataProcessor_ || tiles.isEmpty()) {
+            return;
+        }
+
+        TileMap res;
+        res.reserve(tiles.size());
+        for (SurfaceTile* t : tiles) {
+            if (!t || !t->getIsInited()) {
+                continue;
+            }
+            res.insert(t->getKey(), *t);
+        }
+
+        if (!res.isEmpty()) {
+            QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, false));
+        }
+    };
+
+    auto finalizeTiles = [&](QSet<SurfaceTile*>& tiles) {
+        if (tiles.isEmpty()) {
+            return;
+        }
+
+        propagateBorderHeights(tiles);
+        for (SurfaceTile* t : std::as_const(tiles)) {
+            t->updateHeightIndices();
+            t->setIsUpdated(false);
+        }
+
+        postTiles(tiles);
+        surfaceMeshPtr_->setTileUsed(tiles, true);
+    };
+
     float lastMinZ = minZ_;
     float lastMaxZ = maxZ_;
     for (int triIdx : std::as_const(updsTrIndx)) { // трассировака треугольников в меш
@@ -720,7 +767,9 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
             }
         }
 
-        writeTriangleToMesh(pts[0], pts[1], pts[2], changedTiles);
+        QSet<SurfaceTile*> triTiles;
+        writeTriangleToMesh(pts[0], pts[1], pts[2], triTiles);
+        finalizeTiles(triTiles);
 
         minZ_ = std::min(static_cast<double>(minZ_), std::min({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
         maxZ_ = std::max(static_cast<double>(maxZ_), std::max({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
@@ -742,11 +791,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         }
     }
 
-    propagateBorderHeights(changedTiles);
-    for (SurfaceTile* t : std::as_const(changedTiles)) {
-        t->updateHeightIndices();
-        t->setIsUpdated(false);
-    }
+    finalizeTiles(changedTiles);
 
     if (beenManualChanged) {
         float currMin = std::numeric_limits<float>::max();
@@ -773,13 +818,6 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         QMetaObject::invokeMethod(dataProcessor_, "postMaxZ", Qt::QueuedConnection, Q_ARG(float, maxZ_));
     }
 
-    TileMap res;
-    res.reserve(changedTiles.size());
-    for (auto it = changedTiles.cbegin(); it != changedTiles.cend(); ++it) {
-        res.insert((*it)->getKey(), (*(*it)));
-    }
-
-    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, false));
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
 
