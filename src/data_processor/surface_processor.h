@@ -44,6 +44,7 @@ public:
 private:
     void writeTriangleToMesh(const QVector3D& A, const QVector3D& B, const QVector3D& C, QSet<SurfaceTile*>& updatedTiles);
     void ensureTileInited(SurfaceTile* tile, int tileSidePix);
+    void ensureTilesInitedBatch(const QHash<TileKey, SurfaceTile*>& tiles, int tileSidePix);
     QVector<QVector3D> generateExpandedPalette(int totalColors) const;
     void updateTexture() const;
     void propagateBorderHeights(QSet<SurfaceTile*>& changedTiles);
