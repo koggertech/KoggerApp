@@ -39,6 +39,10 @@ public:
         return cancelRequested_.load() || suppressResults_.load()
             || QThread::currentThread()->isInterruptionRequested();
     }
+    inline bool isHardStopRequested() const noexcept {
+        return shuttingDown_.load() || suppressResults_.load()
+            || QThread::currentThread()->isInterruptionRequested();
+    }
     void onDbSaveTiles(const QHash<TileKey, SurfaceTile>& tiles);
     bool isDbReady() const noexcept;
 

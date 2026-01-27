@@ -188,7 +188,7 @@ void ComputeWorker::processBundle(const WorkBundle& wb)
 {
     //qDebug() << "ComputeWorker::processBundle: task" <<  wb.mosaicVec.size() ;
     // последовательно. cабы сами шлют сигналы наружу
-    if (!wb.surfaceVec.isEmpty() && !isCanceled()) {
+    if (!wb.surfaceVec.isEmpty()) { // && !isCanceled()
         surface_.onUpdatedBottomTrackData(wb.surfaceVec);
         surface_.rebuildColorIntervals();
     }

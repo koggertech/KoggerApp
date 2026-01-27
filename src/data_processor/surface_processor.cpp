@@ -860,6 +860,10 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
 
         const QVector3D& point = bTrData[itm.second];
         QVector2D dirVecPix;
+        if (canceled()) {
+            QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
+            return;
+        }
         const bool haveDir = dirForIndexPix(itm.second, dirVecPix);
         if (itm.first == '1') {
             paintTwoLinesManual(point, haveDir ? &dirVecPix : nullptr, changedTiles);
@@ -1589,5 +1593,5 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
 
 bool SurfaceProcessor::canceled() const noexcept
 {
-    return dataProcessor_ && dataProcessor_->isCancelRequested();
+    return dataProcessor_ && dataProcessor_->isHardStopRequested();
 }

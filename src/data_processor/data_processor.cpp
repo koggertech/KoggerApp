@@ -1829,6 +1829,8 @@ void DataProcessor::updateDataProcType()
 
 void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)
 {
+    return; // TODO: delete this
+
     if (shuttingDown_.load() || suppressResults_.load()) {
         dbReaderInWork_ = false;
         dbInWorkKeys_.clear();
