@@ -715,8 +715,25 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         }
 
         if (!res.isEmpty()) {
-            QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, false));
+            const auto connType = (dataProcessor_->thread() == QThread::currentThread())
+                                  ? Qt::DirectConnection
+                                  : Qt::BlockingQueuedConnection;
+            QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", connType, Q_ARG(TileMap, res), Q_ARG(bool, false));
         }
+    };
+
+    constexpr int kPostFlushThreshold = 64;
+    QSet<SurfaceTile*> pendingPostTiles;
+    pendingPostTiles.reserve(kPostFlushThreshold);
+
+    auto flushPendingTiles = [&]() {
+        if (pendingPostTiles.isEmpty()) {
+            return;
+        }
+
+        postTiles(pendingPostTiles);
+        surfaceMeshPtr_->setTileUsed(pendingPostTiles, true);
+        pendingPostTiles.clear();
     };
 
     auto finalizeTiles = [&](QSet<SurfaceTile*>& tiles) {
@@ -730,8 +747,12 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
             t->setIsUpdated(false);
         }
 
-        postTiles(tiles);
-        surfaceMeshPtr_->setTileUsed(tiles, true);
+        surfaceMeshPtr_->setTileUsed(tiles, false);
+        pendingPostTiles.unite(tiles);
+
+        if (pendingPostTiles.size() >= kPostFlushThreshold) {
+            flushPendingTiles();
+        }
     };
 
     float lastMinZ = minZ_;
@@ -792,6 +813,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     }
 
     finalizeTiles(changedTiles);
+    flushPendingTiles();
 
     if (beenManualChanged) {
         float currMin = std::numeric_limits<float>::max();
@@ -1090,6 +1112,32 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
     QVector3D Bp = surfaceMeshPtr_->convertPhToPixCoords(B);
     QVector3D Cp = surfaceMeshPtr_->convertPhToPixCoords(C);
 
+    const auto finite2 = [](const QVector3D& v) {
+        return std::isfinite(v.x()) && std::isfinite(v.y());
+    };
+    if (!finite2(Ap) || !finite2(Bp) || !finite2(Cp)) {
+        return;
+    }
+
+    const float triDenom = kmath::twiceArea(Ap, Bp, Cp);
+    if (qFuzzyIsNull(triDenom)) {
+        return;
+    }
+
+    const float maxEdgeMeters = std::max({ (A - B).length(), (B - C).length(), (C - A).length() });
+    if (std::isfinite(maxEdgeMeters) && maxEdgeMeters > edgeLimit_) {
+        return;
+    }
+
+    const float pad = float(stepPix);
+    const float minX = std::min({ Ap.x(), Bp.x(), Cp.x() });
+    const float maxX = std::max({ Ap.x(), Bp.x(), Cp.x() });
+    const float minY = std::min({ Ap.y(), Bp.y(), Cp.y() });
+    const float maxY = std::max({ Ap.y(), Bp.y(), Cp.y() });
+    if (maxX < -pad || minX > float(meshW - 1) + pad || maxY < -pad || minY > float(meshH - 1) + pad) {
+        return;
+    }
+
     int minPx = std::floor(std::min({ Ap.x(), Bp.x(), Cp.x() })) - stepPix; // описывающий прямоугольник с запасом stepPix (вершина на границе)
     int maxPx = std::ceil (std::max({ Ap.x(), Bp.x(), Cp.x() })) + stepPix;
     int minPy = std::floor(std::min({ Ap.y(), Bp.y(), Cp.y() })) - stepPix;
@@ -1220,6 +1268,17 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
 
     auto& matrix = surfaceMeshPtr_->getTileMatrixRef();
 
+    QVector<QPair<int, int>> seedTiles;
+    seedTiles.reserve(changedTiles.size());
+    for (int ty = 0; ty < tilesY; ++ty) {
+        for (int tx = 0; tx < tilesX; ++tx) {
+            SurfaceTile* t = matrix[ty][tx];
+            if (t && t->getIsUpdated() && changedTiles.contains(t)) {
+                seedTiles.append(qMakePair(ty, tx));
+            }
+        }
+    }
+
     auto copyRow = [&](SurfaceTile* src, SurfaceTile* dst, int rowFrom, int rowTo) {
         auto& vSrc = src->getHeightVerticesRef();
         auto& mSrc = src->getHeightMarkVerticesRef();
@@ -1258,51 +1317,54 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
         }
     };
 
-    for (int ty = 0; ty < tilesY; ++ty) {
-        for (int tx = 0; tx < tilesX; ++tx) {
-            SurfaceTile* t = matrix[ty][tx];
-            if (!t->getIsUpdated()) {
-                continue;
-            }
+    for (const auto& seed : std::as_const(seedTiles)) {
+        const int ty = seed.first;
+        const int tx = seed.second;
+        SurfaceTile* t = matrix[ty][tx];
+        if (!t || !t->getIsUpdated()) {
+            continue;
+        }
 
             if (ty + 1 < tilesY) { // вверх, строка 0 в последнюю верхнего тайла
                 SurfaceTile* top = matrix[ty + 1][tx];
-                ensureTileInited(top, tileSidePixelSize_);
-                copyRow(t, top, 0, hvSide - 1);
-                top->setIsUpdated(true);
-                changedTiles.insert(top);
+                if (top && top->getIsInited()) {
+                    copyRow(t, top, 0, hvSide - 1);
+                    top->setIsUpdated(true);
+                    changedTiles.insert(top);
+                }
             }
 
             if (tx > 0) { // влево, столбец 0 в правый столбец левого тайла
                 SurfaceTile* left = matrix[ty][tx - 1];
-                ensureTileInited(left, tileSidePixelSize_);
-                copyCol(t, left, 0, hvSide - 1);
-                left->setIsUpdated(true);
-                changedTiles.insert(left);
+                if (left && left->getIsInited()) {
+                    copyCol(t, left, 0, hvSide - 1);
+                    left->setIsUpdated(true);
+                    changedTiles.insert(left);
+                }
             }
 
             if (ty + 1 < tilesY && tx > 0) { // диагональный узел
                 SurfaceTile* topLeft = matrix[ty + 1][tx - 1];
-                ensureTileInited(topLeft, tileSidePixelSize_);
-                auto& vSrc = t->getHeightVerticesRef();
-                auto& vDst = topLeft->getHeightVerticesRef();
-                auto& mDst = topLeft->getHeightMarkVerticesRef();
-                auto& mSrc = t->getHeightMarkVerticesRef();
+                if (topLeft && topLeft->getIsInited()) {
+                    auto& vSrc = t->getHeightVerticesRef();
+                    auto& vDst = topLeft->getHeightVerticesRef();
+                    auto& mDst = topLeft->getHeightMarkVerticesRef();
+                    auto& mSrc = t->getHeightMarkVerticesRef();
 
-                const int srcTL = 0;
-                const int dstBR = hvSide * hvSide - 1;
-                if (!qFuzzyIsNull(vSrc[srcTL].z())) {
-                    const auto srcMark = mSrc[srcTL];
-                    if (!canOverwriteHeight(srcMark, mDst[dstBR])) {
-                        continue;
+                    const int srcTL = 0;
+                    const int dstBR = hvSide * hvSide - 1;
+                    if (!qFuzzyIsNull(vSrc[srcTL].z())) {
+                        const auto srcMark = mSrc[srcTL];
+                        if (!canOverwriteHeight(srcMark, mDst[dstBR])) {
+                            continue;
+                        }
+                        vDst[dstBR][2] = vSrc[srcTL][2];
+                        mDst[dstBR]    = srcMark;
+                        topLeft->setIsUpdated(true);
+                        changedTiles.insert(topLeft);
                     }
-                    vDst[dstBR][2] = vSrc[srcTL][2];
-                    mDst[dstBR]    = srcMark;
-                    topLeft->setIsUpdated(true);
-                    changedTiles.insert(topLeft);
                 }
             }
-        }
     }
 }
 
