@@ -289,7 +289,7 @@ void DataProcessor::onCameraMoved()
     //    updateIsobaths_ = false;
     //}
 
-    auto epTiles =  collectEpochsForTiles(lastDataZoomIndx_, lastVisTileKeys_);
+    QSet<int> visibleEpochs = collectEpochsForTilesSet(lastDataZoomIndx_, lastVisTileKeys_);
     int zoom = lastDataZoomIndx_;
     if (zoom <= 0) {
         zoom = zoomFromMpp(tileResolution_);
@@ -297,8 +297,7 @@ void DataProcessor::onCameraMoved()
     auto& processedSurface = surfaceTaskEpochIndxsByZoom_[zoom];
     auto& processedMosaic = mosaicTaskEpochIndxsByZoom_[zoom];
 
-    for (auto it = epTiles.cbegin(); it != epTiles.cend(); ++it) {
-        auto itm = (*it).first;
+    for (int itm : std::as_const(visibleEpochs)) {
         if (!processedSurface.contains(itm)) {
             pendingSurfaceIndxs_.insert(qMakePair('0', itm));
         }
@@ -1806,6 +1805,38 @@ QVector<QPair<int, QSet<TileKey>>> DataProcessor::collectEpochsForTiles(int zoom
     result.reserve(tilesByEpoch.size());
     for (auto it = tilesByEpoch.cbegin(); it != tilesByEpoch.cend(); ++it) {
         result.push_back(QPair<int, QSet<TileKey>>(it.key(), it.value()));
+    }
+
+    return result;
+}
+
+QSet<int> DataProcessor::collectEpochsForTilesSet(int zoom, const QSet<TileKey> &tiles) const
+{
+    int cZoom = zoom - 1;
+
+    QSet<int> result;
+    if (tiles.isEmpty()) {
+        return result;
+    }
+
+    if (cZoom < 0 || cZoom >= tileEpochIndxsByZoom_.size()) {
+        return result;
+    }
+
+    const auto& indexForZoom = tileEpochIndxsByZoom_.at(cZoom);
+    if (indexForZoom.isEmpty()) {
+        return result;
+    }
+
+    for (const TileKey& tk : tiles) {
+        auto it = indexForZoom.constFind(tk);
+        if (it == indexForZoom.cend()) {
+            continue;
+        }
+        const QVector<int>& epochList = it.value();
+        for (int epochIndx : epochList) {
+            result.insert(epochIndx);
+        }
     }
 
     return result;

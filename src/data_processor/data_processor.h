@@ -220,6 +220,7 @@ private:
 
     void enqueueSurfaceMissingForZoom(int zoom);
     QVector<QPair<int, QSet<TileKey>>> collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const;
+    QSet<int> collectEpochsForTilesSet(int zoom, const QSet<TileKey>& tiles) const;
     void updateDataProcType();
     void emitMosaicColorTable();
 
