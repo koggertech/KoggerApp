@@ -289,16 +289,18 @@ void DataProcessor::onCameraMoved()
     //    updateIsobaths_ = false;
     //}
 
-    QSet<int> visibleEpochs = collectEpochsForTilesSet(lastDataZoomIndx_, lastVisTileKeys_);
     int zoom = lastDataZoomIndx_;
     if (zoom <= 0) {
         zoom = zoomFromMpp(tileResolution_);
     }
+
+    QSet<int> visibleEpochs = collectEpochsForTilesSet(zoom, lastVisTileKeys_);
+
     auto& processedSurface = surfaceTaskEpochIndxsByZoom_[zoom];
     auto& processedMosaic = mosaicTaskEpochIndxsByZoom_[zoom];
 
     for (int itm : std::as_const(visibleEpochs)) {
-        if (!processedSurface.contains(itm)) {
+        if (!processedSurface.contains(itm) && vertIndxsFromBottomTrack_.contains(itm)) {
             pendingSurfaceIndxs_.insert(qMakePair('0', itm));
         }
         if (!processedMosaic.contains(itm)) {
