@@ -3,6 +3,9 @@
 #include <QtMath>
 #include <QDebug>
 #include <QThread>
+#include <functional>
+#include <limits>
+#include <queue>
 #include "data_processor.h"
 #include "data_processor_defs.h"
 #include "dataset.h"
@@ -115,9 +118,54 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
 
     // чанкование задачи
     const int kStep = 10;
+    const int kProgressStep = 100; // batch sending completed indxs
     QSet<int> usedEpochs;
     QSet<int> blockedEpochs;
+    QSet<int> reportedEpochs;
+    QSet<int> pendingUsedSet;
+    std::priority_queue<int, std::vector<int>, std::greater<int>> pendingUsedMin;
+    QVector<int> progressBatch;
+    progressBatch.reserve(kProgressStep * 2);
     QVector<int> chunk;
+
+    const int progressZoom = zoomFromMpp(tileResolution_);
+
+    auto emitProgress = [&](bool force) {
+        if (progressBatch.isEmpty()) {
+            return;
+        }
+        if (!force && progressBatch.size() < kProgressStep) {
+            return;
+        }
+        if (canceled()) {
+            return;
+        }
+
+        std::sort(progressBatch.begin(), progressBatch.end());
+        QMetaObject::invokeMethod(dataProcessor_, "onMosaicEpochsProcessed", Qt::QueuedConnection,
+                                  Q_ARG(QVector<int>, progressBatch),
+                                  Q_ARG(int, progressZoom));
+        for (int idx : std::as_const(progressBatch)) {
+            reportedEpochs.insert(idx);
+        }
+        progressBatch.clear();
+    };
+
+    auto drainSafeProgress = [&](int cutoff) {
+        while (!pendingUsedMin.empty() && pendingUsedMin.top() <= cutoff) {
+            const int idx = pendingUsedMin.top();
+            pendingUsedMin.pop();
+            if (!pendingUsedSet.contains(idx)) {
+                continue;
+            }
+            pendingUsedSet.remove(idx);
+            if (blockedEpochs.contains(idx) || reportedEpochs.contains(idx)) {
+                continue;
+            }
+            progressBatch.append(idx);
+        }
+        emitProgress(false);
+    };
 
     auto expandAndUpdate = [&]() {
         if (chunk.empty()) {
@@ -132,7 +180,23 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
             expandedChunk.push_back(itm);
         }
 
-        updateData(expandedChunk, usedEpochs, blockedEpochs);
+        QVector<int> newUsed;
+        QVector<int> newBlocked;
+        updateData(expandedChunk, usedEpochs, blockedEpochs, &newUsed, &newBlocked);
+
+        for (int idx : std::as_const(newBlocked)) {
+            pendingUsedSet.remove(idx);
+        }
+        for (int idx : std::as_const(newUsed)) {
+            if (blockedEpochs.contains(idx) || reportedEpochs.contains(idx)) {
+                continue;
+            }
+            if (pendingUsedSet.contains(idx)) {
+                continue;
+            }
+            pendingUsedSet.insert(idx);
+            pendingUsedMin.push(idx);
+        }
     };
 
     int prev = 0;
@@ -141,6 +205,7 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
         if (!chunk.isEmpty() && idx != prev + 1) {
             if (chunkHasNew) {
                 expandAndUpdate();
+                drainSafeProgress(prev - 3);
                 if (canceled()) {
                     break;
                 }
@@ -152,6 +217,7 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
         prev = idx;
         if (chunk.size() >= kStep) {
             expandAndUpdate();
+            drainSafeProgress(prev - 3);
             if (canceled()) {
                 break;
             }
@@ -163,6 +229,7 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     }
     if (!canceled() && chunkHasNew && !chunk.isEmpty()) {
         expandAndUpdate();
+        drainSafeProgress(prev - 3);
     }
 
     // TODO
@@ -173,8 +240,14 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     //     updateData(seg);
     // }
 
+    drainSafeProgress(std::numeric_limits<int>::max());
+    emitProgress(true);
+
     if (!blockedEpochs.isEmpty()) {
         usedEpochs.subtract(blockedEpochs);
+    }
+    if (!reportedEpochs.isEmpty()) {
+        usedEpochs.subtract(reportedEpochs);
     }
 
     if (!usedEpochs.isEmpty() && !canceled()) {
@@ -490,7 +563,8 @@ void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
     }
 }
 
-void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpochs, QSet<int>& blockedEpochs)
+void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpochs, QSet<int>& blockedEpochs,
+                                 QVector<int>* newUsed, QVector<int>* newBlocked)
 {
     //qDebug() << "MosaicProcessor::updateData"
     //         << "thread =" << QThread::currentThread()
@@ -932,12 +1006,29 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
                 break;
             }
         } // while interp line
+        auto addBlocked = [&](int idx) {
+            if (!blockedEpochs.contains(idx)) {
+                blockedEpochs.insert(idx);
+                if (newBlocked) {
+                    newBlocked->append(idx);
+                }
+            }
+        };
+        auto addUsed = [&](int idx) {
+            if (!usedEpochs.contains(idx)) {
+                usedEpochs.insert(idx);
+                if (newUsed) {
+                    newUsed->append(idx);
+                }
+            }
+        };
+
         if (pairOutOfFov) {
-            blockedEpochs.insert(pairEpochF);
-            blockedEpochs.insert(pairEpochS);
+            addBlocked(pairEpochF);
+            addBlocked(pairEpochS);
         } else if (pairUsed) {
-            usedEpochs.insert(pairEpochF);
-            usedEpochs.insert(pairEpochS);
+            addUsed(pairEpochF);
+            addUsed(pairEpochS);
         }
 
         if (!cancelPending && canceled()) {
