@@ -247,6 +247,9 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
 
     datasetPtr_->setState(Dataset::DatasetState::kFile);
     QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, true));
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setIsOpeningFile(true);
+    }
 
     emit deviceManagerWrapperPtr_->sendOpenFile(localfilePath);
 }
@@ -278,6 +281,9 @@ bool Core::closeLogFile(bool onOpen)
             linkManagerWrapperPtr_->openClosedLinks();
             QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
             QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+            if (scene3dViewPtr_) {
+                scene3dViewPtr_->setIsOpeningFile(false);
+            }
         }
 
         return true;
@@ -302,6 +308,9 @@ void Core::onFileOpened()
     qDebug() << "file opened!";
     QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
     QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setIsOpeningFile(false);
+    }
 
     tryOpenedfilePath_.clear();
     fileIsCompleteOpened_ = true;
@@ -336,6 +345,9 @@ void Core::onFileOpenBreaked(bool onOpen)
     QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
     QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
     QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setIsOpeningFile(false);
+    }
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
@@ -384,6 +396,9 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
         }
 
         QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, true));
+        if (scene3dViewPtr_) {
+            scene3dViewPtr_->setIsOpeningFile(true);
+        }
 
         QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
 
@@ -402,6 +417,9 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                 onFileStopsOpening();
 
                 QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+                if (scene3dViewPtr_) {
+                    scene3dViewPtr_->setIsOpeningFile(false);
+                }
 
                 return;
             }
@@ -472,6 +490,9 @@ void Core::onFileOpened()
 
     QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
     QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setIsOpeningFile(false);
+    }
 }
 #endif
 

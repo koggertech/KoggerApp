@@ -1689,7 +1689,7 @@
         <translation type="vanished">Boost: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1587"/>
+        <location filename="../src/core.cpp" line="1608"/>
         <source>File</source>
         <translation>File</translation>
     </message>
@@ -2135,58 +2135,63 @@
         <translation>Pokaż jakość powierzchni</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="134"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="108"/>
+        <source>Force zoom</source>
+        <translation>Stały zoom</translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="189"/>
         <source>Sync echogram</source>
         <translation>Zsynchronizowane echogramy</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="191"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="246"/>
         <source>Grid</source>
         <translation>Siatka</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="222"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="277"/>
         <source>Circle</source>
         <translation>Okólnik</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="249"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="304"/>
         <source>Labels</source>
         <translation>Tagi</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="271"/>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="418"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="326"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="473"/>
         <source>Size:</source>
         <translation>Rozmiar:</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="274"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="329"/>
         <source>Step:</source>
         <translation>Krok:</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="277"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="332"/>
         <source>Angle:</source>
         <translation>Narożnik:</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="361"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="416"/>
         <source>Boat</source>
         <translation>Łódź</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="390"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="445"/>
         <source>Compass</source>
         <translation>Kompas</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="415"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="470"/>
         <source>Pos:</source>
         <translation>Pozycja:</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="480"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="535"/>
         <source>Map</source>
         <translation>Mapa</translation>
     </message>
@@ -2203,7 +2208,7 @@
         <translation type="vanished">Śledź ostatnią lokalizację</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="107"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="162"/>
         <source>North mode</source>
         <translation>Tryb północny</translation>
     </message>

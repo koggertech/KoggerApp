@@ -11,6 +11,10 @@ class Scene3dToolBarController : public QmlComponentController
     Q_OBJECT
 public:
     explicit Scene3dToolBarController(QObject *parent = nullptr);
+public slots:
+    void setQmlEngine(QObject* engine) override;
+
+public:
     Q_INVOKABLE void onFitAllInViewButtonClicked();
     Q_INVOKABLE void onSetCameraIsometricViewButtonClicked();
     Q_INVOKABLE void onSetCameraMapViewButtonClicked();
@@ -30,6 +34,8 @@ public:
     Q_INVOKABLE void onPlaneGridCircleGridStepChanged(int val);
     Q_INVOKABLE void onPlaneGridCircleGridAngleChanged(int val);
     Q_INVOKABLE void onPlaneGridCircleGridLabelsChanged(bool state);
+    Q_INVOKABLE void onForceSingleZoomCheckedChanged(bool state);
+    Q_INVOKABLE void onForceSingleZoomValueChanged(int zoom);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
@@ -37,8 +43,12 @@ public:
 protected:
     virtual void findComponent() override;
 
+private slots:
+    void onForceSingleZoomAutoStateChanged(bool active);
+
 private:
     void tryInitPendingLambda();
+    void syncForceSingleZoomUi(bool enabled, int zoom);
 
     DataProcessor* dataProcessorPtr_ = nullptr;
     GraphicsScene3dView* graphicsScene3dViewPtr_;
@@ -58,6 +68,9 @@ private:
     int planeGridCircleStep_;
     int planeGridCircleAngle_;
     bool planeGridCircleLabels_;
+    bool forceSingleZoomEnabled_;
+    int forceSingleZoomValue_;
+    bool suppressForceSingleZoomUiCallback_;
 };
 
 #endif // SCENE3DTOOLBARCONTROLLER_H

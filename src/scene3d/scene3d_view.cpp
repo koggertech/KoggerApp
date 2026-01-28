@@ -2,15 +2,57 @@
 #include <cmath>
 #include <memory.h>
 #include <math.h>
+#include <algorithm>
 #include <QOpenGLFramebufferObject>
 #include <QVector3D>
 #include "scene3d_renderer.h"
 #include "dataset.h"
 #include "map_defs.h"
 #include "data_processor_defs.h"
+#include "data_processor.h"
 
 #include "core.h"
 extern Core core;
+
+namespace {
+struct ZoomDistanceRange {
+    float min;
+    float max;
+};
+
+static inline ZoomDistanceRange zoomDistanceRangeFor(int zoom)
+{
+    constexpr float kZoom2Max = 80.0f;
+    constexpr float kZoom3Max = 200.0f;
+    constexpr float kZoom4Max = 400.0f;
+    constexpr float kZoom5Max = 800.0f;
+
+    if (zoom <= 2) {
+        return {0.0f, kZoom2Max};
+    }
+    if (zoom == 3) {
+        return {kZoom2Max, kZoom3Max};
+    }
+    if (zoom == 4) {
+        return {kZoom3Max, kZoom4Max};
+    }
+    if (zoom == 5) {
+        return {kZoom4Max, kZoom5Max};
+    }
+
+    float minDist = kZoom5Max;
+    if (zoom > 6) {
+        minDist *= std::pow(2.0f, static_cast<float>(zoom - 6));
+    }
+    float maxDist = minDist * 2.0f;
+    return {minDist, maxDist};
+}
+
+static inline float zoomDistanceMid(const ZoomDistanceRange& range)
+{
+    return range.min + (range.max - range.min) * 0.5f;
+}
+} // namespace
 
 
 GraphicsScene3dView::GraphicsScene3dView() :
@@ -533,6 +575,54 @@ void GraphicsScene3dView::setPlaneGridCircleLabels(bool state)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setForceSingleZoomEnabled(bool state)
+{
+    if (forceSingleZoomEnabled_ == state) {
+        return;
+    }
+
+    forceSingleZoomEnabled_ = state;
+    if (forceSingleZoomEnabled_) {
+        forceSingleZoomSnapPending_ = true;
+    }
+    onCameraMoved();
+}
+
+void GraphicsScene3dView::setForceSingleZoomValue(int zoom)
+{
+    if (zoom <= 0 || forceSingleZoomValue_ == zoom) {
+        return;
+    }
+
+    forceSingleZoomValue_ = zoom;
+    forceSingleZoomSnapPending_ = true;
+    onCameraMoved();
+}
+
+void GraphicsScene3dView::updateForceSingleZoomAutoState()
+{
+#ifdef SEPARATE_READING
+    const bool active = isOpeningFile_;
+#else
+    const bool active = datasetState_ == static_cast<int>(Dataset::DatasetState::kConnection);
+#endif
+    if (forceSingleZoomAutoActive_ == active) {
+        return;
+    }
+
+    forceSingleZoomAutoActive_ = active;
+    if (forceSingleZoomAutoActive_) {
+        forceSingleZoomEnabled_ = true;
+        forceSingleZoomValue_ = 5;
+        forceSingleZoomSnapPending_ = true;
+    }
+    else {
+        forceSingleZoomEnabled_ = false;
+    }
+
+    emit forceSingleZoomAutoStateChanged(forceSingleZoomAutoActive_);
+}
+
 void GraphicsScene3dView::setActiveZeroing(bool state)
 {
     m_planeGrid->setActiveZeroing(state);
@@ -825,6 +915,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     }
 
     datasetPtr_ = dataset;
+    datasetState_ = static_cast<int>(datasetPtr_->getState());
 
     boatTrack_->setDatasetPtr(datasetPtr_);
     m_bottomTrack->setDatasetPtr(datasetPtr_);
@@ -849,6 +940,32 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                          forceUpdateDatasetLlaRef();
                          fitAllInView();
                      }, Qt::DirectConnection);
+
+    QObject::connect(datasetPtr_, &Dataset::datasetStateChanged,
+                     this,      &GraphicsScene3dView::onDatasetStateChanged,
+                     Qt::DirectConnection);
+
+    updateForceSingleZoomAutoState();
+}
+
+void GraphicsScene3dView::setIsOpeningFile(bool state)
+{
+    if (isOpeningFile_ == state) {
+        return;
+    }
+
+    isOpeningFile_ = state;
+    updateForceSingleZoomAutoState();
+}
+
+void GraphicsScene3dView::onDatasetStateChanged(int state)
+{
+    if (datasetState_ == state) {
+        return;
+    }
+
+    datasetState_ = state;
+    updateForceSingleZoomAutoState();
 }
 
 void GraphicsScene3dView::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
@@ -1008,11 +1125,40 @@ std::tuple<float, float, float, float> GraphicsScene3dView::getFieldViewDim() co
 
 void GraphicsScene3dView::onCameraMoved()
 {
+    const bool forceSingleZoom = forceSingleZoomEnabled_;
+    int forcedZoom = forceSingleZoomValue_;
+    if (forceSingleZoom) {
+        if (auto mip = core.getMosaicIndexProviderPtr()) {
+            const int minZoom = mip->getMaxZoom();
+            const int maxZoom = mip->getMinZoom();
+            if (forcedZoom < minZoom) forcedZoom = minZoom;
+            if (forcedZoom > maxZoom) forcedZoom = maxZoom;
+        }
+
+        const auto range = zoomDistanceRangeFor(forcedZoom);
+        const float dist = m_camera->distForMapView();
+        const bool needSnap = forceSingleZoomSnapPending_ || !forceSingleZoomWasActive_;
+        if (needSnap) {
+            m_camera->setDistance(zoomDistanceMid(range));
+            forceSingleZoomSnapPending_ = false;
+        }
+        else if (dist < range.min || dist > range.max) {
+            m_camera->setDistance(std::clamp(dist, range.min, range.max));
+        }
+    }
+    else {
+        forceSingleZoomSnapPending_ = false;
+    }
+    forceSingleZoomWasActive_ = forceSingleZoom;
+
     updateProjection();
 
     int currZoom = pickZoomByDistance(m_camera->distForMapView());
 
     //currZoom = 2; // 1 - best, 7 (test)
+    if (forceSingleZoom) {
+        currZoom = forcedZoom;
+    }
 
     if (currZoom != dataZoomIndx_) {
         qDebug() << "           CHANGED ZOOM" << currZoom;

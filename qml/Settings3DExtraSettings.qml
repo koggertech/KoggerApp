@@ -97,6 +97,61 @@ MenuFrame {
             }
         }
 
+        RowLayout {
+            CheckButton {
+                id: forceSingleZoomCheckButton
+                objectName: "forceSingleZoomCheckButton"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checked: true
+                text: qsTr("Force zoom")
+                Layout.fillWidth: true
+
+                onToggled: {
+                    Scene3dToolBarController.onForceSingleZoomCheckedChanged(checked)
+                }
+
+                onFocusChanged: {
+                    settings3DSettings.focus = true
+                }
+
+                Component.onCompleted: {
+                    Scene3dToolBarController.onForceSingleZoomCheckedChanged(checked)
+                }
+
+                Settings {
+                    property alias forceSingleZoomCheckButton: forceSingleZoomCheckButton.checked
+                }
+            }
+
+            SpinBoxCustom {
+                id: forceSingleZoomSpinBox
+                objectName: "forceSingleZoomSpinBox"
+                from: 2
+                to: 6
+                stepSize: 1
+                value: 5
+                enabled: forceSingleZoomCheckButton.checked
+
+                onValueChanged: {
+                    Scene3dToolBarController.onForceSingleZoomValueChanged(value)
+                }
+
+                onFocusChanged: {
+                    settings3DSettings.focus = true
+                }
+
+                Component.onCompleted: {
+                    Scene3dToolBarController.onForceSingleZoomValueChanged(value)
+                }
+
+                Settings {
+                    property alias forceSingleZoomSpinBox: forceSingleZoomSpinBox.value
+                }
+            }
+        }
+
         CheckButton {
             id: isNorthViewButton
             objectName: "isNorthViewButton"

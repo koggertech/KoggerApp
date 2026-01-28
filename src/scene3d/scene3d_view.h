@@ -238,6 +238,8 @@ public:
     void setPlaneGridCircleStep(int val);
     void setPlaneGridCircleAngle(int val);
     void setPlaneGridCircleLabels(bool state);
+    void setForceSingleZoomEnabled(bool state);
+    void setForceSingleZoomValue(int zoom);
 
     void setActiveZeroing(bool state);
 
@@ -258,6 +260,8 @@ public Q_SLOTS:
     void setPolygonCreationMode();
     void setPolygonEditingMode();
     void setDataset(Dataset* dataset);
+    void setIsOpeningFile(bool state);
+    void onDatasetStateChanged(int state);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
     void setQmlRootObject(QObject* object);
@@ -283,12 +287,14 @@ signals:
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
     void sendCameraEpIndxs(const QVector<QPair<int, QSet<TileKey>>>& epIndxs);
     void sendVisibleTileKeys(int zoomIndx, const QSet<TileKey>& tileKeys);
+    void forceSingleZoomAutoStateChanged(bool active);
 
 private:
     void updateBounds();
     void updatePlaneGrid();
     void clearComboSelectionRect();
     void initAutoDistTimer();
+    void updateForceSingleZoomAutoState();
 
 private:
     friend class BottomTrack;
@@ -358,6 +364,13 @@ private:
 
     bool planeGridType_;
 
+    bool forceSingleZoomEnabled_ = true;
+    int forceSingleZoomValue_ = 5;
+    bool forceSingleZoomSnapPending_ = false;
+    bool forceSingleZoomWasActive_ = false;
+    bool forceSingleZoomAutoActive_ = false;
+    bool isOpeningFile_ = false;
+    int datasetState_ = -1;
 
     int dataZoomIndx_;
     bool cameraIsMoveUp_;
