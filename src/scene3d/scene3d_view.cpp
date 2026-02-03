@@ -601,6 +601,17 @@ void GraphicsScene3dView::setForceSingleZoomValue(int zoom)
 
 void GraphicsScene3dView::updateForceSingleZoomAutoState()
 {
+    if (!core.getNeedForceZooming()) {
+        const bool wasActive = forceSingleZoomAutoActive_;
+        forceSingleZoomAutoActive_ = false;
+        forceSingleZoomEnabled_ = false;
+        forceSingleZoomSnapPending_ = false;
+        forceSingleZoomWasActive_ = false;
+        if (wasActive) {
+            emit forceSingleZoomAutoStateChanged(false);
+        }
+        return;
+    }
 #ifdef SEPARATE_READING
     const bool active = isOpeningFile_;
 #else
@@ -993,6 +1004,12 @@ void GraphicsScene3dView::setQmlRootObject(QObject* object)
 void GraphicsScene3dView::setQmlAppEngine(QQmlApplicationEngine* engine)
 {
     Contacts::setQmlInstance(contacts_.get(), engine);
+
+    connect(&core,
+            &Core::needForceZoomingChanged,
+            this,
+            &GraphicsScene3dView::updateForceSingleZoomAutoState,
+            Qt::UniqueConnection);
 }
 
 void GraphicsScene3dView::updateBounds()
@@ -1125,7 +1142,7 @@ std::tuple<float, float, float, float> GraphicsScene3dView::getFieldViewDim() co
 
 void GraphicsScene3dView::onCameraMoved()
 {
-    const bool forceSingleZoom = forceSingleZoomEnabled_;
+    const bool forceSingleZoom = core.getNeedForceZooming() && forceSingleZoomEnabled_;
     int forcedZoom = forceSingleZoomValue_;
     if (forceSingleZoom) {
         if (auto mip = core.getMosaicIndexProviderPtr()) {

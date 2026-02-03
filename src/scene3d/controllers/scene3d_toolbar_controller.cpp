@@ -22,7 +22,7 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       planeGridCircleStep_(1),
       planeGridCircleAngle_(1),
       planeGridCircleLabels_(true),
-      forceSingleZoomEnabled_(true),
+      forceSingleZoomEnabled_(false),
       forceSingleZoomValue_(5),
       suppressForceSingleZoomUiCallback_(false)
 {}

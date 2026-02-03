@@ -780,6 +780,16 @@ void Core::setUseGPS(bool state)
     QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "setUseGPS", Qt::QueuedConnection, Q_ARG(bool, isUseGPS_));
 }
 
+void Core::setNeedForceZooming(bool state)
+{
+    if (needForceZooming_ == state) {
+        return;
+    }
+
+    needForceZooming_ = state;
+    emit needForceZoomingChanged();
+}
+
 bool Core::exportComplexToCSV(QString file_path) {
     QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     logger_.creatExportStream(file_path + "/" + export_file_name + ".csv");

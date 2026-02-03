@@ -97,14 +97,16 @@ MenuFrame {
             }
         }
 
-        RowLayout {
+        RowLayout { // forcing zoom
+            visible: core.needForceZooming
+
             CheckButton {
                 id: forceSingleZoomCheckButton
                 objectName: "forceSingleZoomCheckButton"
                 backColor: theme.controlBackColor
                 borderColor: theme.controlBackColor
                 checkedBorderColor: theme.controlBorderColor
-                checked: true
+                checked: false
                 text: qsTr("Force zoom")
                 Layout.fillWidth: true
 

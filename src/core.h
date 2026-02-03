@@ -60,6 +60,7 @@ public:
     Q_PROPERTY(QString           ch1Name                      READ getChannel1Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(QString           ch2Name                      READ getChannel2Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(int               dataProcessorState           READ getDataProcessorState           NOTIFY dataProcessorStateChanged)
+    Q_PROPERTY(bool              needForceZooming             READ getNeedForceZooming             WRITE setNeedForceZooming NOTIFY needForceZoomingChanged)
 
     MosaicIndexProvider* getMosaicIndexProviderPtr();
     void setEngine(QQmlApplicationEngine *engine);
@@ -118,6 +119,8 @@ public slots:
     bool getCsvLogging() const;
     void setCsvLogging(bool isLogging);
     bool getUseGPS() const;
+    bool getNeedForceZooming() const { return needForceZooming_; }
+    void setNeedForceZooming(bool state);
     void setUseGPS(bool state);
     bool exportComplexToCSV(QString filePath);
     bool exportUSBLToCSV(QString filePath);
@@ -155,6 +158,7 @@ signals:
     void sendIsFileOpening();
     void channelListUpdated();
     void dataProcessorStateChanged();
+    void needForceZoomingChanged();
     void isGPSAliveChanged();
     void loggingKlfChanged();
 
@@ -242,6 +246,7 @@ private:
 
     bool isGPSAlive_;
     bool isUseGPS_;
+    bool needForceZooming_ = false; // debug
 
     bool fixBlackStripesState_;
     int  fixBlackStripesForwardSteps_;
