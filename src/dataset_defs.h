@@ -72,6 +72,11 @@ struct ChannelId
         return uuidPart + "|" + addrPart;
     }
 
+    void clear() {
+        uuid = QUuid();
+        address = 0;
+    }
+
     bool operator==(const ChannelId& other) const
     {
         return uuid == other.uuid && address == other.address;
@@ -478,6 +483,14 @@ struct BottomTrackParam {
         float x = 0, y = 0, z = 0;
     } offset;
 };
+
+struct BottomTrackUpdate {
+    int       epochIndex = -1;
+    ChannelId channelId;
+    float     distance = NAN;
+};
+Q_DECLARE_METATYPE(BottomTrackUpdate)
+Q_DECLARE_METATYPE(QVector<BottomTrackUpdate>)
 
 typedef struct ComplexSignal {
     uint32_t globalOffset = 0;

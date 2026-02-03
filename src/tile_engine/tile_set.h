@@ -13,7 +13,6 @@
 
 namespace map {
 
-
 class TileSet : public QObject
 {
     Q_OBJECT
@@ -22,7 +21,7 @@ public:
 
     void onNewRequest(const QSet<TileIndex>& request, ZoomState zoomState, LLARef viewLlaRef, bool isPerspective, double minLon, double maxLon, bool moveUp);
     void onNewLlaRef(LLARef viewLlaRef);
-    void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
+    void setTextureIdByTileIndx(const TileIndex& tileIndx, GLuint textureId);
 
 signals:
     // TileDB
@@ -91,7 +90,6 @@ private:
 
     const int propagationLevel_ = 2;
 };
-
 
 } // namespace map
 

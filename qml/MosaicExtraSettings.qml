@@ -9,6 +9,9 @@ import QtCore
 MenuFrame {
     id: mosaicViewSettings
 
+    signal mosaicLAngleOffsetChanged(int val)
+    signal mosaicRAngleOffsetChanged(int val)
+
     property CheckButton mosaicViewCheckButton
 
     function updateMosaic() {
@@ -129,7 +132,7 @@ MenuFrame {
                         id: mosaicTheme
                         Layout.preferredWidth: 200
 
-                        model: [qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
+                        model: [qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green")]
                         currentIndex: 0
                         onCurrentIndexChanged: {
                             MosaicViewControlMenuController.onThemeChanged(currentIndex)
@@ -295,7 +298,9 @@ MenuFrame {
                             editable: false
 
                             onValueChanged: {
+                                mosaicViewSettings.mosaicLAngleOffsetChanged(value)
                                 MosaicViewControlMenuController.onSetLAngleOffset(value)
+                                dataset.onSetLAngleOffset(value);
                             }
 
                             onFocusChanged: {
@@ -303,7 +308,9 @@ MenuFrame {
                             }
 
                             Component.onCompleted: {
+                                mosaicViewSettings.mosaicLAngleOffsetChanged(value)
                                 MosaicViewControlMenuController.onSetLAngleOffset(value)
+                                dataset.onSetLAngleOffset(value);
                             }
 
                             Settings {
@@ -321,7 +328,9 @@ MenuFrame {
                             editable: false
 
                             onValueChanged: {
+                                mosaicViewSettings.mosaicRAngleOffsetChanged(value)
                                 MosaicViewControlMenuController.onSetRAngleOffset(value)
+                                dataset.onSetRAngleOffset(value);
                             }
 
                             onFocusChanged: {
@@ -329,7 +338,9 @@ MenuFrame {
                             }
 
                             Component.onCompleted: {
+                                mosaicViewSettings.mosaicRAngleOffsetChanged(value)
                                 MosaicViewControlMenuController.onSetRAngleOffset(value)
+                                dataset.onSetRAngleOffset(value);
                             }
 
                             Settings {
@@ -356,16 +367,17 @@ MenuFrame {
                         stepSize: 5
                         value: 10
                         editable: false
+                        enabled: false
 
                         onFocusChanged: {
                             mosaicViewSettings.focus = true
                         }
 
                         onValueChanged: {
-                            MosaicViewControlMenuController.onSetResolution(value)
+              //              MosaicViewControlMenuController.onSetResolution(value)
                         }
                         Component.onCompleted: {
-                            MosaicViewControlMenuController.onSetResolution(value)
+              //              MosaicViewControlMenuController.onSetResolution(value)
                         }
 
                         Settings {
@@ -373,6 +385,7 @@ MenuFrame {
                         }
                     }
                 }
+
             }
         }
     }

@@ -4,7 +4,7 @@ in vec2 vTexCoord;
 in float vHeight;
 
 uniform sampler2D indexedTexture;
-uniform sampler1D colorTable;
+uniform sampler2D colorTable;
 
 out vec4 fragColor;
 
@@ -16,6 +16,6 @@ void main()
         discard;
     }
     else {
-        fragColor = texture(colorTable, index);
+        fragColor = texture(colorTable, vec2(clamp(index, 0.0, 1.0), 0.5));
     }
 }

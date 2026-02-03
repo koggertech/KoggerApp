@@ -59,7 +59,7 @@ int Plot2DEchogram::getThemeId() const
 }
 
 void Plot2DEchogram::setThemeId(int theme_id) {
-    if (theme_id >= ClassicTheme && theme_id <= BWTheme) {
+    if (theme_id >= ClassicTheme && theme_id <= GreenTheme) {
         themeId_ = static_cast<ThemeId>(theme_id);
     }
     else {
@@ -73,8 +73,23 @@ void Plot2DEchogram::setThemeId(int theme_id) {
         coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(20, 5, 80), QColor::fromRgb(50, 180, 230), QColor::fromRgb(190, 240, 250), QColor::fromRgb(255, 255, 255)};
         levels = {0, 30, 130, 220, 255};
     } else if(theme_id == SepiaTheme) {
-        coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(50, 50, 10), QColor::fromRgb(230, 200, 100), QColor::fromRgb(255, 255, 220)};
+        coloros = { QColor::fromRgb(0,   0,   0),
+                    QColor::fromRgb(50,  50,  10),
+                    QColor::fromRgb(230, 200, 100),
+                    QColor::fromRgb(255, 255, 220) };
         levels = {0, 30, 130, 255};
+    } else if(theme_id == SepiaNewTheme) {
+        coloros = {
+            QColor::fromRgb(  0,   0,   0),
+            QColor::fromRgb( 28,  10,   0),
+            QColor::fromRgb( 55,  18,   0),
+            QColor::fromRgb( 95,  35,   0),
+            QColor::fromRgb(150,  70,  10),
+            QColor::fromRgb(210, 105,  15),
+            QColor::fromRgb(245, 175,  70),
+            QColor::fromRgb(255, 232, 160)
+        };
+        levels = { 0, 12, 26, 52, 92, 140, 200, 255 };
     }else if(theme_id == WRGBDTheme) {
         coloros = {
             QColor::fromRgb(0, 0, 0),
@@ -92,6 +107,42 @@ void Plot2DEchogram::setThemeId(int theme_id) {
     } else if(theme_id == BWTheme) {
         coloros = {QColor::fromRgb(230, 255, 255), QColor::fromRgb(70, 70, 70), QColor::fromRgb(0, 0, 0)};
         levels = {0, 150, 255};
+    } else if(theme_id == DeepBlueTheme) {
+        coloros = { QColor::fromRgb(0,   0,   40),
+                    QColor::fromRgb(20,  0,   120),
+                    QColor::fromRgb(40,  0,   200),
+                    QColor::fromRgb(0,   90,  255),
+                    QColor::fromRgb(0,   200, 255),
+                    QColor::fromRgb(0,   255, 200),
+                    QColor::fromRgb(0,   255, 80),
+                    QColor::fromRgb(220, 255, 0),
+                    QColor::fromRgb(255, 120, 0),
+                    QColor::fromRgb(255, 40,  40),
+                    QColor::fromRgb(255, 255, 255) };
+        levels = {0, 18, 36, 60, 90, 120, 150, 185, 210, 235, 255};
+    } else if(theme_id == IceTheme) {
+        coloros = { QColor::fromRgb(0,   0,   70),
+                    QColor::fromRgb(0,   40,  150),
+                    QColor::fromRgb(0,   100, 230),
+                    QColor::fromRgb(0,   180, 255),
+                    QColor::fromRgb(0,   240, 255),
+                    QColor::fromRgb(80,  255, 230),
+                    QColor::fromRgb(170, 255, 255),
+                    QColor::fromRgb(230, 255, 255),
+                    QColor::fromRgb(255, 255, 255) };
+        levels = {0, 30, 60, 95, 130, 170, 210, 235, 255};
+    } else if(theme_id == GreenTheme) {
+        coloros = { QColor::fromRgb(0,   0,   0),
+                    QColor::fromRgb(0,   50,  0),
+                    QColor::fromRgb(0,   100, 0),
+                    QColor::fromRgb(0,   160, 0),
+                    QColor::fromRgb(0,   220, 0),
+                    QColor::fromRgb(0,   255, 0),
+                    QColor::fromRgb(120, 255, 0),
+                    QColor::fromRgb(200, 255, 0),
+                    QColor::fromRgb(255, 255, 80),
+                    QColor::fromRgb(255, 255, 255) };
+        levels = {0, 20, 45, 70, 100, 130, 160, 190, 220, 255};
     }
 
     setColorScheme(coloros, levels);

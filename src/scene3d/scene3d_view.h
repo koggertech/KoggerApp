@@ -1,6 +1,7 @@
 #ifndef GRAPHICSSCENE3DVIEW_H
 #define GRAPHICSSCENE3DVIEW_H
 
+#include <array>
 #include <QQuickFramebufferObject>
 #include <QtMath>
 #include "coordinate_axes.h"
@@ -17,7 +18,7 @@
 #include "ray.h"
 #include "navigation_arrow.h"
 #include "usbl_view.h"
-#include "isobaths_view.h"
+//#include "isobaths_view.h"
 #include "data_processor.h"
 
 
@@ -27,6 +28,8 @@ class GraphicsScene3dView : public QQuickFramebufferObject
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(GraphicsScene3dView)
+    Q_PROPERTY(bool cameraPerspective READ cameraPerspective NOTIFY cameraPerspectiveChanged)
+    Q_PROPERTY(bool updateSurface READ updateSurface NOTIFY updateSurfaceChanged)
 
 public:
     //Camera
@@ -148,8 +151,8 @@ public:
         // maps
         void processMapTextures(GraphicsScene3dView* viewPtr) const;
         // mosaic on surface
-        void processMosaicColorTableTexture(GraphicsScene3dView* viewPtr) const;
-        void processMosaicTileTexture(GraphicsScene3dView* viewPtr) const;
+        void processMosaicColorTableTexture(QOpenGLFunctions* glFuncs, GraphicsScene3dView* viewPtr) const;
+        void processMosaicTileTexture      (QOpenGLFunctions* glFuncs, GraphicsScene3dView* viewPtr) const;
         // image
         void processImageTexture(GraphicsScene3dView* viewPtr) const;
         // surface
@@ -189,7 +192,7 @@ public:
     Renderer *createRenderer() const override;
     std::shared_ptr<BoatTrack> getBoatTrackPtr() const;
     std::shared_ptr<BottomTrack> bottomTrack() const;
-    std::shared_ptr<IsobathsView> getIsobathsViewPtr() const;
+    //std::shared_ptr<IsobathsView> getIsobathsViewPtr() const;
     std::shared_ptr<SurfaceView> getSurfaceViewPtr() const;
     std::shared_ptr<ImageView> getImageViewPtr() const;
     std::shared_ptr<MapView> getMapViewPtr() const;
@@ -201,9 +204,11 @@ public:
     std::weak_ptr <Camera> camera() const;
     float verticalScale() const;
     bool sceneBoundingBoxVisible() const;
+    bool cameraPerspective() const;
+    bool updateSurface() const;
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
-    QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
+    QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ) const;
     void updateProjection();
     void setNeedToResetStartPos(bool state);
     void forceUpdateDatasetLlaRef();
@@ -233,6 +238,8 @@ public:
     void setPlaneGridCircleStep(int val);
     void setPlaneGridCircleAngle(int val);
     void setPlaneGridCircleLabels(bool state);
+    void setForceSingleZoomEnabled(bool state);
+    void setForceSingleZoomValue(int zoom);
 
     void setActiveZeroing(bool state);
 
@@ -253,39 +260,54 @@ public Q_SLOTS:
     void setPolygonCreationMode();
     void setPolygonEditingMode();
     void setDataset(Dataset* dataset);
+    void setIsOpeningFile(bool state);
+    void onDatasetStateChanged(int state);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
     void setQmlRootObject(QObject* object);
     void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
+    void calcVisEpochIndxs();
     void updateViews();
+    void onCameraMoved();
 
     // from DataHorizon
     void onPositionAdded(uint64_t indx);
     void setIsNorth(bool state);
+    void setIsUpdateMosaic(bool state);
+    void setIsUpdateSurface(bool state);
 
 signals:
+    void cameraPerspectiveChanged(bool perspective);
+    void updateSurfaceChanged();
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
+    void sendDataRectRequest(float minX, float minY, float maxX, float maxY);
     void sendLlaRef(LLARef viewLlaRef);
-    void cameraIsMoved();
+    void sendDataZoom(int zoom);
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
+    void sendCameraEpIndxs(const QVector<QPair<int, QSet<TileKey>>>& epIndxs);
+    void sendVisibleTileKeys(int zoomIndx, const QSet<TileKey>& tileKeys);
+    void forceSingleZoomAutoStateChanged(bool active);
 
 private:
     void updateBounds();
     void updatePlaneGrid();
     void clearComboSelectionRect();
     void initAutoDistTimer();
+    void updateForceSingleZoomAutoState();
 
 private:
     friend class BottomTrack;
     friend class BoatTrack;
 
+    bool getViewQuadNed(std::array<QPointF, 4>* quad) const;
+    std::tuple<float, float, float, float> getFieldViewDim() const;
     std::shared_ptr<Camera> m_camera;
     std::shared_ptr<Camera> m_axesThumbnailCamera;
     QPointF m_startMousePos = {0.0f, 0.0f};
     QPointF m_lastMousePos = {0.0f, 0.0f};
     std::shared_ptr<RayCaster> m_rayCaster;
-    std::shared_ptr<IsobathsView> isobathsView_;
+    //std::shared_ptr<IsobathsView> isobathsView_;
     std::shared_ptr<SurfaceView> surfaceView_;
     std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<MapView> mapView_;
@@ -341,6 +363,25 @@ private:
     int compassSize_;
 
     bool planeGridType_;
+
+    bool forceSingleZoomEnabled_ = true;
+    int forceSingleZoomValue_ = 5;
+    bool forceSingleZoomSnapPending_ = false;
+    bool forceSingleZoomWasActive_ = false;
+    bool forceSingleZoomAutoActive_ = false;
+    bool isOpeningFile_ = false;
+    int datasetState_ = -1;
+
+    int dataZoomIndx_;
+    bool cameraIsMoveUp_;
+    float lastMinX_;
+    float lastMaxX_;
+    float lastMinY_;
+    float lastMaxY_;
+    QSet<TileKey> lastVisTileKeys_;
+
+    bool isUpdateMosaic_;
+    bool isUpdateSurface_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

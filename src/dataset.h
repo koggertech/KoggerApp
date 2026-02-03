@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <time.h>
 #include <QObject>
+#include <QMap>
+#include <QSet>
+#include <QPair>
 #include <QVector>
 #include <QVector3D>
 #include <QReadWriteLock>
@@ -155,7 +158,21 @@ public:
 
     int getLastBottomTrackEpoch() const;
 
-    float getLastYaw() {
+    float getLastArtificalYaw() const;
+    float getLastArtificaPitch() const;
+    float getLastArtificalRoll() const;
+
+    float tryRetLastValidYaw() const {
+        if (isfinite(_lastYaw)) {
+            return _lastYaw;
+        }
+        if (isfinite(lastAYaw_)) {
+            return lastAYaw_;
+        }
+        return NAN;
+    }
+
+    float getLastYaw() const {
         return _lastYaw;
     }
 
@@ -181,8 +198,13 @@ public:
 
     void setActiveContactIndx(int64_t indx);
     int64_t getActiveContactIndx() const;
+    void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
+    QMap<int, QSet<TileKey>> traceTileKeysForEpoch(int epochIndx) const;
 
 public slots:
+    Q_INVOKABLE void onSetLAngleOffset(float val);
+    Q_INVOKABLE void onSetRAngleOffset(float val);
+
     friend class DataProcessor;
     void onSonarPosCanCalc(uint64_t indx);
     bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1;  };
@@ -216,6 +238,7 @@ public slots:
     void addDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void addAtt(float yaw, float pitch, float roll);
     void addPosition(double lat, double lon, uint32_t unix_time = 0, int32_t nanosec = 0);
+    void addArtificalYaw();
     void addPositionRTK(Position position);
 
     void addDepth(float depth);
@@ -254,11 +277,10 @@ public slots:
 
     QStringList channelsNameList();
 
-
-    void interpolateData(bool fromStart);
-
     void onDistCompleted(int epIndx, const ChannelId& channelId, float dist);
+    void onDistCompletedBatch(const QVector<BottomTrackUpdate>& updates);
     void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
+    void onDimensionRectCanCalc(uint64_t indx);
 
 signals:
     // data horizon
@@ -266,6 +288,7 @@ signals:
     void positionAdded(uint64_t indx);
     void chartAdded(uint64_t indx); // without ChartId
     void attitudeAdded(uint64_t indx);
+    void artificalAttitudeAdded(uint64_t indx);
     void bottomTrackAdded(uint64_t indx);
     //void interpYaw(int epIndx);
     //void interpPos(int epIndx);
@@ -278,6 +301,9 @@ signals:
     void activeContactChanged();
     void lastDepthChanged();
     void speedChanged();
+    void datasetStateChanged(int state);
+
+    void sendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
 
 protected:
 
@@ -308,7 +334,8 @@ protected:
 
     QVector<Epoch> pool_;
 
-    float _lastYaw = 0, _lastPitch = 0, _lastRoll = 0;
+    float lastAYaw_ = NAN, lastAPitch_ = NAN, lastARoll_ = NAN;
+    float _lastYaw = NAN, _lastPitch = NAN, _lastRoll = NAN;
     float lastTemp_ = NAN;
 
     Epoch* addNewEpoch();
@@ -324,10 +351,14 @@ private:
     void updateEpochWithChart(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
     void setLastDepth(float val);
     void tryResetDataset(float lat, float lon);
+    void calcDimensionRects(uint64_t indx);
+    void appendTileEpochIndex(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
+    void clearTileEpochIndex();
 
     /*data*/
     mutable QReadWriteLock lock_;
     mutable QReadWriteLock poolMtx_;
+    mutable QReadWriteLock tileEpochIdxMtx_;
 
     LLARef _llaRef;
     LlaRefState llaRefState_ = LlaRefState::kUndefined;
@@ -353,4 +384,13 @@ private:
     float speed_                = 0.0f;
     QVector3D sonarOffset_;
     uint64_t sonarPosIndx_;
+
+    ChannelId mosaicFirstChId_;
+    ChannelId mosaicSecondChId_;
+    uint8_t mosaicFirstSubChId_;
+    uint8_t mosaicSecondSubChId_;
+    uint64_t lastDimRectindx_;
+    float lAngleOffset_;
+    float rAngleOffset_;
+    QVector<QHash<TileKey, QVector<int>>> tileEpochIndxsByZoom_;
 };

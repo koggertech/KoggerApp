@@ -1,6 +1,9 @@
 #pragma once
 
 #include <atomic>
+#include <list>
+#include <QHash>
+#include <QMutex>
 #include <QObject>
 #include <QTimer>
 #include <QSet>
@@ -8,35 +11,23 @@
 #include <QVector3D>
 #include <QPair>
 #include <QThread>
-#include <QUuid>
+#include <QWaitCondition>
+
 #include "dataset_defs.h"
+#include "draw_utils.h"
 #include "bottom_track_processor.h"
 #include "isobaths_processor.h"
 #include "mosaic_processor.h"
 #include "surface_processor.h"
+#include "mosaic_db.h"
+#include "mosaic_index_provider.h"
+#include "hot_tile_cache.h"
 
-
-enum class DataProcessorType {
-    kUndefined = 0,
-    kBottomTrack,
-    kIsobaths,
-    kMosaic,
-    kSurface
-};
-
-enum WorkFlag : quint32 {
-    WF_None     = 0,
-    WF_Surface  = 1u << 0,
-    WF_Mosaic   = 1u << 1,
-    WF_Isobaths = 1u << 2,
-    WF_All      = WF_Surface | WF_Mosaic | WF_Isobaths
-};
-Q_DECLARE_FLAGS(WorkSet, WorkFlag)
-Q_DECLARE_OPERATORS_FOR_FLAGS(WorkSet)
 
 class Dataset;
 class BottomTrack;
 class ComputeWorker;
+
 class DataProcessor : public QObject {
     Q_OBJECT
 public:
@@ -44,16 +35,34 @@ public:
     ~DataProcessor() override;
 
     void setDatasetPtr(Dataset* datasetPtr);
-    inline bool isCancelRequested() const noexcept { return cancelRequested_.load(); }
+    inline bool isCancelRequested() const noexcept {
+        return cancelRequested_.load() || suppressResults_.load()
+            || QThread::currentThread()->isInterruptionRequested();
+    }
+    inline bool isHardStopRequested() const noexcept {
+        return shuttingDown_.load() || suppressResults_.load()
+            || QThread::currentThread()->isInterruptionRequested();
+    }
+    void onDbSaveTiles(const QHash<TileKey, SurfaceTile>& tiles);
+    bool isDbReady() const noexcept;
 
 public slots:
     // this
     void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
+    void setSuppressResults(bool state) noexcept;
+    void prepareForFileClose(int timeoutMs);
     void clearProcessing(DataProcessorType = DataProcessorType::kUndefined);
+
+    // from 3d controller (visibility)
     void setUpdateBottomTrack (bool state);
+    void setUpdateSurface(bool state);
     void setUpdateIsobaths (bool state);
     void setUpdateMosaic (bool state);
+
     void setIsOpeningFile (bool state);
+    //
+    void onCameraMoved();
+
     // from DataHorizon
     void onChartsAdded(uint64_t indx); // external calling realtime
     void onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVector<int> &vertIndxs, bool manual);
@@ -81,13 +90,44 @@ public slots:
     void setMosaicLowLevel(float val);
     void setMosaicHighLevel(float val);
     void askColorTableForMosaic();
+    void onMosaicEpochsProcessed(const QVector<int>& indxs, int zoom);
 
     //
     void onIsobathsUpdated();
     void onMosaicUpdated();
     void requestCancel() noexcept;
 
+    // zoom
+    void onUpdateDataZoom(int zoom); // temp
+    void setFilePath(QString filePath);
+
+    void onSendDataRectRequest(float minX, float minY, float maxX, float maxY); // на движение камеры
+    void tryCalcTiles();
+
+    TileMap fetchFromHotCache(const QSet<TileKey>& keys, QSet<TileKey>* missing);
+
+    void requestTilesFromDB(const QSet<TileKey>& keys);
+    void filterNotFoundOut(const QSet<TileKey>& in, QSet<TileKey>* out);
+    quint64 prefetchProgressTick() const;
+    void prefetchWait(quint64 lastTick);
+    void shutdown(); // correct termination of processes
+
+    void onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
+    void onDatasetStateChanged(int state);
+
+private slots:
+    //db
+    void onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles);
+    void onDbTilesLoaded(const QList<DbTile>& dbTiles);
+    void onDbAnyTileForZoom(int zoom, bool exists);
+
 signals:
+    void sendTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd);
+    // db
+    void dbCheckAnyTileForZoom(int zoom);
+    void dbSaveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tilePx, int hmRatio);
+    void dbLoadTilesForKeys(const QSet<TileKey>& keys);
+
     // this
     void sendState(DataProcessorType state);
     void bottomTrackProcessingCleared();
@@ -97,6 +137,7 @@ signals:
     void allProcessingCleared();
     // BottomTrackProcessor
     void distCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
+    void distCompletedByProcessingBatch(const QVector<BottomTrackUpdate>& updates);
     void lastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
     // SurfaceProcessor
     void sendSurfaceMinZ(float minZ);
@@ -114,7 +155,11 @@ signals:
     void sendMosaicColorTable(const std::vector<uint8_t>& colorTable);
     void sendSurfaceTiles(const TileMap& tiles, bool useTextures);
 
+    void sendSurfaceTilesIncremental(const TileMap& upserts, const QSet<TileKey>& fullVisibleNow);
+
 private slots:
+    void postTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd);
+
     void runCoalescedWork();
     void startTimerIfNeeded();
     void onWorkerFinished(); // слот на сигнал ComputeWorker::jobFinished
@@ -123,9 +168,10 @@ private slots:
     void postState(DataProcessorType s);
     // BottomTrack
     void postDistCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
+    void postDistCompletedByProcessingBatch(const QVector<BottomTrackUpdate>& updates);
     void postLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
     // Surface/Mosaic
-    void postSurfaceTiles(const TileMap& tiles, bool useTextures);
+    void postSurfaceTiles(TileMap tiles, bool isMosaic);
     // Surface
     void postMinZ(float val);
     void postMaxZ(float val);
@@ -141,7 +187,12 @@ private slots:
     void onBottomTrackStarted();
     void onBottomTrackFinished();
 
+    // db
+    void onSendSavedKeys(QVector<TileKey> savedKeys);
+
 private:
+    void flushPendingDbKeys();
+
     // this
     void changeState(const DataProcessorType& state);
     void clearBottomTrackProcessing();
@@ -149,10 +200,29 @@ private:
     void clearMosaicProcessing();
     void clearSurfaceProcessing();
     void clearAllProcessings();
-    void scheduleLatest(WorkSet mask = WorkSet(WF_All),
-                        bool replace = false,
-                        bool clearUnrequestedPending = false) noexcept;
+    void scheduleLatest(WorkSet mask = WorkSet(WF_All), bool replace = false, bool clearUnrequestedPending = false) noexcept;
+    void openDB();
+    void closeDB();
+    void initMosaicIndexProvider();
     bool isCanStartCalculations() const;
+
+    void emitDelta(TileMap&& upserts, DataSource src);
+    void pumpVisible();
+    bool isValidZoomIndx(int zoomIndx) const;
+    void handleSurfaceZoomChangeIfReady(int zoom, const QSet<TileKey>& keys);
+
+    // not found LRU
+    inline void nfTouch(const TileKey& k);
+    inline void nfErase(const TileKey& k);
+
+    void notifyPrefetchProgress();
+    void clearDbNotFoundCache();
+
+    void enqueueSurfaceMissingForZoom(int zoom);
+    QVector<QPair<int, QSet<TileKey>>> collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const;
+    QSet<int> collectEpochsForTilesSet(int zoom, const QSet<TileKey>& tiles) const;
+    void updateDataProcType();
+    void emitMosaicColorTable();
 
 private:
     friend class SurfaceProcessor;
@@ -160,10 +230,14 @@ private:
     friend class IsobathsProcessor;
     friend class MosaicProcessor;
 
+    static constexpr int hotCacheMaxSize_    = 2048;
+    static constexpr int hotCacheMinSize_    = 1024;
+    static constexpr int dbNotFoundLimit_ = 4096;
+
     // this
+    MosaicIndexProvider mosaicIndexProvider_;
     Dataset* datasetPtr_;
     
-    // рабочая нить и воркер
     QThread computeThread_;
     ComputeWorker* worker_;
 
@@ -174,6 +248,7 @@ private:
     uint64_t positionCounter_;
     uint64_t attitudeCounter_;
     bool updateBottomTrack_;
+    bool updateSurface_;
     bool updateIsobaths_;
     bool updateMosaic_;
     bool isOpeningFile_;
@@ -181,19 +256,62 @@ private:
     int bottomTrackWindowCounter_;
     // MosaicProcessor
     int mosaicCounter_;
+    mosaic::PlotColorTable mosaicColorTable_;
     // Surface
     float tileResolution_;
-    QSet<int> epIndxsFromBottomTrack_;
+
+    // processing (scheduling/interrupt)
+    QSet<int>              epIndxsFromBottomTrack_;
     QSet<int> vertIndxsFromBottomTrack_;
     QSet<QPair<char, int>> pendingSurfaceIndxs_;
-    QSet<int> pendingMosaicIndxs_;
-    bool pendingIsobathsWork_;
-    QTimer pendingWorkTimer_;
+    QHash<int, QSet<int>>  surfaceTaskEpochIndxsByZoom_;
+    QHash<int, QSet<int>>  surfaceManualEpochIndxsByZoom_;
+    QHash<int, QSet<int>>  mosaicTaskEpochIndxsByZoom_;
+    bool                   surfaceEdgeLimitDirty_;
+    QSet<int>              surfaceEdgeLimitUpdatedZooms_;
+    bool                   bottomTrackFullRecalcPending_;
+    QSet<int>              pendingMosaicIndxs_;
+    QSet<int>              mosaicInFlightIndxs_;
+    bool                   pendingIsobathsWork_;
+    QTimer                 pendingWorkTimer_;
+    std::atomic_bool       cancelRequested_;
+    std::atomic_bool       shuttingDown_;
+    std::atomic_bool       suppressResults_;
+    std::atomic_bool       jobRunning_;
+    std::atomic_bool       nextRunPending_;
+    std::atomic<uint32_t>  requestedMask_;
+    bool                   btBusy_;
+    // hot cache/db
+    HotTileCache           hotCache_; // LRU
+    MosaicDB*              dbReader_;
+    bool                   dbReaderInWork_;
+    MosaicDB*              dbWriter_;
+    QThread                dbReadThread_;
+    QThread                dbWriteThread_;
+    QString                filePath_;
+    int                    engineVer_;
+    QRectF                 lastViewRect_;
+    bool                   surfaceZoomChangedPending_;
+    QSet<TileKey>          dbPendingKeys_;
+    QSet<TileKey>          dbInWorkKeys_;
+    QSet<TileKey>          renderedKeys_;
 
-    // отмена/планирование
-    std::atomic_bool cancelRequested_{false};
-    std::atomic_bool jobRunning_{false};
-    std::atomic_bool nextRunPending_{false};
-    std::atomic<uint32_t> requestedMask_{0};
-    bool btBusy_{false};
+    // not found LRU
+    QSet<TileKey>                                dbNotFoundIndxs_;
+    std::list<TileKey>                           dbNotFoundOrder_; // LRU: front - oldest
+    QHash<TileKey, std::list<TileKey>::iterator> dbNotFoundPos_;
+
+    // prefetch
+    std::atomic_bool     dbIsReady_;
+    QMutex               prefetchMu_;
+    QWaitCondition       prefetchCv_;
+    std::atomic<quint64> prefetchTick_;
+
+    QVector<QHash<TileKey, QVector<int>>> tileEpochIndxsByZoom_;
+
+    QSet<TileKey> lastVisTileKeys_;
+    int lastDataZoomIndx_;
+
+    int datasetState_ = -1;
+    bool defProcType_ = false;
 };

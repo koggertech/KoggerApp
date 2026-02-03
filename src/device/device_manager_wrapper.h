@@ -39,6 +39,14 @@ public:
     int                  pilotArmState  () { return getWorker()->pilotArmState();  }
     int                  pilotModeState () { return getWorker()->pilotModeState(); }
 
+    void initStreamList();
+
+
+
+public slots:
+    Q_INVOKABLE bool isCreatedId(int id) { return getWorker()->isCreatedId(id); };
+    void calcAverageChartLosses();
+
     bool getProtoBinConsoled() const { return protoBinConsoledState_; };
     void setProtoBinConsoled(bool state) {
         protoBinConsoledState_ = state;
@@ -51,15 +59,9 @@ public:
         getWorker()->setUSBLBeaconDirectAsk(USBLBeaconDirectAskState_);
     }
 
-    void initStreamList();
-
     int getAverageChartLosses() const {
         return averageChartLosses_;
     };
-
-public slots:
-    Q_INVOKABLE bool isCreatedId(int id) { return getWorker()->isCreatedId(id); };
-    void calcAverageChartLosses();
 
 signals:
     void sendOpenFile(QString path);

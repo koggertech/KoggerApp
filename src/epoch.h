@@ -3,10 +3,13 @@
 #include <math.h>
 #include <stdint.h>
 #include <time.h>
+#include <QMap>
 #include <QPixmap>
 #include <QRectF>
+#include <QSet>
 #include <QVector>
 
+#include "data_processor_defs.h"
 #include "dataset_defs.h"
 #include "id_binnary.h"
 
@@ -196,8 +199,10 @@ public:
     void setTime(int year, int month, int day, int hour, int min, int sec, int nanosec = 0);
 
     void setTemp(float temp_c);
+    void setArtificalAtt(float yaw, float pitch, float roll, DataType dataType = DataType::kRaw);
     void setAtt(float yaw, float pitch, float roll, DataType dataType = DataType::kRaw);
     DataType getAttDataType() const { return _attitude.dataType; };
+    DataType getArtificalAttDataType() const { return artificalAttitude_.dataType; };
 
     void setEncoders(float enc1, float enc2, float enc3);
     bool isEncodersSeted() { return _encoder.isSeted();}
@@ -390,6 +395,21 @@ public:
     bool temperatureAvail() { return flags.tempAvail; }
 
     bool isAttAvail() { return _attitude.isAvail(); }
+
+    float tryRetValidYaw() const {
+        if (std::isfinite(_attitude.yaw)) {
+            return _attitude.yaw;
+        }
+        if (std::isfinite(artificalAttitude_.yaw)) {
+            return artificalAttitude_.yaw;
+        }
+        return NAN;
+    }
+
+    float artificalYaw() const { return artificalAttitude_.yaw; }
+    float artificalPitch() const { return artificalAttitude_.pitch; }
+    float artificalRoll() const { return artificalAttitude_.roll; }
+
     float yaw() { return _attitude.yaw; }
     float pitch() { return _attitude.pitch; }
     float roll() { return _attitude.roll; }
@@ -573,6 +593,11 @@ public:
         }
         return 0;
     }
+
+    void setTraceTileIndxs(const QMap<int, QSet<TileKey>>& val);
+    QMap<int, QSet<TileKey>>& getTraceTileIndxsPtr();
+    QMap<int, QSet<TileKey>> traceTileIndxs() const;
+
 protected:
     QMap<ChannelId, QVector<Echogram>> charts_; // key - channelId, value - echograms for all addresses
     QMap<ChannelId, float> rangefinders_; // ???
@@ -583,7 +608,7 @@ protected:
 
     DateTime _time;
 
-    struct {
+    struct Attitude {
         float yaw = NAN, pitch = NAN, roll = NAN;
 
         DataType dataType;
@@ -591,7 +616,10 @@ protected:
         bool isAvail() {
             return isfinite(yaw) && isfinite(pitch) && isfinite(roll);
         }
-    } _attitude;
+    };
+
+    Attitude _attitude;
+    Attitude artificalAttitude_;
 
     ComplexSignals _complex;
 
@@ -646,4 +674,6 @@ protected:
 
     float depth_ = NAN;
 
+private:
+    QMap<int, QSet<TileKey>> tileKeysToNextEpochByZoom_;
 };

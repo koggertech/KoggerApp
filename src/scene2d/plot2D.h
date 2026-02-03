@@ -138,6 +138,9 @@ public:
     virtual void plotUpdate();
     virtual void sendSyncEvent(int epoch_index, QEvent::Type eventType);
 
+    void setMosaicLOffset(float val);
+    void setMosaicROffset(float val);
+
 protected:
     Canvas canvas_;
     DatasetCursor cursor_;
@@ -163,4 +166,6 @@ protected:
 
 private:
     bool isEnabled_;
+    float lAngleOffsetDeg_;
+    float rAngleOffsetDeg_;
 };

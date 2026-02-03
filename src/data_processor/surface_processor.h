@@ -4,12 +4,13 @@
 #include <QHash>
 #include <QPair>
 #include <QPointF>
-#include <QReadWriteLock>
+#include <QSet>
 #include <QVector>
 #include <QVector3D>
 #include "delaunay.h"
 #include "math_defs.h"
 #include "isobaths_defs.h"
+#include "surface_tile.h"
 
 
 class BottomTrack;
@@ -28,6 +29,8 @@ public:
     void setSurfaceMeshPtr(SurfaceMesh* surfaceMeshPtr);
     void onUpdatedBottomTrackData(const QVector<QPair<char, int>>& indxs); // работает по индексам кеша рендера трека дна!
     void setTileResolution(float tileResolution);
+    void rebuildAfterResolutionChange();
+    void restoreTilesFromCache(const TileMap& tiles);
     void setEdgeLimit(float val);
     void rebuildColorIntervals();
     void setSurfaceStepSize(float val);
@@ -40,6 +43,8 @@ public:
 
 private:
     void writeTriangleToMesh(const QVector3D& A, const QVector3D& B, const QVector3D& C, QSet<SurfaceTile*>& updatedTiles);
+    void ensureTileInited(SurfaceTile* tile, int tileSidePix);
+    void ensureTilesInitedBatch(const QHash<TileKey, SurfaceTile*>& tiles, int tileSidePix);
     QVector<QVector3D> generateExpandedPalette(int totalColors) const;
     void updateTexture() const;
     void propagateBorderHeights(QSet<SurfaceTile*>& changedTiles);
@@ -52,7 +57,6 @@ private:
     SurfaceMesh* surfaceMeshPtr_;
     delaunay::Delaunay delaunayProc_;
     kmath::MatrixParams lastMatParams_;
-    QReadWriteLock lock_;
     QHash<uint64_t, QVector<int>> pointToTris_;
     QHash<QPair<int,int>, QVector3D>  cellPoints_; // fir - virt indx, sec - indx in tr
     QHash<QPair<int,int>, int>  cellPointsInTri_;

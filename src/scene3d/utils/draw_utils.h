@@ -25,9 +25,13 @@ public:
         kUndefined,
         kClassic,
         kSepia,
+        kSepiaNew,
         kWRGBD,
         kWB,
-        kBW
+        kBW,
+        kDeepBlue,
+        kIce,
+        kGreen
     };
 
     /*methods*/

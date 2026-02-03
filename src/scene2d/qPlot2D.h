@@ -55,6 +55,7 @@ protected:
 signals:
     void timelinePositionChanged();
     void contactChanged();
+    void plotHorizontalChanged();
 
 protected slots:
     void timerUpdater();
@@ -73,7 +74,10 @@ public slots:
     Q_INVOKABLE bool setActiveContact(int indx);
     Q_INVOKABLE bool deleteContact(int indx);
     Q_INVOKABLE void updateContact();
+    void setPlotEnabled(bool state);
 
+    Q_INVOKABLE void mosaicLOffsetChanged(float val);
+    Q_INVOKABLE void mosaicROffsetChanged(float val);
 
     void plotDatasetChannelFromStrings(const QString& ch1Str, const QString& ch2Str)
     {
