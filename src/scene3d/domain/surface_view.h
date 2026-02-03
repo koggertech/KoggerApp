@@ -15,6 +15,13 @@ class SurfaceView : public SceneObject
     QML_NAMED_ELEMENT(SurfaceView)
 
 public:
+    struct IsoLabel
+    {
+        QVector3D pos;
+        QVector3D dir;
+        float depth;
+    };
+
     class SurfaceViewRenderImplementation : public SceneObject::RenderImplementation
     {
     public:
@@ -37,6 +44,9 @@ public:
         int colorIntervalsSize_; // from dataprocessor
         bool iVis_;
         bool mVis_;
+        QVector<IsoLabel> isoLabels_;
+        float labelStep_;
+        float cameraDist_;
         QVector<QVector3D> lastLeftLine_;
         QVector<QVector3D> lastRightLine_;
         float traceWidth_;
@@ -51,6 +61,8 @@ public:
     void   setSurfaceColorTableTextureId(GLuint textureId);
     void   setIVisible(bool state);
     void   setMVisible(bool state);
+    void   setIsobathsLabelStepSize(float val);
+    void   setCameraDistToFocusPoint(float val);
     GLuint getMosaicTextureIdByTileId(const TileKey& tileId) const;
     GLuint getMosaicColorTableTextureId() const;
     GLuint getSurfaceColorTableTextureId() const;
@@ -86,9 +98,15 @@ public slots: // from dataprocessor
 
 private:
     void updateMosaicTileTextureTask(const QHash<TileKey, SurfaceTile>& newTiles);
+    void rebuildIsobathLabels();
+    // isobaths
+    void edgeIntersection(const QVector3D& a, const QVector3D& b, float level, QVector<QVector3D>& out);
+    void filterLabelsBySpacing(const QVector<SurfaceView::IsoLabel>& in, QVector<SurfaceView::IsoLabel>& out, float minDist);
 
 private:
     QMutex mosaicTexTasksMutex_;
+
+    const float kLabelZShift = 0.03f;
 
     std::vector<uint8_t>                            mosaicColorTableToAppend_;
     GLuint                                          mosaicColorTableToDelete_;

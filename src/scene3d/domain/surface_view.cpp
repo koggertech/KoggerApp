@@ -2,7 +2,10 @@
 
 #include "draw_utils.h"
 #include "text_renderer.h"
+#include <cmath>
+#include <algorithm>
 #include <QFile>
+#include "math_defs.h"
 
 
 static inline QVector2D projectToScreen(const QVector3D& p, const QMatrix4x4& mvp, const QRect& viewport)
@@ -275,15 +278,49 @@ void SurfaceView::setSurfaceColorTableTextureId(GLuint textureId)
 void SurfaceView::setIVisible(bool state)
 {
     auto* r = RENDER_IMPL(SurfaceView);
+    if (!r) {
+        return;
+    }
     r->iVis_ = state;
+    if (r->iVis_) {
+        rebuildIsobathLabels();
+    }
+    else {
+        r->isoLabels_.clear();
+    }
     Q_EMIT changed();
 }
 
 void SurfaceView::setMVisible(bool state)
 {
     auto* r = RENDER_IMPL(SurfaceView);
+    if (!r) {
+        return;
+    }
     r->mVis_ = state;
+    if (!r->mVis_ && r->iVis_) {
+        rebuildIsobathLabels();
+    }
     Q_EMIT changed();
+}
+
+void SurfaceView::setIsobathsLabelStepSize(float val)
+{
+    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+        r->labelStep_ = val;
+        if (r->iVis_) {
+            rebuildIsobathLabels();
+        }
+        Q_EMIT changed();
+    }
+}
+
+void SurfaceView::setCameraDistToFocusPoint(float val)
+{
+    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+        r->cameraDist_ = val;
+        Q_EMIT changed();
+    }
 }
 
 void SurfaceView::clear()
@@ -299,6 +336,7 @@ void SurfaceView::clear()
     }
 
     r->tiles_.clear();
+    r->isoLabels_.clear();
 
     {
         QMutexLocker lock(&mosaicTexTasksMutex_);
@@ -347,6 +385,7 @@ void SurfaceView::setTiles(const QHash<TileKey, SurfaceTile> &tiles, bool useTex
         }
 
         r->updateBounds();
+        rebuildIsobathLabels();
 
         Q_EMIT changed();
         Q_EMIT boundsChanged();
@@ -417,6 +456,7 @@ void SurfaceView::setTilesIncremental(const QHash<TileKey, SurfaceTile> &tiles, 
     }
 
     r->updateBounds();
+    rebuildIsobathLabels();
     Q_EMIT changed();
     Q_EMIT boundsChanged();
 }
@@ -433,6 +473,7 @@ void SurfaceView::setMinZ(float minZ)
 {
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
         r->minZ_ = minZ;
+        rebuildIsobathLabels();
         Q_EMIT changed();
     }
 }
@@ -451,6 +492,7 @@ void SurfaceView::setSurfaceStep(float surfaceStep)
 
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
         r->surfaceStep_ = surfaceStep;
+        rebuildIsobathLabels();
         Q_EMIT changed();
     }
 }
@@ -483,6 +525,7 @@ void SurfaceView::removeTiles(const QSet<TileKey>& ids)
                 r->tiles_.erase(it);
             }
         }
+        rebuildIsobathLabels();
         Q_EMIT changed();
     }
 }
@@ -518,6 +561,211 @@ void SurfaceView::updateMosaicTileTextureTask(const QHash<TileKey, SurfaceTile>&
     }
 }
 
+void SurfaceView::rebuildIsobathLabels()
+{
+    auto* r = RENDER_IMPL(SurfaceView);
+    if (!r) {
+        return;
+    }
+
+    r->isoLabels_.clear();
+
+    if (!r->iVis_ || r->mVis_) {
+        return;
+    }
+    if (!std::isfinite(r->surfaceStep_) || r->surfaceStep_ <= 1e-6f) {
+        return;
+    }
+    if (!std::isfinite(r->minZ_)) {
+        return;
+    }
+    if (r->tiles_.isEmpty()) {
+        return;
+    }
+    if (r->colorIntervalsSize_ <= 0) {
+        return;
+    }
+
+    const float lineStep = r->surfaceStep_;
+    const int levelCount = r->colorIntervalsSize_;
+    const float minZ = r->minZ_;
+    const float maxZ = minZ + (levelCount - 1) * lineStep;
+
+    QVector<IsoLabel> candidates;
+    candidates.reserve(r->tiles_.size() * 4);
+
+    auto addLabelFromSeg = [&](const QVector3D& p1, const QVector3D& p2, float level) {
+        QVector3D dir = p2 - p1;
+        dir.setZ(0.0f);
+        const float len = dir.length();
+        if (!std::isfinite(len) || len < kmath::fltEps) {
+            return;
+        }
+        dir /= len;
+        QVector3D pos = (p1 + p2) * 0.5f;
+        candidates.append(IsoLabel{ pos, dir, std::fabs(level) });
+    };
+
+    auto addLabelsFromTri = [&](const QVector3D& A, const QVector3D& B, const QVector3D& C,
+                                HeightType mA, HeightType mB, HeightType mC) {
+        if (mA == HeightType::kUndefined ||
+            mB == HeightType::kUndefined ||
+            mC == HeightType::kUndefined) {
+            return;
+        }
+
+        const float triMin = std::min(A.z(), std::min(B.z(), C.z()));
+        const float triMax = std::max(A.z(), std::max(B.z(), C.z()));
+        if (triMax < minZ - kmath::fltEps || triMin > maxZ + kmath::fltEps) {
+            return;
+        }
+
+        int lvlStart = int(std::floor((triMin - minZ) / lineStep));
+        int lvlEnd   = int(std::ceil((triMax - minZ) / lineStep));
+        if (lvlStart < 0) lvlStart = 0;
+        if (lvlEnd > levelCount - 1) lvlEnd = levelCount - 1;
+
+        for (int lvl = lvlStart; lvl <= lvlEnd; ++lvl) {
+            const float level = minZ + lvl * lineStep;
+            QVector<QVector3D> ip;
+            edgeIntersection(A, B, level, ip);
+            edgeIntersection(B, C, level, ip);
+            edgeIntersection(C, A, level, ip);
+
+            if (ip.size() == 2) {
+                addLabelFromSeg(ip[0], ip[1], level);
+            }
+            else if (ip.size() == 3) {
+                if (!kmath::fuzzyEq(ip[0], ip[1])) {
+                    addLabelFromSeg(ip[0], ip[1], level);
+                }
+                if (!kmath::fuzzyEq(ip[1], ip[2])) {
+                    addLabelFromSeg(ip[1], ip[2], level);
+                }
+            }
+        }
+    };
+
+    for (auto it = r->tiles_.cbegin(); it != r->tiles_.cend(); ++it) {
+        const SurfaceTile& tile = it.value();
+        if (!tile.getIsInited()) {
+            continue;
+        }
+
+        const auto& verts = tile.getHeightVerticesCRef();
+        const auto& marks = tile.getHeightMarkVerticesCRef();
+        if (verts.isEmpty() || verts.size() != marks.size()) {
+            continue;
+        }
+
+        const int side = int(std::sqrt(double(verts.size())));
+        if (side < 2 || side * side != verts.size()) {
+            continue;
+        }
+
+        for (int y = 0; y < side - 1; ++y) {
+            for (int x = 0; x < side - 1; ++x) {
+                const int tl = y * side + x;
+                const int tr = tl + 1;
+                const int bl = (y + 1) * side + x;
+                const int br = bl + 1;
+
+                addLabelsFromTri(verts[tl], verts[bl], verts[tr], marks[tl], marks[bl], marks[tr]);
+                addLabelsFromTri(verts[tr], verts[bl], verts[br], marks[tr], marks[bl], marks[br]);
+            }
+        }
+    }
+
+    float distFactor = 1.0f;
+    if (std::isfinite(r->cameraDist_) && r->cameraDist_ > 1.0f) {
+        distFactor = qBound(0.3f, 150.0f / r->cameraDist_, 1.0f);
+    }
+    float minDist = r->labelStep_ * distFactor;
+    if (std::isfinite(r->cameraDist_) && r->cameraDist_ > 0.0f) {
+        minDist = qMin(minDist, r->cameraDist_ * 0.4f);
+    }
+    minDist = qMax(r->surfaceStep_ * 2.0f, minDist);
+    filterLabelsBySpacing(candidates, r->isoLabels_, minDist);
+}
+
+void SurfaceView::edgeIntersection(const QVector3D &a, const QVector3D &b, float level, QVector<QVector3D> &out)
+{
+    const float zA = a.z();
+    const float zB = b.z();
+
+    if (std::fabs(zA - level) < kmath::fltEps && std::fabs(zB - level) < kmath::fltEps) {
+        out << QVector3D(a.x(), a.y(), level + kLabelZShift);
+        out << QVector3D(b.x(), b.y(), level + kLabelZShift);
+        return;
+    }
+
+    if ((zA - level) * (zB - level) > 0.0f) {
+        return;
+    }
+
+    if (std::fabs(zA - level) < kmath::fltEps) {
+        out << QVector3D(a.x(), a.y(), level + kLabelZShift);
+        return;
+    }
+
+    if (std::fabs(zB - level) < kmath::fltEps) {
+        out << QVector3D(b.x(), b.y(), level + kLabelZShift);
+        return;
+    }
+
+    const float t = (level - zA) / (zB - zA);
+    if (std::isfinite(t)) {
+        QVector3D p = a + t * (b - a);
+        p.setZ(level + kLabelZShift);
+        out << p;
+    }
+}
+
+void SurfaceView::filterLabelsBySpacing(const QVector<IsoLabel> &in, QVector<IsoLabel> &out, float minDist)
+{
+    out.clear();
+    if (in.isEmpty()) {
+        return;
+    }
+
+    if (!std::isfinite(minDist) || minDist <= 0.0f) {
+        out = in;
+        return;
+    }
+
+    const float cell = minDist;
+    const float inv  = 1.0f / cell;
+    const float min2 = cell * cell;
+
+    QHash<QPair<int,int>, QVector<QVector3D>> grid;
+    grid.reserve(in.size());
+
+    for (const auto& lbl : in) {
+        const int cx = int(std::floor(lbl.pos.x() * inv));
+        const int cy = int(std::floor(lbl.pos.y() * inv));
+        bool isNear = false;
+        for (int dx = -1; dx <= 1 && !isNear; ++dx) {
+            for (int dy = -1; dy <= 1 && !isNear; ++dy) {
+                auto it = grid.constFind(qMakePair(cx + dx, cy + dy));
+                if (it == grid.cend()) {
+                    continue;
+                }
+                const auto& pts = it.value();
+                for (const auto& p : pts) {
+                    if ((lbl.pos - p).lengthSquared() < min2) {
+                        isNear = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!isNear) {
+            out.append(lbl);
+            grid[qMakePair(cx, cy)].append(lbl.pos);
+        }
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // SurfaceViewRenderImplementation
 SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
@@ -529,6 +777,8 @@ SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
     colorIntervalsSize_(-1),
     iVis_(false),
     mVis_(false),
+    labelStep_(100.0f),
+    cameraDist_(10.0f),
     traceWidth_(2.0f),
     traceVisible_(true)
 {}
@@ -608,6 +858,9 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
             shP->setUniformValue("levelCount", colorIntervalsSize_);
             shP->setUniformValue("linePass",   false);   // ни линий, ни лейблов
 
+            shP->setUniformValue("lineColor",  QVector3D(1.0f, 1.0f, 1.0f));
+            shP->setUniformValue("lineWidth",  1.0f);
+
             ctx->glActiveTexture(GL_TEXTURE0);
             ctx->glBindTexture(GL_TEXTURE_2D, surfaceColorTableTextureId_);
             shP->setUniformValue("paletteSampler", 0);
@@ -660,6 +913,25 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
             lineProg->disableAttributeArray(posLoc);
             lineProg->release();
         }
+    }
+
+    if (iVis_ && !mVis_ && !isoLabels_.isEmpty()) {
+        glDisable(GL_DEPTH_TEST);
+        const QColor oldCol = TextRenderer::instance().getColor();
+        TextRenderer::instance().setColor(QColor::fromRgbF(1.0f, 1.0f, 1.0f));
+
+        const float baseScale = (std::isfinite(cameraDist_) && cameraDist_ > 0.0f)
+                                ? cameraDist_ * 0.0015f
+                                : surfaceStep_ * 0.20f;
+        const float scale = qBound(0.12f, baseScale, 0.45f);
+
+        for (const auto& lbl : isoLabels_) {
+            const QString txt = QString::number(lbl.depth, 'f', 1);
+            TextRenderer::instance().render3D(txt, scale, lbl.pos, lbl.dir, ctx, mvp, shaderProgramMap);
+        }
+
+        TextRenderer::instance().setColor(oldCol);
+        glEnable(GL_DEPTH_TEST);
     }
 
     return;

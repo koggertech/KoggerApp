@@ -60,7 +60,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_camera(std::make_shared<Camera>(this)),
     m_axesThumbnailCamera(std::make_shared<Camera>()),
     m_rayCaster(std::make_shared<RayCaster>()),
-    isobathsView_(std::make_shared<IsobathsView>()),
+    //isobathsView_(std::make_shared<IsobathsView>()),
     surfaceView_(std::make_shared<SurfaceView>()),
     imageView_(std::make_shared<ImageView>()),
     mapView_(std::make_shared<MapView>(this)),
@@ -109,7 +109,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     imageView_->setView(this);
 
-    QObject::connect(isobathsView_.get(), &IsobathsView::changed, this, &QQuickFramebufferObject::update);
+    //QObject::connect(isobathsView_.get(), &IsobathsView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(surfaceView_.get(), &SurfaceView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
@@ -123,7 +123,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(navigationArrow_.get(), &NavigationArrow::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(usblView_.get(), &UsblView::changed, this, &QQuickFramebufferObject::update);
 
-    QObject::connect(isobathsView_.get(), &IsobathsView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    //QObject::connect(isobathsView_.get(), &IsobathsView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(surfaceView_.get(), &SurfaceView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(imageView_.get(), &ImageView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(mapView_.get(), &MapView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -166,10 +166,10 @@ std::shared_ptr<BottomTrack> GraphicsScene3dView::bottomTrack() const
     return m_bottomTrack;
 }
 
-std::shared_ptr<IsobathsView> GraphicsScene3dView::getIsobathsViewPtr() const
-{
-    return isobathsView_;
-}
+//std::shared_ptr<IsobathsView> GraphicsScene3dView::getIsobathsViewPtr() const
+//{
+//    return isobathsView_;
+//}
 
 std::shared_ptr<SurfaceView> GraphicsScene3dView::getSurfaceViewPtr() const
 {
@@ -243,7 +243,7 @@ Dataset *GraphicsScene3dView::dataset() const
 
 void GraphicsScene3dView::clear(bool cleanMap)
 {
-    isobathsView_->clear();
+    //isobathsView_->clear();
     surfaceView_->clear();
     contacts_->clear();
     imageView_->clear();//
@@ -998,7 +998,7 @@ void GraphicsScene3dView::setQmlAppEngine(QQmlApplicationEngine* engine)
 void GraphicsScene3dView::updateBounds()
 {
     m_bounds = boatTrack_->bounds()
-                   .merge(isobathsView_->bounds())
+                   //.merge(isobathsView_->bounds())
                    .merge(m_bottomTrack->bounds())
                    .merge(boatTrack_->bounds())
                    .merge(m_polygonGroup->bounds())
@@ -1252,8 +1252,11 @@ void GraphicsScene3dView::updateViews()
         emit sendDataRectRequest(lastMinX_, lastMinY_, lastMaxX_, lastMaxY_);
     }
 
-    if (isobathsView_) {
-        isobathsView_->setCameraDistToFocusPoint(m_camera->distForMapView());
+    // if (isobathsView_) {
+    //     isobathsView_->setCameraDistToFocusPoint(m_camera->distForMapView());
+    // }
+    if (surfaceView_) {
+        surfaceView_->setCameraDistToFocusPoint(m_camera->distForMapView());
     }
 }
 
@@ -1375,7 +1378,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_planeGridRenderImpl       = *(dynamic_cast<PlaneGrid::PlaneGridRenderImplementation*>(view->m_planeGrid->m_renderImpl));
     m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->boatTrack_->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
-    m_renderer->isobathsViewRenderImpl_     = *(dynamic_cast<IsobathsView::IsobathsViewRenderImplementation*>(view->isobathsView_->m_renderImpl));
+    //m_renderer->isobathsViewRenderImpl_     = *(dynamic_cast<IsobathsView::IsobathsViewRenderImplementation*>(view->isobathsView_->m_renderImpl));
     m_renderer->surfaceViewRenderImpl_      = *(dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(view->surfaceView_->m_renderImpl));
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->contactsRenderImpl_         = *(dynamic_cast<Contacts::ContactsRenderImplementation*>(view->contacts_->m_renderImpl));

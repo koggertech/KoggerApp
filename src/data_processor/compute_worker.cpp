@@ -194,7 +194,7 @@ void ComputeWorker::processBundle(const WorkBundle& wb)
     }
 
     if (wb.doIsobaths && !isCanceled()) {
-        isobaths_.onUpdatedBottomTrackData();
+        //isobaths_.onUpdatedBottomTrackData();
     }
 
     if (!wb.mosaicVec.isEmpty() && !isCanceled()) {

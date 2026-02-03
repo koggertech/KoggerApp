@@ -18,7 +18,7 @@
 #include "ray.h"
 #include "navigation_arrow.h"
 #include "usbl_view.h"
-#include "isobaths_view.h"
+//#include "isobaths_view.h"
 #include "data_processor.h"
 
 
@@ -192,7 +192,7 @@ public:
     Renderer *createRenderer() const override;
     std::shared_ptr<BoatTrack> getBoatTrackPtr() const;
     std::shared_ptr<BottomTrack> bottomTrack() const;
-    std::shared_ptr<IsobathsView> getIsobathsViewPtr() const;
+    //std::shared_ptr<IsobathsView> getIsobathsViewPtr() const;
     std::shared_ptr<SurfaceView> getSurfaceViewPtr() const;
     std::shared_ptr<ImageView> getImageViewPtr() const;
     std::shared_ptr<MapView> getMapViewPtr() const;
@@ -307,7 +307,7 @@ private:
     QPointF m_startMousePos = {0.0f, 0.0f};
     QPointF m_lastMousePos = {0.0f, 0.0f};
     std::shared_ptr<RayCaster> m_rayCaster;
-    std::shared_ptr<IsobathsView> isobathsView_;
+    //std::shared_ptr<IsobathsView> isobathsView_;
     std::shared_ptr<SurfaceView> surfaceView_;
     std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<MapView> mapView_;

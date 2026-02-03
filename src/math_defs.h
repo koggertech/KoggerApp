@@ -14,6 +14,11 @@ namespace kmath {
 static constexpr float fltEps = std::numeric_limits<float>::epsilon();
 static constexpr float dblEps = std::numeric_limits<double>::epsilon();
 
+inline bool fuzzyEq(const QVector3D& a, const QVector3D& b)
+{
+    return (a - b).lengthSquared() < (kmath::fltEps * kmath::fltEps);
+}
+
 struct MatrixParams {
     MatrixParams() :
         originX(0.0f),

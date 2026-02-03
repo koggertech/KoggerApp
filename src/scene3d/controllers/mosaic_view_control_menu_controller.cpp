@@ -46,7 +46,7 @@ void MosaicViewControlMenuController::onVisibilityChanged(bool state)
 
     if (graphicsSceneViewPtr_) {
         graphicsSceneViewPtr_->getSurfaceViewPtr()->setMVisible(visibility_);
-        graphicsSceneViewPtr_->getIsobathsViewPtr()->setMVisible(visibility_);
+        //graphicsSceneViewPtr_->getIsobathsViewPtr()->setMVisible(visibility_);
 
         if (state) {
                 //QMetaObject::invokeMethod(dataProcessorPtr_, "clearProcessing", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
@@ -223,9 +223,9 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
                 if (auto surfacePtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfacePtr) {
                     surfacePtr->setMVisible(visibility_);
                 }
-                if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsViewPtr(); isobathsPtr) {
-                    isobathsPtr->setMVisible(visibility_);
-                }
+                // if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsViewPtr(); isobathsPtr) {
+                //     isobathsPtr->setMVisible(visibility_);
+                // }
                 if (updateState_) {
                     graphicsSceneViewPtr_->onCameraMoved();
                 }

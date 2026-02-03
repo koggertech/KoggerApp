@@ -62,11 +62,11 @@ void IsobathsViewControlMenuController::tryInitPendingLambda()
 
                 if (auto surfacePtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfacePtr) {
                     surfacePtr->setIVisible(visibility_);
+                    surfacePtr->setIsobathsLabelStepSize(labelStepSize_);
                 }
-
-                if (auto isobathsViewPtr = graphicsSceneViewPtr_->getIsobathsViewPtr(); isobathsViewPtr) {
-                    isobathsViewPtr->setVisible(visibility_);
-                }
+                //if (auto isobathsViewPtr = graphicsSceneViewPtr_->getIsobathsViewPtr(); isobathsViewPtr) {
+                //    isobathsViewPtr->setVisible(visibility_);
+                //}
             }
         };
     }
@@ -78,7 +78,7 @@ void IsobathsViewControlMenuController::onIsobathsVisibilityCheckBoxCheckedChang
 
     if (graphicsSceneViewPtr_) {
         graphicsSceneViewPtr_->getSurfaceViewPtr()->setIVisible(checked);
-        graphicsSceneViewPtr_->getIsobathsViewPtr()->setVisible(checked);
+        //graphicsSceneViewPtr_->getIsobathsViewPtr()->setVisible(checked);
 
         if (visibility_) {
             if (dataProcessorPtr_) {
@@ -150,6 +150,9 @@ void IsobathsViewControlMenuController::onSetLabelStepSize(int val)
         if (dataProcessorPtr_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLabelStepSize", Qt::QueuedConnection, Q_ARG(int , labelStepSize_));
         }
+        if (auto surfacePtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfacePtr) {
+            surfacePtr->setIsobathsLabelStepSize(labelStepSize_);
+        }
     }
     else {
         tryInitPendingLambda();
@@ -209,7 +212,7 @@ void IsobathsViewControlMenuController::onResetIsobathsButtonClicked()
             QMetaObject::invokeMethod(dataProcessorPtr_, "clearProcessing", Qt::QueuedConnection, Q_ARG(DataProcessorType , DataProcessorType::kIsobaths));
         }
 
-        graphicsSceneViewPtr_->getIsobathsViewPtr()->clear();
+        //graphicsSceneViewPtr_->getIsobathsViewPtr()->clear();
     }
 }
 
