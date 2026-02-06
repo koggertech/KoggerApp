@@ -58,6 +58,11 @@ void SurfaceProcessor::setSurfaceMeshPtr(SurfaceMesh *surfaceMeshPtr)
     surfaceMeshPtr_ = surfaceMeshPtr;
 }
 
+void SurfaceProcessor::setVisibleTileKeys(const QSet<TileKey>& val)
+{
+    visibleTileKeys_ = val;
+}
+
 void SurfaceProcessor::ensureTileInited(SurfaceTile* tile, int tileSidePix)
 {
     if (!tile || tile->getIsInited()) {
@@ -1220,6 +1225,9 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
     const int minTileY = std::clamp(std::min(tileY0, tileY1), 0, tilesY - 1);
     const int maxTileY = std::clamp(std::max(tileY0, tileY1), 0, tilesY - 1);
 
+    //const bool useVisibleFilter = !visibleTileKeys_.isEmpty();
+    //bool anyVisible = !useVisibleFilter;
+
     QHash<TileKey, SurfaceTile*> tilesToInit;
     const int tileCount = (maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
     if (tileCount > 0) {
@@ -1228,13 +1236,29 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
         for (int ty = minTileY; ty <= maxTileY; ++ty) {
             for (int tx = minTileX; tx <= maxTileX; ++tx) {
                 SurfaceTile* tile = matrix[ty][tx];
+
                 if (!tile || tile->getIsInited()) {
                     continue;
                 }
-                tilesToInit.insert(tile->getKey(), tile);
+
+                //if (!tile) {
+                //    continue;
+                //}
+                //if (useVisibleFilter && !visibleTileKeys_.contains(tile->getKey())) {
+                //    continue;
+                //}
+                //anyVisible = true;
+                //if (!tile->getIsInited()) {
+                //    tilesToInit.insert(tile->getKey(), tile);
+                //}
             }
         }
     }
+    
+    //if (!anyVisible) {
+    //    return;
+    //}
+
     ensureTilesInitedBatch(tilesToInit, tileSidePix);
 
     const float denom = kmath::twiceArea(Ap, Bp, Cp);
@@ -1266,6 +1290,10 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
             if (!tile || !tile->getIsInited()) {
                 continue;
             }
+            
+            //if (useVisibleFilter && !visibleTileKeys_.contains(tile->getKey())) {
+            //    continue;
+            //}
 
             tile->getHeightVerticesRef()[hvIdx][2]  = interpZ;
             tile->getHeightMarkVerticesRef()[hvIdx] = HeightType::kTriangulation;

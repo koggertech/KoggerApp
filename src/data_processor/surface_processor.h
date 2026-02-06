@@ -27,6 +27,7 @@ public:
 
     void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
     void setSurfaceMeshPtr(SurfaceMesh* surfaceMeshPtr);
+    void setVisibleTileKeys(const QSet<TileKey>& val);
     void onUpdatedBottomTrackData(const QVector<QPair<char, int>>& indxs); // работает по индексам кеша рендера трека дна!
     void setTileResolution(float tileResolution);
     void rebuildAfterResolutionChange();
@@ -73,4 +74,5 @@ private:
     int cellPx_;
     int extraWidth_;
     bool originSet_;
+    QSet<TileKey> visibleTileKeys_;
 };

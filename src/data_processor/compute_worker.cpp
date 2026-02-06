@@ -207,4 +207,5 @@ void ComputeWorker::processBundle(const WorkBundle& wb)
 void ComputeWorker::setVisibleTileKeys(const QSet<TileKey>& val)
 {
     visibleTileKeys_ = val;
+    surface_.setVisibleTileKeys(val);
 }
