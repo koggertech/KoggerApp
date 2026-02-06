@@ -33,6 +33,7 @@
 #include "link_manager_wrapper.h"
 #include "tile_manager.h"
 #include "data_horizon.h"
+#include "mosaic_index_provider.h"
 
 
 class Core : public QObject
@@ -59,7 +60,9 @@ public:
     Q_PROPERTY(QString           ch1Name                      READ getChannel1Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(QString           ch2Name                      READ getChannel2Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(int               dataProcessorState           READ getDataProcessorState           NOTIFY dataProcessorStateChanged)
+    Q_PROPERTY(bool              needForceZooming             READ getNeedForceZooming             WRITE setNeedForceZooming NOTIFY needForceZoomingChanged)
 
+    MosaicIndexProvider* getMosaicIndexProviderPtr();
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
     Dataset* getDatasetPtr();
@@ -80,6 +83,7 @@ public:
     void removeDeviceManagerConnections();
 #endif
     QHash<QUuid, QString> getLinkNames() const;
+    void shutdownDataProcessor();
 
 public slots:    
     void setIsGPSAlive(bool state) { qDebug() << "Core::setIsGPSAlive" << state; isGPSAlive_ = state; emit isGPSAliveChanged(); }
@@ -115,6 +119,8 @@ public slots:
     bool getCsvLogging() const;
     void setCsvLogging(bool isLogging);
     bool getUseGPS() const;
+    bool getNeedForceZooming() const { return needForceZooming_; }
+    void setNeedForceZooming(bool state);
     void setUseGPS(bool state);
     bool exportComplexToCSV(QString filePath);
     bool exportUSBLToCSV(QString filePath);
@@ -126,11 +132,8 @@ public slots:
     void resetAim();
     void UILoad(QObject* object, const QUrl& url);
     void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
-    bool getIsFileOpening() const;
-    bool getIsSeparateReading() const;
     void onChannelsUpdated();
     void onRedrawEpochs(const QSet<int>& indxs);
-    int getDataProcessorState() const;
     void initStreamList();
 
 #ifdef FLASHER
@@ -140,6 +143,9 @@ public slots:
 #endif
 
     Q_INVOKABLE void setPosZeroing(bool state);
+    Q_INVOKABLE bool getIsFileOpening() const;
+    Q_INVOKABLE bool getIsSeparateReading() const;
+    Q_INVOKABLE int getDataProcessorState() const;
     Q_INVOKABLE QString getChannel1Name() const;
     Q_INVOKABLE QString getChannel2Name() const;
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
@@ -152,6 +158,7 @@ signals:
     void sendIsFileOpening();
     void channelListUpdated();
     void dataProcessorStateChanged();
+    void needForceZoomingChanged();
     void isGPSAliveChanged();
     void loggingKlfChanged();
 
@@ -239,6 +246,7 @@ private:
 
     bool isGPSAlive_;
     bool isUseGPS_;
+    bool needForceZooming_ = false; // debug
 
     bool fixBlackStripesState_;
     int  fixBlackStripesForwardSteps_;
@@ -266,4 +274,11 @@ signals:
     QVector<QMetaObject::Connection> dataHorizonConnections_;
 
     DataProcessorType dataProcessorState_ = DataProcessorType::kUndefined;
+
+    ChannelId lastCh1_;
+    uint8_t   lastSub1_;
+    ChannelId lastCh2_;
+    uint8_t   lastSub2_;
+
+    MosaicIndexProvider mosaicIndexProvider_;
 };

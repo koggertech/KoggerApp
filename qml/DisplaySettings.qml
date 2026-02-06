@@ -83,8 +83,8 @@ GridLayout {
                     checked: false
                     text: qsTr("FBS, f/b")
 
-                    onCheckedChanged: core.fixBlackStripesState = fixBlackStripesCheckButton.checked
-                    Component.onCompleted: core.fixBlackStripesState = fixBlackStripesCheckButton.checked
+                    onCheckedChanged: core.setFixBlackStripesState(fixBlackStripesCheckButton.checked)
+                    Component.onCompleted: core.setFixBlackStripesState(fixBlackStripesCheckButton.checked)
 
                     Settings {
                         property alias fixBlackStripesCheckButton: fixBlackStripesCheckButton.checked
@@ -98,25 +98,8 @@ GridLayout {
                     stepSize: 1
                     value: 15
 
-                    onValueChanged: core.fixBlackStripesForwardSteps = fixBlackStripesForwardStepsSpinBox.currValue
-                    Component.onCompleted: core.fixBlackStripesForwardSteps = fixBlackStripesForwardStepsSpinBox.currValue
-
-                    property int currValue: value
-
-                    validator: DoubleValidator {
-                        bottom: Math.min(fixBlackStripesForwardStepsSpinBox.from, fixBlackStripesForwardStepsSpinBox.to)
-                        top:  Math.max(fixBlackStripesForwardStepsSpinBox.from, fixBlackStripesForwardStepsSpinBox.to)
-                    }
-
-                    textFromValue: function(value, locale) {
-                        return Number(value).toLocaleString(locale, 'f', 0)
-                    }
-
-                    valueFromText: function(text, locale) {
-                        return Number.fromLocaleString(locale, text)
-                    }
-
-                    onCurrValueChanged: core.fixBlackStripesForwardSteps = currValue
+                    onValueChanged: core.setFixBlackStripesForwardSteps(fixBlackStripesForwardStepsSpinBox.value)
+                    Component.onCompleted: core.setFixBlackStripesForwardSteps(fixBlackStripesForwardStepsSpinBox.value)
 
                     Settings {
                         property alias fixBlackStripesForwardStepsSpinBox: fixBlackStripesForwardStepsSpinBox.value
@@ -130,25 +113,8 @@ GridLayout {
                     stepSize: 1
                     value: 15
 
-                    onValueChanged: core.fixBlackStripesBackwardSteps = fixBlackStripesBackwardStepsSpinBox.currValue
-                    Component.onCompleted: core.fixBlackStripesBackwardSteps = fixBlackStripesBackwardStepsSpinBox.currValue
-
-                    property int currValue: value
-
-                    validator: DoubleValidator {
-                        bottom: Math.min(fixBlackStripesBackwardStepsSpinBox.from, fixBlackStripesBackwardStepsSpinBox.to)
-                        top:  Math.max(fixBlackStripesBackwardStepsSpinBox.from, fixBlackStripesBackwardStepsSpinBox.to)
-                    }
-
-                    textFromValue: function(value, locale) {
-                        return Number(value).toLocaleString(locale, 'f', 0)
-                    }
-
-                    valueFromText: function(text, locale) {
-                        return Number.fromLocaleString(locale, text)
-                    }
-
-                    onCurrValueChanged: core.fixBlackStripesBackwardSteps = currValue
+                    onValueChanged: core.setFixBlackStripesBackwardSteps(fixBlackStripesBackwardStepsSpinBox.value)
+                    Component.onCompleted: core.setFixBlackStripesBackwardSteps(fixBlackStripesBackwardStepsSpinBox.value)
 
                     Settings {
                         property alias fixBlackStripesBackwardStepsSpinBox: fixBlackStripesBackwardStepsSpinBox.value

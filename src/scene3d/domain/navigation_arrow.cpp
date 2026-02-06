@@ -92,6 +92,10 @@ void NavigationArrow::NavigationArrowRenderImplementation::render(QOpenGLFunctio
                                                                   const QMatrix4x4 &mvp,
                                                                   const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
+    if (!m_isVisible) {
+        return;
+    }
+
     if ((qFuzzyIsNull(angle_) && position_.isNull())|| !shaderProgramMap.contains("static")) {
         return;
     }

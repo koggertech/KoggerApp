@@ -494,8 +494,8 @@ ColumnLayout {
 
             Layout.alignment: Qt.AlignRight
 
-            onCheckedChanged: core.loggingKlf = loggingCheck.checked
-            Component.onCompleted: core.loggingKlf = loggingCheck.checked
+            onCheckedChanged: core.setKlfLogging(loggingCheck.checked)
+            Component.onCompleted: core.setKlfLogging(loggingCheck.checked)
 
             Settings {
                 property alias loggingCheck: loggingCheck.checked
@@ -515,8 +515,8 @@ ColumnLayout {
 
             Layout.alignment: Qt.AlignRight
 
-            onCheckedChanged: core.loggingCsv = loggingCheck2.checked
-            Component.onCompleted: core.loggingCsv = loggingCheck2.checked
+            onCheckedChanged: core.setCsvLogging(loggingCheck2.checked)
+            Component.onCompleted: core.setCsvLogging(loggingCheck2.checked)
 
             Settings {
                 property alias loggingCheck2: loggingCheck2.checked

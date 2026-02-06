@@ -30,10 +30,12 @@ Core::Core() :
     fixBlackStripesState_(false),
     fixBlackStripesForwardSteps_(0),
     fixBlackStripesBackwardSteps_(0),
-    isActiveZeroing_(false)
+    isActiveZeroing_(false),
+    lastSub1_(0),
+    lastSub2_(0),
+    mosaicIndexProvider_(6200)
 {
     qRegisterMetaType<uint8_t>("uint8_t");
-
     logger_.setDatasetPtr(datasetPtr_);
     createDeviceManagerConnections();
     createLinkManagerConnections();
@@ -51,6 +53,11 @@ Core::Core() :
 Core::~Core()
 {
     destroyDataProcessor();
+}
+
+MosaicIndexProvider *Core::getMosaicIndexProviderPtr()
+{
+    return &mosaicIndexProvider_;
 }
 
 void Core::setEngine(QQmlApplicationEngine *engine)
@@ -201,10 +208,12 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
     QCoreApplication::processEvents(QEventLoop::AllEvents);
 
     if (!isAppend) {
+        QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, true));
         resetDataProcessorConnections();
         datasetPtr_->resetDataset();
         dataHorizon_->clear();
         QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(dataProcessor_, "setFilePath", Qt::QueuedConnection, Q_ARG(QString, localfilePath));
         setDataProcessorConnections();
     }
 
@@ -237,6 +246,10 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
     openedfilePath_ = filePath;
 
     datasetPtr_->setState(Dataset::DatasetState::kFile);
+    QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, true));
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setIsOpeningFile(true);
+    }
 
     emit deviceManagerWrapperPtr_->sendOpenFile(localfilePath);
 }
@@ -244,6 +257,10 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
 bool Core::closeLogFile(bool onOpen)
 {
     if (isOpenedFile()) {
+        QMetaObject::invokeMethod(dataProcessor_, "prepareForFileClose", Qt::BlockingQueuedConnection, Q_ARG(int, 1500));
+        if (!onOpen) {
+            resetDataProcessorConnections();
+        }
         emit sendCloseLogFile(onOpen ? !tryOpenedfilePath_.isEmpty() : false);
         openedfilePath_.clear();
 
@@ -252,7 +269,7 @@ bool Core::closeLogFile(bool onOpen)
             dataHorizon_->clear();
         }
 
-        QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::BlockingQueuedConnection);
 
         if (scene3dViewPtr_) {
             scene3dViewPtr_->clear();
@@ -262,6 +279,11 @@ bool Core::closeLogFile(bool onOpen)
             setDataProcessorConnections();
             createLinkManagerConnections();
             linkManagerWrapperPtr_->openClosedLinks();
+            QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
+            QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+            if (scene3dViewPtr_) {
+                scene3dViewPtr_->setIsOpeningFile(false);
+            }
         }
 
         return true;
@@ -284,6 +306,11 @@ void Core::onFileStartOpening()
 void Core::onFileOpened()
 {
     qDebug() << "file opened!";
+    QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
+    QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setIsOpeningFile(false);
+    }
 
     tryOpenedfilePath_.clear();
     fileIsCompleteOpened_ = true;
@@ -295,6 +322,7 @@ void Core::onFileOpened()
 
 void Core::onFileReadEnough()
 {
+    QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
     datasetPtr_->setRefPositionByFirstValid();
     // datasetPtr_->usblProcessing();
     if (scene3dViewPtr_) {
@@ -315,6 +343,11 @@ void Core::onFileOpenBreaked(bool onOpen)
     }
 
     QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
+    QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setIsOpeningFile(false);
+    }
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
@@ -346,10 +379,12 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
         QCoreApplication::processEvents(QEventLoop::AllEvents);
 
         if (!isAppend) {
+            QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, true));
             resetDataProcessorConnections();
             datasetPtr_->resetDataset();
             dataHorizon_->clear();
             QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
+            QMetaObject::invokeMethod(dataProcessor_, "setFilePath", Qt::QueuedConnection, Q_ARG(QString, localfilePath));
             setDataProcessorConnections();
             dataHorizon_->setIsFileOpening(isFileOpening_);
         }
@@ -361,6 +396,9 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
         }
 
         QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, true));
+        if (scene3dViewPtr_) {
+            scene3dViewPtr_->setIsOpeningFile(true);
+        }
 
         QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
 
@@ -379,6 +417,9 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                 onFileStopsOpening();
 
                 QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+                if (scene3dViewPtr_) {
+                    scene3dViewPtr_->setIsOpeningFile(false);
+                }
 
                 return;
             }
@@ -408,6 +449,11 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
 bool Core::closeLogFile()
 {
     // qDebug() << "Core::closeLogFile()";
+    const bool wasOpened = isOpenedFile();
+    QMetaObject::invokeMethod(dataProcessor_, "prepareForFileClose", Qt::BlockingQueuedConnection, Q_ARG(int, 1500));
+    if (wasOpened) {
+        resetDataProcessorConnections();
+    }
     if (datasetPtr_) {
         datasetPtr_->resetRenderBuffers();
     }
@@ -416,9 +462,10 @@ bool Core::closeLogFile()
         scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
     }
     dataHorizon_->clear();
-    QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::BlockingQueuedConnection);
 
-    if (!isOpenedFile()) {
+    if (!wasOpened) {
+        QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
         return false;
     }
 
@@ -429,6 +476,10 @@ bool Core::closeLogFile()
     createLinkManagerConnections();
     openedfilePath_.clear();
     linkManagerWrapperPtr_->openClosedLinks();
+    if (wasOpened) {
+        setDataProcessorConnections();
+    }
+    QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
 
     return true;
 }
@@ -437,7 +488,11 @@ void Core::onFileOpened()
 {
     qDebug() << "file opened!";
 
+    QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
     QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setIsOpeningFile(false);
+    }
 }
 #endif
 
@@ -725,11 +780,21 @@ void Core::setUseGPS(bool state)
     QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "setUseGPS", Qt::QueuedConnection, Q_ARG(bool, isUseGPS_));
 }
 
+void Core::setNeedForceZooming(bool state)
+{
+    if (needForceZooming_ == state) {
+        return;
+    }
+
+    needForceZooming_ = state;
+    emit needForceZoomingChanged();
+}
+
 bool Core::exportComplexToCSV(QString file_path) {
     QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     logger_.creatExportStream(file_path + "/" + export_file_name + ".csv");
 
-    auto ch_list = datasetPtr_->channelsList();
+    //auto ch_list = datasetPtr_->channelsList();
     // _dataset->setRefPosition(1518);
 
     for(int i = 0; i < datasetPtr_->size(); i++) {
@@ -1231,7 +1296,17 @@ void Core::setMosaicChannels(const QString& firstChStr, const QString& secondChS
         Q_UNUSED(name1)
         Q_UNUSED(name2)
 
-        QMetaObject::invokeMethod(dataProcessor_, "setMosaicChannels", Qt::QueuedConnection, Q_ARG(ChannelId, ch1), Q_ARG(uint8_t, sub1), Q_ARG(ChannelId, ch2), Q_ARG(uint8_t, sub2));
+        if (lastCh1_  != ch1  || lastSub1_ != sub1 ||
+            lastCh2_  != ch2  || lastSub2_ != sub2) {
+            datasetPtr_->setMosaicChannels(firstChStr, secondChStr); // for calc dim rects
+
+            QMetaObject::invokeMethod(dataProcessor_, "setMosaicChannels",
+                                      Qt::QueuedConnection, Q_ARG(ChannelId, ch1), Q_ARG(uint8_t, sub1), Q_ARG(ChannelId, ch2), Q_ARG(uint8_t, sub2));
+            lastCh1_  = ch1;
+            lastSub1_ = sub1;
+            lastCh2_  = ch2;
+            lastSub2_ = sub2;
+        }
     }
 }
 
@@ -1379,6 +1454,7 @@ void Core::onFileStopsOpening()
     isFileOpening_ = false;
     emit sendIsFileOpening();
     dataHorizon_->setIsFileOpening(isFileOpening_);
+    QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
 }
 
 void Core::onSendMapTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)
@@ -1554,6 +1630,11 @@ QHash<QUuid, QString> Core::getLinkNames() const
     return retVal;
 }
 
+void Core::shutdownDataProcessor()
+{
+    QMetaObject::invokeMethod(dataProcessor_, "shutdown", Qt::BlockingQueuedConnection);
+}
+
 bool Core::isOpenedFile() const
 {
     return !openedfilePath_.isEmpty();
@@ -1661,8 +1742,7 @@ void Core::createMapTileManagerConnections()
     tileManager_ = std::make_unique<map::TileManager>(this);
 
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
-    QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendLlaRef, tileManager_.get(), &map::TileManager::getLlaRef, Qt::DirectConnection);
-
+    QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendLlaRef,      tileManager_.get(), &map::TileManager::getLlaRef, Qt::DirectConnection);
     auto connType = Qt::DirectConnection;
     QObject::connect(tileManager_->getTileSetPtr().get(),    &map::TileSet::mvAppendTile,         scene3dViewPtr_->getMapViewPtr().get(), &MapView::onTileAppend,             connType);
     QObject::connect(tileManager_->getTileSetPtr().get(),    &map::TileSet::mvDeleteTile,         scene3dViewPtr_->getMapViewPtr().get(), &MapView::onTileDelete,             connType);
@@ -1750,18 +1830,25 @@ void Core::createScene3dConnections()
     QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceStepSize,           scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::setSurfaceStep,                 connType);
     QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceColorIntervalsSize, scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::setColorIntervalsSize,          connType);
     // IsobathsView
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLabels,            scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::setLabels,                     connType);
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineSegments,      scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::setLineSegments,               connType);
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineStepSize,      scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::setLineStepSize,               connType);
+    //QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLabels,            scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::setLabels,                     connType);
+    //QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineSegments,      scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::setLineSegments,               connType);
+    //QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineStepSize,      scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::setLineStepSize,               connType);
     // Mosaic
     QObject::connect(dataProcessor_, &DataProcessor::sendMosaicColorTable,          scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::setMosaicColorTableTextureTask, connType);
-    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceTiles,               scene3dViewPtr_->getSurfaceViewPtr().get(),    &SurfaceView::setTiles,                       connType);
+    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceTiles,              scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::setTiles,                       connType); // TODO: del
+    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceTilesIncremental,   scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::setTilesIncremental,            connType);
+    QObject::connect(dataProcessor_, &DataProcessor::sendTraceLines,                scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::setTraceLines,                  connType);
+
     // clear render
     QObject::connect(dataProcessor_, &DataProcessor::bottomTrackProcessingCleared,  scene3dViewPtr_->bottomTrack().get(),           &BottomTrack::clearData,                      connType);
-    QObject::connect(dataProcessor_, &DataProcessor::isobathsProcessingCleared,     scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::clear,                         connType);
-    QObject::connect(dataProcessor_, &DataProcessor::mosaicProcessingCleared,       this, [](){ /*qDebug() << "TODO: mosaicProcessingCleared";*/ },                               connType); // тут тайлы не трогаем и картинку в них пока
-    QObject::connect(dataProcessor_, &DataProcessor::surfaceProcessingCleared,      scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::clear,                          connType);
-    QObject::connect(dataProcessor_, &DataProcessor::allProcessingCleared,          this, [](){ /*qDebug() << "TODO: allProcessingCleared";*/ },                                  connType); // TODO
+    //QObject::connect(dataProcessor_, &DataProcessor::isobathsProcessingCleared,     scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::clear,                         connType);
+    QObject::connect(dataProcessor_, &DataProcessor::mosaicProcessingCleared,       this, [](){ /*qDebug() << "TODO: mosaicProcessingCleared";*/ },                               connType);
+    QObject::connect(dataProcessor_, &DataProcessor::surfaceProcessingCleared,      this, [](){ /*qDebug() << "TODO: mosaicProcessingCleared";*/ },                               connType);
+    QObject::connect(dataProcessor_, &DataProcessor::allProcessingCleared,          this, [](){ /*qDebug() << "TODO: allProcessingCleared";*/    },                               connType);
+
+    // data tiles request
+    QObject::connect(scene3dViewPtr_,    &GraphicsScene3dView::sendDataZoom,          dataProcessor_, &DataProcessor::onUpdateDataZoom,      connType); // отправляет зум и чекает в кеше/бд наличие (совместить?)
+    QObject::connect(scene3dViewPtr_,    &GraphicsScene3dView::sendDataRectRequest,   dataProcessor_, &DataProcessor::onSendDataRectRequest, connType); // отправляет запрос на рендер данных
 
     QMetaObject::invokeMethod(dataProcessor_, "askColorTableForMosaic", Qt::QueuedConnection);
 }
@@ -1789,12 +1876,18 @@ void Core::setDataProcessorConnections()
     // from dataHorizon
     auto connType = Qt::QueuedConnection;
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded,                    dataProcessor_, &DataProcessor::onChartsAdded,           connType));
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrack3DAdded,            dataProcessor_, &DataProcessor::onBottomTrack3DAdded,      connType));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrack3DAdded,            dataProcessor_, &DataProcessor::onBottomTrack3DAdded,    connType));
+
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::sonarPosCanCalc,               datasetPtr_,    &Dataset::onSonarPosCanCalc,             Qt::DirectConnection));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::dimRectsCanCalc,               datasetPtr_,    &Dataset::onDimensionRectCanCalc,        Qt::DirectConnection));
+
+    dataProcessorConnections_.append(QObject::connect(datasetPtr_,        &Dataset::sendTilesByZoom,                   dataProcessor_, &DataProcessor::onSendTilesByZoom,       connType));
+    dataProcessorConnections_.append(QObject::connect(datasetPtr_,        &Dataset::datasetStateChanged,               dataProcessor_, &DataProcessor::onDatasetStateChanged,       connType));
+
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::mosaicCanCalc,                 dataProcessor_, &DataProcessor::onMosaicCanCalc,         connType));
 
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::sonarPosCanCalc,               datasetPtr_,    &Dataset::onSonarPosCanCalc,             connType));
-
-    dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::distCompletedByProcessing,   datasetPtr_,    &Dataset::onDistCompleted,               connType));
+    dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::distCompletedByProcessing,      datasetPtr_,    &Dataset::onDistCompleted,               connType));
+    dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::distCompletedByProcessingBatch, datasetPtr_,    &Dataset::onDistCompletedBatch,          connType));
     dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_,    &Dataset::onLastBottomTrackEpochChanged, connType));
     dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::sendState,                   this,           &Core::onDataProcesstorStateChanged,     connType));
 }

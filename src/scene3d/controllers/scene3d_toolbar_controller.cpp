@@ -21,8 +21,18 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       planeGridCircleSize_(1),
       planeGridCircleStep_(1),
       planeGridCircleAngle_(1),
-      planeGridCircleLabels_(true)
+      planeGridCircleLabels_(true),
+      forceSingleZoomEnabled_(false),
+      forceSingleZoomValue_(5),
+      suppressForceSingleZoomUiCallback_(false)
 {}
+
+void Scene3dToolBarController::setQmlEngine(QObject *engine)
+{
+    QmlComponentController::setQmlEngine(engine);
+
+    syncForceSingleZoomUi(forceSingleZoomEnabled_, forceSingleZoomValue_);
+}
 
 void Scene3dToolBarController::onFitAllInViewButtonClicked()
 {
@@ -239,11 +249,49 @@ void Scene3dToolBarController::onPlaneGridCircleGridLabelsChanged(bool state)
     }
 }
 
+void Scene3dToolBarController::onForceSingleZoomCheckedChanged(bool state)
+{
+    if (suppressForceSingleZoomUiCallback_) {
+        return;
+    }
+
+    forceSingleZoomEnabled_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setForceSingleZoomEnabled(forceSingleZoomEnabled_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onForceSingleZoomValueChanged(int zoom)
+{
+    if (suppressForceSingleZoomUiCallback_) {
+        return;
+    }
+
+    forceSingleZoomValue_ = zoom;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setForceSingleZoomValue(forceSingleZoomValue_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
 void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     graphicsScene3dViewPtr_ = sceneView;
 
     if (graphicsScene3dViewPtr_) {
+        connect(graphicsScene3dViewPtr_,
+                &GraphicsScene3dView::forceSingleZoomAutoStateChanged,
+                this,
+                &Scene3dToolBarController::onForceSingleZoomAutoStateChanged,
+                Qt::QueuedConnection);
+
         if (pendingLambda_) {
             pendingLambda_();
             pendingLambda_ = nullptr;
@@ -279,6 +327,8 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setPlaneGridCircleStep(planeGridCircleStep_);
                 graphicsScene3dViewPtr_->setPlaneGridCircleAngle(planeGridCircleAngle_);
                 graphicsScene3dViewPtr_->setPlaneGridCircleLabels(planeGridCircleLabels_);
+                graphicsScene3dViewPtr_->setForceSingleZoomEnabled(forceSingleZoomEnabled_);
+                graphicsScene3dViewPtr_->setForceSingleZoomValue(forceSingleZoomValue_);
 
                 if (dataProcessorPtr_) {
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateBottomTrack", Qt::QueuedConnection, Q_ARG(bool, updateBottomTrack_));
@@ -293,4 +343,41 @@ void Scene3dToolBarController::tryInitPendingLambda()
             }
         };
     }
+}
+
+void Scene3dToolBarController::onForceSingleZoomAutoStateChanged(bool active)
+{
+    if (active) {
+        forceSingleZoomEnabled_ = true;
+        forceSingleZoomValue_ = 5;
+    } else {
+        forceSingleZoomEnabled_ = false;
+    }
+
+    syncForceSingleZoomUi(forceSingleZoomEnabled_, forceSingleZoomValue_);
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setForceSingleZoomEnabled(forceSingleZoomEnabled_);
+        graphicsScene3dViewPtr_->setForceSingleZoomValue(forceSingleZoomValue_);
+        graphicsScene3dViewPtr_->onCameraMoved();
+    }
+}
+
+void Scene3dToolBarController::syncForceSingleZoomUi(bool enabled, int zoom)
+{
+    if (!m_engine) {
+        return;
+    }
+
+    QObject* checkObj = m_engine->findChild<QObject*>(QStringLiteral("forceSingleZoomCheckButton"));
+    QObject* spinObj  = m_engine->findChild<QObject*>(QStringLiteral("forceSingleZoomSpinBox"));
+
+    suppressForceSingleZoomUiCallback_ = true;
+    if (checkObj) {
+        checkObj->setProperty("checked", enabled);
+    }
+    if (spinObj) {
+        spinObj->setProperty("value", zoom);
+    }
+    suppressForceSingleZoomUiCallback_ = false;
 }

@@ -1,17 +1,24 @@
-#include "dataset.h"
+﻿#include "dataset.h"
 
 #include "core.h"
 extern Core core;
 #include "QString"
+#include <algorithm>
 
 
 Dataset::Dataset() :
     interpolator_(this),
     lastBottomTrackEpoch_(0),
     bSProc_(new BlackStripesProcessor()),
-    sonarPosIndx_(0)
+    sonarPosIndx_(0),
+    mosaicFirstSubChId_(0),
+    mosaicSecondSubChId_(0),
+    lastDimRectindx_(0),
+    lAngleOffset_(0.0f),
+    rAngleOffset_(0.0f)
 {
     qRegisterMetaType<ChannelId>("ChannelId");
+    qRegisterMetaType<uint64_t>("uint64_t");
     resetDataset();
 }
 
@@ -22,7 +29,13 @@ Dataset::~Dataset()
 
 void Dataset::setState(DatasetState state)
 {
+    if (state_ == state) {
+        return;
+    }
+
     state_ = state;
+
+    emit datasetStateChanged(static_cast<int>(state_)); // 0 -und, 1 -file, 2-conn
 }
 
 void Dataset::setActiveZeroing(bool state)
@@ -79,6 +92,21 @@ void Dataset::getMaxDistanceRange(float *from, float *to, const ChannelId& chann
 int Dataset::getLastBottomTrackEpoch() const
 {
     return lastBottomTrackEpoch_;
+}
+
+float Dataset::getLastArtificalYaw() const
+{
+    return lastAYaw_;
+}
+
+float Dataset::getLastArtificaPitch() const
+{
+    return lastAPitch_;
+}
+
+float Dataset::getLastArtificalRoll() const
+{
+    return lastARoll_;
 }
 
 LLARef Dataset::getLlaRef() const
@@ -316,7 +344,7 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
         validateChannelList(channelId, i);
     }
 
-    int lastIndx = std::max(0, (size() - 1) - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: не просто кол-во эпох - окно назад, а последняя неизменная эпоха по чартам
+    int lastIndx = std::max(0, (size() - 1) - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: РЅРµ РїСЂРѕСЃС‚Рѕ РєРѕР»-РІРѕ СЌРїРѕС… - РѕРєРЅРѕ РЅР°Р·Р°Рґ, Р° РїРѕСЃР»РµРґРЅСЏСЏ РЅРµРёР·РјРµРЅРЅР°СЏ СЌРїРѕС…Р° РїРѕ С‡Р°СЂС‚Р°Рј
     emit dataUpdate();
     emit chartAdded(lastIndx);
 }
@@ -424,7 +452,7 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     int pool_index = endIndex();
     if(pool_index < 0 || pool_[pool_index].isUsblSolutionAvailable() == true) {
         addNewEpoch();
-        pool_index = endIndex();
+        //pool_index = endIndex();
     }
 
     // tracks[data.id].data_.append(QVector3D(data.x_m, data.y_m, data.depth_m));
@@ -733,7 +761,11 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 
                 distToActiveContact_ = distanceMetersLLA(latBoat, lonBoat, latTarget, lonTarget);
 
-                const double yawDeg = _lastYaw;
+                double yawDeg = _lastYaw;
+                if (!std::isfinite(yawDeg)) {
+                    yawDeg = lastAYaw_;
+                }
+
                 if (std::isfinite(yawDeg)) {
                     angleToActiveContact_ = angleToTargetDeg(latBoat, lonBoat, latTarget, lonTarget, yawDeg);
                 }
@@ -744,10 +776,52 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
         emit dataUpdate();
         emit lastPositionChanged();
     }
+
+    addArtificalYaw();
 }
 
-void Dataset::addPositionRTK(Position position)
+void Dataset::addArtificalYaw()
 {
+    auto* llPtr = lastlast();
+    auto* lPtr  = last();
+    if (!llPtr || !lPtr) {
+        return;
+    }
+
+    auto llNed = llPtr->getPositionGNSS().ned;
+    auto lNed  = lPtr->getPositionGNSS().ned;
+    if (!llNed.isCoordinatesValid() || !lNed.isCoordinatesValid()) {
+        return;
+    }
+
+    const double dN = lNed.n - llNed.n;
+    const double dE = lNed.e - llNed.e;
+    if (qFuzzyIsNull(dN) && qFuzzyIsNull(dE)) {
+        return;
+    }
+
+    double yawRad = std::atan2(dE, dN);
+    double yawDeg = qRadiansToDegrees(yawRad);
+    if (yawDeg < 0.0) {
+        yawDeg += 360.0;
+    }
+
+    uint64_t indx = pool_.size() - 1;
+    const float aYaw = static_cast<float>(yawDeg);
+    const float aPitch = 0.0f;
+    const float aRoll = 0.0f;
+
+    lPtr->setArtificalAtt(aYaw, aPitch, aRoll);
+    lastAYaw_   = aYaw;
+    lastAPitch_ = aPitch;
+    lastARoll_  = aRoll;
+
+    interpolator_.interpolateArtificalAtt(false);
+
+    emit artificalAttitudeAdded(indx);
+}
+
+void Dataset::addPositionRTK(Position position) {
     if (activeZeroing_) {
         return;
     }
@@ -858,6 +932,7 @@ void Dataset::mergeGnssTrack(QList<Position> track) {
 
 void Dataset::resetDataset()
 {
+    //qDebug() << "Dataset::resetDataset()";
     {
         QWriteLocker locker(&lock_);
         channelsSetup_.clear();
@@ -867,7 +942,9 @@ void Dataset::resetDataset()
     resetRenderBuffers();
 
     resetDistProcessing();
-    state_ = DatasetState::kUndefined;
+
+    setState(DatasetState::kUndefined);
+
     testTime_ = 1740466541;
     usingRecordParameters_.clear();
     lastAddChartEpochIndx_.clear();
@@ -881,6 +958,7 @@ void Dataset::resetDataset()
     lastDepth_            = 0.0f;
 
     sonarPosIndx_ = 0;
+    lastDimRectindx_ = 0;
 
     emit lastDepthChanged();
     emit channelsUpdated();
@@ -889,7 +967,7 @@ void Dataset::resetDataset()
     emit activeContactChanged();
 }
 
-void Dataset::softResetDataset()
+void Dataset::softResetDataset() // for long-distance camera movement
 {
     {
         QWriteLocker locker(&lock_);
@@ -913,6 +991,12 @@ void Dataset::softResetDataset()
     lastDepth_            = 0.0f;
 
     sonarPosIndx_ = 0;
+
+    mosaicFirstChId_.clear();
+    mosaicSecondChId_.clear();
+    mosaicFirstSubChId_ = 0;
+    mosaicSecondSubChId_ = 0;
+    lastDimRectindx_ = 0;
 
     emit lastDepthChanged();
     emit channelsUpdated();
@@ -923,12 +1007,16 @@ void Dataset::softResetDataset()
 
 void Dataset::resetRenderBuffers()
 {
+    clearTileEpochIndex();
     tracks.clear();
     pool_.clear();
     pool_.shrink_to_fit();//
-    _lastYaw = 0;
-    _lastPitch = 0;
-    _lastRoll = 0;
+    lastAYaw_ = NAN;
+    lastAPitch_ = NAN;
+    lastARoll_ = NAN;
+    _lastYaw = NAN;
+    _lastPitch = NAN;
+    _lastRoll = NAN;
     lastTemp_ = NAN;
     interpolator_.clear();
     _llaRef = LLARef();
@@ -1120,12 +1208,6 @@ QStringList Dataset::channelsNameList()
     return result;
 }
 
-void Dataset::interpolateData(bool fromStart)
-{
-    interpolator_.interpolatePos(fromStart);
-    interpolator_.interpolateAtt(fromStart);
-}
-
 void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist)
 {
     Epoch* epPtr = fromIndex(epIndx);
@@ -1161,13 +1243,79 @@ void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist
     }
 }
 
+void Dataset::onDistCompletedBatch(const QVector<BottomTrackUpdate>& updates)
+{
+    if (updates.isEmpty()) {
+        return;
+    }
+
+    bool haveDepth = false;
+    float lastDepth = NAN;
+    int maxCompIndx = -1;
+
+    for (const auto& update : updates) {
+        Epoch* epPtr = fromIndex(update.epochIndex);
+        if (!epPtr) {
+            continue;
+        }
+
+        bool settedChart = false;
+        const int numSubChs = epPtr->getChartsSizeByChannelId(update.channelId);
+        for (int subChId = 0; subChId < numSubChs; ++subChId) {
+            if (epPtr->chartAvail(update.channelId, subChId)) {
+                Epoch::Echogram* chart = epPtr->chart(update.channelId, subChId);
+                if (chart) {
+                    chart->bottomProcessing.setDistance(update.distance, Epoch::DistProcessing::DistanceSource::DistanceSourceProcessing);
+                    settedChart = true;
+                }
+            }
+        }
+
+        if (!settedChart) {
+            continue;
+        }
+
+        lastDepth = update.distance;
+        haveDepth = true;
+
+        if (firstChannelId_.channelId_ != update.channelId) {
+            continue;
+        }
+
+        const int guardInterval = bottomTrackParam_.windowSize;
+        const int compIndx = update.epochIndex > guardInterval ? update.epochIndex - guardInterval : update.epochIndex;
+        if (compIndx > maxCompIndx) {
+            maxCompIndx = compIndx;
+        }
+    }
+
+    if (haveDepth) {
+        setLastDepth(lastDepth);
+    }
+
+    if (maxCompIndx >= 0) {
+        emit bottomTrackAdded(maxCompIndx);
+    }
+}
+
 void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll)
 {
     bottomTrackParam_ = btP;
     lastBottomTrackEpoch_ = val;
 
-    emit dataUpdate();
-    emit bottomTrackUpdated(channelId, bottomTrackParam_.indexFrom, bottomTrackParam_.indexTo, manual, redrawAll);
+    const int minMagicRenderGap = std::max(3, bottomTrackParam_.windowSize);
+    const int lEpoch = std::max(0, bottomTrackParam_.indexFrom - minMagicRenderGap);
+    const int rEpoch = std::max(0, bottomTrackParam_.indexTo   - minMagicRenderGap);
+
+    emit dataUpdate(); // for 2D
+    emit bottomTrackUpdated(channelId, lEpoch, rEpoch, manual, redrawAll); // 3D
+}
+
+void Dataset::onDimensionRectCanCalc(uint64_t indx)
+{
+    //qDebug() << "Dataset::onDimensionRectCanCalc" << indx;
+
+    calcDimensionRects(indx);
 }
 
 void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannelId)
@@ -1284,6 +1432,204 @@ void Dataset::setLastDepth(float val)
     emit lastDepthChanged();
 }
 
+void Dataset::calcDimensionRects(uint64_t indx)
+{
+    //qDebug() << "void Dataset::calcTracingDimensions()";
+
+    if (!mosaicFirstChId_.isValid() ||
+        !mosaicSecondChId_.isValid()) {
+        return;
+    }
+
+    uint64_t lastIndx = lastDimRectindx_;
+    uint64_t currIndx = indx;
+
+    if (currIndx >= static_cast<uint64_t>(pool_.size())) {
+        qWarning() << "Dataset::calcTracingDimensions out of indxs";
+        return;
+    }
+
+    for (uint64_t i = lastIndx; i < currIndx; ++i) {
+        uint64_t llIndx = i;
+        uint64_t  lIndx = i + 1;
+
+        auto* llPtr = &pool_[llIndx];
+        auto* lPtr  = &pool_[lIndx];
+        if (!llPtr || !lPtr) {
+            qWarning() << "Dataset::calcTracingDimensions: !llPtr || !lPtr";
+            continue;
+        }
+
+        const auto llNed = llPtr->getSonarPosition().ned;
+        const auto lNed  = lPtr->getSonarPosition().ned;
+        if (!llNed.isCoordinatesValid() || !lNed.isCoordinatesValid()) {
+            continue;
+        }
+
+        const auto llYaw = llPtr->tryRetValidYaw();
+        const auto lYaw  = lPtr->tryRetValidYaw();
+        if (!std::isfinite(llYaw) || !std::isfinite(lYaw)) {
+            continue;
+        }
+
+        auto* fChLlCharts = llPtr->chart(mosaicFirstChId_,  mosaicFirstSubChId_);
+        auto* fChlCharts  =  lPtr->chart(mosaicFirstChId_,  mosaicFirstSubChId_);
+        auto* sChLlCharts = llPtr->chart(mosaicSecondChId_, mosaicSecondSubChId_);
+        auto* sChlCharts  =  lPtr->chart(mosaicSecondChId_, mosaicSecondSubChId_);
+
+        if ((!fChLlCharts || !fChlCharts) &&
+            (!sChLlCharts || !sChlCharts)) {
+            continue;
+        }
+
+        lastDimRectindx_ = lIndx; // store progress
+
+        QVector<QVector3D> traceLinesVertices;
+        traceLinesVertices.reserve(8);
+
+        const QVector3D llPos(llNed.n, llNed.e, 0.0f);
+        const QVector3D lPos (lNed.n,  lNed.e,  0.0f);
+
+        const double llAzRad = qDegreesToRadians(llYaw);
+        const double lAzRad  = qDegreesToRadians(lYaw);
+
+        const double firstAngleOffsetDeg  = lAngleOffset_;
+        const double secondAngleOffsetDeg = rAngleOffset_;
+
+        if (fChLlCharts && fChlCharts) {
+            const float llRange = fChLlCharts->range();
+            const float lRange  = fChlCharts->range();
+            const double llLeftAzRad = llAzRad - M_PI_2 + qDegreesToRadians(firstAngleOffsetDeg);
+            const double lLeftAzRad  = lAzRad  - M_PI_2 + qDegreesToRadians(firstAngleOffsetDeg);
+
+            QVector3D llBeg(llPos.x() + llRange * std::cos(llLeftAzRad), llPos.y() + llRange * std::sin(llLeftAzRad), 0.0f); // llPtr f ray
+            QVector3D llEnd(llPos);
+            QVector3D lBeg(lPos.x() + lRange * std::cos(lLeftAzRad), lPos.y() + lRange * std::sin(lLeftAzRad), 0.0f); // lPtr f ray
+            QVector3D lEnd(lPos);
+
+            traceLinesVertices << llBeg << llEnd << lBeg  << lEnd;
+        }
+
+        if (sChLlCharts && sChlCharts) {
+            const float llRange = sChLlCharts->range();
+            const float lRange  = sChlCharts->range();
+
+            const double llRightAzRad = llAzRad + M_PI_2 - qDegreesToRadians(secondAngleOffsetDeg);
+            const double lRightAzRad  = lAzRad  + M_PI_2 - qDegreesToRadians(secondAngleOffsetDeg);
+
+            QVector3D llBeg(llPos.x() + llRange * std::cos(llRightAzRad), llPos.y() + llRange * std::sin(llRightAzRad), 0.0f); // llPtr s ray
+            QVector3D llEnd(llPos);
+            QVector3D lBeg(lPos.x() + lRange * std::cos(lRightAzRad), lPos.y() + lRange * std::sin(lRightAzRad), 0.0f); // lPtr s ray
+            QVector3D lEnd(lPos);
+
+            traceLinesVertices << llBeg << llEnd << lBeg  << lEnd;
+        }
+
+        float minN = std::numeric_limits<float>::max();
+        float maxN = std::numeric_limits<float>::lowest();
+        float minE = std::numeric_limits<float>::max();
+        float maxE = std::numeric_limits<float>::lowest();
+
+        for (auto it = traceLinesVertices.cbegin(); it != traceLinesVertices.cend(); ++it) {
+            minN = std::min(minN, it->x());  // N
+            maxN = std::max(maxN, it->x());
+            minE = std::min(minE, it->y());  // E
+            maxE = std::max(maxE, it->y());
+        }
+
+        // rect
+        // been
+        //const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
+        //const auto lvl1 = core.getMosaicIndexProviderPtr()->tilesInRectNed(currRaysRect, 1, /*padTiles*/0);
+
+        // now
+        const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
+        std::array<QPointF, 4> visQuad;
+        visQuad[0] = currRaysRect.topLeft();
+        visQuad[1] = currRaysRect.topRight();
+        visQuad[2] = currRaysRect.bottomRight();
+        visQuad[3] = currRaysRect.bottomLeft();
+        const auto lvl1 = core.getMosaicIndexProviderPtr()->tilesInQuadNed(visQuad, 1, /*padTiles*/0);
+
+        //qDebug() << lvl1.size();
+        //qDebug() << minN << maxN << minE << maxE;
+
+        QMap<int, QSet<TileKey>> tilesByZoom;
+        tilesByZoom[1] = lvl1;
+
+        auto parentIndex2 = [](int i) -> int {
+            if (i >= 0) {
+                return i >> 1;
+            }
+            else {
+                return -(((-i) + 1) >> 1);
+            }
+        };
+
+        for (int z = 2; z <= core.getMosaicIndexProviderPtr()->getMinZoom(); ++z) {
+            const auto& prevSet = tilesByZoom[z - 1];
+            auto& currSet = tilesByZoom[z];
+
+            for (const TileKey& k : prevSet) {
+                TileKey parent;
+                parent.zoom = z;
+                parent.x    = parentIndex2(k.x);
+                parent.y    = parentIndex2(k.y);
+                currSet.insert(parent);
+            }
+        }
+
+        llPtr->setTraceTileIndxs(tilesByZoom); // в эпоху в датасете //
+        appendTileEpochIndex(static_cast<int>(llIndx), tilesByZoom); // в датасет //
+
+        // TODO: в dataProcessor
+        emit sendTilesByZoom(static_cast<int>(llIndx), tilesByZoom);
+    }
+}
+
+void Dataset::appendTileEpochIndex(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom)
+{
+    QWriteLocker locker(&tileEpochIdxMtx_);
+
+    const int minZoom = 7;
+    if (tileEpochIndxsByZoom_.size() < minZoom) {
+        tileEpochIndxsByZoom_.resize(minZoom);
+    }
+
+    for (auto it = tilesByZoom.cbegin(); it != tilesByZoom.cend(); ++it) {
+        const int zoom = it.key() - 1;
+        if (zoom < 0 || zoom >= tileEpochIndxsByZoom_.size()) {
+            continue;
+        }
+
+        auto& indexForZoom = tileEpochIndxsByZoom_[zoom];
+        const QSet<TileKey>& tileSet = it.value();
+        for (const TileKey& tk : tileSet) {
+            auto& epochList = indexForZoom[tk];
+            if (epochList.isEmpty() || epochList.back() != epochIndx) {
+                epochList.push_back(epochIndx);
+            }
+        }
+    }
+}
+
+void Dataset::clearTileEpochIndex()
+{
+    QWriteLocker locker(&tileEpochIdxMtx_);
+    tileEpochIndxsByZoom_.clear();
+}
+
+QMap<int, QSet<TileKey>> Dataset::traceTileKeysForEpoch(int epochIndx) const
+{
+    QReadLocker locker(&poolMtx_);
+
+    if (epochIndx < 0 || epochIndx >= pool_.size()) {
+        return {};
+    }
+
+    return pool_.at(epochIndx).traceTileIndxs();
+}
+
 void Dataset::tryResetDataset(float lat, float lon)
 {
     if (!std::isfinite(lat) || !std::isfinite(lon)) {
@@ -1329,16 +1675,49 @@ int64_t Dataset::getActiveContactIndx() const
     return activeContactIndx_;
 }
 
+void Dataset::setMosaicChannels(const QString& firstChStr, const QString& secondChStr)
+{
+    auto [ch1, sub1, name1] = channelIdFromName(firstChStr);
+    auto [ch2, sub2, name2] = channelIdFromName(secondChStr);
+
+    bool beenChanged = false;
+    if (mosaicFirstChId_     != ch1  ||
+        mosaicSecondChId_    != ch2  ||
+        mosaicFirstSubChId_  != sub1 ||
+        mosaicSecondSubChId_ != sub2) {
+        beenChanged = true;
+    }
+
+    if (beenChanged) {
+        mosaicFirstChId_ = ch1;
+        mosaicSecondChId_ = ch2;
+        mosaicFirstSubChId_ = sub1;
+        mosaicSecondSubChId_ = sub2;
+
+        // TODO: recalc rects on change channels!
+    }
+}
+
+void Dataset::onSetLAngleOffset(float val)
+{
+    lAngleOffset_ = val;
+}
+
+void Dataset::onSetRAngleOffset(float val)
+{
+    rAngleOffset_ = val;
+}
+
 void Dataset::onSonarPosCanCalc(uint64_t indx)
 {
     for (uint64_t i = sonarPosIndx_ + 1; i <= indx; ++i) {
         if (auto* ep = fromIndex(i); ep) {
             if (sonarOffset_.isNull()) {
-                ep->setSonarPosition(ep->getPositionGNSS());
+                ep->setSonarPosition(ep->getPositionGNSS()); // interp been before
             }
             else {
-                Position boatPos = ep->getPositionGNSS();
-                const NED d = fruOffsetToNed(sonarOffset_, ep->yaw());
+                Position boatPos = ep->getPositionGNSS(); // interp been before
+                const NED d = fruOffsetToNed(sonarOffset_, ep->tryRetValidYaw());
                 NED sonarNed(boatPos.ned.n + d.n, boatPos.ned.e + d.e, /*always zero*/0.0);
                 LLA sonarLla(&sonarNed, &_llaRef, /*spherical=*/true);
                 boatPos.lla      = sonarLla;

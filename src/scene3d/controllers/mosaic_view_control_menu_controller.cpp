@@ -46,7 +46,7 @@ void MosaicViewControlMenuController::onVisibilityChanged(bool state)
 
     if (graphicsSceneViewPtr_) {
         graphicsSceneViewPtr_->getSurfaceViewPtr()->setMVisible(visibility_);
-        graphicsSceneViewPtr_->getIsobathsViewPtr()->setMVisible(visibility_);
+        //graphicsSceneViewPtr_->getIsobathsViewPtr()->setMVisible(visibility_);
 
         if (state) {
                 //QMetaObject::invokeMethod(dataProcessorPtr_, "clearProcessing", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
@@ -104,8 +104,13 @@ void MosaicViewControlMenuController::onUpdateStateChanged(bool state)
     updateState_ = state;
 
     if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->setIsUpdateMosaic(updateState_);
+
         if (dataProcessorPtr_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateMosaic", Qt::QueuedConnection, Q_ARG(bool, updateState_));
+        }
+        if (updateState_) {
+            graphicsSceneViewPtr_->onCameraMoved();
         }
     }
     else {
@@ -187,6 +192,8 @@ void MosaicViewControlMenuController::onSetResolution(float val)
 {
     resolution_ = val;
 
+    return;
+
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, resolution_));
@@ -202,20 +209,25 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
     if (!pendingLambda_) {
         pendingLambda_ = [this](){
             if (graphicsSceneViewPtr_) {
+                graphicsSceneViewPtr_->setIsUpdateMosaic(updateState_);
+
                 if (dataProcessorPtr_) {
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateMosaic",              Qt::QueuedConnection, Q_ARG(bool,  updateState_));
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTheme",               Qt::QueuedConnection, Q_ARG(int,   themeId_));
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicLevels",              Qt::QueuedConnection, Q_ARG(float, lowLevel_), Q_ARG(float, highLevel_));
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicLAngleOffset",        Qt::QueuedConnection, Q_ARG(float, lAngleOffset_));
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicRAngleOffset",        Qt::QueuedConnection, Q_ARG(float, rAngleOffset_));
-                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTileResolution",      Qt::QueuedConnection, Q_ARG(float, resolution_));
+                   //QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTileResolution",      Qt::QueuedConnection, Q_ARG(float, resolution_));
                 }
 
                 if (auto surfacePtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfacePtr) {
                     surfacePtr->setMVisible(visibility_);
                 }
-                if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsViewPtr(); isobathsPtr) {
-                    isobathsPtr->setMVisible(visibility_);
+                // if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsViewPtr(); isobathsPtr) {
+                //     isobathsPtr->setMVisible(visibility_);
+                // }
+                if (updateState_) {
+                    graphicsSceneViewPtr_->onCameraMoved();
                 }
             }
         };

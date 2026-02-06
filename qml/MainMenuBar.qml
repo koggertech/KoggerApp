@@ -211,18 +211,6 @@ Item {
 
             targetPlot: menu.targetPlot
         }
-
-        /*SceneControlMenu {
-            id:                 sceneControlMenu
-            objectName:         "sceneControlMenu"
-            Layout.alignment: Qt.AlignTop
-            // Layout.topMargin:   10
-            // Layout.alignment:   Qt.AlignLeft
-            // Layout.fillWidth:   true
-            width: settingsWidth
-            implicitWidth: settingsWidth
-            visible:            menu3DSettings.active
-        }*/
     }
 
     function handleChildSignal(langStr) {

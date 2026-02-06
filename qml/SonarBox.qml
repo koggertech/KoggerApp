@@ -6,7 +6,7 @@ import QtQuick.Dialogs
 
 DevSettingsBox {
     id: control
-    isActive: dev !== null ? dev.isChartSupport : false
+    isActive: !!(dev && dev.isChartSupport)
 
     ColumnLayout {
         id: columnItem

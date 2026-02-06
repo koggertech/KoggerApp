@@ -195,6 +195,15 @@ void Epoch::setTemp(float temp_c) {
     flags.tempAvail = true;
 }
 
+void Epoch::setArtificalAtt(float yaw, float pitch, float roll, DataType dataType)
+{
+    artificalAttitude_.yaw = yaw;
+    artificalAttitude_.pitch = pitch;
+    artificalAttitude_.roll = roll;
+
+    artificalAttitude_.dataType = dataType;
+}
+
 void Epoch::setEncoders(float enc1, float enc2, float enc3) {
     _encoder.e1 = enc1;
     _encoder.e2 = enc2;
@@ -518,4 +527,19 @@ ChartParameters Epoch::getChartParameters(const ChannelId& channelId) const
     }
 
     return {};
+}
+
+void Epoch::setTraceTileIndxs(const QMap<int, QSet<TileKey>>& val)
+{
+    tileKeysToNextEpochByZoom_ = val;
+}
+
+QMap<int, QSet<TileKey>>& Epoch::getTraceTileIndxsPtr()
+{
+    return tileKeysToNextEpochByZoom_;
+}
+
+QMap<int, QSet<TileKey>> Epoch::traceTileIndxs() const
+{
+    return tileKeysToNextEpochByZoom_;
 }

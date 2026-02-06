@@ -14,7 +14,6 @@
 
 namespace map {
 
-
 class TileManager : public QObject
 {
     Q_OBJECT
@@ -39,7 +38,6 @@ private:
     static constexpr int minTilesCapacity_{ 400 };
     static constexpr int maxConcurrentDownloads_{ 10 };
 };
-
 
 } // namespace map
 

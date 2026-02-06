@@ -2,11 +2,57 @@
 #include <cmath>
 #include <memory.h>
 #include <math.h>
+#include <algorithm>
 #include <QOpenGLFramebufferObject>
 #include <QVector3D>
 #include "scene3d_renderer.h"
 #include "dataset.h"
 #include "map_defs.h"
+#include "data_processor_defs.h"
+#include "data_processor.h"
+
+#include "core.h"
+extern Core core;
+
+namespace {
+struct ZoomDistanceRange {
+    float min;
+    float max;
+};
+
+static inline ZoomDistanceRange zoomDistanceRangeFor(int zoom)
+{
+    constexpr float kZoom2Max = 80.0f;
+    constexpr float kZoom3Max = 200.0f;
+    constexpr float kZoom4Max = 400.0f;
+    constexpr float kZoom5Max = 800.0f;
+
+    if (zoom <= 2) {
+        return {0.0f, kZoom2Max};
+    }
+    if (zoom == 3) {
+        return {kZoom2Max, kZoom3Max};
+    }
+    if (zoom == 4) {
+        return {kZoom3Max, kZoom4Max};
+    }
+    if (zoom == 5) {
+        return {kZoom4Max, kZoom5Max};
+    }
+
+    float minDist = kZoom5Max;
+    if (zoom > 6) {
+        minDist *= std::pow(2.0f, static_cast<float>(zoom - 6));
+    }
+    float maxDist = minDist * 2.0f;
+    return {minDist, maxDist};
+}
+
+static inline float zoomDistanceMid(const ZoomDistanceRange& range)
+{
+    return range.min + (range.max - range.min) * 0.5f;
+}
+} // namespace
 
 
 GraphicsScene3dView::GraphicsScene3dView() :
@@ -14,7 +60,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_camera(std::make_shared<Camera>(this)),
     m_axesThumbnailCamera(std::make_shared<Camera>()),
     m_rayCaster(std::make_shared<RayCaster>()),
-    isobathsView_(std::make_shared<IsobathsView>()),
+    //isobathsView_(std::make_shared<IsobathsView>()),
     surfaceView_(std::make_shared<SurfaceView>()),
     imageView_(std::make_shared<ImageView>()),
     mapView_(std::make_shared<MapView>(this)),
@@ -42,7 +88,15 @@ GraphicsScene3dView::GraphicsScene3dView() :
     compass_(false),
     compassPos_(1),
     compassSize_(1),
-    planeGridType_(true)
+    planeGridType_(true),
+    dataZoomIndx_(-1),
+    cameraIsMoveUp_(false),
+    lastMinX_(std::numeric_limits<float>::max()),
+    lastMaxX_(std::numeric_limits<float>::lowest()),
+    lastMinY_(std::numeric_limits<float>::max()),
+    lastMaxY_(std::numeric_limits<float>::lowest()),
+    isUpdateMosaic_(false),
+    isUpdateSurface_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -55,7 +109,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     imageView_->setView(this);
 
-    QObject::connect(isobathsView_.get(), &IsobathsView::changed, this, &QQuickFramebufferObject::update);
+    //QObject::connect(isobathsView_.get(), &IsobathsView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(surfaceView_.get(), &SurfaceView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
@@ -69,7 +123,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(navigationArrow_.get(), &NavigationArrow::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(usblView_.get(), &UsblView::changed, this, &QQuickFramebufferObject::update);
 
-    QObject::connect(isobathsView_.get(), &IsobathsView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    //QObject::connect(isobathsView_.get(), &IsobathsView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(surfaceView_.get(), &SurfaceView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(imageView_.get(), &ImageView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(mapView_.get(), &MapView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -81,10 +135,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(boatTrack_.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews, Qt::DirectConnection);
-
+    
     updatePlaneGrid();
 
 #ifdef SCENE_TESTING
@@ -115,10 +166,10 @@ std::shared_ptr<BottomTrack> GraphicsScene3dView::bottomTrack() const
     return m_bottomTrack;
 }
 
-std::shared_ptr<IsobathsView> GraphicsScene3dView::getIsobathsViewPtr() const
-{
-    return isobathsView_;
-}
+//std::shared_ptr<IsobathsView> GraphicsScene3dView::getIsobathsViewPtr() const
+//{
+//    return isobathsView_;
+//}
 
 std::shared_ptr<SurfaceView> GraphicsScene3dView::getSurfaceViewPtr() const
 {
@@ -175,6 +226,16 @@ bool GraphicsScene3dView::sceneBoundingBoxVisible() const
     return m_isSceneBoundingBoxVisible;
 }
 
+bool GraphicsScene3dView::cameraPerspective() const
+{
+    return m_camera ? m_camera->getIsPerspective() : false;
+}
+
+bool GraphicsScene3dView::updateSurface() const
+{
+    return isUpdateSurface_;
+}
+
 Dataset *GraphicsScene3dView::dataset() const
 {
     return datasetPtr_;
@@ -182,7 +243,7 @@ Dataset *GraphicsScene3dView::dataset() const
 
 void GraphicsScene3dView::clear(bool cleanMap)
 {
-    isobathsView_->clear();
+    //isobathsView_->clear();
     surfaceView_->clear();
     contacts_->clear();
     imageView_->clear();//
@@ -201,10 +262,17 @@ void GraphicsScene3dView::clear(bool cleanMap)
     //setMapView();
     updateBounds();
 
+    lastMinX_ = std::numeric_limits<float>::max();
+    lastMaxX_ = std::numeric_limits<float>::lowest();
+    lastMinY_ = std::numeric_limits<float>::max();
+    lastMaxY_ = std::numeric_limits<float>::lowest();
+
+    lastVisTileKeys_.clear();
+
     QQuickFramebufferObject::update();
 }
 
-QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ)
+QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ) const
 {
     QVector3D retVal;
 
@@ -323,7 +391,7 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     QQuickFramebufferObject::update();
 
     if (cameraWasMoved) {
-        emit cameraIsMoved();
+        onCameraMoved();
     }
 }
 
@@ -387,7 +455,7 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
     QQuickFramebufferObject::update();
 
     if (cameraWasMoved) {
-        emit cameraIsMoved();
+        onCameraMoved();
     }
 }
 
@@ -403,7 +471,7 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
     updatePlaneGrid();
     QQuickFramebufferObject::update();
 
-    emit cameraIsMoved();
+    onCameraMoved();
 }
 
 void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
@@ -507,6 +575,65 @@ void GraphicsScene3dView::setPlaneGridCircleLabels(bool state)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setForceSingleZoomEnabled(bool state)
+{
+    if (forceSingleZoomEnabled_ == state) {
+        return;
+    }
+
+    forceSingleZoomEnabled_ = state;
+    if (forceSingleZoomEnabled_) {
+        forceSingleZoomSnapPending_ = true;
+    }
+    onCameraMoved();
+}
+
+void GraphicsScene3dView::setForceSingleZoomValue(int zoom)
+{
+    if (zoom <= 0 || forceSingleZoomValue_ == zoom) {
+        return;
+    }
+
+    forceSingleZoomValue_ = zoom;
+    forceSingleZoomSnapPending_ = true;
+    onCameraMoved();
+}
+
+void GraphicsScene3dView::updateForceSingleZoomAutoState()
+{
+    if (!core.getNeedForceZooming()) {
+        const bool wasActive = forceSingleZoomAutoActive_;
+        forceSingleZoomAutoActive_ = false;
+        forceSingleZoomEnabled_ = false;
+        forceSingleZoomSnapPending_ = false;
+        forceSingleZoomWasActive_ = false;
+        if (wasActive) {
+            emit forceSingleZoomAutoStateChanged(false);
+        }
+        return;
+    }
+#ifdef SEPARATE_READING
+    const bool active = isOpeningFile_;
+#else
+    const bool active = datasetState_ == static_cast<int>(Dataset::DatasetState::kConnection);
+#endif
+    if (forceSingleZoomAutoActive_ == active) {
+        return;
+    }
+
+    forceSingleZoomAutoActive_ = active;
+    if (forceSingleZoomAutoActive_) {
+        forceSingleZoomEnabled_ = true;
+        forceSingleZoomValue_ = 5;
+        forceSingleZoomSnapPending_ = true;
+    }
+    else {
+        forceSingleZoomEnabled_ = false;
+    }
+
+    emit forceSingleZoomAutoStateChanged(forceSingleZoomAutoActive_);
+}
+
 void GraphicsScene3dView::setActiveZeroing(bool state)
 {
     m_planeGrid->setActiveZeroing(state);
@@ -555,7 +682,7 @@ void GraphicsScene3dView::geometryChange(const QRectF &newGeometry, const QRectF
 
     if (newGeometry.size() != oldGeometry.size()) {
        updateProjection();
-       emit cameraIsMoved();
+       onCameraMoved();
     }
 }
 
@@ -583,7 +710,7 @@ void GraphicsScene3dView::fitAllInView()
 
     QQuickFramebufferObject::update();
 
-    emit cameraIsMoved();
+    onCameraMoved();
 }
 
 void GraphicsScene3dView::setIsometricView()
@@ -596,7 +723,7 @@ void GraphicsScene3dView::setIsometricView()
 
     QQuickFramebufferObject::update();
 
-    emit cameraIsMoved();
+    onCameraMoved();
 }
 
 void GraphicsScene3dView::setCancelZoomView()
@@ -623,7 +750,7 @@ void GraphicsScene3dView::setMapView() {
 
     QQuickFramebufferObject::update();
 
-    emit cameraIsMoved();
+    onCameraMoved();
 }
 
 void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigatorView)
@@ -638,7 +765,7 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
     }
 
     if (useAngle && !isNorth_) {
-        const float yawDeg = datasetPtr_->getLastYaw();
+        const float yawDeg = datasetPtr_->tryRetLastValidYaw();
         if (std::isfinite(yawDeg)) {
             const float targetYaw = -yawDeg * static_cast<float>(M_PI) / 180.0f;
 
@@ -726,7 +853,7 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
 
     updatePlaneGrid();
     QQuickFramebufferObject::update();
-    emit cameraIsMoved();
+    onCameraMoved();
 }
 
 void GraphicsScene3dView::setIdleMode()
@@ -758,7 +885,7 @@ void GraphicsScene3dView::shiftCameraZAxis(float shift)
 {
     m_camera->moveZAxis(shift);
 
-    emit cameraIsMoved();
+    onCameraMoved();
 }
 
 void GraphicsScene3dView::setBottomTrackVertexSelectionMode()
@@ -799,6 +926,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     }
 
     datasetPtr_ = dataset;
+    datasetState_ = static_cast<int>(datasetPtr_->getState());
 
     boatTrack_->setDatasetPtr(datasetPtr_);
     m_bottomTrack->setDatasetPtr(datasetPtr_);
@@ -823,6 +951,32 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                          forceUpdateDatasetLlaRef();
                          fitAllInView();
                      }, Qt::DirectConnection);
+
+    QObject::connect(datasetPtr_, &Dataset::datasetStateChanged,
+                     this,      &GraphicsScene3dView::onDatasetStateChanged,
+                     Qt::DirectConnection);
+
+    updateForceSingleZoomAutoState();
+}
+
+void GraphicsScene3dView::setIsOpeningFile(bool state)
+{
+    if (isOpeningFile_ == state) {
+        return;
+    }
+
+    isOpeningFile_ = state;
+    updateForceSingleZoomAutoState();
+}
+
+void GraphicsScene3dView::onDatasetStateChanged(int state)
+{
+    if (datasetState_ == state) {
+        return;
+    }
+
+    datasetState_ = state;
+    updateForceSingleZoomAutoState();
 }
 
 void GraphicsScene3dView::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
@@ -850,12 +1004,18 @@ void GraphicsScene3dView::setQmlRootObject(QObject* object)
 void GraphicsScene3dView::setQmlAppEngine(QQmlApplicationEngine* engine)
 {
     Contacts::setQmlInstance(contacts_.get(), engine);
+
+    connect(&core,
+            &Core::needForceZoomingChanged,
+            this,
+            &GraphicsScene3dView::updateForceSingleZoomAutoState,
+            Qt::UniqueConnection);
 }
 
 void GraphicsScene3dView::updateBounds()
 {
     m_bounds = boatTrack_->bounds()
-                   .merge(isobathsView_->bounds())
+                   //.merge(isobathsView_->bounds())
                    .merge(m_bottomTrack->bounds())
                    .merge(boatTrack_->bounds())
                    .merge(m_polygonGroup->bounds())
@@ -930,23 +1090,15 @@ void GraphicsScene3dView::initAutoDistTimer()
                         const float z = 0.0;
                         m_camera->focusOnPosition(QVector3D(x, y, z));
 
-                        emit cameraIsMoved();
+                        onCameraMoved();
                      });
 
     testingTimer_->start();
 }
 
-void GraphicsScene3dView::updateMapView()
+std::tuple<float, float, float, float> GraphicsScene3dView::getFieldViewDim() const
 {
-    if (!m_camera || !mapView_) {
-        return;
-    }
-
-    if (!mapView_->isVisible()) {
-        return;
-    }
-
-    float reductorFactor = -0.05f; // debug
+    float reductorFactor = -0.05f;
     QVector<QPair<float, float>> cornerMultipliers = {
         {       reductorFactor,         reductorFactor }, // lt
         {       reductorFactor,  1.0f - reductorFactor }, // lb
@@ -954,15 +1106,12 @@ void GraphicsScene3dView::updateMapView()
         {1.0f - reductorFactor ,        reductorFactor }  // rt
     };
 
-    updateProjection();
-
     // calc ned
     float minX = std::numeric_limits<float>::max();
     float minY = std::numeric_limits<float>::max();
     float maxX = std::numeric_limits<float>::lowest();
     float maxY = std::numeric_limits<float>::lowest();
 
-    bool allPointsAreValid{ true };
     for (const auto& multiplier : cornerMultipliers) {
         float currWidth  = width() * multiplier.first;
         float currHeight = height() * multiplier.second;
@@ -979,7 +1128,6 @@ void GraphicsScene3dView::updateMapView()
         }
 
         if (point == QVector3D()) {
-            allPointsAreValid = false;
             break;
         }
 
@@ -989,70 +1137,143 @@ void GraphicsScene3dView::updateMapView()
         maxY = std::max(maxY, point.y());
     }
 
-    if (allPointsAreValid) {
-        bool canRequest{ true };
-        if (m_camera->getAngleToGround() > 5.0f) {
-            const float maxSideSize = 14000.f;
-            float maxS = std::pow(maxSideSize, 2.0f);
-            float rectArea = std::fabs(maxX - minX) * std::fabs(maxY - minY);
-            if (rectArea > maxS) { // TODO: using Z coeff
-                canRequest = false;
-            }
+    return { minX, maxX, minY, maxY };
+}
+
+void GraphicsScene3dView::onCameraMoved()
+{
+    const bool forceSingleZoom = core.getNeedForceZooming() && forceSingleZoomEnabled_;
+    int forcedZoom = forceSingleZoomValue_;
+    if (forceSingleZoom) {
+        if (auto mip = core.getMosaicIndexProviderPtr()) {
+            const int minZoom = mip->getMaxZoom();
+            const int maxZoom = mip->getMinZoom();
+            if (forcedZoom < minZoom) forcedZoom = minZoom;
+            if (forcedZoom > maxZoom) forcedZoom = maxZoom;
         }
 
-        QVector<LLA> llaVerts;
-
-        float dist = m_camera->distForMapView();
-        bool moveUp = dist > lastCameraDist_;
-        lastCameraDist_ = dist;
-
-        NED ltNed(minX, minY, 0.0);
-        NED lbNed(minX, maxY, 0.0);
-        NED rbNed(maxX, maxY, 0.0);
-        NED rtNed(maxX, minY, 0.0);
-        LLA ltLla(&ltNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
-        LLA lbLla(&lbNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
-        LLA rbLla(&rbNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
-        LLA rtLla(&rtNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
-
-        ltLla.latitude = map::clampLatitude(ltLla.latitude);
-        lbLla.latitude = map::clampLatitude(lbLla.latitude);
-        rbLla.latitude = map::clampLatitude(rbLla.latitude);
-        rtLla.latitude = map::clampLatitude(rtLla.latitude);
-
-        double edge = 180.0;
-        if (ltLla.longitude >  edge) ltLla.longitude =  edge;
-        if (ltLla.longitude < -edge) ltLla.longitude = -edge;
-        if (lbLla.longitude >  edge) lbLla.longitude =  edge;
-        if (lbLla.longitude < -edge) lbLla.longitude = -edge;
-        if (rbLla.longitude >  edge) rbLla.longitude =  edge;
-        if (rbLla.longitude < -edge) rbLla.longitude = -edge;
-        if (rtLla.longitude >  edge) rtLla.longitude =  edge;
-        if (rtLla.longitude < -edge) rtLla.longitude = -edge;
-
-        llaVerts.append(LLA(ltLla.latitude, ltLla.longitude, dist));
-        llaVerts.append(LLA(lbLla.latitude, lbLla.longitude, dist));
-        llaVerts.append(LLA(rbLla.latitude, rbLla.longitude, dist));
-        llaVerts.append(LLA(rtLla.latitude, rtLla.longitude, dist));
-
-        if (canRequest) {
-            emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_, moveUp, m_camera->getCameraTilt());
+        const auto range = zoomDistanceRangeFor(forcedZoom);
+        const float dist = m_camera->distForMapView();
+        const bool needSnap = forceSingleZoomSnapPending_ || !forceSingleZoomWasActive_;
+        if (needSnap) {
+            m_camera->setDistance(zoomDistanceMid(range));
+            forceSingleZoomSnapPending_ = false;
         }
-        else {
-            emit sendLlaRef(m_camera->viewLlaRef_);
+        else if (dist < range.min || dist > range.max) {
+            m_camera->setDistance(std::clamp(dist, range.min, range.max));
         }
-    } // is rect
+    }
     else {
-        emit sendLlaRef(m_camera->viewLlaRef_);
+        forceSingleZoomSnapPending_ = false;
+    }
+    forceSingleZoomWasActive_ = forceSingleZoom;
+
+    updateProjection();
+
+    int currZoom = pickZoomByDistance(m_camera->distForMapView());
+
+    //currZoom = 2; // 1 - best, 7 (test)
+    if (forceSingleZoom) {
+        currZoom = forcedZoom;
     }
 
-    QQuickFramebufferObject::update();
+    if (currZoom != dataZoomIndx_) {
+        qDebug() << "           CHANGED ZOOM" << currZoom;
+        dataZoomIndx_ = currZoom;
+        emit sendDataZoom(dataZoomIndx_);
+    }
+
+    const auto [minX, maxX, minY, maxY] = getFieldViewDim();
+    if (qFuzzyCompare(minX, std::numeric_limits<float>::max())    ||
+        qFuzzyCompare(minY, std::numeric_limits<float>::max())    ||
+        qFuzzyCompare(maxX, std::numeric_limits<float>::lowest()) ||
+        qFuzzyCompare(maxY, std::numeric_limits<float>::lowest())) {
+        return;
+    }
+
+    lastMinX_ = minX;
+    lastMaxX_ = maxX;
+    lastMinY_ = minY;
+    lastMaxY_ = maxY;
+
+    bool canRequest{ true };
+    if (m_camera->getAngleToGround() > 5.0f) {
+        const float maxSideSize = 14000.f;
+        float maxS = std::pow(maxSideSize, 2.0f);
+        float rectArea = std::fabs(lastMaxX_ - lastMinX_) * std::fabs(lastMaxY_ - lastMinY_);
+        if (rectArea > maxS) { // TODO: using Z coeff
+            canRequest = false;
+        }
+    }
+    if (!canRequest) {
+        emit sendLlaRef(m_camera->viewLlaRef_); //
+        return;
+    }
+
+    updateMapView();
+    updateViews();
+}
+
+void GraphicsScene3dView::updateMapView()
+{
+    if (!mapView_->isVisible()) {
+        return;
+    }
+
+    QVector<LLA> llaVerts;
+
+    float dist = m_camera->distForMapView();
+    cameraIsMoveUp_ = dist > lastCameraDist_;
+    lastCameraDist_ = dist;
+
+    NED ltNed(lastMinX_, lastMinY_, 0.0);
+    NED lbNed(lastMinX_, lastMaxY_, 0.0);
+    NED rbNed(lastMaxX_, lastMaxY_, 0.0);
+    NED rtNed(lastMaxX_, lastMinY_, 0.0);
+    LLA ltLla(&ltNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+    LLA lbLla(&lbNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+    LLA rbLla(&rbNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+    LLA rtLla(&rtNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+
+    ltLla.latitude = map::clampLatitude(ltLla.latitude);
+    lbLla.latitude = map::clampLatitude(lbLla.latitude);
+    rbLla.latitude = map::clampLatitude(rbLla.latitude);
+    rtLla.latitude = map::clampLatitude(rtLla.latitude);
+
+    double edge = 180.0;
+    if (ltLla.longitude >  edge) ltLla.longitude =  edge;
+    if (ltLla.longitude < -edge) ltLla.longitude = -edge;
+    if (lbLla.longitude >  edge) lbLla.longitude =  edge;
+    if (lbLla.longitude < -edge) lbLla.longitude = -edge;
+    if (rbLla.longitude >  edge) rbLla.longitude =  edge;
+    if (rbLla.longitude < -edge) rbLla.longitude = -edge;
+    if (rtLla.longitude >  edge) rtLla.longitude =  edge;
+    if (rtLla.longitude < -edge) rtLla.longitude = -edge;
+
+    llaVerts.append(LLA(ltLla.latitude, ltLla.longitude, dist));
+    llaVerts.append(LLA(lbLla.latitude, lbLla.longitude, dist));
+    llaVerts.append(LLA(rbLla.latitude, rbLla.longitude, dist));
+    llaVerts.append(LLA(rtLla.latitude, rtLla.longitude, dist));
+
+    emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_, cameraIsMoveUp_, m_camera->getCameraTilt());
+}
+
+void GraphicsScene3dView::calcVisEpochIndxs()
+{
+
 }
 
 void GraphicsScene3dView::updateViews()
 {
-    if (isobathsView_) {
-        isobathsView_->setCameraDistToFocusPoint(m_camera->distForMapView());
+    if (isUpdateMosaic_ || isUpdateSurface_) {
+        emit sendDataRectRequest(lastMinX_, lastMinY_, lastMaxX_, lastMaxY_);
+    }
+
+    // if (isobathsView_) {
+    //     isobathsView_->setCameraDistToFocusPoint(m_camera->distForMapView());
+    // }
+    if (surfaceView_) {
+        surfaceView_->setCameraDistToFocusPoint(m_camera->distForMapView());
     }
 }
 
@@ -1074,8 +1295,14 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
 
     boatTrack_->onPositionAdded(indx); // сюда лодка
 
+    // Yaw
+    float lastYaw = datasetPtr_->getLastYaw();
+    if (!std::isfinite(lastYaw)) {
+        lastYaw = datasetPtr_->getLastArtificalYaw();
+    }
+
     QVector3D boatPosVec3D = QVector3D(boatPos.ned.n, boatPos.ned.e, !isfinite(boatPos.ned.d) ? 0.f : boatPos.ned.d);
-    if (float lastYaw = datasetPtr_->getLastYaw(); std::isfinite(lastYaw)) {
+    if (std::isfinite(lastYaw)) {
         navigationArrow_->setPositionAndAngle(boatPosVec3D, lastYaw - 90.f); // сюда лодка
     }
 
@@ -1107,7 +1334,23 @@ void GraphicsScene3dView::setIsNorth(bool state)
     }
 
     QQuickFramebufferObject::update();
-    emit cameraIsMoved();
+
+    onCameraMoved();
+}
+
+void GraphicsScene3dView::setIsUpdateMosaic(bool state)
+{
+    isUpdateMosaic_ = state;
+}
+
+void GraphicsScene3dView::setIsUpdateSurface(bool state)
+{
+    if (isUpdateSurface_ == state) {
+        return;
+    }
+
+    isUpdateSurface_ = state;
+    emit updateSurfaceChanged();
 }
 
 //---------------------Renderer---------------------------//
@@ -1129,6 +1372,7 @@ void GraphicsScene3dView::InFboRenderer::render()
 void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * fbo)
 {
     auto view = qobject_cast<GraphicsScene3dView*>(fbo);
+    auto* glFuncs = QOpenGLContext::currentContext()->functions();
 
     if (!view) {
         return;
@@ -1136,8 +1380,8 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
 
     // process textures
     processMapTextures(view);
-    processMosaicColorTableTexture(view);
-    processMosaicTileTexture(view);
+    processMosaicColorTableTexture(glFuncs, view);
+    processMosaicTileTexture      (glFuncs, view);
     processImageTexture(view);
     processSurfaceTexture(view);
 
@@ -1151,7 +1395,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_planeGridRenderImpl       = *(dynamic_cast<PlaneGrid::PlaneGridRenderImplementation*>(view->m_planeGrid->m_renderImpl));
     m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->boatTrack_->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
-    m_renderer->isobathsViewRenderImpl_     = *(dynamic_cast<IsobathsView::IsobathsViewRenderImplementation*>(view->isobathsView_->m_renderImpl));
+    //m_renderer->isobathsViewRenderImpl_     = *(dynamic_cast<IsobathsView::IsobathsViewRenderImplementation*>(view->isobathsView_->m_renderImpl));
     m_renderer->surfaceViewRenderImpl_      = *(dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(view->surfaceView_->m_renderImpl));
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->contactsRenderImpl_         = *(dynamic_cast<Contacts::ContactsRenderImplementation*>(view->contacts_->m_renderImpl));
@@ -1214,117 +1458,120 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
     r.pendingDelete_ += del;
 }
 
-void GraphicsScene3dView::InFboRenderer::processMosaicColorTableTexture(GraphicsScene3dView* viewPtr) const
+void GraphicsScene3dView::InFboRenderer::processMosaicColorTableTexture(QOpenGLFunctions* glFuncs, GraphicsScene3dView* viewPtr) const
 {
     auto surfacePtr = viewPtr->getSurfaceViewPtr();
 
     // del
     if (auto cTTDId = surfacePtr->takeMosaicColorTableToDelete(); cTTDId) {
+        glFuncs->glDeleteTextures(1, &cTTDId);
         surfacePtr->setMosaicColorTableTextureId(0);
-        glDeleteTextures(1, &cTTDId);
     }
 
-    auto task = surfacePtr->takeMosaicColorTableToAppend();
-    if (task.empty()) {
+    // add/upd
+    auto bytes = surfacePtr->takeMosaicColorTableToAppend();
+    if (bytes.empty()) {
         return;
     }
 
-    GLuint colorTableTextureId = surfacePtr->getMosaicColorTableTextureId();
+    const GLsizei texWidth = GLsizei(bytes.size() / 4);
+    GLint prevUnpack = 4;
+    glFuncs->glGetIntegerv(GL_UNPACK_ALIGNMENT, &prevUnpack);
+    glFuncs->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
-    if (colorTableTextureId) {
-        glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, task.size() / 4, 1, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
+    GLuint texId = surfacePtr->getMosaicColorTableTextureId();
+
+    if (!texId) {
+        glFuncs->glGenTextures(1, &texId);
+        surfacePtr->setMosaicColorTableTextureId(texId);
+        glFuncs->glBindTexture(GL_TEXTURE_2D, texId);
+
+        glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+        glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+        glFuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texWidth, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes.data());
     }
     else {
-        glGenTextures(1, &colorTableTextureId);
-        glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-
-        surfacePtr->setMosaicColorTableTextureId(colorTableTextureId);
+        glFuncs->glBindTexture(GL_TEXTURE_2D, texId);
+        glFuncs->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texWidth, 1, GL_RGBA, GL_UNSIGNED_BYTE, bytes.data());
     }
-#else
-    if (colorTableTextureId) {
-        glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
-        glTexSubImage1D(GL_TEXTURE_1D, 0, 0, task.size() / 4, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-    }
-    else {
-        glGenTextures(1, &colorTableTextureId);
-        glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
 
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, task.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-
-        surfacePtr->setMosaicColorTableTextureId(colorTableTextureId);
-    }
-#endif
+    glFuncs->glPixelStorei(GL_UNPACK_ALIGNMENT, prevUnpack);
 }
 
-void GraphicsScene3dView::InFboRenderer::processMosaicTileTexture(GraphicsScene3dView* viewPtr) const // TODO CHECK
+void GraphicsScene3dView::InFboRenderer::processMosaicTileTexture(QOpenGLFunctions* glFuncs, GraphicsScene3dView* viewPtr) const // TODO CHECK
 {
     auto surfacePtr = viewPtr->getSurfaceViewPtr();
 
-    // delete
+    // del
     {
         auto tasks = surfacePtr->takeMosaicTileTextureToDelete();
-        for (auto it = tasks.begin(); it != tasks.end(); ++it) {
-            if (*it != 0) {
-                glDeleteTextures(1, &(*it));
+        for (auto it = tasks.cbegin(); it != tasks.cend(); ++it) {
+            auto id = *it;
+            if (id) {
+                glFuncs->glDeleteTextures(1, &id);
             }
         }
     }
 
-    // append or update
+    // 2) add/upd
     {
         auto tasks = surfacePtr->takeMosaicTileTextureToAppend();
+        if (tasks.isEmpty()) {
+            return;
+        }
 
-        for (auto it = tasks.begin(); it != tasks.end(); ++it) {
-            const auto& tileId = it->first;
-            const auto& data   = it->second;
+        GLint prevUnpack = 4;
+        glFuncs->glGetIntegerv(GL_UNPACK_ALIGNMENT, &prevUnpack);
+        glFuncs->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        const GLsizei W = defaultTileSidePixelSize;
+        const GLsizei H = defaultTileSidePixelSize;
+
+        for (auto it = tasks.cbegin(); it != tasks.cend(); ++it) {
+            auto iTask = *it;
+            const TileKey& tileId = iTask.first;
+            const auto&    data   = iTask.second;
 
             if (data.empty()) {
                 continue;
             }
 
-            const GLuint existingId = surfacePtr->getMosaicTextureIdByTileId(tileId);
+            // if (!surfacePtr->hasTile(tileId)) { // eсли тайла уже нет
+            //     continue;
+            // }
 
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            GLuint texId = surfacePtr->getMosaicTextureIdByTileId(tileId);
+            if (texId) {
+                glFuncs->glBindTexture(GL_TEXTURE_2D, texId);
+                glFuncs->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, W, H, GL_RED, GL_UNSIGNED_BYTE, data.data());
+                glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
 
-            if (existingId) { // update
-                glBindTexture(GL_TEXTURE_2D, existingId);
-
-                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, defaultTileSidePixelSize, defaultTileSidePixelSize, GL_RED, GL_UNSIGNED_BYTE, data.data());
-
-                QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
-                gl->glGenerateMipmap(GL_TEXTURE_2D);
             }
-            else { // create
-                GLuint texId = 0;
-                glGenTextures(1, &texId);
-                glBindTexture(GL_TEXTURE_2D, texId);
+            else {
+                glFuncs->glGenTextures(1, &texId);
+                glFuncs->glBindTexture(GL_TEXTURE_2D, texId);
 
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, defaultTileSidePixelSize, defaultTileSidePixelSize, 0, GL_RED, GL_UNSIGNED_BYTE, data.data());
 
-                QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
-                gl->glGenerateMipmap(GL_TEXTURE_2D);
+                glFuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, W, H, 0, GL_RED, GL_UNSIGNED_BYTE, data.data());
+                glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
 
-                surfacePtr->setMosaicTextureIdByTileId(tileId, texId);
+                if (!surfacePtr->trySetMosaicTextureId(tileId, texId)) { // если тайла нет — удаляем текстуру
+                    glFuncs->glDeleteTextures(1, &texId);
+                }
             }
         }
+
+        glFuncs->glBindTexture(GL_TEXTURE_2D, 0);
+        glFuncs->glPixelStorei(GL_UNPACK_ALIGNMENT, prevUnpack);
     }
 }
 
@@ -1485,6 +1732,11 @@ void GraphicsScene3dView::Camera::rotate(const QVector2D& lastMouse, const QVect
     r.setY(qDegreesToRadians(r.y()));
 
     m_rotAngle += r;
+
+    const float kMinPitchRad = qDegreesToRadians(30.0f); // angle limit
+    if (m_rotAngle.y() > kMinPitchRad) {
+        m_rotAngle.setY(kMinPitchRad);
+    }
 
     tryResetRotateAngle();
     checkRotateAngle();
@@ -1725,14 +1977,29 @@ void GraphicsScene3dView::Camera::resetRotationAngle()
 
 void GraphicsScene3dView::Camera::updateCameraParams()
 {
-    distToGround_ = std::max(0.0f, std::fabs(-cosf(m_rotAngle.y()) * m_distToFocusPoint));
+    if (viewPtr_) { // zoom limit
+        const float kMinGroundDist = 1.0f;
+        const float kMinCos = 0.01f;
+        const float cosPitch = std::fabs(cosf(m_rotAngle.y()));
+
+        distToGround_ = std::max(0.0f, std::fabs(cosPitch * m_distToFocusPoint));
+        if (distToGround_ < kMinGroundDist) {
+            m_distToFocusPoint = kMinGroundDist / std::max(cosPitch, kMinCos);
+            distForMapView_ = m_distToFocusPoint;
+            distToGround_ = kMinGroundDist;
+        }
+    }
 
     float perspEdge = 5000.f;
     if (viewPtr_) {
         perspEdge = viewPtr_->perspectiveEdge_;
     }
 
+    const bool prevPerspective = isPerspective_;
     isPerspective_ = distToGround_ < perspEdge;
+    if (viewPtr_ && prevPerspective != isPerspective_) {
+        emit viewPtr_->cameraPerspectiveChanged(isPerspective_);
+    }
 }
 
 void GraphicsScene3dView::Camera::tryToChangeViewLlaRef()

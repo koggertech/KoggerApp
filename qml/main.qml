@@ -5,7 +5,6 @@ import QtQuick.Layouts 1.15
 import QtQuick.Dialogs
 import QtQuick.Controls 2.15
 import WaterFall 1.0
-import KoggerCommon 1.0
 import BottomTrack 1.0
 import QtCore
 
@@ -99,6 +98,9 @@ ApplicationWindow  {
         waterViewFirst.settingsClicked.connect(onPlotSettingsClicked)
         waterViewSecond.settingsClicked.connect(onPlotSettingsClicked)
         menuBar.menuBarSettingOpened.connect(onMenuBarSettingsOpened)
+
+        scene3DToolbar.mosaicLAngleOffsetChanged.connect(handleMosaicLOffsetChanged)
+        scene3DToolbar.mosaicRAngleOffsetChanged.connect(handleMosaicROffsetChanged)
 
         if (Qt.platform.os !== "windows") {
             if (appSettings.isFullScreen) {
@@ -388,10 +390,10 @@ ApplicationWindow  {
                 }
                 case "nextTheme": {
                     let themeId = waterViewFirst.getThemeId()
-                    if (themeId < 4) waterViewFirst.plotEchogramTheme(themeId + 1)
+                    if (themeId < 8) waterViewFirst.plotEchogramTheme(themeId + 1)
                     if (waterViewSecond.enabled) {
                         let themeSId = waterViewSecond.getThemeId()
-                        if (themeSId < 4) waterViewSecond.plotEchogramTheme(themeSId + 1)
+                        if (themeSId < 8) waterViewSecond.plotEchogramTheme(themeSId + 1)
                     }
                     break
                 }
@@ -467,6 +469,11 @@ ApplicationWindow  {
                 focus:             true
 
                 property bool longPressTriggered: false
+                property int currentZoom: -1
+
+                onSendDataZoom: function(zoom) {
+                    currentZoom = zoom;
+                }
 
                 PinchArea {
                     id:           pinch3D
@@ -585,6 +592,47 @@ ApplicationWindow  {
                     //anchors.horizontalCenter: parent.horizontalCenter
                     // anchors.rightMargin:      20
                     Keys.forwardTo:           [mousearea3D]
+                }
+
+                Rectangle {
+                    id: mosaicQualityBadge
+                    visible: scene3DToolbar.showMosaicQualityLabel
+                             && renderer.cameraPerspective
+                             && renderer.currentZoom > 0
+                             && (scene3DToolbar.mosaicEnabled || renderer.updateSurface)
+                    readonly property int tileSidePx: 256
+                    readonly property int heightMatrixRatio: 8
+                    readonly property int mosaicCmPerPix: renderer.currentZoom > 0
+                                                           ? Math.pow(2, renderer.currentZoom - 1)
+                                                           : 0
+                    readonly property int surfaceCmPerCell: mosaicCmPerPix > 0
+                                                             ? Math.round(mosaicCmPerPix * tileSidePx / heightMatrixRatio)
+                                                             : 0
+                    color: "#00000080"
+                    radius: 4
+                    anchors.left: scene3DToolbar.right
+                    anchors.verticalCenter: scene3DToolbar.verticalCenter
+                    anchors.leftMargin: 8
+                    z: 1000
+                    implicitWidth: mosaicQualityText.implicitWidth + 12
+                    implicitHeight: mosaicQualityText.implicitHeight + 8
+
+                    Text {
+                        id: mosaicQualityText
+                        text: {
+                            var parts = [];
+                            if (renderer.currentZoom > 0 && scene3DToolbar.mosaicEnabled) {
+                                parts.push(qsTr("Mosaic: ") + mosaicQualityBadge.mosaicCmPerPix + qsTr(" cm/pix"));
+                            }
+                            if (renderer.currentZoom > 0 && renderer.updateSurface) {
+                                parts.push(qsTr("Surface: ") + mosaicQualityBadge.surfaceCmPerCell + qsTr(" cm/cell"));
+                            }
+                            return parts.join("\n");
+                        }
+                        color: "#ffffff"
+                        font: theme.textFont
+                        anchors.centerIn: parent
+                    }
                 }
 
                 CContact {
@@ -760,7 +808,9 @@ ApplicationWindow  {
                         instruments: menuBar.instruments
                         indx: 2
 
-                        isEnabled: enabled
+                        onEnabledChanged: {
+                            waterViewSecond.setPlotEnabled(enabled)
+                        }
 
                         onVisibleChanged: {
                             if (visible && menuBar.syncPlots) {
@@ -1216,7 +1266,7 @@ ApplicationWindow  {
                 CheckButton {
                     // text: checked ? "Armed" : "Disarmed"
                     icon.source: checked ? "qrc:/icons/ui/propeller.svg" : "qrc:/icons/ui/propeller_off.svg"
-                    checked: deviceManagerWrapper.pilotArmState == 1
+                    checked: deviceManagerWrapper.pilotArmState === 1
                     color: "white"
                     backColor: "red"
                     // checkedColor: "white"
@@ -1231,7 +1281,7 @@ ApplicationWindow  {
                 CheckButton {
                     // Layout.fillWidth: true
                     icon.source: "qrc:/icons/ui/direction_arrows.svg"
-                    checked: deviceManagerWrapper.pilotModeState == 0 // "Manual"
+                    checked: deviceManagerWrapper.pilotModeState === 0 // "Manual"
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
@@ -1241,7 +1291,7 @@ ApplicationWindow  {
                 CheckButton {
                     // Layout.fillWidth: true
                     icon.source: "qrc:/icons/ui/route.svg"
-                    checked: deviceManagerWrapper.pilotModeState == 10 // "Auto"
+                    checked: deviceManagerWrapper.pilotModeState === 10 // "Auto"
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
@@ -1251,7 +1301,7 @@ ApplicationWindow  {
                 CheckButton {
                     // Layout.fillWidth: true
                     icon.source: "qrc:/icons/ui/anchor.svg"
-                    checked: deviceManagerWrapper.pilotModeState == 5 // "Loiter"
+                    checked: deviceManagerWrapper.pilotModeState === 5 // "Loiter"
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
@@ -1261,7 +1311,7 @@ ApplicationWindow  {
                 CheckButton {
                     // Layout.fillWidth: true
                     icon.source: "qrc:/icons/ui/map_pin.svg"
-                    checked: deviceManagerWrapper.pilotModeState == 15 // "Guided"
+                    checked: deviceManagerWrapper.pilotModeState === 15 // "Guided"
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
@@ -1271,7 +1321,7 @@ ApplicationWindow  {
                 CheckButton {
                     // Layout.fillWidth: true
                     icon.source: "qrc:/icons/ui/home.svg"
-                    checked: deviceManagerWrapper.pilotModeState == 11 || deviceManagerWrapper.pilotModeState == 12  // "RTL" || "SmartRTL"
+                    checked: deviceManagerWrapper.pilotModeState === 11 || deviceManagerWrapper.pilotModeState === 12  // "RTL" || "SmartRTL"
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
@@ -1396,6 +1446,14 @@ ApplicationWindow  {
     function onMenuBarSettingsOpened() {
         waterViewFirst.closeSettings()
         waterViewSecond.closeSettings()
+    }
+    function handleMosaicLOffsetChanged(val) {
+        waterViewFirst.mosaicLOffsetChanged(val)
+        waterViewSecond.mosaicLOffsetChanged(val)
+    }
+    function handleMosaicROffsetChanged(val) {
+        waterViewFirst.mosaicROffsetChanged(val)
+        waterViewSecond.mosaicROffsetChanged(val)
     }
 
     // banner on file opening

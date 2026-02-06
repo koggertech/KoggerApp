@@ -5,6 +5,11 @@
 #include <QMetaType>
 #include <QDebug>
 
+namespace {
+constexpr int kSurfaceMeshHighWM = 512;
+constexpr int kSurfaceMeshLowWM = 256;
+}
+
 ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
                              Dataset* dataset,
                              QObject* parent)
@@ -14,10 +19,12 @@ ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
       surfaceMesh_(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, defaultTileResolution),
       surface_(ownerDp),
       isobaths_(ownerDp),
-      mosaic_(ownerDp),
+      mosaic_(ownerDp, this),
       bottom_(ownerDp)
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
+
+    surfaceMesh_.setLRUWatermarks(kSurfaceMeshHighWM, kSurfaceMeshLowWM);
 
     surface_.setSurfaceMeshPtr(&surfaceMesh_);
     isobaths_.setSurfaceMeshPtr(&surfaceMesh_);
@@ -28,6 +35,11 @@ ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
 }
 
 ComputeWorker::~ComputeWorker() = default;
+
+const QSet<TileKey> &ComputeWorker::getVisibleTileKeysCPtr()
+{
+    return visibleTileKeys_;
+}
 
 void ComputeWorker::clearAll()
 {
@@ -88,6 +100,11 @@ void ComputeWorker::setSurfaceEdgeLimit(float v)
     surface_.setEdgeLimit(v);
 }
 
+void ComputeWorker::reapplySurfaceEdgeLimit()
+{
+    surface_.setEdgeLimit(surface_.getEdgeLimit());
+}
+
 void ComputeWorker::setSurfaceExtraWidth(int v)
 {
     surface_.setExtraWidth(v);
@@ -107,14 +124,9 @@ void ComputeWorker::setIsobathsLabelStepSize(float v)
 void ComputeWorker::setMosaicChannels(const ChannelId& ch1, uint8_t sub1,
                                       const ChannelId& ch2, uint8_t sub2)
 {
-    clearAll();
-
     mosaic_.setChannels(ch1, sub1, ch2, sub2);
-}
 
-void ComputeWorker::setMosaicTheme(int id)
-{
-    mosaic_.setColorTableThemeById(id);
+    clearAll();
 }
 
 void ComputeWorker::setMosaicLAngleOffset(float val)
@@ -127,23 +139,9 @@ void ComputeWorker::setMosaicRAngleOffset(float val)
     mosaic_.setRAngleOffset(val);
 }
 
-void ComputeWorker::setMosaicLevels(float lo, float hi)
-{
-    mosaic_.setColorTableLevels(lo, hi);
-}
-
-void ComputeWorker::setMosaicLowLevel(float v)
-{
-    mosaic_.setColorTableLowLevel(v);
-}
-
-void ComputeWorker::setMosaicHighLevel(float v)
-{
-    mosaic_.setColorTableHighLevel(v);
-}
-
 void ComputeWorker::setMosaicTileResolution(float res)
 {
+    //qDebug() << "ComputeWorker::setMosaicTileResolution" << res;
     if (res <= 0.f) {
         return;
     }
@@ -153,9 +151,18 @@ void ComputeWorker::setMosaicTileResolution(float res)
     mosaic_.setTileResolution(res);
 }
 
-void ComputeWorker::askColorTableForMosaic()
+void ComputeWorker::applySurfaceZoomChange(const TileMap& cached, bool fullCoverage)
 {
-    mosaic_.askColorTableForMosaic();
+    QMetaObject::invokeMethod(dp_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
+
+    if (!cached.isEmpty()) {
+        surface_.restoreTilesFromCache(cached);
+    }
+    if (!fullCoverage) {
+        surface_.rebuildAfterResolutionChange();
+    }
+
+    QMetaObject::invokeMethod(dp_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
 
 void ComputeWorker::setMinZ(float v)
@@ -181,18 +188,24 @@ void ComputeWorker::processBundle(const WorkBundle& wb)
 {
     //qDebug() << "ComputeWorker::processBundle: task" <<  wb.mosaicVec.size() ;
     // последовательно. cабы сами шлют сигналы наружу
-    if (!wb.surfaceVec.isEmpty() && !isCanceled()) {
+    if (!wb.surfaceVec.isEmpty()) { // && !isCanceled()
         surface_.onUpdatedBottomTrackData(wb.surfaceVec);
         surface_.rebuildColorIntervals();
+    }
+
+    if (wb.doIsobaths && !isCanceled()) {
+        //isobaths_.onUpdatedBottomTrackData();
     }
 
     if (!wb.mosaicVec.isEmpty() && !isCanceled()) {
         mosaic_.updateDataWrapper(wb.mosaicVec);
     }
 
-    if (wb.doIsobaths && !isCanceled()) {
-        isobaths_.onUpdatedBottomTrackData();
-    }
-
     emit jobFinished();
+}
+
+void ComputeWorker::setVisibleTileKeys(const QSet<TileKey>& val)
+{
+    visibleTileKeys_ = val;
+    surface_.setVisibleTileKeys(val);
 }

@@ -2,6 +2,7 @@
 
 #include <set>
 #include <memory>
+#include <QThread>
 
 #include "point_3d.h"
 #include "delaunay_triangulation.h"
@@ -93,7 +94,18 @@ void SurfaceProcessor::process()
     if(m_isBusy.load())
         return;
 
-    if(m_task.bottomTrack()->cdata().isEmpty()){
+    QVector<QVector3D> data;
+    if (auto* bt = m_task.bottomTrack()) {
+        if (bt->thread() == QThread::currentThread()) {
+            data = bt->data();
+        }
+        else {
+            QMetaObject::invokeMethod(bt, [&data, bt]() {
+                data = bt->data();
+            }, Qt::BlockingQueuedConnection);
+        }
+    }
+    if (data.isEmpty()) {
         stopInThread();
         return;
     }
@@ -108,8 +120,6 @@ void SurfaceProcessor::process()
     std::set <Point2D <double>> set;
     std::vector <Point3D <double>> input;
 
-
-    QVector<QVector3D> data = m_task.bottomTrack()->data();
 
     if(m_task.m_bottomTrackDataFilter){
         QVector<QVector3D> filtered;

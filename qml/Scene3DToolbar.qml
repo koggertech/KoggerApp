@@ -16,14 +16,24 @@ Item  {
 
     signal updateBottomTrack()
 
+    signal mosaicLAngleOffsetChanged(int val)
+    signal mosaicRAngleOffsetChanged(int val)
+
     function updateMosaic() {
         mosaicViewSettings.updateMosaic()
+    }
+
+    Component.onCompleted: {
+        mosaicViewSettings.mosaicLAngleOffsetChanged.connect(mosaicLAngleOffsetChanged)
+        mosaicViewSettings.mosaicRAngleOffsetChanged.connect(mosaicRAngleOffsetChanged)
     }
 
     // opacity
     property bool isFitViewCheckButtonHovered: false
     property bool isBoatTrackCheckButtonHovered: false
     property bool isBottomTrackCheckButtonHovered: false
+    property alias mosaicEnabled: mosaicViewCheckButton.checked
+    property alias showMosaicQualityLabel: settings3DSettings.showQualityLabel
 
     property bool toolbarHovered:
         Qt.platform.os === "android" ?
@@ -342,6 +352,10 @@ Item  {
                     }
 
                     onCheckedChanged: {
+                        if (checked) {
+                            toolbarRoot.updateBottomTrack()
+                        }
+
                         IsobathsViewControlMenuController.onProcessStateChanged(checked); // calc state/calc
                         IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
                     }
@@ -438,6 +452,10 @@ Item  {
                     }
 
                     onCheckedChanged: {
+                        if (checked) {
+                            toolbarRoot.updateBottomTrack()
+                        }
+
                         MosaicViewControlMenuController.onUpdateStateChanged(checked) // calc state/calc
                         MosaicViewControlMenuController.onVisibilityChanged(checked)
                     }
