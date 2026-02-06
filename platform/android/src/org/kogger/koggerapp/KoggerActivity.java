@@ -52,6 +52,7 @@ public class KoggerActivity extends QtActivity {
         super.onCreate(savedInstanceState);
 
         nativeInit();
+        checkStoragePermissions();
         acquireWakeLock();
         keepScreenOn();
         setupMulticastLock();
