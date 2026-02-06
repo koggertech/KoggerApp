@@ -1,6 +1,7 @@
 ﻿#include "dataset.h"
 
 #include "core.h"
+#include "data_processor_defs.h"
 extern Core core;
 #include <algorithm>
 
@@ -1391,10 +1392,14 @@ void Dataset::calcDimensionRects(uint64_t indx)
 {
     //qDebug() << "void Dataset::calcTracingDimensions()";
 
-    if (!mosaicFirstChId_.isValid() ||
-        !mosaicSecondChId_.isValid()) {
+    auto* mip = core.getMosaicIndexProviderPtr();
+    if (!mip) {
         return;
     }
+
+    const bool hasMosaicChannels = mosaicFirstChId_.isValid() && mosaicSecondChId_.isValid();
+    const int baseZoom = mip->getMaxZoom();
+    const int maxZoom = mip->getMinZoom();
 
     uint64_t lastIndx = lastDimRectindx_;
     uint64_t currIndx = indx;
@@ -1404,124 +1409,22 @@ void Dataset::calcDimensionRects(uint64_t indx)
         return;
     }
 
-    for (uint64_t i = lastIndx; i < currIndx; ++i) {
-        uint64_t llIndx = i;
-        uint64_t  lIndx = i + 1;
-
-        auto* llPtr = &pool_[llIndx];
-        auto* lPtr  = &pool_[lIndx];
-        if (!llPtr || !lPtr) {
-            qWarning() << "Dataset::calcTracingDimensions: !llPtr || !lPtr";
-            continue;
+    auto parentIndex2 = [](int i) -> int {
+        if (i >= 0) {
+            return i >> 1;
         }
+        return -(((-i) + 1) >> 1);
+    };
 
-        const auto llNed = llPtr->getSonarPosition().ned;
-        const auto lNed  = lPtr->getSonarPosition().ned;
-        if (!llNed.isCoordinatesValid() || !lNed.isCoordinatesValid()) {
-            continue;
-        }
-
-        const auto llYaw = llPtr->tryRetValidYaw();
-        const auto lYaw  = lPtr->tryRetValidYaw();
-        if (!std::isfinite(llYaw) || !std::isfinite(lYaw)) {
-            continue;
-        }
-
-        auto* fChLlCharts = llPtr->chart(mosaicFirstChId_,  mosaicFirstSubChId_);
-        auto* fChlCharts  =  lPtr->chart(mosaicFirstChId_,  mosaicFirstSubChId_);
-        auto* sChLlCharts = llPtr->chart(mosaicSecondChId_, mosaicSecondSubChId_);
-        auto* sChlCharts  =  lPtr->chart(mosaicSecondChId_, mosaicSecondSubChId_);
-
-        if ((!fChLlCharts || !fChlCharts) &&
-            (!sChLlCharts || !sChlCharts)) {
-            continue;
-        }
-
-        lastDimRectindx_ = lIndx; // store progress
-
-        QVector<QVector3D> traceLinesVertices;
-        traceLinesVertices.reserve(8);
-
-        const QVector3D llPos(llNed.n, llNed.e, 0.0f);
-        const QVector3D lPos (lNed.n,  lNed.e,  0.0f);
-
-        const double llAzRad = qDegreesToRadians(llYaw);
-        const double lAzRad  = qDegreesToRadians(lYaw);
-
-        const double firstAngleOffsetDeg  = lAngleOffset_;
-        const double secondAngleOffsetDeg = rAngleOffset_;
-
-        if (fChLlCharts && fChlCharts) {
-            const float llRange = fChLlCharts->range();
-            const float lRange  = fChlCharts->range();
-            const double llLeftAzRad = llAzRad - M_PI_2 + qDegreesToRadians(firstAngleOffsetDeg);
-            const double lLeftAzRad  = lAzRad  - M_PI_2 + qDegreesToRadians(firstAngleOffsetDeg);
-
-            QVector3D llBeg(llPos.x() + llRange * std::cos(llLeftAzRad), llPos.y() + llRange * std::sin(llLeftAzRad), 0.0f); // llPtr f ray
-            QVector3D llEnd(llPos);
-            QVector3D lBeg(lPos.x() + lRange * std::cos(lLeftAzRad), lPos.y() + lRange * std::sin(lLeftAzRad), 0.0f); // lPtr f ray
-            QVector3D lEnd(lPos);
-
-            traceLinesVertices << llBeg << llEnd << lBeg  << lEnd;
-        }
-
-        if (sChLlCharts && sChlCharts) {
-            const float llRange = sChLlCharts->range();
-            const float lRange  = sChlCharts->range();
-
-            const double llRightAzRad = llAzRad + M_PI_2 - qDegreesToRadians(secondAngleOffsetDeg);
-            const double lRightAzRad  = lAzRad  + M_PI_2 - qDegreesToRadians(secondAngleOffsetDeg);
-
-            QVector3D llBeg(llPos.x() + llRange * std::cos(llRightAzRad), llPos.y() + llRange * std::sin(llRightAzRad), 0.0f); // llPtr s ray
-            QVector3D llEnd(llPos);
-            QVector3D lBeg(lPos.x() + lRange * std::cos(lRightAzRad), lPos.y() + lRange * std::sin(lRightAzRad), 0.0f); // lPtr s ray
-            QVector3D lEnd(lPos);
-
-            traceLinesVertices << llBeg << llEnd << lBeg  << lEnd;
-        }
-
-        float minN = std::numeric_limits<float>::max();
-        float maxN = std::numeric_limits<float>::lowest();
-        float minE = std::numeric_limits<float>::max();
-        float maxE = std::numeric_limits<float>::lowest();
-
-        for (auto it = traceLinesVertices.cbegin(); it != traceLinesVertices.cend(); ++it) {
-            minN = std::min(minN, it->x());  // N
-            maxN = std::max(maxN, it->x());
-            minE = std::min(minE, it->y());  // E
-            maxE = std::max(maxE, it->y());
-        }
-
-        // rect
-        // been
-        //const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
-        //const auto lvl1 = core.getMosaicIndexProviderPtr()->tilesInRectNed(currRaysRect, 1, /*padTiles*/0);
-
-        // now
-        const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
-        std::array<QPointF, 4> visQuad;
-        visQuad[0] = currRaysRect.topLeft();
-        visQuad[1] = currRaysRect.topRight();
-        visQuad[2] = currRaysRect.bottomRight();
-        visQuad[3] = currRaysRect.bottomLeft();
-        const auto lvl1 = core.getMosaicIndexProviderPtr()->tilesInQuadNed(visQuad, 1, /*padTiles*/0);
-
-        //qDebug() << lvl1.size();
-        //qDebug() << minN << maxN << minE << maxE;
-
+    auto buildTilesByZoom = [&](const QSet<TileKey>& baseTiles) -> QMap<int, QSet<TileKey>> {
         QMap<int, QSet<TileKey>> tilesByZoom;
-        tilesByZoom[1] = lvl1;
+        if (baseTiles.isEmpty()) {
+            return tilesByZoom;
+        }
 
-        auto parentIndex2 = [](int i) -> int {
-            if (i >= 0) {
-                return i >> 1;
-            }
-            else {
-                return -(((-i) + 1) >> 1);
-            }
-        };
+        tilesByZoom[baseZoom] = baseTiles;
 
-        for (int z = 2; z <= core.getMosaicIndexProviderPtr()->getMinZoom(); ++z) {
+        for (int z = baseZoom + 1; z <= maxZoom; ++z) {
             const auto& prevSet = tilesByZoom[z - 1];
             auto& currSet = tilesByZoom[z];
 
@@ -1534,11 +1437,154 @@ void Dataset::calcDimensionRects(uint64_t indx)
             }
         }
 
-        llPtr->setTraceTileIndxs(tilesByZoom); // в эпоху в датасете //
-        appendTileEpochIndex(static_cast<int>(llIndx), tilesByZoom); // в датасет //
+        return tilesByZoom;
+    };
 
-        // TODO: в dataProcessor
-        emit sendTilesByZoom(static_cast<int>(llIndx), tilesByZoom);
+    auto publishTilesForEpoch = [&](uint64_t epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom) -> bool {
+        const auto baseIt = tilesByZoom.constFind(baseZoom);
+        if (baseIt == tilesByZoom.cend() || baseIt->isEmpty()) {
+            return false;
+        }
+
+        pool_[epochIndx].setTraceTileIndxs(tilesByZoom); // в эпоху в датасете
+        appendTileEpochIndex(static_cast<int>(epochIndx), tilesByZoom); // в датасет
+        emit sendTilesByZoom(static_cast<int>(epochIndx), tilesByZoom); // в dataProcessor
+        return true;
+    };
+
+    auto tryGetEpochNed = [](Epoch* epoch, NED* outNed) -> bool {
+        if (!epoch || !outNed) {
+            return false;
+        }
+
+        NED ned = epoch->getSonarPosition().ned;
+        if (!ned.isCoordinatesValid()) {
+            ned = epoch->getPositionGNSS().ned;
+        }
+        if (!ned.isCoordinatesValid()) {
+            return false;
+        }
+
+        *outNed = ned;
+        return true;
+    };
+
+    auto publishFallbackPointTile = [&](uint64_t epochIndx, Epoch* epoch) -> bool {
+        NED ned;
+        if (!tryGetEpochNed(epoch, &ned)) {
+            return false;
+        }
+
+        QSet<TileKey> baseTiles;
+        baseTiles.insert(tileKeyFromWorld(static_cast<float>(ned.n), static_cast<float>(ned.e), baseZoom));
+        return publishTilesForEpoch(epochIndx, buildTilesByZoom(baseTiles));
+    };
+
+    for (uint64_t i = lastIndx; i < currIndx; ++i) {
+        uint64_t llIndx = i;
+        uint64_t  lIndx = i + 1;
+
+        auto* llPtr = &pool_[llIndx];
+        auto* lPtr  = &pool_[lIndx];
+        if (!llPtr || !lPtr) {
+            qWarning() << "Dataset::calcTracingDimensions: !llPtr || !lPtr";
+            lastDimRectindx_ = lIndx;
+            continue;
+        }
+
+        bool published = false;
+
+        if (hasMosaicChannels) {
+            NED llNed;
+            NED lNed;
+            const bool llNedOk = tryGetEpochNed(llPtr, &llNed);
+            const bool lNedOk  = tryGetEpochNed(lPtr, &lNed);
+
+            if (llNedOk && lNedOk) {
+                const auto llYaw = llPtr->tryRetValidYaw();
+                const auto lYaw  = lPtr->tryRetValidYaw();
+
+                if (std::isfinite(llYaw) && std::isfinite(lYaw)) {
+                    auto* fChLlCharts = llPtr->chart(mosaicFirstChId_,  mosaicFirstSubChId_);
+                    auto* fChlCharts  =  lPtr->chart(mosaicFirstChId_,  mosaicFirstSubChId_);
+                    auto* sChLlCharts = llPtr->chart(mosaicSecondChId_, mosaicSecondSubChId_);
+                    auto* sChlCharts  =  lPtr->chart(mosaicSecondChId_, mosaicSecondSubChId_);
+
+                    if ((fChLlCharts && fChlCharts) || (sChLlCharts && sChlCharts)) {
+                        QVector<QVector3D> traceLinesVertices;
+                        traceLinesVertices.reserve(8);
+
+                        const QVector3D llPos(llNed.n, llNed.e, 0.0f);
+                        const QVector3D lPos (lNed.n,  lNed.e,  0.0f);
+
+                        const double llAzRad = qDegreesToRadians(llYaw);
+                        const double lAzRad  = qDegreesToRadians(lYaw);
+
+                        const double firstAngleOffsetDeg  = lAngleOffset_;
+                        const double secondAngleOffsetDeg = rAngleOffset_;
+
+                        if (fChLlCharts && fChlCharts) {
+                            const float llRange = fChLlCharts->range();
+                            const float lRange  = fChlCharts->range();
+                            const double llLeftAzRad = llAzRad - M_PI_2 + qDegreesToRadians(firstAngleOffsetDeg);
+                            const double lLeftAzRad  = lAzRad  - M_PI_2 + qDegreesToRadians(firstAngleOffsetDeg);
+
+                            QVector3D llBeg(llPos.x() + llRange * std::cos(llLeftAzRad), llPos.y() + llRange * std::sin(llLeftAzRad), 0.0f); // llPtr f ray
+                            QVector3D llEnd(llPos);
+                            QVector3D lBeg(lPos.x() + lRange * std::cos(lLeftAzRad), lPos.y() + lRange * std::sin(lLeftAzRad), 0.0f); // lPtr f ray
+                            QVector3D lEnd(lPos);
+
+                            traceLinesVertices << llBeg << llEnd << lBeg  << lEnd;
+                        }
+
+                        if (sChLlCharts && sChlCharts) {
+                            const float llRange = sChLlCharts->range();
+                            const float lRange  = sChlCharts->range();
+
+                            const double llRightAzRad = llAzRad + M_PI_2 - qDegreesToRadians(secondAngleOffsetDeg);
+                            const double lRightAzRad  = lAzRad  + M_PI_2 - qDegreesToRadians(secondAngleOffsetDeg);
+
+                            QVector3D llBeg(llPos.x() + llRange * std::cos(llRightAzRad), llPos.y() + llRange * std::sin(llRightAzRad), 0.0f); // llPtr s ray
+                            QVector3D llEnd(llPos);
+                            QVector3D lBeg(lPos.x() + lRange * std::cos(lRightAzRad), lPos.y() + lRange * std::sin(lRightAzRad), 0.0f); // lPtr s ray
+                            QVector3D lEnd(lPos);
+
+                            traceLinesVertices << llBeg << llEnd << lBeg  << lEnd;
+                        }
+
+                        if (!traceLinesVertices.isEmpty()) {
+                            float minN = std::numeric_limits<float>::max();
+                            float maxN = std::numeric_limits<float>::lowest();
+                            float minE = std::numeric_limits<float>::max();
+                            float maxE = std::numeric_limits<float>::lowest();
+
+                            for (auto it = traceLinesVertices.cbegin(); it != traceLinesVertices.cend(); ++it) {
+                                minN = std::min(minN, it->x());  // N
+                                maxN = std::max(maxN, it->x());
+                                minE = std::min(minE, it->y());  // E
+                                maxE = std::max(maxE, it->y());
+                            }
+
+                            const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
+                            std::array<QPointF, 4> visQuad = {
+                                currRaysRect.topLeft(),
+                                currRaysRect.topRight(),
+                                currRaysRect.bottomRight(),
+                                currRaysRect.bottomLeft()
+                            };
+                            const auto lvl1 = mip->tilesInQuadNed(visQuad, baseZoom, /*padTiles*/0);
+                            published = publishTilesForEpoch(llIndx, buildTilesByZoom(lvl1));
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!published) {
+            publishFallbackPointTile(llIndx, llPtr);
+        }
+
+        lastDimRectindx_ = lIndx; // store progress
     }
 }
 

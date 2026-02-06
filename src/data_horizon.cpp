@@ -217,7 +217,7 @@ void DataHorizon::tryCalcAndEmitSonarPosIndx()
 
 void DataHorizon::tryCalcAndEmitDimRectIndx()
 {
-    uint64_t minDimRectIndx = std::min(std::min(chartIndx_, std::max(attitudeIndx_, artificalAttitudeIndx_)), sonarPosIndx_);
+    uint64_t minDimRectIndx = sonarPosIndx_;
     if (minDimRectIndx > dimRectIndx_) {
         dimRectIndx_ = minDimRectIndx;
         emit dimRectsCanCalc(dimRectIndx_);
