@@ -1240,6 +1240,7 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
                 if (!tile || tile->getIsInited()) {
                     continue;
                 }
+                tilesToInit.insert(tile->getKey(), tile);
 
                 //if (!tile) {
                 //    continue;
