@@ -2,6 +2,7 @@
 
 #include "core.h"
 extern Core core;
+#include "QString"
 
 
 Dataset::Dataset() :
@@ -427,9 +428,9 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     }
 
     // tracks[data.id].data_.append(QVector3D(data.x_m, data.y_m, data.depth_m));
-    tracks[-1].data_.append(QVector3D());
-    tracks[-1].objectColor_ = QColor(0, 255, 255);
-    tracks[-1].type_ = UsblView::UsblObjectType::kBeacon;
+    // tracks[-1].data_.append(QVector3D());
+    // tracks[-1].objectColor_ = QColor(0, 255, 255);
+    // tracks[-1].type_ = UsblView::UsblObjectType::kBeacon;
     //tracks[-1].yaw_ = 100.0f;
 
 
@@ -467,7 +468,8 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         tracks[-2].data_.append(QVector3D(pos.ned.n, pos.ned.e, 0));
         tracks[-2].objectColor_ = QColor(0, 200, 0);
         tracks[-2].type_ = UsblView::UsblObjectType::kUsbl;
-        tracks[-2].yaw_ = 0.0f;
+        tracks[-2].pointRadius_ = 50;
+        tracks[-2].yaw_ = -(data.usbl_yaw)+180;
 
 
         float beacon_n = data.beacon_n;
@@ -482,9 +484,8 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         tracks[-4].objectColor_ = QColor(200, 0, 0);
         tracks[-4].lineWidth_ = 15;
         tracks[-4].pointRadius_ = 50;
+        tracks[-4].yaw_ = NAN;
         tracks[-4].type_ = UsblView::UsblObjectType::kBeacon;
-        tracks[-4].yaw_ = 90.0f;
-        tracks[-4].type_ = UsblView::UsblObjectType::kUsbl;
 
 
         // Position pos_beacon;
@@ -517,9 +518,30 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
 
 void Dataset::addAcousticNavSolution(IDBinUsblSolution::AcousticNavSolution data) {
     int pool_index = endIndex();
-    if(pool_index < 0 || pool_[pool_index].isAcousticNavSolutionAvailable() == true) {
-        addNewEpoch();
-        pool_index = endIndex();
+    // if(pool_index < 0 || pool_[pool_index].isAcousticNavSolutionAvailable() == true) {
+    //     addNewEpoch();
+    //     pool_index = endIndex();
+    // }
+
+    Position pos;
+    pos.lla = LLA(data.lat, data.lon);
+
+    // qDebug("Beac rcv");
+
+    if(pos.lla.isCoordinatesValid()) {
+        // console out pos.lla data
+        qDebug("AcousticNav lat %f lon %f h: %f", data.lat, data.lon, data.heading);
+
+        // qDebug("Beac coord %1 %2", QString::number(pos.lla.latitude, 'f', 8), QString::number(pos.lla.longitude, 'f', 8));
+        setLlaRef(LLARef(pos.lla), getCurrentLlaRefState());
+        pos.LLA2NED(&_llaRef);
+
+        tracks[-5].data_.append(QVector3D(pos.ned.n, pos.ned.e, 0));
+        tracks[-5].objectColor_ = QColor(0, 200, 0);
+        tracks[-5].type_ = UsblView::UsblObjectType::kUsbl;
+        tracks[-5].pointRadius_ = 50;
+        tracks[-5].yaw_ = -(data.heading)+180-90;
+        // tracks[-5].isTrackVisible_ = false;
     }
 
     pool_[pool_index].setAcousticNavSolution(data);
