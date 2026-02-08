@@ -1880,6 +1880,7 @@ void Core::setDataProcessorConnections()
     dataProcessorConnections_.append(QObject::connect(datasetPtr_,        &Dataset::sendTilesByZoom,                   dataProcessor_, &DataProcessor::onSendTilesByZoom,       connType));
     dataProcessorConnections_.append(QObject::connect(datasetPtr_,        &Dataset::datasetStateChanged,               dataProcessor_, &DataProcessor::onDatasetStateChanged,       connType));
 
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::epochAdded,                    dataProcessor_, &DataProcessor::onEpochAdded,            connType));
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::mosaicCanCalc,                 dataProcessor_, &DataProcessor::onMosaicCanCalc,         connType));
 
     dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::distCompletedByProcessing,      datasetPtr_,    &Dataset::onDistCompleted,               connType));

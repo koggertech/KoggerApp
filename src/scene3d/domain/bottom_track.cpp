@@ -497,8 +497,10 @@ void BottomTrack::updateRenderData(int lEpIndx, int rEpIndx, bool redraw, bool m
         rSize++;
     }
 
-    emit updatedPoints(epIndxUpdated, vertIndxUpdated, manually); // for dataHorizon -> dataProcessor
+    // Keep render cache and emitted indices in sync: listeners (surface pipeline)
+    // read bottom-track points by emitted vertex indices.
     SceneObject::appendData(prepData);
+    emit updatedPoints(epIndxUpdated, vertIndxUpdated, manually); // for dataHorizon -> dataProcessor
 }
 
 QVector<QPair<int, int>> BottomTrack::getSubarrays(const QVector<int>& sequenceVector)

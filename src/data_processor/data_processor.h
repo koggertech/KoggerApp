@@ -219,8 +219,11 @@ private:
     void clearDbNotFoundCache();
 
     void enqueueSurfaceMissingForZoom(int zoom);
+    void tryScheduleAutoBottomTrack(uint64_t indx);
     QVector<QPair<int, QSet<TileKey>>> collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const;
     QSet<int> collectEpochsForTilesSet(int zoom, const QSet<TileKey>& tiles) const;
+    QSet<int> collectSurfaceEpochsForTilesSet(int zoom, const QSet<TileKey>& tiles) const;
+    QSet<int> collectVisibleSurfaceEpochsSet(int zoom) const;
     void updateDataProcType();
     void emitMosaicColorTable();
 
@@ -263,7 +266,9 @@ private:
     // processing (scheduling/interrupt)
     QSet<int>              epIndxsFromBottomTrack_;
     QSet<int> vertIndxsFromBottomTrack_;
+    QHash<int, int>        epochToBottomTrackVertIndx_;
     QSet<QPair<char, int>> pendingSurfaceIndxs_;
+    bool                   surfaceCameraPassPending_ = false;
     QHash<int, QSet<int>>  surfaceTaskEpochIndxsByZoom_;
     QHash<int, QSet<int>>  surfaceManualEpochIndxsByZoom_;
     QHash<int, QSet<int>>  mosaicTaskEpochIndxsByZoom_;
@@ -291,6 +296,10 @@ private:
     QString                filePath_;
     int                    engineVer_;
     QRectF                 lastViewRect_;
+    QTimer                 cameraRectCoalesceTimer_;
+    QRectF                 pendingCameraRect_;
+    bool                   cameraRectPending_ = false;
+    bool                   cameraRectProcessing_ = false;
     bool                   surfaceZoomChangedPending_;
     QSet<TileKey>          dbPendingKeys_;
     QSet<TileKey>          dbInWorkKeys_;
@@ -310,6 +319,7 @@ private:
     QVector<QHash<TileKey, QVector<int>>> tileEpochIndxsByZoom_;
 
     QSet<TileKey> lastVisTileKeys_;
+    int lastVisTilesZoom_;
     int lastDataZoomIndx_;
 
     int datasetState_ = -1;

@@ -268,6 +268,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
     lastMaxY_ = std::numeric_limits<float>::lowest();
 
     lastVisTileKeys_.clear();
+    dataZoomIndx_ = -1; // force zoom sync to data-processor on next camera update
 
     QQuickFramebufferObject::update();
 }
@@ -967,6 +968,11 @@ void GraphicsScene3dView::setIsOpeningFile(bool state)
 
     isOpeningFile_ = state;
     updateForceSingleZoomAutoState();
+
+    if (!isOpeningFile_ && (isUpdateMosaic_ || isUpdateSurface_)) {
+        dataZoomIndx_ = -1; // make sure current zoom is resent after file-open phase
+        onCameraMoved();
+    }
 }
 
 void GraphicsScene3dView::onDatasetStateChanged(int state)
@@ -1340,7 +1346,16 @@ void GraphicsScene3dView::setIsNorth(bool state)
 
 void GraphicsScene3dView::setIsUpdateMosaic(bool state)
 {
+    if (isUpdateMosaic_ == state) {
+        return;
+    }
+
     isUpdateMosaic_ = state;
+
+    if (isUpdateMosaic_) {
+        dataZoomIndx_ = -1; // force zoom re-sync when enabling layer
+        onCameraMoved();
+    }
 }
 
 void GraphicsScene3dView::setIsUpdateSurface(bool state)
@@ -1351,6 +1366,11 @@ void GraphicsScene3dView::setIsUpdateSurface(bool state)
 
     isUpdateSurface_ = state;
     emit updateSurfaceChanged();
+
+    if (isUpdateSurface_) {
+        dataZoomIndx_ = -1; // force zoom re-sync when enabling layer
+        onCameraMoved();
+    }
 }
 
 //---------------------Renderer---------------------------//

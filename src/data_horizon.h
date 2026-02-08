@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QHash>
 
 
 class DataHorizon : public QObject
@@ -24,8 +25,7 @@ public:
     uint64_t getBottomTrackIndx() const { return bottomTrackIndx_; };
 
 signals:
-    // some signals are temporary commented
-    //void epochAdded(uint64_t indx);
+    void epochAdded(uint64_t indx);
     void positionAdded(uint64_t indx);
     void chartAdded(uint64_t indx);
     //void attitudeAdded(uint64_t indx);
@@ -57,6 +57,7 @@ private:
     bool isFileOpening_;
     bool isSeparateReading_;
     bool isAttitudeExpected_;
+    bool pendingBottomTrack3DManual_;
 
     uint64_t epochIndx_;
     uint64_t positionIndx_;
@@ -67,4 +68,6 @@ private:
     uint64_t mosaicIndx_;
     uint64_t sonarPosIndx_;
     uint64_t dimRectIndx_;
+
+    QHash<int, int> pendingBottomTrack3DPairs_;
 };

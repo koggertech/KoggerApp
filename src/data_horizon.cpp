@@ -1,5 +1,6 @@
 #include "data_horizon.h"
 
+#include <algorithm>
 #include <QDebug>
 
 
@@ -9,6 +10,7 @@ DataHorizon::DataHorizon() :
     isFileOpening_(false),
     isSeparateReading_(false),
     isAttitudeExpected_(false),
+    pendingBottomTrack3DManual_(false),
     epochIndx_(0),
     positionIndx_(0),
     chartIndx_(0),
@@ -29,6 +31,8 @@ DataHorizon::DataHorizon() :
 void DataHorizon::clear()
 {
     isFileOpening_ = false;
+    pendingBottomTrack3DPairs_.clear();
+    pendingBottomTrack3DManual_ = false;
 
     epochIndx_ = 0;
     positionIndx_ = 0;
@@ -50,10 +54,15 @@ void DataHorizon::setIsFileOpening(bool state)
 {
     //qDebug() << "DataHorizon::setIsFileOpening" << state;
 
+    if (state) {
+        pendingBottomTrack3DPairs_.clear();
+        pendingBottomTrack3DManual_ = false;
+    }
+
     isFileOpening_ = state;
 
     if (!isFileOpening_ && !isSeparateReading_ && emitChanges_) { // emit all
-        //emit epochAdded(epochIndx_);
+        emit epochAdded(epochIndx_);
         emit positionAdded(positionIndx_);
         emit chartAdded(chartIndx_);
         //emit attitudeAdded(attitudeIndx_);
@@ -61,6 +70,29 @@ void DataHorizon::setIsFileOpening(bool state)
         tryCalcAndEmitSonarPosIndx();
         tryCalcAndEmitMosaicIndx();
         tryCalcAndEmitDimRectIndx();
+
+        if (!pendingBottomTrack3DPairs_.isEmpty()) {
+            QVector<int> epVec;
+            QVector<int> vertVec;
+            QVector<int> epKeys;
+            epKeys.reserve(pendingBottomTrack3DPairs_.size());
+            const QList<int> keys = pendingBottomTrack3DPairs_.keys();
+            for (int key : keys) {
+                epKeys.push_back(key);
+            }
+            std::sort(epKeys.begin(), epKeys.end());
+
+            epVec.reserve(epKeys.size());
+            vertVec.reserve(epKeys.size());
+            for (int epIdx : epKeys) {
+                epVec.push_back(epIdx);
+                vertVec.push_back(pendingBottomTrack3DPairs_.value(epIdx));
+            }
+
+            emit bottomTrack3DAdded(epVec, vertVec, pendingBottomTrack3DManual_);
+            pendingBottomTrack3DPairs_.clear();
+            pendingBottomTrack3DManual_ = false;
+        }
     }
 }
 
@@ -74,13 +106,13 @@ void DataHorizon::onAddedEpoch(uint64_t indx)
 {
     //qDebug() << "DataHorizon::onAddedEpoch" << indx;
 
-    //bool beenChanged = epochIndx_ != indx;
+    bool beenChanged = epochIndx_ != indx;
 
     epochIndx_ = indx;
 
-    //if (canEmitHorizon(beenChanged)) {
-    //    emit epochAdded(epochIndx_);
-    //}
+    if (canEmitHorizon(beenChanged)) {
+        emit epochAdded(epochIndx_);
+    }
 }
 
 void DataHorizon::onAddedPosition(uint64_t indx)
@@ -167,6 +199,19 @@ void DataHorizon::onAddedBottomTrack(uint64_t indx)
 void DataHorizon::onAddedBottomTrack3D(const QVector<int>& epIndxs, const QVector<int>& vertIndx, bool isManual)
 {
     //qDebug() << "DataHorizon::onAddedBottomTrack3D" << epIndxs;
+
+    if (epIndxs.isEmpty() || vertIndx.isEmpty()) {
+        return;
+    }
+
+    if (!isSeparateReading_ && isFileOpening_) {
+        const int pairCount = qMin(epIndxs.size(), vertIndx.size());
+        for (int i = 0; i < pairCount; ++i) {
+            pendingBottomTrack3DPairs_.insert(epIndxs[i], vertIndx[i]);
+        }
+        pendingBottomTrack3DManual_ = pendingBottomTrack3DManual_ || isManual;
+        return;
+    }
 
     bool beenChanged = true; // NEED COMPARE?
 

@@ -159,7 +159,10 @@ void Dataset::addEvent(int timestamp, int id, int unixt) {
     emit dataUpdate();
 }
 
-void Dataset::addEncoder(float angle1_deg, float angle2_deg, float angle3_deg) {
+void Dataset::addEncoder(float angle1_deg, float angle2_deg, float angle3_deg)
+{
+    Q_UNUSED(angle3_deg)
+
     Epoch* last_epoch = last();
     if (!last_epoch) {
         return;

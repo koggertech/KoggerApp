@@ -83,6 +83,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     surfaceZoomChangedPending_(false),
     dbIsReady_(false),
     prefetchTick_(0),
+    lastVisTilesZoom_(0),
     lastDataZoomIndx_(0)
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
@@ -106,6 +107,25 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     pendingWorkTimer_.setSingleShot(true);
     pendingWorkTimer_.setInterval(333);
     connect(&pendingWorkTimer_, &QTimer::timeout, this, &DataProcessor::runCoalescedWork);
+
+    cameraRectCoalesceTimer_.setParent(this);
+    cameraRectCoalesceTimer_.setSingleShot(true);
+    cameraRectCoalesceTimer_.setInterval(20);
+    connect(&cameraRectCoalesceTimer_, &QTimer::timeout, this, [this]() {
+        if (shuttingDown_.load() || !cameraRectPending_) {
+            return;
+        }
+
+        const QRectF rect = pendingCameraRect_;
+        cameraRectPending_ = false;
+        cameraRectProcessing_ = true;
+        onSendDataRectRequest(rect.left(), rect.top(), rect.right(), rect.bottom());
+        cameraRectProcessing_ = false;
+
+        if (cameraRectPending_ && !cameraRectCoalesceTimer_.isActive()) {
+            cameraRectCoalesceTimer_.start();
+        }
+    });
 
     worker_ = new ComputeWorker(this, datasetPtr_);
     worker_->setDatasetPtr(datasetPtr_);
@@ -225,13 +245,54 @@ void DataProcessor::setUpdateSurface(bool state)
     updateSurface_ = state;
 
     if (updateSurface_ && !wasSurface) {
-        int zoom = lastDataZoomIndx_;
+        surfaceCameraPassPending_ = true;
+        if (!lastVisTileKeys_.isEmpty()) {
+            QMetaObject::invokeMethod(worker_, "setVisibleTileKeys", Qt::QueuedConnection, Q_ARG(QSet<TileKey>, lastVisTileKeys_));
+        }
+
+        int zoom = lastVisTilesZoom_;
+        if (!isValidZoomIndx(zoom)) {
+            zoom = lastDataZoomIndx_;
+        }
         if (zoom <= 0) {
             zoom = zoomFromMpp(tileResolution_);
         }
+        if (zoom > 0) {
+            auto& processedSurface = surfaceTaskEpochIndxsByZoom_[zoom];
+            const auto& manualPending = surfaceManualEpochIndxsByZoom_[zoom];
 
-        enqueueSurfaceMissingForZoom(zoom);
+            auto isPendingAnyType = [this](int idx) -> bool {
+                return pendingSurfaceIndxs_.contains(qMakePair('0', idx)) ||
+                       pendingSurfaceIndxs_.contains(qMakePair('1', idx)) ||
+                       pendingSurfaceIndxs_.contains(qMakePair('2', idx));
+            };
+
+            bool addedVisibleSeeds = false;
+            const QSet<int> visibleSurfaceEpochs = collectVisibleSurfaceEpochsSet(zoom);
+            for (int idx : std::as_const(visibleSurfaceEpochs)) {
+                if (processedSurface.contains(idx) || manualPending.contains(idx) || isPendingAnyType(idx)) {
+                    continue;
+                }
+                pendingSurfaceIndxs_.insert(qMakePair('0', idx));
+                addedVisibleSeeds = true;
+            }
+
+            // Bootstrap fallback: if visible mapping is not ready yet, force triangulation refresh
+            // from currently known bottom-track vertices (single toggle-time operation).
+            if (!addedVisibleSeeds && !vertIndxsFromBottomTrack_.isEmpty()) {
+                for (int idx : std::as_const(vertIndxsFromBottomTrack_)) {
+                    if (isPendingAnyType(idx)) {
+                        continue;
+                    }
+                    pendingSurfaceIndxs_.insert(qMakePair('2', idx));
+                }
+            }
+        }
         onCameraMoved();
+        scheduleLatest(WorkSet(WF_Surface));
+    }
+    if (!updateSurface_) {
+        surfaceCameraPassPending_ = false;
     }
 }
 
@@ -259,6 +320,7 @@ void DataProcessor::setUpdateMosaic(bool state)
                 emit dbCheckAnyTileForZoom(lastDataZoomIndx_);
             }
         }
+        onCameraMoved();
     }
     else {
         pendingIsobathsWork_ = true; // мозаика могла изменить поверхность
@@ -279,9 +341,8 @@ void DataProcessor::onCameraMoved()
         return;
     }
 
-    if (updateMosaic_) {
-        pendingMosaicIndxs_.clear();
-    }
+    // Keep already queued mosaic epochs (e.g. from realtime bottom-track updates).
+    // Camera movement should only add visible work, not drop pending work.
     //if (updateSurface_) {
     //    pendingSurfaceIndxs_.clear();
     //}
@@ -289,67 +350,106 @@ void DataProcessor::onCameraMoved()
     //    updateIsobaths_ = false;
     //}
 
-    int zoom = lastDataZoomIndx_;
+    int zoom = lastVisTilesZoom_;
+    if (!isValidZoomIndx(zoom)) {
+        zoom = lastDataZoomIndx_;
+    }
     if (zoom <= 0) {
         zoom = zoomFromMpp(tileResolution_);
     }
 
-    QSet<int> visibleEpochs = collectEpochsForTilesSet(zoom, lastVisTileKeys_);
+    const QSet<int> visibleSurfaceEpochs = collectVisibleSurfaceEpochsSet(zoom);
+    const QSet<int> visibleMosaicEpochs  = updateMosaic_ ? collectEpochsForTilesSet(zoom, lastVisTileKeys_) : QSet<int>();
 
     auto& processedSurface = surfaceTaskEpochIndxsByZoom_[zoom];
     auto& processedMosaic = mosaicTaskEpochIndxsByZoom_[zoom];
 
-    for (int itm : std::as_const(visibleEpochs)) {
-        if (!processedSurface.contains(itm) && vertIndxsFromBottomTrack_.contains(itm)) {
-            pendingSurfaceIndxs_.insert(qMakePair('0', itm));
-        }
-        if (!processedMosaic.contains(itm)) {
-            pendingMosaicIndxs_.insert(itm);
+    bool addedSurface = false;
+    bool addedMosaic = false;
+    const bool needCameraPass = updateSurface_ && surfaceCameraPassPending_;
+
+    for (int itm : std::as_const(visibleSurfaceEpochs)) {
+        const QPair<char, int> pair('0', itm);
+        if (!processedSurface.contains(itm) && !pendingSurfaceIndxs_.contains(pair)) {
+            pendingSurfaceIndxs_.insert(pair);
+            addedSurface = true;
         }
     }
 
-    //qDebug() << "add pending" << pendingSurfaceIndxs_.size() << pendingMosaicIndxs_.size();
+    if (updateMosaic_) {
+        for (int itm : std::as_const(visibleMosaicEpochs)) {
+            if (!processedMosaic.contains(itm) && !pendingMosaicIndxs_.contains(itm)) {
+                pendingMosaicIndxs_.insert(itm);
+                addedMosaic = true;
+            }
+        }
+    }
 
-    scheduleLatest(WorkSet(WF_All)); // all?
+    if (!addedSurface && !addedMosaic && !needCameraPass) {
+        return;
+    }
+
+    WorkSet mask = WF_None;
+    if (addedSurface || needCameraPass) {
+        mask |= WF_Surface;
+    }
+    if (addedMosaic) {
+        mask |= WF_Mosaic;
+    }
+    if (toMask(mask) != 0) {
+        scheduleLatest(mask);
+    }
 }
 
 void DataProcessor::onChartsAdded(uint64_t indx)
 {
     chartsCounter_ = indx;
+    // Fallback trigger: charts may appear after epochs, when channels list becomes available.
+    tryScheduleAutoBottomTrack(indx);
+}
 
+void DataProcessor::tryScheduleAutoBottomTrack(uint64_t indx)
+{
 #ifndef SEPARATE_READING
     if (isOpeningFile_) {
         return;
     }
 #endif
-    
-    if (updateMosaic_ || updateIsobaths_ || updateBottomTrack_) {
-        auto btP = datasetPtr_->getBottomTrackParam();
 
-        const int endIndx    = static_cast<int>(indx);
-        const int windowSize = btP.windowSize;
-
-        int currCount = std::floor(endIndx / windowSize);
-
-        if (bottomTrackWindowCounter_ != currCount) {
-            auto additionalBTPGap = windowSize / 2;
-            btP.indexFrom = std::max(0, windowSize * bottomTrackWindowCounter_ - (windowSize / 2 + 1) - additionalBTPGap);
-            btP.indexTo   = std::max(0, windowSize * currCount - (windowSize / 2 + 1) - additionalBTPGap);
-
-            const auto channels = datasetPtr_->channelsList();
-            if (!channels.isEmpty()) {
-                const DatasetChannel ch1 = channels[0];
-                const DatasetChannel ch2 = (channels.size() >= 2) ? channels[1] : DatasetChannel();
-                QMetaObject::invokeMethod(worker_, "bottomTrackProcessing", Qt::QueuedConnection,
-                                          Q_ARG(DatasetChannel, ch1),
-                                          Q_ARG(DatasetChannel, ch2),
-                                          Q_ARG(BottomTrackParam, btP),
-                                          Q_ARG(bool, false),/*manual*/
-                                          Q_ARG(bool, false)/*redrawAll*/);
-            }
-            bottomTrackWindowCounter_ = currCount;
-        }
+    if (!(updateMosaic_ || updateSurface_ || updateBottomTrack_)) {
+        return;
     }
+
+    auto btP = datasetPtr_->getBottomTrackParam();
+    const int windowSize = btP.windowSize;
+    if (windowSize <= 0) {
+        return;
+    }
+
+    const int endIndx = static_cast<int>(indx);
+    const int currCount = std::floor(endIndx / windowSize);
+    if (bottomTrackWindowCounter_ == currCount) {
+        return;
+    }
+
+    const int additionalBTPGap = windowSize / 2;
+    btP.indexFrom = std::max(0, windowSize * bottomTrackWindowCounter_ - (windowSize / 2 + 1) - additionalBTPGap);
+    btP.indexTo   = std::max(0, windowSize * currCount - (windowSize / 2 + 1) - additionalBTPGap);
+
+    const auto channels = datasetPtr_->channelsList();
+    if (channels.isEmpty()) {
+        return;
+    }
+
+    const DatasetChannel ch1 = channels[0];
+    const DatasetChannel ch2 = (channels.size() >= 2) ? channels[1] : DatasetChannel();
+    QMetaObject::invokeMethod(worker_, "bottomTrackProcessing", Qt::QueuedConnection,
+                              Q_ARG(DatasetChannel, ch1),
+                              Q_ARG(DatasetChannel, ch2),
+                              Q_ARG(BottomTrackParam, btP),
+                              Q_ARG(bool, false),/*manual*/
+                              Q_ARG(bool, false)/*redrawAll*/);
+    bottomTrackWindowCounter_ = currCount;
 }
 
 void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVector<int>& vertIndxs, bool isManual)
@@ -366,6 +466,7 @@ void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVec
         pendingSurfaceIndxs_.clear();
         vertIndxsFromBottomTrack_.clear();
         epIndxsFromBottomTrack_.clear();
+        epochToBottomTrackVertIndx_.clear();
         bottomTrackFullRecalcPending_ = false;
     }
 
@@ -376,7 +477,16 @@ void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVec
 
     for (int itm : vertIndxs) {
         vertIndxsFromBottomTrack_.insert(itm);
-        pendingSurfaceIndxs_.insert(qMakePair(isManual ? '1' : '0', itm));
+    }
+
+    const int pairCount = qMin(epIndxs.size(), vertIndxs.size());
+    for (int i = 0; i < pairCount; ++i) {
+        epochToBottomTrackVertIndx_[epIndxs[i]] = vertIndxs[i];
+    }
+
+    for (int itm : vertIndxs) {
+        // '2' = triangulation-only update (no immediate raster write).
+        pendingSurfaceIndxs_.insert(qMakePair(isManual ? '1' : '2', itm));
     }
 
     scheduleLatest(WorkSet(WF_All));
@@ -385,6 +495,7 @@ void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVec
 void DataProcessor::onEpochAdded(uint64_t indx)
 {
     epochCounter_    = indx;
+    tryScheduleAutoBottomTrack(indx);
 }
 
 void DataProcessor::onPositionAdded(uint64_t indx)
@@ -400,6 +511,12 @@ void DataProcessor::onAttitudeAdded(uint64_t indx)
 void DataProcessor::onMosaicCanCalc(uint64_t indx)
 {
     mosaicCounter_   = indx;
+
+    // Pending mosaic epochs may be blocked only by horizon counter.
+    // When counter advances, immediately retry scheduling.
+    if (updateMosaic_ && !pendingMosaicIndxs_.isEmpty()) {
+        scheduleLatest(WorkSet(WF_Mosaic));
+    }
 }
 
 void DataProcessor::bottomTrackProcessing(const DatasetChannel &ch1, const DatasetChannel &ch2, const BottomTrackParam &p, bool manual, bool redrawAll)
@@ -676,7 +793,7 @@ void DataProcessor::runCoalescedWork()
 
     WorkBundle wb;
 
-    if (wantSurface && (updateSurface_ /*|| updateMosaic_*/)) { // TODO: or     if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && (/*updateBottomTrack_ || */updateIsobaths_ || updateMosaic_)) { ???
+    if (wantSurface && updateSurface_) {
         int zoom = lastDataZoomIndx_;
         if (zoom <= 0) {
             zoom = zoomFromMpp(tileResolution_);
@@ -695,9 +812,10 @@ void DataProcessor::runCoalescedWork()
 
         auto& processed = surfaceTaskEpochIndxsByZoom_[zoom];
         auto& manualPending = surfaceManualEpochIndxsByZoom_[zoom];
+        bool cameraPassRequested = surfaceCameraPassPending_;
 
-        if (!pendingSurfaceIndxs_.isEmpty() || !manualPending.isEmpty()) {
-            wb.surfaceVec.reserve(pendingSurfaceIndxs_.size() + manualPending.size());
+        if (!pendingSurfaceIndxs_.isEmpty() || !manualPending.isEmpty() || cameraPassRequested) {
+            wb.surfaceVec.reserve(pendingSurfaceIndxs_.size() + manualPending.size() + (cameraPassRequested ? 1 : 0));
 
             if (!manualPending.isEmpty()) {
                 for (int idx : std::as_const(manualPending)) {
@@ -712,6 +830,20 @@ void DataProcessor::runCoalescedWork()
                     if (it->first == '1') {
                         continue;
                     }
+
+                    if (it->first == 'c') {
+                        cameraPassRequested = true;
+                        continue;
+                    }
+
+                    if (it->first == '2') {
+                        if (it->second < 0) {
+                            continue;
+                        }
+                        wb.surfaceVec.append(*it);
+                        continue;
+                    }
+
                     if (processed.contains(it->second)) {
                         continue;
                     }
@@ -720,6 +852,11 @@ void DataProcessor::runCoalescedWork()
                 }
 
                 pendingSurfaceIndxs_.clear();
+            }
+
+            if (cameraPassRequested) {
+                wb.surfaceVec.append(qMakePair('c', -1));
+                surfaceCameraPassPending_ = false;
             }
 
             if (!wb.surfaceVec.isEmpty()) {
@@ -782,6 +919,13 @@ void DataProcessor::runCoalescedWork()
 
     //wb.doIsobaths = false;
     //pendingIsobathsWork_ = false;
+
+    if (!wb.surfaceVec.isEmpty()) {
+        // Keep worker-side visible tiles in sync before surface pass starts.
+        // Without this ordering, surface job may run with stale/empty visibility
+        // until the next camera movement event.
+        QMetaObject::invokeMethod(worker_, "setVisibleTileKeys", Qt::BlockingQueuedConnection, Q_ARG(QSet<TileKey>, lastVisTileKeys_));
+    }
 
     nextRunPending_.store(false);
     cancelRequested_.store(false);
@@ -1139,6 +1283,7 @@ void DataProcessor::clearMosaicProcessing()
 void DataProcessor::clearSurfaceProcessing()
 {
     pendingSurfaceIndxs_.clear();
+    surfaceCameraPassPending_ = false;
     surfaceTaskEpochIndxsByZoom_.clear();
     surfaceManualEpochIndxsByZoom_.clear();
     surfaceEdgeLimitUpdatedZooms_.clear();
@@ -1150,17 +1295,20 @@ void DataProcessor::clearAllProcessings()
 {
     closeDB();
     pendingWorkTimer_.stop();
+    cameraRectCoalesceTimer_.stop();
     pendingIsobathsWork_ = false;
     pendingMosaicIndxs_.clear();
     mosaicTaskEpochIndxsByZoom_.clear();
     mosaicInFlightIndxs_.clear();
     pendingSurfaceIndxs_.clear();
+    surfaceCameraPassPending_ = false;
     surfaceTaskEpochIndxsByZoom_.clear();
     surfaceManualEpochIndxsByZoom_.clear();
     surfaceEdgeLimitDirty_ = false;
     surfaceEdgeLimitUpdatedZooms_.clear();
     epIndxsFromBottomTrack_.clear();
     vertIndxsFromBottomTrack_.clear();
+    epochToBottomTrackVertIndx_.clear();
     bottomTrackWindowCounter_ = 0;
     btBusy_ = false;
 
@@ -1182,6 +1330,11 @@ void DataProcessor::clearAllProcessings()
     filePath_.clear();
     dbReaderInWork_ = false;
     lastViewRect_ = QRectF();
+    pendingCameraRect_ = QRectF();
+    cameraRectPending_ = false;
+    cameraRectProcessing_ = false;
+    lastVisTileKeys_.clear();
+    lastVisTilesZoom_ = 0;
     //lastDataZoomIndx_ = 0;
     dbPendingKeys_.clear();
     dbInWorkKeys_.clear();
@@ -1496,10 +1649,8 @@ void DataProcessor::onUpdateDataZoom(int zoom) // calc or db
     QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
 
     surfaceZoomChangedPending_ = updateSurface_;
+    surfaceCameraPassPending_ = updateSurface_;
     handleSurfaceZoomChangeIfReady(lastDataZoomIndx_, lastVisTileKeys_);
-    if (updateSurface_) {
-        enqueueSurfaceMissingForZoom(lastDataZoomIndx_);
-    }
 
     if (!updateMosaic_) {
         return;
@@ -1534,8 +1685,40 @@ void DataProcessor::setFilePath(QString filePath)
 
 void DataProcessor::onSendDataRectRequest(float minX, float minY, float maxX, float maxY)
 {
-    if (!isValidZoomIndx(lastDataZoomIndx_)) {
+    if (!cameraRectProcessing_) {
+        pendingCameraRect_ = QRectF(QPointF(minX, minY), QPointF(maxX, maxY));
+        cameraRectPending_ = true;
+        if (!cameraRectCoalesceTimer_.isActive()) {
+            cameraRectCoalesceTimer_.start();
+        }
         return;
+    }
+
+    int reqZoom = lastDataZoomIndx_;
+    if (!isValidZoomIndx(reqZoom)) {
+        reqZoom = zoomFromMpp(tileResolution_);
+    }
+    if (!isValidZoomIndx(reqZoom)) {
+        const int minZoom = mosaicIndexProvider_.getMaxZoom();
+        const int maxZoom = mosaicIndexProvider_.getMinZoom();
+        if (minZoom <= maxZoom) {
+            if (reqZoom <= 0) {
+                reqZoom = minZoom;
+            }
+            reqZoom = std::clamp(reqZoom, minZoom, maxZoom);
+        }
+    }
+    if (!isValidZoomIndx(reqZoom)) {
+        return;
+    }
+
+    if (!isValidZoomIndx(lastDataZoomIndx_)) {
+        lastDataZoomIndx_ = reqZoom;
+        const float mpp = mppFromZoom(reqZoom);
+        if (std::isfinite(mpp) && mpp > 0.0f) {
+            tileResolution_ = mpp;
+            QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
+        }
     }
 
     // rect
@@ -1547,9 +1730,30 @@ void DataProcessor::onSendDataRectRequest(float minX, float minY, float maxX, fl
     // tiles
     //const auto tiles = mosaicIndexProvider_.tilesInRectNed(viewRect, zoomIndx, /*padTiles*/1); // been
     std::array<QPointF, 4> visQuad = { viewRect.topLeft(), viewRect.topRight(), viewRect.bottomRight(), viewRect.bottomLeft() };
-    const auto tiles = mosaicIndexProvider_.tilesInQuadNed(visQuad, lastDataZoomIndx_, 1); // new
+    const auto tiles = mosaicIndexProvider_.tilesInQuadNed(visQuad, reqZoom, 1); // new
     if (tiles == lastVisTileKeys_) {
+        lastViewRect_ = viewRect;
         return;
+    }
+
+    QSet<TileKey> addedTiles;
+    if (lastVisTilesZoom_ == reqZoom) {
+        addedTiles = tiles;
+        addedTiles.subtract(lastVisTileKeys_);
+    }
+
+    QSet<TileKey> reopenTiles = addedTiles;
+    if (!addedTiles.isEmpty()) {
+        for (const TileKey& key : std::as_const(addedTiles)) {
+            for (int dy = -1; dy <= 1; ++dy) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                    const TileKey neighbor(key.x + dx, key.y + dy, key.zoom);
+                    if (tiles.contains(neighbor)) {
+                        reopenTiles.insert(neighbor);
+                    }
+                }
+            }
+        }
     }
 
     QMetaObject::invokeMethod(worker_, "setVisibleTileKeys", Qt::QueuedConnection, Q_ARG(QSet<TileKey>, tiles));
@@ -1557,8 +1761,25 @@ void DataProcessor::onSendDataRectRequest(float minX, float minY, float maxX, fl
     // store new request
     lastViewRect_ = viewRect;
     lastVisTileKeys_ = tiles;
+    lastVisTilesZoom_ = reqZoom;
+    if (updateSurface_ && !reopenTiles.isEmpty()) {
+        int zoom = reqZoom;
+        if (zoom <= 0) {
+            zoom = zoomFromMpp(tileResolution_);
+        }
+        if (zoom > 0) {
+            auto& processedSurface = surfaceTaskEpochIndxsByZoom_[zoom];
+            const QSet<int> addedSurfaceEpochs = collectSurfaceEpochsForTilesSet(zoom, reopenTiles);
+            for (int idx : std::as_const(addedSurfaceEpochs)) {
+                processedSurface.remove(idx);
+            }
+        }
+        // When view enters previously unseen tiles, some crossing triangles may not be reseeded
+        // by visible-vertex logic alone. Request a one-shot camera pass to fill these gaps.
+        surfaceCameraPassPending_ = true;
+    }
 
-    handleSurfaceZoomChangeIfReady(lastDataZoomIndx_, tiles);
+    handleSurfaceZoomChangeIfReady(reqZoom, tiles);
 
     if (!updateSurface_ && !updateMosaic_) {
         return;
@@ -1584,8 +1805,8 @@ void DataProcessor::tryCalcTiles()
     // замена на то что пришло с камеры?
     for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
         pendingMosaicIndxs_.insert(*it);
-        pendingSurfaceIndxs_.insert(qMakePair('0', *it));
     }
+    enqueueSurfaceMissingForZoom(lastDataZoomIndx_);
     pendingIsobathsWork_ = true;
 
     QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
@@ -1715,6 +1936,88 @@ void DataProcessor::onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKe
             }
         }
     }
+
+    if ((!updateMosaic_ && !updateSurface_) || lastVisTileKeys_.isEmpty()) {
+        return;
+    }
+
+    int zoom = lastDataZoomIndx_;
+    if (zoom <= 0) {
+        zoom = zoomFromMpp(tileResolution_);
+    }
+    if (zoom <= 0) {
+        return;
+    }
+
+    const auto zoomTilesIt = tilesByZoom.constFind(zoom);
+    if (zoomTilesIt == tilesByZoom.cend() || zoomTilesIt->isEmpty()) {
+        return;
+    }
+
+    bool intersectsVisible = false;
+    for (const TileKey& key : zoomTilesIt.value()) {
+        if (lastVisTileKeys_.contains(key)) {
+            intersectsVisible = true;
+            break;
+        }
+    }
+    if (!intersectsVisible) {
+        return;
+    }
+
+    bool addedMosaic = false;
+    bool addedSurface = false;
+
+    if (updateMosaic_) {
+        auto& processed = mosaicTaskEpochIndxsByZoom_[zoom];
+        if (!processed.contains(epochIndx) &&
+            !pendingMosaicIndxs_.contains(epochIndx) &&
+            !mosaicInFlightIndxs_.contains(epochIndx)) {
+            pendingMosaicIndxs_.insert(epochIndx);
+            addedMosaic = true;
+        }
+    }
+
+    if (updateSurface_) {
+        auto& processedSurface = surfaceTaskEpochIndxsByZoom_[zoom];
+        const auto& manualPending = surfaceManualEpochIndxsByZoom_[zoom];
+        auto tryAddSurfaceByEpoch = [&](int epIdx) {
+            const auto vertIt = epochToBottomTrackVertIndx_.constFind(epIdx);
+            if (vertIt == epochToBottomTrackVertIndx_.cend()) {
+                return;
+            }
+            const int vertIdx = vertIt.value();
+            if (!vertIndxsFromBottomTrack_.contains(vertIdx)) {
+                return;
+            }
+            if (processedSurface.contains(vertIdx) || manualPending.contains(vertIdx)) {
+                return;
+            }
+            const QPair<char, int> pair('0', vertIdx);
+            if (pendingSurfaceIndxs_.contains(pair)) {
+                return;
+            }
+            pendingSurfaceIndxs_.insert(pair);
+            addedSurface = true;
+        };
+
+        // epoch coverage is segment-based (epoch i -> i+1), surface is vertex-based.
+        // Add both endpoints of the segment.
+        tryAddSurfaceByEpoch(epochIndx);
+        tryAddSurfaceByEpoch(epochIndx + 1);
+
+    }
+
+    WorkSet mask = WF_None;
+    if (addedMosaic) {
+        mask |= WF_Mosaic;
+    }
+    if (addedSurface) {
+        mask |= WF_Surface;
+    }
+    if (toMask(mask) != 0) {
+        scheduleLatest(mask);
+    }
 }
 
 void DataProcessor::onDatasetStateChanged(int state)
@@ -1757,12 +2060,20 @@ void DataProcessor::clearDbNotFoundCache()
 
 void DataProcessor::enqueueSurfaceMissingForZoom(int zoom)
 {
-    if (!updateSurface_ || zoom <= 0) {
+    if (!updateSurface_) {
         return;
     }
 
-    auto& processed = surfaceTaskEpochIndxsByZoom_[zoom];
-    const auto& manualPending = surfaceManualEpochIndxsByZoom_[zoom];
+    int actualZoom = zoom;
+    if (actualZoom <= 0) {
+        actualZoom = zoomFromMpp(tileResolution_);
+    }
+    if (actualZoom <= 0) {
+        return;
+    }
+
+    auto& processed = surfaceTaskEpochIndxsByZoom_[actualZoom];
+    const auto& manualPending = surfaceManualEpochIndxsByZoom_[actualZoom];
 
     for (int idx : std::as_const(vertIndxsFromBottomTrack_)) {
         if (processed.contains(idx) || manualPending.contains(idx)) {
@@ -1844,6 +2155,46 @@ QSet<int> DataProcessor::collectEpochsForTilesSet(int zoom, const QSet<TileKey> 
     return result;
 }
 
+QSet<int> DataProcessor::collectSurfaceEpochsForTilesSet(int zoom, const QSet<TileKey>& tiles) const
+{
+    QSet<int> visibleEpochs = collectEpochsForTilesSet(zoom, tiles);
+    if (visibleEpochs.isEmpty() || epochToBottomTrackVertIndx_.isEmpty()) {
+        visibleEpochs.clear();
+        return visibleEpochs;
+    }
+
+    QSet<int> result;
+    result.reserve(visibleEpochs.size() * 2);
+    for (int epochIdx : std::as_const(visibleEpochs)) {
+        // tileEpochIndxsByZoom_ is segment-based (epoch i stores coverage for segment i -> i+1),
+        // while surface processing is vertex-based. Include both segment endpoints.
+        const auto vertIt0 = epochToBottomTrackVertIndx_.constFind(epochIdx);
+        if (vertIt0 != epochToBottomTrackVertIndx_.cend()) {
+            const int vertIdx = vertIt0.value();
+            if (vertIndxsFromBottomTrack_.contains(vertIdx)) {
+                result.insert(vertIdx);
+            }
+        }
+        const auto vertIt1 = epochToBottomTrackVertIndx_.constFind(epochIdx + 1);
+        if (vertIt1 != epochToBottomTrackVertIndx_.cend()) {
+            const int vertIdx = vertIt1.value();
+            if (vertIndxsFromBottomTrack_.contains(vertIdx)) {
+                result.insert(vertIdx);
+            }
+        }
+    }
+    return result;
+}
+
+QSet<int> DataProcessor::collectVisibleSurfaceEpochsSet(int zoom) const
+{
+    int actualZoom = zoom;
+    if (actualZoom <= 0) {
+        actualZoom = zoomFromMpp(tileResolution_);
+    }
+    return collectSurfaceEpochsForTilesSet(actualZoom, lastVisTileKeys_);
+}
+
 void DataProcessor::updateDataProcType()
 {
 #ifdef SEPARATE_READING
@@ -1890,8 +2241,8 @@ void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTile
 
     for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
         pendingMosaicIndxs_.insert(*it);
-        pendingSurfaceIndxs_.insert(qMakePair('0', *it));
     }
+    enqueueSurfaceMissingForZoom(lastDataZoomIndx_);
     pendingIsobathsWork_ = true;
 
     QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
