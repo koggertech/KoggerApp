@@ -2691,6 +2691,11 @@ void GraphicsScene3dView::Camera::rotate(const QPointF& prevCenter, const QPoint
     m_rotAngle.setX(m_rotAngle.x() - qDegreesToRadians(angleDelta));
     m_rotAngle.setY(m_rotAngle.y() + qDegreesToRadians(angleDeltaY * increaseCoeff));
 
+    const float kMinPitchRad = qDegreesToRadians(30.0f); // angle limit
+    if (m_rotAngle.y() > kMinPitchRad) {
+        m_rotAngle.setY(kMinPitchRad);
+    }
+
     tryResetRotateAngle();
     checkRotateAngle();
     updateCameraParams();
