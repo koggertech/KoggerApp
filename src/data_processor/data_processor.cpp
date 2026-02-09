@@ -307,11 +307,17 @@ void DataProcessor::setUpdateIsobaths(bool state)
 
 void DataProcessor::setUpdateMosaic(bool state)
 {
+    const bool wasMosaic = updateMosaic_;
     updateMosaic_ = state;
 
     //return;
 
     if (updateMosaic_) {
+        if (!wasMosaic) {
+            pendingMosaicIndxs_.clear();
+            mosaicInFlightIndxs_.clear();
+        }
+
         if (hotCache_.checkAnyTileForZoom(lastDataZoomIndx_)) {
             pumpVisible();
         }
@@ -323,6 +329,8 @@ void DataProcessor::setUpdateMosaic(bool state)
         onCameraMoved();
     }
     else {
+        pendingMosaicIndxs_.clear();
+        mosaicInFlightIndxs_.clear();
         pendingIsobathsWork_ = true; // мозаика могла изменить поверхность
         scheduleLatest(WorkSet(WF_Isobaths));
     }
@@ -360,6 +368,19 @@ void DataProcessor::onCameraMoved()
 
     const QSet<int> visibleSurfaceEpochs = collectVisibleSurfaceEpochsSet(zoom);
     const QSet<int> visibleMosaicEpochs  = updateMosaic_ ? collectEpochsForTilesSet(zoom, lastVisTileKeys_) : QSet<int>();
+
+    if (updateMosaic_ && !pendingMosaicIndxs_.isEmpty()) {
+        // Keep mosaic queue focused on current viewport to avoid processing stale backlog
+        // accumulated during rapid camera moves.
+        QSet<int> filteredPending;
+        filteredPending.reserve(qMin(pendingMosaicIndxs_.size(), visibleMosaicEpochs.size()));
+        for (int idx : std::as_const(pendingMosaicIndxs_)) {
+            if (visibleMosaicEpochs.contains(idx)) {
+                filteredPending.insert(idx);
+            }
+        }
+        pendingMosaicIndxs_.swap(filteredPending);
+    }
 
     auto& processedSurface = surfaceTaskEpochIndxsByZoom_[zoom];
     auto& processedMosaic = mosaicTaskEpochIndxsByZoom_[zoom];
@@ -464,15 +485,41 @@ void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVec
         surfaceTaskEpochIndxsByZoom_.clear();
         surfaceManualEpochIndxsByZoom_.clear();
         pendingSurfaceIndxs_.clear();
+        mosaicTaskEpochIndxsByZoom_.clear();
+        pendingMosaicIndxs_.clear();
+        mosaicInFlightIndxs_.clear();
         vertIndxsFromBottomTrack_.clear();
         epIndxsFromBottomTrack_.clear();
         epochToBottomTrackVertIndx_.clear();
         bottomTrackFullRecalcPending_ = false;
     }
 
+    QSet<int> changedEpochs;
+    changedEpochs.reserve(epIndxs.size());
     for (int itm : epIndxs) {
         epIndxsFromBottomTrack_.insert(itm);
-        pendingMosaicIndxs_.insert(itm);
+        changedEpochs.insert(itm);
+    }
+
+    if (!changedEpochs.isEmpty()) {
+        constexpr int kBulkMosaicInvalidateThreshold = 4096;
+        if (changedEpochs.size() >= kBulkMosaicInvalidateThreshold) {
+            mosaicTaskEpochIndxsByZoom_.clear();
+            pendingMosaicIndxs_.clear();
+            mosaicInFlightIndxs_.clear();
+        }
+        else {
+            for (auto it = mosaicTaskEpochIndxsByZoom_.begin(); it != mosaicTaskEpochIndxsByZoom_.end(); ++it) {
+                auto& processed = it.value();
+                for (int ep : std::as_const(changedEpochs)) {
+                    processed.remove(ep);
+                }
+            }
+            for (int ep : std::as_const(changedEpochs)) {
+                pendingMosaicIndxs_.remove(ep);
+                mosaicInFlightIndxs_.remove(ep);
+            }
+        }
     }
 
     for (int itm : vertIndxs) {
@@ -487,6 +534,30 @@ void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVec
     for (int itm : vertIndxs) {
         // '2' = triangulation-only update (no immediate raster write).
         pendingSurfaceIndxs_.insert(qMakePair(isManual ? '1' : '2', itm));
+    }
+
+    if (updateMosaic_ && !changedEpochs.isEmpty() && !lastVisTileKeys_.isEmpty()) {
+        int zoom = lastVisTilesZoom_;
+        if (!isValidZoomIndx(zoom)) {
+            zoom = lastDataZoomIndx_;
+        }
+        if (zoom <= 0) {
+            zoom = zoomFromMpp(tileResolution_);
+        }
+
+        if (zoom > 0) {
+            const QSet<int> visibleEpochs = collectEpochsForTilesSet(zoom, lastVisTileKeys_);
+            auto& processedMosaic = mosaicTaskEpochIndxsByZoom_[zoom];
+            for (int ep : std::as_const(visibleEpochs)) {
+                if (!changedEpochs.contains(ep) ||
+                    processedMosaic.contains(ep) ||
+                    pendingMosaicIndxs_.contains(ep) ||
+                    mosaicInFlightIndxs_.contains(ep)) {
+                    continue;
+                }
+                pendingMosaicIndxs_.insert(ep);
+            }
+        }
     }
 
     scheduleLatest(WorkSet(WF_All));
