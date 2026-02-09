@@ -7,7 +7,6 @@
 #include <QList>
 
 #include "map_defs.h"
-#include "tile_provider.h"
 
 
 namespace map {
@@ -17,7 +16,7 @@ class TileDB : public QObject
     Q_OBJECT
 
 public:
-    explicit TileDB(std::weak_ptr<TileProvider> tileProvider);
+    explicit TileDB(int32_t providerId);
     ~TileDB();
 
 public slots:
@@ -26,6 +25,7 @@ public slots:
     void saveTile(const map::TileIndex& tileIndx, const QImage& image);
     void stopLoading(const map::TileIndex& tileIndx);
     void stopAndClearRequests();
+    void setProviderId(int32_t providerId);
 
 signals:
     void tileLoaded(const map::TileIndex& tileIndx, const QImage& image);
@@ -37,7 +37,10 @@ private slots:
     void processNextTile();
 
 private:
-    std::weak_ptr<TileProvider> tileProvider_;
+    void closeDb();
+    QString dbNameForProvider(int32_t providerId) const;
+
+    int32_t providerId_;
     QSqlDatabase db_;
     QSet<TileIndex> pendingLoadRequests_;
     bool stopRequested_;

@@ -6,6 +6,7 @@
 #include <QStandardItemModel>
 #include <QQmlContext>
 #include <QThread>
+#include <QVariantList>
 #ifdef FLASHER
 #include "flasher/deviceflasher.h"
 #endif
@@ -60,6 +61,9 @@ public:
     Q_PROPERTY(QString           ch1Name                      READ getChannel1Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(QString           ch2Name                      READ getChannel2Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(int               dataProcessorState           READ getDataProcessorState           NOTIFY dataProcessorStateChanged)
+    Q_PROPERTY(int               mapTileProviderId            READ getMapTileProviderId            NOTIFY mapTileProviderChanged)
+    Q_PROPERTY(QString           mapTileProviderName          READ getMapTileProviderName          NOTIFY mapTileProviderChanged)
+    Q_PROPERTY(QVariantList      mapTileProviders             READ getMapTileProviders             CONSTANT)
     Q_PROPERTY(bool              needForceZooming             READ getNeedForceZooming             WRITE setNeedForceZooming NOTIFY needForceZoomingChanged)
 
     MosaicIndexProvider* getMosaicIndexProviderPtr();
@@ -151,6 +155,11 @@ public slots:
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
 
     Q_INVOKABLE void setIsAttitudeExpected(bool state);
+    Q_INVOKABLE void setMapTileProvider(int providerId);
+    Q_INVOKABLE void toggleMapTileProvider();
+    Q_INVOKABLE int getMapTileProviderId() const;
+    Q_INVOKABLE QString getMapTileProviderName() const;
+    Q_INVOKABLE QVariantList getMapTileProviders() const;
 
 signals:
     void connectionChanged(bool duplex = false);
@@ -161,6 +170,7 @@ signals:
     void needForceZoomingChanged();
     void isGPSAliveChanged();
     void loggingKlfChanged();
+    void mapTileProviderChanged();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
@@ -196,6 +206,7 @@ private:
     QString getFilePath() const;
     void fixFilePathString(QString& filePath) const;
     void loadLLARefFromSettings();
+    int loadSavedMapTileProviderId() const;
 
     /*data*/
     Console* consolePtr_;

@@ -119,7 +119,6 @@ DISTFILES += \
     qml/AdjBox.qml \
     qml/AdjBoxBack.qml \
     qml/BackStyle.qml \
-    qml/ButtonBackStyle.qml \
     qml/CButton.qml \
     qml/CCombo.qml \
     qml/CComboBox.qml \

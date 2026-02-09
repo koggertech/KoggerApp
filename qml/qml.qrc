@@ -13,14 +13,12 @@
         <file>TabBackStyle.qml</file>
         <file>ComboBackStyle.qml</file>
         <file>BackStyle.qml</file>
-        <file>ButtonBackStyle.qml</file>
         <file>AdjBox.qml</file>
         <file>CSlider.qml</file>
         <file>UpgradeBox.qml</file>
         <file>AdjBoxBack.qml</file>
         <file>TitleMeasurement.qml</file>
         <file>CRButton.qml</file>
-        <file>CProgressButton.qml</file>
         <file>TitleSetup.qml</file>
         <file>MenuScroll.qml</file>
         <file>MenuBlock.qml</file>
@@ -56,6 +54,10 @@
         <file>SmoothMethodUGINSettings.qml</file>
         <file>SmoothMethodTriDivideSettings.qml</file>
         <file>Scene3DToolbar.qml</file>
+        <file>Scene3DRightToolbar.qml</file>
+        <file>Scene3DGeometryPanel.qml</file>
+        <file>Scene3DLayerPanel.qml</file>
+        <file>GeoJsonPanel.qml</file>
         <file>one-finger.svg</file>
         <file>tool.svg</file>
         <file>fit-in-view.svg</file>

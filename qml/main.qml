@@ -504,6 +504,13 @@ ApplicationWindow  {
                         hoverEnabled:         true
                         Keys.enabled:         true
                         Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
+                        Keys.onEscapePressed: {
+                            if (renderer.geoJsonEnabled) {
+                                renderer.geojsonCancelDrawing()
+                            } else {
+                                renderer.clearRuler()
+                            }
+                        }
 
                         property int lastMouseKeyPressed: Qt.NoButton // TODO: maybe this mouseArea should be outside pinchArea
                         property point startMousePos: Qt.point(-1, -1)
@@ -540,6 +547,7 @@ ApplicationWindow  {
 
                         onPressed: function(mouse) {
                             menuBlock.visible = false
+                            geoMenuBlock.visible = false
                             startMousePos = Qt.point(mouse.x, mouse.y)
                             wasMoved = false
                             vertexMode = false
@@ -558,7 +566,11 @@ ApplicationWindow  {
                             renderer.mouseReleaseTrigger(lastMouseKeyPressed, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
 
                             if (mouse.button === Qt.RightButton || (Qt.platform.os === "android" && vertexMode)) {
-                                menuBlock.position(mouse.x, mouse.y)
+                                if (renderer.geoJsonEnabled) {
+                                    geoMenuBlock.position(mouse.x, mouse.y)
+                                } else {
+                                    menuBlock.position(mouse.x, mouse.y)
+                                }
                             }
 
                             vertexMode = false
@@ -589,9 +601,20 @@ ApplicationWindow  {
                     id:                       scene3DToolbar
                     // anchors.bottom:              parent.bottom
                     y:renderer.height - height - 2
+                    view: renderer
                     //anchors.horizontalCenter: parent.horizontalCenter
                     // anchors.rightMargin:      20
                     Keys.forwardTo:           [mousearea3D]
+                }
+
+                Scene3DRightToolbar {
+                    id: scene3DRightToolbar
+                    anchors.right: renderer.right
+                    anchors.top: renderer.top
+                    anchors.bottom: renderer.bottom
+                    geo: renderer.geoJsonController
+                    view: renderer
+                    z: 3
                 }
 
                 Rectangle {
@@ -633,9 +656,7 @@ ApplicationWindow  {
                         font: theme.textFont
                         anchors.centerIn: parent
                     }
-                }
-
-                CContact {
+                }                CContact {
                     id: contactDialog
                     visible: false
                     offsetOpacityArea: 20 // increase in 3D
@@ -756,6 +777,89 @@ ApplicationWindow  {
                         }
 
                         ButtonGroup.group: pencilbuttonGroup
+                    }
+                }
+
+                RowLayout {
+                    id: geoMenuBlock
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 1
+                    visible: false
+                    Layout.margins: 0
+
+                    property var geo: renderer.geoJsonController
+
+                    onGeoChanged: {
+                        console.log("GeoJson menu updated, drawing: " + geo.drawing + ", selectedFeatureId: " + geo.selectedFeatureId)
+                    }
+
+                    function position(mx, my) {
+                        var oy = renderer.height - (my + implicitHeight)
+                        if (oy < 0) {
+                            my = my + oy
+                        }
+                        if (my < 0) {
+                            my = 0
+                        }
+                        var ox = renderer.width - (mx - implicitWidth)
+                        if (ox < 0) {
+                            mx = mx + ox
+                        }
+                        x = mx
+                        y = my
+                        visible = true
+                    }
+
+                    CheckButton {
+                        icon.source: "qrc:/icons/ui/plus.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+                        implicitWidth: theme.controlHeight
+                        visible: geoMenuBlock.geo && geoMenuBlock.geo.drawing
+
+                        onClicked: {
+                            renderer.geojsonFinishDrawing()
+                            geoMenuBlock.visible = false
+                        }
+                    }
+
+                    CheckButton {
+                        icon.source: "qrc:/icons/ui/stack_backward.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+                        implicitWidth: theme.controlHeight
+                        visible: geoMenuBlock.geo && geoMenuBlock.geo.drawing
+
+                        onClicked: {
+                            renderer.geojsonUndoLastVertex()
+                            geoMenuBlock.visible = false
+                        }
+                    }
+
+                    CheckButton {
+                        icon.source: "qrc:/icons/ui/x.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+                        implicitWidth: theme.controlHeight
+                        visible: geoMenuBlock.geo && geoMenuBlock.geo.drawing
+
+                        onClicked: {
+                            renderer.geojsonCancelDrawing()
+                            geoMenuBlock.visible = false
+                        }
+                    }
+
+                    CheckButton {
+                        icon.source: "qrc:/icons/ui/timeline_event_x.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+                        implicitWidth: theme.controlHeight
+                        visible: geoMenuBlock.geo && !geoMenuBlock.geo.drawing && geoMenuBlock.geo.selectedFeatureId !== ""
+
+                        onClicked: {
+                            renderer.geojsonDeleteSelectedFeature()
+                            geoMenuBlock.visible = false
+                        }
                     }
                 }
             }

@@ -35,6 +35,8 @@ public:
     Q_INVOKABLE void onPlaneGridCircleGridStepChanged(int val);
     Q_INVOKABLE void onPlaneGridCircleGridAngleChanged(int val);
     Q_INVOKABLE void onPlaneGridCircleGridLabelsChanged(bool state);
+    Q_INVOKABLE void onRulerModeChanged(bool enabled);
+    Q_INVOKABLE void onGeoJsonModeChanged(bool enabled);
     Q_INVOKABLE void onForceSingleZoomCheckedChanged(bool state);
     Q_INVOKABLE void onForceSingleZoomValueChanged(int zoom);
 
@@ -69,6 +71,8 @@ private:
     int planeGridCircleStep_;
     int planeGridCircleAngle_;
     bool planeGridCircleLabels_;
+    bool rulerEnabled_;
+    bool geoJsonEnabled_;
     bool forceSingleZoomEnabled_;
     int forceSingleZoomValue_;
     bool suppressForceSingleZoomUiCallback_;

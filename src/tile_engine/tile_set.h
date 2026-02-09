@@ -22,6 +22,8 @@ public:
     void onNewRequest(const QSet<TileIndex>& request, ZoomState zoomState, LLARef viewLlaRef, bool isPerspective, double minLon, double maxLon, bool moveUp);
     void onNewLlaRef(LLARef viewLlaRef);
     void setTextureIdByTileIndx(const TileIndex& tileIndx, GLuint textureId);
+    void resetForProviderSwitch();
+    void setResources(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader);
 
 signals:
     // TileDB

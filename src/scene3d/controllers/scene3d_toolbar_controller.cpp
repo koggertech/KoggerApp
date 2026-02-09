@@ -22,6 +22,8 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       planeGridCircleStep_(1),
       planeGridCircleAngle_(1),
       planeGridCircleLabels_(true),
+      rulerEnabled_(false),
+      geoJsonEnabled_(false),
       forceSingleZoomEnabled_(false),
       forceSingleZoomValue_(5),
       suppressForceSingleZoomUiCallback_(false)
@@ -260,6 +262,30 @@ void Scene3dToolBarController::onPlaneGridCircleGridLabelsChanged(bool state)
     }
 }
 
+void Scene3dToolBarController::onRulerModeChanged(bool enabled)
+{
+    rulerEnabled_ = enabled;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setRulerEnabled(rulerEnabled_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onGeoJsonModeChanged(bool enabled)
+{
+    geoJsonEnabled_ = enabled;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setGeoJsonEnabled(geoJsonEnabled_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
 void Scene3dToolBarController::onForceSingleZoomCheckedChanged(bool state)
 {
     if (suppressForceSingleZoomUiCallback_) {
@@ -290,9 +316,7 @@ void Scene3dToolBarController::onForceSingleZoomValueChanged(int zoom)
     else {
         tryInitPendingLambda();
     }
-}
-
-void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
+}void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     graphicsScene3dViewPtr_ = sceneView;
 
@@ -338,6 +362,8 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setPlaneGridCircleStep(planeGridCircleStep_);
                 graphicsScene3dViewPtr_->setPlaneGridCircleAngle(planeGridCircleAngle_);
                 graphicsScene3dViewPtr_->setPlaneGridCircleLabels(planeGridCircleLabels_);
+                graphicsScene3dViewPtr_->setRulerEnabled(rulerEnabled_);
+                graphicsScene3dViewPtr_->setGeoJsonEnabled(geoJsonEnabled_);
                 graphicsScene3dViewPtr_->setForceSingleZoomEnabled(forceSingleZoomEnabled_);
                 graphicsScene3dViewPtr_->setForceSingleZoomValue(forceSingleZoomValue_);
 

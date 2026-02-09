@@ -32,9 +32,9 @@ Item  {
     property bool isFitViewCheckButtonHovered: false
     property bool isBoatTrackCheckButtonHovered: false
     property bool isBottomTrackCheckButtonHovered: false
+    property var view: null
     property alias mosaicEnabled: mosaicViewCheckButton.checked
     property alias showMosaicQualityLabel: settings3DSettings.showQualityLabel
-
     property bool toolbarHovered:
         Qt.platform.os === "android" ?
     (   setCameraIsometricView.down
@@ -85,6 +85,62 @@ Item  {
 
                 onClicked: {
                     Scene3dToolBarController.onSetCameraMapViewButtonClicked()
+                }
+            }
+
+            CheckButton {
+                id: rulerToolButton
+                iconSource: "qrc:/icons/ui/ruler_measure.svg"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checked: false
+                implicitHeight: theme.controlHeight * 1.3
+                implicitWidth: theme.controlHeight * 1.3
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Ruler")
+                    popupPosition: "topRight"
+                }
+
+                onToggled: {
+                    Scene3dToolBarController.onRulerModeChanged(checked)
+                }
+
+                Component.onCompleted: {
+                    Scene3dToolBarController.onRulerModeChanged(checked)
+                }
+
+                Settings {
+                    property alias rulerToolButton: rulerToolButton.checked
+                }
+            }
+
+            CheckButton {
+                id: geoJsonToolButton
+                iconSource: "qrc:/icons/ui/map_pin_cog.svg"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checked: false
+                implicitHeight: theme.controlHeight * 1.3
+                implicitWidth: theme.controlHeight * 1.3
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("GeoJSON")
+                    popupPosition: "topRight"
+                }
+
+                onToggled: {
+                    Scene3dToolBarController.onGeoJsonModeChanged(checked)
+                }
+
+                Component.onCompleted: {
+                    Scene3dToolBarController.onGeoJsonModeChanged(checked)
+                }
+
+                Settings {
+                    property alias geoJsonToolButton: geoJsonToolButton.checked
                 }
             }
 
