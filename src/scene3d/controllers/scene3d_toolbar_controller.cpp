@@ -72,6 +72,17 @@ void Scene3dToolBarController::onBottomTrackVertexEditingModeButtonChecked(bool 
     }
 }
 
+void Scene3dToolBarController::onResetProcessingButtonClicked()
+{
+    if (dataProcessorPtr_) {
+        QMetaObject::invokeMethod(dataProcessorPtr_, "resetProcessingPipeline", Qt::QueuedConnection);
+    }
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->clearSurfaceViewRender();
+    }
+}
+
 void Scene3dToolBarController::onCancelZoomButtonClicked()
 {
     graphicsScene3dViewPtr_->setCancelZoomView();

@@ -116,10 +116,10 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
     int epoch_counter = 0;
 
     for(int iepoch = epoch_min_index; iepoch < epoch_max_index; iepoch++) {
-        //if (canceled()) {
-        //    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
-        //    return;
-        //}
+        if (canceled()) {
+            QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
+            return;
+        }
 
         Epoch epoch = datasetPtr_->fromIndexCopy(iepoch);
         if (!epoch.isValid()) {
@@ -338,6 +338,11 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
     };
 
     for(int iepoch = epoch_start_index; iepoch < epoch_stop_index; iepoch++) {
+        if (canceled()) {
+            QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
+            return;
+        }
+
         Epoch epPtr = datasetPtr_->fromIndexCopy(iepoch);
 
         if(epPtr.chartAvail(channel1.channelId_, channel1.subChannelId_)) {

@@ -273,6 +273,26 @@ void GraphicsScene3dView::clear(bool cleanMap)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::clearSurfaceViewRender()
+{
+    if (surfaceView_) {
+        surfaceView_->clear();
+    }
+
+    m_bounds = Cube();
+    updateBounds();
+
+    lastMinX_ = std::numeric_limits<float>::max();
+    lastMaxX_ = std::numeric_limits<float>::lowest();
+    lastMinY_ = std::numeric_limits<float>::max();
+    lastMaxY_ = std::numeric_limits<float>::lowest();
+
+    lastVisTileKeys_.clear();
+    dataZoomIndx_ = -1; // force zoom sync to data-processor on next camera update
+
+    QQuickFramebufferObject::update();
+}
+
 QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ) const
 {
     QVector3D retVal;

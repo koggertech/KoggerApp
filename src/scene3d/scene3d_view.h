@@ -208,6 +208,7 @@ public:
     bool updateSurface() const;
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
+    void clearSurfaceViewRender();
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ) const;
     void updateProjection();
     void setNeedToResetStartPos(bool state);

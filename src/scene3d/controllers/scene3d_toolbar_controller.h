@@ -19,6 +19,7 @@ public:
     Q_INVOKABLE void onSetCameraIsometricViewButtonClicked();
     Q_INVOKABLE void onSetCameraMapViewButtonClicked();
     Q_INVOKABLE void onBottomTrackVertexEditingModeButtonChecked(bool checked);
+    Q_INVOKABLE void onResetProcessingButtonClicked();
     Q_INVOKABLE void onCancelZoomButtonClicked();
     Q_INVOKABLE void onTrackLastDataCheckButtonCheckedChanged(bool state);
     Q_INVOKABLE void onUpdateBottomTrackCheckButtonCheckedChanged(bool state);

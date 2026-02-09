@@ -51,6 +51,14 @@ void ComputeWorker::clearAll()
     surfaceMesh_.clear();
 }
 
+void ComputeWorker::clearSurfaceMosaicContext()
+{
+    surface_.clear();
+    mosaic_.clear();
+    isobaths_.clear();
+    surfaceMesh_.clear();
+}
+
 void ComputeWorker::clearSurface()
 {
     surface_.clear();

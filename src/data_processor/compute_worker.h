@@ -46,6 +46,7 @@ public:
 public slots:
     // service
     void clearAll();
+    void clearSurfaceMosaicContext();
     void clearSurface();
     void clearMosaic();
     void clearIsobaths();

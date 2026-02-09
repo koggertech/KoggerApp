@@ -79,6 +79,27 @@ MenuFrame {
         }
 
         CheckButton {
+            id: resetProcessingButton
+            objectName: "resetProcessingButton"
+            iconSource: "qrc:/icons/ui/refresh.svg"
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checkable: false
+            checked: false
+            text: qsTr("Reset surface")
+            Layout.fillWidth: true
+
+            onClicked: {
+                Scene3dToolBarController.onResetProcessingButtonClicked()
+            }
+
+            onFocusChanged: {
+                settings3DSettings.focus = true
+            }
+        }
+
+        CheckButton {
             id: showQualityLabelCheck
             objectName: "showQualityLabelCheck"
             backColor: theme.controlBackColor

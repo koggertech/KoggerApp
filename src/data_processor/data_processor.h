@@ -52,6 +52,7 @@ public slots:
     void setSuppressResults(bool state) noexcept;
     void prepareForFileClose(int timeoutMs);
     void clearProcessing(DataProcessorType = DataProcessorType::kUndefined);
+    void resetProcessingPipeline();
 
     // from 3d controller (visibility)
     void setUpdateBottomTrack (bool state);
@@ -192,6 +193,7 @@ private slots:
 
 private:
     void flushPendingDbKeys();
+    void tryFinalizeResetProcessing();
 
     // this
     void changeState(const DataProcessorType& state);
@@ -282,6 +284,7 @@ private:
     std::atomic_bool       cancelRequested_;
     std::atomic_bool       shuttingDown_;
     std::atomic_bool       suppressResults_;
+    std::atomic_bool       resetInProgress_;
     std::atomic_bool       jobRunning_;
     std::atomic_bool       nextRunPending_;
     std::atomic<uint32_t>  requestedMask_;

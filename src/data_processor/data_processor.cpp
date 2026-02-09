@@ -71,6 +71,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     cancelRequested_(false),
     shuttingDown_(false),
     suppressResults_(false),
+    resetInProgress_(false),
     jobRunning_(false),
     nextRunPending_(false),
     requestedMask_(0),
@@ -230,9 +231,83 @@ void DataProcessor::clearProcessing(DataProcessorType procType)
     postState(DataProcessorType::kUndefined); //
 }
 
+void DataProcessor::resetProcessingPipeline()
+{
+    if (resetInProgress_.exchange(true)) {
+        return;
+    }
+
+    // Prevent scheduling of new work while reset drains active surface/mosaic jobs.
+    pendingWorkTimer_.stop();
+    cameraRectCoalesceTimer_.stop();
+    requestedMask_.store(0);
+    nextRunPending_.store(false);
+    if (jobRunning_.load() && !btBusy_) {
+        requestCancel();
+    }
+
+    tryFinalizeResetProcessing();
+}
+
+void DataProcessor::tryFinalizeResetProcessing()
+{
+    if (!resetInProgress_.load()) {
+        return;
+    }
+
+    if (jobRunning_.load()) {
+        return;
+    }
+
+    // Reset only surface/mosaic/isobaths pipeline and caches.
+    // Bottom-track data/processing must stay untouched.
+    pendingWorkTimer_.stop();
+    cameraRectCoalesceTimer_.stop();
+    requestedMask_.store(0);
+    nextRunPending_.store(false);
+    cancelRequested_.store(false);
+
+    pendingSurfaceIndxs_.clear();
+    pendingMosaicIndxs_.clear();
+    mosaicInFlightIndxs_.clear();
+    clearIsobathsProcessing();
+    clearSurfaceProcessing();
+    clearMosaicProcessing();
+
+    hotCache_.clear();
+    renderedKeys_.clear();
+    dbPendingKeys_.clear();
+    dbInWorkKeys_.clear();
+    dbReaderInWork_ = false;
+    clearDbNotFoundCache();
+
+    // Reset worker-side surface/mosaic context (including mesh cache), not bottom-track.
+    QMetaObject::invokeMethod(worker_, "clearSurfaceMosaicContext", Qt::BlockingQueuedConnection);
+    QMetaObject::invokeMethod(worker_, "setVisibleTileKeys", Qt::BlockingQueuedConnection,
+                              Q_ARG(QSet<TileKey>, QSet<TileKey>()));
+
+    // Recreate temporary tile DB cache.
+    if (!filePath_.isEmpty()) {
+        closeDB();
+        openDB();
+    }
+
+    state_ = DataProcessorType::kUndefined;
+    postState(DataProcessorType::kUndefined);
+    emit surfaceProcessingCleared();
+    emit mosaicProcessingCleared();
+    emit isobathsProcessingCleared();
+
+    resetInProgress_.store(false);
+}
+
 void DataProcessor::setUpdateBottomTrack(bool state)
 {
     updateBottomTrack_ = state;
+
+    if (resetInProgress_.load()) {
+        return;
+    }
 
     if ((updateBottomTrack_ || updateSurface_ || updateIsobaths_ || updateMosaic_) && !pendingSurfaceIndxs_.empty()) {
         scheduleLatest(WorkSet(WF_Surface));
@@ -243,6 +318,10 @@ void DataProcessor::setUpdateSurface(bool state)
 {
     const bool wasSurface = updateSurface_;
     updateSurface_ = state;
+
+    if (resetInProgress_.load()) {
+        return;
+    }
 
     if (updateSurface_ && !wasSurface) {
         surfaceCameraPassPending_ = true;
@@ -300,6 +379,10 @@ void DataProcessor::setUpdateIsobaths(bool state)
 {
     updateIsobaths_ = state;
 
+    if (resetInProgress_.load()) {
+        return;
+    }
+
     if (updateIsobaths_) {
         scheduleLatest(WorkSet(WF_Isobaths));
     }
@@ -309,6 +392,10 @@ void DataProcessor::setUpdateMosaic(bool state)
 {
     const bool wasMosaic = updateMosaic_;
     updateMosaic_ = state;
+
+    if (resetInProgress_.load()) {
+        return;
+    }
 
     //return;
 
@@ -345,6 +432,10 @@ void DataProcessor::setIsOpeningFile(bool state)
 
 void DataProcessor::onCameraMoved()
 {
+    if (resetInProgress_.load()) {
+        return;
+    }
+
     if (!updateMosaic_ && !updateSurface_) {
         return;
     }
@@ -431,6 +522,10 @@ void DataProcessor::onChartsAdded(uint64_t indx)
 
 void DataProcessor::tryScheduleAutoBottomTrack(uint64_t indx)
 {
+    if (resetInProgress_.load()) {
+        return;
+    }
+
 #ifndef SEPARATE_READING
     if (isOpeningFile_) {
         return;
@@ -476,6 +571,10 @@ void DataProcessor::tryScheduleAutoBottomTrack(uint64_t indx)
 void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVector<int>& vertIndxs, bool isManual)
 {
     //return;
+
+    if (resetInProgress_.load()) {
+        return;
+    }
 
     if (epIndxs.isEmpty() || vertIndxs.isEmpty()) {
         return;
@@ -592,6 +691,10 @@ void DataProcessor::onMosaicCanCalc(uint64_t indx)
 
 void DataProcessor::bottomTrackProcessing(const DatasetChannel &ch1, const DatasetChannel &ch2, const BottomTrackParam &p, bool manual, bool redrawAll)
 {
+    if (resetInProgress_.load()) {
+        return;
+    }
+
     if (btBusy_) {
         //qDebug() << "bt skip - busy";
         return;
@@ -844,6 +947,10 @@ void DataProcessor::runCoalescedWork()
 {
     //qDebug() << "DataProcessor::runCoalescedWork";
 
+    if (resetInProgress_.load()) {
+        return;
+    }
+
     if (shuttingDown_.load()) {
         return;
     }
@@ -1044,6 +1151,11 @@ void DataProcessor::onWorkerFinished()
         mosaicInFlightIndxs_.clear();
     }
 
+    if (resetInProgress_.load()) {
+        tryFinalizeResetProcessing();
+        return;
+    }
+
     if (nextRunPending_.load() && !shuttingDown_.load()) {
         startTimerIfNeeded();
     }
@@ -1177,6 +1289,11 @@ void DataProcessor::onBottomTrackStarted()
 void DataProcessor::onBottomTrackFinished()
 {
     btBusy_ = false;
+
+    if (resetInProgress_.load()) {
+        tryFinalizeResetProcessing();
+        return;
+    }
 
     if (!forceVisibleRefreshAfterBottomTrack_) {
         return;
@@ -1453,6 +1570,9 @@ void DataProcessor::clearAllProcessings()
 void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnrequestedPending) noexcept
 {
     if (shuttingDown_.load()) {
+        return;
+    }
+    if (resetInProgress_.load()) {
         return;
     }
 
@@ -1786,6 +1906,10 @@ void DataProcessor::setFilePath(QString filePath)
 
 void DataProcessor::onSendDataRectRequest(float minX, float minY, float maxX, float maxY)
 {
+    if (resetInProgress_.load()) {
+        return;
+    }
+
     if (!cameraRectProcessing_) {
         pendingCameraRect_ = QRectF(QPointF(minX, minY), QPointF(maxX, maxY));
         cameraRectPending_ = true;
