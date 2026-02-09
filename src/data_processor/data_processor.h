@@ -286,6 +286,7 @@ private:
     std::atomic_bool       nextRunPending_;
     std::atomic<uint32_t>  requestedMask_;
     bool                   btBusy_;
+    bool                   forceVisibleRefreshAfterBottomTrack_ = false;
     // hot cache/db
     HotTileCache           hotCache_; // LRU
     MosaicDB*              dbReader_;

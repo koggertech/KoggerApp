@@ -529,6 +529,9 @@ void DataProcessor::bottomTrackProcessing(const DatasetChannel &ch1, const Datas
     if (redrawAll) {
         bottomTrackFullRecalcPending_ = true;
     }
+    if (manual || redrawAll) {
+        forceVisibleRefreshAfterBottomTrack_ = true;
+    }
 
     QMetaObject::invokeMethod(worker_, "bottomTrackProcessing", Qt::QueuedConnection,
                               Q_ARG(DatasetChannel, ch1),
@@ -1103,6 +1106,31 @@ void DataProcessor::onBottomTrackStarted()
 void DataProcessor::onBottomTrackFinished()
 {
     btBusy_ = false;
+
+    if (!forceVisibleRefreshAfterBottomTrack_) {
+        return;
+    }
+    forceVisibleRefreshAfterBottomTrack_ = false;
+
+    QTimer::singleShot(0, this, [this]() {
+        if (shuttingDown_.load()) {
+            return;
+        }
+        if (!updateSurface_ && !updateMosaic_) {
+            return;
+        }
+
+        if (updateSurface_) {
+            // After manual/redrawAll bottom-track runs, force one visible camera pass
+            // so updated triangulation is rasterized without requiring camera movement.
+            surfaceCameraPassPending_ = true;
+        }
+
+        onCameraMoved();
+        if (updateMosaic_) {
+            pumpVisible();
+        }
+    });
 }
 
 void DataProcessor::onSendSavedKeys(QVector<TileKey> savedKeys)
@@ -1260,6 +1288,7 @@ void DataProcessor::clearBottomTrackProcessing()
 {
     bottomTrackWindowCounter_ = 0;
     btBusy_ = false;
+    forceVisibleRefreshAfterBottomTrack_ = false;
 
     QMetaObject::invokeMethod(worker_, "clearBottomTrack", Qt::QueuedConnection);
 }
@@ -1311,6 +1340,7 @@ void DataProcessor::clearAllProcessings()
     epochToBottomTrackVertIndx_.clear();
     bottomTrackWindowCounter_ = 0;
     btBusy_ = false;
+    forceVisibleRefreshAfterBottomTrack_ = false;
 
     QMetaObject::invokeMethod(worker_, "clearAll", Qt::QueuedConnection);
 
