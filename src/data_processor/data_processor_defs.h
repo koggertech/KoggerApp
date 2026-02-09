@@ -69,13 +69,13 @@ ZL[] = {
 
 inline int pickZoomByDistance(float meters)
 {
-    //if (meters < 30.0f)   return 1;   // 100 px/m
-    if (meters < 80.0f)   return 2;   // 50
-    if (meters < 200.0f)  return 3;   // 25
-    if (meters < 400.0f)  return 4;   // 12.5
-    if (meters < 800.0f)  return 5;   // 6.25
-    //if (meters < 1600.0f) return 6;   // 3.125
-    return 6;                        // 1.5625
+    //if (meters < 10.0f)   return 1;   // 100 px/m
+    if (meters < 40.0f)   return 2;   // 50
+    if (meters < 100.0f)  return 3;   // 25
+    if (meters < 200.0f)  return 4;   // 12.5
+    if (meters < 500.0f)  return 5;   // 6.25
+    //if (meters < 800.0f) return 6;   // 3.125
+    return 6;                    // 1.5625
 }
 
 inline int zoomFromMpp(float mpp)
