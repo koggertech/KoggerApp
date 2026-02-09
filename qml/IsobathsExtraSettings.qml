@@ -36,7 +36,11 @@ MenuFrame {
 
     onFocusChanged: {
         if (Qt.platform.os === "android" && !focus) {
-            isobathsCheckButton.isobathsLongPressTriggered = false
+            Qt.callLater(function() {
+                if (!isobathsSettings.focus) {
+                    isobathsCheckButton.isobathsLongPressTriggered = false
+                }
+            })
         }
     }
 

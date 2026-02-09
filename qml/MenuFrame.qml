@@ -54,24 +54,23 @@ Item {
         implicitHeight: childrenRect.height
     }
 
-    // Lightweight hover tracking without pointer handlers
-    MouseArea {
-        id: hoverOpacityArea
+    Item {
+        id: hoverArea
         anchors.fill: columnItem
         anchors.margins: -10 - control.offsetOpacityArea
-        hoverEnabled: true
-        acceptedButtons: Qt.NoButton      // ignore button presses; let children handle
-        propagateComposedEvents: true
-        z: -1                             // stay behind children to avoid intercepting their hover
-        visible: false                    // no visual overlay
+    }
 
-        onContainsMouseChanged: {
-            isHovered = containsMouse
-            columnItem.opacity = !isOpacityControlled || containsMouse ? 1 : offOpacity
-        }
+    HoverHandler {
+        id: hoverHandler
+        target: hoverArea
 
-        Component.onCompleted: {
-            columnItem.opacity = !isOpacityControlled || containsMouse ? 1 : offOpacity
+        onHoveredChanged: {
+            isHovered = hovered
+            columnItem.opacity = !isOpacityControlled || hovered ? 1 : offOpacity
         }
+    }
+
+    Component.onCompleted: {
+        columnItem.opacity = !isOpacityControlled || hoverHandler.hovered ? 1 : offOpacity
     }
 }

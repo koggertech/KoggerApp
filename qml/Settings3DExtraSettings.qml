@@ -36,7 +36,11 @@ MenuFrame {
 
     onFocusChanged: {
         if (Qt.platform.os === "android" && !focus) {
-            settings3DCheckButton.settings3DLongPressTriggered = false
+            Qt.callLater(function() {
+                if (!settings3DSettings.focus) {
+                    settings3DCheckButton.settings3DLongPressTriggered = false
+                }
+            })
         }
     }
 

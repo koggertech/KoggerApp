@@ -35,7 +35,11 @@ MenuFrame {
 
     onFocusChanged: {
         if (Qt.platform.os === "android" && !focus) {
-            locationCheckButton.locationLongPressTriggered = false
+            Qt.callLater(function() {
+                if (!locationSettings.focus) {
+                    locationCheckButton.locationLongPressTriggered = false
+                }
+            })
         }
     }
 

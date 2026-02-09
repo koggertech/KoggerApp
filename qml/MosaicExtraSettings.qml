@@ -51,7 +51,11 @@ MenuFrame {
 
     onFocusChanged: {
         if (Qt.platform.os === "android" && !focus) {
-            mosaicViewCheckButton.mosaicLongPressTriggered = false
+            Qt.callLater(function() {
+                if (!mosaicViewSettings.focus) {
+                    mosaicViewCheckButton.mosaicLongPressTriggered = false
+                }
+            })
         }
     }
 
