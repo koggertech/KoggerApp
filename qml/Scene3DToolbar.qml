@@ -105,11 +105,27 @@ Item  {
                 }
 
                 onToggled: {
+                    if (!visible && checked) {
+                        // GeoJSON button is hidden; never allow persisted "true" state to activate mode.
+                        checked = false
+                        return
+                    }
                     Scene3dToolBarController.onGeoJsonModeChanged(checked)
                 }
 
                 Component.onCompleted: {
+                    if (!visible && checked) {
+                        checked = false
+                    }
                     Scene3dToolBarController.onGeoJsonModeChanged(checked)
+                }
+
+                onVisibleChanged: {
+                    if (!visible && checked) {
+                        checked = false
+                    } else if (!visible) {
+                        Scene3dToolBarController.onGeoJsonModeChanged(false)
+                    }
                 }
 
                 Settings {
