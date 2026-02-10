@@ -137,8 +137,10 @@ Item {
                 delegate: CheckButton {
                     width: parent ? parent.width : panel.width
                     text: modelData.name
-                    checkable: true
-                    checked: modelData.id === core.mapTileProviderId
+                    // Provider items act like selectors, not toggles:
+                    // keep highlight strictly tied to current provider id.
+                    checkable: false
+                    active: (modelData.id === core.mapTileProviderId) || down
                     backColor: theme.controlBackColor
                     borderColor: theme.controlBorderColor
                     checkedBorderColor: theme.controlBorderColor
