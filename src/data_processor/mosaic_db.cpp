@@ -348,7 +348,7 @@ bool MosaicDB::removeDbFiles(const QString& dbPath)
     ok = rm(mainPath) && ok;
 
     if (ok) {
-        qDebug() << "[MosaicDB] removed db files:" << mainPath;
+        //qDebug() << "[MosaicDB] removed db files:" << mainPath;
     }
 
     return ok;

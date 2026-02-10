@@ -1692,7 +1692,7 @@ void DataProcessor::closeDB()
         qWarning() << "Failed to remove mosaic cache" << filePath_;
     }
 
-    qDebug() << "DB closed";
+    //qDebug() << "DB closed";
 }
 
 void DataProcessor::emitDelta(TileMap &&upserts, DataSource src)
@@ -1848,7 +1848,7 @@ void DataProcessor::onUpdateDataZoom(int zoom) // calc or db
     }
 
     if (zoom == lastDataZoomIndx_) {
-        qDebug() << "Skip: zoom already applied" << zoom;
+        //qDebug() << "Skip: zoom already applied" << zoom;
         return;
     }
 
@@ -2134,7 +2134,7 @@ void DataProcessor::shutdown()
 
     dbIsReady_ = false;
 
-    qDebug() << "DataProcessor::shutdown()";
+    //qDebug() << "DataProcessor::shutdown()";
 }
 
 void DataProcessor::onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKey> > &tilesByZoom)
