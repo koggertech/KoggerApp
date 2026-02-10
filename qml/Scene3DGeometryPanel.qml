@@ -317,7 +317,7 @@ Item {
                                             focus = true
                                         }
                                         onFocusChanged: {
-                                            if (!focused) {
+                                            if (!add_button.focus) {
                                                 root.setAddMenuOpen(model.id, false)
                                             }
                                         }
@@ -393,6 +393,7 @@ Item {
                     }
 
                     ColumnLayout {
+                        id: featureProperties
                         Layout.fillWidth: true
                         spacing: 6
                         visible: geo && geo.selectedFeatureId !== ""
@@ -429,7 +430,7 @@ Item {
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 6
-                            visible: isLine || isPolygon
+                            visible: featureProperties.isLine || featureProperties.isPolygon
 
                             Label {
                                 text: "Stroke"
@@ -474,7 +475,7 @@ Item {
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 6
-                            visible: isPolygon
+                            visible: featureProperties.isPolygon
 
                             Label {
                                 text: "Fill"
@@ -510,7 +511,7 @@ Item {
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 6
-                            visible: isPoint
+                            visible: featureProperties.isPoint
 
                             Label {
                                 text: "Marker"
