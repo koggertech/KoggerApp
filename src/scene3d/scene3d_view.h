@@ -32,6 +32,10 @@ class GraphicsScene3dView : public QQuickFramebufferObject
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(GraphicsScene3dView)
+    Q_PROPERTY(bool rulerEnabled READ rulerEnabled WRITE setRulerEnabled NOTIFY rulerEnabledChanged)
+    Q_PROPERTY(bool rulerDrawing READ rulerDrawing NOTIFY rulerStateChanged)
+    Q_PROPERTY(bool rulerSelected READ rulerSelected NOTIFY rulerStateChanged)
+    Q_PROPERTY(bool rulerHasGeometry READ rulerHasGeometry NOTIFY rulerStateChanged)
     Q_PROPERTY(bool geoJsonEnabled READ geoJsonEnabled WRITE setGeoJsonEnabled NOTIFY geoJsonEnabledChanged)
     Q_PROPERTY(QObject* geoJsonController READ geoJsonController CONSTANT)
     Q_PROPERTY(bool cameraPerspective READ cameraPerspective NOTIFY cameraPerspectiveChanged)
@@ -223,6 +227,10 @@ public:
     void forceUpdateDatasetLlaRef();
 
     bool geoJsonEnabled() const;
+    bool rulerEnabled() const;
+    bool rulerDrawing() const;
+    bool rulerSelected() const;
+    bool rulerHasGeometry() const;
     QObject* geoJsonController() const;
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
@@ -233,6 +241,9 @@ public:
     Q_INVOKABLE void pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta);
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
+    Q_INVOKABLE void rulerFinishDrawing();
+    Q_INVOKABLE void rulerCancelDrawing();
+    Q_INVOKABLE void rulerDeleteSelected();
     Q_INVOKABLE void geojsonFinishDrawing();
     Q_INVOKABLE void geojsonFinishDrawingDoubleClick();
     Q_INVOKABLE void geojsonCancelDrawing();
@@ -306,6 +317,8 @@ signals:
     void sendLlaRef(LLARef viewLlaRef);
     void sendDataZoom(int zoom);
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
+    void rulerEnabledChanged();
+    void rulerStateChanged();
     void geoJsonEnabledChanged();
     void sendCameraEpIndxs(const QVector<QPair<int, QSet<TileKey>>>& epIndxs);
     void sendVisibleTileKeys(int zoomIndx, const QSet<TileKey>& tileKeys);
@@ -319,10 +332,14 @@ private:
     void rebuildGeoJsonLayerIfNeeded();
     QVector3D geojsonToScene(const GeoJsonCoord& c) const;
     GeoJsonCoord sceneToGeojson(const QVector3D& p) const;
+    bool pickRuler(qreal x, qreal y) const;
     bool pickGeoJsonVertex(qreal x, qreal y, QString& outFeatureId, int& outVertexIndex, QVector3D& outWorld) const;
     bool pickGeoJsonSegmentMidpoint(qreal x, qreal y, QString& outFeatureId, int& outInsertIndex, QVector3D& outWorld) const;
     bool pickGeoJsonFeature(qreal x, qreal y, QString& outFeatureId) const;
     void stopGeoJsonDrag();
+    void setRulerDrawing(bool drawing);
+    void setRulerSelected(bool selected);
+    void resetRulerInteraction();
     void updateForceSingleZoomAutoState();
 
 private:
@@ -396,6 +413,11 @@ private:
 
     bool planeGridType_;
     bool rulerEnabled_{false};
+    bool rulerDrawing_{false};
+    bool rulerSelected_{false};
+    QElapsedTimer rulerLastLeftClickTimer_;
+    QPointF rulerLastLeftClickPos_{0.0, 0.0};
+    bool rulerHasLastLeftClick_{false};
 
     bool geoJsonEnabled_{false};
     bool geoJsonIgnoreNextLeftRelease_{false};

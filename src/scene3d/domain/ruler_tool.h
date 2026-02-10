@@ -23,6 +23,8 @@ public:
         void addPoint(const QVector3D& p);
         void setPreviewPoint(const QVector3D& p);
         void clearPreview();
+        void setSelected(bool selected);
+        bool isSelected() const;
 
         int pointsCount() const;
 
@@ -40,8 +42,10 @@ public:
         QVector<QVector3D> points_;
         bool previewActive_{false};
         QVector3D previewPoint_{};
+        bool selected_{false};
 
         QColor lineColor_{0, 200, 255, 230};
+        QColor selectedLineColor_{255, 210, 90, 245};
         float lineWidth_{4.0f};
     };
 
@@ -55,8 +59,11 @@ public:
     void addPoint(const QVector3D& p);
     void setPreviewPoint(const QVector3D& p);
     void clearPreview();
+    void setSelected(bool selected);
+    bool isSelected() const;
 
     int pointsCount() const;
+    QVector<QVector3D> polylinePoints(bool includePreview = false) const;
 
 private:
     SceneObjectType type() const override { return SceneObjectType::Unknown; }

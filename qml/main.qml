@@ -503,8 +503,10 @@ ApplicationWindow  {
                         focus:                true
                         hoverEnabled:         true
                         Keys.enabled:         true
-                        Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
-                        Keys.onEscapePressed: {
+                        Keys.onDeletePressed: function(event) { renderer.keyPressTrigger(event.key) }
+                        Keys.onReturnPressed: function(event) { renderer.keyPressTrigger(event.key) }
+                        Keys.onEnterPressed:  function(event) { renderer.keyPressTrigger(event.key) }
+                        Keys.onEscapePressed: function(event) {
                             if (renderer.geoJsonEnabled) {
                                 renderer.geojsonCancelDrawing()
                             } else {
@@ -535,10 +537,14 @@ ApplicationWindow  {
                                     }
                                 }
                                 if (renderer.longPressTriggered && !wasMoved) {
-                                    if (!vertexMode) {
-                                        renderer.switchToBottomTrackVertexComboSelectionMode(mouse.x, mouse.y)
+                                    if (renderer.geoJsonEnabled || renderer.rulerEnabled || renderer.rulerHasGeometry) {
+                                        vertexMode = true
+                                    } else {
+                                        if (!vertexMode) {
+                                            renderer.switchToBottomTrackVertexComboSelectionMode(mouse.x, mouse.y)
+                                        }
+                                        vertexMode = true
                                     }
-                                    vertexMode = true
                                 }
                             }
 
@@ -548,6 +554,7 @@ ApplicationWindow  {
                         onPressed: function(mouse) {
                             menuBlock.visible = false
                             geoMenuBlock.visible = false
+                            rulerMenuBlock.visible = false
                             startMousePos = Qt.point(mouse.x, mouse.y)
                             wasMoved = false
                             vertexMode = false
@@ -568,6 +575,8 @@ ApplicationWindow  {
                             if (mouse.button === Qt.RightButton || (Qt.platform.os === "android" && vertexMode)) {
                                 if (renderer.geoJsonEnabled) {
                                     geoMenuBlock.position(mouse.x, mouse.y)
+                                } else if (renderer.rulerEnabled || renderer.rulerSelected) {
+                                    rulerMenuBlock.position(mouse.x, mouse.y)
                                 } else {
                                     menuBlock.position(mouse.x, mouse.y)
                                 }
@@ -859,6 +868,72 @@ ApplicationWindow  {
                         onClicked: {
                             renderer.geojsonDeleteSelectedFeature()
                             geoMenuBlock.visible = false
+                        }
+                    }
+                }
+
+                RowLayout {
+                    id: rulerMenuBlock
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 1
+                    visible: false
+                    Layout.margins: 0
+
+                    function position(mx, my) {
+                        var oy = renderer.height - (my + implicitHeight)
+                        if (oy < 0) {
+                            my = my + oy
+                        }
+                        if (my < 0) {
+                            my = 0
+                        }
+                        var ox = renderer.width - (mx - implicitWidth)
+                        if (ox < 0) {
+                            mx = mx + ox
+                        }
+                        x = mx
+                        y = my
+                        visible = true
+                    }
+
+                    CheckButton {
+                        icon.source: "qrc:/icons/ui/file-check.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+                        implicitWidth: theme.controlHeight
+                        visible: renderer.rulerEnabled && renderer.rulerDrawing
+
+                        onClicked: {
+                            renderer.rulerFinishDrawing()
+                            rulerMenuBlock.visible = false
+                        }
+                    }
+
+                    CheckButton {
+                        icon.source: "qrc:/icons/ui/x.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+                        implicitWidth: theme.controlHeight
+                        visible: renderer.rulerEnabled || renderer.rulerSelected
+
+                        onClicked: {
+                            if (renderer.rulerDrawing) {
+                                renderer.rulerCancelDrawing()
+                            }
+                            rulerMenuBlock.visible = false
+                        }
+                    }
+
+                    CheckButton {
+                        icon.source: "qrc:/icons/ui/timeline_event_x.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+                        implicitWidth: theme.controlHeight
+                        visible: !renderer.rulerDrawing && renderer.rulerSelected
+
+                        onClicked: {
+                            renderer.rulerDeleteSelected()
+                            rulerMenuBlock.visible = false
                         }
                     }
                 }

@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtCore
 
 Item {
     id: root
@@ -41,6 +42,42 @@ Item {
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             onClicked: root.toggleLayers()
+        }
+
+        CheckButton {
+            id: rulerToolButton
+            checkable: true
+            checked: false
+            iconSource: "qrc:/icons/ui/ruler_measure.svg"
+            implicitWidth: buttonSize
+            implicitHeight: buttonSize
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+
+            onToggled: {
+                Scene3dToolBarController.onRulerModeChanged(checked)
+            }
+
+            Component.onCompleted: {
+                if (root.view) {
+                    checked = root.view.rulerEnabled
+                }
+                Scene3dToolBarController.onRulerModeChanged(checked)
+            }
+
+            Settings {
+                property alias rulerToolButton: rulerToolButton.checked
+            }
+        }
+
+        Connections {
+            target: root.view
+            function onRulerEnabledChanged() {
+                if (root.view && rulerToolButton.checked !== root.view.rulerEnabled) {
+                    rulerToolButton.checked = root.view.rulerEnabled
+                }
+            }
         }
 
         CheckButton {

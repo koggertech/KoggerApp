@@ -89,34 +89,6 @@ Item  {
             }
 
             CheckButton {
-                id: rulerToolButton
-                iconSource: "qrc:/icons/ui/ruler_measure.svg"
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checked: false
-                implicitHeight: theme.controlHeight * 1.3
-                implicitWidth: theme.controlHeight * 1.3
-
-                CMouseOpacityArea {
-                    toolTipText: qsTr("Ruler")
-                    popupPosition: "topRight"
-                }
-
-                onToggled: {
-                    Scene3dToolBarController.onRulerModeChanged(checked)
-                }
-
-                Component.onCompleted: {
-                    Scene3dToolBarController.onRulerModeChanged(checked)
-                }
-
-                Settings {
-                    property alias rulerToolButton: rulerToolButton.checked
-                }
-            }
-
-            CheckButton {
                 id: geoJsonToolButton
                 iconSource: "qrc:/icons/ui/map_pin_cog.svg"
                 backColor: theme.controlBackColor

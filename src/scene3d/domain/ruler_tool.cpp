@@ -41,6 +41,7 @@ void RulerTool::RulerToolRenderImplementation::clear()
 {
     points_.clear();
     previewActive_ = false;
+    selected_ = false;
 }
 
 void RulerTool::RulerToolRenderImplementation::addPoint(const QVector3D& p)
@@ -57,6 +58,16 @@ void RulerTool::RulerToolRenderImplementation::setPreviewPoint(const QVector3D& 
 void RulerTool::RulerToolRenderImplementation::clearPreview()
 {
     previewActive_ = false;
+}
+
+void RulerTool::RulerToolRenderImplementation::setSelected(bool selected)
+{
+    selected_ = selected;
+}
+
+bool RulerTool::RulerToolRenderImplementation::isSelected() const
+{
+    return selected_;
 }
 
 int RulerTool::RulerToolRenderImplementation::pointsCount() const
@@ -119,7 +130,8 @@ void RulerTool::RulerToolRenderImplementation::render(
     const int colorLoc = shaderProgram->uniformLocation("color");
     const int matrixLoc = shaderProgram->uniformLocation("matrix");
 
-    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(lineColor_));
+    const QColor drawColor = selected_ ? selectedLineColor_ : lineColor_;
+    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(drawColor));
     shaderProgram->setUniformValue(matrixLoc, projection * view * model);
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, pts.constData());
@@ -266,7 +278,24 @@ void RulerTool::clearPreview()
     Q_EMIT changed();
 }
 
+void RulerTool::setSelected(bool selected)
+{
+    auto* r = RENDER_IMPL(RulerTool);
+    r->setSelected(selected);
+    Q_EMIT changed();
+}
+
+bool RulerTool::isSelected() const
+{
+    return RENDER_IMPL(RulerTool)->isSelected();
+}
+
 int RulerTool::pointsCount() const
 {
     return RENDER_IMPL(RulerTool)->pointsCount();
+}
+
+QVector<QVector3D> RulerTool::polylinePoints(bool includePreview) const
+{
+    return RENDER_IMPL(RulerTool)->polylinePoints(includePreview);
 }
