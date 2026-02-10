@@ -11,8 +11,13 @@ Item {
     property bool layersOpen: false
     property bool geometryOpen: false
     property real buttonSize: theme.controlHeight * 1.3
+    property bool toolbarHovered: buttonColumnHoverHandler.hovered
+    property bool toolbarPressed: layersButton.down || rulerToolButton.down
+    property bool menuOpened: root.layersOpen || root.geometryOpen
 
     width: buttonColumn.width + Math.max(layerPanel.width, geometryPanel.width) + 8
+    opacity: (toolbarHovered || toolbarPressed || menuOpened) ? 1.0 : 0.5
+    Behavior on opacity { NumberAnimation { duration: 120 } }
 
     function toggleLayers() {
         layersOpen = !layersOpen
@@ -33,14 +38,26 @@ Item {
         spacing: 6
         z: 3
 
+        HoverHandler {
+            id: buttonColumnHoverHandler
+        }
+
         CheckButton {
+            id: layersButton
             checkable: false
+            checked: root.layersOpen
             iconSource: "qrc:/icons/ui/map.svg"
             implicitWidth: buttonSize
             implicitHeight: buttonSize
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
+
+            CMouseOpacityArea {
+                toolTipText: qsTr("Map settings")
+                popupPosition: "bottomLeft"
+            }
+
             onClicked: root.toggleLayers()
         }
 
@@ -54,6 +71,11 @@ Item {
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
+
+            CMouseOpacityArea {
+                toolTipText: qsTr("Ruler")
+                popupPosition: "bottomLeft"
+            }
 
             onToggled: {
                 Scene3dToolBarController.onRulerModeChanged(checked)
@@ -88,6 +110,13 @@ Item {
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
+            visible: false
+
+            CMouseOpacityArea {
+                toolTipText: qsTr("GeoJSON")
+                popupPosition: "bottomLeft"
+            }
+
             onClicked: root.toggleGeometry()
         }
 
@@ -104,6 +133,12 @@ Item {
                 backColor: theme.controlBackColor
                 borderColor: theme.controlBackColor
                 checkedBorderColor: theme.controlBorderColor
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Point")
+                    popupPosition: "bottomLeft"
+                }
+
                 onClicked: {
                     if (geo) geo.tool = (geo.tool === 1 ? 0 : 1)
                 }
@@ -118,6 +153,12 @@ Item {
                 backColor: theme.controlBackColor
                 borderColor: theme.controlBackColor
                 checkedBorderColor: theme.controlBorderColor
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Line")
+                    popupPosition: "bottomLeft"
+                }
+
                 onClicked: {
                     if (geo) geo.tool = (geo.tool === 2 ? 0 : 2)
                 }
@@ -132,6 +173,12 @@ Item {
                 backColor: theme.controlBackColor
                 borderColor: theme.controlBackColor
                 checkedBorderColor: theme.controlBorderColor
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Polygon")
+                    popupPosition: "bottomLeft"
+                }
+
                 onClicked: {
                     if (geo) geo.tool = (geo.tool === 3 ? 0 : 3)
                 }
@@ -151,6 +198,12 @@ Item {
                 borderColor: theme.controlBackColor
                 checkedBorderColor: theme.controlBorderColor
                 enabled: geo ? geo.drawing : false
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Finish drawing")
+                    popupPosition: "bottomLeft"
+                }
+
                 onClicked: if (geo) geo.finishDrawing()
             }
 
@@ -163,6 +216,12 @@ Item {
                 borderColor: theme.controlBackColor
                 checkedBorderColor: theme.controlBorderColor
                 enabled: geo ? geo.drawing : false
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Undo")
+                    popupPosition: "bottomLeft"
+                }
+
                 onClicked: if (geo) geo.undoLastVertex()
             }
 
@@ -175,6 +234,12 @@ Item {
                 borderColor: theme.controlBackColor
                 checkedBorderColor: theme.controlBorderColor
                 enabled: geo ? geo.drawing : false
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Cancel drawing")
+                    popupPosition: "bottomLeft"
+                }
+
                 onClicked: if (geo) geo.cancelDrawing()
             }
         }

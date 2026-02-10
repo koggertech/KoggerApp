@@ -97,6 +97,7 @@ Item  {
                 checked: false
                 implicitHeight: theme.controlHeight * 1.3
                 implicitWidth: theme.controlHeight * 1.3
+                visible: false
 
                 CMouseOpacityArea {
                     toolTipText: qsTr("GeoJSON")

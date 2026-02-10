@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtCore
 
 Item {
     id: root
@@ -42,7 +43,7 @@ Item {
         visible: showToggleButton
 
         CMouseOpacityArea {
-            toolTipText: qsTr("Map layers")
+            toolTipText: qsTr("Map settings")
             popupPosition: "topRight"
         }
 
@@ -78,9 +79,41 @@ Item {
             spacing: 8
 
             Text {
-                text: qsTr("Map layers")
+                text: qsTr("Map settings")
                 color: theme.textColor
                 font: theme.textFont
+                Layout.fillWidth: true
+            }
+
+            CheckButton {
+                id: mapViewCheckButton
+                objectName: "mapViewCheckButton"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checked: true
+                //iconSource: "qrc:/icons/ui/map.svg"
+                text: qsTr("Visibility")
+                Layout.fillWidth: true
+
+                onToggled: {
+                    MapViewControlMenuController.onVisibilityChanged(checked)
+                }
+
+                Component.onCompleted: {
+                    MapViewControlMenuController.onVisibilityChanged(checked)
+                }
+
+                Settings {
+                    property alias mapViewCheckButton: mapViewCheckButton.checked
+                }
+            }
+
+            Text {
+                text: qsTr("Providers")
+                color: theme.textColor
+                font: theme.textFont
+                opacity: 0.7
                 Layout.fillWidth: true
             }
 
@@ -94,12 +127,12 @@ Item {
 
                 section.property: "layer_type"
                 section.criteria: ViewSection.FullString
-                section.delegate: Text {
-                    text: root.formatSectionLabel(section)
-                    color: theme.textColor
-                    font: theme.textFont
-                    opacity: 0.7
-                }
+                //section.delegate: Text {
+                //    text: root.formatSectionLabel(section)
+                //    color: theme.textColor
+                //    font: theme.textFont
+                //    opacity: 0.7
+                //}
 
                 delegate: CheckButton {
                     width: parent ? parent.width : panel.width

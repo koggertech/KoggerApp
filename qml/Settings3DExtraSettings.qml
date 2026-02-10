@@ -551,34 +551,5 @@ MenuFrame {
             }
         }
 
-        CheckButton {
-            id: mapViewCheckButton
-            objectName: "mapViewCheckButton"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            checked: true
-            iconSource: "qrc:/icons/ui/map.svg"
-            text: qsTr("Map")
-            Layout.fillWidth: true
-
-            implicitWidth: theme.controlHeight
-
-            onToggled: {
-                MapViewControlMenuController.onVisibilityChanged(checked)
-            }
-
-            onFocusChanged: {
-                settings3DSettings.focus = true
-            }
-
-            Component.onCompleted: {
-                MapViewControlMenuController.onVisibilityChanged(checked)
-            }
-
-            Settings {
-                property alias mapViewCheckButton: mapViewCheckButton.checked
-            }
-        }
     }
 }
