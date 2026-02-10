@@ -1,0 +1,10 @@
+<svg width="24.000000000000004" height="24.000000000000004" xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icons-tabler-outline icon-tabler-line" stroke-linejoin="round" stroke-linecap="round" stroke-width="1.75" stroke="currentColor" fill="none">
+
+ <g>
+  <title>Layer 1</title>
+  <path id="svg_2" d="m6,18m-2,0a2,2 0 1 0 4,0a2,2 0 1 0 -4,0"/>
+  <path id="svg_3" d="m17.81651,6m-2,0a2,2 0 1 0 4,0a2,2 0 1 0 -4,0"/>
+  <path id="svg_4" d="m7.5,16.5l9,-9"/>
+  <line stroke="#000" stroke-linecap="undefined" stroke-linejoin="undefined" id="svg_5" y2="20.25686" x2="19.52292" y1="3.55965" x1="4.11011" fill="none"/>
+ </g>
+</svg>
