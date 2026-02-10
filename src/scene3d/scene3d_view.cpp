@@ -2099,7 +2099,7 @@ void GraphicsScene3dView::onCameraMoved()
     }
 
     if (currZoom != dataZoomIndx_) {
-        qDebug() << "           CHANGED ZOOM" << currZoom;
+        //qDebug() << "           CHANGED ZOOM" << currZoom;
         dataZoomIndx_ = currZoom;
         emit sendDataZoom(dataZoomIndx_);
     }

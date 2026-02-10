@@ -790,7 +790,7 @@ ApplicationWindow  {
                     property var geo: renderer.geoJsonController
 
                     onGeoChanged: {
-                        console.log("GeoJson menu updated, drawing: " + geo.drawing + ", selectedFeatureId: " + geo.selectedFeatureId)
+                        //console.log("GeoJson menu updated, drawing: " + geo.drawing + ", selectedFeatureId: " + geo.selectedFeatureId)
                     }
 
                     function position(mx, my) {
