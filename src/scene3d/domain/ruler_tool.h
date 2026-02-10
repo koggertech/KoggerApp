@@ -44,8 +44,8 @@ public:
         QVector3D previewPoint_{};
         bool selected_{false};
 
-        QColor lineColor_{0, 200, 255, 230};
-        QColor selectedLineColor_{255, 210, 90, 245};
+        QColor lineColor_{45, 64, 89, 255};
+        QColor selectedLineColor_{240, 123, 63, 255};
         float lineWidth_{4.0f};
     };
 

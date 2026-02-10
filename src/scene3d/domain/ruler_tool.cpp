@@ -183,7 +183,7 @@ void RulerTool::RulerToolRenderImplementation::render(
                     auto sp = shaderIt2.value();
                     if (sp->bind()) {
                         const int colorLoc2 = sp->uniformLocation("color");
-                        sp->setUniformValue(colorLoc2, DrawUtils::colorToVector4d(QColor(255, 255, 255, 230)));
+                        sp->setUniformValue(colorLoc2, DrawUtils::colorToVector4d(QColor(234, 84, 85, 255)));
                         sp->enableAttributeArray(0);
                         sp->setAttributeArray(0, markersNdc.constData());
 
