@@ -317,9 +317,9 @@ Item {
                                             focus = true
                                         }
                                         onFocusChanged: {
-                                            if (!add_button.focus) {
-                                                root.setAddMenuOpen(model.id, false)
-                                            }
+                                            //if (!add_button.focus) {
+                                            //    root.setAddMenuOpen(model.id, false)
+                                            //}
                                         }
                                     }
 
