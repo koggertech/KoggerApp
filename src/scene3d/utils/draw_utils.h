@@ -31,7 +31,8 @@ public:
         kBW,
         kDeepBlue,
         kIce,
-        kGreen
+        kGreen,
+        kMidnight
     };
 
     /*methods*/

@@ -223,17 +223,17 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="512"/>
+        <location filename="../qml/ConnectionViewer.qml" line="522"/>
         <source>CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="537"/>
+        <location filename="../qml/ConnectionViewer.qml" line="557"/>
         <source>GPS</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="1039"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1059"/>
         <source>Undefined</source>
         <translation>niezdefiniowany</translation>
     </message>
@@ -246,14 +246,14 @@
         <translation type="vanished">ZAPISCSV</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="771"/>
-        <location filename="../qml/ConnectionViewer.qml" line="931"/>
+        <location filename="../qml/ConnectionViewer.qml" line="791"/>
+        <location filename="../qml/ConnectionViewer.qml" line="951"/>
         <source>Enter path</source>
         <translation>Wprowadź ścieżkę</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="957"/>
-        <location filename="../qml/ConnectionViewer.qml" line="997"/>
+        <location filename="../qml/ConnectionViewer.qml" line="977"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1017"/>
         <source>Please choose a file</source>
         <translation>Proszę wybrać plik</translation>
     </message>
@@ -1292,6 +1292,11 @@
         <translation>Zielony</translation>
     </message>
     <message>
+        <location filename="../qml/MosaicExtraSettings.qml" line="139"/>
+        <source>Midnight</source>
+        <translation>Północ</translation>
+    </message>
+    <message>
         <location filename="../qml/MosaicExtraSettings.qml" line="163"/>
         <source>Channels:</source>
         <translation>Kanał:</translation>
@@ -1687,7 +1692,7 @@
         <translation type="vanished">Boost: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1705"/>
+        <location filename="../src/core.cpp" line="1721"/>
         <source>File</source>
         <translation>File</translation>
     </message>
@@ -2158,12 +2163,12 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="279"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="295"/>
         <source>Boat track</source>
         <translation>Ślad łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="311"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="327"/>
         <source>Bottom track</source>
         <translation>Śledzenie dna</translation>
     </message>
