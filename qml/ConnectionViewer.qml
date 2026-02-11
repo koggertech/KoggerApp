@@ -494,8 +494,18 @@ ColumnLayout {
 
             Layout.alignment: Qt.AlignRight
 
-            onCheckedChanged: core.setKlfLogging(loggingCheck.checked)
-            Component.onCompleted: core.setKlfLogging(loggingCheck.checked)
+            onCheckedChanged: {
+                core.setKlfLogging(loggingCheck.checked)
+                if (loggingCheck.checked !== core.loggingKlf) {
+                    loggingCheck.checked = core.loggingKlf
+                }
+            }
+            Component.onCompleted: {
+                core.setKlfLogging(loggingCheck.checked)
+                if (loggingCheck.checked !== core.loggingKlf) {
+                    loggingCheck.checked = core.loggingKlf
+                }
+            }
 
             Settings {
                 property alias loggingCheck: loggingCheck.checked
@@ -515,8 +525,18 @@ ColumnLayout {
 
             Layout.alignment: Qt.AlignRight
 
-            onCheckedChanged: core.setCsvLogging(loggingCheck2.checked)
-            Component.onCompleted: core.setCsvLogging(loggingCheck2.checked)
+            onCheckedChanged: {
+                core.setCsvLogging(loggingCheck2.checked)
+                if (loggingCheck2.checked !== core.loggingCsv) {
+                    loggingCheck2.checked = core.loggingCsv
+                }
+            }
+            Component.onCompleted: {
+                core.setCsvLogging(loggingCheck2.checked)
+                if (loggingCheck2.checked !== core.loggingCsv) {
+                    loggingCheck2.checked = core.loggingCsv
+                }
+            }
 
             Settings {
                 property alias loggingCheck2: loggingCheck2.checked
