@@ -527,7 +527,7 @@ WaterFall {
                             id: echoTheme
                             //                        Layout.fillWidth: true
                             Layout.preferredWidth: 150
-                            model: [qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green")]
+                            model: [qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green"), qsTr("Midnight")]
                             currentIndex: 0
 
                             onCurrentIndexChanged: plotEchogramTheme(currentIndex)

@@ -390,10 +390,10 @@ ApplicationWindow  {
                 }
                 case "nextTheme": {
                     let themeId = waterViewFirst.getThemeId()
-                    if (themeId < 8) waterViewFirst.plotEchogramTheme(themeId + 1)
+                    if (themeId < 9) waterViewFirst.plotEchogramTheme(themeId + 1)
                     if (waterViewSecond.enabled) {
                         let themeSId = waterViewSecond.getThemeId()
-                        if (themeSId < 8) waterViewSecond.plotEchogramTheme(themeSId + 1)
+                        if (themeSId < 9) waterViewSecond.plotEchogramTheme(themeSId + 1)
                     }
                     break
                 }

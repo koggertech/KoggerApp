@@ -15,7 +15,8 @@ public:
         BWTheme,
         DeepBlueTheme,
         IceTheme,
-        GreenTheme
+        GreenTheme,
+        MidnightTheme
     };
 
     Plot2DEchogram();

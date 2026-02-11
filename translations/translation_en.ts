@@ -1131,6 +1131,11 @@
         <translation></translation>
     </message>
     <message>
+        <location filename="../qml/Plot2D.qml" line="530"/>
+        <source>Midnight</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../qml/Plot2D.qml" line="547"/>
         <source>Raw</source>
         <translation></translation>
@@ -1141,137 +1146,137 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="566"/>
+        <location filename="../qml/Plot2D.qml" line="567"/>
         <source>Bottom-Track</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="575"/>
+        <location filename="../qml/Plot2D.qml" line="576"/>
         <source>Line1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="575"/>
+        <location filename="../qml/Plot2D.qml" line="576"/>
         <source>Line2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="575"/>
+        <location filename="../qml/Plot2D.qml" line="576"/>
         <source>Dot1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="575"/>
+        <location filename="../qml/Plot2D.qml" line="576"/>
         <source>Dot2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="575"/>
+        <location filename="../qml/Plot2D.qml" line="576"/>
         <source>DotLine</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="593"/>
+        <location filename="../qml/Plot2D.qml" line="594"/>
         <source>Rangefinder</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="600"/>
+        <location filename="../qml/Plot2D.qml" line="601"/>
         <source>Text</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="600"/>
+        <location filename="../qml/Plot2D.qml" line="601"/>
         <source>Line</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="600"/>
+        <location filename="../qml/Plot2D.qml" line="601"/>
         <source>Dot</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="618"/>
+        <location filename="../qml/Plot2D.qml" line="619"/>
         <source>Attitude</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="626"/>
+        <location filename="../qml/Plot2D.qml" line="627"/>
         <source>Temperature</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="644"/>
+        <location filename="../qml/Plot2D.qml" line="645"/>
         <source>Doppler Beams</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="709"/>
+        <location filename="../qml/Plot2D.qml" line="710"/>
         <source>Doppler Instrument</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="750"/>
+        <location filename="../qml/Plot2D.qml" line="751"/>
         <source>Acoustic angle</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="762"/>
+        <location filename="../qml/Plot2D.qml" line="763"/>
         <source>Doppler Profiler</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="772"/>
+        <location filename="../qml/Plot2D.qml" line="773"/>
         <source>GNSS data</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="791"/>
+        <location filename="../qml/Plot2D.qml" line="792"/>
         <source>Grid</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="797"/>
+        <location filename="../qml/Plot2D.qml" line="798"/>
         <source>fill</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="813"/>
+        <location filename="../qml/Plot2D.qml" line="814"/>
         <source>invert</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="851"/>
+        <location filename="../qml/Plot2D.qml" line="852"/>
         <source>Angle range, °</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="903"/>
+        <location filename="../qml/Plot2D.qml" line="904"/>
         <source>Velocity range, m/s</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="960"/>
+        <location filename="../qml/Plot2D.qml" line="961"/>
         <source>Distance auto range</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="976"/>
+        <location filename="../qml/Plot2D.qml" line="977"/>
         <source>Last data       </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="976"/>
+        <location filename="../qml/Plot2D.qml" line="977"/>
         <source>Last on screen</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="976"/>
+        <location filename="../qml/Plot2D.qml" line="977"/>
         <source>Max on screen</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="992"/>
+        <location filename="../qml/Plot2D.qml" line="993"/>
         <source>Horizontal</source>
         <translation></translation>
     </message>

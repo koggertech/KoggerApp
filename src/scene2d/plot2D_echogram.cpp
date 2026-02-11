@@ -59,7 +59,7 @@ int Plot2DEchogram::getThemeId() const
 }
 
 void Plot2DEchogram::setThemeId(int theme_id) {
-    if (theme_id >= ClassicTheme && theme_id <= GreenTheme) {
+    if (theme_id >= ClassicTheme && theme_id <= MidnightTheme) {
         themeId_ = static_cast<ThemeId>(theme_id);
     }
     else {
@@ -143,6 +143,18 @@ void Plot2DEchogram::setThemeId(int theme_id) {
                     QColor::fromRgb(255, 255, 80),
                     QColor::fromRgb(255, 255, 255) };
         levels = {0, 20, 45, 70, 100, 130, 160, 190, 220, 255};
+    } else if(theme_id == MidnightTheme) {
+        coloros = { QColor::fromRgb(51,  128, 255),
+                    QColor::fromRgb(51,  102, 230),
+                    QColor::fromRgb(77,  77,  204),
+                    QColor::fromRgb(102, 51,  179),
+                    QColor::fromRgb(128, 51,  153),
+                    QColor::fromRgb(153, 77,  128),
+                    QColor::fromRgb(179, 102, 102),
+                    QColor::fromRgb(204, 128, 77),
+                    QColor::fromRgb(230, 153, 51),
+                    QColor::fromRgb(255, 179, 26) };
+        levels = {0, 28, 56, 84, 112, 140, 168, 196, 224, 255};
     }
 
     setColorScheme(coloros, levels);

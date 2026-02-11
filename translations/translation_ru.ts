@@ -1395,6 +1395,11 @@
         <translation>Зелёный</translation>
     </message>
     <message>
+        <location filename="../qml/Plot2D.qml" line="530"/>
+        <source>Midnight</source>
+        <translation>Полночь</translation>
+    </message>
+    <message>
         <location filename="../qml/Plot2D.qml" line="547"/>
         <source>Raw</source>
         <translation>Исходный</translation>
@@ -1405,137 +1410,137 @@
         <translation>Боковое сканирование</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="566"/>
+        <location filename="../qml/Plot2D.qml" line="567"/>
         <source>Bottom-Track</source>
         <translation>Трек дна</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="575"/>
+        <location filename="../qml/Plot2D.qml" line="576"/>
         <source>Line1</source>
         <translation>Линия1</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="575"/>
+        <location filename="../qml/Plot2D.qml" line="576"/>
         <source>Line2</source>
         <translation>Линия2</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="575"/>
+        <location filename="../qml/Plot2D.qml" line="576"/>
         <source>Dot1</source>
         <translation>Точка1</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="575"/>
+        <location filename="../qml/Plot2D.qml" line="576"/>
         <source>Dot2</source>
         <translation>Точка2</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="575"/>
+        <location filename="../qml/Plot2D.qml" line="576"/>
         <source>DotLine</source>
         <translation>Линия точек</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="593"/>
+        <location filename="../qml/Plot2D.qml" line="594"/>
         <source>Rangefinder</source>
         <translation>Глубиномер</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="600"/>
+        <location filename="../qml/Plot2D.qml" line="601"/>
         <source>Text</source>
         <translation>Текст</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="600"/>
+        <location filename="../qml/Plot2D.qml" line="601"/>
         <source>Line</source>
         <translation>Линия</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="600"/>
+        <location filename="../qml/Plot2D.qml" line="601"/>
         <source>Dot</source>
         <translation>Точка</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="618"/>
+        <location filename="../qml/Plot2D.qml" line="619"/>
         <source>Attitude</source>
         <translation>Ориентация</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="626"/>
+        <location filename="../qml/Plot2D.qml" line="627"/>
         <source>Temperature</source>
         <translation>Температура</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="644"/>
+        <location filename="../qml/Plot2D.qml" line="645"/>
         <source>Doppler Beams</source>
         <translation>Доплеровские лучи</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="709"/>
+        <location filename="../qml/Plot2D.qml" line="710"/>
         <source>Doppler Instrument</source>
         <translation>Доплеровский инструмент</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="750"/>
+        <location filename="../qml/Plot2D.qml" line="751"/>
         <source>Acoustic angle</source>
         <translation>Акустический угол</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="762"/>
+        <location filename="../qml/Plot2D.qml" line="763"/>
         <source>Doppler Profiler</source>
         <translation>Доплеровский профилировщик</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="772"/>
+        <location filename="../qml/Plot2D.qml" line="773"/>
         <source>GNSS data</source>
         <translation>GNSS данные</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="791"/>
+        <location filename="../qml/Plot2D.qml" line="792"/>
         <source>Grid</source>
         <translation>Сетка</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="797"/>
+        <location filename="../qml/Plot2D.qml" line="798"/>
         <source>fill</source>
         <translation>заполнить</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="813"/>
+        <location filename="../qml/Plot2D.qml" line="814"/>
         <source>invert</source>
         <translation>инвертировать</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="851"/>
+        <location filename="../qml/Plot2D.qml" line="852"/>
         <source>Angle range, °</source>
         <translation>Диапазон углов, °</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="903"/>
+        <location filename="../qml/Plot2D.qml" line="904"/>
         <source>Velocity range, m/s</source>
         <translation>Диапазон скоростей, м/с</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="960"/>
+        <location filename="../qml/Plot2D.qml" line="961"/>
         <source>Distance auto range</source>
         <translation>Автоматическая дистанция</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="976"/>
+        <location filename="../qml/Plot2D.qml" line="977"/>
         <source>Last data       </source>
         <translation>Последние данные       </translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="976"/>
+        <location filename="../qml/Plot2D.qml" line="977"/>
         <source>Last on screen</source>
         <translation>Последний на экране</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="976"/>
+        <location filename="../qml/Plot2D.qml" line="977"/>
         <source>Max on screen</source>
         <translation>Максимальный на экране</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="992"/>
+        <location filename="../qml/Plot2D.qml" line="993"/>
         <source>Horizontal</source>
         <translation>Горизонтальный режим</translation>
     </message>
