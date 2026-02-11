@@ -30,51 +30,18 @@ ApplicationWindow  {
             //property int savedY: 100
     }
 
-    Loader {
-        id: stateGroupLoader
-        active: (Qt.platform.os === "windows")
-        sourceComponent: stateGroupComp
+    function setFullScreenMode(enabled) {
+        appSettings.isFullScreen = enabled
+        if (enabled) {
+            mainview.showFullScreen()
+        }
+        else {
+            mainview.showNormal()
+        }
     }
 
-    Component {
-        id: stateGroupComp
-        StateGroup {
-            state: appSettings.isFullScreen ? "FullScreen" : "Windowed"
-
-            states: [
-                State {
-                    name: "FullScreen"
-                    StateChangeScript {
-                        script: { // empty
-                        }
-                    }
-                    PropertyChanges {
-                        target: mainview
-                        visibility: "FullScreen"
-
-                        flags: Qt.FramelessWindowHint
-                        x: 0
-                        y: - 1
-                        width: Screen.width
-                        height: Screen.height + 1
-                    }
-                },
-                State {
-                    name: "Windowed"
-                    StateChangeScript {
-                        script: {
-                            if (Qt.platform.os !== "android") {
-                                mainview.flags = Qt.Window
-                            }
-                        }
-                    }
-                    PropertyChanges {
-                        target: mainview
-                        visibility: "Windowed"
-                    }
-                }
-            ]
-        }
+    function toggleFullScreenMode() {
+        setFullScreenMode(mainview.visibility !== Window.FullScreen)
     }
 
     function handleUpdateBottomTrack() {
@@ -102,10 +69,8 @@ ApplicationWindow  {
         scene3DToolbar.mosaicLAngleOffsetChanged.connect(handleMosaicLOffsetChanged)
         scene3DToolbar.mosaicRAngleOffsetChanged.connect(handleMosaicROffsetChanged)
 
-        if (Qt.platform.os !== "windows") {
-            if (appSettings.isFullScreen) {
-                mainview.showFullScreen();
-            }
+        if (appSettings.isFullScreen) {
+            mainview.showFullScreen()
         }
 
         // contacts
@@ -231,19 +196,7 @@ ApplicationWindow  {
 
             // high priority
             if (fn === "toggleFullScreen") {
-                if (Qt.platform.os === "windows") {
-                    appSettings.isFullScreen = !appSettings.isFullScreen
-                }
-                else if (Qt.platform.os === "linux") {
-                    if (mainview.visibility === Window.FullScreen) {
-                        mainview.showNormal();
-                        appSettings.isFullScreen = false;
-                    }
-                    else {
-                        appSettings.isFullScreen = true;
-                        mainview.showFullScreen();
-                    }
-                }
+                toggleFullScreenMode()
                 return;
             }
             if (fn === "openFile") {
