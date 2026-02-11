@@ -109,7 +109,7 @@ MenuFrame {
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
-            checked: true
+            checked: false
             text: qsTr("Show surface quality")
             Layout.fillWidth: true
 
@@ -268,7 +268,7 @@ MenuFrame {
                 backColor: theme.controlBackColor
                 borderColor: theme.controlBackColor
                 checkedBorderColor: theme.controlBorderColor
-                checked: true
+                checked: false
                 iconSource: "qrc:/icons/ui/grid_4x4.svg"
                 text: qsTr("Grid")
                 Layout.fillWidth: true
@@ -299,7 +299,7 @@ MenuFrame {
                     backColor: theme.controlBackColor
                     borderColor: theme.controlBackColor
                     checkedBorderColor: theme.controlBorderColor
-                    checked: true
+                    checked: false
                     //iconSource: "qrc:/icons/ui/gps.svg"
                     text: qsTr("Circle")
                     Layout.fillWidth: true
