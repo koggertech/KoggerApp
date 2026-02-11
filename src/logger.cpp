@@ -7,6 +7,24 @@
 #include "core.h"
 extern Core core;
 
+#ifdef Q_OS_ANDROID
+#include "platform/android/src/android_interface.h"
+#endif
+
+namespace
+{
+
+QString resolveLogDirectoryPath()
+{
+#ifdef Q_OS_ANDROID
+    return "/storage/emulated/0/Documents/KoggerApp";
+#else
+    return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/KoggerApp/logs";
+#endif
+}
+
+} // namespace
+
 
 Logger::Logger() :
     klfLogFile_(std::make_unique<QFile>(this)),
@@ -32,11 +50,13 @@ bool Logger::startNewKlfLog()
 
     bool isOpen = false;
     QDir dir;
+    const QString logPath = resolveLogDirectoryPath();
 
 #ifdef Q_OS_ANDROID
-    QString logPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/KoggerApp";
-#else
-    QString logPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/KoggerApp/logs";
+    if (!AndroidInterface::checkStoragePermissions()) {
+        core.consoleWarning("Logger can't access Documents: permission denied");
+        return false;
+    }
 #endif
 
     if (dir.mkpath(logPath)) {
@@ -122,11 +142,13 @@ bool Logger::startNewCsvLog()
     // open file
     bool isOpen = false;
     QDir dir;
+    const QString logPath = resolveLogDirectoryPath();
 
 #ifdef Q_OS_ANDROID
-    QString logPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/KoggerApp";
-#else
-    QString logPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/KoggerApp/logs";
+    if (!AndroidInterface::checkStoragePermissions()) {
+        core.consoleWarning("Logger csv can't access Documents: permission denied");
+        return false;
+    }
 #endif
 
     if (dir.mkpath(logPath)) {
@@ -141,9 +163,6 @@ bool Logger::startNewCsvLog()
         if (isOpen) {
             core.consoleInfo("Logger csv dir: " + dir.path());
             core.consoleInfo("Logger csv make file: " + csvLogFile_->fileName());
-
-            // connects
-            csvData_.csvConnections.append(QObject::connect(datasetPtr_, &Dataset::dataUpdate, this, &Logger::loggingCsvStream, Qt::AutoConnection));
         }
         else {
             core.consoleInfo("Logger csv can't make file: " + csvLogFile_->fileName());
@@ -151,6 +170,11 @@ bool Logger::startNewCsvLog()
     }
     else {
         core.consoleInfo("Logger csv can't make dir");
+    }
+
+    if (isOpen) {
+        // connects
+        csvData_.csvConnections.append(QObject::connect(datasetPtr_, &Dataset::dataUpdate, this, &Logger::loggingCsvStream, Qt::AutoConnection));
     }
 
     return isOpen;

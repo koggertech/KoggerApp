@@ -630,8 +630,16 @@ void Core::setKlfLogging(bool isLogging)
 {
     if (isLogging == this->getKlfLogging())
         return;
-    this->getKlfLogging() ? logger_.stopKlfLogging() : logger_.startNewKlfLog();
-    isLoggingKlf_ = isLogging;
+    bool success = true;
+    if (isLogging) {
+        success = logger_.startNewKlfLog();
+        if (!success) {
+            consoleWarning("KLF logging not started");
+        }
+    } else {
+        logger_.stopKlfLogging();
+    }
+    isLoggingKlf_ = isLogging && success;
 
     emit loggingKlfChanged();
 }
@@ -687,8 +695,16 @@ void Core::setCsvLogging(bool isLogging)
 {
     if (isLogging == this->getCsvLogging())
         return;
-    this->getCsvLogging() ? logger_.stopCsvLogging() : logger_.startNewCsvLog();
-    isLoggingCsv_ = isLogging;
+    bool success = true;
+    if (isLogging) {
+        success = logger_.startNewCsvLog();
+        if (!success) {
+            consoleWarning("CSV logging not started");
+        }
+    } else {
+        logger_.stopCsvLogging();
+    }
+    isLoggingCsv_ = isLogging && success;
 }
 
 bool Core::getUseGPS() const
