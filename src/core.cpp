@@ -1549,7 +1549,7 @@ QVariantList Core::getMapTileProviders() const
 int Core::loadSavedMapTileProviderId() const
 {
     QSettings settings("KOGGER", "KoggerApp");
-    return settings.value("Map/TileProviderId", map::kOsmProviderId).toInt();
+    return settings.value("Map/TileProviderId", map::kGoogleProviderId).toInt();
 }
 
 void Core::onFileStopsOpening()
