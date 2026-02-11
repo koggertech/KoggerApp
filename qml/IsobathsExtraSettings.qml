@@ -108,7 +108,7 @@ MenuFrame {
                 from: 10
                 to: 1000
                 stepSize: 5
-                value: 20
+                value: 70
                 editable: false
 
                 property int decimals: 1
@@ -195,7 +195,7 @@ MenuFrame {
                 from: 5
                 to: 100
                 stepSize: 5
-                value: 5
+                value: 10
                 editable: false
 
                 onFocusChanged: {

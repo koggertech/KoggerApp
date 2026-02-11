@@ -20,13 +20,13 @@ SurfaceProcessor::SurfaceProcessor(DataProcessor* parent) :
     tileResolution_(defaultTileResolution),
     minZ_(std::numeric_limits<float>::max()),
     maxZ_(std::numeric_limits<float>::lowest()),
-    edgeLimit_(20.0f),
+    edgeLimit_(70.0f),
     surfaceStepSize_(1.0f),
     tileSidePixelSize_(defaultTileSidePixelSize),
     tileHeightMatrixRatio_(defaultTileHeightMatrixRatio),
     themeId_(0),
     cellPx_(1),
-    extraWidth_(0),
+    extraWidth_(10),
     originSet_ (false)
 {
 }
