@@ -563,6 +563,7 @@ WaterFall {
                         CCheck {
                             id: bottomTrackVisible
                             Layout.fillWidth: true
+                            checked: true
                             text: qsTr("Bottom-Track")
                             onCheckedChanged: plotBottomTrackVisible(checked)
                             Component.onCompleted: plotBottomTrackVisible(checked)
