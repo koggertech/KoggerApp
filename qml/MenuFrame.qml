@@ -54,24 +54,23 @@ Item {
         implicitHeight: childrenRect.height
     }
 
-    MouseArea {
-        id: mouseOpacityArea
-        // enabled: control.visible
-        propagateComposedEvents: true
+    Item {
+        id: hoverArea
         anchors.fill: columnItem
         anchors.margins: -10 - control.offsetOpacityArea
-        hoverEnabled: true
-        onPressed: function(mouse) { mouse.accepted = false }
-        onReleased: function(mouse) { mouse.accepted = false }
-        onClicked: function(mouse) { mouse.accepted = false }
+    }
 
-        onContainsMouseChanged: {
-            containsMouse ? isHovered = true : isHovered = false
-            columnItem.opacity = !isOpacityControlled || containsMouse ? 1 : offOpacity
-        }
+    HoverHandler {
+        id: hoverHandler
+        target: hoverArea
 
-        Component.onCompleted: {
-            columnItem.opacity = !isOpacityControlled || containsMouse ? 1 : offOpacity
+        onHoveredChanged: {
+            isHovered = hovered
+            columnItem.opacity = !isOpacityControlled || hovered ? 1 : offOpacity
         }
+    }
+
+    Component.onCompleted: {
+        columnItem.opacity = !isOpacityControlled || hoverHandler.hovered ? 1 : offOpacity
     }
 }

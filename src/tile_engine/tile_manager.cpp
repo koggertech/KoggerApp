@@ -3,19 +3,20 @@
 #include <QDebug>
 #include <QUrl>
 #include <QThread>
-
 #include "map_defs.h"
 #include "tile_google_provider.h"
+#include "tile_osm_provider.h"
+#include "tile_provider_ids.h"
 
 
 namespace map {
 
-
 TileManager::TileManager(QObject *parent) :
     QObject(parent),
+    providerId_(kGoogleProviderId),
     tileProvider_(std::make_shared<TileGoogleProvider>()),
     tileDownloader_(std::make_shared<TileDownloader>(tileProvider_, maxConcurrentDownloads_)),
-    tileDB_(std::make_shared<TileDB>(tileProvider_)),
+    tileDB_(std::make_shared<TileDB>(providerId_)),
     tileSet_(std::make_shared<TileSet>(tileProvider_, tileDB_, tileDownloader_, maxTilesCapacity_, minTilesCapacity_)),
     lastZoomLevel_(-1)
 {
@@ -55,6 +56,77 @@ TileManager::~TileManager()
 std::shared_ptr<TileSet> TileManager::getTileSetPtr() const
 {
     return tileSet_;
+}
+
+int32_t TileManager::currentProviderId() const
+{
+    return providerId_;
+}
+
+QString TileManager::currentProviderName() const
+{
+    return providerNameForId(providerId_);
+}
+
+void TileManager::setProvider(int32_t providerId)
+{
+    if (providerId_ == providerId) {
+        return;
+    }
+
+    if (providerId != kGoogleProviderId && providerId != kOsmProviderId) {
+        qWarning() << "TileManager::setProvider: unsupported providerId" << providerId;
+        return;
+    }
+
+    providerId_ = providerId;
+    lastZoomLevel_ = -1;
+
+    if (tileDownloader_) {
+        tileDownloader_->stopAndClearRequests();
+    }
+
+    if (tileSet_) {
+        tileSet_->resetForProviderSwitch();
+    }
+
+    if (providerId_ == kGoogleProviderId) {
+        tileProvider_ = std::make_shared<TileGoogleProvider>();
+    } else {
+        tileProvider_ = std::make_shared<TileOsmProvider>();
+    }
+
+    if (tileDownloader_) {
+        tileDownloader_->setProvider(tileProvider_);
+    }
+
+    if (tileSet_) {
+        tileSet_->setResources(tileProvider_, tileDB_, tileDownloader_);
+    }
+
+    if (tileDB_) {
+        QMetaObject::invokeMethod(tileDB_.get(), "setProviderId", Qt::QueuedConnection, Q_ARG(int, providerId_));
+    }
+
+    emit providerChanged(providerId_);
+}
+
+void TileManager::toggleProvider()
+{
+    int32_t nextProvider = (providerId_ == kGoogleProviderId) ? kOsmProviderId : kGoogleProviderId;
+    setProvider(nextProvider);
+}
+
+QString TileManager::providerNameForId(int32_t providerId)
+{
+    switch (providerId) {
+    case kGoogleProviderId:
+        return QStringLiteral("Google Satellite");
+    case kOsmProviderId:
+        return QStringLiteral("OpenStreetMap");
+    default:
+        return QStringLiteral("Unknown");
+    }
 }
 
 void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam)
@@ -131,83 +203,7 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
                 }
             }
         }
-
-        /*
-        // using camera tilt TODO: sec break
-        auto addFunc = [&](int x, int y) -> bool {
-            if (cntReq > reqSize) {
-                return false;
-            }
-
-            TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
-            indxRequest.insert(tileIndx);
-            ++cntReq;
-
-            return true;
-        };
-
-        switch (tiltCam)
-        {
-        case CameraTilt::Up: {
-            for (int y = minY; y <= maxY; ++y) {
-                for (int x = lonStartTile; x <= lonEndTile; ++x) {
-                    if (!addFunc(x,y)) {
-                        break;
-                    }
-                }
-            }
-            break;
-        }
-        case CameraTilt::Down: {
-            for (int y = maxY; y >= minY; --y) {
-                for (int x = lonStartTile; x <= lonEndTile; ++x) {
-                    if (!addFunc(x,y)) {
-                        break;
-                    }
-                }
-            }
-            break;
-
-        case CameraTilt::Left:
-            for (int x = lonStartTile; x <= lonEndTile; ++x) {
-                for (int y = minY; y <= maxY; ++y) {
-                    if (!addFunc(x,y)) {
-                        break;
-                    }
-                }
-            }
-            break;
-
-        case CameraTilt::Right:
-            for (int x = lonEndTile; x >= lonStartTile; --x) {
-                for (int y = minY; y <= maxY; ++y) {
-                    if (!addFunc(x,y)) {
-                        break;
-                    }
-                }
-            }
-            break;
-        }
-        }*/
     }
-    //else {
-    //    reqSize = (boundaryTile - lonStartTile + 1) * (maxY - minY + 1) +
-    //              (lonEndTile + 1) * (maxY - minY + 1);
-    //    if (reqSize < minTilesCapacity_) {
-    //        for (int x = lonStartTile; x <= boundaryTile; ++x) {
-    //            for (int y = minY; y <= maxY; ++y) {
-    //                TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
-    //                indxRequest.insert(tileIndx);
-    //            }
-    //        }
-    //        for (int x = 0; x <= lonEndTile; ++x) {
-    //            for (int y = minY; y <= maxY; ++y) {
-    //                TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
-    //                indxRequest.insert(tileIndx);
-    //            }
-    //        }
-    //    }
-    //}
 
     if (!indxRequest.isEmpty()) {
         tileSet_->onNewRequest(indxRequest, zoomState, viewLlaRef, isPerspective, minLon, maxLon, moveUp);
@@ -218,6 +214,5 @@ void TileManager::getLlaRef(LLARef viewLlaRef)
 {
     tileSet_->onNewLlaRef(viewLlaRef);
 }
-
 
 } // namespace map

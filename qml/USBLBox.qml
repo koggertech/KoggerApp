@@ -6,7 +6,7 @@ import QtQuick.Dialogs
 
 DevSettingsBox {
     id: control
-    isActive: dev ? (dev.isUSBLBeacon || dev.isUSBL): false
+    isActive: !!(dev && (dev.isUSBLBeacon || dev.isUSBL))
 
     // property bool isUSBL: dev ? (dev.isUSBL) ? true : false : false
     // property bool isBeacon: dev ? (dev.isUSBLBeacon) ? true : false : false
@@ -58,7 +58,7 @@ DevSettingsBox {
                 visible: false
                 iconSource: "qrc:/icons/ui/repeat.svg"
                 onCheckedChanged: {
-                    // deviceManagerWrapper.isbeaconDirectQueueAsk = checked
+                    // deviceManagerWrapper.setUSBLBeaconDirectAsk(checked)
                     scanEnable = checked
                 }
             }

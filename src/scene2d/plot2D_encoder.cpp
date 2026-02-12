@@ -22,7 +22,7 @@ bool Plot2DEncoder::draw(Plot2D *parent, Dataset *dataset) {
         Epoch *data = dataset->fromIndex(pool_index);
         
         if (data != NULL && data->isEncodersSeted()) {
-            yaw[i] = data->encoder1();
+            yaw[i] = -data->encoder1();
             pitch[i] = data->encoder2();
             roll[i] = data->encoder3();
         } else {
@@ -34,6 +34,7 @@ bool Plot2DEncoder::draw(Plot2D *parent, Dataset *dataset) {
     
     drawY(canvas, yaw, cursor.attitude.from, cursor.attitude.to, penYaw_);
     drawY(canvas, pitch, cursor.attitude.from, cursor.attitude.to, penPitch_);
+    drawY(canvas, roll, cursor.attitude.from, cursor.attitude.to, penRoll_);
     
     return true;
 }

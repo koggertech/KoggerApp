@@ -6,6 +6,7 @@
 DataInterpolator::DataInterpolator(Dataset *datasetPtr) :
     datasetPtr_(datasetPtr),
     lastAttInterpIndx_(0),
+    lastArtificalAttInterpIndx_(0),
     lastPosInterpIndx_(0)
 {}
 
@@ -233,9 +234,126 @@ void DataInterpolator::interpolateAtt(bool fromStart)
     }
 }
 
+void DataInterpolator::interpolateArtificalAtt(bool fromStart)
+{
+    if (!datasetPtr_) {
+        return;
+    }
+
+    int startEpochIndx = fromStart ? 0 : lastArtificalAttInterpIndx_;
+    int endEpochIndx = datasetPtr_->size();
+
+    if ((endEpochIndx - startEpochIndx) < 1) {
+        return;
+    }
+
+    int firstValidIndex = startEpochIndx;
+    bool beenInterp = false;
+
+    while (firstValidIndex < endEpochIndx) {
+        while (firstValidIndex < endEpochIndx) {
+            if (auto* ep = datasetPtr_->fromIndex(firstValidIndex); ep) {
+                if (ep->getArtificalAttDataType() == DataType::kRaw) {
+                    break;
+                }
+                ++firstValidIndex;
+            }
+        }
+
+        int secondValidIndex = firstValidIndex + 1;
+        while (secondValidIndex < endEpochIndx) {
+            if (auto* ep = datasetPtr_->fromIndex(secondValidIndex); ep) {
+                if (ep->getArtificalAttDataType() == DataType::kRaw) {
+                    break;
+                }
+                ++secondValidIndex;
+            }
+        }
+
+        if (secondValidIndex > endEpochIndx) {
+            break;
+        }
+
+        int numInterpIndx = secondValidIndex - firstValidIndex;
+        if (numInterpIndx < 1) {
+            firstValidIndex = secondValidIndex;
+            continue;
+        }
+
+        int fromIndx = firstValidIndex + 1;
+        int toIndx = secondValidIndex;
+
+        // boundaries epochs
+        auto* startEpoch = datasetPtr_->fromIndex(firstValidIndex);
+        auto* endEpoch = datasetPtr_->fromIndex(secondValidIndex);
+        if (!startEpoch || !endEpoch) {
+            continue;
+        }
+
+        auto startYaw = startEpoch->artificalYaw();
+        auto endYaw = endEpoch->artificalYaw();
+        auto startPitch = startEpoch->artificalPitch();
+        auto endPitch = endEpoch->artificalPitch();
+        auto startRoll = startEpoch->artificalRoll();
+        auto endRoll = endEpoch->artificalRoll();
+
+
+        const int numSteps = secondValidIndex - firstValidIndex;
+
+        const quint64 startTimeNs = convertToNanosecs(startEpoch->getPositionGNSS().time.sec,
+                                                      startEpoch->getPositionGNSS().time.nanoSec);
+        const quint64 endTimeNs   = convertToNanosecs(endEpoch->getPositionGNSS().time.sec,
+                                                    endEpoch->getPositionGNSS().time.nanoSec);
+        const bool haveTimes = (startTimeNs != 0 || endTimeNs != 0) && (endTimeNs > startTimeNs);
+        const quint64 timeDiffNs = haveTimes ? (endTimeNs - startTimeNs) : zeroNsecs;
+
+        const quint64 stepNs = haveTimes ? (timeDiffNs / numSteps) : oneHundredNsecs;
+
+        int cnt = 1;
+        for (int j = fromIndx; j < toIndx; ++j, ++cnt) {
+            if (auto* ep = datasetPtr_->fromIndex(j); ep) {
+
+                quint64 currentNs = haveTimes ? convertToNanosecs(ep->getPositionGNSS().time.sec, ep->getPositionGNSS().time.nanoSec) : (startTimeNs + stepNs * cnt);
+
+                if (!haveTimes) {
+                    const auto t = convertFromNanosecs(currentNs);
+                    ep->setGNSSSec(t.first);
+                    ep->setGNSSNanoSec(t.second);
+                }
+
+                double progress = haveTimes
+                                      ? double(currentNs - startTimeNs) / double(timeDiffNs)
+                                      : double(cnt) / double(numSteps);
+                if (!haveTimes || currentNs <= startTimeNs || currentNs >= endTimeNs) {
+                    progress = double(cnt) / double(numSteps);
+                }
+                progress = qBound(0.0, progress, 1.0);
+
+                float resYaw   = interpAttParam(startYaw,   endYaw,   float(progress));
+                float resPitch = interpAttParam(startPitch, endPitch, float(progress));
+                float resRoll  = interpAttParam(startRoll,  endRoll,  float(progress));
+
+                ep->setArtificalAtt(resYaw, resPitch, resRoll, DataType::kInterpolated);
+                beenInterp = true;
+                lastArtificalAttInterpIndx_ = j;
+            }
+        }
+
+        firstValidIndex = secondValidIndex;
+    }
+
+    if (beenInterp) {
+        //    emit datasetPtr_->interpYaw(endEpochIndx);
+    }
+    else {
+        lastArtificalAttInterpIndx_ = firstValidIndex - 1;
+    }
+}
+
 void DataInterpolator::clear()
 {
     lastAttInterpIndx_= 0;
+    lastArtificalAttInterpIndx_ = 0;
     lastPosInterpIndx_ = 0;
 }
 

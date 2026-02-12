@@ -16,15 +16,25 @@ Item  {
 
     signal updateBottomTrack()
 
+    signal mosaicLAngleOffsetChanged(int val)
+    signal mosaicRAngleOffsetChanged(int val)
+
     function updateMosaic() {
         mosaicViewSettings.updateMosaic()
+    }
+
+    Component.onCompleted: {
+        mosaicViewSettings.mosaicLAngleOffsetChanged.connect(mosaicLAngleOffsetChanged)
+        mosaicViewSettings.mosaicRAngleOffsetChanged.connect(mosaicRAngleOffsetChanged)
     }
 
     // opacity
     property bool isFitViewCheckButtonHovered: false
     property bool isBoatTrackCheckButtonHovered: false
     property bool isBottomTrackCheckButtonHovered: false
-
+    property var view: null
+    property alias mosaicEnabled: mosaicViewCheckButton.checked
+    property alias showMosaicQualityLabel: settings3DSettings.showQualityLabel
     property bool toolbarHovered:
         Qt.platform.os === "android" ?
     (   setCameraIsometricView.down
@@ -75,6 +85,51 @@ Item  {
 
                 onClicked: {
                     Scene3dToolBarController.onSetCameraMapViewButtonClicked()
+                }
+            }
+
+            CheckButton {
+                id: geoJsonToolButton
+                iconSource: "qrc:/icons/ui/map_pin_cog.svg"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checked: false
+                implicitHeight: theme.controlHeight * 1.3
+                implicitWidth: theme.controlHeight * 1.3
+                visible: false
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("GeoJSON")
+                    popupPosition: "topRight"
+                }
+
+                onToggled: {
+                    if (!visible && checked) {
+                        // GeoJSON button is hidden; never allow persisted "true" state to activate mode.
+                        checked = false
+                        return
+                    }
+                    Scene3dToolBarController.onGeoJsonModeChanged(checked)
+                }
+
+                Component.onCompleted: {
+                    if (!visible && checked) {
+                        checked = false
+                    }
+                    Scene3dToolBarController.onGeoJsonModeChanged(checked)
+                }
+
+                onVisibleChanged: {
+                    if (!visible && checked) {
+                        checked = false
+                    } else if (!visible) {
+                        Scene3dToolBarController.onGeoJsonModeChanged(false)
+                    }
+                }
+
+                Settings {
+                    property alias geoJsonToolButton: geoJsonToolButton.checked
                 }
             }
 
@@ -342,6 +397,10 @@ Item  {
                     }
 
                     onCheckedChanged: {
+                        if (checked) {
+                            toolbarRoot.updateBottomTrack()
+                        }
+
                         IsobathsViewControlMenuController.onProcessStateChanged(checked); // calc state/calc
                         IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
                     }
@@ -438,6 +497,10 @@ Item  {
                     }
 
                     onCheckedChanged: {
+                        if (checked) {
+                            toolbarRoot.updateBottomTrack()
+                        }
+
                         MosaicViewControlMenuController.onUpdateStateChanged(checked) // calc state/calc
                         MosaicViewControlMenuController.onVisibilityChanged(checked)
                     }

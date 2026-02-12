@@ -33,6 +33,7 @@ DevDriver::DevDriver(QObject *parent)
     connect(idChart, &IDBinChart::rawDataRecieved, this, &DevDriver::receivedRaw);
     regID(idAtt = new IDBinAttitude(), &DevDriver::receivedAtt);
     regID(idTemp = new IDBinTemp(), &DevDriver::receivedTemp);
+    regID(idEncoder = new IDBinEncoder(), &DevDriver::receivedEncoder);
 
     regID(idDataset = new IDBinDataset(), &DevDriver::receivedDataset, true);
     regID(idDistSetup = new IDBinDistSetup(), &DevDriver::receivedDistSetup, true);
@@ -1141,6 +1142,15 @@ void DevDriver::receivedTemp(Parsers::Type type, Parsers::Version ver, Parsers::
 
     emit tempComplete(idTemp->temp());
     //core.getDatasetPtr()->addTemp(idTemp->temp());
+}
+
+void DevDriver::receivedEncoder(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
+    IDBinEncoder::Encoder data = idEncoder->get();
+    qDebug() << "encoder: " << data.e1 << data.e2 << data.e3;
+    emit encoderComplete(data.e1, data.e2, data.e3);
 }
 
 void DevDriver::receivedDataset(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {

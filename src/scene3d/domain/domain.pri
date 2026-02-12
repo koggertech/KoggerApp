@@ -13,6 +13,7 @@ HEADERS += \
     $$PWD/delaunay_triangulation.h \
     $$PWD/edge.h \
     $$PWD/equals.h \
+    $$PWD/geojson_layer.h \
     $$PWD/grid_generator.h \
     $$PWD/image_view.h \
     $$PWD/map_view.h \
@@ -26,6 +27,7 @@ HEADERS += \
     $$PWD/polygon_group.h \
     $$PWD/polygon_object.h \
     $$PWD/quad.h \
+    $$PWD/ruler_tool.h \
     $$PWD/surface_view.h \
     $$PWD/isobaths_view.h \
     $$PWD/triangle.h \
@@ -39,6 +41,7 @@ SOURCES += \
     $$PWD/contour.cpp \
     $$PWD/coordinate_axes.cpp \
     $$PWD/cube.cpp \
+    $$PWD/geojson_layer.cpp \
     $$PWD/image_view.cpp \
     $$PWD/map_view.cpp \
     $$PWD/navigation_arrow.cpp \
@@ -48,6 +51,7 @@ SOURCES += \
     $$PWD/point_object.cpp \
     $$PWD/polygon_group.cpp \
     $$PWD/polygon_object.cpp \
+    $$PWD/ruler_tool.cpp \
     $$PWD/surface_view.cpp \
     $$PWD/isobaths_view.cpp \
     $$PWD/usbl_view.cpp

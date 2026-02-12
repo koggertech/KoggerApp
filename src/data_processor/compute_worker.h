@@ -4,8 +4,8 @@
 #include <QVector>
 #include <QPair>
 #include <QSet>
-#include <QUuid>
 #include "surface_processor.h"
+#include "surface_tile.h"
 #include "isobaths_processor.h"
 #include "mosaic_processor.h"
 #include "bottom_track_processor.h"
@@ -16,6 +16,14 @@ struct WorkBundle
     QVector<QPair<char,int>> surfaceVec;
     QVector<int>             mosaicVec;
     bool                     doIsobaths{false};
+
+    void clear() {
+        surfaceVec.clear();
+        surfaceVec.shrink_to_fit();
+        mosaicVec.clear();
+        mosaicVec.shrink_to_fit();
+        doIsobaths = false;
+    }
 };
 Q_DECLARE_METATYPE(WorkBundle)
 
@@ -33,9 +41,12 @@ public:
                            QObject* parent = nullptr);
     ~ComputeWorker();
 
+    const QSet<TileKey>& getVisibleTileKeysCPtr();
+
 public slots:
     // service
     void clearAll();
+    void clearSurfaceMosaicContext();
     void clearSurface();
     void clearMosaic();
     void clearIsobaths();
@@ -46,24 +57,22 @@ public slots:
     void setBottomTrackPtr(BottomTrack* bt);
     void setSurfaceThemeId(int id);
     void setSurfaceEdgeLimit(float v);
+    void reapplySurfaceEdgeLimit();
     void setSurfaceExtraWidth(int v);
     void setSurfaceIsobathsStepSize(float v);
     void setIsobathsLabelStepSize(float v);
     void setMosaicChannels(const ChannelId& ch1, uint8_t sub1, const ChannelId& ch2, uint8_t sub2);
-    void setMosaicTheme(int id);
     void setMosaicLAngleOffset(float val);
     void setMosaicRAngleOffset(float val);
-    void setMosaicLevels(float lo, float hi);
-    void setMosaicLowLevel(float v);
-    void setMosaicHighLevel(float v);
     void setMosaicTileResolution(float res);
-    void askColorTableForMosaic();
+    void applySurfaceZoomChange(const TileMap& cached, bool fullCoverage);
     void setMinZ(float v);
     void setMaxZ(float v);
 
     // tasks
     void bottomTrackProcessing(const DatasetChannel& ch1, const DatasetChannel& ch2, const BottomTrackParam& p, bool manual, bool redrawAll);
     void processBundle(const WorkBundle& wb); // выполнить пачку задач последовательно
+    void setVisibleTileKeys(const QSet<TileKey>& val);
 
 signals:
     void jobFinished(); // для dataProcessor (нормально, отмена)
@@ -82,4 +91,6 @@ private:
     IsobathsProcessor    isobaths_;
     MosaicProcessor      mosaic_;
     BottomTrackProcessor bottom_;
+
+    QSet<TileKey> visibleTileKeys_;
 };

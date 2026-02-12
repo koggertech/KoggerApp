@@ -14,6 +14,10 @@
 #include <QSql>
 #include <QSqlDatabase>
 #include <QQuickStyle>
+#include <QWindow>
+#if defined(Q_OS_WIN)
+#include <windows.h>
+#endif
 #include "qPlot2D.h"
 #include "core.h"
 #include "themes.h"
@@ -88,6 +92,37 @@ void registerQmlMetaTypes()
     qRegisterMetaType<BottomTrack::ActionEvent>("BottomTrack::ActionEvent");
     qRegisterMetaType<LinkAttribute>("LinkAttribute");
 }
+
+#if defined(Q_OS_WIN)
+void applyWindowsFullscreenBorderWorkaround(QWindow* window)
+{
+    if (!window) {
+        return;
+    }
+
+    auto applyBorder = [window]() {
+        HWND handle = reinterpret_cast<HWND>(window->winId());
+        if (!handle) {
+            return;
+        }
+
+        const LONG_PTR style = GetWindowLongPtr(handle, GWL_STYLE);
+        if ((style & WS_BORDER) == 0) {
+            SetWindowLongPtr(handle, GWL_STYLE, style | WS_BORDER);
+            SetWindowPos(handle, nullptr, 0, 0, 0, 0,
+                         SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+        }
+    };
+
+    QObject::connect(window, &QWindow::visibilityChanged, window, [applyBorder](QWindow::Visibility visibility) {
+        if (visibility == QWindow::FullScreen) {
+            applyBorder();
+        }
+    });
+
+    applyBorder();
+}
+#endif
 
 
 int main(int argc, char *argv[])
@@ -180,6 +215,7 @@ int main(int argc, char *argv[])
 
     QObject::connect(&app,  &QGuiApplication::aboutToQuit,
                      &core, [&]() {
+                                core.shutdownDataProcessor();
                                 core.saveLLARefToSettings();
                                 core.removeLinkManagerConnections();
                                 core.stopLinkManagerTimer();
@@ -190,6 +226,13 @@ int main(int argc, char *argv[])
                             });
 
     engine.load(url);
+#if defined(Q_OS_WIN)
+    if (!engine.rootObjects().isEmpty()) {
+        if (auto* window = qobject_cast<QWindow*>(engine.rootObjects().first())) {
+            applyWindowsFullscreenBorderWorkaround(window);
+        }
+    }
+#endif
     qCritical() << "App is created";
     return app.exec();
 }

@@ -9,6 +9,17 @@ ColumnLayout {
     property var dev: null
     property var devList: deviceManagerWrapper.devs
     property string filePath: pathText.text
+    function importSettingsToAllDevices(path) {
+        if (!path || !path.length) {
+            return
+        }
+        for (var i = 0; i < devList.length; ++i) {
+            var device = devList[i]
+            if (device && device.importSettingsFromXML) {
+                device.importSettingsFromXML(path)
+            }
+        }
+    }
 
     Layout.margins: 0
     spacing: 10
@@ -911,24 +922,19 @@ ColumnLayout {
 
     MenuRow {
         spacing: 4
-        CheckButton {
+        CheckButton { // FAKE_COORDS
             id: zeroingPosButton
             icon.source: "qrc:/icons/ui/propeller_off.svg"
             backColor: theme.controlSolidBackColor
             borderWidth: 0
             implicitWidth: theme.controlHeight
-            visible: theme.isFakeCoords
 
             onCheckedChanged: {
-                if (theme.isFakeCoords) {
-                    core.setPosZeroing(checked);
-                }
+                core.setPosZeroing(checked);
             }
 
-            Component.onCompleted: { // maybe need del
-                if (theme.isFakeCoords) {
-                    core.setPosZeroing(checked);
-                }
+            Component.onCompleted: {
+                core.setPosZeroing(checked);
             }
 
             Settings {

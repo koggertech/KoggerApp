@@ -3,11 +3,13 @@
 #include "coordinate_axes.h"
 #include "plane_grid.h"
 #include "bottom_track.h"
-#include "isobaths_view.h"
+//#include "isobaths_view.h"
 #include "surface_view.h"
 #include "image_view.h"
 #include "map_view.h"
 #include "contacts.h"
+#include "geojson_layer.h"
+#include "ruler_tool.h"
 #include "point_group.h"
 #include "polygon_group.h"
 #include "scene3d_view.h"
@@ -61,13 +63,15 @@ private:
     QSizeF m_viewSize;
     GraphicsScene3dView::Camera m_camera;
     GraphicsScene3dView::Camera m_axesThumbnailCamera;
-    CoordinateAxes::CoordinateAxesRenderImplementation m_coordAxesRenderImpl;
+    CoordinateAxes::CoordinateAxesRenderImplementation compassRenderImpl_;
     PlaneGrid::PlaneGridRenderImplementation m_planeGridRenderImpl;
-    IsobathsView::IsobathsViewRenderImplementation isobathsViewRenderImpl_;
+    //IsobathsView::IsobathsViewRenderImplementation isobathsViewRenderImpl_;
     SurfaceView::SurfaceViewRenderImplementation surfaceViewRenderImpl_;
     ImageView::ImageViewRenderImplementation imageViewRenderImpl_;
     MapView::MapViewRenderImplementation mapViewRenderImpl_;
     Contacts::ContactsRenderImplementation contactsRenderImpl_;
+    GeoJsonLayer::GeoJsonLayerRenderImplementation geoJsonLayerRenderImpl_;
+    RulerTool::RulerToolRenderImplementation rulerToolRenderImpl_;
     BottomTrack::BottomTrackRenderImplementation m_bottomTrackRenderImpl;
     PolygonGroup::PolygonGroupRenderImplementation m_polygonGroupRenderImpl;
     PointGroup::PointGroupRenderImplementation m_pointGroupRenderImpl;
@@ -83,5 +87,10 @@ private:
     bool m_isSceneBoundingBoxVisible = true;
     GLuint VAO, VBO;
     float scaleFactor_;
-    float gridVisibility_ = true;
+    bool gridVisibility_ = true;
+
+    bool compass_ = false;
+    int compassPos_ = 1;
+    int compassSize_ = 1;
+    bool planeGridType_ = true;
 };

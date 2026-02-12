@@ -2,13 +2,14 @@
 
 #include "tile_provider.h"
 #include "map_defs.h"
+#include "tile_provider_ids.h"
 
 
 namespace map {
 
 
 constexpr double GOOGLE_TILE_CONSTANT = 126543000.03392;
-const int GOOGLE_PROVIDER_ID = 1;
+const int GOOGLE_PROVIDER_ID = kGoogleProviderId;
 const int googleSat = 997;
 const QString secGoogleWord = QStringLiteral("Galileo");
 const QString language = QStringLiteral("en-US");

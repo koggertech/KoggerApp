@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <QDebug>
 #include <QDateTime>
 #include <QVector>
@@ -12,7 +13,7 @@
 #include <QMetaType>
 #include <QOpenGLFunctions>
 #include <QtMath>
-#include <functional>
+#include "dataset_defs.h"
 #include "dataset_defs.h"
 
 
@@ -29,7 +30,6 @@ static inline float shortestDiff(float from, float to)
 };
 
 namespace map {
-
 
 /*data*/
 inline const QVector<QVector2D> kTextureCoords = {
@@ -262,7 +262,6 @@ inline TilePosition getTilePosition(double minLon, double maxLon, const TileInfo
     return TilePosition::kFits;
 }
 
-
 } // namespace map
 
 
@@ -271,6 +270,7 @@ Q_DECLARE_METATYPE(map::Tile)
 
 
 namespace std {
+
 template <>
 struct hash<::map::TileIndex> {
     std::size_t operator()(const ::map::TileIndex& index) const noexcept {
@@ -280,12 +280,15 @@ struct hash<::map::TileIndex> {
                (std::hash<int32_t>()(index.providerId_) << 3);
     }
 };
+
 } // namespace std
 
 
 namespace map {
+
 inline uint qHash(const ::map::TileIndex& key, uint seed = 0) {
     std::size_t stlHash = std::hash<::map::TileIndex>()(key);
     return static_cast<uint>(stlHash ^ (seed * 0x9e3779b9));
 }
+
 } // namespace map

@@ -92,11 +92,11 @@ void NavigationArrow::NavigationArrowRenderImplementation::render(QOpenGLFunctio
                                                                   const QMatrix4x4 &mvp,
                                                                   const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
-#if defined(FAKE_COORDS)
-    return;
-#endif
+    if (!m_isVisible) {
+        return;
+    }
 
-    if (position_.isNull() || !m_isVisible || !shaderProgramMap.contains("static")) {
+    if ((qFuzzyIsNull(angle_) && position_.isNull())|| !shaderProgramMap.contains("static")) {
         return;
     }
 

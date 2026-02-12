@@ -54,14 +54,10 @@ void PolygonObject::PolygonObjectRenderImplementation::render(QOpenGLFunctions *
     for(const auto& renderImpl : m_pointRenderImplList)
         data.append(renderImpl.cdata().at(0));
 
-    for (int i = 1; i < data.size() - 1; ++i) {
-        QVector<QVector3D> triangle;
-        triangle.append(data[0]);
-        triangle.append(data[i]);
-        triangle.append(data[i + 1]);
-
-        shaderProgram->setAttributeArray(posLoc, triangle.constData());
-        ctx->glDrawArrays(GL_TRIANGLES, 0, triangle.size());
+    const auto triangles = DrawUtils::triangulatePolygonXY(data);
+    if (!triangles.isEmpty()) {
+        shaderProgram->setAttributeArray(posLoc, triangles.constData());
+        ctx->glDrawArrays(GL_TRIANGLES, 0, triangles.size());
     }
 
     shaderProgram->disableAttributeArray(posLoc);

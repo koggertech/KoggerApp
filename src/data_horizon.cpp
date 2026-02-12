@@ -1,5 +1,6 @@
 #include "data_horizon.h"
 
+#include <algorithm>
 #include <QDebug>
 
 
@@ -9,13 +10,16 @@ DataHorizon::DataHorizon() :
     isFileOpening_(false),
     isSeparateReading_(false),
     isAttitudeExpected_(false),
+    pendingBottomTrack3DManual_(false),
     epochIndx_(0),
     positionIndx_(0),
     chartIndx_(0),
     attitudeIndx_(0),
+    artificalAttitudeIndx_(0),
     bottomTrackIndx_(0),
     mosaicIndx_(0),
-    sonarIndx_(0)
+    sonarPosIndx_(0),
+    dimRectIndx_(0)
 {
 #ifdef SEPARATE_READING
     isSeparateReading_ = true;
@@ -27,14 +31,18 @@ DataHorizon::DataHorizon() :
 void DataHorizon::clear()
 {
     isFileOpening_ = false;
+    pendingBottomTrack3DPairs_.clear();
+    pendingBottomTrack3DManual_ = false;
 
     epochIndx_ = 0;
     positionIndx_ = 0;
     chartIndx_ = 0;
     attitudeIndx_ = 0;
+    artificalAttitudeIndx_ = 0;
     bottomTrackIndx_ = 0;
     mosaicIndx_ = 0;
-    sonarIndx_ = 0;
+    sonarPosIndx_ = 0;
+    dimRectIndx_ = 0;
 }
 
 void DataHorizon::setEmitChanges(bool state)
@@ -46,15 +54,45 @@ void DataHorizon::setIsFileOpening(bool state)
 {
     //qDebug() << "DataHorizon::setIsFileOpening" << state;
 
+    if (state) {
+        pendingBottomTrack3DPairs_.clear();
+        pendingBottomTrack3DManual_ = false;
+    }
+
     isFileOpening_ = state;
 
     if (!isFileOpening_ && !isSeparateReading_ && emitChanges_) { // emit all
         emit epochAdded(epochIndx_);
         emit positionAdded(positionIndx_);
         emit chartAdded(chartIndx_);
-        emit attitudeAdded(attitudeIndx_);
+        //emit attitudeAdded(attitudeIndx_);
+        //emit artificalAttitudeAdded(artificalAttitudeIndx_);
         tryCalcAndEmitSonarPosIndx();
         tryCalcAndEmitMosaicIndx();
+        tryCalcAndEmitDimRectIndx();
+
+        if (!pendingBottomTrack3DPairs_.isEmpty()) {
+            QVector<int> epVec;
+            QVector<int> vertVec;
+            QVector<int> epKeys;
+            epKeys.reserve(pendingBottomTrack3DPairs_.size());
+            const QList<int> keys = pendingBottomTrack3DPairs_.keys();
+            for (int key : keys) {
+                epKeys.push_back(key);
+            }
+            std::sort(epKeys.begin(), epKeys.end());
+
+            epVec.reserve(epKeys.size());
+            vertVec.reserve(epKeys.size());
+            for (int epIdx : epKeys) {
+                epVec.push_back(epIdx);
+                vertVec.push_back(pendingBottomTrack3DPairs_.value(epIdx));
+            }
+
+            emit bottomTrack3DAdded(epVec, vertVec, pendingBottomTrack3DManual_);
+            pendingBottomTrack3DPairs_.clear();
+            pendingBottomTrack3DManual_ = false;
+        }
     }
 }
 
@@ -87,7 +125,9 @@ void DataHorizon::onAddedPosition(uint64_t indx)
 
     if (canEmitHorizon(beenChanged)) {
         emit positionAdded(positionIndx_);
+        tryCalcAndEmitDimRectIndx();
         tryCalcAndEmitSonarPosIndx();
+        tryCalcAndEmitMosaicIndx();
     }
 }
 
@@ -101,6 +141,7 @@ void DataHorizon::onAddedChart(uint64_t indx)
 
     if (canEmitHorizon(beenChanged)) {
         emit chartAdded(chartIndx_);
+        tryCalcAndEmitDimRectIndx();
         tryCalcAndEmitMosaicIndx();
     }
 }
@@ -114,8 +155,25 @@ void DataHorizon::onAddedAttitude(uint64_t indx)
     attitudeIndx_ = indx;
 
     if (canEmitHorizon(beenChanged)) {
-        emit attitudeAdded(attitudeIndx_);
+        //emit attitudeAdded(attitudeIndx_);
         tryCalcAndEmitSonarPosIndx();
+        tryCalcAndEmitDimRectIndx();
+        tryCalcAndEmitMosaicIndx();
+    }
+}
+
+void DataHorizon::onAddedArtificalAttitude(uint64_t indx)
+{
+    //qDebug() << "DataHorizon::onAddedArtificalAttitude" << indx;
+
+    bool beenChanged = artificalAttitudeIndx_ != indx;
+
+    artificalAttitudeIndx_ = indx;
+
+    if (canEmitHorizon(beenChanged)) {
+        //emit artificalAttitudeAdded(artificalAttitudeIndx_);
+        tryCalcAndEmitSonarPosIndx();
+        tryCalcAndEmitDimRectIndx();
         tryCalcAndEmitMosaicIndx();
     }
 }
@@ -133,14 +191,27 @@ void DataHorizon::onAddedBottomTrack(uint64_t indx)
     bottomTrackIndx_ = indx;
 
     if (canEmitHorizon(beenChanged)) {
-        emit bottomTrackAdded(bottomTrackIndx_);
+        //emit bottomTrackAdded(bottomTrackIndx_);
         tryCalcAndEmitMosaicIndx();
     }
 }
 
 void DataHorizon::onAddedBottomTrack3D(const QVector<int>& epIndxs, const QVector<int>& vertIndx, bool isManual)
 {
-    //qDebug() << "DataHorizon::onAddedBottomTrack3D" << indx;
+    //qDebug() << "DataHorizon::onAddedBottomTrack3D" << epIndxs;
+
+    if (epIndxs.isEmpty() || vertIndx.isEmpty()) {
+        return;
+    }
+
+    if (!isSeparateReading_ && isFileOpening_) {
+        const int pairCount = qMin(epIndxs.size(), vertIndx.size());
+        for (int i = 0; i < pairCount; ++i) {
+            pendingBottomTrack3DPairs_.insert(epIndxs[i], vertIndx[i]);
+        }
+        pendingBottomTrack3DManual_ = pendingBottomTrack3DManual_ || isManual;
+        return;
+    }
 
     bool beenChanged = true; // NEED COMPARE?
 
@@ -173,7 +244,7 @@ bool DataHorizon::canEmitHorizon(bool beenChanged) const
 
 void DataHorizon::tryCalcAndEmitMosaicIndx()
 {
-    uint64_t minMosaicHorizon = std::min(std::min(bottomTrackIndx_, chartIndx_), attitudeIndx_);
+    uint64_t minMosaicHorizon = std::min(std::min(std::min(bottomTrackIndx_, chartIndx_), std::max(attitudeIndx_, artificalAttitudeIndx_)), sonarPosIndx_);
     if (minMosaicHorizon > mosaicIndx_) {
         mosaicIndx_ = minMosaicHorizon;
         emit mosaicCanCalc(mosaicIndx_);
@@ -182,9 +253,18 @@ void DataHorizon::tryCalcAndEmitMosaicIndx()
 
 void DataHorizon::tryCalcAndEmitSonarPosIndx()
 {
-    uint64_t minSonarIndx = isAttitudeExpected_ ? std::min(positionIndx_, attitudeIndx_) : positionIndx_;
-    if (minSonarIndx > sonarIndx_) {
-        sonarIndx_ = minSonarIndx;
-        emit sonarPosCanCalc(sonarIndx_);
+    uint64_t minSonarIndx = isAttitudeExpected_ ? std::min(positionIndx_, std::max(attitudeIndx_, artificalAttitudeIndx_)) : positionIndx_;
+    if (minSonarIndx > sonarPosIndx_) {
+        sonarPosIndx_ = minSonarIndx;
+        emit sonarPosCanCalc(sonarPosIndx_);
+    }
+}
+
+void DataHorizon::tryCalcAndEmitDimRectIndx()
+{
+    uint64_t minDimRectIndx = sonarPosIndx_;
+    if (minDimRectIndx > dimRectIndx_) {
+        dimRectIndx_ = minDimRectIndx;
+        emit dimRectsCanCalc(dimRectIndx_);
     }
 }

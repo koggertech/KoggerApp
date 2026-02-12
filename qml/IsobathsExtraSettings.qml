@@ -36,7 +36,11 @@ MenuFrame {
 
     onFocusChanged: {
         if (Qt.platform.os === "android" && !focus) {
-            isobathsCheckButton.isobathsLongPressTriggered = false
+            Qt.callLater(function() {
+                if (!isobathsSettings.focus) {
+                    isobathsCheckButton.isobathsLongPressTriggered = false
+                }
+            })
         }
     }
 
@@ -71,7 +75,7 @@ MenuFrame {
             CCombo  {
                 id: isobathsTheme
                 Layout.preferredWidth: 200
-                model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("Standard")]
+                model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("Standard"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green")]
                 currentIndex: 0
                 onCurrentIndexChanged: {
                     IsobathsViewControlMenuController.onThemeChanged(currentIndex)
@@ -104,7 +108,7 @@ MenuFrame {
                 from: 10
                 to: 1000
                 stepSize: 5
-                value: 20
+                value: 70
                 editable: false
 
                 property int decimals: 1
@@ -191,7 +195,7 @@ MenuFrame {
                 from: 5
                 to: 100
                 stepSize: 5
-                value: 5
+                value: 10
                 editable: false
 
                 onFocusChanged: {

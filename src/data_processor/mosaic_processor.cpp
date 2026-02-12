@@ -2,14 +2,18 @@
 
 #include <QtMath>
 #include <QDebug>
-#include <optional>
+#include <QThread>
+#include <functional>
+#include <limits>
+#include <queue>
 #include "data_processor.h"
+#include "data_processor_defs.h"
 #include "dataset.h"
+#include "compute_worker.h"
 
 
 static constexpr int sampleLimiter    = 2;
 static constexpr int colorTableSize_  = 255;
-static constexpr int interpLineWidth_ = 1;
 
 static bool checkLength(float dist)
 {
@@ -19,36 +23,39 @@ static bool checkLength(float dist)
     return true;
 }
 
-static std::optional<int> sampleIndex(Epoch::Echogram *echogramPtr, float dist)
+static int sampleIndex(Epoch::Echogram *echogramPtr, float dist)
 {
     if (!echogramPtr) {
-        return std::nullopt;
+        return -1;
     }
 
     const float resolution = echogramPtr->resolution;
 
     if (resolution <= 0.0f) {
-        return std::nullopt;
+        return -1;
     }
 
     float resDist = dist / resolution;
     if (resDist < 0.f) {
-        return std::nullopt;
+        return -1;
     }
 
     int indx = static_cast<int>(std::round(resDist));
     if (indx >= static_cast<int>(echogramPtr->amplitude.size()) - sampleLimiter) {
-        return std::nullopt;
+        return -1;
     }
 
     return indx;
 }
 
-MosaicProcessor::MosaicProcessor(DataProcessor* parent)
-    : dataProcessor_(parent),
+MosaicProcessor::MosaicProcessor(DataProcessor* parent, ComputeWorker* computeWorker)
+    : computeWorker_(computeWorker),
+    dataProcessor_(parent),
     datasetPtr_(nullptr),
     surfaceMeshPtr_(nullptr),
     tileResolution_(defaultTileResolution),
+    pixOnMeters_(std::pow(tileResolution_, -1)),
+    aliasWindow_(100/pixOnMeters_),
     currIndxSec_(0),
     segFSubChannelId_(0),
     segSSubChannelId_(0),
@@ -60,7 +67,6 @@ MosaicProcessor::MosaicProcessor(DataProcessor* parent)
     rAngleOffset_(0.0f),
     generateGridContour_(false)
 {
-    qRegisterMetaType<std::vector<uint8_t>>("std::vector<uint8_t>");
     qRegisterMetaType<TileMap>("TileMap");
 }
 
@@ -70,6 +76,8 @@ MosaicProcessor::~MosaicProcessor()
 
 void MosaicProcessor::clear()
 {
+    //qDebug() << "MosaicProcessor::clear";
+
     lastMatParams_ = kmath::MatrixParams();
     currIndxSec_ = 0;
 
@@ -99,103 +107,163 @@ void MosaicProcessor::setChannels(const ChannelId& firstChId, uint8_t firstSubCh
 
 void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
 {
+    //qDebug() << "";
+    //qDebug() << "MosaicProcessor::updateDataWrapper" << indxs;
+
     if (!datasetPtr_ || indxs.isEmpty()) {
         return;
     }
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kMosaic));
 
-    QVector<int> vec = indxs;
-    const int firstNow = vec.first();
+    // чанкование задачи
+    const int kStep = 10;
+    const int kProgressStep = 100; // batch sending completed indxs
+    QSet<int> usedEpochs;
+    QSet<int> blockedEpochs;
+    QSet<int> reportedEpochs;
+    QSet<int> pendingUsedSet;
+    std::priority_queue<int, std::vector<int>, std::greater<int>> pendingUsedMin;
+    QVector<int> progressBatch;
+    progressBatch.reserve(kProgressStep * 2);
+    QVector<int> chunk;
 
-    if (lastAcceptedEpoch_ >= 0 && lastAcceptedEpoch_ < firstNow) {
-        const int gap = firstNow - lastAcceptedEpoch_;
+    const int progressZoom = zoomFromMpp(tileResolution_);
 
-        if (gap > 1) { // дыра слева [lastAcceptedEpoch_, firstNow)
-            QVector<int> left;
-            left.reserve(gap);
-            for (int i = lastAcceptedEpoch_; i < firstNow; ++i) {
-                left.push_back(i);
+    auto emitProgress = [&](bool force) {
+        if (progressBatch.isEmpty()) {
+            return;
+        }
+        if (!force && progressBatch.size() < kProgressStep) {
+            return;
+        }
+        if (canceled()) {
+            return;
+        }
+
+        std::sort(progressBatch.begin(), progressBatch.end());
+        QMetaObject::invokeMethod(dataProcessor_, "onMosaicEpochsProcessed", Qt::QueuedConnection,
+                                  Q_ARG(QVector<int>, progressBatch),
+                                  Q_ARG(int, progressZoom));
+        for (int idx : std::as_const(progressBatch)) {
+            reportedEpochs.insert(idx);
+        }
+        progressBatch.clear();
+    };
+
+    auto drainSafeProgress = [&](int cutoff) {
+        while (!pendingUsedMin.empty() && pendingUsedMin.top() <= cutoff) {
+            const int idx = pendingUsedMin.top();
+            pendingUsedMin.pop();
+            if (!pendingUsedSet.contains(idx)) {
+                continue;
             }
-
-            left += vec;
-            vec.swap(left);
+            pendingUsedSet.remove(idx);
+            if (blockedEpochs.contains(idx) || reportedEpochs.contains(idx)) {
+                continue;
+            }
+            progressBatch.append(idx);
         }
-        else { // gap == 1
-             vec.prepend(lastAcceptedEpoch_); // стык одним элементом
+        emitProgress(false);
+    };
+
+    auto expandAndUpdate = [&]() {
+        if (chunk.empty()) {
+            return;
+        }
+
+        const int firstIndx = chunk.front();
+        QVector<int> expandedChunk = { firstIndx - 3, firstIndx - 2, firstIndx - 1 };
+        expandedChunk.reserve(chunk.size() + 3);
+
+        for (const auto& itm : std::as_const(chunk)) {
+            expandedChunk.push_back(itm);
+        }
+
+        QVector<int> newUsed;
+        QVector<int> newBlocked;
+        updateData(expandedChunk, usedEpochs, blockedEpochs, &newUsed, &newBlocked);
+
+        for (int idx : std::as_const(newBlocked)) {
+            pendingUsedSet.remove(idx);
+        }
+        for (int idx : std::as_const(newUsed)) {
+            if (blockedEpochs.contains(idx) || reportedEpochs.contains(idx)) {
+                continue;
+            }
+            if (pendingUsedSet.contains(idx)) {
+                continue;
+            }
+            pendingUsedSet.insert(idx);
+            pendingUsedMin.push(idx);
+        }
+    };
+
+    int prev = 0;
+    bool chunkHasNew = false;
+    for (int idx : std::as_const(indxs)) {
+        if (!chunk.isEmpty() && idx != prev + 1) {
+            if (chunkHasNew) {
+                expandAndUpdate();
+                drainSafeProgress(prev - 3);
+                if (canceled()) {
+                    break;
+                }
+            }
+            chunk.clear();
+        }
+        chunk.push_back(idx);
+        chunkHasNew = true;
+        prev = idx;
+        if (chunk.size() >= kStep) {
+            expandAndUpdate();
+            drainSafeProgress(prev - 3);
+            if (canceled()) {
+                break;
+            }
+            const int lastIdx = chunk.back();
+            chunk.clear();
+            chunk.push_back(lastIdx);
+            chunkHasNew = false;
         }
     }
-    else {
-        //
+    if (!canceled() && chunkHasNew && !chunk.isEmpty()) {
+        expandAndUpdate();
+        drainSafeProgress(prev - 3);
     }
 
-    //qDebug() << "task";
-    //qDebug() << vec;
-    //for (int i = 1; i < vec.size(); ++i) {
-    //   if (vec[i] != vec[i - 1] + 1) {
-    //       qWarning() << "Hole in mosaic task" << vec[i - 1] << "and" << vec[i];
-    //   }
-    //}
+    // TODO
+    // constexpr int minSegmentLen = 2;
+    // constexpr int maxSegmentLen = 100;
+    // const auto segments = splitContinuousSegments(indxs, minSegmentLen, maxSegmentLen);
+    // for (const auto& seg : segments) {
+    //     updateData(seg);
+    // }
 
-    updateData(vec);
+    drainSafeProgress(std::numeric_limits<int>::max());
+    emitProgress(true);
+
+    if (!blockedEpochs.isEmpty()) {
+        usedEpochs.subtract(blockedEpochs);
+    }
+    if (!reportedEpochs.isEmpty()) {
+        usedEpochs.subtract(reportedEpochs);
+    }
+
+    if (!usedEpochs.isEmpty() && !canceled()) {
+        QVector<int> usedVec;
+        usedVec.reserve(usedEpochs.size());
+        for (int idx : std::as_const(usedEpochs)) {
+            usedVec.append(idx);
+        }
+        std::sort(usedVec.begin(), usedVec.end());
+        const int zoom = zoomFromMpp(tileResolution_);
+        QMetaObject::invokeMethod(dataProcessor_, "onMosaicEpochsProcessed", Qt::QueuedConnection,
+                                  Q_ARG(QVector<int>, usedVec),
+                                  Q_ARG(int, zoom));
+    }
+
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
-}
-
-void MosaicProcessor::resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)//
-{
-    clear();
-
-    tileSidePixelSize_ = tileSidePixelSize;
-    tileHeightMatrixRatio_ = tileHeightMatrixRatio;
-    tileResolution_ = tileResolution;
-
-    surfaceMeshPtr_->reinit(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);//
-}
-
-void MosaicProcessor::setColorTableThemeById(int id)
-{
-    if (colorTable_.getTheme() == id) {
-        return;
-    }
-
-    colorTable_.setTheme(id);
-
-    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
-}
-
-void MosaicProcessor::setColorTableLevels(float lowVal, float highVal)
-{
-    auto levels = colorTable_.getLevels();
-    if (qFuzzyCompare(1.0 + levels.first, 1.0 + lowVal) &&
-        qFuzzyCompare(1.0 + levels.second, 1.0 + highVal)) {
-        return;
-    }
-
-    colorTable_.setLevels(lowVal, highVal);
-
-    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
-}
-
-void MosaicProcessor::setColorTableLowLevel(float val)
-{
-    if (qFuzzyCompare(1.0 + colorTable_.getLowLevel(), 1.0 + val)) {
-        return;
-    }
-
-    colorTable_.setLowLevel(val);
-
-    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
-}
-
-void MosaicProcessor::setColorTableHighLevel(float val)
-{
-    if (qFuzzyCompare(1.0 + colorTable_.getHighLevel(), 1.0 + val)) {
-        return;
-    }
-
-    colorTable_.setHighLevel(val);
-
-    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
 }
 
 void MosaicProcessor::setLAngleOffset(float val)
@@ -219,6 +287,8 @@ void MosaicProcessor::setRAngleOffset(float val)
 void MosaicProcessor::setTileResolution(float tileResolution)
 {
     tileResolution_ = tileResolution;
+    pixOnMeters_ = std::pow(tileResolution_, -1);
+    aliasWindow_ = 100 / pixOnMeters_;
 }
 
 void MosaicProcessor::setGenerageGridContour(bool state)
@@ -226,143 +296,221 @@ void MosaicProcessor::setGenerageGridContour(bool state)
     generateGridContour_ = state;
 }
 
-void MosaicProcessor::askColorTableForMosaic()
+// Шьём только ВВЕРХ и ВЛЕВО и в тот угол
+// Причина: у каждого шва/угла ровно один владелец, это исключает двойную запись, гарантируя одинаковые значения по обе стороны шва
+void MosaicProcessor::postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<SurfaceTile*>& changedOut)
 {
-    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
-}
-
-void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
-{
-    //qDebug() << "tileResolution_" << tileResolution_;
-
-    if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited()) {
+    if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited() || updatedIn.isEmpty()) {
         return;
     }
 
     auto& matrix = surfaceMeshPtr_->getTileMatrixRef();
-    int tilesY = matrix.size();
+    const int tilesY = matrix.size();
     if (tilesY == 0) {
         return;
     }
-    int tilesX = matrix.at(0).size();
+
+    const int tilesX = matrix.at(0).size();
     if (tilesX == 0) {
         return;
     }
 
-    const QSet<SurfaceTile*> primaryChanged = changedTiles;
-
-    for (int i = 0; i < tilesY; ++i) {
-        for (int j = 0; j < tilesX; ++j) {
-            auto* tile = matrix[i][j];
-            if (!tile || !tile->getIsUpdated()) {
-                continue;
+    // helpers
+    auto findIJ = [&](SurfaceTile* t, int& oi, int& oj)->bool {
+        for (int i = 0; i < tilesY; ++i) {
+            for (int j = 0; j < tilesX; ++j) {
+                if (matrix[i][j] == t) { oi = i; oj = j; return true; }
             }
-
-            changedTiles.insert(tile);
-
-            auto& vSrc = tile->getHeightVerticesRef();
-            const int hvSide = std::sqrt(vSrc.size());
-            if (hvSide <= 1) {
-                continue;
-            }
-
-            if (i + 1  < tilesY) { // вверх (строка 0 -> последняя строка верхнего тайла)
-                auto* top = matrix[i + 1][j];
-                if (!top) {
+        }
+        return false;
+    };
+    auto copyRow = [&](QVector<QVector3D>& from,
+                       const QVector<HeightType>& mFrom, int fromRow,
+                       QVector<QVector3D>& to, QVector<HeightType>& mTo,
+                       int toRow, int hvSide)
+    {
+        const int total = from.size();
+        if (total == 0 || to.size() != total || mTo.size() != total || mFrom.size() != total) {
+            return;
+        }
+        const int fromStart = fromRow * hvSide;
+        const int toStart   = toRow   * hvSide;
+        for (int k = 0; k < hvSide; ++k) {
+            const int si = fromStart + k;
+            const int di = toStart   + k;
+            if (!qFuzzyIsNull(from[si][2])) {
+                const auto srcMark = mFrom[si];
+                if (!canOverwriteHeight(srcMark, mTo[di])) {
                     continue;
                 }
-
-                if (!top->getIsInited()) {
-                    top->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+                to[di][2] = from[si][2];
+                mTo[di]   = srcMark;
+            }
+        }
+    };
+    auto copyCol = [&](QVector<QVector3D>& from,
+                       const QVector<HeightType>& mFrom, int fromCol,
+                       QVector<QVector3D>& to, QVector<HeightType>& mTo,
+                       int toCol, int hvSide)
+    {
+        const int total = from.size();
+        if (total == 0 || to.size() != total || mTo.size() != total || mFrom.size() != total) {
+            return;
+        }
+        for (int k = 0; k < hvSide; ++k) {
+            const int si = k * hvSide + fromCol;
+            const int di = k * hvSide + toCol;
+            if (!qFuzzyIsNull(from[si][2])) {
+                const auto srcMark = mFrom[si];
+                if (!canOverwriteHeight(srcMark, mTo[di])) {
+                    continue;
                 }
+                to[di][2] = from[si][2];
+                mTo[di]   = srcMark;
+            }
+        }
+    };
+    auto copyCorner = [&](QVector<QVector3D>& from, const QVector<HeightType>& mFrom, int si,
+                          QVector<QVector3D>& to,   QVector<HeightType>& mTo,   int di)
+    {
+        if (si < 0 || si >= from.size() || si >= mFrom.size() || di < 0 || di >= to.size() || di >= mTo.size()) {
+            return;
+        }
+        if (!qFuzzyIsNull(from[si][2])) {
+            const auto srcMark = mFrom[si];
+            if (!canOverwriteHeight(srcMark, mTo[di])) {
+                return;
+            }
+            to[di][2] = from[si][2];
+            mTo[di]   = srcMark;
+        }
+    };
 
+    for (SurfaceTile* tile : updatedIn) {
+        if (!tile || !tile->getIsUpdated()) {
+            continue;
+        }
+
+        int i = -1, j = -1;
+        if (!findIJ(tile, i, j)) {
+            continue;
+        }
+
+        auto& vSrc = tile->getHeightVerticesRef();
+        auto& mSrc = tile->getHeightMarkVerticesRef();
+        const int n = vSrc.size();
+        const int hvSide = int(std::sqrt(double(n)));
+        if (hvSide * hvSide != n || hvSide <= 1) {
+            continue;
+        }
+
+        // Индексы углов текущего тайла
+        const int TL = 0;
+        // const int TR = hvSide - 1;
+        // const int BL = hvSide * (hvSide - 1);
+        const int BR = hvSide * hvSide - 1;
+
+        // 4 стороны
+        // TOP: текущая верхняя строка -> нижняя строка top-соседа (i+1, j)
+        if (i + 1 < tilesY) {
+            SurfaceTile* top = matrix[i + 1][j];
+            if (top && top->getIsInited()) {
                 auto& vTop = top->getHeightVerticesRef();
                 auto& mTop = top->getHeightMarkVerticesRef();
-
-                const int topLastRowStart = hvSide * (hvSide - 1);
-                for (int k = 0; k < hvSide; ++k) {
-                    const int srcIndx = k;
-                    const int dstIndx = topLastRowStart + k;
-                    if (!qFuzzyIsNull(vSrc[srcIndx][2])) {
-                        vTop[dstIndx][2] = vSrc[srcIndx][2];
-                        mTop[dstIndx] = HeightType::kMosaic;
-                    }
-                }
+                copyRow(vSrc, mSrc,
+                        /*fromRow=*/0, vTop, mTop,
+                        /*toRow=*/hvSide - 1, hvSide);
                 top->setIsUpdated(true);
-                changedTiles.insert(top);
+                changedOut.insert(top);
             }
-
-
-            if (j - 1 >= 0) { // влево (столбец 0 -> правый столбец левого тайла)
-                auto* left = matrix[i][j - 1];
-                if (!left) {
-                    continue;
-                }
-
-                if (!left->getIsInited()) {
-                    left->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
-                }
-
+        }
+        // // BOTTOM: текущая нижняя строка -> верхняя строка bottom-соседа (i-1, j)
+        // if (i - 1 >= 0) {
+        //     SurfaceTile* bottom = matrix[i - 1][j];
+        //     if (bottom && bottom->getIsInited()) {
+        //         auto& vBtm = bottom->getHeightVerticesRef();
+        //         auto& mBtm = bottom->getHeightMarkVerticesRef();
+        //         copyRow(vSrc,
+        //                 /*fromRow=*/hvSide - 1, vBtm, mBtm,
+        //                 /*toRow=*/0, hvSide);
+        //         bottom->setIsUpdated(true);
+        //         changedOut.insert(bottom);
+        //     }
+        // }
+        // LEFT: текущий левый столбец -> правый столбец left-соседа (i, j-1)
+        if (j - 1 >= 0) {
+            SurfaceTile* left = matrix[i][j - 1];
+            if (left && left->getIsInited()) {
                 auto& vLeft = left->getHeightVerticesRef();
                 auto& mLeft = left->getHeightMarkVerticesRef();
-
-                for (int k = 0; k < hvSide; ++k) {
-                    const int srcIndx = (k == 0 ? 0 : k * hvSide);
-                    const int dstIndx = ((k + 1) * hvSide - 1);
-                    if (!qFuzzyIsNull(vSrc[srcIndx][2])) {
-                        vLeft[dstIndx][2] = vSrc[srcIndx][2];
-                        mLeft[dstIndx] = HeightType::kMosaic;
-                    }
-                }
+                copyCol(vSrc, mSrc,
+                        /*fromCol=*/0, vLeft, mLeft,
+                        /*toCol=*/hvSide - 1, hvSide);
                 left->setIsUpdated(true);
-                changedTiles.insert(left);
+                changedOut.insert(left);
             }
+        }
 
-            if (i + 1 < tilesY && j - 1 >= 0) { // диагональ: top-left, узел (0,0) текущего -> (hvSide - 1,hvSide - 1) диагонального тайла
-                SurfaceTile* diag = matrix[i + 1][j - 1];
-                if (!diag) {
-                    continue;
-                }
+        // // RIGHT: текущий правый столбец -> левый столбец right-соседа (i, j+1)
+        // if (j + 1 < tilesX) {
+        //     SurfaceTile* right = matrix[i][j + 1];
+        //     if (right && right->getIsInited()) {
+        //         auto& vRight = right->getHeightVerticesRef();
+        //         auto& mRight = right->getHeightMarkVerticesRef();
+        //         copyCol(vSrc,
+        //                 /*fromCol=*/hvSide - 1, vRight, mRight,
+        //                 /*toCol=*/0, hvSide);
+        //         right->setIsUpdated(true);
+        //         changedOut.insert(right);
+        //     }
+        // }
 
-                if (!diag->getIsInited()) {
-                    diag->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
-                }
-                auto& vDiag = diag->getHeightVerticesRef();
-                auto& mDiag = diag->getHeightMarkVerticesRef();
-
-                const int srcTL = 0;                    // (0, 0)
-                const int dstBR = hvSide * hvSide - 1;  // (hvSide-1, hvSide-1)
-                if (!qFuzzyIsNull(vSrc[srcTL][2])) {
-                    vDiag[dstBR][2] = vSrc[srcTL][2];
-                    mDiag[dstBR]    = HeightType::kMosaic;
-                }
+        // 4 угла
+        // TOP-LEFT (i+1, j-1): TL -> BR
+        if (i + 1 < tilesY && j - 1 >= 0) {
+            SurfaceTile* diag = matrix[i + 1][j - 1];
+            if (diag && diag->getIsInited()) {
+                auto& vD = diag->getHeightVerticesRef();
+                auto& mD = diag->getHeightMarkVerticesRef();
+                copyCorner(vSrc, mSrc, TL, vD, mD, BR);
                 diag->setIsUpdated(true);
-                changedTiles.insert(diag);
+                changedOut.insert(diag);
             }
         }
+        // // TOP-RIGHT (i+1, j+1): TR -> BL
+        // if (i + 1 < tilesY && j + 1 < tilesX) {
+        //     SurfaceTile* diag = matrix[i + 1][j + 1];
+        //     if (diag && diag->getIsInited()) {
+        //         auto& vD = diag->getHeightVerticesRef();
+        //         auto& mD = diag->getHeightMarkVerticesRef();
+        //         copyCorner(vSrc, TR, vD, mD, BL);
+        //         diag->setIsUpdated(true);
+        //         changedOut.insert(diag);
+        //     }
+        // }
+        // // BOTTOM-LEFT (i-1, j-1): BL -> TR
+        // if (i - 1 >= 0 && j - 1 >= 0) {
+        //     SurfaceTile* diag = matrix[i - 1][j - 1];
+        //     if (diag && diag->getIsInited()) {
+        //         auto& vD = diag->getHeightVerticesRef();
+        //         auto& mD = diag->getHeightMarkVerticesRef();
+        //         copyCorner(vSrc, BL, vD, mD, TR);
+        //         diag->setIsUpdated(true);
+        //         changedOut.insert(diag);
+        //     }
+        // }
+        // // BOTTOM-RIGHT (i-1, j+1): BR -> TL
+        // if (i - 1 >= 0 && j + 1 < tilesX) {
+        //     SurfaceTile* diag = matrix[i - 1][j + 1];
+        //     if (diag && diag->getIsInited()) {
+        //         auto& vD = diag->getHeightVerticesRef();
+        //         auto& mD = diag->getHeightMarkVerticesRef();
+        //         copyCorner(vSrc, BR, vD, mD, TL);
+        //         diag->setIsUpdated(true);
+        //         changedOut.insert(diag);
+        //     }
+        // }
     }
-
-    for (SurfaceTile* itm : std::as_const(primaryChanged)) {
-        if (itm) {
-            updateUnmarkedHeightVertices(itm);
-        }
-    }
-
-    for (SurfaceTile* itm : std::as_const(changedTiles)) {
-        if (itm) {
-            itm->updateHeightIndices();
-            itm->setIsUpdated(false);
-        }
-    }
-
-    // to SurfaceView
-    TileMap res;
-    res.reserve(changedTiles.size());
-    for (auto it = changedTiles.cbegin(); it != changedTiles.cend(); ++it) {
-        res.insert((*it)->getUuid(), (*(*it)));
-    }
-
-    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
 }
 
 void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
@@ -415,33 +563,42 @@ void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
     }
 }
 
-void MosaicProcessor::updateData(const QVector<int>& indxs)
+void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpochs, QSet<int>& blockedEpochs,
+                                 QVector<int>* newUsed, QVector<int>* newBlocked)
 {
-    // qDebug() << "MosaicProcessor::updateData"
-    //          << "thread =" << QThread::currentThread()
-    //          << "size =" << indxs.size();
+    //qDebug() << "MosaicProcessor::updateData"
+    //         << "thread =" << QThread::currentThread()
+    //         << "size =" << indxs.size();
+    //qDebug() << "MosaicProcessor::updateData";
+    //qDebug() << indxs;
+    //qDebug() << "";
+
+    bool bench = false;
+    QElapsedTimer et; // test
+    if (bench) {
+        et.start();
+    }
 
     if (!datasetPtr_ || indxs.empty()) {
         return;
     }
-
     const bool segFIsValid = segFChannelId_.isValid();
     const bool segSIsValid = segSChannelId_.isValid();
-
     if (!segFIsValid && !segSIsValid) {
         return;
     }
 
     kmath::MatrixParams actualMatParams(lastMatParams_);
     kmath::MatrixParams newMatrixParams;
+    QVector<QVector3D>  measLinesVertices;
+    QVector<int>        measLinesEvenIndices;
+    QVector<int>        measLinesOddIndices;
+    QVector<char>       isOdds; // 0 - even, 1 - odd
+    QVector<int>        epochIndxs;
+    QVector3D           lastLeftBeg, lastLeftEnd, lastRightBeg, lastRightEnd;
+    //bool                haveLastPair = false;
 
-    QVector<QVector3D> measLinesVertices;
-    QVector<int>       measLinesEvenIndices;
-    QVector<int>       measLinesOddIndices;
-    QVector<char>      isOdds; // 0 - even, 1 - odd
-    QVector<int>       epochIndxs;
-
-    // prepare intermediate data (selecting epochs to process)
+    // update matrix
     for (const auto& i : indxs) {
         auto epoch = datasetPtr_->fromIndexCopy(i);
         if (!epoch.isValid()) {
@@ -457,8 +614,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                 if (auto segFCharts = epoch.chart(segFChannelId_, segFSubChannelId_); segFCharts) {
                     double leftAzRad = azRad - M_PI_2 + qDegreesToRadians(lAngleOffset_);
                     float lDist = segFCharts->range();
-                    measLinesVertices.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f));
-                    measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
+                    lastLeftBeg = QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f);
+                    lastLeftEnd = QVector3D(pos.n, pos.e, 0.0f);
+                    measLinesVertices.append(lastLeftBeg);
+                    measLinesVertices.append(lastLeftEnd);
                     measLinesEvenIndices.append(currIndxSec_++);
                     measLinesEvenIndices.append(currIndxSec_++);
                     isOdds.append('0');
@@ -471,8 +630,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                 if (auto segSCharts = epoch.chart(segSChannelId_, segSSubChannelId_); segSCharts) {
                     double rightAzRad = azRad + M_PI_2 - qDegreesToRadians(rAngleOffset_);
                     float rDist = segSCharts->range();
-                    measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
-                    measLinesVertices.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
+                    lastRightBeg = QVector3D(pos.n, pos.e, 0.0f);
+                    lastRightEnd = QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f);
+                    measLinesVertices.append(lastRightBeg);
+                    measLinesVertices.append(lastRightEnd);
                     measLinesOddIndices.append(currIndxSec_++);
                     measLinesOddIndices.append(currIndxSec_++);
                     isOdds.append('1');
@@ -484,29 +645,143 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             if (acceptedEven || acceptedOdd) {
                 lastAcceptedEpoch_ = std::max(lastAcceptedEpoch_, i);
             }
+
+            //if (acceptedEven && acceptedOdd) {
+            //    haveLastPair = true;
+            //}
         }
     }
 
-    newMatrixParams = kmath::getMatrixParams(measLinesVertices);
-    if (!newMatrixParams.isValid()) {
+    if (measLinesVertices.empty()) {
         return;
     }
 
+    const float tileSideMeters = tileSidePixelSize_ * tileResolution_;
+    newMatrixParams = kmath::getMatrixParams(measLinesVertices, tileSideMeters);
+    if (!newMatrixParams.isValid()) {
+        return;
+    }
     concatenateMatrixParameters(actualMatParams, newMatrixParams);
 
-    surfaceMeshPtr_->concatenate(actualMatParams);
+    // expand surface mesh
+    const float marginMeters  = expandMargin_ * tileSideMeters;
+    kmath::MatrixParams expanded = actualMatParams;
+    expanded.originX -= marginMeters;
+    expanded.originY -= marginMeters;
+    expanded.width   += 2 * marginMeters;
+    expanded.height  += 2 * marginMeters;
+    const double S = double(tileSidePixelSize_ * tileResolution_);
+    auto snapDown = [&](double v){ return std::floor(v / S) * S; };
+    auto snapUp   = [&](double v){ return std::ceil (v / S) * S; };
+    {
+        const double x0  = snapDown(expanded.originX);
+        const double y0  = snapDown(expanded.originY);
+        const double x1  = snapUp  (expanded.originX + expanded.width);
+        const double y1  = snapUp  (expanded.originY + expanded.height);
+        expanded.originX = float(x0);
+        expanded.originY = float(y0);
+        expanded.width   = int(std::lround(x1 - x0));
+        expanded.height  = int(std::lround(y1 - y0));
+    }
+    surfaceMeshPtr_->concatenate(expanded);
 
-    const int gMeshWidthPixs  = surfaceMeshPtr_->getPixelWidth();
-    const int gMeshHeightPixs = surfaceMeshPtr_->getPixelHeight();
+    QSet<TileKey> visAndPrefTileKeys = computeWorker_->getVisibleTileKeysCPtr();
+    { // prefetch tiles
+        QSet<TileKey> toRestore = forecastTilesToTouch(measLinesVertices, isOdds, epochIndxs, expandMargin_/*for prefetch*/);
+        visAndPrefTileKeys.intersect(toRestore);
 
-    static QSet<SurfaceTile*> changedTiles;
-    changedTiles.clear();
+        if (!toRestore.isEmpty()) {
+            QSet<TileKey> need;
+            need.reserve(toRestore.size());
+            for (auto it = toRestore.cbegin(); it != toRestore.cend(); ++it) {
+                auto cKey = *it;
+                if (auto* t = surfaceMeshPtr_->getTilePtrByKey(cKey); t) {
+                    if (!t->getIsInited()) {
+                        need.insert(cKey);
+                    }
+                    // if before was surf proc on changing zoom
+                    //if (t->getHeadIndx() == -1) {
+                    //    need.insert(cKey);
+                    //}
+                }
+            }
 
-    for (int i = 0; i < measLinesVertices.size(); i += 2) {
-        if (canceled()) {
-            return;
+            if (!need.isEmpty()) {
+                prefetchTiles(need);
+            }
+
+            for (auto it = need.cbegin(); it != need.cend(); ++it) {
+                if (auto* tile = surfaceMeshPtr_->getTilePtrByKey(*it); tile) {
+                    if (!tile->getIsInited()) {
+                        tile->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+                        tile->initImageData(tileSidePixelSize_, tileHeightMatrixRatio_);
+                    }
+                }
+            }
+        }
+    }
+
+    { // mark tiles
+        for (auto it = visAndPrefTileKeys.cbegin(); it != visAndPrefTileKeys.cend(); ++it) {
+            if (auto* t = surfaceMeshPtr_->getTilePtrByKey(*it); t) {
+                if (t->getIsInited()) {
+                    if (t->getMosaicImageDataCRef().empty()) {
+                        t->initImageData(t->sidePixelSize(), t->heightMatrixRatio());
+                    }
+                }
+                t->setInFov(true);
+            }
+        }
+    }
+
+    uint64_t traceCnt = 0;
+
+    // after expand by martix
+    const int numHeightTiles = surfaceMeshPtr_->getNumHeightTiles();
+    const int stepSizeHeightMatrix = surfaceMeshPtr_->getStepSizeHeightMatrix();
+    bool* pairOutOfFovPtr = nullptr;
+
+    // helpers
+    auto putPixel = [&](int x, int y, uint8_t color, int headIndx) -> SurfaceTile* {
+        const int meshX = x / tileSidePixelSize_;
+        const int meshY = (numHeightTiles - 1) - (y / tileSidePixelSize_);
+        SurfaceTile* t  = surfaceMeshPtr_->getTileByXYIndxs(meshY, meshX);
+        if (!t || !t->getInFov()) {
+            if (pairOutOfFovPtr) {
+                *pairOutOfFovPtr = true;
+            }
+            return nullptr;
         }
 
+        if (headIndx > t->getHeadIndx()) {
+            const int tileX = x % tileSidePixelSize_;
+            const int tileY = y % tileSidePixelSize_;
+
+            auto& img = t->getMosaicImageDataRef();
+            img.data()[tileY * tileSidePixelSize_ + tileX] = color;
+            t->setIsUpdated(true);
+            traceCnt++;
+
+            return t;
+        }
+        return nullptr;
+    };
+
+    if (bench) {
+        qDebug() << "prep time,    ms" << et.elapsed(); // test
+        et.restart();
+        et.start();
+    }
+
+    QSet<SurfaceTile*> usedTiles;
+    int lastHead = -1;
+    bool cancelPending = false;
+    int cancelEpochF = -1;
+    int cancelEpochS = -1;
+    char cancelSide = 0;
+
+    // ray tracing
+    for (int i = 0; i < measLinesVertices.size(); i += 2) {
         if (i + 5 > measLinesVertices.size() - 1) {
             break;
         }
@@ -534,8 +809,22 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             continue;
         }
 
-        auto segFEpoch = datasetPtr_->fromIndexCopy(epochIndxs[segFIndx]);
-        auto segSEpoch = datasetPtr_->fromIndexCopy(epochIndxs[segSIndx]);
+        const int pairEpochF = epochIndxs[segFIndx];
+        const int pairEpochS = epochIndxs[segSIndx];
+        const char pairSide = isOdds[segFIndx];
+        bool stopAfterThis = false;
+        if (cancelPending) {
+            const bool isCounterpart = (pairEpochF == cancelEpochF &&
+                                        pairEpochS == cancelEpochS &&
+                                        pairSide != cancelSide);
+            if (!isCounterpart) {
+                break;
+            }
+            stopAfterThis = true;
+        }
+
+        auto segFEpoch = datasetPtr_->fromIndexCopy(pairEpochF);
+        auto segSEpoch = datasetPtr_->fromIndexCopy(pairEpochS);
         if (!segFEpoch.isValid() || !segSEpoch.isValid()) {
             continue;
         }
@@ -566,9 +855,8 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             segSCharts->updateCompesated();
         }
 
-        // Bresenham
-        // first segment
-        QVector3D segFPhBegPnt = segFIsOdd ? measLinesVertices[segFBegVertIndx] : measLinesVertices[segFEndVertIndx]; // physics coordinates
+        // Bresenham, first segment
+        QVector3D segFPhBegPnt = segFIsOdd ? measLinesVertices[segFBegVertIndx] : measLinesVertices[segFEndVertIndx];
         QVector3D segFPhEndPnt = segFIsOdd ? measLinesVertices[segFEndVertIndx] : measLinesVertices[segFBegVertIndx];
         auto segFBegPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFPhBegPnt);
         auto segFEndPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFPhEndPnt);
@@ -597,7 +885,6 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
         int segSPixSx = (segSPixX1 < segSPixX2) ? 1 : -1;
         int segSPixSy = (segSPixY1 < segSPixY2) ? 1 : -1;
         int segSPixErr = segSPixDx - segSPixDy;
-
         // pixel length checking
         if (!checkLength(segFPixTotDist) ||
             !checkLength(segSPixTotDist)) {
@@ -616,135 +903,251 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
         QVector3D segFBoatPos(segFInterpNED.n, segFInterpNED.e, 0.0f);
         QVector3D segSBoatPos(segSInterpNED.n, segSInterpNED.e, 0.0f);
 
-        // follow the first segment
-        while (true) {
-            // first segment
-            float segFPixCurrDist = std::sqrt(std::pow(segFPixX1 - segFPixX2, 2) + std::pow(segFPixY1 - segFPixY2, 2));
-            float segFProgByPix = std::min(1.0f, segFPixCurrDist / segFPixTotDist);
-            QVector3D segFCurrPhPos(segFPhBegPnt.x() + segFProgByPix * segFPhDistX, segFPhBegPnt.y() + segFProgByPix * segFPhDistY, segFDistProc);
-            // second segment, calc corresponding progress using smoothed interpolation
-            float segSCorrProgByPix = std::min(1.0f, segFPixCurrDist / segFPixTotDist * segSPixTotDist / segFPixTotDist);
-            QVector3D segSCurrPhPos(segSPhBegPnt.x() + segSCorrProgByPix * segSPhDistX, segSPhBegPnt.y() + segSCorrProgByPix * segSPhDistY, segSDistProc);
+        // select longest ray
+        const bool bigIsF = (segFPixTotDist >= segSPixTotDist);
+        int       bigX1  = bigIsF ? segFPixX1  :  segSPixX1;
+        int       bigY1  = bigIsF ? segFPixY1  :  segSPixY1;
+        const int bigX2  = bigIsF ? segFPixX2  :  segSPixX2;
+        const int bigY2  = bigIsF ? segFPixY2  :  segSPixY2;
+        int       bigErr = bigIsF ? segFPixErr :  segSPixErr;
+        const int bigDx  = bigIsF ? segFPixDx  :  segSPixDx;
+        const int bigDy  = bigIsF ? segFPixDy  :  segSPixDy;
+        const int bigSx  = bigIsF ? segFPixSx  :  segSPixSx;
+        const int bigSy  = bigIsF ? segFPixSy  :  segSPixSy;
+        const float bigTot = std::max(1.0f, bigIsF ? segFPixTotDist : segSPixTotDist);
 
-            auto indxF = sampleIndex(segFCharts, segFCurrPhPos.distanceToPoint(segFBoatPos));
-            auto indxS = sampleIndex(segSCharts, segSCurrPhPos.distanceToPoint(segSBoatPos));
-            int segFColorIndx = 0;
-            int segSColorIndx = 0;
-
-            bool bothValid = indxF && indxS;
-            if (bothValid) {
-                segFColorIndx = getColorIndx(segFCharts, *indxF);
-                segSColorIndx = getColorIndx(segSCharts, *indxS);
-                if (segFColorIndx == 0 && segSColorIndx == 0) {
-                    bothValid = false;
-                }
+        auto bresStep = [&](int& x0, int& y0, const int& x1, const int& y1, int& err, const int& dx, const int& dy, const int& sx,  const int& sy) -> bool {
+            if (x0 == x1 && y0 == y1) {
+                return true;
             }
 
+            int e2 = (err << 1);
+            if (e2 > -dy) {
+                err -= dy; x0 += sx;
+            }
+            else if (e2 < dx) {
+                err += dx; y0 += sy;
+            }
+
+            return false;
+        };
+
+        const int freshEpIndx = pairEpochS;
+        bool pairUsed = false;
+        bool pairOutOfFov = false;
+        pairOutOfFovPtr = &pairOutOfFov;
+
+        while (true) { // follow the biggest segment
+            const float rem = std::sqrt(float((bigX2 - bigX1) * (bigX2 - bigX1) + (bigY2 - bigY1) * (bigY2 - bigY1))); // moving on longest line
+            const float t   = std::clamp(rem / bigTot, 0.0f, 1.0f);
+            QVector3D segFCurrPhPos(segFPhBegPnt.x() + t * segFPhDistX, segFPhBegPnt.y() + t * segFPhDistY, segFDistProc);
+            QVector3D segSCurrPhPos(segSPhBegPnt.x() + t * segSPhDistX, segSPhBegPnt.y() + t * segSPhDistY, segSDistProc);
+
+            int segFColorIndx = getColorIndx(segFCharts, sampleIndex(segFCharts, segFCurrPhPos.distanceToPoint(segFBoatPos)));
+            int segSColorIndx = getColorIndx(segSCharts, sampleIndex(segSCharts, segSCurrPhPos.distanceToPoint(segSBoatPos)));
+            if (!segFColorIndx && !segSColorIndx) {
+                if (bresStep(bigX1, bigY1, bigX2, bigY2, bigErr, bigDx, bigDy, bigSx, bigSy)) {
+                    break;
+                }
+                continue;
+            }
             auto segFCurrPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFCurrPhPos);
             auto segSCurrPixPos = surfaceMeshPtr_->convertPhToPixCoords(segSCurrPhPos);
 
-            // color interpolation between two pixels
-            int interpPixX1 = segFCurrPixPos.x();
-            int interpPixY1 = segFCurrPixPos.y();
-            int interpPixX2 = segSCurrPixPos.x();
-            int interpPixY2 = segSCurrPixPos.y();
-            int interpPixDistX = interpPixX2 - interpPixX1;
-            int interpPixDistY = interpPixY2 - interpPixY1;
-            float interpPixTotDist = std::sqrt(std::pow(interpPixDistX, 2) + std::pow(interpPixDistY, 2));
+            // interp Bres
+            int x0 = int(segFCurrPixPos.x());
+            int y0 = int(segFCurrPixPos.y());
+            const int x1 = int(segSCurrPixPos.x());
+            const int y1 = int(segSCurrPixPos.y());
+            const int dx = std::abs(x1 - x0);
+            const int dy = std::abs(y1 - y0);
+            const int sx = (x0 < x1) ? 1 : -1;
+            const int sy = (y0 < y1) ? 1 : -1;
+            int err = dx - dy;
+            const int stepsTot = dx + dy;
 
-            // interpolate
-            if (bothValid && checkLength(interpPixTotDist)) {
-                for (int step = 0; step <= interpPixTotDist; ++step) {
-                    float interpProgressByPixel = static_cast<float>(step) / interpPixTotDist;
-                    int interpX = interpPixX1 + interpProgressByPixel * interpPixDistX;
-                    int interpY = interpPixY1 + interpProgressByPixel * interpPixDistY;
-                    auto interpColorIndx = static_cast<uint8_t>((1 - interpProgressByPixel) * segFColorIndx + interpProgressByPixel * segSColorIndx);
+            if (checkLength(stepsTot)) { // color interpolation between two pixels
+                int stepsDone = 0;
 
-                    for (int offsetX = -interpLineWidth_; offsetX <= interpLineWidth_; ++offsetX) { // bypass
-                        for (int offsetY = -interpLineWidth_; offsetY <= interpLineWidth_; ++offsetY) {
-                            int bypassInterpX = std::min(gMeshWidthPixs - 1, std::max(0, interpX + offsetX)); // cause bypass
-                            int bypassInterpY = std::min(gMeshHeightPixs - 1, std::max(0, interpY + offsetY));
+                while (true) { // follow between pixels
+                    const float iP       = static_cast<float>(stepsDone) / float(stepsTot); /*stepsTot*/
+                    const auto  iClrIndx = static_cast<uint8_t>((1 - iP) * segFColorIndx + iP * segSColorIndx);
 
-                            int tileSidePixelSize = surfaceMeshPtr_->getTileSidePixelSize();
-                            int meshIndxX = bypassInterpX / tileSidePixelSize;
-                            int meshIndxY = (surfaceMeshPtr_->getNumHeightTiles() - 1) - bypassInterpY / tileSidePixelSize;
-                            int tileIndxX = bypassInterpX % tileSidePixelSize;
-                            int tileIndxY = bypassInterpY % tileSidePixelSize;
+                    // рисуем текущий пиксель
+                    auto* t = putPixel(x0, y0, iClrIndx, freshEpIndx);
 
-                            auto& tileRef = surfaceMeshPtr_->getTileMatrixRef()[meshIndxY][meshIndxX];
-                            if (!tileRef->getIsInited()) {
-                                tileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+                    if (t) {
+                        pairUsed = true;
+                        if (!(stepsDone % tileHeightMatrixRatio_)) {
+                            usedTiles.insert(t);
+                            lastHead = pairEpochF;
+
+                            const int tileX = x0 % tileSidePixelSize_;
+                            const int tileY = y0 % tileSidePixelSize_;
+                            const int numSteps = tileSidePixelSize_ / stepSizeHeightMatrix + 1;
+                            const int hIdx = (tileY / stepSizeHeightMatrix) * numSteps + (tileX / stepSizeHeightMatrix);
+                            auto& hT = t->getHeightMarkVerticesRef()[hIdx];
+                            if (hT != HeightType::kTriangulation) {
+                                t->getHeightVerticesRef()[hIdx][2] = segFCurrPhPos[2];
+                                hT = HeightType::kMosaic;
                             }
-
-                            // image
-                            auto& imageRef = tileRef->getMosaicImageDataRef();
-                            int bytesPerLine = std::sqrt(imageRef.size());
-                            *(imageRef.data() + tileIndxY * bytesPerLine + tileIndxX) = interpColorIndx;
-
-                            // height matrix
-                            int stepSizeHeightMatrix = surfaceMeshPtr_->getStepSizeHeightMatrix();
-                            int numSteps = tileSidePixelSize / stepSizeHeightMatrix + 1;
-                            int hVIndx = (tileIndxY / stepSizeHeightMatrix) * numSteps + (tileIndxX / stepSizeHeightMatrix);
-
-                            if (tileRef->getHeightMarkVerticesRef()[hVIndx] != HeightType::kTriangulation) {
-                                tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos[2];
-                                tileRef->getHeightMarkVerticesRef()[hVIndx] = HeightType::kMosaic;
-                            }
-
-                            tileRef->setIsUpdated(true);
-
-                            changedTiles.insert(tileRef);
                         }
                     }
+
+                    if (bresStep(x0, y0, x1, y1, err, dx, dy, sx, sy)) {
+                        break;
+                    }
+
+                    ++stepsDone;
                 }
             }
 
-            // break at the end of the first segment
-            if (segFPixX1 == segFPixX2 && segFPixY1 == segFPixY2) {
+            if (bresStep(bigX1, bigY1, bigX2, bigY2, bigErr, bigDx, bigDy, bigSx, bigSy)) {
                 break;
             }
+        } // while interp line
+        auto addBlocked = [&](int idx) {
+            if (!blockedEpochs.contains(idx)) {
+                blockedEpochs.insert(idx);
+                if (newBlocked) {
+                    newBlocked->append(idx);
+                }
+            }
+        };
+        auto addUsed = [&](int idx) {
+            if (!usedEpochs.contains(idx)) {
+                usedEpochs.insert(idx);
+                if (newUsed) {
+                    newUsed->append(idx);
+                }
+            }
+        };
 
-            // Bresenham
-            int segFPixE2 = 2 * segFPixErr;
-            if (segFPixE2 > -segFPixDy) {
-                segFPixErr -= segFPixDy;
-                segFPixX1 += segFPixSx;
-            }
-            if (segFPixE2 < segFPixDx) {
-                segFPixErr += segFPixDx;
-                segFPixY1 += segFPixSy;
-            }
-            int segSPixE2 = 2 * segSPixErr;
-            if (segSPixE2 > -segSPixDy) {
-                segSPixErr -= segSPixDy;
-                segSPixX1 += segSPixSx;
-            }
-            if (segSPixE2 < segSPixDx) {
-                segSPixErr += segSPixDx;
-                segSPixY1 += segSPixSy;
+        if (pairOutOfFov) {
+            addBlocked(pairEpochF);
+            addBlocked(pairEpochS);
+        } else if (pairUsed) {
+            addUsed(pairEpochF);
+            addUsed(pairEpochS);
+        }
+
+        if (!cancelPending && canceled()) {
+            cancelPending = true;
+            cancelEpochF = pairEpochF;
+            cancelEpochS = pairEpochS;
+            cancelSide = pairSide;
+        }
+        if (stopAfterThis) {
+            break;
+        }
+    } // for rays
+
+    { // unmark tiles
+        for (auto it = visAndPrefTileKeys.cbegin(); it != visAndPrefTileKeys.cend(); ++it) {
+            if (auto* t = surfaceMeshPtr_->getTilePtrByKey(*it); t) {
+                t->setInFov(false);
             }
         }
     }
 
     lastMatParams_ = actualMatParams;
-    postUpdate(changedTiles);
+
+    if (bench) {
+        qDebug() << "trace time,   ms" << et.elapsed();
+        et.restart();
+        et.start();
+    }
+
+    //qDebug() << usedTiles.size();
+    if (usedTiles.isEmpty()) {
+        return;
+    }
+
+    if (lastHead != -1) {
+        for (auto it = usedTiles.cbegin(); it != usedTiles.cend(); ++it) {
+            auto* t = *it;
+            t->setHeadIndx(lastHead);
+        }
+    }
+
+    // collect changed tiles
+    QSet<SurfaceTile*> updTiles = surfaceMeshPtr_->getUpdatedTiles();
+    QSet<SurfaceTile*> changedOut;
+    postUpdate(updTiles, changedOut);
+    updTiles.unite(changedOut);
+    TileMap res;
+    res.reserve(updTiles.size());
+    for (SurfaceTile* itm : std::as_const(updTiles)) {
+        if (!itm || !itm->getIsInited()) {
+            continue;
+        }
+        updateUnmarkedHeightVertices(itm);
+        itm->updateHeightIndices();
+        itm->setIsUpdated(false);
+        res.insert((itm)->getKey(), (*itm));
+    }
+    surfaceMeshPtr_->setTileUsed(updTiles, true); // метка тайлов/ужимка
+
+    if (bench) {
+        qDebug() << "post up time, ms" << et.elapsed();
+    }
+
+    // emit data
+    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
+    //if (haveLastPair) {
+    //    QMetaObject::invokeMethod(dataProcessor_, "postTraceLines", Qt::QueuedConnection,
+    //        Q_ARG(QVector3D, lastLeftBeg),
+    //        Q_ARG(QVector3D, lastLeftEnd),
+    //        Q_ARG(QVector3D, lastRightBeg),
+    //        Q_ARG(QVector3D, lastRightEnd)
+    //        );
+    //}
 }
 
 int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
 {
     int retVal{ 0 };
 
-    if (charts->compensated.size() > ampIndx) {
-        int cVal = charts->compensated[ampIndx] ;
-        cVal = std::min(colorTableSize_, cVal);
-        retVal = cVal;
-    }
-    else {
+    if (!charts || ampIndx == -1) {
         return retVal;
     }
 
+    const auto ampSize = charts->compensated.size();
+
+    if (ampSize > ampIndx) {
+        if (aliasWindow_ == 1) {
+            int cVal = charts->compensated[ampIndx] ;
+            cVal = std::min(colorTableSize_, cVal);
+            retVal = cVal;
+        }
+        else { // aliasing
+            const int half  = aliasWindow_ / 2;
+            const int lIndx = ampIndx - half;
+            const int rIndx = ampIndx + half;
+
+            if (lIndx > 0 && ampSize > lIndx &&
+                rIndx > 0 && ampSize > rIndx) {
+                int newColorIndx = 0;
+                for (int i = lIndx; i < rIndx; ++i) {
+                    int cVal = charts->compensated[i] ;
+                    cVal = std::min(colorTableSize_, cVal);
+                    newColorIndx += cVal;
+                }
+                retVal = float(newColorIndx) / float(aliasWindow_);
+            }
+            else {
+                int cVal = charts->compensated[ampIndx] ;
+                cVal = std::min(colorTableSize_, cVal);
+                retVal = cVal;
+            }
+        }
+    }
+    else {
+        return retVal; // если вышел за предел - ноль
+    }
+
     if (!retVal) {
-        return ++retVal;
+        return 1;
     }
 
     return retVal;
@@ -752,4 +1155,323 @@ int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
 bool MosaicProcessor::canceled() const noexcept
 {
     return dataProcessor_ && dataProcessor_->isCancelRequested();
+}
+
+QSet<TileKey> MosaicProcessor::forecastTilesToTouch(const QVector<QVector3D>& meas, const QVector<char>& isOdds, const QVector<int>& epochIndxs, int marginTiles) const
+{
+    QSet<TileKey> retVal;
+
+    if (!surfaceMeshPtr_ || meas.size() < 4) {
+        return retVal;
+    }
+
+    const int tilePx = surfaceMeshPtr_->getTileSidePixelSize();
+    const int H      = surfaceMeshPtr_->getNumHeightTiles();
+    const int W      = surfaceMeshPtr_->getNumWidthTiles();
+    auto clamp = [](int v, int lo, int hi) -> int {
+        return std::min(std::max(v, lo), hi);
+    };
+
+    const int stridePx = std::max(8, tilePx / 4);
+    const int m = std::max(0, marginTiles);
+
+    auto pushIdxWithMargin = [&](int mx, int my){
+        const int x0 = clamp(mx - m, 0, W - 1);
+        const int x1 = clamp(mx + m, 0, W - 1);
+        const int y0 = clamp(my - m, 0, H - 1);
+        const int y1 = clamp(my + m, 0, H - 1);
+        for (int ty = y0; ty <= y1; ++ty) {
+            for (int tx = x0; tx <= x1; ++tx) {
+                if (auto* t = surfaceMeshPtr_->getTileByXYIndxs(ty, tx)) {
+                    retVal.insert(t->getKey());
+                }
+            }
+        }
+    };
+
+    auto addPix = [&](int pixX, int pixY){
+        int mx = clamp(pixX / tilePx,          0, W - 1);
+        int my = clamp((H - 1) - pixY / tilePx,0, H - 1);
+        pushIdxWithMargin(mx, my);
+    };
+
+    auto addLineTiles = [&](int x1, int y1, int x2, int y2){
+        int ax1 = clamp(x1 / tilePx,           0, W - 1);
+        int ay1 = clamp((H - 1) - y1 / tilePx, 0, H - 1);
+        int ax2 = clamp(x2 / tilePx,           0, W - 1);
+        int ay2 = clamp((H - 1) - y2 / tilePx, 0, H - 1);
+
+        int dx = std::abs(ax2 - ax1), sx = ax1 < ax2 ? 1 : -1;
+        int dy = -std::abs(ay2 - ay1), sy = ay1 < ay2 ? 1 : -1;
+        int err = dx + dy, x = ax1, y = ay1;
+
+        while (true) {
+            pushIdxWithMargin(x, y);
+            if (x == ax2 && y == ay2) {
+                break;
+            }
+
+            int e2 = 2 * err;
+            if (e2 >= dy) {
+                err += dy;
+                x += sx;
+            }
+
+            if (e2 <= dx) {
+                err += dx;
+                y += sy;
+            }
+        }
+    };
+
+    for (int i = 0; i + 3 < meas.size(); i += 2) {
+        int segFBegVertIndx = i,     segFEndVertIndx = i + 1;
+        int segSBegVertIndx = i + 2, segSEndVertIndx = i + 3;
+
+        int segFIndx = i / 2;
+        int segSIndx = (i + 2) / 2;
+
+        if (epochIndxs[segFIndx] == epochIndxs[segSIndx] || isOdds[segFIndx] != isOdds[segSIndx]) {
+            ++segSIndx; segSBegVertIndx += 2; segSEndVertIndx += 2;
+        }
+        if (segSIndx >= epochIndxs.size()) {
+            break;
+        }
+
+        if (epochIndxs[segFIndx] == epochIndxs[segSIndx] || isOdds[segFIndx] != isOdds[segSIndx]) {
+            continue;
+        }
+
+        const bool segFIsOdd = isOdds[segFIndx] == '1';
+        const bool segSIsOdd = isOdds[segSIndx] == '1';
+        if (segFIsOdd != segSIsOdd) {
+            continue;
+        }
+
+        auto Fbeg = surfaceMeshPtr_->convertPhToPixCoords(segFIsOdd ? meas[segFBegVertIndx] : meas[segFEndVertIndx]);
+        auto Fend = surfaceMeshPtr_->convertPhToPixCoords(segFIsOdd ? meas[segFEndVertIndx] : meas[segFBegVertIndx]);
+        auto Sbeg = surfaceMeshPtr_->convertPhToPixCoords(segSIsOdd ? meas[segSBegVertIndx] : meas[segSEndVertIndx]);
+        auto Send = surfaceMeshPtr_->convertPhToPixCoords(segSIsOdd ? meas[segSEndVertIndx] : meas[segSBegVertIndx]);
+
+        const int Fx1 = int(Fbeg.x()), Fy1 = int(Fbeg.y());
+        const int Fx2 = int(Fend.x()), Fy2 = int(Fend.y());
+        const int Sx1 = int(Sbeg.x()), Sy1 = int(Sbeg.y());
+        const int Sx2 = int(Send.x()), Sy2 = int(Send.y());
+
+        const float Ftot = std::hypot(Fx2 - Fx1, Fy2 - Fy1);
+        const float Stot = std::hypot(Sx2 - Sx1, Sy2 - Sy1);
+        const float longest = std::max(Ftot, Stot);
+        if (longest <= 0.0f) {
+            continue;
+        }
+
+        const int steps = std::max(1, int(std::ceil(longest / float(stridePx))));
+        for (int s = 0; s <= steps; ++s) {
+            float tt = float(s) / float(steps);
+            const int Fx = int(std::lround(Fx1 + tt * (Fx2 - Fx1)));
+            const int Fy = int(std::lround(Fy1 + tt * (Fy2 - Fy1)));
+            const int Sx = int(std::lround(Sx1 + tt * (Sx2 - Sx1)));
+            const int Sy = int(std::lround(Sy1 + tt * (Sy2 - Sy1)));
+            addPix(Fx, Fy);
+            addPix(Sx, Sy);
+            addLineTiles(Fx, Fy, Sx, Sy);
+        }
+    }
+
+    return retVal;
+}
+
+void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles) // может вызвать только prefetch, т.к. инитит тайл
+{
+    if (!surfaceMeshPtr_ || tiles.isEmpty()) {
+        return;
+    }
+
+    QSet<SurfaceTile*> initedNow;
+
+    for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) {
+        const TileKey tKey = it.key();
+        SurfaceTile* dst = surfaceMeshPtr_->getTilePtrByKey(tKey);
+        if (!dst) {
+            continue;
+        }
+        const auto& src = it.value();
+
+        if (!dst->getIsInited()) {
+            dst->setOrigin(src.getOrigin()); //
+            dst->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+            dst->initImageData(tileSidePixelSize_, tileHeightMatrixRatio_);
+        }
+
+        dst->setHeadIndx(src.getHeadIndx());
+
+        // image
+        auto& di = dst->getMosaicImageDataRef();
+        const auto& si = src.getMosaicImageDataCRef();
+        if (!si.empty()) {
+            if (di.size() != si.size()) {
+                dst->initImageData(dst->sidePixelSize(), dst->heightMatrixRatio());
+            }
+            if (di.size() == si.size()) {
+                memcpy(di.data(), si.data(), size_t(di.size()));
+            }
+        }
+        // heights & marks
+        const auto& srcHeights = src.getHeightVerticesCRef();
+        const auto& srcMarks = src.getHeightMarkVerticesCRef();
+        auto& dstHeights = dst->getHeightVerticesRef();
+        auto& dstMarks = dst->getHeightMarkVerticesRef();
+        if (!srcHeights.isEmpty() && srcHeights.size() == dstHeights.size()) {
+            dstHeights = srcHeights;
+        }
+        if (!srcMarks.isEmpty() && srcMarks.size() == dstMarks.size()) {
+            dstMarks = srcMarks;
+        }
+
+        dst->updateHeightIndices();
+        dst->setIsUpdated(false);
+
+        if (dst->getIsInited()) {
+            initedNow.insert(dst);
+        }
+    }
+
+    if (!initedNow.isEmpty()) {
+        surfaceMeshPtr_->setTileUsed(initedNow, false); // поднимет счетчики, эвикт выключен чтобы не выгрузить возможно нужные тайлы
+    }
+
+    return;
+}
+
+bool MosaicProcessor::prefetchTiles(const QSet<TileKey> &keys) // подгрузка тайлов с hotCache, db (dataprocessor)
+{
+    if (!dataProcessor_ || keys.isEmpty()) {
+        return false;
+    }
+
+    Q_ASSERT(QThread::currentThread() != dataProcessor_->thread());
+
+    TileMap allGot;
+    QSet<TileKey> missing;
+
+    auto putAllGotTiles = [&]() -> bool {
+        if (!allGot.isEmpty()) {
+            putTilesIntoMesh(allGot);
+        }
+
+        return !allGot.isEmpty();
+    };
+
+    // забрать с хот кэша
+    if (!QMetaObject::invokeMethod(dataProcessor_, "fetchFromHotCache", Qt::BlockingQueuedConnection, Q_RETURN_ARG(TileMap, allGot), Q_ARG(QSet<TileKey>, keys), Q_ARG(QSet<TileKey>*, &missing))) {
+        qWarning() << "[prefetch] invoke fetchFromHotCache failed";
+    }
+
+    // вычесть то, чего нет в БД
+    QSet<TileKey> waiting;
+    if (!QMetaObject::invokeMethod(dataProcessor_, "filterNotFoundOut", Qt::BlockingQueuedConnection, Q_ARG(QSet<TileKey>, missing), Q_ARG(QSet<TileKey>*, &waiting))) {
+        qWarning() << "[prefetch] invoke filterNotFoundOut failed";
+    }
+
+    // нечего ждать,  бд не готова - выход
+    if (waiting.isEmpty() || !dataProcessor_->isDbReady()) {
+        return putAllGotTiles();
+    }
+
+    // цикл ожидания поступлений из БД
+    while (!waiting.isEmpty()) {
+        // попросить БД
+        QMetaObject::invokeMethod(dataProcessor_, "requestTilesFromDB", Qt::QueuedConnection, Q_ARG(QSet<TileKey>, waiting));
+
+        // засечь тик и уснуть до прогресса
+        quint64 t0 = 0;
+        if (!QMetaObject::invokeMethod(dataProcessor_, "prefetchProgressTick", Qt::BlockingQueuedConnection, Q_RETURN_ARG(quint64, t0))) {
+            qWarning() << "[prefetch] invoke prefetchProgressTick failed";
+        }
+
+        // корректное ожидание через паблик-API
+        dataProcessor_->prefetchWait(t0);
+
+        if (canceled()) {
+            break;
+        }
+
+        // попробуем снова забрать с горячего кеша (в него пишет БД)
+        QSet<TileKey> stillMissing;
+        TileMap newlyGot;
+
+        if (!QMetaObject::invokeMethod(dataProcessor_, "fetchFromHotCache", Qt::BlockingQueuedConnection, Q_RETURN_ARG(TileMap, newlyGot), Q_ARG(QSet<TileKey>, waiting), Q_ARG(QSet<TileKey>*, &stillMissing))) {
+            qWarning() << "[prefetch] invoke fetchFromHotCache (retry) failed";
+        }
+
+        // что осталось уйдёт в ожидание
+        if (!QMetaObject::invokeMethod(dataProcessor_, "filterNotFoundOut", Qt::BlockingQueuedConnection, Q_ARG(QSet<TileKey>, stillMissing), Q_ARG(QSet<TileKey>*, &stillMissing))) {
+            qWarning() << "[prefetch] invoke filterNotFoundOut (retry) failed";
+        }
+
+        // аккумуляция результата
+        for (auto it = newlyGot.cbegin(); it != newlyGot.cend(); ++it) {
+            allGot.insert(it.key(), it.value());
+        }
+
+        // на следующий поиск
+        waiting.swap(stillMissing);
+    }
+
+    // выход
+    return putAllGotTiles();
+}
+
+QVector<QVector<int> > MosaicProcessor::splitContinuousSegments(const QVector<int> &indxs, int minSegmentLen, int maxSegmentLen)
+{
+    QVector<QVector<int>> result;
+    if (indxs.isEmpty()) {
+        return result;
+    }
+
+    if (maxSegmentLen < minSegmentLen) {
+        maxSegmentLen = minSegmentLen;
+    }
+
+    const int n = indxs.size();
+    int startPos = 0;
+
+    while (startPos < n) {
+        int endPos = startPos;
+
+        while (endPos + 1 < n &&
+               indxs[endPos + 1] == indxs[endPos] + 1) {
+            ++endPos;
+        }
+
+        const int runLen = endPos - startPos + 1;
+
+        if (runLen >= minSegmentLen) {
+            int segStartPos = startPos;
+
+            while (segStartPos <= endPos) {
+                int segEndPos = std::min(segStartPos + maxSegmentLen - 1, endPos);
+                int segLen    = segEndPos - segStartPos + 1;
+
+                if (segLen >= minSegmentLen) {
+                    QVector<int> segment;
+                    segment.reserve(segLen);
+                    for (int i = segStartPos; i <= segEndPos; ++i) {
+                        segment.push_back(indxs[i]);
+                    }
+                    result.append(std::move(segment));
+                }
+
+                if (segEndPos >= endPos) {
+                    break;
+                }
+
+                segStartPos = segEndPos;
+            }
+        }
+
+        startPos = endPos + 1;
+    }
+
+    return result;
 }

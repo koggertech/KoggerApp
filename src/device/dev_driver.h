@@ -192,6 +192,7 @@ signals:
     void attitudeComplete(float yaw, float pitch, float roll);
     void tempComplete(float val);
     void distComplete(const ChannelId& channelId, int dist);
+    void encoderComplete(float e1, float e2, float e3);
 
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
     void beaconActivationComplete(uint8_t id);
@@ -278,6 +279,7 @@ protected:
     IDBinChart* idChart = NULL;
     IDBinAttitude* idAtt = NULL;
     IDBinTemp* idTemp = NULL;
+    IDBinEncoder* idEncoder = NULL;
 
     IDBinDataset* idDataset = NULL;
     IDBinDistSetup* idDistSetup = NULL;
@@ -393,6 +395,7 @@ protected slots:
     void receivedRaw        (RawData raw_data);
     void receivedAtt        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedTemp       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedEncoder(Type type, Version ver, Resp resp);
 
     void receivedDataset    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedDistSetup  (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);

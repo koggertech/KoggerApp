@@ -8,3 +8,8 @@ out_x64
 *.user
 *.bkp
 flasher
+# other
+.github
+.git
+.qtcreator
+.vscode

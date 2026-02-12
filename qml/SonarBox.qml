@@ -6,7 +6,7 @@ import QtQuick.Dialogs
 
 DevSettingsBox {
     id: control
-    isActive: dev !== null ? dev.isChartSupport : false
+    isActive: !!(dev && dev.isChartSupport)
 
     ColumnLayout {
         id: columnItem
@@ -87,13 +87,15 @@ DevSettingsBox {
                 nameFilters: ["XML files (*.xml)"]
 
                 onAccepted: {
-                    var selectedFile = importFileDialog.selectedFile
-                    if (selectedFile !== "") {
-                        var filePath = selectedFile.toString();
-                        if (Qt.platform.os === "windows")
-                            filePath = filePath.substring(8)
-                        dev.importSettingsFromXML(filePath)
-                    }
+                    const url = importFileDialog.selectedFile
+                    if (!url) return
+
+                    let filePath = url.toString()
+
+                    if (filePath.startsWith("file:///"))
+                        filePath = filePath.slice(8)
+
+                    dev.importSettingsFromXML(filePath)
                 }
             }
 
@@ -104,13 +106,16 @@ DevSettingsBox {
                 nameFilters: ["XML files (*.xml)"]
 
                 onAccepted: {
-                    var selectedFile = exportFileDialog.selectedFile
-                    if (selectedFile !== "") {
-                        var filePath = selectedFile.toString();
-                        if (Qt.platform.os === "windows")
-                            filePath = filePath.substring(8)
-                        dev.exportSettingsToXML(filePath)
-                    }
+                    const url = exportFileDialog.selectedFile
+                    if (!url || url.toString() === "")
+                        return
+
+                    let filePath = url.toString()
+
+                    if (filePath.startsWith("file:///"))
+                        filePath = filePath.slice(8)
+
+                    dev.exportSettingsToXML(filePath)
                 }
             }
 

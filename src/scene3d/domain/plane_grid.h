@@ -13,9 +13,9 @@ public:
     public:
         PlaneGridRenderImplementation();
         virtual ~PlaneGridRenderImplementation();
-        virtual void render(QOpenGLFunctions* ctx,
-                          const QMatrix4x4& mvp,
-                          const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+        //virtual void render(QOpenGLFunctions* ctx,
+        //                  const QMatrix4x4& mvp,
+        //                  const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
 
         virtual void render(QOpenGLFunctions* ctx,
                             const QMatrix4x4& model,
@@ -27,12 +27,30 @@ public:
         QSizeF m_size = {10,10};
         int m_cellSize = 1.0f;
         QVector3D m_position = {0.0f, 0.0f, 0.0f};
+
+        bool defType_ = true;
+        int circleSize_ = 1;
+        int circleStep_ = 1;
+        int circleAngle_ = 1;
+        bool circleLabels_ = true;
+        bool isActiveZeroing_ = false;
+        QVector3D circlePosition_;
     };
 
     void setPlane(const Plane& plane);
     void setSize(const QSizeF& size);
     void setPosition(const QVector3D& pos);
     void setCellSize(int size);
+    void setType(bool type);
+
+    void setCircleSize(int val);
+    void setCircleStep(int val);
+    void setCircleAngle(int val);
+    void setCircleLabels(bool state);
+    void setCirclePosition(const QVector3D& pos);
+    void setActiveZeroing(bool state);
+
+    void clear();
 
     explicit PlaneGrid(QObject *parent = nullptr);
 

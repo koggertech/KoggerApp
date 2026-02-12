@@ -7,12 +7,14 @@
 #include <QDebug>
 #include <QThread>
 
+#include "tile_provider_ids.h"
+
 
 namespace map {
 
-TileDB::TileDB(std::weak_ptr<TileProvider> tileProvider) :
+TileDB::TileDB(int32_t providerId) :
     QObject(nullptr),
-    tileProvider_(tileProvider),
+    providerId_(providerId),
     stopRequested_(false)
 {
     qRegisterMetaType<TileIndex>("TileIndex");
@@ -76,25 +78,25 @@ void TileDB::stopAndClearRequests()
     pendingLoadRequests_.clear();
 }
 
-void TileDB::init()
+void TileDB::setProviderId(int32_t providerId)
 {
-    QString dbName;
-
-    if (auto sharedProvider = tileProvider_.lock(); sharedProvider) {
-        switch (sharedProvider->getProviderId()) {
-        case 1: {
-            dbName = "tiles_google";
-            break;
-        }
-        default: {
-            dbName = "tiles_undefined";
-            break;
-        }
-        }
+    if (providerId_ == providerId) {
+        return;
     }
 
+    stopAndClearRequests();
+    closeDb();
+
+    providerId_ = providerId;
+    init();
+}
+
+void TileDB::init()
+{
+    QString dbName = dbNameForProvider(providerId_);
+
     if (dbName.isEmpty()) {
-        qWarning() << "TileDB::init: Failed to init, tileProvider is 'nullptr'";
+        qWarning() << "TileDB::init: Failed to init, providerId is invalid";
         return;
     }
 
@@ -104,6 +106,7 @@ void TileDB::init()
         dir.mkpath(".");
     }
 
+    closeDb();
     db_ = QSqlDatabase::addDatabase("QSQLITE", "TileDBConnection");
     db_.setDatabaseName(dbPath);
 
@@ -120,6 +123,28 @@ void TileDB::init()
                         "PRIMARY KEY (x, y, z))")) {
             qWarning() << "Failed to create table tiles:" << query.lastError().text();
         }
+    }
+}
+
+void TileDB::closeDb()
+{
+    if (db_.isValid()) {
+        const QString connectionName = db_.connectionName();
+        db_.close();
+        db_ = QSqlDatabase();
+        QSqlDatabase::removeDatabase(connectionName);
+    }
+}
+
+QString TileDB::dbNameForProvider(int32_t providerId) const
+{
+    switch (providerId) {
+    case kGoogleProviderId:
+        return "tiles_google";
+    case kOsmProviderId:
+        return "tiles_osm";
+    default:
+        return "tiles_undefined";
     }
 }
 

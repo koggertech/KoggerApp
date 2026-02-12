@@ -24,9 +24,9 @@ public:
 
     struct UsblObjectParams
     {
-        UsblObjectParams() : isTrackVisible_(true), type_(UsblObjectType::kUndefined), lineWidth_(3.0f), pointRadius_(30.0f), objectColor_(255,55,55), data_() {};
-        UsblObjectParams(bool isTrackVisisble, UsblObjectType type, float lineWidth, float pointRadius, QColor objectColor, QVector<QVector3D> data) :
-            isTrackVisible_(isTrackVisisble), type_(type), lineWidth_(lineWidth), pointRadius_(pointRadius), objectColor_(objectColor), data_(data) {};
+        UsblObjectParams() : isTrackVisible_(true), type_(UsblObjectType::kUndefined), lineWidth_(3.0f), pointRadius_(30.0f), objectColor_(255,55,55), data_(), yaw_(NAN) {};
+        UsblObjectParams(bool isTrackVisisble, UsblObjectType type, float lineWidth, float pointRadius, QColor objectColor, QVector<QVector3D> data, float yaw) :
+            isTrackVisible_(isTrackVisisble), type_(type), lineWidth_(lineWidth), pointRadius_(pointRadius), objectColor_(objectColor), data_(data), yaw_(yaw) {};
 
         bool isTrackVisible_;
         UsblObjectType type_;
@@ -34,6 +34,7 @@ public:
         float pointRadius_;
         QColor objectColor_;
         QVector<QVector3D> data_;
+        float yaw_;
     };
 
     class UsblViewRenderImplementation : public SceneObject::RenderImplementation

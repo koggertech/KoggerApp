@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <time.h>
 #include <QObject>
+#include <QMap>
+#include <QSet>
+#include <QPair>
 #include <QVector>
 #include <QVector3D>
 #include <QReadWriteLock>
@@ -44,17 +47,14 @@ public:
     Q_PROPERTY(float depth                    READ getLastDepth             NOTIFY lastDepthChanged)
     Q_PROPERTY(float isSpeedValid             READ isValidSpeed             NOTIFY speedChanged)
     Q_PROPERTY(float speed                    READ getSpeed                 NOTIFY speedChanged)
+    Q_PROPERTY(bool  spatialPreparing         READ isSpatialPreparing       NOTIFY spatialPreparingChanged)
 
     /*methods*/
     Dataset();
     ~Dataset();
 
     void setState(DatasetState state);
-
-#if defined(FAKE_COORDS)
     void setActiveZeroing(bool state);
-#endif
-
     DatasetState getState() const;
     LLARef getLlaRef() const;
     void setLlaRef(const LLARef& val, LlaRefState state);
@@ -159,7 +159,21 @@ public:
 
     int getLastBottomTrackEpoch() const;
 
-    float getLastYaw() {
+    float getLastArtificalYaw() const;
+    float getLastArtificaPitch() const;
+    float getLastArtificalRoll() const;
+
+    float tryRetLastValidYaw() const {
+        if (isfinite(_lastYaw)) {
+            return _lastYaw;
+        }
+        if (isfinite(lastAYaw_)) {
+            return lastAYaw_;
+        }
+        return NAN;
+    }
+
+    float getLastYaw() const {
         return _lastYaw;
     }
 
@@ -185,14 +199,21 @@ public:
 
     void setActiveContactIndx(int64_t indx);
     int64_t getActiveContactIndx() const;
+    void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
+    QMap<int, QSet<TileKey>> traceTileKeysForEpoch(int epochIndx) const;
 
 public slots:
+    Q_INVOKABLE void onSetLAngleOffset(float val);
+    Q_INVOKABLE void onSetRAngleOffset(float val);
+    void setSpatialIndexingEnabled(bool sonarState, bool dimRectState, bool chunkedCatchup);
+
     friend class DataProcessor;
     void onSonarPosCanCalc(uint64_t indx);
     bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1;  };
     bool  isValidBoatCoordinate() const    { return !qFuzzyIsNull(boatLatitute_) || !qFuzzyIsNull(boatLongitude_); };
     bool  isValidLastDepth() const         { return !qFuzzyIsNull(lastDepth_); };
     bool isValidSpeed() const              { return qFuzzyIsNull(speed_);      };
+    bool isSpatialPreparing() const        { return spatialPreparing_;          };
     float getBoatLatitude() const          { return boatLatitute_;             };
     float getBoatLongitude() const         { return boatLongitude_;            };
     float getDistToContact() const         { return distToActiveContact_;      };
@@ -220,6 +241,7 @@ public slots:
     void addDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void addAtt(float yaw, float pitch, float roll);
     void addPosition(double lat, double lon, uint32_t unix_time = 0, int32_t nanosec = 0);
+    void addArtificalYaw();
     void addPositionRTK(Position position);
 
     void addDepth(float depth);
@@ -232,6 +254,7 @@ public slots:
     void mergeGnssTrack(QList<Position> track);
 
     void resetDataset();
+    void softResetDataset();
     void resetRenderBuffers();
     void resetDistProcessing();
 
@@ -257,11 +280,10 @@ public slots:
 
     QStringList channelsNameList();
 
-
-    void interpolateData(bool fromStart);
-
     void onDistCompleted(int epIndx, const ChannelId& channelId, float dist);
+    void onDistCompletedBatch(const QVector<BottomTrackUpdate>& updates);
     void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
+    void onDimensionRectCanCalc(uint64_t indx);
 
 signals:
     // data horizon
@@ -269,6 +291,7 @@ signals:
     void positionAdded(uint64_t indx);
     void chartAdded(uint64_t indx); // without ChartId
     void attitudeAdded(uint64_t indx);
+    void artificalAttitudeAdded(uint64_t indx);
     void bottomTrackAdded(uint64_t indx);
     //void interpYaw(int epIndx);
     //void interpPos(int epIndx);
@@ -281,6 +304,10 @@ signals:
     void activeContactChanged();
     void lastDepthChanged();
     void speedChanged();
+    void spatialPreparingChanged();
+    void datasetStateChanged(int state);
+
+    void sendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
 
 protected:
 
@@ -288,10 +315,8 @@ protected:
     int lastEventId = 0;
     float _lastEncoder = 0;
 
-#if defined(FAKE_COORDS)
     bool activeZeroing_ = false;
     uint64_t testTime_ = 1740466541;
-#endif
 
     DatasetChannel firstChannelId_ = DatasetChannel(); // TODO: temp solution
     QVector<DatasetChannel> channelsSetup_;
@@ -313,7 +338,8 @@ protected:
 
     QVector<Epoch> pool_;
 
-    float _lastYaw = 0, _lastPitch = 0, _lastRoll = 0;
+    float lastAYaw_ = NAN, lastAPitch_ = NAN, lastARoll_ = NAN;
+    float _lastYaw = NAN, _lastPitch = NAN, _lastRoll = NAN;
     float lastTemp_ = NAN;
 
     Epoch* addNewEpoch();
@@ -328,10 +354,17 @@ private:
     bool shouldAddNewEpoch(const ChannelId& channelId, uint8_t numSubChannels) const;
     void updateEpochWithChart(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
     void setLastDepth(float val);
+    void tryResetDataset(float lat, float lon);
+    void calcDimensionRects(uint64_t indx);
+    void appendTileEpochIndex(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
+    void clearTileEpochIndex();
+    void scheduleSpatialCatchup();
+    void setSpatialPreparing(bool state);
 
     /*data*/
     mutable QReadWriteLock lock_;
     mutable QReadWriteLock poolMtx_;
+    mutable QReadWriteLock tileEpochIdxMtx_;
 
     LLARef _llaRef;
     LlaRefState llaRefState_ = LlaRefState::kUndefined;
@@ -357,4 +390,20 @@ private:
     float speed_                = 0.0f;
     QVector3D sonarOffset_;
     uint64_t sonarPosIndx_;
+    bool sonarIndexingEnabled_ = false;
+    bool dimRectIndexingEnabled_ = false;
+    bool chunkedSpatialCatchup_ = false;
+    bool spatialCatchupScheduled_ = false;
+    bool spatialPreparing_ = false;
+    uint64_t pendingSonarPosIndx_ = 0;
+    uint64_t pendingDimRectIndx_ = 0;
+
+    ChannelId mosaicFirstChId_;
+    ChannelId mosaicSecondChId_;
+    uint8_t mosaicFirstSubChId_;
+    uint8_t mosaicSecondSubChId_;
+    uint64_t lastDimRectindx_;
+    float lAngleOffset_;
+    float rAngleOffset_;
+    QVector<QHash<TileKey, QVector<int>>> tileEpochIndxsByZoom_;
 };

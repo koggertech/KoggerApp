@@ -103,6 +103,44 @@ void TileSet::setTextureIdByTileIndx(const TileIndex &tileIndx, GLuint textureId
     }
 }
 
+void TileSet::resetForProviderSwitch()
+{
+    emit mvClearAppendTasks();
+
+    for (auto& lTile : tileList_) {
+        if (lTile.getInUse()) {
+            emit mvDeleteTile(lTile.getIndex());
+        }
+    }
+
+    if (auto sharedDownloader = tileDownloader_.lock(); sharedDownloader) {
+        sharedDownloader->stopAndClearRequests();
+    }
+
+    emit dbStopAndClearTasks();
+
+    tileList_.clear();
+    tileHash_.clear();
+    request_.clear();
+    dbReq_.clear();
+    dwReq_.clear();
+    dbSvd_.clear();
+
+    zoomState_ = ZoomState::kUndefined;
+    currZoom_ = -1;
+    diffLevels_ = std::numeric_limits<int32_t>::max();
+    minLon_ = 0.0;
+    maxLon_ = 0.0;
+    moveUp_ = false;
+}
+
+void TileSet::setResources(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader)
+{
+    tileProvider_ = provider;
+    tileDB_ = db;
+    tileDownloader_ = downloader;
+}
+
 void TileSet::onTileLoaded(const map::TileIndex &tileIndx, const QImage &image)
 {
     dbReq_.remove(tileIndx);
@@ -564,6 +602,5 @@ bool TileSet::updateVertices(Tile* tile) const
     }
     return false;
 }
-
 
 } // namespace map

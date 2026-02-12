@@ -31,6 +31,7 @@ public:
     void downloadTile(const TileIndex& tile);
     void stopAndClearRequests();
     void deleteRequest(const TileIndex& tileIndx);
+    void setProvider(std::weak_ptr<TileProvider> provider);
 
 signals:
     void tileDownloaded(const map::TileIndex& tileIndx, const QImage& image);

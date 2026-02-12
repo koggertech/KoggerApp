@@ -6,6 +6,7 @@
 #include <QStandardItemModel>
 #include <QQmlContext>
 #include <QThread>
+#include <QVariantList>
 #ifdef FLASHER
 #include "flasher/deviceflasher.h"
 #endif
@@ -33,6 +34,7 @@
 #include "link_manager_wrapper.h"
 #include "tile_manager.h"
 #include "data_horizon.h"
+#include "mosaic_index_provider.h"
 
 
 class Core : public QObject
@@ -59,7 +61,12 @@ public:
     Q_PROPERTY(QString           ch1Name                      READ getChannel1Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(QString           ch2Name                      READ getChannel2Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(int               dataProcessorState           READ getDataProcessorState           NOTIFY dataProcessorStateChanged)
+    Q_PROPERTY(int               mapTileProviderId            READ getMapTileProviderId            NOTIFY mapTileProviderChanged)
+    Q_PROPERTY(QString           mapTileProviderName          READ getMapTileProviderName          NOTIFY mapTileProviderChanged)
+    Q_PROPERTY(QVariantList      mapTileProviders             READ getMapTileProviders             CONSTANT)
+    Q_PROPERTY(bool              needForceZooming             READ getNeedForceZooming             WRITE setNeedForceZooming NOTIFY needForceZoomingChanged)
 
+    MosaicIndexProvider* getMosaicIndexProviderPtr();
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
     Dataset* getDatasetPtr();
@@ -80,6 +87,7 @@ public:
     void removeDeviceManagerConnections();
 #endif
     QHash<QUuid, QString> getLinkNames() const;
+    void shutdownDataProcessor();
 
 public slots:    
     void setIsGPSAlive(bool state) { qDebug() << "Core::setIsGPSAlive" << state; isGPSAlive_ = state; emit isGPSAliveChanged(); }
@@ -95,6 +103,8 @@ public slots:
     void openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
     bool closeLogFile();
 #endif
+    void onRequestClearing();
+
     void onFileOpened();
     bool openXTF(const QByteArray& data);
     bool openCSV(QString name, int separatorType, int row = -1, int colTime = -1, bool isUtcTime = true, int colLat = -1, int colLon = -1, int colAltitude = -1, int colNorth = -1, int colEast = -1, int colUp = -1);
@@ -113,6 +123,8 @@ public slots:
     bool getCsvLogging() const;
     void setCsvLogging(bool isLogging);
     bool getUseGPS() const;
+    bool getNeedForceZooming() const { return needForceZooming_; }
+    void setNeedForceZooming(bool state);
     void setUseGPS(bool state);
     bool exportComplexToCSV(QString filePath);
     bool exportUSBLToCSV(QString filePath);
@@ -124,11 +136,8 @@ public slots:
     void resetAim();
     void UILoad(QObject* object, const QUrl& url);
     void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
-    bool getIsFileOpening() const;
-    bool getIsSeparateReading() const;
     void onChannelsUpdated();
     void onRedrawEpochs(const QSet<int>& indxs);
-    int getDataProcessorState() const;
     void initStreamList();
 
 #ifdef FLASHER
@@ -137,15 +146,20 @@ public slots:
     void releaseFlasherLink();
 #endif
 
-#if defined(FAKE_COORDS)
     Q_INVOKABLE void setPosZeroing(bool state);
-#endif
-
+    Q_INVOKABLE bool getIsFileOpening() const;
+    Q_INVOKABLE bool getIsSeparateReading() const;
+    Q_INVOKABLE int getDataProcessorState() const;
     Q_INVOKABLE QString getChannel1Name() const;
     Q_INVOKABLE QString getChannel2Name() const;
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
 
     Q_INVOKABLE void setIsAttitudeExpected(bool state);
+    Q_INVOKABLE void setMapTileProvider(int providerId);
+    Q_INVOKABLE void toggleMapTileProvider();
+    Q_INVOKABLE int getMapTileProviderId() const;
+    Q_INVOKABLE QString getMapTileProviderName() const;
+    Q_INVOKABLE QVariantList getMapTileProviders() const;
 
 signals:
     void connectionChanged(bool duplex = false);
@@ -153,8 +167,10 @@ signals:
     void sendIsFileOpening();
     void channelListUpdated();
     void dataProcessorStateChanged();
+    void needForceZoomingChanged();
     void isGPSAliveChanged();
     void loggingKlfChanged();
+    void mapTileProviderChanged();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
@@ -174,6 +190,9 @@ private:
     void destroyDataProcessor();
     void createScene3dConnections();
 
+    void createDataHorizonConnections();
+    void destroyDataHorizonConnections();
+
     void setDataProcessorConnections();
     void resetDataProcessorConnections();
 
@@ -187,6 +206,7 @@ private:
     QString getFilePath() const;
     void fixFilePathString(QString& filePath) const;
     void loadLLARefFromSettings();
+    int loadSavedMapTileProviderId() const;
 
     /*data*/
     Console* consolePtr_;
@@ -237,10 +257,13 @@ private:
 
     bool isGPSAlive_;
     bool isUseGPS_;
+    bool needForceZooming_ = false; // debug
 
-    bool fixBlackStripesState_;;
+    bool fixBlackStripesState_;
     int  fixBlackStripesForwardSteps_;
     int  fixBlackStripesBackwardSteps_;
+
+    bool isActiveZeroing_;
 
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)
@@ -259,5 +282,14 @@ signals:
 #endif
 
     QVector<QMetaObject::Connection> dataProcessorConnections_;
+    QVector<QMetaObject::Connection> dataHorizonConnections_;
+
     DataProcessorType dataProcessorState_ = DataProcessorType::kUndefined;
+
+    ChannelId lastCh1_;
+    uint8_t   lastSub1_;
+    ChannelId lastCh2_;
+    uint8_t   lastSub2_;
+
+    MosaicIndexProvider mosaicIndexProvider_;
 };

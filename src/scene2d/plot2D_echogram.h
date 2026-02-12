@@ -9,9 +9,14 @@ public:
     enum ThemeId {
         ClassicTheme,
         SepiaTheme,
+        SepiaNewTheme,
         WRGBDTheme,
         WBTheme,
-        BWTheme
+        BWTheme,
+        DeepBlueTheme,
+        IceTheme,
+        GreenTheme,
+        MidnightTheme
     };
 
     Plot2DEchogram();

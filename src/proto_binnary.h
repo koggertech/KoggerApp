@@ -55,7 +55,7 @@ typedef enum ID {
     ID_IMU = 0x06,
     ID_MAG = 0x07,
     ID_BARO = 0x08,
-    ID_ENCODER = 0x08,
+    ID_ENCODER = 0x09,
 
     ID_DATASET = 0x10,
     ID_DIST_SETUP = 0x11,
