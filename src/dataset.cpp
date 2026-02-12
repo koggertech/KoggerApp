@@ -4,6 +4,7 @@
 #include "data_processor_defs.h"
 extern Core core;
 #include <algorithm>
+#include <QTimer>
 
 
 Dataset::Dataset() :
@@ -926,6 +927,9 @@ void Dataset::resetDataset()
     lastDepth_            = 0.0f;
 
     sonarPosIndx_ = 0;
+    pendingSonarPosIndx_ = 0;
+    pendingDimRectIndx_ = 0;
+    setSpatialPreparing(false);
     lastDimRectindx_ = 0;
 
     emit lastDepthChanged();
@@ -959,6 +963,9 @@ void Dataset::softResetDataset() // for long-distance camera movement
     lastDepth_            = 0.0f;
 
     sonarPosIndx_ = 0;
+    pendingSonarPosIndx_ = 0;
+    pendingDimRectIndx_ = 0;
+    setSpatialPreparing(false);
 
     mosaicFirstChId_.clear();
     mosaicSecondChId_.clear();
@@ -991,6 +998,9 @@ void Dataset::resetRenderBuffers()
     llaRefState_ = LlaRefState::kUndefined;
     bSProc_->clear();
     lastBottomTrackEpoch_ = 0;
+    pendingSonarPosIndx_ = 0;
+    pendingDimRectIndx_ = 0;
+    setSpatialPreparing(false);
 }
 
 void Dataset::resetDistProcessing() {
@@ -1283,7 +1293,30 @@ void Dataset::onDimensionRectCanCalc(uint64_t indx)
 {
     //qDebug() << "Dataset::onDimensionRectCanCalc" << indx;
 
-    calcDimensionRects(indx);
+    pendingDimRectIndx_ = std::max(pendingDimRectIndx_, indx);
+
+    if (!dimRectIndexingEnabled_) {
+        return;
+    }
+
+    const uint64_t safeTarget = std::min(pendingDimRectIndx_, sonarPosIndx_);
+    if (safeTarget <= lastDimRectindx_) {
+        return;
+    }
+
+    uint64_t chunkTarget = safeTarget;
+    if (chunkedSpatialCatchup_) {
+        static constexpr uint64_t kDimRectChunk = 128;
+        chunkTarget = std::min(safeTarget, lastDimRectindx_ + kDimRectChunk);
+    }
+
+    calcDimensionRects(chunkTarget);
+
+    pendingDimRectIndx_ = std::max(pendingDimRectIndx_, lastDimRectindx_);
+
+    if (chunkedSpatialCatchup_ && (std::min(pendingDimRectIndx_, sonarPosIndx_) > lastDimRectindx_)) {
+        scheduleSpatialCatchup();
+    }
 }
 
 void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannelId)
@@ -1688,6 +1721,82 @@ int64_t Dataset::getActiveContactIndx() const
     return activeContactIndx_;
 }
 
+void Dataset::setSpatialIndexingEnabled(bool sonarState, bool dimRectState, bool chunkedCatchup)
+{
+    if (sonarIndexingEnabled_ == sonarState &&
+        dimRectIndexingEnabled_ == dimRectState &&
+        chunkedSpatialCatchup_ == chunkedCatchup) {
+        return;
+    }
+
+    sonarIndexingEnabled_ = sonarState;
+    dimRectIndexingEnabled_ = dimRectState;
+    chunkedSpatialCatchup_ = chunkedCatchup;
+
+    if (!(sonarIndexingEnabled_ || dimRectIndexingEnabled_)) {
+        setSpatialPreparing(false);
+        return;
+    }
+
+    if (chunkedSpatialCatchup_) {
+        scheduleSpatialCatchup();
+        return;
+    }
+
+    setSpatialPreparing(false);
+
+    if (sonarIndexingEnabled_ && pendingSonarPosIndx_ > sonarPosIndx_) {
+        onSonarPosCanCalc(pendingSonarPosIndx_);
+    }
+    if (dimRectIndexingEnabled_ && pendingDimRectIndx_ > lastDimRectindx_) {
+        onDimensionRectCanCalc(pendingDimRectIndx_);
+    }
+}
+
+void Dataset::scheduleSpatialCatchup()
+{
+    const bool canRun = chunkedSpatialCatchup_ && (sonarIndexingEnabled_ || dimRectIndexingEnabled_);
+    const bool sonarPending = sonarIndexingEnabled_ && (pendingSonarPosIndx_ > sonarPosIndx_);
+    const bool dimPending = dimRectIndexingEnabled_ && (std::min(pendingDimRectIndx_, sonarPosIndx_) > lastDimRectindx_);
+    const bool hasPending = sonarPending || dimPending;
+
+    setSpatialPreparing(canRun && hasPending);
+
+    if (!canRun || spatialCatchupScheduled_ || !hasPending) {
+        return;
+    }
+
+    spatialCatchupScheduled_ = true;
+    QTimer::singleShot(0, this, [this]() {
+        spatialCatchupScheduled_ = false;
+
+        if (sonarIndexingEnabled_ && pendingSonarPosIndx_ > sonarPosIndx_) {
+            onSonarPosCanCalc(pendingSonarPosIndx_);
+        }
+        if (dimRectIndexingEnabled_ && pendingDimRectIndx_ > lastDimRectindx_) {
+            onDimensionRectCanCalc(pendingDimRectIndx_);
+        }
+
+        const bool sonarPending = sonarIndexingEnabled_ && pendingSonarPosIndx_ > sonarPosIndx_;
+        const bool dimPending = dimRectIndexingEnabled_ && (std::min(pendingDimRectIndx_, sonarPosIndx_) > lastDimRectindx_);
+        if (sonarPending || dimPending) {
+            scheduleSpatialCatchup();
+        } else {
+            setSpatialPreparing(false);
+        }
+    });
+}
+
+void Dataset::setSpatialPreparing(bool state)
+{
+    if (spatialPreparing_ == state) {
+        return;
+    }
+
+    spatialPreparing_ = state;
+    emit spatialPreparingChanged();
+}
+
 void Dataset::setMosaicChannels(const QString& firstChStr, const QString& secondChStr)
 {
     auto [ch1, sub1, name1] = channelIdFromName(firstChStr);
@@ -1723,7 +1832,24 @@ void Dataset::onSetRAngleOffset(float val)
 
 void Dataset::onSonarPosCanCalc(uint64_t indx)
 {
-    for (uint64_t i = sonarPosIndx_ + 1; i <= indx; ++i) {
+    pendingSonarPosIndx_ = std::max(pendingSonarPosIndx_, indx);
+
+    if (!sonarIndexingEnabled_) {
+        return;
+    }
+
+    const uint64_t calcTarget = std::max(indx, pendingSonarPosIndx_);
+    if (calcTarget <= sonarPosIndx_) {
+        return;
+    }
+
+    uint64_t chunkTarget = calcTarget;
+    if (chunkedSpatialCatchup_) {
+        static constexpr uint64_t kSonarChunk = 1024;
+        chunkTarget = std::min(calcTarget, sonarPosIndx_ + kSonarChunk);
+    }
+
+    for (uint64_t i = sonarPosIndx_ + 1; i <= chunkTarget; ++i) {
         if (auto* ep = fromIndex(i); ep) {
             if (sonarOffset_.isNull()) {
                 ep->setSonarPosition(ep->getPositionGNSS()); // interp been before
@@ -1742,5 +1868,11 @@ void Dataset::onSonarPosCanCalc(uint64_t indx)
         }
     }
 
-    sonarPosIndx_ = indx;
+    sonarPosIndx_ = chunkTarget;
+    pendingSonarPosIndx_ = sonarPosIndx_;
+
+    if (chunkedSpatialCatchup_ && calcTarget > sonarPosIndx_) {
+        pendingSonarPosIndx_ = calcTarget;
+        scheduleSpatialCatchup();
+    }
 }

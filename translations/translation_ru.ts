@@ -266,8 +266,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="1154"/>
-        <location filename="../src/dataset.cpp" line="1156"/>
+        <location filename="../src/dataset.cpp" line="1164"/>
+        <location filename="../src/dataset.cpp" line="1166"/>
         <source>None</source>
         <translation>Отсутствует</translation>
     </message>
@@ -2574,55 +2574,60 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="125"/>
+        <location filename="../qml/main.qml" line="90"/>
         <source>Undefined</source>
         <translation>Неопределён</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="139"/>
+        <location filename="../qml/main.qml" line="104"/>
         <source>Please restart the application to apply the language change</source>
         <translation>Перезапустите приложение, чтобы применить изменение языка</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="148"/>
+        <location filename="../qml/main.qml" line="113"/>
         <source>Ok</source>
         <translation>Ок</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="657"/>
+        <location filename="../qml/main.qml" line="634"/>
+        <source>Data prepairing...</source>
+        <translation>Подготовка данных...</translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="638"/>
         <source> cm/pix</source>
         <translation> см/пикс</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="657"/>
+        <location filename="../qml/main.qml" line="638"/>
         <source>Mosaic: </source>
         <translation>Мозайка: </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="660"/>
+        <location filename="../qml/main.qml" line="641"/>
         <source>Surface: </source>
         <translation>Поверхность: </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="660"/>
+        <location filename="../qml/main.qml" line="641"/>
         <source> cm/cell</source>
         <translation> см/ячейка</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1084"/>
+        <location filename="../qml/main.qml" line="1065"/>
         <source>Profiles...</source>
         <translation>Профили...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1341"/>
-        <location filename="../qml/main.qml" line="1343"/>
+        <location filename="../qml/main.qml" line="1322"/>
+        <location filename="../qml/main.qml" line="1324"/>
         <source> m</source>
         <translation> м</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1339"/>
-        <location filename="../qml/main.qml" line="1340"/>
-        <location filename="../qml/main.qml" line="1342"/>
+        <location filename="../qml/main.qml" line="1320"/>
+        <location filename="../qml/main.qml" line="1321"/>
+        <location filename="../qml/main.qml" line="1323"/>
         <source>°</source>
         <translation></translation>
     </message>
@@ -2631,72 +2636,72 @@
         <translation type="vanished">Профили...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1139"/>
+        <location filename="../qml/main.qml" line="1120"/>
         <source>Profiles</source>
         <translation>Профили</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1174"/>
+        <location filename="../qml/main.qml" line="1155"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1193"/>
+        <location filename="../qml/main.qml" line="1174"/>
         <source>Select profile XML</source>
         <translation>Выберите профиль XML</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1213"/>
+        <location filename="../qml/main.qml" line="1194"/>
         <source>Add profiles and apply them</source>
         <translation>Добавьте профиль и примените его</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1252"/>
+        <location filename="../qml/main.qml" line="1233"/>
         <source>Path to profile .xml</source>
         <translation>Путь до профиля .xml</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1262"/>
+        <location filename="../qml/main.qml" line="1243"/>
         <source>Browse</source>
         <translation>Выбрать</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1270"/>
+        <location filename="../qml/main.qml" line="1251"/>
         <source>Apply</source>
         <translation>Применить</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1344"/>
+        <location filename="../qml/main.qml" line="1325"/>
         <source> km/h</source>
         <translation> км/ч</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1383"/>
+        <location filename="../qml/main.qml" line="1364"/>
         <source>Boat position</source>
         <translation>Позиция лодки</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1392"/>
+        <location filename="../qml/main.qml" line="1373"/>
         <source>Lat.:</source>
         <translation>Шир.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1399"/>
+        <location filename="../qml/main.qml" line="1380"/>
         <source>Lon.:</source>
         <translation>Долг.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1409"/>
+        <location filename="../qml/main.qml" line="1390"/>
         <source>Active point</source>
         <translation>Активная точка</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1418"/>
+        <location filename="../qml/main.qml" line="1399"/>
         <source>Dist.:</source>
         <translation>Дист.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1425"/>
+        <location filename="../qml/main.qml" line="1406"/>
         <source>Ang.:</source>
         <translation>Аз.:</translation>
     </message>
@@ -2713,12 +2718,12 @@ Please wait...</source>
 Пожалуйста, подождите...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1546"/>
+        <location filename="../qml/main.qml" line="1527"/>
         <source> m/s </source>
         <translation> м/с </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1553"/>
+        <location filename="../qml/main.qml" line="1534"/>
         <source> %</source>
         <translation> %</translation>
     </message>
@@ -2729,12 +2734,12 @@ Please wait...</source>
 Пожалуйста, подождите...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1546"/>
+        <location filename="../qml/main.qml" line="1527"/>
         <source> V   </source>
         <translation> В   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1546"/>
+        <location filename="../qml/main.qml" line="1527"/>
         <source> A   </source>
         <translation> А   </translation>
     </message>
@@ -2743,7 +2748,7 @@ Please wait...</source>
         <translation type="vanished"> м/с</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1655"/>
+        <location filename="../qml/main.qml" line="1636"/>
         <source>Please wait, the file is opening</source>
         <translation>Пожалуйста подождите, файл открывается</translation>
     </message>

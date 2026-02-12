@@ -581,10 +581,11 @@ ApplicationWindow  {
 
                 Rectangle {
                     id: mosaicQualityBadge
-                    visible: scene3DToolbar.showMosaicQualityLabel
-                             && renderer.cameraPerspective
-                             && renderer.currentZoom > 0
-                             && (scene3DToolbar.mosaicEnabled || renderer.updateSurface)
+                    visible: renderer.cameraPerspective
+                             && (dataset.spatialPreparing
+                                 || (scene3DToolbar.showMosaicQualityLabel
+                                     && renderer.currentZoom > 0
+                                     && (scene3DToolbar.mosaicEnabled || renderer.updateSurface)))
                     readonly property int tileSidePx: 256
                     readonly property int heightMatrixRatio: 8
                     readonly property int mosaicCmPerPix: renderer.currentZoom > 0
@@ -601,10 +602,37 @@ ApplicationWindow  {
                     z: 1000
                     implicitWidth: mosaicQualityText.implicitWidth + 12
                     implicitHeight: mosaicQualityText.implicitHeight + 8
+                    opacity: 1.0
+
+                    SequentialAnimation {
+                        id: mosaicQualityPreparingAnimation
+                        running: dataset.spatialPreparing
+                        loops: Animation.Infinite
+                        NumberAnimation { target: mosaicQualityBadge; property: "opacity"; to: 0.35; duration: 500 }
+                        NumberAnimation { target: mosaicQualityBadge; property: "opacity"; to: 1.0; duration: 500 }
+                    }
+
+                    onVisibleChanged: {
+                        if (!visible) {
+                            opacity = 1.0
+                        }
+                    }
+
+                    Connections {
+                        target: dataset
+                        function onSpatialPreparingChanged() {
+                            if (!dataset.spatialPreparing) {
+                                mosaicQualityBadge.opacity = 1.0
+                            }
+                        }
+                    }
 
                     Text {
                         id: mosaicQualityText
                         text: {
+                            if (dataset.spatialPreparing) {
+                                return qsTr("Data prepairing...")
+                            }
                             var parts = [];
                             if (renderer.currentZoom > 0 && scene3DToolbar.mosaicEnabled) {
                                 parts.push(qsTr("Mosaic: ") + mosaicQualityBadge.mosaicCmPerPix + qsTr(" cm/pix"));

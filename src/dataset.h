@@ -47,6 +47,7 @@ public:
     Q_PROPERTY(float depth                    READ getLastDepth             NOTIFY lastDepthChanged)
     Q_PROPERTY(float isSpeedValid             READ isValidSpeed             NOTIFY speedChanged)
     Q_PROPERTY(float speed                    READ getSpeed                 NOTIFY speedChanged)
+    Q_PROPERTY(bool  spatialPreparing         READ isSpatialPreparing       NOTIFY spatialPreparingChanged)
 
     /*methods*/
     Dataset();
@@ -204,6 +205,7 @@ public:
 public slots:
     Q_INVOKABLE void onSetLAngleOffset(float val);
     Q_INVOKABLE void onSetRAngleOffset(float val);
+    void setSpatialIndexingEnabled(bool sonarState, bool dimRectState, bool chunkedCatchup);
 
     friend class DataProcessor;
     void onSonarPosCanCalc(uint64_t indx);
@@ -211,6 +213,7 @@ public slots:
     bool  isValidBoatCoordinate() const    { return !qFuzzyIsNull(boatLatitute_) || !qFuzzyIsNull(boatLongitude_); };
     bool  isValidLastDepth() const         { return !qFuzzyIsNull(lastDepth_); };
     bool isValidSpeed() const              { return qFuzzyIsNull(speed_);      };
+    bool isSpatialPreparing() const        { return spatialPreparing_;          };
     float getBoatLatitude() const          { return boatLatitute_;             };
     float getBoatLongitude() const         { return boatLongitude_;            };
     float getDistToContact() const         { return distToActiveContact_;      };
@@ -301,6 +304,7 @@ signals:
     void activeContactChanged();
     void lastDepthChanged();
     void speedChanged();
+    void spatialPreparingChanged();
     void datasetStateChanged(int state);
 
     void sendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
@@ -354,6 +358,8 @@ private:
     void calcDimensionRects(uint64_t indx);
     void appendTileEpochIndex(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
     void clearTileEpochIndex();
+    void scheduleSpatialCatchup();
+    void setSpatialPreparing(bool state);
 
     /*data*/
     mutable QReadWriteLock lock_;
@@ -384,6 +390,13 @@ private:
     float speed_                = 0.0f;
     QVector3D sonarOffset_;
     uint64_t sonarPosIndx_;
+    bool sonarIndexingEnabled_ = false;
+    bool dimRectIndexingEnabled_ = false;
+    bool chunkedSpatialCatchup_ = false;
+    bool spatialCatchupScheduled_ = false;
+    bool spatialPreparing_ = false;
+    uint64_t pendingSonarPosIndx_ = 0;
+    uint64_t pendingDimRectIndx_ = 0;
 
     ChannelId mosaicFirstChId_;
     ChannelId mosaicSecondChId_;

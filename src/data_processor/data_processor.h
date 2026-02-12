@@ -228,6 +228,7 @@ private:
     QSet<int> collectVisibleSurfaceEpochsSet(int zoom) const;
     void updateDataProcType();
     void emitMosaicColorTable();
+    void updateDatasetSpatialIndexingState();
 
 private:
     friend class SurfaceProcessor;

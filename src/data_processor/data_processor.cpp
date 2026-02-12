@@ -151,6 +151,7 @@ void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 
     QMetaObject::invokeMethod(worker_, "setDatasetPtr", Qt::QueuedConnection, Q_ARG(Dataset*, datasetPtr_));
+    updateDatasetSpatialIndexingState();
 }
 
 void DataProcessor::setSuppressResults(bool state) noexcept
@@ -304,6 +305,7 @@ void DataProcessor::tryFinalizeResetProcessing()
 void DataProcessor::setUpdateBottomTrack(bool state)
 {
     updateBottomTrack_ = state;
+    updateDatasetSpatialIndexingState();
 
     if (resetInProgress_.load()) {
         return;
@@ -318,6 +320,7 @@ void DataProcessor::setUpdateSurface(bool state)
 {
     const bool wasSurface = updateSurface_;
     updateSurface_ = state;
+    updateDatasetSpatialIndexingState();
 
     if (resetInProgress_.load()) {
         return;
@@ -378,6 +381,7 @@ void DataProcessor::setUpdateSurface(bool state)
 void DataProcessor::setUpdateIsobaths(bool state)
 {
     updateIsobaths_ = state;
+    updateDatasetSpatialIndexingState();
 
     if (resetInProgress_.load()) {
         return;
@@ -392,6 +396,7 @@ void DataProcessor::setUpdateMosaic(bool state)
 {
     const bool wasMosaic = updateMosaic_;
     updateMosaic_ = state;
+    updateDatasetSpatialIndexingState();
 
     if (resetInProgress_.load()) {
         return;
@@ -426,6 +431,7 @@ void DataProcessor::setUpdateMosaic(bool state)
 void DataProcessor::setIsOpeningFile(bool state)
 {
     isOpeningFile_ = state;
+    updateDatasetSpatialIndexingState();
 
     updateDataProcType();
 }
@@ -2074,6 +2080,7 @@ void DataProcessor::shutdown()
     updateSurface_ = false;
     updateIsobaths_ = false;
     updateMosaic_ = false;
+    updateDatasetSpatialIndexingState();
 
     pendingSurfaceIndxs_.clear();
     pendingMosaicIndxs_.clear();
@@ -2141,6 +2148,16 @@ void DataProcessor::onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKe
 {
     //qDebug() << "DataProcessor::onSendDimRects" << epochIndx;
 
+    bool optimizeForNonSeparateFileMode = true;
+#ifdef SEPARATE_READING
+    optimizeForNonSeparateFileMode = false;
+#else
+    optimizeForNonSeparateFileMode = (datasetState_ != 2); // 2 == connection
+#endif
+    if (optimizeForNonSeparateFileMode && !updateMosaic_ && !updateSurface_) {
+        return;
+    }
+
     const int minZoom = 7;
     if (tileEpochIndxsByZoom_.size() < minZoom) {
         tileEpochIndxsByZoom_.resize(minZoom);
@@ -2162,7 +2179,7 @@ void DataProcessor::onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKe
         }
     }
 
-    if ((!updateMosaic_ && !updateSurface_) || lastVisTileKeys_.isEmpty()) {
+    if (lastVisTileKeys_.isEmpty()) {
         return;
     }
 
@@ -2245,6 +2262,35 @@ void DataProcessor::onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKe
     }
 }
 
+void DataProcessor::updateDatasetSpatialIndexingState()
+{
+    if (!datasetPtr_) {
+        return;
+    }
+
+    bool optimizeForNonSeparateFileMode = true;
+#ifdef SEPARATE_READING
+    optimizeForNonSeparateFileMode = false;
+#else
+    optimizeForNonSeparateFileMode = (datasetState_ != 2); // 2 == connection
+#endif
+
+    bool sonarEnabled = true;
+    bool dimRectEnabled = true;
+    bool chunkedCatchup = false;
+
+    if (optimizeForNonSeparateFileMode) {
+        sonarEnabled = updateBottomTrack_ || updateSurface_ || updateIsobaths_ || updateMosaic_;
+        dimRectEnabled = updateSurface_ || updateIsobaths_ || updateMosaic_;
+        chunkedCatchup = true;
+    }
+
+    QMetaObject::invokeMethod(datasetPtr_, "setSpatialIndexingEnabled", Qt::QueuedConnection,
+                              Q_ARG(bool, sonarEnabled),
+                              Q_ARG(bool, dimRectEnabled),
+                              Q_ARG(bool, chunkedCatchup));
+}
+
 void DataProcessor::onDatasetStateChanged(int state)
 {
     if (datasetState_ == state) {
@@ -2253,6 +2299,7 @@ void DataProcessor::onDatasetStateChanged(int state)
 
     datasetState_ = state;
 
+    updateDatasetSpatialIndexingState();
     updateDataProcType();
 }
 
