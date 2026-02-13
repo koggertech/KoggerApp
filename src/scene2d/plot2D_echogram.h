@@ -3,6 +3,7 @@
 #include "plot2D_plot_layer.h"
 #include "plot2D_defs.h"
 
+class QPainter;
 
 class Plot2DEchogram : public PlotLayer {
 public:
@@ -39,6 +40,7 @@ public:
     void resetCash();
 
     void addReRenderPlotIndxs(const QSet<int>& indxs);
+    bool drawZoomPreview(Plot2D* parent, Dataset* dataset, QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceSize);
 
 protected:
     struct CashLine

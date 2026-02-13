@@ -993,6 +993,51 @@ WaterFall {
                         text: qsTr("Horizontal")
                     }
 
+                    RowLayout {
+                        CCheck {
+                            id: loupeVisible
+                            Layout.fillWidth: true
+                            checked: false
+                            text: qsTr("Loupe")
+
+                            onCheckedChanged: plotLoupeVisible(checked)
+                            Component.onCompleted: plotLoupeVisible(checked)
+                        }
+
+                        RowLayout {
+                            CText {
+                                text: qsTr("size")
+                            }
+                            SpinBoxCustom {
+                                id: loupeSize
+                                from: 1
+                                to: 3
+                                stepSize: 1
+                                value: 1
+                                visible: loupeVisible.checked
+
+                                onValueChanged: plotLoupeSize(value)
+                                Component.onCompleted: plotLoupeSize(value)
+                            }
+                        }
+                        RowLayout {
+                            CText {
+                                text: qsTr("zoom")
+                            }
+                            SpinBoxCustom {
+                                id: loupeZoom
+                                from: 1
+                                to: 3
+                                stepSize: 1
+                                value: 1
+                                visible: loupeVisible.checked
+
+                                onValueChanged: plotLoupeZoom(value)
+                                Component.onCompleted: plotLoupeZoom(value)
+                            }
+                        }
+                    }
+
                     Settings {
                         category: "Plot2D_" + plot.indx
 
@@ -1005,6 +1050,9 @@ WaterFall {
                         property alias dopplerBeamVisible: dopplerBeamVisible.checked
                         property alias dopplerInstrumentVisible: dopplerInstrumentVisible.checked
                         property alias horisontalVertical: horisontalVertical.checked
+                        property alias loupeVisible: loupeVisible.checked
+                        property alias loupeSize: loupeSize.value
+                        property alias loupeZoom: loupeZoom.value
                     }
                 }
             } // menu frame

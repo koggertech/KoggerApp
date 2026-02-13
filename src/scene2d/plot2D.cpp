@@ -8,6 +8,9 @@ Plot2D::Plot2D()
     , pendingBtpLambda_(nullptr)
     , isHorizontal_(true)
     , isEnabled_(true)
+    , isLoupeVisible_(false)
+    , loupeSize_(1)
+    , loupeZoom_(1)
     , lAngleOffsetDeg_(0.0f)
     , rAngleOffsetDeg_(0.0f)
 {
@@ -144,6 +147,53 @@ bool Plot2D::plotEnabled() const
     return isEnabled_;
 }
 
+bool Plot2D::getLoupeVisible() const
+{
+    return isLoupeVisible_;
+}
+
+void Plot2D::setLoupeVisible(bool state)
+{
+    if (isLoupeVisible_ == state) {
+        return;
+    }
+
+    isLoupeVisible_ = state;
+    plotUpdate();
+}
+
+int Plot2D::getLoupeSize() const
+{
+    return loupeSize_;
+}
+
+void Plot2D::setLoupeSize(int size)
+{
+    const int boundedSize = qBound(1, size, 3);
+    if (loupeSize_ == boundedSize) {
+        return;
+    }
+
+    loupeSize_ = boundedSize;
+    plotUpdate();
+}
+
+int Plot2D::getLoupeZoom() const
+{
+    return loupeZoom_;
+}
+
+void Plot2D::setLoupeZoom(int zoom)
+{
+    const int boundedZoom = qBound(1, zoom, 3);
+    if (loupeZoom_ == boundedZoom) {
+        return;
+    }
+
+    loupeZoom_ = boundedZoom;
+    plotUpdate();
+}
+
 bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizontal)
 {
     if (is_horizontal) {
@@ -181,6 +231,11 @@ void Plot2D::draw(QPainter *painterPtr)
     aim_.draw(this, datasetPtr_);
 
     contacts_.draw(this, datasetPtr_);
+}
+
+bool Plot2D::drawEchogramZoomPreview(QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceSize)
+{
+    return echogram_.drawZoomPreview(this, datasetPtr_, painter, targetRect, sourceCenter, sourceSize);
 }
 
 bool Plot2D::isHorizontal()

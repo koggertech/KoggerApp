@@ -1564,6 +1564,21 @@
         <source>Horizontal</source>
         <translation>Poziomy</translation>
     </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="1001"/>
+        <source>Loupe</source>
+        <translation>Loupe</translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="1009"/>
+        <source>size</source>
+        <translation>rozmiar</translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="1025"/>
+        <source>zoom</source>
+        <translation>brzęczenie</translation>
+    </message>
 </context>
 <context>
     <name>PointGroupControlMenu</name>

@@ -46,6 +46,12 @@ public:
     void setPlotEnabled(bool state);
 
     bool plotEnabled() const;
+    bool getLoupeVisible() const;
+    void setLoupeVisible(bool state);
+    int getLoupeSize() const;
+    void setLoupeSize(int size);
+    int getLoupeZoom() const;
+    void setLoupeZoom(int zoom);
 
     bool isHorizontal();
     void setHorizontal(bool is_horizontal);
@@ -77,6 +83,7 @@ public:
 
     bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
     void draw(QPainter* painterPtr);
+    bool drawEchogramZoomPreview(QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceSize);
 
     float getCursorDistance() const;
     std::tuple<ChannelId, uint8_t, QString> getSelectedChannelId(float cursorDistance = 0.0f) const;
@@ -166,6 +173,9 @@ protected:
 
 private:
     bool isEnabled_;
+    bool isLoupeVisible_;
+    int loupeSize_;
+    int loupeZoom_;
     float lAngleOffsetDeg_;
     float rAngleOffsetDeg_;
 };

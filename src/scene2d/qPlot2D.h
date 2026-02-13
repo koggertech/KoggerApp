@@ -124,6 +124,9 @@ public slots:
     void plotVelocityRange(float velocity) { setVelocityRange(velocity); }
 
     void plotDistanceAutoRange(int auto_range_type) { setDistanceAutoRange(auto_range_type); }
+    void plotLoupeVisible(bool state) { setLoupeVisible(state); }
+    void plotLoupeSize(int size) { setLoupeSize(size); }
+    void plotLoupeZoom(int zoom) { setLoupeZoom(zoom); }
 
     void plotEchogramSetLevels(float low, float hight) {
         setEchogramLowLevel(low);

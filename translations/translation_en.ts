@@ -1280,6 +1280,21 @@
         <source>Horizontal</source>
         <translation></translation>
     </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="1001"/>
+        <source>Loupe</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="1009"/>
+        <source>size</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="1025"/>
+        <source>zoom</source>
+        <translation></translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>

@@ -1544,6 +1544,21 @@
         <source>Horizontal</source>
         <translation>Горизонтальный режим</translation>
     </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="1001"/>
+        <source>Loupe</source>
+        <translation>Лупа</translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="1009"/>
+        <source>size</source>
+        <translation>размер</translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="1025"/>
+        <source>zoom</source>
+        <translation>зум</translation>
+    </message>
 </context>
 <context>
     <name>PointGroupControlMenu</name>
