@@ -311,6 +311,7 @@ void Core::onFileOpened()
     qDebug() << "file opened!";
     QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
     QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+    setTimelinePosition(1.0);
     if (scene3dViewPtr_) {
         scene3dViewPtr_->setIsOpeningFile(false);
     }
@@ -493,6 +494,7 @@ void Core::onFileOpened()
 
     QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
     QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+    setTimelinePosition(1.0);
     if (scene3dViewPtr_) {
         scene3dViewPtr_->setIsOpeningFile(false);
     }

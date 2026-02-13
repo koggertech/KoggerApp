@@ -666,8 +666,7 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
 //    _mouse.x = x;
 //    _mouse.y = y;
 
-    //qDebug() << "Cursor epoch" << cursor_.getIndex(x_start);
-    int epoch_index = cursor_.getIndex(x_start);
+    int epoch_index = cursor_.getIndex(x);
     cursor_.currentEpochIndx = epoch_index;
     cursor_.lastEpochIndx = cursor_.currentEpochIndx;
     sendSyncEvent(epoch_index, EpochSelected2d);
@@ -1017,6 +1016,15 @@ void Plot2D::reindexingCursor() {
         }
     }
     cursor_.numZeroEpoch = cntZeros;
+
+    if (cursor_.mouseX >= 0 && !cursor_.indexes.empty()) {
+        const int clampedX = std::clamp(cursor_.mouseX, 0, image_width - 1);
+        const int epochIndex = cursor_.getIndex(clampedX);
+        cursor_.currentEpochIndx = datasetPtr_->validIndex(epochIndex);
+        if (cursor_.currentEpochIndx >= 0) {
+            cursor_.lastEpochIndx = cursor_.currentEpochIndx;
+        }
+    }
 }
 
 void Plot2D::reRangeDistance()
