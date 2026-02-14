@@ -6,6 +6,8 @@
 #include <QPainter>
 #include <QSGSimpleTextureNode>
 #include <QQuickWindow>
+#include <cmath>
+#include <limits>
 #include "epoch_event.h"
 
 
@@ -35,10 +37,109 @@ void qPlot2D::paint(QPainter *painter)
     clock_t start = clock();
 
     if (m_plot != nullptr && painter != nullptr) {
-        Plot2D::getImage((int)width(), (int)height(), painter, _isHorizontal);
-        Plot2D::draw(painter);
-        if (Plot2D::getIsContactChanged()) {
-            emit contactChanged();
+        const int w = static_cast<int>(width());
+        const int h = static_cast<int>(height());
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+
+        if (zoomPreviewMode_ && datasetPtr_ && datasetPtr_->size() > 0 && zoomPreviewEpochIndx_ >= 0) {
+            const float halfWidth = static_cast<float>(qRound(w * 0.5f));
+            const float timelinePos = static_cast<float>(zoomPreviewEpochIndx_ + halfWidth) / static_cast<float>(datasetPtr_->size());
+            cursor_.position = qBound(0.0f, timelinePos, 1.0f);
+            cursor_.selectEpochIndx = zoomPreviewEpochIndx_;
+        }
+
+        Plot2D::getImage(w, h, painter, _isHorizontal);
+
+        if (zoomPreviewMode_) {
+            int centerX = qBound(0, canvas().width() / 2, canvas().width() - 1);
+            if (zoomPreviewEpochIndx_ >= 0) {
+                const int idxSize = static_cast<int>(cursor_.indexes.size());
+                for (int i = 0; i < idxSize; ++i) {
+                    if (cursor_.indexes[i] == zoomPreviewEpochIndx_) {
+                        centerX = i;
+                        break;
+                    }
+                }
+            }
+
+            int centerY = qBound(0, canvas().height() / 2, canvas().height() - 1);
+            const float distRange = cursor_.distance.to - cursor_.distance.from;
+            const bool twoChannelView = cursor_.channel2 != CHANNEL_NONE;
+            if (std::isfinite(distRange) && std::abs(distRange) > 1e-6f) {
+                if (twoChannelView) {
+                    // Keep the same Y mapping as Plot2DAim for 2-channel mode.
+                    if (!std::isfinite(zoomPreviewDepth_)) {
+                        centerY = 0;
+                    }
+                    else {
+                        const float aimY = static_cast<float>(canvas().height()) * 0.5f
+                            - static_cast<float>(canvas().height()) * (zoomPreviewDepth_ / distRange);
+                        centerY = qBound(0, qRound(aimY), canvas().height() - 1);
+                    }
+                }
+                else {
+                    const float previewDepth = std::isfinite(zoomPreviewDepth_) ? zoomPreviewDepth_ : cursor_.distance.from;
+                    const float norm = (previewDepth - cursor_.distance.from) / distRange;
+                    centerY = qBound(0, qRound(norm * static_cast<float>(canvas().height() - 1)), canvas().height() - 1);
+                }
+            }
+
+            const int sourceWidth = qBound(4, zoomPreviewSourceSize_, qMax(4, canvas().width()));
+            int sourceHeight = qBound(4, zoomPreviewSourceSize_, qMax(4, canvas().height()));
+            if (zoomPreviewReferenceDepthPixels_ > 0 && canvas().height() > 0) {
+                const float scaledSource = static_cast<float>(sourceHeight)
+                    * static_cast<float>(canvas().height())
+                    / static_cast<float>(zoomPreviewReferenceDepthPixels_);
+                sourceHeight = qBound(4, qRound(scaledSource), qMax(4, canvas().height()));
+            }
+            const QRect previewRect(0, 0, w, h);
+
+            painter->fillRect(previewRect, QColor(30, 30, 30, 220));
+            QImage previewImage(w, h, QImage::Format_ARGB32_Premultiplied);
+            previewImage.fill(Qt::transparent);
+            QPainter previewPainter(&previewImage);
+            QPointF previewFocus(0.5, 0.5);
+            const bool rendered = Plot2D::drawEchogramZoomPreview(&previewPainter,
+                                                                  QRect(0, 0, w, h),
+                                                                  QPoint(centerX, centerY),
+                                                                  sourceWidth,
+                                                                  sourceHeight,
+                                                                  &previewFocus);
+            previewPainter.end();
+
+            if (rendered) {
+                if (zoomPreviewFlipY_) {
+                    previewImage = previewImage.mirrored(false, true);
+                    previewFocus.setY(1.0 - previewFocus.y());
+                }
+                painter->drawImage(previewRect, previewImage);
+
+                const qreal focusX = qBound<qreal>(0.0, previewFocus.x(), 1.0);
+                const qreal focusY = qBound<qreal>(0.0, previewFocus.y(), 1.0);
+                const int zoomCenterX = previewRect.left()
+                    + qRound(focusX * static_cast<qreal>(qMax(0, previewRect.width() - 1)));
+                const int zoomCenterY = previewRect.top()
+                    + qRound(focusY * static_cast<qreal>(qMax(0, previewRect.height() - 1)));
+                const int crossHalf = qMax(6, qMin(previewRect.width(), previewRect.height()) / 10);
+                const int leftArm = qMin(crossHalf, qMax(0, zoomCenterX - previewRect.left()));
+                const int rightArm = qMin(crossHalf, qMax(0, previewRect.right() - zoomCenterX));
+                const int topArm = qMin(crossHalf, qMax(0, zoomCenterY - previewRect.top()));
+                const int bottomArm = qMin(crossHalf, qMax(0, previewRect.bottom() - zoomCenterY));
+                painter->setPen(QPen(QColor(255, 255, 255, 220), 2));
+                painter->drawLine(zoomCenterX - leftArm, zoomCenterY, zoomCenterX + rightArm, zoomCenterY);
+                painter->drawLine(zoomCenterX, zoomCenterY - topArm, zoomCenterX, zoomCenterY + bottomArm);
+            }
+            else {
+                Plot2D::draw(painter);
+            }
+        }
+        else {
+            Plot2D::draw(painter);
+            if (Plot2D::getIsContactChanged()) {
+                emit contactChanged();
+            }
         }
     }
 
@@ -117,6 +218,30 @@ void qPlot2D::plotUpdate()
     update();
 
     mutex.unlock();
+}
+
+float qPlot2D::getLoupeDepthForEpoch(int epochIndx) const
+{
+    if (!datasetPtr_ || epochIndx < 0 || epochIndx >= datasetPtr_->size()) {
+        return std::numeric_limits<float>::quiet_NaN();
+    }
+
+    auto* epoch = datasetPtr_->fromIndex(epochIndx);
+    if (!epoch) {
+        return std::numeric_limits<float>::quiet_NaN();
+    }
+
+    float depth = std::numeric_limits<float>::quiet_NaN();
+    if (cursor_.channel1.isValid()) {
+        depth = static_cast<float>(epoch->distProccesing(cursor_.channel1));
+    }
+
+    if (std::isfinite(depth)) {
+        return std::abs(depth);
+    }
+
+    // Match Plot2DAim behavior: for 2-channel view without depth, aim the top of preview.
+    return cursor_.channel2 == CHANNEL_NONE ? 0.0f : std::numeric_limits<float>::quiet_NaN();
 }
 
 bool qPlot2D::eventFilter(QObject *watched, QEvent *event)

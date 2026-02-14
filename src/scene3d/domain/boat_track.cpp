@@ -80,14 +80,23 @@ void BoatTrack::clearData()
     r->boatTrackVertice_ = QVector3D();
     r->bottomTrackVertice_ = QVector3D();
     lastIndx_ = 0;
+    if (m_view) {
+        m_view->setSyncEpochIndex(-1);
+    }
 
     SceneObject::clearData();
 }
 
 void BoatTrack::selectEpoch(int epochIndex)
 {
-    if (epochIndex < 0 || epochIndex >= datasetPtr_->size())
+    if (!datasetPtr_ || epochIndex < 0 || epochIndex >= datasetPtr_->size()) {
+        if (m_view) {
+            m_view->setSyncEpochIndex(-1);
+        }
         return;
+    }
+
+    bool selected = false;
 
     if (auto* epoch = datasetPtr_->fromIndex(epochIndex); epoch) {
         NED boatPosNed = epoch->getPositionGNSS().ned;
@@ -111,10 +120,15 @@ void BoatTrack::selectEpoch(int epochIndex)
             if (!beenBottomSelected) {
                 r->bottomTrackVertice_ = QVector3D();
             }
+            selected = true;
         }
         else {
             //qDebug() << "invalid pos on boat track" << epochIndex;
         }
+    }
+
+    if (m_view) {
+        m_view->setSyncEpochIndex(selected ? epochIndex : -1);
     }
 
     Q_EMIT changed();
@@ -131,6 +145,9 @@ void BoatTrack::clearSelectedEpoch()
     auto* r = RENDER_IMPL(BoatTrack);
     r->boatTrackVertice_ = QVector3D();
     r->bottomTrackVertice_ = QVector3D();
+    if (m_view) {
+        m_view->setSyncEpochIndex(-1);
+    }
 }
 
 void BoatTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
@@ -153,6 +170,7 @@ void BoatTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 
                         QVector3D pos(epNed.n, epNed.e, 0.0f);
                         RENDER_IMPL(BoatTrack)->boatTrackVertice_ = pos;
+                        m_view->setSyncEpochIndex(indice);
                         if (auto datasetChannels = datasetPtr_->channelsList(); !datasetChannels.isEmpty()) {
                             auto epochEvent = new EpochEvent(EpochSelected3d, epoch, indice, datasetChannels.first());
                             QCoreApplication::postEvent(this, epochEvent);

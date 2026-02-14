@@ -579,6 +579,147 @@ ApplicationWindow  {
                     z: 3
                 }
 
+                Item {
+                    id: syncLoupeOverlay
+                    visible: renderer.visible
+                             && menuBar.is3DVisible
+                             && !menuBar.is2DVisible
+                             && renderer.syncLoupeOverlayVisible
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.rightMargin: Math.round(12 * theme.resCoeff)
+                    anchors.bottomMargin: Math.round(12 * theme.resCoeff)
+                    z: 1002
+
+                    property real sizeMultiplier: renderer.syncLoupeSize === 2 ? 1.5 : (renderer.syncLoupeSize === 3 ? 2.25 : 1.0)
+                    property int baseSide: Math.round(180 * theme.resCoeff * sizeMultiplier)
+                    property int maxSide: Math.max(64, Math.min(renderer.width, renderer.height) - 2 * anchors.rightMargin)
+                    property int side: Math.max(64, Math.min(baseSide, maxSide))
+                    property int sourceDepthReferencePx: 0
+
+                    width: side
+                    height: side
+
+                    function refreshLoupePlot() {
+                        if (!visible || renderer.syncLoupeEpochIndex < 0) {
+                            return
+                        }
+
+                        const zoomMultiplier = renderer.syncLoupeZoom === 2 ? 1.5 : (renderer.syncLoupeZoom === 3 ? 2.25 : 1.0)
+                        const previewSourceBaseSize = Math.max(8, Math.floor(syncLoupeOverlay.side / 4))
+                        const previewSourceSize = Math.max(4, Math.floor(previewSourceBaseSize / zoomMultiplier))
+                        const ch1Name = waterViewFirst.plotDatasetChannelName()
+                        const ch2Name = waterViewFirst.plotDatasetChannel2Name()
+                        let mainDepthPxCandidate = waterViewFirst.horizontal ? Math.floor(waterViewFirst.height) : Math.floor(waterViewFirst.width)
+                        if (mainDepthPxCandidate <= 0) {
+                            const outerRows = Math.max(1, visualisationLayout.rows)
+                            const outerCols = Math.max(1, visualisationLayout.columns)
+                            const twoDCellHeight = Math.max(1, Math.floor(visualisationLayout.height / outerRows))
+                            const twoDCellWidth = Math.max(1, Math.floor(visualisationLayout.width / outerCols))
+                            const sliderHeight = Math.max(1, Math.floor(theme.controlHeight))
+                            const plotsCount = menuBar.numPlots === 2 ? 2 : 1
+                            const syntheticPlotHeight = Math.max(1, Math.floor((twoDCellHeight - sliderHeight) / plotsCount))
+                            const syntheticPlotWidth = Math.max(1, twoDCellWidth)
+                            mainDepthPxCandidate = waterViewFirst.horizontal ? syntheticPlotHeight : syntheticPlotWidth
+                        }
+                        if (mainDepthPxCandidate > 0) {
+                            sourceDepthReferencePx = mainDepthPxCandidate
+                        }
+                        if (sourceDepthReferencePx <= 0) {
+                            sourceDepthReferencePx = Math.max(1, Math.floor(syncLoupePlot3D.height))
+                        }
+
+                        const from2D = waterViewFirst.cursorFrom()
+                        const to2D = waterViewFirst.cursorTo()
+                        const has2DRange = isFinite(from2D) && isFinite(to2D) && Math.abs(to2D - from2D) > 0.0001
+                        const cursorFrom = has2DRange ? from2D : renderer.syncLoupeDepthFrom
+                        const cursorTo = has2DRange ? to2D : renderer.syncLoupeDepthTo
+                        const centerDepth = waterViewFirst.getLoupeDepthForEpoch(renderer.syncLoupeEpochIndex)
+
+                        syncLoupePlot3D.horizontal = waterViewFirst.horizontal
+                        syncLoupePlot3D.plotDatasetChannelFromStrings(ch1Name, ch2Name)
+                        syncLoupePlot3D.plotEchogramTheme(waterViewFirst.getThemeId())
+                        syncLoupePlot3D.plotEchogramSetLevels(waterViewFirst.getLowEchogramLevel(), waterViewFirst.getHighEchogramLevel())
+                        syncLoupePlot3D.plotEchogramCompensation(waterViewFirst.getEchogramCompensation())
+
+                        syncLoupePlot3D.setCursorFromTo(cursorFrom, cursorTo)
+                        syncLoupePlot3D.setTimelinePositionByEpochCentered(renderer.syncLoupeEpochIndex)
+                        syncLoupePlot3D.setZoomPreviewSourceSize(previewSourceSize)
+                        syncLoupePlot3D.setZoomPreviewReferenceDepthPixels(sourceDepthReferencePx)
+                        syncLoupePlot3D.setZoomPreviewFlipY(renderer.syncLoupeFlipY)
+                        syncLoupePlot3D.setZoomPreviewSourceByEpochDepth(renderer.syncLoupeEpochIndex, centerDepth)
+                        syncLoupePlot3D.update()
+                    }
+
+                    onVisibleChanged: {
+                        if (visible) {
+                            refreshLoupePlot()
+                        }
+                    }
+
+                    onWidthChanged: {
+                        if (visible) {
+                            refreshLoupePlot()
+                        }
+                    }
+
+                    Connections {
+                        target: renderer
+                        function onSyncLoupeStateChanged() {
+                            syncLoupeOverlay.refreshLoupePlot()
+                        }
+                    }
+
+                    Connections {
+                        target: waterViewFirst
+                        function onTimelinePositionChanged() {
+                            syncLoupeOverlay.refreshLoupePlot()
+                        }
+                        function onEchogramThemeChanged(themeId) {
+                            syncLoupeOverlay.refreshLoupePlot()
+                        }
+                    }
+
+                    Rectangle {
+                        id: syncLoupeFrame
+                        anchors.fill: parent
+                        color: "black"
+                        border.color: "#545E84"
+                        border.width: Math.max(1, Math.round(2 * theme.resCoeff))
+                        radius: Math.max(1, Math.round(2 * theme.resCoeff))
+                        clip: true
+
+                        WaterFall {
+                            id: syncLoupePlot3D
+                            objectName: "syncLoupe3DPlot"
+                            anchors.fill: parent
+                            anchors.margins: syncLoupeFrame.border.width
+                            horizontal: true
+                            enabled: false
+
+                            Component.onCompleted: {
+                                core.registerSyncLoupePlot(syncLoupePlot3D)
+                                setZoomPreviewMode(true)
+                                plotBottomTrackVisible(false)
+                                plotRangefinderVisible(false)
+                                plotAttitudeVisible(false)
+                                plotTemperatureVisible(false)
+                                plotDopplerBeamVisible(false, 0)
+                                plotDopplerInstrumentVisible(false)
+                                plotGNSSVisible(false, 0)
+                                plotAcousticAngleVisible(false)
+                                plotVelocityVisible(false)
+                                plotAngleVisibility(false)
+                                plotGridVerticalNumber(0)
+                                plotGridFillWidth(false)
+                                plotGridInvert(false)
+                                plotDistanceAutoRange(-1)
+                                plotEchogramCompensation(0)
+                            }
+                        }
+                    }
+                }
+
                 Rectangle {
                     id: mosaicQualityBadge
                     visible: renderer.cameraPerspective
@@ -1561,6 +1702,9 @@ ApplicationWindow  {
 
     function handlePlotCursorChanged(indx, from, to) {
         if (!menuBar.syncPlots) {
+            if (renderer.syncLoupeOverlayVisible) {
+                syncLoupeOverlay.refreshLoupePlot()
+            }
             return;
         }
 
@@ -1571,6 +1715,10 @@ ApplicationWindow  {
         if (indx === 2) {
             waterViewFirst.setCursorFromTo(from, to)
             waterViewFirst.update()
+        }
+
+        if (renderer.syncLoupeOverlayVisible) {
+            syncLoupeOverlay.refreshLoupePlot()
         }
     }
 

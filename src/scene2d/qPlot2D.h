@@ -44,6 +44,58 @@ public:
     Q_INVOKABLE float cursorFrom() const { return Plot2D::cursor_.distance.from; }
     Q_INVOKABLE float cursorTo() const { return Plot2D::cursor_.distance.to; }
     Q_INVOKABLE void setCursorFromTo(float from, float to) { cursor_.distance.mode = AutoRangeNone; Plot2D::cursor_.distance.from = from; Plot2D::cursor_.distance.to = to; }
+    Q_INVOKABLE void setTimelinePositionByEpochCentered(int epochIndx) {
+        if (!datasetPtr_ || datasetPtr_->size() <= 0) {
+            return;
+        }
+        if (epochIndx < 0) {
+            Plot2D::setTimelinePosition(cursor_.position);
+            cursor_.selectEpochIndx = -1;
+            return;
+        }
+        const float halfWidth = static_cast<float>(qRound(width() * 0.5f));
+        const float timelinePos = static_cast<float>(epochIndx + halfWidth) / static_cast<float>(datasetPtr_->size());
+        Plot2D::setTimelinePosition(qBound(0.0f, timelinePos, 1.0f));
+        cursor_.selectEpochIndx = epochIndx;
+    }
+    Q_INVOKABLE void setZoomPreviewMode(bool enabled) {
+        if (zoomPreviewMode_ == enabled) {
+            return;
+        }
+        zoomPreviewMode_ = enabled;
+        update();
+    }
+    Q_INVOKABLE void setZoomPreviewSourceSize(int sourceSize) {
+        const int bounded = qBound(4, sourceSize, 4096);
+        if (zoomPreviewSourceSize_ == bounded) {
+            return;
+        }
+        zoomPreviewSourceSize_ = bounded;
+        update();
+    }
+    Q_INVOKABLE void setZoomPreviewReferenceDepthPixels(int pixels) {
+        const int bounded = qMax(0, pixels);
+        if (zoomPreviewReferenceDepthPixels_ == bounded) {
+            return;
+        }
+        zoomPreviewReferenceDepthPixels_ = bounded;
+        update();
+    }
+    Q_INVOKABLE void setZoomPreviewSourceByEpochDepth(int epochIndx, float depth) {
+        if (zoomPreviewEpochIndx_ == epochIndx && qFuzzyCompare(zoomPreviewDepth_ + 1.0f, depth + 1.0f)) {
+            return;
+        }
+        zoomPreviewEpochIndx_ = epochIndx;
+        zoomPreviewDepth_ = depth;
+        update();
+    }
+    Q_INVOKABLE void setZoomPreviewFlipY(bool enabled) {
+        if (zoomPreviewFlipY_ == enabled) {
+            return;
+        }
+        zoomPreviewFlipY_ = enabled;
+        update();
+    }
     Q_INVOKABLE void setIndx(int indx) { indx_ = indx; }
 
 protected:
@@ -97,6 +149,8 @@ public slots:
     uint8_t plotDatasetSubChannel() { return cursor_.subChannel1; }
     ChannelId plotDatasetChannel2() { return cursor_.channel2; }
     uint8_t plotDatasetSubChannel2() { return cursor_.subChannel2; }
+    Q_INVOKABLE QString plotDatasetChannelName() const { return cursor_.firstChannelPortName; }
+    Q_INVOKABLE QString plotDatasetChannel2Name() const { return cursor_.secondChannelPortName; }
 
     void plotEchogramVisible(bool visible) { setEchogramVisible(visible); }
     Q_INVOKABLE void plotEchogramTheme(int theme_id) { setEchogramTheme(theme_id); }
@@ -136,6 +190,8 @@ public slots:
     Q_INVOKABLE float getLowEchogramLevel() const;
     Q_INVOKABLE float getHighEchogramLevel() const;
     Q_INVOKABLE int getThemeId() const;
+    Q_INVOKABLE int getEchogramCompensation() const { return Plot2D::getEchogramCompensation(); }
+    Q_INVOKABLE float getLoupeDepthForEpoch(int epochIndx) const;
     void doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz, bool manual);
     void refreshDistParams(int preset, int windowSize, float verticalGap, float rangeMin, float rangeMax, float gainSlope, float threshold, float offsetX, float offsetY, float offsetZ);
 
@@ -152,4 +208,10 @@ public slots:
 
 private:
     int indx_ = -1;
+    bool zoomPreviewMode_ = false;
+    int zoomPreviewSourceSize_ = 44;
+    int zoomPreviewReferenceDepthPixels_ = 0;
+    int zoomPreviewEpochIndx_ = -1;
+    float zoomPreviewDepth_ = 0.0f;
+    bool zoomPreviewFlipY_ = false;
 };

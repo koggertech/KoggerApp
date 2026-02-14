@@ -8,6 +8,7 @@ public:
     {
         setHorizontal(true);
         setPlotEnabled(true);
+        bottomProcessing_.setVisible(true);
     }
 
     bool render(QPainter* painter,
@@ -79,7 +80,13 @@ public:
         echogram_.setLevels(lowLevel, highLevel);
         echogram_.setCompensation(compensationId);
 
-        return echogram_.draw(this, dataset);
+        const bool rendered = echogram_.draw(this, dataset);
+        if (!rendered) {
+            return false;
+        }
+
+        bottomProcessing_.draw(this, dataset);
+        return true;
     }
 };
 } // namespace
@@ -246,6 +253,11 @@ void Plot2DEchogram::setThemeId(int theme_id) {
 void Plot2DEchogram::setCompensation(int compensation_id)
 {
     _compensation_id = compensation_id;
+}
+
+int Plot2DEchogram::getCompensation() const
+{
+    return _compensation_id;
 }
 
 void Plot2DEchogram::updateColors()
@@ -518,8 +530,30 @@ bool Plot2DEchogram::draw(Plot2D* parent, Dataset* dataset)
     return true;
 }
 
-bool Plot2DEchogram::drawZoomPreview(Plot2D* parent, Dataset* dataset, QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceSize)
+bool Plot2DEchogram::drawZoomPreview(Plot2D* parent,
+                                     Dataset* dataset,
+                                     QPainter* painter,
+                                     const QRect& targetRect,
+                                     const QPoint& sourceCenter,
+                                     int sourceSize,
+                                     QPointF* focusPoint)
 {
+    return drawZoomPreview(parent, dataset, painter, targetRect, sourceCenter, sourceSize, sourceSize, focusPoint);
+}
+
+bool Plot2DEchogram::drawZoomPreview(Plot2D* parent,
+                                     Dataset* dataset,
+                                     QPainter* painter,
+                                     const QRect& targetRect,
+                                     const QPoint& sourceCenter,
+                                     int sourceWidth,
+                                     int sourceHeight,
+                                     QPointF* focusPoint)
+{
+    if (focusPoint) {
+        *focusPoint = QPointF(0.5, 0.5);
+    }
+
     if (!parent || !dataset || !painter || targetRect.width() <= 0 || targetRect.height() <= 0) {
         return false;
     }
@@ -537,8 +571,8 @@ bool Plot2DEchogram::drawZoomPreview(Plot2D* parent, Dataset* dataset, QPainter*
         return false;
     }
 
-    const int srcWidth = qBound(4, sourceSize, canvas.width());
-    const int srcHeight = qBound(4, sourceSize, canvas.height());
+    const int srcWidth = qBound(4, sourceWidth, canvas.width());
+    const int srcHeight = qBound(4, sourceHeight, canvas.height());
 
     const int clampedCenterX = qBound(0, sourceCenter.x(), canvas.width() - 1);
     const int clampedCenterY = qBound(0, sourceCenter.y(), canvas.height() - 1);
@@ -583,6 +617,16 @@ bool Plot2DEchogram::drawZoomPreview(Plot2D* parent, Dataset* dataset, QPainter*
     const bool isAscending = cursorTo >= cursorFrom;
     const float zoomFrom = isAscending ? low : high;
     const float zoomTo = isAscending ? high : low;
+    if (focusPoint) {
+        const float zoomSpan = zoomTo - zoomFrom;
+        float focusY = 0.5f;
+        if (std::isfinite(zoomSpan) && std::abs(zoomSpan) > 1e-6f) {
+            focusY = (centerDistance - zoomFrom) / zoomSpan;
+        }
+        focusY = qBound(0.0f, focusY, 1.0f);
+        focusPoint->setX(0.5);
+        focusPoint->setY(focusY);
+    }
 
     QImage zoomImage(previewWidth, previewHeight, QImage::Format_ARGB32_Premultiplied);
     zoomImage.fill(Qt::transparent);

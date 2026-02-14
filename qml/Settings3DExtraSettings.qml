@@ -179,6 +179,88 @@ MenuFrame {
             }
         }
 
+        RowLayout {
+            CheckButton {
+                id: syncLoupeCheckButton
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checked: false
+                text: qsTr("Loupe")
+                Layout.fillWidth: true
+
+                onToggled: {
+                    Scene3dToolBarController.onSyncLoupeVisibleChanged(checked)
+                }
+
+                onFocusChanged: {
+                    settings3DSettings.focus = true
+                }
+
+                Component.onCompleted: {
+                    Scene3dToolBarController.onSyncLoupeVisibleChanged(checked)
+                }
+            }
+
+            RowLayout {
+                visible: syncLoupeCheckButton.checked
+                CText {
+                    text: qsTr("size")
+                }
+                SpinBoxCustom {
+                    id: syncLoupeSizeSpinBox
+                    from: 1
+                    to: 3
+                    stepSize: 1
+                    value: 1
+
+                    onValueChanged: {
+                        Scene3dToolBarController.onSyncLoupeSizeChanged(value)
+                    }
+
+                    onFocusChanged: {
+                        settings3DSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        Scene3dToolBarController.onSyncLoupeSizeChanged(value)
+                    }
+                }
+            }
+
+            RowLayout {
+                visible: syncLoupeCheckButton.checked
+                CText {
+                    text: qsTr("zoom")
+                }
+                SpinBoxCustom {
+                    id: syncLoupeZoomSpinBox
+                    from: 1
+                    to: 3
+                    stepSize: 1
+                    value: 1
+
+                    onValueChanged: {
+                        Scene3dToolBarController.onSyncLoupeZoomChanged(value)
+                    }
+
+                    onFocusChanged: {
+                        settings3DSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        Scene3dToolBarController.onSyncLoupeZoomChanged(value)
+                    }
+                }
+            }
+
+            Settings {
+                property alias syncLoupeCheckButton: syncLoupeCheckButton.checked
+                property alias syncLoupeSizeSpinBox: syncLoupeSizeSpinBox.value
+                property alias syncLoupeZoomSpinBox: syncLoupeZoomSpinBox.value
+            }
+        }
+
         CheckButton {
             id: isNorthViewButton
             objectName: "isNorthViewButton"

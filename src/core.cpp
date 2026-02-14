@@ -545,7 +545,7 @@ bool Core::openXTF(const QByteArray& data)
         fChName = channelList.at(0).portName_;
     }
     if (linkNames.contains(channelList.at(1).channelId_.uuid)) {
-        sChName = channelList.at(0).portName_;
+        sChName = channelList.at(1).portName_;
     }
 
     if (!plot2dList_.isEmpty() && plot2dList_.at(0) && channelList.size() >= 2) {
@@ -560,6 +560,21 @@ bool Core::openXTF(const QByteArray& data)
                 plot2dList_.at(i)->plotUpdate();
             }
         }
+    }
+
+    if (syncLoupePlot3dPtr_ && !channelList.isEmpty()) {
+        if (channelList.size() >= 2) {
+            const QString loupeFirstName = fChName.isEmpty() ? channelList[0].portName_ : fChName;
+            const QString loupeSecondName = sChName.isEmpty() ? channelList[1].portName_ : sChName;
+            syncLoupePlot3dPtr_->setDataChannel(false,
+                                                channelList[0].channelId_, channelList[0].subChannelId_, loupeFirstName,
+                                                channelList[1].channelId_, channelList[1].subChannelId_, loupeSecondName);
+        }
+        else {
+            const QString loupeChannelName = fChName.isEmpty() ? channelList[0].portName_ : fChName;
+            syncLoupePlot3dPtr_->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, loupeChannelName);
+        }
+        syncLoupePlot3dPtr_->plotUpdate();
     }
 
     return true;
@@ -1184,6 +1199,9 @@ void Core::setPlotStartLevel(int level)
             plot2dList_.at(i)->setEchogramLowLevel(level);
         }
     }
+    if (syncLoupePlot3dPtr_) {
+        syncLoupePlot3dPtr_->setEchogramLowLevel(level);
+    }
 }
 
 void Core::setPlotStopLevel(int level)
@@ -1191,6 +1209,9 @@ void Core::setPlotStopLevel(int level)
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (plot2dList_.at(i) != NULL)
             plot2dList_.at(i)->setEchogramHightLevel(level);
+    }
+    if (syncLoupePlot3dPtr_) {
+        syncLoupePlot3dPtr_->setEchogramHightLevel(level);
     }
 }
 
@@ -1224,7 +1245,19 @@ void Core::UILoad(QObject* object, const QUrl& url)
 #endif
 
     scene3dViewPtr_ = object->findChild<GraphicsScene3dView*> ();
-    plot2dList_ = object->findChildren<qPlot2D*>();
+    plot2dList_.clear();
+    syncLoupePlot3dPtr_.clear();
+    const auto allPlots = object->findChildren<qPlot2D*>();
+    for (auto* plot : allPlots) {
+        if (!plot) {
+            continue;
+        }
+        if (plot->objectName() == QStringLiteral("syncLoupe3DPlot")) {
+            syncLoupePlot3dPtr_ = plot;
+            continue;
+        }
+        plot2dList_.append(plot);
+    }
     scene3dViewPtr_->setDataset(datasetPtr_);
     scene3dViewPtr_->setDataProcessorPtr(dataProcessor_);
     datasetPtr_->setScene3D(scene3dViewPtr_);
@@ -1240,6 +1273,11 @@ void Core::UILoad(QObject* object, const QUrl& url)
             plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->getBoatTrackPtr().get());
             plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->getContactsPtr().get());
         }
+    }
+
+    if (syncLoupePlot3dPtr_) {
+        syncLoupePlot3dPtr_->setPlot(datasetPtr_);
+        syncLoupePlot3dPtr_->setDataProcessor(dataProcessor_);
     }
 
     //if(m_scene3dView){
@@ -1392,6 +1430,18 @@ void Core::onChannelsUpdated()
     }
 
     if (fChName.isEmpty() && sChName.isEmpty()) {
+        if (syncLoupePlot3dPtr_ && chSize >= 1) {
+            if (chSize >= 2) {
+                syncLoupePlot3dPtr_->setDataChannel(false,
+                                                    chs[0].channelId_, chs[0].subChannelId_, chs[0].portName_,
+                                                    chs[1].channelId_, chs[1].subChannelId_, chs[1].portName_);
+            }
+            else {
+                syncLoupePlot3dPtr_->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, chs[0].portName_);
+            }
+            syncLoupePlot3dPtr_->plotUpdate();
+        }
+        emit channelListUpdated();
         return;
     }
 
@@ -1410,6 +1460,22 @@ void Core::onChannelsUpdated()
         }
     }
 
+    if (syncLoupePlot3dPtr_) {
+        if (chSize >= 2) {
+            const QString loupeFirstName = fChName.isEmpty() ? chs[0].portName_ : fChName;
+            const QString loupeSecondName = sChName.isEmpty() ? chs[1].portName_ : sChName;
+            syncLoupePlot3dPtr_->setDataChannel(false,
+                                                chs[0].channelId_, chs[0].subChannelId_, loupeFirstName,
+                                                chs[1].channelId_, chs[1].subChannelId_, loupeSecondName);
+            syncLoupePlot3dPtr_->plotUpdate();
+        }
+        else if (chSize == 1) {
+            const QString loupeChannelName = fChName.isEmpty() ? chs[0].portName_ : fChName;
+            syncLoupePlot3dPtr_->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, loupeChannelName);
+            syncLoupePlot3dPtr_->plotUpdate();
+        }
+    }
+
     emit channelListUpdated();
 }
 
@@ -1418,6 +1484,9 @@ void Core::onRedrawEpochs(const QSet<int>& indxs)
     const int numPlots = plot2dList_.size();
     for (int i = 0; i < numPlots; i++) {
         plot2dList_[i]->addReRenderPlotIndxs(indxs);
+    }
+    if (syncLoupePlot3dPtr_) {
+        syncLoupePlot3dPtr_->addReRenderPlotIndxs(indxs);
     }
 }
 
@@ -1429,6 +1498,42 @@ QString Core::getChannel1Name() const
 QString Core::getChannel2Name() const
 {
     return sChName_;
+}
+
+void Core::registerSyncLoupePlot(QObject* plotObj)
+{
+    auto* plot = qobject_cast<qPlot2D*>(plotObj);
+    if (!plot) {
+        return;
+    }
+
+    syncLoupePlot3dPtr_ = plot;
+
+    if (datasetPtr_) {
+        syncLoupePlot3dPtr_->setPlot(datasetPtr_);
+    }
+    if (dataProcessor_) {
+        syncLoupePlot3dPtr_->setDataProcessor(dataProcessor_);
+    }
+
+    if (!datasetPtr_) {
+        return;
+    }
+
+    const auto chs = datasetPtr_->channelsList();
+    if (chs.isEmpty()) {
+        return;
+    }
+
+    if (chs.size() >= 2) {
+        syncLoupePlot3dPtr_->setDataChannel(false,
+                                            chs[0].channelId_, chs[0].subChannelId_, chs[0].portName_,
+                                            chs[1].channelId_, chs[1].subChannelId_, chs[1].portName_);
+    }
+    else {
+        syncLoupePlot3dPtr_->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, chs[0].portName_);
+    }
+    syncLoupePlot3dPtr_->plotUpdate();
 }
 
 QVariant Core::getConvertedMousePos(int indx, int mouseX, int mouseY)

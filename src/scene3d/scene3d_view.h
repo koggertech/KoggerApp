@@ -2,6 +2,7 @@
 #define GRAPHICSSCENE3DVIEW_H
 
 #include <array>
+#include <memory>
 #include <QQuickFramebufferObject>
 #include <QtMath>
 #include <QElapsedTimer>
@@ -40,6 +41,14 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(QObject* geoJsonController READ geoJsonController CONSTANT)
     Q_PROPERTY(bool cameraPerspective READ cameraPerspective NOTIFY cameraPerspectiveChanged)
     Q_PROPERTY(bool updateSurface READ updateSurface NOTIFY updateSurfaceChanged)
+    Q_PROPERTY(bool syncLoupeOverlayVisible READ syncLoupeOverlayVisible NOTIFY syncLoupeStateChanged)
+    Q_PROPERTY(int syncLoupeEpochIndex READ syncLoupeEpochIndex NOTIFY syncLoupeStateChanged)
+    Q_PROPERTY(float syncLoupeDepthFrom READ syncLoupeDepthFrom NOTIFY syncLoupeStateChanged)
+    Q_PROPERTY(float syncLoupeDepthTo READ syncLoupeDepthTo NOTIFY syncLoupeStateChanged)
+    Q_PROPERTY(float syncLoupeCenterDepth READ syncLoupeCenterDepth NOTIFY syncLoupeStateChanged)
+    Q_PROPERTY(bool syncLoupeFlipY READ syncLoupeFlipY NOTIFY syncLoupeStateChanged)
+    Q_PROPERTY(int syncLoupeSize READ syncLoupeSize NOTIFY syncLoupeStateChanged)
+    Q_PROPERTY(int syncLoupeZoom READ syncLoupeZoom NOTIFY syncLoupeStateChanged)
 
 public:
     //Camera
@@ -232,6 +241,14 @@ public:
     bool rulerSelected() const;
     bool rulerHasGeometry() const;
     QObject* geoJsonController() const;
+    bool syncLoupeOverlayVisible() const;
+    int syncLoupeEpochIndex() const;
+    float syncLoupeDepthFrom() const;
+    float syncLoupeDepthTo() const;
+    float syncLoupeCenterDepth() const;
+    bool syncLoupeFlipY() const;
+    int syncLoupeSize() const;
+    int syncLoupeZoom() const;
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -269,6 +286,10 @@ public:
     void setPlaneGridCircleLabels(bool state);
     void setForceSingleZoomEnabled(bool state);
     void setForceSingleZoomValue(int zoom);
+    void setSyncLoupeVisible(bool state);
+    void setSyncLoupeSize(int val);
+    void setSyncLoupeZoom(int val);
+    void setSyncEpochIndex(int epochIndex);
 
     void setActiveZeroing(bool state);
 
@@ -323,6 +344,7 @@ signals:
     void sendCameraEpIndxs(const QVector<QPair<int, QSet<TileKey>>>& epIndxs);
     void sendVisibleTileKeys(int zoomIndx, const QSet<TileKey>& tileKeys);
     void forceSingleZoomAutoStateChanged(bool active);
+    void syncLoupeStateChanged();
 
 private:
     void updateBounds();
@@ -341,6 +363,7 @@ private:
     void setRulerSelected(bool selected);
     void resetRulerInteraction();
     void updateForceSingleZoomAutoState();
+    void refreshSyncLoupePreview();
 
 private:
     friend class BottomTrack;
@@ -450,6 +473,17 @@ private:
     QSet<TileKey> lastVisTileKeys_;
 
     bool isUpdateMosaic_;
-    bool isUpdateSurface_;};
+    bool isUpdateSurface_;
+
+    bool syncLoupeVisible_ = false;
+    int syncLoupeSize_ = 1;
+    int syncLoupeZoom_ = 1;
+    int syncEpochIndex_ = -1;
+    bool syncLoupeOverlayVisible_ = false;
+    float syncLoupeDepthFrom_ = 0.0f;
+    float syncLoupeDepthTo_ = 0.0f;
+    float syncLoupeCenterDepth_ = 0.0f;
+    bool syncLoupeFlipY_ = false;
+};
 
 #endif // GRAPHICSSCENE3DVIEW_H

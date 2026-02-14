@@ -233,9 +233,14 @@ void Plot2D::draw(QPainter *painterPtr)
     contacts_.draw(this, datasetPtr_);
 }
 
-bool Plot2D::drawEchogramZoomPreview(QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceSize)
+bool Plot2D::drawEchogramZoomPreview(QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceSize, QPointF* focusPoint)
 {
-    return echogram_.drawZoomPreview(this, datasetPtr_, painter, targetRect, sourceCenter, sourceSize);
+    return drawEchogramZoomPreview(painter, targetRect, sourceCenter, sourceSize, sourceSize, focusPoint);
+}
+
+bool Plot2D::drawEchogramZoomPreview(QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceWidth, int sourceHeight, QPointF* focusPoint)
+{
+    return echogram_.drawZoomPreview(this, datasetPtr_, painter, targetRect, sourceCenter, sourceWidth, sourceHeight, focusPoint);
 }
 
 bool Plot2D::isHorizontal()
@@ -390,6 +395,11 @@ float Plot2D::getEchogramHighLevel() const
 int Plot2D::getThemeId() const
 {
     return echogram_.getThemeId();
+}
+
+int Plot2D::getEchogramCompensation() const
+{
+    return echogram_.getCompensation();
 }
 
 void Plot2D::setEchogramLowLevel(float low) {

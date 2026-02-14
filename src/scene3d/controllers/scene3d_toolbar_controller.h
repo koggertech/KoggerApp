@@ -39,6 +39,9 @@ public:
     Q_INVOKABLE void onGeoJsonModeChanged(bool enabled);
     Q_INVOKABLE void onForceSingleZoomCheckedChanged(bool state);
     Q_INVOKABLE void onForceSingleZoomValueChanged(int zoom);
+    Q_INVOKABLE void onSyncLoupeVisibleChanged(bool state);
+    Q_INVOKABLE void onSyncLoupeSizeChanged(int size);
+    Q_INVOKABLE void onSyncLoupeZoomChanged(int zoom);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
@@ -75,6 +78,9 @@ private:
     bool geoJsonEnabled_;
     bool forceSingleZoomEnabled_;
     int forceSingleZoomValue_;
+    bool syncLoupeVisible_;
+    int syncLoupeSize_;
+    int syncLoupeZoom_;
     bool suppressForceSingleZoomUiCallback_;
 };
 

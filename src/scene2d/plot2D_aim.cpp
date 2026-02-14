@@ -196,17 +196,27 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
         p->setPen(Qt::NoPen);
         p->setBrush(QColor(30, 30, 30, 220));
         p->drawRect(previewRect);
-        parent->drawEchogramZoomPreview(p, previewInnerRect, sourceCenter, previewSourceSize);
+        QPointF previewFocus(0.5, 0.5);
+        parent->drawEchogramZoomPreview(p, previewInnerRect, sourceCenter, previewSourceSize, &previewFocus);
 
         p->setPen(QPen(QColor(94, 101, 132, 255), 2));
         p->setBrush(Qt::NoBrush);
         p->drawRect(previewRect.adjusted(1, 1, -1, -1));
 
-        const QPoint zoomCenter = previewInnerRect.center();
+        const qreal focusX = qBound<qreal>(0.0, previewFocus.x(), 1.0);
+        const qreal focusY = qBound<qreal>(0.0, previewFocus.y(), 1.0);
+        const int zoomCenterX = previewInnerRect.left()
+            + qRound(focusX * static_cast<qreal>(qMax(0, previewInnerRect.width() - 1)));
+        const int zoomCenterY = previewInnerRect.top()
+            + qRound(focusY * static_cast<qreal>(qMax(0, previewInnerRect.height() - 1)));
         const int crossHalf = qMax(6 * scaleFactor_, previewInnerRect.width() / 10);
+        const int leftArm = qMin(crossHalf, qMax(0, zoomCenterX - previewInnerRect.left()));
+        const int rightArm = qMin(crossHalf, qMax(0, previewInnerRect.right() - zoomCenterX));
+        const int topArm = qMin(crossHalf, qMax(0, zoomCenterY - previewInnerRect.top()));
+        const int bottomArm = qMin(crossHalf, qMax(0, previewInnerRect.bottom() - zoomCenterY));
         p->setPen(QPen(QColor(255, 255, 255, 220), 2));
-        p->drawLine(zoomCenter.x() - crossHalf, zoomCenter.y(), zoomCenter.x() + crossHalf, zoomCenter.y());
-        p->drawLine(zoomCenter.x(), zoomCenter.y() - crossHalf, zoomCenter.x(), zoomCenter.y() + crossHalf);
+        p->drawLine(zoomCenterX - leftArm, zoomCenterY, zoomCenterX + rightArm, zoomCenterY);
+        p->drawLine(zoomCenterX, zoomCenterY - topArm, zoomCenterX, zoomCenterY + bottomArm);
     }
 
     return true;

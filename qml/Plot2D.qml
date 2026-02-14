@@ -51,6 +51,7 @@ WaterFall {
     signal plotPressed(int indx, int mousex, int mousey)
     signal plotReleased(int indx)
     signal settingsClicked()
+    signal echogramThemeChanged(int themeId)
 
     PinchArea {
         id: pinch2D
@@ -530,8 +531,14 @@ WaterFall {
                             model: [qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green"), qsTr("Midnight")]
                             currentIndex: 0
 
-                            onCurrentIndexChanged: plotEchogramTheme(currentIndex)
-                            Component.onCompleted: plotEchogramTheme(currentIndex)
+                            onCurrentIndexChanged: {
+                                plotEchogramTheme(currentIndex)
+                                echogramThemeChanged(currentIndex)
+                            }
+                            Component.onCompleted: {
+                                plotEchogramTheme(currentIndex)
+                                echogramThemeChanged(currentIndex)
+                            }
 
                             Settings {
                                 category: "Plot2D_" + plot.indx

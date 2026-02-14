@@ -4,6 +4,7 @@
 #include <QVector>
 #include <QImage>
 #include <QPoint>
+#include <QPointF>
 #include <QPixmap>
 #include <QPainter>
 #include <QEvent>
@@ -83,7 +84,8 @@ public:
 
     bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
     void draw(QPainter* painterPtr);
-    bool drawEchogramZoomPreview(QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceSize);
+    bool drawEchogramZoomPreview(QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceSize, QPointF* focusPoint = nullptr);
+    bool drawEchogramZoomPreview(QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceWidth, int sourceHeight, QPointF* focusPoint = nullptr);
 
     float getCursorDistance() const;
     std::tuple<ChannelId, uint8_t, QString> getSelectedChannelId(float cursorDistance = 0.0f) const;
@@ -91,6 +93,7 @@ public:
     float getEchogramLowLevel() const;
     float getEchogramHighLevel() const;
     int getThemeId() const;
+    int getEchogramCompensation() const;
     void setEchogramLowLevel(float low);
     void setEchogramHightLevel(float high);
     void setEchogramVisible(bool visible);

@@ -55,8 +55,8 @@ static inline float zoomDistanceMid(const ZoomDistanceRange& range)
 {
     return range.min + (range.max - range.min) * 0.5f;
 }
-} // namespace
 
+} // namespace
 
 GraphicsScene3dView::GraphicsScene3dView() :
     QQuickFramebufferObject(),
@@ -337,6 +337,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
 
     lastVisTileKeys_.clear();
     dataZoomIndx_ = -1; // force zoom sync to data-processor on next camera update
+    setSyncEpochIndex(-1);
 
     QQuickFramebufferObject::update();
 }
@@ -384,6 +385,7 @@ void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, q
 
     m_bottomTrack->resetVertexSelection();
     boatTrack_->clearSelectedEpoch();
+    setSyncEpochIndex(-1);
     lastMode_ = m_mode;
     m_mode = ActiveMode::BottomTrackVertexComboSelectionMode;
     m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
@@ -1133,6 +1135,56 @@ void GraphicsScene3dView::setForceSingleZoomValue(int zoom)
     onCameraMoved();
 }
 
+void GraphicsScene3dView::setSyncLoupeVisible(bool state)
+{
+    if (syncLoupeVisible_ == state) {
+        return;
+    }
+
+    syncLoupeVisible_ = state;
+    refreshSyncLoupePreview();
+    emit syncLoupeStateChanged();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setSyncLoupeSize(int val)
+{
+    const int bounded = qBound(1, val, 3);
+    if (syncLoupeSize_ == bounded) {
+        return;
+    }
+
+    syncLoupeSize_ = bounded;
+    refreshSyncLoupePreview();
+    emit syncLoupeStateChanged();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setSyncLoupeZoom(int val)
+{
+    const int bounded = qBound(1, val, 3);
+    if (syncLoupeZoom_ == bounded) {
+        return;
+    }
+
+    syncLoupeZoom_ = bounded;
+    refreshSyncLoupePreview();
+    emit syncLoupeStateChanged();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setSyncEpochIndex(int epochIndex)
+{
+    if (syncEpochIndex_ == epochIndex) {
+        return;
+    }
+
+    syncEpochIndex_ = epochIndex;
+    refreshSyncLoupePreview();
+    emit syncLoupeStateChanged();
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::updateForceSingleZoomAutoState()
 {
     if (!core.getNeedForceZooming()) {
@@ -1171,6 +1223,99 @@ void GraphicsScene3dView::updateForceSingleZoomAutoState()
 void GraphicsScene3dView::setActiveZeroing(bool state)
 {
     m_planeGrid->setActiveZeroing(state);
+}
+
+void GraphicsScene3dView::refreshSyncLoupePreview()
+{
+    bool overlayVisible = false;
+    float depthFrom = 0.0f;
+    float depthTo = 0.0f;
+    float centerDepth = 0.0f;
+    bool flipY = false;
+
+    if (syncLoupeVisible_ && datasetPtr_ && syncEpochIndex_ >= 0) {
+        const int datasetSize = datasetPtr_->size();
+        if (syncEpochIndex_ < datasetSize) {
+            if (auto* epoch = datasetPtr_->fromIndex(syncEpochIndex_); epoch) {
+                ChannelId firstChannelId = CHANNEL_NONE;
+                uint8_t firstSubChannelId = 0;
+                ChannelId secondChannelId = CHANNEL_NONE;
+                uint8_t secondSubChannelId = 0;
+                bool hasSecondChannel = false;
+                if (const auto channels = datasetPtr_->channelsList(); !channels.isEmpty()) {
+                    firstChannelId = channels.first().channelId_;
+                    firstSubChannelId = channels.first().subChannelId_;
+                    hasSecondChannel = channels.size() > 1;
+                    if (hasSecondChannel) {
+                        secondChannelId = channels.at(1).channelId_;
+                        secondSubChannelId = channels.at(1).subChannelId_;
+                    }
+                }
+                flipY = false;
+
+                float rangeFrom = NAN;
+                float rangeTo = NAN;
+                if (firstChannelId.isValid()) {
+                    datasetPtr_->getMaxDistanceRange(&rangeFrom, &rangeTo, firstChannelId, firstSubChannelId, secondChannelId, secondSubChannelId);
+                }
+                if (!std::isfinite(rangeFrom) || !std::isfinite(rangeTo) || rangeTo <= rangeFrom) {
+                    float maxRange = epoch->getMaxRange(firstChannelId);
+                    if (!std::isfinite(maxRange) || maxRange <= 0.0f) {
+                        maxRange = epoch->getMaxRange();
+                    }
+                    if (!std::isfinite(maxRange) || maxRange <= 0.0f) {
+                        maxRange = 20.0f;
+                    }
+                    rangeFrom = 0.0f;
+                    rangeTo = maxRange;
+                }
+
+                bool hasBottomDepth = false;
+                if (firstChannelId.isValid()) {
+                    const float btDepth = static_cast<float>(epoch->distProccesing(firstChannelId));
+                    if (std::isfinite(btDepth)) {
+                        centerDepth = std::abs(btDepth);
+                        hasBottomDepth = true;
+                    }
+                }
+
+                depthFrom = rangeFrom;
+                depthTo = rangeTo;
+                if (!hasBottomDepth) {
+                    centerDepth = hasSecondChannel ? NAN : 0.0f;
+                }
+
+                const float minDepth = qMin(depthFrom, depthTo);
+                const float maxDepth = qMax(depthFrom, depthTo);
+                if (std::isfinite(centerDepth)) {
+                    centerDepth = qBound(minDepth, centerDepth, maxDepth);
+                }
+                overlayVisible = maxDepth > minDepth;
+            }
+        }
+    }
+
+    auto sameFloat = [](float a, float b) {
+        if (std::isnan(a) && std::isnan(b)) {
+            return true;
+        }
+        return qFuzzyCompare(a + 1.0f, b + 1.0f);
+    };
+    const bool changed = syncLoupeOverlayVisible_ != overlayVisible ||
+                         !sameFloat(syncLoupeDepthFrom_, depthFrom) ||
+                         !sameFloat(syncLoupeDepthTo_, depthTo) ||
+                         !sameFloat(syncLoupeCenterDepth_, centerDepth) ||
+                         syncLoupeFlipY_ != flipY;
+
+    syncLoupeOverlayVisible_ = overlayVisible;
+    syncLoupeDepthFrom_ = depthFrom;
+    syncLoupeDepthTo_ = depthTo;
+    syncLoupeCenterDepth_ = centerDepth;
+    syncLoupeFlipY_ = flipY;
+
+    if (changed) {
+        emit syncLoupeStateChanged();
+    }
 }
 
 void GraphicsScene3dView::updateProjection()
@@ -1238,6 +1383,46 @@ bool GraphicsScene3dView::rulerHasGeometry() const
 QObject* GraphicsScene3dView::geoJsonController() const
 {
     return geoJsonController_;
+}
+
+bool GraphicsScene3dView::syncLoupeOverlayVisible() const
+{
+    return syncLoupeOverlayVisible_;
+}
+
+int GraphicsScene3dView::syncLoupeEpochIndex() const
+{
+    return syncEpochIndex_;
+}
+
+float GraphicsScene3dView::syncLoupeDepthFrom() const
+{
+    return syncLoupeDepthFrom_;
+}
+
+float GraphicsScene3dView::syncLoupeDepthTo() const
+{
+    return syncLoupeDepthTo_;
+}
+
+float GraphicsScene3dView::syncLoupeCenterDepth() const
+{
+    return syncLoupeCenterDepth_;
+}
+
+bool GraphicsScene3dView::syncLoupeFlipY() const
+{
+    return syncLoupeFlipY_;
+}
+
+int GraphicsScene3dView::syncLoupeSize() const
+{
+    return syncLoupeSize_;
+}
+
+int GraphicsScene3dView::syncLoupeZoom() const
+{
+    return syncLoupeZoom_;
 }
 
 void GraphicsScene3dView::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
@@ -1427,6 +1612,7 @@ void GraphicsScene3dView::setIdleMode()
     clearComboSelectionRect();
     m_bottomTrack->resetVertexSelection();
     boatTrack_->clearSelectedEpoch();
+    setSyncEpochIndex(-1);
 
     QQuickFramebufferObject::update();
 }
@@ -1491,6 +1677,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
 
     datasetPtr_ = dataset;
     datasetState_ = static_cast<int>(datasetPtr_->getState());
+    setSyncEpochIndex(-1);
 
     boatTrack_->setDatasetPtr(datasetPtr_);
     m_bottomTrack->setDatasetPtr(datasetPtr_);
@@ -2337,6 +2524,7 @@ void GraphicsScene3dView::onCameraMoved()
         dataZoomIndx_ = currZoom;
         emit sendDataZoom(dataZoomIndx_);
     }
+    refreshSyncLoupePreview();
 
     const auto [minX, maxX, minY, maxY] = getFieldViewDim();
     if (qFuzzyCompare(minX, std::numeric_limits<float>::max())    ||

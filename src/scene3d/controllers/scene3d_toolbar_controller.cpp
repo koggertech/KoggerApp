@@ -26,6 +26,9 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       geoJsonEnabled_(false),
       forceSingleZoomEnabled_(false),
       forceSingleZoomValue_(5),
+      syncLoupeVisible_(false),
+      syncLoupeSize_(1),
+      syncLoupeZoom_(1),
       suppressForceSingleZoomUiCallback_(false)
 {}
 
@@ -316,7 +319,45 @@ void Scene3dToolBarController::onForceSingleZoomValueChanged(int zoom)
     else {
         tryInitPendingLambda();
     }
-}void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
+}
+
+void Scene3dToolBarController::onSyncLoupeVisibleChanged(bool state)
+{
+    syncLoupeVisible_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setSyncLoupeVisible(syncLoupeVisible_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onSyncLoupeSizeChanged(int size)
+{
+    syncLoupeSize_ = qBound(1, size, 3);
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setSyncLoupeSize(syncLoupeSize_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onSyncLoupeZoomChanged(int zoom)
+{
+    syncLoupeZoom_ = qBound(1, zoom, 3);
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setSyncLoupeZoom(syncLoupeZoom_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     graphicsScene3dViewPtr_ = sceneView;
 
@@ -366,6 +407,9 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setGeoJsonEnabled(geoJsonEnabled_);
                 graphicsScene3dViewPtr_->setForceSingleZoomEnabled(forceSingleZoomEnabled_);
                 graphicsScene3dViewPtr_->setForceSingleZoomValue(forceSingleZoomValue_);
+                graphicsScene3dViewPtr_->setSyncLoupeVisible(syncLoupeVisible_);
+                graphicsScene3dViewPtr_->setSyncLoupeSize(syncLoupeSize_);
+                graphicsScene3dViewPtr_->setSyncLoupeZoom(syncLoupeZoom_);
 
                 if (dataProcessorPtr_) {
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateBottomTrack", Qt::QueuedConnection, Q_ARG(bool, updateBottomTrack_));

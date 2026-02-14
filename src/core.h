@@ -152,6 +152,7 @@ public slots:
     Q_INVOKABLE int getDataProcessorState() const;
     Q_INVOKABLE QString getChannel1Name() const;
     Q_INVOKABLE QString getChannel2Name() const;
+    Q_INVOKABLE void registerSyncLoupePlot(QObject* plotObj);
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
 
     Q_INVOKABLE void setIsAttitudeExpected(bool state);
@@ -245,6 +246,7 @@ private:
     ConverterXTF converterXtf_;
     Logger logger_;
     QList<qPlot2D*> plot2dList_;
+    QPointer<qPlot2D> syncLoupePlot3dPtr_;
     QList<QMetaObject::Connection> linkManagerWrapperConnections_;
     QString openedfilePath_;
     bool isLoggingKlf_;

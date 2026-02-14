@@ -206,6 +206,9 @@ void BottomTrack::clearData()
 
     auto r = RENDER_IMPL(BottomTrack);
     r->selectedVertexIndices_.clear();
+    if (m_view) {
+        m_view->setSyncEpochIndex(-1);
+    }
 
     SceneObject::clearData();
 }
@@ -213,6 +216,9 @@ void BottomTrack::clearData()
 void BottomTrack::resetVertexSelection()
 {
     RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
+    if (m_view) {
+        m_view->setSyncEpochIndex(-1);
+    }
 }
 
 //void BottomTrack::setVisibleChannel(const ChannelId& channelId)
@@ -262,6 +268,7 @@ void BottomTrack::selectEpoch(int epochIndex, const ChannelId& channelId)
 
     r->selectedVertexIndices_.clear();
     r->selectedVertexIndices_.append(indxFromMap);
+    m_view->setSyncEpochIndex(epochIndex);
 
     Q_EMIT changed();
 }
@@ -289,6 +296,7 @@ void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
             if (!hits.isEmpty()) {
                 RENDER_IMPL(BottomTrack)->selectedVertexIndices_ = {hits.first().indices().first};
                 auto epochIndex = vertex2Epoch_.value({hits.first().indices().first});
+                m_view->setSyncEpochIndex(epochIndex);
 
                 auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, visibleChannel_);
 
@@ -328,6 +336,7 @@ void BottomTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 
                 r->selectedVertexIndices_ = {hits.first().indices().first};
                 auto epochIndex = vertex2Epoch_.value({hits.first().indices().first});
+                m_view->setSyncEpochIndex(epochIndex);
                 m_view->getBoatTrackPtr()->selectEpoch(epochIndex);
                 auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, visibleChannel_);
                 QCoreApplication::postEvent(this, epochEvent);
@@ -354,6 +363,7 @@ void BottomTrack::mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 
     auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(-1),-1, visibleChannel_);
     QCoreApplication::postEvent(this, epochEvent);
+    m_view->setSyncEpochIndex(-1);
 }
 
 void BottomTrack::keyPressEvent(Qt::Key key)
