@@ -695,6 +695,8 @@ GridLayout {
 
             ColumnLayout {
                 RowLayout {
+                    id: exportPathRow
+                    property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
                     CTextField {
                         id: exportPathText
                         hoverEnabled: true
@@ -711,22 +713,30 @@ GridLayout {
                     CButton {
                         text: "..."
                         Layout.fillWidth: false
-                        onClicked: exportFileDialog.open()
+                        onClicked: {
+                            exportFileDialog.currentFolder = exportPathRow.exportFolder
+                            exportFileDialog.open()
+                        }
                     }
 
                     FolderDialog {
                         id: exportFileDialog
                         title: qsTr("Select folder for export")
 
-                        currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+                        currentFolder: exportPathRow.exportFolder
+
+                        onCurrentFolderChanged: {
+                            exportPathRow.exportFolder = currentFolder
+                        }
 
                         onAccepted: {
+                            exportPathRow.exportFolder = exportFileDialog.currentFolder
                             exportPathText.text = selectedFolder.toString()
                         }
                     }
 
                     Settings {
-                        property alias exportFolder: exportFileDialog.currentFolder
+                        property alias exportFolder: exportPathRow.exportFolder
                     }
 
                     Settings {

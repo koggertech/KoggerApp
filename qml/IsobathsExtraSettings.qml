@@ -10,6 +10,7 @@ MenuFrame {
     id: isobathsSettings
 
     property CheckButton isobathsCheckButton
+    property var exportSurfaceFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
     visible: Qt.platform.os === "android"
              ? (isobathsCheckButton.isobathsLongPressTriggered || isobathsTheme.activeFocus)
@@ -229,6 +230,7 @@ MenuFrame {
                 Layout.fillWidth: false
 
                 onClicked: {
+                    exportSurfaceFileDialog.currentFolder = isobathsSettings.exportSurfaceFolder
                     exportSurfaceFileDialog.open()
                 }
             }
@@ -237,14 +239,19 @@ MenuFrame {
                 id: exportSurfaceFileDialog
                 title: qsTr("Select folder and set .csv file name")
 
-                currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+                currentFolder: isobathsSettings.exportSurfaceFolder
 
                 fileMode: FileDialog.SaveFile
 
                 nameFilters: ["CSV Files (*.csv)", "All Files (*)"]
                 defaultSuffix: "csv"
 
+                onCurrentFolderChanged: {
+                    isobathsSettings.exportSurfaceFolder = currentFolder
+                }
+
                 onAccepted: {
+                    isobathsSettings.exportSurfaceFolder = exportSurfaceFileDialog.currentFolder
                     var url = selectedFile.toString()
 
                     if (!url.toLowerCase().endsWith(".csv")) {
@@ -263,7 +270,7 @@ MenuFrame {
 
 
             Settings {
-                property alias exportSurfaceFolder: exportSurfaceFileDialog.currentFolder
+                property alias exportSurfaceFolder: isobathsSettings.exportSurfaceFolder
             }
 
             Settings {

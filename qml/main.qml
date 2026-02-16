@@ -1269,6 +1269,7 @@ ApplicationWindow  {
         Settings {
             id: profilesStorage
             property var savedProfiles: []
+            property var lastProfileFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         }
 
         function loadSavedProfiles() {
@@ -1314,10 +1315,16 @@ ApplicationWindow  {
             id: profilePickDialog
             title: qsTr("Select profile XML")
             fileMode: FileDialog.OpenFile
+            currentFolder: profilesStorage.lastProfileFolder
             nameFilters: Qt.platform.os === "android" ? ["*/*"] : ["XML files (*.xml)"]
+
+            onCurrentFolderChanged: {
+                profilesStorage.lastProfileFolder = currentFolder
+            }
 
             onAccepted: {
                 if (profilesDialog.browseRow < 0) return
+                profilesStorage.lastProfileFolder = profilePickDialog.currentFolder
                 const p = profilesDialog.urlToPath(profilePickDialog.selectedFile)
                 profilesModel.setProperty(profilesDialog.browseRow, "path", p)
                 profilesDialog.browseRow = -1
@@ -1384,6 +1391,7 @@ ApplicationWindow  {
                                 text: qsTr("Browse")
                                 onClicked: {
                                     profilesDialog.browseRow = index
+                                    profilePickDialog.currentFolder = profilesStorage.lastProfileFolder
                                     profilePickDialog.open()
                                 }
                             }

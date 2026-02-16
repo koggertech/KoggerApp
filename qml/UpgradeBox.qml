@@ -9,13 +9,20 @@ DevSettingsBox {
     id: control
     Layout.preferredHeight: columnItem.height
     isActive: !!(dev && dev.isUpgradeSupport)
+    property var upgradeFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
     FileDialog {
         id: fileDialog
         title: qsTr("Please choose a file")
-        currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+        currentFolder: control.upgradeFolder
         nameFilters: ["Upgrade files (*.ufw)"]
+
+        onCurrentFolderChanged: {
+            control.upgradeFolder = currentFolder
+        }
+
         onAccepted: {
+            control.upgradeFolder = fileDialog.currentFolder
             pathText.text = fileDialog.selectedFile.toString()
         }
         onRejected: {
@@ -23,7 +30,7 @@ DevSettingsBox {
     }
 
     Settings {
-        property alias upgradeFolder: fileDialog.currentFolder
+        property alias upgradeFolder: control.upgradeFolder
     }
 
     ColumnLayout {
@@ -62,6 +69,7 @@ DevSettingsBox {
                 text: "..."
                 Layout.fillWidth: false
                 onClicked: {
+                    fileDialog.currentFolder = control.upgradeFolder
                     fileDialog.open()
                 }
             }

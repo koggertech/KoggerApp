@@ -6,9 +6,18 @@ import QtCore
 
 
 ColumnLayout {
+    id: connectionViewer
     property var dev: null
     property var devList: deviceManagerWrapper.devs
     property string filePath: pathText.text
+    property var lastLogFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property var lastImportTrackFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+
+    Settings {
+        property alias logFolder: connectionViewer.lastLogFolder
+        property alias importTrackFolder: connectionViewer.lastImportTrackFolder
+    }
+
     function importSettingsToAllDevices(path) {
         if (!path || !path.length) {
             return
@@ -808,16 +817,21 @@ ColumnLayout {
                 implicitHeight: theme.controlHeight
                 implicitWidth: implicitHeight*1.1
                 onClicked: {
+                    importTrackFileDialog.currentFolder = connectionViewer.lastImportTrackFolder
                     importTrackFileDialog.open()
                 }
 
                 FileDialog {
                     id: importTrackFileDialog
                     title: "Please choose a file"
-                    currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+                    currentFolder: connectionViewer.lastImportTrackFolder
                     //                    fileMode: FileDialog.OpenFiles
 
                     nameFilters: ["Logs (*.csv *.txt)"]
+
+                    onCurrentFolderChanged: {
+                        connectionViewer.lastImportTrackFolder = currentFolder
+                    }
 
                     function openCSV() {
                         core.openCSV(importPathText.text, separatorCombo.currentIndex, firstRow.value, timeColumn.value, utcGpsCombo.currentIndex == 0,
@@ -826,16 +840,13 @@ ColumnLayout {
                     }
 
                     onAccepted: {
+                        connectionViewer.lastImportTrackFolder = importTrackFileDialog.currentFolder
                         importPathText.text = importTrackFileDialog.selectedFile.toString()
 
                         openCSV();
                     }
                     onRejected: {
                     }
-                }
-
-                Settings {
-                    property alias importFolder: importTrackFileDialog.currentFolder
                 }
             }
         }
@@ -969,21 +980,27 @@ ColumnLayout {
             implicitWidth: theme.controlHeight
 
             onClicked: {
+                newFileDialog.currentFolder = connectionViewer.lastLogFolder
                 newFileDialog.open()
             }
 
             FileDialog {
                 id: newFileDialog
                 title: qsTr("Please choose a file")
-                currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+                currentFolder: connectionViewer.lastLogFolder
 
                 nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
+
+                onCurrentFolderChanged: {
+                    connectionViewer.lastLogFolder = currentFolder
+                }
 
                 onAccepted: {
                     const file = newFileDialog.selectedFile
                     if (!file) {
                         return
                     }
+                    connectionViewer.lastLogFolder = newFileDialog.currentFolder
 
                     const fileStr = file.toString()
                     pathText.text = fileStr.replace("file:///", Qt.platform.os === "windows" ? "" : "/")
@@ -995,10 +1012,6 @@ ColumnLayout {
                 onRejected: {
                 }
             }
-
-            Settings {
-                property alias logFolder: newFileDialog.currentFolder
-            }
         }
 
         CheckButton {
@@ -1009,18 +1022,24 @@ ColumnLayout {
             implicitWidth: theme.controlHeight
 
             onClicked: {
+                appendFileDialog.currentFolder = connectionViewer.lastLogFolder
                 appendFileDialog.open()
             }
 
             FileDialog {
                 id: appendFileDialog
                 title: qsTr("Please choose a file")
-                currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+                currentFolder: connectionViewer.lastLogFolder
 
                 nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
 
+                onCurrentFolderChanged: {
+                    connectionViewer.lastLogFolder = currentFolder
+                }
+
                 onAccepted: {
                     pathText.text = appendFileDialog.selectedFile.toString().replace("file:///", Qt.platform.os === "windows" ? "" : "/")
+                    connectionViewer.lastLogFolder = appendFileDialog.currentFolder
 
                     var name_parts = appendFileDialog.selectedFile.toString().split('.')
 
@@ -1029,10 +1048,6 @@ ColumnLayout {
                 }
                 onRejected: {
                 }
-            }
-
-            Settings {
-                property alias logFolder: appendFileDialog.currentFolder
             }
         }
 
