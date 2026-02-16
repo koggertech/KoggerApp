@@ -1618,52 +1618,52 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="71"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="100"/>
         <source>%1 m</source>
         <translation>%1 м</translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="91"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="120"/>
         <source>ON</source>
         <translation>ВКЛ</translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="91"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="120"/>
         <source>OFF</source>
         <translation>ВЫКЛ</translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="77"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="106"/>
         <source>Channel: </source>
         <translation>Канал: </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="81"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="110"/>
         <source>Epoch: </source>
         <translation>Эпоха: </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="92"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="121"/>
         <source>Resolution, mm: </source>
         <translation>Разрешение, мм: </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="95"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="124"/>
         <source>Frequency, kHz: </source>
         <translation>Частота, кГц: </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="96"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="125"/>
         <source>Pulse count: </source>
         <translation>Количество импульсов: </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="97"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="126"/>
         <source>Booster: </source>
         <translation>Усилитель: </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="98"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="127"/>
         <source>Speed of sound, m/s: </source>
         <translation>Скорость звука, м/с: </translation>
     </message>
@@ -1692,7 +1692,7 @@
         <translation type="vanished">Буст: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1828"/>
+        <location filename="../src/core.cpp" line="1858"/>
         <source>File</source>
         <translation>Файл</translation>
     </message>
@@ -1913,7 +1913,12 @@
         <translation>Видимость</translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DLayerPanel.qml" line="113"/>
+        <location filename="../qml/Scene3DLayerPanel.qml" line="115"/>
+        <source>Internet</source>
+        <translation>Интернет</translation>
+    </message>
+    <message>
+        <location filename="../qml/Scene3DLayerPanel.qml" line="132"/>
         <source>Providers</source>
         <translation>Провайдеры</translation>
     </message>

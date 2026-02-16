@@ -17,6 +17,8 @@ Core::Core() :
     consolePtr_(new Console),
     deviceManagerWrapperPtr_(std::make_unique<DeviceManagerWrapper>(this)),
     linkManagerWrapperPtr_(std::make_unique<LinkManagerWrapper>(this)),
+    internetManager_(nullptr),
+    internetThread_(nullptr),
     dataProcessor_(nullptr),
     dataProcThread_(nullptr),
     dataHorizon_(std::make_unique<DataHorizon>()),
@@ -55,6 +57,7 @@ Core::Core() :
 
 Core::~Core()
 {
+    destroyInternetManager();
     destroyDataProcessor();
 }
 
@@ -67,6 +70,8 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 {
     qmlAppEnginePtr_ = engine;
     QObject::connect(qmlAppEnginePtr_, &QQmlApplicationEngine::objectCreated, this, &Core::UILoad, Qt::QueuedConnection);
+
+    createInternetManager();
 
     qmlAppEnginePtr_->rootContext()->setContextProperty("BoatTrackControlMenuController",       boatTrackControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("NavigationArrowControlMenuController", navigationArrowControlMenuController_.get());
@@ -1653,6 +1658,31 @@ QVariantList Core::getMapTileProviders() const
     return providers;
 }
 
+bool Core::getInternetAvailable() const
+{
+    return internetAvailable_;
+}
+
+bool Core::getMapTileLoadingEnabled() const
+{
+    return mapTileLoadingEnabled_;
+}
+
+void Core::setMapTileLoadingEnabled(bool enabled)
+{
+    if (mapTileLoadingEnabled_ == enabled) {
+        return;
+    }
+
+    mapTileLoadingEnabled_ = enabled;
+
+    if (tileManager_) {
+        tileManager_->setMapEnabled(mapTileLoadingEnabled_);
+    }
+
+    emit mapTileLoadingEnabledChanged();
+}
+
 int Core::loadSavedMapTileProviderId() const
 {
     QSettings settings("KOGGER", "KoggerApp");
@@ -1959,6 +1989,8 @@ void Core::loadLLARefFromSettings()
 void Core::createMapTileManagerConnections()
 {
     tileManager_ = std::make_unique<map::TileManager>(this);
+    tileManager_->setInternetAvailable(getInternetAvailable());
+    tileManager_->setMapEnabled(mapTileLoadingEnabled_);
 
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendLlaRef, tileManager_.get(), &map::TileManager::getLlaRef, Qt::DirectConnection);
@@ -2001,6 +2033,48 @@ void Core::createDatasetConnections()
 {
     QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this,               &Core::onChannelsUpdated);
     QObject::connect(datasetPtr_, &Dataset::redrawEpochs,    this,               &Core::onRedrawEpochs);
+}
+
+void Core::createInternetManager()
+{
+    if (!internetThread_) {
+        internetThread_ = new QThread(this);
+        internetThread_->setObjectName("InternetThread");
+    }
+
+    if (!internetManager_) {
+        internetManager_ = new InternetManager();
+        internetManager_->moveToThread(internetThread_);
+
+        QObject::connect(internetThread_, &QThread::started, internetManager_, &InternetManager::start, Qt::QueuedConnection);
+        QObject::connect(internetThread_, &QThread::finished, internetManager_, &QObject::deleteLater, Qt::QueuedConnection);
+        QObject::connect(internetManager_, &InternetManager::internetAvailabilityChanged, this,
+                         [this](bool available) {
+                             internetAvailable_ = available;
+                             if (tileManager_) {
+                                 tileManager_->setInternetAvailable(available);
+                             }
+                             emit internetAvailableChanged();
+                         },
+                         Qt::QueuedConnection);
+    }
+
+    if (!internetThread_->isRunning()) {
+        internetThread_->start();
+    }
+}
+
+void Core::destroyInternetManager()
+{
+    if (internetManager_ && internetThread_ && internetThread_->isRunning()) {
+        QMetaObject::invokeMethod(internetManager_, "stop", Qt::BlockingQueuedConnection);
+    }
+    if (internetThread_ && internetThread_->isRunning()) {
+        internetThread_->quit();
+        internetThread_->wait();
+    }
+    internetManager_ = nullptr;
+    internetThread_ = nullptr;
 }
 
 int Core::getDataProcessorState() const

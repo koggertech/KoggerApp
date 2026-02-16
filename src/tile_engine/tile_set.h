@@ -24,6 +24,9 @@ public:
     void setTextureIdByTileIndx(const TileIndex& tileIndx, GLuint textureId);
     void resetForProviderSwitch();
     void setResources(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader);
+    void setNetworkAvailable(bool available);
+    void setMapEnabled(bool enabled);
+    bool isMapEnabled() const;
 
 signals:
     // TileDB
@@ -86,6 +89,8 @@ private:
     QSet<TileIndex> dbReq_;
     QSet<TileIndex> dwReq_;
     QSet<TileIndex> dbSvd_;
+    bool networkAvailable_;
+    bool mapEnabled_;
     bool moveUp_;
     QSize defaultSize_;
     QImage::Format defaultImageFormat_;

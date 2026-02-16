@@ -27,6 +27,10 @@ public:
     QString currentProviderName() const;
     void setProvider(int32_t providerId);
     void toggleProvider();
+    void setInternetAvailable(bool available);
+    bool isInternetAvailable() const;
+    void setMapEnabled(bool enabled);
+    bool isMapEnabled() const;
 
 public slots:
     void getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
@@ -34,6 +38,8 @@ public slots:
 
 signals:
     void providerChanged(int32_t providerId);
+    void internetAvailabilityChanged(bool available);
+    void mapEnabledChanged(bool enabled);
 
 private:
     static QString providerNameForId(int32_t providerId);
@@ -44,6 +50,8 @@ private:
     std::shared_ptr<TileDB> tileDB_;
     std::shared_ptr<TileSet> tileSet_;
     int lastZoomLevel_;
+    bool internetAvailable_;
+    bool mapEnabled_;
 
     static constexpr int maxTilesCapacity_{ 800 };
     static constexpr int minTilesCapacity_{ 400 };

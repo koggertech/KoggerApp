@@ -13,6 +13,7 @@ HEADERS += \
     src/console_list_model.h \
     src/converter_xtf.h \
     src/core.h \
+    src/internet_manager.h \
     src/dataset.h \
     src/dataset_defs.h \
     src/data_interpolator.h \
@@ -42,6 +43,7 @@ SOURCES += \
     src/console.cpp \
     src/console_list_model.cpp \
     src/core.cpp \
+    src/internet_manager.cpp \
     src/dataset.cpp \
     src/data_interpolator.cpp \
     src/data_horizon.cpp \
