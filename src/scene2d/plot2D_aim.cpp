@@ -1,5 +1,6 @@
 #include "plot2D_aim.h"
 #include "plot2D.h"
+#include <cmath>
 
 
 Plot2DAim::Plot2DAim()
@@ -34,12 +35,40 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
             offsetX = cursor.selectEpochIndx - withoutHalf;
         }
 
-        if (const auto datasetChannels{ dataset->channelsList() }; !datasetChannels.empty()) {
-            auto& firstDatasetChannels = datasetChannels.at(0);
-            if (const auto chartPtr{ ep->chart(firstDatasetChannels.channelId_, firstDatasetChannels.subChannelId_) }; chartPtr) {
+        if (ep) {
+            ChannelId channelId = cursor.channel1;
+            uint8_t subChannelId = cursor.subChannel1;
+
+            const auto datasetChannels = dataset->channelsList();
+            if (!channelId.isValid() && !datasetChannels.empty()) {
+                channelId = datasetChannels.at(0).channelId_;
+                subChannelId = datasetChannels.at(0).subChannelId_;
+            }
+
+            auto* chartPtr = ep->chart(channelId, subChannelId);
+            if (!chartPtr && !datasetChannels.empty()) {
+                // Fallback to legacy behavior if selected channel has no chart in this epoch.
+                chartPtr = ep->chart(datasetChannels.at(0).channelId_, datasetChannels.at(0).subChannelId_);
+            }
+
+            if (chartPtr) {
                 const int x = canvas.width() / 2 + offsetX;
-                const int y = datasetChannels.size() == 2 ? canvas.height() / 2 - canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range()) :
-                                  canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range());
+                float bottomDistance = chartPtr->bottomProcessing.distance;
+                if (!std::isfinite(bottomDistance)) {
+                    bottomDistance = 0.0f;
+                }
+
+                const float distanceRange = cursor.distance.range();
+                int y = (cursor.channel2 != CHANNEL_NONE) ? canvas.height() / 2 : 0;
+                if (std::isfinite(distanceRange) && std::abs(distanceRange) > 1e-6f) {
+                    const float yFloat = (cursor.channel2 != CHANNEL_NONE)
+                        ? static_cast<float>(canvas.height()) * 0.5f
+                            - static_cast<float>(canvas.height()) * (bottomDistance / distanceRange)
+                        : static_cast<float>(canvas.height()) * (bottomDistance / distanceRange);
+                    y = qRound(yFloat);
+                }
+
+                y = qBound(0, y, qMax(0, canvas.height() - 1));
                 cursor.setMouse(x, y);
             }
         }
