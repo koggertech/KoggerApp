@@ -111,32 +111,32 @@
 <context>
     <name>ConnectionViewer</name>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="79"/>
+        <location filename="../qml/ConnectionViewer.qml" line="88"/>
         <source>Settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="94"/>
+        <location filename="../qml/ConnectionViewer.qml" line="103"/>
         <source>Unpin</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="94"/>
+        <location filename="../qml/ConnectionViewer.qml" line="103"/>
         <source>Pin</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="110"/>
+        <location filename="../qml/ConnectionViewer.qml" line="119"/>
         <source>Auto</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="127"/>
+        <location filename="../qml/ConnectionViewer.qml" line="136"/>
         <source>Delete</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="263"/>
+        <location filename="../qml/ConnectionViewer.qml" line="272"/>
         <source>src:</source>
         <translation></translation>
     </message>
@@ -146,84 +146,84 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="204"/>
+        <location filename="../qml/ConnectionViewer.qml" line="213"/>
         <source>Auto search baudrate</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="212"/>
+        <location filename="../qml/ConnectionViewer.qml" line="221"/>
         <source>UDP ip:</source>
         <translation>UDP ip:</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="212"/>
+        <location filename="../qml/ConnectionViewer.qml" line="221"/>
         <source>TCP ip:</source>
         <translation>TCP ip:</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="316"/>
+        <location filename="../qml/ConnectionViewer.qml" line="325"/>
         <source>dst:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="316"/>
+        <location filename="../qml/ConnectionViewer.qml" line="325"/>
         <source>srv:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="355"/>
+        <location filename="../qml/ConnectionViewer.qml" line="364"/>
         <source>Close</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="355"/>
+        <location filename="../qml/ConnectionViewer.qml" line="364"/>
         <source>Open</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="451"/>
+        <location filename="../qml/ConnectionViewer.qml" line="460"/>
         <source>+UDP</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="460"/>
+        <location filename="../qml/ConnectionViewer.qml" line="469"/>
         <source>+TCP</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="470"/>
+        <location filename="../qml/ConnectionViewer.qml" line="479"/>
         <source>MAVProxy</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="491"/>
+        <location filename="../qml/ConnectionViewer.qml" line="500"/>
         <source>KLF</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="522"/>
+        <location filename="../qml/ConnectionViewer.qml" line="531"/>
         <source>CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="557"/>
+        <location filename="../qml/ConnectionViewer.qml" line="566"/>
         <source>GPS</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="791"/>
-        <location filename="../qml/ConnectionViewer.qml" line="951"/>
+        <location filename="../qml/ConnectionViewer.qml" line="800"/>
+        <location filename="../qml/ConnectionViewer.qml" line="962"/>
         <source>Enter path</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="977"/>
-        <location filename="../qml/ConnectionViewer.qml" line="1017"/>
+        <location filename="../qml/ConnectionViewer.qml" line="989"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1031"/>
         <source>Please choose a file</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="1059"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1074"/>
         <source>Undefined</source>
         <translation></translation>
     </message>
@@ -244,8 +244,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="1164"/>
-        <location filename="../src/dataset.cpp" line="1166"/>
+        <location filename="../src/dataset.cpp" line="1173"/>
+        <location filename="../src/dataset.cpp" line="1175"/>
         <source>None</source>
         <translation></translation>
     </message>
@@ -585,136 +585,136 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="705"/>
+        <location filename="../qml/DisplaySettings.qml" line="707"/>
         <source>Enter path</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="719"/>
+        <location filename="../qml/DisplaySettings.qml" line="724"/>
         <source>Select folder for export</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="741"/>
+        <location filename="../qml/DisplaySettings.qml" line="751"/>
         <source>Decimation, m:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="761"/>
+        <location filename="../qml/DisplaySettings.qml" line="771"/>
         <source>Export to CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="773"/>
+        <location filename="../qml/DisplaySettings.qml" line="783"/>
         <source>Export to XTF</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="781"/>
+        <location filename="../qml/DisplaySettings.qml" line="791"/>
         <source>Complex signal to CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="789"/>
+        <location filename="../qml/DisplaySettings.qml" line="799"/>
         <source>USBL to CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="799"/>
+        <location filename="../qml/DisplaySettings.qml" line="809"/>
         <source>Preference</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="802"/>
+        <location filename="../qml/DisplaySettings.qml" line="812"/>
         <source>Language:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="807"/>
-        <location filename="../qml/DisplaySettings.qml" line="813"/>
-        <location filename="../qml/DisplaySettings.qml" line="819"/>
+        <location filename="../qml/DisplaySettings.qml" line="817"/>
+        <location filename="../qml/DisplaySettings.qml" line="823"/>
+        <location filename="../qml/DisplaySettings.qml" line="829"/>
         <source>English</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="807"/>
-        <location filename="../qml/DisplaySettings.qml" line="815"/>
+        <location filename="../qml/DisplaySettings.qml" line="817"/>
+        <location filename="../qml/DisplaySettings.qml" line="825"/>
         <source>Russian</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="807"/>
         <location filename="../qml/DisplaySettings.qml" line="817"/>
+        <location filename="../qml/DisplaySettings.qml" line="827"/>
         <source>Polish</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="834"/>
+        <location filename="../qml/DisplaySettings.qml" line="844"/>
         <source>Display theme:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="839"/>
+        <location filename="../qml/DisplaySettings.qml" line="849"/>
         <source>Dark</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="839"/>
+        <location filename="../qml/DisplaySettings.qml" line="849"/>
         <source>Super Dark</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="839"/>
+        <location filename="../qml/DisplaySettings.qml" line="849"/>
         <source>Light</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="839"/>
+        <location filename="../qml/DisplaySettings.qml" line="849"/>
         <source>Super Light</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="852"/>
+        <location filename="../qml/DisplaySettings.qml" line="862"/>
         <source>Instruments grade:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="857"/>
+        <location filename="../qml/DisplaySettings.qml" line="867"/>
         <source>Fish Finders</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="857"/>
+        <location filename="../qml/DisplaySettings.qml" line="867"/>
         <source>Bottom Tracking</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="857"/>
+        <location filename="../qml/DisplaySettings.qml" line="867"/>
         <source>Maximum</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="872"/>
+        <location filename="../qml/DisplaySettings.qml" line="882"/>
         <source>Interface</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="876"/>
+        <location filename="../qml/DisplaySettings.qml" line="886"/>
         <source>Extra info panel</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="884"/>
+        <location filename="../qml/DisplaySettings.qml" line="894"/>
         <source>Profiles button</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="893"/>
+        <location filename="../qml/DisplaySettings.qml" line="903"/>
         <source>Autopilot info</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="901"/>
+        <location filename="../qml/DisplaySettings.qml" line="911"/>
         <source>Console</source>
         <translation></translation>
     </message>
@@ -768,52 +768,52 @@
 <context>
     <name>FactoryBox</name>
     <message>
-        <location filename="../qml/FactoryBox.qml" line="14"/>
+        <location filename="../qml/FactoryBox.qml" line="15"/>
         <source>Please choose a file</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/FactoryBox.qml" line="42"/>
+        <location filename="../qml/FactoryBox.qml" line="49"/>
         <source>Factory</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/FactoryBox.qml" line="45"/>
+        <location filename="../qml/FactoryBox.qml" line="52"/>
         <source>PN</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/FactoryBox.qml" line="52"/>
+        <location filename="../qml/FactoryBox.qml" line="59"/>
         <source>Enter PN</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/FactoryBox.qml" line="241"/>
+        <location filename="../qml/FactoryBox.qml" line="248"/>
         <source>Write</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/FactoryBox.qml" line="255"/>
+        <location filename="../qml/FactoryBox.qml" line="262"/>
         <source>Read</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/FactoryBox.qml" line="269"/>
+        <location filename="../qml/FactoryBox.qml" line="276"/>
         <source>Check</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/FactoryBox.qml" line="283"/>
+        <location filename="../qml/FactoryBox.qml" line="290"/>
         <source>Upgrade</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/FactoryBox.qml" line="302"/>
+        <location filename="../qml/FactoryBox.qml" line="309"/>
         <source>FLASH</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/FactoryBox.qml" line="317"/>
+        <location filename="../qml/FactoryBox.qml" line="324"/>
         <source>Simple FLASH</source>
         <translation></translation>
     </message>
@@ -839,97 +839,97 @@
 <context>
     <name>IsobathsExtraSettings</name>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="58"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="59"/>
         <source>Isobaths settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="70"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="71"/>
         <source>Theme:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="78"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="79"/>
         <source>Midnight</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="78"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="79"/>
         <source>Default</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="78"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="79"/>
         <source>Blue</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="78"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="79"/>
         <source>Sepia</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="78"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="79"/>
         <source>WRGBD</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="78"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="79"/>
         <source>WhiteBlack</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="78"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="79"/>
         <source>Standard</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="78"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="79"/>
         <source>Sepia New</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="78"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="79"/>
         <source>DeepBlue</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="78"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="79"/>
         <source>Ice</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="78"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="79"/>
         <source>Green</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="102"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="103"/>
         <source>Edge limit, m:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="138"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="139"/>
         <source>Step, m:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="187"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="188"/>
         <source>Extra width, m:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="224"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="225"/>
         <source>Enter path</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="238"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="240"/>
         <source>Select folder and set .csv file name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="259"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="266"/>
         <source>Export to CSV</source>
         <translation></translation>
     </message>
@@ -1299,20 +1299,16 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="37"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="38"/>
         <source> m/s    </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="48"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="77"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="105"/>
+        <location filename="../src/scene2d/plot2D_bottom_processing.cpp" line="11"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="49"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="78"/>
+        <location filename="../src/scene2d/plot2D_rangefinder.cpp" line="11"/>
         <source> m</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="148"/>
-        <source>°</source>
         <translation></translation>
     </message>
     <message>
@@ -1759,52 +1755,52 @@
 <context>
     <name>SonarBox</name>
     <message>
-        <location filename="../qml/SonarBox.qml" line="21"/>
+        <location filename="../qml/SonarBox.qml" line="29"/>
         <source>Actions</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/SonarBox.qml" line="31"/>
+        <location filename="../qml/SonarBox.qml" line="39"/>
         <source>Flash settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/SonarBox.qml" line="41"/>
+        <location filename="../qml/SonarBox.qml" line="49"/>
         <source>Erase settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/SonarBox.qml" line="51"/>
+        <location filename="../qml/SonarBox.qml" line="59"/>
         <source>Reboot</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/SonarBox.qml" line="71"/>
+        <location filename="../qml/SonarBox.qml" line="79"/>
         <source>Set baudrate</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/SonarBox.qml" line="81"/>
+        <location filename="../qml/SonarBox.qml" line="89"/>
         <source>Settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/SonarBox.qml" line="85"/>
+        <location filename="../qml/SonarBox.qml" line="93"/>
         <source>Open file</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/SonarBox.qml" line="104"/>
+        <location filename="../qml/SonarBox.qml" line="118"/>
         <source>Save as file</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/SonarBox.qml" line="125"/>
+        <location filename="../qml/SonarBox.qml" line="145"/>
         <source>Import</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/SonarBox.qml" line="132"/>
+        <location filename="../qml/SonarBox.qml" line="153"/>
         <source>Export</source>
         <translation></translation>
     </message>
@@ -1854,22 +1850,22 @@
 <context>
     <name>UpgradeBox</name>
     <message>
-        <location filename="../qml/UpgradeBox.qml" line="15"/>
+        <location filename="../qml/UpgradeBox.qml" line="16"/>
         <source>Please choose a file</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/UpgradeBox.qml" line="34"/>
+        <location filename="../qml/UpgradeBox.qml" line="41"/>
         <source>Upgrade</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/UpgradeBox.qml" line="58"/>
+        <location filename="../qml/UpgradeBox.qml" line="65"/>
         <source>Enter path</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/UpgradeBox.qml" line="70"/>
+        <location filename="../qml/UpgradeBox.qml" line="78"/>
         <source>UPGRADE</source>
         <translation></translation>
     </message>
@@ -1902,15 +1898,15 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1463"/>
-        <location filename="../qml/main.qml" line="1465"/>
+        <location filename="../qml/main.qml" line="1471"/>
+        <location filename="../qml/main.qml" line="1473"/>
         <source> m</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1461"/>
-        <location filename="../qml/main.qml" line="1462"/>
-        <location filename="../qml/main.qml" line="1464"/>
+        <location filename="../qml/main.qml" line="1469"/>
+        <location filename="../qml/main.qml" line="1470"/>
+        <location filename="../qml/main.qml" line="1472"/>
         <source>°</source>
         <translation></translation>
     </message>
@@ -1945,92 +1941,92 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1296"/>
+        <location filename="../qml/main.qml" line="1297"/>
         <source>Close</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1315"/>
+        <location filename="../qml/main.qml" line="1316"/>
         <source>Select profile XML</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1335"/>
+        <location filename="../qml/main.qml" line="1342"/>
         <source>Add profiles and apply them</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1374"/>
+        <location filename="../qml/main.qml" line="1381"/>
         <source>Path to profile .xml</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1384"/>
+        <location filename="../qml/main.qml" line="1391"/>
         <source>Browse</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1392"/>
+        <location filename="../qml/main.qml" line="1400"/>
         <source>Apply</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1466"/>
+        <location filename="../qml/main.qml" line="1474"/>
         <source> km/h</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1505"/>
+        <location filename="../qml/main.qml" line="1513"/>
         <source>Boat position</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1514"/>
+        <location filename="../qml/main.qml" line="1522"/>
         <source>Lat.:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1521"/>
+        <location filename="../qml/main.qml" line="1529"/>
         <source>Lon.:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1531"/>
+        <location filename="../qml/main.qml" line="1539"/>
         <source>Active point</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1540"/>
+        <location filename="../qml/main.qml" line="1548"/>
         <source>Dist.:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1547"/>
+        <location filename="../qml/main.qml" line="1555"/>
         <source>Ang.:</source>
         <translation>Az.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1668"/>
+        <location filename="../qml/main.qml" line="1676"/>
         <source> V   </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1668"/>
+        <location filename="../qml/main.qml" line="1676"/>
         <source> A   </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1668"/>
+        <location filename="../qml/main.qml" line="1676"/>
         <source> m/s </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1675"/>
+        <location filename="../qml/main.qml" line="1683"/>
         <source> %</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1784"/>
+        <location filename="../qml/main.qml" line="1792"/>
         <source>Please wait, the file is opening</source>
         <translation></translation>
     </message>

@@ -3,6 +3,15 @@
 #include "math_defs.h"
 #include <cmath>
 
+namespace {
+QString formatDepthText(float distance)
+{
+    const float val = std::round(distance * 100.f) / 100.f;
+    const bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
+    return QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
+}
+}
+
 
 Plot2DRangefinder::Plot2DRangefinder()
 {}
@@ -42,29 +51,16 @@ bool Plot2DRangefinder::draw(Plot2D* parent, Dataset* dataset)
         }
     }
 
-    float lastDistance = NAN;
-
-    Epoch* lastEpoch = dataset->last();
-    Epoch* preLastEpoch = dataset->lastlast();
-
-    if (lastEpoch != nullptr && std::isfinite(lastEpoch->rangeFinder())) {
-        lastDistance = lastEpoch->rangeFinder();
-    }
-    else if (preLastEpoch != nullptr && std::isfinite(preLastEpoch->rangeFinder())) {
-        lastDistance = preLastEpoch->rangeFinder();
-    }
-
-    if (std::isfinite(lastDistance)) {
+    const float rangefinderDepth = dataset->getLastRangefinderDepth();
+    if (std::isfinite(rangefinderDepth)) {
         QPainter* p = canvas.painter();
         if (p != nullptr) {
-            QPen pen(QColor(250, 100, 0));
-            p->setPen(pen);
-            p->setFont(QFont("Asap", 40, QFont::Normal));
-
-            const float val = std::round(lastDistance * 100.f) / 100.f;
-            const bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
-            const QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
-            p->drawText(canvas.width() / 2 - rangeText.size() * 32, canvas.height() - 15, rangeText);
+            p->setFont(QFont("Asap", 30, QFont::Normal));
+            const QString rangefinderText = formatDepthText(rangefinderDepth);
+            const int y = canvas.height() - 15;
+            const int x = 220;
+            p->setPen(QPen(QColor(250, 100, 0)));
+            p->drawText(x, y, rangefinderText);
         }
     }
 

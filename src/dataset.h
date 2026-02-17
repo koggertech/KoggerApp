@@ -181,6 +181,11 @@ public:
         return lastTemp_;
     }
 
+    bool isValidLastRangefinderDepth() const { return isfinite(lastRangefinderDepth_); }
+    bool isValidLastBottomTrackDepth() const { return isfinite(lastBottomTrackDepth_); }
+    float getLastRangefinderDepth() const { return lastRangefinderDepth_; }
+    float getLastBottomTrackDepth() const { return lastBottomTrackDepth_; }
+
     BottomTrackParam getBottomTrackParam() {
         QReadLocker rl(&lock_);
 
@@ -354,6 +359,8 @@ private:
     bool shouldAddNewEpoch(const ChannelId& channelId, uint8_t numSubChannels) const;
     void updateEpochWithChart(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
     void setLastDepth(float val);
+    void setLastRangefinderDepth(float val);
+    void setLastBottomTrackDepth(float val);
     void tryResetDataset(float lat, float lon);
     void calcDimensionRects(uint64_t indx);
     void appendTileEpochIndex(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
@@ -387,6 +394,8 @@ private:
     float distToActiveContact_  = 0.0f;
     float angleToActiveContact_ = 0.0f;
     float lastDepth_            = 0.0f;
+    float lastRangefinderDepth_ = NAN;
+    float lastBottomTrackDepth_ = NAN;
     float speed_                = 0.0f;
     QVector3D sonarOffset_;
     uint64_t sonarPosIndx_;

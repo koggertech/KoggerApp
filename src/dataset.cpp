@@ -439,7 +439,9 @@ void Dataset::addDist(const ChannelId& channelId, int dist)
 
     pool_[pool_index].setDist(channelId, dist);
 
-    setLastDepth(dist);
+    const float distMeters = static_cast<float>(dist) * 0.001f;
+    setLastRangefinderDepth(distMeters);
+    setLastDepth(distMeters);
 
     emit dataUpdate();
 }
@@ -454,6 +456,7 @@ void Dataset::addRangefinder(const ChannelId& channelId, float distance)
         epoch = addNewEpoch();
     }
 
+    setLastRangefinderDepth(distance);
     setLastDepth(distance);
 
     epoch->setDist(channelId, distance * 1000);
@@ -925,6 +928,8 @@ void Dataset::resetDataset()
     distToActiveContact_  = 0.0f;
     angleToActiveContact_ = 0.0f;
     lastDepth_            = 0.0f;
+    lastRangefinderDepth_ = NAN;
+    lastBottomTrackDepth_ = NAN;
 
     sonarPosIndx_ = 0;
     pendingSonarPosIndx_ = 0;
@@ -961,6 +966,8 @@ void Dataset::softResetDataset() // for long-distance camera movement
     distToActiveContact_  = 0.0f;
     angleToActiveContact_ = 0.0f;
     lastDepth_            = 0.0f;
+    lastRangefinderDepth_ = NAN;
+    lastBottomTrackDepth_ = NAN;
 
     sonarPosIndx_ = 0;
     pendingSonarPosIndx_ = 0;
@@ -993,6 +1000,8 @@ void Dataset::resetRenderBuffers()
     _lastPitch = NAN;
     _lastRoll = NAN;
     lastTemp_ = NAN;
+    lastRangefinderDepth_ = NAN;
+    lastBottomTrackDepth_ = NAN;
     interpolator_.clear();
     _llaRef = LLARef();
     llaRefState_ = LlaRefState::kUndefined;
@@ -1209,6 +1218,7 @@ void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist
     }
 
     if (settedChart) {
+        setLastBottomTrackDepth(dist);
         setLastDepth(dist);
 
         if (firstChannelId_.channelId_ != channelId) { // only if first channel updated
@@ -1268,6 +1278,7 @@ void Dataset::onDistCompletedBatch(const QVector<BottomTrackUpdate>& updates)
     }
 
     if (haveDepth) {
+        setLastBottomTrackDepth(lastDepth);
         setLastDepth(lastDepth);
     }
 
@@ -1431,6 +1442,16 @@ void Dataset::setLastDepth(float val)
     lastDepth_ = val;
 
     emit lastDepthChanged();
+}
+
+void Dataset::setLastRangefinderDepth(float val)
+{
+    lastRangefinderDepth_ = val;
+}
+
+void Dataset::setLastBottomTrackDepth(float val)
+{
+    lastBottomTrackDepth_ = val;
 }
 
 void Dataset::calcDimensionRects(uint64_t indx)

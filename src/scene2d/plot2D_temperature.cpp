@@ -37,16 +37,16 @@ bool Plot2DTemperature::draw(Plot2D* parent, Dataset* dataset)
         return false;
     }
 
-    QPen pen(QColor(80, 200, 0));
+    QPen pen(QColor(255, 220, 0));
     p->setPen(pen);
-    p->setFont(QFont("Asap", 40, QFont::Normal));
+    p->setFont(QFont("Asap", 30, QFont::Normal));
 
     const int imageHeight = canvas.height();
-    const int imageWidth = canvas.width();
     const float val = round(temp * 100.f) / 100.f;
     const bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
     const QString tempText = QString::number(val, 'f', isInteger ? 0 : 1) + QString(QChar(0x00B0));
-    p->drawText(imageWidth / 2 - 300, imageHeight - 15, tempText);
+    const int x = 70;
+    p->drawText(x, imageHeight - 15, tempText);
 
     return true;
 }
