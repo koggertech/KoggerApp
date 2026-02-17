@@ -1965,12 +1965,12 @@ void Core::loadLLARefFromSettings()
         settings.endGroup();
 
         if (!std::isfinite(ref.refLla.altitude)) {
-            qWarning() << "Core::loadLLARefFromSettings: refLla.altitude is NaN, forcing 0";
+            //qWarning() << "Core::loadLLARefFromSettings: refLla.altitude is NaN, forcing 0";
             ref.refLla.altitude = 0.0;
         }
 
         if (!std::isfinite(ref.refLla.latitude) || !std::isfinite(ref.refLla.longitude)) {
-            qWarning() << "Core::loadLLARefFromSettings: invalid lat/lon, disabling isInit";
+            //qWarning() << "Core::loadLLARefFromSettings: invalid lat/lon, disabling isInit";
             ref.isInit = false;
         }
 
