@@ -21,6 +21,7 @@
 #include "plot2D_encoder.h"
 #include "plot2D_gnss.h"
 #include "plot2D_grid.h"
+#include "plot2D_temperature.h"
 #include "plot2D_quadrature.h"
 #include "plot2D_rangefinder.h"
 #include "plot2D_depth.h"
@@ -165,6 +166,7 @@ protected:
     Plot2DEncoder encoder_;
     Plot2DGNSS gnss_;
     Plot2DGrid grid_;
+    Plot2DTemperature temperature_;
     Plot2DQuadrature quadrature_;
     Plot2DRangefinder rangefinder_;
     Plot2DDepth depth_;

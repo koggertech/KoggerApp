@@ -16,6 +16,7 @@ HEADERS += \
     $$PWD/plot2D_encoder.h \
     $$PWD/plot2D_gnss.h \
     $$PWD/plot2D_grid.h \
+    $$PWD/plot2D_temperature.h \
     $$PWD/plot2D_line.h \
     $$PWD/plot2D_plot_layer.h \
     $$PWD/plot2D_quadrature.h \
@@ -36,6 +37,7 @@ SOURCES += \
     $$PWD/plot2D_encoder.cpp \
     $$PWD/plot2D_gnss.cpp \
     $$PWD/plot2D_grid.cpp \
+    $$PWD/plot2D_temperature.cpp \
     $$PWD/plot2D_line.cpp \
     $$PWD/plot2D_quadrature.cpp \
     $$PWD/plot2D_rangefinder.cpp \

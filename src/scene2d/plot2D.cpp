@@ -26,6 +26,7 @@ Plot2D::Plot2D()
     rangefinder_.setVisible(true);
     depth_.setVisible(true);
     grid_.setVisible(true);
+    temperature_.setVisible(true);
     aim_.setVisible(true);
     quadrature_.setVisible(false);
     setDataChannel(false, CHANNEL_NONE, 0, {});
@@ -228,6 +229,7 @@ void Plot2D::draw(QPainter *painterPtr)
 
     painterPtr->setCompositionMode(QPainter::CompositionMode_Exclusion);
     grid_.draw(this, datasetPtr_);
+    temperature_.draw(this, datasetPtr_);
     aim_.draw(this, datasetPtr_);
 
     contacts_.draw(this, datasetPtr_);
@@ -455,7 +457,7 @@ void Plot2D::setAttitudeVisible(bool visible) {
 }
 
 void Plot2D::setTemperatureVisible(bool visible) {
-    grid_.setTemperatureVisible(visible);
+    temperature_.setVisible(visible);
     plotUpdate();
 }
 
