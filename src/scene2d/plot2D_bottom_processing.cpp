@@ -57,7 +57,13 @@ bool Plot2DBottomProcessing::draw(Plot2D* parent, Dataset* dataset)
         QPainter* p = canvas.painter();
         if (p != nullptr) {
             const QString depthText = formatDepthText(bottomTrackDepth);
-            const int x = 370;
+            int x = 370;
+            if (!parent->hasTemperatureValue()) {
+                x -= 150;
+            }
+            if (!parent->hasRangefinderDepthTextValue()) {
+                x -= 150;
+            }
             const int y = canvas.height() - 15;
             drawValueWithBackdrop(p, x, y, depthText, QColor(50, 255, 0));
         }

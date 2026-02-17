@@ -13,6 +13,7 @@ public:
     bool draw(Plot2D* parent, Dataset* dataset);
     void setTheme(int theme_id);
     void setDepthTextVisible(bool state) { drawDepthText_ = state; }
+    bool isDepthTextVisible() const { return drawDepthText_; }
 
 protected:
     PlotPen penPoint_ = PlotPen(PlotColor(250, 100, 0), 2, PlotPen::LineStylePoint);

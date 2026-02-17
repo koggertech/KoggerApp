@@ -49,7 +49,10 @@ bool Plot2DRangefinder::draw(Plot2D* parent, Dataset* dataset)
         if (p != nullptr) {
             const QString rangefinderText = formatDepthText(rangefinderDepth);
             const int y = canvas.height() - 15;
-            const int x = 220;
+            int x = 220;
+            if (!parent->hasTemperatureValue()) {
+                x -= 150;
+            }
             drawValueWithBackdrop(p, x, y, rangefinderText, QColor(250, 100, 0));
         }
     }

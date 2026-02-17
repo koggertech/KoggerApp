@@ -110,6 +110,8 @@ public:
     void setRangefinderDepthTextVisible(bool visible);
     void setAttitudeVisible(bool visible);
     void setTemperatureVisible(bool visible);
+    bool hasTemperatureValue() const;
+    bool hasRangefinderDepthTextValue() const;
     void setDopplerBeamVisible(bool visible, int beam_filter);
     void setDopplerInstrumentVisible(bool visible);
 

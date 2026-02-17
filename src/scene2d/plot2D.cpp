@@ -1,6 +1,7 @@
 #include "plot2D.h"
 #include "epoch_event.h"
 #include "qmath.h"
+#include <cmath>
 
 
 Plot2D::Plot2D()
@@ -470,6 +471,39 @@ void Plot2D::setAttitudeVisible(bool visible) {
 void Plot2D::setTemperatureVisible(bool visible) {
     temperature_.setVisible(visible);
     plotUpdate();
+}
+
+bool Plot2D::hasTemperatureValue() const
+{
+    if (!datasetPtr_ || !temperature_.isVisible()) {
+        return false;
+    }
+
+    float temp = datasetPtr_->getLastTemp();
+    if (std::isfinite(temp)) {
+        return true;
+    }
+
+    Epoch* lastEpoch = datasetPtr_->last();
+    Epoch* preLastEpoch = datasetPtr_->lastlast();
+
+    if (lastEpoch && lastEpoch->temperatureAvail()) {
+        return true;
+    }
+    if (preLastEpoch && preLastEpoch->temperatureAvail()) {
+        return true;
+    }
+
+    return false;
+}
+
+bool Plot2D::hasRangefinderDepthTextValue() const
+{
+    if (!datasetPtr_ || !rangefinder_.isVisible() || !rangefinder_.isDepthTextVisible()) {
+        return false;
+    }
+
+    return std::isfinite(datasetPtr_->getLastRangefinderDepth());
 }
 
 void Plot2D::setDopplerBeamVisible(bool visible, int beam_filter) {
