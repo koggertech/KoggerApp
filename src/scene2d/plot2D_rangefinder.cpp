@@ -2,15 +2,7 @@
 #include "plot2D.h"
 #include "math_defs.h"
 #include <cmath>
-
-namespace {
-QString formatDepthText(float distance)
-{
-    const float val = std::round(distance * 100.f) / 100.f;
-    const bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
-    return QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
-}
-}
+#include <QFontMetrics>
 
 
 Plot2DRangefinder::Plot2DRangefinder()
@@ -55,12 +47,10 @@ bool Plot2DRangefinder::draw(Plot2D* parent, Dataset* dataset)
     if (drawDepthText_ && std::isfinite(rangefinderDepth)) {
         QPainter* p = canvas.painter();
         if (p != nullptr) {
-            p->setFont(QFont("Asap", 30, QFont::Normal));
             const QString rangefinderText = formatDepthText(rangefinderDepth);
             const int y = canvas.height() - 15;
             const int x = 220;
-            p->setPen(QPen(QColor(250, 100, 0)));
-            p->drawText(x, y, rangefinderText);
+            drawValueWithBackdrop(p, x, y, rangefinderText, QColor(250, 100, 0));
         }
     }
 
@@ -70,4 +60,40 @@ bool Plot2DRangefinder::draw(Plot2D* parent, Dataset* dataset)
 void Plot2DRangefinder::setTheme(int theme_id)
 {
     themeId_ = theme_id;
+}
+
+QString Plot2DRangefinder::formatDepthText(float distance) const
+{
+    const float val = std::round(distance * 100.f) / 100.f;
+    const bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
+    return QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
+}
+
+void Plot2DRangefinder::drawValueWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text, const QColor& textColor) const
+{
+    if (!painter) {
+        return;
+    }
+
+    const QFont font("Asap", 30, QFont::Normal);
+    const QFontMetrics fm(font);
+    const int padX = 8;
+    const int padY = 4;
+    const int radius = 5;
+    const QRect bgRect(x - padX,
+                       baselineY - fm.ascent() - padY,
+                       fm.horizontalAdvance(text) + padX * 2,
+                       fm.height() + padY * 2);
+
+    const auto prevMode = painter->compositionMode();
+    painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(QColor(0, 0, 0, 115));
+    painter->drawRoundedRect(bgRect, radius, radius);
+
+    painter->setFont(font);
+    painter->setPen(QPen(textColor));
+    painter->drawText(x, baselineY, text);
+    painter->setCompositionMode(prevMode);
 }

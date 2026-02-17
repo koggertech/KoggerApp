@@ -2,6 +2,7 @@
 #include "plot2D.h"
 #include "math_defs.h"
 #include <cmath>
+#include <QFontMetrics>
 
 
 Plot2DTemperature::Plot2DTemperature()
@@ -37,16 +38,46 @@ bool Plot2DTemperature::draw(Plot2D* parent, Dataset* dataset)
         return false;
     }
 
-    QPen pen(QColor(255, 220, 0));
-    p->setPen(pen);
-    p->setFont(QFont("Asap", 30, QFont::Normal));
-
     const int imageHeight = canvas.height();
-    const float val = round(temp * 100.f) / 100.f;
-    const bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
-    const QString tempText = QString::number(val, 'f', isInteger ? 0 : 1) + QString(QChar(0x00B0));
+    const QString tempText = formatTemperatureText(temp);
     const int x = 70;
-    p->drawText(x, imageHeight - 15, tempText);
+    drawValueWithBackdrop(p, x, imageHeight - 15, tempText, QColor(255, 220, 0));
 
     return true;
+}
+
+QString Plot2DTemperature::formatTemperatureText(float temp) const
+{
+    const float val = std::round(temp * 100.f) / 100.f;
+    const bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
+    return QString::number(val, 'f', isInteger ? 0 : 1) + QString(QChar(0x00B0));
+}
+
+void Plot2DTemperature::drawValueWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text, const QColor& textColor) const
+{
+    if (!painter) {
+        return;
+    }
+
+    const QFont font("Asap", 30, QFont::Normal);
+    const QFontMetrics fm(font);
+    const int padX = 8;
+    const int padY = 4;
+    const int radius = 5;
+    const QRect bgRect(x - padX,
+                       baselineY - fm.ascent() - padY,
+                       fm.horizontalAdvance(text) + padX * 2,
+                       fm.height() + padY * 2);
+
+    const auto prevMode = painter->compositionMode();
+    painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(QColor(0, 0, 0, 115));
+    painter->drawRoundedRect(bgRect, radius, radius);
+
+    painter->setFont(font);
+    painter->setPen(QPen(textColor));
+    painter->drawText(x, baselineY, text);
+    painter->setCompositionMode(prevMode);
 }
