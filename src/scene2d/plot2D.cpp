@@ -442,7 +442,6 @@ void Plot2D::setBottomTrackTheme(int theme_id) {
 
 void Plot2D::setRangefinderVisible(bool visible) {
     rangefinder_.setVisible(visible);
-    grid_.setRangeFinderVisible(visible);
     plotUpdate();
 }
 

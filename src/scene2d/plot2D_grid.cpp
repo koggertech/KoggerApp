@@ -8,6 +8,7 @@ Plot2DGrid::Plot2DGrid() : angleVisibility_(false)
 
 bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
 {
+    Q_UNUSED(dataset);
     auto &canvas = parent->canvas();
     auto &cursor = parent->cursor();
 
@@ -78,33 +79,6 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
         const int w = fm2.horizontalAdvance(rangeText);
         const int x = invert_ ? (textXOffset * 2) : (imageWidth - textXOffset / 2 - w);
         p->drawText(x, imageHeight - 10, rangeText);
-    }
-
-    // rangefinder
-    if (_rangeFinderLastVisible && cursor.distance.isValid()) {
-        Epoch* lastEpoch = dataset->last();
-        Epoch* preLastEpoch = dataset->lastlast();
-        if (!lastEpoch || !preLastEpoch) {
-            return false;
-        }
-        float distance = NAN;
-
-        if (lastEpoch != NULL && isfinite(lastEpoch->rangeFinder())) {
-            distance = lastEpoch->rangeFinder();
-        }
-        else if (preLastEpoch != NULL && isfinite(preLastEpoch->rangeFinder())) {
-            distance = preLastEpoch->rangeFinder();
-        }
-
-        if (isfinite(distance)) {
-            pen.setColor(QColor(250, 100, 0));
-            p->setPen(pen);
-            p->setFont(QFont("Asap", 40, QFont::Normal));
-            float val{ round(distance * 100.f) / 100.f };
-            bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
-            QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
-            p->drawText(imageWidth / 2 - rangeText.size() * 32, imageHeight - 15, rangeText);
-        }
     }
 
     return true;
