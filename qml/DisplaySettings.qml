@@ -702,9 +702,9 @@ GridLayout {
                         core.setBottomTrackRealtimeFromSettings(checked)
                     }
 
-                    Settings {
-                        property alias updateBottomTrackRealtimeButton: updateBottomTrackRealtimeButton.checked
-                    }
+                    //Settings {
+                    //    property alias updateBottomTrackRealtimeButton: updateBottomTrackRealtimeButton.checked
+                    //}
                 }
             }
         }
