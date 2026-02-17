@@ -418,8 +418,6 @@ ColumnLayout {
             Layout.topMargin: 0
             Layout.bottomMargin: 0
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            height: count*theme.controlHeight
             Layout.preferredHeight: count*(theme.controlHeight+4)
             Layout.maximumHeight: 10*(theme.controlHeight+4)
             delegate: fileItem
