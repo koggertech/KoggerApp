@@ -12,10 +12,10 @@ import QtCore
 ApplicationWindow  {
     id:            mainview
     visible:       true
-    width:         1024
-    minimumWidth:  512
-    height:        512
-    minimumHeight: 256
+    width:         1280 // 21:9
+    minimumWidth:  640
+    height:        540
+    minimumHeight: 272
     color:         "black"
     title:         qsTr("KoggerApp, KOGGER")
 
