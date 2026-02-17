@@ -686,6 +686,26 @@ GridLayout {
                         bottomTrackProcessingGroup.updateProcessing()
                     }
                 }
+
+                CButton {
+                    id: updateBottomTrackRealtimeButton
+                    text: qsTr("Realtime")
+                    checkable: true
+                    checked: false
+                    Layout.fillWidth: true
+
+                    onCheckedChanged: {
+                        core.setBottomTrackRealtimeFromSettings(checked)
+                    }
+
+                    Component.onCompleted: {
+                        core.setBottomTrackRealtimeFromSettings(checked)
+                    }
+
+                    Settings {
+                        property alias updateBottomTrackRealtimeButton: updateBottomTrackRealtimeButton.checked
+                    }
+                }
             }
         }
 

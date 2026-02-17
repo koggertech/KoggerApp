@@ -580,141 +580,146 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="694"/>
+        <location filename="../qml/DisplaySettings.qml" line="692"/>
+        <source>Realtime</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="714"/>
         <source>Export</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="707"/>
+        <location filename="../qml/DisplaySettings.qml" line="727"/>
         <source>Enter path</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="724"/>
+        <location filename="../qml/DisplaySettings.qml" line="744"/>
         <source>Select folder for export</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="751"/>
+        <location filename="../qml/DisplaySettings.qml" line="771"/>
         <source>Decimation, m:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="771"/>
+        <location filename="../qml/DisplaySettings.qml" line="791"/>
         <source>Export to CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="783"/>
+        <location filename="../qml/DisplaySettings.qml" line="803"/>
         <source>Export to XTF</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="791"/>
+        <location filename="../qml/DisplaySettings.qml" line="811"/>
         <source>Complex signal to CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="799"/>
+        <location filename="../qml/DisplaySettings.qml" line="819"/>
         <source>USBL to CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="809"/>
+        <location filename="../qml/DisplaySettings.qml" line="829"/>
         <source>Preference</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="812"/>
+        <location filename="../qml/DisplaySettings.qml" line="832"/>
         <source>Language:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="817"/>
-        <location filename="../qml/DisplaySettings.qml" line="823"/>
-        <location filename="../qml/DisplaySettings.qml" line="829"/>
+        <location filename="../qml/DisplaySettings.qml" line="837"/>
+        <location filename="../qml/DisplaySettings.qml" line="843"/>
+        <location filename="../qml/DisplaySettings.qml" line="849"/>
         <source>English</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="817"/>
-        <location filename="../qml/DisplaySettings.qml" line="825"/>
+        <location filename="../qml/DisplaySettings.qml" line="837"/>
+        <location filename="../qml/DisplaySettings.qml" line="845"/>
         <source>Russian</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="817"/>
-        <location filename="../qml/DisplaySettings.qml" line="827"/>
+        <location filename="../qml/DisplaySettings.qml" line="837"/>
+        <location filename="../qml/DisplaySettings.qml" line="847"/>
         <source>Polish</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="844"/>
+        <location filename="../qml/DisplaySettings.qml" line="864"/>
         <source>Display theme:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="849"/>
+        <location filename="../qml/DisplaySettings.qml" line="869"/>
         <source>Dark</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="849"/>
+        <location filename="../qml/DisplaySettings.qml" line="869"/>
         <source>Super Dark</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="849"/>
+        <location filename="../qml/DisplaySettings.qml" line="869"/>
         <source>Light</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="849"/>
+        <location filename="../qml/DisplaySettings.qml" line="869"/>
         <source>Super Light</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="862"/>
+        <location filename="../qml/DisplaySettings.qml" line="882"/>
         <source>Instruments grade:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="867"/>
+        <location filename="../qml/DisplaySettings.qml" line="887"/>
         <source>Fish Finders</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="867"/>
+        <location filename="../qml/DisplaySettings.qml" line="887"/>
         <source>Bottom Tracking</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="867"/>
+        <location filename="../qml/DisplaySettings.qml" line="887"/>
         <source>Maximum</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="882"/>
+        <location filename="../qml/DisplaySettings.qml" line="902"/>
         <source>Interface</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="886"/>
+        <location filename="../qml/DisplaySettings.qml" line="906"/>
         <source>Extra info panel</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="894"/>
+        <location filename="../qml/DisplaySettings.qml" line="914"/>
         <source>Profiles button</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="903"/>
+        <location filename="../qml/DisplaySettings.qml" line="923"/>
         <source>Autopilot info</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="911"/>
+        <location filename="../qml/DisplaySettings.qml" line="931"/>
         <source>Console</source>
         <translation></translation>
     </message>
@@ -1047,10 +1052,6 @@
         <source>Angle, °:</source>
         <translation></translation>
     </message>
-    <message>
-        <source>Show quality label</source>
-        <translation type="vanished">Show quality</translation>
-    </message>
 </context>
 <context>
     <name>ParamGroup</name>
@@ -1362,7 +1363,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1858"/>
+        <location filename="../src/core.cpp" line="1865"/>
         <source>File</source>
         <translation>File</translation>
     </message>

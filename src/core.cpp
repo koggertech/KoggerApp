@@ -788,6 +788,13 @@ void Core::setFixBlackStripesBackwardSteps(int val)
     }
 }
 
+void Core::setBottomTrackRealtimeFromSettings(bool state)
+{
+    if (dataProcessor_) {
+        QMetaObject::invokeMethod(dataProcessor_, "setUpdateBottomTrackFromSettings", Qt::QueuedConnection, Q_ARG(bool, state));
+    }
+}
+
 bool Core::getCsvLogging() const
 {
     return isLoggingCsv_;

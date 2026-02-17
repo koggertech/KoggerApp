@@ -54,8 +54,8 @@ public slots:
     void clearProcessing(DataProcessorType = DataProcessorType::kUndefined);
     void resetProcessingPipeline();
 
-    // from 3d controller (visibility)
     void setUpdateBottomTrack (bool state);
+    void setUpdateBottomTrackFromSettings(bool state);
     void setUpdateSurface(bool state);
     void setUpdateIsobaths (bool state);
     void setUpdateMosaic (bool state);
@@ -229,6 +229,7 @@ private:
     void updateDataProcType();
     void emitMosaicColorTable();
     void updateDatasetSpatialIndexingState();
+    void setUpdateBottomTrackSourceState(bool state, bool fromSettings);
 
 private:
     friend class SurfaceProcessor;
@@ -253,6 +254,8 @@ private:
     uint64_t epochCounter_;
     uint64_t positionCounter_;
     uint64_t attitudeCounter_;
+    bool updateBottomTrackFromScene3d_;
+    bool updateBottomTrackFromSettings_;
     bool updateBottomTrack_;
     bool updateSurface_;
     bool updateIsobaths_;

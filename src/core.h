@@ -123,6 +123,7 @@ public slots:
     void setFixBlackStripesState(bool state);
     void setFixBlackStripesForwardSteps(int val);
     void setFixBlackStripesBackwardSteps(int val);
+    void setBottomTrackRealtimeFromSettings(bool state);
     bool getCsvLogging() const;
     void setCsvLogging(bool isLogging);
     bool getUseGPS() const;
