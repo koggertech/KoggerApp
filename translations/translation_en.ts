@@ -181,49 +181,49 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="460"/>
+        <location filename="../qml/ConnectionViewer.qml" line="458"/>
         <source>+UDP</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="469"/>
+        <location filename="../qml/ConnectionViewer.qml" line="467"/>
         <source>+TCP</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="479"/>
+        <location filename="../qml/ConnectionViewer.qml" line="477"/>
         <source>MAVProxy</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="500"/>
+        <location filename="../qml/ConnectionViewer.qml" line="498"/>
         <source>KLF</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="531"/>
+        <location filename="../qml/ConnectionViewer.qml" line="529"/>
         <source>CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="566"/>
+        <location filename="../qml/ConnectionViewer.qml" line="564"/>
         <source>GPS</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="800"/>
-        <location filename="../qml/ConnectionViewer.qml" line="962"/>
+        <location filename="../qml/ConnectionViewer.qml" line="798"/>
+        <location filename="../qml/ConnectionViewer.qml" line="960"/>
         <source>Enter path</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="989"/>
-        <location filename="../qml/ConnectionViewer.qml" line="1031"/>
+        <location filename="../qml/ConnectionViewer.qml" line="987"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1029"/>
         <source>Please choose a file</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="1074"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1072"/>
         <source>Undefined</source>
         <translation></translation>
     </message>
@@ -1152,147 +1152,153 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="583"/>
+        <location filename="../qml/Plot2D.qml" line="581"/>
+        <location filename="../qml/Plot2D.qml" line="617"/>
+        <source>Value</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="592"/>
         <source>Line1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="583"/>
+        <location filename="../qml/Plot2D.qml" line="592"/>
         <source>Line2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="583"/>
+        <location filename="../qml/Plot2D.qml" line="592"/>
         <source>Dot1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="583"/>
+        <location filename="../qml/Plot2D.qml" line="592"/>
         <source>Dot2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="583"/>
+        <location filename="../qml/Plot2D.qml" line="592"/>
         <source>DotLine</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="601"/>
+        <location filename="../qml/Plot2D.qml" line="610"/>
         <source>Rangefinder</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="608"/>
+        <location filename="../qml/Plot2D.qml" line="626"/>
         <source>Text</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="608"/>
+        <location filename="../qml/Plot2D.qml" line="626"/>
         <source>Line</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="608"/>
+        <location filename="../qml/Plot2D.qml" line="626"/>
         <source>Dot</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="626"/>
+        <location filename="../qml/Plot2D.qml" line="644"/>
         <source>Attitude</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="634"/>
+        <location filename="../qml/Plot2D.qml" line="652"/>
         <source>Temperature</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="652"/>
+        <location filename="../qml/Plot2D.qml" line="670"/>
         <source>Doppler Beams</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="717"/>
+        <location filename="../qml/Plot2D.qml" line="735"/>
         <source>Doppler Instrument</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="758"/>
+        <location filename="../qml/Plot2D.qml" line="776"/>
         <source>Acoustic angle</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="770"/>
+        <location filename="../qml/Plot2D.qml" line="788"/>
         <source>Doppler Profiler</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="780"/>
+        <location filename="../qml/Plot2D.qml" line="798"/>
         <source>GNSS data</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="799"/>
+        <location filename="../qml/Plot2D.qml" line="817"/>
         <source>Grid</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="805"/>
+        <location filename="../qml/Plot2D.qml" line="823"/>
         <source>fill</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="821"/>
+        <location filename="../qml/Plot2D.qml" line="839"/>
         <source>invert</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="859"/>
+        <location filename="../qml/Plot2D.qml" line="877"/>
         <source>Angle range, °</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="911"/>
+        <location filename="../qml/Plot2D.qml" line="929"/>
         <source>Velocity range, m/s</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="968"/>
+        <location filename="../qml/Plot2D.qml" line="986"/>
         <source>Distance auto range</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="984"/>
+        <location filename="../qml/Plot2D.qml" line="1002"/>
         <source>Last data       </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="984"/>
+        <location filename="../qml/Plot2D.qml" line="1002"/>
         <source>Last on screen</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="984"/>
+        <location filename="../qml/Plot2D.qml" line="1002"/>
         <source>Max on screen</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1000"/>
+        <location filename="../qml/Plot2D.qml" line="1018"/>
         <source>Horizontal</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1008"/>
+        <location filename="../qml/Plot2D.qml" line="1026"/>
         <source>Loupe</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1016"/>
+        <location filename="../qml/Plot2D.qml" line="1034"/>
         <source>size</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1032"/>
+        <location filename="../qml/Plot2D.qml" line="1050"/>
         <source>zoom</source>
         <translation></translation>
     </message>

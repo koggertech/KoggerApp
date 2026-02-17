@@ -103,9 +103,11 @@ public:
 
     void setBottomTrackVisible(bool visible);
     void setBottomTrackTheme(int theme_id);
+    void setBottomTrackDepthTextVisible(bool visible);
 
     void setRangefinderVisible(bool visible);
     void setRangefinderTheme(int theme_id);
+    void setRangefinderDepthTextVisible(bool visible);
     void setAttitudeVisible(bool visible);
     void setTemperatureVisible(bool visible);
     void setDopplerBeamVisible(bool visible, int beam_filter);

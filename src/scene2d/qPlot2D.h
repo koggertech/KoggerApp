@@ -157,9 +157,11 @@ public slots:
     Q_INVOKABLE void plotEchogramCompensation(int compensation_id) { setEchogramCompensation(compensation_id); }
     void plotBottomTrackVisible(bool visible) { setBottomTrackVisible(visible); }
     void plotBottomTrackTheme(int theme_id) { setBottomTrackTheme(theme_id); }
+    void plotBottomTrackDepthTextVisible(bool visible) { setBottomTrackDepthTextVisible(visible); }
 
     void plotRangefinderVisible(bool visible) { setRangefinderVisible(visible); }
     void plotRangefinderTheme(int theme_id) { setRangefinderTheme(theme_id); }
+    void plotRangefinderDepthTextVisible(bool visible) { setRangefinderDepthTextVisible(visible); }
     void plotAttitudeVisible(bool visible) { setAttitudeVisible(visible); }
     void plotTemperatureVisible(bool visible) { setTemperatureVisible(visible); }
     void plotDopplerBeamVisible(bool visible, int beam_filter) { setDopplerBeamVisible(visible, beam_filter); }

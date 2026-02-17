@@ -440,6 +440,12 @@ void Plot2D::setBottomTrackTheme(int theme_id) {
     Q_UNUSED(theme_id);
 }
 
+void Plot2D::setBottomTrackDepthTextVisible(bool visible)
+{
+    bottomProcessing_.setDepthTextVisible(visible);
+    plotUpdate();
+}
+
 void Plot2D::setRangefinderVisible(bool visible) {
     rangefinder_.setVisible(visible);
     plotUpdate();
@@ -447,6 +453,12 @@ void Plot2D::setRangefinderVisible(bool visible) {
 
 void Plot2D::setRangefinderTheme(int theme_id) {
     rangefinder_.setTheme(theme_id);
+    plotUpdate();
+}
+
+void Plot2D::setRangefinderDepthTextVisible(bool visible)
+{
+    rangefinder_.setDepthTextVisible(visible);
     plotUpdate();
 }
 

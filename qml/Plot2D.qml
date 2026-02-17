@@ -576,6 +576,15 @@ WaterFall {
                             Component.onCompleted: plotBottomTrackVisible(checked)
                         }
 
+                        CCheck {
+                            id: bottomTrackValueVisible
+                            text: qsTr("Value")
+                            checked: true
+
+                            onCheckedChanged: plotBottomTrackDepthTextVisible(checked)
+                            Component.onCompleted: plotBottomTrackDepthTextVisible(checked)
+                        }
+
                         CCombo  {
                             id: bottomTrackThemeList
                             //                        Layout.fillWidth: true
@@ -601,6 +610,15 @@ WaterFall {
                             text: qsTr("Rangefinder")
                             onCheckedChanged: plotRangefinderVisible(checked)
                             Component.onCompleted: plotRangefinderVisible(checked)
+                        }
+
+                        CCheck {
+                            id: rangefinderValueVisible
+                            text: qsTr("Value")
+                            checked: true
+
+                            onCheckedChanged: plotRangefinderDepthTextVisible(checked)
+                            Component.onCompleted: plotRangefinderDepthTextVisible(checked)
                         }
 
                         CCombo  {
@@ -1050,7 +1068,9 @@ WaterFall {
 
                         property alias echogramVisible: echogramVisible.checked
                         property alias rangefinderVisible: rangefinderVisible.checked
+                        property alias rangefinderValueVisible: rangefinderValueVisible.checked
                         property alias postProcVisible: bottomTrackVisible.checked
+                        property alias bottomTrackValueVisible: bottomTrackValueVisible.checked
                         property alias ahrsVisible: ahrsVisible.checked
                         property alias temperatureVisible: temperatureVisible.checked
                         property alias gridVisible: gridVisible.checked
