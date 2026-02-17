@@ -52,7 +52,7 @@ bool Plot2DRangefinder::draw(Plot2D* parent, Dataset* dataset)
     }
 
     const float rangefinderDepth = dataset->getLastRangefinderDepth();
-    if (std::isfinite(rangefinderDepth)) {
+    if (drawDepthText_ && std::isfinite(rangefinderDepth)) {
         QPainter* p = canvas.painter();
         if (p != nullptr) {
             p->setFont(QFont("Asap", 30, QFont::Normal));

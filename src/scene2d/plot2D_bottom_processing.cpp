@@ -61,7 +61,7 @@ bool Plot2DBottomProcessing::draw(Plot2D* parent, Dataset* dataset)
     }
 
     const float bottomTrackDepth = dataset->getLastBottomTrackDepth();
-    if (std::isfinite(bottomTrackDepth)) {
+    if (drawDepthText_ && std::isfinite(bottomTrackDepth)) {
         QPainter* p = canvas.painter();
         if (p != nullptr) {
             p->setFont(QFont("Asap", 30, QFont::Normal));

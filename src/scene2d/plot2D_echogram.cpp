@@ -9,6 +9,10 @@ public:
         setHorizontal(true);
         setPlotEnabled(true);
         bottomProcessing_.setVisible(true);
+        bottomProcessing_.setDepthTextVisible(false);
+        rangefinder_.setVisible(true);
+        rangefinder_.setTheme(1);
+        rangefinder_.setDepthTextVisible(false);
     }
 
     bool render(QPainter* painter,
@@ -86,6 +90,7 @@ public:
         }
 
         bottomProcessing_.draw(this, dataset);
+        rangefinder_.draw(this, dataset);
         return true;
     }
 };
