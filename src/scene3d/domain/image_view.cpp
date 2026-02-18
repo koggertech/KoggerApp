@@ -147,9 +147,8 @@ void ImageView::ImageViewRenderImplementation::render(QOpenGLFunctions *ctx, con
 
 
     if (textureId_) {
-        QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
-        glFuncs->glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureId_);
+        ctx->glActiveTexture(GL_TEXTURE0);
+        ctx->glBindTexture(GL_TEXTURE_2D, textureId_);
         shaderProgram->setUniformValue("imageTexture", 0);
     }
 

@@ -2731,9 +2731,17 @@ void GraphicsScene3dView::InFboRenderer::render()
 void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * fbo)
 {
     auto view = qobject_cast<GraphicsScene3dView*>(fbo);
-    auto* glFuncs = QOpenGLContext::currentContext()->functions();
 
     if (!view) {
+        return;
+    }
+
+    auto* glContext = QOpenGLContext::currentContext();
+    if (!glContext) {
+        return;
+    }
+    auto* glFuncs = glContext->functions();
+    if (!glFuncs) {
         return;
     }
 
@@ -2965,8 +2973,11 @@ void GraphicsScene3dView::InFboRenderer::processImageTexture(GraphicsScene3dView
 
     imagePtr->setTextureId(textureId);
 
-    QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
-    glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
+    if (auto* glContext = QOpenGLContext::currentContext()) {
+        if (auto* glFuncs = glContext->functions()) {
+            glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
+        }
+    }
 
     task = QImage();
 }

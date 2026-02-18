@@ -2,6 +2,7 @@
 #include "draw_utils.h"
 #include <QDebug>
 #include <QFile>
+#include <QOpenGLContext>
 
 #include <ft2build.h> // NOLINT
 #include FT_FREETYPE_H
@@ -9,8 +10,8 @@
 
 TextRenderer& TextRenderer::instance()
 {
-    static TextRenderer instance;
-    return instance;
+    static TextRenderer* instance = new TextRenderer();
+    return *instance;
 }
 
 void TextRenderer::setFontPixelSize(int size)
@@ -292,16 +293,26 @@ void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, con
 
 void TextRenderer::cleanup()
 {
-    if (QOpenGLContext::currentContext()) {
-        for (auto& ch : m_chars) {
-            if (ch.texture) {
-                ch.texture->destroy();
-            }
+    auto* glContext = QOpenGLContext::currentContext();
+    if (!glContext) {
+        return;
+    }
+
+    for (auto& ch : m_chars) {
+        if (ch.texture) {
+            ch.texture->destroy();
+            ch.texture.reset();
         }
     }
+
     m_chars.clear();
 
-    m_arrayBuffer.destroy();
+    if (m_arrayBuffer.isCreated()) {
+        m_arrayBuffer.destroy();
+    }
+    if (m_indexBuffer.isCreated()) {
+        m_indexBuffer.destroy();
+    }
 }
 
 TextRenderer::TextRenderer()

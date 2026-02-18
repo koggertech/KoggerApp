@@ -828,14 +828,12 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
             shP->setAttributeArray(positionLoc, heightVerts.constData());
             shP->setAttributeArray(texCoordLoc, texVerts.constData());
 
-            QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
-
-            glFuncs->glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, textureId);
+            ctx->glActiveTexture(GL_TEXTURE0);
+            ctx->glBindTexture(GL_TEXTURE_2D, textureId);
             shP->setUniformValue("indexedTexture", 0);
 
-            glFuncs->glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, mosaicColorTableTextureId_);
+            ctx->glActiveTexture(GL_TEXTURE1);
+            ctx->glBindTexture(GL_TEXTURE_2D, mosaicColorTableTextureId_);
             shP->setUniformValue("colorTable", 1);
 
             ctx->glDrawElements(GL_TRIANGLES,

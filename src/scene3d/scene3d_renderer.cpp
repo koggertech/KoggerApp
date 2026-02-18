@@ -7,6 +7,7 @@
 
 #include <QThread>
 #include <QDebug>
+#include <QOpenGLContext>
 
 #include "text_renderer.h"
 //#include "ft2build.h"
@@ -33,7 +34,10 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer() :
 
 GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
 {
-    TextRenderer::instance().cleanup(); // using working ctx
+    if (QOpenGLContext::currentContext()) {
+        TextRenderer::instance().cleanup();
+        m_shaderProgramMap.clear();
+    }
 }
 
 void GraphicsScene3dRenderer::initialize()
