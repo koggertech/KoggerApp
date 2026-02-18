@@ -266,6 +266,22 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     }
                 }
             }
+
+            if (prot_nmea.isEqualId("HDT")) {
+                const double headingDeg = prot_nmea.readDouble();
+                //const char reference = prot_nmea.readChar();
+                const bool headingValid = isfinite(headingDeg);
+
+                if (/*reference == 'T' && TODO: check this*/ headingValid) {
+                    //qDebug().noquote() << QString("NMEA HDT parsed: heading=%1 deg true").arg(heading_deg, 0, 'f', 3);
+                    emit attitudeComplete(static_cast<float>(headingDeg), 0.0f, 0.0f);
+                }
+                else {
+                    //qDebug().noquote() << QString("NMEA HDT rejected: heading=%1 ref=%2")
+                    //                      .arg(heading_valid ? QString::number(heading_deg, 'f', 3) : QStringLiteral("nan"))
+                    //                      .arg(reference);
+                }
+            }
         }
 
         if (frame.isCompleteAsUBX()) {
