@@ -2175,9 +2175,8 @@ void DataProcessor::onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKe
 #else
     optimizeForNonSeparateFileMode = (datasetState_ != 2); // 2 == connection
 #endif
-    if (optimizeForNonSeparateFileMode && !updateMosaic_ && !updateSurface_) {
-        return;
-    }
+
+    const bool skipSchedulingForDisabledLayers = optimizeForNonSeparateFileMode && !updateMosaic_ && !updateSurface_;
 
     const int minZoom = 7;
     if (tileEpochIndxsByZoom_.size() < minZoom) {
@@ -2198,6 +2197,10 @@ void DataProcessor::onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKe
                 epochList.push_back(epochIndx);
             }
         }
+    }
+
+    if (skipSchedulingForDisabledLayers) {
+        return;
     }
 
     if (lastVisTileKeys_.isEmpty()) {
