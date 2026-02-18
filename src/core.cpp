@@ -2169,6 +2169,7 @@ void Core::createDataHorizonConnections()
     dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::positionAdded,    dataHorizon_.get(), &DataHorizon::onAddedPosition));
     dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::chartAdded,       dataHorizon_.get(), &DataHorizon::onAddedChart));
     dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::attitudeAdded,    dataHorizon_.get(), &DataHorizon::onAddedAttitude));
+    dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::artificalAttitudeAdded, dataHorizon_.get(), &DataHorizon::onAddedArtificalAttitude));
     dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::bottomTrackAdded, dataHorizon_.get(), &DataHorizon::onAddedBottomTrack));
 }
 
