@@ -389,6 +389,7 @@ WaterFall {
 
                     RowLayout {
                         id: rowDataset
+                        Layout.fillWidth: true
                         visible: instruments > 1
                         //CCombo  {
                         //    id: datasetCombo
@@ -418,7 +419,6 @@ WaterFall {
                             property bool suppressTextSignal: false
 
                             Layout.fillWidth: true
-                            Layout.preferredWidth: rowDataset.width / 3
                             visible: true
 
                             onCurrentTextChanged: {
@@ -467,7 +467,6 @@ WaterFall {
                             property bool suppressTextSignal: false
 
                             Layout.fillWidth: true
-                            Layout.preferredWidth: rowDataset.width / 3
                             visible: true
 
                             onCurrentTextChanged: {
