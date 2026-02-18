@@ -207,7 +207,7 @@ SpinBox {
     }
 
     onDevValueChanged: {
-        if (value != devValue) {
+        if (value !== devValue) {
             isDriverChanged = true
             value = devValue
         }

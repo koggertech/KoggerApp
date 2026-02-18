@@ -40,7 +40,7 @@ Item {
         var stopCoord = centerMouse + heightSlider/2
 
         if(pressed) {
-            if(startPointY == stopPointY) {
+            if(startPointY === stopPointY) {
                 if(mouseY > startPointY) {
                     activeSlider = 1
                 } else {
@@ -53,12 +53,12 @@ Item {
             }
         }
 
-        if(activeSlider == 1) {
+        if(activeSlider === 1) {
             startValue = mouseToVal(startCoord)
             if(startValue > stopValue) {
                 stopValue = startValue
             }
-        } else if(activeSlider == 2){
+        } else if(activeSlider === 2){
             stopValue = mouseToVal(stopCoord)
             if(stopValue < startValue) {
                 startValue = stopValue;

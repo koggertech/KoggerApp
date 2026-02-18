@@ -78,7 +78,7 @@ DevSettingsBox {
                 text: qsTr("UPGRADE")
                 Layout.fillWidth: false
                 Layout.leftMargin: 10
-                visible: pathText.text != ""
+                visible: pathText.text !== ""
 
                 onClicked: {
                     core.upgradeFW(pathText.text, dev)

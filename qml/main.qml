@@ -1660,7 +1660,7 @@ ApplicationWindow  {
                 //     currentIndex: deviceManagerWrapper.pilotModeState
 
                 //     onCurrentIndexChanged: {
-                //         if(currentIndex != deviceManagerWrapper.pilotModeState) {
+                //         if(currentIndex !== deviceManagerWrapper.pilotModeState) {
                 //             currentIndex = deviceManagerWrapper.pilotModeState
                 //         }
                 //     }

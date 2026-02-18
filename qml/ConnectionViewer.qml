@@ -159,7 +159,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         selectByMouse: true
                         readOnly: true
-                        visible: LinkType == 1
+                        visible: LinkType === 1
                         text: PortName
 
                         background:  Rectangle {
@@ -174,7 +174,7 @@ ColumnLayout {
                     CCombo  {
                         id: baudrateCombo
                         implicitWidth: 150
-                        visible: LinkType == 1
+                        visible: LinkType === 1
                         model: linkManagerWrapper.baudrateModel
                         currentIndex: 8
                         displayText: Baudrate
@@ -193,7 +193,7 @@ ColumnLayout {
 
                     CheckButton {
                         id: autoSpeedCheckBox
-                        visible: LinkType == 1
+                        visible: LinkType === 1
                         icon.source: "qrc:/icons/ui/refresh.svg"
                         implicitWidth: theme.controlHeight
 
@@ -832,7 +832,7 @@ ColumnLayout {
                     }
 
                     function openCSV() {
-                        core.openCSV(importPathText.text, separatorCombo.currentIndex, firstRow.value, timeColumn.value, utcGpsCombo.currentIndex == 0,
+                        core.openCSV(importPathText.text, separatorCombo.currentIndex, firstRow.value, timeColumn.value, utcGpsCombo.currentIndex === 0,
                                      latColumn.value*latLonEnable.checked, lonColumn.value*latLonEnable.checked, altColumn.value*latLonEnable.checked,
                                      northColumn.value*xyzEnable.checked, eastColumn.value*xyzEnable.checked, upColumn.value*xyzEnable.checked);
                     }

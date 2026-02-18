@@ -313,7 +313,7 @@ ColumnLayout {
 
                 onValueChanged: {
                     if (!isDriverChanged) {
-                        if (value == 1) {
+                        if (value === 1) {
                             dev.datasetChart = 1
                         }
                         else {
@@ -344,10 +344,10 @@ ColumnLayout {
 
                 onValueChanged: {
                     if (!isDriverChanged) {
-                        if (value == 1) {
+                        if (value === 1) {
                             dev.datasetDist = 1
                         }
-                        else if (value == 2) {
+                        else if (value === 2) {
                             dev.datasetSDDBT = 1
                         }
                         else {
@@ -379,7 +379,7 @@ ColumnLayout {
 
                 onValueChanged: {
                     if (!isDriverChanged) {
-                        if (value == 1) {
+                        if (value === 1) {
                             dev.datasetEuler = 1
                         }
                         else if (dev.datasetEuler & 1) {
@@ -410,7 +410,7 @@ ColumnLayout {
 
                 onValueChanged: {
                     if (!isDriverChanged) {
-                        if(value == 1) {
+                        if(value === 1) {
                             dev.datasetTemp = 1
                         }
                         else if (dev.datasetTemp & 1) {
@@ -441,7 +441,7 @@ ColumnLayout {
 
                 onValueChanged: {
                     if (!isDriverChanged) {
-                        if (value == 1) {
+                        if (value === 1) {
                             dev.datasetTimestamp = 1
                         }
                         else if (dev.datasetTimestamp & 1) {

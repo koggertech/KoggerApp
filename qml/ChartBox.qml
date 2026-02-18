@@ -28,9 +28,9 @@ DevSettingsBox {
                     text: qsTr("On")
                     checked: dev.datasetChart > 0
                     onCheckedChanged: {
-                        if(checked == true && dev.datasetChart === 0) {
+                        if(checked === true && dev.datasetChart === 0) {
                             dev.datasetChart = switchDatasetChart.lastChannel
-                        } else if(checked == false && dev.datasetChart > 0) {
+                        } else if(checked === false && dev.datasetChart > 0) {
                             switchDatasetChart.lastChannel = dev.datasetChart
                             dev.datasetChart = 0
                         }
