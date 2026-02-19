@@ -1476,12 +1476,12 @@ ApplicationWindow  {
             lonDms   = toDMS(dataset.boatLongitude, false) + qsTr("°")
             distStr  = formatFixed(dataset.distToContact, 1, 3) + qsTr(" m")
             angStr   = formatFixed(dataset.angleToContact, 1, 3) + qsTr("°")
-            depthStr = formatFixed(dataset.depth, 1, 3) + qsTr(" m")
+            depthStr = formatFixed(dataset.depth, 2, 4) + qsTr(" m")
             speedStr = formatFixed(dataset.speed, 1, 3) + qsTr(" km/h")
         }
 
         Timer {
-            interval: 333
+            interval: 40
             repeat: true
             running: extraInfoPanel.visible
             triggeredOnStart: true
