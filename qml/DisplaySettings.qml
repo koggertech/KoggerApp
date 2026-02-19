@@ -8,6 +8,9 @@ import QtCore
 GridLayout {
     id: control
 
+    readonly property real preferenceComboWidth: 200
+    readonly property real preferenceBottomTrackComboWidth: 250
+
     property int numPlots: numPlotsSpinBox.value
     property bool syncPlots: plotSyncCheckBox.checked
     property int instruments: instrumentsGradeList.currentIndex
@@ -252,8 +255,12 @@ GridLayout {
                     CCombo  {
                         id: bottomTrackList
                         //                        Layout.fillWidth: true
-                        Layout.preferredWidth: 250
-                        model: [qsTr("Normal 2D"), qsTr("Narrow 2D"), qsTr("Echogram Side-Scan")]
+                        implicitContentWidthPolicy: ComboBox.WidestText
+                        Layout.fillWidth: false
+                        Layout.preferredWidth: preferenceBottomTrackComboWidth
+                        Layout.minimumWidth: preferenceBottomTrackComboWidth
+                        Layout.maximumWidth: preferenceBottomTrackComboWidth
+                        model: [qsTr("Normal 2D"), qsTr("Narrow 2D"), qsTr("Side-Scan")]
                         currentIndex: 0
 
 //                        onCurrentIndexChanged: bottomTrackProcessingGroup.updateProcessing()
@@ -833,7 +840,11 @@ GridLayout {
 
                 CCombo  {
                     id: appLanguage
-                    Layout.fillWidth: true
+                    implicitContentWidthPolicy: ComboBox.WidestText
+                    Layout.fillWidth: false
+                    Layout.preferredWidth: control.preferenceComboWidth
+                    Layout.minimumWidth: control.preferenceComboWidth
+                    Layout.maximumWidth: control.preferenceComboWidth
                     model: [qsTr("English"), qsTr("Russian"), qsTr("Polish")]
                     currentIndex: 0
 
@@ -865,7 +876,11 @@ GridLayout {
 
                 CCombo  {
                     id: appTheme
-                    Layout.fillWidth: true
+                    implicitContentWidthPolicy: ComboBox.WidestText
+                    Layout.fillWidth: false
+                    Layout.preferredWidth: control.preferenceComboWidth
+                    Layout.minimumWidth: control.preferenceComboWidth
+                    Layout.maximumWidth: control.preferenceComboWidth
                     model: [qsTr("Dark"), qsTr("Super Dark"), qsTr("Light"), qsTr("Super Light")]
                     currentIndex: 0
 
@@ -883,7 +898,11 @@ GridLayout {
 
                 CCombo  {
                     id: instrumentsGradeList
-                    Layout.fillWidth: true
+                    implicitContentWidthPolicy: ComboBox.WidestText
+                    Layout.fillWidth: false
+                    Layout.preferredWidth: control.preferenceComboWidth
+                    Layout.minimumWidth: control.preferenceComboWidth
+                    Layout.maximumWidth: control.preferenceComboWidth
                     model: [qsTr("Fish Finders"), qsTr("Bottom Tracking"), qsTr("Maximum")]
                     currentIndex: 0
 
