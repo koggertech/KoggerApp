@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QFile>
 #include <QOpenGLContext>
+#include <QtGlobal>
 
 #include <ft2build.h> // NOLINT
 #include FT_FREETYPE_H
@@ -136,6 +137,8 @@ void TextRenderer::render(const QString &text, float scale, QVector2D pos, bool 
         ctx->glActiveTexture(GL_TEXTURE0);
 
         textShader->setUniformValue("mvp_matrix", projection);
+        textShader->setUniformValue("tex", 0);
+        textShader->setUniformValue("textColor", DrawUtils::colorToVector4d(m_color));
 
         auto it = text.begin();
         while (it != text.end()) {
@@ -164,9 +167,7 @@ void TextRenderer::render(const QString &text, float scale, QVector2D pos, bool 
             };
 
             if (ch.texture) {
-                ch.texture->bind();
-                textShader->setUniformValue("texture", ch.texture->textureId());
-                textShader->setUniformValue("textColor", DrawUtils::colorToVector4d(m_color));
+                ch.texture->bind(0);
 
                 m_arrayBuffer.write(0, vertices, 6 * 4 * sizeof(float));
 
@@ -215,8 +216,11 @@ void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, con
 
     ctx->glEnable(GL_BLEND);
     ctx->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    ctx->glActiveTexture(GL_TEXTURE0);
 
     shaderProgram->setUniformValue("mvp_matrix", pvm);
+    shaderProgram->setUniformValue("tex", 0);
+    shaderProgram->setUniformValue("textColor", DrawUtils::colorToVector4d(m_color));
 
     float cs = dir.normalized().x();
     float sn = dir.normalized().y();
@@ -260,9 +264,7 @@ void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, con
         }
 
         if (ch.texture) {
-            ch.texture->bind();
-            shaderProgram->setUniformValue("texture", m_chars[c].texture->textureId());
-            shaderProgram->setUniformValue("textColor", DrawUtils::colorToVector4d(m_color));
+            ch.texture->bind(0);
 
             m_arrayBuffer.write(0,vertices, 6 * 5 * sizeof(float));
 
@@ -367,13 +369,20 @@ void TextRenderer::initFont()
         return;
     }
 
-    FT_Set_Pixel_Sizes(face, 0, m_fontPixelSize);
+    const int rasterPixelSize = qMax(1, m_fontPixelSize * m_glyphRasterScale);
+    FT_Set_Pixel_Sizes(face, 0, rasterPixelSize);
+    const float invRasterScale = 1.0f / static_cast<float>(m_glyphRasterScale);
 
 
     auto loadGlyphRange = [&](uint16_t start, uint16_t end) {
         for (uint16_t c = start; c <= end; c++) {
-            if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+            if (FT_Load_Char(face, c, FT_LOAD_DEFAULT | FT_LOAD_TARGET_LIGHT)) {
                 qDebug().noquote() << "ERROR::FREETYTPE: Failed to load Glyph for char code"
+                                   << QString("0x%1").arg(c, 0, 16);
+                continue;
+            }
+            if (FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL)) {
+                qDebug().noquote() << "ERROR::FREETYTPE: Failed to render Glyph for char code"
                                    << QString("0x%1").arg(c, 0, 16);
                 continue;
             }
@@ -382,18 +391,19 @@ void TextRenderer::initFont()
                          face->glyph->bitmap.width,
                          face->glyph->bitmap.rows,
                          face->glyph->bitmap.pitch,
-                         QImage::Format_Indexed8);
+                         QImage::Format_Grayscale8);
 
             Character character;
             character.num     = c;
-            character.size    = QVector2D(face->glyph->bitmap.width, face->glyph->bitmap.rows);
-            character.bearing = QVector2D(face->glyph->bitmap_left, face->glyph->bitmap_top);
-            character.advance = face->glyph->advance.x;
+            character.size    = QVector2D(face->glyph->bitmap.width, face->glyph->bitmap.rows) * invRasterScale;
+            character.bearing = QVector2D(face->glyph->bitmap_left, face->glyph->bitmap_top) * invRasterScale;
+            character.advance = static_cast<GLuint>(face->glyph->advance.x / m_glyphRasterScale);
 
             if (!image.isNull()) {
-                auto texture = std::make_shared<QOpenGLTexture>(image, QOpenGLTexture::GenerateMipMaps);
+                auto textureImage = image.copy();
+                auto texture = std::make_shared<QOpenGLTexture>(textureImage, QOpenGLTexture::DontGenerateMipMaps);
                 texture->create();
-                texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+                texture->setMinificationFilter(QOpenGLTexture::Linear);
                 texture->setMagnificationFilter(QOpenGLTexture::Linear);
                 texture->setWrapMode(QOpenGLTexture::ClampToEdge);
                 character.texture = texture;

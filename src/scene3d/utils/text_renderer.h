@@ -86,6 +86,7 @@ private:
     QColor m_color = {0,0,0};
     QColor m_backgroundColor = {255, 255, 255};
     int m_fontPixelSize = 22;
+    int m_glyphRasterScale = 2;
 
     static constexpr int stride3d = 5 * sizeof(float);
     static constexpr int stride2d = 4 * sizeof(float);
