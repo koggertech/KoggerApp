@@ -1463,9 +1463,15 @@ void Dataset::calcDimensionRects(uint64_t indx)
         return;
     }
 
-    const bool hasMosaicChannels = mosaicFirstChId_.isValid() && mosaicSecondChId_.isValid();
+    const bool hasFirstMosaicChannel = mosaicFirstChId_.isValid();
+    const bool hasSecondMosaicChannel = mosaicSecondChId_.isValid();
+    const bool hasSingleConfiguredLeft = hasFirstMosaicChannel && !hasSecondMosaicChannel;
+    const bool hasSingleConfiguredRight = !hasFirstMosaicChannel && hasSecondMosaicChannel;
+    const bool hasAnyMosaicChannel = hasFirstMosaicChannel || hasSecondMosaicChannel;
     const int baseZoom = mip->getMaxZoom();
     const int maxZoom = mip->getMinZoom();
+    const double leftAngleOffsetRad = qDegreesToRadians(lAngleOffset_);
+    const double rightAngleOffsetRad = qDegreesToRadians(rAngleOffset_);
 
     uint64_t lastIndx = lastDimRectindx_;
     uint64_t currIndx = indx;
@@ -1546,6 +1552,39 @@ void Dataset::calcDimensionRects(uint64_t indx)
         return publishTilesForEpoch(epochIndx, buildTilesByZoom(baseTiles));
     };
 
+    auto appendRayBounds = [](float llRange,
+                              float lRange,
+                              const QVector3D& llPos,
+                              const QVector3D& lPos,
+                              double llAzRad,
+                              double lAzRad,
+                              double angleOffsetRad,
+                              bool isLeftSide,
+                              float* minN,
+                              float* maxN,
+                              float* minE,
+                              float* maxE,
+                              bool* hasTraceRays) {
+        const double sideHalfPi = isLeftSide ? -M_PI_2 : M_PI_2;
+        const double offsetSign = isLeftSide ? 1.0 : -1.0;
+        const double llRayAzRad = llAzRad + sideHalfPi + offsetSign * angleOffsetRad;
+        const double lRayAzRad  = lAzRad  + sideHalfPi + offsetSign * angleOffsetRad;
+
+        QVector3D llBeg(llPos.x() + llRange * std::cos(llRayAzRad), llPos.y() + llRange * std::sin(llRayAzRad), 0.0f);
+        QVector3D llEnd(llPos);
+        QVector3D lBeg(lPos.x() + lRange * std::cos(lRayAzRad), lPos.y() + lRange * std::sin(lRayAzRad), 0.0f);
+        QVector3D lEnd(lPos);
+
+        const QVector3D rayPoints[] = { llBeg, llEnd, lBeg, lEnd };
+        for (const auto& point : rayPoints) {
+            *minN = std::min(*minN, point.x());
+            *maxN = std::max(*maxN, point.x());
+            *minE = std::min(*minE, point.y());
+            *maxE = std::max(*maxE, point.y());
+        }
+        *hasTraceRays = true;
+    };
+
     for (uint64_t i = lastIndx; i < currIndx; ++i) {
         uint64_t llIndx = i;
         uint64_t  lIndx = i + 1;
@@ -1560,7 +1599,7 @@ void Dataset::calcDimensionRects(uint64_t indx)
 
         bool published = false;
 
-        if (hasMosaicChannels) {
+        if (hasAnyMosaicChannel) {
             NED llNed;
             NED lNed;
             const bool llNedOk = tryGetEpochNed(llPtr, &llNed);
@@ -1571,76 +1610,98 @@ void Dataset::calcDimensionRects(uint64_t indx)
                 const auto lYaw  = lPtr->tryRetValidYaw();
 
                 if (std::isfinite(llYaw) && std::isfinite(lYaw)) {
-                    auto* fChLlCharts = llPtr->chart(mosaicFirstChId_,  mosaicFirstSubChId_);
-                    auto* fChlCharts  =  lPtr->chart(mosaicFirstChId_,  mosaicFirstSubChId_);
-                    auto* sChLlCharts = llPtr->chart(mosaicSecondChId_, mosaicSecondSubChId_);
-                    auto* sChlCharts  =  lPtr->chart(mosaicSecondChId_, mosaicSecondSubChId_);
+                    auto* fChLlCharts = hasFirstMosaicChannel  ? llPtr->chart(mosaicFirstChId_,  mosaicFirstSubChId_)  : nullptr;
+                    auto* fChlCharts  = hasFirstMosaicChannel  ?  lPtr->chart(mosaicFirstChId_,  mosaicFirstSubChId_)  : nullptr;
+                    auto* sChLlCharts = hasSecondMosaicChannel ? llPtr->chart(mosaicSecondChId_, mosaicSecondSubChId_) : nullptr;
+                    auto* sChlCharts  = hasSecondMosaicChannel ?  lPtr->chart(mosaicSecondChId_, mosaicSecondSubChId_) : nullptr;
 
-                    if ((fChLlCharts && fChlCharts) || (sChLlCharts && sChlCharts)) {
-                        QVector<QVector3D> traceLinesVertices;
-                        traceLinesVertices.reserve(8);
+                    const QVector3D llPos(llNed.n, llNed.e, 0.0f);
+                    const QVector3D lPos (lNed.n,  lNed.e,  0.0f);
 
-                        const QVector3D llPos(llNed.n, llNed.e, 0.0f);
-                        const QVector3D lPos (lNed.n,  lNed.e,  0.0f);
+                    const double llAzRad = qDegreesToRadians(llYaw);
+                    const double lAzRad  = qDegreesToRadians(lYaw);
 
-                        const double llAzRad = qDegreesToRadians(llYaw);
-                        const double lAzRad  = qDegreesToRadians(lYaw);
+                    float minN = std::numeric_limits<float>::max();
+                    float maxN = std::numeric_limits<float>::lowest();
+                    float minE = std::numeric_limits<float>::max();
+                    float maxE = std::numeric_limits<float>::lowest();
+                    bool hasTraceRays = false;
 
-                        const double firstAngleOffsetDeg  = lAngleOffset_;
-                        const double secondAngleOffsetDeg = rAngleOffset_;
+                    const bool hasLeftRange = fChLlCharts && fChlCharts;
+                    const bool hasRightRange = sChLlCharts && sChlCharts;
 
-                        if (fChLlCharts && fChlCharts) {
-                            const float llRange = fChLlCharts->range();
-                            const float lRange  = fChlCharts->range();
-                            const double llLeftAzRad = llAzRad - M_PI_2 + qDegreesToRadians(firstAngleOffsetDeg);
-                            const double lLeftAzRad  = lAzRad  - M_PI_2 + qDegreesToRadians(firstAngleOffsetDeg);
+                    if (hasLeftRange) {
+                        appendRayBounds(fChLlCharts->range(),
+                                        fChlCharts->range(),
+                                        llPos,
+                                        lPos,
+                                        llAzRad,
+                                        lAzRad,
+                                        leftAngleOffsetRad,
+                                        true,
+                                        &minN,
+                                        &maxN,
+                                        &minE,
+                                        &maxE,
+                                        &hasTraceRays);
+                    }
+                    if (hasRightRange) {
+                        appendRayBounds(sChLlCharts->range(),
+                                        sChlCharts->range(),
+                                        llPos,
+                                        lPos,
+                                        llAzRad,
+                                        lAzRad,
+                                        rightAngleOffsetRad,
+                                        false,
+                                        &minN,
+                                        &maxN,
+                                        &minE,
+                                        &maxE,
+                                        &hasTraceRays);
+                    }
 
-                            QVector3D llBeg(llPos.x() + llRange * std::cos(llLeftAzRad), llPos.y() + llRange * std::sin(llLeftAzRad), 0.0f); // llPtr f ray
-                            QVector3D llEnd(llPos);
-                            QVector3D lBeg(lPos.x() + lRange * std::cos(lLeftAzRad), lPos.y() + lRange * std::sin(lLeftAzRad), 0.0f); // lPtr f ray
-                            QVector3D lEnd(lPos);
+                    if (!hasRightRange && hasSingleConfiguredLeft && hasLeftRange) {
+                        appendRayBounds(fChLlCharts->range(),
+                                        fChlCharts->range(),
+                                        llPos,
+                                        lPos,
+                                        llAzRad,
+                                        lAzRad,
+                                        rightAngleOffsetRad,
+                                        false,
+                                        &minN,
+                                        &maxN,
+                                        &minE,
+                                        &maxE,
+                                        &hasTraceRays);
+                    }
+                    if (!hasLeftRange && hasSingleConfiguredRight && hasRightRange) {
+                        appendRayBounds(sChLlCharts->range(),
+                                        sChlCharts->range(),
+                                        llPos,
+                                        lPos,
+                                        llAzRad,
+                                        lAzRad,
+                                        leftAngleOffsetRad,
+                                        true,
+                                        &minN,
+                                        &maxN,
+                                        &minE,
+                                        &maxE,
+                                        &hasTraceRays);
+                    }
 
-                            traceLinesVertices << llBeg << llEnd << lBeg  << lEnd;
-                        }
-
-                        if (sChLlCharts && sChlCharts) {
-                            const float llRange = sChLlCharts->range();
-                            const float lRange  = sChlCharts->range();
-
-                            const double llRightAzRad = llAzRad + M_PI_2 - qDegreesToRadians(secondAngleOffsetDeg);
-                            const double lRightAzRad  = lAzRad  + M_PI_2 - qDegreesToRadians(secondAngleOffsetDeg);
-
-                            QVector3D llBeg(llPos.x() + llRange * std::cos(llRightAzRad), llPos.y() + llRange * std::sin(llRightAzRad), 0.0f); // llPtr s ray
-                            QVector3D llEnd(llPos);
-                            QVector3D lBeg(lPos.x() + lRange * std::cos(lRightAzRad), lPos.y() + lRange * std::sin(lRightAzRad), 0.0f); // lPtr s ray
-                            QVector3D lEnd(lPos);
-
-                            traceLinesVertices << llBeg << llEnd << lBeg  << lEnd;
-                        }
-
-                        if (!traceLinesVertices.isEmpty()) {
-                            float minN = std::numeric_limits<float>::max();
-                            float maxN = std::numeric_limits<float>::lowest();
-                            float minE = std::numeric_limits<float>::max();
-                            float maxE = std::numeric_limits<float>::lowest();
-
-                            for (auto it = traceLinesVertices.cbegin(); it != traceLinesVertices.cend(); ++it) {
-                                minN = std::min(minN, it->x());  // N
-                                maxN = std::max(maxN, it->x());
-                                minE = std::min(minE, it->y());  // E
-                                maxE = std::max(maxE, it->y());
-                            }
-
-                            const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
-                            std::array<QPointF, 4> visQuad = {
-                                currRaysRect.topLeft(),
-                                currRaysRect.topRight(),
-                                currRaysRect.bottomRight(),
-                                currRaysRect.bottomLeft()
-                            };
-                            const auto lvl1 = mip->tilesInQuadNed(visQuad, baseZoom, /*padTiles*/0);
-                            published = publishTilesForEpoch(llIndx, buildTilesByZoom(lvl1));
-                        }
+                    if (hasTraceRays) {
+                        const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
+                        std::array<QPointF, 4> visQuad = {
+                            currRaysRect.topLeft(),
+                            currRaysRect.topRight(),
+                            currRaysRect.bottomRight(),
+                            currRaysRect.bottomLeft()
+                        };
+                        const auto lvl1 = mip->tilesInQuadNed(visQuad, baseZoom, /*padTiles*/0);
+                        published = publishTilesForEpoch(llIndx, buildTilesByZoom(lvl1));
                     }
                 }
             }
