@@ -402,6 +402,11 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->release();
 
     // text, textback
+    QMatrix4x4 textProjection;
+    textProjection.ortho(vport.toRect());
+    QVector<TextRenderer::Text2DItem> labelItems;
+    labelItems.reserve(points_.size());
+
     for (auto it = points_.begin(); it != points_.end(); ++it) {
         bool isIntersects = it.key() == intersectedEpochIndx_;
 
@@ -413,11 +418,12 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
         if (!isIntersects) {
             pScreen.setY(vport.height() - pScreen.y() - 5);
 
-            QMatrix4x4 textProjection;
-            textProjection.ortho(vport.toRect());
-
-            TextRenderer::instance().render(it.value().info, 0.9f, pScreen, true, ctx, textProjection, shaderProgramMap);
+            labelItems.append(TextRenderer::Text2DItem{it.value().info, 0.9f, pScreen, true});
         }
+    }
+
+    if (!labelItems.isEmpty()) {
+        TextRenderer::instance().render2DBatch(labelItems, ctx, textProjection, shaderProgramMap);
     }
 }
 

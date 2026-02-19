@@ -603,7 +603,8 @@ void SurfaceView::rebuildIsobathLabels()
         }
         dir /= len;
         QVector3D pos = (p1 + p2) * 0.5f;
-        candidates.append(IsoLabel{ pos, dir, std::fabs(level) });
+        const float depth = std::fabs(level);
+        candidates.append(IsoLabel{ pos, dir, depth, QString::number(depth, 'f', 1) });
     };
 
     auto addLabelsFromTri = [&](const QVector3D& A, const QVector3D& B, const QVector3D& C,
@@ -923,9 +924,31 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
                                 : surfaceStep_ * 0.20f;
         const float scale = qBound(0.12f, baseScale, 0.45f);
 
+        QVector<TextRenderer::Text3DItem> labelBatch;
+        labelBatch.reserve(isoLabels_.size());
+        constexpr float ndcMargin = 0.2f;
         for (const auto& lbl : isoLabels_) {
-            const QString txt = QString::number(lbl.depth, 'f', 1);
-            TextRenderer::instance().render3D(txt, scale, lbl.pos, lbl.dir, ctx, mvp, shaderProgramMap);
+            const QVector4D clip = mvp * QVector4D(lbl.pos, 1.0f);
+            const float w = clip.w();
+            if (!std::isfinite(w) || std::fabs(w) < kmath::fltEps || w <= 0.0f) {
+                continue;
+            }
+
+            const float invW = 1.0f / w;
+            const float x = clip.x() * invW;
+            const float y = clip.y() * invW;
+            const float z = clip.z() * invW;
+            if (x < -1.0f - ndcMargin || x > 1.0f + ndcMargin ||
+                y < -1.0f - ndcMargin || y > 1.0f + ndcMargin ||
+                z < -1.0f - ndcMargin || z > 1.0f + ndcMargin) {
+                continue;
+            }
+
+            labelBatch.append(TextRenderer::Text3DItem{QStringView{lbl.text}, scale, lbl.pos, lbl.dir});
+        }
+
+        if (!labelBatch.isEmpty()) {
+            TextRenderer::instance().render3DBatch(labelBatch, ctx, mvp, shaderProgramMap);
         }
 
         TextRenderer::instance().setColor(oldCol);

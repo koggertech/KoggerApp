@@ -4,6 +4,7 @@
 #include <QMutex>
 #include <QVector>
 #include <QVector3D>
+#include <QString>
 #include "surface_tile.h"
 #include "scene_object.h"
 #include "dataset_defs.h"
@@ -20,6 +21,7 @@ public:
         QVector3D pos;
         QVector3D dir;
         float depth;
+        QString text;
     };
 
     class SurfaceViewRenderImplementation : public SceneObject::RenderImplementation
