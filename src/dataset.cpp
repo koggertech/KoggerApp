@@ -1439,6 +1439,18 @@ void Dataset::updateEpochWithChart(const ChannelId &channelId, const ChartParame
 
 void Dataset::setLastDepth(float val)
 {
+    if (!std::isfinite(val)) {
+        return;
+    }
+
+    if (qFuzzyIsNull(val)) {
+        return;
+    }
+
+    if (qFuzzyCompare(1.0f + val, 1.0f + lastDepth_)) {
+        return;
+    }
+
     lastDepth_ = val;
 
     emit lastDepthChanged();
@@ -1451,6 +1463,18 @@ void Dataset::setLastRangefinderDepth(float val)
 
 void Dataset::setLastBottomTrackDepth(float val)
 {
+    if (!std::isfinite(val)) {
+        return;
+    }
+
+    if (qFuzzyIsNull(val)) {
+        return;
+    }
+
+    if (qFuzzyCompare(1.0f + val, 1.0f + lastBottomTrackDepth_)) {
+        return;
+    }
+
     lastBottomTrackDepth_ = val;
 }
 

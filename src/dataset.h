@@ -217,7 +217,7 @@ public slots:
     bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1;  };
     bool  isValidBoatCoordinate() const    { return !qFuzzyIsNull(boatLatitute_) || !qFuzzyIsNull(boatLongitude_); };
     bool  isValidLastDepth() const         { return !qFuzzyIsNull(lastDepth_); };
-    bool isValidSpeed() const              { return qFuzzyIsNull(speed_);      };
+    bool isValidSpeed() const              { return isfinite(speed_) && !qFuzzyIsNull(speed_); };
     bool isSpatialPreparing() const        { return spatialPreparing_;          };
     float getBoatLatitude() const          { return boatLatitute_;             };
     float getBoatLongitude() const         { return boatLongitude_;            };

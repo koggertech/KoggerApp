@@ -1428,7 +1428,13 @@ ApplicationWindow  {
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.margins: 12
-        visible: menuBar.extraInfoVis && !showBanner && dataset.isBoatCoordinateValid
+        visible: menuBar.extraInfoVis
+                 && !showBanner
+                 && (dataset.isBoatCoordinateValid
+                     || dataset.isLastDepthValid
+                     || dataset.isSpeedValid
+                     || dataset.isActiveContactIndxValid)
+
         isDraggable: true
         isOpacityControlled: true
         horizontalMargins: 12
@@ -1497,7 +1503,7 @@ ApplicationWindow  {
                 }
 
                 CText {
-                    visible: dataset.isValidSpeed
+                    visible: dataset.isSpeedValid
                     text: extraInfoPanel.speedStr
                     font.bold: true
                     font.pixelSize: 40 * theme.resCoeff
