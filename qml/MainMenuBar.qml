@@ -20,6 +20,10 @@ Item {
     property int settingsWidth: theme.controlHeight*20
     property string filePath: devSettings.filePath
     property bool extraInfoVis: appSettings.extraInfoVis
+    property bool extraInfoDepthVis: appSettings.extraInfoDepthVis
+    property bool extraInfoSpeedVis: appSettings.extraInfoSpeedVis
+    property bool extraInfoCoordinatesVis: appSettings.extraInfoCoordinatesVis
+    property bool extraInfoActivePointVis: appSettings.extraInfoActivePointVis
     property bool autopilotInfofVis: appSettings.autopilotInfofVis
     property bool profilesBtnVis: appSettings.profilesButtonVis
 

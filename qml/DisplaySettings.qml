@@ -16,6 +16,10 @@ GridLayout {
     property int instruments: instrumentsGradeList.currentIndex
     property var targetPlot: null
     property bool extraInfoVis: extraInfoPanelVisible.checked
+    property bool extraInfoDepthVis: extraInfoDepthVisible.checked
+    property bool extraInfoSpeedVis: extraInfoSpeedVisible.checked
+    property bool extraInfoCoordinatesVis: extraInfoCoordinatesVisible.checked
+    property bool extraInfoActivePointVis: extraInfoActivePointVisible.checked
     property bool autopilotInfofVis: autopilotInfoVisible.checked
     property bool profilesButtonVis: profilesButtonCheck.checked
 
@@ -24,6 +28,35 @@ GridLayout {
 
     function updateBottomTrack() {
         updateBottomTrackButton.clicked()
+    }
+
+    function toggleExtraInfoFiltersPopup() {
+        if (extraInfoSettingsButton.checked) {
+            extraInfoFiltersPopup.close()
+            return
+        }
+
+        if (!extraInfoSettingsButton.checked) {
+            positionExtraInfoFiltersPopup()
+            extraInfoFiltersPopup.open()
+        }
+    }
+
+    function positionExtraInfoFiltersPopup() {
+        var popupParent = extraInfoFiltersPopup.parent
+        if (!popupParent) {
+            return
+        }
+
+        var p = extraInfoSettingsButton.mapToItem(popupParent, 0, 0)
+        var desiredX = p.x + extraInfoSettingsButton.width + 8
+        var maxX = popupParent.width - extraInfoFiltersPopup.width - 8
+        var popupHeight = Math.max(extraInfoFiltersPopup.height, extraInfoFiltersPopup.implicitHeight)
+        var desiredY = p.y + (extraInfoSettingsButton.height - popupHeight) * 0.5
+        var maxY = popupParent.height - popupHeight - 8
+
+        extraInfoFiltersPopup.x = Math.max(8, Math.min(desiredX, maxX))
+        extraInfoFiltersPopup.y = Math.max(8, Math.min(desiredY, maxY))
     }
 
     ColumnLayout {
@@ -920,14 +953,41 @@ GridLayout {
             visible: instruments > 1
             groupName: qsTr("Interface")
 
-            CCheck {
-                id: extraInfoPanelVisible
-                text: qsTr("Extra info panel")
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
 
-                Settings {
-                    property alias extraBoatInfoVisible: extraInfoPanelVisible.checked
+                CCheck {
+                    id: extraInfoPanelVisible
+                    text: qsTr("Extra info panel")
+
+                    onCheckedChanged: {
+                        if (!checked) {
+                            extraInfoSettingsButton.checked = false 
+                            if (extraInfoFiltersPopup.opened) {
+                                extraInfoFiltersPopup.close()
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias extraBoatInfoVisible: extraInfoPanelVisible.checked
+                    }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                CButton {
+                    id: extraInfoSettingsButton
+                    text: qsTr("filter")
+                    visible: extraInfoPanelVisible.checked
+                    checkable: true
+                    onPressed: control.toggleExtraInfoFiltersPopup()
                 }
             }
+
             CCheck {
                 id: profilesButtonCheck
                 text: qsTr("Profiles button")
@@ -955,6 +1015,81 @@ GridLayout {
                 Settings {
                     property alias consoleVisible: consoleVisible.checked
                 }
+            }
+        }
+    }
+
+    Popup {
+        id: extraInfoFiltersPopup
+        parent: Overlay.overlay
+        //modal: false
+        //focus: true
+        padding: 10
+        width: Math.max(220, theme.controlHeight * 8)
+
+        closePolicy: Popup.NoAutoClose
+
+        background: Rectangle {
+            color: theme.menuBackColor
+            border.color: theme.controlBorderColor
+            border.width: 1
+            radius: 2
+        }
+
+        contentItem: ColumnLayout {
+            spacing: 6
+
+            CCheck {
+                id: extraInfoDepthVisible
+                text: qsTr("Depth")
+                checked: true
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoDepthVisible: extraInfoDepthVisible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoSpeedVisible
+                text: qsTr("Speed")
+                checked: true
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoSpeedVisible: extraInfoSpeedVisible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoCoordinatesVisible
+                text: qsTr("Coordinates")
+                checked: true
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoCoordinatesVisible: extraInfoCoordinatesVisible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoActivePointVisible
+                text: qsTr("Active point")
+                checked: true
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoActivePointVisible: extraInfoActivePointVisible.checked
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: scrollBar.contentItem
+        function onContentYChanged() { // menu scroll
+            if (extraInfoSettingsButton.checked) {
+                positionExtraInfoFiltersPopup()
             }
         }
     }

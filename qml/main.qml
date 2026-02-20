@@ -1430,10 +1430,10 @@ ApplicationWindow  {
         anchors.margins: 12
         visible: menuBar.extraInfoVis
                  && !showBanner
-                 && (dataset.isBoatCoordinateValid
-                     || dataset.isLastDepthValid
-                     || dataset.isSpeedValid
-                     || dataset.isActiveContactIndxValid)
+                 && ((menuBar.extraInfoCoordinatesVis && dataset.isBoatCoordinateValid)
+                     || (menuBar.extraInfoDepthVis && dataset.isLastDepthValid)
+                     || (menuBar.extraInfoSpeedVis && dataset.isSpeedValid)
+                     || (menuBar.extraInfoActivePointVis && dataset.isActiveContactIndxValid))
 
         isDraggable: true
         isOpacityControlled: true
@@ -1494,7 +1494,7 @@ ApplicationWindow  {
             ColumnLayout {
 
                 CText {
-                    visible: dataset.isLastDepthValid
+                    visible: menuBar.extraInfoDepthVis && dataset.isLastDepthValid
                     text: extraInfoPanel.depthStr
                     font.bold: true
                     font.pixelSize: 40 * theme.resCoeff
@@ -1503,7 +1503,7 @@ ApplicationWindow  {
                 }
 
                 CText {
-                    visible: dataset.isSpeedValid
+                    visible: menuBar.extraInfoSpeedVis && dataset.isSpeedValid
                     text: extraInfoPanel.speedStr
                     font.bold: true
                     font.pixelSize: 40 * theme.resCoeff
@@ -1513,7 +1513,7 @@ ApplicationWindow  {
             }
 
             ColumnLayout {
-                visible: dataset.isBoatCoordinateValid
+                visible: menuBar.extraInfoCoordinatesVis && dataset.isBoatCoordinateValid
 
                 CText {
                     text: qsTr("Boat position")
@@ -1539,7 +1539,7 @@ ApplicationWindow  {
             }
 
             ColumnLayout {
-                visible: dataset.isActiveContactIndxValid
+                visible: menuBar.extraInfoActivePointVis && dataset.isActiveContactIndxValid
 
                 CText {
                     text: qsTr("Active point")

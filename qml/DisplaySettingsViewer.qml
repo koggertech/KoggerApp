@@ -12,6 +12,10 @@ MenuScroll {
     property var targetPlot: null
     property int menuWidth: 200
     property bool extraInfoVis: displaySettings.extraInfoVis
+    property bool extraInfoDepthVis: displaySettings.extraInfoDepthVis
+    property bool extraInfoSpeedVis: displaySettings.extraInfoSpeedVis
+    property bool extraInfoCoordinatesVis: displaySettings.extraInfoCoordinatesVis
+    property bool extraInfoActivePointVis: displaySettings.extraInfoActivePointVis
     property bool autopilotInfofVis: displaySettings.autopilotInfofVis
     property bool profilesButtonVis: displaySettings.profilesButtonVis
 
