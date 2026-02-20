@@ -872,14 +872,13 @@ bool Plot2D::setContact(int indx, const QString& text)
         const float bottomTrack = ep->distProccesing(channelId);
         const auto  sonarNed         = ep->getSonarPosition().ned;
         const auto  sonarLla         = ep->getSonarPosition().lla;
+        const auto  epochPos         = ep->getPositionGNSS();
 
-
-        ep->contact_.nedX             = sonarNed.n;
-        ep->contact_.nedY             = sonarNed.e;
-        ep->contact_.lat              = sonarLla.latitude;
-        ep->contact_.lon              = sonarLla.longitude;
+        ep->contact_.nedX             = std::isfinite(sonarNed.n) ? sonarNed.n : epochPos.ned.n;
+        ep->contact_.nedY             = std::isfinite(sonarNed.e) ? sonarNed.e : epochPos.ned.e;
+        ep->contact_.lat              = std::isfinite(sonarLla.latitude)  ? sonarLla.latitude  : epochPos.lla.latitude;
+        ep->contact_.lon              = std::isfinite(sonarLla.longitude) ? sonarLla.longitude : epochPos.lla.longitude;
         ep->contact_.echogramDistance = cursor_distance;
-
 
         if (!cursor_.isChannelDoubled()) { // basic
             ep->contact_.depth            = cursor_distance;
