@@ -1032,11 +1032,11 @@ GridLayout {
         id: extraInfoFiltersPopup
         parent: Overlay.overlay
         //modal: false
-        //focus: true
+        focus: true
         padding: 10
         width: Math.max(220, theme.controlHeight * 8)
 
-        closePolicy: Popup.NoAutoClose
+        closePolicy: Popup.NoAutoClose | Popup.CloseOnEscape
 
         background: Rectangle {
             color: theme.menuBackColor
