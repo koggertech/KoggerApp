@@ -12,7 +12,7 @@ MenuFrame {
 
     id: inputDialog
     visible: false
-    width: 185
+    width: implicitWidth
 
     property alias inputFieldText: inputField.text
     property bool accepted: false
