@@ -30,6 +30,15 @@ GridLayout {
         updateBottomTrackButton.clicked()
     }
 
+    function closeExtraInfoFiltersPopup() {
+        if (extraInfoSettingsButton.checked) {
+            extraInfoSettingsButton.checked = false
+        }
+        if (extraInfoFiltersPopup.opened) {
+            extraInfoFiltersPopup.close()
+        }
+    }
+
     function toggleExtraInfoFiltersPopup() {
         if (extraInfoSettingsButton.checked) {
             extraInfoFiltersPopup.close()

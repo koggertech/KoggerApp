@@ -22,6 +22,12 @@ MenuScroll {
     signal languageChanged(string langStr)
     signal syncPlotEnabled()
 
+    onVisibleChanged: {
+        if (!visible && displaySettings) {
+            displaySettings.closeExtraInfoFiltersPopup()
+        }
+    }
+
     function updateBottomTrack() {
         displaySettings.updateBottomTrack()
     }
