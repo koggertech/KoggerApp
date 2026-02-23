@@ -36,6 +36,7 @@
         <file>DevSettingsBox.qml</file>
         <file>DisplaySettingsViewer.qml</file>
         <file>DisplaySettings.qml</file>
+        <file>ExtraInfoPanel.qml</file>
         <file>ExportSettings.qml</file>
         <file>ExportDist.qml</file>
         <file>SonarBox.qml</file>

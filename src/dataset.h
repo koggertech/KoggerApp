@@ -47,6 +47,23 @@ public:
     Q_PROPERTY(float depth                    READ getLastDepth             NOTIFY lastDepthChanged)
     Q_PROPERTY(float isSpeedValid             READ isValidSpeed             NOTIFY speedChanged)
     Q_PROPERTY(float speed                    READ getSpeed                 NOTIFY speedChanged)
+    Q_PROPERTY(bool isSimpleNavV2Valid                  READ isValidSimpleNavV2                   NOTIFY simpleNavV2Changed)
+    Q_PROPERTY(int simpleNavV2GnssFixType               READ simpleNavV2GnssFixType               NOTIFY simpleNavV2Changed)
+    Q_PROPERTY(int simpleNavV2NumSats                   READ simpleNavV2NumSats                   NOTIFY simpleNavV2Changed)
+    Q_PROPERTY(uint simpleNavV2UnixTime                 READ simpleNavV2UnixTime                  NOTIFY simpleNavV2Changed)
+    Q_PROPERTY(int simpleNavV2UnixOffsetMs              READ simpleNavV2UnixOffsetMs              NOTIFY simpleNavV2Changed)
+    Q_PROPERTY(double simpleNavV2Latitude               READ simpleNavV2Latitude                  NOTIFY simpleNavV2Changed)
+    Q_PROPERTY(double simpleNavV2Longitude              READ simpleNavV2Longitude                 NOTIFY simpleNavV2Changed)
+    Q_PROPERTY(double simpleNavV2GroundCourseDeg        READ simpleNavV2GroundCourseDeg           NOTIFY simpleNavV2Changed)
+    Q_PROPERTY(double simpleNavV2GroundVelocityMps      READ simpleNavV2GroundVelocityMps         NOTIFY simpleNavV2Changed)
+    Q_PROPERTY(float simpleNavV2YawDeg                  READ simpleNavV2YawDeg                    NOTIFY simpleNavV2Changed)
+    Q_PROPERTY(float simpleNavV2PitchDeg                READ simpleNavV2PitchDeg                  NOTIFY simpleNavV2Changed)
+    Q_PROPERTY(float simpleNavV2RollDeg                 READ simpleNavV2RollDeg                   NOTIFY simpleNavV2Changed)
+    Q_PROPERTY(bool isBoatStatusValid                   READ isValidBoatStatus                    NOTIFY boatStatusChanged)
+    Q_PROPERTY(int boatStatusBatteryBoatPercent         READ boatStatusBatteryBoatPercent          NOTIFY boatStatusChanged)
+    Q_PROPERTY(int boatStatusBatteryBridgePercent       READ boatStatusBatteryBridgePercent        NOTIFY boatStatusChanged)
+    Q_PROPERTY(int boatStatusSignalQualityBoatPercent   READ boatStatusSignalQualityBoatPercent    NOTIFY boatStatusChanged)
+    Q_PROPERTY(int boatStatusSignalQualityBridgePercent READ boatStatusSignalQualityBridgePercent  NOTIFY boatStatusChanged)
     Q_PROPERTY(bool  spatialPreparing         READ isSpatialPreparing       NOTIFY spatialPreparingChanged)
 
     /*methods*/
@@ -217,7 +234,24 @@ public slots:
     bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1;  };
     bool  isValidBoatCoordinate() const    { return !qFuzzyIsNull(boatLatitute_) || !qFuzzyIsNull(boatLongitude_); };
     bool  isValidLastDepth() const         { return !qFuzzyIsNull(lastDepth_); };
-    bool isValidSpeed() const              { return isfinite(speed_) && !qFuzzyIsNull(speed_); };
+    bool isValidSpeed() const              { return isfinite(speed_) /*&& !qFuzzyIsNull(speed_)*/; };
+    bool isValidSimpleNavV2() const        { return simpleNavV2Valid_; };
+    int simpleNavV2GnssFixType() const     { return static_cast<int>(simpleNavV2GnssFixType_); };
+    int simpleNavV2NumSats() const         { return static_cast<int>(simpleNavV2NumSats_); };
+    uint simpleNavV2UnixTime() const       { return simpleNavV2UnixTime_; };
+    int simpleNavV2UnixOffsetMs() const    { return static_cast<int>(simpleNavV2UnixOffsetMs_); };
+    double simpleNavV2Latitude() const     { return simpleNavV2Latitude_; };
+    double simpleNavV2Longitude() const    { return simpleNavV2Longitude_; };
+    double simpleNavV2GroundCourseDeg() const { return simpleNavV2GroundCourseDeg_; };
+    double simpleNavV2GroundVelocityMps() const { return simpleNavV2GroundVelocityMps_; };
+    float simpleNavV2YawDeg() const        { return simpleNavV2YawDeg_; };
+    float simpleNavV2PitchDeg() const      { return simpleNavV2PitchDeg_; };
+    float simpleNavV2RollDeg() const       { return simpleNavV2RollDeg_; };
+    bool isValidBoatStatus() const         { return boatStatusValid_; };
+    int boatStatusBatteryBoatPercent() const { return static_cast<int>(boatBatteryPercent_); };
+    int boatStatusBatteryBridgePercent() const { return static_cast<int>(bridgeBatteryPercent_); };
+    int boatStatusSignalQualityBoatPercent() const { return static_cast<int>(boatSignalQualityPercent_); };
+    int boatStatusSignalQualityBridgePercent() const { return static_cast<int>(bridgeSignalQualityPercent_); };
     bool isSpatialPreparing() const        { return spatialPreparing_;          };
     float getBoatLatitude() const          { return boatLatitute_;             };
     float getBoatLongitude() const         { return boatLongitude_;            };
@@ -252,6 +286,17 @@ public slots:
     void addDepth(float depth);
 
     void addGnssVelocity(double h_speed, double course);
+    void addSimpleNavV2(uint8_t gnssFixType,
+                        uint8_t numSats,
+                        uint32_t unixTime,
+                        int16_t unixOffsetMs,
+                        double latitude,
+                        double longitude,
+                        double groundCourseDeg,
+                        double groundVelocityMps,
+                        float yawDeg,
+                        float pitchDeg,
+                        float rollDeg);
 
 //    void addDateTime(int year, );
     void addTemp(float temp_c);
@@ -310,6 +355,8 @@ signals:
     void activeContactChanged();
     void lastDepthChanged();
     void speedChanged();
+    void simpleNavV2Changed();
+    void boatStatusChanged();
     void spatialPreparingChanged();
     void datasetStateChanged(int state);
 
@@ -398,6 +445,19 @@ private:
     float lastRangefinderDepth_ = NAN;
     float lastBottomTrackDepth_ = NAN;
     float speed_                = 0.0f;
+    bool simpleNavV2Valid_ = false;
+    uint8_t simpleNavV2GnssFixType_ = 0;
+    uint8_t simpleNavV2NumSats_ = 0;
+    uint32_t simpleNavV2UnixTime_ = 0;
+    int16_t simpleNavV2UnixOffsetMs_ = 0;
+    double simpleNavV2Latitude_ = 0.0;
+    double simpleNavV2Longitude_ = 0.0;
+    double simpleNavV2GroundCourseDeg_ = 0.0;
+    double simpleNavV2GroundVelocityMps_ = 0.0;
+    float simpleNavV2YawDeg_ = 0.0f;
+    float simpleNavV2PitchDeg_ = 0.0f;
+    float simpleNavV2RollDeg_ = 0.0f;
+    bool boatStatusValid_ = false;
     uint8_t boatBatteryPercent_ = 0;
     uint8_t bridgeBatteryPercent_ = 0;
     uint8_t boatSignalQualityPercent_ = 0;

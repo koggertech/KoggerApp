@@ -199,6 +199,17 @@ signals:
 
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void gnssVelocityComplete(double hSpeed, double course);
+    void simpleNavV2Complete(uint8_t gnssFixType,
+                             uint8_t numSats,
+                             uint32_t unixTime,
+                             int16_t unixOffsetMs,
+                             double latitude,
+                             double longitude,
+                             double groundCourseDeg,
+                             double groundVelocityMps,
+                             float yawDeg,
+                             float pitchDeg,
+                             float rollDeg);
     void boatStatusComplete(uint8_t batteryBoatPercent, uint8_t batteryBridgePercent, uint8_t signalQualityBoatPercent, uint8_t signalQualityBridgePercent);
     void depthComplete(float depth);
     void chartSetupChanged();

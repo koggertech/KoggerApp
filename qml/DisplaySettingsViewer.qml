@@ -16,6 +16,8 @@ MenuScroll {
     property bool extraInfoSpeedVis: displaySettings.extraInfoSpeedVis
     property bool extraInfoCoordinatesVis: displaySettings.extraInfoCoordinatesVis
     property bool extraInfoActivePointVis: displaySettings.extraInfoActivePointVis
+    property bool extraInfoSimpleNavV2Vis: displaySettings.extraInfoSimpleNavV2Vis
+    property bool extraInfoBoatStatusVis: displaySettings.extraInfoBoatStatusVis
     property bool autopilotInfofVis: displaySettings.autopilotInfofVis
     property bool profilesButtonVis: displaySettings.profilesButtonVis
 

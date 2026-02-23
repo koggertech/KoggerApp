@@ -900,6 +900,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
 
     connect(dev, &DevQProperty::positionComplete, this, &DeviceManager::positionComplete, connType);
     connect(dev, &DevQProperty::gnssVelocityComplete, this, &DeviceManager::gnssVelocityComplete, connType);
+    connect(dev, &DevQProperty::simpleNavV2Complete, this, &DeviceManager::simpleNavV2Complete, connType);
     connect(dev, &DevQProperty::boatStatusComplete, this, &DeviceManager::boatStatusComplete, connType);
     connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete, connType);
 
@@ -944,6 +945,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
 
     connect(dev, &DevQProperty::positionComplete, this, &DeviceManager::positionComplete);
     connect(dev, &DevQProperty::gnssVelocityComplete, this, &DeviceManager::gnssVelocityComplete);
+    connect(dev, &DevQProperty::simpleNavV2Complete, this, &DeviceManager::simpleNavV2Complete);
     connect(dev, &DevQProperty::boatStatusComplete, this, &DeviceManager::boatStatusComplete);
     connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete);
 

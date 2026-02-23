@@ -1415,6 +1415,11 @@ void DevDriver::receivedNav(Parsers::Type type, Parsers::Version ver, Parsers::R
     Q_UNUSED(type);
 
     if (resp == respNone && ver == v2) {
+        const uint8_t gnssFixType = idNav->gnssFixTypeV2();
+        const uint8_t numSats = idNav->numSatsV2();
+        const uint32_t unixTime = idNav->unixTimeV2();
+        const int16_t unixOffsetMs = idNav->unixOffsetMsV2();
+
         int32_t unixOffsetNs = static_cast<int32_t>(idNav->unixOffsetMsV2()) * 1000000;
         if (unixOffsetNs < 0) {
             unixOffsetNs = 0;
@@ -1430,8 +1435,8 @@ void DevDriver::receivedNav(Parsers::Type type, Parsers::Version ver, Parsers::R
 
 #ifndef SEPARATE_READING
         core.consoleInfo(QString("SimpleNavV2: fix %1 sats %2 lat %3 lon %4 course %5 speed %6 yaw %7 pitch %8 roll %9")
-                             .arg(idNav->gnssFixTypeV2())
-                             .arg(idNav->numSatsV2())
+                             .arg(gnssFixType)
+                             .arg(numSats)
                              .arg(latitude, 0, 'f', 7)
                              .arg(longitude, 0, 'f', 7)
                              .arg(courseDeg, 0, 'f', 2)
@@ -1441,7 +1446,10 @@ void DevDriver::receivedNav(Parsers::Type type, Parsers::Version ver, Parsers::R
                              .arg(rollDeg, 0, 'f', 2));
 #endif
 
-        emit positionComplete(latitude, longitude, idNav->unixTimeV2(), static_cast<uint32_t>(unixOffsetNs));
+        emit simpleNavV2Complete(gnssFixType, numSats, unixTime, unixOffsetMs,
+                                 latitude, longitude, courseDeg, velocityMps,
+                                 yawDeg, pitchDeg, rollDeg);
+        emit positionComplete(latitude, longitude, unixTime, static_cast<uint32_t>(unixOffsetNs));
         emit gnssVelocityComplete(velocityMps, courseDeg);
         emit attitudeComplete(yawDeg, pitchDeg, rollDeg);
 

@@ -836,6 +836,34 @@ void Dataset::addGnssVelocity(double h_speed, double course) {
     emit dataUpdate();
 }
 
+void Dataset::addSimpleNavV2(uint8_t gnssFixType,
+                             uint8_t numSats,
+                             uint32_t unixTime,
+                             int16_t unixOffsetMs,
+                             double latitude,
+                             double longitude,
+                             double groundCourseDeg,
+                             double groundVelocityMps,
+                             float yawDeg,
+                             float pitchDeg,
+                             float rollDeg)
+{
+    simpleNavV2Valid_ = true;
+    simpleNavV2GnssFixType_ = gnssFixType;
+    simpleNavV2NumSats_ = numSats;
+    simpleNavV2UnixTime_ = unixTime;
+    simpleNavV2UnixOffsetMs_ = unixOffsetMs;
+    simpleNavV2Latitude_ = latitude;
+    simpleNavV2Longitude_ = longitude;
+    simpleNavV2GroundCourseDeg_ = groundCourseDeg;
+    simpleNavV2GroundVelocityMps_ = groundVelocityMps;
+    simpleNavV2YawDeg_ = yawDeg;
+    simpleNavV2PitchDeg_ = pitchDeg;
+    simpleNavV2RollDeg_ = rollDeg;
+
+    emit simpleNavV2Changed();
+}
+
 void Dataset::addTemp(float temp_c) {
     //qDebug() << "Dataset::addTemp" << temp_c;
     lastTemp_ = temp_c;
@@ -857,10 +885,13 @@ void Dataset::addTemp(float temp_c) {
 
 void Dataset::addBoatStatus(uint8_t batteryBoatPercent, uint8_t batteryBridgePercent, uint8_t signalQualityBoatPercent, uint8_t signalQualityBridgePercent)
 {
+    boatStatusValid_ = true;
     boatBatteryPercent_ = batteryBoatPercent;
     bridgeBatteryPercent_ = batteryBridgePercent;
     boatSignalQualityPercent_ = signalQualityBoatPercent;
     bridgeSignalQualityPercent_ = signalQualityBridgePercent;
+
+    emit boatStatusChanged();
 }
 
 void Dataset::mergeGnssTrack(QList<Position> track) {
@@ -938,6 +969,19 @@ void Dataset::resetDataset()
     lastDepth_                  = 0.0f;
     lastRangefinderDepth_       = NAN;
     lastBottomTrackDepth_       = NAN;
+    simpleNavV2Valid_           = false;
+    simpleNavV2GnssFixType_     = 0;
+    simpleNavV2NumSats_         = 0;
+    simpleNavV2UnixTime_        = 0;
+    simpleNavV2UnixOffsetMs_    = 0;
+    simpleNavV2Latitude_        = 0.0;
+    simpleNavV2Longitude_       = 0.0;
+    simpleNavV2GroundCourseDeg_ = 0.0;
+    simpleNavV2GroundVelocityMps_ = 0.0;
+    simpleNavV2YawDeg_          = 0.0f;
+    simpleNavV2PitchDeg_        = 0.0f;
+    simpleNavV2RollDeg_         = 0.0f;
+    boatStatusValid_            = false;
     boatBatteryPercent_         = 0;
     bridgeBatteryPercent_       = 0;
     boatSignalQualityPercent_   = 0;
@@ -980,6 +1024,19 @@ void Dataset::softResetDataset() // for long-distance camera movement
     lastDepth_                  = 0.0f;
     lastRangefinderDepth_       = NAN;
     lastBottomTrackDepth_       = NAN;
+    simpleNavV2Valid_           = false;
+    simpleNavV2GnssFixType_     = 0;
+    simpleNavV2NumSats_         = 0;
+    simpleNavV2UnixTime_        = 0;
+    simpleNavV2UnixOffsetMs_    = 0;
+    simpleNavV2Latitude_        = 0.0;
+    simpleNavV2Longitude_       = 0.0;
+    simpleNavV2GroundCourseDeg_ = 0.0;
+    simpleNavV2GroundVelocityMps_ = 0.0;
+    simpleNavV2YawDeg_          = 0.0f;
+    simpleNavV2PitchDeg_        = 0.0f;
+    simpleNavV2RollDeg_         = 0.0f;
+    boatStatusValid_            = false;
     boatBatteryPercent_         = 0;
     bridgeBatteryPercent_       = 0;
     boatSignalQualityPercent_   = 0;
@@ -1018,6 +1075,19 @@ void Dataset::resetRenderBuffers()
     lastTemp_ = NAN;
     lastRangefinderDepth_ = NAN;
     lastBottomTrackDepth_ = NAN;
+    simpleNavV2Valid_ = false;
+    simpleNavV2GnssFixType_ = 0;
+    simpleNavV2NumSats_ = 0;
+    simpleNavV2UnixTime_ = 0;
+    simpleNavV2UnixOffsetMs_ = 0;
+    simpleNavV2Latitude_ = 0.0;
+    simpleNavV2Longitude_ = 0.0;
+    simpleNavV2GroundCourseDeg_ = 0.0;
+    simpleNavV2GroundVelocityMps_ = 0.0;
+    simpleNavV2YawDeg_ = 0.0f;
+    simpleNavV2PitchDeg_ = 0.0f;
+    simpleNavV2RollDeg_ = 0.0f;
+    boatStatusValid_ = false;
     boatBatteryPercent_ = 0;
     bridgeBatteryPercent_ = 0;
     boatSignalQualityPercent_ = 0;
@@ -1030,6 +1100,9 @@ void Dataset::resetRenderBuffers()
     pendingSonarPosIndx_ = 0;
     pendingDimRectIndx_ = 0;
     setSpatialPreparing(false);
+
+    emit simpleNavV2Changed();
+    emit boatStatusChanged();
 }
 
 void Dataset::resetDistProcessing() {
@@ -1500,7 +1573,7 @@ void Dataset::setLastBottomTrackDepth(float val)
 
 void Dataset::calcDimensionRects(uint64_t indx)
 {
-    //qDebug() << "void Dataset::calcTracingDimensions()";
+    //qDebug() << "void Dataset::calcDimensionRects()";
 
     auto* mip = core.getMosaicIndexProviderPtr();
     if (!mip) {
@@ -1521,7 +1594,7 @@ void Dataset::calcDimensionRects(uint64_t indx)
     uint64_t currIndx = indx;
 
     if (currIndx >= static_cast<uint64_t>(pool_.size())) {
-        qWarning() << "Dataset::calcTracingDimensions out of indxs";
+        qWarning() << "Dataset::calcDimensionRects out of indxs";
         return;
     }
 
@@ -1636,7 +1709,7 @@ void Dataset::calcDimensionRects(uint64_t indx)
         auto* llPtr = &pool_[llIndx];
         auto* lPtr  = &pool_[lIndx];
         if (!llPtr || !lPtr) {
-            qWarning() << "Dataset::calcTracingDimensions: !llPtr || !lPtr";
+            qWarning() << "Dataset::calcDimensionRects: !llPtr || !lPtr";
             lastDimRectindx_ = lIndx;
             continue;
         }

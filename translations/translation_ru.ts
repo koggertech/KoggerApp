@@ -244,8 +244,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="1173"/>
-        <location filename="../src/dataset.cpp" line="1175"/>
+        <location filename="../src/dataset.cpp" line="1266"/>
+        <location filename="../src/dataset.cpp" line="1268"/>
         <source>None</source>
         <translation>Отсутствует</translation>
     </message>
@@ -709,44 +709,54 @@
         <translation>Экстра инфо панель</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="993"/>
+        <location filename="../qml/DisplaySettings.qml" line="995"/>
         <source>filter</source>
         <translation>фильтр</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1002"/>
+        <location filename="../qml/DisplaySettings.qml" line="1004"/>
         <source>Profiles button</source>
         <translation>Профили</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1011"/>
+        <location filename="../qml/DisplaySettings.qml" line="1013"/>
         <source>Autopilot info</source>
         <translation>Информация об автопилоте</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1019"/>
+        <location filename="../qml/DisplaySettings.qml" line="1021"/>
         <source>Console</source>
         <translation>Консоль</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1069"/>
+        <location filename="../qml/DisplaySettings.qml" line="1055"/>
         <source>Depth</source>
         <translation>Глубина</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1080"/>
+        <location filename="../qml/DisplaySettings.qml" line="1066"/>
         <source>Speed</source>
         <translation>Скорость</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1091"/>
+        <location filename="../qml/DisplaySettings.qml" line="1077"/>
         <source>Coordinates</source>
         <translation>Координаты</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1102"/>
+        <location filename="../qml/DisplaySettings.qml" line="1088"/>
         <source>Active point</source>
         <translation>Активная точка</translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="1099"/>
+        <source>Navigation info</source>
+        <translation>Навигационное инфо</translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="1110"/>
+        <source>Boat Status</source>
+        <translation>Статус лодки</translation>
     </message>
 </context>
 <context>
@@ -793,6 +803,67 @@
         <location filename="../qml/ExportDist.qml" line="45"/>
         <source>Export to CSV</source>
         <translation>Экспорт в CSV</translation>
+    </message>
+</context>
+<context>
+    <name>ExtraInfoPanel</name>
+    <message>
+        <location filename="../qml/ExtraInfoPanel.qml" line="98"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="99"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="101"/>
+        <source>°</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/ExtraInfoPanel.qml" line="100"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="102"/>
+        <source> m</source>
+        <translation> м</translation>
+    </message>
+    <message>
+        <location filename="../qml/ExtraInfoPanel.qml" line="103"/>
+        <source> km/h</source>
+        <translation> км/ч</translation>
+    </message>
+    <message>
+        <location filename="../qml/ExtraInfoPanel.qml" line="142"/>
+        <source>Boat position</source>
+        <translation>Позиция лодки</translation>
+    </message>
+    <message>
+        <location filename="../qml/ExtraInfoPanel.qml" line="151"/>
+        <source>Lat.:</source>
+        <translation>Шир.:</translation>
+    </message>
+    <message>
+        <location filename="../qml/ExtraInfoPanel.qml" line="158"/>
+        <source>Lon.:</source>
+        <translation>Долг.:</translation>
+    </message>
+    <message>
+        <location filename="../qml/ExtraInfoPanel.qml" line="168"/>
+        <source>Active point</source>
+        <translation>Активная точка</translation>
+    </message>
+    <message>
+        <location filename="../qml/ExtraInfoPanel.qml" line="177"/>
+        <source>Dist.:</source>
+        <translation>Дист.:</translation>
+    </message>
+    <message>
+        <location filename="../qml/ExtraInfoPanel.qml" line="184"/>
+        <source>Ang.:</source>
+        <translation>Аз.:</translation>
+    </message>
+    <message>
+        <location filename="../qml/ExtraInfoPanel.qml" line="206"/>
+        <source>SimpleNavV2</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/ExtraInfoPanel.qml" line="306"/>
+        <source>IDBinBoatStatus</source>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -985,22 +1056,22 @@
 <context>
     <name>MainMenuBar</name>
     <message>
-        <location filename="../qml/MainMenuBar.qml" line="122"/>
+        <location filename="../qml/MainMenuBar.qml" line="124"/>
         <source>Connections</source>
         <translation>Подключения</translation>
     </message>
     <message>
-        <location filename="../qml/MainMenuBar.qml" line="137"/>
+        <location filename="../qml/MainMenuBar.qml" line="139"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
     <message>
-        <location filename="../qml/MainMenuBar.qml" line="156"/>
+        <location filename="../qml/MainMenuBar.qml" line="158"/>
         <source>Display 3D</source>
         <translation>Показать 3D</translation>
     </message>
     <message>
-        <location filename="../qml/MainMenuBar.qml" line="182"/>
+        <location filename="../qml/MainMenuBar.qml" line="184"/>
         <source>Display 2D</source>
         <translation>Показать 2D</translation>
     </message>
@@ -1394,7 +1465,7 @@
         <translation>Скорость звука, м/с: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1865"/>
+        <location filename="../src/core.cpp" line="1869"/>
         <source>File</source>
         <translation>Файл</translation>
     </message>
@@ -1955,19 +2026,6 @@
         <translation>Профили...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1477"/>
-        <location filename="../qml/main.qml" line="1479"/>
-        <source> m</source>
-        <translation> м</translation>
-    </message>
-    <message>
-        <location filename="../qml/main.qml" line="1475"/>
-        <location filename="../qml/main.qml" line="1476"/>
-        <location filename="../qml/main.qml" line="1478"/>
-        <source>°</source>
-        <translation></translation>
-    </message>
-    <message>
         <location filename="../qml/main.qml" line="1261"/>
         <source>Profiles</source>
         <translation>Профили</translation>
@@ -2003,62 +2061,27 @@
         <translation>Применить</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1480"/>
-        <source> km/h</source>
-        <translation> км/ч</translation>
-    </message>
-    <message>
-        <location filename="../qml/main.qml" line="1519"/>
-        <source>Boat position</source>
-        <translation>Позиция лодки</translation>
-    </message>
-    <message>
-        <location filename="../qml/main.qml" line="1528"/>
-        <source>Lat.:</source>
-        <translation>Шир.:</translation>
-    </message>
-    <message>
-        <location filename="../qml/main.qml" line="1535"/>
-        <source>Lon.:</source>
-        <translation>Долг.:</translation>
-    </message>
-    <message>
-        <location filename="../qml/main.qml" line="1545"/>
-        <source>Active point</source>
-        <translation>Активная точка</translation>
-    </message>
-    <message>
-        <location filename="../qml/main.qml" line="1554"/>
-        <source>Dist.:</source>
-        <translation>Дист.:</translation>
-    </message>
-    <message>
-        <location filename="../qml/main.qml" line="1561"/>
-        <source>Ang.:</source>
-        <translation>Аз.:</translation>
-    </message>
-    <message>
-        <location filename="../qml/main.qml" line="1682"/>
+        <location filename="../qml/main.qml" line="1548"/>
         <source> m/s </source>
         <translation> м/с </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1689"/>
+        <location filename="../qml/main.qml" line="1555"/>
         <source> %</source>
         <translation> %</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1682"/>
+        <location filename="../qml/main.qml" line="1548"/>
         <source> V   </source>
         <translation> В   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1682"/>
+        <location filename="../qml/main.qml" line="1548"/>
         <source> A   </source>
         <translation> А   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1798"/>
+        <location filename="../qml/main.qml" line="1664"/>
         <source>Please wait, the file is opening</source>
         <translation>Пожалуйста подождите, файл открывается</translation>
     </message>

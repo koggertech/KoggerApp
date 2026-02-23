@@ -20,6 +20,8 @@ GridLayout {
     property bool extraInfoSpeedVis: extraInfoSpeedVisible.checked
     property bool extraInfoCoordinatesVis: extraInfoCoordinatesVisible.checked
     property bool extraInfoActivePointVis: extraInfoActivePointVisible.checked
+    property bool extraInfoSimpleNavV2Vis: extraInfoSimpleNavV2Visible.checked
+    property bool extraInfoBoatStatusVis: extraInfoBoatStatusVisible.checked
     property bool autopilotInfofVis: autopilotInfoVisible.checked
     property bool profilesButtonVis: profilesButtonCheck.checked
 
@@ -1089,6 +1091,28 @@ GridLayout {
 
                 Settings {
                     property alias extraInfoActivePointVisible: extraInfoActivePointVisible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoSimpleNavV2Visible
+                text: qsTr("Navigation info")
+                checked: false
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoSimpleNavV2Visible: extraInfoSimpleNavV2Visible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoBoatStatusVisible
+                text: qsTr("Boat Status")
+                checked: false
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoBoatStatusVisible: extraInfoBoatStatusVisible.checked
                 }
             }
         }
