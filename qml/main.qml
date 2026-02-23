@@ -1439,7 +1439,7 @@ ApplicationWindow  {
         anchors.margins: 12
         menuBarState: menuBar
         datasetState: dataset
-        showBanner: showBanner
+        showBanner: mainview.showBanner
     }
     // бровь
     MenuFrame {

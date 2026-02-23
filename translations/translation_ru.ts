@@ -808,60 +808,60 @@
 <context>
     <name>ExtraInfoPanel</name>
     <message>
-        <location filename="../qml/ExtraInfoPanel.qml" line="98"/>
-        <location filename="../qml/ExtraInfoPanel.qml" line="99"/>
-        <location filename="../qml/ExtraInfoPanel.qml" line="101"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="121"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="122"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="124"/>
         <source>°</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ExtraInfoPanel.qml" line="100"/>
-        <location filename="../qml/ExtraInfoPanel.qml" line="102"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="123"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="125"/>
         <source> m</source>
         <translation> м</translation>
     </message>
     <message>
-        <location filename="../qml/ExtraInfoPanel.qml" line="103"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="126"/>
         <source> km/h</source>
         <translation> км/ч</translation>
     </message>
     <message>
-        <location filename="../qml/ExtraInfoPanel.qml" line="142"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="165"/>
         <source>Boat position</source>
         <translation>Позиция лодки</translation>
     </message>
     <message>
-        <location filename="../qml/ExtraInfoPanel.qml" line="151"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="174"/>
         <source>Lat.:</source>
         <translation>Шир.:</translation>
     </message>
     <message>
-        <location filename="../qml/ExtraInfoPanel.qml" line="158"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="181"/>
         <source>Lon.:</source>
         <translation>Долг.:</translation>
     </message>
     <message>
-        <location filename="../qml/ExtraInfoPanel.qml" line="168"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="191"/>
         <source>Active point</source>
         <translation>Активная точка</translation>
     </message>
     <message>
-        <location filename="../qml/ExtraInfoPanel.qml" line="177"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="200"/>
         <source>Dist.:</source>
         <translation>Дист.:</translation>
     </message>
     <message>
-        <location filename="../qml/ExtraInfoPanel.qml" line="184"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="207"/>
         <source>Ang.:</source>
         <translation>Аз.:</translation>
     </message>
     <message>
-        <location filename="../qml/ExtraInfoPanel.qml" line="206"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="229"/>
         <source>SimpleNavV2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ExtraInfoPanel.qml" line="306"/>
+        <location filename="../qml/ExtraInfoPanel.qml" line="329"/>
         <source>IDBinBoatStatus</source>
         <translation></translation>
     </message>
@@ -1402,14 +1402,14 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="38"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="68"/>
         <source> m/s    </source>
         <translation> м/с    </translation>
     </message>
     <message>
         <location filename="../src/scene2d/plot2D_bottom_processing.cpp" line="79"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="49"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="78"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="79"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="108"/>
         <location filename="../src/scene2d/plot2D_rangefinder.cpp" line="72"/>
         <source> m</source>
         <translation> м</translation>
@@ -1996,92 +1996,92 @@
         <translation>Ок</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="775"/>
+        <location filename="../qml/main.qml" line="784"/>
         <source>Data prepairing...</source>
         <translation>Подготовка данных...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="779"/>
+        <location filename="../qml/main.qml" line="788"/>
         <source> cm/pix</source>
         <translation> см/пикс</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="779"/>
+        <location filename="../qml/main.qml" line="788"/>
         <source>Mosaic: </source>
         <translation>Мозайка: </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="782"/>
+        <location filename="../qml/main.qml" line="791"/>
         <source>Surface: </source>
         <translation>Поверхность: </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="782"/>
+        <location filename="../qml/main.qml" line="791"/>
         <source> cm/cell</source>
         <translation> см/ячейка</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1206"/>
+        <location filename="../qml/main.qml" line="1215"/>
         <source>Profiles...</source>
         <translation>Профили...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1261"/>
+        <location filename="../qml/main.qml" line="1270"/>
         <source>Profiles</source>
         <translation>Профили</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1297"/>
+        <location filename="../qml/main.qml" line="1306"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1316"/>
+        <location filename="../qml/main.qml" line="1325"/>
         <source>Select profile XML</source>
         <translation>Выберите профиль XML</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1342"/>
+        <location filename="../qml/main.qml" line="1351"/>
         <source>Add profiles and apply them</source>
         <translation>Добавьте профиль и примените его</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1381"/>
+        <location filename="../qml/main.qml" line="1390"/>
         <source>Path to profile .xml</source>
         <translation>Путь до профиля .xml</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1391"/>
+        <location filename="../qml/main.qml" line="1400"/>
         <source>Browse</source>
         <translation>Выбрать</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1400"/>
+        <location filename="../qml/main.qml" line="1409"/>
         <source>Apply</source>
         <translation>Применить</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1548"/>
+        <location filename="../qml/main.qml" line="1557"/>
         <source> m/s </source>
         <translation> м/с </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1555"/>
+        <location filename="../qml/main.qml" line="1564"/>
         <source> %</source>
         <translation> %</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1548"/>
+        <location filename="../qml/main.qml" line="1557"/>
         <source> V   </source>
         <translation> В   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1548"/>
+        <location filename="../qml/main.qml" line="1557"/>
         <source> A   </source>
         <translation> А   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1664"/>
+        <location filename="../qml/main.qml" line="1673"/>
         <source>Please wait, the file is opening</source>
         <translation>Пожалуйста подождите, файл открывается</translation>
     </message>
