@@ -7,6 +7,7 @@ MiniPreviewPlot2D::MiniPreviewPlot2D()
 {
     setHorizontal(true);
     setPlotEnabled(true);
+    echogram_.setVisible(true);
     bottomProcessing_.setVisible(true);
     bottomProcessing_.setDepthTextVisible(false);
     rangefinder_.setVisible(true);
@@ -56,7 +57,9 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
         return false;
     }
 
-    setDataset(dataset);
+    if (datasetPtr_ != dataset) {
+        setDataset(dataset);
+    }
     canvas_.setSize(previewWidth, previewHeight, painter);
 
     cursor_.channel1 = parentCursor.channel1;
@@ -109,7 +112,6 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
 
     cursor_.numZeroEpoch = zeroEpochCount;
 
-    echogram_.setVisible(true);
     updateEchogramSettings(themeId, lowLevel, highLevel, compensationId);
 
     const bool rendered = echogram_.draw(this, dataset);
