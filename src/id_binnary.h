@@ -866,6 +866,23 @@ public:
         float depth  = NAN;
     } __attribute__((packed));
 
+    struct SimpleNavV2 {
+        static constexpr ID getId() { return ID_NAV; }
+        static constexpr Version getVer() { return v2; }
+
+        uint8_t gnss_fix_type = 0;
+        uint8_t numSats = 0;
+        uint32_t unix_time = 0;
+        int16_t unix_offset_ms = 0;
+        int32_t latitude = 0;               // deg * 1e7
+        int32_t longitude = 0;              // deg * 1e7
+        int16_t ground_course_deg = 0;      // deg * 1e2
+        int16_t ground_velocity_mps = 0;    // meters/s * 1e3
+        int16_t yaw_deg = 0;                // deg * 1e2
+        int16_t pitch_deg = 0;              // deg * 1e2
+        int16_t roll_deg = 0;               // deg * 1e2
+    } __attribute__((packed));
+
     double latitude() { return _nav.latitude; }
     double longitude() { return _nav.longitude; }
 
@@ -875,8 +892,50 @@ public:
 
     float depth() { return _nav.depth; }
 
+    uint8_t gnssFixTypeV2() const { return _navV2.gnss_fix_type; }
+    uint8_t numSatsV2() const { return _navV2.numSats; }
+    uint32_t unixTimeV2() const { return _navV2.unix_time; }
+    int16_t unixOffsetMsV2() const { return _navV2.unix_offset_ms; }
+    double latitudeV2() const { return static_cast<double>(_navV2.latitude) * 1e-7; }
+    double longitudeV2() const { return static_cast<double>(_navV2.longitude) * 1e-7; }
+    double groundCourseDegV2() const { return static_cast<double>(_navV2.ground_course_deg) * 0.01; }
+    double groundVelocityMpsV2() const { return static_cast<double>(_navV2.ground_velocity_mps) * 0.001; }
+    float yawV2() const { return static_cast<float>(static_cast<double>(_navV2.yaw_deg) * 0.01); }
+    float pitchV2() const { return static_cast<float>(static_cast<double>(_navV2.pitch_deg) * 0.01); }
+    float rollV2() const { return static_cast<float>(static_cast<double>(_navV2.roll_deg) * 0.01); }
+
 protected:
     SimpleNav _nav;
+    SimpleNavV2 _navV2;
+};
+
+class IDBinBoatStatus : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinBoatStatus() : IDBin() {
+    }
+
+    ID id() override { return ID_BOAT_STATUS; }
+    Resp parsePayload(FrameParser& proto) override;
+
+    struct BoatStatus {
+        static constexpr ID getId() { return ID_BOAT_STATUS; }
+        static constexpr Version getVer() { return v0; }
+
+        uint8_t batteryBoat_percent = 0;
+        uint8_t batteryBridge_percent = 0;
+        uint8_t signal_quality_boat_percent = 0;
+        uint8_t signal_quality_bridge_percent = 0;
+    } __attribute__((packed));
+
+    uint8_t batteryBoatPercent() const { return data_.batteryBoat_percent; }
+    uint8_t batteryBridgePercent() const { return data_.batteryBridge_percent; }
+    uint8_t signalQualityBoatPercent() const { return data_.signal_quality_boat_percent; }
+    uint8_t signalQualityBridgePercent() const { return data_.signal_quality_bridge_percent; }
+
+protected:
+    BoatStatus data_{};
 };
 
 class IDBinDVL : public IDBin

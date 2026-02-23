@@ -255,6 +255,7 @@ public slots:
 
 //    void addDateTime(int year, );
     void addTemp(float temp_c);
+    void addBoatStatus(uint8_t batteryBoatPercent, uint8_t batteryBridgePercent, uint8_t signalQualityBoatPercent, uint8_t signalQualityBridgePercent);
 
     void mergeGnssTrack(QList<Position> track);
 
@@ -397,6 +398,10 @@ private:
     float lastRangefinderDepth_ = NAN;
     float lastBottomTrackDepth_ = NAN;
     float speed_                = 0.0f;
+    uint8_t boatBatteryPercent_ = 0;
+    uint8_t bridgeBatteryPercent_ = 0;
+    uint8_t boatSignalQualityPercent_ = 0;
+    uint8_t bridgeSignalQualityPercent_ = 0;
     QVector3D sonarOffset_;
     uint64_t sonarPosIndx_;
     bool sonarIndexingEnabled_ = false;

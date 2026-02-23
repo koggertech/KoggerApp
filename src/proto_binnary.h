@@ -98,6 +98,7 @@ typedef enum ID {
     ID_USBL_CONTROL = 0x68, // 104
 
     ID_GFW = 200,
+    ID_BOAT_STATUS = 0xC9,
 
     sizer = 0xFFFF
 } ID;

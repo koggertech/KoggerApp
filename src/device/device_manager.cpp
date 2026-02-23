@@ -22,6 +22,7 @@ DeviceManager::DeviceManager()
 #ifdef SEPARATE_READING
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut&");
 #endif
+    qRegisterMetaType<uint8_t>("uint8_t");
     qRegisterMetaType<int16_t>("int16_t");
     qRegisterMetaType<QVector<uint8_t>>("QVector<uint8_t>");
     qRegisterMetaType<QByteArray>("QByteArray");
@@ -898,6 +899,8 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged, connType);
 
     connect(dev, &DevQProperty::positionComplete, this, &DeviceManager::positionComplete, connType);
+    connect(dev, &DevQProperty::gnssVelocityComplete, this, &DeviceManager::gnssVelocityComplete, connType);
+    connect(dev, &DevQProperty::boatStatusComplete, this, &DeviceManager::boatStatusComplete, connType);
     connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete, connType);
 
     dev->moveToThread(qApp->thread());
@@ -940,6 +943,8 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged);
 
     connect(dev, &DevQProperty::positionComplete, this, &DeviceManager::positionComplete);
+    connect(dev, &DevQProperty::gnssVelocityComplete, this, &DeviceManager::gnssVelocityComplete);
+    connect(dev, &DevQProperty::boatStatusComplete, this, &DeviceManager::boatStatusComplete);
     connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete);
 
     dev->startConnection(link != NULL);

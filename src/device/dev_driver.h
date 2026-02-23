@@ -198,6 +198,8 @@ signals:
     void beaconActivationComplete(uint8_t id);
 
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
+    void gnssVelocityComplete(double hSpeed, double course);
+    void boatStatusComplete(uint8_t batteryBoatPercent, uint8_t batteryBridgePercent, uint8_t signalQualityBoatPercent, uint8_t signalQualityBridgePercent);
     void depthComplete(float depth);
     void chartSetupChanged();
     void dspSetupChanged();
@@ -296,6 +298,7 @@ protected:
     IDBinUpdate* idUpdate = NULL;
 
     IDBinNav* idNav = NULL;
+    IDBinBoatStatus* idBoatStatus = NULL;
     IDBinDVL* idDVL = NULL;
     IDBinDVLMode* idDVLMode = NULL;
 
@@ -412,6 +415,7 @@ protected slots:
     void receivedUpdate     (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
     void receivedNav        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedBoatStatus (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedDVL        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedDVLMode    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 

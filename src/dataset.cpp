@@ -855,6 +855,14 @@ void Dataset::addTemp(float temp_c) {
     // emit dataUpdate();
 }
 
+void Dataset::addBoatStatus(uint8_t batteryBoatPercent, uint8_t batteryBridgePercent, uint8_t signalQualityBoatPercent, uint8_t signalQualityBridgePercent)
+{
+    boatBatteryPercent_ = batteryBoatPercent;
+    bridgeBatteryPercent_ = batteryBridgePercent;
+    boatSignalQualityPercent_ = signalQualityBoatPercent;
+    bridgeSignalQualityPercent_ = signalQualityBridgePercent;
+}
+
 void Dataset::mergeGnssTrack(QList<Position> track) {
     const int64_t max_difference_ns = 1e9;
     const int psize = size();
@@ -922,14 +930,18 @@ void Dataset::resetDataset()
     lastAddChartEpochIndx_.clear();
     channelsToResizeEthData_.clear();
 
-    activeContactIndx_    = -1;
-    boatLatitute_         = 0.0f;
-    boatLongitude_        = 0.0f;
-    distToActiveContact_  = 0.0f;
-    angleToActiveContact_ = 0.0f;
-    lastDepth_            = 0.0f;
-    lastRangefinderDepth_ = NAN;
-    lastBottomTrackDepth_ = NAN;
+    activeContactIndx_          = -1;
+    boatLatitute_               = 0.0f;
+    boatLongitude_              = 0.0f;
+    distToActiveContact_        = 0.0f;
+    angleToActiveContact_       = 0.0f;
+    lastDepth_                  = 0.0f;
+    lastRangefinderDepth_       = NAN;
+    lastBottomTrackDepth_       = NAN;
+    boatBatteryPercent_         = 0;
+    bridgeBatteryPercent_       = 0;
+    boatSignalQualityPercent_   = 0;
+    bridgeSignalQualityPercent_ = 0;
 
     sonarPosIndx_ = 0;
     pendingSonarPosIndx_ = 0;
@@ -960,14 +972,18 @@ void Dataset::softResetDataset() // for long-distance camera movement
     lastAddChartEpochIndx_.clear();
     channelsToResizeEthData_.clear();
 
-    activeContactIndx_    = -1;
-    boatLatitute_         = 0.0f;
-    boatLongitude_        = 0.0f;
-    distToActiveContact_  = 0.0f;
-    angleToActiveContact_ = 0.0f;
-    lastDepth_            = 0.0f;
-    lastRangefinderDepth_ = NAN;
-    lastBottomTrackDepth_ = NAN;
+    activeContactIndx_          = -1;
+    boatLatitute_               = 0.0f;
+    boatLongitude_              = 0.0f;
+    distToActiveContact_        = 0.0f;
+    angleToActiveContact_       = 0.0f;
+    lastDepth_                  = 0.0f;
+    lastRangefinderDepth_       = NAN;
+    lastBottomTrackDepth_       = NAN;
+    boatBatteryPercent_         = 0;
+    bridgeBatteryPercent_       = 0;
+    boatSignalQualityPercent_   = 0;
+    bridgeSignalQualityPercent_ = 0;
 
     sonarPosIndx_ = 0;
     pendingSonarPosIndx_ = 0;
@@ -1002,6 +1018,10 @@ void Dataset::resetRenderBuffers()
     lastTemp_ = NAN;
     lastRangefinderDepth_ = NAN;
     lastBottomTrackDepth_ = NAN;
+    boatBatteryPercent_ = 0;
+    bridgeBatteryPercent_ = 0;
+    boatSignalQualityPercent_ = 0;
+    bridgeSignalQualityPercent_ = 0;
     interpolator_.clear();
     _llaRef = LLARef();
     llaRefState_ = LlaRefState::kUndefined;

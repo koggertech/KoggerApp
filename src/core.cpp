@@ -1766,6 +1766,7 @@ void Core::createDeviceManagerConnections()
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rangefinderComplete,    datasetPtr_, &Dataset::addRangefinder,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionComplete,       datasetPtr_, &Dataset::addPosition,     deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssVelocityComplete,   datasetPtr_, &Dataset::addGnssVelocity, deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::boatStatusComplete,     datasetPtr_, &Dataset::addBoatStatus,   deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::attitudeComplete,       datasetPtr_, &Dataset::addAtt,          deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::tempComplete,           datasetPtr_, &Dataset::addTemp,         deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileOpened,             this,        &Core::onFileOpened,       deviceManagerConnection));
@@ -1815,6 +1816,7 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::depthComplete,          datasetPtr_, &Dataset::addDepth,        deviceManagerConnection);
 
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssVelocityComplete,   datasetPtr_, &Dataset::addGnssVelocity, deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::boatStatusComplete,     datasetPtr_, &Dataset::addBoatStatus,   deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::attitudeComplete,       datasetPtr_, &Dataset::addAtt,          deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::tempComplete,           datasetPtr_, &Dataset::addTemp,         deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileOpened,             this,        &Core::onFileOpened,       deviceManagerConnection);

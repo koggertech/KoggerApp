@@ -105,6 +105,7 @@ signals:
     void positionCompleteRTK(Position position);
     void depthComplete(float depth);
     void gnssVelocityComplete(double hSpeed, double course);
+    void boatStatusComplete(uint8_t batteryBoatPercent, uint8_t batteryBridgePercent, uint8_t signalQualityBoatPercent, uint8_t signalQualityBridgePercent);
     void attitudeComplete(float yaw, float pitch, float roll);
     void tempComplete(float val);
     void encoderComplete(float e1, float e2, float e3);
