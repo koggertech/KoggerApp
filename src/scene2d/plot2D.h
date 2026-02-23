@@ -188,3 +188,32 @@ private:
     float lAngleOffsetDeg_;
     float rAngleOffsetDeg_;
 };
+
+class MiniPreviewPlot2D final : public Plot2D
+{
+public:
+    MiniPreviewPlot2D();
+
+    bool render(QPainter* painter,
+                Dataset* dataset,
+                const DatasetCursor& parentCursor,
+                int parentCanvasWidth,
+                int sourceLeft,
+                int sourceWidth,
+                int previewWidth,
+                int previewHeight,
+                float zoomFrom,
+                float zoomTo,
+                int themeId,
+                float lowLevel,
+                float highLevel,
+                int compensationId);
+
+private:
+    void updateEchogramSettings(int themeId, float lowLevel, float highLevel, int compensationId);
+
+    int cachedThemeId_ = -1;
+    int cachedCompensationId_ = -1;
+    float cachedLowLevel_ = NAN;
+    float cachedHighLevel_ = NAN;
+};

@@ -5,6 +5,7 @@
 
 class QPainter;
 class QPointF;
+class MiniPreviewPlot2D;
 
 class Plot2DEchogram : public PlotLayer {
 public:
@@ -22,6 +23,7 @@ public:
     };
 
     Plot2DEchogram();
+    ~Plot2DEchogram();
     bool draw(Plot2D* parent, Dataset* dataset);
 
     float getLowLevel() const;
@@ -101,4 +103,5 @@ protected:
 private:
     ThemeId themeId_;
     QSet<int> reRenderPlotIndxs_;
+    MiniPreviewPlot2D* miniPreviewPlot_ = nullptr;
 };

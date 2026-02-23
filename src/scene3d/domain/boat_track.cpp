@@ -36,7 +36,6 @@ bool BoatTrack::eventFilter(QObject *watched, QEvent *event)
         clearSelectedEpoch();
         m_view->m_mode = GraphicsScene3dView::ActiveMode::BottomTrackVertexSelectionMode;
         selectEpoch(epochEvent->epochIndex());
-        m_view->update();
     }
     return false;
 }

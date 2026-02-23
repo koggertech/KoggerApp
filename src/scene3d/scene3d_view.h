@@ -249,6 +249,8 @@ public:
     bool syncLoupeFlipY() const;
     int syncLoupeSize() const;
     int syncLoupeZoom() const;
+    bool syncLoupeUiAllowed() const;
+    bool shouldRenderSyncFrom2d() const;
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -267,6 +269,7 @@ public:
     Q_INVOKABLE void geojsonUndoLastVertex();
     Q_INVOKABLE void geojsonDeleteSelectedFeature();
     Q_INVOKABLE void geojsonFitInView();
+    Q_INVOKABLE void setSyncLoupeUiAllowed(bool allowed);
 
     void setTrackLastData(bool state);
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
@@ -478,6 +481,7 @@ private:
     bool syncLoupeVisible_ = false;
     int syncLoupeSize_ = 1;
     int syncLoupeZoom_ = 1;
+    bool syncLoupeUiAllowed_ = true;
     int syncEpochIndex_ = -1;
     bool syncLoupeOverlayVisible_ = false;
     float syncLoupeDepthFrom_ = 0.0f;

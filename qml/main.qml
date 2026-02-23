@@ -423,6 +423,15 @@ ApplicationWindow  {
 
                 property bool longPressTriggered: false
                 property int currentZoom: -1
+                property bool syncLoupeUiAllowed: (menuBar !== null) ? (menuBar.is3DVisible && !menuBar.is2DVisible) : false
+
+                onSyncLoupeUiAllowedChanged: {
+                    setSyncLoupeUiAllowed(syncLoupeUiAllowed)
+                }
+
+                Component.onCompleted: {
+                    setSyncLoupeUiAllowed(syncLoupeUiAllowed)
+                }
 
                 onSendDataZoom: function(zoom) {
                     currentZoom = zoom;

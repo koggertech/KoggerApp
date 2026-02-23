@@ -1,106 +1,16 @@
 #include "plot2D_echogram.h"
 #include "plot2D.h"
 
-namespace {
-class MiniPreviewPlot2D final : public Plot2D {
-public:
-    MiniPreviewPlot2D()
-    {
-        setHorizontal(true);
-        setPlotEnabled(true);
-        bottomProcessing_.setVisible(true);
-        bottomProcessing_.setDepthTextVisible(false);
-        rangefinder_.setVisible(true);
-        rangefinder_.setTheme(1);
-        rangefinder_.setDepthTextVisible(false);
-    }
-
-    bool render(QPainter* painter,
-                Dataset* dataset,
-                const DatasetCursor& parentCursor,
-                int parentCanvasWidth,
-                int sourceLeft,
-                int sourceWidth,
-                int previewWidth,
-                int previewHeight,
-                float zoomFrom,
-                float zoomTo,
-                int themeId,
-                float lowLevel,
-                float highLevel,
-                int compensationId)
-    {
-        if (!painter || !dataset || previewWidth <= 0 || previewHeight <= 0 || parentCanvasWidth <= 0) {
-            return false;
-        }
-
-        setDataset(dataset);
-        canvas_.setSize(previewWidth, previewHeight, painter);
-
-        cursor_ = parentCursor;
-        cursor_.distance.mode = AutoRangeNone;
-        cursor_.distance.from = zoomFrom;
-        cursor_.distance.to = zoomTo;
-        cursor_.setMouse(-1, -1);
-        cursor_.selectEpochIndx = -1;
-        cursor_.currentEpochIndx = -1;
-        cursor_.lastEpochIndx = -1;
-
-        const int fallbackX = qBound(0, parentCanvasWidth / 2, parentCanvasWidth - 1);
-        int fallbackEpoch = parentCursor.getIndex(fallbackX);
-        if (dataset->validIndex(fallbackEpoch) < 0) {
-            fallbackEpoch = -1;
-        }
-
-        int lastValidEpoch = fallbackEpoch;
-        int zeroEpochCount = 0;
-        const int maxParentX = parentCanvasWidth - 1;
-
-        cursor_.indexes.resize(previewWidth);
-        for (int column = 0; column < previewWidth; ++column) {
-            const float srcXFloat = static_cast<float>(sourceLeft)
-                + (static_cast<float>(column) + 0.5f) * static_cast<float>(sourceWidth) / static_cast<float>(previewWidth);
-            const int sourceX = qBound(0, qRound(srcXFloat), maxParentX);
-
-            int epochIndex = parentCursor.getIndex(sourceX);
-            if (dataset->validIndex(epochIndex) < 0) {
-                epochIndex = lastValidEpoch;
-            }
-            else {
-                lastValidEpoch = epochIndex;
-            }
-
-            if (dataset->validIndex(epochIndex) < 0) {
-                ++zeroEpochCount;
-            }
-
-            cursor_.indexes[column] = epochIndex;
-        }
-
-        cursor_.numZeroEpoch = zeroEpochCount;
-
-        echogram_.setVisible(true);
-        echogram_.setThemeId(themeId);
-        echogram_.setLevels(lowLevel, highLevel);
-        echogram_.setCompensation(compensationId);
-
-        const bool rendered = echogram_.draw(this, dataset);
-        if (!rendered) {
-            return false;
-        }
-
-        bottomProcessing_.draw(this, dataset);
-        rangefinder_.draw(this, dataset);
-        return true;
-    }
-};
-} // namespace
-
 
 Plot2DEchogram::Plot2DEchogram()
 {
     setThemeId(ClassicTheme);
     setLevels(10, 100);
+}
+
+Plot2DEchogram::~Plot2DEchogram()
+{
+    delete miniPreviewPlot_;
 }
 
 void Plot2DEchogram::setLowLevel(float low)
@@ -633,33 +543,35 @@ bool Plot2DEchogram::drawZoomPreview(Plot2D* parent,
         focusPoint->setY(focusY);
     }
 
-    QImage zoomImage(previewWidth, previewHeight, QImage::Format_ARGB32_Premultiplied);
-    zoomImage.fill(Qt::transparent);
-    QPainter zoomPainter(&zoomImage);
-
-    static MiniPreviewPlot2D miniPlot;
     const int sourceLeft = clampedCenterX - srcWidth / 2;
-    const bool rendered = miniPlot.render(&zoomPainter,
-                                          dataset,
-                                          cursor,
-                                          canvas.width(),
-                                          sourceLeft,
-                                          srcWidth,
-                                          previewWidth,
-                                          previewHeight,
-                                          zoomFrom,
-                                          zoomTo,
-                                          getThemeId(),
-                                          getLowLevel(),
-                                          getHighLevel(),
-                                          _compensation_id);
-    zoomPainter.end();
+    if (miniPreviewPlot_ == nullptr) {
+        miniPreviewPlot_ = new MiniPreviewPlot2D();
+    }
+
+    painter->save();
+    painter->setClipRect(targetRect);
+    painter->translate(targetRect.left(), targetRect.top());
+
+    const bool rendered = miniPreviewPlot_->render(painter,
+                                                   dataset,
+                                                   cursor,
+                                                   canvas.width(),
+                                                   sourceLeft,
+                                                   srcWidth,
+                                                   previewWidth,
+                                                   previewHeight,
+                                                   zoomFrom,
+                                                   zoomTo,
+                                                   getThemeId(),
+                                                   getLowLevel(),
+                                                   getHighLevel(),
+                                                   _compensation_id);
+    painter->restore();
 
     if (!rendered) {
         return false;
     }
 
-    painter->drawImage(targetRect, zoomImage, zoomImage.rect(), Qt::ThresholdDither);
     return true;
 }
 

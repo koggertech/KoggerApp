@@ -3,6 +3,125 @@
 #include "qmath.h"
 #include <cmath>
 
+MiniPreviewPlot2D::MiniPreviewPlot2D()
+{
+    setHorizontal(true);
+    setPlotEnabled(true);
+    bottomProcessing_.setVisible(true);
+    bottomProcessing_.setDepthTextVisible(false);
+    rangefinder_.setVisible(true);
+    rangefinder_.setTheme(1);
+    rangefinder_.setDepthTextVisible(false);
+}
+
+void MiniPreviewPlot2D::updateEchogramSettings(int themeId, float lowLevel, float highLevel, int compensationId)
+{
+    if (cachedThemeId_ != themeId) {
+        echogram_.setThemeId(themeId);
+        cachedThemeId_ = themeId;
+    }
+
+    const bool levelsChanged = !std::isfinite(cachedLowLevel_)
+        || !std::isfinite(cachedHighLevel_)
+        || std::abs(cachedLowLevel_ - lowLevel) > 1e-6f
+        || std::abs(cachedHighLevel_ - highLevel) > 1e-6f;
+    if (levelsChanged) {
+        echogram_.setLevels(lowLevel, highLevel);
+        cachedLowLevel_ = lowLevel;
+        cachedHighLevel_ = highLevel;
+    }
+
+    if (cachedCompensationId_ != compensationId) {
+        echogram_.setCompensation(compensationId);
+        cachedCompensationId_ = compensationId;
+    }
+}
+
+bool MiniPreviewPlot2D::render(QPainter* painter,
+                               Dataset* dataset,
+                               const DatasetCursor& parentCursor,
+                               int parentCanvasWidth,
+                               int sourceLeft,
+                               int sourceWidth,
+                               int previewWidth,
+                               int previewHeight,
+                               float zoomFrom,
+                               float zoomTo,
+                               int themeId,
+                               float lowLevel,
+                               float highLevel,
+                               int compensationId)
+{
+    if (!painter || !dataset || previewWidth <= 0 || previewHeight <= 0 || parentCanvasWidth <= 0) {
+        return false;
+    }
+    qDebug() << "RRR";
+    setDataset(dataset);
+    canvas_.setSize(previewWidth, previewHeight, painter);
+
+    cursor_.channel1 = parentCursor.channel1;
+    cursor_.subChannel1 = parentCursor.subChannel1;
+    cursor_.channel2 = parentCursor.channel2;
+    cursor_.subChannel2 = parentCursor.subChannel2;
+
+    cursor_.distance.mode = AutoRangeNone;
+    cursor_.distance.from = zoomFrom;
+    cursor_.distance.to = zoomTo;
+    cursor_.setMouse(-1, -1);
+    cursor_.setContactPos(-1, -1);
+    cursor_.selectEpochIndx = -1;
+    cursor_.currentEpochIndx = -1;
+    cursor_.lastEpochIndx = -1;
+
+    const int fallbackX = qBound(0, parentCanvasWidth / 2, parentCanvasWidth - 1);
+    int fallbackEpoch = parentCursor.getIndex(fallbackX);
+    if (dataset->validIndex(fallbackEpoch) < 0) {
+        fallbackEpoch = -1;
+    }
+
+    int lastValidEpoch = fallbackEpoch;
+    int zeroEpochCount = 0;
+    const int maxParentX = parentCanvasWidth - 1;
+    const float stepX = static_cast<float>(sourceWidth) / static_cast<float>(previewWidth);
+    float srcXFloat = static_cast<float>(sourceLeft) + stepX * 0.5f;
+
+    cursor_.indexes.resize(previewWidth);
+    for (int column = 0; column < previewWidth; ++column) {
+        const int sourceX = qBound(0, qRound(srcXFloat), maxParentX);
+        srcXFloat += stepX;
+
+        int epochIndex = parentCursor.getIndex(sourceX);
+        bool validEpoch = dataset->validIndex(epochIndex) >= 0;
+        if (!validEpoch) {
+            epochIndex = lastValidEpoch;
+            validEpoch = dataset->validIndex(epochIndex) >= 0;
+        }
+        else {
+            lastValidEpoch = epochIndex;
+        }
+
+        if (!validEpoch) {
+            ++zeroEpochCount;
+        }
+
+        cursor_.indexes[column] = epochIndex;
+    }
+
+    cursor_.numZeroEpoch = zeroEpochCount;
+
+    echogram_.setVisible(true);
+    updateEchogramSettings(themeId, lowLevel, highLevel, compensationId);
+
+    const bool rendered = echogram_.draw(this, dataset);
+    if (!rendered) {
+        return false;
+    }
+
+    bottomProcessing_.draw(this, dataset);
+    rangefinder_.draw(this, dataset);
+    return true;
+}
+
 
 Plot2D::Plot2D()
     : datasetPtr_(nullptr)

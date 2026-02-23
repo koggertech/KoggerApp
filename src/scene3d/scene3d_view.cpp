@@ -1147,6 +1147,21 @@ void GraphicsScene3dView::setSyncLoupeVisible(bool state)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setSyncLoupeUiAllowed(bool allowed)
+{
+    if (syncLoupeUiAllowed_ == allowed) {
+        return;
+    }
+
+    syncLoupeUiAllowed_ = allowed;
+    refreshSyncLoupePreview();
+    emit syncLoupeStateChanged();
+
+    if (syncLoupeUiAllowed_) {
+        QQuickFramebufferObject::update();
+    }
+}
+
 void GraphicsScene3dView::setSyncLoupeSize(int val)
 {
     const int bounded = qBound(1, val, 3);
@@ -1180,9 +1195,13 @@ void GraphicsScene3dView::setSyncEpochIndex(int epochIndex)
     }
 
     syncEpochIndex_ = epochIndex;
+
+    if (!syncLoupeUiAllowed_) {
+        return;
+    }
+
     refreshSyncLoupePreview();
     emit syncLoupeStateChanged();
-    QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::updateForceSingleZoomAutoState()
@@ -1233,7 +1252,7 @@ void GraphicsScene3dView::refreshSyncLoupePreview()
     float centerDepth = 0.0f;
     bool flipY = false;
 
-    if (syncLoupeVisible_ && datasetPtr_ && syncEpochIndex_ >= 0) {
+    if (syncLoupeVisible_ && syncLoupeUiAllowed_ && datasetPtr_ && syncEpochIndex_ >= 0) {
         const int datasetSize = datasetPtr_->size();
         if (syncEpochIndex_ < datasetSize) {
             if (auto* epoch = datasetPtr_->fromIndex(syncEpochIndex_); epoch) {
@@ -1388,6 +1407,16 @@ QObject* GraphicsScene3dView::geoJsonController() const
 bool GraphicsScene3dView::syncLoupeOverlayVisible() const
 {
     return syncLoupeOverlayVisible_;
+}
+
+bool GraphicsScene3dView::syncLoupeUiAllowed() const
+{
+    return syncLoupeUiAllowed_;
+}
+
+bool GraphicsScene3dView::shouldRenderSyncFrom2d() const
+{
+    return syncLoupeUiAllowed_ && isVisible();
 }
 
 int GraphicsScene3dView::syncLoupeEpochIndex() const

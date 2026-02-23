@@ -34,7 +34,6 @@ bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
         resetVertexSelection();
         m_view->m_mode = GraphicsScene3dView::ActiveMode::BottomTrackVertexSelectionMode;
         selectEpoch(epochEvent->epochIndex(), epochEvent->channel().channelId_);
-        m_view->update();
     }
     return false;
 }
