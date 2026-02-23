@@ -217,9 +217,6 @@ int main(int argc, char *argv[])
 
     QObject::connect(&app,  &QGuiApplication::aboutToQuit,
                      &core, [&]() {
-                                if (mainWindow) {
-                                    mainWindow->releaseResources();
-                                }
                                 core.shutdownDataProcessor();
                                 core.saveLLARefToSettings();
                                 core.removeLinkManagerConnections();
