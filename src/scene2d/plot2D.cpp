@@ -55,7 +55,7 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
     if (!painter || !dataset || previewWidth <= 0 || previewHeight <= 0 || parentCanvasWidth <= 0) {
         return false;
     }
-    qDebug() << "RRR";
+
     setDataset(dataset);
     canvas_.setSize(previewWidth, previewHeight, painter);
 

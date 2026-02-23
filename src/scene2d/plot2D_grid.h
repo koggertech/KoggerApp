@@ -3,6 +3,8 @@
 #include "plot2D_plot_layer.h"
 
 
+class QPainter;
+class QString;
 class Plot2DGrid : public PlotLayer
 {
 public:
@@ -18,6 +20,8 @@ public:
     void setInvert(bool state) { invert_ = state; }
 
 protected:
+    void drawTextWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text) const;
+
     bool angleVisibility_;
     bool _velocityVisible = true;
     int _lines = 20;

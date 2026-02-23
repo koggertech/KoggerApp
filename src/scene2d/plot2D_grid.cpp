@@ -1,10 +1,40 @@
 #include "plot2D_grid.h"
 #include "plot2D.h"
 #include "math_defs.h"
+#include <QFontMetrics>
 
 
 Plot2DGrid::Plot2DGrid() : angleVisibility_(false)
 {}
+
+void Plot2DGrid::drawTextWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text) const
+{
+    if (!painter || text.isEmpty()) {
+        return;
+    }
+
+    const QFontMetrics fm(painter->font());
+    const int padX = 8;
+    const int padY = 4;
+    const int radius = 5;
+    const QRect bgRect(x - padX,
+                       baselineY - fm.ascent() - padY,
+                       fm.horizontalAdvance(text) + padX * 2,
+                       fm.height() + padY * 2);
+
+    const auto prevMode = painter->compositionMode();
+    const auto prevPen = painter->pen();
+    painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(QColor(0, 0, 0, 115));
+    painter->drawRoundedRect(bgRect, radius, radius);
+
+    painter->setPen(prevPen);
+    painter->drawText(x, baselineY, text);
+    painter->setPen(prevPen);
+    painter->setCompositionMode(prevMode);
+}
 
 bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
 {
@@ -65,7 +95,7 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
 
         if (!lineText.isEmpty()) {
             const int textX = invert_ ? textXOffset : (imageWidth - textW - textXOffset);
-            p->drawText(textX, posY - textYOffset, lineText);
+            drawTextWithBackdrop(p, textX, posY - textYOffset, lineText);
         }
     }
 
@@ -78,7 +108,7 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
         QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
         const int w = fm2.horizontalAdvance(rangeText);
         const int x = invert_ ? (textXOffset * 2) : (imageWidth - textXOffset / 2 - w);
-        p->drawText(x, imageHeight - 10, rangeText);
+        drawTextWithBackdrop(p, x, imageHeight - 10, rangeText);
     }
 
     return true;
