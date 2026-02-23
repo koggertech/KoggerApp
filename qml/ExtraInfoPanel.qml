@@ -93,6 +93,29 @@ MenuFrame {
     property string angStr: ""
     property string depthStr: ""
     property string speedStr: ""
+    readonly property bool touchInteractionActive: touchDragHandler.active || touchPinchBlocker.active
+
+    DragHandler {
+        id: touchDragHandler
+        enabled: extraInfoPanel.isDraggable
+        target: extraInfoPanel
+        acceptedDevices: PointerDevice.TouchScreen | PointerDevice.TouchPad
+        maximumPointCount: 1
+        onActiveChanged: {
+            if (active) {
+                extraInfoPanel.releaseAnchorsForDrag()
+            }
+        }
+    }
+
+    PinchHandler {
+        id: touchPinchBlocker
+        enabled: extraInfoPanel.isDraggable
+        target: null
+        acceptedDevices: PointerDevice.TouchScreen | PointerDevice.TouchPad
+        minimumPointCount: 2
+        maximumPointCount: 2
+    }
 
     function updateFields() {
         latDms   = toDMS(ds.boatLatitude,  true)  + qsTr("\u00B0")

@@ -440,7 +440,7 @@ ApplicationWindow  {
                 PinchArea {
                     id:           pinch3D
                     anchors.fill: parent
-                    enabled:      true
+                    enabled:      !extraInfoPanel.touchInteractionActive
 
                     onPinchStarted: {
                         menuBlock.visible = false
