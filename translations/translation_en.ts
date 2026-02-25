@@ -1825,7 +1825,7 @@
     </message>
     <message>
         <location filename="../qml/Settings3DExtraSettings.qml" line="435"/>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="582"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="829"/>
         <source>Size:</source>
         <translation></translation>
     </message>
@@ -1840,17 +1840,47 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="525"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="524"/>
+        <source>Shadows</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="558"/>
+        <source>Vector X:</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="598"/>
+        <source>Vector Y:</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="638"/>
+        <source>Vector Z:</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="678"/>
+        <source>Ambient:</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="718"/>
+        <source>Highlight:</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="772"/>
         <source>Boat</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="554"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="801"/>
         <source>Compass</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="579"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="826"/>
         <source>Pos:</source>
         <translation></translation>
     </message>

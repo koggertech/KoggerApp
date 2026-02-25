@@ -8,7 +8,9 @@
 #include "math_defs.h"
 
 
-static inline QVector2D projectToScreen(const QVector3D& p, const QMatrix4x4& mvp, const QRect& viewport)
+QVector2D SurfaceView::SurfaceViewRenderImplementation::projectToScreen(const QVector3D& p,
+                                                                         const QMatrix4x4& mvp,
+                                                                         const QRect& viewport) const
 {
     const QVector4D clip = mvp * QVector4D(p, 1.0f);
     const float w = clip.w();
@@ -17,11 +19,152 @@ static inline QVector2D projectToScreen(const QVector3D& p, const QMatrix4x4& mv
         return QVector2D(NAN, NAN);
     }
 
-    const QVector3D ndc(clip.x()/w, clip.y()/w, clip.z()/w);
+    const QVector3D ndc(clip.x() / w, clip.y() / w, clip.z() / w);
     const float x = viewport.x() + (ndc.x() * 0.5f + 0.5f) * viewport.width();
     const float y = viewport.y() + (ndc.y() * 0.5f + 0.5f) * viewport.height();
 
     return QVector2D(x, y);
+}
+
+SurfaceView::SurfaceViewRenderImplementation::VertexXYKey
+SurfaceView::SurfaceViewRenderImplementation::makeVertexXYKey(const QVector3D& point) const
+{
+    // Quantization keeps same-border vertices from adjacent tiles in one bucket.
+    constexpr double kQuantScale = 10000.0;
+    return VertexXYKey(static_cast<long long>(std::llround(static_cast<double>(point.x()) * kQuantScale)),
+                       static_cast<long long>(std::llround(static_cast<double>(point.y()) * kQuantScale)));
+}
+
+QVector<QVector3D> SurfaceView::SurfaceViewRenderImplementation::buildTileNormalSums(const SurfaceTile& tile) const
+{
+    const auto& verts = tile.getHeightVerticesCRef();
+    const auto& inds = tile.getHeightIndicesCRef();
+
+    QVector<QVector3D> normals(verts.size(), QVector3D(0.0f, 0.0f, 0.0f));
+    if (verts.isEmpty() || inds.isEmpty()) {
+        return normals;
+    }
+
+    for (int i = 0; i + 2 < inds.size(); i += 3) {
+        const int i0 = inds[i];
+        const int i1 = inds[i + 1];
+        const int i2 = inds[i + 2];
+        if (i0 < 0 || i1 < 0 || i2 < 0 ||
+            i0 >= verts.size() || i1 >= verts.size() || i2 >= verts.size()) {
+            continue;
+        }
+
+        const QVector3D& v0 = verts[i0];
+        const QVector3D& v1 = verts[i1];
+        const QVector3D& v2 = verts[i2];
+        const QVector3D face = QVector3D::crossProduct(v1 - v0, v2 - v0);
+        if (face.lengthSquared() <= 1e-12f) {
+            continue;
+        }
+
+        normals[i0] += face;
+        normals[i1] += face;
+        normals[i2] += face;
+    }
+
+    return normals;
+}
+
+QVector<QVector3D> SurfaceView::SurfaceViewRenderImplementation::normalizeNormals(const QVector<QVector3D>& normalSums) const
+{
+    QVector<QVector3D> normals = normalSums;
+    for (auto& n : normals) {
+        if (n.lengthSquared() <= 1e-12f) {
+            n = QVector3D(0.0f, 0.0f, 1.0f);
+        } else {
+            n.normalize();
+        }
+    }
+
+    return normals;
+}
+
+QVector<QVector3D> SurfaceView::SurfaceViewRenderImplementation::buildTileNormals(const SurfaceTile& tile) const
+{
+    return normalizeNormals(buildTileNormalSums(tile));
+}
+
+void SurfaceView::SurfaceViewRenderImplementation::rebuildSeamlessTileNormals(const QHash<TileKey, SurfaceTile>& tiles,
+                                                                               QHash<TileKey, QVector<QVector3D>>& outNormals) const
+{
+    outNormals.clear();
+    if (tiles.isEmpty()) {
+        return;
+    }
+
+    QHash<TileKey, QVector<QVector3D>> perTileNormalSums;
+    perTileNormalSums.reserve(tiles.size());
+
+    QHash<VertexXYKey, QVector3D> sharedNormalSums;
+    sharedNormalSums.reserve(qMax(tiles.size() * 16, 64));
+
+    for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) {
+        const SurfaceTile& tile = it.value();
+        if (!tile.getIsInited()) {
+            continue;
+        }
+
+        const auto& verts = tile.getHeightVerticesCRef();
+        if (verts.isEmpty()) {
+            continue;
+        }
+
+        QVector<QVector3D> normalSums = buildTileNormalSums(tile);
+        if (normalSums.size() != verts.size()) {
+            continue;
+        }
+
+        for (int i = 0; i < verts.size(); ++i) {
+            const QVector3D& n = normalSums[i];
+            if (n.lengthSquared() <= 1e-12f) {
+                continue;
+            }
+            sharedNormalSums[makeVertexXYKey(verts[i])] += n;
+        }
+
+        perTileNormalSums.insert(it.key(), std::move(normalSums));
+    }
+
+    outNormals.reserve(perTileNormalSums.size());
+
+    for (auto tileIt = tiles.cbegin(); tileIt != tiles.cend(); ++tileIt) {
+        const TileKey& key = tileIt.key();
+        const auto sumsIt = perTileNormalSums.constFind(key);
+        if (sumsIt == perTileNormalSums.cend()) {
+            continue;
+        }
+
+        const auto& verts = tileIt.value().getHeightVerticesCRef();
+        const auto& localSums = sumsIt.value();
+        if (verts.size() != localSums.size()) {
+            continue;
+        }
+
+        QVector<QVector3D> normals(localSums.size(), QVector3D(0.0f, 0.0f, 1.0f));
+        for (int i = 0; i < localSums.size(); ++i) {
+            QVector3D n = localSums[i];
+
+            const auto sharedIt = sharedNormalSums.constFind(makeVertexXYKey(verts[i]));
+            if (sharedIt != sharedNormalSums.cend() && sharedIt.value().lengthSquared() > 1e-12f) {
+                n = sharedIt.value();
+            }
+
+            if (n.lengthSquared() <= 1e-12f) {
+                n = QVector3D(0.0f, 0.0f, 1.0f);
+            }
+            else {
+                n.normalize();
+            }
+            normals[i] = n;
+        }
+
+        outNormals.insert(key, std::move(normals));
+    }
 }
 
 SurfaceView::SurfaceView(QObject* parent)
@@ -336,6 +479,7 @@ void SurfaceView::clear()
     }
 
     r->tiles_.clear();
+    r->tileNormals_.clear();
     r->isoLabels_.clear();
 
     {
@@ -380,6 +524,12 @@ void SurfaceView::setTiles(const QHash<TileKey, SurfaceTile> &tiles, bool useTex
             }
         }
 
+        if (r->shadowEnabled_) {
+            r->rebuildSeamlessTileNormals(rTRef, r->tileNormals_);
+        } else {
+            r->tileNormals_.clear();
+        }
+
         if (useTextures) {
             updateMosaicTileTextureTask(tiles);
         }
@@ -401,6 +551,7 @@ void SurfaceView::setTilesIncremental(const QHash<TileKey, SurfaceTile> &tiles, 
     }
 
     auto& cur = r->tiles_;
+    QSet<TileKey> changedKeys;
 
     // to del
     QSet<TileKey> toRemove;
@@ -420,6 +571,7 @@ void SurfaceView::setTilesIncremental(const QHash<TileKey, SurfaceTile> &tiles, 
                 }
                 cur.erase(it);
             }
+            r->tileNormals_.remove(k);
 
             mosaicTileTextureToAppend_.remove(k); // удалить все неактуальные задания на этот ключ
         }
@@ -435,6 +587,7 @@ void SurfaceView::setTilesIncremental(const QHash<TileKey, SurfaceTile> &tiles, 
             auto curIt = cur.find(key);
             if (curIt == cur.end()) {
                 cur.insert(key, inTile);
+                changedKeys.insert(key);
                 if (inTile.updateHint() == UpdateHint::kAddOrUpdateTexture ||
                     inTile.updateHint() == UpdateHint::kUpdateTexture ||
                     !inTile.getMosaicImageDataCRef().empty()) {
@@ -445,6 +598,7 @@ void SurfaceView::setTilesIncremental(const QHash<TileKey, SurfaceTile> &tiles, 
                 GLuint texId = curIt.value().getMosaicTextureId();
                 curIt.value() = inTile;
                 curIt.value().setMosaicTextureId(texId);
+                changedKeys.insert(key);
 
                 if (!inTile.getMosaicImageDataCRef().empty() ||
                     inTile.updateHint() == UpdateHint::kUpdateTexture ||
@@ -452,6 +606,14 @@ void SurfaceView::setTilesIncremental(const QHash<TileKey, SurfaceTile> &tiles, 
                     mosaicTileTextureToAppend_.insert(key, curIt.value().getMosaicImageDataCRef());
                 }
             }
+        }
+    }
+
+    if (!changedKeys.isEmpty() || !toRemove.isEmpty()) {
+        if (r->shadowEnabled_) {
+            r->rebuildSeamlessTileNormals(cur, r->tileNormals_);
+        } else {
+            r->tileNormals_.clear();
         }
     }
 
@@ -793,91 +955,183 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         return;
     }
 
+    const bool shadowsOn = shadowEnabled_;
     auto mShP = shaderProgramMap.value("mosaic", nullptr);
     auto iShP = shaderProgramMap.value("isobaths", nullptr);
 
     if (!mShP || !iShP) {
-        qWarning() << "Shader program 'mosaic'|'isobaths' not found!";
+        qWarning() << "Shader program for surface render not found!";
         return;
     }
 
-    for (auto& itm : tiles_) {
-        if (!itm.getIsInited()) {
-            continue;
-        }
+    const EffectiveShadowParams shadow = effectiveShadowParams();
 
-        GLuint textureId = itm.getMosaicTextureId();
-
-        if (mVis_) {
-            auto& shP = mShP;
-
-            const auto& texVerts = itm.getMosaicTextureVerticesCRef();
-            const auto& heightVerts = itm.getHeightVerticesCRef();
-            if (texVerts.isEmpty() || texVerts.size() != heightVerts.size()) {
-                continue;
-            }
-
-            shP->bind();
+    if (mVis_) {
+        auto& shP = mShP;
+        if (shP->bind()) {
             shP->setUniformValue("mvp", mvp);
+            shP->setUniformValue("shadowsEnabled", shadowsOn);
+            shP->setUniformValue("lightDir", shadow.lightDir);
+            shP->setUniformValue("shadowAmbient", shadow.ambient);
+            shP->setUniformValue("shadowIntensity", shadow.intensity);
+            shP->setUniformValue("highlightIntensity", shadow.highlightIntensity);
 
-            int positionLoc = shP->attributeLocation("position");
-            int texCoordLoc = shP->attributeLocation("texCoord");
+            const int positionLoc = shP->attributeLocation("position");
+            const int texCoordLoc = shP->attributeLocation("texCoord");
+            const int normalLoc = shP->attributeLocation("normal");
+            const bool attribsOk = positionLoc >= 0 && texCoordLoc >= 0 && normalLoc >= 0;
 
-            shP->enableAttributeArray(positionLoc);
-            shP->enableAttributeArray(texCoordLoc);
+            if (attribsOk) {
+                shP->enableAttributeArray(positionLoc);
+                shP->enableAttributeArray(texCoordLoc);
+                if (shadowsOn) {
+                    shP->enableAttributeArray(normalLoc);
+                } else {
+                    shP->disableAttributeArray(normalLoc);
+                    shP->setAttributeValue(normalLoc, QVector3D(0.0f, 0.0f, 1.0f));
+                }
 
-            shP->setAttributeArray(positionLoc, heightVerts.constData());
-            shP->setAttributeArray(texCoordLoc, texVerts.constData());
+                shP->setUniformValue("indexedTexture", 0);
+                shP->setUniformValue("colorTable", 1);
+                ctx->glActiveTexture(GL_TEXTURE1);
+                ctx->glBindTexture(GL_TEXTURE_2D, mosaicColorTableTextureId_);
+                ctx->glActiveTexture(GL_TEXTURE0);
 
-            ctx->glActiveTexture(GL_TEXTURE0);
-            ctx->glBindTexture(GL_TEXTURE_2D, textureId);
-            shP->setUniformValue("indexedTexture", 0);
+                for (auto tileIt = tiles_.cbegin(); tileIt != tiles_.cend(); ++tileIt) {
+                    const TileKey& tileKey = tileIt.key();
+                    const SurfaceTile& itm = tileIt.value();
 
-            ctx->glActiveTexture(GL_TEXTURE1);
-            ctx->glBindTexture(GL_TEXTURE_2D, mosaicColorTableTextureId_);
-            shP->setUniformValue("colorTable", 1);
+                    if (!itm.getIsInited()) {
+                        continue;
+                    }
 
-            ctx->glDrawElements(GL_TRIANGLES,
-                                itm.getHeightIndicesCRef().size(),
-                                GL_UNSIGNED_INT,
-                                itm.getHeightIndicesCRef().constData());
+                    const auto& texVerts = itm.getMosaicTextureVerticesCRef();
+                    const auto& heightVerts = itm.getHeightVerticesCRef();
+                    if (texVerts.isEmpty() || texVerts.size() != heightVerts.size()) {
+                        continue;
+                    }
 
-            shP->disableAttributeArray(texCoordLoc);
-            shP->disableAttributeArray(positionLoc);
+                    QVector<QVector3D> localNormals;
+                    const QVector<QVector3D>* normalsPtr = nullptr;
+                    if (shadowsOn) {
+                        const auto normalsIt = tileNormals_.constFind(tileKey);
+                        if (normalsIt != tileNormals_.cend() && normalsIt.value().size() == heightVerts.size()) {
+                            normalsPtr = &normalsIt.value();
+                        }
+                        else {
+                            localNormals = buildTileNormals(itm);
+                            if (!localNormals.isEmpty() && localNormals.size() == heightVerts.size()) {
+                                normalsPtr = &localNormals;
+                            }
+                        }
+                        if (!normalsPtr) {
+                            continue;
+                        }
+                    }
+
+                    shP->setAttributeArray(positionLoc, heightVerts.constData());
+                    shP->setAttributeArray(texCoordLoc, texVerts.constData());
+                    if (shadowsOn) {
+                        shP->setAttributeArray(normalLoc, normalsPtr->constData());
+                    }
+
+                    ctx->glBindTexture(GL_TEXTURE_2D, itm.getMosaicTextureId());
+                    ctx->glDrawElements(GL_TRIANGLES,
+                                        itm.getHeightIndicesCRef().size(),
+                                        GL_UNSIGNED_INT,
+                                        itm.getHeightIndicesCRef().constData());
+                }
+
+                if (shadowsOn) {
+                    shP->disableAttributeArray(normalLoc);
+                }
+                shP->disableAttributeArray(texCoordLoc);
+                shP->disableAttributeArray(positionLoc);
+            }
 
             shP->release();
         }
-        else if (iVis_) {
-            auto &shP = iShP;
-            shP->bind();
-
-            shP->setUniformValue("matrix",     mvp);
-            shP->setUniformValue("depthMin",   minZ_);
-            shP->setUniformValue("levelStep",  surfaceStep_);
+    }
+    else if (iVis_) {
+        auto& shP = iShP;
+        if (shP->bind()) {
+            shP->setUniformValue("matrix", mvp);
+            shP->setUniformValue("shadowsEnabled", shadowsOn);
+            shP->setUniformValue("depthMin", minZ_);
+            shP->setUniformValue("levelStep", surfaceStep_);
             shP->setUniformValue("levelCount", colorIntervalsSize_);
-            shP->setUniformValue("linePass",   false);   // ни линий, ни лейблов
-
-            shP->setUniformValue("lineColor",  QVector3D(1.0f, 1.0f, 1.0f));
-            shP->setUniformValue("lineWidth",  1.0f);
+            shP->setUniformValue("linePass", false);
+            shP->setUniformValue("lineColor", QVector3D(1.0f, 1.0f, 1.0f));
+            shP->setUniformValue("lineWidth", 1.0f);
+            shP->setUniformValue("lightDir", shadow.lightDir);
+            shP->setUniformValue("shadowAmbient", shadow.ambient);
+            shP->setUniformValue("shadowIntensity", shadow.intensity);
+            shP->setUniformValue("highlightIntensity", shadow.highlightIntensity);
 
             ctx->glActiveTexture(GL_TEXTURE0);
             ctx->glBindTexture(GL_TEXTURE_2D, surfaceColorTableTextureId_);
             shP->setUniformValue("paletteSampler", 0);
 
             const int posLoc = shP->attributeLocation("position");
-            shP->enableAttributeArray(posLoc);
-            shP->setAttributeArray(posLoc, itm.getHeightVerticesCRef().constData());
+            const int normalLoc = shP->attributeLocation("normal");
+            const bool attribsOk = posLoc >= 0 && normalLoc >= 0;
 
-            ctx->glDrawElements(GL_TRIANGLES,
-                                itm.getHeightIndicesCRef().size(),
-                                GL_UNSIGNED_INT,
-                                itm.getHeightIndicesCRef().constData());
+            if (attribsOk) {
+                shP->enableAttributeArray(posLoc);
+                if (shadowsOn) {
+                    shP->enableAttributeArray(normalLoc);
+                } else {
+                    shP->disableAttributeArray(normalLoc);
+                    shP->setAttributeValue(normalLoc, QVector3D(0.0f, 0.0f, 1.0f));
+                }
 
-            shP->disableAttributeArray(posLoc);
+                for (auto tileIt = tiles_.cbegin(); tileIt != tiles_.cend(); ++tileIt) {
+                    const TileKey& tileKey = tileIt.key();
+                    const SurfaceTile& itm = tileIt.value();
+
+                    if (!itm.getIsInited()) {
+                        continue;
+                    }
+
+                    const auto& heightVerts = itm.getHeightVerticesCRef();
+                    QVector<QVector3D> localNormals;
+                    const QVector<QVector3D>* normalsPtr = nullptr;
+                    if (shadowsOn) {
+                        const auto normalsIt = tileNormals_.constFind(tileKey);
+                        if (normalsIt != tileNormals_.cend() && normalsIt.value().size() == heightVerts.size()) {
+                            normalsPtr = &normalsIt.value();
+                        }
+                        else {
+                            localNormals = buildTileNormals(itm);
+                            if (!localNormals.isEmpty() && localNormals.size() == heightVerts.size()) {
+                                normalsPtr = &localNormals;
+                            }
+                        }
+                        if (!normalsPtr) {
+                            continue;
+                        }
+                    }
+
+                    shP->setAttributeArray(posLoc, heightVerts.constData());
+                    if (shadowsOn) {
+                        shP->setAttributeArray(normalLoc, normalsPtr->constData());
+                    }
+
+                    ctx->glDrawElements(GL_TRIANGLES,
+                                        itm.getHeightIndicesCRef().size(),
+                                        GL_UNSIGNED_INT,
+                                        itm.getHeightIndicesCRef().constData());
+                }
+
+                if (shadowsOn) {
+                    shP->disableAttributeArray(normalLoc);
+                }
+                shP->disableAttributeArray(posLoc);
+            }
+
             shP->release();
         }
     }
-
     auto lineProg = shaderProgramMap.value("static", nullptr);
     if (!lineProg) {
         qWarning() << "Shader program 'static' not found! Tile frames disabled.";
@@ -1049,6 +1303,24 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
     }
 }
 
+void SurfaceView::SurfaceViewRenderImplementation::setShadowSettings(bool enabled,
+                                                                     const QVector3D& lightDir,
+                                                                     float ambient,
+                                                                     float intensity,
+                                                                     float highlightIntensity)
+{
+    const bool wasEnabled = shadowEnabled_;
+    SceneObject::RenderImplementation::setShadowSettings(enabled, lightDir, ambient, intensity, highlightIntensity);
+    if (!enabled) {
+        tileNormals_.clear();
+        return;
+    }
+
+    if (!wasEnabled || tileNormals_.isEmpty()) {
+        rebuildSeamlessTileNormals(tiles_, tileNormals_);
+    }
+}
+
 void SurfaceView::SurfaceViewRenderImplementation::updateBounds()
 {
     if (tiles_.isEmpty()) {
@@ -1090,3 +1362,4 @@ void SurfaceView::SurfaceViewRenderImplementation::updateBounds()
 
     m_bounds = Cube(xMin, xMax, yMin, yMax, 0, 0);
 }
+

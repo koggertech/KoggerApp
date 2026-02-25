@@ -1,6 +1,50 @@
 #include "coordinate_axes.h"
 #include "draw_utils.h"
 #include "text_renderer.h"
+#include <cmath>
+
+
+QVector<QVector3D> CoordinateAxes::CoordinateAxesRenderImplementation::buildSmoothTriangleNormals(const QVector<QVector3D>& tris) const
+{
+    QVector<QVector3D> normals(tris.size(), QVector3D(0.0f, 0.0f, 1.0f));
+    if (tris.size() < 3 || (tris.size() % 3) != 0) {
+        return normals;
+    }
+
+    QVector<QVector3D> faceNormals(tris.size() / 3, QVector3D(0.0f, 0.0f, 1.0f));
+    for (int i = 0; i + 2 < tris.size(); i += 3) {
+        QVector3D n = QVector3D::crossProduct(tris[i + 1] - tris[i], tris[i + 2] - tris[i]);
+        if (n.lengthSquared() > 1e-12f) {
+            n.normalize();
+        } else {
+            n = QVector3D(0.0f, 0.0f, 1.0f);
+        }
+        faceNormals[i / 3] = n;
+    }
+
+    const auto samePos = [](const QVector3D& a, const QVector3D& b) {
+        return std::fabs(a.x() - b.x()) < 1e-4f &&
+               std::fabs(a.y() - b.y()) < 1e-4f &&
+               std::fabs(a.z() - b.z()) < 1e-4f;
+    };
+
+    for (int i = 0; i < tris.size(); ++i) {
+        QVector3D acc(0.0f, 0.0f, 0.0f);
+        for (int t = 0; t + 2 < tris.size(); t += 3) {
+            if (samePos(tris[i], tris[t]) ||
+                samePos(tris[i], tris[t + 1]) ||
+                samePos(tris[i], tris[t + 2])) {
+                acc += faceNormals[t / 3];
+            }
+        }
+        if (acc.lengthSquared() > 1e-12f) {
+            acc.normalize();
+            normals[i] = acc;
+        }
+    }
+
+    return normals;
+}
 
 CoordinateAxes::CoordinateAxes(QObject *parent)
     : SceneObject(new CoordinateAxesRenderImplementation,parent)
@@ -75,17 +119,8 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
         return;
     }
 
-    auto shaderProgram = shaderProgramMap["static"];
-    if (!shaderProgram->bind()) {
-        qCritical() << "Error binding shader program.";
-        return;
-    }
-
-    const int posLoc    = shaderProgram->attributeLocation("position");
-    const int colorLoc  = shaderProgram->uniformLocation("color");
-    const int matrixLoc = shaderProgram->uniformLocation("matrix");
-
-    shaderProgram->enableAttributeArray(posLoc);
+    auto lineShaderProgram = shaderProgramMap["static"];
+    auto litShaderProgram = shaderProgramMap.value("directional_lit", nullptr);
 
     QMatrix4x4 compassModelBase = model;
     compassModelBase.rotate(-90.0f, 0.0f, 0.0f, 1.0f);
@@ -117,66 +152,107 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
          << Er << Ar
          << Er << Cr;
 
-    { // red
-        QMatrix4x4 mvpNorth = projection * view * compassModelNorth;
-        shaderProgram->setUniformValue(matrixLoc, mvpNorth);
-
-        QVector<GLfloat> vertices;
-        vertices.reserve(tris.size() * 3);
-        for (auto it = tris.cbegin(); it != tris.cend(); ++it) {
-            vertices << it->x() << it->y() << it->z();
-        }
-
-        shaderProgram->setAttributeArray(posLoc, vertices.constData(), 3);
-        shaderProgram->setUniformValue(colorLoc,
-                                       DrawUtils::colorToVector4d(QColor(235, 52, 52)));
-        ctx->glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
-
-        QVector<GLfloat> lineVertices;
-        lineVertices.reserve(ribs.size() * 3);
-        for (auto it = ribs.cbegin(); it != ribs.cend(); ++it) {
-            lineVertices << it->x() << it->y() << it->z();
-        }
-
-        shaderProgram->setAttributeArray(posLoc, lineVertices.constData(), 3);
-        shaderProgram->setUniformValue(colorLoc,
-                                       DrawUtils::colorToVector4d(QColor(99, 22, 22)));
-
-        ctx->glLineWidth(2.0f);
-        ctx->glDrawArrays(GL_LINES, 0, lineVertices.size() / 3);
-        ctx->glLineWidth(1.0f);
+    const bool useLit = shadowEnabled_ && static_cast<bool>(litShaderProgram);
+    QVector<QVector3D> normals;
+    EffectiveShadowParams shadow;
+    if (useLit) {
+        normals = buildSmoothTriangleNormals(tris);
+        shadow = effectiveShadowParams();
     }
 
-    { // blue
-        QMatrix4x4 mvpSouth = projection * view * compassModelSouth;
-        shaderProgram->setUniformValue(matrixLoc, mvpSouth);
+    const auto drawBody = [&](const QMatrix4x4& mvp, const QColor& color) {
+        if (useLit && litShaderProgram && litShaderProgram->bind()) {
+            const int posLoc = litShaderProgram->attributeLocation("position");
+            const int normalLoc = litShaderProgram->attributeLocation("normal");
+            const int matrixLoc = litShaderProgram->uniformLocation("matrix");
+            const int colorLoc = litShaderProgram->uniformLocation("color");
+            const int lightDirLoc = litShaderProgram->uniformLocation("lightDir");
+            const int ambientLoc = litShaderProgram->uniformLocation("ambient");
+            const int intensityLoc = litShaderProgram->uniformLocation("intensity");
+            const int highlightLoc = litShaderProgram->uniformLocation("highlightIntensity");
 
-        QVector<GLfloat> vertices;
-        vertices.reserve(tris.size() * 3);
-        for (auto it = tris.cbegin(); it != tris.cend(); ++it) {
-            vertices << it->x() << it->y() << it->z();
+            if (posLoc >= 0) {
+                litShaderProgram->setUniformValue(matrixLoc, mvp);
+                litShaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(color));
+                if (lightDirLoc >= 0) {
+                    litShaderProgram->setUniformValue(lightDirLoc, shadow.lightDir);
+                }
+                if (ambientLoc >= 0) {
+                    litShaderProgram->setUniformValue(ambientLoc, shadow.ambient);
+                }
+                if (intensityLoc >= 0) {
+                    litShaderProgram->setUniformValue(intensityLoc, shadow.intensity);
+                }
+                if (highlightLoc >= 0) {
+                    litShaderProgram->setUniformValue(highlightLoc, shadow.highlightIntensity);
+                }
+                litShaderProgram->enableAttributeArray(posLoc);
+                litShaderProgram->setAttributeArray(posLoc, tris.constData());
+                if (normalLoc >= 0) {
+                    litShaderProgram->enableAttributeArray(normalLoc);
+                    litShaderProgram->setAttributeArray(normalLoc, normals.constData());
+                }
+                ctx->glDrawArrays(GL_TRIANGLES, 0, tris.size());
+                if (normalLoc >= 0) {
+                    litShaderProgram->disableAttributeArray(normalLoc);
+                }
+                litShaderProgram->disableAttributeArray(posLoc);
+            }
+            litShaderProgram->release();
+            return;
         }
 
-        shaderProgram->setAttributeArray(posLoc, vertices.constData(), 3);
-        shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(47, 132, 227)));
-        ctx->glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
+        if (lineShaderProgram && lineShaderProgram->bind()) {
+            const int posLoc = lineShaderProgram->attributeLocation("position");
+            const int colorLoc = lineShaderProgram->uniformLocation("color");
+            const int matrixLoc = lineShaderProgram->uniformLocation("matrix");
+            const int isPointLoc = lineShaderProgram->uniformLocation("isPoint");
+            const int isTriangleLoc = lineShaderProgram->uniformLocation("isTriangle");
+            if (posLoc >= 0) {
+                lineShaderProgram->setUniformValue(matrixLoc, mvp);
+                lineShaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(color));
+                lineShaderProgram->setUniformValue(isPointLoc, false);
+                lineShaderProgram->setUniformValue(isTriangleLoc, false);
+                lineShaderProgram->enableAttributeArray(posLoc);
+                lineShaderProgram->setAttributeArray(posLoc, tris.constData());
+                ctx->glDrawArrays(GL_TRIANGLES, 0, tris.size());
+                lineShaderProgram->disableAttributeArray(posLoc);
+            }
+            lineShaderProgram->release();
+        }
+    };
 
-        QVector<GLfloat> lineVertices;
-        lineVertices.reserve(ribs.size() * 3);
-        for (auto it = ribs.cbegin(); it != ribs.cend(); ++it) {
-            lineVertices << it->x() << it->y() << it->z();
+    const auto drawRibs = [&](const QMatrix4x4& mvp, const QColor& color) {
+        if (!lineShaderProgram || !lineShaderProgram->bind()) {
+            return;
         }
 
-        shaderProgram->setAttributeArray(posLoc, lineVertices.constData(), 3);
-        shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(10, 40, 120)));
+        const int posLoc = lineShaderProgram->attributeLocation("position");
+        const int colorLoc = lineShaderProgram->uniformLocation("color");
+        const int matrixLoc = lineShaderProgram->uniformLocation("matrix");
+        const int isPointLoc = lineShaderProgram->uniformLocation("isPoint");
+        const int isTriangleLoc = lineShaderProgram->uniformLocation("isTriangle");
+        if (posLoc >= 0) {
+            lineShaderProgram->setUniformValue(matrixLoc, mvp);
+            lineShaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(color));
+            lineShaderProgram->setUniformValue(isPointLoc, false);
+            lineShaderProgram->setUniformValue(isTriangleLoc, false);
+            lineShaderProgram->enableAttributeArray(posLoc);
+            lineShaderProgram->setAttributeArray(posLoc, ribs.constData());
+            ctx->glLineWidth(2.0f);
+            ctx->glDrawArrays(GL_LINES, 0, ribs.size());
+            ctx->glLineWidth(1.0f);
+            lineShaderProgram->disableAttributeArray(posLoc);
+        }
+        lineShaderProgram->release();
+    };
 
-        ctx->glLineWidth(2.0f);
-        ctx->glDrawArrays(GL_LINES, 0, lineVertices.size() / 3);
-        ctx->glLineWidth(1.0f);
-    }
-
-    shaderProgram->disableAttributeArray(posLoc);
-    shaderProgram->release();
+    const QMatrix4x4 mvpNorth = projection * view * compassModelNorth;
+    const QMatrix4x4 mvpSouth = projection * view * compassModelSouth;
+    drawBody(mvpNorth, QColor(235, 52, 52));
+    drawRibs(mvpNorth, QColor(99, 22, 22));
+    drawBody(mvpSouth, QColor(47, 132, 227));
+    drawRibs(mvpSouth, QColor(10, 40, 120));
 
     // labels
     GLint vp[4];
@@ -207,3 +283,4 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
     TextRenderer::instance().render("N", scale, nLabelPos, false, ctx, textProjection, shaderProgramMap);
     TextRenderer::instance().render("S", scale, sLabelPos, false, ctx, textProjection, shaderProgramMap);
 }
+

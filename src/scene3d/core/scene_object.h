@@ -30,6 +30,14 @@ public:
     class RenderImplementation
     {
     public:
+        struct EffectiveShadowParams
+        {
+            QVector3D lightDir;
+            float ambient = 1.0f;
+            float intensity = 0.0f;
+            float highlightIntensity = 0.0f;
+        };
+
         RenderImplementation();
         virtual ~RenderImplementation();
 
@@ -60,9 +68,16 @@ public:
         Cube bounds() const;
         int primitiveType() const;
         void removeVertex(int index);
+        virtual void setShadowSettings(bool enabled,
+                                       const QVector3D& lightDir,
+                                       float ambient,
+                                       float intensity,
+                                       float highlightIntensity);
 
     protected:
         virtual void updateBounds();
+        EffectiveShadowParams effectiveShadowParams() const;
+        static QVector3D normalizedShadowDir(const QVector3D& dir);
 
     protected:
         QVector<QVector3D> m_data;
@@ -71,6 +86,11 @@ public:
         bool m_isVisible = true;
         Cube m_bounds;
         int m_primitiveType = GL_POINTS;
+        bool shadowEnabled_ = true;
+        QVector3D shadowLightDir_ = QVector3D(0.40f, 0.40f, 0.40f);
+        float shadowAmbient_ = 0.35f;
+        float shadowIntensity_ = 1.00f;
+        float shadowHighlightIntensity_ = 0.70f;
 
     private:
         friend class SceneObject;

@@ -56,6 +56,14 @@ static inline float zoomDistanceMid(const ZoomDistanceRange& range)
     return range.min + (range.max - range.min) * 0.5f;
 }
 
+static inline float clampShadowFactor(float value, float fallback)
+{
+    if (!std::isfinite(value)) {
+        return fallback;
+    }
+    return qBound(0.0f, value, 1.0f);
+}
+
 } // namespace
 
 GraphicsScene3dView::GraphicsScene3dView() :
@@ -94,6 +102,11 @@ GraphicsScene3dView::GraphicsScene3dView() :
     compass_(false),
     compassPos_(1),
     compassSize_(1),
+    shadowsEnabled_(true),
+    shadowVector_(QVector3D(0.40f, 0.40f, 0.40f)),
+    shadowIntensity_(1.00f),
+    shadowAmbient_(0.35f),
+    shadowHighlight_(0.70f),
     planeGridType_(true),
     dataZoomIndx_(-1),
     cameraIsMoveUp_(false),
@@ -189,7 +202,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(boatTrack_.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-    
+
+    applyShadowSettingsToSceneRenderObjects();
     updatePlaneGrid();
 
 #ifdef SCENE_TESTING
@@ -1071,6 +1085,110 @@ void GraphicsScene3dView::setCompassSize(int val)
 {
     compassSize_ = val;
 
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::applyShadowSettingsToSceneRenderObjects()
+{
+    auto applyFor = [this](SceneObject::RenderImplementation* impl) {
+        if (!impl) {
+            return;
+        }
+        impl->setShadowSettings(shadowsEnabled_, shadowVector_, shadowAmbient_, shadowIntensity_, shadowHighlight_);
+    };
+
+    applyFor(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(m_coordAxes->m_renderImpl));
+    applyFor(dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(surfaceView_->m_renderImpl));
+    applyFor(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(navigationArrow_->m_renderImpl));
+}
+
+void GraphicsScene3dView::setShadowsEnabled(bool state)
+{
+    if (shadowsEnabled_ == state) {
+        return;
+    }
+
+    shadowsEnabled_ = state;
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setShadowVectorX(float value)
+{
+    if (!std::isfinite(value)) {
+        return;
+    }
+    if (qFuzzyCompare(shadowVector_.x() + 1.0f, value + 1.0f)) {
+        return;
+    }
+
+    shadowVector_.setX(value);
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setShadowVectorY(float value)
+{
+    if (!std::isfinite(value)) {
+        return;
+    }
+    if (qFuzzyCompare(shadowVector_.y() + 1.0f, value + 1.0f)) {
+        return;
+    }
+
+    shadowVector_.setY(value);
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setShadowVectorZ(float value)
+{
+    if (!std::isfinite(value)) {
+        return;
+    }
+    if (qFuzzyCompare(shadowVector_.z() + 1.0f, value + 1.0f)) {
+        return;
+    }
+
+    shadowVector_.setZ(value);
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setShadowIntensity(float value)
+{
+    Q_UNUSED(value);
+    constexpr float kFixedShadowIntensity = 1.0f;
+    if (qFuzzyCompare(shadowIntensity_ + 1.0f, kFixedShadowIntensity + 1.0f)) {
+        return;
+    }
+
+    shadowIntensity_ = kFixedShadowIntensity;
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setShadowAmbient(float value)
+{
+    const float clamped = clampShadowFactor(value, shadowAmbient_);
+    if (qFuzzyCompare(shadowAmbient_ + 1.0f, clamped + 1.0f)) {
+        return;
+    }
+
+    shadowAmbient_ = clamped;
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setShadowHighlight(float value)
+{
+    const float clamped = clampShadowFactor(value, shadowHighlight_);
+    if (qFuzzyCompare(shadowHighlight_ + 1.0f, clamped + 1.0f)) {
+        return;
+    }
+
+    shadowHighlight_ = clamped;
+    applyShadowSettingsToSceneRenderObjects();
     QQuickFramebufferObject::update();
 }
 
@@ -2813,6 +2931,10 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->compassPos_                 = view->compassPos_;
     m_renderer->compassSize_                = view->compassSize_;
     m_renderer->planeGridType_              = view->planeGridType_;
+
+    m_renderer->compassRenderImpl_.setShadowSettings(view->shadowsEnabled_, view->shadowVector_, view->shadowAmbient_, view->shadowIntensity_, view->shadowHighlight_);
+    m_renderer->surfaceViewRenderImpl_.setShadowSettings(view->shadowsEnabled_, view->shadowVector_, view->shadowAmbient_, view->shadowIntensity_, view->shadowHighlight_);
+    m_renderer->navigationArrowRenderImpl_.setShadowSettings(view->shadowsEnabled_, view->shadowVector_, view->shadowAmbient_, view->shadowIntensity_, view->shadowHighlight_);
 }
 
 QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferObject(const QSize &size)

@@ -22,6 +22,7 @@ public:
                             const QMatrix4x4& projection,
                             const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
     private:
+        QVector<QVector3D> buildSmoothTriangleNormals(const QVector<QVector3D>& tris) const;
         friend class CoordinateAxes;
         QVector3D m_position = {0.0f, 0.0f, 0.0f};
     };

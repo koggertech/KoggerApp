@@ -24,6 +24,7 @@ public:
         QVector3D position_;
         float angle_ = 0.0f;
         QVector<QVector3D> arrowVertices_;
+        QVector<QVector3D> arrowNormals_;
         QVector<QVector3D> arrowRibs_;
     };
 
@@ -35,5 +36,6 @@ public:
 private:
     /*methods*/
     QVector<QVector3D> makeArrowVertices() const;
+    QVector<QVector3D> makeArrowNormals(const QVector<QVector3D>& tris) const;
     QVector<QVector3D> makeArrowRibs() const;
 };

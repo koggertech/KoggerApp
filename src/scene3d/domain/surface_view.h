@@ -32,7 +32,20 @@ public:
                             const QMatrix4x4& mvp,
                             const QMap<QString,
                             std::shared_ptr<QOpenGLShaderProgram>>& shaderProgramMap) const override final;
+        void setShadowSettings(bool enabled,
+                               const QVector3D& lightDir,
+                               float ambient,
+                               float intensity,
+                               float highlightIntensity) override;
     private:
+        using VertexXYKey = QPair<long long, long long>;
+        QVector2D projectToScreen(const QVector3D& p, const QMatrix4x4& mvp, const QRect& viewport) const;
+        VertexXYKey makeVertexXYKey(const QVector3D& point) const;
+        QVector<QVector3D> buildTileNormalSums(const SurfaceTile& tile) const;
+        QVector<QVector3D> normalizeNormals(const QVector<QVector3D>& normalSums) const;
+        QVector<QVector3D> buildTileNormals(const SurfaceTile& tile) const;
+        void rebuildSeamlessTileNormals(const QHash<TileKey, SurfaceTile>& tiles,
+                                        QHash<TileKey, QVector<QVector3D>>& outNormals) const;
         void updateBounds() override final;
 
         friend class SurfaceView;
@@ -46,6 +59,7 @@ public:
         int colorIntervalsSize_; // from dataprocessor
         bool iVis_;
         bool mVis_;
+        QHash<TileKey, QVector<QVector3D>> tileNormals_;
         QVector<IsoLabel> isoLabels_;
         float labelStep_;
         float cameraDist_;

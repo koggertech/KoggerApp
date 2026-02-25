@@ -280,6 +280,13 @@ public:
     void setCompassState(bool state);
     void setCompassPos(int val);
     void setCompassSize(int val);
+    void setShadowsEnabled(bool state);
+    void setShadowVectorX(float value);
+    void setShadowVectorY(float value);
+    void setShadowVectorZ(float value);
+    void setShadowIntensity(float value);
+    void setShadowAmbient(float value);
+    void setShadowHighlight(float value);
 
     void setPlaneGridType(bool def);
 
@@ -365,6 +372,7 @@ private:
     void setRulerDrawing(bool drawing);
     void setRulerSelected(bool selected);
     void resetRulerInteraction();
+    void applyShadowSettingsToSceneRenderObjects();
     void updateForceSingleZoomAutoState();
     void refreshSyncLoupePreview();
 
@@ -436,6 +444,11 @@ private:
     bool compass_;
     int compassPos_;
     int compassSize_;
+    bool shadowsEnabled_;
+    QVector3D shadowVector_;
+    float shadowIntensity_;
+    float shadowAmbient_;
+    float shadowHighlight_;
 
     bool planeGridType_;
     bool rulerEnabled_{false};
