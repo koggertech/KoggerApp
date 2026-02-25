@@ -1,13 +1,15 @@
 #include "navigation_arrow_control_menu_controller.h"
 
 #include "scene3d_view.h"
+#include <QtGlobal>
 
 
 NavigationArrowControlMenuController::NavigationArrowControlMenuController(QObject* parent) :
     QmlComponentController(parent),
     graphicsSceneView_(nullptr),
     pendingLambda_(nullptr),
-    isVisible_(false)
+    isVisible_(false),
+    size_(1)
 {
 
 }
@@ -24,6 +26,20 @@ void NavigationArrowControlMenuController::onVisibilityCheckBoxCheckedChanged(bo
     if (graphicsSceneView_) {
         if (auto nAPtr = graphicsSceneView_->getNavigationArrowPtr(); nAPtr) {
             nAPtr->setVisible(checked);
+        }
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void NavigationArrowControlMenuController::onSizeSpinBoxValueChanged(int size)
+{
+    size_ = qBound(1, size, 5);
+
+    if (graphicsSceneView_) {
+        if (auto nAPtr = graphicsSceneView_->getNavigationArrowPtr(); nAPtr) {
+            nAPtr->setSize(size_);
         }
     }
     else {
@@ -55,6 +71,7 @@ void NavigationArrowControlMenuController::tryInitPendingLambda()
             if (graphicsSceneView_) {
                 if (auto nAPtr = graphicsSceneView_->getNavigationArrowPtr(); nAPtr) {
                     nAPtr->setVisible(isVisible_);
+                    nAPtr->setSize(size_);
                 }
             }
         };

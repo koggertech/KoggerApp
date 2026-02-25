@@ -17,12 +17,14 @@ public:
                             const QMap<QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
         QVector3D getPosition() const;
         float getAngle() const;
+        int getSize() const;
 
     private:
         friend class NavigationArrow;
 
         QVector3D position_;
         float angle_ = 0.0f;
+        int size_ = 1;
         QVector<QVector3D> arrowVertices_;
         QVector<QVector3D> arrowNormals_;
         QVector<QVector3D> arrowRibs_;
@@ -31,6 +33,7 @@ public:
     explicit NavigationArrow(QObject *parent = nullptr);
     void setPositionAndAngle(const QVector3D& position, float degAngle);
     void resetPositionAndAngle();
+    void setSize(int size);
     void setIsDatasetExist(bool state);
 
 private:

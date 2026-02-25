@@ -1,6 +1,7 @@
 #include "navigation_arrow.h"
 
 #include <QtMath>
+#include <QtGlobal>
 #include <cmath>
 #include <draw_utils.h>
 
@@ -42,6 +43,19 @@ void NavigationArrow::resetPositionAndAngle()
     r->position_ = QVector3D(0.0f, 0.0f, 0.0f);
     r->angle_ = 0.0f;
 
+    Q_EMIT changed();
+}
+
+void NavigationArrow::setSize(int size)
+{
+    auto* r = RENDER_IMPL(NavigationArrow);
+    const int boundedSize = qBound(1, size, 5);
+
+    if (r->size_ == boundedSize) {
+        return;
+    }
+
+    r->size_ = boundedSize;
     Q_EMIT changed();
 }
 
@@ -214,4 +228,9 @@ QVector3D NavigationArrow::NavigationArrowRenderImplementation::getPosition() co
 float NavigationArrow::NavigationArrowRenderImplementation::getAngle() const
 {
     return angle_;
+}
+
+int NavigationArrow::NavigationArrowRenderImplementation::getSize() const
+{
+    return size_;
 }

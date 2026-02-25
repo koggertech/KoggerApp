@@ -1820,7 +1820,8 @@
     </message>
     <message>
         <location filename="../qml/Settings3DExtraSettings.qml" line="435"/>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="829"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="793"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="860"/>
         <source>Size:</source>
         <translation>Размер:</translation>
     </message>
@@ -1865,17 +1866,17 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="772"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="773"/>
         <source>Boat</source>
         <translation>Лодка</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="801"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="832"/>
         <source>Compass</source>
         <translation>Компас</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="826"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="857"/>
         <source>Pos:</source>
         <translation>Поз:</translation>
     </message>

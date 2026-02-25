@@ -761,31 +761,62 @@ MenuFrame {
             }
         }
 
-        CheckButton {
-            id: navigationArrowCheckButton
-            objectName: "navigationArrowCheckButton"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            checked: true
-            iconSource: "qrc:/icons/ui/speedboat.svg"
-            text: qsTr("Boat")
-            Layout.fillWidth: true
+        RowLayout {
+            CheckButton {
+                id: navigationArrowCheckButton
+                objectName: "navigationArrowCheckButton"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checked: true
+                iconSource: "qrc:/icons/ui/speedboat.svg"
+                text: qsTr("Boat")
+                Layout.fillWidth: true
 
-            onToggled: {
-                NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                onToggled: {
+                    NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                }
+
+                onFocusChanged: {
+                    settings3DSettings.focus = true
+                }
+
+                Component.onCompleted: {
+                    NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                }
             }
 
-            onFocusChanged: {
-                settings3DSettings.focus = true
-            }
+            RowLayout {
+                visible: navigationArrowCheckButton.checked
 
-            Component.onCompleted: {
-                NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                CText {
+                    text: qsTr("Size:")
+                }
+
+                SpinBoxCustom {
+                    id: navigationArrowSizeSpinBox
+                    from: 1
+                    to: 5
+                    stepSize: 1
+                    value: 1
+
+                    onValueChanged: {
+                        NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(value)
+                    }
+
+                    onFocusChanged: {
+                        settings3DSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(value)
+                    }
+                }
             }
 
             Settings {
                 property alias navigationArrowCheckButton: navigationArrowCheckButton.checked
+                property alias navigationArrowSizeSpinBox: navigationArrowSizeSpinBox.value
             }
         }
 
