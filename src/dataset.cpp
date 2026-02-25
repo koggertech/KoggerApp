@@ -515,8 +515,8 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         tracks[-2].yaw_ = 0.0f;
 
 
-        float beacon_n = data.beacon_n;
-        float beacon_e = data.beacon_e;
+        float beacon_n = data.beacon_n_m;
+        float beacon_e = data.beacon_e_m;
 
         if(pos.ned.isCoordinatesValid()) {
             beacon_n += pos.ned.n;

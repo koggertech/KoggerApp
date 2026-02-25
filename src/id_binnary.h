@@ -1014,30 +1014,31 @@ public:
     Resp  parsePayload(FrameParser &proto) override;
 
     struct UsblSolution {
-        uint8_t id = 0;
+        uint8_t id = 0xFF;
         uint8_t role = 0;
-        uint16_t watermark = 0;
+        uint8_t cmd_id = 0xFF;
+        uint8_t reserved = 0;
 
         int64_t timestamp_us = 0;
         uint32_t ping_counter = 0;
         int64_t carrier_counter = 0;
 
-        float distance_m = 0;
+        float distance_m = NAN;
         float distance_unc = 0;
 
-        float azimuth_deg = 0;
+        float azimuth_deg = NAN;
         float azimuth_unc = 0;
 
-        float elevation_deg = 0;
+        float elevation_deg = NAN;
         float elevation_unc = 0;
 
         float snr = 0;
 
-        float x_m = NAN;
-        float y_m = NAN;
-        double latitude_deg = NAN;
-        double longitude_deg = NAN;
-        float depth_m = NAN;
+        float beacon_x_m = NAN;
+        float beacon_y_m = NAN;
+        double beacon_latitude = NAN;
+        double beacon_longitude = NAN;
+        float beacon_depth = NAN;
 
         float usbl_yaw = NAN;
         float usbl_pitch = NAN;
@@ -1047,8 +1048,59 @@ public:
         double usbl_longitude = NAN;
         uint32_t last_iTOW = 0;
 
-        float beacon_n = NAN;
-        float beacon_e = NAN;
+        float beacon_n_m = NAN;
+        float beacon_e_m = NAN;
+        float code_snr[8] = {NAN,NAN,NAN,NAN,NAN,NAN,NAN,NAN};
+    } __attribute__((packed));
+
+    struct AcousticNavSolution {
+        uint8_t address = 0xFF;
+        uint8_t cmd_id = 0xFF;
+
+        uint32_t reserved = 0;
+
+        int64_t timestamp_us = 0;
+        int64_t carrier_us = 0;
+        int64_t carrier_counter = 0;
+
+        double lat = NAN;
+        double lon = NAN;
+        float depth = NAN;
+
+        float acousticAzimuth = NAN;
+        float geoAzimuth = NAN;
+        float heading = NAN;
+
+        float distance = NAN;
+
+        double baseLat = NAN;
+        double baseLon = NAN;
+        float baseDepth = NAN;
+    } __attribute__((packed));
+
+    struct BaseToBeacon {
+        uint8_t address = 0xFF;
+        uint8_t cmd_id = 0xFF;
+
+        uint32_t reserved = 0;
+
+        int64_t timestamp_us = 0;
+        int64_t carrier_us = 0;
+        int64_t carrier_counter = 0;
+
+        float acousticAzimuth = NAN;
+        float geoAzimuth = NAN;
+        float beaconDistance = NAN;
+        float beaconN = NAN;
+        float beaconE = NAN;
+        float beaconD = NAN;
+        double beaconLat = NAN;
+        double beaconLon = NAN;
+
+        float antennaYaw = NAN;
+        float antennaDepth = NAN;
+        double antennaLat = NAN;
+        double antennaLon = NAN;
     } __attribute__((packed));
 
     struct USBLRequestBeacon {
@@ -1076,12 +1128,16 @@ public:
     UsblSolution usblSolution() {
         return _usblSolution;
     }
+    AcousticNavSolution acousticNavSolution() const { return _acousticNavSolution; }
+    BaseToBeacon baseToBeacon() const { return _baseToBeacon; }
 
     void askBeacon(USBLRequestBeacon ask);
     void enableBeaconOnce(float timeout);
 
 protected:
     UsblSolution _usblSolution;
+    AcousticNavSolution _acousticNavSolution;
+    BaseToBeacon _baseToBeacon;
     BeaconActivationResponce _beaconResponcel;
 };
 
@@ -1105,9 +1161,14 @@ public:
         // 0xFFFFFFFF: trigger always enabled
         // otherwise: enable tx trigger for a certain time after setting the value
 
-        uint32_t timeout_us = 0;
+        uint32_t trigger_timeout_us = 0;
         // 1-8 are addresses, 0: promisc address, 0xFF: disabled address slot
         uint8_t address = 0;
+        uint8_t cmd_id = 0;
+        // 0: Pinger (no waiting for a response), >0: Interrogator (ranging)
+        uint32_t reply_distance_mm = 20000;
+        // Payload bytes count is ((payload_bit_length + 7) / 8)
+        uint16_t payload_bit_length = 0;
     } __attribute__((packed));
 
     // Regular addresses
@@ -1134,8 +1195,8 @@ public:
     struct USBLResponseAddressFilter {
         static constexpr ID getId() { return ID_USBL_CONTROL; }
         static constexpr Version getVer() { return v4; }
-        // 1-8 are addresses, 0: promisc address, 0xFF: disabled address slot
-        uint8_t address = 0;
+        // 0-7 are addresses, 0xFF: disabled address slot
+        uint8_t address[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     } __attribute__((packed));
 
     void pingRequest(uint32_t timeout_us, uint8_t address);

@@ -1068,10 +1068,61 @@ void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3, bool ismod
 Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
         _usblSolution = proto.read<UsblSolution>();
-        qInfo("USBL d: %f, a: %f,e: %f, y: %f", _usblSolution.distance_m, _usblSolution.azimuth_deg, _usblSolution.elevation_deg, _usblSolution.usbl_yaw);
+
+        QString msg;
+        QTextStream(&msg)
+            << "USBL: " << (_usblSolution.role == 1 ? "request  " : "response")
+            << ", addr: " << _usblSolution.id
+            << ", cmd: " << _usblSolution.cmd_id
+            << ", carr_cnt: " << _usblSolution.carrier_counter
+            << ", dist: " << (isfinite(_usblSolution.distance_m) ? QString::number(_usblSolution.distance_m, 'f', 2) : "_____")
+            ;
+        core.consoleInfo(msg);
     } else if(proto.ver() == v1) {
-        _beaconResponcel = proto.read<BeaconActivationResponce>();
-        qInfo("Beacon responce: %d", _beaconResponcel.id);
+        if (proto.readAvailable() >= static_cast<int16_t>(sizeof(AcousticNavSolution))) {
+            _acousticNavSolution = proto.read<AcousticNavSolution>();
+
+            // Normalize V1 payload to the legacy V0-like view used by app-side consumers.
+            _usblSolution = {};
+            _usblSolution.id = _acousticNavSolution.address;
+            _usblSolution.cmd_id = _acousticNavSolution.cmd_id;
+            _usblSolution.timestamp_us = _acousticNavSolution.timestamp_us;
+            _usblSolution.carrier_counter = _acousticNavSolution.carrier_counter;
+            _usblSolution.distance_m = _acousticNavSolution.distance;
+            _usblSolution.azimuth_deg = _acousticNavSolution.acousticAzimuth;
+            _usblSolution.beacon_latitude = _acousticNavSolution.lat;
+            _usblSolution.beacon_longitude = _acousticNavSolution.lon;
+            _usblSolution.beacon_depth = _acousticNavSolution.depth;
+            _usblSolution.usbl_yaw = _acousticNavSolution.heading;
+            _usblSolution.usbl_latitude = _acousticNavSolution.baseLat;
+            _usblSolution.usbl_longitude = _acousticNavSolution.baseLon;
+        } else {
+            // Backward-compatibility for older V1 packets used as beacon activation response.
+            _beaconResponcel = proto.read<BeaconActivationResponce>();
+            qInfo("Beacon responce: %d", _beaconResponcel.id);
+        }
+    } else if(proto.ver() == v2) {
+        if (proto.readAvailable() < static_cast<int16_t>(sizeof(BaseToBeacon))) {
+            return respErrorPayload;
+        }
+        _baseToBeacon = proto.read<BaseToBeacon>();
+
+        // Normalize V2 payload to the legacy V0-like view used by app-side consumers.
+        _usblSolution = {};
+        _usblSolution.id = _baseToBeacon.address;
+        _usblSolution.cmd_id = _baseToBeacon.cmd_id;
+        _usblSolution.timestamp_us = _baseToBeacon.timestamp_us;
+        _usblSolution.carrier_counter = _baseToBeacon.carrier_counter;
+        _usblSolution.distance_m = _baseToBeacon.beaconDistance;
+        _usblSolution.azimuth_deg = _baseToBeacon.acousticAzimuth;
+        _usblSolution.usbl_yaw = _baseToBeacon.antennaYaw;
+        _usblSolution.usbl_latitude = _baseToBeacon.antennaLat;
+        _usblSolution.usbl_longitude = _baseToBeacon.antennaLon;
+        _usblSolution.beacon_depth = _baseToBeacon.beaconD;
+        _usblSolution.beacon_latitude = _baseToBeacon.beaconLat;
+        _usblSolution.beacon_longitude = _baseToBeacon.beaconLon;
+        _usblSolution.beacon_n_m = _baseToBeacon.beaconN;
+        _usblSolution.beacon_e_m = _baseToBeacon.beaconE;
     } else {
         return respErrorVersion;
     }
@@ -1109,7 +1160,9 @@ Resp IDBinUsblControl::parsePayload(FrameParser& proto)
 void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address) {
     ProtoBinOut ping_req;
     ping_req.create(SETTING, USBLPingRequest::getVer(), id(), m_address);
-    USBLPingRequest req = {timeout_us, address};
+    USBLPingRequest req;
+    req.trigger_timeout_us = timeout_us;
+    req.address = address;
     ping_req.write<USBLPingRequest>(req);
     ping_req.end();
 
@@ -1129,7 +1182,8 @@ void IDBinUsblControl::setResponseTimeout(uint32_t timeout_us) {
 void IDBinUsblControl::setResponseAddressFilter(uint8_t address) {
     ProtoBinOut ping_resp_a;
     ping_resp_a.create(SETTING, USBLResponseAddressFilter::getVer(), id(), m_address);
-    USBLResponseAddressFilter req = {address};
+    USBLResponseAddressFilter req;
+    req.address[0] = address;
     ping_resp_a.write<USBLResponseAddressFilter>(req);
     ping_resp_a.end();
 

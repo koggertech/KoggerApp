@@ -1451,10 +1451,9 @@ void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::
     Q_UNUSED(type);
 
     if(resp == respNone) {
-        if(ver == Parsers::v0) {
+        if(ver == Parsers::v0 || ver == Parsers::v2) {
             emit usblSolutionComplete(idUSBL->usblSolution());
         } else if(ver == Parsers::v1) {
-            qDebug("usbl p.ver %d", ver);
             emit beaconActivationComplete(0);
         }
     }
