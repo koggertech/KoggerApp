@@ -510,7 +510,10 @@ ApplicationWindow  {
                                 }
                             }
 
-                            renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
+                            const activeButtons = (Qt.platform.os === "android" && lastMouseKeyPressed !== Qt.NoButton)
+                                    ? lastMouseKeyPressed
+                                    : mouse.buttons
+                            renderer.mouseMoveTrigger(activeButtons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
                         onPressed: function(mouse) {

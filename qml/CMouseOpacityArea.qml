@@ -1,42 +1,27 @@
 import QtQuick 2.15
 
-MouseArea {
+Item {
     id: hoverArea
     anchors.fill: parent
-    hoverEnabled: true
 
     anchors.margins: -2
 
-    property bool isMouseAccepted: false
+    property alias containsMouse: hoverHandler.hovered
     property string toolTipText: qsTr("Tooltip")
     property string popupPosition: "bottomRight"
     property point popupOffset: Qt.point(10, 10)
 
-    onPressed: function(mouse) {
-        if (mouse.source === 2) {
-             tooltipTimer.stop()
-             customToolTip.close()
+    onContainsMouseChanged: {
+        if (containsMouse) {
+            tooltipTimer.start()
+        } else {
+            tooltipTimer.stop()
+            customToolTip.close()
         }
+    }
 
-        mouse.accepted = isMouseAccepted
-    }
-    onReleased: function(mouse) {
-        mouse.accepted = isMouseAccepted
-    }
-    onClicked: function(mouse) {
-        if (mouse.source === 2) {
-             tooltipTimer.stop()
-             customToolTip.close()
-        }
-
-        mouse.accepted = isMouseAccepted
-    }
-    onEntered: {
-        tooltipTimer.start()
-    }
-    onExited: {
-        tooltipTimer.stop()
-        customToolTip.close()
+    HoverHandler {
+        id: hoverHandler
     }
 
     Timer {

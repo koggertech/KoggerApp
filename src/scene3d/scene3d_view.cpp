@@ -580,12 +580,14 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     else {
 #if defined(Q_OS_ANDROID)
         Q_UNUSED(keyboardKey);
-        auto fromOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-        auto fromEnd = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-        auto fromDir = (fromEnd - fromOrig).normalized();
-        auto from = calculateIntersectionPoint(fromOrig, fromDir , 0);
-        m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
-        cameraWasMoved = true;
+        if (mouseButton.testFlag(Qt::LeftButton)) {
+            auto fromOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromEnd = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromDir = (fromEnd - fromOrig).normalized();
+            auto from = calculateIntersectionPoint(fromOrig, fromDir , 0);
+            m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
+            cameraWasMoved = true;
+        }
 #else
         if (mouseButton.testFlag(Qt::LeftButton) && (keyboardKey == Qt::Key_Control)) {
             if (m_camera->getIsPerspective() && !isNorth_) {
