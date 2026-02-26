@@ -6,50 +6,50 @@ Popup {
     property string popupText: qsTr("Custom popup")
     property string popupPosition: "bottomRight" // topLeft, topRight, bottomLeft, bottomRight
     property point popupOffset: Qt.point(10, 10)
+    property real cursorX: parent ? parent.width * 0.5 : 0
+    property real cursorY: parent ? parent.height * 0.5 : 0
 
     x: {
+        const popupWidth = contentItem ? contentItem.implicitWidth : 0
         switch (popupPosition) {
-        case "topLeft":     return parent.mouseX - contentItem.implicitWidth - popupOffset.x
-        case "bottomLeft":  return parent.mouseX - contentItem.implicitWidth - popupOffset.x
-        case "topRight":    return parent.mouseX + popupOffset.x
-        case "bottomRight": return parent.mouseX + popupOffset.x
-        default:            return parent.mouseX + popupOffset.x
+        case "topLeft":     return cursorX - popupWidth - popupOffset.x
+        case "bottomLeft":  return cursorX - popupWidth - popupOffset.x
+        case "topRight":    return cursorX + popupOffset.x
+        case "bottomRight": return cursorX + popupOffset.x
+        default:            return cursorX + popupOffset.x
         }
     }
     y: {
+        const popupHeight = contentItem ? contentItem.implicitHeight : 0
         switch (popupPosition) {
         case "topLeft":
-        case "topRight":   return parent.mouseY - contentItem.implicitHeight - popupOffset.y
+        case "topRight":   return cursorY - popupHeight - popupOffset.y
         case "bottomLeft":
-        case "bottomRight":return parent.mouseY + popupOffset.y
-        default:           return parent.mouseY + popupOffset.y
+        case "bottomRight":return cursorY + popupOffset.y
+        default:           return cursorY + popupOffset.y
         }
     }
 
     visible: false
+    padding: 0
     background: null
 
-    Rectangle {
-        id: contentItem
+    contentItem: Rectangle {
+        id: popupBubble
         color: theme.controlBackColor
         opacity: 0.8
-        anchors.centerIn: parent
         radius: 5
         implicitWidth: textItem.implicitWidth + 10
         implicitHeight: textItem.implicitHeight + 10
 
-        Column {
+        Text {
+            id: textItem
             anchors.centerIn: parent
-            spacing: 5
-
-            Text {
-                id: textItem
-                text: popupText
-                color: "white"
-                font.pixelSize: 14
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
-            }
+            text: popupText
+            color: "white"
+            font.pixelSize: 14
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.Wrap
         }
     }
 }

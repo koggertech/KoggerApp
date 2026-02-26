@@ -10,6 +10,8 @@ Item {
     property string toolTipText: qsTr("Tooltip")
     property string popupPosition: "bottomRight"
     property point popupOffset: Qt.point(10, 10)
+    property real cursorX: hoverHandler.point.position.x
+    property real cursorY: hoverHandler.point.position.y
 
     onContainsMouseChanged: {
         if (containsMouse) {
@@ -38,5 +40,7 @@ Item {
         popupText: toolTipText
         popupPosition: hoverArea.popupPosition
         popupOffset: hoverArea.popupOffset
+        cursorX: hoverArea.cursorX
+        cursorY: hoverArea.cursorY
     }
 }
