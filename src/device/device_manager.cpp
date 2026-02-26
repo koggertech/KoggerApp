@@ -22,6 +22,7 @@ DeviceManager::DeviceManager()
 #ifdef SEPARATE_READING
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut&");
 #endif
+    qRegisterMetaType<uint8_t>("uint8_t");
     qRegisterMetaType<int16_t>("int16_t");
     qRegisterMetaType<QVector<uint8_t>>("QVector<uint8_t>");
     qRegisterMetaType<QByteArray>("QByteArray");
@@ -264,6 +265,22 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     if(q == '4') {
                         emit positionCompleteRTK(pos);
                     }
+                }
+            }
+
+            if (prot_nmea.isEqualId("HDT")) {
+                const double headingDeg = prot_nmea.readDouble();
+                //const char reference = prot_nmea.readChar();
+                const bool headingValid = isfinite(headingDeg);
+
+                if (/*reference == 'T' && TODO: check this*/ headingValid) {
+                    //qDebug().noquote() << QString("NMEA HDT parsed: heading=%1 deg true").arg(heading_deg, 0, 'f', 3);
+                    emit attitudeComplete(static_cast<float>(headingDeg), 0.0f, 0.0f);
+                }
+                else {
+                    //qDebug().noquote() << QString("NMEA HDT rejected: heading=%1 ref=%2")
+                    //                      .arg(heading_valid ? QString::number(heading_deg, 'f', 3) : QStringLiteral("nan"))
+                    //                      .arg(reference);
                 }
             }
         }
@@ -882,6 +899,9 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged, connType);
 
     connect(dev, &DevQProperty::positionComplete, this, &DeviceManager::positionComplete, connType);
+    connect(dev, &DevQProperty::gnssVelocityComplete, this, &DeviceManager::gnssVelocityComplete, connType);
+    connect(dev, &DevQProperty::simpleNavV2Complete, this, &DeviceManager::simpleNavV2Complete, connType);
+    connect(dev, &DevQProperty::boatStatusComplete, this, &DeviceManager::boatStatusComplete, connType);
     connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete, connType);
 
     dev->moveToThread(qApp->thread());
@@ -924,6 +944,9 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged);
 
     connect(dev, &DevQProperty::positionComplete, this, &DeviceManager::positionComplete);
+    connect(dev, &DevQProperty::gnssVelocityComplete, this, &DeviceManager::gnssVelocityComplete);
+    connect(dev, &DevQProperty::simpleNavV2Complete, this, &DeviceManager::simpleNavV2Complete);
+    connect(dev, &DevQProperty::boatStatusComplete, this, &DeviceManager::boatStatusComplete);
     connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete);
 
     dev->startConnection(link != NULL);

@@ -75,6 +75,10 @@ SpinBox {
         }
 
         onPaint: {
+            if (!context || typeof context.reset !== "function") {
+                return;
+            }
+
             context.reset();
 
             var mid_height = height/2
@@ -156,7 +160,7 @@ SpinBox {
         }
 
         onPaint: {
-            if (context === null) {
+            if (!context || typeof context.reset !== "function") {
                 return;
             }
 
@@ -207,7 +211,7 @@ SpinBox {
     }
 
     onDevValueChanged: {
-        if (value != devValue) {
+        if (value !== devValue) {
             isDriverChanged = true
             value = devValue
         }

@@ -8,11 +8,20 @@ import QtCore
 GridLayout {
     id: control
 
+    readonly property real preferenceComboWidth: 200
+    readonly property real preferenceBottomTrackComboWidth: 250
+
     property int numPlots: numPlotsSpinBox.value
     property bool syncPlots: plotSyncCheckBox.checked
     property int instruments: instrumentsGradeList.currentIndex
     property var targetPlot: null
     property bool extraInfoVis: extraInfoPanelVisible.checked
+    property bool extraInfoDepthVis: extraInfoDepthVisible.checked
+    property bool extraInfoSpeedVis: extraInfoSpeedVisible.checked
+    property bool extraInfoCoordinatesVis: extraInfoCoordinatesVisible.checked
+    property bool extraInfoActivePointVis: extraInfoActivePointVisible.checked
+    property bool extraInfoSimpleNavV2Vis: extraInfoSimpleNavV2Visible.checked
+    property bool extraInfoBoatStatusVis: extraInfoBoatStatusVisible.checked
     property bool autopilotInfofVis: autopilotInfoVisible.checked
     property bool profilesButtonVis: profilesButtonCheck.checked
 
@@ -21,6 +30,44 @@ GridLayout {
 
     function updateBottomTrack() {
         updateBottomTrackButton.clicked()
+    }
+
+    function closeExtraInfoFiltersPopup() {
+        if (extraInfoSettingsButton.checked) {
+            extraInfoSettingsButton.checked = false
+        }
+        if (extraInfoFiltersPopup.opened) {
+            extraInfoFiltersPopup.close()
+        }
+    }
+
+    function toggleExtraInfoFiltersPopup() {
+        if (extraInfoSettingsButton.checked) {
+            extraInfoFiltersPopup.close()
+            return
+        }
+
+        if (!extraInfoSettingsButton.checked) {
+            positionExtraInfoFiltersPopup()
+            extraInfoFiltersPopup.open()
+        }
+    }
+
+    function positionExtraInfoFiltersPopup() {
+        var popupParent = extraInfoFiltersPopup.parent
+        if (!popupParent) {
+            return
+        }
+
+        var p = extraInfoSettingsButton.mapToItem(popupParent, 0, 0)
+        var desiredX = p.x + extraInfoSettingsButton.width + 8
+        var maxX = popupParent.width - extraInfoFiltersPopup.width - 8
+        var popupHeight = Math.max(extraInfoFiltersPopup.height, extraInfoFiltersPopup.implicitHeight)
+        var desiredY = p.y + (extraInfoSettingsButton.height - popupHeight) * 0.5
+        var maxY = popupParent.height - popupHeight - 8
+
+        extraInfoFiltersPopup.x = Math.max(8, Math.min(desiredX, maxX))
+        extraInfoFiltersPopup.y = Math.max(8, Math.min(desiredY, maxY))
     }
 
     ColumnLayout {
@@ -252,8 +299,12 @@ GridLayout {
                     CCombo  {
                         id: bottomTrackList
                         //                        Layout.fillWidth: true
-                        Layout.preferredWidth: 250
-                        model: [qsTr("Normal 2D"), qsTr("Narrow 2D"), qsTr("Echogram Side-Scan")]
+                        implicitContentWidthPolicy: ComboBox.WidestText
+                        Layout.fillWidth: false
+                        Layout.preferredWidth: preferenceBottomTrackComboWidth
+                        Layout.minimumWidth: preferenceBottomTrackComboWidth
+                        Layout.maximumWidth: preferenceBottomTrackComboWidth
+                        model: [qsTr("Normal 2D"), qsTr("Narrow 2D"), qsTr("Side-Scan")]
                         currentIndex: 0
 
 //                        onCurrentIndexChanged: bottomTrackProcessingGroup.updateProcessing()
@@ -686,6 +737,26 @@ GridLayout {
                         bottomTrackProcessingGroup.updateProcessing()
                     }
                 }
+
+                CButton {
+                    id: updateBottomTrackRealtimeButton
+                    text: qsTr("Realtime")
+                    checkable: true
+                    checked: false
+                    Layout.fillWidth: true
+
+                    onCheckedChanged: {
+                        core.setBottomTrackRealtimeFromSettings(checked)
+                    }
+
+                    Component.onCompleted: {
+                        core.setBottomTrackRealtimeFromSettings(checked)
+                    }
+
+                    //Settings {
+                    //    property alias updateBottomTrackRealtimeButton: updateBottomTrackRealtimeButton.checked
+                    //}
+                }
             }
         }
 
@@ -695,6 +766,8 @@ GridLayout {
 
             ColumnLayout {
                 RowLayout {
+                    id: exportPathRow
+                    property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
                     CTextField {
                         id: exportPathText
                         hoverEnabled: true
@@ -711,22 +784,30 @@ GridLayout {
                     CButton {
                         text: "..."
                         Layout.fillWidth: false
-                        onClicked: exportFileDialog.open()
+                        onClicked: {
+                            exportFileDialog.currentFolder = exportPathRow.exportFolder
+                            exportFileDialog.open()
+                        }
                     }
 
                     FolderDialog {
                         id: exportFileDialog
                         title: qsTr("Select folder for export")
 
-                        currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+                        currentFolder: exportPathRow.exportFolder
+
+                        onCurrentFolderChanged: {
+                            exportPathRow.exportFolder = currentFolder
+                        }
 
                         onAccepted: {
+                            exportPathRow.exportFolder = exportFileDialog.currentFolder
                             exportPathText.text = selectedFolder.toString()
                         }
                     }
 
                     Settings {
-                        property alias exportFolder: exportFileDialog.currentFolder
+                        property alias exportFolder: exportPathRow.exportFolder
                     }
 
                     Settings {
@@ -803,7 +884,11 @@ GridLayout {
 
                 CCombo  {
                     id: appLanguage
-                    Layout.fillWidth: true
+                    implicitContentWidthPolicy: ComboBox.WidestText
+                    Layout.fillWidth: false
+                    Layout.preferredWidth: control.preferenceComboWidth
+                    Layout.minimumWidth: control.preferenceComboWidth
+                    Layout.maximumWidth: control.preferenceComboWidth
                     model: [qsTr("English"), qsTr("Russian"), qsTr("Polish")]
                     currentIndex: 0
 
@@ -835,7 +920,11 @@ GridLayout {
 
                 CCombo  {
                     id: appTheme
-                    Layout.fillWidth: true
+                    implicitContentWidthPolicy: ComboBox.WidestText
+                    Layout.fillWidth: false
+                    Layout.preferredWidth: control.preferenceComboWidth
+                    Layout.minimumWidth: control.preferenceComboWidth
+                    Layout.maximumWidth: control.preferenceComboWidth
                     model: [qsTr("Dark"), qsTr("Super Dark"), qsTr("Light"), qsTr("Super Light")]
                     currentIndex: 0
 
@@ -853,7 +942,11 @@ GridLayout {
 
                 CCombo  {
                     id: instrumentsGradeList
-                    Layout.fillWidth: true
+                    implicitContentWidthPolicy: ComboBox.WidestText
+                    Layout.fillWidth: false
+                    Layout.preferredWidth: control.preferenceComboWidth
+                    Layout.minimumWidth: control.preferenceComboWidth
+                    Layout.maximumWidth: control.preferenceComboWidth
                     model: [qsTr("Fish Finders"), qsTr("Bottom Tracking"), qsTr("Maximum")]
                     currentIndex: 0
 
@@ -871,14 +964,41 @@ GridLayout {
             visible: instruments > 1
             groupName: qsTr("Interface")
 
-            CCheck {
-                id: extraInfoPanelVisible
-                text: qsTr("Extra info panel")
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
 
-                Settings {
-                    property alias extraBoatInfoVisible: extraInfoPanelVisible.checked
+                CCheck {
+                    id: extraInfoPanelVisible
+                    text: qsTr("Extra info panel")
+
+                    onCheckedChanged: {
+                        if (!checked) {
+                            extraInfoSettingsButton.checked = false 
+                            if (extraInfoFiltersPopup.opened) {
+                                extraInfoFiltersPopup.close()
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias extraBoatInfoVisible: extraInfoPanelVisible.checked
+                    }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                CButton {
+                    id: extraInfoSettingsButton
+                    text: qsTr("filter")
+                    visible: extraInfoPanelVisible.checked
+                    checkable: true
+                    onPressed: control.toggleExtraInfoFiltersPopup()
                 }
             }
+
             CCheck {
                 id: profilesButtonCheck
                 text: qsTr("Profiles button")
@@ -906,6 +1026,103 @@ GridLayout {
                 Settings {
                     property alias consoleVisible: consoleVisible.checked
                 }
+            }
+        }
+    }
+
+    Popup {
+        id: extraInfoFiltersPopup
+        parent: Overlay.overlay
+        //modal: false
+        focus: true
+        padding: 10
+        width: Math.max(220, theme.controlHeight * 8)
+
+        closePolicy: Popup.NoAutoClose | Popup.CloseOnEscape
+
+        background: Rectangle {
+            color: theme.menuBackColor
+            border.color: theme.controlBorderColor
+            border.width: 1
+            radius: 2
+        }
+
+        contentItem: ColumnLayout {
+            spacing: 6
+
+            CCheck {
+                id: extraInfoDepthVisible
+                text: qsTr("Depth")
+                checked: true
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoDepthVisible: extraInfoDepthVisible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoSpeedVisible
+                text: qsTr("Speed")
+                checked: true
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoSpeedVisible: extraInfoSpeedVisible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoCoordinatesVisible
+                text: qsTr("Coordinates")
+                checked: true
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoCoordinatesVisible: extraInfoCoordinatesVisible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoActivePointVisible
+                text: qsTr("Active point")
+                checked: true
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoActivePointVisible: extraInfoActivePointVisible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoSimpleNavV2Visible
+                text: qsTr("Navigation info")
+                checked: false
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoSimpleNavV2Visible: extraInfoSimpleNavV2Visible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoBoatStatusVisible
+                text: qsTr("Boat Status")
+                checked: false
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoBoatStatusVisible: extraInfoBoatStatusVisible.checked
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: scrollBar.contentItem
+        function onContentYChanged() { // menu scroll
+            if (extraInfoSettingsButton.checked) {
+                positionExtraInfoFiltersPopup()
             }
         }
     }

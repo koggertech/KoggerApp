@@ -242,9 +242,15 @@ bool DataHorizon::canEmitHorizon(bool beenChanged) const
     return retVal;
 }
 
+uint64_t DataHorizon::getActualAttitudeIndx() const
+{
+    return std::max(attitudeIndx_, artificalAttitudeIndx_);
+}
+
 void DataHorizon::tryCalcAndEmitMosaicIndx()
 {
-    uint64_t minMosaicHorizon = std::min(std::min(std::min(bottomTrackIndx_, chartIndx_), std::max(attitudeIndx_, artificalAttitudeIndx_)), sonarPosIndx_);
+    const uint64_t attitudeIndx = getActualAttitudeIndx();
+    uint64_t minMosaicHorizon = std::min(std::min(std::min(bottomTrackIndx_, chartIndx_), attitudeIndx), sonarPosIndx_);
     if (minMosaicHorizon > mosaicIndx_) {
         mosaicIndx_ = minMosaicHorizon;
         emit mosaicCanCalc(mosaicIndx_);
@@ -253,7 +259,8 @@ void DataHorizon::tryCalcAndEmitMosaicIndx()
 
 void DataHorizon::tryCalcAndEmitSonarPosIndx()
 {
-    uint64_t minSonarIndx = isAttitudeExpected_ ? std::min(positionIndx_, std::max(attitudeIndx_, artificalAttitudeIndx_)) : positionIndx_;
+    const uint64_t attitudeIndx = getActualAttitudeIndx();
+    uint64_t minSonarIndx = isAttitudeExpected_ ? std::min(positionIndx_, attitudeIndx) : positionIndx_;
     if (minSonarIndx > sonarPosIndx_) {
         sonarPosIndx_ = minSonarIndx;
         emit sonarPosCanCalc(sonarPosIndx_);

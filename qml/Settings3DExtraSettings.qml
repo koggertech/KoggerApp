@@ -179,6 +179,88 @@ MenuFrame {
             }
         }
 
+        RowLayout {
+            CheckButton {
+                id: syncLoupeCheckButton
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checked: false
+                text: qsTr("Loupe")
+                Layout.fillWidth: true
+
+                onToggled: {
+                    Scene3dToolBarController.onSyncLoupeVisibleChanged(checked)
+                }
+
+                onFocusChanged: {
+                    settings3DSettings.focus = true
+                }
+
+                Component.onCompleted: {
+                    Scene3dToolBarController.onSyncLoupeVisibleChanged(checked)
+                }
+            }
+
+            RowLayout {
+                visible: syncLoupeCheckButton.checked
+                CText {
+                    text: qsTr("size")
+                }
+                SpinBoxCustom {
+                    id: syncLoupeSizeSpinBox
+                    from: 1
+                    to: 3
+                    stepSize: 1
+                    value: 1
+
+                    onValueChanged: {
+                        Scene3dToolBarController.onSyncLoupeSizeChanged(value)
+                    }
+
+                    onFocusChanged: {
+                        settings3DSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        Scene3dToolBarController.onSyncLoupeSizeChanged(value)
+                    }
+                }
+            }
+
+            RowLayout {
+                visible: syncLoupeCheckButton.checked
+                CText {
+                    text: qsTr("zoom")
+                }
+                SpinBoxCustom {
+                    id: syncLoupeZoomSpinBox
+                    from: 1
+                    to: 3
+                    stepSize: 1
+                    value: 1
+
+                    onValueChanged: {
+                        Scene3dToolBarController.onSyncLoupeZoomChanged(value)
+                    }
+
+                    onFocusChanged: {
+                        settings3DSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        Scene3dToolBarController.onSyncLoupeZoomChanged(value)
+                    }
+                }
+            }
+
+            Settings {
+                property alias syncLoupeCheckButton: syncLoupeCheckButton.checked
+                property alias syncLoupeSizeSpinBox: syncLoupeSizeSpinBox.value
+                property alias syncLoupeZoomSpinBox: syncLoupeZoomSpinBox.value
+            }
+        }
+
         CheckButton {
             id: isNorthViewButton
             objectName: "isNorthViewButton"
@@ -433,18 +515,17 @@ MenuFrame {
         }
 
         CheckButton {
-            id: navigationArrowCheckButton
-            objectName: "navigationArrowCheckButton"
+            id: shadowEnabledCheckButton
+            objectName: "shadowEnabledCheckButton"
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            iconSource: "qrc:/icons/ui/speedboat.svg"
-            text: qsTr("Boat")
+            text: qsTr("Shadows")
             Layout.fillWidth: true
 
             onToggled: {
-                NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                Scene3dToolBarController.onShadowsEnabledChanged(checked)
             }
 
             onFocusChanged: {
@@ -452,11 +533,290 @@ MenuFrame {
             }
 
             Component.onCompleted: {
-                NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                Scene3dToolBarController.onShadowsEnabledChanged(checked)
+            }
+        }
+
+        RowLayout {
+            id: shadowSettingsRow
+            Layout.fillWidth: true
+            visible: false //shadowEnabledCheckButton.checked
+
+            function formatShadowValue(value) {
+                return Number(value).toLocaleString(Qt.locale(), 'f', 2)
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 4
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    CText {
+                        Layout.preferredWidth: 84
+                        text: qsTr("Vector X:")
+                    }
+
+                    Slider {
+                        id: shadowVectorXSlider
+                        objectName: "shadowVectorXSpinBox"
+                        Layout.fillWidth: true
+                        from: -1.0
+                        to: 1.0
+                        stepSize: 0.01
+                        value: 0.40
+                        enabled: shadowEnabledCheckButton.checked
+
+                        onPressedChanged: {
+                            if (pressed) {
+                                settings3DSettings.focus = true
+                            }
+                        }
+
+                        onValueChanged: {
+                            Scene3dToolBarController.onShadowVectorXChanged(value)
+                        }
+
+                        Component.onCompleted: {
+                            Scene3dToolBarController.onShadowVectorXChanged(value)
+                        }
+                    }
+
+                    CText {
+                        Layout.preferredWidth: 48
+                        horizontalAlignment: Text.AlignRight
+                        text: shadowSettingsRow.formatShadowValue(shadowVectorXSlider.value)
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    CText {
+                        Layout.preferredWidth: 84
+                        text: qsTr("Vector Y:")
+                    }
+
+                    Slider {
+                        id: shadowVectorYSlider
+                        objectName: "shadowVectorYSpinBox"
+                        Layout.fillWidth: true
+                        from: -1.0
+                        to: 1.0
+                        stepSize: 0.01
+                        value: 0.40
+                        enabled: shadowEnabledCheckButton.checked
+
+                        onPressedChanged: {
+                            if (pressed) {
+                                settings3DSettings.focus = true
+                            }
+                        }
+
+                        onValueChanged: {
+                            Scene3dToolBarController.onShadowVectorYChanged(value)
+                        }
+
+                        Component.onCompleted: {
+                            Scene3dToolBarController.onShadowVectorYChanged(value)
+                        }
+                    }
+
+                    CText {
+                        Layout.preferredWidth: 48
+                        horizontalAlignment: Text.AlignRight
+                        text: shadowSettingsRow.formatShadowValue(shadowVectorYSlider.value)
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    CText {
+                        Layout.preferredWidth: 84
+                        text: qsTr("Vector Z:")
+                    }
+
+                    Slider {
+                        id: shadowVectorZSlider
+                        objectName: "shadowVectorZSpinBox"
+                        Layout.fillWidth: true
+                        from: -1.0
+                        to: 1.0
+                        stepSize: 0.01
+                        value: 0.40
+                        enabled: shadowEnabledCheckButton.checked
+
+                        onPressedChanged: {
+                            if (pressed) {
+                                settings3DSettings.focus = true
+                            }
+                        }
+
+                        onValueChanged: {
+                            Scene3dToolBarController.onShadowVectorZChanged(value)
+                        }
+
+                        Component.onCompleted: {
+                            Scene3dToolBarController.onShadowVectorZChanged(value)
+                        }
+                    }
+
+                    CText {
+                        Layout.preferredWidth: 48
+                        horizontalAlignment: Text.AlignRight
+                        text: shadowSettingsRow.formatShadowValue(shadowVectorZSlider.value)
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    CText {
+                        Layout.preferredWidth: 84
+                        text: qsTr("Ambient:")
+                    }
+
+                    Slider {
+                        id: shadowAmbientSlider
+                        objectName: "shadowAmbientSpinBox"
+                        Layout.fillWidth: true
+                        from: 0.0
+                        to: 1.0
+                        stepSize: 0.05
+                        value: 0.35
+                        enabled: shadowEnabledCheckButton.checked
+
+                        onPressedChanged: {
+                            if (pressed) {
+                                settings3DSettings.focus = true
+                            }
+                        }
+
+                        onValueChanged: {
+                            Scene3dToolBarController.onShadowAmbientChanged(value)
+                        }
+
+                        Component.onCompleted: {
+                            Scene3dToolBarController.onShadowAmbientChanged(value)
+                        }
+                    }
+
+                    CText {
+                        Layout.preferredWidth: 48
+                        horizontalAlignment: Text.AlignRight
+                        text: shadowSettingsRow.formatShadowValue(shadowAmbientSlider.value)
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    CText {
+                        Layout.preferredWidth: 84
+                        text: qsTr("Highlight:")
+                    }
+
+                    Slider {
+                        id: shadowHighlightSlider
+                        objectName: "shadowHighlightSpinBox"
+                        Layout.fillWidth: true
+                        from: 0.0
+                        to: 1.0
+                        stepSize: 0.05
+                        value: 0.70
+                        enabled: shadowEnabledCheckButton.checked
+
+                        onPressedChanged: {
+                            if (pressed) {
+                                settings3DSettings.focus = true
+                            }
+                        }
+
+                        onValueChanged: {
+                            Scene3dToolBarController.onShadowHighlightChanged(value)
+                        }
+
+                        Component.onCompleted: {
+                            Scene3dToolBarController.onShadowHighlightChanged(value)
+                        }
+                    }
+
+                    CText {
+                        Layout.preferredWidth: 48
+                        horizontalAlignment: Text.AlignRight
+                        text: shadowSettingsRow.formatShadowValue(shadowHighlightSlider.value)
+                    }
+                }
+            }
+
+            Settings {
+                property alias shadowEnabledCheckButton: shadowEnabledCheckButton.checked
+                property alias shadowVectorXSpinBox: shadowVectorXSlider.value
+                property alias shadowVectorYSpinBox: shadowVectorYSlider.value
+                property alias shadowVectorZSpinBox: shadowVectorZSlider.value
+                property alias shadowAmbientSpinBox: shadowAmbientSlider.value
+                property alias shadowHighlightSpinBox: shadowHighlightSlider.value
+            }
+        }
+
+        RowLayout {
+            CheckButton {
+                id: navigationArrowCheckButton
+                objectName: "navigationArrowCheckButton"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checked: true
+                iconSource: "qrc:/icons/ui/speedboat.svg"
+                text: qsTr("Boat")
+                Layout.fillWidth: true
+
+                onToggled: {
+                    NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                }
+
+                onFocusChanged: {
+                    settings3DSettings.focus = true
+                }
+
+                Component.onCompleted: {
+                    NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                }
+            }
+
+            RowLayout {
+                visible: navigationArrowCheckButton.checked
+
+                CText {
+                    text: qsTr("Size:")
+                }
+
+                SpinBoxCustom {
+                    id: navigationArrowSizeSpinBox
+                    from: 1
+                    to: 5
+                    stepSize: 1
+                    value: 1
+
+                    onValueChanged: {
+                        NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(value)
+                    }
+
+                    onFocusChanged: {
+                        settings3DSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(value)
+                    }
+                }
             }
 
             Settings {
                 property alias navigationArrowCheckButton: navigationArrowCheckButton.checked
+                property alias navigationArrowSizeSpinBox: navigationArrowSizeSpinBox.value
             }
         }
 

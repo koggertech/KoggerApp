@@ -606,7 +606,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
         }
 
         auto pos = epoch.getSonarPosition().ned;
-        auto yaw = epoch.yaw();
+        auto yaw = epoch.tryRetValidYaw();
         if (isfinite(pos.n) && isfinite(pos.e) && isfinite(yaw)) {
             bool acceptedEven = false, acceptedOdd = false;
             double azRad = qDegreesToRadians(yaw);

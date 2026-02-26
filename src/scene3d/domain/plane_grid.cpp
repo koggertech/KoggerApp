@@ -1,6 +1,7 @@
 #include "plane_grid.h"
 
 #include <QtMath>
+#include <utility>
 #include "draw_utils.h"
 #include <text_renderer.h>
 
@@ -489,8 +490,8 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
             textProjection.ortho(vport.toRect());
 
             const QMatrix4x4 modelView = view * model;
-
-            auto &tr = TextRenderer::instance();
+            QVector<TextRenderer::Text2DItem> labelItems;
+            labelItems.reserve(maxRing + parts);
 
             const float mainAngleDeg = -90.0f;
             const float mainAngleRad = qDegreesToRadians(mainAngleDeg);
@@ -507,7 +508,7 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
                 pScreen.setY(pScreen.y() + 8.0f);
 
                 QString text = QString::number(static_cast<int>(qRound(r))) + " m";
-                tr.render(text, 0.7f, pScreen, true, ctx, textProjection, shaderProgramMap);
+                labelItems.append(TextRenderer::Text2DItem{std::move(text), 0.7f, pScreen, true});
             }
 
             const float labelRadius = maxRadius + radiusStep * 0.7f;
@@ -526,7 +527,11 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
                 pScreen.setY(pScreen.y() + 4.0f);
 
                 QString text = QString::number(static_cast<int>(qRound(angleDeg))) + QChar(0x00B0);
-                tr.render(text, 0.8f, pScreen, /*drawBackground*/ true, ctx, textProjection, shaderProgramMap);
+                labelItems.append(TextRenderer::Text2DItem{std::move(text), 0.8f, pScreen, true});
+            }
+
+            if (!labelItems.isEmpty()) {
+                TextRenderer::instance().render2DBatch(labelItems, ctx, textProjection, shaderProgramMap);
             }
         }
     }

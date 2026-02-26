@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQml.Models
+import QtCore
 
 Item {
     id: root
@@ -13,6 +14,13 @@ Item {
     property real panelWidth: theme.controlHeight * 12
     property real panelPadding: 10
     property var addMenuState: ({})
+    property var openKgtFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property var saveKgtFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+
+    Settings {
+        property alias openKgtFolder: root.openKgtFolder
+        property alias saveKgtFolder: root.saveKgtFolder
+    }
 
     function toLocalPath(url) {
         var s = url.toString()
@@ -74,7 +82,10 @@ Item {
                     checkable: false
                     iconSource: "qrc:/icons/ui/file_import.svg"
                     text: "Import"
-                    onClicked: openKgtDialog.open()
+                    onClicked: {
+                        openKgtDialog.currentFolder = root.openKgtFolder
+                        openKgtDialog.open()
+                    }
                 }
 
                 CheckButton {
@@ -82,7 +93,10 @@ Item {
                     iconSource: "qrc:/icons/ui/file_export.svg"
                     text: "Export"
                     enabled: geo !== null
-                    onClicked: saveKgtDialog.open()
+                    onClicked: {
+                        saveKgtDialog.currentFolder = root.saveKgtFolder
+                        saveKgtDialog.open()
+                    }
                 }
 
                 CheckButton {
@@ -589,8 +603,15 @@ Item {
         id: openKgtDialog
         title: "Open KGT"
         fileMode: FileDialog.OpenFile
+        currentFolder: root.openKgtFolder
         nameFilters: ["Kogger Geometry Tree (*.kgt)", "All Files (*)"]
+
+        onCurrentFolderChanged: {
+            root.openKgtFolder = currentFolder
+        }
+
         onAccepted: {
+            root.openKgtFolder = openKgtDialog.currentFolder
             const path = root.toLocalPath(openKgtDialog.selectedFile)
             if (geo) geo.loadKgt(path)
         }
@@ -600,8 +621,15 @@ Item {
         id: saveKgtDialog
         title: "Save KGT"
         fileMode: FileDialog.SaveFile
+        currentFolder: root.saveKgtFolder
         nameFilters: ["Kogger Geometry Tree (*.kgt)", "All Files (*)"]
+
+        onCurrentFolderChanged: {
+            root.saveKgtFolder = currentFolder
+        }
+
         onAccepted: {
+            root.saveKgtFolder = saveKgtDialog.currentFolder
             const path = root.toLocalPath(saveKgtDialog.selectedFile)
             if (geo) geo.saveKgt(path)
         }

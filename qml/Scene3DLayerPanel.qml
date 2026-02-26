@@ -78,7 +78,7 @@ Item {
             anchors.margins: root.panelPadding
             spacing: 8
 
-            Text {
+            CText {
                 text: qsTr("Map settings")
                 color: theme.textColor
                 font: theme.textFont
@@ -98,10 +98,12 @@ Item {
 
                 onToggled: {
                     MapViewControlMenuController.onVisibilityChanged(checked)
+                    core.setMapTileLoadingEnabled(checked)
                 }
 
                 Component.onCompleted: {
                     MapViewControlMenuController.onVisibilityChanged(checked)
+                    core.setMapTileLoadingEnabled(checked)
                 }
 
                 Settings {
@@ -109,7 +111,24 @@ Item {
                 }
             }
 
-            Text {
+            CText {
+                text: qsTr("Internet")
+                color: theme.textColor
+                font: theme.textFont
+                opacity: 0.7
+                Layout.fillWidth: true
+            }
+
+            Rectangle {
+                width: 10
+                height: 10
+                radius: width / 2
+                color: core.internetAvailable ? "#35c759" : "#ff3b30"
+                border.width: 1
+                border.color: theme.controlBorderColor
+            }
+
+            CText {
                 text: qsTr("Providers")
                 color: theme.textColor
                 font: theme.textFont

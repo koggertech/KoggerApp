@@ -12,10 +12,10 @@ import QtCore
 ApplicationWindow  {
     id:            mainview
     visible:       true
-    width:         1024
-    minimumWidth:  512
-    height:        512
-    minimumHeight: 256
+    width:         1280 // 21:9
+    minimumWidth:  640
+    height:        540
+    minimumHeight: 272
     color:         "black"
     title:         qsTr("KoggerApp, KOGGER")
 
@@ -423,6 +423,15 @@ ApplicationWindow  {
 
                 property bool longPressTriggered: false
                 property int currentZoom: -1
+                property bool syncLoupeUiAllowed: (menuBar !== null) ? (menuBar.is3DVisible && !menuBar.is2DVisible) : false
+
+                onSyncLoupeUiAllowedChanged: {
+                    setSyncLoupeUiAllowed(syncLoupeUiAllowed)
+                }
+
+                Component.onCompleted: {
+                    setSyncLoupeUiAllowed(syncLoupeUiAllowed)
+                }
 
                 onSendDataZoom: function(zoom) {
                     currentZoom = zoom;
@@ -431,7 +440,7 @@ ApplicationWindow  {
                 PinchArea {
                     id:           pinch3D
                     anchors.fill: parent
-                    enabled:      true
+                    enabled:      !extraInfoPanel.touchInteractionActive
 
                     onPinchStarted: {
                         menuBlock.visible = false
@@ -501,7 +510,10 @@ ApplicationWindow  {
                                 }
                             }
 
-                            renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
+                            const activeButtons = (Qt.platform.os === "android" && lastMouseKeyPressed !== Qt.NoButton)
+                                    ? lastMouseKeyPressed
+                                    : mouse.buttons
+                            renderer.mouseMoveTrigger(activeButtons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
                         onPressed: function(mouse) {
@@ -577,6 +589,147 @@ ApplicationWindow  {
                     geo: renderer.geoJsonController
                     view: renderer
                     z: 3
+                }
+
+                Item {
+                    id: syncLoupeOverlay
+                    visible: renderer.visible
+                             && menuBar.is3DVisible
+                             && !menuBar.is2DVisible
+                             && renderer.syncLoupeOverlayVisible
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.rightMargin: Math.round(12 * theme.resCoeff)
+                    anchors.bottomMargin: Math.round(12 * theme.resCoeff)
+                    z: 1002
+
+                    property real sizeMultiplier: renderer.syncLoupeSize === 2 ? 1.5 : (renderer.syncLoupeSize === 3 ? 2.25 : 1.0)
+                    property int baseSide: Math.round(180 * theme.resCoeff * sizeMultiplier)
+                    property int maxSide: Math.max(64, Math.min(renderer.width, renderer.height) - 2 * anchors.rightMargin)
+                    property int side: Math.max(64, Math.min(baseSide, maxSide))
+                    property int sourceDepthReferencePx: 0
+
+                    width: side
+                    height: side
+
+                    function refreshLoupePlot() {
+                        if (!visible || renderer.syncLoupeEpochIndex < 0) {
+                            return
+                        }
+
+                        const zoomMultiplier = renderer.syncLoupeZoom === 2 ? 1.5 : (renderer.syncLoupeZoom === 3 ? 2.25 : 1.0)
+                        const previewSourceBaseSize = Math.max(8, Math.floor(syncLoupeOverlay.side / 4))
+                        const previewSourceSize = Math.max(4, Math.floor(previewSourceBaseSize / zoomMultiplier))
+                        const ch1Name = waterViewFirst.plotDatasetChannelName()
+                        const ch2Name = waterViewFirst.plotDatasetChannel2Name()
+                        let mainDepthPxCandidate = waterViewFirst.horizontal ? Math.floor(waterViewFirst.height) : Math.floor(waterViewFirst.width)
+                        if (mainDepthPxCandidate <= 0) {
+                            const outerRows = Math.max(1, visualisationLayout.rows)
+                            const outerCols = Math.max(1, visualisationLayout.columns)
+                            const twoDCellHeight = Math.max(1, Math.floor(visualisationLayout.height / outerRows))
+                            const twoDCellWidth = Math.max(1, Math.floor(visualisationLayout.width / outerCols))
+                            const sliderHeight = Math.max(1, Math.floor(theme.controlHeight))
+                            const plotsCount = menuBar.numPlots === 2 ? 2 : 1
+                            const syntheticPlotHeight = Math.max(1, Math.floor((twoDCellHeight - sliderHeight) / plotsCount))
+                            const syntheticPlotWidth = Math.max(1, twoDCellWidth)
+                            mainDepthPxCandidate = waterViewFirst.horizontal ? syntheticPlotHeight : syntheticPlotWidth
+                        }
+                        if (mainDepthPxCandidate > 0) {
+                            sourceDepthReferencePx = mainDepthPxCandidate
+                        }
+                        if (sourceDepthReferencePx <= 0) {
+                            sourceDepthReferencePx = Math.max(1, Math.floor(syncLoupePlot3D.height))
+                        }
+
+                        const from2D = waterViewFirst.cursorFrom()
+                        const to2D = waterViewFirst.cursorTo()
+                        const has2DRange = isFinite(from2D) && isFinite(to2D) && Math.abs(to2D - from2D) > 0.0001
+                        const cursorFrom = has2DRange ? from2D : renderer.syncLoupeDepthFrom
+                        const cursorTo = has2DRange ? to2D : renderer.syncLoupeDepthTo
+                        const centerDepth = waterViewFirst.getLoupeDepthForEpoch(renderer.syncLoupeEpochIndex)
+
+                        syncLoupePlot3D.horizontal = waterViewFirst.horizontal
+                        syncLoupePlot3D.plotDatasetChannelFromStrings(ch1Name, ch2Name)
+                        syncLoupePlot3D.plotEchogramTheme(waterViewFirst.getThemeId())
+                        syncLoupePlot3D.plotEchogramSetLevels(waterViewFirst.getLowEchogramLevel(), waterViewFirst.getHighEchogramLevel())
+                        syncLoupePlot3D.plotEchogramCompensation(waterViewFirst.getEchogramCompensation())
+
+                        syncLoupePlot3D.setCursorFromTo(cursorFrom, cursorTo)
+                        syncLoupePlot3D.setTimelinePositionByEpochCentered(renderer.syncLoupeEpochIndex)
+                        syncLoupePlot3D.setZoomPreviewSourceSize(previewSourceSize)
+                        syncLoupePlot3D.setZoomPreviewReferenceDepthPixels(sourceDepthReferencePx)
+                        syncLoupePlot3D.setZoomPreviewFlipY(renderer.syncLoupeFlipY)
+                        syncLoupePlot3D.setZoomPreviewSourceByEpochDepth(renderer.syncLoupeEpochIndex, centerDepth)
+                        syncLoupePlot3D.update()
+                    }
+
+                    onVisibleChanged: {
+                        if (visible) {
+                            refreshLoupePlot()
+                        }
+                    }
+
+                    onWidthChanged: {
+                        if (visible) {
+                            refreshLoupePlot()
+                        }
+                    }
+
+                    Connections {
+                        target: renderer
+                        function onSyncLoupeStateChanged() {
+                            syncLoupeOverlay.refreshLoupePlot()
+                        }
+                    }
+
+                    Connections {
+                        target: waterViewFirst
+                        function onTimelinePositionChanged() {
+                            syncLoupeOverlay.refreshLoupePlot()
+                        }
+                        function onEchogramThemeChanged(themeId) {
+                            syncLoupeOverlay.refreshLoupePlot()
+                        }
+                    }
+
+                    Rectangle {
+                        id: syncLoupeFrame
+                        anchors.fill: parent
+                        color: "black"
+                        border.color: "#545E84"
+                        border.width: Math.max(1, Math.round(2 * theme.resCoeff))
+                        radius: Math.max(1, Math.round(2 * theme.resCoeff))
+                        clip: true
+
+                        WaterFall {
+                            id: syncLoupePlot3D
+                            objectName: "syncLoupe3DPlot"
+                            anchors.fill: parent
+                            anchors.margins: syncLoupeFrame.border.width
+                            horizontal: true
+                            enabled: false
+
+                            Component.onCompleted: {
+                                core.registerSyncLoupePlot(syncLoupePlot3D)
+                                setZoomPreviewMode(true)
+                                plotBottomTrackVisible(false)
+                                plotRangefinderVisible(false)
+                                plotAttitudeVisible(false)
+                                plotTemperatureVisible(false)
+                                plotDopplerBeamVisible(false, 0)
+                                plotDopplerInstrumentVisible(false)
+                                plotGNSSVisible(false, 0)
+                                plotAcousticAngleVisible(false)
+                                plotVelocityVisible(false)
+                                plotAngleVisibility(false)
+                                plotGridVerticalNumber(0)
+                                plotGridFillWidth(false)
+                                plotGridInvert(false)
+                                plotDistanceAutoRange(-1)
+                                plotEchogramCompensation(0)
+                            }
+                        }
+                    }
                 }
 
                 Rectangle {
@@ -1128,6 +1281,7 @@ ApplicationWindow  {
         Settings {
             id: profilesStorage
             property var savedProfiles: []
+            property var lastProfileFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         }
 
         function loadSavedProfiles() {
@@ -1173,10 +1327,16 @@ ApplicationWindow  {
             id: profilePickDialog
             title: qsTr("Select profile XML")
             fileMode: FileDialog.OpenFile
+            currentFolder: profilesStorage.lastProfileFolder
             nameFilters: Qt.platform.os === "android" ? ["*/*"] : ["XML files (*.xml)"]
+
+            onCurrentFolderChanged: {
+                profilesStorage.lastProfileFolder = currentFolder
+            }
 
             onAccepted: {
                 if (profilesDialog.browseRow < 0) return
+                profilesStorage.lastProfileFolder = profilePickDialog.currentFolder
                 const p = profilesDialog.urlToPath(profilePickDialog.selectedFile)
                 profilesModel.setProperty(profilesDialog.browseRow, "path", p)
                 profilesDialog.browseRow = -1
@@ -1243,6 +1403,7 @@ ApplicationWindow  {
                                 text: qsTr("Browse")
                                 onClicked: {
                                     profilesDialog.browseRow = index
+                                    profilePickDialog.currentFolder = profilesStorage.lastProfileFolder
                                     profilePickDialog.open()
                                 }
                             }
@@ -1274,143 +1435,15 @@ ApplicationWindow  {
         }
     }
 
-    MenuFrame {
+    ExtraInfoPanel {
         id: extraInfoPanel
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.margins: 12
-        visible: menuBar.extraInfoVis && !showBanner && dataset.isBoatCoordinateValid
-        isDraggable: true
-        isOpacityControlled: true
-        horizontalMargins: 12
-        verticalMargins: 10
-        spacing: 8
-
-        function lpad(s, w, ch) {
-            s = String(s)
-            while (s.length < w) s = (ch || ' ') + s
-            return s
-        }
-        function formatFixed(value, fracDigits, intWidth) {
-            if (!isFinite(value)) return lpad("-", intWidth + 1 + fracDigits)
-            var sign = value < 0 ? "-" : " "
-            var abs  = Math.abs(value)
-            var s    = abs.toFixed(fracDigits)
-            var p    = s.split(".")
-            var intP = lpad(p[0], intWidth, " ")
-            return sign + intP + (fracDigits > 0 ? "." + p[1] : "")
-        }
-        function toDMS(value, isLat) {
-            var hemi = isLat ? (value >= 0 ? "N" : "S") : (value >= 0 ? "E" : "W");
-            var abs  = Math.abs(value)
-            var s    = abs.toFixed(4)
-            var p    = s.split(".")
-            var intP = lpad(p[0], 3, " ")
-            return hemi + " " + intP + "." + p[1]
-        }
-
-        property string latDms: ""
-        property string lonDms: ""
-        property string distStr: ""
-        property string angStr: ""
-        property string depthStr: ""
-        property string speedStr: ""
-
-        function updateFields() {
-            latDms   = toDMS(dataset.boatLatitude,  true)  + qsTr("°")
-            lonDms   = toDMS(dataset.boatLongitude, false) + qsTr("°")
-            distStr  = formatFixed(dataset.distToContact, 1, 3) + qsTr(" m")
-            angStr   = formatFixed(dataset.angleToContact, 1, 3) + qsTr("°")
-            depthStr = formatFixed(dataset.depth, 1, 3) + qsTr(" m")
-            speedStr = formatFixed(dataset.speed, 1, 3) + qsTr(" km/h")
-        }
-
-        Timer {
-            interval: 333
-            repeat: true
-            running: extraInfoPanel.visible
-            triggeredOnStart: true
-            onTriggered: extraInfoPanel.updateFields()
-        }
-
-        ColumnLayout {
-            spacing: 6
-
-            ColumnLayout {
-
-                CText {
-                    visible: dataset.isLastDepthValid
-                    text: extraInfoPanel.depthStr
-                    font.bold: true
-                    font.pixelSize: 40 * theme.resCoeff
-                    font.family: "monospace"
-                    leftPadding: 4
-                }
-
-                CText {
-                    visible: dataset.isValidSpeed
-                    text: extraInfoPanel.speedStr
-                    font.bold: true
-                    font.pixelSize: 40 * theme.resCoeff
-                    font.family: "monospace"
-                    leftPadding: 4
-                }
-            }
-
-            ColumnLayout {
-                visible: dataset.isBoatCoordinateValid
-
-                CText {
-                    text: qsTr("Boat position")
-                    leftPadding: 4
-                    rightPadding: 4
-                    font.bold: true
-                    font.pixelSize: 16 * theme.resCoeff
-                }
-
-                RowLayout {
-                    spacing: 6
-                    CText { text: qsTr("Lat.:"); opacity: 0.7; leftPadding: 4; }
-                    Item  { Layout.fillWidth: true }
-                    CText { text: extraInfoPanel.latDms; }
-                }
-
-                RowLayout {
-                    spacing: 6
-                    CText { text: qsTr("Lon.:"); opacity: 0.7; leftPadding: 4; }
-                    Item  { Layout.fillWidth: true }
-                    CText { text: extraInfoPanel.lonDms; }
-                }
-            }
-
-            ColumnLayout {
-                visible: dataset.isActiveContactIndxValid
-
-                CText {
-                    text: qsTr("Active point")
-                    leftPadding: 4
-                    rightPadding: 4
-                    font.bold: true
-                    font.pixelSize: 16 * theme.resCoeff
-                }
-
-                RowLayout {
-                    spacing: 6
-                    CText { text: qsTr("Dist.:"); opacity: 0.7; leftPadding: 4 }
-                    Item  { Layout.fillWidth: true }
-                    CText { text: extraInfoPanel.distStr; }
-                }
-
-                RowLayout {
-                    spacing: 6
-                    CText { text: qsTr("Ang.:"); opacity: 0.7; leftPadding: 4 }
-                    Item  { Layout.fillWidth: true }
-                    CText { text: extraInfoPanel.angStr; }
-                }
-            }
-        }
+        menuBarState: menuBar
+        datasetState: dataset
+        showBanner: mainview.showBanner
     }
-
     // бровь
     MenuFrame {
         anchors.top: parent.top
@@ -1511,7 +1544,7 @@ ApplicationWindow  {
                 //     currentIndex: deviceManagerWrapper.pilotModeState
 
                 //     onCurrentIndexChanged: {
-                //         if(currentIndex != deviceManagerWrapper.pilotModeState) {
+                //         if(currentIndex !== deviceManagerWrapper.pilotModeState) {
                 //             currentIndex = deviceManagerWrapper.pilotModeState
                 //         }
                 //     }
@@ -1561,6 +1594,9 @@ ApplicationWindow  {
 
     function handlePlotCursorChanged(indx, from, to) {
         if (!menuBar.syncPlots) {
+            if (renderer.syncLoupeOverlayVisible) {
+                syncLoupeOverlay.refreshLoupePlot()
+            }
             return;
         }
 
@@ -1571,6 +1607,10 @@ ApplicationWindow  {
         if (indx === 2) {
             waterViewFirst.setCursorFromTo(from, to)
             waterViewFirst.update()
+        }
+
+        if (renderer.syncLoupeOverlayVisible) {
+            syncLoupeOverlay.refreshLoupePlot()
         }
     }
 
@@ -1642,3 +1682,4 @@ ApplicationWindow  {
         }
     }
 }
+

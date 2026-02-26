@@ -50,6 +50,7 @@ DevDriver::DevDriver(QObject *parent)
     regID(idUpdate = new IDBinUpdate(), &DevDriver::receivedUpdate);
 
     regID(idNav = new IDBinNav(), &DevDriver::receivedNav);
+    regID(idBoatStatus = new IDBinBoatStatus(), &DevDriver::receivedBoatStatus);
     regID(idDVL = new IDBinDVL(), &DevDriver::receivedDVL);
     regID(idDVLMode = new IDBinDVLMode(), &DevDriver::receivedDVLMode);
 
@@ -173,6 +174,10 @@ QList<QTimer *> DevDriver::getChildTimers()
     if (idNav) {
         timers.append(idNav->getSetTimer());
         timers.append(idNav->getColdStartTimer());
+    }
+    if (idBoatStatus) {
+        timers.append(idBoatStatus->getSetTimer());
+        timers.append(idBoatStatus->getColdStartTimer());
     }
     if (idDVL) {
         timers.append(idDVL->getSetTimer());
@@ -583,6 +588,9 @@ void DevDriver::initChildsTimersConnects()
     }
     if (idNav) {
         idNav->initTimersConnects();
+    }
+    if (idBoatStatus) {
+        idBoatStatus->initTimersConnects();
     }
     if (idDVL) {
         idDVL->initTimersConnects();
@@ -1405,22 +1413,101 @@ void DevDriver::receivedUpdate(Parsers::Type type, Parsers::Version ver, Parsers
 void DevDriver::receivedNav(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
 {
     Q_UNUSED(type);
-    Q_UNUSED(ver);
-    Q_UNUSED(resp);
 
-    if(resp == respNone) {
-        if(ver == v1) {
-#ifndef SEPARATE_READING
-            core.consoleInfo(QString("ROV: yaw: %1, pitch: %2, roll: %3, lat: %4, lon: %5, depth: %6")
-                                .arg(idNav->yaw()).arg(idNav->pitch()).arg(idNav->roll())
-                                .arg(idNav->latitude()).arg(idNav->longitude())
-                                .arg(idNav->depth())
-                             );
-#endif
-            emit positionComplete(idNav->latitude(), idNav->longitude(), 0, 0);
-            emit attitudeComplete(idNav->yaw(), idNav->pitch(), idNav->roll());
-            emit depthComplete(idNav->depth());
+    if (resp == respNone && ver == v2) {
+        const uint8_t gnssFixType = idNav->gnssFixTypeV2();
+        const uint8_t numSats = idNav->numSatsV2();
+        const uint32_t unixTime = idNav->unixTimeV2();
+        const int16_t unixOffsetMs = idNav->unixOffsetMsV2();
+
+        int32_t unixOffsetNs = static_cast<int32_t>(idNav->unixOffsetMsV2()) * 1000000;
+        if (unixOffsetNs < 0) {
+            unixOffsetNs = 0;
         }
+
+        const double latitude = idNav->latitudeV2();
+        const double longitude = idNav->longitudeV2();
+        const double courseDeg = idNav->groundCourseDegV2();
+        const double velocityMps = idNav->groundVelocityMpsV2();
+        const float yawDeg = idNav->yawV2();
+        const float pitchDeg = idNav->pitchV2();
+        const float rollDeg = idNav->rollV2();
+
+#ifndef SEPARATE_READING
+        core.consoleInfo(QString("SimpleNavV2: fix %1 sats %2 lat %3 lon %4 course %5 speed %6 yaw %7 pitch %8 roll %9")
+                             .arg(gnssFixType)
+                             .arg(numSats)
+                             .arg(latitude, 0, 'f', 7)
+                             .arg(longitude, 0, 'f', 7)
+                             .arg(courseDeg, 0, 'f', 2)
+                             .arg(velocityMps, 0, 'f', 3)
+                             .arg(yawDeg, 0, 'f', 2)
+                             .arg(pitchDeg, 0, 'f', 2)
+                             .arg(rollDeg, 0, 'f', 2));
+#endif
+
+        emit simpleNavV2Complete(gnssFixType, numSats, unixTime, unixOffsetMs,
+                                 latitude, longitude, courseDeg, velocityMps,
+                                 yawDeg, pitchDeg, rollDeg);
+        emit positionComplete(latitude, longitude, unixTime, static_cast<uint32_t>(unixOffsetNs));
+        emit gnssVelocityComplete(velocityMps, courseDeg);
+        emit attitudeComplete(yawDeg, pitchDeg, rollDeg);
+
+        //qDebug() << "SimpleNavV2 parsed (driver):"
+        //         << "fix=" << idNav->gnssFixTypeV2()
+        //         << "sats=" << idNav->numSatsV2()
+        //         << "unixTime=" << idNav->unixTimeV2()
+        //         << "unixOffsetMs=" << idNav->unixOffsetMsV2()
+        //         << "lat=" << latitude
+        //         << "lon=" << longitude
+        //         << "courseDeg=" << courseDeg
+        //         << "velocityMps=" << velocityMps
+        //         << "yaw=" << yawDeg
+        //         << "pitch=" << pitchDeg
+        //         << "roll=" << rollDeg;
+    }
+
+    if (resp == respNone && ver == v1) {
+        const double latitude = idNav->latitude();
+        const double longitude = idNav->longitude();
+        const float yawDeg = idNav->yaw();
+        const float pitchDeg = idNav->pitch();
+        const float rollDeg = idNav->roll();
+        const float depthM = idNav->depth();
+
+#ifndef SEPARATE_READING
+        core.consoleInfo(QString("ROV: yaw: %1, pitch: %2, roll: %3, lat: %4, lon: %5, depth: %6")
+                             .arg(yawDeg)
+                             .arg(pitchDeg)
+                             .arg(rollDeg)
+                             .arg(latitude)
+                             .arg(longitude)
+                             .arg(depthM));
+#endif
+
+        emit positionComplete(latitude, longitude, 0, 0);
+        emit attitudeComplete(yawDeg, pitchDeg, rollDeg);
+        emit depthComplete(depthM);
+    }
+}
+
+void DevDriver::receivedBoatStatus(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
+{
+    Q_UNUSED(type);
+
+    if (resp == respNone && ver == v0) {
+        const uint8_t batteryBoat = idBoatStatus->batteryBoatPercent();
+        const uint8_t batteryBridge = idBoatStatus->batteryBridgePercent();
+        const uint8_t signalBoat = idBoatStatus->signalQualityBoatPercent();
+        const uint8_t signalBridge = idBoatStatus->signalQualityBridgePercent();
+
+        emit boatStatusComplete(batteryBoat, batteryBridge, signalBoat, signalBridge);
+
+        //qDebug() << "BoatStatusV0 parsed (driver):"
+        //         << "batteryBoat=" << batteryBoat
+        //         << "batteryBridge=" << batteryBridge
+        //         << "signalBoat=" << signalBoat
+        //         << "signalBridge=" << signalBridge;
     }
 }
 

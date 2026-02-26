@@ -28,7 +28,7 @@ Button {
     hoverEnabled: true
     padding: 0
     rightPadding: text === "" ? 2 : 6
-    leftPadding: icon.source == "" ? 6 : 2
+    leftPadding: icon.source === "" ? 6 : 2
 
     //height: theme.controlHeight
     //width: text === "" ? theme.controlHeight : undefined

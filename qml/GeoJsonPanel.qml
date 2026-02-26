@@ -3,11 +3,23 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQml.Models
+import QtCore
 
 MenuFrame {
     id: root
     property var geo: null
     property var view: null
+    property var openKgtFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property var saveKgtFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property var importGeoJsonFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property var exportGeoJsonFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+
+    Settings {
+        property alias openKgtFolder: root.openKgtFolder
+        property alias saveKgtFolder: root.saveKgtFolder
+        property alias importGeoJsonFolder: root.importGeoJsonFolder
+        property alias exportGeoJsonFolder: root.exportGeoJsonFolder
+    }
 
 
     function toLocalPath(url) {
@@ -41,7 +53,10 @@ MenuFrame {
                 iconSource: "qrc:/icons/ui/file_import.svg"
                 implicitWidth: theme.controlHeight * 1.3
                 implicitHeight: theme.controlHeight * 1.3
-                onClicked: openKgtDialog.open()
+                onClicked: {
+                    openKgtDialog.currentFolder = root.openKgtFolder
+                    openKgtDialog.open()
+                }
             }
 
             CheckButton {
@@ -50,7 +65,10 @@ MenuFrame {
                 implicitWidth: theme.controlHeight * 1.3
                 implicitHeight: theme.controlHeight * 1.3
                 enabled: geo !== null
-                onClicked: saveKgtDialog.open()
+                onClicked: {
+                    saveKgtDialog.currentFolder = root.saveKgtFolder
+                    saveKgtDialog.open()
+                }
             }
 
             CheckButton {
@@ -92,14 +110,20 @@ MenuFrame {
                 checkable: false
                 text: "Import"
                 enabled: geo !== null
-                onClicked: importDialog.open()
+                onClicked: {
+                    importDialog.currentFolder = root.importGeoJsonFolder
+                    importDialog.open()
+                }
             }
 
             CheckButton {
                 checkable: false
                 text: "Export"
                 enabled: geo !== null
-                onClicked: exportDialog.open()
+                onClicked: {
+                    exportDialog.currentFolder = root.exportGeoJsonFolder
+                    exportDialog.open()
+                }
             }
 
             CheckButton {
@@ -362,8 +386,15 @@ MenuFrame {
         id: openKgtDialog
         title: "Open KGT"
         fileMode: FileDialog.OpenFile
+        currentFolder: root.openKgtFolder
         nameFilters: ["Kogger Geometry Tree (*.kgt)", "All Files (*)"]
+
+        onCurrentFolderChanged: {
+            root.openKgtFolder = currentFolder
+        }
+
         onAccepted: {
+            root.openKgtFolder = openKgtDialog.currentFolder
             const path = root.toLocalPath(openKgtDialog.selectedFile)
             if (geo) geo.loadKgt(path)
         }
@@ -373,8 +404,15 @@ MenuFrame {
         id: saveKgtDialog
         title: "Save KGT"
         fileMode: FileDialog.SaveFile
+        currentFolder: root.saveKgtFolder
         nameFilters: ["Kogger Geometry Tree (*.kgt)", "All Files (*)"]
+
+        onCurrentFolderChanged: {
+            root.saveKgtFolder = currentFolder
+        }
+
         onAccepted: {
+            root.saveKgtFolder = saveKgtDialog.currentFolder
             const path = root.toLocalPath(saveKgtDialog.selectedFile)
             if (geo) geo.saveKgt(path)
         }
@@ -384,8 +422,15 @@ MenuFrame {
         id: importDialog
         title: "Import GeoJSON"
         fileMode: FileDialog.OpenFile
+        currentFolder: root.importGeoJsonFolder
         nameFilters: ["GeoJSON (*.geojson *.json)", "All Files (*)"]
+
+        onCurrentFolderChanged: {
+            root.importGeoJsonFolder = currentFolder
+        }
+
         onAccepted: {
+            root.importGeoJsonFolder = importDialog.currentFolder
             const path = root.toLocalPath(importDialog.selectedFile)
             const folderId = root.targetFolderId()
             if (geo && folderId !== "") geo.importGeoJsonToFolder(path, folderId)
@@ -396,8 +441,15 @@ MenuFrame {
         id: exportDialog
         title: "Export Folder"
         fileMode: FileDialog.SaveFile
+        currentFolder: root.exportGeoJsonFolder
         nameFilters: ["Kogger Geometry Tree (*.kgt)", "GeoJSON (*.geojson *.json)", "All Files (*)"]
+
+        onCurrentFolderChanged: {
+            root.exportGeoJsonFolder = currentFolder
+        }
+
         onAccepted: {
+            root.exportGeoJsonFolder = exportDialog.currentFolder
             const path = root.toLocalPath(exportDialog.selectedFile)
             const folderId = root.targetFolderId()
             if (geo && folderId !== "") geo.exportFolder(path, folderId)

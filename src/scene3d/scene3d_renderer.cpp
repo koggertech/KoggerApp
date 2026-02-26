@@ -7,6 +7,7 @@
 
 #include <QThread>
 #include <QDebug>
+#include <QOpenGLContext>
 
 #include "text_renderer.h"
 //#include "ft2build.h"
@@ -24,6 +25,7 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer() :
     m_shaderProgramMap["static"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["static_sec"] = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["usbl_arrow"] = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["directional_lit"]  = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["text"]       = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["text_back"]  = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["mosaic"]     = std::make_shared<QOpenGLShaderProgram>();
@@ -33,7 +35,10 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer() :
 
 GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
 {
-    TextRenderer::instance().cleanup(); // using working ctx
+    if (QOpenGLContext::currentContext()) {
+        TextRenderer::instance().cleanup();
+        m_shaderProgramMap.clear();
+    }
 }
 
 void GraphicsScene3dRenderer::initialize()
@@ -41,6 +46,14 @@ void GraphicsScene3dRenderer::initialize()
     initializeOpenGLFunctions();
 
     m_isInitialized = true;
+
+    if (auto* glContext = QOpenGLContext::currentContext()) {
+        const QSurfaceFormat fmt = glContext->format();
+        qInfo() << "GL context:"
+                << (fmt.renderableType() == QSurfaceFormat::OpenGLES ? "OpenGLES" : "OpenGL")
+                << "version" << fmt.majorVersion() << "." << fmt.minorVersion()
+                << "profile" << fmt.profile();
+    }
 
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.3f, 0.3f, 0.3f, 0.0f);
@@ -68,6 +81,19 @@ void GraphicsScene3dRenderer::initialize()
         qCritical() << "Error adding usbl_arrow fragment shader from source file.";
     if (!m_shaderProgramMap["usbl_arrow"]->link())
         qCritical() << "Error linking usbl_arrow shaders in shader program.";
+    // directional-lit color shader (used by arrow/compass/axes)
+    if (!m_shaderProgramMap["directional_lit"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/directional_lit.vsh")) {
+        qCritical() << "Error adding directional_lit vertex shader from source file.";
+        qCritical().noquote() << m_shaderProgramMap["directional_lit"]->log();
+    }
+    if (!m_shaderProgramMap["directional_lit"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/directional_lit.fsh")) {
+        qCritical() << "Error adding directional_lit fragment shader from source file.";
+        qCritical().noquote() << m_shaderProgramMap["directional_lit"]->log();
+    }
+    if (!m_shaderProgramMap["directional_lit"]->link()) {
+        qCritical() << "Error linking directional_lit shaders in shader program.";
+        qCritical().noquote() << m_shaderProgramMap["directional_lit"]->log();
+    }
     // height
     if (!m_shaderProgramMap["height"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh"))
         qCritical() << "Error adding vertex shader from source file.";
@@ -77,12 +103,18 @@ void GraphicsScene3dRenderer::initialize()
         qCritical() << "Error linking shaders in shader program.";
 
     // mosaic
-    if (!m_shaderProgramMap["mosaic"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/mosaic.vsh"))
+    if (!m_shaderProgramMap["mosaic"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/mosaic.vsh")) {
         qCritical() << "Error adding mosaic vertex shader from source file.";
-    if (!m_shaderProgramMap["mosaic"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/mosaic.fsh"))
+        qCritical().noquote() << m_shaderProgramMap["mosaic"]->log();
+    }
+    if (!m_shaderProgramMap["mosaic"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/mosaic.fsh")) {
         qCritical() << "Error adding mosaic fragment shader from source file.";
-    if (!m_shaderProgramMap["mosaic"]->link())
+        qCritical().noquote() << m_shaderProgramMap["mosaic"]->log();
+    }
+    if (!m_shaderProgramMap["mosaic"]->link()) {
         qCritical() << "Error linking mosaic shaders in shader program.";
+        qCritical().noquote() << m_shaderProgramMap["mosaic"]->log();
+    }
 
     // image
     if (!m_shaderProgramMap["image"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/image.vsh"))
@@ -109,12 +141,18 @@ void GraphicsScene3dRenderer::initialize()
         qCritical() << "Error linking text_back shaders in shader program.";
 
     // isobaths
-    if (!m_shaderProgramMap["isobaths"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/isobaths_colored.vsh"))
+    if (!m_shaderProgramMap["isobaths"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/isobaths_colored.vsh")) {
         qCritical() << "Error adding isobaths vertex shader from source file.";
-    if (!m_shaderProgramMap["isobaths"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/isobaths_colored.fsh"))
+        qCritical().noquote() << m_shaderProgramMap["isobaths"]->log();
+    }
+    if (!m_shaderProgramMap["isobaths"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/isobaths_colored.fsh")) {
         qCritical() << "Error adding isobaths fragment shader from source file.";
-    if (!m_shaderProgramMap["isobaths"]->link())
+        qCritical().noquote() << m_shaderProgramMap["isobaths"]->log();
+    }
+    if (!m_shaderProgramMap["isobaths"]->link()) {
         qCritical() << "Error linking isobaths shaders in shader program.";
+        qCritical().noquote() << m_shaderProgramMap["isobaths"]->log();
+    }
 }
 
 void GraphicsScene3dRenderer::render()
@@ -301,7 +339,16 @@ void GraphicsScene3dRenderer::drawObjects()
         float perspFixFovRad = qDegreesToRadians(perspFixFov);
         float factor = 2.0f * distance * std::tan(perspFixFovRad * 0.5f) / m_viewSize.height();
         float worldScale = factor * 7.f * scaleFactor_;
-        nModel.scale(worldScale);
+        float navigationArrowSizeFactor = 1.0f;
+        switch (qBound(1, navigationArrowRenderImpl_.getSize(), 5)) {
+        case 1: navigationArrowSizeFactor = 1.0f; break;
+        case 2: navigationArrowSizeFactor = 2.0f; break;
+        case 3: navigationArrowSizeFactor = 3.0f; break;
+        case 4: navigationArrowSizeFactor = 4.0f; break;
+        case 5: navigationArrowSizeFactor = 5.0f; break;
+        default: break;
+        }
+        nModel.scale(worldScale * navigationArrowSizeFactor);
         navigationArrowRenderImpl_.render(this, projection * view * nModel, m_shaderProgramMap);
 
         glDisable(GL_DEPTH_TEST);

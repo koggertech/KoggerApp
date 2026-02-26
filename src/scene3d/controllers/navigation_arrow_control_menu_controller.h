@@ -13,6 +13,7 @@ public:
     virtual ~NavigationArrowControlMenuController();
 
     Q_INVOKABLE void onVisibilityCheckBoxCheckedChanged(bool checked);
+    Q_INVOKABLE void onSizeSpinBoxValueChanged(int size);
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
 protected:
@@ -26,4 +27,5 @@ private:
     GraphicsScene3dView* graphicsSceneView_;
     std::function<void()> pendingLambda_;
     bool isVisible_;
+    int size_;
 };

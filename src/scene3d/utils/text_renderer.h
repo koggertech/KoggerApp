@@ -7,14 +7,32 @@
 #include <QColor>
 #include <QMap>
 #include <QMatrix4x4>
+#include <QString>
 #include <QVector2D>
 #include <QVector3D>
+#include <QStringView>
 #include <memory>
 
 class QOpenGLFunctions;
 class TextRenderer
 {
 public:
+    struct Text2DItem
+    {
+        QString text;
+        float scale = 1.0f;
+        QVector2D pos;
+        bool drawBackground = false;
+    };
+
+    struct Text3DItem
+    {
+        QStringView text;
+        float scale = 1.0f;
+        QVector3D pos;
+        QVector3D dir;
+    };
+
     static TextRenderer& instance();
 
     void setFontPixelSize(int size);
@@ -30,6 +48,10 @@ public:
                 QOpenGLFunctions* ctx,
                 const QMatrix4x4& projection,
                 const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap);
+    void render2DBatch(const QVector<Text2DItem>& items,
+                       QOpenGLFunctions* ctx,
+                       const QMatrix4x4& projection,
+                       const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap);
     /**
      * @brief Rebders text somewhere in the world
      * @param text - text
@@ -45,6 +67,10 @@ public:
                   QOpenGLFunctions* ctx,
                   const QMatrix4x4& pvm,
                   const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap);
+    void render3DBatch(const QVector<Text3DItem>& items,
+                       QOpenGLFunctions* ctx,
+                       const QMatrix4x4& pvm,
+                       const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap);
 
     void cleanup();
 
@@ -61,19 +87,23 @@ private:
 private:
     struct Character
     {
-        std::shared_ptr<QOpenGLTexture> texture;
         uint16_t num     = 0;
         GLuint   advance = 0; ///< horizontal offset of the next character
         QVector2D size;        ///< glyph size
         QVector2D bearing;     ///< bottom left corner position on font atlas
+        QVector2D uvMin;       ///< bottom-left UV in atlas
+        QVector2D uvMax;       ///< top-right UV in atlas
+        bool hasBitmap = false;
 
         friend QDebug operator<<(QDebug ds, const Character &ch)
         {
             ds << " --> Character " << ch.num                  << '\n'
-               << "texId ="         << ch.texture->textureId() << '\n'
                << "advance ="       << ch.advance              << '\n'
                << "size ="          << ch.size                 << '\n'
                << "bearing ="       << ch.bearing              << '\n'
+               << "uvMin ="         << ch.uvMin                << '\n'
+               << "uvMax ="         << ch.uvMax                << '\n'
+               << "hasBitmap ="     << ch.hasBitmap            << '\n'
                << "<----------"                                << '\n';
 
             return ds;
@@ -81,11 +111,13 @@ private:
     };
 
     QMap<uint16_t, Character> m_chars;
+    std::shared_ptr<QOpenGLTexture> m_fontAtlasTexture;
     QOpenGLBuffer m_arrayBuffer;
     QOpenGLBuffer m_indexBuffer;
     QColor m_color = {0,0,0};
     QColor m_backgroundColor = {255, 255, 255};
     int m_fontPixelSize = 22;
+    int m_glyphRasterScale = 2;
 
     static constexpr int stride3d = 5 * sizeof(float);
     static constexpr int stride2d = 4 * sizeof(float);

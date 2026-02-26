@@ -51,6 +51,7 @@ WaterFall {
     signal plotPressed(int indx, int mousex, int mousey)
     signal plotReleased(int indx)
     signal settingsClicked()
+    signal echogramThemeChanged(int themeId)
 
     PinchArea {
         id: pinch2D
@@ -388,6 +389,7 @@ WaterFall {
 
                     RowLayout {
                         id: rowDataset
+                        Layout.fillWidth: true
                         visible: instruments > 1
                         //CCombo  {
                         //    id: datasetCombo
@@ -417,7 +419,6 @@ WaterFall {
                             property bool suppressTextSignal: false
 
                             Layout.fillWidth: true
-                            Layout.preferredWidth: rowDataset.width / 3
                             visible: true
 
                             onCurrentTextChanged: {
@@ -466,7 +467,6 @@ WaterFall {
                             property bool suppressTextSignal: false
 
                             Layout.fillWidth: true
-                            Layout.preferredWidth: rowDataset.width / 3
                             visible: true
 
                             onCurrentTextChanged: {
@@ -530,8 +530,14 @@ WaterFall {
                             model: [qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green"), qsTr("Midnight")]
                             currentIndex: 0
 
-                            onCurrentIndexChanged: plotEchogramTheme(currentIndex)
-                            Component.onCompleted: plotEchogramTheme(currentIndex)
+                            onCurrentIndexChanged: {
+                                plotEchogramTheme(currentIndex)
+                                echogramThemeChanged(currentIndex)
+                            }
+                            Component.onCompleted: {
+                                plotEchogramTheme(currentIndex)
+                                echogramThemeChanged(currentIndex)
+                            }
 
                             Settings {
                                 category: "Plot2D_" + plot.indx
@@ -569,6 +575,15 @@ WaterFall {
                             Component.onCompleted: plotBottomTrackVisible(checked)
                         }
 
+                        CCheck {
+                            id: bottomTrackValueVisible
+                            text: qsTr("Value")
+                            checked: true
+
+                            onCheckedChanged: plotBottomTrackDepthTextVisible(checked)
+                            Component.onCompleted: plotBottomTrackDepthTextVisible(checked)
+                        }
+
                         CCombo  {
                             id: bottomTrackThemeList
                             //                        Layout.fillWidth: true
@@ -594,6 +609,15 @@ WaterFall {
                             text: qsTr("Rangefinder")
                             onCheckedChanged: plotRangefinderVisible(checked)
                             Component.onCompleted: plotRangefinderVisible(checked)
+                        }
+
+                        CCheck {
+                            id: rangefinderValueVisible
+                            text: qsTr("Value")
+                            checked: true
+
+                            onCheckedChanged: plotRangefinderDepthTextVisible(checked)
+                            Component.onCompleted: plotRangefinderDepthTextVisible(checked)
                         }
 
                         CCombo  {
@@ -993,18 +1017,68 @@ WaterFall {
                         text: qsTr("Horizontal")
                     }
 
+                    RowLayout {
+                        CCheck {
+                            id: loupeVisible
+                            Layout.fillWidth: true
+                            checked: false
+                            text: qsTr("Loupe")
+
+                            onCheckedChanged: plotLoupeVisible(checked)
+                            Component.onCompleted: plotLoupeVisible(checked)
+                        }
+
+                        RowLayout {
+                            CText {
+                                text: qsTr("size")
+                            }
+                            SpinBoxCustom {
+                                id: loupeSize
+                                from: 1
+                                to: 3
+                                stepSize: 1
+                                value: 1
+                                visible: loupeVisible.checked
+
+                                onValueChanged: plotLoupeSize(value)
+                                Component.onCompleted: plotLoupeSize(value)
+                            }
+                        }
+                        RowLayout {
+                            CText {
+                                text: qsTr("zoom")
+                            }
+                            SpinBoxCustom {
+                                id: loupeZoom
+                                from: 1
+                                to: 3
+                                stepSize: 1
+                                value: 1
+                                visible: loupeVisible.checked
+
+                                onValueChanged: plotLoupeZoom(value)
+                                Component.onCompleted: plotLoupeZoom(value)
+                            }
+                        }
+                    }
+
                     Settings {
                         category: "Plot2D_" + plot.indx
 
                         property alias echogramVisible: echogramVisible.checked
                         property alias rangefinderVisible: rangefinderVisible.checked
+                        property alias rangefinderValueVisible: rangefinderValueVisible.checked
                         property alias postProcVisible: bottomTrackVisible.checked
+                        property alias bottomTrackValueVisible: bottomTrackValueVisible.checked
                         property alias ahrsVisible: ahrsVisible.checked
                         property alias temperatureVisible: temperatureVisible.checked
                         property alias gridVisible: gridVisible.checked
                         property alias dopplerBeamVisible: dopplerBeamVisible.checked
                         property alias dopplerInstrumentVisible: dopplerInstrumentVisible.checked
                         property alias horisontalVertical: horisontalVertical.checked
+                        property alias loupeVisible: loupeVisible.checked
+                        property alias loupeSize: loupeSize.value
+                        property alias loupeZoom: loupeZoom.value
                     }
                 }
             } // menu frame

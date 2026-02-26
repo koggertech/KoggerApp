@@ -18,7 +18,9 @@ TileManager::TileManager(QObject *parent) :
     tileDownloader_(std::make_shared<TileDownloader>(tileProvider_, maxConcurrentDownloads_)),
     tileDB_(std::make_shared<TileDB>(providerId_)),
     tileSet_(std::make_shared<TileSet>(tileProvider_, tileDB_, tileDownloader_, maxTilesCapacity_, minTilesCapacity_)),
-    lastZoomLevel_(-1)
+    lastZoomLevel_(-1),
+    internetAvailable_(false),
+    mapEnabled_(true)
 {
     auto downloaderConnType = Qt::AutoConnection;
     // tileDownloader_ -> tileSet_
@@ -44,6 +46,9 @@ TileManager::TileManager(QObject *parent) :
     QObject::connect(dbThread, &QThread::started,  tileDB_.get(), &TileDB::init,         dbConnType);
     QObject::connect(dbThread, &QThread::finished, tileDB_.get(), &QObject::deleteLater, dbConnType);
     QObject::connect(dbThread, &QThread::finished, dbThread,      &QThread::deleteLater, dbConnType);
+
+    tileSet_->setNetworkAvailable(internetAvailable_);
+    tileSet_->setMapEnabled(mapEnabled_);
 
     dbThread->start();
 }
@@ -117,6 +122,46 @@ void TileManager::toggleProvider()
     setProvider(nextProvider);
 }
 
+void TileManager::setInternetAvailable(bool available)
+{
+    if (internetAvailable_ == available) {
+        return;
+    }
+
+    internetAvailable_ = available;
+
+    if (tileSet_) {
+        tileSet_->setNetworkAvailable(internetAvailable_);
+    }
+
+    emit internetAvailabilityChanged(internetAvailable_);
+}
+
+bool TileManager::isInternetAvailable() const
+{
+    return internetAvailable_;
+}
+
+void TileManager::setMapEnabled(bool enabled)
+{
+    if (mapEnabled_ == enabled) {
+        return;
+    }
+
+    mapEnabled_ = enabled;
+
+    if (tileSet_) {
+        tileSet_->setMapEnabled(mapEnabled_);
+    }
+
+    emit mapEnabledChanged(mapEnabled_);
+}
+
+bool TileManager::isMapEnabled() const
+{
+    return mapEnabled_;
+}
+
 QString TileManager::providerNameForId(int32_t providerId)
 {
     switch (providerId) {
@@ -131,6 +176,10 @@ QString TileManager::providerNameForId(int32_t providerId)
 
 void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam)
 {
+    if (!mapEnabled_) {
+        return;
+    }
+
     Q_UNUSED(tiltCam);
 
     int minX = std::numeric_limits<int>::max();
@@ -212,6 +261,10 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
 
 void TileManager::getLlaRef(LLARef viewLlaRef)
 {
+    if (!mapEnabled_) {
+        return;
+    }
+
     tileSet_->onNewLlaRef(viewLlaRef);
 }
 

@@ -8,6 +8,11 @@ Plot2DEchogram::Plot2DEchogram()
     setLevels(10, 100);
 }
 
+Plot2DEchogram::~Plot2DEchogram()
+{
+    delete miniPreviewPlot_;
+}
+
 void Plot2DEchogram::setLowLevel(float low)
 {
     setLevels(low, _levels.high);
@@ -163,6 +168,11 @@ void Plot2DEchogram::setThemeId(int theme_id) {
 void Plot2DEchogram::setCompensation(int compensation_id)
 {
     _compensation_id = compensation_id;
+}
+
+int Plot2DEchogram::getCompensation() const
+{
+    return _compensation_id;
 }
 
 void Plot2DEchogram::updateColors()
@@ -430,6 +440,136 @@ bool Plot2DEchogram::draw(Plot2D* parent, Dataset* dataset)
         canvas.painter()->drawPixmap(0, 0, _pixmap, cash_position, 0, cash_width - cash_position, 0);
         canvas.painter()->drawPixmap(cash_width - cash_position, 0, _pixmap, 0, 0, cash_position, 0);
     } else {
+    }
+
+    return true;
+}
+
+bool Plot2DEchogram::drawZoomPreview(Plot2D* parent,
+                                     Dataset* dataset,
+                                     QPainter* painter,
+                                     const QRect& targetRect,
+                                     const QPoint& sourceCenter,
+                                     int sourceSize,
+                                     QPointF* focusPoint)
+{
+    return drawZoomPreview(parent, dataset, painter, targetRect, sourceCenter, sourceSize, sourceSize, focusPoint);
+}
+
+bool Plot2DEchogram::drawZoomPreview(Plot2D* parent,
+                                     Dataset* dataset,
+                                     QPainter* painter,
+                                     const QRect& targetRect,
+                                     const QPoint& sourceCenter,
+                                     int sourceWidth,
+                                     int sourceHeight,
+                                     QPointF* focusPoint)
+{
+    if (focusPoint) {
+        *focusPoint = QPointF(0.5, 0.5);
+    }
+
+    if (!parent || !dataset || !painter || targetRect.width() <= 0 || targetRect.height() <= 0) {
+        return false;
+    }
+
+    auto& cursor = parent->cursor();
+    auto& canvas = parent->canvas();
+
+    if (!cursor.distance.isValid() || canvas.width() <= 0 || canvas.height() <= 0) {
+        return false;
+    }
+
+    const int previewWidth = targetRect.width();
+    const int previewHeight = targetRect.height();
+    if (previewWidth <= 0 || previewHeight <= 0) {
+        return false;
+    }
+
+    const int srcWidth = qBound(4, sourceWidth, canvas.width());
+    const int srcHeight = qBound(4, sourceHeight, canvas.height());
+
+    const int clampedCenterX = qBound(0, sourceCenter.x(), canvas.width() - 1);
+    const int clampedCenterY = qBound(0, sourceCenter.y(), canvas.height() - 1);
+
+    const float cursorFrom = cursor.distance.from;
+    const float cursorTo = cursor.distance.to;
+    const float cursorRange = cursorTo - cursorFrom;
+    if (qFuzzyIsNull(cursorRange)) {
+        return false;
+    }
+
+    const float centerScale = static_cast<float>(clampedCenterY) / static_cast<float>(canvas.height());
+    const float centerDistance = cursorFrom + centerScale * cursorRange;
+    float distanceSpan = std::abs(cursorRange) * (static_cast<float>(srcHeight) / static_cast<float>(canvas.height()));
+    if (distanceSpan < 0.01f) {
+        distanceSpan = 0.01f;
+    }
+
+    const float minDistance = qMin(cursorFrom, cursorTo);
+    const float maxDistance = qMax(cursorFrom, cursorTo);
+
+    float low = centerDistance - distanceSpan * 0.5f;
+    float high = centerDistance + distanceSpan * 0.5f;
+
+    if (low < minDistance) {
+        const float delta = minDistance - low;
+        low += delta;
+        high += delta;
+    }
+    if (high > maxDistance) {
+        const float delta = high - maxDistance;
+        low -= delta;
+        high -= delta;
+    }
+
+    low = qBound(minDistance, low, maxDistance);
+    high = qBound(minDistance, high, maxDistance);
+    if (high <= low) {
+        high = qMin(maxDistance, low + 0.01f);
+    }
+
+    const bool isAscending = cursorTo >= cursorFrom;
+    const float zoomFrom = isAscending ? low : high;
+    const float zoomTo = isAscending ? high : low;
+    if (focusPoint) {
+        const float zoomSpan = zoomTo - zoomFrom;
+        float focusY = 0.5f;
+        if (std::isfinite(zoomSpan) && std::abs(zoomSpan) > 1e-6f) {
+            focusY = (centerDistance - zoomFrom) / zoomSpan;
+        }
+        focusY = qBound(0.0f, focusY, 1.0f);
+        focusPoint->setX(0.5);
+        focusPoint->setY(focusY);
+    }
+
+    const int sourceLeft = clampedCenterX - srcWidth / 2;
+    if (miniPreviewPlot_ == nullptr) {
+        miniPreviewPlot_ = new MiniPreviewPlot2D();
+    }
+
+    painter->save();
+    painter->setClipRect(targetRect);
+    painter->translate(targetRect.left(), targetRect.top());
+
+    const bool rendered = miniPreviewPlot_->render(painter,
+                                                   dataset,
+                                                   cursor,
+                                                   canvas.width(),
+                                                   sourceLeft,
+                                                   srcWidth,
+                                                   previewWidth,
+                                                   previewHeight,
+                                                   zoomFrom,
+                                                   zoomTo,
+                                                   getThemeId(),
+                                                   getLowLevel(),
+                                                   getHighLevel(),
+                                                   _compensation_id);
+    painter->restore();
+
+    if (!rendered) {
+        return false;
     }
 
     return true;

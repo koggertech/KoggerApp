@@ -57,6 +57,8 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     epochCounter_(0),
     positionCounter_(0),
     attitudeCounter_(0),
+    updateBottomTrackFromScene3d_(false),
+    updateBottomTrackFromSettings_(false),
     updateBottomTrack_(false),
     updateSurface_(false),
     updateIsobaths_(false),
@@ -304,7 +306,24 @@ void DataProcessor::tryFinalizeResetProcessing()
 
 void DataProcessor::setUpdateBottomTrack(bool state)
 {
-    updateBottomTrack_ = state;
+    setUpdateBottomTrackSourceState(state, false);
+}
+
+void DataProcessor::setUpdateBottomTrackFromSettings(bool state)
+{
+    setUpdateBottomTrackSourceState(state, true);
+}
+
+void DataProcessor::setUpdateBottomTrackSourceState(bool state, bool fromSettings)
+{
+    if (fromSettings) {
+        updateBottomTrackFromSettings_ = state;
+    }
+    else {
+        updateBottomTrackFromScene3d_ = state;
+    }
+
+    updateBottomTrack_ = updateBottomTrackFromScene3d_ || updateBottomTrackFromSettings_;
     updateDatasetSpatialIndexingState();
 
     if (resetInProgress_.load()) {
@@ -2076,6 +2095,8 @@ void DataProcessor::shutdown()
     pendingWorkTimer_.stop();
     notifyPrefetchProgress();
 
+    updateBottomTrackFromScene3d_ = false;
+    updateBottomTrackFromSettings_ = false;
     updateBottomTrack_ = false;
     updateSurface_ = false;
     updateIsobaths_ = false;
@@ -2154,9 +2175,8 @@ void DataProcessor::onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKe
 #else
     optimizeForNonSeparateFileMode = (datasetState_ != 2); // 2 == connection
 #endif
-    if (optimizeForNonSeparateFileMode && !updateMosaic_ && !updateSurface_) {
-        return;
-    }
+
+    const bool skipSchedulingForDisabledLayers = optimizeForNonSeparateFileMode && !updateMosaic_ && !updateSurface_;
 
     const int minZoom = 7;
     if (tileEpochIndxsByZoom_.size() < minZoom) {
@@ -2177,6 +2197,10 @@ void DataProcessor::onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKe
                 epochList.push_back(epochIndx);
             }
         }
+    }
+
+    if (skipSchedulingForDisabledLayers) {
+        return;
     }
 
     if (lastVisTileKeys_.isEmpty()) {

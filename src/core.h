@@ -33,6 +33,7 @@
 #include "device_manager_wrapper.h"
 #include "link_manager_wrapper.h"
 #include "tile_manager.h"
+#include "internet_manager.h"
 #include "data_horizon.h"
 #include "mosaic_index_provider.h"
 
@@ -64,6 +65,8 @@ public:
     Q_PROPERTY(int               mapTileProviderId            READ getMapTileProviderId            NOTIFY mapTileProviderChanged)
     Q_PROPERTY(QString           mapTileProviderName          READ getMapTileProviderName          NOTIFY mapTileProviderChanged)
     Q_PROPERTY(QVariantList      mapTileProviders             READ getMapTileProviders             CONSTANT)
+    Q_PROPERTY(bool              internetAvailable            READ getInternetAvailable            NOTIFY internetAvailableChanged)
+    Q_PROPERTY(bool              mapTileLoadingEnabled        READ getMapTileLoadingEnabled        WRITE setMapTileLoadingEnabled NOTIFY mapTileLoadingEnabledChanged)
     Q_PROPERTY(bool              needForceZooming             READ getNeedForceZooming             WRITE setNeedForceZooming NOTIFY needForceZoomingChanged)
 
     MosaicIndexProvider* getMosaicIndexProviderPtr();
@@ -120,6 +123,7 @@ public slots:
     void setFixBlackStripesState(bool state);
     void setFixBlackStripesForwardSteps(int val);
     void setFixBlackStripesBackwardSteps(int val);
+    void setBottomTrackRealtimeFromSettings(bool state);
     bool getCsvLogging() const;
     void setCsvLogging(bool isLogging);
     bool getUseGPS() const;
@@ -152,6 +156,7 @@ public slots:
     Q_INVOKABLE int getDataProcessorState() const;
     Q_INVOKABLE QString getChannel1Name() const;
     Q_INVOKABLE QString getChannel2Name() const;
+    Q_INVOKABLE void registerSyncLoupePlot(QObject* plotObj);
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
 
     Q_INVOKABLE void setIsAttitudeExpected(bool state);
@@ -160,6 +165,9 @@ public slots:
     Q_INVOKABLE int getMapTileProviderId() const;
     Q_INVOKABLE QString getMapTileProviderName() const;
     Q_INVOKABLE QVariantList getMapTileProviders() const;
+    Q_INVOKABLE bool getInternetAvailable() const;
+    Q_INVOKABLE bool getMapTileLoadingEnabled() const;
+    Q_INVOKABLE void setMapTileLoadingEnabled(bool enabled);
 
 signals:
     void connectionChanged(bool duplex = false);
@@ -171,6 +179,8 @@ signals:
     void isGPSAliveChanged();
     void loggingKlfChanged();
     void mapTileProviderChanged();
+    void internetAvailableChanged();
+    void mapTileLoadingEnabledChanged();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
@@ -186,6 +196,8 @@ private:
     /*methods*/
     void createMapTileManagerConnections();
     void createDatasetConnections();
+    void createInternetManager();
+    void destroyInternetManager();
     void createDataProcessor();
     void destroyDataProcessor();
     void createScene3dConnections();
@@ -227,6 +239,8 @@ private:
     std::shared_ptr<UsblViewControlMenuController> usblViewControlMenuController_;
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
+    InternetManager* internetManager_;
+    QThread* internetThread_;
     std::unique_ptr<map::TileManager> tileManager_;
     // data processor
     DataProcessor* dataProcessor_;
@@ -245,6 +259,7 @@ private:
     ConverterXTF converterXtf_;
     Logger logger_;
     QList<qPlot2D*> plot2dList_;
+    QPointer<qPlot2D> syncLoupePlot3dPtr_;
     QList<QMetaObject::Connection> linkManagerWrapperConnections_;
     QString openedfilePath_;
     bool isLoggingKlf_;
@@ -257,6 +272,8 @@ private:
 
     bool isGPSAlive_;
     bool isUseGPS_;
+    bool internetAvailable_ = false;
+    bool mapTileLoadingEnabled_ = true;
     bool needForceZooming_ = false; // debug
 
     bool fixBlackStripesState_;

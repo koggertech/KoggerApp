@@ -1,6 +1,7 @@
 #include "scene3d_toolbar_controller.h"
 #include "scene3d_view.h"
 #include "qml_object_names.h"
+#include <cmath>
 
 
 Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
@@ -17,6 +18,13 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       compass_(true),
       compassPos_(1),
       compassSize_(1),
+      shadowsEnabled_(true),
+      shadowVectorX_(0.40f),
+      shadowVectorY_(0.40f),
+      shadowVectorZ_(0.40f),
+      shadowIntensity_(1.00f),
+      shadowAmbient_(0.35f),
+      shadowHighlight_(0.70f),
       planeGridType_(false),
       planeGridCircleSize_(1),
       planeGridCircleStep_(1),
@@ -26,6 +34,9 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       geoJsonEnabled_(false),
       forceSingleZoomEnabled_(false),
       forceSingleZoomValue_(5),
+      syncLoupeVisible_(false),
+      syncLoupeSize_(1),
+      syncLoupeZoom_(1),
       suppressForceSingleZoomUiCallback_(false)
 {}
 
@@ -202,6 +213,107 @@ void Scene3dToolBarController::onCompassSizeChanged(int size)
     }
 }
 
+void Scene3dToolBarController::onShadowsEnabledChanged(bool state)
+{
+    shadowsEnabled_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setShadowsEnabled(shadowsEnabled_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onShadowVectorXChanged(float value)
+{
+    if (!std::isfinite(value)) {
+        return;
+    }
+    shadowVectorX_ = value;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setShadowVectorX(shadowVectorX_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onShadowVectorYChanged(float value)
+{
+    if (!std::isfinite(value)) {
+        return;
+    }
+    shadowVectorY_ = value;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setShadowVectorY(shadowVectorY_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onShadowVectorZChanged(float value)
+{
+    if (!std::isfinite(value)) {
+        return;
+    }
+    shadowVectorZ_ = value;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setShadowVectorZ(shadowVectorZ_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onShadowIntensityChanged(float value)
+{
+    Q_UNUSED(value);
+    constexpr float kFixedShadowIntensity = 1.0f;
+    shadowIntensity_ = kFixedShadowIntensity;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setShadowIntensity(kFixedShadowIntensity);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onShadowAmbientChanged(float value)
+{
+    if (!std::isfinite(value)) {
+        return;
+    }
+    shadowAmbient_ = qBound(0.0f, value, 1.0f);
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setShadowAmbient(shadowAmbient_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onShadowHighlightChanged(float value)
+{
+    if (!std::isfinite(value)) {
+        return;
+    }
+    shadowHighlight_ = qBound(0.0f, value, 1.0f);
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setShadowHighlight(shadowHighlight_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
 void Scene3dToolBarController::onPlaneGridTypeChanged(bool val)
 {
     planeGridType_ = val;
@@ -316,7 +428,45 @@ void Scene3dToolBarController::onForceSingleZoomValueChanged(int zoom)
     else {
         tryInitPendingLambda();
     }
-}void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
+}
+
+void Scene3dToolBarController::onSyncLoupeVisibleChanged(bool state)
+{
+    syncLoupeVisible_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setSyncLoupeVisible(syncLoupeVisible_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onSyncLoupeSizeChanged(int size)
+{
+    syncLoupeSize_ = qBound(1, size, 3);
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setSyncLoupeSize(syncLoupeSize_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onSyncLoupeZoomChanged(int zoom)
+{
+    syncLoupeZoom_ = qBound(1, zoom, 3);
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setSyncLoupeZoom(syncLoupeZoom_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     graphicsScene3dViewPtr_ = sceneView;
 
@@ -357,6 +507,13 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setCompassState(compass_);
                 graphicsScene3dViewPtr_->setCompassPos(compassPos_);
                 graphicsScene3dViewPtr_->setCompassSize(compassSize_);
+                graphicsScene3dViewPtr_->setShadowsEnabled(shadowsEnabled_);
+                graphicsScene3dViewPtr_->setShadowVectorX(shadowVectorX_);
+                graphicsScene3dViewPtr_->setShadowVectorY(shadowVectorY_);
+                graphicsScene3dViewPtr_->setShadowVectorZ(shadowVectorZ_);
+                graphicsScene3dViewPtr_->setShadowIntensity(shadowIntensity_);
+                graphicsScene3dViewPtr_->setShadowAmbient(shadowAmbient_);
+                graphicsScene3dViewPtr_->setShadowHighlight(shadowHighlight_);
                 graphicsScene3dViewPtr_->setPlaneGridType(planeGridType_);
                 graphicsScene3dViewPtr_->setPlaneGridCircleSize(planeGridCircleSize_);
                 graphicsScene3dViewPtr_->setPlaneGridCircleStep(planeGridCircleStep_);
@@ -366,6 +523,9 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setGeoJsonEnabled(geoJsonEnabled_);
                 graphicsScene3dViewPtr_->setForceSingleZoomEnabled(forceSingleZoomEnabled_);
                 graphicsScene3dViewPtr_->setForceSingleZoomValue(forceSingleZoomValue_);
+                graphicsScene3dViewPtr_->setSyncLoupeVisible(syncLoupeVisible_);
+                graphicsScene3dViewPtr_->setSyncLoupeSize(syncLoupeSize_);
+                graphicsScene3dViewPtr_->setSyncLoupeZoom(syncLoupeZoom_);
 
                 if (dataProcessorPtr_) {
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateBottomTrack", Qt::QueuedConnection, Q_ARG(bool, updateBottomTrack_));

@@ -204,6 +204,8 @@ void RulerTool::RulerToolRenderImplementation::render(
 
     TextRenderer::instance().setColor(theme.textSolidColor());
     TextRenderer::instance().setBackgroundColor(QColor(0, 0, 0, 160));
+    QVector<TextRenderer::Text2DItem> labelItems;
+    labelItems.reserve(pts.size());
 
     // Segment labels (XY length)
     for (int i = 1; i < pts.size(); ++i) {
@@ -217,7 +219,7 @@ void RulerTool::RulerToolRenderImplementation::render(
 
         midScreen += QVector2D(0.0f, (i % 2 == 0) ? -18.0f : -34.0f);
 
-        TextRenderer::instance().render(formatDistanceMeters(segMeters), 1.0f, midScreen, true, ctx, textProjection, shaderProgramMap);
+        labelItems.append(TextRenderer::Text2DItem{formatDistanceMeters(segMeters), 1.0f, midScreen, true});
     }
 
     // Total label (XY only)
@@ -229,7 +231,9 @@ void RulerTool::RulerToolRenderImplementation::render(
     screen.setY(viewport.height() - screen.y());
     screen += QVector2D(12.0f, -14.0f);
 
-    TextRenderer::instance().render(label, 1.5f, screen, true, ctx, textProjection, shaderProgramMap);
+    labelItems.append(TextRenderer::Text2DItem{label, 1.5f, screen, true});
+
+    TextRenderer::instance().render2DBatch(labelItems, ctx, textProjection, shaderProgramMap);
 }
 
 RulerTool::RulerTool(QObject* parent)

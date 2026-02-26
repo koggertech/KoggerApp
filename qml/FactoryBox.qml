@@ -8,13 +8,20 @@ import QtCore
 DevSettingsBox {
     id: control
     isActive: true
+    property var upgradeFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
         FileDialog {
             id: fileDialog
             title: qsTr("Please choose a file")
-            currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+            currentFolder: control.upgradeFolder
             nameFilters: ["Upgrade files (*.bin)"]
+
+            onCurrentFolderChanged: {
+                control.upgradeFolder = currentFolder
+            }
+
             onAccepted: {
+                control.upgradeFolder = fileDialog.currentFolder
                 pathText.text = fileDialog.selectedFile.toString()
             }
             onRejected: {
@@ -22,7 +29,7 @@ DevSettingsBox {
         }
 
         Settings {
-            property alias upgradeFolder: fileDialog.currentFolder
+            property alias upgradeFolder: control.upgradeFolder
         }
 
     //MenuBlock {
@@ -327,6 +334,7 @@ DevSettingsBox {
 //                    Layout.fillWidth: true
                     implicitHeight: 30
                     onClicked: {
+                        fileDialog.currentFolder = control.upgradeFolder
                         fileDialog.open()
                     }
                 }

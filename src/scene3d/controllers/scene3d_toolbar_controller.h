@@ -30,6 +30,13 @@ public:
     Q_INVOKABLE void onCompassButtonChanged(bool state);
     Q_INVOKABLE void onCompassPosChanged(int pos);
     Q_INVOKABLE void onCompassSizeChanged(int size);
+    Q_INVOKABLE void onShadowsEnabledChanged(bool state);
+    Q_INVOKABLE void onShadowVectorXChanged(float value);
+    Q_INVOKABLE void onShadowVectorYChanged(float value);
+    Q_INVOKABLE void onShadowVectorZChanged(float value);
+    Q_INVOKABLE void onShadowIntensityChanged(float value);
+    Q_INVOKABLE void onShadowAmbientChanged(float value);
+    Q_INVOKABLE void onShadowHighlightChanged(float value);
     Q_INVOKABLE void onPlaneGridTypeChanged(bool val);
     Q_INVOKABLE void onPlaneGridCircleGridSizeChanged(int val);
     Q_INVOKABLE void onPlaneGridCircleGridStepChanged(int val);
@@ -39,6 +46,9 @@ public:
     Q_INVOKABLE void onGeoJsonModeChanged(bool enabled);
     Q_INVOKABLE void onForceSingleZoomCheckedChanged(bool state);
     Q_INVOKABLE void onForceSingleZoomValueChanged(int zoom);
+    Q_INVOKABLE void onSyncLoupeVisibleChanged(bool state);
+    Q_INVOKABLE void onSyncLoupeSizeChanged(int size);
+    Q_INVOKABLE void onSyncLoupeZoomChanged(int zoom);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
@@ -66,6 +76,13 @@ private:
     bool compass_;
     int  compassPos_;
     int  compassSize_;
+    bool shadowsEnabled_;
+    float shadowVectorX_;
+    float shadowVectorY_;
+    float shadowVectorZ_;
+    float shadowIntensity_;
+    float shadowAmbient_;
+    float shadowHighlight_;
     bool planeGridType_;
     int planeGridCircleSize_;
     int planeGridCircleStep_;
@@ -75,6 +92,9 @@ private:
     bool geoJsonEnabled_;
     bool forceSingleZoomEnabled_;
     int forceSingleZoomValue_;
+    bool syncLoupeVisible_;
+    int syncLoupeSize_;
+    int syncLoupeZoom_;
     bool suppressForceSingleZoomUiCallback_;
 };
 

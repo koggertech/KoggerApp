@@ -341,6 +341,10 @@ void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
+
+        if (linkPtr->getIsPinned() && linkPtr->getConnectionStatus()) {
+            exportPinnedLinksToXML();
+        }
     }
 }
 
@@ -455,6 +459,10 @@ void LinkManager::closeLink(QUuid uuid)
         linkPtr->close();
 
         doEmitAppendModifyModel(linkPtr); //
+
+        if (linkPtr->getIsPinned()) {
+            exportPinnedLinksToXML();
+        }
     }
 }
 

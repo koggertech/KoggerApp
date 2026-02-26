@@ -9,11 +9,13 @@
         <file>shaders/mosaic.vsh</file>
         <file>shaders/static_color.fsh</file>
         <file>shaders/usbl_arrow.fsh</file>
+        <file>shaders/directional_lit.vsh</file>
+        <file>shaders/directional_lit.fsh</file>
         <file>shaders/text.fsh</file>
         <file>shaders/text.vsh</file>
         <file>shaders/text_back.fsh</file>
         <file>shaders/text_back.vsh</file>
-		<file>shaders/isobaths_colored.fsh</file>
+        <file>shaders/isobaths_colored.fsh</file>
         <file>shaders/isobaths_colored.vsh</file>
     </qresource>
 </RCC>

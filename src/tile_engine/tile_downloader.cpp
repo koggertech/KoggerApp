@@ -6,13 +6,6 @@
 
 #include "tile_provider_ids.h"
 
-#ifdef Q_OS_WINDOWS
-#include <QTcpSocket>
-#include <QNetworkProxy>
-#endif
-
-
-
 namespace map {
 
 
@@ -22,18 +15,12 @@ TileDownloader::TileDownloader(std::weak_ptr<TileProvider> provider, int maxConc
     tileProvider_(provider),
     activeDownloads_(0),
     maxConcurrentDownloads_(maxConcurrentDownloads),
-    networkAvailable_(false),
-    hostLookupId_(-1)
+    networkAvailable_(false)
 {
     qRegisterMetaType<TileIndex>("TileIndex");
     qRegisterMetaType<TileInfo>("TileInfo");
 
     QObject::connect(networkManager_, &QNetworkAccessManager::finished, this, &TileDownloader::onTileDownloaded, Qt::AutoConnection);
-
-    checkNetworkAvailabilityAsync();
-    networkCheckTimer_ = new QTimer();
-    connect(networkCheckTimer_, &QTimer::timeout, this, &TileDownloader::checkNetworkAvailabilityAsync);
-    networkCheckTimer_->start(10000);
 }
 
 TileDownloader::~TileDownloader()
@@ -41,22 +28,22 @@ TileDownloader::~TileDownloader()
     stopAndClearRequests();
 }
 
-void TileDownloader::downloadTile(const TileIndex& tileIndx)
+bool TileDownloader::downloadTile(const TileIndex& tileIndx)
 {    
     if (downloadQueue_.contains(tileIndx)) {
-        return;
+        return true;
     }
 
     for (auto it = activeReplies_.begin(); it != activeReplies_.end(); ++it) {
         QNetworkReply* reply = *it;
         TileIndex activeIndex = reply->property("tileIndex").value<TileIndex>();
         if (activeIndex == tileIndx) {
-            return;
+            return true;
         }
     }
 
     if (!networkAvailable_) {
-        return;
+        return false;
     }
 
     downloadQueue_.enqueue(tileIndx);
@@ -64,6 +51,8 @@ void TileDownloader::downloadTile(const TileIndex& tileIndx)
     while (activeDownloads_ < maxConcurrentDownloads_ && !downloadQueue_.isEmpty()) {
         startNextDownload();
     }
+
+    return true;
 }
 
 void TileDownloader::stopAndClearRequests()
@@ -119,9 +108,32 @@ void TileDownloader::setProvider(std::weak_ptr<TileProvider> provider)
     tileProvider_ = provider;
 }
 
+void TileDownloader::setNetworkAvailable(bool available)
+{
+    if (networkAvailable_ == available) {
+        return;
+    }
+
+    networkAvailable_ = available;
+
+    if (!networkAvailable_) {
+        stopAndClearRequests();
+        return;
+    }
+
+    while (activeDownloads_ < maxConcurrentDownloads_ && !downloadQueue_.isEmpty()) {
+        startNextDownload();
+    }
+}
+
+bool TileDownloader::isNetworkAvailable() const
+{
+    return networkAvailable_;
+}
+
 void TileDownloader::startNextDownload()
 {
-    if (downloadQueue_.isEmpty()) {
+    if (downloadQueue_.isEmpty() || !networkAvailable_) {
         return;
     }
 
@@ -186,60 +198,5 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
 
     startNextDownload();
 }
-
-void TileDownloader::checkNetworkAvailabilityAsync()
-{
-    networkAvailable_ = true; // TODO
-
-#ifndef Q_OS_ANDROID
-    //networkAvailable_ = true; // TODO
-    // QTcpSocket socket; 
-    // socket.connectToHost("8.8.8.8", 53);
-    // if (socket.waitForConnected(2000)) {
-    //     //qDebug() << "internet available";
-    //     networkAvailable_ = true;
-    //     return;
-    // }
-    // qDebug() << "internet UNavailable";
-    // networkAvailable_= false;
-#else
-    //if (hostLookupId_ == -1) {
-    //    hostLookupId_ = QHostInfo::lookupHost("www.google.com", this, &TileDownloader::onHostLookupFinished);
-    //}
-#endif
-}
-/*
-#ifndef Q_OS_ANDROID
-void TileDownloader::onHostLookupFinished(QHostInfo hostInfo)
-{
-#ifdef Q_OS_ANDROID
-    Q_UNUSED(hostInfo);
-#else
-    hostLookupId_ = -1;
-    auto adresses = hostInfo.addresses();
-    if (hostInfo.error() == QHostInfo::NoError && adresses.size()) {
-        auto socket = new QTcpSocket();
-        socket->setProxy(QNetworkProxy::DefaultProxy);
-        socket->connectToHost(adresses.first(), 80);
-        connect(socket, &QTcpSocket::connected,
-                this, [this, socket]() {
-                          networkAvailable_ = true;
-                          socket->deleteLater();
-                      }, Qt::AutoConnection);
-
-        connect(socket, &QAbstractSocket::errorOccurred,
-                this, [this, socket](QAbstractSocket::SocketError error) {
-                          Q_UNUSED(error);
-                          networkAvailable_ = false;
-                          socket->deleteLater();
-                      }, Qt::AutoConnection);
-    }
-    else {
-        networkAvailable_ = false;
-    }
-#endif
-}
-#endif
-*/
 
 } // namespace map

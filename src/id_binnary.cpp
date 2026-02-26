@@ -442,13 +442,36 @@ Resp IDBinEncoder::parsePayload(FrameParser &proto) {
 }
 
 Resp IDBinNav::parsePayload(FrameParser &proto) {
-    if(SimpleNav::getVer()) {
+    if(proto.ver() == SimpleNav::getVer()) {
+        if (proto.readAvailable() < static_cast<int16_t>(sizeof(SimpleNav))) {
+            return respErrorPayload;
+        }
         SimpleNav nav = proto.read<SimpleNav>();
         _nav = nav;
+    } else if (proto.ver() == SimpleNavV2::getVer()) {
+        if (proto.readAvailable() < static_cast<int16_t>(sizeof(SimpleNavV2))) {
+            return respErrorPayload;
+        }
+        SimpleNavV2 nav = proto.read<SimpleNavV2>();
+        _navV2 = nav;
     } else {
         return respErrorVersion;
     }
 
+    return respOk;
+}
+
+Resp IDBinBoatStatus::parsePayload(FrameParser& proto)
+{
+    if (proto.ver() != BoatStatus::getVer()) {
+        return respErrorVersion;
+    }
+
+    if (proto.readAvailable() < static_cast<int16_t>(sizeof(BoatStatus))) {
+        return respErrorPayload;
+    }
+
+    data_ = proto.read<BoatStatus>();
     return respOk;
 }
 

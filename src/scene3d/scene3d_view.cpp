@@ -55,8 +55,16 @@ static inline float zoomDistanceMid(const ZoomDistanceRange& range)
 {
     return range.min + (range.max - range.min) * 0.5f;
 }
-} // namespace
 
+static inline float clampShadowFactor(float value, float fallback)
+{
+    if (!std::isfinite(value)) {
+        return fallback;
+    }
+    return qBound(0.0f, value, 1.0f);
+}
+
+} // namespace
 
 GraphicsScene3dView::GraphicsScene3dView() :
     QQuickFramebufferObject(),
@@ -94,6 +102,11 @@ GraphicsScene3dView::GraphicsScene3dView() :
     compass_(false),
     compassPos_(1),
     compassSize_(1),
+    shadowsEnabled_(true),
+    shadowVector_(QVector3D(0.40f, 0.40f, 0.40f)),
+    shadowIntensity_(1.00f),
+    shadowAmbient_(0.35f),
+    shadowHighlight_(0.70f),
     planeGridType_(true),
     dataZoomIndx_(-1),
     cameraIsMoveUp_(false),
@@ -189,7 +202,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(boatTrack_.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-    
+
+    applyShadowSettingsToSceneRenderObjects();
     updatePlaneGrid();
 
 #ifdef SCENE_TESTING
@@ -337,6 +351,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
 
     lastVisTileKeys_.clear();
     dataZoomIndx_ = -1; // force zoom sync to data-processor on next camera update
+    setSyncEpochIndex(-1);
 
     QQuickFramebufferObject::update();
 }
@@ -384,6 +399,7 @@ void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, q
 
     m_bottomTrack->resetVertexSelection();
     boatTrack_->clearSelectedEpoch();
+    setSyncEpochIndex(-1);
     lastMode_ = m_mode;
     m_mode = ActiveMode::BottomTrackVertexComboSelectionMode;
     m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
@@ -564,12 +580,14 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     else {
 #if defined(Q_OS_ANDROID)
         Q_UNUSED(keyboardKey);
-        auto fromOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-        auto fromEnd = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-        auto fromDir = (fromEnd - fromOrig).normalized();
-        auto from = calculateIntersectionPoint(fromOrig, fromDir , 0);
-        m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
-        cameraWasMoved = true;
+        if (mouseButton.testFlag(Qt::LeftButton)) {
+            auto fromOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromEnd = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromDir = (fromEnd - fromOrig).normalized();
+            auto from = calculateIntersectionPoint(fromOrig, fromDir , 0);
+            m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
+            cameraWasMoved = true;
+        }
 #else
         if (mouseButton.testFlag(Qt::LeftButton) && (keyboardKey == Qt::Key_Control)) {
             if (m_camera->getIsPerspective() && !isNorth_) {
@@ -1072,6 +1090,110 @@ void GraphicsScene3dView::setCompassSize(int val)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::applyShadowSettingsToSceneRenderObjects()
+{
+    auto applyFor = [this](SceneObject::RenderImplementation* impl) {
+        if (!impl) {
+            return;
+        }
+        impl->setShadowSettings(shadowsEnabled_, shadowVector_, shadowAmbient_, shadowIntensity_, shadowHighlight_);
+    };
+
+    applyFor(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(m_coordAxes->m_renderImpl));
+    applyFor(dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(surfaceView_->m_renderImpl));
+    applyFor(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(navigationArrow_->m_renderImpl));
+}
+
+void GraphicsScene3dView::setShadowsEnabled(bool state)
+{
+    if (shadowsEnabled_ == state) {
+        return;
+    }
+
+    shadowsEnabled_ = state;
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setShadowVectorX(float value)
+{
+    if (!std::isfinite(value)) {
+        return;
+    }
+    if (qFuzzyCompare(shadowVector_.x() + 1.0f, value + 1.0f)) {
+        return;
+    }
+
+    shadowVector_.setX(value);
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setShadowVectorY(float value)
+{
+    if (!std::isfinite(value)) {
+        return;
+    }
+    if (qFuzzyCompare(shadowVector_.y() + 1.0f, value + 1.0f)) {
+        return;
+    }
+
+    shadowVector_.setY(value);
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setShadowVectorZ(float value)
+{
+    if (!std::isfinite(value)) {
+        return;
+    }
+    if (qFuzzyCompare(shadowVector_.z() + 1.0f, value + 1.0f)) {
+        return;
+    }
+
+    shadowVector_.setZ(value);
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setShadowIntensity(float value)
+{
+    Q_UNUSED(value);
+    constexpr float kFixedShadowIntensity = 1.0f;
+    if (qFuzzyCompare(shadowIntensity_ + 1.0f, kFixedShadowIntensity + 1.0f)) {
+        return;
+    }
+
+    shadowIntensity_ = kFixedShadowIntensity;
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setShadowAmbient(float value)
+{
+    const float clamped = clampShadowFactor(value, shadowAmbient_);
+    if (qFuzzyCompare(shadowAmbient_ + 1.0f, clamped + 1.0f)) {
+        return;
+    }
+
+    shadowAmbient_ = clamped;
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setShadowHighlight(float value)
+{
+    const float clamped = clampShadowFactor(value, shadowHighlight_);
+    if (qFuzzyCompare(shadowHighlight_ + 1.0f, clamped + 1.0f)) {
+        return;
+    }
+
+    shadowHighlight_ = clamped;
+    applyShadowSettingsToSceneRenderObjects();
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::setPlaneGridType(bool def)
 {
     planeGridType_ = def;
@@ -1133,6 +1255,75 @@ void GraphicsScene3dView::setForceSingleZoomValue(int zoom)
     onCameraMoved();
 }
 
+void GraphicsScene3dView::setSyncLoupeVisible(bool state)
+{
+    if (syncLoupeVisible_ == state) {
+        return;
+    }
+
+    syncLoupeVisible_ = state;
+    refreshSyncLoupePreview();
+    emit syncLoupeStateChanged();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setSyncLoupeUiAllowed(bool allowed)
+{
+    if (syncLoupeUiAllowed_ == allowed) {
+        return;
+    }
+
+    syncLoupeUiAllowed_ = allowed;
+    refreshSyncLoupePreview();
+    emit syncLoupeStateChanged();
+
+    if (syncLoupeUiAllowed_) {
+        QQuickFramebufferObject::update();
+    }
+}
+
+void GraphicsScene3dView::setSyncLoupeSize(int val)
+{
+    const int bounded = qBound(1, val, 3);
+    if (syncLoupeSize_ == bounded) {
+        return;
+    }
+
+    syncLoupeSize_ = bounded;
+    refreshSyncLoupePreview();
+    emit syncLoupeStateChanged();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setSyncLoupeZoom(int val)
+{
+    const int bounded = qBound(1, val, 3);
+    if (syncLoupeZoom_ == bounded) {
+        return;
+    }
+
+    syncLoupeZoom_ = bounded;
+    refreshSyncLoupePreview();
+    emit syncLoupeStateChanged();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setSyncEpochIndex(int epochIndex)
+{
+    if (syncEpochIndex_ == epochIndex) {
+        return;
+    }
+
+    syncEpochIndex_ = epochIndex;
+
+    if (!syncLoupeUiAllowed_) {
+        return;
+    }
+
+    refreshSyncLoupePreview();
+    emit syncLoupeStateChanged();
+}
+
 void GraphicsScene3dView::updateForceSingleZoomAutoState()
 {
     if (!core.getNeedForceZooming()) {
@@ -1171,6 +1362,99 @@ void GraphicsScene3dView::updateForceSingleZoomAutoState()
 void GraphicsScene3dView::setActiveZeroing(bool state)
 {
     m_planeGrid->setActiveZeroing(state);
+}
+
+void GraphicsScene3dView::refreshSyncLoupePreview()
+{
+    bool overlayVisible = false;
+    float depthFrom = 0.0f;
+    float depthTo = 0.0f;
+    float centerDepth = 0.0f;
+    bool flipY = false;
+
+    if (syncLoupeVisible_ && syncLoupeUiAllowed_ && datasetPtr_ && syncEpochIndex_ >= 0) {
+        const int datasetSize = datasetPtr_->size();
+        if (syncEpochIndex_ < datasetSize) {
+            if (auto* epoch = datasetPtr_->fromIndex(syncEpochIndex_); epoch) {
+                ChannelId firstChannelId = CHANNEL_NONE;
+                uint8_t firstSubChannelId = 0;
+                ChannelId secondChannelId = CHANNEL_NONE;
+                uint8_t secondSubChannelId = 0;
+                bool hasSecondChannel = false;
+                if (const auto channels = datasetPtr_->channelsList(); !channels.isEmpty()) {
+                    firstChannelId = channels.first().channelId_;
+                    firstSubChannelId = channels.first().subChannelId_;
+                    hasSecondChannel = channels.size() > 1;
+                    if (hasSecondChannel) {
+                        secondChannelId = channels.at(1).channelId_;
+                        secondSubChannelId = channels.at(1).subChannelId_;
+                    }
+                }
+                flipY = false;
+
+                float rangeFrom = NAN;
+                float rangeTo = NAN;
+                if (firstChannelId.isValid()) {
+                    datasetPtr_->getMaxDistanceRange(&rangeFrom, &rangeTo, firstChannelId, firstSubChannelId, secondChannelId, secondSubChannelId);
+                }
+                if (!std::isfinite(rangeFrom) || !std::isfinite(rangeTo) || rangeTo <= rangeFrom) {
+                    float maxRange = epoch->getMaxRange(firstChannelId);
+                    if (!std::isfinite(maxRange) || maxRange <= 0.0f) {
+                        maxRange = epoch->getMaxRange();
+                    }
+                    if (!std::isfinite(maxRange) || maxRange <= 0.0f) {
+                        maxRange = 20.0f;
+                    }
+                    rangeFrom = 0.0f;
+                    rangeTo = maxRange;
+                }
+
+                bool hasBottomDepth = false;
+                if (firstChannelId.isValid()) {
+                    const float btDepth = static_cast<float>(epoch->distProccesing(firstChannelId));
+                    if (std::isfinite(btDepth)) {
+                        centerDepth = std::abs(btDepth);
+                        hasBottomDepth = true;
+                    }
+                }
+
+                depthFrom = rangeFrom;
+                depthTo = rangeTo;
+                if (!hasBottomDepth) {
+                    centerDepth = hasSecondChannel ? NAN : 0.0f;
+                }
+
+                const float minDepth = qMin(depthFrom, depthTo);
+                const float maxDepth = qMax(depthFrom, depthTo);
+                if (std::isfinite(centerDepth)) {
+                    centerDepth = qBound(minDepth, centerDepth, maxDepth);
+                }
+                overlayVisible = maxDepth > minDepth;
+            }
+        }
+    }
+
+    auto sameFloat = [](float a, float b) {
+        if (std::isnan(a) && std::isnan(b)) {
+            return true;
+        }
+        return qFuzzyCompare(a + 1.0f, b + 1.0f);
+    };
+    const bool changed = syncLoupeOverlayVisible_ != overlayVisible ||
+                         !sameFloat(syncLoupeDepthFrom_, depthFrom) ||
+                         !sameFloat(syncLoupeDepthTo_, depthTo) ||
+                         !sameFloat(syncLoupeCenterDepth_, centerDepth) ||
+                         syncLoupeFlipY_ != flipY;
+
+    syncLoupeOverlayVisible_ = overlayVisible;
+    syncLoupeDepthFrom_ = depthFrom;
+    syncLoupeDepthTo_ = depthTo;
+    syncLoupeCenterDepth_ = centerDepth;
+    syncLoupeFlipY_ = flipY;
+
+    if (changed) {
+        emit syncLoupeStateChanged();
+    }
 }
 
 void GraphicsScene3dView::updateProjection()
@@ -1238,6 +1522,56 @@ bool GraphicsScene3dView::rulerHasGeometry() const
 QObject* GraphicsScene3dView::geoJsonController() const
 {
     return geoJsonController_;
+}
+
+bool GraphicsScene3dView::syncLoupeOverlayVisible() const
+{
+    return syncLoupeOverlayVisible_;
+}
+
+bool GraphicsScene3dView::syncLoupeUiAllowed() const
+{
+    return syncLoupeUiAllowed_;
+}
+
+bool GraphicsScene3dView::shouldRenderSyncFrom2d() const
+{
+    return syncLoupeUiAllowed_ && isVisible();
+}
+
+int GraphicsScene3dView::syncLoupeEpochIndex() const
+{
+    return syncEpochIndex_;
+}
+
+float GraphicsScene3dView::syncLoupeDepthFrom() const
+{
+    return syncLoupeDepthFrom_;
+}
+
+float GraphicsScene3dView::syncLoupeDepthTo() const
+{
+    return syncLoupeDepthTo_;
+}
+
+float GraphicsScene3dView::syncLoupeCenterDepth() const
+{
+    return syncLoupeCenterDepth_;
+}
+
+bool GraphicsScene3dView::syncLoupeFlipY() const
+{
+    return syncLoupeFlipY_;
+}
+
+int GraphicsScene3dView::syncLoupeSize() const
+{
+    return syncLoupeSize_;
+}
+
+int GraphicsScene3dView::syncLoupeZoom() const
+{
+    return syncLoupeZoom_;
 }
 
 void GraphicsScene3dView::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
@@ -1427,6 +1761,7 @@ void GraphicsScene3dView::setIdleMode()
     clearComboSelectionRect();
     m_bottomTrack->resetVertexSelection();
     boatTrack_->clearSelectedEpoch();
+    setSyncEpochIndex(-1);
 
     QQuickFramebufferObject::update();
 }
@@ -1491,6 +1826,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
 
     datasetPtr_ = dataset;
     datasetState_ = static_cast<int>(datasetPtr_->getState());
+    setSyncEpochIndex(-1);
 
     boatTrack_->setDatasetPtr(datasetPtr_);
     m_bottomTrack->setDatasetPtr(datasetPtr_);
@@ -2337,6 +2673,7 @@ void GraphicsScene3dView::onCameraMoved()
         dataZoomIndx_ = currZoom;
         emit sendDataZoom(dataZoomIndx_);
     }
+    refreshSyncLoupePreview();
 
     const auto [minX, maxX, minY, maxY] = getFieldViewDim();
     if (qFuzzyCompare(minX, std::numeric_limits<float>::max())    ||
@@ -2543,9 +2880,17 @@ void GraphicsScene3dView::InFboRenderer::render()
 void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * fbo)
 {
     auto view = qobject_cast<GraphicsScene3dView*>(fbo);
-    auto* glFuncs = QOpenGLContext::currentContext()->functions();
 
     if (!view) {
+        return;
+    }
+
+    auto* glContext = QOpenGLContext::currentContext();
+    if (!glContext) {
+        return;
+    }
+    auto* glFuncs = glContext->functions();
+    if (!glFuncs) {
         return;
     }
 
@@ -2588,6 +2933,10 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->compassPos_                 = view->compassPos_;
     m_renderer->compassSize_                = view->compassSize_;
     m_renderer->planeGridType_              = view->planeGridType_;
+
+    m_renderer->compassRenderImpl_.setShadowSettings(view->shadowsEnabled_, view->shadowVector_, view->shadowAmbient_, view->shadowIntensity_, view->shadowHighlight_);
+    m_renderer->surfaceViewRenderImpl_.setShadowSettings(view->shadowsEnabled_, view->shadowVector_, view->shadowAmbient_, view->shadowIntensity_, view->shadowHighlight_);
+    m_renderer->navigationArrowRenderImpl_.setShadowSettings(view->shadowsEnabled_, view->shadowVector_, view->shadowAmbient_, view->shadowIntensity_, view->shadowHighlight_);
 }
 
 QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferObject(const QSize &size)
@@ -2777,8 +3126,11 @@ void GraphicsScene3dView::InFboRenderer::processImageTexture(GraphicsScene3dView
 
     imagePtr->setTextureId(textureId);
 
-    QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
-    glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
+    if (auto* glContext = QOpenGLContext::currentContext()) {
+        if (auto* glFuncs = glContext->functions()) {
+            glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
+        }
+    }
 
     task = QImage();
 }

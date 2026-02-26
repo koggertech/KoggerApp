@@ -12,7 +12,7 @@ MenuFrame {
 
     id: inputDialog
     visible: false
-    width: 185
+    width: implicitWidth
 
     property alias inputFieldText: inputField.text
     property bool accepted: false
@@ -98,7 +98,7 @@ MenuFrame {
         }
 
         RowLayout {
-            visible: info.length != 0
+            visible: info.length !== 0
             CheckButton {
                 icon.source: "qrc:/icons/ui/gps.svg"
                 backColor: theme.menuBackColor
@@ -134,7 +134,7 @@ MenuFrame {
         }
 
         RowLayout {
-            visible: info.length != 0
+            visible: info.length !== 0
             CheckButton {
                 icon.source: "qrc:/icons/ui/arrow_bar_down.svg"
                 backColor: theme.menuBackColor

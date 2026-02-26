@@ -13,9 +13,9 @@ ColumnLayout {
             text: qsTr("Chart")
 
             onCheckStateChanged: {
-                if(checked == true && dev.datasetChart !== channelNumber) {
+                if(checked === true && dev.datasetChart !== channelNumber) {
                     dev.datasetChart = channelNumber
-                } else if(checked == false && dev.datasetChart === channelNumber) {
+                } else if(checked === false && dev.datasetChart === channelNumber) {
                     dev.datasetChart = 0
                 }
             }
@@ -27,9 +27,9 @@ ColumnLayout {
             text: qsTr("Distance")
 
             onCheckStateChanged: {
-                if(checked == true && dev.datasetDist !== channelNumber) {
+                if(checked === true && dev.datasetDist !== channelNumber) {
                     dev.datasetDist = channelNumber
-                } else if(checked == false && dev.datasetDist === channelNumber) {
+                } else if(checked === false && dev.datasetDist === channelNumber) {
                     dev.datasetDist = 0
                 }
             }
@@ -41,9 +41,9 @@ ColumnLayout {
             text: qsTr("Dist. NMEA")
 
             onCheckStateChanged: {
-                if(checked == true && dev.datasetSDDBT !== channelNumber) {
+                if(checked === true && dev.datasetSDDBT !== channelNumber) {
                     dev.datasetSDDBT = channelNumber
-                } else if(checked == false && dev.datasetSDDBT === channelNumber) {
+                } else if(checked === false && dev.datasetSDDBT === channelNumber) {
                     dev.datasetSDDBT = 0
                 }
             }
@@ -55,9 +55,9 @@ ColumnLayout {
             text: qsTr("Dist. NMEA#2")
 
             onCheckStateChanged: {
-                if(checked == true && dev.datasetSDDBT_P2 !== channelNumber) {
+                if(checked === true && dev.datasetSDDBT_P2 !== channelNumber) {
                     dev.datasetSDDBT_P2 = channelNumber
-                } else if(checked == false && dev.datasetSDDBT_P2 === channelNumber) {
+                } else if(checked === false && dev.datasetSDDBT_P2 === channelNumber) {
                     dev.datasetSDDBT_P2 = 0
                 }
             }
@@ -70,9 +70,9 @@ ColumnLayout {
             text: qsTr("Timestamp")
 
             onCheckStateChanged: {
-                if(checked == true && dev.datasetTimestamp !== channelNumber) {
+                if(checked === true && dev.datasetTimestamp !== channelNumber) {
                     dev.datasetTimestamp = channelNumber
-                } else if(checked == false && dev.datasetTimestamp === channelNumber) {
+                } else if(checked === false && dev.datasetTimestamp === channelNumber) {
                     dev.datasetTimestamp = 0
                 }
             }
@@ -84,9 +84,9 @@ ColumnLayout {
             text: qsTr("Temper.")
 
             onCheckStateChanged: {
-                if(checked == true && dev.datasetTemp !== channelNumber) {
+                if(checked === true && dev.datasetTemp !== channelNumber) {
                     dev.datasetTemp = channelNumber
-                } else if(checked == false && dev.datasetTemp === channelNumber) {
+                } else if(checked === false && dev.datasetTemp === channelNumber) {
                     dev.datasetTemp = 0
                 }
             }
@@ -100,9 +100,9 @@ ColumnLayout {
             text: qsTr("Euler")
 
             onCheckStateChanged: {
-                if(checked == true && dev.datasetEuler !== channelNumber) {
+                if(checked === true && dev.datasetEuler !== channelNumber) {
                     dev.datasetEuler = channelNumber
-                } else if(checked == false && dev.datasetEuler === channelNumber) {
+                } else if(checked === false && dev.datasetEuler === channelNumber) {
                     dev.datasetEuler = 0
                 }
             }

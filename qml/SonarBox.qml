@@ -2,11 +2,19 @@ import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
 import QtQuick.Dialogs
+import QtCore
 
 
 DevSettingsBox {
     id: control
     isActive: !!(dev && dev.isChartSupport)
+    property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+
+    Settings {
+        property alias importFolder: control.importFolder
+        property alias exportFolder: control.exportFolder
+    }
 
     ColumnLayout {
         id: columnItem
@@ -84,11 +92,17 @@ DevSettingsBox {
                 id: importFileDialog
                 title: qsTr("Open file")
                 fileMode: FileDialog.OpenFile
+                currentFolder: control.importFolder
                 nameFilters: ["XML files (*.xml)"]
+
+                onCurrentFolderChanged: {
+                    control.importFolder = currentFolder
+                }
 
                 onAccepted: {
                     const url = importFileDialog.selectedFile
                     if (!url) return
+                    control.importFolder = importFileDialog.currentFolder
 
                     let filePath = url.toString()
 
@@ -103,12 +117,18 @@ DevSettingsBox {
                 id: exportFileDialog
                 title: qsTr("Save as file")
                 fileMode: FileDialog.SaveFile
+                currentFolder: control.exportFolder
                 nameFilters: ["XML files (*.xml)"]
+
+                onCurrentFolderChanged: {
+                    control.exportFolder = currentFolder
+                }
 
                 onAccepted: {
                     const url = exportFileDialog.selectedFile
                     if (!url || url.toString() === "")
                         return
+                    control.exportFolder = exportFileDialog.currentFolder
 
                     let filePath = url.toString()
 
@@ -125,6 +145,7 @@ DevSettingsBox {
                         text: qsTr("Import")
                         Layout.fillWidth: true
                         onClicked: {
+                            importFileDialog.currentFolder = control.importFolder
                             importFileDialog.open()
                         }
                     }
@@ -132,6 +153,7 @@ DevSettingsBox {
                         text: qsTr("Export")
                         Layout.fillWidth: true
                         onClicked: {
+                            exportFileDialog.currentFolder = control.exportFolder
                             exportFileDialog.open()
                         }
                     }

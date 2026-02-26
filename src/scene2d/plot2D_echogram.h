@@ -3,6 +3,9 @@
 #include "plot2D_plot_layer.h"
 #include "plot2D_defs.h"
 
+class QPainter;
+class QPointF;
+class MiniPreviewPlot2D;
 
 class Plot2DEchogram : public PlotLayer {
 public:
@@ -20,6 +23,7 @@ public:
     };
 
     Plot2DEchogram();
+    ~Plot2DEchogram();
     bool draw(Plot2D* parent, Dataset* dataset);
 
     float getLowLevel() const;
@@ -31,6 +35,7 @@ public:
     void setColorScheme(QVector<QColor> coloros, QVector<int> levels);
     int getThemeId() const;
     void setThemeId(int theme_id);
+    int getCompensation() const;
     void setCompensation(int compensation_id);
 
     void updateColors();
@@ -39,6 +44,8 @@ public:
     void resetCash();
 
     void addReRenderPlotIndxs(const QSet<int>& indxs);
+    bool drawZoomPreview(Plot2D* parent, Dataset* dataset, QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceSize, QPointF* focusPoint = nullptr);
+    bool drawZoomPreview(Plot2D* parent, Dataset* dataset, QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceWidth, int sourceHeight, QPointF* focusPoint = nullptr);
 
 protected:
     struct CashLine
@@ -96,4 +103,5 @@ protected:
 private:
     ThemeId themeId_;
     QSet<int> reRenderPlotIndxs_;
+    MiniPreviewPlot2D* miniPreviewPlot_ = nullptr;
 };

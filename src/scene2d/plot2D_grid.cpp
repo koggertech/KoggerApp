@@ -1,13 +1,44 @@
 #include "plot2D_grid.h"
 #include "plot2D.h"
 #include "math_defs.h"
+#include <QFontMetrics>
 
 
 Plot2DGrid::Plot2DGrid() : angleVisibility_(false)
 {}
 
+void Plot2DGrid::drawTextWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text) const
+{
+    if (!painter || text.isEmpty()) {
+        return;
+    }
+
+    const QFontMetrics fm(painter->font());
+    const int padX = 8;
+    const int padY = 4;
+    const int radius = 5;
+    const QRect bgRect(x - padX,
+                       baselineY - fm.ascent() - padY,
+                       fm.horizontalAdvance(text) + padX * 2,
+                       fm.height() + padY * 2);
+
+    const auto prevMode = painter->compositionMode();
+    const auto prevPen = painter->pen();
+    painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(QColor(0, 0, 0, 115));
+    painter->drawRoundedRect(bgRect, radius, radius);
+
+    painter->setPen(prevPen);
+    painter->drawText(x, baselineY, text);
+    painter->setPen(prevPen);
+    painter->setCompositionMode(prevMode);
+}
+
 bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
 {
+    Q_UNUSED(dataset);
     auto &canvas = parent->canvas();
     auto &cursor = parent->cursor();
 
@@ -64,7 +95,7 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
 
         if (!lineText.isEmpty()) {
             const int textX = invert_ ? textXOffset : (imageWidth - textW - textXOffset);
-            p->drawText(textX, posY - textYOffset, lineText);
+            drawTextWithBackdrop(p, textX, posY - textYOffset, lineText);
         }
     }
 
@@ -77,77 +108,7 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
         QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
         const int w = fm2.horizontalAdvance(rangeText);
         const int x = invert_ ? (textXOffset * 2) : (imageWidth - textXOffset / 2 - w);
-        p->drawText(x, imageHeight - 10, rangeText);
-    }
-
-    // rangefinder
-    if (_rangeFinderLastVisible && cursor.distance.isValid()) {
-        Epoch* lastEpoch = dataset->last();
-        Epoch* preLastEpoch = dataset->lastlast();
-        if (!lastEpoch || !preLastEpoch) {
-            return false;
-        }
-        float distance = NAN;
-
-        if (lastEpoch != NULL && isfinite(lastEpoch->rangeFinder())) {
-            distance = lastEpoch->rangeFinder();
-        }
-        else if (preLastEpoch != NULL && isfinite(preLastEpoch->rangeFinder())) {
-            distance = preLastEpoch->rangeFinder();
-        }
-
-        if (isfinite(distance)) {
-            pen.setColor(QColor(250, 100, 0));
-            p->setPen(pen);
-            p->setFont(QFont("Asap", 40, QFont::Normal));
-            float val{ round(distance * 100.f) / 100.f };
-            bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
-            QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
-            p->drawText(imageWidth / 2 - rangeText.size() * 32, imageHeight - 15, rangeText);
-        }
-    }
-
-    if(true) {
-        Epoch* lastEpoch = dataset->last();
-        Epoch* preLastEpoch = dataset->lastlast();
-        if (!lastEpoch || !preLastEpoch) {
-            return false;
-        }
-
-        Q_UNUSED(lastEpoch)
-        Q_UNUSED(preLastEpoch)
-
-        float temp = NAN;
-        temp = dataset->getLastTemp();
-
-        // qDebug() << "Plot temp def: " << temp;
-
-        // if (lastEpoch != NULL && isfinite(lastEpoch->temperatureAvail())) {
-        //     temp = lastEpoch->temperature();
-        //     qDebug() << "Plot temp one: " << temp;
-        // }
-        // else if (preLastEpoch != NULL && isfinite(preLastEpoch->temperatureAvail())) {
-        //     temp = preLastEpoch->temperature();
-        //     qDebug() << "Plot temp sec: " << temp;
-        // } else if() {
-
-        // if (lastEpoch != NULL && isfinite(lastEpoch->temperatureAvail())) {
-        //     temp = preLastEpoch->temperature();
-        //     qDebug() << "Plot temp sec: " << temp;
-        // }
-
-        // }
-        // qDebug() << "Plot temp end: " << temp;
-
-        if (temperatureVisible_ && isfinite(temp)) {
-            pen.setColor(QColor(80, 200, 0));
-            p->setPen(pen);
-            p->setFont(QFont("Asap", 40, QFont::Normal));
-            float val{ round(temp * 100.f) / 100.f };
-            bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
-            QString rangeText = QString::number(val, 'f', isInteger ? 0 : 1) + QObject::tr("°");
-            p->drawText(imageWidth / 2 - 300, imageHeight - 15, rangeText);
-        }
+        drawTextWithBackdrop(p, x, imageHeight - 10, rangeText);
     }
 
     return true;

@@ -17,6 +17,8 @@ Core::Core() :
     consolePtr_(new Console),
     deviceManagerWrapperPtr_(std::make_unique<DeviceManagerWrapper>(this)),
     linkManagerWrapperPtr_(std::make_unique<LinkManagerWrapper>(this)),
+    internetManager_(nullptr),
+    internetThread_(nullptr),
     dataProcessor_(nullptr),
     dataProcThread_(nullptr),
     dataHorizon_(std::make_unique<DataHorizon>()),
@@ -55,6 +57,7 @@ Core::Core() :
 
 Core::~Core()
 {
+    destroyInternetManager();
     destroyDataProcessor();
 }
 
@@ -67,6 +70,8 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 {
     qmlAppEnginePtr_ = engine;
     QObject::connect(qmlAppEnginePtr_, &QQmlApplicationEngine::objectCreated, this, &Core::UILoad, Qt::QueuedConnection);
+
+    createInternetManager();
 
     qmlAppEnginePtr_->rootContext()->setContextProperty("BoatTrackControlMenuController",       boatTrackControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("NavigationArrowControlMenuController", navigationArrowControlMenuController_.get());
@@ -311,6 +316,7 @@ void Core::onFileOpened()
     qDebug() << "file opened!";
     QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
     QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+    setTimelinePosition(1.0);
     if (scene3dViewPtr_) {
         scene3dViewPtr_->setIsOpeningFile(false);
     }
@@ -493,6 +499,7 @@ void Core::onFileOpened()
 
     QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
     QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+    setTimelinePosition(1.0);
     if (scene3dViewPtr_) {
         scene3dViewPtr_->setIsOpeningFile(false);
     }
@@ -543,7 +550,7 @@ bool Core::openXTF(const QByteArray& data)
         fChName = channelList.at(0).portName_;
     }
     if (linkNames.contains(channelList.at(1).channelId_.uuid)) {
-        sChName = channelList.at(0).portName_;
+        sChName = channelList.at(1).portName_;
     }
 
     if (!plot2dList_.isEmpty() && plot2dList_.at(0) && channelList.size() >= 2) {
@@ -558,6 +565,21 @@ bool Core::openXTF(const QByteArray& data)
                 plot2dList_.at(i)->plotUpdate();
             }
         }
+    }
+
+    if (syncLoupePlot3dPtr_ && !channelList.isEmpty()) {
+        if (channelList.size() >= 2) {
+            const QString loupeFirstName = fChName.isEmpty() ? channelList[0].portName_ : fChName;
+            const QString loupeSecondName = sChName.isEmpty() ? channelList[1].portName_ : sChName;
+            syncLoupePlot3dPtr_->setDataChannel(false,
+                                                channelList[0].channelId_, channelList[0].subChannelId_, loupeFirstName,
+                                                channelList[1].channelId_, channelList[1].subChannelId_, loupeSecondName);
+        }
+        else {
+            const QString loupeChannelName = fChName.isEmpty() ? channelList[0].portName_ : fChName;
+            syncLoupePlot3dPtr_->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, loupeChannelName);
+        }
+        syncLoupePlot3dPtr_->plotUpdate();
     }
 
     return true;
@@ -763,6 +785,13 @@ void Core::setFixBlackStripesBackwardSteps(int val)
 
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesBackwardSteps(val);
+    }
+}
+
+void Core::setBottomTrackRealtimeFromSettings(bool state)
+{
+    if (dataProcessor_) {
+        QMetaObject::invokeMethod(dataProcessor_, "setUpdateBottomTrackFromSettings", Qt::QueuedConnection, Q_ARG(bool, state));
     }
 }
 
@@ -1182,6 +1211,9 @@ void Core::setPlotStartLevel(int level)
             plot2dList_.at(i)->setEchogramLowLevel(level);
         }
     }
+    if (syncLoupePlot3dPtr_) {
+        syncLoupePlot3dPtr_->setEchogramLowLevel(level);
+    }
 }
 
 void Core::setPlotStopLevel(int level)
@@ -1189,6 +1221,9 @@ void Core::setPlotStopLevel(int level)
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (plot2dList_.at(i) != NULL)
             plot2dList_.at(i)->setEchogramHightLevel(level);
+    }
+    if (syncLoupePlot3dPtr_) {
+        syncLoupePlot3dPtr_->setEchogramHightLevel(level);
     }
 }
 
@@ -1222,7 +1257,19 @@ void Core::UILoad(QObject* object, const QUrl& url)
 #endif
 
     scene3dViewPtr_ = object->findChild<GraphicsScene3dView*> ();
-    plot2dList_ = object->findChildren<qPlot2D*>();
+    plot2dList_.clear();
+    syncLoupePlot3dPtr_.clear();
+    const auto allPlots = object->findChildren<qPlot2D*>();
+    for (auto* plot : allPlots) {
+        if (!plot) {
+            continue;
+        }
+        if (plot->objectName() == QStringLiteral("syncLoupe3DPlot")) {
+            syncLoupePlot3dPtr_ = plot;
+            continue;
+        }
+        plot2dList_.append(plot);
+    }
     scene3dViewPtr_->setDataset(datasetPtr_);
     scene3dViewPtr_->setDataProcessorPtr(dataProcessor_);
     datasetPtr_->setScene3D(scene3dViewPtr_);
@@ -1238,6 +1285,11 @@ void Core::UILoad(QObject* object, const QUrl& url)
             plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->getBoatTrackPtr().get());
             plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->getContactsPtr().get());
         }
+    }
+
+    if (syncLoupePlot3dPtr_) {
+        syncLoupePlot3dPtr_->setPlot(datasetPtr_);
+        syncLoupePlot3dPtr_->setDataProcessor(dataProcessor_);
     }
 
     //if(m_scene3dView){
@@ -1390,6 +1442,18 @@ void Core::onChannelsUpdated()
     }
 
     if (fChName.isEmpty() && sChName.isEmpty()) {
+        if (syncLoupePlot3dPtr_ && chSize >= 1) {
+            if (chSize >= 2) {
+                syncLoupePlot3dPtr_->setDataChannel(false,
+                                                    chs[0].channelId_, chs[0].subChannelId_, chs[0].portName_,
+                                                    chs[1].channelId_, chs[1].subChannelId_, chs[1].portName_);
+            }
+            else {
+                syncLoupePlot3dPtr_->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, chs[0].portName_);
+            }
+            syncLoupePlot3dPtr_->plotUpdate();
+        }
+        emit channelListUpdated();
         return;
     }
 
@@ -1408,6 +1472,22 @@ void Core::onChannelsUpdated()
         }
     }
 
+    if (syncLoupePlot3dPtr_) {
+        if (chSize >= 2) {
+            const QString loupeFirstName = fChName.isEmpty() ? chs[0].portName_ : fChName;
+            const QString loupeSecondName = sChName.isEmpty() ? chs[1].portName_ : sChName;
+            syncLoupePlot3dPtr_->setDataChannel(false,
+                                                chs[0].channelId_, chs[0].subChannelId_, loupeFirstName,
+                                                chs[1].channelId_, chs[1].subChannelId_, loupeSecondName);
+            syncLoupePlot3dPtr_->plotUpdate();
+        }
+        else if (chSize == 1) {
+            const QString loupeChannelName = fChName.isEmpty() ? chs[0].portName_ : fChName;
+            syncLoupePlot3dPtr_->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, loupeChannelName);
+            syncLoupePlot3dPtr_->plotUpdate();
+        }
+    }
+
     emit channelListUpdated();
 }
 
@@ -1416,6 +1496,9 @@ void Core::onRedrawEpochs(const QSet<int>& indxs)
     const int numPlots = plot2dList_.size();
     for (int i = 0; i < numPlots; i++) {
         plot2dList_[i]->addReRenderPlotIndxs(indxs);
+    }
+    if (syncLoupePlot3dPtr_) {
+        syncLoupePlot3dPtr_->addReRenderPlotIndxs(indxs);
     }
 }
 
@@ -1427,6 +1510,42 @@ QString Core::getChannel1Name() const
 QString Core::getChannel2Name() const
 {
     return sChName_;
+}
+
+void Core::registerSyncLoupePlot(QObject* plotObj)
+{
+    auto* plot = qobject_cast<qPlot2D*>(plotObj);
+    if (!plot) {
+        return;
+    }
+
+    syncLoupePlot3dPtr_ = plot;
+
+    if (datasetPtr_) {
+        syncLoupePlot3dPtr_->setPlot(datasetPtr_);
+    }
+    if (dataProcessor_) {
+        syncLoupePlot3dPtr_->setDataProcessor(dataProcessor_);
+    }
+
+    if (!datasetPtr_) {
+        return;
+    }
+
+    const auto chs = datasetPtr_->channelsList();
+    if (chs.isEmpty()) {
+        return;
+    }
+
+    if (chs.size() >= 2) {
+        syncLoupePlot3dPtr_->setDataChannel(false,
+                                            chs[0].channelId_, chs[0].subChannelId_, chs[0].portName_,
+                                            chs[1].channelId_, chs[1].subChannelId_, chs[1].portName_);
+    }
+    else {
+        syncLoupePlot3dPtr_->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, chs[0].portName_);
+    }
+    syncLoupePlot3dPtr_->plotUpdate();
 }
 
 QVariant Core::getConvertedMousePos(int indx, int mouseX, int mouseY)
@@ -1546,6 +1665,31 @@ QVariantList Core::getMapTileProviders() const
     return providers;
 }
 
+bool Core::getInternetAvailable() const
+{
+    return internetAvailable_;
+}
+
+bool Core::getMapTileLoadingEnabled() const
+{
+    return mapTileLoadingEnabled_;
+}
+
+void Core::setMapTileLoadingEnabled(bool enabled)
+{
+    if (mapTileLoadingEnabled_ == enabled) {
+        return;
+    }
+
+    mapTileLoadingEnabled_ = enabled;
+
+    if (tileManager_) {
+        tileManager_->setMapEnabled(mapTileLoadingEnabled_);
+    }
+
+    emit mapTileLoadingEnabledChanged();
+}
+
 int Core::loadSavedMapTileProviderId() const
 {
     QSettings settings("KOGGER", "KoggerApp");
@@ -1622,6 +1766,8 @@ void Core::createDeviceManagerConnections()
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rangefinderComplete,    datasetPtr_, &Dataset::addRangefinder,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionComplete,       datasetPtr_, &Dataset::addPosition,     deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssVelocityComplete,   datasetPtr_, &Dataset::addGnssVelocity, deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::simpleNavV2Complete,   datasetPtr_, &Dataset::addSimpleNavV2,  deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::boatStatusComplete,     datasetPtr_, &Dataset::addBoatStatus,   deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::attitudeComplete,       datasetPtr_, &Dataset::addAtt,          deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::tempComplete,           datasetPtr_, &Dataset::addTemp,         deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileOpened,             this,        &Core::onFileOpened,       deviceManagerConnection));
@@ -1671,6 +1817,8 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::depthComplete,          datasetPtr_, &Dataset::addDepth,        deviceManagerConnection);
 
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssVelocityComplete,   datasetPtr_, &Dataset::addGnssVelocity, deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::simpleNavV2Complete,    datasetPtr_, &Dataset::addSimpleNavV2,  deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::boatStatusComplete,     datasetPtr_, &Dataset::addBoatStatus,   deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::attitudeComplete,       datasetPtr_, &Dataset::addAtt,          deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::tempComplete,           datasetPtr_, &Dataset::addTemp,         deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileOpened,             this,        &Core::onFileOpened,       deviceManagerConnection);
@@ -1828,12 +1976,12 @@ void Core::loadLLARefFromSettings()
         settings.endGroup();
 
         if (!std::isfinite(ref.refLla.altitude)) {
-            qWarning() << "Core::loadLLARefFromSettings: refLla.altitude is NaN, forcing 0";
+            //qWarning() << "Core::loadLLARefFromSettings: refLla.altitude is NaN, forcing 0";
             ref.refLla.altitude = 0.0;
         }
 
         if (!std::isfinite(ref.refLla.latitude) || !std::isfinite(ref.refLla.longitude)) {
-            qWarning() << "Core::loadLLARefFromSettings: invalid lat/lon, disabling isInit";
+            //qWarning() << "Core::loadLLARefFromSettings: invalid lat/lon, disabling isInit";
             ref.isInit = false;
         }
 
@@ -1852,6 +2000,8 @@ void Core::loadLLARefFromSettings()
 void Core::createMapTileManagerConnections()
 {
     tileManager_ = std::make_unique<map::TileManager>(this);
+    tileManager_->setInternetAvailable(getInternetAvailable());
+    tileManager_->setMapEnabled(mapTileLoadingEnabled_);
 
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendLlaRef, tileManager_.get(), &map::TileManager::getLlaRef, Qt::DirectConnection);
@@ -1894,6 +2044,48 @@ void Core::createDatasetConnections()
 {
     QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this,               &Core::onChannelsUpdated);
     QObject::connect(datasetPtr_, &Dataset::redrawEpochs,    this,               &Core::onRedrawEpochs);
+}
+
+void Core::createInternetManager()
+{
+    if (!internetThread_) {
+        internetThread_ = new QThread(this);
+        internetThread_->setObjectName("InternetThread");
+    }
+
+    if (!internetManager_) {
+        internetManager_ = new InternetManager();
+        internetManager_->moveToThread(internetThread_);
+
+        QObject::connect(internetThread_, &QThread::started, internetManager_, &InternetManager::start, Qt::QueuedConnection);
+        QObject::connect(internetThread_, &QThread::finished, internetManager_, &QObject::deleteLater, Qt::QueuedConnection);
+        QObject::connect(internetManager_, &InternetManager::internetAvailabilityChanged, this,
+                         [this](bool available) {
+                             internetAvailable_ = available;
+                             if (tileManager_) {
+                                 tileManager_->setInternetAvailable(available);
+                             }
+                             emit internetAvailableChanged();
+                         },
+                         Qt::QueuedConnection);
+    }
+
+    if (!internetThread_->isRunning()) {
+        internetThread_->start();
+    }
+}
+
+void Core::destroyInternetManager()
+{
+    if (internetManager_ && internetThread_ && internetThread_->isRunning()) {
+        QMetaObject::invokeMethod(internetManager_, "stop", Qt::BlockingQueuedConnection);
+    }
+    if (internetThread_ && internetThread_->isRunning()) {
+        internetThread_->quit();
+        internetThread_->wait();
+    }
+    internetManager_ = nullptr;
+    internetThread_ = nullptr;
 }
 
 int Core::getDataProcessorState() const
@@ -1981,6 +2173,7 @@ void Core::createDataHorizonConnections()
     dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::positionAdded,    dataHorizon_.get(), &DataHorizon::onAddedPosition));
     dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::chartAdded,       dataHorizon_.get(), &DataHorizon::onAddedChart));
     dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::attitudeAdded,    dataHorizon_.get(), &DataHorizon::onAddedAttitude));
+    dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::artificalAttitudeAdded, dataHorizon_.get(), &DataHorizon::onAddedArtificalAttitude));
     dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::bottomTrackAdded, dataHorizon_.get(), &DataHorizon::onAddedBottomTrack));
 }
 

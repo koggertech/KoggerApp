@@ -1,5 +1,6 @@
 #include "scene_object.h"
 #include "draw_utils.h"
+#include <cmath>
 
 
 SceneObject::SceneObject(QObject *parent)
@@ -359,6 +360,53 @@ void SceneObject::RenderImplementation::removeVertex(int index)
     m_data.removeAt(index);
 
     updateBounds();
+}
+
+void SceneObject::RenderImplementation::setShadowSettings(bool enabled,
+                                                          const QVector3D& lightDir,
+                                                          float ambient,
+                                                          float intensity,
+                                                          float highlightIntensity)
+{
+    shadowEnabled_ = enabled;
+    shadowLightDir_ = lightDir;
+    shadowAmbient_ = qBound(0.0f, ambient, 1.0f);
+    shadowIntensity_ = qBound(0.0f, intensity, 1.0f);
+    shadowHighlightIntensity_ = qBound(0.0f, highlightIntensity, 1.0f);
+}
+
+SceneObject::RenderImplementation::EffectiveShadowParams SceneObject::RenderImplementation::effectiveShadowParams() const
+{
+    EffectiveShadowParams params;
+    if (shadowEnabled_) {
+        params.lightDir = normalizedShadowDir(shadowLightDir_);
+        params.ambient = qBound(0.0f, shadowAmbient_, 1.0f);
+        params.intensity = qBound(0.0f, shadowIntensity_, 1.0f);
+        params.highlightIntensity = qBound(0.0f, shadowHighlightIntensity_, 1.0f);
+    } 
+    else {
+        params.lightDir = QVector3D(0.0f, 0.0f, 1.0f);
+        params.ambient = 1.0f;
+        params.intensity = 0.0f;
+        params.highlightIntensity = 0.0f;
+    }
+
+    return params;
+}
+
+QVector3D SceneObject::RenderImplementation::normalizedShadowDir(const QVector3D& dir)
+{
+    if (!std::isfinite(dir.x()) || !std::isfinite(dir.y()) || !std::isfinite(dir.z())) {
+        return QVector3D(0.40f, 0.40f, 0.40f);
+    }
+
+    QVector3D n = dir;
+    const float lenSq = n.lengthSquared();
+    if (lenSq <= 1e-8f) {
+        return QVector3D(0.40f, 0.40f, 0.40f);
+    }
+    n /= std::sqrt(lenSq);
+    return n;
 }
 
 void SceneObject::RenderImplementation::updateBounds()

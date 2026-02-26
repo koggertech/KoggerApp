@@ -76,19 +76,19 @@ Item {
             id: column
             CRButton {
                 id:switch_off
-                checked: setPositionSwitch == 0
+                checked: setPositionSwitch === 0
                 text: qsTr("OFF")
             }
 
             CRButton {
                 id:switch_ch1
-                checked: setPositionSwitch == 1
+                checked: setPositionSwitch === 1
                 text: qsTr("CH1")
             }
 
             CRButton {
                 id:switch_ch2
-                checked: setPositionSwitch == 2
+                checked: setPositionSwitch === 2
                 text: qsTr("CH2")
             }
         }

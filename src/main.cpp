@@ -11,6 +11,7 @@
 #include <QFile>
 #include <QByteArray>
 #include <QQuickWindow>
+#include <QPointer>
 #include <QSql>
 #include <QSqlDatabase>
 #include <QQuickStyle>
@@ -197,6 +198,7 @@ int main(int argc, char *argv[])
     core.setEngine(&engine);
     //qDebug() << "SQL drivers =" << QSqlDatabase::drivers(); // тут должен появиться QSQLITE
     const QUrl url(QStringLiteral("qrc:/main.qml"));
+    QPointer<QQuickWindow> mainWindow;
     QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
                      &app,      [url](QObject *obj, const QUrl &objUrl) {
                                     if (!obj && url == objUrl)
@@ -226,13 +228,16 @@ int main(int argc, char *argv[])
                             });
 
     engine.load(url);
+    const auto rootObjects = engine.rootObjects();
+    if (!rootObjects.isEmpty()) {
+        QObject* rootObject = rootObjects.constFirst();
+        mainWindow = qobject_cast<QQuickWindow*>(rootObject);
 #if defined(Q_OS_WIN)
-    if (!engine.rootObjects().isEmpty()) {
-        if (auto* window = qobject_cast<QWindow*>(engine.rootObjects().first())) {
+        if (auto* window = qobject_cast<QWindow*>(rootObject)) {
             applyWindowsFullscreenBorderWorkaround(window);
         }
-    }
 #endif
+    }
     qCritical() << "App is created";
     return app.exec();
 }

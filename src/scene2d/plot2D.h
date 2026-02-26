@@ -4,6 +4,7 @@
 #include <QVector>
 #include <QImage>
 #include <QPoint>
+#include <QPointF>
 #include <QPixmap>
 #include <QPainter>
 #include <QEvent>
@@ -20,6 +21,7 @@
 #include "plot2D_encoder.h"
 #include "plot2D_gnss.h"
 #include "plot2D_grid.h"
+#include "plot2D_temperature.h"
 #include "plot2D_quadrature.h"
 #include "plot2D_rangefinder.h"
 #include "plot2D_depth.h"
@@ -46,6 +48,12 @@ public:
     void setPlotEnabled(bool state);
 
     bool plotEnabled() const;
+    bool getLoupeVisible() const;
+    void setLoupeVisible(bool state);
+    int getLoupeSize() const;
+    void setLoupeSize(int size);
+    int getLoupeZoom() const;
+    void setLoupeZoom(int zoom);
 
     bool isHorizontal();
     void setHorizontal(bool is_horizontal);
@@ -77,6 +85,8 @@ public:
 
     bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
     void draw(QPainter* painterPtr);
+    bool drawEchogramZoomPreview(QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceSize, QPointF* focusPoint = nullptr);
+    bool drawEchogramZoomPreview(QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceWidth, int sourceHeight, QPointF* focusPoint = nullptr);
 
     float getCursorDistance() const;
     std::tuple<ChannelId, uint8_t, QString> getSelectedChannelId(float cursorDistance = 0.0f) const;
@@ -84,6 +94,7 @@ public:
     float getEchogramLowLevel() const;
     float getEchogramHighLevel() const;
     int getThemeId() const;
+    int getEchogramCompensation() const;
     void setEchogramLowLevel(float low);
     void setEchogramHightLevel(float high);
     void setEchogramVisible(bool visible);
@@ -92,11 +103,15 @@ public:
 
     void setBottomTrackVisible(bool visible);
     void setBottomTrackTheme(int theme_id);
+    void setBottomTrackDepthTextVisible(bool visible);
 
     void setRangefinderVisible(bool visible);
     void setRangefinderTheme(int theme_id);
+    void setRangefinderDepthTextVisible(bool visible);
     void setAttitudeVisible(bool visible);
     void setTemperatureVisible(bool visible);
+    bool hasTemperatureValue() const;
+    bool hasRangefinderDepthTextValue() const;
     void setDopplerBeamVisible(bool visible, int beam_filter);
     void setDopplerInstrumentVisible(bool visible);
 
@@ -155,6 +170,7 @@ protected:
     Plot2DEncoder encoder_;
     Plot2DGNSS gnss_;
     Plot2DGrid grid_;
+    Plot2DTemperature temperature_;
     Plot2DQuadrature quadrature_;
     Plot2DRangefinder rangefinder_;
     Plot2DDepth depth_;
@@ -166,6 +182,38 @@ protected:
 
 private:
     bool isEnabled_;
+    bool isLoupeVisible_;
+    int loupeSize_;
+    int loupeZoom_;
     float lAngleOffsetDeg_;
     float rAngleOffsetDeg_;
+};
+
+class MiniPreviewPlot2D final : public Plot2D
+{
+public:
+    MiniPreviewPlot2D();
+
+    bool render(QPainter* painter,
+                Dataset* dataset,
+                const DatasetCursor& parentCursor,
+                int parentCanvasWidth,
+                int sourceLeft,
+                int sourceWidth,
+                int previewWidth,
+                int previewHeight,
+                float zoomFrom,
+                float zoomTo,
+                int themeId,
+                float lowLevel,
+                float highLevel,
+                int compensationId);
+
+private:
+    void updateEchogramSettings(int themeId, float lowLevel, float highLevel, int compensationId);
+
+    int cachedThemeId_ = -1;
+    int cachedCompensationId_ = -1;
+    float cachedLowLevel_ = NAN;
+    float cachedHighLevel_ = NAN;
 };
