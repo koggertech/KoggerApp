@@ -595,6 +595,21 @@ void DevDriver::acousticResponceTimeout(uint32_t timeout_us) {
     idUSBLControl->setResponseTimeout(timeout_us);
 }
 
+void DevDriver::setUsblTransponderEnable(bool enabled, uint32_t timeout_us) {
+    if(!m_state.connect) return;
+    idUSBLControl->setTransponderEnable(enabled ? timeout_us : 0u);
+}
+
+void DevDriver::setUsblMonitorConfig(uint32_t suppressSelfResponse_us, uint32_t suppressSelfRequest_us, bool receiveResponseInIdle) {
+    if(!m_state.connect) return;
+
+    IDBinUsblControl::USBLMonitorConfig cfg = {};
+    cfg.suppressSelfResponse_us = suppressSelfResponse_us;
+    cfg.suppressSelfRequest_us = suppressSelfRequest_us;
+    cfg.receiveResponseInIdle = receiveResponseInIdle;
+    idUSBLControl->setMonitorConfig(cfg);
+}
+
 void DevDriver::setUsblCmdConfigRow(bool isResponseList, uint8_t cmdId, bool receiverChecked, bool senderChecked, bool functionBitArray, uint16_t receiveBits, const QString& sendingPayloadHex) {
     if(!m_state.connect) return;
 

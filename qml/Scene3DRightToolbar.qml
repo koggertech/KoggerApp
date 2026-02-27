@@ -110,7 +110,7 @@ Item {
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
-            visible: false
+            visible: true
 
             CMouseOpacityArea {
                 toolTipText: qsTr("GeoJSON")

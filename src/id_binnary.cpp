@@ -1193,7 +1193,7 @@ void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address, uint8_t
     emit binFrameOut(ping_req);
 }
 
-void IDBinUsblControl::setResponseTimeout(uint32_t timeout_us) {
+void IDBinUsblControl::setTransponderEnable(uint32_t timeout_us) {
     ProtoBinOut ping_resp_t;
     ping_resp_t.create(SETTING, USBLResponseTimeout::getVer(), id(), m_address);
     USBLResponseTimeout req = {timeout_us};
@@ -1201,6 +1201,19 @@ void IDBinUsblControl::setResponseTimeout(uint32_t timeout_us) {
     ping_resp_t.end();
 
     emit binFrameOut(ping_resp_t);
+}
+
+void IDBinUsblControl::setResponseTimeout(uint32_t timeout_us) {
+    setTransponderEnable(timeout_us);
+}
+
+void IDBinUsblControl::setMonitorConfig(const USBLMonitorConfig& cfg) {
+    ProtoBinOut monitor_cfg;
+    monitor_cfg.create(SETTING, USBLMonitorConfig::getVer(), id(), m_address);
+    monitor_cfg.write<USBLMonitorConfig>(cfg);
+    monitor_cfg.end();
+
+    emit binFrameOut(monitor_cfg);
 }
 
 void IDBinUsblControl::setResponseAddressFilter(const std::array<uint8_t, 8>& addresses) {

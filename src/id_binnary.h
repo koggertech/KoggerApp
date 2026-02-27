@@ -1215,6 +1215,15 @@ public:
         uint32_t timeout_us = 0;
     } __attribute__((packed));
 
+    struct USBLMonitorConfig {
+        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr Version getVer() { return v7; }
+
+        uint32_t suppressSelfResponse_us = 0;
+        uint32_t suppressSelfRequest_us = 0;
+        bool receiveResponseInIdle = false;
+    } __attribute__((packed));
+
     // Filter for incoming addresses
     struct USBLResponseAddressFilter {
         static constexpr ID getId() { return ID_USBL_CONTROL; }
@@ -1318,7 +1327,9 @@ public:
 
     void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id);
     void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id, uint32_t reply_distance_mm, const QByteArray& payload = {});
+    void setTransponderEnable(uint32_t timeout_us);
     void setResponseTimeout(uint32_t timeout_us);
+    void setMonitorConfig(const USBLMonitorConfig& cfg);
     void setResponseAddressFilter(const std::array<uint8_t, 8>& addresses);
     void setResponseAddressFilter(uint8_t address);
     void setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& sendingPayload = {});

@@ -27,7 +27,7 @@ DevSettingsBox {
                 active: true
                 address: 0
                 cmd: 0
-                distanceM: "20.0"
+                distanceM: "500.0"
                 payloadHex: ""
                 triggerEnabled: false
                 timeoutUs: 0
@@ -159,6 +159,56 @@ DevSettingsBox {
             }
         }
 
+        QtObject {
+            id: usblConfigController
+
+            function toUInt32(textValue, fallback) {
+                var s = String(textValue).trim()
+                if (s.length === 0) {
+                    return fallback
+                }
+
+                var n = Number(s)
+                if (!isFinite(n) || isNaN(n)) {
+                    return fallback
+                }
+
+                n = Math.round(n)
+                if (n < 0) {
+                    return 0
+                }
+                if (n > 4294967295) {
+                    return 4294967295
+                }
+                return n
+            }
+
+            function toUInt32FromMs(textValue, fallbackUs) {
+                var s = String(textValue).trim()
+                if (s.length === 0) {
+                    return fallbackUs
+                }
+
+                var ms = Number(s)
+                if (!isFinite(ms) || isNaN(ms)) {
+                    return fallbackUs
+                }
+
+                if (ms < 0) {
+                    ms = 0
+                }
+
+                var us = Math.round(ms * 1000.0)
+                if (us < 0) {
+                    return 0
+                }
+                if (us > 4294967295) {
+                    return 4294967295
+                }
+                return us
+            }
+        }
+
         Timer {
             id: pingRowsTimer
             interval: autoIntervalSpin.value
@@ -233,9 +283,9 @@ DevSettingsBox {
             CText { text: "ms" }
             SpinBoxCustom {
                 id: autoIntervalSpin
-                from: 100
+                from: 300
                 to: 10000
-                value: 1800
+                value: 1000
             }
         }
 
@@ -289,7 +339,7 @@ DevSettingsBox {
                     CTextField {
                         implicitWidth: 80
                         text: payloadHex
-                        placeholderText: "AA 01 FF"
+                        // placeholderText: "AA 01 FF"
                         onTextChanged: pingRowsModel.setProperty(index, "payloadHex", text)
                     }
 
@@ -372,7 +422,9 @@ DevSettingsBox {
                     anchors.fill: parent
                     anchors.margins: 4
                     spacing: 6
-                    CCheck {
+                    CheckButton {
+                        icon.source: checked ? "qrc:/icons/ui/access_point.svg" : "qrc:/icons/ui/access_point_off.svg"
+                        checkable: true
                         checked: enabled
                         text: ""
                         onCheckedChanged: requestCmdConfigModel.setProperty(index, "enabled", checked)
@@ -498,7 +550,9 @@ DevSettingsBox {
                     anchors.fill: parent
                     anchors.margins: 4
                     spacing: 6
-                    CCheck {
+                    CheckButton {
+                        icon.source: checked ? "qrc:/icons/ui/access_point.svg" : "qrc:/icons/ui/access_point_off.svg"
+                        checkable: true
                         checked: enabled
                         text: ""
                         onCheckedChanged: responseCmdConfigModel.setProperty(index, "enabled", checked)
@@ -705,13 +759,6 @@ DevSettingsBox {
                 dev.acousticResponceFilterSlots(enabled)
             }
 
-            CheckButton {
-                id: requestFilterLabel
-                icon.source: "qrc:/icons/ui/filter_cog.svg"
-                checkable: false
-                text: "Req Filter"
-            }
-
             Repeater {
                 model: 8
                 delegate: CheckButton {
@@ -725,30 +772,115 @@ DevSettingsBox {
             }
         }
 
-        RowLayout {
-            id: responseControl
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: transponderRow.implicitHeight + 8
+            radius: 6
+            color: "#1AFFFFFF"
+            border.color: "#33FFFFFF"
+            border.width: 1
 
-            function responseTimeout() {
-                var responseTriggerTime =  responseEnableButton.checked ?  0xFFFFFFFF : 0
-                dev.acousticResponceTimeout(responseTriggerTime)
+            RowLayout {
+                id: transponderRow
+                anchors.fill: parent
+                anchors.margins: 4
+                spacing: 8
+
+                CheckButton {
+                    id: transponderEnableButton
+                    checkable: true
+                    checked: true
+                    icon.source: checked ? "qrc:/icons/ui/access_point.svg" : "qrc:/icons/ui/access_point_off.svg"
+                    text: "Transponder"
+                }
+
+                CheckButton {
+                    id: transponderForceButton
+                    text: "Force"
+                    checkable: true
+                    checked: true
+                }
+
+                CTextField {
+                    id: transponderTimeoutField
+                    visible: !transponderForceButton.checked
+                    implicitWidth: 130
+                    text: "400"
+                    placeholderText: "timeout ms"
+                }
+
+                CheckButton {
+                    icon.source: "qrc:/icons/ui/file-check.svg"
+                    text: ""
+                    checkable: false
+                    onClicked: {
+                        var timeoutUs = transponderForceButton.checked
+                            ? 4294967295
+                            : usblConfigController.toUInt32FromMs(transponderTimeoutField.text, 400000)
+                        dev.setUsblTransponderEnable(transponderEnableButton.checked, timeoutUs)
+                    }
+                }
             }
+        }
 
-            CheckButton {
-                id: responseEnableButton
-                checkable: true
-                checked: true
-                icon.source: checked ? "qrc:/icons/ui/access_point.svg" : "qrc:/icons/ui/access_point_off.svg"
-                text: "Response"
-                onCheckedChanged: { responseControl.responseTimeout() }
-            }
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: monitorRow.implicitHeight + 8
+            radius: 6
+            color: "#1AFFFFFF"
+            border.color: "#33FFFFFF"
+            border.width: 1
 
-            SpinBoxCustom {
-                id: addressPayloadSpin
-                visible: responseEnableButton.checked
-                from: 0
-                to: 8
-                value: 1
-                onValueChanged: {  }
+            ColumnLayout {
+                id: monitorRow
+                anchors.fill: parent
+                anchors.margins: 4
+                spacing: 8
+
+                RowLayout {
+                    CText {
+                        text: "Monitor Suppress Response for, ms"
+                    }
+
+                    CTextField {
+                        id: suppressResponseField
+                        implicitWidth: 95
+                        text: "400"
+                        placeholderText: "resp ms"
+                    }
+                }
+
+
+                RowLayout {
+                    CText {
+                        text: "Monitor Suppress Request for, ms"
+                    }
+
+                    CTextField {
+                        id: suppressRequestField
+                        implicitWidth: 95
+                        text: "400"
+                        placeholderText: "req ms"
+                    }
+                }
+
+                CheckButton {
+                    id: receiveInIdleButton
+                    text: "Response In Idle"
+                    checkable: true
+                    checked: false
+                }
+
+                CheckButton {
+                    icon.source: "qrc:/icons/ui/file-check.svg"
+                    text: ""
+                    checkable: false
+                    onClicked: {
+                        var suppressResp = usblConfigController.toUInt32FromMs(suppressResponseField.text, 400000)
+                        var suppressReq = usblConfigController.toUInt32FromMs(suppressRequestField.text, 400000)
+                        dev.setUsblMonitorConfig(suppressResp, suppressReq, receiveInIdleButton.checked)
+                    }
+                }
             }
         }
     }
