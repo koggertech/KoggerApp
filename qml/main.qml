@@ -48,6 +48,44 @@ ApplicationWindow  {
         menuBar.updateBottomTrack()
     }
 
+    function refreshAllGraphicsAfterResume() {
+        if (renderer) {
+            renderer.update()
+            renderer.onCameraMoved()
+        }
+
+        if (waterViewFirst) {
+            waterViewFirst.update()
+        }
+
+        if (waterViewSecond && waterViewSecond.visible) {
+            waterViewSecond.update()
+        }
+
+        if (syncLoupePlot3D) {
+            syncLoupePlot3D.update()
+        }
+
+        if (syncLoupeOverlay && syncLoupeOverlay.visible) {
+            syncLoupeOverlay.refreshLoupePlot()
+        }
+
+        mainview.update()
+    }
+
+    function scheduleResumeRefreshIfNeeded() {
+        if (Qt.platform.os !== "android") {
+            return
+        }
+
+        if (Qt.application.state !== Qt.ApplicationActive) {
+            return
+        }
+
+        // Defer refresh until window/surface is active again.
+        Qt.callLater(refreshAllGraphicsAfterResume)
+    }
+
     function handleAndroidBack() {
         if (Qt.platform.os !== "android") {
             return false
@@ -141,6 +179,20 @@ ApplicationWindow  {
         // Step 4: root screen -> send app to background.
         core.moveAppToBackground()
         return true
+    }
+
+    onVisibilityChanged: {
+        if (visibility === Window.FullScreen) {
+            scheduleResumeRefreshIfNeeded()
+        }
+    }
+
+    Connections {
+        target: Qt.application
+
+        function onStateChanged() {
+            scheduleResumeRefreshIfNeeded()
+        }
     }
 
     Component.onCompleted: {
