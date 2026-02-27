@@ -1028,6 +1028,10 @@ GridLayout {
                 }
             }
         }
+
+        ParamGroup {
+            groupName: "KoggerApp 0.14.1"
+        }
     }
 
     Popup {
