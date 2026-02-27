@@ -181,8 +181,8 @@ ApplicationWindow  {
         return true
     }
 
-    onVisibilityChanged: {
-        if (visibility === Window.FullScreen) {
+    onVisibilityChanged: function(windowVisibility) {
+        if (windowVisibility === Window.FullScreen) {
             scheduleResumeRefreshIfNeeded()
         }
     }

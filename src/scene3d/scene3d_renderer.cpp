@@ -47,13 +47,14 @@ void GraphicsScene3dRenderer::initialize()
 
     m_isInitialized = true;
 
-    if (auto* glContext = QOpenGLContext::currentContext()) {
-        const QSurfaceFormat fmt = glContext->format();
-        qInfo() << "GL context:"
-                << (fmt.renderableType() == QSurfaceFormat::OpenGLES ? "OpenGLES" : "OpenGL")
-                << "version" << fmt.majorVersion() << "." << fmt.minorVersion()
-                << "profile" << fmt.profile();
-    }
+    // check OpenGL version
+    //if (auto* glContext = QOpenGLContext::currentContext()) {
+    //    const QSurfaceFormat fmt = glContext->format();
+    //    qInfo() << "GL context:"
+    //            << (fmt.renderableType() == QSurfaceFormat::OpenGLES ? "OpenGLES" : "OpenGL")
+    //            << "version" << fmt.majorVersion() << "." << fmt.minorVersion()
+    //            << "profile" << fmt.profile();
+    //}
 
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.3f, 0.3f, 0.3f, 0.0f);
