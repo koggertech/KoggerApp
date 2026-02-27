@@ -6,6 +6,7 @@
 #include <QMap>
 #include <QVector>
 #include <QTimer>
+#include <array>
 #include "dataset_defs.h"
 #include "proto_binnary.h"
 
@@ -1054,6 +1055,9 @@ public:
     } __attribute__((packed));
 
     struct AcousticNavSolution {
+        static constexpr ID getId() { return ID_USBL_SOLUTION; }
+        static constexpr Version getVer() { return v1; }
+
         uint8_t address = 0xFF;
         uint8_t cmd_id = 0xFF;
 
@@ -1079,6 +1083,9 @@ public:
     } __attribute__((packed));
 
     struct BaseToBeacon {
+        static constexpr ID getId() { return ID_USBL_SOLUTION; }
+        static constexpr Version getVer() { return v2; }
+
         uint8_t address = 0xFF;
         uint8_t cmd_id = 0xFF;
 
@@ -1125,11 +1132,27 @@ public:
         float timeout_s = 2;
     }  __attribute__((packed));
 
+    enum class UsbLSolutionPayloadKind {
+        None,
+        UsblSolution,
+        AcousticNavSolution,
+        BaseToBeacon,
+        BeaconActivationResponse
+    };
+
     UsblSolution usblSolution() {
         return _usblSolution;
     }
     AcousticNavSolution acousticNavSolution() const { return _acousticNavSolution; }
     BaseToBeacon baseToBeacon() const { return _baseToBeacon; }
+
+    BeaconActivationResponce beaconActivationResponse() {
+        return _beaconResponcel;
+    }
+
+    UsbLSolutionPayloadKind lastPayloadKind() const {
+        return lastPayloadKind_;
+    }
 
     void askBeacon(USBLRequestBeacon ask);
     void enableBeaconOnce(float timeout);
@@ -1139,6 +1162,7 @@ protected:
     AcousticNavSolution _acousticNavSolution;
     BaseToBeacon _baseToBeacon;
     BeaconActivationResponce _beaconResponcel;
+    UsbLSolutionPayloadKind lastPayloadKind_ = UsbLSolutionPayloadKind::None;
 };
 
 class IDBinUsblControl : public IDBin
@@ -1199,12 +1223,103 @@ public:
         uint8_t address[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     } __attribute__((packed));
 
-    void pingRequest(uint32_t timeout_us, uint8_t address);
+    struct USBLCmdSlotConfig  {
+        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr Version getVer() { return v6; }
+
+        enum EventFilter : uint8_t {
+            EventOnRequest = 1,
+            EventOnResponse = 2,
+        } eventFilter = EventOnRequest;
+
+        enum Type : uint8_t {
+            PayloadContainer = 0,
+            PayloadRequest = 1,
+        } type = PayloadContainer;
+
+        enum Function : uint8_t {
+            FunctionDisabled = 0,
+            FunctionSilent = 1,
+            FunctionNothing = 2,
+            FunctionBitArray = 3,
+            FunctionLLGeoAzimuth = 4
+        } function = FunctionNothing;
+
+        enum CmdAction : uint8_t {
+            CmdActionRepeat = 0,
+            CmdActionUseNext = 1
+        } cmdAction = CmdActionRepeat;
+
+        enum AddressAction : uint8_t {
+            AddressActionRepeat = 0,
+            AddressActionUseNext = 1,
+        } addressAction = AddressActionRepeat;
+
+        enum EventAction : uint8_t {
+            EventActionSwap = 0,
+            EventActionSame = 1,
+        } eventAction = EventActionSwap;
+
+        uint32_t reserved1 = 0; //  must be 0
+
+        uint8_t cmd_id = 0;
+        uint8_t cmd_id_next = 0;
+        uint8_t address_next = 0;
+        uint8_t reserved2 = 0; //  must be 0
+        uint16_t bit_length = 0; // for the next bytes
+    } __attribute__((packed));
+
+    void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id);
+    void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id, uint32_t reply_distance_mm, const QByteArray& payload = {});
     void setResponseTimeout(uint32_t timeout_us);
+    void setResponseAddressFilter(const std::array<uint8_t, 8>& addresses);
     void setResponseAddressFilter(uint8_t address);
+    void setCmdSlotAsModemResponse(uint8_t cmd_id, QByteArray byte_array, int bit_length);
+    void setCmdSlotAsModemReceiver(uint8_t cmd_id, int bit_length);
 
 protected:
 
+};
+
+class IDBinModemSolution : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinModemSolution() : IDBin() {
+    }
+
+    ID id() override { return ID_MODEM_SOLUTION; }
+    Resp  parsePayload(FrameParser &proto) override;
+
+    struct ModemSolutionHeader {
+        static constexpr ID getId() { return ID_MODEM_SOLUTION; }
+        static constexpr Version getVer() { return v0; }
+
+        int64_t timestamp_us = 0;
+        int64_t carrier_us = 0;
+        int64_t carrier_counter = 0;
+
+        uint64_t reserved1 = 0;
+
+        enum EventFilter : uint8_t {
+            EventOnRequest = 1,
+            EventOnResponse = 2,
+        } event = EventOnRequest;
+
+        uint8_t address_from = 0;
+        uint8_t address_to = 0;
+        uint8_t cmd_id_from = 0;
+
+        uint16_t bit_length = 0;
+        // payload bytes follow
+    } __attribute__((packed));
+
+    ModemSolutionHeader header() const { return header_; }
+    QByteArray payload() const { return payload_; }
+
+protected:
+    ModemSolutionHeader header_;
+    QByteArray payload_;
 };
 
 

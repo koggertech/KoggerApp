@@ -2,8 +2,39 @@
 #include <time.h>
 #include <core.h>
 #include <QXmlStreamWriter>
+#include <QRegularExpression>
+#include <QtMath>
 
 extern Core core;
+
+namespace {
+bool parseHexPayload(const QString& text, QByteArray& outBytes, QString* err = nullptr)
+{
+    outBytes.clear();
+    const QString trimmed = text.trimmed();
+    if (trimmed.isEmpty()) {
+        return true;
+    }
+
+    const QStringList tokens = trimmed.split(QRegularExpression("[,\\s]+"), Qt::SkipEmptyParts);
+    for (const QString& tokenRaw : tokens) {
+        QString token = tokenRaw.trimmed();
+        if (token.startsWith("0x", Qt::CaseInsensitive)) {
+            token = token.mid(2);
+        }
+        bool ok = false;
+        const int value = token.toInt(&ok, 16);
+        if (!ok || value < 0 || value > 0xFF || token.isEmpty() || token.size() > 2) {
+            if (err) {
+                *err = QString("Invalid hex byte token: '%1'").arg(tokenRaw);
+            }
+            return false;
+        }
+        outBytes.append(static_cast<char>(value));
+    }
+    return true;
+}
+}
 
 DevDriver::DevDriver(QObject *parent)
     : QObject(parent),
@@ -54,6 +85,7 @@ DevDriver::DevDriver(QObject *parent)
     regID(idDVLMode = new IDBinDVLMode(), &DevDriver::receivedDVLMode);
 
     regID(idUSBL = new IDBinUsblSolution(), &DevDriver::receivedUSBL);
+    regID(idModemSolution = new IDBinModemSolution(), &DevDriver::receivedModemSolution);
 
     regID(idUSBLControl = new IDBinUsblControl(), &DevDriver::receivedUSBLControl);
 
@@ -185,6 +217,10 @@ QList<QTimer *> DevDriver::getChildTimers()
     if (idUSBL) {
         timers.append(idUSBL->getSetTimer());
         timers.append(idUSBL->getColdStartTimer());
+    }
+    if (idModemSolution) {
+        timers.append(idModemSolution->getSetTimer());
+        timers.append(idModemSolution->getColdStartTimer());
     }
 
     return timers;
@@ -478,6 +514,11 @@ QUuid DevDriver::getLinkUuid() const
     return linkUuid_;
 }
 
+QString DevDriver::modemLastPayload() const
+{
+    return QString::fromLatin1(modemLastPayload_);
+}
+
 void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask)
 {
     Q_UNUSED(ask)
@@ -486,7 +527,7 @@ void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask)
         return;
     }
 
-    idUSBLControl->pingRequest(0xFFFFFFFF, 0xFF);
+    // idUSBLControl->pingRequest(0xFFFFFFFF, 0xFF);
 }
 
 void DevDriver::enableBeaconOnce(float timeout)
@@ -499,19 +540,70 @@ void DevDriver::enableBeaconOnce(float timeout)
     }
 }
 
-void DevDriver::acousticPingRequest(uint8_t address, uint32_t timeout_us) {
+void DevDriver::acousticPingRequest(uint8_t address, uint8_t cmd_id, uint32_t timeout_us) {
+    acousticPingRequestEx(address, cmd_id, 20.0, timeout_us, QString());
+}
+
+void DevDriver::acousticPingRequestEx(uint8_t address, uint8_t cmd_id, double distance_m, uint32_t timeout_us, const QString& payload_hex) {
     if(!m_state.connect) return;
-    idUSBLControl->pingRequest(timeout_us, address);
+
+    if (address > 7) {
+        qWarning() << "USBL ping skipped: address out of range" << address;
+        return;
+    }
+
+    const qint64 reply_distance_mm_i64 = qRound64(distance_m * 1000.0);
+    const uint32_t reply_distance_mm = static_cast<uint32_t>(reply_distance_mm_i64 < 0 ? 0 : reply_distance_mm_i64);
+
+    QByteArray payload;
+    QString parseError;
+    if (!parseHexPayload(payload_hex, payload, &parseError)) {
+        qWarning() << "USBL ping skipped:" << parseError;
+        return;
+    }
+
+    idUSBLControl->pingRequest(timeout_us, address, cmd_id, reply_distance_mm, payload);
+}
+
+void DevDriver::acousticResponceFilterSlots(const QVariantList& enabledAddressList) {
+    if(!m_state.connect) return;
+
+    std::array<uint8_t, 8> addresses;
+    addresses.fill(0xFF);
+
+    for (const QVariant& value : enabledAddressList) {
+        bool ok = false;
+        const int addr = value.toInt(&ok);
+        if (ok && addr >= 0 && addr < 8) {
+            addresses[addr] = static_cast<uint8_t>(addr);
+        }
+    }
+
+    idUSBLControl->setResponseAddressFilter(addresses);
 }
 
 void DevDriver::acousticResponceFilter(uint8_t address) {
-    if(!m_state.connect) return;
-    idUSBLControl->setResponseAddressFilter(address);
+    QVariantList enabledAddressList;
+    if (address < 8) {
+        enabledAddressList.append(address);
+    }
+    acousticResponceFilterSlots(enabledAddressList);
 }
 
 void DevDriver::acousticResponceTimeout(uint32_t timeout_us) {
     if(!m_state.connect) return;
     idUSBLControl->setResponseTimeout(timeout_us);
+}
+
+void DevDriver::setCmdSlotAsModemResponse(uint8_t cmd_id, const QString& payload) {
+    if(!m_state.connect) return;
+    const QByteArray data = payload.toUtf8();
+    idUSBLControl->setCmdSlotAsModemResponse(cmd_id, data, data.size() * 8);
+}
+
+void DevDriver::setCmdSlotAsModemReceiver(uint8_t cmd_id, int byte_length) {
+    if(!m_state.connect) return;
+    idUSBLControl->setCmdSlotAsModemReceiver(cmd_id, byte_length * 8);
 }
 
 void DevDriver::doRequestAll()
@@ -592,6 +684,9 @@ void DevDriver::initChildsTimersConnects()
     }
     if (idUSBL) {
         idUSBL->initTimersConnects();
+    }
+    if (idModemSolution) {
+        idModemSolution->initTimersConnects();
     }
 }
 #endif
@@ -1451,13 +1546,83 @@ void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::
     Q_UNUSED(type);
 
     if(resp == respNone) {
-        if(ver == Parsers::v0 || ver == Parsers::v2) {
+        if(ver == Parsers::v0) {
             emit usblSolutionComplete(idUSBL->usblSolution());
+#ifndef SEPARATE_READING
+            const auto sol = idUSBL->usblSolution();
+            core.consoleInfo(QString("UsblSolution: distance_m %1 azimuth_deg %2 elevation_deg %3 beacon_x_m %4 beacon_y_m %5 beacon_latitude %6 beacon_longitude %7 beacon_depth %8 usbl_yaw %9 usbl_latitude %10 usbl_longitude %11 beacon_n_m %12 beacon_e_m %13")
+                                 .arg(QString::number(sol.distance_m, 'f', 3))
+                                 .arg(QString::number(sol.azimuth_deg, 'f', 3))
+                                 .arg(QString::number(sol.elevation_deg, 'f', 3))
+                                 .arg(QString::number(sol.beacon_x_m, 'f', 3))
+                                 .arg(QString::number(sol.beacon_y_m, 'f', 3))
+                                 .arg(QString::number(sol.beacon_latitude, 'f', 8))
+                                 .arg(QString::number(sol.beacon_longitude, 'f', 8))
+                                 .arg(QString::number(sol.beacon_depth, 'f', 3))
+                                 .arg(QString::number(sol.usbl_yaw, 'f', 3))
+                                 .arg(QString::number(sol.usbl_latitude, 'f', 8))
+                                 .arg(QString::number(sol.usbl_longitude, 'f', 8))
+                                 .arg(QString::number(sol.beacon_n_m, 'f', 3))
+                                 .arg(QString::number(sol.beacon_e_m, 'f', 3)));
+#endif
         } else if(ver == Parsers::v1) {
-            emit beaconActivationComplete(0);
+            const auto payload_kind = idUSBL->lastPayloadKind();
+            if (payload_kind == IDBinUsblSolution::UsbLSolutionPayloadKind::AcousticNavSolution) {
+                const auto sol = idUSBL->acousticNavSolution();
+#ifndef SEPARATE_READING
+                core.consoleInfo(QString("AcousticNavSolution: lat %1 lon %2 depth %3 acousticAz %4 geoAz %5 heading %6 distance %7 baseLat %8 baseLon %9 baseDepth %10")
+                                     .arg(QString::number(sol.lat, 'f', 8))
+                                     .arg(QString::number(sol.lon, 'f', 8))
+                                     .arg(QString::number(sol.depth, 'f', 3))
+                                     .arg(QString::number(sol.acousticAzimuth, 'f', 3))
+                                     .arg(QString::number(sol.geoAzimuth, 'f', 3))
+                                     .arg(QString::number(sol.heading, 'f', 3))
+                                     .arg(QString::number(sol.distance, 'f', 3))
+                                     .arg(QString::number(sol.baseLat, 'f', 8))
+                                     .arg(QString::number(sol.baseLon, 'f', 8))
+                                     .arg(QString::number(sol.baseDepth, 'f', 3)));
+#endif
+                emit acousticNavSolutionComplete(sol);
+            } else if (payload_kind == IDBinUsblSolution::UsbLSolutionPayloadKind::BeaconActivationResponse) {
+                const auto resp_data = idUSBL->beaconActivationResponse();
+                qDebug("usbl p.ver %d", ver);
+                emit beaconActivationComplete(resp_data.id);
+            }
+        } else if(ver == Parsers::v2) {
+            const auto payload_kind = idUSBL->lastPayloadKind();
+            if (payload_kind == IDBinUsblSolution::UsbLSolutionPayloadKind::BaseToBeacon) {
+                const auto sol = idUSBL->baseToBeacon();
+#ifndef SEPARATE_READING
+                core.consoleInfo(QString("BaseToBeacon: acousticAz %1 geoAz %2 beaconDist %3 beaconN %4 beaconE %5 beaconD %6 beaconLat %7 beaconLon %8 antYaw %9 antDepth %10 antLat %11 antLon %12")
+                                     .arg(QString::number(sol.acousticAzimuth, 'f', 3))
+                                     .arg(QString::number(sol.geoAzimuth, 'f', 3))
+                                     .arg(QString::number(sol.beaconDistance, 'f', 3))
+                                     .arg(QString::number(sol.beaconN, 'f', 3))
+                                     .arg(QString::number(sol.beaconE, 'f', 3))
+                                     .arg(QString::number(sol.beaconD, 'f', 3))
+                                     .arg(QString::number(sol.beaconLat, 'f', 8))
+                                     .arg(QString::number(sol.beaconLon, 'f', 8))
+                                     .arg(QString::number(sol.antennaYaw, 'f', 3))
+                                     .arg(QString::number(sol.antennaDepth, 'f', 3))
+                                     .arg(QString::number(sol.antennaLat, 'f', 8))
+                                     .arg(QString::number(sol.antennaLon, 'f', 8)));
+#endif
+                emit baseToBeaconComplete(sol);
+                emit usblSolutionComplete(idUSBL->usblSolution());
+            }
         }
     }
 
+}
+
+void DevDriver::receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
+{
+    Q_UNUSED(type);
+
+    if (resp == respNone && ver == Parsers::v0) {
+        modemLastPayload_ = idModemSolution->payload();
+        emit modemSolutionChanged();
+    }
 }
 
 void DevDriver::receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)

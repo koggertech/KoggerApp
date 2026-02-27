@@ -192,6 +192,8 @@ public:
     bool isComplexSignalAvail() { return _complex.size() > 0; }
 
     void set(IDBinUsblSolution::UsblSolution data) { _usblSolution = data;  _isUsblSolutionAvailable = true; }
+    void setAcousticNavSolution(IDBinUsblSolution::AcousticNavSolution data) { _acousticNavSolution = data; _isAcousticNavSolutionAvailable = true; }
+    void setBaseToBeacon(IDBinUsblSolution::BaseToBeacon data) { _baseToBeacon = data; _isBaseToBeaconAvailable = true; }
 
     void setGnssVelocity(double h_speed, double course);
 
@@ -428,6 +430,10 @@ public:
 
     bool isUsblSolutionAvailable() { return _isUsblSolutionAvailable; }
     IDBinUsblSolution::UsblSolution usblSolution() { return _usblSolution; }
+    bool isAcousticNavSolutionAvailable() { return _isAcousticNavSolutionAvailable; }
+    IDBinUsblSolution::AcousticNavSolution acousticNavSolution() { return _acousticNavSolution; }
+    bool isBaseToBeaconAvailable() { return _isBaseToBeaconAvailable; }
+    IDBinUsblSolution::BaseToBeacon baseToBeacon() { return _baseToBeacon; }
 
 
     double lat() { return _positionGNSS.lla.latitude; }
@@ -630,6 +636,10 @@ protected:
 
     IDBinUsblSolution::UsblSolution _usblSolution;
     bool _isUsblSolutionAvailable = false;
+    IDBinUsblSolution::AcousticNavSolution _acousticNavSolution;
+    bool _isAcousticNavSolutionAvailable = false;
+    IDBinUsblSolution::BaseToBeacon _baseToBeacon;
+    bool _isBaseToBeaconAvailable = false;
 
     Position _positionGNSS;
     Position _positionExternal;

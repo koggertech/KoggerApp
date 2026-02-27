@@ -1068,6 +1068,7 @@ void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3, bool ismod
 Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
         _usblSolution = proto.read<UsblSolution>();
+        lastPayloadKind_ = UsbLSolutionPayloadKind::UsblSolution;
 
         QString msg;
         QTextStream(&msg)
@@ -1079,10 +1080,12 @@ Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
             ;
         core.consoleInfo(msg);
     } else if(proto.ver() == v1) {
-        if (proto.readAvailable() >= static_cast<int16_t>(sizeof(AcousticNavSolution))) {
+        const int payload_avail = proto.readAvailable();
+        if (payload_avail >= static_cast<int>(sizeof(AcousticNavSolution))) {
             _acousticNavSolution = proto.read<AcousticNavSolution>();
+            lastPayloadKind_ = UsbLSolutionPayloadKind::AcousticNavSolution;
 
-            // Normalize V1 payload to the legacy V0-like view used by app-side consumers.
+            // Normalize V1 payload to the legacy UsblSolution view used by downstream consumers.
             _usblSolution = {};
             _usblSolution.id = _acousticNavSolution.address;
             _usblSolution.cmd_id = _acousticNavSolution.cmd_id;
@@ -1096,33 +1099,37 @@ Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
             _usblSolution.usbl_yaw = _acousticNavSolution.heading;
             _usblSolution.usbl_latitude = _acousticNavSolution.baseLat;
             _usblSolution.usbl_longitude = _acousticNavSolution.baseLon;
-        } else {
-            // Backward-compatibility for older V1 packets used as beacon activation response.
+        } else if (payload_avail >= static_cast<int>(sizeof(BeaconActivationResponce))) {
             _beaconResponcel = proto.read<BeaconActivationResponce>();
+            lastPayloadKind_ = UsbLSolutionPayloadKind::BeaconActivationResponse;
             qInfo("Beacon responce: %d", _beaconResponcel.id);
-        }
-    } else if(proto.ver() == v2) {
-        if (proto.readAvailable() < static_cast<int16_t>(sizeof(BaseToBeacon))) {
+        } else {
             return respErrorPayload;
         }
-        _baseToBeacon = proto.read<BaseToBeacon>();
+    } else if(proto.ver() == v2) {
+        if (proto.readAvailable() >= static_cast<int>(sizeof(BaseToBeacon))) {
+            _baseToBeacon = proto.read<BaseToBeacon>();
+            lastPayloadKind_ = UsbLSolutionPayloadKind::BaseToBeacon;
 
-        // Normalize V2 payload to the legacy V0-like view used by app-side consumers.
-        _usblSolution = {};
-        _usblSolution.id = _baseToBeacon.address;
-        _usblSolution.cmd_id = _baseToBeacon.cmd_id;
-        _usblSolution.timestamp_us = _baseToBeacon.timestamp_us;
-        _usblSolution.carrier_counter = _baseToBeacon.carrier_counter;
-        _usblSolution.distance_m = _baseToBeacon.beaconDistance;
-        _usblSolution.azimuth_deg = _baseToBeacon.acousticAzimuth;
-        _usblSolution.usbl_yaw = _baseToBeacon.antennaYaw;
-        _usblSolution.usbl_latitude = _baseToBeacon.antennaLat;
-        _usblSolution.usbl_longitude = _baseToBeacon.antennaLon;
-        _usblSolution.beacon_depth = _baseToBeacon.beaconD;
-        _usblSolution.beacon_latitude = _baseToBeacon.beaconLat;
-        _usblSolution.beacon_longitude = _baseToBeacon.beaconLon;
-        _usblSolution.beacon_n_m = _baseToBeacon.beaconN;
-        _usblSolution.beacon_e_m = _baseToBeacon.beaconE;
+            // Normalize V2 payload to the legacy UsblSolution view used by downstream consumers.
+            _usblSolution = {};
+            _usblSolution.id = _baseToBeacon.address;
+            _usblSolution.cmd_id = _baseToBeacon.cmd_id;
+            _usblSolution.timestamp_us = _baseToBeacon.timestamp_us;
+            _usblSolution.carrier_counter = _baseToBeacon.carrier_counter;
+            _usblSolution.distance_m = _baseToBeacon.beaconDistance;
+            _usblSolution.azimuth_deg = _baseToBeacon.acousticAzimuth;
+            _usblSolution.usbl_yaw = _baseToBeacon.antennaYaw;
+            _usblSolution.usbl_latitude = _baseToBeacon.antennaLat;
+            _usblSolution.usbl_longitude = _baseToBeacon.antennaLon;
+            _usblSolution.beacon_depth = _baseToBeacon.beaconD;
+            _usblSolution.beacon_latitude = _baseToBeacon.beaconLat;
+            _usblSolution.beacon_longitude = _baseToBeacon.beaconLon;
+            _usblSolution.beacon_n_m = _baseToBeacon.beaconN;
+            _usblSolution.beacon_e_m = _baseToBeacon.beaconE;
+        } else {
+            return respErrorPayload;
+        }
     } else {
         return respErrorVersion;
     }
@@ -1157,13 +1164,30 @@ Resp IDBinUsblControl::parsePayload(FrameParser& proto)
     return respOk;
 }
 
-void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address) {
+void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id) {
+    pingRequest(timeout_us, address, cmd_id, 20000, QByteArray());
+}
+
+void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id, uint32_t reply_distance_mm, const QByteArray& payload) {
     ProtoBinOut ping_req;
     ping_req.create(SETTING, USBLPingRequest::getVer(), id(), m_address);
+
+    int max_payload_bytes = ping_req.frameSpaceAvail() - static_cast<int>(sizeof(USBLPingRequest));
+    if (max_payload_bytes < 0) {
+        max_payload_bytes = 0;
+    }
+    const int payload_bytes_to_write = qMin(payload.size(), max_payload_bytes);
+
     USBLPingRequest req;
     req.trigger_timeout_us = timeout_us;
     req.address = address;
+    req.cmd_id = cmd_id;
+    req.reply_distance_mm = reply_distance_mm;
+    req.payload_bit_length = static_cast<uint16_t>(payload_bytes_to_write * 8);
     ping_req.write<USBLPingRequest>(req);
+    if (payload_bytes_to_write > 0) {
+        ping_req.write((void*)payload.constData(), static_cast<uint16_t>(payload_bytes_to_write));
+    }
     ping_req.end();
 
     emit binFrameOut(ping_req);
@@ -1179,13 +1203,80 @@ void IDBinUsblControl::setResponseTimeout(uint32_t timeout_us) {
     emit binFrameOut(ping_resp_t);
 }
 
-void IDBinUsblControl::setResponseAddressFilter(uint8_t address) {
+void IDBinUsblControl::setResponseAddressFilter(const std::array<uint8_t, 8>& addresses) {
     ProtoBinOut ping_resp_a;
     ping_resp_a.create(SETTING, USBLResponseAddressFilter::getVer(), id(), m_address);
     USBLResponseAddressFilter req;
-    req.address[0] = address;
+    for (int i = 0; i < 8; i++) {
+        req.address[i] = addresses[i];
+    }
     ping_resp_a.write<USBLResponseAddressFilter>(req);
     ping_resp_a.end();
 
     emit binFrameOut(ping_resp_a);
+}
+
+void IDBinUsblControl::setResponseAddressFilter(uint8_t address) {
+    std::array<uint8_t, 8> addresses;
+    addresses.fill(0xFF);
+    addresses[0] = address;
+    setResponseAddressFilter(addresses);
+}
+
+void IDBinUsblControl::setCmdSlotAsModemResponse(uint8_t cmd_id, QByteArray byte_array, int bit_length) {
+    USBLCmdSlotConfig cmd_slot = {};
+    cmd_slot.cmd_id = cmd_id;
+    cmd_slot.type = USBLCmdSlotConfig::Type::PayloadRequest;
+    cmd_slot.eventFilter = USBLCmdSlotConfig::EventFilter::EventOnResponse;
+    cmd_slot.function = USBLCmdSlotConfig::Function::FunctionBitArray;
+    cmd_slot.bit_length = bit_length;
+
+    int byte_length = (bit_length + 7) / 8;
+
+    ProtoBinOut proto_cmd_slot;
+    proto_cmd_slot.create(SETTING, USBLCmdSlotConfig::getVer(), id(), m_address);
+    proto_cmd_slot.write<USBLCmdSlotConfig>(cmd_slot);
+    proto_cmd_slot.write((uint8_t*)(byte_array.constData()), byte_length);
+    proto_cmd_slot.end();
+    emit binFrameOut(proto_cmd_slot);
+}
+
+void IDBinUsblControl::setCmdSlotAsModemReceiver(uint8_t cmd_id, int bit_length) {
+    USBLCmdSlotConfig cmd_slot = {};
+    cmd_slot.cmd_id = cmd_id;
+    cmd_slot.type = USBLCmdSlotConfig::Type::PayloadContainer;
+    cmd_slot.eventFilter = USBLCmdSlotConfig::EventFilter::EventOnRequest;
+    cmd_slot.function = USBLCmdSlotConfig::Function::FunctionBitArray;
+    cmd_slot.bit_length = bit_length;
+
+    ProtoBinOut proto_cmd_slot;
+    proto_cmd_slot.create(SETTING, USBLCmdSlotConfig::getVer(), id(), m_address);
+    proto_cmd_slot.write<USBLCmdSlotConfig>(cmd_slot);
+    proto_cmd_slot.end();
+    emit binFrameOut(proto_cmd_slot);
+}
+
+Resp IDBinModemSolution::parsePayload(FrameParser &proto) {
+    if (proto.ver() != v0) {
+        return respErrorVersion;
+    }
+
+    if (proto.readAvailable() < static_cast<int>(sizeof(ModemSolutionHeader))) {
+        return respErrorPayload;
+    }
+
+    header_ = proto.read<ModemSolutionHeader>();
+    const int byte_length = (header_.bit_length + 7) / 8;
+
+    if (proto.readAvailable() < byte_length) {
+        return respErrorPayload;
+    }
+
+    if (byte_length > 0) {
+        payload_ = QByteArray(reinterpret_cast<char*>(proto.read(byte_length)), byte_length);
+    } else {
+        payload_.clear();
+    }
+
+    return respOk;
 }

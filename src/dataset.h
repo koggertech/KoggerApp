@@ -242,6 +242,8 @@ public slots:
     void addDist(const ChannelId& channelId, int dist);
     void addRangefinder(const ChannelId& channelId, float distance);
     void addUsblSolution(IDBinUsblSolution::UsblSolution data);
+    void addAcousticNavSolution(IDBinUsblSolution::AcousticNavSolution data);
+    void addBaseToBeacon(IDBinUsblSolution::BaseToBeacon data);
     void addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void addDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void addAtt(float yaw, float pitch, float roll);

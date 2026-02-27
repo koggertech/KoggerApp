@@ -84,6 +84,8 @@ signals:
     void rawDataRecieved(const ChannelId& channelId, RawData rawData);
     void distComplete(const ChannelId& channelId, int dist);
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
+    void acousticNavSolutionComplete(IDBinUsblSolution::AcousticNavSolution data);
+    void baseToBeaconComplete(IDBinUsblSolution::BaseToBeacon data);
     void dopplerBeamComlete(IDBinDVL::BeamSolution* beams, uint16_t cnt);
     void dvlSolutionComplete(IDBinDVL::DVLSolution dvlSolution);
     void chartSetupChanged();

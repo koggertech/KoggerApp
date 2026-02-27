@@ -5,6 +5,8 @@
 #include <QVector>
 #include <QTimer>
 #include <QUuid>
+#include <QVariantList>
+#include <array>
 #include "proto_binnary.h"
 #include "id_binnary.h"
 
@@ -167,6 +169,7 @@ public:
     bool getSoundSpeedState() { return soundSpeedState_; };
     bool getUartState() { return uartState_; };
     int getAverageChartLosses() const { return averageChartLosses_; };
+    QString modemLastPayload() const;
     void setFirmware(const QByteArray& data);
 
 signals:
@@ -195,7 +198,10 @@ signals:
     void encoderComplete(float e1, float e2, float e3);
 
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
+    void acousticNavSolutionComplete(IDBinUsblSolution::AcousticNavSolution data);
+    void baseToBeaconComplete(IDBinUsblSolution::BaseToBeacon data);
     void beaconActivationComplete(uint8_t id);
+    void modemSolutionChanged();
 
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void depthComplete(float depth);
@@ -256,9 +262,13 @@ public slots:
     void askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask);
     void enableBeaconOnce(float timeout);
 
-    void acousticPingRequest(uint8_t address, uint32_t timeout_us = 0xFFFFFFFF);
+    void acousticPingRequest(uint8_t address, uint8_t cmd_id, uint32_t timeout_us = 0xFFFFFFFF);
+    void acousticPingRequestEx(uint8_t address, uint8_t cmd_id, double distance_m, uint32_t timeout_us, const QString& payload_hex);
+    void acousticResponceFilterSlots(const QVariantList& enabledAddressList);
     void acousticResponceFilter(uint8_t address);
     void acousticResponceTimeout(uint32_t timeout_us = 0xFFFFFFFF);
+    void setCmdSlotAsModemResponse(uint8_t cmd_id, const QString& payload);
+    void setCmdSlotAsModemReceiver(uint8_t cmd_id, int byte_length);
 
 #ifdef SEPARATE_READING
     Q_INVOKABLE void initProcessTimerConnects();
@@ -300,6 +310,7 @@ protected:
     IDBinDVLMode* idDVLMode = NULL;
 
     IDBinUsblSolution* idUSBL = NULL;
+    IDBinModemSolution* idModemSolution = NULL;
     IDBinUsblControl* idUSBLControl = NULL;
 
 //    QHash<ID, IDBin*> hashIDParsing;
@@ -416,6 +427,7 @@ protected slots:
     void receivedDVLMode    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
     void receivedUSBL       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
 private:
@@ -429,4 +441,5 @@ private:
     int errorFreezeCnt_;
     int averageChartLosses_;
     QUuid linkUuid_;
+    QByteArray modemLastPayload_;
 };
