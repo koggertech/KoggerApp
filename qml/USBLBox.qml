@@ -34,6 +34,14 @@ DevSettingsBox {
             }
         }
 
+        ListModel {
+            id: requestCmdConfigModel
+        }
+
+        ListModel {
+            id: responseCmdConfigModel
+        }
+
         QtObject {
             id: pingRowsController
             property int autoPingIndex: -1
@@ -92,6 +100,65 @@ DevSettingsBox {
             }
         }
 
+        QtObject {
+            id: cmdConfigController
+
+            function payloadByteCount(hexText) {
+                var text = String(hexText).trim()
+                if (text.length === 0) {
+                    return 0
+                }
+                var tokens = text.split(/[,\s]+/)
+                var count = 0
+                for (var i = 0; i < tokens.length; i++) {
+                    var token = tokens[i].trim()
+                    if (token.length === 0) {
+                        continue
+                    }
+                    if (token.toLowerCase().startsWith("0x")) {
+                        token = token.slice(2)
+                    }
+                    if (token.length === 0 || token.length > 2) {
+                        return -1
+                    }
+                    if (!/^[0-9a-fA-F]+$/.test(token)) {
+                        return -1
+                    }
+                    var value = parseInt(token, 16)
+                    if (isNaN(value) || value < 0 || value > 255) {
+                        return -1
+                    }
+                    count += 1
+                }
+                return count
+            }
+
+            function applyRow(modelObj, rowIndex, isResponseList) {
+                if (!dev || rowIndex < 0 || rowIndex >= modelObj.count) {
+                    return
+                }
+                var row = modelObj.get(rowIndex)
+                if (!row.enabled) {
+                    return
+                }
+                dev.setUsblCmdConfigRow(
+                    isResponseList,
+                    row.cmdId,
+                    row.receiverChecked,
+                    row.senderChecked,
+                    row.functionBitArray,
+                    row.receiveBits,
+                    row.sendingPayloadHex
+                )
+            }
+
+            function applyAllRows(modelObj, isResponseList) {
+                for (var i = 0; i < modelObj.count; i++) {
+                    applyRow(modelObj, i, isResponseList)
+                }
+            }
+        }
+
         Timer {
             id: pingRowsTimer
             interval: autoIntervalSpin.value
@@ -129,7 +196,8 @@ DevSettingsBox {
         RowLayout {
             spacing: 8
             CheckButton {
-                text: "Add Row"
+                icon.source: "qrc:/icons/ui/plus.svg"
+                text: ""
                 checkable: false
                 onClicked: {
                     pingRowsModel.append({
@@ -145,7 +213,8 @@ DevSettingsBox {
             }
 
             CheckButton {
-                text: "Send Active"
+                icon.source: "qrc:/icons/ui/file-check.svg"
+                text: ""
                 checkable: false
                 onClicked: pingRowsController.startSendActiveOnce()
             }
@@ -172,72 +241,342 @@ DevSettingsBox {
 
         Repeater {
             model: pingRowsModel
-            delegate: RowLayout {
-                spacing: 6
+            delegate: Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: pingRow.implicitHeight + 8
+                radius: 6
+                color: "#1AFFFFFF"
+                border.color: "#33FFFFFF"
+                border.width: 1
 
-                CCheck {
-                    checked: active
-                    text: ""
-                    onCheckedChanged: pingRowsModel.setProperty(index, "active", checked)
-                }
+                RowLayout {
+                    id: pingRow
+                    anchors.fill: parent
+                    anchors.margins: 4
+                    spacing: 6
 
-                SpinBoxCustom {
-                    from: 0
-                    to: 7
-                    value: address
-                    onValueChanged: pingRowsModel.setProperty(index, "address", value)
-                }
+                    CheckButton {
+                        // checked: active
+                        // text: ""
+                        icon.source:  checked ? "qrc:/icons/ui/access_point.svg" : "qrc:/icons/ui/access_point_off.svg"
+                        checkable: true
+                        onCheckedChanged: pingRowsModel.setProperty(index, "active", checked)
+                    }
 
-                SpinBoxCustom {
-                    from: 0
-                    to: 255
-                    value: cmd
-                    onValueChanged: pingRowsModel.setProperty(index, "cmd", value)
-                }
+                    SpinBoxCustom {
+                        implicitWidth: 85
+                        from: 0
+                        to: 7
+                        value: address
+                        onValueChanged: pingRowsModel.setProperty(index, "address", value)
+                    }
 
-                CTextField {
-                    implicitWidth: 80
-                    text: distanceM
-                    placeholderText: "m"
-                    onTextChanged: pingRowsModel.setProperty(index, "distanceM", text)
-                }
+                    SpinBoxCustom {
+                        implicitWidth: 85
+                        from: 0
+                        to: 7
+                        value: cmd
+                        onValueChanged: pingRowsModel.setProperty(index, "cmd", value)
+                    }
 
-                CTextField {
-                    implicitWidth: 180
-                    text: payloadHex
-                    placeholderText: "AA 01 FF"
-                    onTextChanged: pingRowsModel.setProperty(index, "payloadHex", text)
-                }
+                    CTextField {
+                        implicitWidth: 80
+                        text: distanceM
+                        placeholderText: "m"
+                        onTextChanged: pingRowsModel.setProperty(index, "distanceM", text)
+                    }
 
-                CheckButton {
-                    text: "Trig"
-                    checkable: true
-                    checked: triggerEnabled
-                    onCheckedChanged: pingRowsModel.setProperty(index, "triggerEnabled", checked)
-                }
+                    CTextField {
+                        implicitWidth: 80
+                        text: payloadHex
+                        placeholderText: "AA 01 FF"
+                        onTextChanged: pingRowsModel.setProperty(index, "payloadHex", text)
+                    }
 
-                SpinBoxCustom {
-                    from: 0
-                    to: 2147483647
-                    value: timeoutUs
-                    enabled: triggerEnabled
-                    onValueChanged: pingRowsModel.setProperty(index, "timeoutUs", value)
-                }
+                    CheckButton {
+                        text: "Trig"
+                        checkable: true
+                        checked: triggerEnabled
+                        onCheckedChanged: pingRowsModel.setProperty(index, "triggerEnabled", checked)
+                    }
 
-                CheckButton {
-                    text: "Send"
-                    checkable: false
-                    onClicked: pingRowsController.sendPingAt(index)
-                }
+                    SpinBoxCustom {
+                        from: 0
+                        to: 2147483647
+                        value: timeoutUs
+                        enabled: triggerEnabled
+                        onValueChanged: pingRowsModel.setProperty(index, "timeoutUs", value)
+                    }
 
-                CheckButton {
-                    text: "Del"
-                    checkable: false
-                    onClicked: {
-                        pingRowsModel.remove(index, 1)
-                        if (pingRowsController.autoPingIndex >= pingRowsModel.count) {
-                            pingRowsController.autoPingIndex = pingRowsModel.count - 1
+                    // CheckButton {
+                    //     icon.source: "qrc:/icons/ui/click.svg"
+                    //     text: ""
+                    //     checkable: false
+                    //     onClicked: pingRowsController.sendPingAt(index)
+                    // }
+
+                    CheckButton {
+                        icon.source: "qrc:/icons/ui/x.svg"
+                        text: ""
+                        checkable: false
+                        onClicked: {
+                            pingRowsModel.remove(index, 1)
+                            if (pingRowsController.autoPingIndex >= pingRowsModel.count) {
+                                pingRowsController.autoPingIndex = pingRowsModel.count - 1
+                            }
                         }
+                    }
+                }
+            }
+        }
+
+        RowLayout {
+            spacing: 8
+            CText { text: "Initiator slots" }
+            CheckButton {
+                icon.source: "qrc:/icons/ui/plus.svg"
+                text: ""
+                checkable: false
+                onClicked: {
+                    requestCmdConfigModel.append({
+                        "enabled": true,
+                        "cmdId": 0,
+                        "receiverChecked": true,
+                        "senderChecked": false,
+                        "functionBitArray": false,
+                        "receiveBits": 0,
+                        "sendingPayloadHex": ""
+                    })
+                }
+            }
+            CheckButton {
+                icon.source: "qrc:/icons/ui/file-check.svg"
+                text: ""
+                checkable: false
+                onClicked: cmdConfigController.applyAllRows(requestCmdConfigModel, false)
+            }
+        }
+
+        Repeater {
+            model: requestCmdConfigModel
+            delegate: Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: reqRow.implicitHeight + 8
+                radius: 6
+                color: "#1AFFFFFF"
+                border.color: "#33FFFFFF"
+                border.width: 1
+
+                RowLayout {
+                    id: reqRow
+                    anchors.fill: parent
+                    anchors.margins: 4
+                    spacing: 6
+                    CCheck {
+                        checked: enabled
+                        text: ""
+                        onCheckedChanged: requestCmdConfigModel.setProperty(index, "enabled", checked)
+                    }
+                    SpinBoxCustom {
+                        implicitWidth: 85
+                        from: 0
+                        to: 255
+                        value: cmdId
+                        onValueChanged: requestCmdConfigModel.setProperty(index, "cmdId", value)
+                    }
+
+                    CheckButton {
+                        id: functionButton
+                        text: functionBitArray ? "BitArray" : "Default"
+                        checkable: true
+                        checked: functionBitArray
+                        onCheckedChanged: requestCmdConfigModel.setProperty(index, "functionBitArray", checked)
+                    }
+
+                    CheckButton {
+                        id: receiverButton
+                        visible: functionButton.checked
+                        text: "R"
+                        checkable: true
+                        checked: receiverChecked
+                        onCheckedChanged: {
+                            requestCmdConfigModel.setProperty(index, "receiverChecked", checked)
+                            var row = requestCmdConfigModel.get(index)
+                            if (!row.receiverChecked && !row.senderChecked) {
+                                requestCmdConfigModel.setProperty(index, "receiverChecked", true)
+                            }
+                        }
+                    }
+
+                    SpinBoxCustom {
+                        visible: functionButton.checked && receiverButton.checked
+                        implicitWidth: 100
+                        from: 0
+                        to: 65535
+                        value: receiveBits
+                        onValueChanged: requestCmdConfigModel.setProperty(index, "receiveBits", value)
+                    }
+
+                    CheckButton {
+                        id: senderButton
+                        visible: functionButton.checked
+                        text: "S"
+                        checkable: true
+                        checked: senderChecked
+                        onCheckedChanged: {
+                            requestCmdConfigModel.setProperty(index, "senderChecked", checked)
+                            var row = requestCmdConfigModel.get(index)
+                            if (!row.receiverChecked && !row.senderChecked) {
+                                requestCmdConfigModel.setProperty(index, "receiverChecked", true)
+                            }
+                        }
+                    }
+
+                    CTextField {
+                        visible: functionButton.checked && senderButton.checked
+                        implicitWidth: 70
+                        text: sendingPayloadHex
+                        placeholderText: "AA 01 FF"
+                        onTextChanged: requestCmdConfigModel.setProperty(index, "sendingPayloadHex", text)
+                    }
+
+                    // CheckButton {
+                    //     icon.source: "qrc:/icons/ui/file-check.svg"
+                    //     text: ""
+                    //     checkable: false
+                    //     onClicked: cmdConfigController.applyRow(requestCmdConfigModel, index, false)
+                    // }
+                    CheckButton {
+                        icon.source: "qrc:/icons/ui/x.svg"
+                        text: ""
+                        checkable: false
+                        onClicked: requestCmdConfigModel.remove(index, 1)
+                    }
+                }
+            }
+        }
+
+        RowLayout {
+            spacing: 8
+            CText { text: "Monitor slots" }
+            CheckButton {
+                icon.source: "qrc:/icons/ui/plus.svg"
+                text: ""
+                checkable: false
+                onClicked: {
+                    responseCmdConfigModel.append({
+                        "enabled": true,
+                        "cmdId": 0,
+                        "receiverChecked": true,
+                        "senderChecked": false,
+                        "functionBitArray": false,
+                        "receiveBits": 0,
+                        "sendingPayloadHex": ""
+                    })
+                }
+            }
+            CheckButton {
+                icon.source: "qrc:/icons/ui/file-check.svg"
+                text: ""
+                checkable: false
+                onClicked: cmdConfigController.applyAllRows(responseCmdConfigModel, true)
+            }
+        }
+
+        Repeater {
+            model: responseCmdConfigModel
+            delegate: Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: respRow.implicitHeight + 8
+                radius: 6
+                color: "#1AFFFFFF"
+                border.color: "#33FFFFFF"
+                border.width: 1
+
+                RowLayout {
+                    id: respRow
+                    anchors.fill: parent
+                    anchors.margins: 4
+                    spacing: 6
+                    CCheck {
+                        checked: enabled
+                        text: ""
+                        onCheckedChanged: responseCmdConfigModel.setProperty(index, "enabled", checked)
+                    }
+                    SpinBoxCustom {
+                        implicitWidth: 85
+                        from: 0
+                        to: 255
+                        value: cmdId
+                        onValueChanged: responseCmdConfigModel.setProperty(index, "cmdId", value)
+                    }
+
+                    CheckButton {
+                        id: functionButton_resp
+                        text: functionBitArray ? "BitArray" : "Default"
+                        checkable: true
+                        checked: functionBitArray
+                        onCheckedChanged: responseCmdConfigModel.setProperty(index, "functionBitArray", checked)
+                    }
+
+                    CheckButton {
+                        id: receiverButton_resp
+                        visible: functionButton_resp.checked
+                        text: "R"
+                        checkable: true
+                        checked: receiverChecked
+                        onCheckedChanged: {
+                            responseCmdConfigModel.setProperty(index, "receiverChecked", checked)
+                            var row = responseCmdConfigModel.get(index)
+                            if (!row.receiverChecked && !row.senderChecked) {
+                                responseCmdConfigModel.setProperty(index, "receiverChecked", true)
+                            }
+                        }
+                    }
+
+                    SpinBoxCustom {
+                        visible: functionButton_resp.checked && receiverButton_resp.checked
+                        implicitWidth: 100
+                        from: 0
+                        to: 65535
+                        value: receiveBits
+                        onValueChanged: responseCmdConfigModel.setProperty(index, "receiveBits", value)
+                    }
+
+                    CheckButton {
+                        id: senderButton_resp
+                        visible: functionButton_resp.checked
+                        text: "S"
+                        checkable: true
+                        checked: senderChecked
+                        onCheckedChanged: {
+                            responseCmdConfigModel.setProperty(index, "senderChecked", checked)
+                            var row = responseCmdConfigModel.get(index)
+                            if (!row.receiverChecked && !row.senderChecked) {
+                                responseCmdConfigModel.setProperty(index, "receiverChecked", true)
+                            }
+                        }
+                    }
+
+                    CTextField {
+                        visible: functionButton_resp.checked && senderButton_resp.checked
+                        implicitWidth: 70
+                        text: sendingPayloadHex
+                        placeholderText: "AA 01 FF"
+                        onTextChanged: responseCmdConfigModel.setProperty(index, "sendingPayloadHex", text)
+                    }
+
+                    CheckButton {
+                        icon.source: "qrc:/icons/ui/file-check.svg"
+                        text: ""
+                        checkable: false
+                        onClicked: cmdConfigController.applyRow(responseCmdConfigModel, index, true)
+                    }
+                    CheckButton {
+                        icon.source: "qrc:/icons/ui/x.svg"
+                        text: ""
+                        checkable: false
+                        onClicked: responseCmdConfigModel.remove(index, 1)
                     }
                 }
             }

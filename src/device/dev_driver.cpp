@@ -595,6 +595,43 @@ void DevDriver::acousticResponceTimeout(uint32_t timeout_us) {
     idUSBLControl->setResponseTimeout(timeout_us);
 }
 
+void DevDriver::setUsblCmdConfigRow(bool isResponseList, uint8_t cmdId, bool receiverChecked, bool senderChecked, bool functionBitArray, uint16_t receiveBits, const QString& sendingPayloadHex) {
+    if(!m_state.connect) return;
+
+    QByteArray payloadBytes;
+    QString parseError;
+    if (!parseHexPayload(sendingPayloadHex, payloadBytes, &parseError)) {
+        qWarning() << "USBL cmd config skipped:" << parseError;
+        return;
+    }
+
+    IDBinUsblControl::USBLCmdConfig cfg = {};
+    cfg.eventFilter = isResponseList
+        ? IDBinUsblControl::USBLCmdConfig::EventOnReceiveResponse
+        : IDBinUsblControl::USBLCmdConfig::EventOnReceiveRequest;
+
+    if (!receiverChecked && !senderChecked) {
+        receiverChecked = true;
+    }
+    if (receiverChecked && senderChecked) {
+        cfg.payloadDir = IDBinUsblControl::USBLCmdConfig::PayloadReceiverSender;
+    } else if (senderChecked) {
+        cfg.payloadDir = IDBinUsblControl::USBLCmdConfig::PayloadSender;
+    } else {
+        cfg.payloadDir = IDBinUsblControl::USBLCmdConfig::PayloadReceiver;
+    }
+
+    cfg.function = functionBitArray
+        ? IDBinUsblControl::USBLCmdConfig::FunctionBitArray
+        : IDBinUsblControl::USBLCmdConfig::FunctionDefault;
+
+    cfg.cmd_id = cmdId;
+    cfg.receive_bit_length = receiveBits;
+    cfg.sending_bit_length = static_cast<uint16_t>(payloadBytes.size() * 8);
+
+    idUSBLControl->setCmdConfig(cfg, payloadBytes);
+}
+
 void DevDriver::setCmdSlotAsModemResponse(uint8_t cmd_id, const QString& payload) {
     if(!m_state.connect) return;
     const QByteArray data = payload.toUtf8();

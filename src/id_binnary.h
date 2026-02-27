@@ -1269,11 +1269,59 @@ public:
         uint16_t bit_length = 0; // for the next bytes
     } __attribute__((packed));
 
+    struct USBLCmdConfig  {
+        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr Version getVer() { return v6; }
+
+        enum EventFilter : uint8_t {
+            EventOnReceiveRequest = 1,
+            EventOnReceiveResponse = 2
+        } eventFilter = EventOnReceiveRequest;
+
+        enum PayloadDir : uint8_t {
+            PayloadReceiver = 0,
+            PayloadSender = 1,
+            PayloadReceiverSender = 2,
+        } payloadDir = PayloadReceiver;
+
+        enum Function : uint8_t {
+            FunctionReserved0 = 0,
+            FunctionReserved1 = 1,
+            FunctionDefault = 2,
+            FunctionBitArray = 3,
+            FunctionLLGeoAzimuth = 4
+        } function = FunctionDefault;
+
+        enum SendBackCmdIdAction : uint8_t {
+            SendBackCmdIdIncoming = 0,
+            SendBackCmdIdReplacement = 1
+        } cmdIdAction = SendBackCmdIdIncoming;
+
+        enum SendBackAddressAction : uint8_t {
+            SendBackAddressIncoming = 0,
+            SendBackAddressReplacement = 1,
+        } addressAction = SendBackAddressIncoming;
+
+        enum SendBackEventAction : uint8_t {
+            SendBackEventSwaping = 0,
+            SendBackEventSame = 1,
+        } eventAction = SendBackEventSwaping;
+
+        uint32_t reserved1 = 0;
+        uint8_t cmd_id = 0;
+        uint8_t cmd_id_replacement = 0;
+        uint8_t address_replacement = 0;
+        uint8_t reserved2 = 0;
+        uint16_t receive_bit_length = 0;
+        uint16_t sending_bit_length = 0;
+    } __attribute__((packed));
+
     void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id);
     void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id, uint32_t reply_distance_mm, const QByteArray& payload = {});
     void setResponseTimeout(uint32_t timeout_us);
     void setResponseAddressFilter(const std::array<uint8_t, 8>& addresses);
     void setResponseAddressFilter(uint8_t address);
+    void setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& sendingPayload = {});
     void setCmdSlotAsModemResponse(uint8_t cmd_id, QByteArray byte_array, int bit_length);
     void setCmdSlotAsModemReceiver(uint8_t cmd_id, int bit_length);
 

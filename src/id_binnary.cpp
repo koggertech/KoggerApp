@@ -1223,6 +1223,28 @@ void IDBinUsblControl::setResponseAddressFilter(uint8_t address) {
     setResponseAddressFilter(addresses);
 }
 
+void IDBinUsblControl::setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& sendingPayload) {
+    ProtoBinOut proto_cfg;
+    proto_cfg.create(SETTING, USBLCmdConfig::getVer(), id(), m_address);
+
+    int max_payload_bytes = proto_cfg.frameSpaceAvail() - static_cast<int>(sizeof(USBLCmdConfig));
+    if (max_payload_bytes < 0) {
+        max_payload_bytes = 0;
+    }
+    const int payload_bytes_to_write = qMin(sendingPayload.size(), max_payload_bytes);
+
+    USBLCmdConfig cfg_to_send = cfg;
+    cfg_to_send.sending_bit_length = static_cast<uint16_t>(payload_bytes_to_write * 8);
+
+    proto_cfg.write<USBLCmdConfig>(cfg_to_send);
+    if (payload_bytes_to_write > 0) {
+        proto_cfg.write((void*)sendingPayload.constData(), static_cast<uint16_t>(payload_bytes_to_write));
+    }
+    proto_cfg.end();
+
+    emit binFrameOut(proto_cfg);
+}
+
 void IDBinUsblControl::setCmdSlotAsModemResponse(uint8_t cmd_id, QByteArray byte_array, int bit_length) {
     USBLCmdSlotConfig cmd_slot = {};
     cmd_slot.cmd_id = cmd_id;

@@ -267,6 +267,7 @@ public slots:
     void acousticResponceFilterSlots(const QVariantList& enabledAddressList);
     void acousticResponceFilter(uint8_t address);
     void acousticResponceTimeout(uint32_t timeout_us = 0xFFFFFFFF);
+    void setUsblCmdConfigRow(bool isResponseList, uint8_t cmdId, bool receiverChecked, bool senderChecked, bool functionBitArray, uint16_t receiveBits, const QString& sendingPayloadHex);
     void setCmdSlotAsModemResponse(uint8_t cmd_id, const QString& payload);
     void setCmdSlotAsModemReceiver(uint8_t cmd_id, int byte_length);
 
