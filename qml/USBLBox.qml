@@ -25,13 +25,12 @@ DevSettingsBox {
         ListModel {
             id: pingRowsModel
             ListElement {
-                active: true
+                active: false
+                isCurrent: false
                 address: 0
                 cmd: 0
                 distanceM: "500.0"
                 payloadHex: ""
-                triggerEnabled: false
-                timeoutUs: 0
             }
         }
 
@@ -46,8 +45,28 @@ DevSettingsBox {
         QtObject {
             id: pingRowsController
             property int autoPingIndex: -1
+            property int currentPingIndex: -1
             property var activeOnceQueue: []
             property int activeOncePos: 0
+            property bool activeOnceInProgress: false
+
+            function clearCurrentPing() {
+                currentPingIndex = -1
+                for (var i = 0; i < pingRowsModel.count; i++) {
+                    pingRowsModel.setProperty(i, "isCurrent", false)
+                }
+            }
+
+            function setCurrentPing(index) {
+                if (index < 0 || index >= pingRowsModel.count) {
+                    clearCurrentPing()
+                    return
+                }
+                currentPingIndex = index
+                for (var i = 0; i < pingRowsModel.count; i++) {
+                    pingRowsModel.setProperty(i, "isCurrent", i === index)
+                }
+            }
 
             function nextActiveIndex(startIndex) {
                 if (pingRowsModel.count === 0) {
@@ -64,13 +83,17 @@ DevSettingsBox {
 
             function sendPingAt(index) {
                 if (!dev || index < 0 || index >= pingRowsModel.count) {
+                    clearCurrentPing()
                     return
                 }
+                setCurrentPing(index)
                 var row = pingRowsModel.get(index)
-                var timeout = row.triggerEnabled ? row.timeoutUs : 0
+                var timeout = (pingTriggerSettingsButton.checked && pingGlobalTriggerButton.checked)
+                    ? (pingGlobalTimeoutMsSpin.value * 1000)
+                    : 0
                 var distance = Number(row.distanceM)
                 if (isNaN(distance) || distance < 0) {
-                    distance = 20.0
+                    distance = 500.0
                 }
                 dev.acousticPingRequestEx(row.address, row.cmd, distance, timeout, row.payloadHex)
             }
@@ -84,12 +107,17 @@ DevSettingsBox {
                 }
 
                 if (queue.length === 0) {
+                    activeOnceInProgress = false
+                    if (!autoCycleButton.checked) {
+                        clearCurrentPing()
+                    }
                     return
                 }
 
                 pingRowsSendActiveTimer.stop()
                 activeOnceQueue = queue
                 activeOncePos = 0
+                activeOnceInProgress = true
 
                 // Send first item now, next items by timer interval.
                 sendPingAt(activeOnceQueue[activeOncePos])
@@ -97,6 +125,11 @@ DevSettingsBox {
 
                 if (activeOncePos < activeOnceQueue.length) {
                     pingRowsSendActiveTimer.start()
+                } else {
+                    activeOnceInProgress = false
+                    if (!autoCycleButton.checked) {
+                        clearCurrentPing()
+                    }
                 }
             }
         }
@@ -220,6 +253,8 @@ DevSettingsBox {
                 if (next >= 0) {
                     pingRowsController.autoPingIndex = next
                     pingRowsController.sendPingAt(next)
+                } else {
+                    pingRowsController.clearCurrentPing()
                 }
             }
         }
@@ -231,6 +266,10 @@ DevSettingsBox {
             running: false
             onTriggered: {
                 if (pingRowsController.activeOncePos >= pingRowsController.activeOnceQueue.length) {
+                    pingRowsController.activeOnceInProgress = false
+                    if (!autoCycleButton.checked) {
+                        pingRowsController.clearCurrentPing()
+                    }
                     stop()
                     return
                 }
@@ -239,6 +278,10 @@ DevSettingsBox {
                 pingRowsController.activeOncePos += 1
 
                 if (pingRowsController.activeOncePos >= pingRowsController.activeOnceQueue.length) {
+                    pingRowsController.activeOnceInProgress = false
+                    if (!autoCycleButton.checked) {
+                        pingRowsController.clearCurrentPing()
+                    }
                     stop()
                 }
             }
@@ -252,31 +295,39 @@ DevSettingsBox {
                 checkable: false
                 onClicked: {
                     pingRowsModel.append({
-                        "active": true,
+                        "active": false,
+                        "isCurrent": false,
                         "address": 0,
                         "cmd": 0,
-                        "distanceM": "20.0",
-                        "payloadHex": "",
-                        "triggerEnabled": false,
-                        "timeoutUs": 0
+                        "distanceM": "500.0",
+                        "payloadHex": ""
                     })
                 }
             }
 
             CheckButton {
-                icon.source: "qrc:/icons/ui/file-check.svg"
-                text: ""
+                icon.source: "qrc:/icons/ui/click.svg"
+                text: "Send Active"
                 checkable: false
-                onClicked: pingRowsController.startSendActiveOnce()
+                active: pingRowsController.activeOnceInProgress || down
+                onClicked: {
+                    if (!pingRowsController.activeOnceInProgress) {
+                        pingRowsController.startSendActiveOnce()
+                    }
+                }
             }
 
             CheckButton {
                 id: autoCycleButton
+                icon.source: "qrc:/icons/ui/repeat.svg"
                 text: "Auto Cycle"
                 checkable: true
                 onCheckedChanged: {
                     if (!checked) {
                         pingRowsController.autoPingIndex = -1
+                        if (!pingRowsController.activeOnceInProgress) {
+                            pingRowsController.clearCurrentPing()
+                        }
                     }
                 }
             }
@@ -284,21 +335,54 @@ DevSettingsBox {
             CText { text: "ms" }
             SpinBoxCustom {
                 id: autoIntervalSpin
+                implicitWidth: 130
                 from: 300
                 to: 10000
                 value: 1000
+            }
+
+            CheckButton {
+                id: pingTriggerSettingsButton
+                icon.source: "qrc:/icons/ui/settings.svg"
+                text: ""
+                checkable: true
+                checked: false
+            }
+        }
+
+        RowLayout {
+            visible: pingTriggerSettingsButton.checked
+            spacing: 8
+            CheckButton {
+                id: pingGlobalTriggerButton
+                text: "Trig"
+                checkable: true
+                checked: false
+            }
+            SpinBoxCustom {
+                id: pingGlobalTimeoutMsSpin
+                from: 0
+                to: 4294967
+                value: 2147483
+                visible: pingGlobalTriggerButton.checked
+            }
+            CText {
+                text: "ms"
+                visible: pingGlobalTriggerButton.checked
             }
         }
 
         Repeater {
             model: pingRowsModel
             delegate: Rectangle {
+                property bool currentItemHighlight: (model.isCurrent === true)
+                                                   && (autoCycleButton.checked || pingRowsController.activeOnceInProgress)
                 Layout.fillWidth: true
                 implicitHeight: pingRow.implicitHeight + 8
                 radius: 6
-                color: "#1AFFFFFF"
-                border.color: "#33FFFFFF"
-                border.width: 1
+                color: currentItemHighlight ? "#2AFFFFFF" : "#1AFFFFFF"
+                border.color: currentItemHighlight ? "#66FFFFFF" : "#33FFFFFF"
+                border.width: currentItemHighlight ? 2 : 1
 
                 RowLayout {
                     id: pingRow
@@ -307,8 +391,7 @@ DevSettingsBox {
                     spacing: 6
 
                     CheckButton {
-                        // checked: active
-                        // text: ""
+                        checked: model.active
                         icon.source:  checked ? "qrc:/icons/ui/access_point.svg" : "qrc:/icons/ui/access_point_off.svg"
                         checkable: true
                         onCheckedChanged: pingRowsModel.setProperty(index, "active", checked)
@@ -338,25 +421,11 @@ DevSettingsBox {
                     }
 
                     CTextField {
-                        implicitWidth: 80
+                        Layout.fillWidth: true
+                        // implicitWidth: 80
                         text: payloadHex
                         // placeholderText: "AA 01 FF"
                         onTextChanged: pingRowsModel.setProperty(index, "payloadHex", text)
-                    }
-
-                    CheckButton {
-                        text: "Trig"
-                        checkable: true
-                        checked: triggerEnabled
-                        onCheckedChanged: pingRowsModel.setProperty(index, "triggerEnabled", checked)
-                    }
-
-                    SpinBoxCustom {
-                        from: 0
-                        to: 2147483647
-                        value: timeoutUs
-                        enabled: triggerEnabled
-                        onValueChanged: pingRowsModel.setProperty(index, "timeoutUs", value)
                     }
 
                     // CheckButton {
@@ -371,7 +440,13 @@ DevSettingsBox {
                         text: ""
                         checkable: false
                         onClicked: {
+                            var removedWasCurrent = index === pingRowsController.currentPingIndex
                             pingRowsModel.remove(index, 1)
+                            if (removedWasCurrent) {
+                                pingRowsController.clearCurrentPing()
+                            } else if (index < pingRowsController.currentPingIndex) {
+                                pingRowsController.setCurrentPing(pingRowsController.currentPingIndex - 1)
+                            }
                             if (pingRowsController.autoPingIndex >= pingRowsModel.count) {
                                 pingRowsController.autoPingIndex = pingRowsModel.count - 1
                             }
