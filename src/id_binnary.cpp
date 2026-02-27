@@ -1244,14 +1244,17 @@ void IDBinUsblControl::setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& 
     if (max_payload_bytes < 0) {
         max_payload_bytes = 0;
     }
-    const int payload_bytes_to_write = qMin(sendingPayload.size(), max_payload_bytes);
+
+    const bool sender_is_bit_array = (cfg.sender_function == USBLCmdConfig::FunctionBitArray);
+    const QByteArray payload_to_send = sender_is_bit_array ? sendingPayload : QByteArray();
+    const int payload_bytes_to_write = qMin(payload_to_send.size(), max_payload_bytes);
 
     USBLCmdConfig cfg_to_send = cfg;
-    cfg_to_send.sending_bit_length = static_cast<uint16_t>(payload_bytes_to_write * 8);
+    cfg_to_send.sending_bit_length = sender_is_bit_array ? static_cast<uint16_t>(payload_bytes_to_write * 8) : 0;
 
     proto_cfg.write<USBLCmdConfig>(cfg_to_send);
     if (payload_bytes_to_write > 0) {
-        proto_cfg.write((void*)sendingPayload.constData(), static_cast<uint16_t>(payload_bytes_to_write));
+        proto_cfg.write((void*)payload_to_send.constData(), static_cast<uint16_t>(payload_bytes_to_write));
     }
     proto_cfg.end();
 

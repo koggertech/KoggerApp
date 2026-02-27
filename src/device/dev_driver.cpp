@@ -613,36 +613,51 @@ void DevDriver::setUsblMonitorConfig(uint32_t suppressSelfResponse_us, uint32_t 
 void DevDriver::setUsblCmdConfigRow(bool isResponseList, uint8_t cmdId, bool receiverChecked, bool senderChecked, bool functionBitArray, uint16_t receiveBits, const QString& sendingPayloadHex) {
     if(!m_state.connect) return;
 
-    QByteArray payloadBytes;
-    QString parseError;
-    if (!parseHexPayload(sendingPayloadHex, payloadBytes, &parseError)) {
-        qWarning() << "USBL cmd config skipped:" << parseError;
-        return;
-    }
-
     IDBinUsblControl::USBLCmdConfig cfg = {};
+    cfg.cmd_id = cmdId;
     cfg.eventFilter = isResponseList
         ? IDBinUsblControl::USBLCmdConfig::EventOnReceiveResponse
         : IDBinUsblControl::USBLCmdConfig::EventOnReceiveRequest;
 
-    if (!receiverChecked && !senderChecked) {
-        receiverChecked = true;
+    cfg.cmdIdAction = IDBinUsblControl::USBLCmdConfig::SendBackCmdIdIncoming;
+    cfg.cmd_id_replacement = 0;
+    cfg.addressAction = IDBinUsblControl::USBLCmdConfig::SendBackAddressIncoming;
+    cfg.address_replacement = 0;
+    cfg.eventAction = IDBinUsblControl::USBLCmdConfig::SendBackEventSwaping;
+    cfg.reserved1 = 0;
+    cfg.reserved2 = 0;
+
+    QByteArray payloadBytes;
+    if (!functionBitArray) {
+        cfg.receiver_function = IDBinUsblControl::USBLCmdConfig::FunctionDefault;
+        cfg.receive_bit_length = 0;
+        cfg.sender_function = IDBinUsblControl::USBLCmdConfig::FunctionDefault;
+        cfg.sending_bit_length = 0;
+        idUSBLControl->setCmdConfig(cfg, payloadBytes);
+        return;
     }
-    if (receiverChecked && senderChecked) {
-        cfg.payloadDir = IDBinUsblControl::USBLCmdConfig::PayloadReceiverSender;
-    } else if (senderChecked) {
-        cfg.payloadDir = IDBinUsblControl::USBLCmdConfig::PayloadSender;
+
+    if (receiverChecked) {
+        cfg.receiver_function = IDBinUsblControl::USBLCmdConfig::FunctionBitArray;
+        cfg.receive_bit_length = receiveBits;
     } else {
-        cfg.payloadDir = IDBinUsblControl::USBLCmdConfig::PayloadReceiver;
+        cfg.receiver_function = IDBinUsblControl::USBLCmdConfig::FunctionDefault;
+        cfg.receive_bit_length = 0;
     }
 
-    cfg.function = functionBitArray
-        ? IDBinUsblControl::USBLCmdConfig::FunctionBitArray
-        : IDBinUsblControl::USBLCmdConfig::FunctionDefault;
+    if (senderChecked) {
+        cfg.sender_function = IDBinUsblControl::USBLCmdConfig::FunctionBitArray;
 
-    cfg.cmd_id = cmdId;
-    cfg.receive_bit_length = receiveBits;
-    cfg.sending_bit_length = static_cast<uint16_t>(payloadBytes.size() * 8);
+        QString parseError;
+        if (!parseHexPayload(sendingPayloadHex, payloadBytes, &parseError)) {
+            qWarning() << "USBL cmd config skipped:" << parseError;
+            return;
+        }
+        cfg.sending_bit_length = static_cast<uint16_t>(payloadBytes.size() * 8);
+    } else {
+        cfg.sender_function = IDBinUsblControl::USBLCmdConfig::FunctionDefault;
+        cfg.sending_bit_length = 0;
+    }
 
     idUSBLControl->setCmdConfig(cfg, payloadBytes);
 }

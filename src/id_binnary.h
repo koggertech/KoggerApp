@@ -1282,46 +1282,44 @@ public:
         static constexpr ID getId() { return ID_USBL_CONTROL; }
         static constexpr Version getVer() { return v6; }
 
+        uint8_t cmd_id = 0;
+
         enum EventFilter : uint8_t {
             EventOnReceiveRequest = 1,
             EventOnReceiveResponse = 2
         } eventFilter = EventOnReceiveRequest;
-
-        enum PayloadDir : uint8_t {
-            PayloadReceiver = 0,
-            PayloadSender = 1,
-            PayloadReceiverSender = 2,
-        } payloadDir = PayloadReceiver;
-
-        enum Function : uint8_t {
-            FunctionReserved0 = 0,
-            FunctionReserved1 = 1,
-            FunctionDefault = 2,
-            FunctionBitArray = 3,
-            FunctionLLGeoAzimuth = 4
-        } function = FunctionDefault;
 
         enum SendBackCmdIdAction : uint8_t {
             SendBackCmdIdIncoming = 0,
             SendBackCmdIdReplacement = 1
         } cmdIdAction = SendBackCmdIdIncoming;
 
+        uint8_t cmd_id_replacement = 0;
+
         enum SendBackAddressAction : uint8_t {
             SendBackAddressIncoming = 0,
             SendBackAddressReplacement = 1,
         } addressAction = SendBackAddressIncoming;
+
+        uint8_t address_replacement = 0;
 
         enum SendBackEventAction : uint8_t {
             SendBackEventSwaping = 0,
             SendBackEventSame = 1,
         } eventAction = SendBackEventSwaping;
 
-        uint32_t reserved1 = 0;
-        uint8_t cmd_id = 0;
-        uint8_t cmd_id_replacement = 0;
-        uint8_t address_replacement = 0;
-        uint8_t reserved2 = 0;
+        uint8_t reserved1 = 0;
+        uint32_t reserved2 = 0;
+
+        enum Function : uint8_t {
+            FunctionDefault = 0,
+            FunctionBitArray = 1,
+            FunctionLLGeoAzimuth = 2
+        };
+
+        Function receiver_function = FunctionDefault;
         uint16_t receive_bit_length = 0;
+        Function sender_function = FunctionDefault;
         uint16_t sending_bit_length = 0;
     } __attribute__((packed));
 
