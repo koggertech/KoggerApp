@@ -194,6 +194,11 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
 
+    QObject::connect(&theme, &Themes::interfaceChanged, &core, []() {
+        core.setConsoleOutputEnabled(theme.consoleVisible());
+    });
+    core.setConsoleOutputEnabled(theme.consoleVisible());
+
     core.consoleInfo("Run...");
     core.setEngine(&engine);
     //qDebug() << "SQL drivers =" << QSqlDatabase::drivers(); // тут должен появиться QSQLITE

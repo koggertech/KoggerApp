@@ -81,6 +81,8 @@ public:
     QString getTryOpenedfilePath() const;
     void stopDeviceManagerThread() const;
 #endif
+    void setConsoleOutputEnabled(bool enabled);
+    bool isConsoleOutputEnabled() const { return consoleOutputEnabled_; }
     void consoleInfo(QString msg);
     void consoleWarning(QString msg);
     void consoleProto(FrameParser& parser, bool isIn = true);
@@ -264,6 +266,7 @@ private:
     QString openedfilePath_;
     bool isLoggingKlf_;
     bool isLoggingCsv_;
+    bool consoleOutputEnabled_ = true;
     QString filePath_;
     QString fChName_;
     QString sChName_;

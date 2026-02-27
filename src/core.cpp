@@ -3,6 +3,7 @@
 #include <QSettings>
 #include <cmath>
 #include <ctime>
+#include <cstring>
 #include <QDebug>
 #include "bottom_track.h"
 #include "hotkeys_manager.h"
@@ -126,26 +127,49 @@ void Core::stopLinkManagerTimer() const
     emit linkManagerWrapperPtr_->sendStopTimer();
 }
 
+void Core::setConsoleOutputEnabled(bool enabled)
+{
+    consoleOutputEnabled_ = enabled;
+}
+
 void Core::consoleInfo(QString msg)
 {
+    if (!consoleOutputEnabled_) {
+        return;
+    }
     getConsolePtr()->put(QtMsgType::QtInfoMsg, msg);
 }
 
 void Core::consoleWarning(QString msg)
 {
+    if (!consoleOutputEnabled_) {
+        return;
+    }
     getConsolePtr()->put(QtMsgType::QtWarningMsg, msg);
 }
 
 void Core::consoleProto(FrameParser &parser, bool isIn)
 {
+    if (!consoleOutputEnabled_) {
+        return;
+    }
+
+    const uint8_t* frameData = parser.frame();
+    const int frameLen = parser.frameLen();
+    const int route = parser.route();
+    const int id = parser.id();
+    const int ver = parser.ver();
+    const int payloadLen = parser.payloadLen();
+
     QString str_mode;
-    QString comment = "";
+    QString comment;
 
     switch (parser.type()) {
     case CONTENT:
         str_mode = "DATA";
         if (parser.resp()) {
-            switch(parser.frame()[6]) {
+            const uint8_t respCode = frameLen > 6 ? frameData[6] : respNone;
+            switch(respCode) {
             case respNone: comment = "[respNone]"; break;
             case respOk: comment = "[respOk]"; break;
             case respErrorCheck: comment = "[respErrorCheck]"; break;
@@ -156,13 +180,17 @@ void Core::consoleProto(FrameParser &parser, bool isIn)
             case respErrorKey: comment = "[respErrorKey]"; break;
             case respErrorRuntime: comment = "[respErrorRuntime]"; break;
             default:
-                comment = QString("[resp %1]").arg((int)parser.frame()[6]);
+                comment = QString("[resp %1]").arg(static_cast<int>(respCode));
                 break;
             }
         }
-        else {
-            if (parser.id() == ID_EVENT) {
-                comment = QString("Event ID %1").arg(*(uint32_t*)(&parser.frame()[10]));
+        else if (id == ID_EVENT) {
+            if (frameLen >= 14) {
+                uint32_t eventId = 0;
+                std::memcpy(&eventId, frameData + 10, sizeof(eventId));
+                comment = QString("Event ID %1").arg(eventId);
+            } else {
+                comment = "Event ID <invalid>";
             }
         }
         break;
@@ -181,14 +209,19 @@ void Core::consoleProto(FrameParser &parser, bool isIn)
     isIn ? str_dir = "-->> " : str_dir = "<<-- ";
 
     try {
-        QString str_data = QByteArray((char*)parser.frame(), parser.frameLen()).toHex();
+        constexpr int kMaxHexDumpBytes = 96;
+        const int bytesToDump = qMin(frameLen, kMaxHexDumpBytes);
+        QString str_data = QString::fromLatin1(QByteArray::fromRawData(reinterpret_cast<const char*>(frameData), bytesToDump).toHex());
+        if (frameLen > bytesToDump) {
+            str_data += QString("...(+%1B)").arg(frameLen - bytesToDump);
+        }
 
         consoleInfo(
-            str_dir % "KG[" % QString::number(parser.route()) % "]: id "
-            % QString::number(parser.id())
-            % " v" % QString::number(parser.ver())
+            str_dir % "KG[" % QString::number(route) % "]: id "
+            % QString::number(id)
+            % " v" % QString::number(ver)
             % ", " % str_mode
-            % ", len " % QString::number(parser.payloadLen())
+            % ", len " % QString::number(payloadLen)
             % "; " % comment
             % " [ " % str_data % " ]"
             );

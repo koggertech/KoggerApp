@@ -32,6 +32,9 @@ signals:
 private:
     Q_DISABLE_COPY(ConsoleListModel)
 
+    static constexpr int kMaxRows = 4000;
+    static constexpr int kTrimBatch = 256;
+
     int _size = 0;
     int _categories = 0;
 
@@ -45,6 +48,7 @@ private:
     QHash<int, QVector<QVariant>> _vectors;
 
 
+    void trimHeadIfNeeded(int incomingCount = 1);
     void doAppend(const QString& time, int category, const QString& data);
 };
 
