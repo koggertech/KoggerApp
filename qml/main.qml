@@ -48,6 +48,101 @@ ApplicationWindow  {
         menuBar.updateBottomTrack()
     }
 
+    function handleAndroidBack() {
+        if (Qt.platform.os !== "android") {
+            return false
+        }
+
+        // Step 1: close modal/popup/menu overlays.
+        if (profilePickDialog.visible) {
+            profilePickDialog.close()
+            return true
+        }
+
+        if (profilesDialog.visible) {
+            profilesDialog.close()
+            return true
+        }
+
+        if (showBanner) {
+            showBanner = false
+            return true
+        }
+
+        if (typeof contactDialog !== "undefined" && contactDialog.visible) {
+            contactDialog.visible = false
+            return true
+        }
+
+        if (menuBlock.visible) {
+            menuBlock.visible = false
+            return true
+        }
+
+        if (geoMenuBlock.visible) {
+            geoMenuBlock.visible = false
+            return true
+        }
+
+        if (rulerMenuBlock.visible) {
+            rulerMenuBlock.visible = false
+            return true
+        }
+
+        if (waterViewFirst.closeTransientUi && waterViewFirst.closeTransientUi()) {
+            return true
+        }
+
+        if (waterViewSecond.visible && waterViewSecond.closeTransientUi && waterViewSecond.closeTransientUi()) {
+            return true
+        }
+
+        // Step 2: cancel active editing modes.
+        if (renderer.geoJsonEnabled) {
+            const geo = renderer.geoJsonController
+            if (geo && geo.drawing) {
+                renderer.geojsonCancelDrawing()
+                return true
+            }
+        }
+
+        if (renderer.rulerDrawing) {
+            renderer.rulerCancelDrawing()
+            return true
+        }
+
+        if (renderer.rulerEnabled || renderer.rulerSelected || renderer.rulerHasGeometry) {
+            renderer.clearRuler()
+            return true
+        }
+
+        // Step 3: close settings panels.
+        let settingsClosed = false
+
+        if (waterViewFirst.settingsOpen) {
+            waterViewFirst.closeSettings()
+            settingsClosed = true
+        }
+
+        if (waterViewSecond.visible && waterViewSecond.settingsOpen) {
+            waterViewSecond.closeSettings()
+            settingsClosed = true
+        }
+
+        if (menuBar.hasOpenMenus) {
+            menuBar.closeMenus()
+            settingsClosed = true
+        }
+
+        if (settingsClosed) {
+            return true
+        }
+
+        // Step 4: root screen -> send app to background.
+        core.moveAppToBackground()
+        return true
+    }
+
     Component.onCompleted: {
         theme.updateResCoeff()
 
@@ -185,6 +280,13 @@ ApplicationWindow  {
         orientation:       Qt.Vertical
 
         Keys.onReleased: function(event) {
+            if (event.key === Qt.Key_Back || event.key === Qt.Key_Escape) {
+                if (handleAndroidBack()) {
+                    event.accepted = true
+                    return
+                }
+            }
+
             let sc = event.nativeScanCode.toString()
             let hotkeyData = hotkeysMapScan[sc];
             if (hotkeyData === undefined) {
@@ -469,6 +571,12 @@ ApplicationWindow  {
                         Keys.onReturnPressed: function(event) { renderer.keyPressTrigger(event.key) }
                         Keys.onEnterPressed:  function(event) { renderer.keyPressTrigger(event.key) }
                         Keys.onEscapePressed: function(event) {
+                            if (Qt.platform.os === "android") {
+                                if (mainview.handleAndroidBack()) {
+                                    event.accepted = true
+                                    return
+                                }
+                            }
                             if (renderer.geoJsonEnabled) {
                                 renderer.geojsonCancelDrawing()
                             } else {

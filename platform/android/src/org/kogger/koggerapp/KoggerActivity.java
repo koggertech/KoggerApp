@@ -126,6 +126,18 @@ public class KoggerActivity extends QtActivity {
         }
     }
 
+    /**
+     * Moves the app task to background (same UX as Home button).
+     */
+    public static void moveTaskToBackApp() {
+        if (m_instance == null) {
+            Log.w(TAG, "moveTaskToBackApp: activity instance is null");
+            return;
+        }
+
+        m_instance.runOnUiThread(() -> m_instance.moveTaskToBack(true));
+    }
+
     public static String getSDCardPath() {
         StorageManager storageManager = (StorageManager)m_instance.getSystemService(Activity.STORAGE_SERVICE);
         List<StorageVolume> volumes = storageManager.getStorageVolumes();

@@ -170,6 +170,7 @@ public slots:
     Q_INVOKABLE bool getInternetAvailable() const;
     Q_INVOKABLE bool getMapTileLoadingEnabled() const;
     Q_INVOKABLE void setMapTileLoadingEnabled(bool enabled);
+    Q_INVOKABLE void moveAppToBackground();
 
 signals:
     void connectionChanged(bool duplex = false);

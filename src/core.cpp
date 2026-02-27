@@ -11,6 +11,9 @@
 #ifdef Q_OS_WINDOWS
 #include <Windows.h>
 #endif
+#ifdef Q_OS_ANDROID
+#include "platform/android/src/android_interface.h"
+#endif
 
 
 Core::Core() :
@@ -1721,6 +1724,13 @@ void Core::setMapTileLoadingEnabled(bool enabled)
     }
 
     emit mapTileLoadingEnabledChanged();
+}
+
+void Core::moveAppToBackground()
+{
+#ifdef Q_OS_ANDROID
+    AndroidInterface::moveTaskToBack();
+#endif
 }
 
 int Core::loadSavedMapTileProviderId() const

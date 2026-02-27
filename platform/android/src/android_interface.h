@@ -26,6 +26,7 @@ namespace AndroidInterface
     bool checkStoragePermissions();
     QString getSDCardPath();
     void setKeepScreenOn(bool on);
+    void moveTaskToBack();
 
     constexpr const char *kJniKoggerActivityClassName = "org/kogger/koggerapp/KoggerActivity";
 };

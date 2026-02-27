@@ -146,4 +146,16 @@ void setKeepScreenOn(bool on)
     //-- Screen is locked on while KoggerApp is running on Android
 }
 
+void moveTaskToBack()
+{
+    QJniObject::callStaticMethod<void>(
+        kJniKoggerActivityClassName,
+        "moveTaskToBackApp",
+        "()V");
+
+    if (cleanJavaException()) {
+        qCWarning(AndroidInterfaceLog) << "Java exception in moveTaskToBackApp";
+    }
+}
+
 } // namespace AndroidInterface

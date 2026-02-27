@@ -28,6 +28,7 @@ Item {
     property bool extraInfoBoatStatusVis: appSettings.extraInfoBoatStatusVis
     property bool autopilotInfofVis: appSettings.autopilotInfofVis
     property bool profilesBtnVis: appSettings.profilesButtonVis
+    property bool hasOpenMenus: menuSettings.active || menuDisplay.active
 
     signal languageChanged(string langStr)
     signal menuBarSettingOpened()

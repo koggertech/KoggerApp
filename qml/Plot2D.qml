@@ -12,6 +12,8 @@ WaterFall {
     property bool is3dVisible: false
     property int indx: 0
     property int instruments: instrumentsGradeList.currentIndex
+    property bool settingsOpen: plotCheckButton.checked
+    property bool hasTransientUi: menuBlock.visible || contactDialog.visible
 
     horizontal: horisontalVertical.checked
 
@@ -24,7 +26,27 @@ WaterFall {
     }
 
     function closeSettings() {
+        if (!plotCheckButton.checked) {
+            return false
+        }
         plotCheckButton.checked = false
+        return true
+    }
+
+    function closeTransientUi() {
+        let handled = false
+
+        if (menuBlock.visible) {
+            menuBlock.visible = false
+            handled = true
+        }
+
+        if (contactDialog.visible) {
+            contactDialog.visible = false
+            handled = true
+        }
+
+        return handled
     }
 
     function setAim(mouseX, mouseY) {
