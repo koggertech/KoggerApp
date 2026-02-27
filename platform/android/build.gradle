@@ -101,7 +101,6 @@ android {
         println "versionName: ${versionName}"
     }
 
-    println "androidPackageName: ${namespace}"
     println "androidCompileSdkVersion: ${compileSdkVersion}"
     println "androidBuildToolsVersion: ${buildToolsVersion}"
     println "androidNdkVersion: ${ndkVersion}"
