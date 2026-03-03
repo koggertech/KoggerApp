@@ -213,155 +213,153 @@ void GraphicsScene3dRenderer::drawObjects()
     }
     glDisable(GL_DEPTH_TEST);
 
-    if (isOut) {
-        return;
-    }
+    if (!isOut) {
+        glEnable(GL_DEPTH_TEST);
+        surfaceViewRenderImpl_.render(this,      m_projection * view * m_model, m_shaderProgramMap);
+        //isobathsViewRenderImpl_.render(this,     m_model, view, m_projection, m_shaderProgramMap);
+        m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
+        m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
+        glDisable(GL_DEPTH_TEST);
 
-    glEnable(GL_DEPTH_TEST);
-    surfaceViewRenderImpl_.render(this,      m_projection * view * m_model, m_shaderProgramMap);
-    //isobathsViewRenderImpl_.render(this,     m_model, view, m_projection, m_shaderProgramMap);
-    m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
-    m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
-    glDisable(GL_DEPTH_TEST);
+        //-----------Contacts-------------
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        contactsRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+        glDisable(GL_BLEND);
 
-    //-----------Contacts-------------
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    contactsRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
-    glDisable(GL_BLEND);
-
-    //-----------Draw selection rect-------------
-    if (!m_shaderProgramMap.contains("static_sec")) {
-        return;
-    }
-
-    auto shaderProgram = m_shaderProgramMap["static_sec"];
-    if (!shaderProgram->bind()) {
-        qCritical() << "Error binding shader program.";
-        return;
-    }
-
-    const int colorLoc  = shaderProgram->uniformLocation("color");
-    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 104.0f, 145.0f, 0.0f)));
-    shaderProgram->enableAttributeArray(0);
-
-    const float halfWidth = viewport[2] / 2.0f;
-    const float halfHeight = viewport[3] / 2.0f;
-    QVector<QVector2D> rectVert = { { (m_comboSelectionRect.topLeft().x()     / halfWidth)  - 1.0f,
-                                      (m_comboSelectionRect.topLeft().y()     / halfHeight) - 1.0f },
-                                    { (m_comboSelectionRect.topRight().x()    / halfWidth)  - 1.0f,
-                                      (m_comboSelectionRect.topRight().y()    / halfHeight) - 1.0f },
-                                    { (m_comboSelectionRect.bottomRight().x() / halfWidth)  - 1.0f,
-                                      (m_comboSelectionRect.bottomRight().y() / halfHeight) - 1.0f },
-                                    { (m_comboSelectionRect.bottomLeft().x()  / halfWidth)  - 1.0f,
-                                      (m_comboSelectionRect.bottomLeft().y()  / halfHeight) - 1.0f } };
-
-    shaderProgram->setAttributeArray(0, rectVert.constData());
-    glDrawArrays(GL_LINE_LOOP, 0, rectVert.size());
-    shaderProgram->release();
-
-    //-----------Grid & Draw scene bounding box-------------
-    if (gridVisibility_ && planeGridType_) {
-        if (!m_shaderProgramMap.contains("static")) {
+        //-----------Draw selection rect-------------
+        if (!m_shaderProgramMap.contains("static_sec")) {
             return;
         }
 
-        auto shaderProgram = m_shaderProgramMap["static"];
+        auto shaderProgram = m_shaderProgramMap["static_sec"];
         if (!shaderProgram->bind()) {
             qCritical() << "Error binding shader program.";
             return;
         }
 
-        QVector<QVector3D> boundingBox{
-            // Bottom horizontal edges
-            {m_boundingBox.minimumX(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()},
-            {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()},
-            {m_boundingBox.minimumX(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()},
-            {m_boundingBox.minimumX(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()},
-            {m_boundingBox.minimumX(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()},
-            {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()},
-            {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()},
-            {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()},
-
-            //Top horizontal edges
-            {m_boundingBox.minimumX(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()+m_boundingBox.height()},
-            {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()+m_boundingBox.height()},
-            {m_boundingBox.minimumX(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()+m_boundingBox.height()},
-            {m_boundingBox.minimumX(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()+m_boundingBox.height()},
-            {m_boundingBox.minimumX(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()+m_boundingBox.height()},
-            {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()+m_boundingBox.height()},
-            {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()+m_boundingBox.height()},
-            {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()+m_boundingBox.height()},
-
-            // Vertical Edges
-            {m_boundingBox.minimumX(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()},
-            {m_boundingBox.minimumX(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()+m_boundingBox.height()},
-            {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()},
-            {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()+m_boundingBox.height()},
-            {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()},
-            {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()+m_boundingBox.height()},
-            {m_boundingBox.minimumX(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()},
-            {m_boundingBox.minimumX(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()+m_boundingBox.height()}
-        };
-
-        int posLoc    = shaderProgram->attributeLocation("position");
-        int matrixLoc = shaderProgram->uniformLocation("matrix");
-        int colorLoc  = shaderProgram->uniformLocation("color");
-
+        const int colorLoc  = shaderProgram->uniformLocation("color");
         shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 104.0f, 145.0f, 0.0f)));
-        shaderProgram->setUniformValue(matrixLoc, m_projection*view*m_model);
-        shaderProgram->enableAttributeArray(posLoc);
-        shaderProgram->setAttributeArray(posLoc, boundingBox.constData());
+        shaderProgram->enableAttributeArray(0);
 
-        glEnable(GL_DEPTH_TEST);
-        glLineWidth(2.0f);
-        glDrawArrays(GL_LINES, 0, boundingBox.size());
-        glLineWidth(1.0f);
-        glDisable(GL_DEPTH_TEST);
+        const float halfWidth = viewport[2] / 2.0f;
+        const float halfHeight = viewport[3] / 2.0f;
+        QVector<QVector2D> rectVert = { { (m_comboSelectionRect.topLeft().x()     / halfWidth)  - 1.0f,
+                                          (m_comboSelectionRect.topLeft().y()     / halfHeight) - 1.0f },
+                                        { (m_comboSelectionRect.topRight().x()    / halfWidth)  - 1.0f,
+                                          (m_comboSelectionRect.topRight().y()    / halfHeight) - 1.0f },
+                                        { (m_comboSelectionRect.bottomRight().x() / halfWidth)  - 1.0f,
+                                          (m_comboSelectionRect.bottomRight().y() / halfHeight) - 1.0f },
+                                        { (m_comboSelectionRect.bottomLeft().x()  / halfWidth)  - 1.0f,
+                                          (m_comboSelectionRect.bottomLeft().y()  / halfHeight) - 1.0f } };
 
-        shaderProgram->disableAttributeArray(posLoc);
+        shaderProgram->setAttributeArray(0, rectVert.constData());
+        glDrawArrays(GL_LINE_LOOP, 0, rectVert.size());
         shaderProgram->release();
 
-        m_planeGridRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
-    }
-    if (gridVisibility_ && !planeGridType_) {
-        m_planeGridRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
-    }
+        //-----------Grid & Draw scene bounding box-------------
+        if (gridVisibility_ && planeGridType_) {
+            if (!m_shaderProgramMap.contains("static")) {
+                return;
+            }
 
-    //-----------Navigation arrow-------------
-    {
-        glEnable(GL_DEPTH_TEST);
+            auto shaderProgram = m_shaderProgramMap["static"];
+            if (!shaderProgram->bind()) {
+                qCritical() << "Error binding shader program.";
+                return;
+            }
 
-        QMatrix4x4 nModel;
-        nModel.setToIdentity();
-        nModel.translate(navigationArrowRenderImpl_.getPosition());
-        nModel.rotate(navigationArrowRenderImpl_.getAngle(), 0.f, 0.f, 1.f);
-        float distance =  m_camera.distToFocusPoint();
-        float perspFixFovRad = qDegreesToRadians(perspFixFov);
-        float factor = 2.0f * distance * std::tan(perspFixFovRad * 0.5f) / m_viewSize.height();
-        float worldScale = factor * 7.f * scaleFactor_;
-        float navigationArrowSizeFactor = 1.0f;
-        switch (qBound(1, navigationArrowRenderImpl_.getSize(), 5)) {
-        case 1: navigationArrowSizeFactor = 1.0f; break;
-        case 2: navigationArrowSizeFactor = 2.0f; break;
-        case 3: navigationArrowSizeFactor = 3.0f; break;
-        case 4: navigationArrowSizeFactor = 4.0f; break;
-        case 5: navigationArrowSizeFactor = 5.0f; break;
-        default: break;
+            QVector<QVector3D> boundingBox{
+                // Bottom horizontal edges
+                {m_boundingBox.minimumX(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()},
+                {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()},
+                {m_boundingBox.minimumX(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()},
+                {m_boundingBox.minimumX(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()},
+                {m_boundingBox.minimumX(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()},
+                {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()},
+                {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()},
+                {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()},
+
+                //Top horizontal edges
+                {m_boundingBox.minimumX(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()+m_boundingBox.height()},
+                {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()+m_boundingBox.height()},
+                {m_boundingBox.minimumX(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()+m_boundingBox.height()},
+                {m_boundingBox.minimumX(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()+m_boundingBox.height()},
+                {m_boundingBox.minimumX(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()+m_boundingBox.height()},
+                {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()+m_boundingBox.height()},
+                {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()+m_boundingBox.height()},
+                {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()+m_boundingBox.height()},
+
+                // Vertical Edges
+                {m_boundingBox.minimumX(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()},
+                {m_boundingBox.minimumX(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()+m_boundingBox.height()},
+                {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()},
+                {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY(),m_boundingBox.minimumZ()+m_boundingBox.height()},
+                {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()},
+                {m_boundingBox.minimumX()+m_boundingBox.length(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()+m_boundingBox.height()},
+                {m_boundingBox.minimumX(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()},
+                {m_boundingBox.minimumX(),m_boundingBox.minimumY()+m_boundingBox.width(),m_boundingBox.minimumZ()+m_boundingBox.height()}
+            };
+
+            int posLoc    = shaderProgram->attributeLocation("position");
+            int matrixLoc = shaderProgram->uniformLocation("matrix");
+            int colorLoc  = shaderProgram->uniformLocation("color");
+
+            shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 104.0f, 145.0f, 0.0f)));
+            shaderProgram->setUniformValue(matrixLoc, m_projection*view*m_model);
+            shaderProgram->enableAttributeArray(posLoc);
+            shaderProgram->setAttributeArray(posLoc, boundingBox.constData());
+
+            glEnable(GL_DEPTH_TEST);
+            glLineWidth(2.0f);
+            glDrawArrays(GL_LINES, 0, boundingBox.size());
+            glLineWidth(1.0f);
+            glDisable(GL_DEPTH_TEST);
+
+            shaderProgram->disableAttributeArray(posLoc);
+            shaderProgram->release();
+
+            m_planeGridRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
         }
-        nModel.scale(worldScale * navigationArrowSizeFactor);
-        navigationArrowRenderImpl_.render(this, projection * view * nModel, m_shaderProgramMap);
+        if (gridVisibility_ && !planeGridType_) {
+            m_planeGridRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
+        }
 
+        //-----------Navigation arrow-------------
+        {
+            glEnable(GL_DEPTH_TEST);
+
+            QMatrix4x4 nModel;
+            nModel.setToIdentity();
+            nModel.translate(navigationArrowRenderImpl_.getPosition());
+            nModel.rotate(navigationArrowRenderImpl_.getAngle(), 0.f, 0.f, 1.f);
+            float distance =  m_camera.distToFocusPoint();
+            float perspFixFovRad = qDegreesToRadians(perspFixFov);
+            float factor = 2.0f * distance * std::tan(perspFixFovRad * 0.5f) / m_viewSize.height();
+            float worldScale = factor * 7.f * scaleFactor_;
+            float navigationArrowSizeFactor = 1.0f;
+            switch (qBound(1, navigationArrowRenderImpl_.getSize(), 5)) {
+            case 1: navigationArrowSizeFactor = 1.0f; break;
+            case 2: navigationArrowSizeFactor = 2.0f; break;
+            case 3: navigationArrowSizeFactor = 3.0f; break;
+            case 4: navigationArrowSizeFactor = 4.0f; break;
+            case 5: navigationArrowSizeFactor = 5.0f; break;
+            default: break;
+            }
+            nModel.scale(worldScale * navigationArrowSizeFactor);
+            navigationArrowRenderImpl_.render(this, projection * view * nModel, m_shaderProgramMap);
+
+            glDisable(GL_DEPTH_TEST);
+        }
+
+        //-----------Overlays that should work in any camera/reference state-------------
         glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        geoJsonLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+        rulerToolRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+        glDisable(GL_BLEND);
     }
-
-    //-----------Overlays that should work in any camera/reference state-------------
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    geoJsonLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
-    rulerToolRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
-    glDisable(GL_BLEND);
 
     //-----------Compass-------------
     if (compass_) {
