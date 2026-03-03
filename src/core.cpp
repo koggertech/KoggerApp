@@ -930,6 +930,82 @@ bool Core::exportUSBLToCSV(QString filePath)
     return true;
 }
 
+bool Core::exportUSBLGnssToCSV(QString filePath)
+{
+    QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
+
+    logger_.creatExportStream(filePath + "/" + export_file_name + ".csv");
+    logger_.dataExport("epoch_num,carrier_counter,distance_m,latitude,longitude,north,east\n");
+
+    LLARef llaRef = datasetPtr_->getLlaRef();
+    Position lastValidPosition;
+    bool hasLastValidPosition = false;
+
+    for (int i = 0; i < datasetPtr_->size(); i += 1) {
+        Epoch* epoch = datasetPtr_->fromIndex(i);
+
+        if (epoch == NULL) {
+            continue;
+        }
+
+        Position currentPosition = epoch->getPositionGNSS();
+        const bool hasCurrentPosition = currentPosition.lla.isCoordinatesValid();
+        if (hasCurrentPosition) {
+            if (!currentPosition.ned.isCoordinatesValid() && llaRef.isInit) {
+                currentPosition.LLA2NED(&llaRef);
+            }
+
+            lastValidPosition = currentPosition;
+            hasLastValidPosition = true;
+        }
+
+        if (!epoch->isUsblSolutionAvailable()) {
+            continue;
+        }
+
+        Position resolvedPosition;
+        bool hasResolvedPosition = false;
+
+        if (hasCurrentPosition) {
+            resolvedPosition = currentPosition;
+            hasResolvedPosition = true;
+        }
+        else if (hasLastValidPosition) {
+            resolvedPosition = lastValidPosition;
+            hasResolvedPosition = true;
+        }
+
+        if (hasResolvedPosition && !resolvedPosition.ned.isCoordinatesValid() &&
+            resolvedPosition.lla.isCoordinatesValid() && llaRef.isInit) {
+            resolvedPosition.LLA2NED(&llaRef);
+        }
+
+        QString row_data;
+        row_data.append(QString("%1,%2,%3")
+                            .arg(i)
+                            .arg(epoch->usblSolution().carrier_counter)
+                            .arg(epoch->usblSolution().distance_m));
+
+        if (hasResolvedPosition) {
+            row_data.append(QString(",%1,%2,%3,%4")
+                                .arg(QString::number(resolvedPosition.lla.latitude, 'f', 8))
+                                .arg(QString::number(resolvedPosition.lla.longitude, 'f', 8))
+                                .arg(QString::number(resolvedPosition.ned.n, 'f', 3))
+                                .arg(QString::number(resolvedPosition.ned.e, 'f', 3)));
+        }
+        else {
+            row_data.append(",,,,");
+        }
+
+        row_data.append("\n");
+        logger_.dataExport(row_data);
+    }
+
+    logger_.endExportStream();
+
+    return true;
+}
+
 bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation)
 {
     QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');

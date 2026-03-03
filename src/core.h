@@ -132,6 +132,7 @@ public slots:
     void setUseGPS(bool state);
     bool exportComplexToCSV(QString filePath);
     bool exportUSBLToCSV(QString filePath);
+    bool exportUSBLGnssToCSV(QString filePath);
     bool exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation = 0);
     bool exportPlotAsXTF(QString filePath);
     void setPlotStartLevel(int level);

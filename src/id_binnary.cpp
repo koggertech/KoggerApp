@@ -1183,6 +1183,9 @@ void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address, uint8_t
     req.address = address;
     req.cmd_id = cmd_id;
     req.reply_distance_mm = reply_distance_mm;
+    req.function = (payload_bytes_to_write > 0)
+        ? USBLPingRequest::FunctionBitArray
+        : USBLPingRequest::FunctionDefault;
     req.payload_bit_length = static_cast<uint16_t>(payload_bytes_to_write * 8);
     ping_req.write<USBLPingRequest>(req);
     if (payload_bytes_to_write > 0) {

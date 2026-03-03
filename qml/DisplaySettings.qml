@@ -820,6 +820,12 @@ GridLayout {
                         Layout.fillWidth: true
                         onClicked: core.exportUSBLToCSV(exportPathText.text);
                     }
+
+                    CButton {
+                        text: qsTr("USBL+GNSS to CSV")
+                        Layout.fillWidth: true
+                        onClicked: core.exportUSBLGnssToCSV(exportPathText.text);
+                    }
                 }
 
             }

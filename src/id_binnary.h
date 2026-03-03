@@ -1191,6 +1191,15 @@ public:
         uint8_t cmd_id = 0;
         // 0: Pinger (no waiting for a response), >0: Interrogator (ranging)
         uint32_t reply_distance_mm = 20000;
+
+        enum Function : uint8_t {
+            FunctionDefault = 0,
+            FunctionBitArray = 1,
+            FunctionLLGeoAzimuth = 2
+        };
+
+        Function function = FunctionDefault;
+        // non-zero only if (function == FunctionBitArray)
         // Payload bytes count is ((payload_bit_length + 7) / 8)
         uint16_t payload_bit_length = 0;
     } __attribute__((packed));
