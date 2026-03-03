@@ -616,8 +616,8 @@ void DevDriver::setUsblCmdConfigRow(bool isResponseList, uint8_t cmdId, bool rec
     IDBinUsblControl::USBLCmdConfig cfg = {};
     cfg.cmd_id = cmdId;
     cfg.eventFilter = isResponseList
-        ? IDBinUsblControl::USBLCmdConfig::EventOnReceiveResponse
-        : IDBinUsblControl::USBLCmdConfig::EventOnReceiveRequest;
+        ? IDBinUsblControl::USBLCmdConfig::EventOnReceiveRequest
+        : IDBinUsblControl::USBLCmdConfig::EventOnReceiveResponse;
 
     cfg.cmdIdAction = IDBinUsblControl::USBLCmdConfig::SendBackCmdIdIncoming;
     cfg.cmd_id_replacement = 0;
