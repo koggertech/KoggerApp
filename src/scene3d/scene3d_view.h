@@ -503,6 +503,11 @@ private:
     float syncLoupeDepthTo_ = 0.0f;
     float syncLoupeCenterDepth_ = 0.0f;
     bool syncLoupeFlipY_ = false;
+
+    qreal pinchPanZoomWeight_ = 1.0;
+    qreal pinchTiltWeight_ = 0.0;
+    qreal pinchRotateWeight_ = 0.0;
+    QElapsedTimer pinchGestureTimer_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H
