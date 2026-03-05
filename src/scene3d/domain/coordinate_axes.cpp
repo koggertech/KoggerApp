@@ -153,14 +153,42 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
          << Er << Cr;
 
     const bool useLit = shadowEnabled_ && static_cast<bool>(litShaderProgram);
-    QVector<QVector3D> normals;
+    QVector<QVector3D> northNormals;
+    QVector<QVector3D> southNormals;
     EffectiveShadowParams shadow;
+    QVector3D compassLightDir(0.0f, 0.0f, 1.0f);
     if (useLit) {
-        normals = buildSmoothTriangleNormals(tris);
+        const QVector<QVector3D> baseNormals = buildSmoothTriangleNormals(tris);
+        const auto buildTransformedNormals = [](const QVector<QVector3D>& source, const QMatrix4x4& transform) {
+            QVector<QVector3D> out;
+            out.reserve(source.size());
+            for (const QVector3D& n : source) {
+                QVector3D rotated = transform.mapVector(n);
+                if (rotated.lengthSquared() > 1e-12f) {
+                    rotated.normalize();
+                } else {
+                    rotated = QVector3D(0.0f, 0.0f, 1.0f);
+                }
+                out.append(rotated);
+            }
+            return out;
+        };
+        const QMatrix4x4 northNormalTransform = view * compassModelNorth;
+        const QMatrix4x4 southNormalTransform = view * compassModelSouth;
+        northNormals = buildTransformedNormals(baseNormals, northNormalTransform);
+        southNormals = buildTransformedNormals(baseNormals, southNormalTransform);
         shadow = effectiveShadowParams();
+        compassLightDir = shadow.lightDir;
+        // Slightly tilt light for compass only to increase contrast on facets.
+        compassLightDir.setZ(compassLightDir.z() * 0.45f);
+        if (compassLightDir.lengthSquared() > 1e-12f) {
+            compassLightDir.normalize();
+        } else {
+            compassLightDir = shadow.lightDir;
+        }
     }
 
-    const auto drawBody = [&](const QMatrix4x4& mvp, const QColor& color) {
+    const auto drawBody = [&](const QMatrix4x4& mvp, const QColor& color, const QVector<QVector3D>& normals) {
         if (useLit && litShaderProgram && litShaderProgram->bind()) {
             const int posLoc = litShaderProgram->attributeLocation("position");
             const int normalLoc = litShaderProgram->attributeLocation("normal");
@@ -175,7 +203,7 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
                 litShaderProgram->setUniformValue(matrixLoc, mvp);
                 litShaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(color));
                 if (lightDirLoc >= 0) {
-                    litShaderProgram->setUniformValue(lightDirLoc, shadow.lightDir);
+                    litShaderProgram->setUniformValue(lightDirLoc, compassLightDir);
                 }
                 if (ambientLoc >= 0) {
                     litShaderProgram->setUniformValue(ambientLoc, shadow.ambient);
@@ -249,9 +277,9 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
 
     const QMatrix4x4 mvpNorth = projection * view * compassModelNorth;
     const QMatrix4x4 mvpSouth = projection * view * compassModelSouth;
-    drawBody(mvpNorth, QColor(235, 52, 52));
+    drawBody(mvpNorth, QColor(235, 52, 52), northNormals);
     drawRibs(mvpNorth, QColor(99, 22, 22));
-    drawBody(mvpSouth, QColor(47, 132, 227));
+    drawBody(mvpSouth, QColor(47, 132, 227), southNormals);
     drawRibs(mvpSouth, QColor(10, 40, 120));
 
     // labels
