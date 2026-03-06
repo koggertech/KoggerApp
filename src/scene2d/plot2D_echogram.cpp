@@ -175,6 +175,16 @@ int Plot2DEchogram::getCompensation() const
     return _compensation_id;
 }
 
+void Plot2DEchogram::setWrapEnabled(bool state)
+{
+    if (wrapEnabled_ == state) {
+        return;
+    }
+
+    wrapEnabled_ = state;
+    resetCash();
+}
+
 void Plot2DEchogram::updateColors()
 {
     float low = _levels.low;
@@ -259,12 +269,15 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
         to1 = -from;
     }
 
-    int wrap_start_pos = qAbs(cursor.getIndex(0) % width);
+    int wrap_start_pos = 0;
+    if (wrapEnabled_) {
+        wrap_start_pos = qAbs(cursor.getIndex(0) % width);
 
-    for (unsigned int i = 0; i < cursor.indexes.size(); i++) {
-        if (cursor.indexes[i] > 0) {
-            wrap_start_pos = qAbs((cursor.indexes[i] + (width - i)) % width);
-            break;
+        for (unsigned int i = 0; i < cursor.indexes.size(); i++) {
+            if (cursor.indexes[i] > 0) {
+                wrap_start_pos = qAbs((cursor.indexes[i] + (width - i)) % width);
+                break;
+            }
         }
     }
 

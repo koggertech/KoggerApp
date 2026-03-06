@@ -249,8 +249,6 @@ public:
     bool syncLoupeFlipY() const;
     int syncLoupeSize() const;
     int syncLoupeZoom() const;
-    bool syncLoupeUiAllowed() const;
-    bool shouldRenderSyncFrom2d() const;
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);

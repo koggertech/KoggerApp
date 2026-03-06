@@ -8,6 +8,7 @@ MiniPreviewPlot2D::MiniPreviewPlot2D()
     setHorizontal(true);
     setPlotEnabled(true);
     echogram_.setVisible(true);
+    echogram_.setWrapEnabled(false);
     bottomProcessing_.setVisible(true);
     bottomProcessing_.setDepthTextVisible(false);
     rangefinder_.setVisible(true);
@@ -76,38 +77,39 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
     cursor_.currentEpochIndx = -1;
     cursor_.lastEpochIndx = -1;
 
-    const int fallbackX = qBound(0, parentCanvasWidth / 2, parentCanvasWidth - 1);
-    int fallbackEpoch = parentCursor.getIndex(fallbackX);
-    if (dataset->validIndex(fallbackEpoch) < 0) {
-        fallbackEpoch = -1;
-    }
-
-    int lastValidEpoch = fallbackEpoch;
     int zeroEpochCount = 0;
     const int maxParentX = parentCanvasWidth - 1;
     const float stepX = static_cast<float>(sourceWidth) / static_cast<float>(previewWidth);
     float srcXFloat = static_cast<float>(sourceLeft) + stepX * 0.5f;
+    QVector<QPair<int, int>> noDataRanges;
+    int noDataStart = -1;
 
     cursor_.indexes.resize(previewWidth);
     for (int column = 0; column < previewWidth; ++column) {
-        const int sourceX = qBound(0, qRound(srcXFloat), maxParentX);
+        const int sourceX = qRound(srcXFloat);
         srcXFloat += stepX;
 
-        int epochIndex = parentCursor.getIndex(sourceX);
-        bool validEpoch = dataset->validIndex(epochIndex) >= 0;
-        if (!validEpoch) {
-            epochIndex = lastValidEpoch;
-            validEpoch = dataset->validIndex(epochIndex) >= 0;
-        }
-        else {
-            lastValidEpoch = epochIndex;
-        }
+        const bool sourceInBounds = sourceX >= 0 && sourceX <= maxParentX;
+        const int epochIndex = sourceInBounds ? parentCursor.getIndex(sourceX) : -1;
+        const bool validEpoch = sourceInBounds && dataset->validIndex(epochIndex) >= 0;
 
         if (!validEpoch) {
             ++zeroEpochCount;
+            cursor_.indexes[column] = -1;
+            if (noDataStart < 0) {
+                noDataStart = column;
+            }
         }
-
-        cursor_.indexes[column] = epochIndex;
+        else {
+            cursor_.indexes[column] = epochIndex;
+            if (noDataStart >= 0) {
+                noDataRanges.append(qMakePair(noDataStart, column));
+                noDataStart = -1;
+            }
+        }
+    }
+    if (noDataStart >= 0) {
+        noDataRanges.append(qMakePair(noDataStart, previewWidth));
     }
 
     cursor_.numZeroEpoch = zeroEpochCount;
@@ -117,6 +119,16 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
     const bool rendered = echogram_.draw(this, dataset);
     if (!rendered) {
         return false;
+    }
+
+    if (QPainter* canvasPainter = canvas_.painter(); canvasPainter != nullptr) {
+        for (const auto& range : noDataRanges) {
+            const int xFrom = range.first;
+            const int xTo = range.second;
+            if (xTo > xFrom) {
+                canvasPainter->fillRect(xFrom, 0, xTo - xFrom, previewHeight, Qt::black);
+            }
+        }
     }
 
     bottomProcessing_.draw(this, dataset);

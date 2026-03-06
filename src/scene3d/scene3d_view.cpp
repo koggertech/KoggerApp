@@ -1769,16 +1769,6 @@ bool GraphicsScene3dView::syncLoupeOverlayVisible() const
     return syncLoupeOverlayVisible_;
 }
 
-bool GraphicsScene3dView::syncLoupeUiAllowed() const
-{
-    return syncLoupeUiAllowed_;
-}
-
-bool GraphicsScene3dView::shouldRenderSyncFrom2d() const
-{
-    return syncLoupeUiAllowed_ && isVisible();
-}
-
 int GraphicsScene3dView::syncLoupeEpochIndex() const
 {
     return syncEpochIndex_;
