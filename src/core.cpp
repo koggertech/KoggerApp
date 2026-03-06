@@ -541,6 +541,11 @@ bool Core::closeLogFile()
         return false;
     }
 
+    if (datasetPtr_) {
+        // file -> connection: drop file channels/state before opening live stream links
+        datasetPtr_->resetDataset();
+    }
+
     emit deviceManagerWrapperPtr_->sendCloseFile();
     createLinkManagerConnections();
     openedfilePath_.clear();
