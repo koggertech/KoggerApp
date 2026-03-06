@@ -6,6 +6,7 @@ Button {
     property bool isKlfLogging: false
     property bool active: false
     property int borderWidth: 0
+    property real iconScale: 0.80
     property real klfTint: 1.0
 
     id: control
@@ -13,6 +14,8 @@ Button {
     padding: 0
 
     icon.color: theme.textColor
+    icon.width: theme.controlHeight * iconScale
+    icon.height: theme.controlHeight * iconScale
 
     property color baseBackColor: (control.active)
                                   ? theme.controlSolidBackColor
