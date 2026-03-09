@@ -195,12 +195,12 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
     int previewX = layoutX;
     if (hasPreview) {
         if (placeToRight) {
-            textBoxX = layoutX;
-            previewX = textBoxX + textBoxWidth + previewGap;
-        }
-        else {
             previewX = layoutX;
             textBoxX = previewX + previewSize + previewGap;
+        }
+        else {
+            textBoxX = layoutX;
+            previewX = textBoxX + textBoxWidth + previewGap;
         }
     }
 
