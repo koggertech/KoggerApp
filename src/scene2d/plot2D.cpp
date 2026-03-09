@@ -571,7 +571,8 @@ void Plot2D::setBottomTrackVisible(bool visible) {
 }
 
 void Plot2D::setBottomTrackTheme(int theme_id) {
-    Q_UNUSED(theme_id);
+    bottomProcessing_.setTheme(theme_id);
+    plotUpdate();
 }
 
 void Plot2D::setBottomTrackDepthTextVisible(bool visible)

@@ -25,6 +25,24 @@ WaterFall {
         echogramLevelsSlider.update()
     }
 
+    function updateBottomTrackPresentation() {
+        const showValue = bottomTrackValueVisible.checked
+        const showLine = bottomTrackGraphicsVisible.checked
+
+        plotBottomTrackDepthTextVisible(showValue)
+        plotBottomTrackTheme(showLine ? (bottomTrackThemeList.currentIndex + 1) : 0)
+        plotBottomTrackVisible(showValue || showLine)
+    }
+
+    function updateRangefinderPresentation() {
+        const showValue = rangefinderValueVisible.checked
+        const showLine = rangefinderGraphicsVisible.checked
+
+        plotRangefinderDepthTextVisible(showValue)
+        plotRangefinderTheme(showLine ? (rangefinderThemeList.currentIndex + 1) : 0)
+        plotRangefinderVisible(showValue || showLine)
+    }
+
     function closeSettings() {
         if (!plotCheckButton.checked) {
             return false
@@ -588,13 +606,9 @@ WaterFall {
 
                     RowLayout {
                         visible: instruments > 0
-                        CCheck {
-                            id: bottomTrackVisible
+                        CText {
                             Layout.fillWidth: true
-                            checked: true
                             text: qsTr("Bottom-Track")
-                            onCheckedChanged: plotBottomTrackVisible(checked)
-                            Component.onCompleted: plotBottomTrackVisible(checked)
                         }
 
                         CCheck {
@@ -602,19 +616,26 @@ WaterFall {
                             text: qsTr("Value")
                             checked: true
 
-                            onCheckedChanged: plotBottomTrackDepthTextVisible(checked)
-                            Component.onCompleted: plotBottomTrackDepthTextVisible(checked)
+                            onCheckedChanged: plot.updateBottomTrackPresentation()
+                            Component.onCompleted: plot.updateBottomTrackPresentation()
+                        }
+
+                        CCheck {
+                            id: bottomTrackGraphicsVisible
+                            text: qsTr("Line")
+                            checked: true
+
+                            onCheckedChanged: plot.updateBottomTrackPresentation()
+                            Component.onCompleted: plot.updateBottomTrackPresentation()
                         }
 
                         CCombo  {
                             id: bottomTrackThemeList
-                            //                        Layout.fillWidth: true
-                            //                        Layout.preferredWidth: 150
-                            model: [qsTr("Line1"), qsTr("Line2"), qsTr("Dot1"), qsTr("Dot2"), qsTr("DotLine")]
-                            currentIndex: 1
+                            model: [qsTr("Line"), qsTr("Points")]
+                            currentIndex: 0
 
-                            onCurrentIndexChanged: plotBottomTrackTheme(currentIndex)
-                            Component.onCompleted: plotBottomTrackTheme(currentIndex)
+                            onCurrentIndexChanged: plot.updateBottomTrackPresentation()
+                            Component.onCompleted: plot.updateBottomTrackPresentation()
 
                             Settings {
                                 category: "Plot2D_" + plot.indx
@@ -625,12 +646,9 @@ WaterFall {
                     }
 
                     RowLayout {
-                        CCheck {
-                            id: rangefinderVisible
+                        CText {
                             Layout.fillWidth: true
                             text: qsTr("Rangefinder")
-                            onCheckedChanged: plotRangefinderVisible(checked)
-                            Component.onCompleted: plotRangefinderVisible(checked)
                         }
 
                         CCheck {
@@ -638,17 +656,26 @@ WaterFall {
                             text: qsTr("Value")
                             checked: true
 
-                            onCheckedChanged: plotRangefinderDepthTextVisible(checked)
-                            Component.onCompleted: plotRangefinderDepthTextVisible(checked)
+                            onCheckedChanged: plot.updateRangefinderPresentation()
+                            Component.onCompleted: plot.updateRangefinderPresentation()
+                        }
+
+                        CCheck {
+                            id: rangefinderGraphicsVisible
+                            text: qsTr("Line")
+                            checked: false
+
+                            onCheckedChanged: plot.updateRangefinderPresentation()
+                            Component.onCompleted: plot.updateRangefinderPresentation()
                         }
 
                         CCombo  {
                             id: rangefinderThemeList
-                            model: [qsTr("Text"), qsTr("Line"), qsTr("Dot")]
-                            currentIndex: 1
+                            model: [qsTr("Line"), qsTr("Points")]
+                            currentIndex: 0
 
-                            onCurrentIndexChanged: plotRangefinderTheme(currentIndex)
-                            Component.onCompleted: plotRangefinderTheme(currentIndex)
+                            onCurrentIndexChanged: plot.updateRangefinderPresentation()
+                            Component.onCompleted: plot.updateRangefinderPresentation()
 
                             Settings {
                                 category: "Plot2D_" + plot.indx
@@ -1088,10 +1115,12 @@ WaterFall {
                         category: "Plot2D_" + plot.indx
 
                         property alias echogramVisible: echogramVisible.checked
-                        property alias rangefinderVisible: rangefinderVisible.checked
+                        property alias rangefinderVisible: rangefinderGraphicsVisible.checked
                         property alias rangefinderValueVisible: rangefinderValueVisible.checked
-                        property alias postProcVisible: bottomTrackVisible.checked
+                        property alias postProcVisible: bottomTrackGraphicsVisible.checked
                         property alias bottomTrackValueVisible: bottomTrackValueVisible.checked
+                        property alias rangefinderGraphicsVisible: rangefinderGraphicsVisible.checked
+                        property alias bottomTrackGraphicsVisible: bottomTrackGraphicsVisible.checked
                         property alias ahrsVisible: ahrsVisible.checked
                         property alias temperatureVisible: temperatureVisible.checked
                         property alias gridVisible: gridVisible.checked
