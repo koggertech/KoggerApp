@@ -1856,9 +1856,7 @@ void GraphicsScene3dView::setIsometricView()
 
 void GraphicsScene3dView::setCancelZoomView()
 {
-    m_verticalScale = 1.0f;
-
-    QQuickFramebufferObject::update();
+    setVerticalScale(1.0f);
 }
 
 void GraphicsScene3dView::setMapView() {
@@ -2006,6 +2004,10 @@ void GraphicsScene3dView::setVerticalScale(float scale)
         m_verticalScale = 10.0f;
     else
         m_verticalScale = scale;
+
+    if (auto* impl = dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(surfaceView_->m_renderImpl); impl) {
+        impl->setVerticalScale(m_verticalScale);
+    }
 
     QQuickFramebufferObject::update();
 }

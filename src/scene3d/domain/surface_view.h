@@ -32,6 +32,7 @@ public:
                             const QMatrix4x4& mvp,
                             const QMap<QString,
                             std::shared_ptr<QOpenGLShaderProgram>>& shaderProgramMap) const override final;
+        void setVerticalScale(float scale);
         void setShadowSettings(bool enabled,
                                const QVector3D& lightDir,
                                float ambient,
@@ -67,6 +68,7 @@ public:
         QVector<QVector3D> lastRightLine_;
         float traceWidth_;
         bool  traceVisible_;
+        float verticalScale_;
     };
 
     explicit SurfaceView(QObject* parent = nullptr);
