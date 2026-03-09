@@ -1,5 +1,7 @@
 #include "bottom_track_processor.h"
 
+#include <algorithm>
+#include <cmath>
 #include <QDebug>
 #include "data_processor.h"
 #include "dataset.h"
@@ -70,36 +72,48 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
     float gain_slope = btP.gainSlope;
     float threshold = btP.threshold;
 
-    int istart = 4;
-    int init_win = 6;
-    int scale_win = 20;
+    int istart_ref = 4;
+    int init_win_ref = 6;
+    int scale_win_ref = 20;
 
     int16_t c1 = -6, c2 = 6, c3 = 4, c4 = 2, c5 = 0;
     float s2 = 1.04f, s3 = 1.06f, s4 = 1.10f, s5 = 1.15f;
-    float t1 = 1.07;
+    float t1 = 1.07f;
 
     if(btP.preset == BottomTrackPreset::BottomTrackOneBeamNarrow) {
-        istart = 4;
-        init_win = 6;
-        scale_win = 35;
+        istart_ref = 4;
+        init_win_ref = 6;
+        scale_win_ref = 35;
 
         c1 = -3, c2 = 8, c3 = 5, c4 = -1, c5 = -1;
         s2 = 1.015f, s3 = 1.035f, s4 = 1.08f, s5 = 1.12f;
-        t1 = 1.04;
+        t1 = 1.04f;
     }
 
     if(btP.preset == BottomTrackPreset::BottomTrackSideScan) {
-        istart = 4;
-        init_win = 6;
-        scale_win = 12;
+        istart_ref = 4;
+        init_win_ref = 6;
+        scale_win_ref = 12;
 
         c1 = -3, c2 = -3, c3 = 4, c4 = 2, c5 = 1;
         s2 = 1.1f, s3 = 1.2f, s4 = 1.3f, s5 = 1.4f;
-        t1 = 1.2;
+        t1 = 1.2f;
     }
 
     const int gain_slope_inv = 1000/(gain_slope);
     const int threshold_int = 10*gain_slope_inv*1000*threshold;
+    constexpr float kBottomTrackRefResolution = 0.01f; // 10 mm
+
+    int istart = istart_ref;
+    int init_win = init_win_ref;
+    int scale_win = scale_win_ref;
+    float init_win_scaled = static_cast<float>(init_win_ref);
+    float index_gain_scale = 1.0f;
+    int index_gain_scale_q12 = 1 << 12;
+    int init_scale_term_q12 = 0;
+    int scale_win_q12 = 0;
+    bool coeffs_initialized = false;
+    float active_resolution = NAN;
 
     struct EpochConstrants
     {
@@ -172,6 +186,44 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
             continue;
         }
 
+        const float resolution = chart->resolution;
+        if (!(resolution > 0.0f)) {
+            continue;
+        }
+
+        const bool resolution_changed = !coeffs_initialized || std::fabs(resolution - active_resolution) > 1e-6f;
+        if (resolution_changed) {
+            const float samples_scale = kBottomTrackRefResolution / resolution;
+
+            istart = std::max(0, static_cast<int>(std::lround(static_cast<float>(istart_ref) * samples_scale)));
+            init_win_scaled = static_cast<float>(init_win_ref) * samples_scale;
+            init_win = std::max(1, static_cast<int>(std::lround(init_win_scaled)));
+            index_gain_scale = resolution / kBottomTrackRefResolution;
+            scale_win = scale_win_ref;
+            index_gain_scale_q12 = std::max(1, static_cast<int>(std::lround(index_gain_scale * static_cast<float>(1 << 12))));
+            scale_win_q12 = scale_win << 12;
+            init_scale_term_q12 = std::max(1, static_cast<int>(std::lround(init_win_scaled * static_cast<float>(scale_win_q12))));
+
+            if (coeffs_initialized) {
+                summ.clear();
+                for (auto& col : cash) {
+                    col.clear();
+                }
+                for (auto& c : constr) {
+                    c.min = NAN;
+                    c.max = NAN;
+                }
+                epoch_counter = 0;
+            }
+
+            active_resolution = resolution;
+            coeffs_initialized = true;
+        }
+
+        if (data_size <= (istart + init_win)) {
+            continue;
+        }
+
         epoch_counter++;
 
 
@@ -206,7 +258,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
         for(int idata = istart; (idata + avrg_range) < data_size; idata++) {
             data_acc -= *data_from; data_from++;
             data_acc += *data_to; data_to++;
-            while((idata+(init_win*scale_win)) >= ((avrg_range = data_to - data_from)*scale_win)) {
+            while((((idata << 12) + init_scale_term_q12) >= ((avrg_range = data_to - data_from) * scale_win_q12))) {
                 data_acc += *data_to; data_to++;
             }
             cash_data[idata] = 10*data_acc / (avrg_range);
@@ -214,7 +266,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
 
         const int data_conv_size = data_size - avrg_range;
         for(int idata = istart; ; idata++) {
-            const float fidata = idata + init_win+1;
+            const float fidata = idata + init_win_scaled + 1.0f;
             int di1 =  idata;
             int di2 =  fidata*s2;
             int di3 =  fidata*s3;
@@ -224,7 +276,8 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
             if(di5 >= data_conv_size) { break; }
 
             int calc = (c1*cash_data[di1] + c2*cash_data[di2] + c3*cash_data[di3] + c4*cash_data[di4] + c5*cash_data[di5]);
-            calc = calc*gain_slope_inv + calc*(idata);
+            const int idata_ref = std::max(0, (idata * index_gain_scale_q12 + (1 << 11)) >> 12);
+            calc = calc*gain_slope_inv + calc*idata_ref;
 
             cash_data[idata] = calc;
         }
@@ -271,7 +324,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
         }
 
         if(max_ind > 0) {
-            float distance = ((max_ind+init_win+1)*t1)*chart->resolution;
+            float distance = ((max_ind + init_win_scaled + 1.0f) * t1) * chart->resolution;
 
             if(epoch_counter >= btP.windowSize) {
                 if(btP.verticalGap > 0) {
@@ -299,7 +352,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
 
 
                     if(max_gap_ind > 0) {
-                        distance = ((max_gap_ind+init_win+1)*t1)*chart->resolution;
+                        distance = ((max_gap_ind + init_win_scaled + 1.0f) * t1) * chart->resolution;
                     }
                 }
 
