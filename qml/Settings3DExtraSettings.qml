@@ -898,7 +898,7 @@ MenuFrame {
                         from: 1
                         to: 3
                         stepSize: 1
-                        value: 1
+                        value: 2
 
                         onValueChanged: {
                             Scene3dToolBarController.onCompassPosChanged(value)
