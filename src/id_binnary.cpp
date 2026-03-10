@@ -674,7 +674,7 @@ void IDBinChartSetup::setV0(uint16_t count, uint16_t resolution, uint16_t offset
 Resp IDBinDSPSetup::parsePayload(FrameParser &proto) {
     if (proto.ver() == v0) {
         m_horSmoothFactor = proto.read<U1>();
-        qInfo("read smooth %u", m_horSmoothFactor);
+        //qInfo("read smooth %u", m_horSmoothFactor);
     }
     else
         return respErrorVersion;
