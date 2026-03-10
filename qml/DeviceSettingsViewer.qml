@@ -79,6 +79,112 @@ MenuScroll {
             }
         }
 
+        MenuFrame {
+            id: recentOpenedFrame
+            visible: devConnection.recentOpenedFiles.length > 0
+
+            ColumnLayout {
+                width: menuWidth
+                spacing: 4
+
+                MenuRow {
+                    CText {
+                        text: qsTr("Recently opened:")
+                    }
+                }
+
+                MenuRow {
+                    visible: devConnection.recentOpenedFiles.length > 0
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: theme.controlHeight
+                        property string filePath: devConnection.recentOpenedFiles.length > 0 ? devConnection.recentOpenedFiles[0] : ""
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.width: 0
+                        }
+
+                        CText {
+                            anchors.fill: parent
+                            anchors.leftMargin: 6
+                            anchors.rightMargin: 6
+                            text: parent.filePath
+                            horizontalAlignment: Text.AlignRight
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideLeft
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: devConnection.openRecentFile(parent.filePath)
+                        }
+                    }
+                }
+
+                MenuRow {
+                    visible: devConnection.recentOpenedFiles.length > 1
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: theme.controlHeight
+                        property string filePath: devConnection.recentOpenedFiles.length > 1 ? devConnection.recentOpenedFiles[1] : ""
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.width: 0
+                        }
+
+                        CText {
+                            anchors.fill: parent
+                            anchors.leftMargin: 6
+                            anchors.rightMargin: 6
+                            text: parent.filePath
+                            horizontalAlignment: Text.AlignRight
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideLeft
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: devConnection.openRecentFile(parent.filePath)
+                        }
+                    }
+                }
+
+                MenuRow {
+                    visible: devConnection.recentOpenedFiles.length > 2
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: theme.controlHeight
+                        property string filePath: devConnection.recentOpenedFiles.length > 2 ? devConnection.recentOpenedFiles[2] : ""
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.width: 0
+                        }
+
+                        CText {
+                            anchors.fill: parent
+                            anchors.leftMargin: 6
+                            anchors.rightMargin: 6
+                            text: parent.filePath
+                            horizontalAlignment: Text.AlignRight
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideLeft
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: devConnection.openRecentFile(parent.filePath)
+                        }
+                    }
+                }
+            }
+        }
+
 //        DevAddrBox {
 //            dev: devConnection.dev
 //            Layout.fillWidth: true

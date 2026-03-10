@@ -53,6 +53,17 @@ ColumnLayout {
         recentOpenedFiles = updated
     }
 
+    function openRecentFile(path) {
+        var localPath = toLocalPath(path)
+        if (!localPath.length) {
+            return
+        }
+
+        pathText.text = localPath
+        core.openLogFile(localPath, false, false)
+        pushRecentOpenedFile(localPath)
+    }
+
     function importSettingsToAllDevices(path) {
         if (!path || !path.length) {
             return
@@ -1100,120 +1111,6 @@ ColumnLayout {
         }
     }
 
-    MenuRow {
-        visible: connectionViewer.recentOpenedFiles.length > 0
-
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 4
-
-            CText {
-                text: qsTr("Recently opened:")
-            }
-
-            Item {
-                id: recentFileItem1
-                Layout.fillWidth: true
-                Layout.preferredHeight: theme.controlHeight
-                visible: connectionViewer.recentOpenedFiles.length > 0
-                property string filePath: connectionViewer.recentOpenedFiles.length > 0 ? connectionViewer.recentOpenedFiles[0] : ""
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: "transparent"
-                    border.width: 0
-                }
-
-                CText {
-                    anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
-                    text: recentFileItem1.filePath
-                    horizontalAlignment: Text.AlignRight
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideLeft
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        var clickedPath = recentFileItem1.filePath
-                        pathText.text = clickedPath
-                        core.openLogFile(clickedPath, false, false)
-                        connectionViewer.pushRecentOpenedFile(clickedPath)
-                    }
-                }
-            }
-
-            Item {
-                id: recentFileItem2
-                Layout.fillWidth: true
-                Layout.preferredHeight: theme.controlHeight
-                visible: connectionViewer.recentOpenedFiles.length > 1
-                property string filePath: connectionViewer.recentOpenedFiles.length > 1 ? connectionViewer.recentOpenedFiles[1] : ""
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: "transparent"
-                    border.width: 0
-                }
-
-                CText {
-                    anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
-                    text: recentFileItem2.filePath
-                    horizontalAlignment: Text.AlignRight
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideLeft
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        var clickedPath = recentFileItem2.filePath
-                        pathText.text = clickedPath
-                        core.openLogFile(clickedPath, false, false)
-                        connectionViewer.pushRecentOpenedFile(clickedPath)
-                    }
-                }
-            }
-
-            Item {
-                id: recentFileItem3
-                Layout.fillWidth: true
-                Layout.preferredHeight: theme.controlHeight
-                visible: connectionViewer.recentOpenedFiles.length > 2
-                property string filePath: connectionViewer.recentOpenedFiles.length > 2 ? connectionViewer.recentOpenedFiles[2] : ""
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: "transparent"
-                    border.width: 0
-                }
-
-                CText {
-                    anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
-                    text: recentFileItem3.filePath
-                    horizontalAlignment: Text.AlignRight
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideLeft
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        var clickedPath = recentFileItem3.filePath
-                        pathText.text = clickedPath
-                        core.openLogFile(clickedPath, false, false)
-                        connectionViewer.pushRecentOpenedFile(clickedPath)
-                    }
-                }
-            }
-        }
-    }
 
     MenuRow {
         visible: devList.length > 0
