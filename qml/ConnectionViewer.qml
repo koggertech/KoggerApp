@@ -12,10 +12,45 @@ ColumnLayout {
     property string filePath: pathText.text
     property var lastLogFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     property var lastImportTrackFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property var recentOpenedFiles: []
 
     Settings {
         property alias logFolder: connectionViewer.lastLogFolder
         property alias importTrackFolder: connectionViewer.lastImportTrackFolder
+        property alias recentOpenedFiles: connectionViewer.recentOpenedFiles
+    }
+
+    function toLocalPath(path) {
+        if (!path || !path.length) {
+            return ""
+        }
+
+        var localPath = path.toString()
+        if (localPath.indexOf("file:///") === 0) {
+            localPath = localPath.replace("file:///", Qt.platform.os === "windows" ? "" : "/")
+        } else if (localPath.indexOf("file://") === 0) {
+            localPath = localPath.replace("file://", "")
+        }
+        return localPath
+    }
+
+    function pushRecentOpenedFile(path) {
+        var localPath = toLocalPath(path)
+        if (!localPath.length) {
+            return
+        }
+
+        var updated = [localPath]
+        for (var i = 0; i < recentOpenedFiles.length; ++i) {
+            var item = recentOpenedFiles[i]
+            if (item && item !== localPath) {
+                updated.push(item)
+            }
+            if (updated.length >= 3) {
+                break
+            }
+        }
+        recentOpenedFiles = updated
     }
 
     function importSettingsToAllDevices(path) {
@@ -961,6 +996,7 @@ ColumnLayout {
 
             Keys.onPressed: function(event) {
                 if (event.key === 16777220 || event.key === Qt.Key_Enter) {
+                    connectionViewer.pushRecentOpenedFile(pathText.text)
                     core.openLogFile(pathText.text, false, false);
                 }
             }
@@ -1005,6 +1041,7 @@ ColumnLayout {
 
                     var name_parts = fileStr.split('.')
 
+                    connectionViewer.pushRecentOpenedFile(pathText.text)
                     core.openLogFile(pathText.text, false, false)
                 }
                 onRejected: {
@@ -1042,6 +1079,7 @@ ColumnLayout {
                     var name_parts = appendFileDialog.selectedFile.toString().split('.')
 
                     //deviceManagerWrapper.sendOpenFile(pathText.text, true)
+                    connectionViewer.pushRecentOpenedFile(pathText.text)
                     core.openLogFile(pathText.text, true, false);
                 }
                 onRejected: {
@@ -1058,6 +1096,121 @@ ColumnLayout {
 
             onClicked: {
                 core.closeLogFile();
+            }
+        }
+    }
+
+    MenuRow {
+        visible: connectionViewer.recentOpenedFiles.length > 0
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 4
+
+            CText {
+                text: qsTr("Recently opened:")
+            }
+
+            Item {
+                id: recentFileItem1
+                Layout.fillWidth: true
+                Layout.preferredHeight: theme.controlHeight
+                visible: connectionViewer.recentOpenedFiles.length > 0
+                property string filePath: connectionViewer.recentOpenedFiles[0]
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.width: 0
+                }
+
+                CText {
+                    anchors.fill: parent
+                    anchors.leftMargin: 6
+                    anchors.rightMargin: 6
+                    text: recentFileItem1.filePath
+                    horizontalAlignment: Text.AlignRight
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideLeft
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        var clickedPath = recentFileItem1.filePath
+                        pathText.text = clickedPath
+                        core.openLogFile(clickedPath, false, false)
+                        connectionViewer.pushRecentOpenedFile(clickedPath)
+                    }
+                }
+            }
+
+            Item {
+                id: recentFileItem2
+                Layout.fillWidth: true
+                Layout.preferredHeight: theme.controlHeight
+                visible: connectionViewer.recentOpenedFiles.length > 1
+                property string filePath: connectionViewer.recentOpenedFiles[1]
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.width: 0
+                }
+
+                CText {
+                    anchors.fill: parent
+                    anchors.leftMargin: 6
+                    anchors.rightMargin: 6
+                    text: recentFileItem2.filePath
+                    horizontalAlignment: Text.AlignRight
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideLeft
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        var clickedPath = recentFileItem2.filePath
+                        pathText.text = clickedPath
+                        core.openLogFile(clickedPath, false, false)
+                        connectionViewer.pushRecentOpenedFile(clickedPath)
+                    }
+                }
+            }
+
+            Item {
+                id: recentFileItem3
+                Layout.fillWidth: true
+                Layout.preferredHeight: theme.controlHeight
+                visible: connectionViewer.recentOpenedFiles.length > 2
+                property string filePath: connectionViewer.recentOpenedFiles[2]
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.width: 0
+                }
+
+                CText {
+                    anchors.fill: parent
+                    anchors.leftMargin: 6
+                    anchors.rightMargin: 6
+                    text: recentFileItem3.filePath
+                    horizontalAlignment: Text.AlignRight
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideLeft
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        var clickedPath = recentFileItem3.filePath
+                        pathText.text = clickedPath
+                        core.openLogFile(clickedPath, false, false)
+                        connectionViewer.pushRecentOpenedFile(clickedPath)
+                    }
+                }
             }
         }
     }
