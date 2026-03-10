@@ -1116,7 +1116,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 Layout.preferredHeight: theme.controlHeight
                 visible: connectionViewer.recentOpenedFiles.length > 0
-                property string filePath: connectionViewer.recentOpenedFiles[0]
+                property string filePath: connectionViewer.recentOpenedFiles.length > 0 ? connectionViewer.recentOpenedFiles[0] : ""
 
                 Rectangle {
                     anchors.fill: parent
@@ -1150,7 +1150,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 Layout.preferredHeight: theme.controlHeight
                 visible: connectionViewer.recentOpenedFiles.length > 1
-                property string filePath: connectionViewer.recentOpenedFiles[1]
+                property string filePath: connectionViewer.recentOpenedFiles.length > 1 ? connectionViewer.recentOpenedFiles[1] : ""
 
                 Rectangle {
                     anchors.fill: parent
@@ -1184,7 +1184,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 Layout.preferredHeight: theme.controlHeight
                 visible: connectionViewer.recentOpenedFiles.length > 2
-                property string filePath: connectionViewer.recentOpenedFiles[2]
+                property string filePath: connectionViewer.recentOpenedFiles.length > 2 ? connectionViewer.recentOpenedFiles[2] : ""
 
                 Rectangle {
                     anchors.fill: parent
