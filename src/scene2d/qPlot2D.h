@@ -44,6 +44,16 @@ public:
     Q_INVOKABLE float cursorFrom() const { return Plot2D::cursor_.distance.from; }
     Q_INVOKABLE float cursorTo() const { return Plot2D::cursor_.distance.to; }
     Q_INVOKABLE void setCursorFromTo(float from, float to) { cursor_.distance.mode = AutoRangeNone; Plot2D::cursor_.distance.from = from; Plot2D::cursor_.distance.to = to; }
+    Q_INVOKABLE int getAimEpochIndex() const { return cursor_.selectEpochIndx; }
+    Q_INVOKABLE void setAimEpochIndex(int epochIndx) {
+        if (!datasetPtr_ || datasetPtr_->size() <= 0 || epochIndx < 0) {
+            cursor_.selectEpochIndx = -1;
+            update();
+            return;
+        }
+        cursor_.selectEpochIndx = qBound(0, epochIndx, datasetPtr_->size() - 1);
+        update();
+    }
     Q_INVOKABLE void setTimelinePositionByEpochCentered(int epochIndx) {
         if (!datasetPtr_ || datasetPtr_->size() <= 0) {
             return;
@@ -192,8 +202,13 @@ public slots:
     Q_INVOKABLE float getLowEchogramLevel() const;
     Q_INVOKABLE float getHighEchogramLevel() const;
     Q_INVOKABLE int getThemeId() const;
+    Q_INVOKABLE bool getBottomTrackVisible() const { return Plot2D::getBottomTrackVisible(); }
+    Q_INVOKABLE int getBottomTrackThemeId() const;
+    Q_INVOKABLE bool getRangefinderVisible() const { return Plot2D::getRangefinderVisible(); }
+    Q_INVOKABLE int getRangefinderThemeId() const;
     Q_INVOKABLE int getEchogramCompensation() const { return Plot2D::getEchogramCompensation(); }
     Q_INVOKABLE float getLoupeDepthForEpoch(int epochIndx) const;
+    Q_INVOKABLE int getPreferredLoupeEpochIndex(int preferredEpochIndx = -1) const;
     void doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz, bool manual);
     void refreshDistParams(int preset, int windowSize, float verticalGap, float rangeMin, float rangeMax, float gainSlope, float threshold, float offsetX, float offsetY, float offsetZ);
 

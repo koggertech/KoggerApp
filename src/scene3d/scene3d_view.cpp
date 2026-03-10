@@ -1537,12 +1537,24 @@ void GraphicsScene3dView::setSyncLoupeSize(int val)
 
 void GraphicsScene3dView::setSyncLoupeZoom(int val)
 {
-    const int bounded = qBound(1, val, 3);
+    const int bounded = qBound(0, val, 300);
     if (syncLoupeZoom_ == bounded) {
         return;
     }
 
     syncLoupeZoom_ = bounded;
+    refreshSyncLoupePreview();
+    emit syncLoupeStateChanged();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setSyncLoupeZoomAdjusting(bool adjusting)
+{
+    if (syncLoupeZoomAdjusting_ == adjusting) {
+        return;
+    }
+
+    syncLoupeZoomAdjusting_ = adjusting;
     refreshSyncLoupePreview();
     emit syncLoupeStateChanged();
     QQuickFramebufferObject::update();
@@ -1556,7 +1568,7 @@ void GraphicsScene3dView::setSyncEpochIndex(int epochIndex)
 
     syncEpochIndex_ = epochIndex;
 
-    if (!syncLoupeUiAllowed_) {
+    if (!syncLoupeUiAllowed_ && !syncLoupeZoomAdjusting_) {
         return;
     }
 
@@ -1612,7 +1624,8 @@ void GraphicsScene3dView::refreshSyncLoupePreview()
     float centerDepth = 0.0f;
     bool flipY = false;
 
-    if (syncLoupeVisible_ && syncLoupeUiAllowed_ && datasetPtr_ && syncEpochIndex_ >= 0) {
+    const bool loupeUiEffective = syncLoupeUiAllowed_ || syncLoupeZoomAdjusting_;
+    if (syncLoupeVisible_ && loupeUiEffective && datasetPtr_ && syncEpochIndex_ >= 0) {
         const int datasetSize = datasetPtr_->size();
         if (syncEpochIndex_ < datasetSize) {
             if (auto* epoch = datasetPtr_->fromIndex(syncEpochIndex_); epoch) {
@@ -1802,6 +1815,11 @@ int GraphicsScene3dView::syncLoupeSize() const
 int GraphicsScene3dView::syncLoupeZoom() const
 {
     return syncLoupeZoom_;
+}
+
+bool GraphicsScene3dView::syncLoupeZoomAdjusting() const
+{
+    return syncLoupeZoomAdjusting_;
 }
 
 void GraphicsScene3dView::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)

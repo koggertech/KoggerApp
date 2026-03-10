@@ -49,6 +49,7 @@ public:
     Q_INVOKABLE void onSyncLoupeVisibleChanged(bool state);
     Q_INVOKABLE void onSyncLoupeSizeChanged(int size);
     Q_INVOKABLE void onSyncLoupeZoomChanged(int zoom);
+    Q_INVOKABLE void onSyncLoupeZoomAdjustingChanged(bool adjusting);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
@@ -95,6 +96,7 @@ private:
     bool syncLoupeVisible_;
     int syncLoupeSize_;
     int syncLoupeZoom_;
+    bool syncLoupeZoomAdjusting_;
     bool suppressForceSingleZoomUiCallback_;
 };
 

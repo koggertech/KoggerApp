@@ -794,12 +794,6 @@ GridLayout {
                         id: exportFileDialog
                         title: qsTr("Select folder for export")
 
-                        currentFolder: exportPathRow.exportFolder
-
-                        onCurrentFolderChanged: {
-                            exportPathRow.exportFolder = currentFolder
-                        }
-
                         onAccepted: {
                             exportPathRow.exportFolder = exportFileDialog.currentFolder
                             exportPathText.text = selectedFolder.toString()

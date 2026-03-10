@@ -848,10 +848,10 @@ ApplicationWindow  {
 
                 Item {
                     id: syncLoupeOverlay
+                    property int previewEpochIndex: waterViewFirst.getPreferredLoupeEpochIndex(renderer.syncLoupeEpochIndex)
                     visible: renderer.visible
                              && menuBar.is3DVisible
-                             && !menuBar.is2DVisible
-                             && renderer.syncLoupeOverlayVisible
+                             && (renderer.syncLoupeOverlayVisible || (renderer.syncLoupeZoomAdjusting && previewEpochIndex >= 0))
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
                     anchors.rightMargin: Math.round(12 * theme.resCoeff)
@@ -868,12 +868,13 @@ ApplicationWindow  {
                     height: side
 
                     function refreshLoupePlot() {
-                        if (!visible || renderer.syncLoupeEpochIndex < 0) {
+                        const previewEpoch = previewEpochIndex
+                        if (!visible || previewEpoch < 0) {
                             return
                         }
 
-                        const zoomMultiplier = renderer.syncLoupeZoom === 2 ? 1.5 : (renderer.syncLoupeZoom === 3 ? 2.25 : 1.0)
-                        const previewSourceBaseSize = Math.max(8, Math.floor(syncLoupeOverlay.side / 4))
+                        const zoomMultiplier = 1.0 + Math.max(0, Math.min(renderer.syncLoupeZoom, 300)) * 0.01
+                        const previewSourceBaseSize = Math.max(8, Math.floor(syncLoupeOverlay.side))
                         const previewSourceSize = Math.max(4, Math.floor(previewSourceBaseSize / zoomMultiplier))
                         const ch1Name = waterViewFirst.plotDatasetChannelName()
                         const ch2Name = waterViewFirst.plotDatasetChannel2Name()
@@ -901,20 +902,24 @@ ApplicationWindow  {
                         const has2DRange = isFinite(from2D) && isFinite(to2D) && Math.abs(to2D - from2D) > 0.0001
                         const cursorFrom = has2DRange ? from2D : renderer.syncLoupeDepthFrom
                         const cursorTo = has2DRange ? to2D : renderer.syncLoupeDepthTo
-                        const centerDepth = waterViewFirst.getLoupeDepthForEpoch(renderer.syncLoupeEpochIndex)
+                        const centerDepth = waterViewFirst.getLoupeDepthForEpoch(previewEpoch)
 
                         syncLoupePlot3D.horizontal = waterViewFirst.horizontal
                         syncLoupePlot3D.plotDatasetChannelFromStrings(ch1Name, ch2Name)
                         syncLoupePlot3D.plotEchogramTheme(waterViewFirst.getThemeId())
                         syncLoupePlot3D.plotEchogramSetLevels(waterViewFirst.getLowEchogramLevel(), waterViewFirst.getHighEchogramLevel())
                         syncLoupePlot3D.plotEchogramCompensation(waterViewFirst.getEchogramCompensation())
+                        syncLoupePlot3D.plotBottomTrackVisible(waterViewFirst.getBottomTrackVisible())
+                        syncLoupePlot3D.plotBottomTrackTheme(waterViewFirst.getBottomTrackThemeId())
+                        syncLoupePlot3D.plotRangefinderVisible(waterViewFirst.getRangefinderVisible())
+                        syncLoupePlot3D.plotRangefinderTheme(waterViewFirst.getRangefinderThemeId())
 
                         syncLoupePlot3D.setCursorFromTo(cursorFrom, cursorTo)
-                        syncLoupePlot3D.setTimelinePositionByEpochCentered(renderer.syncLoupeEpochIndex)
+                        syncLoupePlot3D.setTimelinePositionByEpochCentered(previewEpoch)
                         syncLoupePlot3D.setZoomPreviewSourceSize(previewSourceSize)
                         syncLoupePlot3D.setZoomPreviewReferenceDepthPixels(sourceDepthReferencePx)
                         syncLoupePlot3D.setZoomPreviewFlipY(renderer.syncLoupeFlipY)
-                        syncLoupePlot3D.setZoomPreviewSourceByEpochDepth(renderer.syncLoupeEpochIndex, centerDepth)
+                        syncLoupePlot3D.setZoomPreviewSourceByEpochDepth(previewEpoch, centerDepth)
                         syncLoupePlot3D.update()
                     }
 
@@ -967,8 +972,6 @@ ApplicationWindow  {
                             Component.onCompleted: {
                                 core.registerSyncLoupePlot(syncLoupePlot3D)
                                 setZoomPreviewMode(true)
-                                plotBottomTrackVisible(false)
-                                plotRangefinderVisible(false)
                                 plotAttitudeVisible(false)
                                 plotTemperatureVisible(false)
                                 plotDopplerBeamVisible(false, 0)
@@ -1976,7 +1979,7 @@ ApplicationWindow  {
 
     function handlePlotCursorChanged(indx, from, to) {
         if (!menuBar.syncPlots) {
-            if (renderer.syncLoupeOverlayVisible) {
+            if (syncLoupeOverlay.visible) {
                 syncLoupeOverlay.refreshLoupePlot()
             }
             return;
@@ -1991,7 +1994,7 @@ ApplicationWindow  {
             waterViewFirst.update()
         }
 
-        if (renderer.syncLoupeOverlayVisible) {
+        if (syncLoupeOverlay.visible) {
             syncLoupeOverlay.refreshLoupePlot()
         }
     }
@@ -2064,4 +2067,3 @@ ApplicationWindow  {
         }
     }
 }
-

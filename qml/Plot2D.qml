@@ -14,6 +14,9 @@ WaterFall {
     property int instruments: instrumentsGradeList.currentIndex
     property bool settingsOpen: plotCheckButton.checked
     property bool hasTransientUi: menuBlock.visible || contactDialog.visible
+    property bool loupeZoomAdjusting: false
+    property bool loupeZoomWasVisibleBeforeAdjust: false
+    property int loupeZoomSavedAimEpoch: -1
 
     horizontal: horisontalVertical.checked
 
@@ -41,6 +44,53 @@ WaterFall {
         plotRangefinderDepthTextVisible(showValue)
         plotRangefinderTheme(showLine ? (rangefinderThemeList.currentIndex + 1) : 0)
         plotRangefinderVisible(showValue || showLine)
+    }
+
+    function beginLoupeZoomPreview() {
+        if (loupeZoomAdjusting) {
+            return
+        }
+
+        loupeZoomAdjusting = true
+        loupeZoomWasVisibleBeforeAdjust = loupeVisible.checked
+        loupeZoomSavedAimEpoch = getAimEpochIndex()
+
+        if (!loupeVisible.checked) {
+            loupeVisible.checked = true
+        }
+
+        const previewEpoch = getPreferredLoupeEpochIndex(loupeZoomSavedAimEpoch)
+        setAimEpochIndex(previewEpoch)
+    }
+
+    function updateLoupeZoomPreview() {
+        if (!loupeZoomAdjusting) {
+            return
+        }
+
+        const previewEpoch = getPreferredLoupeEpochIndex(getAimEpochIndex())
+        setAimEpochIndex(previewEpoch)
+    }
+
+    function endLoupeZoomPreview() {
+        if (!loupeZoomAdjusting) {
+            return
+        }
+
+        loupeZoomAdjusting = false
+        if (loupeZoomSavedAimEpoch >= 0) {
+            setAimEpochIndex(loupeZoomSavedAimEpoch)
+        }
+        else {
+            setAimEpochIndex(-1)
+            resetAim()
+        }
+
+        if (!loupeZoomWasVisibleBeforeAdjust) {
+            loupeVisible.checked = false
+        }
+
+        loupeZoomSavedAimEpoch = -1
     }
 
     function closeSettings() {
@@ -361,6 +411,9 @@ WaterFall {
                         if (checked) {
                             settingsClicked()
                         }
+                        else {
+                            plot.endLoupeZoomPreview()
+                        }
                     }
                 }
 
@@ -420,6 +473,12 @@ WaterFall {
             id: settingsScroll
             visible: plotCheckButton.checked
             Layout.preferredHeight: parent.height
+
+            onVisibleChanged: {
+                if (!visible) {
+                    plot.endLoupeZoomPreview()
+                }
+            }
 
             MenuFrame {
                 id: plotSettings
@@ -1078,6 +1137,8 @@ WaterFall {
                         }
 
                         RowLayout {
+                            visible: loupeVisible.checked
+
                             CText {
                                 text: qsTr("size")
                             }
@@ -1087,26 +1148,51 @@ WaterFall {
                                 to: 3
                                 stepSize: 1
                                 value: 1
-                                visible: loupeVisible.checked
 
                                 onValueChanged: plotLoupeSize(value)
                                 Component.onCompleted: plotLoupeSize(value)
                             }
                         }
                         RowLayout {
+                            visible: loupeVisible.checked
+                            spacing: Math.max(6, Math.round(theme.controlHeight * 0.2))
+
                             CText {
                                 text: qsTr("zoom")
                             }
-                            SpinBoxCustom {
-                                id: loupeZoom
-                                from: 1
-                                to: 3
-                                stepSize: 1
-                                value: 1
-                                visible: loupeVisible.checked
 
-                                onValueChanged: plotLoupeZoom(value)
-                                Component.onCompleted: plotLoupeZoom(value)
+                            ChartLevelSingle {
+                                id: loupeZoom
+                                Layout.fillWidth: true
+                                Layout.preferredWidth: theme.controlHeight * 5
+                                from: 0
+                                to: 300
+                                stepSize: 1
+                                value: 0
+
+                                onValueChanged: plotLoupeZoom(Math.round(value))
+
+                                onPressedChanged: {
+                                    if (pressed) {
+                                        plot.beginLoupeZoomPreview()
+                                    }
+                                    else {
+                                        plot.endLoupeZoomPreview()
+                                    }
+                                }
+
+                                onMoved: {
+                                    plot.updateLoupeZoomPreview()
+                                }
+
+                                Component.onCompleted: plotLoupeZoom(Math.round(value))
+                            }
+
+                            CText {
+                                text: Math.round(loupeZoom.value) + "%"
+                                small: true
+                                horizontalAlignment: Text.AlignRight
+                                Layout.preferredWidth: theme.controlHeight * 1.7
                             }
                         }
                     }

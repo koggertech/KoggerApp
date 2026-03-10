@@ -582,7 +582,11 @@ bool Plot2DEchogram::drawZoomPreview(Plot2D* parent,
                                                    getThemeId(),
                                                    getLowLevel(),
                                                    getHighLevel(),
-                                                   _compensation_id);
+                                                   _compensation_id,
+                                                   parent->getBottomTrackVisible(),
+                                                   parent->getBottomTrackTheme(),
+                                                   parent->getRangefinderVisible(),
+                                                   parent->getRangefinderTheme());
     painter->restore();
 
     if (!rendered) {

@@ -12,6 +12,7 @@ public:
     Plot2DRangefinder();
     bool draw(Plot2D* parent, Dataset* dataset);
     void setTheme(int theme_id);
+    int getThemeId() const { return themeId_; }
     void setDepthTextVisible(bool state) { drawDepthText_ = state; }
     bool isDepthTextVisible() const { return drawDepthText_; }
 

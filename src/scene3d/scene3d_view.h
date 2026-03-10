@@ -49,6 +49,7 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(bool syncLoupeFlipY READ syncLoupeFlipY NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(int syncLoupeSize READ syncLoupeSize NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(int syncLoupeZoom READ syncLoupeZoom NOTIFY syncLoupeStateChanged)
+    Q_PROPERTY(bool syncLoupeZoomAdjusting READ syncLoupeZoomAdjusting NOTIFY syncLoupeStateChanged)
 
 public:
     //Camera
@@ -249,6 +250,7 @@ public:
     bool syncLoupeFlipY() const;
     int syncLoupeSize() const;
     int syncLoupeZoom() const;
+    bool syncLoupeZoomAdjusting() const;
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -297,6 +299,7 @@ public:
     void setSyncLoupeVisible(bool state);
     void setSyncLoupeSize(int val);
     void setSyncLoupeZoom(int val);
+    void setSyncLoupeZoomAdjusting(bool adjusting);
     void setSyncEpochIndex(int epochIndex);
 
     void setActiveZeroing(bool state);
@@ -493,7 +496,8 @@ private:
 
     bool syncLoupeVisible_ = false;
     int syncLoupeSize_ = 1;
-    int syncLoupeZoom_ = 1;
+    int syncLoupeZoom_ = 0;
+    bool syncLoupeZoomAdjusting_ = false;
     bool syncLoupeUiAllowed_ = true;
     int syncEpochIndex_ = -1;
     bool syncLoupeOverlayVisible_ = false;

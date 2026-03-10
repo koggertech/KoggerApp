@@ -141,14 +141,14 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
 
     const bool loupeEnabled = parent->getLoupeVisible();
     const int loupeSize = qBound(1, parent->getLoupeSize(), 3);
-    const int loupeZoom = qBound(1, parent->getLoupeZoom(), 3);
+    const int loupeZoomPercent = qBound(0, parent->getLoupeZoom(), 300);
     const float loupeSizeMultiplier = (loupeSize == 1) ? 1.0f : ((loupeSize == 2) ? 1.5f : 2.25f);
-    const float loupeZoomMultiplier = (loupeZoom == 1) ? 1.0f : ((loupeZoom == 2) ? 1.5f : 2.25f);
+    const float loupeZoomMultiplier = 1.0f + static_cast<float>(loupeZoomPercent) * 0.01f;
     const int previewFrameMargin = 10 * scaleFactor_;
     const int maxPreviewSize = qMin(canvas.width() - previewFrameMargin * 2, canvas.height() - previewFrameMargin * 2);
     const bool hasPreview = loupeEnabled && maxPreviewSize > 30 * scaleFactor_;
     const int previewSize = hasPreview ? qMin(static_cast<int>(180.0f * scaleFactor_ * loupeSizeMultiplier), maxPreviewSize) : 0;
-    const int previewSourceBaseSize = hasPreview ? qMax(8, previewSize / 4) : 0;
+    const int previewSourceBaseSize = hasPreview ? qMax(8, previewSize) : 0;
     const int previewSourceSize = hasPreview
         ? qMax(4, static_cast<int>(static_cast<float>(previewSourceBaseSize) / loupeZoomMultiplier))
         : 0;

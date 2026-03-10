@@ -52,7 +52,11 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
                                int themeId,
                                float lowLevel,
                                float highLevel,
-                               int compensationId)
+                               int compensationId,
+                               bool bottomTrackVisible,
+                               int bottomTrackThemeId,
+                               bool rangefinderVisible,
+                               int rangefinderThemeId)
 {
     if (!painter || !dataset || previewWidth <= 0 || previewHeight <= 0 || parentCanvasWidth <= 0) {
         return false;
@@ -115,6 +119,10 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
     cursor_.numZeroEpoch = zeroEpochCount;
 
     updateEchogramSettings(themeId, lowLevel, highLevel, compensationId);
+    bottomProcessing_.setVisible(bottomTrackVisible);
+    bottomProcessing_.setTheme(bottomTrackThemeId);
+    rangefinder_.setVisible(rangefinderVisible);
+    rangefinder_.setTheme(rangefinderThemeId);
 
     const bool rendered = echogram_.draw(this, dataset);
     if (!rendered) {
@@ -144,7 +152,7 @@ Plot2D::Plot2D()
     , isEnabled_(true)
     , isLoupeVisible_(false)
     , loupeSize_(1)
-    , loupeZoom_(1)
+    , loupeZoom_(0)
     , lAngleOffsetDeg_(0.0f)
     , rAngleOffsetDeg_(0.0f)
 {
@@ -320,7 +328,7 @@ int Plot2D::getLoupeZoom() const
 
 void Plot2D::setLoupeZoom(int zoom)
 {
-    const int boundedZoom = qBound(1, zoom, 3);
+    const int boundedZoom = qBound(0, zoom, 300);
     if (loupeZoom_ == boundedZoom) {
         return;
     }
@@ -575,6 +583,16 @@ void Plot2D::setBottomTrackTheme(int theme_id) {
     plotUpdate();
 }
 
+bool Plot2D::getBottomTrackVisible() const
+{
+    return bottomProcessing_.isVisible();
+}
+
+int Plot2D::getBottomTrackTheme() const
+{
+    return bottomProcessing_.getThemeId();
+}
+
 void Plot2D::setBottomTrackDepthTextVisible(bool visible)
 {
     bottomProcessing_.setDepthTextVisible(visible);
@@ -589,6 +607,16 @@ void Plot2D::setRangefinderVisible(bool visible) {
 void Plot2D::setRangefinderTheme(int theme_id) {
     rangefinder_.setTheme(theme_id);
     plotUpdate();
+}
+
+bool Plot2D::getRangefinderVisible() const
+{
+    return rangefinder_.isVisible();
+}
+
+int Plot2D::getRangefinderTheme() const
+{
+    return rangefinder_.getThemeId();
 }
 
 void Plot2D::setRangefinderDepthTextVisible(bool visible)
