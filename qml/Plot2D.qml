@@ -1168,7 +1168,7 @@ WaterFall {
                                 from: 0
                                 to: 300
                                 stepSize: 1
-                                value: 0
+                                value: 100
 
                                 onValueChanged: plotLoupeZoom(Math.round(value))
 
