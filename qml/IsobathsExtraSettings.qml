@@ -109,7 +109,7 @@ MenuFrame {
                 from: 10
                 to: 1000
                 stepSize: 5
-                value: 70
+                value: 100
                 editable: false
 
                 property int decimals: 1

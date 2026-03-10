@@ -10,7 +10,7 @@ IsobathsViewControlMenuController::IsobathsViewControlMenuController(QObject* pa
     surfaceLineStepSize_(3.0f),
     themeId_(0),
     labelStepSize_(100),
-    edgeLimit_(70),
+    edgeLimit_(100),
     extraWidth_(10),
     visibility_(false),
     edgesVisible_(false),

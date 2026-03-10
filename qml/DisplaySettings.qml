@@ -143,7 +143,7 @@ GridLayout {
                     from: 0
                     to: 100
                     stepSize: 1
-                    value: 15
+                    value: 5
 
                     onValueChanged: core.setFixBlackStripesForwardSteps(fixBlackStripesForwardStepsSpinBox.value)
                     Component.onCompleted: core.setFixBlackStripesForwardSteps(fixBlackStripesForwardStepsSpinBox.value)
@@ -158,7 +158,7 @@ GridLayout {
                     from: 0
                     to: 100
                     stepSize: 1
-                    value: 15
+                    value: 5
 
                     onValueChanged: core.setFixBlackStripesBackwardSteps(fixBlackStripesBackwardStepsSpinBox.value)
                     Component.onCompleted: core.setFixBlackStripesBackwardSteps(fixBlackStripesBackwardStepsSpinBox.value)
