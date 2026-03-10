@@ -111,32 +111,32 @@
 <context>
     <name>ConnectionViewer</name>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="88"/>
+        <location filename="../qml/ConnectionViewer.qml" line="123"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="103"/>
+        <location filename="../qml/ConnectionViewer.qml" line="138"/>
         <source>Unpin</source>
         <translation>Открепить</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="103"/>
+        <location filename="../qml/ConnectionViewer.qml" line="138"/>
         <source>Pin</source>
         <translation>Закрепить</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="119"/>
+        <location filename="../qml/ConnectionViewer.qml" line="154"/>
         <source>Auto</source>
         <translation>Авто</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="136"/>
+        <location filename="../qml/ConnectionViewer.qml" line="171"/>
         <source>Delete</source>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="272"/>
+        <location filename="../qml/ConnectionViewer.qml" line="307"/>
         <source>src:</source>
         <translation></translation>
     </message>
@@ -146,84 +146,89 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="213"/>
+        <location filename="../qml/ConnectionViewer.qml" line="248"/>
         <source>Auto search baudrate</source>
         <translation>Автопоиск скорости</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="221"/>
+        <location filename="../qml/ConnectionViewer.qml" line="256"/>
         <source>UDP ip:</source>
         <translation>UDP ip:</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="221"/>
+        <location filename="../qml/ConnectionViewer.qml" line="256"/>
         <source>TCP ip:</source>
         <translation>TCP ip:</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="325"/>
+        <location filename="../qml/ConnectionViewer.qml" line="360"/>
         <source>dst:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="325"/>
+        <location filename="../qml/ConnectionViewer.qml" line="360"/>
         <source>srv:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="364"/>
+        <location filename="../qml/ConnectionViewer.qml" line="399"/>
         <source>Close</source>
         <translation>Отключить</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="364"/>
+        <location filename="../qml/ConnectionViewer.qml" line="399"/>
         <source>Open</source>
         <translation>Подключить</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="458"/>
+        <location filename="../qml/ConnectionViewer.qml" line="493"/>
         <source>+UDP</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="467"/>
+        <location filename="../qml/ConnectionViewer.qml" line="502"/>
         <source>+TCP</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="477"/>
+        <location filename="../qml/ConnectionViewer.qml" line="512"/>
         <source>MAVProxy</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="498"/>
+        <location filename="../qml/ConnectionViewer.qml" line="533"/>
         <source>KLF</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="529"/>
+        <location filename="../qml/ConnectionViewer.qml" line="564"/>
         <source>CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="564"/>
+        <location filename="../qml/ConnectionViewer.qml" line="599"/>
         <source>GPS</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="798"/>
-        <location filename="../qml/ConnectionViewer.qml" line="960"/>
+        <location filename="../qml/ConnectionViewer.qml" line="833"/>
+        <location filename="../qml/ConnectionViewer.qml" line="995"/>
         <source>Enter path</source>
         <translation>Выберите путь</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="987"/>
-        <location filename="../qml/ConnectionViewer.qml" line="1029"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1023"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1066"/>
         <source>Please choose a file</source>
         <translation>Выберите файл</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="1072"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1111"/>
+        <source>Recently opened:</source>
+        <translation>Недавно открытые:</translation>
+    </message>
+    <message>
+        <location filename="../qml/ConnectionViewer.qml" line="1225"/>
         <source>Undefined</source>
         <translation>Неопределён</translation>
     </message>
@@ -1778,79 +1783,79 @@
         <translation>Синхр. эхограммы</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="381"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="382"/>
         <source>Grid</source>
         <translation>Сетка</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="412"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="413"/>
         <source>Circle</source>
         <translation>Круговая</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="439"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="440"/>
         <source>Labels</source>
         <translation>Метки</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="461"/>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="819"/>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="886"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="462"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="820"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="887"/>
         <source>Size:</source>
         <translation>Размер:</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="464"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="465"/>
         <source>Step:</source>
         <translation>Шаг:</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="467"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="468"/>
         <source>Angle:</source>
         <translation>Угол:</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="550"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="551"/>
         <source>Shadows</source>
         <translation>Тени</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="584"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="585"/>
         <source>Vector X:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="624"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="625"/>
         <source>Vector Y:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="664"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="665"/>
         <source>Vector Z:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="704"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="705"/>
         <source>Ambient:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="744"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="745"/>
         <source>Highlight:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="799"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="800"/>
         <source>Boat</source>
         <translation>Лодка</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="858"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="859"/>
         <source>Compass</source>
         <translation>Компас</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="883"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="884"/>
         <source>Pos:</source>
         <translation>Поз:</translation>
     </message>
