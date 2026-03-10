@@ -8,7 +8,7 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
     : QmlComponentController(parent),
       graphicsScene3dViewPtr_(nullptr),
       pendingLambda_(nullptr),
-      isVertexEditingMode_(false),
+      isVertexEditingMode_(true),
       trackLastData_(false),
       updateBottomTrack_(false),
       gridVisibility_(true),

@@ -323,6 +323,7 @@ MenuFrame {
             iconSource: "qrc:/icons/ui/click.svg"
             text: qsTr("Sync echogram")
             Layout.fillWidth: true
+            checked: true
 
             onToggled: {
                 Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
