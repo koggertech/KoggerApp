@@ -14,9 +14,10 @@ TextField {
 
     font: small ? theme.textFontS : theme.textFont
     color: theme.textColor
+    placeholderTextColor: theme.placeholderTextColor
     selectionColor: theme.hoveredBackColor
 
-    background:  Rectangle {
+    background: Rectangle {
         id: backRect
         radius: 1
         color: control.down ? theme.controlSolidBackColor : theme.controlBackColor

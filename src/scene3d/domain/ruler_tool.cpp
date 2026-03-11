@@ -202,7 +202,7 @@ void RulerTool::RulerToolRenderImplementation::render(
     QMatrix4x4 textProjection;
     textProjection.ortho(viewport.toRect());
 
-    TextRenderer::instance().setColor(theme.textSolidColor());
+    TextRenderer::instance().setColor(QColor(255, 255, 255));
     TextRenderer::instance().setBackgroundColor(QColor(0, 0, 0, 160));
     QVector<TextRenderer::Text2DItem> labelItems;
     labelItems.reserve(pts.size());

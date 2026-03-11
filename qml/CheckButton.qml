@@ -9,20 +9,31 @@ Button {
 
     property int borderWidth: 1
     property color color: theme.textColor
-    property color checkedColor: "black"
-    property color checkedBackColor: "white"
+    property color checkedColor: theme.textSolidColor
+    property color checkedBackColor: theme.activeControlBackColor
     property color backColor: "transparent"
-    property color checkedBorderColor: "transparent"
-    property color borderColor: theme.controlSolidBorderColor
+    property color checkedBorderColor: theme.controlSolidBorderColor
+    property color borderColor: theme.controlBorderColor
     property string iconSource: ""
-    property real   iconScale: 0.80
+    property real iconScale: 0.80
     readonly property bool hoverActive: control.hovered && control.enabled && !control.active
+    readonly property bool checkedColorIsCustom: control.checkedColor != theme.textSolidColor
+    readonly property color defaultCheckedForegroundColor: {
+        var inverted = theme.invertedColor(control.color)
+        return theme.contrastRatio(inverted, control.checkedBackColor) >= 2.4
+                ? inverted
+                : theme.contrastTextColor(control.checkedBackColor)
+    }
+    readonly property color foregroundColor: !control.enabled
+                                             ? theme.disabledTextColor
+                                             : (control.active
+                                                ? (control.checkedColorIsCustom ? control.checkedColor : control.defaultCheckedForegroundColor)
+                                                : control.color)
 
     implicitHeight: theme.controlHeight
-    //implicitWidth: icon.width + textWidth + leftPadding + rightPadding
 
     icon.source: iconSource
-    icon.width:  control.height * iconScale
+    icon.width: control.height * iconScale
     icon.height: control.height * iconScale
 
     hoverEnabled: true
@@ -30,15 +41,11 @@ Button {
     rightPadding: text === "" ? 2 : 6
     leftPadding: icon.source === "" ? 6 : 2
 
-    //height: theme.controlHeight
-    //width: text === "" ? theme.controlHeight : undefined
-
-
     font: theme.textFont
-    palette.buttonText: active ? checkedColor : color
-    palette.brightText: active ? checkedColor : color
+    palette.buttonText: foregroundColor
+    palette.brightText: foregroundColor
 
-    icon.color: active ? checkedColor : color
+    icon.color: foregroundColor
 
     background: Rectangle {
         id: backRect
@@ -47,9 +54,10 @@ Button {
         radius: 2
         height: parent.height
         width: parent.width
-        color: control.active ? control.checkedBackColor
-                              : hoverActive ? theme.hoveredBackColor
-                                            : control.backColor
+        color: !control.enabled ? theme.disabledBackColor
+                                : control.active ? control.checkedBackColor
+                                                 : hoverActive ? theme.hoveredBackColor
+                                                               : control.backColor
         border.color: control.active ? control.checkedBorderColor
                                      : hoverActive ? theme.controlSolidBorderColor
                                                    : control.borderColor

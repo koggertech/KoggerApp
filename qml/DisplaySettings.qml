@@ -919,7 +919,7 @@ GridLayout {
                     Layout.preferredWidth: control.preferenceComboWidth
                     Layout.minimumWidth: control.preferenceComboWidth
                     Layout.maximumWidth: control.preferenceComboWidth
-                    model: [qsTr("Dark"), qsTr("Super Dark"), qsTr("Light"), qsTr("Super Light")]
+                    model: [qsTr("Dark"), qsTr("Super Dark"), qsTr("Light"), qsTr("Super Light"), qsTr("OneDarkPro"), qsTr("Monokai"), qsTr("Kimbie Dark"), qsTr("Solarized Dark")]
                     currentIndex: 0
 
                     onCurrentIndexChanged: theme.themeID = currentIndex

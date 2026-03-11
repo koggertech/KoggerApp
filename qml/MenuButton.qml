@@ -13,13 +13,16 @@ Button {
     Layout.preferredHeight: theme.controlHeight
     padding: 0
 
-    icon.color: theme.textColor
+    readonly property color activeBackColor: theme.activeControlBackColor
+    readonly property color baseBackColor: control.active ? control.activeBackColor : theme.controlBackColor
+
+    readonly property color iconTintColor: !control.enabled
+                                           ? theme.disabledTextColor
+                                           : (control.active ? theme.contrastTextColor(control.baseBackColor) : theme.textColor)
+
+    icon.color: iconTintColor
     icon.width: theme.controlHeight * iconScale
     icon.height: theme.controlHeight * iconScale
-
-    property color baseBackColor: (control.active)
-                                  ? theme.controlSolidBackColor
-                                  : theme.controlBackColor
 
     function mixWithRed(base, t) {
         return Qt.rgba(
@@ -29,7 +32,6 @@ Button {
                     base.a
                 );
     }
-
 
     background: Rectangle {
         id: backRect
@@ -44,11 +46,4 @@ Button {
         border.color: theme.controlBorderColor
         border.width: borderWidth
     }
-
-//    contentItem: CText {
-//        text: control.text
-//        horizontalAlignment: Text.AlignHCenter
-//        verticalAlignment: Text.AlignTop
-//        font.pointSize: 20
-//    }
 }
