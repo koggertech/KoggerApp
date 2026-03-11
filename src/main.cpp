@@ -16,6 +16,7 @@
 #include <QSqlDatabase>
 #include <QQuickStyle>
 #include <QWindow>
+#include <QStyleHints>
 #if defined(Q_OS_WIN)
 #include <windows.h>
 #endif
@@ -95,6 +96,47 @@ void registerQmlMetaTypes()
 }
 
 #if defined(Q_OS_WIN)
+constexpr DWORD kDwmwaUseImmersiveDarkMode = 20;
+constexpr DWORD kDwmwaUseImmersiveDarkModeLegacy = 19;
+
+void applyWindowsSystemTitleBarTheme(QWindow* window)
+{
+    if (!window) {
+        return;
+    }
+
+    const HWND handle = reinterpret_cast<HWND>(window->winId());
+    if (!handle) {
+        return;
+    }
+
+    const HMODULE dwmApi = LoadLibraryW(L"dwmapi.dll");
+    if (!dwmApi) {
+        return;
+    }
+
+    using DwmSetWindowAttributeFn = HRESULT (WINAPI*)(HWND, DWORD, LPCVOID, DWORD);
+    auto* setWindowAttribute = reinterpret_cast<DwmSetWindowAttributeFn>(GetProcAddress(dwmApi, "DwmSetWindowAttribute"));
+    if (!setWindowAttribute) {
+        FreeLibrary(dwmApi);
+        return;
+    }
+
+    const BOOL useDarkCaption = QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark ? TRUE : FALSE;
+    HRESULT hr = setWindowAttribute(handle,
+                                    kDwmwaUseImmersiveDarkMode,
+                                    &useDarkCaption,
+                                    sizeof(useDarkCaption));
+    if (FAILED(hr)) {
+        setWindowAttribute(handle,
+                           kDwmwaUseImmersiveDarkModeLegacy,
+                           &useDarkCaption,
+                           sizeof(useDarkCaption));
+    }
+
+    FreeLibrary(dwmApi);
+}
+
 void applyWindowsFullscreenBorderWorkaround(QWindow* window)
 {
     if (!window) {
@@ -239,6 +281,7 @@ int main(int argc, char *argv[])
         mainWindow = qobject_cast<QQuickWindow*>(rootObject);
 #if defined(Q_OS_WIN)
         if (auto* window = qobject_cast<QWindow*>(rootObject)) {
+            applyWindowsSystemTitleBarTheme(window);
             applyWindowsFullscreenBorderWorkaround(window);
         }
 #endif
