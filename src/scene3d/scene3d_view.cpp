@@ -1827,8 +1827,10 @@ void GraphicsScene3dView::geometryChange(const QRectF &newGeometry, const QRectF
     QQuickFramebufferObject::geometryChange(newGeometry, oldGeometry);
 
     if (newGeometry.size() != oldGeometry.size()) {
-       updateProjection();
-       onCameraMoved();
+        QMetaObject::invokeMethod(this, [this]() {
+            updateProjection();
+            onCameraMoved();
+        }, Qt::QueuedConnection);
     }
 }
 
