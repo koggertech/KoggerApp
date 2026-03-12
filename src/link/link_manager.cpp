@@ -134,9 +134,7 @@ void LinkManager::update()
 
     addNewLinks(currSerialList);
 
-#if !defined(Q_OS_ANDROID)
     deleteMissingLinks(currSerialList);
-#endif
 
     openAutoConnections();
 }
