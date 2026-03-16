@@ -57,7 +57,9 @@ QVector<QVector3D> SurfaceView::SurfaceViewRenderImplementation::buildTileNormal
         const QVector3D& v0 = verts[i0];
         const QVector3D& v1 = verts[i1];
         const QVector3D& v2 = verts[i2];
-        const QVector3D face = QVector3D::crossProduct(v1 - v0, v2 - v0);
+        QVector3D face = QVector3D::crossProduct(v1 - v0, v2 - v0);
+        face.setX(face.x() * verticalScale_);
+        face.setY(face.y() * verticalScale_);
         if (face.lengthSquared() <= 1e-12f) {
             continue;
         }
@@ -943,7 +945,8 @@ SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
     labelStep_(100.0f),
     cameraDist_(10.0f),
     traceWidth_(2.0f),
-    traceVisible_(true)
+    traceVisible_(true),
+    verticalScale_(1.0f)
 {}
 
 void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
@@ -1319,6 +1322,27 @@ void SurfaceView::SurfaceViewRenderImplementation::setShadowSettings(bool enable
     if (!wasEnabled || tileNormals_.isEmpty()) {
         rebuildSeamlessTileNormals(tiles_, tileNormals_);
     }
+}
+
+void SurfaceView::SurfaceViewRenderImplementation::setVerticalScale(float scale)
+{
+    const float clampedScale = qBound(0.05f, scale, 10.0f);
+    if (qFuzzyCompare(verticalScale_ + 1.0f, clampedScale + 1.0f)) {
+        return;
+    }
+
+    verticalScale_ = clampedScale;
+
+    if (!shadowEnabled_) {
+        return;
+    }
+
+    if (tiles_.isEmpty()) {
+        tileNormals_.clear();
+        return;
+    }
+
+    rebuildSeamlessTileNormals(tiles_, tileNormals_);
 }
 
 void SurfaceView::SurfaceViewRenderImplementation::updateBounds()

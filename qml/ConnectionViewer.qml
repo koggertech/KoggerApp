@@ -12,10 +12,72 @@ ColumnLayout {
     property string filePath: pathText.text
     property var lastLogFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     property var lastImportTrackFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property var recentOpenedFiles: []
 
     Settings {
         property alias logFolder: connectionViewer.lastLogFolder
         property alias importTrackFolder: connectionViewer.lastImportTrackFolder
+        property alias recentOpenedFiles: connectionViewer.recentOpenedFiles
+    }
+
+    function toLocalPath(path) {
+        if (!path || !path.length) {
+            return ""
+        }
+
+        var localPath = path.toString()
+        if (localPath.indexOf("file:///") === 0) {
+            localPath = localPath.replace("file:///", Qt.platform.os === "windows" ? "" : "/")
+        } else if (localPath.indexOf("file://") === 0) {
+            localPath = localPath.replace("file://", "")
+        }
+        return localPath
+    }
+
+    function pushRecentOpenedFile(path) {
+        var localPath = toLocalPath(path)
+        if (!localPath.length) {
+            return
+        }
+
+        var updated = [localPath]
+        for (var i = 0; i < recentOpenedFiles.length; ++i) {
+            var item = recentOpenedFiles[i]
+            if (item && item !== localPath) {
+                updated.push(item)
+            }
+            if (updated.length >= 3) {
+                break
+            }
+        }
+        recentOpenedFiles = updated
+    }
+
+    function openRecentFile(path) {
+        var localPath = toLocalPath(path)
+        if (!localPath.length) {
+            return
+        }
+
+        pathText.text = localPath
+        core.openLogFile(localPath, false, false)
+        pushRecentOpenedFile(localPath)
+    }
+
+    function removeRecentFile(path) {
+        var localPath = toLocalPath(path)
+        if (!localPath.length) {
+            return
+        }
+
+        var updated = []
+        for (var i = 0; i < recentOpenedFiles.length; ++i) {
+            var item = recentOpenedFiles[i]
+            if (item && item !== localPath) {
+                updated.push(item)
+            }
+        }
+        recentOpenedFiles = updated
     }
 
     function importSettingsToAllDevices(path) {
@@ -961,6 +1023,7 @@ ColumnLayout {
 
             Keys.onPressed: function(event) {
                 if (event.key === 16777220 || event.key === Qt.Key_Enter) {
+                    connectionViewer.pushRecentOpenedFile(pathText.text)
                     core.openLogFile(pathText.text, false, false);
                 }
             }
@@ -1005,6 +1068,7 @@ ColumnLayout {
 
                     var name_parts = fileStr.split('.')
 
+                    connectionViewer.pushRecentOpenedFile(pathText.text)
                     core.openLogFile(pathText.text, false, false)
                 }
                 onRejected: {
@@ -1042,6 +1106,7 @@ ColumnLayout {
                     var name_parts = appendFileDialog.selectedFile.toString().split('.')
 
                     //deviceManagerWrapper.sendOpenFile(pathText.text, true)
+                    connectionViewer.pushRecentOpenedFile(pathText.text)
                     core.openLogFile(pathText.text, true, false);
                 }
                 onRejected: {
@@ -1061,6 +1126,7 @@ ColumnLayout {
             }
         }
     }
+
 
     MenuRow {
         visible: devList.length > 0

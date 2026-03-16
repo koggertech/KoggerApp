@@ -67,8 +67,9 @@ static inline float clampShadowFactor(float value, float fallback)
 
 constexpr qreal kWheelDeltaUnit = 120.0;
 constexpr qreal kWheelMaxSteps = 8.0;
-constexpr qreal kPinchScaleToSteps = 18.0;
+constexpr qreal kPinchScaleToSteps = 12.0;
 constexpr qreal kPinchMaxSteps = 2.0;
+constexpr qreal kPinchTiltSpeedBoost = 2.5;
 
 static bool resolvePerspectiveByGround(float distToGround, float edge, bool wasPerspective)
 {
@@ -961,16 +962,104 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
 
 void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta)
 {
-    const qreal pinchStepsRaw = scaleDelta * kPinchScaleToSteps;
+    const qreal dx = currCenter.x() - prevCenter.x();
+    const qreal dy = currCenter.y() - prevCenter.y();
+    const qreal centerShiftLen = QLineF(prevCenter, currCenter).length();
+    const qreal absScale = std::fabs(scaleDelta);
+    const qreal absAngle = std::fabs(angleDelta);
+
+    const bool gestureRestart = !pinchGestureTimer_.isValid() || pinchGestureTimer_.elapsed() > 170;
+    if (gestureRestart) {
+        pinchPanZoomWeight_ = 1.0;
+        pinchTiltWeight_ = 0.0;
+        pinchRotateWeight_ = 0.0;
+    }
+
+    const bool canRotateOrTilt = !isNorth_ && m_camera->getIsPerspective();
+    const qreal absDx = std::fabs(dx);
+    const qreal absDy = std::fabs(dy);
+
+    const qreal normScale = qBound<qreal>(0.0, absScale / 0.10, 1.0);
+    const qreal normShift = qBound<qreal>(0.0, centerShiftLen / 12.0, 1.0);
+    const qreal normAngle = qBound<qreal>(0.0, absAngle / 2.8, 1.0);
+    const qreal normDy = qBound<qreal>(0.0, absDy / 8.0, 1.0);
+    const qreal verticalDominance = qBound<qreal>(0.0, (absDy - absDx * 0.8) / 7.0, 1.0);
+
+    qreal tiltEvidence = 0.0;
+    qreal rotateEvidence = 0.0;
+    if (canRotateOrTilt) {
+        tiltEvidence = normDy * verticalDominance * (1.0 - normScale) * (1.0 - normAngle);
+        rotateEvidence = normAngle * (1.0 - normScale * 0.5);
+    }
+
+    qreal panZoomEvidence = qMax(normScale, normShift);
+    panZoomEvidence *= (1.0 - qMax(tiltEvidence, rotateEvidence) * 0.55);
+    panZoomEvidence = qBound<qreal>(0.0, panZoomEvidence, 1.0);
+
+    const qreal blend = gestureRestart ? 1.0 : 0.35;
+    pinchPanZoomWeight_ = pinchPanZoomWeight_ * (1.0 - blend) + panZoomEvidence * blend;
+    pinchTiltWeight_ = pinchTiltWeight_ * (1.0 - blend) + tiltEvidence * blend;
+    pinchRotateWeight_ = pinchRotateWeight_ * (1.0 - blend) + rotateEvidence * blend;
+
+    if (!canRotateOrTilt) {
+        pinchPanZoomWeight_ = 1.0;
+        pinchTiltWeight_ = 0.0;
+        pinchRotateWeight_ = 0.0;
+    }
+
+    qreal sumWeights = pinchPanZoomWeight_ + pinchTiltWeight_ + pinchRotateWeight_;
+    if (sumWeights < 1e-6) {
+        pinchPanZoomWeight_ = 1.0;
+        pinchTiltWeight_ = 0.0;
+        pinchRotateWeight_ = 0.0;
+        sumWeights = 1.0;
+    }
+
+    qreal panWeight = pinchPanZoomWeight_ / sumWeights;
+    qreal tiltWeight = pinchTiltWeight_ / sumWeights;
+    qreal rotateWeight = pinchRotateWeight_ / sumWeights;
+
+    if (tiltWeight > 0.45 || rotateWeight > 0.45) {
+        panWeight *= 0.2;
+    }
+    panWeight = qBound<qreal>(0.0, panWeight, 1.0);
+
+    if (centerShiftLen > 0.25 && panWeight > 0.02) {
+        QVector3D fromPoint;
+        QVector3D toPoint;
+        const bool hasFrom = tryProjectScreenToPlane(prevCenter.x(), prevCenter.y(), 0.0f, fromPoint);
+        const bool hasTo = tryProjectScreenToPlane(currCenter.x(), currCenter.y(), 0.0f, toPoint);
+        if (hasFrom && hasTo) {
+            const QVector2D fromVec(fromPoint.x(), fromPoint.y());
+            const QVector2D toVec(toPoint.x(), toPoint.y());
+            const QVector2D blendedTo = fromVec + (toVec - fromVec) * static_cast<float>(panWeight);
+            m_camera->m_lookAtSave = m_camera->m_lookAt;
+            m_camera->move(fromVec, blendedTo);
+        }
+    }
+
+    const qreal zoomWeight = qBound<qreal>(0.0, 1.0 - tiltWeight * 0.65, 1.0);
+    const qreal pinchStepsRaw = scaleDelta * kPinchScaleToSteps * zoomWeight;
     const qreal pinchSteps = qBound(-kPinchMaxSteps, pinchStepsRaw, kPinchMaxSteps);
     if (std::fabs(pinchSteps) > 1e-6) {
         zoomAroundScreenAnchor(pinchSteps, currCenter);
     }
 
-    if (!isNorth_) {
-        m_camera->rotate(prevCenter, currCenter, angleDelta, height());
+    bool updateAxesRotation = false;
+    if (canRotateOrTilt && tiltWeight > 0.08 && absDy > 0.2) {
+        const QPointF tiltCenter(currCenter.x(), prevCenter.y() + dy * tiltWeight * kPinchTiltSpeedBoost);
+        m_camera->rotate(prevCenter, tiltCenter, 0.0, height());
+        updateAxesRotation = true;
+    }
+    if (canRotateOrTilt && rotateWeight > 0.08 && absAngle > 0.05) {
+        m_camera->rotate(currCenter, currCenter, angleDelta * rotateWeight, height());
+        updateAxesRotation = true;
+    }
+    if (updateAxesRotation) {
         m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
     }
+
+    pinchGestureTimer_.restart();
 
     updatePlaneGrid();
     QQuickFramebufferObject::update();
@@ -1448,12 +1537,24 @@ void GraphicsScene3dView::setSyncLoupeSize(int val)
 
 void GraphicsScene3dView::setSyncLoupeZoom(int val)
 {
-    const int bounded = qBound(1, val, 3);
+    const int bounded = qBound(0, val, 300);
     if (syncLoupeZoom_ == bounded) {
         return;
     }
 
     syncLoupeZoom_ = bounded;
+    refreshSyncLoupePreview();
+    emit syncLoupeStateChanged();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setSyncLoupeZoomAdjusting(bool adjusting)
+{
+    if (syncLoupeZoomAdjusting_ == adjusting) {
+        return;
+    }
+
+    syncLoupeZoomAdjusting_ = adjusting;
     refreshSyncLoupePreview();
     emit syncLoupeStateChanged();
     QQuickFramebufferObject::update();
@@ -1467,7 +1568,7 @@ void GraphicsScene3dView::setSyncEpochIndex(int epochIndex)
 
     syncEpochIndex_ = epochIndex;
 
-    if (!syncLoupeUiAllowed_) {
+    if (!syncLoupeUiAllowed_ && !syncLoupeZoomAdjusting_) {
         return;
     }
 
@@ -1523,7 +1624,8 @@ void GraphicsScene3dView::refreshSyncLoupePreview()
     float centerDepth = 0.0f;
     bool flipY = false;
 
-    if (syncLoupeVisible_ && syncLoupeUiAllowed_ && datasetPtr_ && syncEpochIndex_ >= 0) {
+    const bool loupeUiEffective = syncLoupeUiAllowed_ || syncLoupeZoomAdjusting_;
+    if (syncLoupeVisible_ && loupeUiEffective && datasetPtr_ && syncEpochIndex_ >= 0) {
         const int datasetSize = datasetPtr_->size();
         if (syncEpochIndex_ < datasetSize) {
             if (auto* epoch = datasetPtr_->fromIndex(syncEpochIndex_); epoch) {
@@ -1680,16 +1782,6 @@ bool GraphicsScene3dView::syncLoupeOverlayVisible() const
     return syncLoupeOverlayVisible_;
 }
 
-bool GraphicsScene3dView::syncLoupeUiAllowed() const
-{
-    return syncLoupeUiAllowed_;
-}
-
-bool GraphicsScene3dView::shouldRenderSyncFrom2d() const
-{
-    return syncLoupeUiAllowed_ && isVisible();
-}
-
 int GraphicsScene3dView::syncLoupeEpochIndex() const
 {
     return syncEpochIndex_;
@@ -1725,13 +1817,20 @@ int GraphicsScene3dView::syncLoupeZoom() const
     return syncLoupeZoom_;
 }
 
+bool GraphicsScene3dView::syncLoupeZoomAdjusting() const
+{
+    return syncLoupeZoomAdjusting_;
+}
+
 void GraphicsScene3dView::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
     QQuickFramebufferObject::geometryChange(newGeometry, oldGeometry);
 
     if (newGeometry.size() != oldGeometry.size()) {
-       updateProjection();
-       onCameraMoved();
+        QMetaObject::invokeMethod(this, [this]() {
+            updateProjection();
+            onCameraMoved();
+        }, Qt::QueuedConnection);
     }
 }
 
@@ -1777,9 +1876,7 @@ void GraphicsScene3dView::setIsometricView()
 
 void GraphicsScene3dView::setCancelZoomView()
 {
-    m_verticalScale = 1.0f;
-
-    QQuickFramebufferObject::update();
+    setVerticalScale(1.0f);
 }
 
 void GraphicsScene3dView::setMapView() {
@@ -1927,6 +2024,10 @@ void GraphicsScene3dView::setVerticalScale(float scale)
         m_verticalScale = 10.0f;
     else
         m_verticalScale = scale;
+
+    if (auto* impl = dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(surfaceView_->m_renderImpl); impl) {
+        impl->setVerticalScale(m_verticalScale);
+    }
 
     QQuickFramebufferObject::update();
 }

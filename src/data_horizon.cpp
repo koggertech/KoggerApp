@@ -106,6 +106,8 @@ void DataHorizon::onAddedEpoch(uint64_t indx)
 {
     //qDebug() << "DataHorizon::onAddedEpoch" << indx;
 
+    resetOnIndexRollback(indx, epochIndx_);
+
     bool beenChanged = epochIndx_ != indx;
 
     epochIndx_ = indx;
@@ -118,6 +120,8 @@ void DataHorizon::onAddedEpoch(uint64_t indx)
 void DataHorizon::onAddedPosition(uint64_t indx)
 {
     //qDebug() << "DataHorizon::onAddedPosition" << indx;
+
+    resetOnIndexRollback(indx, positionIndx_);
 
     bool beenChanged = positionIndx_ != indx;
 
@@ -135,6 +139,8 @@ void DataHorizon::onAddedChart(uint64_t indx)
 {
     //qDebug() << "DataHorizon::onAddedChart" << indx;
 
+    resetOnIndexRollback(indx, chartIndx_);
+
     bool beenChanged = indx != chartIndx_; // TODO: delete this (fix on processing)
 
     chartIndx_ = indx;
@@ -149,6 +155,8 @@ void DataHorizon::onAddedChart(uint64_t indx)
 void DataHorizon::onAddedAttitude(uint64_t indx)
 {
     //qDebug() << "DataHorizon::onAddedAttitude" << indx;
+
+    resetOnIndexRollback(indx, attitudeIndx_);
 
     bool beenChanged = attitudeIndx_ != indx;
 
@@ -165,6 +173,8 @@ void DataHorizon::onAddedAttitude(uint64_t indx)
 void DataHorizon::onAddedArtificalAttitude(uint64_t indx)
 {
     //qDebug() << "DataHorizon::onAddedArtificalAttitude" << indx;
+
+    resetOnIndexRollback(indx, artificalAttitudeIndx_);
 
     bool beenChanged = artificalAttitudeIndx_ != indx;
 
@@ -240,6 +250,21 @@ bool DataHorizon::canEmitHorizon(bool beenChanged) const
     }
 
     return retVal;
+}
+
+bool DataHorizon::resetOnIndexRollback(uint64_t incomingIndx, uint64_t currentIndx)
+{
+    if (incomingIndx >= currentIndx) {
+        return false;
+    }
+
+    //qDebug() << "DataHorizon: index rollback detected"
+    //         << "current" << currentIndx << "incoming" << incomingIndx
+    //         << "- reset horizon for new session";
+
+    clear();
+
+    return true;
 }
 
 uint64_t DataHorizon::getActualAttitudeIndx() const

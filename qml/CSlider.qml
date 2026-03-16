@@ -14,13 +14,16 @@ Slider {
     property real backHandleY: slider.horizontal ? slider.topPadding + slider.availableHeight / 2 - handleControl.height / 2 : -slider.topPadding / 2 + slider.visualPosition * (slider.height) - handleControl.height / 2
     property int barWidth: 10
 
+    readonly property color handleBaseColor: theme.sliderHandleColor
+    readonly property color handlePressedColor: theme.sliderHandlePressedColor
+
     handle: Rectangle {
         id: handleControl
         x: backHandleX
         y: backHandleY
         width: barWidth
         height: slider.height
-        color: slider.pressed ? theme.textSolidColor : theme.textColor
+        color: slider.pressed ? slider.handlePressedColor : slider.handleBaseColor
     }
 
     background: Rectangle {

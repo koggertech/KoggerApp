@@ -21,35 +21,45 @@ bool Plot2DBottomProcessing::draw(Plot2D* parent, Dataset* dataset)
         return false;
     }
 
-    QVector<float> distance1(canvas.width());
-    QVector<float> distance2(canvas.width());
+    const bool needDrawLine = (themeId_ == 1 || themeId_ == 2);
+    if (needDrawLine) {
+        QVector<float> distance1(canvas.width());
+        QVector<float> distance2(canvas.width());
 
-    distance1.fill(NAN);
-    distance2.fill(NAN);
+        distance1.fill(NAN);
+        distance2.fill(NAN);
 
-    if (!cursor.channel2.isValid()) {
-        for (int i = 0; i < canvas.width(); i++) {
-            int pool_index = cursor.getIndex(i);
-            Epoch *data = dataset->fromIndex(pool_index);
-            if (data != NULL) {
-                distance1[i] = data->distProccesing(cursor.channel1);
+        if (!cursor.channel2.isValid()) {
+            for (int i = 0; i < canvas.width(); i++) {
+                int pool_index = cursor.getIndex(i);
+                Epoch *data = dataset->fromIndex(pool_index);
+                if (data != NULL) {
+                    distance1[i] = data->distProccesing(cursor.channel1);
+                }
+            }
+        } else {
+            for (int i = 0; i < canvas.width(); i++) {
+                int pool_index = cursor.getIndex(i);
+                Epoch *data = dataset->fromIndex(pool_index);
+                if (data != NULL) {
+                    distance1[i] = -data->distProccesing(cursor.channel1);
+                    distance2[i] = data->distProccesing(cursor.channel2);
+                }
             }
         }
-    } else {
-        for (int i = 0; i < canvas.width(); i++) {
-            int pool_index = cursor.getIndex(i);
-            Epoch *data = dataset->fromIndex(pool_index);
-            if (data != NULL) {
-                distance1[i] = -data->distProccesing(cursor.channel1);
-                distance2[i] = data->distProccesing(cursor.channel2);
-            }
-        }
-    }
 
-    drawY(canvas, distance1, cursor.distance.from, cursor.distance.to, _penLine);
-    if (cursor.channel2.isValid()) {
-        drawY(canvas, distance2, cursor.distance.from, cursor.distance.to,
-              _penLine2);
+        const PlotPen::LineStyle lineStyle = (themeId_ == 2)
+            ? PlotPen::LineStylePoint
+            : PlotPen::LineStyleSolid;
+        PlotPen linePen1 = _penLine;
+        PlotPen linePen2 = _penLine2;
+        linePen1.lineStyle = lineStyle;
+        linePen2.lineStyle = lineStyle;
+
+        drawY(canvas, distance1, cursor.distance.from, cursor.distance.to, linePen1);
+        if (cursor.channel2.isValid()) {
+            drawY(canvas, distance2, cursor.distance.from, cursor.distance.to, linePen2);
+        }
     }
 
     const float bottomTrackDepth = dataset->getLastBottomTrackDepth();
@@ -70,6 +80,11 @@ bool Plot2DBottomProcessing::draw(Plot2D* parent, Dataset* dataset)
     }
 
     return true;
+}
+
+void Plot2DBottomProcessing::setTheme(int theme_id)
+{
+    themeId_ = theme_id;
 }
 
 QString Plot2DBottomProcessing::formatDepthText(float distance) const

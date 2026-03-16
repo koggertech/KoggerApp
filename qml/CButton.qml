@@ -12,9 +12,18 @@ Button {
     property var backColor: active ? theme.controlSolidBackColor : theme.controlBackColor
     property int borderRadius: 2
     readonly property bool hoverActive: control.hovered && control.enabled
+    readonly property bool solidVisual: control.down || control.active
+    readonly property color foregroundColor: !control.enabled
+                                            ? theme.disabledTextColor
+                                            : (control.solidVisual ? theme.textSolidColor : theme.textColor)
+
+    palette.buttonText: foregroundColor
+    palette.brightText: foregroundColor
+    icon.color: foregroundColor
 
     contentItem: CText {
         text: control.text
+        color: control.foregroundColor
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight

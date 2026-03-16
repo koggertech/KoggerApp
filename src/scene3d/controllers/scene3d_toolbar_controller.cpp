@@ -8,7 +8,7 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
     : QmlComponentController(parent),
       graphicsScene3dViewPtr_(nullptr),
       pendingLambda_(nullptr),
-      isVertexEditingMode_(false),
+      isVertexEditingMode_(true),
       trackLastData_(false),
       updateBottomTrack_(false),
       gridVisibility_(true),
@@ -36,7 +36,8 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       forceSingleZoomValue_(5),
       syncLoupeVisible_(false),
       syncLoupeSize_(1),
-      syncLoupeZoom_(1),
+      syncLoupeZoom_(0),
+      syncLoupeZoomAdjusting_(false),
       suppressForceSingleZoomUiCallback_(false)
 {}
 
@@ -456,10 +457,22 @@ void Scene3dToolBarController::onSyncLoupeSizeChanged(int size)
 
 void Scene3dToolBarController::onSyncLoupeZoomChanged(int zoom)
 {
-    syncLoupeZoom_ = qBound(1, zoom, 3);
+    syncLoupeZoom_ = qBound(0, zoom, 300);
 
     if (graphicsScene3dViewPtr_) {
         graphicsScene3dViewPtr_->setSyncLoupeZoom(syncLoupeZoom_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onSyncLoupeZoomAdjustingChanged(bool adjusting)
+{
+    syncLoupeZoomAdjusting_ = adjusting;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setSyncLoupeZoomAdjusting(syncLoupeZoomAdjusting_);
     }
     else {
         tryInitPendingLambda();
@@ -526,6 +539,7 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setSyncLoupeVisible(syncLoupeVisible_);
                 graphicsScene3dViewPtr_->setSyncLoupeSize(syncLoupeSize_);
                 graphicsScene3dViewPtr_->setSyncLoupeZoom(syncLoupeZoom_);
+                graphicsScene3dViewPtr_->setSyncLoupeZoomAdjusting(syncLoupeZoomAdjusting_);
 
                 if (dataProcessorPtr_) {
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateBottomTrack", Qt::QueuedConnection, Q_ARG(bool, updateBottomTrack_));

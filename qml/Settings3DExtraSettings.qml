@@ -32,6 +32,9 @@ MenuFrame {
         if (visible) {
             focus = true;
         }
+        else {
+            Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(false)
+        }
     }
 
     onFocusChanged: {
@@ -201,7 +204,6 @@ MenuFrame {
                     Scene3dToolBarController.onSyncLoupeVisibleChanged(checked)
                 }
             }
-
             RowLayout {
                 visible: syncLoupeCheckButton.checked
                 CText {
@@ -230,27 +232,51 @@ MenuFrame {
 
             RowLayout {
                 visible: syncLoupeCheckButton.checked
+                spacing: Math.max(6, Math.round(theme.controlHeight * 0.2))
+
                 CText {
                     text: qsTr("zoom")
                 }
-                SpinBoxCustom {
+
+                ChartLevelSingle {
                     id: syncLoupeZoomSpinBox
-                    from: 1
-                    to: 3
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: theme.controlHeight * 5
+                    from: 0
+                    to: 300
                     stepSize: 1
-                    value: 1
+                    value: 100
 
                     onValueChanged: {
-                        Scene3dToolBarController.onSyncLoupeZoomChanged(value)
+                        Scene3dToolBarController.onSyncLoupeZoomChanged(Math.round(value))
                     }
 
                     onFocusChanged: {
                         settings3DSettings.focus = true
                     }
 
-                    Component.onCompleted: {
-                        Scene3dToolBarController.onSyncLoupeZoomChanged(value)
+                    onPressedChanged: {
+                        Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(pressed)
+                        if (pressed) {
+                            settings3DSettings.forceActiveFocus()
+                        }
                     }
+
+                    onMoved: {
+                        Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(true)
+                        settings3DSettings.forceActiveFocus()
+                    }
+
+                    Component.onCompleted: {
+                        Scene3dToolBarController.onSyncLoupeZoomChanged(Math.round(value))
+                    }
+                }
+
+                CText {
+                    text: Math.round(syncLoupeZoomSpinBox.value) + "%"
+                    small: true
+                    horizontalAlignment: Text.AlignRight
+                    Layout.preferredWidth: theme.controlHeight * 1.7
                 }
             }
 
@@ -297,6 +323,7 @@ MenuFrame {
             iconSource: "qrc:/icons/ui/click.svg"
             text: qsTr("Sync echogram")
             Layout.fillWidth: true
+            checked: true
 
             onToggled: {
                 Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
@@ -871,7 +898,7 @@ MenuFrame {
                         from: 1
                         to: 3
                         stepSize: 1
-                        value: 1
+                        value: 2
 
                         onValueChanged: {
                             Scene3dToolBarController.onCompassPosChanged(value)

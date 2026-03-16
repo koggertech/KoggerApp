@@ -175,6 +175,16 @@ int Plot2DEchogram::getCompensation() const
     return _compensation_id;
 }
 
+void Plot2DEchogram::setWrapEnabled(bool state)
+{
+    if (wrapEnabled_ == state) {
+        return;
+    }
+
+    wrapEnabled_ = state;
+    resetCash();
+}
+
 void Plot2DEchogram::updateColors()
 {
     float low = _levels.low;
@@ -219,7 +229,7 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
         resetCash();
     }
 
-    uint8_t* image_data = (uint8_t*)_image.constBits();
+    uint8_t* image_data = _image.bits();
     const int b_scanline = _image.bytesPerLine();
 
     bool is_cash_notvalid = getTriggerCashReset();
@@ -259,12 +269,15 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
         to1 = -from;
     }
 
-    int wrap_start_pos = qAbs(cursor.getIndex(0) % width);
+    int wrap_start_pos = 0;
+    if (wrapEnabled_) {
+        wrap_start_pos = qAbs(cursor.getIndex(0) % width);
 
-    for (unsigned int i = 0; i < cursor.indexes.size(); i++) {
-        if (cursor.indexes[i] > 0) {
-            wrap_start_pos = qAbs((cursor.indexes[i] + (width - i)) % width);
-            break;
+        for (unsigned int i = 0; i < cursor.indexes.size(); i++) {
+            if (cursor.indexes[i] > 0) {
+                wrap_start_pos = qAbs((cursor.indexes[i] + (width - i)) % width);
+                break;
+            }
         }
     }
 
@@ -275,7 +288,7 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
 //            _cash[column].stateColor = CashLine::CashState::CashStateNotValid;
             _cash[column].state = CashLine::CashState::CashStateNotValid;
             _cash[column].data.resize(height);
-//            _cash[column].data.fill(0);
+            _cash[column].data.fill(0);
             _cash[column].poolIndex = -1;
             _cash[column].state = CashLine::CashState::CashStateEraced;
             _cash[column].isNeedUpdate = true;
@@ -346,7 +359,7 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
                     }
 //                    _cash[column].stateColor = CashLine::CashState::CashStateNotValid;
                 } else {
-                    if(_cash[column].state != CashLine::CashState::CashStateEraced) {
+                    if(is_cash_notvalid || _cash[column].state != CashLine::CashState::CashStateEraced) {
 //                        _cash[column].stateColor = CashLine::CashState::CashStateNotValid;
                         _cash[column].state = CashLine::CashState::CashStateNotValid;
                         _cash[column].data.fill(0);
@@ -367,7 +380,7 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
 
             }
         } else {
-            if(_cash[column].state != CashLine::CashState::CashStateEraced) {
+            if(is_cash_notvalid || _cash[column].state != CashLine::CashState::CashStateEraced) {
 //                _cash[column].stateColor = CashLine::CashState::CashStateNotValid;
                 _cash[column].state = CashLine::CashState::CashStateNotValid;
                 _cash[column].data.fill(0);
@@ -409,7 +422,11 @@ bool Plot2DEchogram::draw(Plot2D* parent, Dataset* dataset)
         if(_image.width() != image_width || _image.height() != image_height) {
             _image = QImage(image_width, image_height, QImage::Format_Indexed8);
             _image.setColorTable(_colorLevels);
+            _image.fill(0);
             _pixmap = QPixmap(image_width, image_height);
+            const QRgb bg = _colorLevels.isEmpty() ? qRgb(0, 0, 0) : _colorLevels.first();
+            _pixmap.fill(QColor::fromRgb(bg));
+            resetCash();
         }
 
         const int cash_width = canvas.width();
@@ -565,7 +582,11 @@ bool Plot2DEchogram::drawZoomPreview(Plot2D* parent,
                                                    getThemeId(),
                                                    getLowLevel(),
                                                    getHighLevel(),
-                                                   _compensation_id);
+                                                   _compensation_id,
+                                                   parent->getBottomTrackVisible(),
+                                                   parent->getBottomTrackTheme(),
+                                                   parent->getRangefinderVisible(),
+                                                   parent->getRangefinderTheme());
     painter->restore();
 
     if (!rendered) {

@@ -8,6 +8,7 @@ MiniPreviewPlot2D::MiniPreviewPlot2D()
     setHorizontal(true);
     setPlotEnabled(true);
     echogram_.setVisible(true);
+    echogram_.setWrapEnabled(false);
     bottomProcessing_.setVisible(true);
     bottomProcessing_.setDepthTextVisible(false);
     rangefinder_.setVisible(true);
@@ -51,7 +52,11 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
                                int themeId,
                                float lowLevel,
                                float highLevel,
-                               int compensationId)
+                               int compensationId,
+                               bool bottomTrackVisible,
+                               int bottomTrackThemeId,
+                               bool rangefinderVisible,
+                               int rangefinderThemeId)
 {
     if (!painter || !dataset || previewWidth <= 0 || previewHeight <= 0 || parentCanvasWidth <= 0) {
         return false;
@@ -76,47 +81,62 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
     cursor_.currentEpochIndx = -1;
     cursor_.lastEpochIndx = -1;
 
-    const int fallbackX = qBound(0, parentCanvasWidth / 2, parentCanvasWidth - 1);
-    int fallbackEpoch = parentCursor.getIndex(fallbackX);
-    if (dataset->validIndex(fallbackEpoch) < 0) {
-        fallbackEpoch = -1;
-    }
-
-    int lastValidEpoch = fallbackEpoch;
     int zeroEpochCount = 0;
     const int maxParentX = parentCanvasWidth - 1;
     const float stepX = static_cast<float>(sourceWidth) / static_cast<float>(previewWidth);
     float srcXFloat = static_cast<float>(sourceLeft) + stepX * 0.5f;
+    QVector<QPair<int, int>> noDataRanges;
+    int noDataStart = -1;
 
     cursor_.indexes.resize(previewWidth);
     for (int column = 0; column < previewWidth; ++column) {
-        const int sourceX = qBound(0, qRound(srcXFloat), maxParentX);
+        const int sourceX = qRound(srcXFloat);
         srcXFloat += stepX;
 
-        int epochIndex = parentCursor.getIndex(sourceX);
-        bool validEpoch = dataset->validIndex(epochIndex) >= 0;
-        if (!validEpoch) {
-            epochIndex = lastValidEpoch;
-            validEpoch = dataset->validIndex(epochIndex) >= 0;
-        }
-        else {
-            lastValidEpoch = epochIndex;
-        }
+        const bool sourceInBounds = sourceX >= 0 && sourceX <= maxParentX;
+        const int epochIndex = sourceInBounds ? parentCursor.getIndex(sourceX) : -1;
+        const bool validEpoch = sourceInBounds && dataset->validIndex(epochIndex) >= 0;
 
         if (!validEpoch) {
             ++zeroEpochCount;
+            cursor_.indexes[column] = -1;
+            if (noDataStart < 0) {
+                noDataStart = column;
+            }
         }
-
-        cursor_.indexes[column] = epochIndex;
+        else {
+            cursor_.indexes[column] = epochIndex;
+            if (noDataStart >= 0) {
+                noDataRanges.append(qMakePair(noDataStart, column));
+                noDataStart = -1;
+            }
+        }
+    }
+    if (noDataStart >= 0) {
+        noDataRanges.append(qMakePair(noDataStart, previewWidth));
     }
 
     cursor_.numZeroEpoch = zeroEpochCount;
 
     updateEchogramSettings(themeId, lowLevel, highLevel, compensationId);
+    bottomProcessing_.setVisible(bottomTrackVisible);
+    bottomProcessing_.setTheme(bottomTrackThemeId);
+    rangefinder_.setVisible(rangefinderVisible);
+    rangefinder_.setTheme(rangefinderThemeId);
 
     const bool rendered = echogram_.draw(this, dataset);
     if (!rendered) {
         return false;
+    }
+
+    if (QPainter* canvasPainter = canvas_.painter(); canvasPainter != nullptr) {
+        for (const auto& range : noDataRanges) {
+            const int xFrom = range.first;
+            const int xTo = range.second;
+            if (xTo > xFrom) {
+                canvasPainter->fillRect(xFrom, 0, xTo - xFrom, previewHeight, Qt::black);
+            }
+        }
     }
 
     bottomProcessing_.draw(this, dataset);
@@ -132,7 +152,7 @@ Plot2D::Plot2D()
     , isEnabled_(true)
     , isLoupeVisible_(false)
     , loupeSize_(1)
-    , loupeZoom_(1)
+    , loupeZoom_(0)
     , lAngleOffsetDeg_(0.0f)
     , rAngleOffsetDeg_(0.0f)
 {
@@ -308,7 +328,7 @@ int Plot2D::getLoupeZoom() const
 
 void Plot2D::setLoupeZoom(int zoom)
 {
-    const int boundedZoom = qBound(1, zoom, 3);
+    const int boundedZoom = qBound(0, zoom, 300);
     if (loupeZoom_ == boundedZoom) {
         return;
     }
@@ -559,7 +579,18 @@ void Plot2D::setBottomTrackVisible(bool visible) {
 }
 
 void Plot2D::setBottomTrackTheme(int theme_id) {
-    Q_UNUSED(theme_id);
+    bottomProcessing_.setTheme(theme_id);
+    plotUpdate();
+}
+
+bool Plot2D::getBottomTrackVisible() const
+{
+    return bottomProcessing_.isVisible();
+}
+
+int Plot2D::getBottomTrackTheme() const
+{
+    return bottomProcessing_.getThemeId();
 }
 
 void Plot2D::setBottomTrackDepthTextVisible(bool visible)
@@ -576,6 +607,16 @@ void Plot2D::setRangefinderVisible(bool visible) {
 void Plot2D::setRangefinderTheme(int theme_id) {
     rangefinder_.setTheme(theme_id);
     plotUpdate();
+}
+
+bool Plot2D::getRangefinderVisible() const
+{
+    return rangefinder_.isVisible();
+}
+
+int Plot2D::getRangefinderTheme() const
+{
+    return rangefinder_.getThemeId();
 }
 
 void Plot2D::setRangefinderDepthTextVisible(bool visible)

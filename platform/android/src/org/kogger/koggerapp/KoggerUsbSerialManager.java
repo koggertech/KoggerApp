@@ -32,7 +32,6 @@ public class KoggerUsbSerialManager {
     private static native void nativeDeviceHasDisconnected(final long classPtr);
     public static native void nativeDeviceException(final long classPtr, final String message);
     public static native void nativeDeviceNewData(final long classPtr, final byte[] data);
-    private static native void nativeUpdateAvailableJoysticks();
 
     /**
      * Encapsulates all resources associated with a USB device.
@@ -40,8 +39,9 @@ public class KoggerUsbSerialManager {
     private static class UsbDeviceResources {
         UsbSerialDriver driver;
         SerialInputOutputManager ioManager;
-        int fileDescriptor;
-        long classPtr;
+        KoggerSerialListener listener;
+        int fileDescriptor = -1;
+        long classPtr = 0;
 
         UsbDeviceResources(UsbSerialDriver driver) {
             this.driver = driver;
@@ -149,12 +149,6 @@ public class KoggerUsbSerialManager {
             }
 
             updateCurrentDrivers();
-
-            try {
-                nativeUpdateAvailableJoysticks();
-            } catch (final Exception ex) {
-                KoggerLogger.e(TAG, "Exception nativeUpdateAvailableJoysticks()", ex);
-            }
         }
     };
 
@@ -189,9 +183,21 @@ public class KoggerUsbSerialManager {
         UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
         if (device != null) {
             int deviceId = device.getDeviceId();
-            UsbDeviceResources resources = deviceResourcesMap.remove(deviceId);
+            UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
             if (resources != null) {
-                nativeDeviceHasDisconnected(resources.classPtr);
+                final long classPtr = resources.classPtr;
+
+                if (resources.listener != null) {
+                    resources.listener.invalidate();
+                }
+
+                resources.classPtr = 0;
+                stopIoManager(deviceId);
+                resources.ioManager = null;
+
+                if (classPtr != 0) {
+                    nativeDeviceHasDisconnected(classPtr);
+                }
             }
             KoggerLogger.i(TAG, "Device detached: " + device.getDeviceName());
         }
@@ -215,15 +221,22 @@ public class KoggerUsbSerialManager {
      * @param device The UsbDevice to add or update.
      */
     private static void addOrUpdateDevice(UsbDevice device) {
-        UsbSerialDriver driver = findDriverByDeviceId(device.getDeviceId());
-        if (driver != null) {
-            if (usbManager.hasPermission(device)) {
-                KoggerLogger.i(TAG, "Already have permission to use device " + device.getDeviceName());
-                addDriver(driver);
-            } else {
-                KoggerLogger.i(TAG, "Requesting permission to use device " + device.getDeviceName());
-                usbManager.requestPermission(device, usbPermissionIntent);
-            }
+        if (usbSerialProber == null || usbManager == null) {
+            return;
+        }
+
+        UsbSerialDriver driver = usbSerialProber.probeDevice(device);
+        if (driver == null) {
+            KoggerLogger.w(TAG, "No serial driver found for device " + device.getDeviceName());
+            return;
+        }
+
+        if (usbManager.hasPermission(device)) {
+            KoggerLogger.i(TAG, "Already have permission to use device " + device.getDeviceName());
+            addDriver(driver);
+        } else {
+            KoggerLogger.i(TAG, "Requesting permission to use device " + device.getDeviceName());
+            usbManager.requestPermission(device, usbPermissionIntent);
         }
     }
 
@@ -283,12 +296,19 @@ public class KoggerUsbSerialManager {
      * @param deviceId The device ID to update, or -1 to update all.
      */
     private static void updateCurrentDrivers() {
+        if (usbSerialProber == null || usbManager == null) {
+            return;
+        }
+
         final List<UsbSerialDriver> currentDrivers = usbSerialProber.findAllDrivers(usbManager);
+
+        // Keep internal state in sync even when no devices are connected.
+        removeStaleDrivers(currentDrivers);
+
         if (currentDrivers.isEmpty()) {
             return;
         }
 
-        removeStaleDrivers(currentDrivers);
         addNewDrivers(currentDrivers);
     }
 
@@ -305,7 +325,25 @@ public class KoggerUsbSerialManager {
 
             if (!found) {
                 int deviceId = existingDriver.getDevice().getDeviceId();
-                deviceResourcesMap.remove(deviceId);
+                UsbDeviceResources staleResources = deviceResourcesMap.remove(deviceId);
+                if (staleResources != null) {
+                    if (staleResources.listener != null) {
+                        staleResources.listener.invalidate();
+                    }
+
+                    if (staleResources.ioManager != null) {
+                        try {
+                            staleResources.ioManager.stop();
+                        } catch (final Exception e) {
+                            KoggerLogger.w(TAG, "Error stopping stale IO manager for device ID " + deviceId + ": " + e.getMessage());
+                        }
+                        staleResources.ioManager = null;
+                    }
+
+                    staleResources.classPtr = 0;
+                    staleResources.fileDescriptor = -1;
+                }
+
                 drivers.remove(i);
                 KoggerLogger.i(TAG, "Removed stale driver for device ID " + deviceId);
             }
@@ -335,11 +373,31 @@ public class KoggerUsbSerialManager {
      */
     private static void addDriver(final UsbSerialDriver newDriver) {
         UsbDevice device = newDriver.getDevice();
+        int deviceId = device.getDeviceId();
         String deviceName = device.getDeviceName();
 
-        drivers.add(newDriver);
-        deviceResourcesMap.put(device.getDeviceId(), new UsbDeviceResources(newDriver));
-        KoggerLogger.i(TAG, "Adding new driver for device ID " + device.getDeviceId() + ": " + deviceName);
+        boolean replaced = false;
+        for (int i = 0; i < drivers.size(); i++) {
+            UsbSerialDriver existingDriver = drivers.get(i);
+            if (existingDriver.getDevice().getDeviceId() == deviceId) {
+                drivers.set(i, newDriver);
+                replaced = true;
+                break;
+            }
+        }
+
+        if (!replaced) {
+            drivers.add(newDriver);
+        }
+
+        UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
+        if (resources != null) {
+            resources.driver = newDriver;
+        } else {
+            deviceResourcesMap.put(deviceId, new UsbDeviceResources(newDriver));
+        }
+
+        KoggerLogger.i(TAG, (replaced ? "Refreshing" : "Adding new") + " driver for device ID " + deviceId + ": " + deviceName);
 
         if (usbManager.hasPermission(device)) {
             KoggerLogger.i(TAG, "Already have permission to use device " + deviceName);
@@ -367,9 +425,9 @@ public class KoggerUsbSerialManager {
      * @return The corresponding UsbSerialDriver or null if not found.
      */
     private static UsbSerialDriver findDriverByDeviceName(final String deviceName) {
-        for (UsbDeviceResources resources : deviceResourcesMap.values()) {
-            if (resources.driver.getDevice().getDeviceName().equals(deviceName)) {
-                return resources.driver;
+        for (UsbSerialDriver driver : drivers) {
+            if (driver.getDevice().getDeviceName().equals(deviceName)) {
+                return driver;
             }
         }
         return null;
@@ -477,6 +535,7 @@ public class KoggerUsbSerialManager {
 
         UsbDevice device = driver.getDevice();
         int deviceId = device.getDeviceId();
+        deviceResourcesMap.putIfAbsent(deviceId, new UsbDeviceResources(driver));
         UsbSerialPort port = findPortByDeviceId(deviceId);
 
         if (!openDriver(port, device, deviceId, classPtr)) {
@@ -492,6 +551,9 @@ public class KoggerUsbSerialManager {
         UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
         if (resources != null) {
             resources.classPtr = classPtr;
+            if (resources.listener != null) {
+                resources.listener.setClassPtr(classPtr);
+            }
         }
 
         KoggerLogger.d(TAG, "Port open successful: " + port.toString());
@@ -545,12 +607,16 @@ public class KoggerUsbSerialManager {
      * @return True if successful, false otherwise.
      */
     private static boolean createIoManager(final int deviceId, final UsbSerialPort port, final long classPtr) {
-        if (deviceResourcesMap.get(deviceId) == null) {
+        UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
+        if (resources == null) {
             KoggerLogger.w(TAG, "No resources found for device ID " + deviceId);
             return false;
         }
 
-        if (deviceResourcesMap.get(deviceId).ioManager != null) {
+        if (resources.ioManager != null) {
+            if (resources.listener != null) {
+                resources.listener.setClassPtr(classPtr);
+            }
             KoggerLogger.i(TAG, "IO Manager already exists for device ID " + deviceId);
             return true;
         }
@@ -572,7 +638,8 @@ public class KoggerUsbSerialManager {
             return false;
         }
 
-        deviceResourcesMap.get(deviceId).ioManager = ioManager;
+        resources.listener = listener;
+        resources.ioManager = ioManager;
         KoggerLogger.d(TAG, "Serial I/O Manager created for device ID " + deviceId);
         return true;
     }
@@ -652,26 +719,35 @@ public class KoggerUsbSerialManager {
     public static boolean close(int deviceId) {
         UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
         if (resources == null) {
-            KoggerLogger.w(TAG, "Attempted to close a non-existent device ID " + deviceId);
-            return false;
+            KoggerLogger.i(TAG, "Device ID " + deviceId + " is already closed or removed.");
+            return true;
         }
 
-        UsbSerialPort port = findPortByDeviceId(deviceId);
-        if (port == null) {
-            KoggerLogger.w(TAG, "Attempted to close a null port for device ID " + deviceId);
-            return false;
-        }
-
-        if (!port.isOpen()) {
-            KoggerLogger.w(TAG, "Attempted to close an already closed port for device ID " + deviceId);
-            return false;
+        if (resources.listener != null) {
+            resources.listener.invalidate();
         }
 
         stopIoManager(deviceId);
-        deviceResourcesMap.remove(deviceId);
+        resources.ioManager = null;
+        resources.fileDescriptor = -1;
+        resources.classPtr = 0;
+
+        UsbSerialPort port = findPortByDeviceId(deviceId);
+        if (port == null) {
+            KoggerLogger.i(TAG, "Port already unavailable for device ID " + deviceId + ". Treating as closed.");
+            resources.listener = null;
+            return true;
+        }
+
+        if (!port.isOpen()) {
+            KoggerLogger.i(TAG, "Port already closed for device ID " + deviceId);
+            resources.listener = null;
+            return true;
+        }
 
         try {
             port.close();
+            resources.listener = null;
             KoggerLogger.d(TAG, "Device " + deviceId + " closed successfully.");
             return true;
         } catch (final IOException ex) {
@@ -1143,24 +1219,50 @@ public class KoggerUsbSerialManager {
      * Inner class to handle serial data callbacks.
      */
     private static class KoggerSerialListener implements SerialInputOutputManager.Listener {
+        private final Object callbackLock = new Object();
         private long classPtr;
 
         public KoggerSerialListener(long classPtr) {
             this.classPtr = classPtr;
         }
 
+        public void setClassPtr(long classPtr) {
+            synchronized (callbackLock) {
+                this.classPtr = classPtr;
+            }
+        }
+
+        public void invalidate() {
+            synchronized (callbackLock) {
+                this.classPtr = 0;
+            }
+        }
+
         @Override
         public void onRunError(Exception e) {
-            KoggerLogger.e(TAG, "Runner stopped.", e);
-            nativeDeviceException(classPtr, "Runner stopped: " + e.getMessage());
+            synchronized (callbackLock) {
+                if (classPtr == 0) {
+                    return;
+                }
+
+                KoggerLogger.e(TAG, "Runner stopped.", e);
+                nativeDeviceException(classPtr, "Runner stopped: " + e.getMessage());
+            }
         }
 
         @Override
         public void onNewData(final byte[] data) {
-            if (isValidData(data)) {
-                nativeDeviceNewData(classPtr, data);
-            } else {
+            if (!isValidData(data)) {
                 KoggerLogger.w(TAG, "Invalid data received: " + Arrays.toString(data));
+                return;
+            }
+
+            synchronized (callbackLock) {
+                if (classPtr == 0) {
+                    return;
+                }
+
+                nativeDeviceNewData(classPtr, data);
             }
         }
 

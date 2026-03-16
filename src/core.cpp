@@ -234,6 +234,31 @@ void Core::consoleProto(FrameParser &parser, bool isIn)
     }
 }
 
+void Core::resetRealtimeSessionState()
+{
+    if (datasetPtr_) {
+        datasetPtr_->resetDataset();
+        dataHorizon_->clear();
+    }
+
+    QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::BlockingQueuedConnection);
+
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->clear();
+        scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
+    }
+}
+
+void Core::restoreRealtimeProcessingFlags()
+{
+    QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
+    QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setIsOpeningFile(false);
+    }
+}
+
 
 #ifdef SEPARATE_READING
 void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEvent)
@@ -308,30 +333,26 @@ bool Core::closeLogFile(bool onOpen)
         emit sendCloseLogFile(onOpen ? !tryOpenedfilePath_.isEmpty() : false);
         openedfilePath_.clear();
 
-        if (datasetPtr_) {
-            datasetPtr_->resetDataset();
-            dataHorizon_->clear();
-        }
+        resetRealtimeSessionState();
 
-        QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::BlockingQueuedConnection);
-
-        if (scene3dViewPtr_) {
-            scene3dViewPtr_->clear();
-            scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
-        }
         if (!onOpen) {
             setDataProcessorConnections();
             createLinkManagerConnections();
             linkManagerWrapperPtr_->openClosedLinks();
-            QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
-            QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
-            if (scene3dViewPtr_) {
-                scene3dViewPtr_->setIsOpeningFile(false);
-            }
+            restoreRealtimeProcessingFlags();
         }
 
         return true;
     }
+
+    if (!onOpen) {
+        // This branch is used by connection UI before opening a link:
+        // reconnect must start from a clean runtime state even when no file was open.
+        // qDebug() << "Core::closeLogFile: prepare reconnect without opened file";
+        resetRealtimeSessionState();
+        restoreRealtimeProcessingFlags();
+    }
+
     return false;
 }
 
@@ -510,13 +531,21 @@ bool Core::closeLogFile()
     QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::BlockingQueuedConnection);
 
     if (!wasOpened) {
+        // Connection UI calls closeLogFile() before opening live links.
+        // Keep this reconnect path explicit.
+        // qDebug() << "Core::closeLogFile: reconnect preparation without opened file";
+        if (datasetPtr_) {
+            datasetPtr_->resetDataset();
+        }
         QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
         return false;
     }
 
     if (datasetPtr_) {
+        // file -> connection: drop file channels/state before opening live stream links
         datasetPtr_->resetDataset();
     }
+
     emit deviceManagerWrapperPtr_->sendCloseFile();
     createLinkManagerConnections();
     openedfilePath_.clear();

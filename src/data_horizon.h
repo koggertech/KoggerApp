@@ -48,6 +48,7 @@ public slots:
 
 private:
     bool canEmitHorizon(bool beenChanged) const;
+    bool resetOnIndexRollback(uint64_t incomingIndx, uint64_t currentIndx);
     uint64_t getActualAttitudeIndx() const;
     void tryCalcAndEmitMosaicIndx();
     void tryCalcAndEmitSonarPosIndx();

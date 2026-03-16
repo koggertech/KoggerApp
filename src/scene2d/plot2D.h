@@ -104,10 +104,14 @@ public:
     void setBottomTrackVisible(bool visible);
     void setBottomTrackTheme(int theme_id);
     void setBottomTrackDepthTextVisible(bool visible);
+    bool getBottomTrackVisible() const;
+    int getBottomTrackTheme() const;
 
     void setRangefinderVisible(bool visible);
     void setRangefinderTheme(int theme_id);
     void setRangefinderDepthTextVisible(bool visible);
+    bool getRangefinderVisible() const;
+    int getRangefinderTheme() const;
     void setAttitudeVisible(bool visible);
     void setTemperatureVisible(bool visible);
     bool hasTemperatureValue() const;
@@ -207,7 +211,11 @@ public:
                 int themeId,
                 float lowLevel,
                 float highLevel,
-                int compensationId);
+                int compensationId,
+                bool bottomTrackVisible,
+                int bottomTrackThemeId,
+                bool rangefinderVisible,
+                int rangefinderThemeId);
 
 private:
     void updateEchogramSettings(int themeId, float lowLevel, float highLevel, int compensationId);

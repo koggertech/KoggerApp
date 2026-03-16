@@ -22,7 +22,14 @@ SpinBox {
     implicitHeight: theme.controlHeight
     implicitWidth: implicitHeight*6
 
-    valueFromText: function(text, locale) { return Number.fromLocaleString(locale, text); }
+    valueFromText: function(text, locale) {
+        try {
+            var n = Number.fromLocaleString(locale, (text || "").toString())
+            return isNaN(n) ? control.value : n
+        } catch (e) {
+            return control.value
+        }
+    }
 
     contentItem: TextInput {
         id:textInput

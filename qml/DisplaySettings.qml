@@ -143,7 +143,7 @@ GridLayout {
                     from: 0
                     to: 100
                     stepSize: 1
-                    value: 15
+                    value: 5
 
                     onValueChanged: core.setFixBlackStripesForwardSteps(fixBlackStripesForwardStepsSpinBox.value)
                     Component.onCompleted: core.setFixBlackStripesForwardSteps(fixBlackStripesForwardStepsSpinBox.value)
@@ -158,7 +158,7 @@ GridLayout {
                     from: 0
                     to: 100
                     stepSize: 1
-                    value: 15
+                    value: 5
 
                     onValueChanged: core.setFixBlackStripesBackwardSteps(fixBlackStripesBackwardStepsSpinBox.value)
                     Component.onCompleted: core.setFixBlackStripesBackwardSteps(fixBlackStripesBackwardStepsSpinBox.value)
@@ -794,12 +794,6 @@ GridLayout {
                         id: exportFileDialog
                         title: qsTr("Select folder for export")
 
-                        currentFolder: exportPathRow.exportFolder
-
-                        onCurrentFolderChanged: {
-                            exportPathRow.exportFolder = currentFolder
-                        }
-
                         onAccepted: {
                             exportPathRow.exportFolder = exportFileDialog.currentFolder
                             exportPathText.text = selectedFolder.toString()
@@ -925,7 +919,7 @@ GridLayout {
                     Layout.preferredWidth: control.preferenceComboWidth
                     Layout.minimumWidth: control.preferenceComboWidth
                     Layout.maximumWidth: control.preferenceComboWidth
-                    model: [qsTr("Dark"), qsTr("Super Dark"), qsTr("Light"), qsTr("Super Light")]
+                    model: [qsTr("Dark"), qsTr("Super Dark"), qsTr("Light"), qsTr("Super Light"), qsTr("OneDarkPro"), qsTr("Monokai"), qsTr("Kimbie Dark"), qsTr("Solarized Dark")]
                     currentIndex: 0
 
                     onCurrentIndexChanged: theme.themeID = currentIndex
@@ -1022,6 +1016,15 @@ GridLayout {
 
                 onCheckedChanged: theme.consoleVisible = checked
                 Component.onCompleted: theme.consoleVisible = checked
+
+                Connections {
+                    target: theme
+                    function onInterfaceChanged() {
+                        if (consoleVisible.checked !== theme.consoleVisible) {
+                            consoleVisible.checked = theme.consoleVisible
+                        }
+                    }
+                }
 
                 Settings {
                     property alias consoleVisible: consoleVisible.checked

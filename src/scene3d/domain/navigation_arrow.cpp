@@ -144,8 +144,23 @@ void NavigationArrow::NavigationArrowRenderImplementation::render(QOpenGLFunctio
     }
 
     EffectiveShadowParams shadow;
+    QVector<QVector3D> rotatedNormals;
     if (litShaderProgram) {
         shadow = effectiveShadowParams();
+        rotatedNormals = arrowNormals_;
+        if (!qFuzzyIsNull(angle_)) {
+            QMatrix4x4 normalTransform;
+            normalTransform.setToIdentity();
+            normalTransform.rotate(angle_, 0.0f, 0.0f, 1.0f);
+            for (QVector3D& n : rotatedNormals) {
+                n = normalTransform.mapVector(n);
+                if (n.lengthSquared() > 1e-12f) {
+                    n.normalize();
+                } else {
+                    n = QVector3D(0.0f, 0.0f, 1.0f);
+                }
+            }
+        }
     }
 
     if (litShaderProgram && litShaderProgram->bind()) {
@@ -178,7 +193,7 @@ void NavigationArrow::NavigationArrowRenderImplementation::render(QOpenGLFunctio
             litShaderProgram->setAttributeArray(posLoc, arrowVertices_.constData());
             if (normalLoc >= 0) {
                 litShaderProgram->enableAttributeArray(normalLoc);
-                litShaderProgram->setAttributeArray(normalLoc, arrowNormals_.constData());
+                litShaderProgram->setAttributeArray(normalLoc, rotatedNormals.constData());
             }
             ctx->glDrawArrays(GL_TRIANGLES, 0, arrowVertices_.size());
             if (normalLoc >= 0) {

@@ -37,6 +37,7 @@ public:
     void setThemeId(int theme_id);
     int getCompensation() const;
     void setCompensation(int compensation_id);
+    void setWrapEnabled(bool state);
 
     void updateColors();
 
@@ -104,4 +105,5 @@ private:
     ThemeId themeId_;
     QSet<int> reRenderPlotIndxs_;
     MiniPreviewPlot2D* miniPreviewPlot_ = nullptr;
+    bool wrapEnabled_ = true;
 };
