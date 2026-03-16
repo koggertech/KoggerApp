@@ -111,32 +111,32 @@
 <context>
     <name>ConnectionViewer</name>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="134"/>
+        <location filename="../qml/ConnectionViewer.qml" line="150"/>
         <source>Settings</source>
         <translation>Właściwości</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="149"/>
+        <location filename="../qml/ConnectionViewer.qml" line="165"/>
         <source>Unpin</source>
         <translation>Odepnij</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="149"/>
+        <location filename="../qml/ConnectionViewer.qml" line="165"/>
         <source>Pin</source>
         <translation>Przypnij</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="165"/>
+        <location filename="../qml/ConnectionViewer.qml" line="181"/>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="182"/>
+        <location filename="../qml/ConnectionViewer.qml" line="198"/>
         <source>Delete</source>
         <translation>Usuń</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="318"/>
+        <location filename="../qml/ConnectionViewer.qml" line="334"/>
         <source>src:</source>
         <translation>src:</translation>
     </message>
@@ -146,84 +146,84 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="259"/>
+        <location filename="../qml/ConnectionViewer.qml" line="275"/>
         <source>Auto search baudrate</source>
         <translation>Automatyczne wyszukiwanie Prędkości</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="267"/>
+        <location filename="../qml/ConnectionViewer.qml" line="283"/>
         <source>UDP ip:</source>
         <translation>UDP ip:</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="267"/>
+        <location filename="../qml/ConnectionViewer.qml" line="283"/>
         <source>TCP ip:</source>
         <translation>TCP ip:</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="371"/>
+        <location filename="../qml/ConnectionViewer.qml" line="387"/>
         <source>dst:</source>
         <translation>dst:</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="371"/>
+        <location filename="../qml/ConnectionViewer.qml" line="387"/>
         <source>srv:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="410"/>
+        <location filename="../qml/ConnectionViewer.qml" line="426"/>
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="410"/>
+        <location filename="../qml/ConnectionViewer.qml" line="426"/>
         <source>Open</source>
         <translation>Otwórz</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="504"/>
+        <location filename="../qml/ConnectionViewer.qml" line="520"/>
         <source>+UDP</source>
         <translation>+UDP</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="513"/>
+        <location filename="../qml/ConnectionViewer.qml" line="529"/>
         <source>+TCP</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="523"/>
+        <location filename="../qml/ConnectionViewer.qml" line="539"/>
         <source>MAVProxy</source>
         <translation>MAVProxy</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="544"/>
+        <location filename="../qml/ConnectionViewer.qml" line="560"/>
         <source>KLF</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="575"/>
+        <location filename="../qml/ConnectionViewer.qml" line="591"/>
         <source>CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="610"/>
+        <location filename="../qml/ConnectionViewer.qml" line="626"/>
         <source>GPS</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="1122"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1138"/>
         <source>Undefined</source>
         <translation>niezdefiniowany</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="844"/>
-        <location filename="../qml/ConnectionViewer.qml" line="1006"/>
+        <location filename="../qml/ConnectionViewer.qml" line="860"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1022"/>
         <source>Enter path</source>
         <translation>Wprowadź ścieżkę</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="1034"/>
-        <location filename="../qml/ConnectionViewer.qml" line="1077"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1050"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1093"/>
         <source>Please choose a file</source>
         <translation>Proszę wybrać plik</translation>
     </message>
@@ -231,14 +231,19 @@
 <context>
     <name>Console</name>
     <message>
-        <location filename="../qml/Console.qml" line="31"/>
+        <location filename="../qml/Console.qml" line="36"/>
         <source>Auto scroll</source>
         <translation>Automatyczne przewijanie</translation>
     </message>
     <message>
-        <location filename="../qml/Console.qml" line="42"/>
+        <location filename="../qml/Console.qml" line="47"/>
         <source>Binnary</source>
         <translation>Binarny</translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="71"/>
+        <source>Close console</source>
+        <translation>Zamknij konsolę</translation>
     </message>
 </context>
 <context>
@@ -687,6 +692,26 @@
         <translation>Super Jasny</translation>
     </message>
     <message>
+        <location filename="../qml/DisplaySettings.qml" line="922"/>
+        <source>OneDarkPro</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="922"/>
+        <source>Monokai</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="922"/>
+        <source>Kimbie Dark</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="922"/>
+        <source>Solarized Dark</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../qml/DisplaySettings.qml" line="935"/>
         <source>Instruments grade:</source>
         <translation>Klasa instrumentów:</translation>
@@ -737,32 +762,32 @@
         <translation>Konsola</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1053"/>
+        <location filename="../qml/DisplaySettings.qml" line="1062"/>
         <source>Depth</source>
         <translation>Głębokość</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1064"/>
+        <location filename="../qml/DisplaySettings.qml" line="1073"/>
         <source>Speed</source>
         <translation>Prędkość</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1075"/>
+        <location filename="../qml/DisplaySettings.qml" line="1084"/>
         <source>Coordinates</source>
         <translation>Współrzędne</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1086"/>
+        <location filename="../qml/DisplaySettings.qml" line="1095"/>
         <source>Active point</source>
         <translation>Punkt aktywny</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1097"/>
+        <location filename="../qml/DisplaySettings.qml" line="1106"/>
         <source>Navigation info</source>
         <translation>Informacje nawigacyjne</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1108"/>
+        <location filename="../qml/DisplaySettings.qml" line="1117"/>
         <source>Boat Status</source>
         <translation>Status łodzi</translation>
     </message>
