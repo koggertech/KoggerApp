@@ -64,6 +64,22 @@ ColumnLayout {
         pushRecentOpenedFile(localPath)
     }
 
+    function removeRecentFile(path) {
+        var localPath = toLocalPath(path)
+        if (!localPath.length) {
+            return
+        }
+
+        var updated = []
+        for (var i = 0; i < recentOpenedFiles.length; ++i) {
+            var item = recentOpenedFiles[i]
+            if (item && item !== localPath) {
+                updated.push(item)
+            }
+        }
+        recentOpenedFiles = updated
+    }
+
     function importSettingsToAllDevices(path) {
         if (!path || !path.length) {
             return
