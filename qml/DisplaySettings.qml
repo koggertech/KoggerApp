@@ -1017,6 +1017,15 @@ GridLayout {
                 onCheckedChanged: theme.consoleVisible = checked
                 Component.onCompleted: theme.consoleVisible = checked
 
+                Connections {
+                    target: theme
+                    function onInterfaceChanged() {
+                        if (consoleVisible.checked !== theme.consoleVisible) {
+                            consoleVisible.checked = theme.consoleVisible
+                        }
+                    }
+                }
+
                 Settings {
                     property alias consoleVisible: consoleVisible.checked
                 }
