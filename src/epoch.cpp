@@ -11,6 +11,62 @@ Epoch::Epoch()
     flags.distAvail = false;
 }
 
+Epoch Epoch::deepCopyForMosaic() const
+{
+    Epoch copy;
+
+    for (auto it = charts_.cbegin(); it != charts_.cend(); ++it) {
+        QVector<Echogram> echogramsCopy;
+        echogramsCopy.reserve(it.value().size());
+
+        for (const auto& srcEchogram : it.value()) {
+            Echogram echogramCopy;
+            echogramCopy.amplitude = srcEchogram.amplitude;
+            echogramCopy.amplitude.detach();
+            echogramCopy.resolution = srcEchogram.resolution;
+            echogramCopy.offset = srcEchogram.offset;
+            echogramCopy.type = srcEchogram.type;
+            echogramCopy.compensated = srcEchogram.compensated;
+            echogramCopy.compensated.detach();
+            echogramCopy.bottomProcessing = srcEchogram.bottomProcessing;
+            echogramCopy.sensorPosition = srcEchogram.sensorPosition;
+            echogramCopy.recordParameters_ = srcEchogram.recordParameters_;
+            echogramCopy.chartParameters_ = srcEchogram.chartParameters_;
+            echogramsCopy.push_back(echogramCopy);
+        }
+
+        copy.charts_.insert(it.key(), echogramsCopy);
+    }
+
+    copy._eventTimestamp_us = _eventTimestamp_us;
+    copy._eventUnix = _eventUnix;
+    copy._eventId = _eventId;
+    copy._time = _time;
+    copy._attitude = _attitude;
+    copy.artificalAttitude_ = artificalAttitude_;
+    copy._positionGNSS = _positionGNSS;
+    copy._positionExternal = _positionExternal;
+    copy.sonarPosition_ = sonarPosition_;
+    copy.m_temp_c = m_temp_c;
+    copy.contact_ = contact_;
+    copy.flags.encoderAvail = flags.encoderAvail;
+    copy.flags.eventAvail = flags.eventAvail;
+    copy.flags.timestampAvail = flags.timestampAvail;
+    copy.flags.distAvail = flags.distAvail;
+    copy.flags.posAvail = flags.posAvail;
+    copy.flags.sonarPosAvail = flags.sonarPosAvail;
+    copy.flags.tempAvail = flags.tempAvail;
+    copy.flags.isDVLSolutionAvail = flags.isDVLSolutionAvail;
+    copy.depth_ = depth_;
+
+    return copy;
+}
+
+Epoch Epoch::deepCopyForBottomTrack() const
+{
+    return deepCopyForMosaic();
+}
+
 void Epoch::setEvent(int timestamp, int id, int unixt)
 {
     _eventTimestamp_us = timestamp;

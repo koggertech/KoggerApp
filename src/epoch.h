@@ -283,6 +283,8 @@ public:
     bool chartAvail(const ChannelId& channelId, uint8_t subChannelId = 0) const;
     Echogram* chart(const ChannelId& channelId = CHANNEL_NONE, uint8_t subChannelId = 0);
     Echogram chartCopy(const ChannelId &channelId = CHANNEL_NONE, uint8_t subChannelId = 0) const;
+    Epoch deepCopyForMosaic() const;
+    Epoch deepCopyForBottomTrack() const;
 
     QList<ChannelId> chartChannels();
 
