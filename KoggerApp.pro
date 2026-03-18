@@ -209,3 +209,7 @@ android {
 else {
     QT += serialport
 }
+
+# win32 dump
+#CONFIG(release, debug|release): CONFIG += force_debug_info
+#QMAKE_CXXFLAGS_RELEASE += -fno-omit-frame-pointer

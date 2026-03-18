@@ -891,8 +891,8 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
             continue;
         }
 
-        float segFDistProc = -1.0f * static_cast<float>(segFIsOdd ? segFEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance() : segFEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance());
-        float segSDistProc = -1.0f * static_cast<float>(segSIsOdd ? segSEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance() : segSEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance());
+        float segFDistProc = -1.0f * static_cast<float>(segFCharts->bottomProcessing.getDistance());
+        float segSDistProc = -1.0f * static_cast<float>(segSCharts->bottomProcessing.getDistance());
         float segFPhDistX = segFPhEndPnt.x() - segFPhBegPnt.x();
         float segFPhDistY = segFPhEndPnt.y() - segFPhBegPnt.y();
         float segSPhDistX = segSPhEndPnt.x() - segSPhBegPnt.x();
