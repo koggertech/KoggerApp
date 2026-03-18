@@ -520,15 +520,14 @@ void DeviceManager::openFile(QString filePath)
             frameParser.process();
             if (frameParser.isComplete()) {
                 frameInput(someUuid, NULL, frameParser);
+#ifdef SEPARATE_READING
+                if (!fileReadEnough) { // TODO: check this
+                    emit onFileReadEnough();
+                    fileReadEnough = true;
+                }
+#endif
             }
         }
-
-#ifdef SEPARATE_READING
-        if (!fileReadEnough) { // it's really that?
-            emit onFileReadEnough();
-            fileReadEnough = true;
-        }
-#endif
 
         chunk.clear();
     }
