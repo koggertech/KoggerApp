@@ -600,7 +600,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
 
     // update matrix
     for (const auto& i : indxs) {
-        auto epoch = datasetPtr_->fromIndexCopy(i);
+        auto epoch = datasetPtr_->fromIndexMosaicCopy(i);
         if (!epoch.isValid()) {
             continue;
         }
@@ -823,8 +823,8 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
             stopAfterThis = true;
         }
 
-        auto segFEpoch = datasetPtr_->fromIndexCopy(pairEpochF);
-        auto segSEpoch = datasetPtr_->fromIndexCopy(pairEpochS);
+        auto segFEpoch = datasetPtr_->fromIndexMosaicCopy(pairEpochF);
+        auto segSEpoch = datasetPtr_->fromIndexMosaicCopy(pairEpochS);
         if (!segFEpoch.isValid() || !segSEpoch.isValid()) {
             continue;
         }
