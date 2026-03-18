@@ -547,6 +547,7 @@ void DataProcessor::onChartsAdded(uint64_t indx)
 
 void DataProcessor::tryScheduleAutoBottomTrack(uint64_t indx)
 {
+    Q_UNUSED(indx);
     if (resetInProgress_.load()) {
         return;
     }
@@ -567,15 +568,30 @@ void DataProcessor::tryScheduleAutoBottomTrack(uint64_t indx)
         return;
     }
 
-    const int endIndx = static_cast<int>(indx);
-    const int currCount = std::floor(endIndx / windowSize);
-    if (bottomTrackWindowCounter_ == currCount) {
+    const int datasetSize = datasetPtr_ ? datasetPtr_->sizeThreadSafe() : 0;
+    if (datasetSize <= 0) {
         return;
     }
 
-    const int additionalBTPGap = windowSize / 2;
-    btP.indexFrom = std::max(0, windowSize * bottomTrackWindowCounter_ - (windowSize / 2 + 1) - additionalBTPGap);
-    btP.indexTo   = std::max(0, windowSize * currCount - (windowSize / 2 + 1) - additionalBTPGap);
+    const int availableEpochs = datasetSize;
+    const int availableCharts = static_cast<int>(chartsCounter_) + 1;
+    const int currTo = std::min(availableEpochs, availableCharts);
+
+    if (currTo < windowSize) {
+        return;
+    }
+
+    if (currTo <= bottomTrackWindowCounter_) {
+        return;
+    }
+
+    if (btBusy_) {
+        return;
+    }
+
+    const int prevTo = std::clamp(bottomTrackWindowCounter_, 0, currTo);
+    btP.indexFrom = std::max(0, prevTo - windowSize);
+    btP.indexTo   = currTo;
 
     const auto channels = datasetPtr_->channelsList();
     if (channels.isEmpty()) {
@@ -584,13 +600,16 @@ void DataProcessor::tryScheduleAutoBottomTrack(uint64_t indx)
 
     const DatasetChannel ch1 = channels[0];
     const DatasetChannel ch2 = (channels.size() >= 2) ? channels[1] : DatasetChannel();
+
+    btBusy_ = true;
+
     QMetaObject::invokeMethod(worker_, "bottomTrackProcessing", Qt::QueuedConnection,
                               Q_ARG(DatasetChannel, ch1),
                               Q_ARG(DatasetChannel, ch2),
                               Q_ARG(BottomTrackParam, btP),
                               Q_ARG(bool, false),/*manual*/
                               Q_ARG(bool, false)/*redrawAll*/);
-    bottomTrackWindowCounter_ = currCount;
+    bottomTrackWindowCounter_ = currTo;
 }
 
 void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVector<int>& vertIndxs, bool isManual)
@@ -1319,6 +1338,8 @@ void DataProcessor::onBottomTrackFinished()
         tryFinalizeResetProcessing();
         return;
     }
+
+    tryScheduleAutoBottomTrack(epochCounter_);
 
     if (!forceVisibleRefreshAfterBottomTrack_) {
         return;
