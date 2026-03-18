@@ -1,4 +1,4 @@
-﻿#include "dataset.h"
+#include "dataset.h"
 
 #include "core.h"
 #include "data_processor_defs.h"
@@ -164,25 +164,25 @@ void Dataset::addEncoder(float angle1_deg, float angle2_deg, float angle3_deg)
 {
     Q_UNUSED(angle3_deg)
 
-    Epoch* last_epoch = last();
-    if (!last_epoch) {
-        return;
-    }
-    if(last_epoch->isEncodersSeted()) {
-        last_epoch = addNewEpoch();
+    {
+        QWriteLocker wl(&poolMtx_);
 
-        if(last_epoch->isUsblSolutionAvailable()) {
-            float usbl_az = last_epoch->usblSolution().azimuth_deg;
-            pool_[endIndex()].setEncoders(angle1_deg, angle2_deg, (angle1_deg+usbl_az)*10);
+        if (pool_.isEmpty()) {
+            pool_.resize(1);
         }
-    } else {
-        if(last_epoch->isUsblSolutionAvailable()) {
-            float usbl_az = last_epoch->usblSolution().azimuth_deg;
-            pool_[endIndex()].setEncoders(angle1_deg, angle2_deg, (angle1_deg+usbl_az)*10);
+
+        int lastIndex = pool_.size() - 1;
+        if (pool_[lastIndex].isEncodersSeted()) {
+            pool_.resize(pool_.size() + 1);
+            lastIndex = pool_.size() - 1;
+        }
+
+        if (pool_[lastIndex].isUsblSolutionAvailable()) {
+            const float usbl_az = pool_[lastIndex].usblSolution().azimuth_deg;
+            pool_[lastIndex].setEncoders(angle1_deg, angle2_deg, (angle1_deg + usbl_az) * 10);
         }
     }
 
-    // last_epoch->setEncoders(angle1_deg, angle2_deg, NAN);
     qDebug("Encoder was added");
     emit dataUpdate();
 }
@@ -239,89 +239,97 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
     }
 
     // ! we need all channels in data !
-    uint8_t numSubChannels = data.size();
+    const uint8_t numSubChannels = data.size();
+    QSet<int> updatedIndxs;
+    int endIndx = -1;
+    int lastIndx = 0;
 
-    if (shouldAddNewEpoch(channelId, numSubChannels)) {
-        addNewEpoch();
-    }
+    {
+        QWriteLocker wl(&poolMtx_);
 
-    updateEpochWithChart(channelId, chartParams, data, resolution, offset);
-    const int endIndx = endIndex();
-
-    // BLACK STRIPES PROCESSOR
-    if (bSProc_->getState()) {
-        QSet<int> updatedIndxs;
-
-        // resize eth data
-        if (channelsToResizeEthData_.contains(channelId)) {
-            channelsToResizeEthData_.remove(channelId);
-            uint16_t count = usingRecordParameters_[channelId].count;
-            bSProc_->tryResizeEthalonData(channelId, numSubChannels, BlackStripesProcessor::Direction::kForward, count);
-            bSProc_->tryResizeEthalonData(channelId, numSubChannels, BlackStripesProcessor::Direction::kBackward, count);
+        bool needNewEpoch = pool_.isEmpty();
+        if (!needNewEpoch) {
+            const auto& epoch = pool_.last();
+            needNewEpoch = true;
+            for (int i = 0; i < numSubChannels; ++i) {
+                if (!epoch.chartAvail(channelId, i)) {
+                    needNewEpoch = false;
+                    break;
+                }
+            }
         }
 
+        if (needNewEpoch) {
+            pool_.resize(pool_.size() + 1);
+        }
 
-        // FORWARD
-        if (bSProc_->getForwardSteps()) {
+        endIndx = pool_.size() - 1;
+        Epoch& epoch = pool_[endIndx];
 
-            auto getPreChart = [&](int i, uint8_t subChannelId) -> const Epoch::Echogram* {
-                const int preEpIndx = std::max(0, i - 1);
-                if (auto* preEpoch = &pool_[preEpIndx]; preEpoch) {
-                    return preEpoch->chart(channelId, subChannelId);
-                }
+        RecordParameters recParam;
+        if (usingRecordParameters_.contains(channelId)) {
+            recParam = usingRecordParameters_[channelId];
+        }
 
-                return nullptr;
-            };
+        epoch.setChart(channelId, data, resolution, offset);
+        epoch.setRecParameters(channelId, recParam);
+        epoch.setChartParameters(channelId, chartParams);
 
-            const int remainingIndx = lastAddChartEpochIndx_[channelId] + 1;
-            const uint8_t subChannelId = 0; //
+        if (bSProc_->getState()) {
+            if (channelsToResizeEthData_.contains(channelId)) {
+                channelsToResizeEthData_.remove(channelId);
+                const uint16_t count = usingRecordParameters_[channelId].count;
+                bSProc_->tryResizeEthalonData(channelId, numSubChannels, BlackStripesProcessor::Direction::kForward, count);
+                bSProc_->tryResizeEthalonData(channelId, numSubChannels, BlackStripesProcessor::Direction::kBackward, count);
+            }
 
-            for (int i = remainingIndx; i <= endIndx; ++i) {
-                if (auto* iEpoch = &pool_[i]; iEpoch) {
+            if (bSProc_->getForwardSteps()) {
+                auto getPreChart = [&](int i, uint8_t subChannelId) -> const Epoch::Echogram* {
+                    const int preEpIndx = std::max(0, i - 1);
+                    return pool_[preEpIndx].chart(channelId, subChannelId);
+                };
+
+                const int remainingIndx = lastAddChartEpochIndx_[channelId] + 1;
+                const uint8_t subChannelId = 0;
+
+                for (int i = remainingIndx; i <= endIndx; ++i) {
+                    Epoch& iEpoch = pool_[i];
                     float iResolution = 0.0f;
                     float iOffset = 0.0f;
 
                     if (i == endIndx) {
                         iResolution = resolution;
                         iOffset = offset;
-                    }
-                    else {
-                        if (const auto* iChart = iEpoch->chart(channelId, subChannelId); iChart) {
-                            iResolution = iChart->resolution;
-                            iOffset = iChart->offset;
-                        }
-                        else {
-                            if (auto* preChart = getPreChart(i, subChannelId); preChart) {
-                                iResolution = preChart->resolution;
-                                iOffset = preChart->offset;
-                            }
-                        }
+                    } else if (const auto* iChart = iEpoch.chart(channelId, subChannelId); iChart) {
+                        iResolution = iChart->resolution;
+                        iOffset = iChart->offset;
+                    } else if (const auto* preChart = getPreChart(i, subChannelId); preChart) {
+                        iResolution = preChart->resolution;
+                        iOffset = preChart->offset;
                     }
 
-                    if (auto* preChart = getPreChart(i, subChannelId); preChart) {
+                    if (const auto* preChart = getPreChart(i, subChannelId); preChart) {
                         if (!qFuzzyCompare(preChart->resolution, iResolution) || !qFuzzyCompare(preChart->offset, iOffset)) {
                             bSProc_->clearEthalonData(channelId, BlackStripesProcessor::Direction::kForward);
                         }
                     }
 
-                    if (bSProc_->update(channelId, iEpoch, BlackStripesProcessor::Direction::kForward, iResolution, iOffset)) {
+                    if (bSProc_->update(channelId, &iEpoch, BlackStripesProcessor::Direction::kForward, iResolution, iOffset)) {
                         updatedIndxs.insert(i);
                     }
                 }
             }
-        }
 
-        // BACKWARD
-        int backSteps = bSProc_->getBackwardSteps();
-        if (backSteps) {
-            bSProc_->clearEthalonData(channelId, BlackStripesProcessor::Direction::kBackward);
+            const int backSteps = bSProc_->getBackwardSteps();
+            if (backSteps) {
+                bSProc_->clearEthalonData(channelId, BlackStripesProcessor::Direction::kBackward);
 
-            const int startIndx  = std::max(0, endIndx - backSteps);
-            for (int i = endIndx; i >= startIndx; --i) {
-                if (auto* iEpoch = &pool_[i]; iEpoch) {
+                const int startIndx = std::max(0, endIndx - backSteps);
+                for (int i = endIndx; i >= startIndx; --i) {
+                    Epoch& iEpoch = pool_[i];
                     float iResolution = resolution;
                     float iOffset = offset;
-                    if (const auto* iChart = iEpoch->chart(channelId); iChart) {
+                    if (const auto* iChart = iEpoch.chart(channelId); iChart) {
                         iResolution = iChart->resolution;
                         iOffset = iChart->offset;
                         if (!qFuzzyCompare(iChart->resolution, resolution) || !qFuzzyCompare(iChart->offset, offset)) {
@@ -329,26 +337,25 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
                         }
                     }
 
-                    if (bSProc_->update(channelId, iEpoch, BlackStripesProcessor::Direction::kBackward, iResolution, iOffset)) {
+                    if (bSProc_->update(channelId, &iEpoch, BlackStripesProcessor::Direction::kBackward, iResolution, iOffset)) {
                         updatedIndxs.insert(i);
                     }
                 }
             }
         }
 
-
-        if (!updatedIndxs.empty()) {
-            emit redrawEpochs(updatedIndxs);
-        }
+        lastAddChartEpochIndx_[channelId] = endIndx;
+        lastIndx = std::max(0, endIndx - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0));
     }
 
-    lastAddChartEpochIndx_[channelId] = endIndx;
+    if (!updatedIndxs.empty()) {
+        emit redrawEpochs(updatedIndxs);
+    }
 
     for (int i = 0; i < numSubChannels; ++i) {
         validateChannelList(channelId, i);
     }
 
-    int lastIndx = std::max(0, (size() - 1) - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: РЅРµ РїСЂРѕСЃС‚Рѕ РєРѕР»-РІРѕ СЌРїРѕС… - РѕРєРЅРѕ РЅР°Р·Р°Рґ, Р° РїРѕСЃР»РµРґРЅСЏСЏ РЅРµРёР·РјРµРЅРЅР°СЏ СЌРїРѕС…Р° РїРѕ С‡Р°СЂС‚Р°Рј
     emit dataUpdate();
     emit chartAdded(lastIndx);
 }
@@ -360,68 +367,65 @@ void Dataset::rawDataRecieved(const ChannelId& channelId, RawData raw_data) {
     int16_t* complex16_data = (int16_t*)raw_data.data.data();
     int size = raw_data.samplesPerChannel();
 
-    Epoch* last_epoch = last();
-    if (!last_epoch) {
-        return;
-    }
-    std::reference_wrapper<ComplexSignals> compex_signals = last_epoch->complexSignals();
+    ChannelId dev_id(channelId.uuid, header.channelGroup);
 
-    ChannelId dev_id(channelId.uuid, header.channelGroup); // channelId.uuid
+    {
+        QWriteLocker wl(&poolMtx_);
 
-    if(compex_signals.get()[dev_id].contains(header.channelGroup)) {
-        float offset_m = 0;
-        float offset_db = 0;
-        offset_db = -20;
+        if (pool_.isEmpty()) {
+            pool_.resize(1);
+        }
 
-        Q_UNUSED(offset_m)
-        Q_UNUSED(offset_db)
+        int lastIndex = pool_.size() - 1;
+        Epoch* last_epoch = &pool_[lastIndex];
+        auto* complexSignals = &last_epoch->complexSignals();
 
-        // last_epoch->moveComplexToEchogram(offset_m, offset_db);
-        last_epoch = addNewEpoch();
+        if ((*complexSignals)[dev_id].contains(header.channelGroup)) {
+            pool_.resize(pool_.size() + 1);
+            lastIndex = pool_.size() - 1;
+            last_epoch = &pool_[lastIndex];
+            complexSignals = &last_epoch->complexSignals();
+        }
 
-        compex_signals = std::ref(last_epoch->complexSignals());
+        QVector<ComplexSignal>& channels = (*complexSignals)[dev_id][header.channelGroup];
+        channels.resize(header.channelCount);
 
-    }
+        for (int ich = 0; ich < header.channelCount; ich++) {
+            ComplexSignal& signal = channels[ich];
 
-    QVector<ComplexSignal>& channels = compex_signals.get()[dev_id][header.channelGroup];
-    channels.resize(header.channelCount);
+            signal.globalOffset = header.globalOffset;
+            signal.sampleRate = header.sampleRate;
+            signal.data.resize(size);
 
-    for(int ich = 0; ich < header.channelCount; ich++) {
-        ComplexSignal& signal = channels[ich]; //??
+            ComplexF* signal_data = signal.data.data();
 
-        signal.globalOffset = header.globalOffset;
-        signal.sampleRate = header.sampleRate;
-        signal.data.resize(size);
+            if (header.dataType == 0) {
+                signal.isComplex = true;
 
-        ComplexF* signal_data = signal.data.data();
+                for (int i = 0; i < size; i++) {
+                    signal_data[i] = compelex_data[i * header.channelCount + ich];
+                }
+            } else if (header.dataType == 1) {
+                signal.isComplex = false;
 
-        if(header.dataType == 0) {
-            signal.isComplex = true;
+                for (int i = 0; i < size; i++) {
+                    signal_data[i] = ComplexF(real16_data[i * header.channelCount + ich], 0);
+                }
+            } else if (header.dataType == 2) {
+                signal.isComplex = true;
 
-            for(int i  = 0; i < size; i++) {
-                signal_data[i] = compelex_data[i*header.channelCount + ich];
-            }
-        } else if(header.dataType == 1) {
-            signal.isComplex = false;
-
-            for(int i  = 0; i < size; i++) {
-                signal_data[i] = ComplexF(real16_data[i*header.channelCount + ich], 0);
-            }
-        } else if(header.dataType == 2) {
-            signal.isComplex = true;
-
-            for(int i  = 0; i < size; i++) {
-                signal_data[i] = ComplexF(complex16_data[(i*header.channelCount + ich)*2], complex16_data[(i*header.channelCount + ich)*2+1]);
+                for (int i = 0; i < size; i++) {
+                    signal_data[i] = ComplexF(complex16_data[(i * header.channelCount + ich) * 2], complex16_data[(i * header.channelCount + ich) * 2 + 1]);
+                }
             }
         }
+
+        float offset_m = 0;
+        float offset_db = -20;
+        last_epoch->moveComplexToEchogram(dev_id, header.channelGroup, offset_m, offset_db);
     }
 
-    float offset_m = 0;
-    float offset_db = 0;
-    offset_db = -20;
-    last_epoch->moveComplexToEchogram(dev_id, header.channelGroup, offset_m, offset_db);
-
-    for(int ich = 0; ich < header.channelCount; ich++) {
+    for (int ich = 0; ich < header.channelCount; ich++) {
         validateChannelList(dev_id, ich);
     }
 
@@ -430,14 +434,21 @@ void Dataset::rawDataRecieved(const ChannelId& channelId, RawData raw_data) {
 
 void Dataset::addDist(const ChannelId& channelId, int dist)
 {
-    int pool_index = endIndex();
+    {
+        QWriteLocker wl(&poolMtx_);
 
-    if (pool_index < 0 || pool_[pool_index].distAvail() == true) {
-        addNewEpoch();
-        pool_index = endIndex();
+        if (pool_.isEmpty()) {
+            pool_.resize(1);
+        }
+
+        int pool_index = pool_.size() - 1;
+        if (pool_[pool_index].distAvail()) {
+            pool_.resize(pool_.size() + 1);
+            pool_index = pool_.size() - 1;
+        }
+
+        pool_[pool_index].setDist(channelId, dist);
     }
-
-    pool_[pool_index].setDist(channelId, dist);
 
     const float distMeters = static_cast<float>(dist) * 0.001f;
     setLastRangefinderDepth(distMeters);
@@ -448,35 +459,32 @@ void Dataset::addDist(const ChannelId& channelId, int dist)
 
 void Dataset::addRangefinder(const ChannelId& channelId, float distance)
 {
-    Epoch* epoch = last();
-    if (!epoch) {
-        return;
-    }
-    if (epoch->distAvail()) {
-        epoch = addNewEpoch();
+    {
+        QWriteLocker wl(&poolMtx_);
+
+        if (pool_.isEmpty()) {
+            pool_.resize(1);
+        }
+
+        int poolIndex = pool_.size() - 1;
+        if (pool_[poolIndex].distAvail()) {
+            pool_.resize(pool_.size() + 1);
+            poolIndex = pool_.size() - 1;
+        }
+
+        pool_[poolIndex].setDist(channelId, distance * 1000);
     }
 
     setLastRangefinderDepth(distance);
     setLastDepth(distance);
 
-    epoch->setDist(channelId, distance * 1000);
-
     emit dataUpdate();
 }
 
 void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
-    int pool_index = endIndex();
-    if(pool_index < 0 || pool_[pool_index].isUsblSolutionAvailable() == true) {
-        addNewEpoch();
-        //pool_index = endIndex();
-    }
-
-    // tracks[data.id].data_.append(QVector3D(data.x_m, data.y_m, data.depth_m));
     tracks[-1].data_.append(QVector3D());
     tracks[-1].objectColor_ = QColor(0, 255, 255);
     tracks[-1].type_ = UsblView::UsblObjectType::kBeacon;
-    //tracks[-1].yaw_ = 100.0f;
-
 
     Position pos;
     pos.lla = LLA(data.usbl_latitude, data.usbl_longitude);
@@ -487,33 +495,18 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     Q_UNUSED(dist_save);
     Q_UNUSED(angl_save);
 
-    // float angl = qDegreesToRadians(-data.usbl_yaw - data.azimuth_deg);
     float angl_usbl = data.azimuth_deg;
     float dist = data.distance_m;
 
-    // float x_beacon = dist*cosf(angl);
-    // float y_beacon = dist*sinf(angl);
-
-    // data.azimuth_deg = (data.usbl_yaw + data.azimuth_deg);
-
-
-    if(pos.lla.isCoordinatesValid()
-        // && abs(dist_save - dist) < 0.5
-        // && (abs(angl_save - angl_usbl) < 10)
-        // && x_beacon < 0
-        ) {
-        // qDebug("usbl lat %f, lon %f", data.usbl_latitude, data.usbl_longitude);
-
+    if(pos.lla.isCoordinatesValid()) {
         setLlaRef(LLARef(pos.lla), getCurrentLlaRefState());
 
         pos.LLA2NED(&_llaRef);
-        // qDebug("usbl x %f, y %f", pos.ned.n, pos.ned.e);
 
         tracks[-2].data_.append(QVector3D(pos.ned.n, pos.ned.e, 0));
         tracks[-2].objectColor_ = QColor(0, 200, 0);
         tracks[-2].type_ = UsblView::UsblObjectType::kUsbl;
         tracks[-2].yaw_ = 0.0f;
-
 
         float beacon_n = data.beacon_n;
         float beacon_e = data.beacon_e;
@@ -529,18 +522,6 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         tracks[-4].pointRadius_ = 50;
         tracks[-4].type_ = UsblView::UsblObjectType::kBeacon;
         tracks[-4].yaw_ = 90.0f;
-
-
-        // Position pos_beacon;
-        // pos_beacon.lla = LLA(data.latitude_deg, data.longitude_deg);
-        // if(pos_beacon.lla.isCoordinatesValid()) {
-        //     pos_beacon.LLA2NED(&_llaRef);
-        //     tracks[-5].data_.append(QVector3D(pos_beacon.ned.n, pos_beacon.ned.e, 0));
-        //     tracks[-5].objectColor_ = QColor(0, 200, 0);
-        //     tracks[-5].lineWidth_ = 5;
-        // }
-
-        // _pool[endIndex()].set(data);
     } else {
          tracks[-4].data_.append(QVector3D(NAN, NAN, 0));
     }
@@ -550,48 +531,67 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     std::shared_ptr<UsblView> view = scene3dViewPtr_->getUsblViewPtr();
     view->setTrackRef(tracks);
 
-    pool_[endIndex()].setAtt(data.usbl_yaw, data.usbl_pitch, data.usbl_roll);
-    pool_[endIndex()].set(data);
-    // float enc_az= pool_[endIndex()].encoder1();
-    // float enc_el= pool_[endIndex()].encoder2();
-    // float usbl_az = data.azimuth_deg;
-    // pool_[endIndex()].setEncoders(enc_az, enc_el, -enc_az+usbl_az);
+    {
+        QWriteLocker wl(&poolMtx_);
+
+        if (pool_.isEmpty()) {
+            pool_.resize(1);
+        }
+
+        int poolIndex = pool_.size() - 1;
+        if (pool_[poolIndex].isUsblSolutionAvailable()) {
+            pool_.resize(pool_.size() + 1);
+            poolIndex = pool_.size() - 1;
+        }
+
+        pool_[poolIndex].setAtt(data.usbl_yaw, data.usbl_pitch, data.usbl_roll);
+        pool_[poolIndex].set(data);
+    }
+
     emit dataUpdate();
 }
 
 void Dataset::addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
-    int pool_index = endIndex();
+    {
+        QWriteLocker wl(&poolMtx_);
 
-    if(pool_index < 0 || (pool_[pool_index].isDopplerBeamAvail() == true)) { //
-        addNewEpoch();
+        if (pool_.isEmpty()) {
+            pool_.resize(1);
+        }
+
+        int pool_index = pool_.size() - 1;
+        if (pool_[pool_index].isDopplerBeamAvail()) {
+            pool_.resize(pool_.size() + 1);
+            pool_index = pool_.size() - 1;
+        }
+
+        pool_[pool_index].setDopplerBeam(beams, cnt);
     }
-
-    pool_index = endIndex();
-
-    pool_[pool_index].setDopplerBeam(beams, cnt);
     emit dataUpdate();
 }
 
 void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
-    int pool_index = endIndex();
+    {
+        QWriteLocker wl(&poolMtx_);
 
-    if(pool_index < 0 || (pool_[pool_index].isDopplerBeamAvail() == false)) { //
-        addNewEpoch();
-        pool_index = endIndex();
+        if (pool_.isEmpty()) {
+            pool_.resize(1);
+        }
+
+        int pool_index = pool_.size() - 1;
+        if (!pool_[pool_index].isDopplerBeamAvail()) {
+            pool_.resize(pool_.size() + 1);
+            pool_index = pool_.size() - 1;
+        }
+
+        pool_[pool_index].setDVLSolution(dvlSolution);
     }
-
-    pool_[pool_index].setDVLSolution(dvlSolution);
     emit dataUpdate();
 }
 
 void Dataset::addAtt(float yaw, float pitch, float roll)
 {
     if (activeZeroing_) {
-        Epoch* lastEp = last();
-        if (!lastEp) {
-            return;
-        }
-
         ++testTime_;
 
         Position pos;
@@ -600,48 +600,58 @@ void Dataset::addAtt(float yaw, float pitch, float roll)
         pos.time = DateTime(testTime_, 100);
 
         if (pos.lla.isCoordinatesValid()) {
-            if (lastEp->getPositionGNSS().lla.isCoordinatesValid()) {
-                //qDebug() << "pos add new epoch" << _pool.size();
-                lastEp = addNewEpoch();
-            }
-            uint64_t lastIndx = pool_.size() - 1;
             if (!getLlaRef().isInit) {
-                LlaRefState llaState = state_ == DatasetState::kUndefined ? LlaRefState::kFile : (state_ == DatasetState::kFile ?  LlaRefState::kFile :  LlaRefState::kConnection);
-                setLlaRef(LLARef(pos.lla), llaState /*Dataset::LlaRefState::kConnection*/); // TODO
+                LlaRefState llaState = state_ == DatasetState::kUndefined ? LlaRefState::kFile : (state_ == DatasetState::kFile ? LlaRefState::kFile : LlaRefState::kConnection);
+                setLlaRef(LLARef(pos.lla), llaState);
             }
 
             tryResetDataset(pos.lla.latitude, pos.lla.longitude);
 
-            lastEp->setPositionLLA(pos);
-            lastEp->setPositionRef(&_llaRef);
-            lastEp->setPositionDataType(DataType::kRaw);
-            interpolator_.interpolatePos(false); //
-
+            uint64_t lastIndx = 0;
             {
-                speed_ =  0.0;
-                emit speedChanged();
+                QWriteLocker wl(&poolMtx_);
+
+                if (pool_.isEmpty()) {
+                    pool_.resize(1);
+                }
+
+                int lastIndex = pool_.size() - 1;
+                if (pool_[lastIndex].getPositionGNSS().lla.isCoordinatesValid()) {
+                    pool_.resize(pool_.size() + 1);
+                    lastIndex = pool_.size() - 1;
+                }
+
+                Epoch& lastEp = pool_[lastIndex];
+                lastEp.setPositionLLA(pos);
+                lastEp.setPositionRef(&_llaRef);
+                lastEp.setPositionDataType(DataType::kRaw);
+
+                speed_ = 0.0;
+                boatLatitute_ = pos.lla.latitude;
+                boatLongitude_ = pos.lla.longitude;
+                lastIndx = static_cast<uint64_t>(lastIndex);
             }
 
-            boatLatitute_ = pos.lla.latitude;
-            boatLongitude_ = pos.lla.longitude;
-
+            interpolator_.interpolatePos(false);
+            emit speedChanged();
             emit positionAdded(lastIndx);
             emit dataUpdate();
             emit lastPositionChanged();
         }
     }
 
-    uint64_t lastIndx = pool_.size() - 1;
+    uint64_t lastIndx = 0;
+    {
+        QWriteLocker wl(&poolMtx_);
 
-    Epoch* last_epoch = last();
-    if (!last_epoch) {
-        return;
-    }
-    if(last_epoch->isAttAvail()) {
-        // last_epoch = addNewEpoch();
-    }
+        if (pool_.isEmpty()) {
+            pool_.resize(1);
+        }
 
-    last_epoch->setAtt(yaw, pitch, roll);
+        const int lastIndex = pool_.size() - 1;
+        pool_[lastIndex].setAtt(yaw, pitch, roll);
+        lastIndx = static_cast<uint64_t>(lastIndex);
+    }
 
     _lastYaw = yaw;
     _lastPitch = pitch;
@@ -659,89 +669,103 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
         return;
     }
 
-    Epoch* lastEp = last();
-    if (!lastEp) {
-        return;
-    }
-
     Position pos;
     pos.lla = LLA(lat, lon);
     pos.time = DateTime(unix_time, nanosec);
     const bool oneHzNoTimestamp = (unix_time == 0 && nanosec == 0);
 
     if (pos.lla.isCoordinatesValid()) {
-        if (lastEp->getPositionGNSS().lla.isCoordinatesValid()) {
-            //qDebug() << "pos add new epoch" << _pool.size();
-            lastEp = addNewEpoch();
-        }
-        uint64_t lastIndx = pool_.size() - 1;
         if (!getLlaRef().isInit) {
-            LlaRefState llaState = state_ == DatasetState::kUndefined ? LlaRefState::kFile : (state_ == DatasetState::kFile ?  LlaRefState::kFile :  LlaRefState::kConnection);
-            setLlaRef(LLARef(pos.lla), llaState /*Dataset::LlaRefState::kConnection*/); // TODO
+            LlaRefState llaState = state_ == DatasetState::kUndefined ? LlaRefState::kFile : (state_ == DatasetState::kFile ? LlaRefState::kFile : LlaRefState::kConnection);
+            setLlaRef(LLARef(pos.lla), llaState);
         }
 
         tryResetDataset(pos.lla.latitude, pos.lla.longitude);
 
-        lastEp->setPositionLLA(pos);
-        lastEp->setPositionRef(&_llaRef);
-        lastEp->setPositionDataType(DataType::kRaw);
-        interpolator_.interpolatePos(false);
+        uint64_t lastIndx = 0;
+        bool needEmitSpeedChanged = false;
 
-        if (Epoch* prevEp = lastlast(); prevEp) {
-            const auto& prev = prevEp->getPositionGNSS();
-            if (prev.lla.isCoordinatesValid()) {
-                const double dist = distanceMetersLLA(prev.lla.latitude, prev.lla.longitude, pos.lla.latitude,  pos.lla.longitude);
+        {
+            QWriteLocker wl(&poolMtx_);
 
-                if (oneHzNoTimestamp) {
-                    speed_ = (dist / 0.1) * 3.6; // TODO: kostyl
-                }
-                else {
-                    const auto& c = pos.time;
-                    const auto& p = prev.time;
-
-                    int64_t dsec  = int64_t(c.sec)     - int64_t(p.sec);
-                    int64_t dnano = int64_t(c.nanoSec) - int64_t(p.nanoSec);
-                    if (dnano < 0) {
-                        dsec -= 1;
-                        dnano += 1000000000;
-                    }
-
-                    double dt = double(dsec) + double(dnano) * 1e-9;
-
-                    if (dt <= 0.0) {
-                        dt = 1.0;
-                    }
-
-                    speed_ = (dist / dt) * 3.6;
-                }
-
-                emit speedChanged();
+            if (pool_.isEmpty()) {
+                pool_.resize(1);
             }
+
+            int lastIndex = pool_.size() - 1;
+            if (pool_[lastIndex].getPositionGNSS().lla.isCoordinatesValid()) {
+                pool_.resize(pool_.size() + 1);
+                lastIndex = pool_.size() - 1;
+            }
+
+            Epoch& lastEp = pool_[lastIndex];
+            lastEp.setPositionLLA(pos);
+            lastEp.setPositionRef(&_llaRef);
+            lastEp.setPositionDataType(DataType::kRaw);
+
+            if (lastIndex > 0) {
+                const auto& prev = pool_[lastIndex - 1].getPositionGNSS();
+                if (prev.lla.isCoordinatesValid()) {
+                    const double dist = distanceMetersLLA(prev.lla.latitude, prev.lla.longitude, pos.lla.latitude, pos.lla.longitude);
+
+                    if (oneHzNoTimestamp) {
+                        speed_ = (dist / 0.1) * 3.6;
+                    }
+                    else {
+                        const auto& c = pos.time;
+                        const auto& p = prev.time;
+
+                        int64_t dsec  = int64_t(c.sec) - int64_t(p.sec);
+                        int64_t dnano = int64_t(c.nanoSec) - int64_t(p.nanoSec);
+                        if (dnano < 0) {
+                            dsec -= 1;
+                            dnano += 1000000000;
+                        }
+
+                        double dt = double(dsec) + double(dnano) * 1e-9;
+                        if (dt <= 0.0) {
+                            dt = 1.0;
+                        }
+
+                        speed_ = (dist / dt) * 3.6;
+                    }
+
+                    needEmitSpeedChanged = true;
+                }
+            }
+
+            boatLatitute_ = pos.lla.latitude;
+            boatLongitude_ = pos.lla.longitude;
+
+            if (isValidActiveContactIndx()) {
+                const int activeIndx = static_cast<int>(activeContactIndx_);
+                if (activeIndx >= 0 && activeIndx < pool_.size()) {
+                    const auto& ep = pool_[activeIndx];
+                    const double latTarget = ep.contact_.lat;
+                    const double lonTarget = ep.contact_.lon;
+                    const double latBoat = pos.lla.latitude;
+                    const double lonBoat = pos.lla.longitude;
+
+                    distToActiveContact_ = distanceMetersLLA(latBoat, lonBoat, latTarget, lonTarget);
+
+                    double yawDeg = _lastYaw;
+                    if (!std::isfinite(yawDeg)) {
+                        yawDeg = lastAYaw_;
+                    }
+
+                    if (std::isfinite(yawDeg)) {
+                        angleToActiveContact_ = angleToTargetDeg(latBoat, lonBoat, latTarget, lonTarget, yawDeg);
+                    }
+                }
+            }
+
+            lastIndx = static_cast<uint64_t>(lastIndex);
         }
 
-        //qDebug() << "add pos for" << lastIndx;
+        interpolator_.interpolatePos(false);
 
-        boatLatitute_ = pos.lla.latitude;
-        boatLongitude_ = pos.lla.longitude;
-
-        if (isValidActiveContactIndx()) {
-            if (auto* ep = fromIndex(activeContactIndx_); ep) {
-                const double latTarget = ep->contact_.lat;
-                const double lonTarget = ep->contact_.lon;
-                const double latBoat = pos.lla.latitude;
-                const double lonBoat = pos.lla.longitude;
-
-                distToActiveContact_ = distanceMetersLLA(latBoat, lonBoat, latTarget, lonTarget);
-
-                double yawDeg = _lastYaw;
-                if (!std::isfinite(yawDeg)) {
-                    yawDeg = lastAYaw_;
-                }
-
-                if (std::isfinite(yawDeg)) {
-                    angleToActiveContact_ = angleToTargetDeg(latBoat, lonBoat, latTarget, lonTarget, yawDeg);
-                }
-            }
+        if (needEmitSpeedChanged) {
+            emit speedChanged();
         }
 
         emit positionAdded(lastIndx);
@@ -754,39 +778,47 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 
 void Dataset::addArtificalYaw()
 {
-    auto* llPtr = lastlast();
-    auto* lPtr  = last();
-    if (!llPtr || !lPtr) {
-        return;
-    }
-
-    auto llNed = llPtr->getPositionGNSS().ned;
-    auto lNed  = lPtr->getPositionGNSS().ned;
-    if (!llNed.isCoordinatesValid() || !lNed.isCoordinatesValid()) {
-        return;
-    }
-
-    const double dN = lNed.n - llNed.n;
-    const double dE = lNed.e - llNed.e;
-    if (qFuzzyIsNull(dN) && qFuzzyIsNull(dE)) {
-        return;
-    }
-
-    double yawRad = std::atan2(dE, dN);
-    double yawDeg = qRadiansToDegrees(yawRad);
-    if (yawDeg < 0.0) {
-        yawDeg += 360.0;
-    }
-
-    uint64_t indx = pool_.size() - 1;
-    const float aYaw = static_cast<float>(yawDeg);
+    uint64_t indx = 0;
+    float aYaw = 0.0f;
     const float aPitch = 0.0f;
     const float aRoll = 0.0f;
 
-    lPtr->setArtificalAtt(aYaw, aPitch, aRoll);
-    lastAYaw_   = aYaw;
+    {
+        QWriteLocker wl(&poolMtx_);
+
+        if (pool_.size() < 2) {
+            return;
+        }
+
+        auto& llPtr = pool_[pool_.size() - 2];
+        auto& lPtr  = pool_[pool_.size() - 1];
+
+        auto llNed = llPtr.getPositionGNSS().ned;
+        auto lNed  = lPtr.getPositionGNSS().ned;
+        if (!llNed.isCoordinatesValid() || !lNed.isCoordinatesValid()) {
+            return;
+        }
+
+        const double dN = lNed.n - llNed.n;
+        const double dE = lNed.e - llNed.e;
+        if (qFuzzyIsNull(dN) && qFuzzyIsNull(dE)) {
+            return;
+        }
+
+        double yawRad = std::atan2(dE, dN);
+        double yawDeg = qRadiansToDegrees(yawRad);
+        if (yawDeg < 0.0) {
+            yawDeg += 360.0;
+        }
+
+        indx = static_cast<uint64_t>(pool_.size() - 1);
+        aYaw = static_cast<float>(yawDeg);
+        lPtr.setArtificalAtt(aYaw, aPitch, aRoll);
+    }
+
+    lastAYaw_ = aYaw;
     lastAPitch_ = aPitch;
-    lastARoll_  = aRoll;
+    lastARoll_ = aRoll;
 
     interpolator_.interpolateArtificalAtt(false);
 
@@ -798,41 +830,44 @@ void Dataset::addPositionRTK(Position position) {
         return;
     }
 
-    Epoch* last_epoch = last();
-    if (!last_epoch) {
-        return;
+    QWriteLocker wl(&poolMtx_);
+    if (pool_.isEmpty()) {
+        pool_.resize(1);
     }
-    last_epoch->setExternalPosition(position);
+    pool_.last().setExternalPosition(position);
 }
 
 void Dataset::addDepth(float depth) {
-    Epoch* last_epoch = last();
-    if (!last_epoch) {
-        return;
-    }
-    if(last_epoch->isDepthAvail()) {
-        last_epoch = addNewEpoch();
+    {
+        QWriteLocker wl(&poolMtx_);
+
+        if (pool_.isEmpty()) {
+            pool_.resize(1);
+        }
+
+        int lastIndex = pool_.size() - 1;
+        if (pool_[lastIndex].isDepthAvail()) {
+            pool_.resize(pool_.size() + 1);
+            lastIndex = pool_.size() - 1;
+        }
+
+        pool_[lastIndex].setDepth(depth);
     }
 
     setLastDepth(depth);
-
-    last_epoch->setDepth(depth);
 }
 
 void Dataset::addGnssVelocity(double h_speed, double course) {
-    int pool_index = endIndex();
-    if(pool_index < 0) {
-        addNewEpoch();
-        pool_index = endIndex();
+    {
+        QWriteLocker wl(&poolMtx_);
+
+        if (pool_.isEmpty()) {
+            pool_.resize(1);
+        }
+
+        const int pool_index = pool_.size() - 1;
+        pool_[pool_index].setGnssVelocity(h_speed, course);
     }
-
-//    if(isfinite(_pool[pool_index].gnssHSpeed())) {
-//        makeNewEpoch();
-//        pool_index = endIndex();
-//    }
-
-
-    pool_[pool_index].setGnssVelocity(h_speed, course);
     emit dataUpdate();
 }
 
@@ -865,22 +900,13 @@ void Dataset::addSimpleNavV2(uint8_t gnssFixType,
 }
 
 void Dataset::addTemp(float temp_c) {
-    //qDebug() << "Dataset::addTemp" << temp_c;
     lastTemp_ = temp_c;
-    Epoch* last_epoch = last();
-    if (!last_epoch) {
-        return;
-    }
-    last_epoch->setTemp(temp_c);
-    // qDebug() << "Dataset Temp: " << temp_c;
 
-    // int pool_index = endIndex();
-    // if(pool_index < 0) {
-    //     addNewEpoch();
-    //     pool_index = endIndex();
-    // }
-    // pool_[pool_index].setTemp(temp_c);
-    // emit dataUpdate();
+    QWriteLocker wl(&poolMtx_);
+    if (pool_.isEmpty()) {
+        pool_.resize(1);
+    }
+    pool_.last().setTemp(temp_c);
 }
 
 void Dataset::addBoatStatus(uint8_t batteryBoatPercent, uint8_t batteryBridgePercent, uint8_t signalQualityBoatPercent, uint8_t signalQualityBridgePercent)
@@ -1290,22 +1316,26 @@ QStringList Dataset::channelsNameList()
 
 void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist)
 {
-    Epoch* epPtr = fromIndex(epIndx);
-
-    if (!epPtr) {
-        return;
-    }
-
     bool settedChart = false;
 
-    // for all sub ch
-    auto numSubChs = epPtr->getChartsSizeByChannelId(channelId);
-    for (int subChId = 0; subChId < numSubChs; ++subChId) {
-        if (epPtr->chartAvail(channelId, subChId)) {
-            Epoch::Echogram* chart = epPtr->chart(channelId, subChId);
-            if (chart) {
-                chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSource::DistanceSourceProcessing);
-                settedChart = true;
+    {
+        QWriteLocker wl(&poolMtx_);
+
+        if (epIndx < 0 || epIndx >= pool_.size()) {
+            return;
+        }
+
+        Epoch& ep = pool_[epIndx];
+
+        // for all sub ch
+        const int numSubChs = ep.getChartsSizeByChannelId(channelId);
+        for (int subChId = 0; subChId < numSubChs; ++subChId) {
+            if (ep.chartAvail(channelId, subChId)) {
+                Epoch::Echogram* chart = ep.chart(channelId, subChId);
+                if (chart) {
+                    chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSource::DistanceSourceProcessing);
+                    settedChart = true;
+                }
             }
         }
     }
@@ -1334,39 +1364,45 @@ void Dataset::onDistCompletedBatch(const QVector<BottomTrackUpdate>& updates)
     float lastDepth = NAN;
     int maxCompIndx = -1;
 
-    for (const auto& update : updates) {
-        Epoch* epPtr = fromIndex(update.epochIndex);
-        if (!epPtr) {
-            continue;
-        }
+    {
+        QWriteLocker wl(&poolMtx_);
+        const int poolSize = pool_.size();
 
-        bool settedChart = false;
-        const int numSubChs = epPtr->getChartsSizeByChannelId(update.channelId);
-        for (int subChId = 0; subChId < numSubChs; ++subChId) {
-            if (epPtr->chartAvail(update.channelId, subChId)) {
-                Epoch::Echogram* chart = epPtr->chart(update.channelId, subChId);
-                if (chart) {
-                    chart->bottomProcessing.setDistance(update.distance, Epoch::DistProcessing::DistanceSource::DistanceSourceProcessing);
-                    settedChart = true;
+        for (const auto& update : updates) {
+            if (update.epochIndex < 0 || update.epochIndex >= poolSize) {
+                continue;
+            }
+
+            Epoch& ep = pool_[update.epochIndex];
+
+            bool settedChart = false;
+            const int numSubChs = ep.getChartsSizeByChannelId(update.channelId);
+            for (int subChId = 0; subChId < numSubChs; ++subChId) {
+                if (ep.chartAvail(update.channelId, subChId)) {
+                    Epoch::Echogram* chart = ep.chart(update.channelId, subChId);
+                    if (chart) {
+                        chart->bottomProcessing.setDistance(update.distance, Epoch::DistProcessing::DistanceSource::DistanceSourceProcessing);
+                        settedChart = true;
+                    }
                 }
             }
-        }
 
-        if (!settedChart) {
-            continue;
-        }
+            if (!settedChart) {
+                continue;
+            }
 
-        lastDepth = update.distance;
-        haveDepth = true;
+            lastDepth = update.distance;
+            haveDepth = true;
 
-        if (firstChannelId_.channelId_ != update.channelId) {
-            continue;
-        }
+            if (firstChannelId_.channelId_ != update.channelId) {
+                continue;
+            }
 
-        const int guardInterval = bottomTrackParam_.windowSize;
-        const int compIndx = update.epochIndex > guardInterval ? update.epochIndex - guardInterval : update.epochIndex;
-        if (compIndx > maxCompIndx) {
-            maxCompIndx = compIndx;
+            const int guardInterval = bottomTrackParam_.windowSize;
+            const int compIndx = update.epochIndex > guardInterval ? update.epochIndex - guardInterval : update.epochIndex;
+            if (compIndx > maxCompIndx) {
+                maxCompIndx = compIndx;
+            }
         }
     }
 
@@ -1379,7 +1415,6 @@ void Dataset::onDistCompletedBatch(const QVector<BottomTrackUpdate>& updates)
         emit bottomTrackAdded(maxCompIndx);
     }
 }
-
 void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll)
 {
     bottomTrackParam_ = btP;
@@ -1498,14 +1533,14 @@ Epoch *Dataset::addNewEpoch()
 
 bool Dataset::shouldAddNewEpoch(const ChannelId &channelId, uint8_t numSubChannels) const
 {
-    const int lastIndx = endIndex();
+    QReadLocker rl(&poolMtx_);
 
-    if (lastIndx == -1) {
+    const int lastIndx = pool_.size() - 1;
+    if (lastIndx < 0) {
         return true;
     }
 
     const auto& epoch = pool_[lastIndx];
-
     for (int i = 0; i < numSubChannels; ++i) {
         if (!epoch.chartAvail(channelId, i)) {
             return false;
@@ -1517,7 +1552,12 @@ bool Dataset::shouldAddNewEpoch(const ChannelId &channelId, uint8_t numSubChanne
 
 void Dataset::updateEpochWithChart(const ChannelId &channelId, const ChartParameters &chartParams, const QVector<QVector<uint8_t> > &data, float resolution, float offset)
 {
-    const int indx = endIndex();
+    QWriteLocker wl(&poolMtx_);
+    if (pool_.isEmpty()) {
+        return;
+    }
+
+    const int indx = pool_.size() - 1;
     auto& epoch = pool_[indx];
 
     RecordParameters recParam;

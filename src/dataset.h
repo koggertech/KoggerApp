@@ -80,6 +80,11 @@ public:
         return pool_.size();
     }
 
+    inline int sizeThreadSafe() const {
+        QReadLocker rl(&poolMtx_);
+        return pool_.size();
+    }
+
     Epoch* fromIndex(int index_offset = 0) {
         int index = validIndex(index_offset);
         if(index >= 0) {
@@ -101,6 +106,28 @@ public:
         Epoch copy = src;
 
         return copy;
+    }
+
+    Epoch fromIndexMosaicCopy(int index_offset = 0) {
+        QReadLocker rl(&poolMtx_);
+
+        const int index = validIndex(index_offset);
+        if (channelsSetup_.empty() || index < 0) {
+            return Epoch{};
+        }
+
+        return pool_.at(index).deepCopyForMosaic();
+    }
+
+    Epoch fromIndexBottomTrackCopy(int index_offset = 0) {
+        QReadLocker rl(&poolMtx_);
+
+        const int index = validIndex(index_offset);
+        if (channelsSetup_.empty() || index < 0) {
+            return Epoch{};
+        }
+
+        return pool_.at(index).deepCopyForBottomTrack();
     }
 
     Epoch::Echogram fromIndexCopyEchogram(int index_offset, const ChannelId& channelId) {
