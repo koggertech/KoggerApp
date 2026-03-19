@@ -23,6 +23,7 @@ public:
 
     LinkListModel* getModelPtr();
     LinkManager* getWorker();
+    void startWorkerThread();
     void closeOpenedLinks();
     QHash<QUuid, QString> getLinkNames() const;
     void openClosedLinks();

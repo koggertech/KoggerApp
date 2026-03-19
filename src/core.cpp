@@ -55,8 +55,6 @@ Core::Core() :
 #ifdef FLASHER
     connect(&dev_flasher_, &DeviceFlasher::sendStepInfo, this, &Core::dev_flasher_rcv);
 #endif
-
-    createDataProcessor();
 }
 
 Core::~Core()
@@ -1976,6 +1974,10 @@ QHash<QUuid, QString> Core::getLinkNames() const
 
 void Core::shutdownDataProcessor()
 {
+    if (!dataProcessor_) {
+        return;
+    }
+
     QMetaObject::invokeMethod(dataProcessor_, "shutdown", Qt::BlockingQueuedConnection);
 }
 
@@ -2190,13 +2192,31 @@ int Core::getDataProcessorState() const
     return static_cast<int>(dataProcessorState_);
 }
 
+void Core::initAfterApp()
+{
+    if (linkManagerWrapperPtr_) {
+        linkManagerWrapperPtr_->startWorkerThread();
+    }
+
+    if (deviceManagerWrapperPtr_) {
+        deviceManagerWrapperPtr_->startWorkerThread();
+    }
+
+    createDataProcessor();
+}
+
 void Core::initStreamList()
 {
+    initAfterApp();
     deviceManagerWrapperPtr_->initStreamList();
 }
 
 void Core::createDataProcessor()
 {
+    if (dataProcessor_ || dataProcThread_) {
+        return;
+    }
+
     dataProcThread_ = new QThread(this);
     dataProcessor_  = new DataProcessor(nullptr, datasetPtr_);
 
@@ -2214,6 +2234,10 @@ void Core::createDataProcessor()
 
 void Core::destroyDataProcessor()
 {
+    if (!dataProcessor_ && !dataProcThread_) {
+        return;
+    }
+
     resetDataProcessorConnections();
 
     if (dataProcThread_ && dataProcThread_->isRunning()) {

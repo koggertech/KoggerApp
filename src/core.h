@@ -144,6 +144,7 @@ public slots:
     void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
     void onChannelsUpdated();
     void onRedrawEpochs(const QSet<int>& indxs);
+    void initAfterApp();
     void initStreamList();
 
 #ifdef FLASHER

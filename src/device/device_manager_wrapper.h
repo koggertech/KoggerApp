@@ -39,6 +39,7 @@ public:
     int                  pilotArmState  () { return getWorker()->pilotArmState();  }
     int                  pilotModeState () { return getWorker()->pilotModeState(); }
 
+    void startWorkerThread();
     void initStreamList();
 
 

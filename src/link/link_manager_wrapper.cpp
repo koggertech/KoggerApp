@@ -47,8 +47,6 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
 
     workerObject_->moveToThread(workerThread_.get());
     workerThread_->setObjectName("LinkThread");
-
-    workerThread_->start();
 }
 
 LinkManagerWrapper::~LinkManagerWrapper()
@@ -69,6 +67,13 @@ LinkListModel* LinkManagerWrapper::getModelPtr()
 LinkManager* LinkManagerWrapper::getWorker()
 {
     return workerObject_.get();
+}
+
+void LinkManagerWrapper::startWorkerThread()
+{
+    if (workerThread_ && !workerThread_->isRunning()) {
+        workerThread_->start();
+    }
 }
 
 void LinkManagerWrapper::closeOpenedLinks()
