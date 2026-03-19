@@ -124,7 +124,7 @@ signals:
     void chartLossesChanged();
 
     // logger
-    void sendProtoFrame(const Parsers::ProtoBinOut& protoOut);
+    void sendProtoFrame(Parsers::ProtoBinOut protoOut);
 
 #ifdef SEPARATE_READING
     void fileStartOpening();

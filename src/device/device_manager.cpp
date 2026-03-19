@@ -19,9 +19,7 @@ DeviceManager::DeviceManager()
       upgradeAddr_(0)
 {
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
-#ifdef SEPARATE_READING
-    qRegisterMetaType<ProtoBinOut>("ProtoBinOut&");
-#endif
+    qRegisterMetaType<Parsers::ProtoBinOut>("Parsers::ProtoBinOut");
     qRegisterMetaType<uint8_t>("uint8_t");
     qRegisterMetaType<int16_t>("int16_t");
     qRegisterMetaType<QVector<uint8_t>>("QVector<uint8_t>");

@@ -22,6 +22,7 @@ DevDriver::DevDriver(QObject *parent)
     qRegisterMetaType<uint16_t>("uint16_t");
     qRegisterMetaType<uint32_t>("uint32_t");
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
+    qRegisterMetaType<Parsers::ProtoBinOut>("Parsers::ProtoBinOut");
     qRegisterMetaType<QVector<QVector<uint8_t>>>("QVector<QVector<uint8_t>>");
     qRegisterMetaType<ChannelId>("ChannelId");
     qRegisterMetaType<ChartParameters>("ChartParameters");

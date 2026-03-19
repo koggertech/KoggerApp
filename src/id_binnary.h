@@ -102,7 +102,7 @@ public:
 signals:
     void updateContent(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp, uint8_t address);
     void dataSend(QByteArray data);
-    void binFrameOut(Parsers::ProtoBinOut &proto_out);
+    void binFrameOut(Parsers::ProtoBinOut proto_out);
     void notifyDevDriver(bool state);
 
 protected:
