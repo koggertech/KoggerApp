@@ -180,7 +180,7 @@ void DataProcessor::prepareForFileClose(int timeoutMs)
     requestCancel();
     notifyPrefetchProgress();
 
-    if (!jobRunning_.load()) {
+    if (!jobRunning_.load() && !btBusy_) {
         return;
     }
 
@@ -188,9 +188,13 @@ void DataProcessor::prepareForFileClose(int timeoutMs)
     QTimer timer;
     timer.setSingleShot(true);
     QObject::connect(worker_, &ComputeWorker::jobFinished, &loop, &QEventLoop::quit);
+    QObject::connect(worker_, &ComputeWorker::bottomTrackFinished, &loop, &QEventLoop::quit);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     timer.start(timeoutMs);
-    loop.exec();
+
+    while ((jobRunning_.load() || btBusy_) && timer.isActive()) {
+        loop.exec();
+    }
 }
 
 void DataProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
