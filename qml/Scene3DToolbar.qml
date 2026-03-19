@@ -53,6 +53,14 @@ Item  {
     opacity: (toolbarHovered || menuOpened) ? 1.0 : 0.5
     Behavior on opacity { NumberAnimation { duration: 120 } }
 
+    HoverHandler {
+        onHoveredChanged: {
+            if (hovered && toolbarRoot.view && toolbarRoot.view.resetScenePointerState) {
+                toolbarRoot.view.resetScenePointerState()
+            }
+        }
+    }
+
     ColumnLayout {
         id: column
 

@@ -674,6 +674,17 @@ ApplicationWindow  {
                 property int currentZoom: -1
                 property bool syncLoupeUiAllowed: (menuBar !== null) ? (menuBar.is3DVisible && !menuBar.is2DVisible) : false
 
+                function resetScenePointerState() {
+                    //console.info("resetScenePointerState")
+                    mousearea3D.startMousePos = Qt.point(-1, -1)
+                    mousearea3D.wasMoved = false
+                    mousearea3D.vertexMode = false
+                    mousearea3D.lastMouseKeyPressed = Qt.NoButton
+                    longPressTimer.stop()
+                    renderer.longPressTriggered = false
+                    renderer.cancelPointerInteraction()
+                }
+
                 onSyncLoupeUiAllowedChanged: {
                     setSyncLoupeUiAllowed(syncLoupeUiAllowed)
                 }
@@ -808,10 +819,7 @@ ApplicationWindow  {
                         }
 
                         onCanceled: {
-                            startMousePos = Qt.point(-1, -1)
-                            wasMoved = false
-                            vertexMode = false
-                            longPressTimer.stop()
+                            renderer.resetScenePointerState()
                         }
                     }
                 }

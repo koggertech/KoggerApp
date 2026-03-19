@@ -19,6 +19,14 @@ Item {
     opacity: (toolbarHovered || toolbarPressed || menuOpened) ? 1.0 : 0.5
     Behavior on opacity { NumberAnimation { duration: 120 } }
 
+    HoverHandler {
+        onHoveredChanged: {
+            if (hovered && root.view && root.view.resetScenePointerState) {
+                root.view.resetScenePointerState()
+            }
+        }
+    }
+
     function toggleLayers() {
         layersOpen = !layersOpen
         if (layersOpen) geometryOpen = false

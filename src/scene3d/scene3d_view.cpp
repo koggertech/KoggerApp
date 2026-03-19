@@ -921,6 +921,34 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::cancelPointerInteraction()
+{
+    //qDebug() << "GraphicsScene3dView::cancelPointerInteraction";
+    clearComboSelectionRect();
+
+    if (switchedToBottomTrackVertexComboSelectionMode_) {
+        m_mode = lastMode_;
+        if (m_bottomTrack) {
+            m_bottomTrack->mouseReleaseEvent(Qt::MouseButton::NoButton, m_lastMousePos.x(), m_lastMousePos.y());
+        }
+    }
+
+    switchedToBottomTrackVertexComboSelectionMode_ = false;
+    wasMoved_ = false;
+    wasMovedMouseButton_ = Qt::MouseButton::NoButton;
+
+    if (geoJsonDragging_) {
+        stopGeoJsonDrag();
+        geoJsonRenderDirty_ = true;
+    }
+
+    geoJsonBlockCameraMove_ = false;
+    geoJsonIgnoreNextLeftRelease_ = false;
+    resetRulerInteraction();
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, QPointF angleDelta, Qt::Key keyboardKey)
 {
     bool cameraWasMoved{ false };
