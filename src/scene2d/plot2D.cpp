@@ -1176,6 +1176,11 @@ void Plot2D::resetCash() {
     echogram_.resetCash();
 }
 
+void Plot2D::releaseCache()
+{
+    echogram_.releaseCache();
+}
+
 void Plot2D::plotUpdate() {}
 
 void Plot2D::sendSyncEvent(int epoch_index, QEvent::Type eventType) {

@@ -10,6 +10,7 @@ Plot2DEchogram::Plot2DEchogram()
 
 Plot2DEchogram::~Plot2DEchogram()
 {
+    releaseCache();
     delete miniPreviewPlot_;
 }
 
@@ -213,6 +214,24 @@ void Plot2DEchogram::updateColors()
 void Plot2DEchogram::resetCash()
 {
     _cashFlags.resetCash = true;
+}
+
+void Plot2DEchogram::releaseCache()
+{
+    _cash.clear();
+    _cash.squeeze();
+    _image = QImage();
+    _pixmap = QPixmap();
+    _lastCursor = DatasetCursor();
+    _lastWidth = -1;
+    _lastHeight = -1;
+    _flagColorChanged = true;
+    _cashFlags.resetCash = true;
+    reRenderPlotIndxs_.clear();
+
+    if (miniPreviewPlot_ != nullptr) {
+        miniPreviewPlot_->releaseCache();
+    }
 }
 
 void Plot2DEchogram::addReRenderPlotIndxs(const QSet<int> &indxs)
@@ -457,6 +476,9 @@ bool Plot2DEchogram::draw(Plot2D* parent, Dataset* dataset)
         canvas.painter()->drawPixmap(0, 0, _pixmap, cash_position, 0, cash_width - cash_position, 0);
         canvas.painter()->drawPixmap(cash_width - cash_position, 0, _pixmap, 0, 0, cash_position, 0);
     } else {
+        if (dataset == nullptr || !cursor.distance.isValid()) {
+            releaseCache();
+        }
     }
 
     return true;

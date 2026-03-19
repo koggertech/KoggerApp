@@ -241,11 +241,32 @@ void Core::resetRealtimeSessionState()
         dataHorizon_->clear();
     }
 
+    releasePlotCaches();
+
     QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::BlockingQueuedConnection);
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
         scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
+    }
+}
+
+void Core::releasePlotCaches()
+{
+    const int numPlots = plot2dList_.size();
+    for (int i = 0; i < numPlots; ++i) {
+        auto* plot = plot2dList_.at(i);
+        if (!plot) {
+            continue;
+        }
+
+        plot->releaseCache();
+        plot->plotUpdate();
+    }
+
+    if (syncLoupePlot3dPtr_) {
+        syncLoupePlot3dPtr_->releaseCache();
+        syncLoupePlot3dPtr_->plotUpdate();
     }
 }
 
@@ -281,6 +302,7 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
         resetDataProcessorConnections();
         datasetPtr_->resetDataset();
         dataHorizon_->clear();
+        releasePlotCaches();
         QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
         QMetaObject::invokeMethod(dataProcessor_, "setFilePath", Qt::QueuedConnection, Q_ARG(QString, localfilePath));
         setDataProcessorConnections();
@@ -407,6 +429,7 @@ void Core::onFileOpenBreaked(bool onOpen)
         datasetPtr_->resetDataset();
         dataHorizon_->clear();
     }
+    releasePlotCaches();
 
     QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
     QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
@@ -449,6 +472,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
             resetDataProcessorConnections();
             datasetPtr_->resetDataset();
             dataHorizon_->clear();
+            releasePlotCaches();
             QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
             QMetaObject::invokeMethod(dataProcessor_, "setFilePath", Qt::QueuedConnection, Q_ARG(QString, localfilePath));
             setDataProcessorConnections();
@@ -523,6 +547,7 @@ bool Core::closeLogFile()
     if (datasetPtr_) {
         datasetPtr_->resetRenderBuffers();
     }
+    releasePlotCaches();
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
         scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();

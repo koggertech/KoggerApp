@@ -43,6 +43,7 @@ public:
 
     int updateCash(Plot2D* parent, Dataset* dataset, int width, int height);
     void resetCash();
+    void releaseCache();
 
     void addReRenderPlotIndxs(const QSet<int>& indxs);
     bool drawZoomPreview(Plot2D* parent, Dataset* dataset, QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceSize, QPointF* focusPoint = nullptr);

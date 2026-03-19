@@ -150,6 +150,7 @@ public:
     DatasetCursor& cursor();
 
     void resetCash();
+    void releaseCache();
     Canvas image(int width, int height);
     void reindexingCursor();
     void reRangeDistance();

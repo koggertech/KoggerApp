@@ -224,6 +224,7 @@ private:
     int loadSavedMapTileProviderId() const;
     void resetRealtimeSessionState();
     void restoreRealtimeProcessingFlags();
+    void releasePlotCaches();
 
     /*data*/
     Console* consolePtr_;

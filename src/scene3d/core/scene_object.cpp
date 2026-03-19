@@ -57,7 +57,10 @@ void SceneObject::keyPressEvent(Qt::Key key)
 }
 
 SceneObject::~SceneObject()
-{}
+{
+    delete m_renderImpl;
+    m_renderImpl = nullptr;
+}
 
 void SceneObject::setName(QString name)
 {
