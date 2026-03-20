@@ -270,12 +270,20 @@ MenuFrame {
         }
 
         RowLayout {
+            onFocusChanged: {
+                isobathsSettings.focus = true
+            }
+
             CTextField {
                 id: exportSurfacePathText
                 hoverEnabled: true
                 Layout.maximumWidth: 200
                 Layout.fillWidth: true
                 placeholderText: qsTr("Enter path")
+
+                onFocusChanged: {
+                    isobathsSettings.focus = true
+                }
             }
 
             CButton {
@@ -285,6 +293,10 @@ MenuFrame {
                 onClicked: {
                     exportSurfaceFileDialog.currentFolder = isobathsSettings.exportSurfaceFolder
                     exportSurfaceFileDialog.open()
+                }
+
+                onFocusChanged: {
+                    isobathsSettings.focus = true
                 }
             }
 
@@ -317,6 +329,10 @@ MenuFrame {
                 text: qsTr("Export to CSV")
                 Layout.fillWidth: true
                 onClicked: Scene3DControlMenuController.onExportToCSVButtonClicked(isobathsSettings.currentExportSurfacePath())
+
+                onFocusChanged: {
+                    isobathsSettings.focus = true
+                }
             }
 
 
