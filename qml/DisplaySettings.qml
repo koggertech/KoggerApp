@@ -8,8 +8,8 @@ import QtCore
 GridLayout {
     id: control
 
-    readonly property real preferenceComboWidth: 200
-    readonly property real preferenceBottomTrackComboWidth: 250
+    readonly property real preferenceComboWidth: 300
+    readonly property real preferenceBottomTrackComboWidth: 300
 
     property int numPlots: numPlotsSpinBox.value
     property bool syncPlots: plotSyncCheckBox.checked
@@ -768,6 +768,60 @@ GridLayout {
                 RowLayout {
                     id: exportPathRow
                     property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+                    property string exportFolderPathSource: ""
+
+                    function sourceUrl(value) {
+                        if (!value) {
+                            return ""
+                        }
+
+                        if (typeof value === "string") {
+                            if (value.startsWith("file:///")) {
+                                return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
+                            }
+                            if (value.startsWith("file://")) {
+                                return value.slice(7)
+                            }
+                            return value
+                        }
+
+                        var localPath = value.toLocalFile ? value.toLocalFile() : ""
+                        return localPath && localPath.length ? localPath : value.toString()
+                    }
+
+                    function displayUrl(value) {
+                        var source = sourceUrl(value)
+                        if (!source.length) {
+                            return ""
+                        }
+
+                        try {
+                            return decodeURIComponent(source)
+                        } catch (error) {
+                            return source
+                        }
+                    }
+
+                    function effectiveSource(displayText, storedSource) {
+                        if (!displayText || !displayText.length) {
+                            return ""
+                        }
+
+                        if (storedSource && displayText === displayUrl(storedSource)) {
+                            return storedSource
+                        }
+
+                        return displayText
+                    }
+
+                    Component.onCompleted: {
+                        exportPathText.text = displayUrl(exportFolderPathSource)
+                    }
+
+                    function currentExportFolderPath() {
+                        return effectiveSource(exportPathText.text, exportFolderPathSource)
+                    }
+
                     CTextField {
                         id: exportPathText
                         hoverEnabled: true
@@ -796,7 +850,8 @@ GridLayout {
 
                         onAccepted: {
                             exportPathRow.exportFolder = exportFileDialog.currentFolder
-                            exportPathText.text = selectedFolder.toString()
+                            exportPathRow.exportFolderPathSource = exportPathRow.sourceUrl(selectedFolder)
+                            exportPathText.text = exportPathRow.displayUrl(exportPathRow.exportFolderPathSource)
                         }
                     }
 
@@ -805,7 +860,7 @@ GridLayout {
                     }
 
                     Settings {
-                        property alias exportFolderText: exportPathText.text
+                        property alias exportFolderText: exportPathRow.exportFolderPathSource
                     }
                 }
 
@@ -822,6 +877,7 @@ GridLayout {
 
                     SpinBoxCustom {
                         id: exportDecimationValue
+                        Layout.fillWidth: true
                         implicitWidth: 100
                         from: 0
                         to: 100
@@ -837,7 +893,7 @@ GridLayout {
                         Layout.fillWidth: true
                         onClicked: {
                             if (targetPlot) {
-                                core.exportPlotAsCVS(exportPathText.text, targetPlot.plotDatasetChannel(), exportDecimation.checked ? exportDecimationValue.value : 0);
+                                core.exportPlotAsCVS(exportPathRow.currentExportFolderPath(), targetPlot.plotDatasetChannel(), exportDecimation.checked ? exportDecimationValue.value : 0);
                             }
                         }
                     }
@@ -847,7 +903,7 @@ GridLayout {
                     CButton {
                         text: qsTr("Export to XTF")
                         Layout.fillWidth: true
-                        onClicked: core.exportPlotAsXTF(exportPathText.text);
+                        onClicked: core.exportPlotAsXTF(exportPathRow.currentExportFolderPath());
                     }
                 }
 
@@ -855,7 +911,7 @@ GridLayout {
                     CButton {
                         text: qsTr("Complex signal to CSV")
                         Layout.fillWidth: true
-                        onClicked: core.exportComplexToCSV(exportPathText.text);
+                        onClicked: core.exportComplexToCSV(exportPathRow.currentExportFolderPath());
                     }
                 }
 
@@ -863,7 +919,7 @@ GridLayout {
                     CButton {
                         text: qsTr("USBL to CSV")
                         Layout.fillWidth: true
-                        onClicked: core.exportUSBLToCSV(exportPathText.text);
+                        onClicked: core.exportUSBLToCSV(exportPathRow.currentExportFolderPath());
                     }
                 }
 

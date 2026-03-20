@@ -292,7 +292,8 @@ ApplicationWindow  {
                 if (drag.hasUrls) {
                     for (var i = 0; i < drag.urls.length; ++i) {
                         var url = drag.urls[i]
-                        var filePath = url.toString().replace("file:///", "").toLowerCase()
+                        var localPath = url.toLocalFile ? url.toLocalFile() : ""
+                        var filePath = (localPath && localPath.length ? localPath : url.toString()).toLowerCase()
                         if (filePath.endsWith(".klf") ||
                             filePath.endsWith(".xtf")) {
                             draggedFilePath = filePath
@@ -1684,7 +1685,8 @@ ApplicationWindow  {
                 return
             }
             for (var i = 0; i < stored.length; ++i) {
-                profilesModel.append({ path: stored[i] })
+                var path = stored[i] ? stored[i] : ""
+                profilesModel.append({ path: path, displayPath: pathToDisplay(path) })
             }
         }
 
@@ -1704,11 +1706,38 @@ ApplicationWindow  {
 
         function urlToPath(u) {
             if (!u) return ""
-            if (u.toLocalFile) return u.toLocalFile()
-            var s = u.toString()
-            if (s.startsWith("file:///")) s = s.slice(8)
-            else if (s.startsWith("file://")) s = s.slice(7)
-            return s
+            var localPath = u.toLocalFile ? u.toLocalFile() : ""
+            return localPath && localPath.length ? localPath : u.toString()
+        }
+
+        function pathToDisplay(path) {
+            if (!path || !path.length) {
+                return ""
+            }
+
+            if (path.startsWith("file:///")) {
+                path = Qt.platform.os === "windows" ? path.slice(8) : path.slice(7)
+            } else if (path.startsWith("file://")) {
+                path = path.slice(7)
+            }
+
+            try {
+                return decodeURIComponent(path)
+            } catch (error) {
+                return path
+            }
+        }
+
+        function effectivePath(displayText, storedPath) {
+            if (!displayText || !displayText.length) {
+                return ""
+            }
+
+            if (storedPath && displayText === pathToDisplay(storedPath)) {
+                return storedPath
+            }
+
+            return displayText
         }
 
         ListModel {
@@ -1732,6 +1761,7 @@ ApplicationWindow  {
                 profilesStorage.lastProfileFolder = profilePickDialog.currentFolder
                 const p = profilesDialog.urlToPath(profilePickDialog.selectedFile)
                 profilesModel.setProperty(profilesDialog.browseRow, "path", p)
+                profilesModel.setProperty(profilesDialog.browseRow, "displayPath", pathToDisplay(p))
                 profilesDialog.browseRow = -1
                 profilesDialog.saveProfiles()
             }
@@ -1752,7 +1782,7 @@ ApplicationWindow  {
                 CButton {
                     text: "+"
                     onClicked: {
-                        profilesModel.append({ path: "" })
+                        profilesModel.append({ path: "", displayPath: "" })
                         profilesDialog.saveProfiles()
                     }
                 }
@@ -1784,10 +1814,12 @@ ApplicationWindow  {
                                 id: pathField
                                 Layout.fillWidth: true
                                 placeholderText: qsTr("Path to profile .xml")
-                                text: path
+                                text: displayPath
                                 color: "white"
                                 onEditingFinished: {
-                                    profilesModel.setProperty(index, "path", text)
+                                    const sourcePath = effectivePath(text, path)
+                                    profilesModel.setProperty(index, "path", sourcePath)
+                                    profilesModel.setProperty(index, "displayPath", pathToDisplay(sourcePath))
                                     profilesDialog.saveProfiles()
                                 }
                             }
@@ -1805,7 +1837,7 @@ ApplicationWindow  {
                                 text: qsTr("Apply")
                                 enabled: (pathField.text && pathField.text.length > 0)
                                 onClicked: {
-                                    menuBar.applyProfileToAllDevices(pathField.text)
+                                    menuBar.applyProfileToAllDevices(effectivePath(pathField.text, path))
                                 }
                             }
 

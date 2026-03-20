@@ -9,33 +9,89 @@ ColumnLayout {
     id: connectionViewer
     property var dev: null
     property var devList: deviceManagerWrapper.devs
-    property string filePath: pathText.text
+    property string filePath: currentLogPath()
     property var lastLogFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     property var lastImportTrackFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     property var recentOpenedFiles: []
+    property string selectedLogPathSource: ""
+    property string importTrackPathSource: ""
 
     Settings {
         property alias logFolder: connectionViewer.lastLogFolder
         property alias importTrackFolder: connectionViewer.lastImportTrackFolder
         property alias recentOpenedFiles: connectionViewer.recentOpenedFiles
+        property alias pathText: connectionViewer.selectedLogPathSource
+        property alias importPathText: connectionViewer.importTrackPathSource
     }
 
-    function toLocalPath(path) {
-        if (!path || !path.length) {
+    function urlSource(value) {
+        if (!value) {
             return ""
         }
 
-        var localPath = path.toString()
-        if (localPath.indexOf("file:///") === 0) {
-            localPath = localPath.replace("file:///", Qt.platform.os === "windows" ? "" : "/")
-        } else if (localPath.indexOf("file://") === 0) {
-            localPath = localPath.replace("file://", "")
+        if (typeof value === "string") {
+            if (value.startsWith("file:///")) {
+                return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
+            }
+            if (value.startsWith("file://")) {
+                return value.slice(7)
+            }
+            return value
         }
-        return localPath
+
+        var localPath = value.toLocalFile ? value.toLocalFile() : ""
+        return localPath && localPath.length ? localPath : value.toString()
+    }
+
+    function urlDisplay(value) {
+        var source = urlSource(value)
+        if (!source.length) {
+            return ""
+        }
+
+        try {
+            return decodeURIComponent(source)
+        } catch (error) {
+            return source
+        }
+    }
+
+    function effectiveSource(displayText, storedSource) {
+        if (!displayText || !displayText.length) {
+            return ""
+        }
+
+        if (storedSource && displayText === urlDisplay(storedSource)) {
+            return storedSource
+        }
+
+        return displayText
+    }
+
+    function toLocalPath(path) {
+        return urlSource(path)
+    }
+
+    function setLogPath(path) {
+        selectedLogPathSource = urlSource(path)
+        pathText.text = urlDisplay(selectedLogPathSource)
+    }
+
+    function currentLogPath() {
+        return effectiveSource(pathText.text, selectedLogPathSource)
+    }
+
+    function setImportTrackPath(path) {
+        importTrackPathSource = urlSource(path)
+        importPathText.text = urlDisplay(importTrackPathSource)
+    }
+
+    function currentImportTrackPath() {
+        return effectiveSource(importPathText.text, importTrackPathSource)
     }
 
     function pushRecentOpenedFile(path) {
-        var localPath = toLocalPath(path)
+        var localPath = urlSource(path)
         if (!localPath.length) {
             return
         }
@@ -54,18 +110,18 @@ ColumnLayout {
     }
 
     function openRecentFile(path) {
-        var localPath = toLocalPath(path)
+        var localPath = urlSource(path)
         if (!localPath.length) {
             return
         }
 
-        pathText.text = localPath
+        setLogPath(localPath)
         core.openLogFile(localPath, false, false)
         pushRecentOpenedFile(localPath)
     }
 
     function removeRecentFile(path) {
-        var localPath = toLocalPath(path)
+        var localPath = urlSource(path)
         if (!localPath.length) {
             return
         }
@@ -95,6 +151,10 @@ ColumnLayout {
     Layout.margins: 0
     spacing: 10
 
+    Component.onCompleted: {
+        setLogPath(selectedLogPathSource.length ? selectedLogPathSource : core.filePath)
+        setImportTrackPath(importTrackPathSource)
+    }
 
     onDevListChanged: {
         if (devList.length > 0) {
@@ -108,6 +168,10 @@ ColumnLayout {
         function onConnectionChanged() {
             connectionButton.connection = core.isOpenConnection()
             dev = null
+        }
+
+        function onFilePathChanged() {
+            connectionViewer.setLogPath(core.filePath)
         }
     }
 
@@ -865,9 +929,6 @@ ColumnLayout {
                     }
                 }
 
-                Settings {
-                    property alias importPathText: importPathText.text
-                }
             }
 
             CButton {
@@ -894,14 +955,15 @@ ColumnLayout {
                     }
 
                     function openCSV() {
-                        core.openCSV(importPathText.text, separatorCombo.currentIndex, firstRow.value, timeColumn.value, utcGpsCombo.currentIndex === 0,
+                        const importPath = connectionViewer.currentImportTrackPath()
+                        core.openCSV(importPath, separatorCombo.currentIndex, firstRow.value, timeColumn.value, utcGpsCombo.currentIndex === 0,
                                      latColumn.value*latLonEnable.checked, lonColumn.value*latLonEnable.checked, altColumn.value*latLonEnable.checked,
                                      northColumn.value*xyzEnable.checked, eastColumn.value*xyzEnable.checked, upColumn.value*xyzEnable.checked);
                     }
 
                     onAccepted: {
                         connectionViewer.lastImportTrackFolder = importTrackFileDialog.currentFolder
-                        importPathText.text = importTrackFileDialog.selectedFile.toString()
+                        connectionViewer.setImportTrackPath(importTrackFileDialog.selectedFile)
 
                         openCSV();
                     }
@@ -1018,18 +1080,16 @@ ColumnLayout {
             hoverEnabled: true
             Layout.fillWidth: true
 
-            text: core.filePath
+            text: ""
             placeholderText: qsTr("Enter path")
 
             Keys.onPressed: function(event) {
                 if (event.key === 16777220 || event.key === Qt.Key_Enter) {
-                    connectionViewer.pushRecentOpenedFile(pathText.text)
-                    core.openLogFile(pathText.text, false, false);
+                    const logPath = connectionViewer.currentLogPath()
+                    connectionViewer.setLogPath(logPath)
+                    connectionViewer.pushRecentOpenedFile(logPath)
+                    core.openLogFile(logPath, false, false);
                 }
-            }
-
-            Settings {
-                property alias pathText: pathText.text
             }
         }
 
@@ -1063,13 +1123,10 @@ ColumnLayout {
                     }
                     connectionViewer.lastLogFolder = newFileDialog.currentFolder
 
-                    const fileStr = file.toString()
-                    pathText.text = fileStr.replace("file:///", Qt.platform.os === "windows" ? "" : "/")
-
-                    var name_parts = fileStr.split('.')
-
-                    connectionViewer.pushRecentOpenedFile(pathText.text)
-                    core.openLogFile(pathText.text, false, false)
+                    const logPath = urlSource(file)
+                    connectionViewer.setLogPath(logPath)
+                    connectionViewer.pushRecentOpenedFile(logPath)
+                    core.openLogFile(logPath, false, false)
                 }
                 onRejected: {
                 }
@@ -1100,14 +1157,13 @@ ColumnLayout {
                 }
 
                 onAccepted: {
-                    pathText.text = appendFileDialog.selectedFile.toString().replace("file:///", Qt.platform.os === "windows" ? "" : "/")
+                    const logPath = urlSource(appendFileDialog.selectedFile)
+                    connectionViewer.setLogPath(logPath)
                     connectionViewer.lastLogFolder = appendFileDialog.currentFolder
 
-                    var name_parts = appendFileDialog.selectedFile.toString().split('.')
-
-                    //deviceManagerWrapper.sendOpenFile(pathText.text, true)
-                    connectionViewer.pushRecentOpenedFile(pathText.text)
-                    core.openLogFile(pathText.text, true, false);
+                    //deviceManagerWrapper.sendOpenFile(logPath, true)
+                    connectionViewer.pushRecentOpenedFile(logPath)
+                    core.openLogFile(logPath, true, false);
                 }
                 onRejected: {
                 }

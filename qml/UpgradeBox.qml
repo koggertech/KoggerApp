@@ -10,6 +10,60 @@ DevSettingsBox {
     Layout.preferredHeight: columnItem.height
     isActive: !!(dev && dev.isUpgradeSupport)
     property var upgradeFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property string selectedUpgradePathSource: ""
+
+    function sourceUrl(value) {
+        if (!value) {
+            return ""
+        }
+
+        if (typeof value === "string") {
+            if (value.startsWith("file:///")) {
+                return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
+            }
+            if (value.startsWith("file://")) {
+                return value.slice(7)
+            }
+            return value
+        }
+
+        var localPath = value.toLocalFile ? value.toLocalFile() : ""
+        return localPath && localPath.length ? localPath : value.toString()
+    }
+
+    function displayUrl(value) {
+        var source = sourceUrl(value)
+        if (!source.length) {
+            return ""
+        }
+
+        try {
+            return decodeURIComponent(source)
+        } catch (error) {
+            return source
+        }
+    }
+
+    function effectiveSource(displayText, storedSource) {
+        if (!displayText || !displayText.length) {
+            return ""
+        }
+
+        if (storedSource && displayText === displayUrl(storedSource)) {
+            return storedSource
+        }
+
+        return displayText
+    }
+
+    function setUpgradePath(path) {
+        selectedUpgradePathSource = sourceUrl(path)
+        pathText.text = displayUrl(selectedUpgradePathSource)
+    }
+
+    function currentUpgradePath() {
+        return effectiveSource(pathText.text, selectedUpgradePathSource)
+    }
 
     FileDialog {
         id: fileDialog
@@ -23,7 +77,7 @@ DevSettingsBox {
 
         onAccepted: {
             control.upgradeFolder = fileDialog.currentFolder
-            pathText.text = fileDialog.selectedFile.toString()
+            control.setUpgradePath(fileDialog.selectedFile)
         }
         onRejected: {
         }
@@ -81,7 +135,7 @@ DevSettingsBox {
                 visible: pathText.text !== ""
 
                 onClicked: {
-                    core.upgradeFW(pathText.text, dev)
+                    core.upgradeFW(control.currentUpgradePath(), dev)
                 }
             }
         }

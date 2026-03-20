@@ -23,14 +23,12 @@ Item {
     }
 
     function toLocalPath(url) {
-        var s = url.toString()
-        if (s.indexOf("file:///") === 0) {
-            return s.replace("file:///", Qt.platform.os === "windows" ? "" : "/")
+        if (!url) {
+            return ""
         }
-        if (s.indexOf("file://") === 0) {
-            return s.replace("file://", "")
-        }
-        return s
+
+        var localPath = url.toLocalFile ? url.toLocalFile() : ""
+        return localPath && localPath.length ? localPath : url.toString()
     }
 
     function targetFolderId() {
