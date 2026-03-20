@@ -226,6 +226,11 @@ private:
     void resetRealtimeSessionState();
     void restoreRealtimeProcessingFlags();
     void releasePlotCaches();
+    QString resolveExportBasePath(const QString& basePath) const;
+    QString buildExportFileStem(const QString& openedFilePath) const;
+#ifdef Q_OS_ANDROID
+    QString resolveAndroidUriToPath(const QString& uriString) const;
+#endif
 
     /*data*/
     Console* consolePtr_;

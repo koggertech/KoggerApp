@@ -2,6 +2,7 @@
 
 #include <QDateTime>
 #include <QDir>
+#include <QFileInfo>
 #include <QStandardPaths>
 #include <QUrl>
 #include "core.h"
@@ -384,8 +385,20 @@ bool Logger::creatExportStream(QString name)
 {
     bool isOpen = false;
 
-    QUrl url(name);
-    exportFile_->setFileName(url.toLocalFile());
+#ifdef Q_OS_ANDROID
+    if (!AndroidInterface::checkStoragePermissions()) {
+        core.consoleWarning("Export can't access Documents: permission denied");
+        return false;
+    }
+#endif
+
+    const QUrl url(name);
+    QString localFilePath = url.toLocalFile();
+    if (localFilePath.isEmpty() && QFileInfo(name).isAbsolute()) {
+        localFilePath = name;
+    }
+
+    exportFile_->setFileName(localFilePath);
     isOpen = exportFile_->open(QIODevice::WriteOnly);
 
     if (isOpen) {

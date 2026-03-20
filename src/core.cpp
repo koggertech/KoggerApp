@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cstring>
 #include <QDebug>
+#include <QFileInfo>
 #include "bottom_track.h"
 #include "hotkeys_manager.h"
 #include "tile_provider_ids.h"
@@ -62,6 +63,122 @@ Core::~Core()
     destroyInternetManager();
     destroyDataProcessor();
 }
+
+QString Core::resolveExportBasePath(const QString& basePath) const
+{
+    const QUrl url(basePath);
+    if (url.isLocalFile()) {
+        return url.toLocalFile();
+    }
+
+#ifdef Q_OS_ANDROID
+    if (url.scheme() == "content") {
+        const QString resolvedPath = resolveAndroidUriToPath(basePath);
+        if (!resolvedPath.isEmpty()) {
+            return resolvedPath;
+        }
+    }
+#endif
+
+    return basePath;
+}
+
+QString Core::buildExportFileStem(const QString& openedFilePath) const
+{
+    QString stem;
+
+    if (!openedFilePath.isEmpty()) {
+        QString normalizedPath = QUrl::fromPercentEncoding(openedFilePath.toUtf8());
+        const QUrl url(openedFilePath);
+        if (url.isLocalFile()) {
+            normalizedPath = url.toLocalFile();
+        }
+#ifdef Q_OS_ANDROID
+        else if (url.scheme() == "content") {
+            const QString resolvedPath = resolveAndroidUriToPath(openedFilePath);
+            if (!resolvedPath.isEmpty()) {
+                normalizedPath = resolvedPath;
+            }
+        }
+#endif
+
+        stem = QFileInfo(normalizedPath).completeBaseName();
+        if (stem.isEmpty()) {
+            stem = QFileInfo(openedFilePath).completeBaseName();
+        }
+    }
+
+    if (!stem.isEmpty()) {
+        return stem;
+    }
+
+    return QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
+}
+
+#ifdef Q_OS_ANDROID
+QString Core::resolveAndroidUriToPath(const QString& uriString) const
+{
+    if (uriString.isEmpty()) {
+        return QString();
+    }
+
+    const QUrl url(uriString);
+    if (url.isLocalFile()) {
+        return url.toLocalFile();
+    }
+
+    if (url.scheme() != "content" || url.host() != "com.android.externalstorage.documents") {
+        return QString();
+    }
+
+    const QString encodedUri = QString::fromUtf8(url.toEncoded());
+    int markerIndex = encodedUri.indexOf("/tree/");
+    int markerSize = 6;
+    if (markerIndex < 0) {
+        markerIndex = encodedUri.indexOf("/document/");
+        markerSize = 10;
+    }
+    if (markerIndex < 0) {
+        return QString();
+    }
+
+    QString documentId = encodedUri.mid(markerIndex + markerSize);
+    const int slashIndex = documentId.indexOf('/');
+    if (slashIndex >= 0) {
+        documentId.truncate(slashIndex);
+    }
+    documentId = QUrl::fromPercentEncoding(documentId.toUtf8());
+
+    if (documentId.startsWith("raw:")) {
+        return documentId.mid(4);
+    }
+
+    const int separatorIndex = documentId.indexOf(':');
+    const QString volumeId = separatorIndex >= 0 ? documentId.left(separatorIndex) : documentId;
+    const QString relativePath = separatorIndex >= 0 ? documentId.mid(separatorIndex + 1) : QString();
+
+    QString volumePath;
+    if (volumeId.compare("primary", Qt::CaseInsensitive) == 0) {
+        volumePath = "/storage/emulated/0";
+    }
+    else if (volumeId.compare("home", Qt::CaseInsensitive) == 0) {
+        volumePath = "/storage/emulated/0/Documents";
+    }
+    else {
+        volumePath = AndroidInterface::getSDCardPath();
+    }
+
+    if (volumePath.isEmpty()) {
+        return QString();
+    }
+    if (relativePath.isEmpty()) {
+        return volumePath;
+    }
+
+    return volumePath + "/" + relativePath;
+}
+#endif
+
 
 MosaicIndexProvider *Core::getMosaicIndexProviderPtr()
 {
@@ -927,8 +1044,12 @@ void Core::setNeedForceZooming(bool state)
 }
 
 bool Core::exportComplexToCSV(QString file_path) {
-    QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
-    logger_.creatExportStream(file_path + "/" + export_file_name + ".csv");
+    const QString resolvedBasePath = this->resolveExportBasePath(file_path);
+    const QString export_file_name = buildExportFileStem(openedfilePath_);
+    const QString exportPath = resolvedBasePath + "/" + export_file_name + ".csv";
+    if (!logger_.creatExportStream(exportPath)) {
+        return false;
+    }
 
     //auto ch_list = datasetPtr_->channelsList();
     // _dataset->setRefPosition(1518);
@@ -981,12 +1102,12 @@ bool Core::exportComplexToCSV(QString file_path) {
 
 bool Core::exportUSBLToCSV(QString filePath)
 {
-    QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
-
-    logger_.creatExportStream(filePath + "/" + export_file_name + ".csv");
-    //QMap<int, DatasetChannel> ch_list = datasetPtr_->channelsList();
-    //Q_UNUSED(ch_list);
-    // _dataset->setRefPosition(1518);
+    const QString resolvedBasePath = this->resolveExportBasePath(filePath);
+    const QString export_file_name = buildExportFileStem(openedfilePath_);
+    const QString exportPath = resolvedBasePath + "/" + export_file_name + ".csv";
+    if (!logger_.creatExportStream(exportPath)) {
+        return false;
+    }
 
     logger_.dataExport("epoch,yaw,pitch,roll,north,east,ping_counter,carrier_counter,snr,azimuth_deg,elevation_deg,distance_m\n");
 
@@ -1020,8 +1141,12 @@ bool Core::exportUSBLToCSV(QString filePath)
 
 bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation)
 {
-    QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
-    logger_.creatExportStream(filePath + "/" + export_file_name + ".csv");
+    const QString resolvedBasePath = this->resolveExportBasePath(filePath);
+    const QString export_file_name = buildExportFileStem(openedfilePath_);
+    const QString exportPath = resolvedBasePath + "/" + export_file_name + ".csv";
+    if (!logger_.creatExportStream(exportPath)) {
+        return false;
+    }
 
     bool meas_nbr = true;
     bool event_id = true;
@@ -1278,8 +1403,12 @@ bool Core::exportPlotAsXTF(QString filePath)
         return false;
     }
 
-    QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
-    logger_.creatExportStream(filePath + "/_" + export_file_name + ".xtf");
+    const QString resolvedBasePath = this->resolveExportBasePath(filePath);
+    const QString export_file_name = buildExportFileStem(openedfilePath_);
+    const QString exportPath = resolvedBasePath + "/_" + export_file_name + ".xtf";
+    if (!logger_.creatExportStream(exportPath)) {
+        return false;
+    }
 
     auto ch1 = plot2dList_[0]->plotDatasetChannel();
     auto subCh1 = plot2dList_[0]->plotDatasetSubChannel();
