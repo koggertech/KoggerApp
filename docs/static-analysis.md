@@ -81,6 +81,37 @@ level0,old-style-connect,qproperty-without-notify,incorrect-emit,post-event,rang
 Expected result for a typical file analysis: Qt header spam from `qchar.h` is gone,
 and only project warnings remain (for example `Q_PROPERTY ... without NOTIFY`).
 
+Important: this profile intentionally trades coverage for lower noise. It can hide
+real project warnings (for example `const-signal-or-slot`) if they are disabled.
+
+## Two-profile workflow (recommended)
+
+Use two analyzer profiles in Qt Creator:
+
+1. `Low-noise (daily)`:
+- fast checks while coding;
+- good for current file / touched module;
+- allows temporary suppression of noisy checks.
+
+2. `Audit (strict)`:
+- run regularly (for example once per sprint, before release, or before big merges);
+- run on the whole touched subsystem;
+- do not disable checks that can find real project issues.
+
+Suggested strict `Clazy Checks` string:
+
+```text
+level0,level1,old-style-connect,qproperty-without-notify,incorrect-emit,post-event,range-loop-detach,readlock-detaching,container-anti-pattern,const-signal-or-slot
+```
+
+For the strict run, avoid adding `no-const-signal-or-slot`.
+
+## Triage rules for strict runs
+
+- Warning points to project file under `src/`: fix it or create a tracked task.
+- Warning points to Qt/system headers: treat as toolchain noise unless it affects behavior.
+- If a warning is noisy but valid, prefer narrowing scope/header filters over globally disabling the check.
+
 ### Build Environment variables (optional)
 
 These are useful for `CLI` / `qmake QMAKE_CXX=clazy` / `CI`.
@@ -145,6 +176,8 @@ If you do not want to maintain a compilation database manually, prefer running `
 - Keep `.clang-tidy` in the repository.
 - Treat `Clazy` as a developer tool first, not as a hard CI gate.
 - Run both tools on changed files before larger refactors or rendering/threading changes.
+- Keep two Qt Creator profiles: `Low-noise (daily)` and `Audit (strict)`.
+- Require a periodic strict pass to catch warnings hidden by low-noise settings.
 - Add stricter checks only after the current baseline is mostly clean.
 
 ## Checks we intentionally did not enable yet
