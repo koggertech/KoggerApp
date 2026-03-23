@@ -175,7 +175,7 @@ public:
         return index;
     }
 
-    void getMaxDistanceRange(float* from, float* to, const ChannelId& channel, uint8_t subAddressCh1, const ChannelId& channel2 = CHANNEL_NONE, uint8_t subAddressCh2 = 0);
+    void getMaxDistanceRange(float* from, float* to, const ChannelId& channel, uint8_t subAddressCh1, const ChannelId& channel2 = channelNone(), uint8_t subAddressCh2 = 0);
 
     bool channelsListIsEmpty() const {
         QReadLocker locker(&lock_);
@@ -250,14 +250,16 @@ public:
     int64_t getActiveContactIndx() const;
     void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
     QMap<int, QSet<TileKey>> traceTileKeysForEpoch(int epochIndx) const;
+    friend class DataProcessor;
 
 public slots:
     Q_INVOKABLE void onSetLAngleOffset(float val);
     Q_INVOKABLE void onSetRAngleOffset(float val);
     void setSpatialIndexingEnabled(bool sonarState, bool dimRectState, bool chunkedCatchup);
 
-    friend class DataProcessor;
     void onSonarPosCanCalc(uint64_t indx);
+
+public:
     bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1;  };
     bool  isValidBoatCoordinate() const    { return !qFuzzyIsNull(boatLatitute_) || !qFuzzyIsNull(boatLongitude_); };
     bool  isValidLastDepth() const         { return !qFuzzyIsNull(lastDepth_); };
@@ -286,6 +288,8 @@ public slots:
     float getAngleToContact() const        { return angleToActiveContact_;     };
     float getLastDepth() const             { return lastDepth_;                };
     float getSpeed() const                 { return speed_;                    };
+
+public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float angle1_deg, float angle2_deg = NAN, float angle3_deg = NAN);
     void addTimestamp(int timestamp);

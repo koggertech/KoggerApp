@@ -171,7 +171,7 @@ Plot2D::Plot2D()
     temperature_.setVisible(true);
     aim_.setVisible(true);
     quadrature_.setVisible(false);
-    setDataChannel(false, CHANNEL_NONE, 0, {});
+    setDataChannel(false, channelNone(), 0, {});
     cursor_.attitude.from = -180;
     cursor_.attitude.to = 180;
     cursor_.distance.set(0, 20);
@@ -192,7 +192,7 @@ float Plot2D::getCursorDistance() const
 std::tuple<ChannelId, uint8_t, QString> Plot2D::getSelectedChannelId(float cursorDistance) const
 {
     const float dist = qFuzzyIsNull(cursorDistance) ? getCursorDistance() : cursorDistance;
-    const bool useChannel1 = qFuzzyIsNull(dist) || dist < 0.0f || cursor_.channel2 == CHANNEL_NONE;
+    const bool useChannel1 = qFuzzyIsNull(dist) || dist < 0.0f || cursor_.channel2 == channelNone();
 
     return useChannel1 ? std::make_tuple(cursor_.channel1, cursor_.subChannel1, cursor_.firstChannelPortName) : std::make_tuple(cursor_.channel2, cursor_.subChannel2, cursor_.secondChannelPortName);
 }

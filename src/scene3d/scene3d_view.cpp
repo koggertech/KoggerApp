@@ -1657,9 +1657,9 @@ void GraphicsScene3dView::refreshSyncLoupePreview()
         const int datasetSize = datasetPtr_->size();
         if (syncEpochIndex_ < datasetSize) {
             if (auto* epoch = datasetPtr_->fromIndex(syncEpochIndex_); epoch) {
-                ChannelId firstChannelId = CHANNEL_NONE;
+                ChannelId firstChannelId = channelNone();
                 uint8_t firstSubChannelId = 0;
-                ChannelId secondChannelId = CHANNEL_NONE;
+                ChannelId secondChannelId = channelNone();
                 uint8_t secondSubChannelId = 0;
                 bool hasSecondChannel = false;
                 if (const auto channels = datasetPtr_->channelsList(); !channels.isEmpty()) {

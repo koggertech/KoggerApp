@@ -348,7 +348,7 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
                     int16_t* cash_data = _cash[column].data.data();
                     int16_t cash_data_size = _cash[column].data.size();
 
-                    if (cursor.channel2 == CHANNEL_NONE) {
+                    if (cursor.channel2 == channelNone()) {
                         datasource->chartTo(cursor.channel1, cursor.subChannel1, from, to, cash_data, cash_data_size, _compensation_id);
                     }
                     else {

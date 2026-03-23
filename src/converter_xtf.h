@@ -15,7 +15,7 @@ public:
 
     XTFFILEHEADER header;
 
-    QByteArray toXTF(Dataset* dataset, const ChannelId& channel1, uint8_t subChannel1, const ChannelId& channel2 = CHANNEL_NONE, uint8_t subChannel2 = 0) {
+    QByteArray toXTF(Dataset* dataset, const ChannelId& channel1, uint8_t subChannel1, const ChannelId& channel2 = channelNone(), uint8_t subChannel2 = 0) {
         QByteArray xtfdata;
         XTFFILEHEADER fileheader;
 
@@ -24,7 +24,7 @@ public:
         fileheader.RecordingProgramVersion[0] = '1';
 
         fileheader.NumberOfSonarChannels = 1;
-        if(channel2 != CHANNEL_NONE) {
+        if(channel2 != channelNone()) {
             fileheader.NumberOfSonarChannels = 2;
         }
 
@@ -32,7 +32,7 @@ public:
         fileheader.ChanInfo[0].TypeOfChannel = 1;
         fileheader.ChanInfo[0].BytesPerSample = 1;
 
-        if(channel2 != CHANNEL_NONE) {
+        if(channel2 != channelNone()) {
             fileheader.ChanInfo[1].SubChannelNumber = 1;
             fileheader.ChanInfo[1].TypeOfChannel = 2;
             fileheader.ChanInfo[1].BytesPerSample = fileheader.ChanInfo[0].BytesPerSample;
@@ -136,7 +136,7 @@ public:
                     }
                 }
 
-                if(chart2 != NULL && channel2 != CHANNEL_NONE) {
+                if(chart2 != NULL && channel2 != channelNone()) {
                     QVector<uint8_t> raw = chart2->amplitude;
                     int constr_size = raw.size();
                     raw2.resize(constr_size);

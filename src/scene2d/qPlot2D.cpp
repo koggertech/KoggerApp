@@ -66,7 +66,7 @@ void qPlot2D::paint(QPainter *painter)
 
             int centerY = qBound(0, canvas().height() / 2, canvas().height() - 1);
             const float distRange = cursor_.distance.to - cursor_.distance.from;
-            const bool twoChannelView = cursor_.channel2 != CHANNEL_NONE;
+            const bool twoChannelView = cursor_.channel2 != channelNone();
             if (std::isfinite(distRange) && std::abs(distRange) > 1e-6f) {
                 if (twoChannelView) {
                     // Keep the same Y mapping as Plot2DAim for 2-channel mode.
@@ -241,7 +241,7 @@ float qPlot2D::getLoupeDepthForEpoch(int epochIndx) const
     }
 
     // Match Plot2DAim behavior: for 2-channel view without depth, aim the top of preview.
-    return cursor_.channel2 == CHANNEL_NONE ? 0.0f : std::numeric_limits<float>::quiet_NaN();
+    return cursor_.channel2 == channelNone() ? 0.0f : std::numeric_limits<float>::quiet_NaN();
 }
 
 int qPlot2D::getPreferredLoupeEpochIndex(int preferredEpochIndx) const

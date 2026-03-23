@@ -124,7 +124,11 @@ inline uint qHash(const ChannelId& key, uint seed = 0)
     return static_cast<uint>(stlHash ^ (seed * 0x9e3779b9));
 }
 
-static const ChannelId CHANNEL_NONE  = ChannelId();
+inline const ChannelId& channelNone()
+{
+    static const ChannelId value;
+    return value;
+}
 
 typedef struct NED NED;
 typedef struct LLARef LLARef;
