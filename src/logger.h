@@ -28,7 +28,7 @@ public slots:
     bool stopKlfLogging();
     void loggingKlfStream(const QByteArray &data);
     bool isOpenKlf();
-    void onFrameParserReceiveKlf(QUuid uuid, Link* link, FrameParser frame);
+    void onFrameParserReceiveKlf(QUuid uuid, Link* link, Parsers::FrameParser frame);
 
     // .csv
     bool startNewCsvLog();
@@ -43,7 +43,7 @@ public slots:
     bool dataByteExport(QByteArray data);
     bool endExportStream();
 
-    void receiveProtoFrame(ProtoBinOut protoBinOut);
+    void receiveProtoFrame(Parsers::ProtoBinOut protoBinOut);
 
 private:
     struct {

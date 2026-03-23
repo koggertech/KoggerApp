@@ -17,7 +17,7 @@ public:
     ~DeviceManagerWrapper();
 
     Q_PROPERTY(QList<DevQProperty*> devs READ getDevList NOTIFY devChanged)
-    Q_PROPERTY(bool protoBinConsoled READ getProtoBinConsoled WRITE setProtoBinConsoled)
+    Q_PROPERTY(bool protoBinConsoled READ getProtoBinConsoled WRITE setProtoBinConsoled NOTIFY protoBinConsoledChanged)
     Q_PROPERTY(StreamListModel* streamsList READ streamsList NOTIFY streamChanged)
     Q_PROPERTY(float vruVoltage READ vruVoltage NOTIFY vruChanged)
     Q_PROPERTY(float vruCurrent READ vruCurrent NOTIFY vruChanged)
@@ -25,7 +25,7 @@ public:
     Q_PROPERTY(int pilotArmState READ pilotArmState NOTIFY vruChanged)
     Q_PROPERTY(int pilotModeState READ pilotModeState NOTIFY vruChanged)
     Q_PROPERTY(int averageChartLosses READ getAverageChartLosses NOTIFY chartLossesChanged)
-    Q_PROPERTY(bool isbeaconDirectQueueAsk READ getUSBLBeaconDirectAsk WRITE setUSBLBeaconDirectAsk)
+    Q_PROPERTY(bool isbeaconDirectQueueAsk READ getUSBLBeaconDirectAsk WRITE setUSBLBeaconDirectAsk NOTIFY USBLBeaconDirectAskChanged)
 
     DeviceManager* getWorker();
     QUuid getFileUuid() const;
@@ -50,14 +50,22 @@ public slots:
 
     bool getProtoBinConsoled() const { return protoBinConsoledState_; };
     void setProtoBinConsoled(bool state) {
+        const bool changed = (protoBinConsoledState_ != state);
         protoBinConsoledState_ = state;
         getWorker()->setProtoBinConsoled(protoBinConsoledState_);
+        if (changed) {
+            emit protoBinConsoledChanged();
+        }
     }
 
     bool getUSBLBeaconDirectAsk() const { return USBLBeaconDirectAskState_; };
     void setUSBLBeaconDirectAsk(bool is_ask) {
+        const bool changed = (USBLBeaconDirectAskState_ != is_ask);
         USBLBeaconDirectAskState_ = is_ask;
         getWorker()->setUSBLBeaconDirectAsk(USBLBeaconDirectAskState_);
+        if (changed) {
+            emit USBLBeaconDirectAskChanged();
+        }
     }
 
     int getAverageChartLosses() const {
@@ -76,6 +84,8 @@ signals:
     void streamChanged();
     void vruChanged();
     void chartLossesChanged();
+    void protoBinConsoledChanged();
+    void USBLBeaconDirectAskChanged();
 
 private:
     std::unique_ptr<DeviceManager> workerObject_;

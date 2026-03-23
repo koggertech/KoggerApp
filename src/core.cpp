@@ -968,29 +968,47 @@ int Core::getFixBlackStripesBackwardSteps() const
 
 void Core::setFixBlackStripesState(bool state)
 {
+    if (fixBlackStripesState_ == state) {
+        return;
+    }
+
     fixBlackStripesState_ = state;
 
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesState(state);
     }
+
+    emit fixBlackStripesStateChanged();
 }
 
 void Core::setFixBlackStripesForwardSteps(int val)
 {
+    if (fixBlackStripesForwardSteps_ == val) {
+        return;
+    }
+
     fixBlackStripesForwardSteps_ = val;
 
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesForwardSteps(val);
     }
+
+    emit fixBlackStripesForwardStepsChanged();
 }
 
 void Core::setFixBlackStripesBackwardSteps(int val)
 {
+    if (fixBlackStripesBackwardSteps_ == val) {
+        return;
+    }
+
     fixBlackStripesBackwardSteps_ = val;
 
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesBackwardSteps(val);
     }
+
+    emit fixBlackStripesBackwardStepsChanged();
 }
 
 void Core::setBottomTrackRealtimeFromSettings(bool state)
@@ -1019,6 +1037,7 @@ void Core::setCsvLogging(bool isLogging)
         logger_.stopCsvLogging();
     }
     isLoggingCsv_ = isLogging && success;
+    emit loggingCsvChanged();
 }
 
 bool Core::getUseGPS() const
@@ -1028,9 +1047,12 @@ bool Core::getUseGPS() const
 
 void Core::setUseGPS(bool state)
 {
-    //qDebug() << "Core::setUseGPS" << state;
+    const bool changed = (isUseGPS_ != state);
     isUseGPS_ = state;
     QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "setUseGPS", Qt::QueuedConnection, Q_ARG(bool, isUseGPS_));
+    if (changed) {
+        emit useGPSChanged();
+    }
 }
 
 void Core::setNeedForceZooming(bool state)

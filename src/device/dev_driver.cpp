@@ -1153,7 +1153,7 @@ void DevDriver::receivedTemp(Parsers::Type type, Parsers::Version ver, Parsers::
     //core.getDatasetPtr()->addTemp(idTemp->temp());
 }
 
-void DevDriver::receivedEncoder(Type type, Version ver, Resp resp) {
+void DevDriver::receivedEncoder(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
     Q_UNUSED(type);
     Q_UNUSED(ver);
     Q_UNUSED(resp);
@@ -1576,7 +1576,9 @@ void DevDriver::process() {
                     m_state.in_update = true;
                     // idUpdate->putUpdate();
 
-                    QTimer::singleShot(100, idUpdate, SLOT(putUpdate()));
+                    QTimer::singleShot(100, idUpdate, [update = idUpdate]() {
+                        update->putUpdate();
+                    });
                     //qDebug() << "To upgrading";
                 }
 

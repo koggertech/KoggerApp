@@ -281,7 +281,7 @@ SceneObject::SceneObjectType GeoJsonLayer::type() const
     return SceneObject::SceneObjectType::Unknown;
 }
 
-void GeoJsonLayer::setRenderData(RenderData data)
+void GeoJsonLayer::setRenderData(GeoJsonLayer::RenderData data)
 {
     auto* r = dynamic_cast<GeoJsonLayerRenderImplementation*>(m_renderImpl);
     if (!r) {

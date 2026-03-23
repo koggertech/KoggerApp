@@ -122,7 +122,7 @@ bool Logger::isOpenKlf()
     return klfLogFile_->isOpen();
 }
 
-void Logger::onFrameParserReceiveKlf(QUuid uuid, Link* linkPtr, FrameParser frame)
+void Logger::onFrameParserReceiveKlf(QUuid uuid, Link* linkPtr, Parsers::FrameParser frame)
 {
     Q_UNUSED(uuid);
     Q_UNUSED(linkPtr);
@@ -435,7 +435,7 @@ bool Logger::endExportStream()
     return true;
 }
 
-void Logger::receiveProtoFrame(ProtoBinOut protoBinOut)
+void Logger::receiveProtoFrame(Parsers::ProtoBinOut protoBinOut)
 {
     QByteArray data = QByteArray((const char*)protoBinOut.frame(), protoBinOut.frameLen());
 
@@ -451,4 +451,3 @@ void Logger::receiveProtoFrame(ProtoBinOut protoBinOut)
         }
     }
 }
-

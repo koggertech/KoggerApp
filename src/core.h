@@ -49,13 +49,13 @@ public:
     Q_PROPERTY(bool              isGPSAlive                   READ getIsGPSAlive                   NOTIFY isGPSAliveChanged)
     Q_PROPERTY(bool              isFactoryMode                READ isFactoryMode                   CONSTANT)
     Q_PROPERTY(ConsoleListModel* consoleList                  READ consoleList                     CONSTANT)
-    Q_PROPERTY(bool              loggingKlf                   READ getKlfLogging                   WRITE setKlfLogging)
+    Q_PROPERTY(bool              loggingKlf                   READ getKlfLogging                   WRITE setKlfLogging                   NOTIFY loggingKlfChanged)
     Q_PROPERTY(bool              isKlfLogging                 READ getKlfLogging                   NOTIFY loggingKlfChanged)
-    Q_PROPERTY(bool              loggingCsv                   READ getCsvLogging                   WRITE setCsvLogging)
-    Q_PROPERTY(bool              useGPS                       READ getUseGPS                       WRITE setUseGPS)
-    Q_PROPERTY(bool              fixBlackStripesState         READ getFixBlackStripesState         WRITE setFixBlackStripesState)
-    Q_PROPERTY(int               fixBlackStripesForwardSteps  READ getFixBlackStripesForwardSteps  WRITE setFixBlackStripesForwardSteps)
-    Q_PROPERTY(int               fixBlackStripesBackwardSteps READ getFixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps)
+    Q_PROPERTY(bool              loggingCsv                   READ getCsvLogging                   WRITE setCsvLogging                   NOTIFY loggingCsvChanged)
+    Q_PROPERTY(bool              useGPS                       READ getUseGPS                       WRITE setUseGPS                       NOTIFY useGPSChanged)
+    Q_PROPERTY(bool              fixBlackStripesState         READ getFixBlackStripesState         WRITE setFixBlackStripesState         NOTIFY fixBlackStripesStateChanged)
+    Q_PROPERTY(int               fixBlackStripesForwardSteps  READ getFixBlackStripesForwardSteps  WRITE setFixBlackStripesForwardSteps  NOTIFY fixBlackStripesForwardStepsChanged)
+    Q_PROPERTY(int               fixBlackStripesBackwardSteps READ getFixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps NOTIFY fixBlackStripesBackwardStepsChanged)
     Q_PROPERTY(QString           filePath                     READ getFilePath                     NOTIFY filePathChanged)
     Q_PROPERTY(bool              isFileOpening                READ getIsFileOpening                NOTIFY sendIsFileOpening)
     Q_PROPERTY(bool              isSeparateReading            READ getIsSeparateReading            CONSTANT)
@@ -182,6 +182,11 @@ signals:
     void needForceZoomingChanged();
     void isGPSAliveChanged();
     void loggingKlfChanged();
+    void loggingCsvChanged();
+    void useGPSChanged();
+    void fixBlackStripesStateChanged();
+    void fixBlackStripesForwardStepsChanged();
+    void fixBlackStripesBackwardStepsChanged();
     void mapTileProviderChanged();
     void internetAvailableChanged();
     void mapTileLoadingEnabledChanged();

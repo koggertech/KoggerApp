@@ -409,7 +409,7 @@ protected slots:
     void receivedRaw        (RawData raw_data);
     void receivedAtt        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedTemp       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
-    void receivedEncoder(Type type, Version ver, Resp resp);
+    void receivedEncoder    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
     void receivedDataset    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedDistSetup  (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);

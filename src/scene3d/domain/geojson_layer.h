@@ -100,6 +100,6 @@ public:
     SceneObjectType type() const override;
 
 public slots:
-    void setRenderData(RenderData data);
+    void setRenderData(GeoJsonLayer::RenderData data);
     void clear();
 };

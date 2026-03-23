@@ -115,7 +115,7 @@ public:
 
     void updateStream(int id) {
         _streams[id].id = id;
-        _modelList.appendEvent(_streams[id].id, _streams[id].size, _streams[id].data.size(), "", _streams[id].recordingState, _streams[id].uploadingState);
+        Q_EMIT _modelList.appendEvent(_streams[id].id, _streams[id].size, _streams[id].data.size(), "", _streams[id].recordingState, _streams[id].uploadingState);
     }
 
     Stream* getStream(int id) {

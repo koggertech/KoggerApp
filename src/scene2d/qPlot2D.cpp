@@ -361,7 +361,12 @@ void qPlot2D::updateContact()
 
 void qPlot2D::setPlotEnabled(bool state)
 {
+    if (Plot2D::getPlotEnabled() == state) {
+        return;
+    }
     Plot2D::setPlotEnabled(state);
+    Q_EMIT plotEnabledChanged();
+    update();
 }
 
 void qPlot2D::mosaicLOffsetChanged(float val)
