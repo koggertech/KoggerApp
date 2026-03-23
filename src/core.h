@@ -93,10 +93,17 @@ public:
 #endif
     QHash<QUuid, QString> getLinkNames() const;
     void shutdownDataProcessor();
+    bool getIsGPSAlive() const { return isGPSAlive_; };
+    bool getKlfLogging() const;
+    bool getFixBlackStripesState() const;
+    int  getFixBlackStripesForwardSteps() const;
+    int  getFixBlackStripesBackwardSteps() const;
+    bool getCsvLogging() const;
+    bool getUseGPS() const;
+    bool getNeedForceZooming() const { return needForceZooming_; }
 
 public slots:    
     void setIsGPSAlive(bool state) { qDebug() << "Core::setIsGPSAlive" << state; isGPSAlive_ = state; emit isGPSAliveChanged(); }
-    bool getIsGPSAlive() const { return isGPSAlive_; };
 
 #ifdef SEPARATE_READING
     void openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
@@ -117,19 +124,12 @@ public slots:
     bool closeProxy();
     bool upgradeFW(const QString& name, QObject* dev);
     void upgradeChanged(int progressStatus);
-    bool getKlfLogging() const;
     void setKlfLogging(bool isLogging);
-    bool getFixBlackStripesState() const;
-    int  getFixBlackStripesForwardSteps() const;
-    int  getFixBlackStripesBackwardSteps() const;
     void setFixBlackStripesState(bool state);
     void setFixBlackStripesForwardSteps(int val);
     void setFixBlackStripesBackwardSteps(int val);
     void setBottomTrackRealtimeFromSettings(bool state);
-    bool getCsvLogging() const;
     void setCsvLogging(bool isLogging);
-    bool getUseGPS() const;
-    bool getNeedForceZooming() const { return needForceZooming_; }
     void setNeedForceZooming(bool state);
     void setUseGPS(bool state);
     bool exportComplexToCSV(QString filePath);

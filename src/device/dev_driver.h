@@ -167,6 +167,7 @@ public:
     bool getSoundSpeedState() { return soundSpeedState_; };
     bool getUartState() { return uartState_; };
     int getAverageChartLosses() const { return averageChartLosses_; };
+    QUuid getLinkUuid() const;
     void setFirmware(const QByteArray& data);
 
 signals:
@@ -261,7 +262,6 @@ public slots:
     void setSoundSpeedState(bool state);
     void setUartState(bool state);
     void setLinkUuid(QUuid linkUuid);
-    QUuid getLinkUuid() const;
     void askBeaconPosition() {
         IDBinUsblSolution::USBLRequestBeacon ask;
         askBeaconPosition(ask);

@@ -42,13 +42,16 @@ public:
     void startWorkerThread();
     void initStreamList();
 
+    bool getProtoBinConsoled() const { return protoBinConsoledState_; };
+    bool getUSBLBeaconDirectAsk() const { return USBLBeaconDirectAskState_; };
+    int getAverageChartLosses() const {
+        return averageChartLosses_;
+    };
 
 
 public slots:
     Q_INVOKABLE bool isCreatedId(int id) { return getWorker()->isCreatedId(id); };
     void calcAverageChartLosses();
-
-    bool getProtoBinConsoled() const { return protoBinConsoledState_; };
     void setProtoBinConsoled(bool state) {
         const bool changed = (protoBinConsoledState_ != state);
         protoBinConsoledState_ = state;
@@ -58,7 +61,6 @@ public slots:
         }
     }
 
-    bool getUSBLBeaconDirectAsk() const { return USBLBeaconDirectAskState_; };
     void setUSBLBeaconDirectAsk(bool is_ask) {
         const bool changed = (USBLBeaconDirectAskState_ != is_ask);
         USBLBeaconDirectAskState_ = is_ask;
@@ -67,10 +69,6 @@ public slots:
             emit USBLBeaconDirectAskChanged();
         }
     }
-
-    int getAverageChartLosses() const {
-        return averageChartLosses_;
-    };
 
 signals:
     void sendOpenFile(QString path);
