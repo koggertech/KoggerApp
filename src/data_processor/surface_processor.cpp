@@ -750,16 +750,24 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
                 dp.z = pnt.z();
                 beenManualChanged = true;
                 if (queueTriangleWrites) {
-                    for (int triIdx : pointToTris_.value(pIdx)) {
-                        updsTrIndx.insert(triIdx);
+                    const auto triIt = pointToTris_.constFind(pIdx);
+                    if (triIt != pointToTris_.cend()) {
+                        const auto& triIndices = triIt.value();
+                        for (int triIdx : triIndices) {
+                            updsTrIndx.insert(triIdx);
+                        }
                     }
                 }
             }
             else if (queueTriangleWrites) {
                 // Point already exists with same Z. Re-queue adjacent triangles so newly visible tiles
                 // can be painted without rebuilding triangulation.
-                for (int triIdx : pointToTris_.value(pIdx)) {
-                    updsTrIndx.insert(triIdx);
+                const auto triIt = pointToTris_.constFind(pIdx);
+                if (triIt != pointToTris_.cend()) {
+                    const auto& triIndices = triIt.value();
+                    for (int triIdx : triIndices) {
+                        updsTrIndx.insert(triIdx);
+                    }
                 }
             }
         }
