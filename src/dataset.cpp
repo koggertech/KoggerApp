@@ -1540,7 +1540,7 @@ bool Dataset::shouldAddNewEpoch(const ChannelId &channelId, uint8_t numSubChanne
         return true;
     }
 
-    const auto& epoch = pool_[lastIndx];
+    const auto& epoch = pool_.at(lastIndx);
     for (int i = 0; i < numSubChannels; ++i) {
         if (!epoch.chartAvail(channelId, i)) {
             return false;
