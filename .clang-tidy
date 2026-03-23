@@ -22,7 +22,6 @@ Checks: >
   -performance-unnecessary-value-param
 WarningsAsErrors: ''
 HeaderFilterRegex: '(^|.*/)(src|platform)/.*'
-AnalyzeTemporaryDtors: false
 FormatStyle: none
 SystemHeaders: false
 CheckOptions:
