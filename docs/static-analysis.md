@@ -60,6 +60,40 @@ Recommended first pass:
 - Run `Clazy` first.
 - Then run `Clang-Tidy` using the repo `.clang-tidy`.
 
+## Reduce Clazy noise (important)
+
+For `Analyze > Clang-Tidy or Clazy` in Qt Creator, the most important place is
+`Projects > Project Settings > Clang Tools` (project-local diagnostic configuration).
+
+Use this setup first:
+
+1. Open `Projects > Project Settings > Clang Tools`.
+2. Clear `Use global settings`.
+3. Open your `Diagnostic configuration`.
+4. In `Clang Warnings`, disable `Use diagnostic flags from the build system`.
+5. In `Clang Warnings`, add `-Wno-character-conversion`.
+6. In `Clazy Checks > Edit Checks as String`, use this low-noise baseline:
+
+```text
+level0,old-style-connect,qproperty-without-notify,incorrect-emit,post-event,range-loop-detach,readlock-detaching,container-anti-pattern,no-const-signal-or-slot
+```
+
+Expected result for a typical file analysis: Qt header spam from `qchar.h` is gone,
+and only project warnings remain (for example `Q_PROPERTY ... without NOTIFY`).
+
+### Build Environment variables (optional)
+
+These are useful for `CLI` / `qmake QMAKE_CXX=clazy` / `CI`.
+For Qt Creator analyze runs they are optional and may not fully control diagnostics.
+
+If you still want them, set them as **three separate variables**:
+
+```bash
+CLAZY_HEADER_FILTER=(^|.*/)(KoggerApp/(src|platform)/).*
+CLAZY_IGNORE_DIRS=.*/Qt/[^/]+/.*|.*/usr/include/.*
+CLAZY_CHECKS=level0,old-style-connect,qproperty-without-notify,incorrect-emit,post-event,range-loop-detach,readlock-detaching,container-anti-pattern
+```
+
 ## Clazy with qmake from CLI
 
 `Clazy` works well with `qmake` by compiling through the `clazy` wrapper.
@@ -67,16 +101,19 @@ Recommended first pass:
 Example:
 
 ```bash
-export CLAZY_CHECKS="level0,level1,old-style-connect"
+export CLAZY_CHECKS="level0,old-style-connect,qproperty-without-notify,incorrect-emit,post-event,range-loop-detach,readlock-detaching,container-anti-pattern"
+export CLAZY_HEADER_FILTER='(^|.*/)(KoggerApp/(src|platform)/).*'
+export CLAZY_IGNORE_DIRS='.*/Qt/[^/]+/.*|.*/usr/include/.*'
 mkdir -p build-clazy
 cd build-clazy
-qmake -spec linux-clang ../KoggerApp.pro QMAKE_CXX=clazy
+qmake -spec linux-clang ../KoggerApp.pro QMAKE_CXX=clazy "QMAKE_CXXFLAGS+=-Wno-character-conversion"
 make -j"$(nproc)"
 ```
 
 Notes:
 
 - Re-run `qmake` after changing `CLAZY_CHECKS` or `QMAKE_CXX`.
+- Re-run `qmake` after changing `CLAZY_HEADER_FILTER` / `CLAZY_IGNORE_DIRS` too.
 - Use a separate build directory for analyzer runs.
 - Start with one module if the warning volume is high.
 
