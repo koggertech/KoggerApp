@@ -1,0 +1,33 @@
+---
+# Conservative starter profile for KoggerApp.
+# The goal is to surface high-confidence bugs and Qt/C++ hygiene issues
+# without drowning the project in style-only warnings.
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  readability-container-size-empty,
+  readability-delete-null-pointer,
+  readability-redundant-control-flow,
+  readability-redundant-declaration,
+  readability-simplify-boolean-expr,
+  modernize-use-bool-literals,
+  modernize-use-nullptr,
+  modernize-use-override,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-exception-escape,
+  -bugprone-narrowing-conversions,
+  -bugprone-reserved-identifier,
+  -performance-unnecessary-value-param
+WarningsAsErrors: ''
+HeaderFilterRegex: '(^|.*/)(src|platform)/.*'
+AnalyzeTemporaryDtors: false
+FormatStyle: none
+SystemHeaders: false
+CheckOptions:
+  - key: modernize-use-nullptr.NullMacros
+    value: 'NULL'
+  - key: performance-for-range-copy.WarnOnAllAutoCopies
+    value: '0'
+...
