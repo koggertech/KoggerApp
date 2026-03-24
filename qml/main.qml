@@ -708,7 +708,7 @@ ApplicationWindow  {
                         mousearea3D.enabled = false
                     }
 
-                    onPinchUpdated: {
+                    onPinchUpdated: function(pinch) {
                         var shiftScale = pinch.scale - pinch.previousScale;
                         var shiftAngle = pinch.angle - pinch.previousAngle;
                         renderer.pinchTrigger(pinch.previousCenter, pinch.center, shiftScale, shiftAngle)
