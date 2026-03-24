@@ -243,7 +243,16 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
     QSet<TileIndex> indxRequest;
 
     if (boundaryTile == -1) {
-        reqSize = (lonEndTile - lonStartTile + 1) * (maxY - minY + 1);
+        const qint64 xTileCountSigned =
+            static_cast<qint64>(lonEndTile) - static_cast<qint64>(lonStartTile) + 1;
+        const qint64 yTileCountSigned =
+            static_cast<qint64>(maxY) - static_cast<qint64>(minY) + 1;
+        if (xTileCountSigned <= 0 || yTileCountSigned <= 0) {
+            return;
+        }
+        const uint64_t xTileCount = static_cast<uint64_t>(xTileCountSigned);
+        const uint64_t yTileCount = static_cast<uint64_t>(yTileCountSigned);
+        reqSize = xTileCount * yTileCount;
         if (reqSize < minTilesCapacity_) {
             for (int x = lonStartTile; x <= lonEndTile; ++x) {
                 for (int y = minY; y <= maxY; ++y) {

@@ -128,17 +128,15 @@ Tile::Tile(TileIndex index) :
 
 void Tile::updateVertices(const LLARef& llaRef,  bool isPerspective)
 {
-    auto ref = llaRef;
-
     if (llaRef.isInit) {
         LLA lla1(modifiedInfo_.bounds.south, modifiedInfo_.bounds.west, 0.0f); //   4 <--- 3
-        NED ned1(&lla1, &ref, isPerspective);                                  //          |
+        NED ned1(&lla1, &llaRef, isPerspective);                               //          |
         LLA lla2(modifiedInfo_.bounds.north, modifiedInfo_.bounds.west, 0.0f); //          |
-        NED ned2(&lla2, &ref, isPerspective);                                  //   1 ---> 2
+        NED ned2(&lla2, &llaRef, isPerspective);                               //   1 ---> 2
         LLA lla3(modifiedInfo_.bounds.north, modifiedInfo_.bounds.east, 0.0f);
-        NED ned3(&lla3, &ref, isPerspective);
+        NED ned3(&lla3, &llaRef, isPerspective);
         LLA lla4(modifiedInfo_.bounds.south, modifiedInfo_.bounds.east, 0.0f);
-        NED ned4(&lla4, &ref, isPerspective);
+        NED ned4(&lla4, &llaRef, isPerspective);
 
         float zShift = 0.0f;
 #if defined(Q_OS_ANDROID) || defined(LINUX_ES)
@@ -152,16 +150,13 @@ void Tile::updateVertices(const LLARef& llaRef,  bool isPerspective)
             QVector3D(ned4.n, ned4.e, zShift)
         };
 
-        usedLlaRef_ = ref;
+        usedLlaRef_ = llaRef;
     }
 }
 
 bool Tile::isValid() const
 {
-    if (index_ != TileIndex()) {
-        return true;
-    }
-    return false;
+    return index_ != TileIndex();
 }
 
 void Tile::setOriginTileInfo(const TileInfo &info)
@@ -219,7 +214,7 @@ TileIndex::TileIndex(int32_t x, int32_t y, int32_t z, int32_t providerId) :
 
 bool TileIndex::isValid() const
 {
-    return !(x_ == -1 || y_ == -1 || z_ == -1 || providerId_ == -1);
+    return x_ != -1 && y_ != -1 && z_ != -1 && providerId_ != -1;
 }
 
 std::pair<TileIndex, bool> TileIndex::getParent(int depth) const

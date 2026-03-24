@@ -145,7 +145,7 @@ public:
                     }
                 }
 
-                if (!raw1.isEmpty()) {
+                if (chart1 != nullptr && !raw1.isEmpty()) {
                     pingheader.NumChansToFollow++;
                     pingheader.NumBytesThisRecord += sizeof (XTFPINGCHANHEADER);
                     pingheader.NumBytesThisRecord += raw1.size();
@@ -156,7 +156,7 @@ public:
                     pingch1.SecondsPerPing = 0.1;
                 }
 
-                if (!raw2.isEmpty()) {
+                if (chart2 != nullptr && !raw2.isEmpty()) {
                     pingheader.NumChansToFollow++;
                     pingheader.NumBytesThisRecord += sizeof (XTFPINGCHANHEADER);
                     pingheader.NumBytesThisRecord += raw2.size();
