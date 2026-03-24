@@ -30,7 +30,7 @@ bool Plot2DRangefinder::draw(Plot2D* parent, Dataset* dataset)
         for (int i = 0; i < canvas.width(); i++) {
             int pool_index = cursor.getIndex(i);
             Epoch *data = dataset->fromIndex(pool_index);
-            if (data != NULL) {
+            if (data != nullptr) {
                 distance[i] = data->rangeFinder();
             }
         }

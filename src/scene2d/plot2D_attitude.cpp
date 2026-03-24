@@ -20,7 +20,7 @@ bool Plot2DAttitude::draw(Plot2D* parent, Dataset* dataset)
         int pool_index = cursor.getIndex(i);
         Epoch* data = dataset->fromIndex(pool_index);
 
-        if(data != NULL && data->isAttAvail()) {
+        if(data != nullptr && data->isAttAvail()) {
             yaw[i] = data->yaw();
             pitch[i] = data->pitch();
             roll[i] = data->roll();
