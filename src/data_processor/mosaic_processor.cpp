@@ -17,10 +17,7 @@ static constexpr int colorTableSize_  = 255;
 
 static bool checkLength(float dist)
 {
-    if (qFuzzyIsNull(dist) || (dist < 0.0f)) {
-        return false;
-    }
-    return true;
+    return !qFuzzyIsNull(dist) && dist >= 0.0f;
 }
 
 static int sampleIndex(Epoch::Echogram *echogramPtr, float dist)
@@ -125,7 +122,7 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     QSet<int> pendingUsedSet;
     std::priority_queue<int, std::vector<int>, std::greater<int>> pendingUsedMin;
     QVector<int> progressBatch;
-    progressBatch.reserve(kProgressStep * 2);
+    progressBatch.reserve(static_cast<qsizetype>(kProgressStep) * 2);
     QVector<int> chunk;
 
     const int progressZoom = zoomFromMpp(tileResolution_);
@@ -1340,7 +1337,6 @@ void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles) // может вы�
         surfaceMeshPtr_->setTileUsed(initedNow, false); // поднимет счетчики, эвикт выключен чтобы не выгрузить возможно нужные тайлы
     }
 
-    return;
 }
 
 bool MosaicProcessor::prefetchTiles(const QSet<TileKey> &keys) // подгрузка тайлов с hotCache, db (dataprocessor)

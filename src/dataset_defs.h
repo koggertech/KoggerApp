@@ -25,7 +25,7 @@
 #define M_RAD_TO_DEG 57.29577951308232087679f
 #define M_DEG_TO_RAD 0.01745329251994329576f
 
-enum PositionSource {
+enum PositionSource : uint8_t {
     PositionSourceNone,
     PositionSourceGNSS,
     PositionSourceRTK,
@@ -36,13 +36,13 @@ enum PositionSource {
     PositionSourceLLA,
 };
 
-enum AltitudeSource {
+enum AltitudeSource : uint8_t {
     AltitudeSourceNone,
     AltitudeSourceRTK,
     AltitudeSourcePPK
 };
 
-enum class DataType {
+enum class DataType : uint8_t {
     kUndefined = 0,
     kRaw,
     kInterpolated
@@ -121,7 +121,9 @@ struct hash<ChannelId>
 inline uint qHash(const ChannelId& key, uint seed = 0)
 {
     std::size_t stlHash = std::hash<ChannelId>()(key);
-    return static_cast<uint>(stlHash ^ (seed * 0x9e3779b9));
+    const std::size_t mixedSeed =
+        static_cast<std::size_t>(seed) * static_cast<std::size_t>(0x9e3779b9u);
+    return static_cast<uint>(stlHash ^ mixedSeed);
 }
 
 inline const ChannelId& channelNone()
@@ -463,9 +465,9 @@ public:
         count_++;
     }
 } DatasetChannel;
-Q_DECLARE_METATYPE(DatasetChannel)
+Q_DECLARE_METATYPE(DatasetChannel) // NOLINT(performance-enum-size)
 
-enum class BottomTrackPreset {
+enum class BottomTrackPreset : uint8_t {
     BottomTrackOneBeam = 0,
     BottomTrackOneBeamNarrow,
     BottomTrackSideScan
@@ -494,8 +496,8 @@ struct BottomTrackUpdate {
     ChannelId channelId;
     float     distance = NAN;
 };
-Q_DECLARE_METATYPE(BottomTrackUpdate)
-Q_DECLARE_METATYPE(QVector<BottomTrackUpdate>)
+Q_DECLARE_METATYPE(BottomTrackUpdate) // NOLINT(performance-enum-size)
+Q_DECLARE_METATYPE(QVector<BottomTrackUpdate>) // NOLINT(performance-enum-size)
 
 typedef struct ComplexSignal {
     uint32_t globalOffset = 0;
@@ -514,16 +516,13 @@ struct RecordParameters {
     uint32_t soundSpeed = 0;
 
     bool isNull() const {
-        if (resol      == 0 &&
-            count      == 0 &&
-            offset     == 0 &&
-            freq       == 0 &&
-            pulse      == 0 &&
-            boost      == 0 &&
-            soundSpeed == 0) {
-            return true;
-        }
-        return false;
+        return resol      == 0 &&
+               count      == 0 &&
+               offset     == 0 &&
+               freq       == 0 &&
+               pulse      == 0 &&
+               boost      == 0 &&
+               soundSpeed == 0;
     }
 };
 

@@ -679,7 +679,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
                 }
             }
             else {
-                if (!(mark == HeightType::kExrtapolation || mark == HeightType::kUndefined)) { // только старая экстраполяция/undefined
+                if (mark != HeightType::kExrtapolation && mark != HeightType::kUndefined) { // только старая экстраполяция/undefined
                     return;
                 }
             }
@@ -906,7 +906,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         }
 
         const auto& t = tr[triIdx];
-        const bool inWork = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
+        const bool inWork = t.a >= 4 && t.b >= 4 && t.c >= 4 && !t.is_bad && t.longest_edge_dist <= edgeLimit_;
         if (!inWork) {
             continue;
         }
@@ -936,7 +936,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
             }
 
             const auto& t = tr[triIdx];
-            const bool inWork = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
+            const bool inWork = t.a >= 4 && t.b >= 4 && t.c >= 4 && !t.is_bad && t.longest_edge_dist <= edgeLimit_;
             if (!inWork) {
                 continue;
             }
@@ -991,7 +991,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         float currMin = std::numeric_limits<float>::max();
         float currMax = std::numeric_limits<float>::lowest();
         for (const auto& t : tr) {
-            const bool inWork = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
+            const bool inWork = t.a >= 4 && t.b >= 4 && t.c >= 4 && !t.is_bad && t.longest_edge_dist <= edgeLimit_;
             if (!inWork) {
                 continue;
             }
@@ -1433,7 +1433,7 @@ void SurfaceProcessor::updateTexture() const
     }
 
     std::vector<uint8_t> textureTask;
-    textureTask.resize(paletteSize * 4);
+    textureTask.resize(static_cast<std::vector<uint8_t>::size_type>(paletteSize) * 4u);
     for (int i = 0; i < paletteSize; ++i) {
         const QVector3D &c = colorIntervals_[i].color;
         textureTask[i * 4 + 0] = static_cast<uint8_t>(qBound(0.f, c.x() * 255.f, 255.f));
@@ -1692,7 +1692,7 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
     float currMin = std::numeric_limits<float>::max();
     float currMax = std::numeric_limits<float>::lowest();
     for (auto t : tr) {
-        bool inWork = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
+        bool inWork = t.a >= 4 && t.b >= 4 && t.c >= 4 && !t.is_bad && t.longest_edge_dist <= edgeLimit_;
         if (!inWork) {
             continue;
         }

@@ -45,9 +45,9 @@ public:
     }
     void onDbSaveTiles(const QHash<TileKey, SurfaceTile>& tiles);
     bool isDbReady() const noexcept;
-    quint64 prefetchProgressTick() const;
 
 public slots:
+    Q_INVOKABLE quint64 prefetchProgressTick() const;
     // this
     void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
     void setSuppressResults(bool state) noexcept;

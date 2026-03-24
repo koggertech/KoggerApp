@@ -15,7 +15,7 @@ using VecCntAndBrightness = QVector<QPair<uint8_t, uint8_t>>; // first - counter
 class BlackStripesProcessor
 {
 public:
-    enum class Direction {
+    enum class Direction : uint8_t {
         kForward = 0,
         kBackward
     };

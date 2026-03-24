@@ -9,7 +9,7 @@
 #include "surface_tile.h"
 
 
-enum class DbRole { Reader, Writer };
+enum class DbRole : quint8 { Reader, Writer };
 
 struct DbTile {
     TileKey     key;
@@ -34,7 +34,7 @@ class MosaicDB : public QObject
     Q_OBJECT
 public:
     explicit MosaicDB(const QString& klfPath, DbRole role, bool deleteOnClose = false, QObject* parent = nullptr);
-    ~MosaicDB();
+    ~MosaicDB() override;
 
     static QString surfaceDbPath();
     static bool removeDbFiles(const QString& dbPath);

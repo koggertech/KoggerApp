@@ -602,7 +602,7 @@ void DataProcessor::tryScheduleAutoBottomTrack(uint64_t indx)
         return;
     }
 
-    const DatasetChannel ch1 = channels[0];
+    const DatasetChannel& ch1 = channels[0];
     const DatasetChannel ch2 = (channels.size() >= 2) ? channels[1] : DatasetChannel();
 
     btBusy_ = true;
@@ -1250,7 +1250,7 @@ void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
         tile.updateHeightIndices();
         tile.setIsUpdated(false);
 
-        outTiles.insert(dt.key, std::move(tile));
+        outTiles.insert(dt.key, tile);
         loadedKeys.push_back(dt.key);
 
         nfErase(dt.key);

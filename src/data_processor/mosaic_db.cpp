@@ -266,7 +266,8 @@ QByteArray MosaicDB::packFloat32(const QVector<QVector3D>& verts, int hmRatio)
     const int side = hmRatio + 1;
     const int count = side * side;
 
-    QByteArray raw; raw.resize(count * int(sizeof(float)));
+    QByteArray raw;
+    raw.resize(static_cast<qsizetype>(count) * static_cast<qsizetype>(sizeof(float)));
     char* p = raw.data();
 
     for (int i = 0; i < count; ++i) {
@@ -330,7 +331,7 @@ bool MosaicDB::removeDbFiles(const QString& dbPath)
     }
 
     bool ok = true;
-    const QString mainPath = dbPath;
+    const QString& mainPath = dbPath;
     const QString walPath  = dbPath + "-wal";
     const QString shmPath  = dbPath + "-shm";
 

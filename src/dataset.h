@@ -25,12 +25,12 @@ class Dataset : public QObject
 
 public:
     /*structures*/
-    enum class DatasetState {
+    enum class DatasetState : uint8_t {
         kUndefined = 0,
         kFile,
         kConnection
     };
-    enum class LlaRefState {
+    enum class LlaRefState : uint8_t {
         kUndefined = 0,
         kSettings,
         kFile,
@@ -68,7 +68,7 @@ public:
 
     /*methods*/
     Dataset();
-    ~Dataset();
+    ~Dataset() override;
 
     void setState(DatasetState state);
     void setActiveZeroing(bool state);
@@ -91,7 +91,7 @@ public:
             return &pool_[index];
         }
 
-        return NULL;
+        return nullptr;
     }
 
     Epoch fromIndexCopy(int index_offset = 0) {
@@ -161,7 +161,7 @@ public:
         if(size() > 1) {
             return fromIndex(endIndex()-1);
         }
-        return NULL;
+        return nullptr;
     }
 
     int endIndex() const {
@@ -192,7 +192,7 @@ public:
     bool isContainsChannelInChannelSetup(const ChannelId& channelId) const {
         QReadLocker locker(&lock_);
 
-        for (int16_t i = 0; i < channelsSetup_.size(); ++i) {
+        for (qsizetype i = 0; i < channelsSetup_.size(); ++i) {
             if (channelsSetup_.at(i).channelId_ == channelId) {
                 return true;
             }

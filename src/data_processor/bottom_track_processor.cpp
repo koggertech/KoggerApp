@@ -103,7 +103,6 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
 
     int istart = istart_ref;
     int init_win = init_win_ref;
-    int scale_win = scale_win_ref;
     float init_win_scaled = static_cast<float>(init_win_ref);
     float index_gain_scale = 1.0f;
     int index_gain_scale_q12 = 1 << 12;
@@ -200,9 +199,8 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
             init_win_scaled = static_cast<float>(init_win_ref) * samples_scale;
             init_win = std::max(1, static_cast<int>(std::lround(init_win_scaled)));
             index_gain_scale = resolution / kBottomTrackRefResolution;
-            scale_win = scale_win_ref;
             index_gain_scale_q12 = std::max(1, static_cast<int>(std::lround(index_gain_scale * static_cast<float>(1 << 12))));
-            scale_win_q12 = scale_win << 12;
+            scale_win_q12 = scale_win_ref << 12;
             init_scale_term_q12 = std::max(1, static_cast<int>(std::lround(init_win_scaled * static_cast<float>(scale_win_q12))));
 
             if (coeffs_initialized) {

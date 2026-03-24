@@ -47,7 +47,8 @@ void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolutio
 {
     // height vertices
     const int   heightMatSideSize = heightMatrixRatio + 1;
-    const float heightPixelStep = (sidePixelSize / heightMatrixRatio) * resolution;
+    const float heightPixelStep =
+        (static_cast<float>(sidePixelSize) / static_cast<float>(heightMatrixRatio)) * resolution;
     const int   heightMatSize = std::pow(heightMatSideSize, 2);
     heightVertices_.resize(heightMatSize);
     heightMarkVertices_.resize(heightMatSize);
@@ -75,11 +76,12 @@ void SurfaceTile::initImageData(int sidePixelSize, int heightMatrixRatio)
     const int   heightMatSideSize = heightMatrixRatio + 1;
 
     // image data
-    imageData_.resize(sidePixelSize * sidePixelSize, 0);
+    const auto side = static_cast<std::vector<uint8_t>::size_type>(sidePixelSize);
+    imageData_.resize(side * side, 0);
 
     // texture vertices
     textureVertices_.clear();
-    textureVertices_.reserve(heightMatSideSize * heightMatSideSize);
+    textureVertices_.reserve(static_cast<qsizetype>(heightMatSideSize) * heightMatSideSize);
     for (int i = 0; i < heightMatSideSize; ++i) {
         for (int j = 0; j < heightMatSideSize; ++j) {
             textureVertices_.append(QVector2D(float(j) / (heightMatSideSize - 1),
@@ -275,11 +277,8 @@ void SurfaceTile::footprint(float &x0, float &x1, float &y0, float &y1) const
 
 bool SurfaceTile::checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const
 {
-    if (qFuzzyIsNull(heightVertices_[topLeft].z())     || // someone zero
-        qFuzzyIsNull(heightVertices_[topRight].z())    ||
-        qFuzzyIsNull(heightVertices_[bottomLeft].z())  ||
-        qFuzzyIsNull(heightVertices_[bottomRight].z())) {
-        return false;
-    }
-    return true;
+    return !qFuzzyIsNull(heightVertices_[topLeft].z()) &&
+           !qFuzzyIsNull(heightVertices_[topRight].z()) &&
+           !qFuzzyIsNull(heightVertices_[bottomLeft].z()) &&
+           !qFuzzyIsNull(heightVertices_[bottomRight].z());
 }

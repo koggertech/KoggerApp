@@ -118,7 +118,7 @@ private:
 
     std::vector<Edge> buildBoundary(std::vector<size_t> t_idx) {
         std::vector<Edge> boundary;
-        boundary.reserve(RESERVE_BAD * 3);
+        boundary.reserve(static_cast<std::vector<Edge>::size_type>(RESERVE_BAD) * 3u);
         for (size_t idx : t_idx) {
             const Triangle &t = triangles[idx];
             addEdge(boundary, {t.a, t.b});

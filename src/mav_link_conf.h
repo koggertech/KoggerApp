@@ -587,7 +587,7 @@ struct __attribute__((packed)) MAVLink_MSG_VFR_HUD
 
 struct __attribute__((packed)) MAVLink_MSG_HEARTBEAT
 {
-    enum class MAVLink_CustomMode {
+    enum class MAVLink_CustomMode : uint8_t {
         Manual = 0,
         Acro,
         Steering,

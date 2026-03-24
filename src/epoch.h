@@ -49,7 +49,7 @@ public:
     };
 
     struct DistProcessing {
-        enum class DistanceSource {
+        enum class DistanceSource : uint8_t {
             DistanceSourceNone = 0,
             DistanceSourceProcessing,
             DistanceSourceLoad,
@@ -168,7 +168,7 @@ public:
     void setRangefinder(const ChannelId& channelId, float distance);
     void setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void setDVLSolution(IDBinDVL::DVLSolution dvlSolution);
-    void setPositionLLA(double lat, double lon, LLARef* ref = NULL, uint32_t unix_time = 0, int32_t nanosec = 0);
+    void setPositionLLA(double lat, double lon, LLARef* ref = nullptr, uint32_t unix_time = 0, int32_t nanosec = 0);
     void setPositionLLA(Position position);
     void setSonarPosition(Position val);
     void setPositionLLA(const LLA& lla);
@@ -189,7 +189,7 @@ public:
     void setComplexF(const ChannelId& channelId, int group, QVector<ComplexSignal> signal);
     ComplexSignals& complexSignals() { return _complex; }
     //ComplexSignal complexSignal(const ChannelId& channelId) { return _complex[channelId]; }
-    bool isComplexSignalAvail() { return _complex.size() > 0; }
+    bool isComplexSignalAvail() { return !_complex.empty(); }
 
     void set(IDBinUsblSolution::UsblSolution data) { _usblSolution = data;  _isUsblSolutionAvailable = true; }
 
@@ -386,7 +386,7 @@ public:
     }
 
     float rangeFinder() const {
-        if(rangefinders_.size() > 0) {
+        if (!rangefinders_.empty()) {
             return rangefinders_.first();
         }
 

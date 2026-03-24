@@ -21,7 +21,7 @@ class PlotColorTable // TODO: copy-paste from Plot2DEchogram
 {
 public:
     /*structures*/
-    enum class ThemeId {
+    enum class ThemeId : uint8_t {
         kUndefined,
         kClassic,
         kSepia,

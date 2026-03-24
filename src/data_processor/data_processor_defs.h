@@ -6,14 +6,14 @@
 #include <QVector2D>
 
 
-enum class DataSource {
+enum class DataSource : quint8 {
     kUndefined = 0,
     kCalculation,
     kHotCache,
     kDataBase
 };
 
-enum class DataProcessorType {
+enum class DataProcessorType : quint8 {
     kUndefined = 0,
     kBottomTrack,
     kIsobaths,
@@ -21,9 +21,9 @@ enum class DataProcessorType {
     kSurface
 };
 
-Q_DECLARE_METATYPE(DataProcessorType)
+Q_DECLARE_METATYPE(DataProcessorType) // NOLINT(performance-enum-size)
 
-enum class HeightType {
+enum class HeightType : quint8 {
     kUndefined = 0,
     kExrtapolation,
     kMosaic,
@@ -43,7 +43,7 @@ static inline bool canOverwriteHeight(HeightType srcMark, HeightType dstMark) {
     return false;
 }
 
-enum WorkFlag : quint32 {
+enum WorkFlag : quint8 {
     WF_None     = 0,
     WF_Surface  = 1u << 0,
     WF_Mosaic   = 1u << 1,

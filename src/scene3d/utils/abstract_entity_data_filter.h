@@ -1,6 +1,7 @@
 #ifndef ABSTRACTENTITYDATAFILTER_H
 #define ABSTRACTENTITYDATAFILTER_H
 
+#include <cstdint>
 #include <QObject>
 #include <QVector>
 #include <QVector3D>
@@ -12,9 +13,9 @@ class AbstractEntityDataFilter : public QObject
 
 public:
     explicit AbstractEntityDataFilter(QObject* parent = nullptr) : QObject(parent) {};
-    virtual ~AbstractEntityDataFilter(){};
+    ~AbstractEntityDataFilter() override = default;
 
-    enum FilterType {
+    enum FilterType : uint8_t {
         Unknown = 0,
         MaxPointsCount = 1,
         NearestPointDistance = 2,

@@ -5,6 +5,7 @@
 #include "ray_caster.h"
 #include "abstract_entity_data_filter.h"
 
+#include <cstdint>
 #include <QPair>
 #include <QObject>
 #include <QUuid>
@@ -98,9 +99,9 @@ public:
 
     SceneObject(QObject *parent = nullptr);
 
-    virtual ~SceneObject();
+    ~SceneObject() override;
 
-    enum class SceneObjectType{
+    enum class SceneObjectType : uint8_t{
         Unknown      = 0,
         BoatTrack    = 1,
         BottomTrack  = 2,
