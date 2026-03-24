@@ -192,8 +192,8 @@ public:
     bool isContainsChannelInChannelSetup(const ChannelId& channelId) const {
         QReadLocker locker(&lock_);
 
-        for (qsizetype i = 0; i < channelsSetup_.size(); ++i) {
-            if (channelsSetup_.at(i).channelId_ == channelId) {
+        for (const auto& channel : channelsSetup_) {
+            if (channel.channelId_ == channelId) {
                 return true;
             }
         }

@@ -18,17 +18,19 @@ static inline bool toTightRGBA8888(const QImage& in, QByteArray& out, int& w, in
     const int dstStride = w * 4;
     const int srcStride = img.bytesPerLine();
 
-    out.resize(dstStride * h);
+    out.resize(static_cast<size_t>(dstStride) * static_cast<size_t>(h));
 
     const uchar* src = img.constBits();
     uchar*       dst = reinterpret_cast<uchar*>(out.data());
 
     if (srcStride == dstStride) {
-        memcpy(dst, src, out.size());
+        memcpy(dst, src, static_cast<size_t>(out.size()));
     }
     else {
         for (int y = 0; y < h; ++y) {
-            memcpy(dst + y * dstStride, src + y * srcStride, dstStride);
+            const size_t dstOffset = static_cast<size_t>(y) * static_cast<size_t>(dstStride);
+            const size_t srcOffset = static_cast<size_t>(y) * static_cast<size_t>(srcStride);
+            memcpy(dst + dstOffset, src + srcOffset, static_cast<size_t>(dstStride));
         }
     }
 

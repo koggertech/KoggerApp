@@ -106,7 +106,7 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
         float arrowHaloBaseScale = (arrowHaloScale > 0.0f) ? (pointScale / arrowHaloScale) : pointScale;
 
         // point
-        bool isUsbl = itm.type_ == UsblView::UsblObjectType::kUsbl ? true : false; // true - circle, false - square
+        bool isUsbl = itm.type_ == UsblView::UsblObjectType::kUsbl; // true - circle, false - square
 
         QVector<QVector3D> point{ itm.data_.last() };
         //qDebug() << "arrowShaderProgram" << arrowShaderProgram << itm.yaw_;

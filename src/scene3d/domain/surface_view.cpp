@@ -129,7 +129,7 @@ void SurfaceView::SurfaceViewRenderImplementation::rebuildSeamlessTileNormals(co
             sharedNormalSums[makeVertexXYKey(verts[i])] += n;
         }
 
-        perTileNormalSums.insert(it.key(), std::move(normalSums));
+        perTileNormalSums.insert(it.key(), normalSums);
     }
 
     outNormals.reserve(perTileNormalSums.size());
@@ -165,7 +165,7 @@ void SurfaceView::SurfaceViewRenderImplementation::rebuildSeamlessTileNormals(co
             normals[i] = n;
         }
 
-        outNormals.insert(key, std::move(normals));
+        outNormals.insert(key, normals);
     }
 }
 
@@ -512,13 +512,13 @@ void SurfaceView::setTiles(const QHash<TileKey, SurfaceTile> &tiles, bool useTex
         auto& rTRef = r->tiles_;
 
         for (auto itT = tiles.cbegin(); itT != tiles.cend(); ++itT) {
-            auto& iKey   = itT.key();
-            auto& iValue = itT.value();
+            const auto& iKey   = itT.key();
+            const auto& iValue = itT.value();
 
             if (auto itRT = rTRef.find(iKey); itRT != rTRef.end()) { //refresh
                 auto& itRTVRef = itRT.value();
                 const auto savedTexId = itRTVRef.textureId_;
-                itRTVRef = std::move(iValue);
+                itRTVRef = iValue;
                 itRTVRef.textureId_ = savedTexId;
             }
             else {
@@ -824,7 +824,8 @@ void SurfaceView::rebuildIsobathLabels()
         }
 
         const int side = int(std::sqrt(double(verts.size())));
-        if (side < 2 || side * side != verts.size()) {
+        const size_t sideSquared = static_cast<size_t>(side) * static_cast<size_t>(side);
+        if (side < 2 || sideSquared != static_cast<size_t>(verts.size())) {
             continue;
         }
 
@@ -1386,4 +1387,3 @@ void SurfaceView::SurfaceViewRenderImplementation::updateBounds()
 
     m_bounds = Cube(xMin, xMax, yMin, yMax, 0, 0);
 }
-

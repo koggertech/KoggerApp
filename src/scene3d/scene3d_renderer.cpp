@@ -197,8 +197,8 @@ void GraphicsScene3dRenderer::drawObjects()
     view = m_camera.m_view;
     model.scale(1.0f, 1.0f, m_verticalScale);
 
-    m_model = std::move(model);
-    m_projection = std::move(projection);
+    m_model = model;
+    m_projection = projection;
 
     bool isOut = m_camera.getIsFarAwayFromOriginLla();
 

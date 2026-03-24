@@ -122,7 +122,7 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     QSet<int> pendingUsedSet;
     std::priority_queue<int, std::vector<int>, std::greater<int>> pendingUsedMin;
     QVector<int> progressBatch;
-    progressBatch.reserve(static_cast<qsizetype>(kProgressStep) * 2);
+    progressBatch.reserve(static_cast<size_t>(kProgressStep) * static_cast<size_t>(2));
     QVector<int> chunk;
 
     const int progressZoom = zoomFromMpp(tileResolution_);

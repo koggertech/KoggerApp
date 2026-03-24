@@ -9,7 +9,7 @@ class Contour : public SceneObject
 
 public:
     explicit Contour(QObject* parent = nullptr);
-    virtual ~Contour();
+    ~Contour() override;
     bool keyPointsVisible() const;
     QColor keyPointsRgbColor() const;
     QVector4D keyPointsColor() const;

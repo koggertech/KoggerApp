@@ -267,7 +267,7 @@ QByteArray MosaicDB::packFloat32(const QVector<QVector3D>& verts, int hmRatio)
     const int count = side * side;
 
     QByteArray raw;
-    raw.resize(static_cast<qsizetype>(count) * static_cast<qsizetype>(sizeof(float)));
+    raw.resize(static_cast<size_t>(count) * static_cast<size_t>(sizeof(float)));
     char* p = raw.data();
 
     for (int i = 0; i < count; ++i) {

@@ -233,7 +233,7 @@ typedef struct NED {
 
     NED() {}
     NED(double _n, double _e, double _d) : n(_n), e(_e), d(_d) { };
-    NED(LLA* lla, LLARef* ref, bool spherical = true) {
+    NED(const LLA* lla, const LLARef* ref, bool spherical = true) {
         if (spherical) {
             double lat_rad = lla->latitude * M_DEG_TO_RAD;
             double lon_rad = lla->longitude * M_DEG_TO_RAD;

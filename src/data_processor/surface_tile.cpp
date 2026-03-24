@@ -81,7 +81,7 @@ void SurfaceTile::initImageData(int sidePixelSize, int heightMatrixRatio)
 
     // texture vertices
     textureVertices_.clear();
-    textureVertices_.reserve(static_cast<qsizetype>(heightMatSideSize) * heightMatSideSize);
+    textureVertices_.reserve(static_cast<size_t>(heightMatSideSize) * static_cast<size_t>(heightMatSideSize));
     for (int i = 0; i < heightMatSideSize; ++i) {
         for (int j = 0; j < heightMatSideSize; ++j) {
             textureVertices_.append(QVector2D(float(j) / (heightMatSideSize - 1),

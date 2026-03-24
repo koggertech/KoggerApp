@@ -293,8 +293,8 @@ bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
 {
     Q_UNUSED(watched);
 
-    if (event->type() == EpochSelected3d) {
-        auto epochEvent = static_cast<EpochEvent*>(event);
+    auto* epochEvent = dynamic_cast<EpochEvent*>(event);
+    if (epochEvent && epochEvent->eventTypeId() == static_cast<int>(EpochSelected3d)) {
         //qDebug() << QString("[Plot 2d]: catched event from 3d view (epoch index is %1)").arg(epochEvent->epochIndex());
         setAimEpochEventState(true);
         setTimelinePositionByEpoch(epochEvent->epochIndex());

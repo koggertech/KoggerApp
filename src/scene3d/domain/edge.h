@@ -94,11 +94,7 @@ public:
         auto distToP1 = sqrt(pow(point.x() - mP1.x(), 2) + pow(point.y() - mP1.y(), 2) + pow(point.z() - mP1.z(), 2));
         auto distToP2 = sqrt(pow(point.x() - mP2.x(), 2) + pow(point.y() - mP2.y(), 2) + pow(point.z() - mP2.z(), 2));
 
-        if ((distToP1 + distToP2) == edgeLength){
-            return true;
-        }
-
-        return false;
+        return (distToP1 + distToP2) == edgeLength;
     }
 
     bool intersectsWithLine(const QVector3D& origin,
@@ -121,12 +117,11 @@ public:
 
         auto p = p1 + da * s;
 
-        if (containsPoint(p)){
+        const bool isInsideSegment = containsPoint(p);
+        if (isInsideSegment){
             intersectionPoint = p;
-            return true;
         }
-
-        return false;
+        return isInsideSegment;
 
     }
 #endif //QT_CORE_LIB

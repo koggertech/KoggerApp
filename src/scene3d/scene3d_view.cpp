@@ -509,12 +509,9 @@ void GraphicsScene3dView::zoomAroundScreenAnchor(qreal delta, const QPointF& anc
     }
     else if (preRef.isInit && postRef.isInit) {
         NED beforeNedPre(beforePoint.x(), beforePoint.y(), 0.0);
-        LLARef preRefCopy(preRef);
-        LLA beforeLla(&beforeNedPre, &preRefCopy, prePerspective);
+        LLA beforeLla(&beforeNedPre, &preRef, prePerspective);
         if (beforeLla.isCoordinatesValid()) {
-            LLA beforeLlaCopy(beforeLla);
-            LLARef postRefCopy(postRef);
-            NED beforeNedPost(&beforeLlaCopy, &postRefCopy, postPerspective);
+            NED beforeNedPost(&beforeLla, &postRef, postPerspective);
             if (std::isfinite(beforeNedPost.n) && std::isfinite(beforeNedPost.e)) {
                 lookAtDelta = QVector2D(static_cast<float>(beforeNedPost.n) - afterPoint.x(),
                                         static_cast<float>(beforeNedPost.e) - afterPoint.y());
@@ -1754,7 +1751,7 @@ void GraphicsScene3dView::updateProjection()
             currProj.ortho(-orthV * aspectRatio, orthV * aspectRatio, -orthV, orthV, orthV * nearPlaneOrthoCoeff_, orthV * farPlaneOrthoCoeff_);
         }
 
-        m_projection = std::move(currProj);
+        m_projection = currProj;
     }
 }
 
@@ -3334,7 +3331,7 @@ void GraphicsScene3dView::InFboRenderer::processMosaicTileTexture(QOpenGLFunctio
         const GLsizei H = defaultTileSidePixelSize;
 
         for (auto it = tasks.cbegin(); it != tasks.cend(); ++it) {
-            auto iTask = *it;
+            const auto& iTask = *it;
             const TileKey& tileId = iTask.first;
             const auto&    data   = iTask.second;
 
@@ -3465,12 +3462,12 @@ GraphicsScene3dView::Camera::Camera(qreal pitch,
                                     qreal distToFocusPoint,
                                     qreal fov,
                                     qreal sensivity)
-    :m_pitch(std::move(pitch))
-    ,m_yaw(std::move(yaw))
-    ,m_fov(std::move(fov))
-    ,m_distToFocusPoint(std::move(distToFocusPoint))
+    :m_pitch(pitch)
+    ,m_yaw(yaw)
+    ,m_fov(fov)
+    ,m_distToFocusPoint(distToFocusPoint)
     ,distForMapView_(m_distToFocusPoint)
-    ,m_sensivity(std::move(sensivity))
+    ,m_sensivity(sensivity)
 {
    setIsometricView();
 }
@@ -3651,9 +3648,7 @@ void GraphicsScene3dView::Camera::zoom(qreal delta)
         NED lookAtNed(m_lookAt.x(), m_lookAt.y(), 0.0f);
         LLA lookAtLla(&lookAtNed, &viewLlaRef_, isPerspective_);
         if (lookAtLla.isCoordinatesValid() && viewLlaRef_.isInit) {
-            LLA lookAtLlaCopy(lookAtLla);
-            LLARef viewRefCopy(viewLlaRef_);
-            NED rebasedNed(&lookAtLlaCopy, &viewRefCopy, nextPerspective);
+            NED rebasedNed(&lookAtLla, &viewLlaRef_, nextPerspective);
             if (std::isfinite(rebasedNed.n) && std::isfinite(rebasedNed.e)) {
                 m_lookAt.setX(static_cast<float>(rebasedNed.n));
                 m_lookAt.setY(static_cast<float>(rebasedNed.e));
@@ -3839,7 +3834,7 @@ void GraphicsScene3dView::Camera::updateViewMatrix()
     view.lookAt(cf + m_lookAt, m_lookAt, cu.normalized());
     view.scale(1.0f,1.0f,-1.0f);
 
-    m_view = std::move(view);
+    m_view = view;
 }
 
 void GraphicsScene3dView::Camera::checkRotateAngle()
