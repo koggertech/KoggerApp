@@ -7,7 +7,7 @@ class Plot2D;
 class Plot2DUSBLSolution : public Plot2DLine {
 public:
     Plot2DUSBLSolution();
-    bool draw(Plot2D* parent, Dataset* dataset);
+    bool draw(Plot2D* parent, Dataset* dataset) override;
 
 protected:
     PlotPen penAngle_[4] = {   PlotPen(PlotColor(255, 0, 0), 2, PlotPen::LineStyleSolid),

@@ -22,7 +22,7 @@ class TileDownloader : public QObject
     Q_OBJECT
 public:
     explicit TileDownloader(std::weak_ptr<TileProvider> provider, int maxConcurrentDownloads = 5);
-    ~TileDownloader();
+    ~TileDownloader() override;
 
     bool downloadTile(const TileIndex& tile);
     void stopAndClearRequests();

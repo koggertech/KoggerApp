@@ -16,7 +16,7 @@ public:
         return _size;
     }
 
-    enum Roles {
+    enum Roles : quint8 {
         Visibility,
         ID,
         Size,

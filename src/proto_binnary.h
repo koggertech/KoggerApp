@@ -481,13 +481,13 @@ protected:
         StateMAVLinkEnding,
     } _protoState;
 
-    ProtoID _proto;
+    ProtoID _proto = ProtoNone;
 
-    uint8_t* _contextData;
-    int32_t _contextLen;
+    uint8_t* _contextData = nullptr;
+    int32_t _contextLen = 0;
 
-    uint8_t* _savedContextData;
-    int32_t _savedContextLen;
+    uint8_t* _savedContextData = nullptr;
+    int32_t _savedContextLen = 0;
 
     enum : uint8_t {
         ProxyNone,
@@ -496,26 +496,28 @@ protected:
         ProxyEnd
     } _proxyState = ProxyNone;
 
-    uint8_t _frame[1024];
-    char* _frameChar;
-    int16_t _frameLen;
-    int16_t _frameMaxLen;
-    int16_t _payloadLen;
-    int16_t _completeLen;
-    int16_t _readPosition;
-    int16_t _readMaxPosition;
-    uint32_t _ltime;
-    uint64_t _gtime;
+    uint8_t _frame[1024] = {};
+    char* _frameChar = nullptr;
+    int16_t _frameLen = 0;
+    int16_t _frameMaxLen = 0;
+    int16_t _payloadLen = 0;
+    int16_t _completeLen = 0;
+    int16_t _readPosition = 0;
+    int16_t _readMaxPosition = 0;
+    uint32_t _ltime = 0;
+    uint64_t _gtime = 0;
 
-    ID _id;
-    Version _ver;
-    Type _type;
-    uint8_t _address, _from;
-    bool _mark, _resp;
+    ID _id = static_cast<ID>(0);
+    Version _ver = static_cast<Version>(0);
+    Type _type = static_cast<Type>(0);
+    uint8_t _address = 0;
+    uint8_t _from = 0;
+    bool _mark = false;
+    bool _resp = false;
     uint16_t _checksum = 0;
 
-    uint8_t _optionsLen;
-    OP_Flags _optionFlags;
+    uint8_t _optionsLen = 0;
+    OP_Flags _optionFlags = {};
 
     struct {
         uint16_t id;
@@ -527,7 +529,7 @@ protected:
             };
             uint8_t val;
         } flags;
-    } _stream;
+    } _stream = {};
 
 
     struct {

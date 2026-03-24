@@ -20,7 +20,7 @@ class TileManager : public QObject
     Q_OBJECT
 public:
     explicit TileManager(QObject* parent = nullptr);
-    ~TileManager();
+    ~TileManager() override;
 
     std::shared_ptr<TileSet> getTileSetPtr() const;
     int32_t currentProviderId() const;
@@ -59,4 +59,3 @@ private:
 };
 
 } // namespace map
-

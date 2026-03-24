@@ -9,7 +9,7 @@ class QmlComponentController : public QObject
 
 public:
     explicit QmlComponentController(QObject *parent = nullptr);
-    virtual ~QmlComponentController();
+    ~QmlComponentController() override;
 
 public Q_SLOTS:
     virtual void setQmlEngine(QObject* engine);

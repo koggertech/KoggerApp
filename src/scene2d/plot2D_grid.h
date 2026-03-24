@@ -9,7 +9,7 @@ class Plot2DGrid : public PlotLayer
 {
 public:
     Plot2DGrid();
-    bool draw(Plot2D* parent, Dataset* dataset);
+    bool draw(Plot2D* parent, Dataset* dataset) override;
 
     void setAngleVisibility(bool state);
     void setVetricalNumber(int grids) { _lines = grids; }

@@ -44,7 +44,7 @@ class Core : public QObject
 
 public:
     Core();
-    ~Core();
+    ~Core() override;
 
     Q_PROPERTY(bool              isGPSAlive                   READ getIsGPSAlive                   NOTIFY isGPSAliveChanged)
     Q_PROPERTY(bool              isFactoryMode                READ isFactoryMode                   CONSTANT)

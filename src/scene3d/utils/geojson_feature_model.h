@@ -9,7 +9,7 @@ class GeoJsonFeatureModel : public QAbstractListModel
     Q_OBJECT
 
 public:
-    enum Roles {
+    enum Roles : quint16 {
         IdRole = Qt::UserRole + 1,
         NameRole,
         TypeRole,

@@ -10,14 +10,14 @@ class NavigationArrowControlMenuController : public QmlComponentController
     Q_OBJECT
 public:
     explicit NavigationArrowControlMenuController(QObject* parent = nullptr);
-    virtual ~NavigationArrowControlMenuController();
+    ~NavigationArrowControlMenuController() override;
 
     Q_INVOKABLE void onVisibilityCheckBoxCheckedChanged(bool checked);
     Q_INVOKABLE void onSizeSpinBoxValueChanged(int size);
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
 protected:
-    virtual void findComponent() override final;
+    void findComponent() final;
 
 private:
     /*methods*/

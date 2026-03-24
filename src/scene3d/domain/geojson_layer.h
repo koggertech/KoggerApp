@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <QColor>
 #include <QVector>
 #include <QVector2D>
@@ -31,7 +32,7 @@ public:
 
     struct Marker
     {
-        enum class Shape
+        enum class Shape : uint8_t
         {
             Circle,
             Plus

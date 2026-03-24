@@ -9,14 +9,14 @@
 #include "dataset_defs.h"
 
 
-typedef enum {
+typedef enum : int8_t {
     AutoRangeNone = -1,
     AutoRangeLastData,
     AutoRangeLastOnScreen,
     AutoRangeMaxOnScreen
 } AutoRangeMode;
 
-typedef enum {
+typedef enum : uint8_t {
     MouseToolNone = 0,
     MouseToolNothing = 1,
     MouseToolDistanceMin,
@@ -136,7 +136,7 @@ typedef struct  PlotColor{
 typedef struct PlotPen {
     PlotColor color = PlotColor(255, 255, 255, 255);
     int width = 1;
-    typedef enum {
+    typedef enum : uint8_t {
         LineStyleNone,
         LineStyleSolid,
         LineStylePoint
@@ -177,7 +177,7 @@ public:
     int height() const { return _height; }
 
     void drawY(QVector<float> y, const PlotPen& pen) {
-        if(_painter == NULL) { return; }
+        if(_painter == nullptr) { return; }
         QPen qpen;
         qpen.setWidth(pen.width);
         qpen.setColor(QColor(pen.color.r, pen.color.g, pen.color.b, pen.color.a));
@@ -218,5 +218,5 @@ protected:
     int _width = 0;
     int _height = 0;
 
-    QPainter* _painter = NULL;
+    QPainter* _painter = nullptr;
 };

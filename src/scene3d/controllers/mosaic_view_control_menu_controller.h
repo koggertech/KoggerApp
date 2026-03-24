@@ -30,7 +30,7 @@ public:
     Q_INVOKABLE void onSetResolution(float val);
 
 protected:
-    virtual void findComponent() override;
+    void findComponent() override;
 
 private:
     void tryInitPendingLambda();

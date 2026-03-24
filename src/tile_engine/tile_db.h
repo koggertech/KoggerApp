@@ -17,7 +17,7 @@ class TileDB : public QObject
 
 public:
     explicit TileDB(int32_t providerId);
-    ~TileDB();
+    ~TileDB() override;
 
 public slots:
     void init();
@@ -47,4 +47,3 @@ private:
 };
 
 } // namespace map
-

@@ -18,25 +18,25 @@ class StreamList : public QObject
     Q_OBJECT
 public:
     explicit StreamList(QObject* parent = nullptr);
-    ~StreamList();
+    ~StreamList() override;
 
     void initTimer();
 
-    typedef enum {
+    typedef enum : uint8_t {
         RecordingError,
         RecordingIdle,
         RecordingPause,
         Recording
     } RecordingState;
 
-    typedef enum {
+    typedef enum : uint8_t {
         UploadingError,
         UploadingIdle,
         UploadingPause,
         Uploading
     } UploadingState;
 
-    typedef enum {
+    typedef enum : uint8_t {
         FragmentNone,
         FragmentNew,
         FragmentWait,
@@ -90,7 +90,7 @@ public:
     }
 
     void parse(FrameParser* frame) {
-        if(frame->id() == ID_STREAM && frame->type() == CONTENT && frame->ver() == v0 && frame->resp() == false) {
+        if(frame->id() == ID_STREAM && frame->type() == CONTENT && frame->ver() == v0 && !frame->resp()) {
             int item_cnt = frame->payloadLen()/12;
             while(item_cnt--) {
                 int id = frame->read<U2>();
@@ -122,7 +122,7 @@ public:
         if(isStreamExist(id)) {
             return &_streams[id];
         } else {
-            return NULL;
+            return nullptr;
         }
     }
 

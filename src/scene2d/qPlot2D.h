@@ -46,8 +46,8 @@ public:
 
     void plotUpdate() override;
 
-    bool eventFilter(QObject *watched, QEvent *event) override final;
-    void sendSyncEvent(int epoch_index, QEvent::Type eventType) override final;
+    bool eventFilter(QObject *watched, QEvent *event) final;
+    void sendSyncEvent(int epoch_index, QEvent::Type eventType) final;
 
     Q_INVOKABLE float cursorFrom() const { return Plot2D::cursor_.distance.from; }
     Q_INVOKABLE float cursorTo() const { return Plot2D::cursor_.distance.to; }

@@ -21,7 +21,7 @@ public:
 Q_SIGNALS:
 
 protected:
-    virtual void findComponent() override;
+    void findComponent() override;
 
 private:
     ImageView* getImageViewPtr() const;

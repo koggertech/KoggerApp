@@ -15,17 +15,17 @@ public:
     {
     public:
         BoatTrackRenderImplementation();
-        virtual ~BoatTrackRenderImplementation();
+        ~BoatTrackRenderImplementation() override;
 
-        virtual void render(QOpenGLFunctions* ctx,
-                            const QMatrix4x4& mvp,
-                            const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override final;
+        void render(QOpenGLFunctions* ctx,
+                    const QMatrix4x4& mvp,
+                    const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const final;
 
-        virtual void render(QOpenGLFunctions* ctx,
-                            const QMatrix4x4& model,
-                            const QMatrix4x4& view,
-                            const QMatrix4x4& projection,
-                            const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override final;
+        void render(QOpenGLFunctions* ctx,
+                    const QMatrix4x4& model,
+                    const QMatrix4x4& view,
+                    const QMatrix4x4& projection,
+                    const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const final;
 
     private:
         friend class BoatTrack;
@@ -35,18 +35,18 @@ public:
     };
 
     explicit BoatTrack(GraphicsScene3dView* view = nullptr, QObject* parent = nullptr);
-    virtual ~BoatTrack();
-    virtual SceneObjectType type() const override final;
-    virtual bool eventFilter(QObject *watched, QEvent *event) override final;
+    ~BoatTrack() override;
+    SceneObjectType type() const final;
+    bool eventFilter(QObject *watched, QEvent *event) final;
     void setDatasetPtr(Dataset* datasetPtr);
     void onPositionAdded(uint64_t indx);
 
 public Q_SLOTS:
-    virtual void clearData() override final;
+    void clearData() final;
     void selectEpoch(int epochIndex);
     void setBottomTrackVisibleState(bool state);
     void clearSelectedEpoch();
-    virtual void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) override final;
+    void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) final;
 
 Q_SIGNALS:
 

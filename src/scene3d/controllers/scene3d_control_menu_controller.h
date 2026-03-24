@@ -20,7 +20,7 @@ public:
     Q_INVOKABLE void onExportToCSVButtonClicked(const QString& path);
 
 protected:
-    virtual void findComponent() override;
+    void findComponent() override;
 
 private:
     float verticalScale() const;

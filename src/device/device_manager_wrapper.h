@@ -14,7 +14,7 @@ class DeviceManagerWrapper : public QObject
 public:
     /*methods*/
     DeviceManagerWrapper(QObject* parent = nullptr);
-    ~DeviceManagerWrapper();
+    ~DeviceManagerWrapper() override;
 
     Q_PROPERTY(QList<DevQProperty*> devs READ getDevList NOTIFY devChanged)
     Q_PROPERTY(bool protoBinConsoled READ getProtoBinConsoled WRITE setProtoBinConsoled NOTIFY protoBinConsoledChanged)

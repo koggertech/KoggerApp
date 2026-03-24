@@ -293,7 +293,7 @@ void DevDriver::importSettingsFromXML(const QString& filePath) {
             if (elementName == "Settings")
                 continue;
 
-            while (!(xmlReader.tokenType() == QXmlStreamReader::EndElement && xmlReader.name() == elementName)) {
+            while (xmlReader.tokenType() != QXmlStreamReader::EndElement || xmlReader.name() != elementName) {
                 xmlReader.readNext();
                 if (xmlReader.isStartElement()) {
                     if (elementName == "Echogram") {
@@ -419,7 +419,6 @@ void DevDriver::exportSettingsToXML(const QString& filePath) {
     xmlWriter.writeEndDocument();
     file.close();
 
-    return;
 }
 
 void DevDriver::setDatasetState(bool state) {
@@ -648,12 +647,12 @@ void DevDriver::protoComplete(Parsers::FrameParser& proto)
 
 
     if(_hashID.contains(proto.id())) {
-        if(_hashID[proto.id()].instance != NULL) {
+        if(_hashID[proto.id()].instance != nullptr) {
             IDBin* parse_instance = _hashID[proto.id()].instance;
             parse_instance->parse(proto);
             lastAddress_ = proto.route();
 
-            if(_hashID[proto.id()].callback != NULL) {
+            if(_hashID[proto.id()].callback != nullptr) {
                 ParseCallback& callback = _hashID[proto.id()].callback;
                 (this->*callback)(parse_instance->lastType(), parse_instance->lastVersion(), parse_instance->lastResp());
             }
@@ -1240,8 +1239,7 @@ void DevDriver::receivedVersion(Parsers::Type type, Parsers::Version ver, Parser
                 m_devName = "2D-Chirp";
                 break;
             case BoardBase:
-                m_devName = "2D-Base";
-                break;
+                [[fallthrough]];
             case BoardNBase:
                 m_devName = "2D-Base";
                 break;

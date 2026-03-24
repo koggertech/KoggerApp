@@ -7,7 +7,7 @@ class Plot2D;
 class Plot2DQuadrature : public Plot2DLine {
 public:
     Plot2DQuadrature();
-    bool draw(Plot2D* parent, Dataset* dataset);
+    bool draw(Plot2D* parent, Dataset* dataset) override;
 
 protected:
     PlotPen _penReal = PlotPen(PlotColor(250, 100, 0), 2, PlotPen::LineStyleSolid);

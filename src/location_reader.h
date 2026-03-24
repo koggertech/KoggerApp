@@ -13,7 +13,7 @@ class LocationReader : public QObject
     Q_OBJECT
 public:
     explicit LocationReader(QObject* parent = nullptr);
-    ~LocationReader();
+    ~LocationReader() override;
 
 signals:
     void positionUpdated(const QGeoPositionInfo& info);

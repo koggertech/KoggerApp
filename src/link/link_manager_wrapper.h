@@ -19,7 +19,7 @@ public:
 
     /*methods*/
     LinkManagerWrapper(QObject* parent);
-    ~LinkManagerWrapper();
+    ~LinkManagerWrapper() override;
 
     LinkListModel* getModelPtr();
     LinkManager* getWorker();

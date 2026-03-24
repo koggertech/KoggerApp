@@ -55,7 +55,7 @@ public:
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
 
 protected:
-    virtual void findComponent() override;
+    void findComponent() override;
 
 private slots:
     void onForceSingleZoomAutoStateChanged(bool active);
