@@ -249,8 +249,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="1292"/>
-        <location filename="../src/dataset.cpp" line="1294"/>
+        <location filename="../src/dataset.cpp" line="1296"/>
+        <location filename="../src/dataset.cpp" line="1298"/>
         <source>None</source>
         <translation>Brak</translation>
     </message>
@@ -599,11 +599,14 @@
     </message>
     <message>
         <location filename="../qml/DisplaySettings.qml" line="765"/>
+        <location filename="../qml/DisplaySettings.qml" line="1184"/>
         <source>Export</source>
         <translation>Eksport</translation>
     </message>
     <message>
         <location filename="../qml/DisplaySettings.qml" line="832"/>
+        <location filename="../qml/DisplaySettings.qml" line="1169"/>
+        <location filename="../qml/DisplaySettings.qml" line="1285"/>
         <source>Enter path</source>
         <translation>Wprowadź ścieżkę</translation>
     </message>
@@ -762,32 +765,52 @@
         <translation>Konsola</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1118"/>
+        <location filename="../qml/DisplaySettings.qml" line="1092"/>
+        <source>UI state backup</source>
+        <translation>Ustawienia interfejsu kopii zapasowej</translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="1198"/>
+        <source>Export UI state</source>
+        <translation>Eksportuj stan interfejsu</translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="1300"/>
+        <source>Import</source>
+        <translation>Import</translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="1314"/>
+        <source>Import UI state</source>
+        <translation>Importuj stan interfejsu</translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="1379"/>
         <source>Depth</source>
         <translation>Głębokość</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1129"/>
+        <location filename="../qml/DisplaySettings.qml" line="1390"/>
         <source>Speed</source>
         <translation>Prędkość</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1140"/>
+        <location filename="../qml/DisplaySettings.qml" line="1401"/>
         <source>Coordinates</source>
         <translation>Współrzędne</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1151"/>
+        <location filename="../qml/DisplaySettings.qml" line="1412"/>
         <source>Active point</source>
         <translation>Punkt aktywny</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1162"/>
+        <location filename="../qml/DisplaySettings.qml" line="1423"/>
         <source>Navigation info</source>
         <translation>Informacje nawigacyjne</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="1173"/>
+        <location filename="../qml/DisplaySettings.qml" line="1434"/>
         <source>Boat Status</source>
         <translation>Status łodzi</translation>
     </message>
@@ -1053,17 +1076,17 @@
         <translation>Dodatkowa szerokość, m:</translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="278"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="282"/>
         <source>Enter path</source>
         <translation>Wprowadź ścieżkę</translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="293"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="305"/>
         <source>Select folder and set .csv file name</source>
         <translation>Wybierz folder i ustaw nazwę pliku .csv</translation>
     </message>
     <message>
-        <location filename="../qml/IsobathsExtraSettings.qml" line="317"/>
+        <location filename="../qml/IsobathsExtraSettings.qml" line="329"/>
         <source>Export to CSV</source>
         <translation>Eksport do CSV</translation>
     </message>
@@ -1472,7 +1495,7 @@
         <translation>Prędkość dźwięku, m/s: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1964"/>
+        <location filename="../src/core.cpp" line="2115"/>
         <source>File</source>
         <translation>File</translation>
     </message>
@@ -1989,6 +2012,124 @@
     </message>
 </context>
 <context>
+    <name>UIStateSerializer</name>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="323"/>
+        <source>Export failed: file path is empty</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="353"/>
+        <source>Export failed: cannot read pinned links file</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="366"/>
+        <source>Export failed: cannot open file for writing</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="373"/>
+        <source>Export failed: short write</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="378"/>
+        <source>Exported %1 keys.</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="388"/>
+        <source>Import failed: file path is empty</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="395"/>
+        <source>Import failed: cannot open file</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="403"/>
+        <source>Import failed: invalid JSON: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="409"/>
+        <source>Import failed: root must be JSON object</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="417"/>
+        <source>Import failed: unsupported dump type</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="424"/>
+        <source>Import failed: unsupported schema version</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="432"/>
+        <source>Import failed: dump app version is missing</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="439"/>
+        <source>Import failed: version mismatch (file %1, app %2)</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="447"/>
+        <source>Import failed: settings must be JSON object</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="461"/>
+        <source>Import failed: links must be JSON object</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="469"/>
+        <source>Import failed: unsupported links payload format</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="476"/>
+        <source>Import failed: links payload is empty</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="483"/>
+        <source>Import failed: links payload is not valid Base64</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="516"/>
+        <source>Import failed: cannot write settings</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="529"/>
+        <source>Import failed: cannot apply pinned links: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="534"/>
+        <source> Pinned links were replaced live.</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="538"/>
+        <source>Imported %1 keys. Applied %2 in live UI. Skipped path keys: %3. Skipped serial links: %4.%5</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="731"/>
+        <source>link manager is not available</source>
+        <translation></translation>
+    </message>
+</context>
+<context>
     <name>UpgradeBox</name>
     <message>
         <location filename="../qml/UpgradeBox.qml" line="70"/>
@@ -2034,92 +2175,92 @@
         <translation>Ok</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1054"/>
+        <location filename="../qml/main.qml" line="1073"/>
         <source>Data prepairing...</source>
         <translation>Przygotowywanie danych...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1058"/>
+        <location filename="../qml/main.qml" line="1077"/>
         <source> cm/pix</source>
         <translation> cm/piks</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1058"/>
+        <location filename="../qml/main.qml" line="1077"/>
         <source>Mosaic: </source>
         <translation>Mozaika: </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1061"/>
+        <location filename="../qml/main.qml" line="1080"/>
         <source>Surface: </source>
         <translation>Powierzchnia: </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1061"/>
+        <location filename="../qml/main.qml" line="1080"/>
         <source> cm/cell</source>
         <translation> cm/komórka</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1612"/>
+        <location filename="../qml/main.qml" line="1631"/>
         <source>Profiles...</source>
         <translation>Profile...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1667"/>
+        <location filename="../qml/main.qml" line="1686"/>
         <source>Profiles</source>
         <translation>Profile</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1704"/>
+        <location filename="../qml/main.qml" line="1723"/>
         <source>Close</source>
         <translation>Zamknąć</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1750"/>
+        <location filename="../qml/main.qml" line="1769"/>
         <source>Select profile XML</source>
         <translation>Wybierz profil XML</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1777"/>
+        <location filename="../qml/main.qml" line="1796"/>
         <source>Add profiles and apply them</source>
         <translation>Dodaj profile i zastosuj je</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1816"/>
+        <location filename="../qml/main.qml" line="1835"/>
         <source>Path to profile .xml</source>
         <translation>Ścieżka do profilu .xml</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1828"/>
+        <location filename="../qml/main.qml" line="1847"/>
         <source>Browse</source>
         <translation>Przeglądać</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1837"/>
+        <location filename="../qml/main.qml" line="1856"/>
         <source>Apply</source>
         <translation>Stosować</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1985"/>
+        <location filename="../qml/main.qml" line="2004"/>
         <source> m/s </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1992"/>
+        <location filename="../qml/main.qml" line="2011"/>
         <source> %</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1985"/>
+        <location filename="../qml/main.qml" line="2004"/>
         <source> V   </source>
         <translation> V   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1985"/>
+        <location filename="../qml/main.qml" line="2004"/>
         <source> A   </source>
         <translation> A   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2101"/>
+        <location filename="../qml/main.qml" line="2120"/>
         <source>Please wait, the file is opening</source>
         <translation>Proszę czekać, plik się otwiera</translation>
     </message>
