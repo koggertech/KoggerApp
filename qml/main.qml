@@ -563,6 +563,7 @@ ApplicationWindow  {
             property real splitRatio: 0.5
             property real dragRatio: 0.5
             property bool splitDragging: false
+            property bool splitRatioSyncFromUi: false
             readonly property real splitDragMinRatio: 0.0
             readonly property real splitDragMaxRatio: 1.0
             readonly property real splitMidRatio: 0.5
@@ -628,13 +629,31 @@ ApplicationWindow  {
             }
             onSplitRatioChanged: {
                 if (!splitDragging) {
+                    splitRatioSyncFromUi = true
                     appSettings.sceneSplitRatio = clampSplitRatio(splitRatio)
+                    splitRatioSyncFromUi = false
+                }
+            }
+
+            function applySceneSplitRatioFromSettings() {
+                const restoredRatio = nearestSplitRatio(appSettings.sceneSplitRatio)
+                if (Math.abs(splitRatio - restoredRatio) > 0.0001) {
+                    splitRatio = restoredRatio
+                }
+                dragRatio = splitRatio
+            }
+
+            Connections {
+                target: appSettings
+                function onSceneSplitRatioChanged() {
+                    if (!visualisationLayout.splitDragging && !visualisationLayout.splitRatioSyncFromUi) {
+                        visualisationLayout.applySceneSplitRatioFromSettings()
+                    }
                 }
             }
 
             Component.onCompleted: {
-                splitRatio = nearestSplitRatio(appSettings.sceneSplitRatio)
-                dragRatio = splitRatio
+                applySceneSplitRatioFromSettings()
             }
 
             Behavior on splitRatio {
