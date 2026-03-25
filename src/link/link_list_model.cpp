@@ -56,7 +56,18 @@ QHash<QUuid, QString> LinkListModel::getLinkNames() const
             if (linkType == 2 || linkType == 3) {
                 QString type = (linkType == 2) ? "UDP" : "TCP";
                 QString address = vectors_[static_cast<int>(LinkListModel::Roles::Address)][line].toString();
-                retVal[it.key()] = type + "(" + address + ")";
+                const int sourcePort = vectors_[static_cast<int>(LinkListModel::Roles::SourcePort)][line].toInt();
+                const int destinationPort = vectors_[static_cast<int>(LinkListModel::Roles::DestinationPort)][line].toInt();
+
+                QString endpoint = address;
+                if (destinationPort > 0) {
+                    endpoint += ":" + QString::number(destinationPort);
+                }
+                if (sourcePort > 0) {
+                    endpoint += QString(" [local:%1]").arg(sourcePort);
+                }
+
+                retVal[it.key()] = type + "(" + endpoint + ")";
             }
         }
     }
