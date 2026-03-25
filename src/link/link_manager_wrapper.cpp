@@ -93,6 +93,45 @@ void LinkManagerWrapper::openClosedLinks()
     emit sendOpenFLinks();
 }
 
+bool LinkManagerWrapper::reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
+                                                       bool allowSerialLinks,
+                                                       int* skippedSerialLinks,
+                                                       QString* error)
+{
+    if (!workerObject_) {
+        if (error) {
+            *error = QStringLiteral("Link worker is not available");
+        }
+        return false;
+    }
+
+    if (workerThread_ && !workerThread_->isRunning()) {
+        workerThread_->start();
+    }
+
+    if (QThread::currentThread() == workerObject_->thread()) {
+        return workerObject_->reloadPinnedLinksFromXmlData(xmlData, allowSerialLinks, skippedSerialLinks, error);
+    }
+
+    bool ok = false;
+    int localSkippedSerialLinks = 0;
+    QString localError;
+    QMetaObject::invokeMethod(workerObject_.get(), [this, &ok, &localSkippedSerialLinks, &localError, xmlData, allowSerialLinks]() {
+        ok = workerObject_->reloadPinnedLinksFromXmlData(xmlData,
+                                                         allowSerialLinks,
+                                                         &localSkippedSerialLinks,
+                                                         &localError);
+    }, Qt::BlockingQueuedConnection);
+
+    if (skippedSerialLinks) {
+        *skippedSerialLinks = localSkippedSerialLinks;
+    }
+    if (error) {
+        *error = localError;
+    }
+    return ok;
+}
+
 QVariant LinkManagerWrapper::baudrateModel() const
 {
     QVariantList list;

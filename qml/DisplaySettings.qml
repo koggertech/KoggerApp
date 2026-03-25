@@ -1089,6 +1089,267 @@ GridLayout {
         }
 
         ParamGroup {
+            groupName: qsTr("UI state backup")
+
+            ColumnLayout {
+                id: uiStateBackupLayout
+                spacing: 6
+                property real uiStateActionButtonWidth: Math.max(uiStateExportActionButton.implicitWidth, uiStateImportActionButton.implicitWidth)
+
+                RowLayout {
+                    id: uiStateExportRow
+                    property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+                    property string exportPathSource: ""
+
+                    function sourceUrl(value) {
+                        if (!value) {
+                            return ""
+                        }
+
+                        if (typeof value === "string") {
+                            if (value.startsWith("file:///")) {
+                                return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
+                            }
+                            if (value.startsWith("file://")) {
+                                return value.slice(7)
+                            }
+                            return value
+                        }
+
+                        var localPath = value.toLocalFile ? value.toLocalFile() : ""
+                        return localPath && localPath.length ? localPath : value.toString()
+                    }
+
+                    function displayUrl(value) {
+                        var source = sourceUrl(value)
+                        if (!source.length) {
+                            return ""
+                        }
+
+                        try {
+                            return decodeURIComponent(source)
+                        }
+                        catch (error) {
+                            return source
+                        }
+                    }
+
+                    function effectiveSource(displayText, storedSource) {
+                        if (!displayText || !displayText.length) {
+                            return ""
+                        }
+
+                        if (storedSource && displayText === displayUrl(storedSource)) {
+                            return storedSource
+                        }
+
+                        return displayText
+                    }
+
+                    function ensureJsonPath(value) {
+                        if (!value || !value.length) {
+                            return ""
+                        }
+
+                        return value.toLowerCase().endsWith(".json") ? value : value + ".json"
+                    }
+
+                    Component.onCompleted: {
+                        uiStateExportPathText.text = displayUrl(exportPathSource)
+                    }
+
+                    function currentExportPath() {
+                        return ensureJsonPath(effectiveSource(uiStateExportPathText.text, exportPathSource))
+                    }
+
+                    CTextField {
+                        id: uiStateExportPathText
+                        hoverEnabled: true
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("Enter path")
+                    }
+
+                    CButton {
+                        text: "..."
+                        Layout.fillWidth: false
+                        onClicked: {
+                            uiStateExportDialog.currentFolder = uiStateExportRow.exportFolder
+                            uiStateExportDialog.open()
+                        }
+                    }
+
+                    CButton {
+                        id: uiStateExportActionButton
+                        Layout.preferredWidth: uiStateBackupLayout.uiStateActionButtonWidth
+                        text: qsTr("Export")
+                        onClicked: {
+                            const path = uiStateExportRow.currentExportPath()
+                            if (!path.length) {
+                                return
+                            }
+                            uiStateExportRow.exportPathSource = path
+                            uiStateExportPathText.text = uiStateExportRow.displayUrl(path)
+                            uiStateSerializer.exportToJsonFile(path)
+                        }
+                    }
+
+                    FileDialog {
+                        id: uiStateExportDialog
+                        title: qsTr("Export UI state")
+                        fileMode: FileDialog.SaveFile
+                        currentFolder: uiStateExportRow.exportFolder
+                        nameFilters: ["UI State Dump (*.json)", "JSON (*.json)", "All Files (*)"]
+
+                        onCurrentFolderChanged: {
+                            uiStateExportRow.exportFolder = uiStateExportDialog.currentFolder
+                        }
+
+                        onAccepted: {
+                            uiStateExportRow.exportFolder = uiStateExportDialog.currentFolder
+                            uiStateExportRow.exportPathSource = uiStateExportRow.ensureJsonPath(uiStateExportRow.sourceUrl(selectedFile))
+                            uiStateExportPathText.text = uiStateExportRow.displayUrl(uiStateExportRow.exportPathSource)
+                        }
+                    }
+
+                    Settings {
+                        property alias uiStateExportFolder: uiStateExportRow.exportFolder
+                    }
+
+                    Settings {
+                        property alias uiStateExportPathSource: uiStateExportRow.exportPathSource
+                    }
+                }
+
+                RowLayout {
+                    id: uiStateImportRow
+                    property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+                    property string importPathSource: ""
+
+                    function sourceUrl(value) {
+                        if (!value) {
+                            return ""
+                        }
+
+                        if (typeof value === "string") {
+                            if (value.startsWith("file:///")) {
+                                return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
+                            }
+                            if (value.startsWith("file://")) {
+                                return value.slice(7)
+                            }
+                            return value
+                        }
+
+                        var localPath = value.toLocalFile ? value.toLocalFile() : ""
+                        return localPath && localPath.length ? localPath : value.toString()
+                    }
+
+                    function displayUrl(value) {
+                        var source = sourceUrl(value)
+                        if (!source.length) {
+                            return ""
+                        }
+
+                        try {
+                            return decodeURIComponent(source)
+                        }
+                        catch (error) {
+                            return source
+                        }
+                    }
+
+                    function effectiveSource(displayText, storedSource) {
+                        if (!displayText || !displayText.length) {
+                            return ""
+                        }
+
+                        if (storedSource && displayText === displayUrl(storedSource)) {
+                            return storedSource
+                        }
+
+                        return displayText
+                    }
+
+                    Component.onCompleted: {
+                        uiStateImportPathText.text = displayUrl(importPathSource)
+                    }
+
+                    function currentImportPath() {
+                        return effectiveSource(uiStateImportPathText.text, importPathSource)
+                    }
+
+                    CTextField {
+                        id: uiStateImportPathText
+                        hoverEnabled: true
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("Enter path")
+                    }
+
+                    CButton {
+                        text: "..."
+                        Layout.fillWidth: false
+                        onClicked: {
+                            uiStateImportDialog.currentFolder = uiStateImportRow.importFolder
+                            uiStateImportDialog.open()
+                        }
+                    }
+
+                    CButton {
+                        id: uiStateImportActionButton
+                        Layout.preferredWidth: uiStateBackupLayout.uiStateActionButtonWidth
+                        text: qsTr("Import")
+                        onClicked: {
+                            const path = uiStateImportRow.currentImportPath()
+                            if (!path.length) {
+                                return
+                            }
+                            uiStateImportRow.importPathSource = path
+                            uiStateImportPathText.text = uiStateImportRow.displayUrl(path)
+                            uiStateSerializer.importFromJsonFile(path)
+                        }
+                    }
+
+                    FileDialog {
+                        id: uiStateImportDialog
+                        title: qsTr("Import UI state")
+                        fileMode: FileDialog.OpenFile
+                        currentFolder: uiStateImportRow.importFolder
+                        nameFilters: ["UI State Dump (*.json)", "JSON (*.json)", "All Files (*)"]
+
+                        onCurrentFolderChanged: {
+                            uiStateImportRow.importFolder = uiStateImportDialog.currentFolder
+                        }
+
+                        onAccepted: {
+                            uiStateImportRow.importFolder = uiStateImportDialog.currentFolder
+                            uiStateImportRow.importPathSource = uiStateImportRow.sourceUrl(selectedFile)
+                            uiStateImportPathText.text = uiStateImportRow.displayUrl(uiStateImportRow.importPathSource)
+                        }
+                    }
+
+                    Settings {
+                        property alias uiStateImportFolder: uiStateImportRow.importFolder
+                    }
+
+                    Settings {
+                        property alias uiStateImportPathSource: uiStateImportRow.importPathSource
+                    }
+                }
+
+                CText {
+                    Layout.fillWidth: true
+                    small: true
+                    wrapMode: Text.WordWrap
+                    text: uiStateSerializer.lastError.length
+                          ? uiStateSerializer.lastError
+                          : uiStateSerializer.lastStatus
+                    color: uiStateSerializer.lastError.length ? "#ff6b6b" : theme.textColor
+                    visible: text.length > 0
+                }
+            }
+        }
+
+        ParamGroup {
             groupName: "KoggerApp 0.14.2"
         }
     }

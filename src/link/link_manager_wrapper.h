@@ -6,6 +6,7 @@
 #include <QThread>
 #include <QPair>
 #include <QUuid>
+#include <QByteArray>
 #include "link_manager.h"
 #include "link_list_model.h"
 
@@ -27,6 +28,10 @@ public:
     void closeOpenedLinks();
     QHash<QUuid, QString> getLinkNames() const;
     void openClosedLinks();
+    bool reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
+                                      bool allowSerialLinks = true,
+                                      int* skippedSerialLinks = nullptr,
+                                      QString* error = nullptr);
     QVariant baudrateModel() const;
 
 public slots:

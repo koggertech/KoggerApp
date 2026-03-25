@@ -5,6 +5,17 @@
 #include <QDebug>
 #include <QStandardPaths>
 #include <QDir>
+#include <QRegularExpression>
+
+namespace {
+
+bool xmlBoolValue(const QString& value)
+{
+    const QString normalized = value.trimmed().toUpper();
+    return normalized == QStringLiteral("TRUE") || normalized == QStringLiteral("1");
+}
+
+}
 
 
 LinkManager::LinkManager(QObject *parent) :
@@ -198,7 +209,7 @@ void LinkManager::exportPinnedLinksToXML()
 {
     const TimerController timerGuard(timer_.get());
 
-    QString filePath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/pinned_links.xml";
+    const QString filePath = pinnedLinksFilePath();
 
     QDir dir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));
     if (!dir.exists()) {
@@ -243,6 +254,236 @@ void LinkManager::exportPinnedLinksToXML()
     file.close();
 }
 
+QString LinkManager::pinnedLinksFilePath() const
+{
+    return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
+        + QStringLiteral("/pinned_links.xml");
+}
+
+bool LinkManager::parsePinnedLinksXmlData(const QByteArray& xmlData, QList<PinnedLinkRecord>* records, QString* error) const
+{
+    if (!records) {
+        if (error) {
+            *error = QStringLiteral("records output is null");
+        }
+        return false;
+    }
+
+    records->clear();
+
+    if (xmlData.trimmed().isEmpty()) {
+        return true;
+    }
+
+    QXmlStreamReader xmlReader(xmlData);
+
+    while (!xmlReader.atEnd()) {
+        const auto token = xmlReader.readNext();
+        if (token != QXmlStreamReader::StartElement || xmlReader.name() != QStringLiteral("link")) {
+            continue;
+        }
+
+        PinnedLinkRecord record;
+        while (!(xmlReader.tokenType() == QXmlStreamReader::EndElement && xmlReader.name() == QStringLiteral("link"))) {
+            xmlReader.readNext();
+            if (xmlReader.atEnd()) {
+                break;
+            }
+
+            if (xmlReader.tokenType() != QXmlStreamReader::StartElement) {
+                continue;
+            }
+
+            const QString tag = xmlReader.name().toString();
+            if (tag == QStringLiteral("uuid")) {
+                record.uuid = QUuid(xmlReader.readElementText());
+            }
+            else if (tag == QStringLiteral("connection_status")) {
+                record.connectionStatus = xmlBoolValue(xmlReader.readElementText());
+            }
+            else if (tag == QStringLiteral("control_type")) {
+                record.controlType = static_cast<ControlType>(xmlReader.readElementText().toInt());
+            }
+            else if (tag == QStringLiteral("port_name")) {
+                record.portName = xmlReader.readElementText();
+            }
+            else if (tag == QStringLiteral("baudrate")) {
+                record.baudrate = xmlReader.readElementText().toInt();
+            }
+            else if (tag == QStringLiteral("parity")) {
+                record.parity = xmlBoolValue(xmlReader.readElementText());
+            }
+            else if (tag == QStringLiteral("link_type")) {
+                record.linkType = static_cast<LinkType>(xmlReader.readElementText().toInt());
+            }
+            else if (tag == QStringLiteral("address")) {
+                record.address = xmlReader.readElementText();
+            }
+            else if (tag == QStringLiteral("source_port")) {
+                record.sourcePort = xmlReader.readElementText().toInt();
+            }
+            else if (tag == QStringLiteral("destination_port")) {
+                record.destinationPort = xmlReader.readElementText().toInt();
+            }
+            else if (tag == QStringLiteral("is_pinned")) {
+                record.isPinned = xmlBoolValue(xmlReader.readElementText());
+            }
+            else if (tag == QStringLiteral("is_hided")) {
+                record.isHided = xmlBoolValue(xmlReader.readElementText());
+            }
+            else if (tag == QStringLiteral("is_not_available")) {
+                record.isNotAvailable = xmlBoolValue(xmlReader.readElementText());
+            }
+            else if (tag == QStringLiteral("auto_speed_selection")) {
+                record.autoSpeedSelection = xmlBoolValue(xmlReader.readElementText());
+            }
+            else {
+                xmlReader.skipCurrentElement();
+            }
+        }
+
+        if (record.uuid.isNull()) {
+            record.uuid = QUuid::createUuid();
+        }
+        records->append(record);
+    }
+
+    if (xmlReader.hasError()) {
+        if (error) {
+            *error = xmlReader.errorString();
+        }
+        records->clear();
+        return false;
+    }
+
+    return true;
+}
+
+bool LinkManager::looksLikeSerialPortName(const QString& portName)
+{
+    const QString normalized = portName.trimmed();
+    if (normalized.isEmpty()) {
+        return false;
+    }
+
+    if (normalized.startsWith(QStringLiteral("/dev/tty"), Qt::CaseInsensitive) ||
+        normalized.startsWith(QStringLiteral("/dev/cu"), Qt::CaseInsensitive)) {
+        return true;
+    }
+
+    static const QRegularExpression comPortExpression(QStringLiteral(R"(^COM\d+$)"),
+                                                      QRegularExpression::CaseInsensitiveOption);
+    return comPortExpression.match(normalized).hasMatch();
+}
+
+void LinkManager::appendPinnedLinkRecords(const QList<PinnedLinkRecord>& records)
+{
+    for (const PinnedLinkRecord& record : records) {
+        Link* link = createNewLink();
+        link->setUuid(record.uuid);
+        link->setControlType(record.controlType);
+        link->setPortName(record.portName);
+        link->setBaudrate(record.baudrate);
+        link->setParity(record.parity);
+        link->setLinkType(record.linkType);
+        link->setAddress(record.address);
+        link->setSourcePort(record.sourcePort);
+        link->setDestinationPort(record.destinationPort);
+        link->setIsPinned(true);
+        link->setIsHided(record.isHided);
+        link->setIsNotAvailable(record.isNotAvailable);
+        link->setAutoSpeedSelection(record.autoSpeedSelection);
+        link->setIsForceStopped(false);
+
+        list_.append(link);
+        doEmitAppendModifyModel(link);
+
+        if (record.connectionStatus) {
+            link->setConnectionStatus(true);
+            doEmitAppendModifyModel(link);
+        }
+    }
+}
+
+bool LinkManager::reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
+                                               bool allowSerialLinks,
+                                               int* skippedSerialLinks,
+                                               QString* error)
+{
+    const TimerController timerGuard(timer_.get());
+    if (skippedSerialLinks) {
+        *skippedSerialLinks = 0;
+    }
+
+    QList<PinnedLinkRecord> records;
+    QString parseError;
+    if (!parsePinnedLinksXmlData(xmlData, &records, &parseError)) {
+        if (error) {
+            *error = parseError;
+        }
+        return false;
+    }
+
+    if (!allowSerialLinks) {
+        QList<PinnedLinkRecord> filteredRecords;
+        filteredRecords.reserve(records.size());
+        int skippedCount = 0;
+
+        for (const PinnedLinkRecord& record : records) {
+            const bool isSerialByType = record.linkType == LinkType::kLinkSerial;
+            const bool isSerialByPortName = looksLikeSerialPortName(record.portName);
+            if (isSerialByType || isSerialByPortName) {
+                ++skippedCount;
+                continue;
+            }
+
+            filteredRecords.append(record);
+        }
+
+        records = filteredRecords;
+        if (skippedSerialLinks) {
+            *skippedSerialLinks = skippedCount;
+        }
+    }
+
+    // Stop all currently active links before replacing pinned set.
+    for (Link* link : list_) {
+        if (!link) {
+            continue;
+        }
+        if (link->isOpen()) {
+            link->close();
+        }
+        doEmitAppendModifyModel(link);
+    }
+
+    // Remove all existing pinned links.
+    for (int i = list_.size() - 1; i >= 0; --i) {
+        Link* link = list_.at(i);
+        if (!link || !link->getIsPinned()) {
+            continue;
+        }
+
+        emit linkDeleted(link->getUuid(), link);
+        emit deleteModel(link->getUuid());
+
+        link->disconnect();
+        this->disconnect(link);
+
+        if (link->isOpen()) {
+            link->close();
+        }
+
+        list_.removeAt(i);
+        delete link;
+    }
+
+    appendPinnedLinkRecords(records);
+    exportPinnedLinksToXML();
+    coldStarted_ = false;
+    return true;
+}
+
 Link *LinkManager::createNewLink() const
 {
     Link* retVal = new Link();
@@ -277,77 +518,19 @@ void LinkManager::importPinnedLinksFromXML()
 {
     const TimerController timerGuard(timer_.get());
 
-    QString filePath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/pinned_links.xml";
-
-    QFile file(filePath);
+    QFile file(pinnedLinksFilePath());
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         return;
     }
 
-    QXmlStreamReader xmlReader(&file);
-
-    while (!xmlReader.atEnd() && !xmlReader.hasError()) {
-        const QXmlStreamReader::TokenType token = xmlReader.readNext();
-
-        if (token == QXmlStreamReader::StartElement) {
-            if (xmlReader.name() == "link") {
-                Link* link = createNewLink();
-
-                while (xmlReader.tokenType() != QXmlStreamReader::EndElement || xmlReader.name() != "link") {
-                    if (xmlReader.tokenType() == QXmlStreamReader::StartElement) {
-                        if (xmlReader.name().toString() == "uuid") {
-                            link->setUuid(QUuid(xmlReader.readElementText()));
-                        }
-                        else if (xmlReader.name().toString() == "connection_status") {
-                            link->setConnectionStatus(xmlReader.readElementText().trimmed().toUpper() == "TRUE");
-                        }
-                        else if (xmlReader.name().toString() == "control_type") {
-                            link->setControlType(static_cast<ControlType>(xmlReader.readElementText().toInt()));
-                        }
-                        else if (xmlReader.name().toString() == "port_name") {
-                            link->setPortName(xmlReader.readElementText());
-                        }
-                        else if (xmlReader.name().toString() == "baudrate") {
-                            link->setBaudrate(xmlReader.readElementText().toInt());
-                        }
-                        else if (xmlReader.name().toString() == "parity") {
-                            link->setParity(xmlReader.readElementText().trimmed().toUpper() == "TRUE");
-                        }
-                        else if (xmlReader.name().toString() == "link_type") {
-                            link->setLinkType(static_cast<LinkType>(xmlReader.readElementText().toInt()));
-                        }
-                        else if (xmlReader.name().toString() == "address") {
-                            link->setAddress(xmlReader.readElementText());
-                        }
-                        else if (xmlReader.name().toString() == "source_port") {
-                            link->setSourcePort(xmlReader.readElementText().toInt());
-                        }
-                        else if (xmlReader.name().toString() == "destination_port") {
-                            link->setDestinationPort(xmlReader.readElementText().toInt());
-                        }
-                        else if (xmlReader.name().toString() == "is_pinned") {
-                            link->setIsPinned(xmlReader.readElementText().trimmed().toUpper() == "TRUE");
-                        }
-                        else if (xmlReader.name().toString() == "is_hided") {
-                            link->setIsHided(xmlReader.readElementText().trimmed().toUpper() == "TRUE");
-                        }
-                        else if (xmlReader.name().toString() == "is_not_available") {
-                            link->setIsNotAvailable(xmlReader.readElementText().trimmed().toUpper() == "TRUE");
-                        }
-                        else if (xmlReader.name().toString() == "auto_speed_selection") {
-                            link->setAutoSpeedSelection(xmlReader.readElementText().trimmed().toUpper() == "TRUE");
-                        }
-                    }
-                    xmlReader.readNext();
-                }
-
-                list_.append(link);
-                doEmitAppendModifyModel(link);
-            }
-        }
+    QList<PinnedLinkRecord> records;
+    QString error;
+    if (!parsePinnedLinksXmlData(file.readAll(), &records, &error)) {
+        qWarning() << "LinkManager::importPinnedLinksFromXML parse error:" << error;
+        return;
     }
 
-    file.close();
+    appendPinnedLinkRecords(records);
 }
 
 void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)

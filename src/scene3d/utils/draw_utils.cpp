@@ -2,9 +2,11 @@
 
 
 mosaic::PlotColorTable::PlotColorTable()
+    : themeId_(static_cast<int>(ThemeId::kUndefined))
+    , lowLevel_(10.0f)
+    , highLevel_(100.0f)
 {
     setTheme(static_cast<int>(ThemeId::kClassic));
-    setLevels(10.0f, 100.0f);
 }
 
 void mosaic::PlotColorTable::setTheme(int id)

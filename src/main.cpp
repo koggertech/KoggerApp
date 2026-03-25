@@ -23,12 +23,14 @@
 #include "qPlot2D.h"
 #include "core.h"
 #include "themes.h"
+#include "ui_state_serializer.h"
 #include "scene_object.h"
 #include "bottom_track.h"
 
 
 Core core;
 Themes theme;
+UIStateSerializer uiStateSerializer;
 QTranslator translator;
 QVector<QString> availableLanguages{"en", "ru", "pl"};
 
@@ -236,6 +238,8 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
+    engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
+    uiStateSerializer.setLinkManagerWrapper(core.getLinkManagerWrapperPtr());
 
     QObject::connect(&theme, &Themes::interfaceChanged, &core, []() {
         core.setConsoleOutputEnabled(theme.consoleVisible());
@@ -252,6 +256,12 @@ int main(int argc, char *argv[])
                                     if (!obj && url == objUrl)
                                         QCoreApplication::exit(-1);
                                 }, Qt::QueuedConnection);
+    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
+                     &uiStateSerializer, [url](QObject* obj, const QUrl& objUrl) {
+        if (obj && url == objUrl) {
+            uiStateSerializer.setQmlRootObject(obj);
+        }
+    }, Qt::QueuedConnection);
 
 // file opening on startup
 #ifndef Q_OS_ANDROID
