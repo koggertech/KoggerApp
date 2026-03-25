@@ -20,7 +20,7 @@ public:
 Q_SIGNALS:
 
 protected:
-    virtual void findComponent() override;
+    void findComponent() override;
 
 private:
     void tryInitPendingLambda();

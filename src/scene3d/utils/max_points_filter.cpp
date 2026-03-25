@@ -29,6 +29,7 @@ void MaxPointsFilter::setMaxPointsCount(int count)
         return;
 
     m_maxPointsCount = count;
+    emit maxPointsCountChanged();
 }
 
 void MaxPointsFilter::apply(const QVector<QVector3D> &origin, QVector<QVector3D> &filtered)

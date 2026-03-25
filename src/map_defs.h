@@ -45,21 +45,21 @@ inline const QVector<int> kIndices = {
 };
 
 /*structures*/
-enum class CameraTilt {
+enum class CameraTilt : std::uint8_t {
     Up = 0,
     Down,
     Left,
     Right
 };
 
-enum class ZoomState {
+enum class ZoomState : std::uint8_t {
     kUndefined = 0,
     kOut,
     kUnchanged,
     kIn
 };
 
-enum class TilePosition {
+enum class TilePosition : std::uint8_t {
     kFits = 0,
     kOnLeft,
     kOnRight
@@ -118,7 +118,7 @@ struct TileIndex {
 
 class Tile {
 public:
-    enum class State {
+    enum class State : std::uint8_t {
         kNone = 0, kReady, kWaitDB, kWaitServer, kErrorServer
     };
 
@@ -265,7 +265,9 @@ inline TilePosition getTilePosition(double minLon, double maxLon, const TileInfo
 } // namespace map
 
 
+// NOLINTNEXTLINE(performance-enum-size)
 Q_DECLARE_METATYPE(map::TileIndex)
+// NOLINTNEXTLINE(performance-enum-size)
 Q_DECLARE_METATYPE(map::Tile)
 
 
@@ -288,7 +290,8 @@ namespace map {
 
 inline uint qHash(const ::map::TileIndex& key, uint seed = 0) {
     std::size_t stlHash = std::hash<::map::TileIndex>()(key);
-    return static_cast<uint>(stlHash ^ (seed * 0x9e3779b9));
+    const std::size_t mixedSeed = static_cast<std::size_t>(seed) * static_cast<std::size_t>(0x9e3779b9u);
+    return static_cast<uint>(stlHash ^ mixedSeed);
 }
 
 } // namespace map

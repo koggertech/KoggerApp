@@ -62,7 +62,7 @@ void NavigationArrow::setSize(int size)
 QVector<QVector3D> NavigationArrow::makeArrowVertices() const
 {
     QVector<QVector3D> verts;
-    verts.reserve(6 * 3);
+    verts.reserve(static_cast<size_t>(6) * static_cast<size_t>(3));
 
     QVector3D A( -2.0f, -1.0f,  0.0f );
     QVector3D B(  0.0f,  0.0f,  0.0f );
@@ -105,7 +105,7 @@ QVector<QVector3D> NavigationArrow::makeArrowNormals(const QVector<QVector3D>& t
 QVector<QVector3D> NavigationArrow::makeArrowRibs() const
 {
     QVector<QVector3D> ribs;
-    ribs.reserve(6 * 3);
+    ribs.reserve(static_cast<size_t>(6) * static_cast<size_t>(3));
 
     QVector3D A( -2.0f, -1.0f,  0.05f );
     QVector3D B(  0.0f, -0.0f,  0.05f );

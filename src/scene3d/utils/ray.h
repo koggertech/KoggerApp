@@ -1,6 +1,7 @@
 #ifndef RAY_H
 #define RAY_H
 
+#include <cstdint>
 #include <QObject>
 #include <QVector3D>
 
@@ -27,7 +28,7 @@ class Ray : public QObject
 {
     Q_OBJECT
 public:
-    enum class HittingMode
+    enum class HittingMode : uint8_t
     {
         Vertex = 0,
         Segment = 1,

@@ -13,7 +13,7 @@
 using namespace Parsers;
 using Segment = QPair<uint16_t, uint16_t>; // first - begin, second - end
 
-typedef enum {
+enum BoardVersion : int16_t {
     BoardNone = -1,
     BoardEnhanced = 1,
     BoardBase = 3,
@@ -30,7 +30,7 @@ typedef enum {
     BoardNanoSSS = 17,
     BoardPULSEred_2D = 128,
     BoardPULSEblue_DSS = 129
-} BoardVersion;
+};
 
 struct LastReadInfo {
     LastReadInfo() : version(), checkSum(0), address(0), isReaded(true) {};
@@ -67,7 +67,7 @@ class IDBin : public QObject
     Q_OBJECT
 public:
     explicit IDBin(QObject *parent = nullptr);
-    ~IDBin();
+    ~IDBin() override;
 
     Resp  parse(FrameParser &proto);
 
@@ -363,7 +363,7 @@ public:
         uint32_t mask = 0;
     };
 
-    typedef enum {
+    enum ChannelMask : uint8_t {
         MASK_DIST_V0 = 1,
         MASK_CHART_V0 = 2,
         MASK_ATTITUDE_V0 = 4,
@@ -372,7 +372,7 @@ public:
         MASK_TIMESTAMP_V0 = 32,
         MASK_DIST_SDDBT = 64,
         MASK_DIST_SDDBT_P2 = 128,
-    } ChannelMask;
+    };
 
     void setChannel(uint8_t ch_id, uint32_t period, uint32_t mask);
     uint32_t mask(U1 ch_id);
@@ -479,7 +479,7 @@ protected:
     Channel m_channel[3];
 
     void sendChannel(U1 ch_id, uint32_t period, uint32_t mask);
-    virtual void requestSpecific(ProtoBinOut &proto_out) override { proto_out.write<U1>(0); }
+    void requestSpecific(ProtoBinOut &proto_out) override { proto_out.write<U1>(0); }
 };
 
 
@@ -664,7 +664,7 @@ protected:
     UART m_uart[5];
     U1 devDef_address = 0;
 
-    virtual void requestSpecific(ProtoBinOut &proto_out) override {
+    void requestSpecific(ProtoBinOut &proto_out) override {
         appendKey(proto_out);
         if(proto_out.ver() == 0 || proto_out.ver() == 1) {
             proto_out.write<U1>(1);
@@ -795,7 +795,8 @@ public:
     int availSend() {return _fw.length() - _currentFwOffset; }
     int progress() {
         if(_fw.length() != 0) {
-            return 100*_currentFwOffset / _fw.length();
+            return static_cast<int>((100ll * static_cast<long long>(_currentFwOffset)) /
+                                    static_cast<long long>(_fw.length()));
         }
 
         return 0;

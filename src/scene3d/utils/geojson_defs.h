@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <QColor>
 #include <QJsonObject>
 #include <QString>
@@ -23,7 +24,7 @@ inline bool operator!=(const GeoJsonCoord& a, const GeoJsonCoord& b)
     return !(a == b);
 }
 
-enum class GeoJsonGeometryType {
+enum class GeoJsonGeometryType : uint8_t {
     Point = 0,
     LineString,
     Polygon

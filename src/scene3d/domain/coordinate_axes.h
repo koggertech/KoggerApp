@@ -11,16 +11,16 @@ public:
     {
     public:
         CoordinateAxesRenderImplementation();
-        virtual ~CoordinateAxesRenderImplementation();
-        virtual void render(QOpenGLFunctions* ctx,
-                          const QMatrix4x4& mvp,
-                          const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+        ~CoordinateAxesRenderImplementation() override;
+        void render(QOpenGLFunctions* ctx,
+                    const QMatrix4x4& mvp,
+                    const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
 
-        virtual void render(QOpenGLFunctions* ctx,
-                            const QMatrix4x4& model,
-                            const QMatrix4x4& view,
-                            const QMatrix4x4& projection,
-                            const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+        void render(QOpenGLFunctions* ctx,
+                    const QMatrix4x4& model,
+                    const QMatrix4x4& view,
+                    const QMatrix4x4& projection,
+                    const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
     private:
         QVector<QVector3D> buildSmoothTriangleNormals(const QVector<QVector3D>& tris) const;
         friend class CoordinateAxes;

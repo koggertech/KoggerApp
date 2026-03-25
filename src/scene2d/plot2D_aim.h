@@ -6,7 +6,7 @@
 class Plot2DAim : public PlotLayer {
 public:
     Plot2DAim();
-    bool draw(Plot2D* parent, Dataset* dataset);
+    bool draw(Plot2D* parent, Dataset* dataset) override;
     void setEpochEventState(bool state);
 
 protected:

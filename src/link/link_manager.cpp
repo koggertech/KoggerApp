@@ -158,7 +158,7 @@ void LinkManager::update()
 
 Link* LinkManager::getLinkPtr(QUuid uuid)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     Link* retVal{ nullptr };
 
@@ -174,7 +174,7 @@ Link* LinkManager::getLinkPtr(QUuid uuid)
 
 void LinkManager::doEmitAppendModifyModel(Link* linkPtr)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     emit appendModifyModel(linkPtr->getUuid(),
                            linkPtr->getConnectionStatus(),
@@ -196,7 +196,7 @@ void LinkManager::doEmitAppendModifyModel(Link* linkPtr)
 
 void LinkManager::exportPinnedLinksToXML()
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     QString filePath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/pinned_links.xml";
 
@@ -261,7 +261,7 @@ Link *LinkManager::createNewLink() const
 
 void LinkManager::printLinkDebugInfo(Link* link) const
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (!link)
         qDebug() << "\tlink is nullptr";
@@ -275,7 +275,7 @@ void LinkManager::printLinkDebugInfo(Link* link) const
 
 void LinkManager::importPinnedLinksFromXML()
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     QString filePath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/pinned_links.xml";
 
@@ -293,13 +293,13 @@ void LinkManager::importPinnedLinksFromXML()
             if (xmlReader.name() == "link") {
                 Link* link = createNewLink();
 
-                while (!(xmlReader.tokenType() == QXmlStreamReader::EndElement && xmlReader.name() == "link")) {
+                while (xmlReader.tokenType() != QXmlStreamReader::EndElement || xmlReader.name() != "link") {
                     if (xmlReader.tokenType() == QXmlStreamReader::StartElement) {
                         if (xmlReader.name().toString() == "uuid") {
                             link->setUuid(QUuid(xmlReader.readElementText()));
                         }
                         else if (xmlReader.name().toString() == "connection_status") {
-                            link->setConnectionStatus(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            link->setConnectionStatus(xmlReader.readElementText().trimmed().toUpper() == "TRUE");
                         }
                         else if (xmlReader.name().toString() == "control_type") {
                             link->setControlType(static_cast<ControlType>(xmlReader.readElementText().toInt()));
@@ -311,7 +311,7 @@ void LinkManager::importPinnedLinksFromXML()
                             link->setBaudrate(xmlReader.readElementText().toInt());
                         }
                         else if (xmlReader.name().toString() == "parity") {
-                            link->setParity(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            link->setParity(xmlReader.readElementText().trimmed().toUpper() == "TRUE");
                         }
                         else if (xmlReader.name().toString() == "link_type") {
                             link->setLinkType(static_cast<LinkType>(xmlReader.readElementText().toInt()));
@@ -326,16 +326,16 @@ void LinkManager::importPinnedLinksFromXML()
                             link->setDestinationPort(xmlReader.readElementText().toInt());
                         }
                         else if (xmlReader.name().toString() == "is_pinned") {
-                            link->setIsPinned(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            link->setIsPinned(xmlReader.readElementText().trimmed().toUpper() == "TRUE");
                         }
                         else if (xmlReader.name().toString() == "is_hided") {
-                            link->setIsHided(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            link->setIsHided(xmlReader.readElementText().trimmed().toUpper() == "TRUE");
                         }
                         else if (xmlReader.name().toString() == "is_not_available") {
-                            link->setIsNotAvailable(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            link->setIsNotAvailable(xmlReader.readElementText().trimmed().toUpper() == "TRUE");
                         }
                         else if (xmlReader.name().toString() == "auto_speed_selection") {
-                            link->setAutoSpeedSelection(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            link->setAutoSpeedSelection(xmlReader.readElementText().trimmed().toUpper() == "TRUE");
                         }
                     }
                     xmlReader.readNext();
@@ -352,7 +352,7 @@ void LinkManager::importPinnedLinksFromXML()
 
 void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
@@ -365,7 +365,7 @@ void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
 
 void LinkManager::onUpgradingFirmwareStateChanged(QUuid uuid)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
@@ -374,7 +374,7 @@ void LinkManager::onUpgradingFirmwareStateChanged(QUuid uuid)
 
 void LinkManager::onLinkBaudrateChanged(QUuid uuid)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
@@ -387,7 +387,7 @@ void LinkManager::onLinkBaudrateChanged(QUuid uuid)
 
 void LinkManager::onLinkIsReceivesDataChanged(QUuid uuid)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
@@ -427,7 +427,7 @@ void LinkManager::onExpiredTimer()
 
 void LinkManager::openAsSerial(QUuid uuid, LinkAttribute attribute)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAttribute(attribute);
@@ -438,7 +438,7 @@ void LinkManager::openAsSerial(QUuid uuid, LinkAttribute attribute)
 
 void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAttribute(attribute);
@@ -452,7 +452,7 @@ void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int des
 
 void LinkManager::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAttribute(attribute);
@@ -466,7 +466,7 @@ void LinkManager::openAsTcp(QUuid uuid, QString address, int sourcePort, int des
 
 void LinkManager::closeLink(QUuid uuid)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         if (linkPtr->getControlType() == ControlType::kAuto)
@@ -483,7 +483,7 @@ void LinkManager::closeLink(QUuid uuid)
 
 void LinkManager::closeFLink(QUuid uuid)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setIsForceStopped(true);
@@ -494,7 +494,7 @@ void LinkManager::closeFLink(QUuid uuid)
 
 void LinkManager::deleteLink(QUuid uuid)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         emit linkDeleted(linkPtr->getUuid(), linkPtr);
@@ -520,7 +520,7 @@ void LinkManager::deleteLink(QUuid uuid)
 
 void LinkManager::updateBaudrate(QUuid uuid, int baudrate)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setBaudrate(baudrate);
@@ -558,7 +558,7 @@ void LinkManager::setAttribute(QUuid uuid, LinkAttribute attribute) {
 
 void LinkManager::updateAddress(QUuid uuid, const QString &address)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAddress(address);
@@ -571,7 +571,7 @@ void LinkManager::updateAddress(QUuid uuid, const QString &address)
 
 void LinkManager::updateAutoSpeedSelection(QUuid uuid, bool state)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAutoSpeedSelection(state);
@@ -584,7 +584,7 @@ void LinkManager::updateAutoSpeedSelection(QUuid uuid, bool state)
 
 void LinkManager::updateSourcePort(QUuid uuid, int sourcePort)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setSourcePort(sourcePort);
@@ -597,7 +597,7 @@ void LinkManager::updateSourcePort(QUuid uuid, int sourcePort)
 
 void LinkManager::updateDestinationPort(QUuid uuid, int destinationPort)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setDestinationPort(destinationPort);
@@ -610,7 +610,7 @@ void LinkManager::updateDestinationPort(QUuid uuid, int destinationPort)
 
 void LinkManager::updatePinnedState(QUuid uuid, bool state)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setIsPinned(state);
@@ -621,7 +621,7 @@ void LinkManager::updatePinnedState(QUuid uuid, bool state)
 
 void LinkManager::updateControlType(QUuid uuid, ControlType controlType)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setControlType(controlType);
@@ -639,7 +639,7 @@ void LinkManager::frameInput(Link *link, Parsers::FrameParser frame)
 
 void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPort)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     Link* newLinkPtr = createNewLink();
     newLinkPtr->createAsUdp(address, sourcePort, destinationPort);
@@ -650,7 +650,7 @@ void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPo
 
 void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPort)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     Link* newLinkPtr = createNewLink();
     newLinkPtr->createAsTcp(address, sourcePort, destinationPort);
@@ -661,7 +661,7 @@ void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPo
 
 void LinkManager::openFLinks()
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     for (auto& itm : list_) {
         if (itm->getIsForceStopped()) {
@@ -689,7 +689,7 @@ void LinkManager::openFLinks()
 
 void LinkManager::createAndOpenAsUdpProxy(QString address, int sourcePort, int destinationPort)
 {
-    TimerController(timer_.get());
+    const TimerController timerGuard(timer_.get());
 
     Link* newLinkPtr = createNewLink();
     newLinkPtr->createAsUdp(address, sourcePort, destinationPort);

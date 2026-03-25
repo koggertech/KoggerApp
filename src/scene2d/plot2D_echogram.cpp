@@ -343,12 +343,12 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
             if (is_cash_notvalid || pool_index_safe != cash_index || !wasValidlyRendered) {
                 _cash[column].poolIndex = pool_index_safe;
 
-                if(datasource != NULL) {
+                if(datasource != nullptr) {
                     _cash[column].state = CashLine::CashState::CashStateNotValid;
                     int16_t* cash_data = _cash[column].data.data();
                     int16_t cash_data_size = _cash[column].data.size();
 
-                    if (cursor.channel2 == CHANNEL_NONE) {
+                    if (cursor.channel2 == channelNone()) {
                         datasource->chartTo(cursor.channel1, cursor.subChannel1, from, to, cash_data, cash_data_size, _compensation_id);
                     }
                     else {
@@ -611,11 +611,7 @@ bool Plot2DEchogram::drawZoomPreview(Plot2D* parent,
                                                    parent->getRangefinderTheme());
     painter->restore();
 
-    if (!rendered) {
-        return false;
-    }
-
-    return true;
+    return rendered;
 }
 
 float Plot2DEchogram::getLowLevel() const

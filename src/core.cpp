@@ -431,7 +431,7 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
 
     QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
     if (splitname.size() > 1) {
-        QString format = splitname.last();
+        const QString& format = splitname.last();
         if (format.contains("xtf", Qt::CaseInsensitive)) {
             QFile file;
             QUrl url(localfilePath);
@@ -608,7 +608,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
         QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
 
         if (splitname.size() > 1) {
-            QString format = splitname.last();
+            const QString& format = splitname.last();
             if (format.contains("xtf", Qt::CaseInsensitive)) {
                 QFile file;
                 QUrl url(localfilePath);
@@ -764,7 +764,7 @@ bool Core::openXTF(const QByteArray& data)
     }
 
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL && i < channelList.size()) {
+        if (plot2dList_.at(i) != nullptr && i < channelList.size()) {
             if (i == 0) {
                 plot2dList_.at(i)->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, fChName, channelList[1].channelId_, channelList[1].subChannelId_, sChName);
                 plot2dList_.at(i)->plotUpdate();
@@ -833,7 +833,7 @@ bool Core::openCSV(QString name, int separatorType, int firstRow, int colTime, b
             QStringList date_time = columns[colTime-1].split(' ');
             QString date, time;
 
-            if (date_time.size() > 0) {
+            if (!date_time.empty()) {
                 if (date_time[0].contains('-'))
                     date = date_time[0];
             }
@@ -968,29 +968,47 @@ int Core::getFixBlackStripesBackwardSteps() const
 
 void Core::setFixBlackStripesState(bool state)
 {
+    if (fixBlackStripesState_ == state) {
+        return;
+    }
+
     fixBlackStripesState_ = state;
 
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesState(state);
     }
+
+    emit fixBlackStripesStateChanged();
 }
 
 void Core::setFixBlackStripesForwardSteps(int val)
 {
+    if (fixBlackStripesForwardSteps_ == val) {
+        return;
+    }
+
     fixBlackStripesForwardSteps_ = val;
 
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesForwardSteps(val);
     }
+
+    emit fixBlackStripesForwardStepsChanged();
 }
 
 void Core::setFixBlackStripesBackwardSteps(int val)
 {
+    if (fixBlackStripesBackwardSteps_ == val) {
+        return;
+    }
+
     fixBlackStripesBackwardSteps_ = val;
 
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesBackwardSteps(val);
     }
+
+    emit fixBlackStripesBackwardStepsChanged();
 }
 
 void Core::setBottomTrackRealtimeFromSettings(bool state)
@@ -1019,6 +1037,7 @@ void Core::setCsvLogging(bool isLogging)
         logger_.stopCsvLogging();
     }
     isLoggingCsv_ = isLogging && success;
+    emit loggingCsvChanged();
 }
 
 bool Core::getUseGPS() const
@@ -1028,9 +1047,12 @@ bool Core::getUseGPS() const
 
 void Core::setUseGPS(bool state)
 {
-    //qDebug() << "Core::setUseGPS" << state;
+    const bool changed = (isUseGPS_ != state);
     isUseGPS_ = state;
     QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "setUseGPS", Qt::QueuedConnection, Q_ARG(bool, isUseGPS_));
+    if (changed) {
+        emit useGPSChanged();
+    }
 }
 
 void Core::setNeedForceZooming(bool state)
@@ -1057,31 +1079,31 @@ bool Core::exportComplexToCSV(QString file_path) {
     for(int i = 0; i < datasetPtr_->size(); i++) {
         Epoch* epoch = datasetPtr_->fromIndex(i);
 
-        if(epoch == NULL) { continue; }
+        if(epoch == nullptr) { continue; }
 
         if(epoch->isComplexSignalAvail()) {
             ComplexSignals& sigs = epoch->complexSignals();
 
             for (auto dev_i = sigs.cbegin(), end = sigs.cend(); dev_i != end; ++dev_i) {
-                QMap<int, QVector<ComplexSignal>> dev = dev_i.value();
+                const auto& dev = dev_i.value();
 
                 for (auto group_i = dev.cbegin(), end = dev.cend(); group_i != end; ++group_i) {
                     int group_id  = group_i.key();
-                    QVector<ComplexSignal> sig = group_i.value();
-                    int ch_size = sig.size();
+                    const auto& sig = group_i.value();
+                    const int ch_size = sig.size();
 
                     for(int ch_i = 0; ch_i < ch_size; ch_i++) {
                         int ch_num = ch_i + group_id*32;
 
-                        ComplexF* data = sig[ch_i].data.data();
-                        int data_size = sig[ch_i].data.size();
+                        const ComplexF* data = sig[ch_i].data.constData();
+                        const int data_size = sig[ch_i].data.size();
 
                         QString row_data;
                         row_data.append(QString("%1,%2").arg(i).arg(ch_num));
                         row_data.append(QString(",%1").arg(sig[ch_i].globalOffset));
                         row_data.append(QString(",%1").arg(sig[ch_i].sampleRate));
 
-                        if(data != NULL && data_size > 0) {
+                        if(data != nullptr && data_size > 0) {
                             for(int ci = 0; ci < data_size; ci++) {
                                 row_data.append(QString(",%1,%2").arg(data[ci].real).arg(data[ci].imag));
                             }
@@ -1114,7 +1136,7 @@ bool Core::exportUSBLToCSV(QString filePath)
     for (int i = 0; i < datasetPtr_->size(); i += 1) {
         Epoch* epoch = datasetPtr_->fromIndex(i);
 
-        if (epoch == NULL)
+        if (epoch == nullptr)
             continue;
 
         NED boatPosNed = epoch->getPositionGNSS().ned;
@@ -1358,20 +1380,20 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         Epoch::Echogram* sensor = epoch->chart(channelId);
 
         if (sonar_height) {
-            if (sensor != NULL && isfinite(sensor->sensorPosition.ned.d)) {
+            if (sensor != nullptr && isfinite(sensor->sensorPosition.ned.d)) {
                 row_data.append(QString::number(-sensor->sensorPosition.ned.d, 'f', 3));
             }
-            else if (sensor != NULL && isfinite(sensor->sensorPosition.lla.altitude)) {
+            else if (sensor != nullptr && isfinite(sensor->sensorPosition.lla.altitude)) {
                 row_data.append(QString::number(sensor->sensorPosition.lla.altitude, 'f', 3));
             }
             row_data.append(",");
         }
 
         if (bottom_height) {
-            if(sensor != NULL && isfinite(sensor->bottomProcessing.bottomPoint.ned.d)) {
+            if(sensor != nullptr && isfinite(sensor->bottomProcessing.bottomPoint.ned.d)) {
                 row_data.append(QString::number(-sensor->bottomProcessing.bottomPoint.ned.d, 'f', 3));
             }
-            else if (sensor != NULL && isfinite(sensor->bottomProcessing.bottomPoint.lla.altitude)) {
+            else if (sensor != nullptr && isfinite(sensor->bottomProcessing.bottomPoint.lla.altitude)) {
                 row_data.append(QString::number(sensor->bottomProcessing.bottomPoint.lla.altitude, 'f', 3));
             }
             row_data.append(",");
@@ -1424,7 +1446,7 @@ bool Core::exportPlotAsXTF(QString filePath)
 void Core::setPlotStartLevel(int level)
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL) {
+        if (plot2dList_.at(i) != nullptr) {
             plot2dList_.at(i)->setEchogramLowLevel(level);
         }
     }
@@ -1436,7 +1458,7 @@ void Core::setPlotStartLevel(int level)
 void Core::setPlotStopLevel(int level)
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL)
+        if (plot2dList_.at(i) != nullptr)
             plot2dList_.at(i)->setEchogramHightLevel(level);
     }
     if (syncLoupePlot3dPtr_) {
@@ -1447,7 +1469,7 @@ void Core::setPlotStopLevel(int level)
 void Core::setTimelinePosition(double position)
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL)
+        if (plot2dList_.at(i) != nullptr)
             plot2dList_.at(i)->setTimelinePosition(position);
     }
 }
@@ -1455,7 +1477,7 @@ void Core::setTimelinePosition(double position)
 void Core::resetAim()
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL)
+        if (plot2dList_.at(i) != nullptr)
             plot2dList_.at(i)->resetAim();
     }
 }
@@ -1492,7 +1514,7 @@ void Core::UILoad(QObject* object, const QUrl& url)
     datasetPtr_->setScene3D(scene3dViewPtr_);
 
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL) {
+        if (plot2dList_.at(i) != nullptr) {
             plot2dList_.at(i)->setPlot(datasetPtr_);
             plot2dList_.at(i)->setDataProcessor(dataProcessor_);
             scene3dViewPtr_->bottomTrack()->installEventFilter(plot2dList_.at(i));

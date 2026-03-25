@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include "scene_object.h"
 #include <memory>
 #include <QImage>
@@ -16,7 +17,7 @@ class UsblView : public SceneObject
     QML_NAMED_ELEMENT(UsblView)
 
 public:
-    enum class UsblObjectType {
+    enum class UsblObjectType : uint8_t {
         kUndefined = 0,
         kUsbl,
         kBeacon
@@ -40,20 +41,20 @@ public:
     class UsblViewRenderImplementation : public SceneObject::RenderImplementation
     {
     public:
-        virtual void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp,
-                            const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override final;
+        void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp,
+                    const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const final;
     private:
-        virtual void updateBounds() override final;
+        void updateBounds() final;
         friend class UsblView;
         // data
         QMap<int, UsblObjectParams> tracks_;
     };
 
     explicit UsblView(QObject* parent = nullptr);
-    virtual ~UsblView();
+    ~UsblView() override;
 
     /*SceneObject*/
-    virtual SceneObjectType type() const override;
+    SceneObjectType type() const override;
 
     /*UsblView*/
     void setTrackRef(QMap<int, UsblObjectParams>& tracks); // first - id, second - tracks

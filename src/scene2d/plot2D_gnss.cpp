@@ -21,7 +21,7 @@ bool Plot2DGNSS::draw(Plot2D* parent, Dataset *dataset)
         int pool_index = cursor.getIndex(i);
         Epoch *data = dataset->fromIndex(pool_index);
 
-        if (data != NULL) {
+        if (data != nullptr) {
             h_speed[i] = data->gnssHSpeed();
         }
     }

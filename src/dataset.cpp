@@ -56,7 +56,7 @@ void Dataset::getMaxDistanceRange(float *from, float *to, const ChannelId& chann
     float channel2_max = 0;
     for(int iepoch = 0; iepoch < sz; iepoch++) {
         Epoch* epoch = fromIndex(iepoch);
-        if (epoch != NULL) {
+        if (epoch != nullptr) {
             if (epoch->chartAvail(channel1, subAddressCh1)) {
                 float range = epoch->chart(channel1, subAddressCh1)->range();
                 if (channel1_max < range) {
@@ -415,7 +415,11 @@ void Dataset::rawDataRecieved(const ChannelId& channelId, RawData raw_data) {
                 signal.isComplex = true;
 
                 for (int i = 0; i < size; i++) {
-                    signal_data[i] = ComplexF(complex16_data[(i * header.channelCount + ich) * 2], complex16_data[(i * header.channelCount + ich) * 2 + 1]);
+                    const size_t baseIndex =
+                        static_cast<size_t>(i) * static_cast<size_t>(header.channelCount) +
+                        static_cast<size_t>(ich);
+                    const size_t complexIndex = baseIndex * size_t{2};
+                    signal_data[i] = ComplexF(complex16_data[complexIndex], complex16_data[complexIndex + 1]);
                 }
             }
         }
@@ -1144,11 +1148,11 @@ void Dataset::setChannelOffset(const ChannelId& channelId, float x, float y, flo
     QWriteLocker locker(&lock_);
 
     // write to all on ChannelId
-    for (int16_t i = 0; i < channelsSetup_.size(); ++i) {
-        if (channelsSetup_.at(i).channelId_ == channelId) {
-            channelsSetup_[i].localPosition_.x = x;
-            channelsSetup_[i].localPosition_.y = y;
-            channelsSetup_[i].localPosition_.z = z;
+    for (auto& channelSetup : channelsSetup_) {
+        if (channelSetup.channelId_ == channelId) {
+            channelSetup.localPosition_.x = x;
+            channelSetup.localPosition_.y = y;
+            channelSetup.localPosition_.z = z;
         }
     }
 }
@@ -1160,14 +1164,14 @@ void Dataset::spatialProcessing() {
 
         for(int iepoch = 0; iepoch < size(); iepoch++) {
             Epoch* epoch = fromIndex(iepoch);
-            if(epoch == NULL) { continue; }
+            if(epoch == nullptr) { continue; }
 
             Position ext_pos = epoch->getExternalPosition();
 
             if(epoch->chartAvail(ich)) {
                 Epoch::Echogram* data = epoch->chart(ich);
 
-                if(data == NULL) { continue; }
+                if(data == nullptr) { continue; }
 
                 if(ext_pos.ned.isValid()) {
                     ext_pos.ned.d += it->localPosition_.z;
@@ -1246,7 +1250,7 @@ void Dataset::setRefPosition(int epoch_index) {
 }
 
 void Dataset::setRefPosition(Epoch* epoch) {
-    if(epoch == NULL) { return; }
+    if(epoch == nullptr) { return; }
 
     setRefPosition(epoch->getPositionGNSS());
 }
@@ -1256,7 +1260,7 @@ void Dataset::setRefPosition(Position ref_pos) {
         setLlaRef(LLARef(ref_pos.lla), getCurrentLlaRefState());
         for(int iepoch = 0; iepoch < size(); iepoch++) {
             Epoch* epoch = fromIndex(iepoch);
-            if(epoch == NULL) { continue; }
+            if(epoch == nullptr) { continue; }
             epoch->setPositionRef(&_llaRef);
         }
     }
@@ -1264,7 +1268,7 @@ void Dataset::setRefPosition(Position ref_pos) {
 
 void Dataset::setRefPositionByFirstValid() {
     Epoch* epoch = getFirstEpochByValidPosition();
-    if(epoch == NULL) { return; }
+    if(epoch == nullptr) { return; }
 
     setRefPosition(epoch);
 }
@@ -1272,13 +1276,13 @@ void Dataset::setRefPositionByFirstValid() {
 Epoch *Dataset::getFirstEpochByValidPosition() {
     for(int iepoch = 0; iepoch < size(); iepoch++) {
         Epoch* epoch = fromIndex(iepoch);
-        if(epoch == NULL) { continue; }
+        if(epoch == nullptr) { continue; }
         if(epoch->getPositionGNSS().lla.isCoordinatesValid()) {
             return epoch;
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 QStringList Dataset::channelsNameList()
@@ -1460,7 +1464,7 @@ void Dataset::onDimensionRectCanCalc(uint64_t indx)
 
 void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannelId)
 {
-    int16_t indx = -1;
+    bool addedNewChannel = false;
 
     {
         QWriteLocker locker(&lock_);
@@ -1469,23 +1473,21 @@ void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannel
             firstChannelId_ = DatasetChannel(channelId, subChannelId); //
         }
 
-        for (int16_t i = 0; i < channelsSetup_.size(); ++i) {
-            if (channelsSetup_.at(i).channelId_ == channelId &&
-                channelsSetup_.at(i).subChannelId_ == subChannelId) {
-                indx = i;
-                break;
-            }
-        }
+        auto channelIt = std::find_if(channelsSetup_.begin(), channelsSetup_.end(),
+                                      [&](const DatasetChannel& channel) {
+                                          return channel.channelId_ == channelId &&
+                                                 channel.subChannelId_ == subChannelId;
+                                      });
 
-        if (indx != -1) {
-            if (channelsSetup_[indx].portName_.isEmpty()) {
+        if (channelIt != channelsSetup_.end()) {
+            if (channelIt->portName_.isEmpty()) {
                 auto links = core.getLinkNames();
                 if (links.contains(channelId.uuid)) {
-                    channelsSetup_[indx].portName_ = links[channelId.uuid];
+                    channelIt->portName_ = links[channelId.uuid];
                 }
             }
 
-            channelsSetup_[indx].counter();
+            channelIt->counter();
         }
         else {
             auto newDCh = DatasetChannel(channelId, subChannelId);
@@ -1499,10 +1501,11 @@ void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannel
             }
 
             channelsSetup_.push_back(newDCh);
+            addedNewChannel = true;
         }
     }
 
-    if (indx == -1) {
+    if (addedNewChannel) {
         emit channelsUpdated();
     }
 }
@@ -1540,7 +1543,7 @@ bool Dataset::shouldAddNewEpoch(const ChannelId &channelId, uint8_t numSubChanne
         return true;
     }
 
-    const auto& epoch = pool_[lastIndx];
+    const auto& epoch = pool_.at(lastIndx);
     for (int i = 0; i < numSubChannels; ++i) {
         if (!epoch.chartAvail(channelId, i)) {
             return false;

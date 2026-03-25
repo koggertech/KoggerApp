@@ -1,6 +1,7 @@
 #ifndef RAYCASTER_H
 #define RAYCASTER_H
 
+#include <cstdint>
 #include <memory>
 
 #include <QObject>
@@ -31,7 +32,7 @@ class RayCaster : public QObject
     Q_OBJECT
 
 public:
-    enum class RayCastMode
+    enum class RayCastMode : uint8_t
     {
         Vertex = 0,
         Segment = 1,

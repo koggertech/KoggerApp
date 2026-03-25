@@ -14,10 +14,10 @@ public:
     {
     public:
         PointObjectRenderImplementation();
-        virtual ~PointObjectRenderImplementation();
-        virtual void render(QOpenGLFunctions* ctx,
-                          const QMatrix4x4& mvp,
-                          const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+        ~PointObjectRenderImplementation() override;
+        void render(QOpenGLFunctions* ctx,
+                    const QMatrix4x4& mvp,
+                    const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
 
         void setPosition(float x, float y, float z);
         void setPosition(const QVector3D& pos);
@@ -37,7 +37,7 @@ public:
     QVector3D position() const;
 
 public Q_SLOTS:
-    virtual void setData(const QVector <QVector3D>& data, int primitiveType = GL_POINTS) override;
+    void setData(const QVector <QVector3D>& data, int primitiveType = GL_POINTS) override;
     void setPosition(float x, float y, float z);
     void setPosition(const QVector3D& pos);
 

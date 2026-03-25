@@ -6,7 +6,7 @@
 class Plot2DContact : public PlotLayer {
 public:
     Plot2DContact() = default;
-    bool draw(Plot2D *parent, Dataset *dataset);
+    bool draw(Plot2D *parent, Dataset *dataset) override;
     void setMousePos(int x, int y);
 
     bool isChanged();

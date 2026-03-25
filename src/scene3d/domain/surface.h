@@ -46,9 +46,9 @@ public:
     explicit Surface(QObject* parent = nullptr);
     virtual ~Surface();
     void setProcessingTask(const SurfaceProcessorTask& task);
-    virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
-    virtual void clearData() override;
-    virtual SceneObjectType type() const override;
+    void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
+    void clearData() override;
+    SceneObjectType type() const override;
     Contour* contour() const;
     SurfaceGrid* grid() const;
     SurfaceProcessorTask processingTask() const;

@@ -2,6 +2,7 @@
 #define GRAPHICSSCENE3DVIEW_H
 
 #include <array>
+#include <cstdint>
 #include <memory>
 #include <QQuickFramebufferObject>
 #include <QtMath>
@@ -158,12 +159,12 @@ public:
     {
     public:
         InFboRenderer();
-        virtual ~InFboRenderer();
+        ~InFboRenderer() override;
 
     protected:
-        virtual void render() override;
-        virtual void synchronize(QQuickFramebufferObject * fbo) override;
-        virtual QOpenGLFramebufferObject *createFramebufferObject(const QSize &size) override;
+        void render() override;
+        void synchronize(QQuickFramebufferObject * fbo) override;
+        QOpenGLFramebufferObject *createFramebufferObject(const QSize &size) override;
 
     private:
         friend class GraphicsScene3dView;
@@ -183,7 +184,7 @@ public:
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
     };
 
-    enum ActiveMode{
+    enum ActiveMode : uint8_t {
         Idle                                = 0, // not used
         BottomTrackVertexSelectionMode      = 1,
         BottomTrackVertexComboSelectionMode = 2,
@@ -203,7 +204,7 @@ public:
     /**
      * @brief Destructor
      */
-    virtual ~GraphicsScene3dView();
+    ~GraphicsScene3dView() override;
 
     /**
      * @brief Creates renderer
@@ -306,7 +307,7 @@ public:
     void setActiveZeroing(bool state);
 
 protected:
-    void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
+    void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) final;
 
 public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);

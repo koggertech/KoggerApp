@@ -42,11 +42,11 @@ public:
     {
     public:
         ContactsRenderImplementation();
-        virtual void render(QOpenGLFunctions* ctx,
-                            const QMatrix4x4& model,
-                            const QMatrix4x4& view,
-                            const QMatrix4x4& projection,
-                            const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override final;
+        void render(QOpenGLFunctions* ctx,
+                    const QMatrix4x4& model,
+                    const QMatrix4x4& view,
+                    const QMatrix4x4& projection,
+                    const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const final;
 
         void clear();
 
@@ -63,7 +63,7 @@ public:
 
     /*methods*/
     explicit Contacts(QObject* parent = nullptr);
-    virtual ~Contacts();
+    ~Contacts() override;
 
     QString getContactInfo() const;
     bool    getContactVisible() const;
@@ -79,7 +79,7 @@ public:
     void setDatasetPtr(Dataset* datasetPtr);
 
     /*QObject*/
-    virtual bool eventFilter(QObject *watched, QEvent *event) override final;
+    bool eventFilter(QObject *watched, QEvent *event) final;
 
 public slots:
     Q_INVOKABLE bool setContact(int indx, const QString& text);
@@ -93,11 +93,11 @@ signals:
 protected:
     friend class GraphicsScene3dView;
 
-    void mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y) override final;
-    void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) override final;
-    void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) override final;
-    void mouseWheelEvent(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta) override final;
-    void keyPressEvent(Qt::Key key) override final;
+    void mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y) final;
+    void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) final;
+    void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) final;
+    void mouseWheelEvent(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta) final;
+    void keyPressEvent(Qt::Key key) final;
 
 private:
     void setInterEpIndx(int indx);

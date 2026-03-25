@@ -55,7 +55,7 @@ void Link::openAsSerial()
     parity_ ? serialPort->setParity(QSerialPort::EvenParity) : serialPort->setParity(QSerialPort::NoParity);
     serialPort->setBaudRate(baudrate_);
 
-    serialPort->setReadBufferSize(8 * 1024 * 1024);
+    serialPort->setReadBufferSize(static_cast<qint64>(8) * 1024 * 1024);
     serialPort->open(QIODevice::ReadWrite);
 
     if (serialPort->isOpen()) {
@@ -495,10 +495,8 @@ bool Link::write(QByteArray data)
             udp->writeDatagram(data, hostAddress_, destinationPort_);
             break;
         }
-        case LinkType::kLinkIPTCP: {
-            ioDevice_->write(data);
-            break;
-        }
+        case LinkType::kLinkIPTCP:
+            [[fallthrough]];
         case LinkType::kLinkSerial: {
             ioDevice_->write(data);
             break;

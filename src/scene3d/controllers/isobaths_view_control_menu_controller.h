@@ -32,7 +32,7 @@ public:
     Q_INVOKABLE void onSetExtraWidth(int val);
 
 protected:
-    virtual void findComponent() override;
+    void findComponent() override;
 
 private:
     void tryInitPendingLambda();

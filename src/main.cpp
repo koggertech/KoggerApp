@@ -287,6 +287,6 @@ int main(int argc, char *argv[])
         }
 #endif
     }
-    qCritical() << "App is created";
+    qInfo() << "App is created";
     return app.exec();
 }

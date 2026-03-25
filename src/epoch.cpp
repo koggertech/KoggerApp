@@ -201,7 +201,7 @@ void Epoch::setExternalPosition(Position position) {
 }
 
 void Epoch::setPositionRef(LLARef* ref) {
-    if(ref != NULL && ref->isInit) {
+    if (ref != nullptr && ref->isInit) {
         _positionGNSS.LLA2NED(ref);
     }
 }
@@ -279,7 +279,7 @@ int Epoch::chartSize(const ChannelId &channelId, uint8_t subChannelId)
 
 bool Epoch::chartAvail()
 {
-    return charts_.size() > 0;
+    return !charts_.empty();
 }
 
 bool Epoch::chartAvail(const ChannelId &channelId, uint8_t subChannelId) const

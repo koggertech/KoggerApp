@@ -8,6 +8,7 @@
 #include <QUuid>
 #include <algorithm>
 #include <functional>
+#include <utility>
 #include <vector>
 
 #include "geojson_io.h"
@@ -1297,7 +1298,7 @@ QString GeoJsonController::autoFeatureName(GeoJsonGeometryType t) const
     const QString base = GeoJsonFeatureModel::typeToString(t);
     int count = 0;
     if (currentFolder_) {
-        for (const auto& f : currentFolder_->doc.features) {
+        for (const auto& f : std::as_const(currentFolder_->doc.features)) {
             if (f.geomType == t) {
                 ++count;
             }
@@ -1484,7 +1485,7 @@ const GeoJsonFeature* GeoJsonController::findFeatureById(const QString& id) cons
     if (!currentFolder_) {
         return nullptr;
     }
-    for (const auto& f : currentFolder_->doc.features) {
+    for (const auto& f : std::as_const(currentFolder_->doc.features)) {
         if (f.id == id) {
             return &f;
         }
@@ -1546,7 +1547,7 @@ void GeoJsonController::rebuildTreeNodes(Folder* folder, int depth, QVector<GeoJ
     node.visible = folder->visible;
     out.push_back(node);
 
-    for (const auto& f : folder->doc.features) {
+    for (const auto& f : std::as_const(folder->doc.features)) {
         GeoJsonTreeNode fn;
         fn.id = f.id;
         fn.parentId = folder->id;

@@ -106,7 +106,7 @@ void GeoJsonLayer::GeoJsonLayerRenderImplementation::render(
 
     // World-space geometry (lines + polygons)
     if (auto it = shaderProgramMap.find("static"); it != shaderProgramMap.end() && it.value()) {
-        auto sp = it.value();
+        const auto& sp = it.value();
         if (sp->bind()) {
             const int posLoc = sp->attributeLocation("position");
             const int colorLoc = sp->uniformLocation("color");
@@ -206,6 +206,7 @@ void GeoJsonLayer::GeoJsonLayerRenderImplementation::render(
 
     // Screen-space markers
     if (auto it2 = shaderProgramMap.find("static_sec"); it2 != shaderProgramMap.end() && it2.value()) {
+        constexpr size_t kCircleTriVertices = 36;
         QHash<QRgb, QVector<QVector2D>> circleByColor;
         QHash<QRgb, QVector<QVector2D>> plusByColor;
         circleByColor.reserve(data_.markers.size() + 1);
@@ -218,18 +219,18 @@ void GeoJsonLayer::GeoJsonLayerRenderImplementation::render(
                 appendPlusNdc(vec, m.world, m.sizePx, model, view, projection, viewport);
             } else {
                 auto& vec = circleByColor[m.color.rgba()];
-                vec.reserve(vec.size() + 3 * 12);
+                vec.reserve(vec.size() + kCircleTriVertices);
                 appendCircleNdc(vec, m.world, m.sizePx, model, view, projection, viewport);
             }
         }
 
         if (data_.selectedActive) {
             auto& vec = circleByColor[QColor(255, 215, 0, 230).rgba()];
-            vec.reserve(vec.size() + 3 * 12);
+            vec.reserve(vec.size() + kCircleTriVertices);
             appendCircleNdc(vec, data_.selectedWorld, 14.0f, model, view, projection, viewport);
         }
 
-        auto sp = it2.value();
+        const auto& sp = it2.value();
         for (auto it = circleByColor.constBegin(); it != circleByColor.constEnd(); ++it) {
             const auto& circlesNdc = it.value();
             if (circlesNdc.isEmpty()) {
@@ -281,7 +282,7 @@ SceneObject::SceneObjectType GeoJsonLayer::type() const
     return SceneObject::SceneObjectType::Unknown;
 }
 
-void GeoJsonLayer::setRenderData(RenderData data)
+void GeoJsonLayer::setRenderData(GeoJsonLayer::RenderData data)
 {
     auto* r = dynamic_cast<GeoJsonLayerRenderImplementation*>(m_renderImpl);
     if (!r) {

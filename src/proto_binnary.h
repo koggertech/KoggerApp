@@ -44,7 +44,7 @@ typedef float F4;
 typedef double D8;
 typedef uint64_t U8;
 
-typedef enum ID {
+enum ID : uint16_t {
     ID_NONE = 0,
 
     ID_TIMESTAMP = 0x01,
@@ -101,17 +101,17 @@ typedef enum ID {
     ID_BOAT_STATUS = 0xC9,
 
     sizer = 0xFFFF
-} ID;
+};
 
-typedef enum {
+enum Type : uint8_t {
     typeReserved = 0, CONTENT = 1, SETTING = 2, GETTING = 3
-} Type;
+};
 
-typedef enum {
+enum Version : uint8_t {
     v0, v1, v2, v3, v4, v5, v6, v7
-} Version;
+};
 
-typedef enum {
+enum Resp : uint8_t {
     respNone = 0,
     respOk,
     respErrorCheck,
@@ -121,12 +121,12 @@ typedef enum {
     respErrorType,
     respErrorKey,
     respErrorRuntime
-} Resp;
+};
 
 
 class FrameParser {
 public:
-    typedef enum {
+    enum ProtoID : uint8_t {
         ProtoNone,
         ProtoData,
         ProtoKP1,
@@ -135,7 +135,7 @@ public:
         ProtoUBX,
         ProtoMAVLink1,
         ProtoMAVLink2
-    } ProtoID;
+    };
 
     FrameParser() {
         _frameChar = (char*)_frame;
@@ -294,10 +294,10 @@ public:
     void resetContext() {
         _proxyState = ProxyNone;
 
-        _contextData = NULL;
+        _contextData = nullptr;
         _contextLen = 0;
 
-        _savedContextData = NULL;
+        _savedContextData = nullptr;
         _savedContextLen = 0;
     }
 
@@ -315,11 +315,11 @@ public:
 
 
     int32_t availContext() {
-        if(_contextLen == 0 && _savedContextData != NULL) {
+        if(_contextLen == 0 && _savedContextData != nullptr) {
             _contextData = _savedContextData;
             _contextLen = _savedContextLen;
             _savedContextLen = 0;
-            _savedContextData = NULL;
+            _savedContextData = nullptr;
             _proxyState = ProxyNone;
         }
         return _contextLen;
@@ -397,7 +397,7 @@ public:
     void write(T data) {
         if(frameSpaceAvail() > (int16_t)sizeof (T)) {
             uint8_t* ptr_data = (uint8_t*)(&data);
-            for(uint8_t i = 0; i < sizeof (T); i++) {
+            for(size_t i = 0; i < sizeof (T); i++) {
                 _frame[_frameLen] = ptr_data[i];
                 _frameLen++;
             }
@@ -406,14 +406,14 @@ public:
 
     void write(void* ptr, uint16_t len) {
         uint8_t* ptr_data = (uint8_t*)(ptr);
-        for(uint8_t i = 0; i < len; i++) {
+        for(uint16_t i = 0; i < len; i++) {
             _frame[_frameLen] = ptr_data[i];
             _frameLen++;
         }
     }
 
     void writeZero(uint16_t len) {
-        for(uint8_t i = 0; i < len; i++) {
+        for(uint16_t i = 0; i < len; i++) {
             _frame[_frameLen] = 0;
             _frameLen++;
         }
@@ -459,7 +459,7 @@ protected:
         uint16_t val;
     } OP_Flags;
 
-    enum ProtoState {
+    enum ProtoState : uint8_t {
         StateSync,
 
         StateKP1Sync,
@@ -481,41 +481,43 @@ protected:
         StateMAVLinkEnding,
     } _protoState;
 
-    ProtoID _proto;
+    ProtoID _proto = ProtoNone;
 
-    uint8_t* _contextData;
-    int32_t _contextLen;
+    uint8_t* _contextData = nullptr;
+    int32_t _contextLen = 0;
 
-    uint8_t* _savedContextData;
-    int32_t _savedContextLen;
+    uint8_t* _savedContextData = nullptr;
+    int32_t _savedContextLen = 0;
 
-    enum {
+    enum : uint8_t {
         ProxyNone,
         ProxyWrapper,
         ProxyContent,
         ProxyEnd
     } _proxyState = ProxyNone;
 
-    uint8_t _frame[1024];
-    char* _frameChar;
-    int16_t _frameLen;
-    int16_t _frameMaxLen;
-    int16_t _payloadLen;
-    int16_t _completeLen;
-    int16_t _readPosition;
-    int16_t _readMaxPosition;
-    uint32_t _ltime;
-    uint64_t _gtime;
+    uint8_t _frame[1024] = {};
+    char* _frameChar = nullptr;
+    int16_t _frameLen = 0;
+    int16_t _frameMaxLen = 0;
+    int16_t _payloadLen = 0;
+    int16_t _completeLen = 0;
+    int16_t _readPosition = 0;
+    int16_t _readMaxPosition = 0;
+    uint32_t _ltime = 0;
+    uint64_t _gtime = 0;
 
-    ID _id;
-    Version _ver;
-    Type _type;
-    uint8_t _address, _from;
-    bool _mark, _resp;
+    ID _id = static_cast<ID>(0);
+    Version _ver = static_cast<Version>(0);
+    Type _type = static_cast<Type>(0);
+    uint8_t _address = 0;
+    uint8_t _from = 0;
+    bool _mark = false;
+    bool _resp = false;
     uint16_t _checksum = 0;
 
-    uint8_t _optionsLen;
-    OP_Flags _optionFlags;
+    uint8_t _optionsLen = 0;
+    OP_Flags _optionFlags = {};
 
     struct {
         uint16_t id;
@@ -527,7 +529,7 @@ protected:
             };
             uint8_t val;
         } flags;
-    } _stream;
+    } _stream = {};
 
 
     struct {
@@ -1163,7 +1165,7 @@ public:
         _frame[0] = 0xbb;
         _frame[1] = 0x55;
         setRoute(route);
-        setMode(type, ver, type != CONTENT ? true : false); // TODO: check
+        setMode(type, ver, type != CONTENT); // TODO: check
         setId(id);
 
         _frameLen = 6;

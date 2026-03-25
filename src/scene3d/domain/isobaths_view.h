@@ -17,11 +17,11 @@ public:
     {
     public:
         IsobathsViewRenderImplementation();
-        virtual void render(QOpenGLFunctions* ctx,
-                            const QMatrix4x4 &model,
-                            const QMatrix4x4 &view,
-                            const QMatrix4x4 &projection,
-                            const QMap<QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+        void render(QOpenGLFunctions* ctx,
+                    const QMatrix4x4 &model,
+                    const QMatrix4x4 &view,
+                    const QMatrix4x4 &projection,
+                    const QMap<QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
 
     private:
         friend class IsobathsView;
@@ -35,7 +35,7 @@ public:
     };
 
     explicit IsobathsView(QObject* parent = nullptr);
-    virtual ~IsobathsView();
+    ~IsobathsView() override;
 
     void setCameraDistToFocusPoint(float val);
     void setMVisible(bool state) { auto* r = RENDER_IMPL(IsobathsView); r->mVis_ = state; Q_EMIT changed(); };

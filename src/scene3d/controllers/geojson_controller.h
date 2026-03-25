@@ -39,7 +39,7 @@ class GeoJsonController : public QObject
     Q_PROPERTY(bool selectedNodeIsFolder READ selectedNodeIsFolder NOTIFY selectionChanged)
 
 public:
-    enum Tool
+    enum Tool : quint8
     {
         Select = 0,
         DrawPoint = 1,

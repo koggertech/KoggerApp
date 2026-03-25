@@ -10,7 +10,7 @@ class LinkListModel : public QAbstractListModel
 {
     Q_OBJECT
 public:
-    enum class Roles {
+    enum class Roles : quint8 {
         Uuid,
         ConnectionStatus,
         ReceivesData,

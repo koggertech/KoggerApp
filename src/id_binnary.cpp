@@ -218,13 +218,14 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
                 compErrList_ = std::move(tempErrList_);
                 tempErrList_.clear();
             }
-            else if(proto.ver() == v1) {
-                for(uint32_t i = 0; i < m_chartSizeIncr/2; i++) {
-                    m_completeChart[i] = m_fillChart[i*2];
-                    m_completeChart2[i] = m_fillChart[i*2+1];
-                }
-                m_chartSize = m_chartSizeIncr/2;
-                compErrList_ = std::move(tempErrList_);
+                else if(proto.ver() == v1) {
+                    for (uint32_t i = 0; i < m_chartSizeIncr / 2; i++) {
+                        const size_t baseIndex = static_cast<size_t>(i) * size_t{2};
+                        m_completeChart[i] = m_fillChart[baseIndex];
+                        m_completeChart2[i] = m_fillChart[baseIndex + 1];
+                    }
+                    m_chartSize = m_chartSizeIncr/2;
+                    compErrList_ = std::move(tempErrList_);
                 tempErrList_.clear();
             }
 
@@ -282,9 +283,10 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
                     tempErrList_.clear();
                 }
                 else if(proto.ver() == v1) {
-                    for(uint32_t i = 0; i < m_chartSizeIncr/2; i++) {
-                        m_completeChart[i] = m_fillChart[i*2];
-                        m_completeChart2[i] = m_fillChart[i*2+1];
+                    for (uint32_t i = 0; i < m_chartSizeIncr / 2; i++) {
+                        const size_t baseIndex = static_cast<size_t>(i) * size_t{2};
+                        m_completeChart[i] = m_fillChart[baseIndex];
+                        m_completeChart2[i] = m_fillChart[baseIndex + 1];
                     }
                     compErrList_ = std::move(tempErrList_);
                     tempErrList_.clear();
@@ -906,19 +908,8 @@ void IDBinMark::setMark() {
 
 
 Resp IDBinFlash::parsePayload(FrameParser &proto) {
-    if(proto.ver() == v0) {
-        if(checkKeyConfirm(proto.read<U4>())) {
-        } else {
-            return respErrorKey;
-        }
-    } else if(proto.ver() == v1) {
-        if(checkKeyConfirm(proto.read<U4>())) {
-        } else {
-            return respErrorKey;
-        }
-    } else if(proto.ver() == v2) {
-        if(checkKeyConfirm(proto.read<U4>())) {
-        } else {
+    if (proto.ver() == v0 || proto.ver() == v1 || proto.ver() == v2) {
+        if (!checkKeyConfirm(proto.read<U4>())) {
             return respErrorKey;
         }
     } else {
@@ -955,14 +946,8 @@ void IDBinFlash::erase() {
 
 
 Resp IDBinBoot::parsePayload(FrameParser &proto) {
-    if(proto.ver() == v0) {
-        if(checkKeyConfirm(proto.read<U4>())) {
-        } else {
-            return respErrorKey;
-        }
-    } else if(proto.ver() == v1) {
-        if(checkKeyConfirm(proto.read<U4>())) {
-        } else {
+    if (proto.ver() == v0 || proto.ver() == v1) {
+        if (!checkKeyConfirm(proto.read<U4>())) {
             return respErrorKey;
         }
     } else {

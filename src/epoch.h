@@ -49,7 +49,7 @@ public:
     };
 
     struct DistProcessing {
-        enum class DistanceSource {
+        enum class DistanceSource : uint8_t {
             DistanceSourceNone = 0,
             DistanceSourceProcessing,
             DistanceSourceLoad,
@@ -168,7 +168,7 @@ public:
     void setRangefinder(const ChannelId& channelId, float distance);
     void setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void setDVLSolution(IDBinDVL::DVLSolution dvlSolution);
-    void setPositionLLA(double lat, double lon, LLARef* ref = NULL, uint32_t unix_time = 0, int32_t nanosec = 0);
+    void setPositionLLA(double lat, double lon, LLARef* ref = nullptr, uint32_t unix_time = 0, int32_t nanosec = 0);
     void setPositionLLA(Position position);
     void setSonarPosition(Position val);
     void setPositionLLA(const LLA& lla);
@@ -189,7 +189,7 @@ public:
     void setComplexF(const ChannelId& channelId, int group, QVector<ComplexSignal> signal);
     ComplexSignals& complexSignals() { return _complex; }
     //ComplexSignal complexSignal(const ChannelId& channelId) { return _complex[channelId]; }
-    bool isComplexSignalAvail() { return _complex.size() > 0; }
+    bool isComplexSignalAvail() { return !_complex.empty(); }
 
     void set(IDBinUsblSolution::UsblSolution data) { _usblSolution = data;  _isUsblSolutionAvailable = true; }
 
@@ -272,17 +272,17 @@ public:
 
     DateTime* time() { return &_time; }
 
-    //QVector<uint8_t> chartData(const ChannelId& channelId = CHANNEL_NONE) {
+    //QVector<uint8_t> chartData(const ChannelId& channelId = channelNone()) {
     //    if(chartAvail(channelId)) {
     //        return charts_[channelId].amplitude;
     //    }
     //    return QVector<uint8_t>();
     //}
-    int chartSize(const ChannelId& channelId = CHANNEL_NONE, uint8_t subChannelId = 0);
+    int chartSize(const ChannelId& channelId = channelNone(), uint8_t subChannelId = 0);
     bool chartAvail();
     bool chartAvail(const ChannelId& channelId, uint8_t subChannelId = 0) const;
-    Echogram* chart(const ChannelId& channelId = CHANNEL_NONE, uint8_t subChannelId = 0);
-    Echogram chartCopy(const ChannelId &channelId = CHANNEL_NONE, uint8_t subChannelId = 0) const;
+    Echogram* chart(const ChannelId& channelId = channelNone(), uint8_t subChannelId = 0);
+    Echogram chartCopy(const ChannelId &channelId = channelNone(), uint8_t subChannelId = 0) const;
     Epoch deepCopyForMosaic() const;
     Epoch deepCopyForBottomTrack() const;
 
@@ -301,11 +301,11 @@ public:
     //     return full_range;
     // }
 
-    float getMaxRange(const ChannelId& channel = CHANNEL_NONE, const ChannelId& channel2 = CHANNEL_NONE)
+    float getMaxRange(const ChannelId& channel = channelNone(), const ChannelId& channel2 = channelNone())
     {
         float maxRange = NAN;
 
-        if (channel == CHANNEL_NONE && channel2 == CHANNEL_NONE) {
+        if (channel == channelNone() && channel2 == channelNone()) {
             for (auto it = charts_.cbegin(), end = charts_.cend(); it != end; ++it) {
                 const auto &echogramList = it.value();
                 for (const auto& ech : echogramList) {
@@ -361,9 +361,9 @@ public:
         return flags.distAvail;
     }
 
-    double distProccesing(const ChannelId& channelId = CHANNEL_NONE)
+    double distProccesing(const ChannelId& channelId = channelNone())
     {
-        if (channelId == CHANNEL_NONE) {
+        if (channelId == channelNone()) {
             for (auto it = charts_.cbegin(); it != charts_.cend(); ++it) {
                 for (const auto& iEchogram : it.value()) {
                     double distance = iEchogram.bottomProcessing.getDistance();
@@ -386,7 +386,7 @@ public:
     }
 
     float rangeFinder() const {
-        if(rangefinders_.size() > 0) {
+        if (!rangefinders_.empty()) {
             return rangefinders_.first();
         }
 

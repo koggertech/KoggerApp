@@ -46,6 +46,6 @@ void StreamListModel::doAppend(int id, uint32_t size, uint32_t doneSize, const Q
         _vectors[StreamListModel::Time][line] = (time);
         _vectors[StreamListModel::RecordState][line] = (recordState);
         _vectors[StreamListModel::UploadingState][line] = (uploadState);
-        dataChanged(index(line, 0), index(line, 0));
+        Q_EMIT dataChanged(index(line, 0), index(line, 0));
     }
 }

@@ -323,11 +323,7 @@ public:
         float u2 = QVector3D::dotProduct(QVector3D::crossProduct(bc, bp), norm);
         float u3 = QVector3D::dotProduct(QVector3D::crossProduct(ca, cp), norm);
 
-        if ((u1 > 0.0f && u2 > 0.0f && u3 > 0.0f) || (u1 < 0.0f && u2 < 0.0f && u3 < 0.0f)) {
-            return true;
-        }
-
-        return false;
+        return (u1 > 0.0f && u2 > 0.0f && u3 > 0.0f) || (u1 < 0.0f && u2 < 0.0f && u3 < 0.0f);
     }
 
     T distanceToPoint(const QVector3D& point) const{

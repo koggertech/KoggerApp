@@ -7,7 +7,7 @@ class Plot2D;
 class Plot2DAttitude : public Plot2DLine {
 public:
     Plot2DAttitude();
-    bool draw(Plot2D* parent, Dataset* dataset);
+    bool draw(Plot2D* parent, Dataset* dataset) override;
 
 protected:
     PlotPen _penYaw = PlotPen(PlotColor(255, 255, 0), 2, PlotPen::LineStyleSolid);

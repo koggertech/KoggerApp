@@ -22,7 +22,7 @@ class DeviceManager : public QObject
 public:
     /*methods*/
     DeviceManager();
-    ~DeviceManager();
+    ~DeviceManager() override;
 
     Q_INVOKABLE float vruVoltage();
     Q_INVOKABLE float vruCurrent();

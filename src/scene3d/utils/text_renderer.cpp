@@ -187,7 +187,9 @@ void TextRenderer::render2DBatch(const QVector<Text2DItem> &items, QOpenGLFuncti
     const int texcoordLocation = textShader->attributeLocation("a_texcoord");
 
     QVector<float> vertices;
-    vertices.reserve(totalChars * 6 * 4);
+    vertices.reserve(static_cast<size_t>(totalChars) *
+                     static_cast<size_t>(6) *
+                     static_cast<size_t>(4));
 
     auto appendVertex = [&vertices](float x, float y, float u, float v) {
         vertices.append(x);
@@ -313,7 +315,9 @@ void TextRenderer::render3DBatch(const QVector<Text3DItem> &items, QOpenGLFuncti
     }
 
     QVector<float> vertices;
-    vertices.reserve(totalChars * 6 * 5);
+    vertices.reserve(static_cast<size_t>(totalChars) *
+                     static_cast<size_t>(6) *
+                     static_cast<size_t>(5));
 
     auto appendVertex = [&vertices](float x, float y, float z, float u, float v) {
         vertices.append(x);
@@ -438,7 +442,9 @@ void TextRenderer::initBuffers()
     m_arrayBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
     m_arrayBuffer.create();
     m_arrayBuffer.bind();
-    m_arrayBuffer.allocate(6 * 5 * sizeof(float));
+    constexpr size_t kInitialBytes =
+        static_cast<size_t>(6) * static_cast<size_t>(5) * sizeof(float);
+    m_arrayBuffer.allocate(static_cast<int>(kInitialBytes));
 }
 
 void TextRenderer::initFont()

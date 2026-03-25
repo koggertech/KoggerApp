@@ -12,14 +12,14 @@ class BottomTrackControlMenuController : public QmlComponentController
 
 public:
     BottomTrackControlMenuController(QObject* parent = nullptr);
-    virtual ~BottomTrackControlMenuController();
+    ~BottomTrackControlMenuController() override;
 
     Q_INVOKABLE void onVisibilityCheckBoxCheckedChanged(bool checked);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
 protected:
-    virtual void findComponent() override;
+    void findComponent() override;
 
 private:
     BottomTrack* bottomTrack() const;

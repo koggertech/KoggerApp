@@ -18,15 +18,15 @@ public:
     {
     public:
         PolygonObjectRenderImplementation();
-        virtual ~PolygonObjectRenderImplementation();
-        virtual void render(QOpenGLFunctions* ctx,
-                          const QMatrix4x4& mvp,
-                          const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+        ~PolygonObjectRenderImplementation() override;
+        void render(QOpenGLFunctions* ctx,
+                    const QMatrix4x4& mvp,
+                    const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
     };
 
     explicit PolygonObject(QObject *parent = nullptr);
-    virtual ~PolygonObject();
-    virtual SceneObject::SceneObjectType type() const override;
+    ~PolygonObject() override;
+    SceneObject::SceneObjectType type() const override;
 
 private:
     friend class PolygonGroup;
