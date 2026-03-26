@@ -191,7 +191,7 @@ private:
     uint8_t upgradeAddr_;
     QByteArray upgradeData_;
     bool loggingStarted_ = false;
-    LocationReader* locReader_;
+    LocationReader* locReader_{ nullptr };
     bool useGPS_{ false };
 
 private slots:

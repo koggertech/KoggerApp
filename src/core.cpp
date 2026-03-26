@@ -60,8 +60,7 @@ Core::Core() :
 
 Core::~Core()
 {
-    destroyInternetManager();
-    destroyDataProcessor();
+    shutdownBackgroundWorkers();
 }
 
 QString Core::resolveExportBasePath(const QString& basePath) const
@@ -238,11 +237,6 @@ DeviceManagerWrapper* Core::getDeviceManagerWrapperPtr() const
 LinkManagerWrapper* Core::getLinkManagerWrapperPtr() const
 {
     return linkManagerWrapperPtr_.get();
-}
-
-void Core::stopLinkManagerTimer() const
-{
-    emit linkManagerWrapperPtr_->sendStopTimer();
 }
 
 void Core::setConsoleOutputEnabled(bool enabled)
@@ -2123,13 +2117,14 @@ QHash<QUuid, QString> Core::getLinkNames() const
     return retVal;
 }
 
-void Core::shutdownDataProcessor()
+void Core::shutdownBackgroundWorkers()
 {
-    if (!dataProcessor_) {
-        return;
+    if (linkManagerWrapperPtr_) {
+        linkManagerWrapperPtr_->shutdownWorkerThread();
     }
 
-    QMetaObject::invokeMethod(dataProcessor_, "shutdown", Qt::BlockingQueuedConnection);
+    destroyInternetManager();
+    destroyDataProcessor();
 }
 
 bool Core::isOpenedFile() const
@@ -2308,7 +2303,6 @@ void Core::createInternetManager()
         internetManager_->moveToThread(internetThread_);
 
         QObject::connect(internetThread_, &QThread::started, internetManager_, &InternetManager::start, Qt::QueuedConnection);
-        QObject::connect(internetThread_, &QThread::finished, internetManager_, &QObject::deleteLater, Qt::QueuedConnection);
         QObject::connect(internetManager_, &InternetManager::internetAvailabilityChanged, this,
                          [this](bool available) {
                              internetAvailable_ = available;
@@ -2327,14 +2321,40 @@ void Core::createInternetManager()
 
 void Core::destroyInternetManager()
 {
-    if (internetManager_ && internetThread_ && internetThread_->isRunning()) {
-        QMetaObject::invokeMethod(internetManager_, "stop", Qt::BlockingQueuedConnection);
+    if (!internetManager_ && !internetThread_) {
+        return;
     }
+
+    if (internetManager_ && internetThread_ && internetThread_->isRunning()) {
+        InternetManager* managerToDelete = internetManager_;
+        const bool invokeOk = QMetaObject::invokeMethod(
+            managerToDelete,
+            [managerToDelete]() {
+                managerToDelete->stop();
+                delete managerToDelete;
+            },
+            Qt::BlockingQueuedConnection);
+
+        if (!invokeOk) {
+            if (internetThread_->isRunning()) {
+                internetThread_->quit();
+                internetThread_->wait();
+            }
+            delete internetManager_;
+        }
+    }
+    else {
+        delete internetManager_;
+    }
+
+    internetManager_ = nullptr;
+
     if (internetThread_ && internetThread_->isRunning()) {
         internetThread_->quit();
         internetThread_->wait();
     }
-    internetManager_ = nullptr;
+
+    delete internetThread_;
     internetThread_ = nullptr;
 }
 
@@ -2373,9 +2393,6 @@ void Core::createDataProcessor()
 
     dataProcessor_->moveToThread(dataProcThread_);
 
-    QObject::connect(dataProcThread_, &QThread::finished, dataProcessor_,  &QObject::deleteLater);
-    QObject::connect(dataProcThread_, &QThread::finished, dataProcThread_, &QObject::deleteLater);
-
     dataProcThread_->setObjectName("DataProcThread");
 
     setDataProcessorConnections();
@@ -2391,14 +2408,31 @@ void Core::destroyDataProcessor()
 
     resetDataProcessorConnections();
 
+    if (dataProcessor_) {
+        if (dataProcThread_ && dataProcThread_->isRunning()) {
+            DataProcessor* processorToDelete = dataProcessor_;
+            QMetaObject::invokeMethod(processorToDelete, "shutdown", Qt::BlockingQueuedConnection);
+            QMetaObject::invokeMethod(
+                processorToDelete,
+                [processorToDelete]() {
+                    delete processorToDelete;
+                },
+                Qt::BlockingQueuedConnection);
+            dataProcessor_ = nullptr;
+        } else {
+            dataProcessor_->shutdown();
+            delete dataProcessor_;
+            dataProcessor_ = nullptr;
+        }
+    }
+
     if (dataProcThread_ && dataProcThread_->isRunning()) {
         dataProcThread_->quit();
         dataProcThread_->wait();
     }
 
-    delete dataProcessor_;
+    delete dataProcThread_;
 
-    dataProcessor_ = nullptr;
     dataProcThread_ = nullptr;
 }
 

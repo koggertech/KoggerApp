@@ -10,7 +10,6 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
 
     auto connectionType = Qt::AutoConnection;
     QObject::connect(workerThread_.get(), &QThread::started,                                workerObject_.get(), &LinkManager::createAndStartTimer,          connectionType);
-    QObject::connect(this,                &LinkManagerWrapper::sendStopTimer,               workerObject_.get(), &LinkManager::stopTimer,                    connectionType);
     QObject::connect(workerObject_.get(), &LinkManager::appendModifyModel,                  this,                &LinkManagerWrapper::appendModifyModelData, connectionType);
     QObject::connect(workerObject_.get(), &LinkManager::deleteModel,                        this,                &LinkManagerWrapper::deleteModelData,       connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsSerial,            workerObject_.get(), &LinkManager::openAsSerial,                 connectionType);
@@ -51,12 +50,7 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
 
 LinkManagerWrapper::~LinkManagerWrapper()
 {
-    if (workerThread_ && workerThread_->isRunning()) {
-        workerThread_->quit();
-        workerThread_->wait();
-    }
-
-    workerThread_->deleteLater();
+    shutdownWorkerThread();
 }
 
 LinkListModel* LinkManagerWrapper::getModelPtr()
@@ -74,6 +68,37 @@ void LinkManagerWrapper::startWorkerThread()
     if (workerThread_ && !workerThread_->isRunning()) {
         workerThread_->start();
     }
+}
+
+void LinkManagerWrapper::shutdownWorkerThread()
+{
+    if (!workerThread_) {
+        workerObject_.reset();
+        return;
+    }
+
+    if (workerObject_) {
+        if (workerThread_->isRunning()) {
+            LinkManager* managerToDelete = workerObject_.release();
+            QMetaObject::invokeMethod(
+                managerToDelete,
+                [managerToDelete]() {
+                    managerToDelete->shutdown();
+                    delete managerToDelete;
+                },
+                Qt::BlockingQueuedConnection);
+        } else {
+            workerObject_->shutdown();
+            workerObject_.reset();
+        }
+    }
+
+    if (workerThread_->isRunning()) {
+        workerThread_->quit();
+        workerThread_->wait();
+    }
+
+    workerThread_.reset();
 }
 
 void LinkManagerWrapper::closeOpenedLinks()

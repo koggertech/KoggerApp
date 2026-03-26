@@ -145,7 +145,18 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
 
 DataProcessor::~DataProcessor()
 {
-    // shutdown(); // from about to quit
+    if (!shuttingDown_.load()) {
+        shutdown();
+    }
+
+    if (worker_) {
+        if (computeThread_.isRunning()) {
+            computeThread_.quit();
+            computeThread_.wait();
+        }
+        delete worker_;
+        worker_ = nullptr;
+    }
 }
 
 void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
@@ -1671,34 +1682,38 @@ void DataProcessor::openDB()
 
     // writer
     dbWriter_ = new MosaicDB(filePath_, DbRole::Writer, true /*delete temp db files*/);
-    dbWriter_->moveToThread(&dbWriteThread_);
+    MosaicDB* const writer = dbWriter_;
+    writer->moveToThread(&dbWriteThread_);
 
-    connect(&dbWriteThread_, &QThread::finished, dbWriter_, &QObject::deleteLater);
-    connect(&dbWriteThread_, &QThread::started,  dbWriter_, [this]() {
-        if (!dbWriter_->open()) {
+    connect(&dbWriteThread_, &QThread::started, writer, [writer]() {
+        if (!writer->open()) {
             qWarning() << "DB Writer open failed";
         }
     }, Qt::QueuedConnection);
 
     // схема готова - запускаем reader
-    connect(dbWriter_, &MosaicDB::schemaReady, this, [this]() {
+    connect(writer, &MosaicDB::schemaReady, this, [this, writer]() {
+        if (writer != dbWriter_ || shuttingDown_.load()) {
+            return;
+        }
+
         dbIsReady_.store(true, std::memory_order_relaxed);
 
         // reader
         dbReader_ = new MosaicDB(filePath_, DbRole::Reader);
-        dbReader_->moveToThread(&dbReadThread_);
-        connect(&dbReadThread_, &QThread::finished, dbReader_, &QObject::deleteLater);
-        connect(&dbReadThread_, &QThread::started,  dbReader_, [this]() {
-            if (!dbReader_->open()) {
+        MosaicDB* const reader = dbReader_;
+        reader->moveToThread(&dbReadThread_);
+        connect(&dbReadThread_, &QThread::started, reader, [reader]() {
+            if (!reader->open()) {
                 qWarning() << "DB Reader open failed";
             }
         }, Qt::QueuedConnection);
 
         // reader conns
-        connect(this,      &DataProcessor::dbLoadTilesForKeys,    dbReader_, &MosaicDB::loadTilesForKeys,            Qt::QueuedConnection);
-        connect(dbReader_, &MosaicDB::tilesLoadedForKeys,         this,      &DataProcessor::onDbTilesLoaded,        Qt::QueuedConnection);
-        connect(this,      &DataProcessor::dbCheckAnyTileForZoom, dbReader_, &MosaicDB::checkAnyTileForZoom,         Qt::QueuedConnection);
-        connect(dbReader_, &MosaicDB::anyTileForZoom,             this,      &DataProcessor::onDbAnyTileForZoom,     Qt::QueuedConnection);
+        connect(this,   &DataProcessor::dbLoadTilesForKeys,    reader, &MosaicDB::loadTilesForKeys,        Qt::QueuedConnection);
+        connect(reader, &MosaicDB::tilesLoadedForKeys,         this,   &DataProcessor::onDbTilesLoaded,    Qt::QueuedConnection);
+        connect(this,   &DataProcessor::dbCheckAnyTileForZoom, reader, &MosaicDB::checkAnyTileForZoom,     Qt::QueuedConnection);
+        connect(reader, &MosaicDB::anyTileForZoom,             this,   &DataProcessor::onDbAnyTileForZoom, Qt::QueuedConnection);
 
         dbReadThread_.setObjectName("MosaicDBReaderThread");
         dbReadThread_.start();
@@ -1707,8 +1722,8 @@ void DataProcessor::openDB()
     }, Qt::QueuedConnection);
 
     // writer conns
-    connect(this,      &DataProcessor::dbSaveTiles,  dbWriter_, &MosaicDB::saveTiles,            Qt::QueuedConnection);
-    connect(dbWriter_, &MosaicDB::sendSavedKeys,     this,      &DataProcessor::onSendSavedKeys, Qt::QueuedConnection);
+    connect(this,   &DataProcessor::dbSaveTiles,  writer, &MosaicDB::saveTiles,        Qt::QueuedConnection);
+    connect(writer, &MosaicDB::sendSavedKeys,     this,   &DataProcessor::onSendSavedKeys, Qt::QueuedConnection);
 
     dbWriteThread_.setObjectName("MosaicDBWriterThread");
     dbWriteThread_.start();
@@ -1719,20 +1734,43 @@ void DataProcessor::closeDB()
     dbReadThread_.requestInterruption();
     dbWriteThread_.requestInterruption();
 
-    // Reader
-    if (dbReader_) {
-        QMetaObject::invokeMethod(dbReader_, "finalizeAndClose", Qt::BlockingQueuedConnection);
+    auto finalizeAndDelete = [](MosaicDB* db, QThread& thread) {
+        if (!db) {
+            return;
+        }
+
+        if (db->thread() == QThread::currentThread()) {
+            db->finalizeAndClose();
+            delete db;
+            return;
+        }
+
+        if (thread.isRunning()) {
+            QMetaObject::invokeMethod(db, [db]() {
+                db->finalizeAndClose();
+                delete db;
+            }, Qt::BlockingQueuedConnection);
+            return;
+        }
+
+        db->finalizeAndClose();
+        delete db;
+    };
+
+    MosaicDB* const reader = dbReader_;
+    dbReader_ = nullptr;
+    finalizeAndDelete(reader, dbReadThread_);
+    if (dbReadThread_.isRunning()) {
         dbReadThread_.quit();
         dbReadThread_.wait();
-        dbReader_ = nullptr;
     }
 
-    // Writer
-    if (dbWriter_) {
-        QMetaObject::invokeMethod(dbWriter_, "finalizeAndClose", Qt::BlockingQueuedConnection);
+    MosaicDB* const writer = dbWriter_;
+    dbWriter_ = nullptr;
+    finalizeAndDelete(writer, dbWriteThread_);
+    if (dbWriteThread_.isRunning()) {
         dbWriteThread_.quit();
         dbWriteThread_.wait();
-        dbWriter_ = nullptr;
     }
 
     dbIsReady_.store(false, std::memory_order_relaxed);
@@ -2116,7 +2154,10 @@ void DataProcessor::shutdown()
 {
     //qDebug() << "DataProcessor::shutdown()";
 
-    shuttingDown_.store(true);
+    if (shuttingDown_.exchange(true)) {
+        return;
+    }
+
     pendingWorkTimer_.stop();
     notifyPrefetchProgress();
 
@@ -2164,26 +2205,39 @@ void DataProcessor::shutdown()
     }
 
     if (dbReader_) {
-        QMetaObject::invokeMethod(dbReader_, "finalizeAndClose", Qt::BlockingQueuedConnection);
+        if (dbReadThread_.isRunning()) {
+            QMetaObject::invokeMethod(dbReader_, "finalizeAndClose", Qt::BlockingQueuedConnection);
+        } else {
+            dbReader_->finalizeAndClose();
+        }
         dbReadThread_.quit();
         if (!waitForThread(dbReadThread_, 2000)) {
             dbReadThread_.terminate();
             dbReadThread_.wait();
         }
+        delete dbReader_;
         dbReader_ = nullptr;
     }
 
     if (dbWriter_) {
-        QMetaObject::invokeMethod(dbWriter_, "finalizeAndClose", Qt::BlockingQueuedConnection);
+        if (dbWriteThread_.isRunning()) {
+            QMetaObject::invokeMethod(dbWriter_, "finalizeAndClose", Qt::BlockingQueuedConnection);
+        } else {
+            dbWriter_->finalizeAndClose();
+        }
         dbWriteThread_.quit();
         if (!waitForThread(dbWriteThread_, 2000)) {
             dbWriteThread_.terminate();
             dbWriteThread_.wait();
         }
+        delete dbWriter_;
         dbWriter_ = nullptr;
     }
 
-    worker_->deleteLater();
+    if (worker_) {
+        delete worker_;
+        worker_ = nullptr;
+    }
 
     dbIsReady_ = false;
 

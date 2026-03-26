@@ -27,6 +27,39 @@ LinkManager::LinkManager(QObject *parent) :
     qRegisterMetaType<FrameParser>("FrameParser");
 }
 
+LinkManager::~LinkManager()
+{
+    shutdown();
+}
+
+void LinkManager::shutdown()
+{
+    stopTimer();
+
+    for (int i = list_.size() - 1; i >= 0; --i) {
+        Link* link = list_.at(i);
+        if (!link) {
+            list_.removeAt(i);
+            continue;
+        }
+
+        emit linkDeleted(link->getUuid(), link);
+        emit deleteModel(link->getUuid());
+
+        link->disconnect();
+        this->disconnect(link);
+
+        if (link->isOpen()) {
+            link->close();
+        }
+
+        list_.removeAt(i);
+        delete link;
+    }
+
+    proxyLinkUuid_ = QUuid();
+}
+
 QList<QSerialPortInfo> LinkManager::getCurrentSerialList() const
 {
     const auto allPorts = QSerialPortInfo::availablePorts();

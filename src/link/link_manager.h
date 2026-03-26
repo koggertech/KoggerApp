@@ -24,6 +24,7 @@ class LinkManager : public QObject
 
 public:
     explicit LinkManager(QObject *parent = nullptr);
+    ~LinkManager() override;
     Link *getLinkPtr(QUuid uuid);
     bool reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
                                       bool allowSerialLinks = true,
@@ -31,6 +32,7 @@ public:
                                       QString* error = nullptr);
 
 public slots:
+    void shutdown();
     void onLinkConnectionStatusChanged(QUuid uuid);
     void onUpgradingFirmwareStateChanged(QUuid uuid);
     void onLinkBaudrateChanged(QUuid uuid);

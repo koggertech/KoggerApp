@@ -76,7 +76,6 @@ public:
     DataProcessor* getDataProcessorPtr() const;
     DeviceManagerWrapper* getDeviceManagerWrapperPtr() const;
     LinkManagerWrapper* getLinkManagerWrapperPtr() const;
-    void stopLinkManagerTimer() const;
 #ifdef SEPARATE_READING
     QString getTryOpenedfilePath() const;
     void stopDeviceManagerThread() const;
@@ -92,7 +91,7 @@ public:
     void removeDeviceManagerConnections();
 #endif
     QHash<QUuid, QString> getLinkNames() const;
-    void shutdownDataProcessor();
+    void shutdownBackgroundWorkers();
     bool getIsGPSAlive() const { return isGPSAlive_; };
     bool getKlfLogging() const;
     bool getFixBlackStripesState() const;
