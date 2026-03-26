@@ -273,18 +273,6 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    QObject::connect(&app,  &QGuiApplication::aboutToQuit,
-                     &core, [&]() {
-                                core.shutdownDataProcessor();
-                                core.saveLLARefToSettings();
-                                core.removeLinkManagerConnections();
-                                core.stopLinkManagerTimer();
-#ifdef SEPARATE_READING
-                                void removeDeviceManagerConnections();
-                                core.stopDeviceManagerThread();
-#endif
-                            });
-
     engine.load(url);
     const auto rootObjects = engine.rootObjects();
     if (!rootObjects.isEmpty()) {
@@ -298,5 +286,14 @@ int main(int argc, char *argv[])
 #endif
     }
     qInfo() << "App is created";
-    return app.exec();
+    const int retCode = app.exec();
+
+    core.shutdownBackgroundWorkers();
+    core.saveLLARefToSettings();
+    core.removeLinkManagerConnections();
+#ifdef SEPARATE_READING
+    core.stopDeviceManagerThread();
+#endif
+
+    return retCode;
 }

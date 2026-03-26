@@ -25,6 +25,7 @@ public:
     LinkListModel* getModelPtr();
     LinkManager* getWorker();
     void startWorkerThread();
+    void shutdownWorkerThread();
     void closeOpenedLinks();
     QHash<QUuid, QString> getLinkNames() const;
     void openClosedLinks();
@@ -76,7 +77,6 @@ signals:
     void sendUpdateDestinationPort(QUuid uuid, int destinationPort);
     void sendUpdatePinnedState(QUuid uuid, bool state);
     void sendUpdateControlType(QUuid uuid, int controlType);
-    void sendStopTimer();
     void sendOpenFLinks();
     void sendCreateAndOpenAsUdpProxy(QString address, int sourcePort, int destinationPort);
     void sendCloseUdpProxy();
