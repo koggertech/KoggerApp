@@ -2200,8 +2200,10 @@ void DataProcessor::shutdown()
 
     computeThread_.quit();
     if (!waitForThread(computeThread_, 3000)) {
-        computeThread_.terminate();
-        computeThread_.wait();
+        qWarning() << "ComputeWorkerThread did not stop in time; retrying graceful wait";
+        computeThread_.requestInterruption();
+        computeThread_.quit();
+        waitForThread(computeThread_, 7000);
     }
 
     if (dbReader_) {
@@ -2212,7 +2214,7 @@ void DataProcessor::shutdown()
         }
         dbReadThread_.quit();
         if (!waitForThread(dbReadThread_, 2000)) {
-            dbReadThread_.terminate();
+            qWarning() << "MosaicDBReaderThread did not stop in time; waiting until it exits";
             dbReadThread_.wait();
         }
         delete dbReader_;
@@ -2227,7 +2229,7 @@ void DataProcessor::shutdown()
         }
         dbWriteThread_.quit();
         if (!waitForThread(dbWriteThread_, 2000)) {
-            dbWriteThread_.terminate();
+            qWarning() << "MosaicDBWriterThread did not stop in time; waiting until it exits";
             dbWriteThread_.wait();
         }
         delete dbWriter_;

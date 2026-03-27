@@ -2412,12 +2412,7 @@ void Core::destroyDataProcessor()
         if (dataProcThread_ && dataProcThread_->isRunning()) {
             DataProcessor* processorToDelete = dataProcessor_;
             QMetaObject::invokeMethod(processorToDelete, "shutdown", Qt::BlockingQueuedConnection);
-            QMetaObject::invokeMethod(
-                processorToDelete,
-                [processorToDelete]() {
-                    delete processorToDelete;
-                },
-                Qt::BlockingQueuedConnection);
+            QMetaObject::invokeMethod(processorToDelete, "deleteLater", Qt::BlockingQueuedConnection);
             dataProcessor_ = nullptr;
         } else {
             dataProcessor_->shutdown();
