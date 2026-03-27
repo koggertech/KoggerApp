@@ -17,6 +17,7 @@
 #include <QQuickStyle>
 #include <QWindow>
 #include <QStyleHints>
+#include <QLoggingCategory>
 #if defined(Q_OS_WIN)
 #include <windows.h>
 #endif
@@ -193,6 +194,7 @@ int main(int argc, char *argv[])
 #if defined(Q_OS_WIN)
     //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
+    QLoggingCategory::setFilterRules(QStringLiteral("qt.network.info.netlistmanager.warning=false"));
 #endif
 
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGLRhi);
