@@ -11,13 +11,33 @@ WaterFall {
 
     property bool is3dVisible: false
     property int indx: 0
-    property int instruments: instrumentsGradeList.currentIndex
+    property var instrumentsGradeList: null
+    property int instruments: (instrumentsGradeList && typeof instrumentsGradeList.currentIndex === "number")
+                              ? instrumentsGradeList.currentIndex
+                              : 0
     property bool settingsOpen: plotCheckButton.checked
     property bool hasTransientUi: menuBlock.visible || contactDialog.visible
     property bool loupeZoomAdjusting: false
     property bool loupeZoomWasVisibleBeforeAdjust: false
     property int loupeZoomSavedAimEpoch: -1
     property real settingsMenuSpacer: Math.max(4, Math.round(theme.controlHeight * 0.2))
+    property var inputState: null
+    property bool externalInputRouting: false
+    property int pointerLastMouseX: -1
+    property int pointerLastMouseY: -1
+    property bool pointerWasMoved: false
+    property point pointerStartMousePos: Qt.point(-1, -1)
+    property real pointerMouseThreshold: 15
+    property int pointerContactMouseX: -1
+    property int pointerContactMouseY: -1
+    property int pinchThresholdXAxis: 15
+    property int pinchThresholdYAxis: 15
+    property double pinchZoomThreshold: 0.1
+    property bool pinchMovementX: false
+    property bool pinchMovementY: false
+    property bool pinchZoomY: false
+    property point pinchStartPos: Qt.point(-1, -1)
+    property bool pinchActive: false
 
     horizontal: horisontalVertical.checked
 
@@ -131,10 +151,208 @@ WaterFall {
         verScrollEvent(paramX)
     }
 
+    function markMouseKeyboardInput() {
+        if (inputState && typeof inputState.markMouseKeyboardInput === "function")
+            inputState.markMouseKeyboardInput()
+    }
+
+    function markTouchInput() {
+        if (inputState && typeof inputState.markTouchInput === "function")
+            inputState.markTouchInput()
+    }
+
+    function clearPinchMovementState() {
+        pinchMovementX = false
+        pinchMovementY = false
+        pinchZoomY = false
+    }
+
+    function handlePointerClick(mouseButton, buttons, x, y, keyboardKey) {
+        pointerLastMouseX = x
+        pointerLastMouseY = y
+        forceActiveFocus()
+
+        if (mouseButton === Qt.RightButton) {
+            pointerContactMouseX = x
+            pointerContactMouseY = y
+            plot.simplePlotMousePosition(x, y)
+
+            if (theme.instrumentsGrade !== 0) {
+                menuBlock.position(x, y)
+            }
+        }
+
+        pointerWasMoved = false
+    }
+
+    function handlePointerPress(mouseButton, buttons, x, y, keyboardKey) {
+        markMouseKeyboardInput()
+        pointerLastMouseX = x
+        pointerLastMouseY = y
+        forceActiveFocus()
+
+        if (Qt.platform.os === "android") {
+            pointerStartMousePos = Qt.point(x, y)
+            longPressTimer.start()
+        }
+
+        if (mouseButton === Qt.LeftButton) {
+            menuBlock.visible = false
+            plot.plotMousePosition(x, y)
+            plotPressed(indx, x, y)
+        }
+
+        if (mouseButton === Qt.RightButton) {
+            pointerContactMouseX = x
+            pointerContactMouseY = y
+            plot.simplePlotMousePosition(x, y)
+        }
+
+        pointerWasMoved = false
+    }
+
+    function handlePointerMove(buttons, x, y, keyboardKey) {
+        markMouseKeyboardInput()
+        plot.onCursorMoved(x, y)
+
+        if (Qt.platform.os === "android") {
+            if (!pointerWasMoved) {
+                var currDelta = Math.sqrt(Math.pow((x - pointerStartMousePos.x), 2) + Math.pow((y - pointerStartMousePos.y), 2))
+                if (currDelta > pointerMouseThreshold) {
+                    pointerWasMoved = true
+                }
+            }
+        }
+
+        pointerLastMouseX = x
+        pointerLastMouseY = y
+
+        if (buttons & Qt.LeftButton) {
+            plot.plotMousePosition(x, y)
+            plotPressed(indx, x, y)
+        }
+
+        if (buttons & Qt.RightButton) {
+            pointerContactMouseX = x
+            pointerContactMouseY = y
+            plot.simplePlotMousePosition(x, y)
+        }
+    }
+
+    function handlePointerRelease(mouseButton, buttons, x, y, keyboardKey) {
+        markMouseKeyboardInput()
+        pointerLastMouseX = -1
+        pointerLastMouseY = -1
+
+        if (Qt.platform.os === "android") {
+            longPressTimer.stop()
+        }
+
+        if (mouseButton === Qt.LeftButton) {
+            plot.plotMousePosition(-1, -1)
+        }
+
+        if (mouseButton === Qt.RightButton) {
+            pointerContactMouseX = x
+            pointerContactMouseY = y
+            plot.simplePlotMousePosition(x, y)
+        }
+
+        pointerWasMoved = false
+        pointerStartMousePos = Qt.point(-1, -1)
+        plotReleased(indx)
+    }
+
+    function handlePointerCancel() {
+        markMouseKeyboardInput()
+        pointerLastMouseX = -1
+        pointerLastMouseY = -1
+
+        if (Qt.platform.os === "android") {
+            longPressTimer.stop()
+        }
+
+        pointerWasMoved = false
+        pointerStartMousePos = Qt.point(-1, -1)
+        plotReleased(indx)
+    }
+
+    function handlePointerWheel(buttons, x, y, angleDelta, modifiers, keyboardKey) {
+        markMouseKeyboardInput()
+
+        if (modifiers & Qt.ControlModifier) {
+            let val = -angleDelta.y
+            plot.verZoomEvent(val)
+            plotCursorChanged(indx, cursorFrom(), cursorTo())
+        }
+        else if (modifiers & Qt.ShiftModifier) {
+            let val = -angleDelta.y
+            plot.verScrollEvent(val)
+            plotCursorChanged(indx, cursorFrom(), cursorTo())
+        }
+        else {
+            let val = angleDelta.y
+            plot.horScrollEvent(val)
+            updateOtherPlot(indx)
+        }
+    }
+
+    function handlePinchStarted(centerX, centerY) {
+        markTouchInput()
+        pinchActive = true
+        menuBlock.visible = false
+        plot.plotMousePosition(-1, -1)
+        clearPinchMovementState()
+        pinchStartPos = Qt.point(centerX, centerY)
+    }
+
+    function handlePinchUpdated(prevCenterX, prevCenterY, currCenterX, currCenterY, prevScale, scale, prevAngle, angle) {
+        markTouchInput()
+        if (pinchMovementX) {
+            let val = -(prevCenterX - currCenterX)
+            plot.horScrollEvent(val)
+            updateOtherPlot(indx)
+        }
+        else if (pinchMovementY) {
+            let val = prevCenterY - currCenterY
+            plot.verScrollEvent(val)
+            plotCursorChanged(indx, cursorFrom(), cursorTo())
+        }
+        else if (pinchZoomY) {
+            let val = (prevScale - scale) * 500.0
+            plot.verZoomEvent(val)
+            plotCursorChanged(indx, cursorFrom(), cursorTo())
+        }
+        else {
+            if (Math.abs(pinchStartPos.x - currCenterX) > pinchThresholdXAxis) {
+                pinchMovementX = true
+            }
+            else if (Math.abs(pinchStartPos.y - currCenterY) > pinchThresholdYAxis) {
+                pinchMovementY = true
+            }
+            else if (scale > (1.0 + pinchZoomThreshold) || scale < (1.0 - pinchZoomThreshold)) {
+                pinchZoomY = true
+            }
+        }
+    }
+
+    function handlePinchFinished() {
+        markTouchInput()
+        pinchActive = false
+        plot.plotMousePosition(-1, -1)
+        clearPinchMovementState()
+        pinchStartPos = Qt.point(-1, -1)
+    }
+
     onEnabledChanged: {
+        setPlotEnabled(enabled)
         if (enabled) {
             update();
         }
+    }
+
+    Component.onCompleted: {
+        setPlotEnabled(enabled)
     }
 
     signal plotCursorChanged(int indx, real from, real to)
@@ -147,84 +365,22 @@ WaterFall {
     PinchArea {
         id: pinch2D
         anchors.fill: parent
-        enabled: true
+        enabled: !plot.externalInputRouting
 
-        property int thresholdXAxis: 15
-        property int thresholdYAxis: 15
-        property double zoomThreshold: 0.1
+        onPinchStarted: plot.handlePinchStarted(pinch.center.x, pinch.center.y)
 
-        property bool movementX: false
-        property bool movementY: false
-        property bool zoomY: false
-        property point pinchStartPos: Qt.point(-1, -1)
+        onPinchUpdated: plot.handlePinchUpdated(pinch.previousCenter.x, pinch.previousCenter.y,
+                                                 pinch.center.x, pinch.center.y,
+                                                 pinch.previousScale, pinch.scale,
+                                                 pinch.previousAngle, pinch.angle)
 
-        function clearPinchMovementState() {
-            movementX = false
-            movementY = false
-            zoomY = false
-        }
-
-        onPinchStarted: {
-            menuBlock.visible = false
-
-            mousearea.enabled = false
-            plot.plotMousePosition(-1, -1)
-
-            clearPinchMovementState()
-            pinchStartPos = Qt.point(pinch.center.x, pinch.center.y)
-        }
-
-        onPinchUpdated: {
-            console.info("onPinchUpdated")
-
-            if (movementX) {
-                let val = -(pinch.previousCenter.x - pinch.center.x)
-                plot.horScrollEvent(val)
-                updateOtherPlot(indx)
-            }
-            else if (movementY) {
-                let val = pinch.previousCenter.y - pinch.center.y
-                plot.verScrollEvent(val)
-                plotCursorChanged(indx, cursorFrom(), cursorTo())
-            }
-            else if (zoomY) {
-                let val = (pinch.previousScale - pinch.scale) * 500.0
-                plot.verZoomEvent(val)
-                plotCursorChanged(indx, cursorFrom(), cursorTo())
-            }
-            else {
-                if (Math.abs(pinchStartPos.x - pinch.center.x) > thresholdXAxis) {
-                    movementX = true
-                }
-                else if (Math.abs(pinchStartPos.y - pinch.center.y) > thresholdYAxis) {
-                    movementY = true
-                }
-                else if (pinch.scale > (1.0 + zoomThreshold) || pinch.scale < (1.0 - zoomThreshold)) {
-                    zoomY = true
-                }
-            }
-        }       
-
-        onPinchFinished: {
-            mousearea.enabled = true
-            plot.plotMousePosition(-1, -1)
-
-            clearPinchMovementState()
-            pinchStartPos = Qt.point(-1, -1)
-        }
+        onPinchFinished: plot.handlePinchFinished()
 
         MouseArea {
             id: mousearea
-            enabled: true
+            enabled: !plot.externalInputRouting && !plot.pinchActive
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-
-            property int lastMouseX: -1
-            property bool wasMoved: false
-            property point startMousePos: Qt.point(-1, -1)
-            property real mouseThreshold: 15
-            property int contactMouseX: -1
-            property int contactMouseY: -1
 
             hoverEnabled: true
 
@@ -233,138 +389,45 @@ WaterFall {
                 interval: 500
                 repeat: false
                 onTriggered: {
-                    if (Qt.platform.os === "android" && theme.instrumentsGrade !== 0 && !mousearea.wasMoved) {
-                        plot.onCursorMoved(mousearea.mouseX, mousearea.mouseY)
-                        mousearea.contactMouseX = mousearea.mouseX
-                        mousearea.contactMouseY = mousearea.mouseY
-                        plot.simplePlotMousePosition(mousearea.mouseX, mousearea.mouseY)
+                    if (Qt.platform.os === "android" && theme.instrumentsGrade !== 0 && !plot.pointerWasMoved) {
+                        plot.onCursorMoved(plot.pointerLastMouseX, plot.pointerLastMouseY)
+                        plot.pointerContactMouseX = plot.pointerLastMouseX
+                        plot.pointerContactMouseY = plot.pointerLastMouseY
+                        plot.simplePlotMousePosition(plot.pointerLastMouseX, plot.pointerLastMouseY)
 
-                        menuBlock.position(mousearea.mouseX, mousearea.mouseY)
+                        menuBlock.position(plot.pointerLastMouseX, plot.pointerLastMouseY)
                     }
                 }
             }
 
             onClicked: function(mouse) {
-                lastMouseX = mouse.x
-                plot.focus = true
-
-                if (mouse.button === Qt.RightButton) {
-                    contactMouseX = mouse.x
-                    contactMouseY = mouse.y
-
-                    plot.simplePlotMousePosition(mouse.x, mouse.y)
-
-                    if (theme.instrumentsGrade !== 0) {
-                        menuBlock.position(mouse.x, mouse.y)
-                    }
-                }
-
-                wasMoved = false
+                plot.handlePointerClick(mouse.button, mouse.buttons, mouse.x, mouse.y, Qt.Key_unknown)
             }
 
             onPressed: function(mouse) {
-                lastMouseX = mouse.x
-
-                if (Qt.platform.os === "android") {
-                    startMousePos = Qt.point(mouse.x, mouse.y)
+                plot.handlePointerPress(mouse.button, mouse.buttons, mouse.x, mouse.y, Qt.Key_unknown)
+                if (Qt.platform.os === "android")
                     longPressTimer.start()
-                }
-
-                if (mouse.button === Qt.LeftButton) {
-                    menuBlock.visible = false
-                    plot.plotMousePosition(mouse.x, mouse.y)
-                    plotPressed(indx, mouse.x, mouse.y)
-                }
-
-                if (mouse.button === Qt.RightButton) {
-                    contactMouseX = mouse.x
-                    contactMouseY = mouse.y
-
-                    plot.simplePlotMousePosition(mouse.x, mouse.y)
-                }
-
-                wasMoved = false
             }
 
             onReleased: function(mouse) {
-                lastMouseX = -1
-
-                if (Qt.platform.os === "android") {
+                if (Qt.platform.os === "android")
                     longPressTimer.stop()
-                }
-
-                if (mouse.button === Qt.LeftButton) {
-                    plot.plotMousePosition(-1, -1)
-                }
-
-                if (mouse.button === Qt.RightButton) {
-                    contactMouseX = mouse.x
-                    contactMouseY = mouse.y
-
-                    plot.simplePlotMousePosition(mouse.x, mouse.y)
-                }
-
-                wasMoved = false
-                startMousePos = Qt.point(-1, -1)
-                plotReleased(indx)
+                plot.handlePointerRelease(mouse.button, mouse.buttons, mouse.x, mouse.y, Qt.Key_unknown)
             }
 
             onCanceled: {
-                lastMouseX = -1
-
-                if (Qt.platform.os === "android") {
+                if (Qt.platform.os === "android")
                     longPressTimer.stop()
-                }
-
-                wasMoved = false
-                startMousePos = Qt.point(-1, -1)
-                plotReleased(indx)
+                plot.handlePointerCancel()
             }
 
             onPositionChanged: function(mouse) {
-                plot.onCursorMoved(mouse.x, mouse.y)
-
-                if (Qt.platform.os === "android") {
-                    if (!wasMoved) {
-                        var currDelta = Math.sqrt(Math.pow((mouse.x - startMousePos.x), 2) + Math.pow((mouse.y - startMousePos.y), 2));
-                        if (currDelta > mouseThreshold) {
-                            wasMoved = true;
-                        }
-                    }
-                }
-
-                var delta = mouse.x - lastMouseX
-                lastMouseX = mouse.x
-
-                if (mousearea.pressedButtons & Qt.LeftButton) {
-                    plot.plotMousePosition(mouse.x, mouse.y)
-                    plotPressed(indx, mouse.x, mouse.y)
-                }
-
-                if (mouse.button === Qt.RightButton) {
-                    contactMouseX = mouse.x
-                    contactMouseY = mouse.y
-
-                    plot.simplePlotMousePosition(mouse.x, mouse.y)
-                }
+                plot.handlePointerMove(mouse.buttons, mouse.x, mouse.y, Qt.Key_unknown)
             }
 
             onWheel: function(wheel) {
-                if (wheel.modifiers & Qt.ControlModifier) {
-                    let val = -wheel.angleDelta.y
-                    plot.verZoomEvent(val)
-                    plotCursorChanged(indx, cursorFrom(), cursorTo())
-                }
-                else if (wheel.modifiers & Qt.ShiftModifier) {
-                    let val = -wheel.angleDelta.y
-                    plot.verScrollEvent(val)
-                    plotCursorChanged(indx, cursorFrom(), cursorTo())
-                }
-                else {
-                    let val = wheel.angleDelta.y
-                    plot.horScrollEvent(val)
-                    updateOtherPlot(indx)
-                }
+                plot.handlePointerWheel(wheel.buttons, wheel.x, wheel.y, wheel.angleDelta, wheel.modifiers, Qt.Key_unknown)
             }
         }
     }
@@ -1396,8 +1459,8 @@ WaterFall {
             checkable: false
 
             onClicked: {
-                contactDialog.x = mousearea.contactMouseX
-                contactDialog.y = mousearea.contactMouseY
+                contactDialog.x = plot.pointerContactMouseX
+                contactDialog.y = plot.pointerContactMouseY
                 contactDialog.visible = true;
 
                 contactDialog.indx = -1

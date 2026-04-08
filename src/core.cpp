@@ -16,6 +16,12 @@
 #include "platform/android/src/android_interface.h"
 #endif
 
+namespace {
+QString channelDisplayName(const DatasetChannel& channel)
+{
+    return channel.portName_.isEmpty() ? channel.channelId_.toShortName() : channel.portName_;
+}
+}
 
 Core::Core() :
     QObject(),
@@ -742,44 +748,12 @@ bool Core::openXTF(const QByteArray& data)
         return false;
     }
 
-    auto linkNames = getLinkNames();
-    QString fChName;
-    QString sChName;
-    if (linkNames.contains(channelList.at(0).channelId_.uuid)) {
-        fChName = channelList.at(0).portName_;
-    }
-    if (linkNames.contains(channelList.at(1).channelId_.uuid)) {
-        sChName = channelList.at(1).portName_;
-    }
+    const QString fChName = channelDisplayName(channelList.at(0));
+    const QString sChName = channelDisplayName(channelList.at(1));
 
-    if (!plot2dList_.isEmpty() && plot2dList_.at(0) && channelList.size() >= 2) {
-        plot2dList_.at(0)->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, fChName, channelList[1].channelId_, channelList[1].subChannelId_, sChName);
-        plot2dList_.at(0)->plotUpdate();
-    }
-
-    for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != nullptr && i < channelList.size()) {
-            if (i == 0) {
-                plot2dList_.at(i)->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, fChName, channelList[1].channelId_, channelList[1].subChannelId_, sChName);
-                plot2dList_.at(i)->plotUpdate();
-            }
-        }
-    }
-
-    if (syncLoupePlot3dPtr_ && !channelList.isEmpty()) {
-        if (channelList.size() >= 2) {
-            const QString loupeFirstName = fChName.isEmpty() ? channelList[0].portName_ : fChName;
-            const QString loupeSecondName = sChName.isEmpty() ? channelList[1].portName_ : sChName;
-            syncLoupePlot3dPtr_->setDataChannel(false,
-                                                channelList[0].channelId_, channelList[0].subChannelId_, loupeFirstName,
-                                                channelList[1].channelId_, channelList[1].subChannelId_, loupeSecondName);
-        }
-        else {
-            const QString loupeChannelName = fChName.isEmpty() ? channelList[0].portName_ : fChName;
-            syncLoupePlot3dPtr_->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, loupeChannelName);
-        }
-        syncLoupePlot3dPtr_->plotUpdate();
-    }
+    Q_UNUSED(fChName)
+    Q_UNUSED(sChName)
+    onChannelsUpdated();
 
     return true;
 }
@@ -1490,35 +1464,18 @@ void Core::UILoad(QObject* object, const QUrl& url)
 #endif
 
     scene3dViewPtr_ = object->findChild<GraphicsScene3dView*> ();
-    plot2dList_.clear();
     syncLoupePlot3dPtr_.clear();
     const auto allPlots = object->findChildren<qPlot2D*>();
     for (auto* plot : allPlots) {
-        if (!plot) {
-            continue;
-        }
         if (plot->objectName() == QStringLiteral("syncLoupe3DPlot")) {
             syncLoupePlot3dPtr_ = plot;
             continue;
         }
-        plot2dList_.append(plot);
+        registerPlot2D(plot);
     }
     scene3dViewPtr_->setDataset(datasetPtr_);
     scene3dViewPtr_->setDataProcessorPtr(dataProcessor_);
     datasetPtr_->setScene3D(scene3dViewPtr_);
-
-    for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != nullptr) {
-            plot2dList_.at(i)->setPlot(datasetPtr_);
-            plot2dList_.at(i)->setDataProcessor(dataProcessor_);
-            scene3dViewPtr_->bottomTrack()->installEventFilter(plot2dList_.at(i));
-            scene3dViewPtr_->getBoatTrackPtr()->installEventFilter(plot2dList_.at(i));
-            scene3dViewPtr_->getContactsPtr()->installEventFilter(plot2dList_.at(i));
-            plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->bottomTrack().get());
-            plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->getBoatTrackPtr().get());
-            plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->getContactsPtr().get());
-        }
-    }
 
     if (syncLoupePlot3dPtr_) {
         syncLoupePlot3dPtr_->setPlot(datasetPtr_);
@@ -1591,6 +1548,25 @@ void Core::UILoad(QObject* object, const QUrl& url)
     QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "createLocationReader", Qt::QueuedConnection);
 }
 
+void Core::registerPlot2D(QObject* plotObj)
+{
+    auto* plot = qobject_cast<qPlot2D*>(plotObj);
+    if (!plot) {
+        return;
+    }
+
+    const bool alreadyRegistered = plot2dList_.contains(plot);
+    if (!alreadyRegistered) {
+        plot2dList_.append(plot);
+    }
+
+    bindPlot2D(plot);
+
+    if (!alreadyRegistered && datasetPtr_ && !datasetPtr_->channelsList().isEmpty()) {
+        onChannelsUpdated();
+    }
+}
+
 void Core::setMosaicChannels(const QString& firstChStr, const QString& secondChStr)
 {
     if (datasetPtr_ && dataProcessor_ && scene3dViewPtr_) {
@@ -1612,6 +1588,28 @@ void Core::setMosaicChannels(const QString& firstChStr, const QString& secondChS
             lastSub2_ = sub2;
         }
     }
+}
+
+void Core::refreshMosaicProcessing()
+{
+    if (!(datasetPtr_ && dataProcessor_ && scene3dViewPtr_))
+        return;
+
+    const QString firstChStr = getChannel1Name();
+    const QString secondChStr = getChannel2Name();
+    auto [ch1, sub1, name1] = datasetPtr_->channelIdFromName(firstChStr);
+    auto [ch2, sub2, name2] = datasetPtr_->channelIdFromName(secondChStr);
+
+    Q_UNUSED(name1)
+    Q_UNUSED(name2)
+
+    datasetPtr_->setMosaicChannels(firstChStr, secondChStr);
+    QMetaObject::invokeMethod(dataProcessor_, "setMosaicChannels",
+                              Qt::QueuedConnection, Q_ARG(ChannelId, ch1), Q_ARG(uint8_t, sub1), Q_ARG(ChannelId, ch2), Q_ARG(uint8_t, sub2));
+    lastCh1_  = ch1;
+    lastSub1_ = sub1;
+    lastCh2_  = ch2;
+    lastSub2_ = sub2;
 }
 
 #ifdef SEPARATE_READING
@@ -1653,41 +1651,25 @@ void Core::onChannelsUpdated()
         return;
     }
 
-    QString fChName;
-    QString sChName;
+    QString fChName = chSize > 0 ? channelDisplayName(chs[0]) : QString();
+    QString sChName = chSize > 1 ? channelDisplayName(chs[1]) : QString();
 
     if (openedfilePath_.isEmpty()) {
         auto linkNames = getLinkNames();
         if (chSize > 0 && linkNames.contains(chs[0].channelId_.uuid)) {
-            fChName = chs[0].portName_;
+            fChName = channelDisplayName(chs[0]);
         }
         if (chSize > 1 && linkNames.contains(chs[1].channelId_.uuid)) {
-            sChName = chs[1].portName_;
+            sChName = channelDisplayName(chs[1]);
         }
     }
     else {
         if (chSize > 0) {
-            fChName = chs[0].portName_;
+            fChName = channelDisplayName(chs[0]);
         }
         if (chSize > 1) {
-            sChName = chs[1].portName_;
+            sChName = channelDisplayName(chs[1]);
         }
-    }
-
-    if (fChName.isEmpty() && sChName.isEmpty()) {
-        if (syncLoupePlot3dPtr_ && chSize >= 1) {
-            if (chSize >= 2) {
-                syncLoupePlot3dPtr_->setDataChannel(false,
-                                                    chs[0].channelId_, chs[0].subChannelId_, chs[0].portName_,
-                                                    chs[1].channelId_, chs[1].subChannelId_, chs[1].portName_);
-            }
-            else {
-                syncLoupePlot3dPtr_->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, chs[0].portName_);
-            }
-            syncLoupePlot3dPtr_->plotUpdate();
-        }
-        emit channelListUpdated();
-        return;
     }
 
     const int numPlots = plot2dList_.size();
@@ -1707,15 +1689,15 @@ void Core::onChannelsUpdated()
 
     if (syncLoupePlot3dPtr_) {
         if (chSize >= 2) {
-            const QString loupeFirstName = fChName.isEmpty() ? chs[0].portName_ : fChName;
-            const QString loupeSecondName = sChName.isEmpty() ? chs[1].portName_ : sChName;
+            const QString loupeFirstName = fChName.isEmpty() ? channelDisplayName(chs[0]) : fChName;
+            const QString loupeSecondName = sChName.isEmpty() ? channelDisplayName(chs[1]) : sChName;
             syncLoupePlot3dPtr_->setDataChannel(false,
                                                 chs[0].channelId_, chs[0].subChannelId_, loupeFirstName,
                                                 chs[1].channelId_, chs[1].subChannelId_, loupeSecondName);
             syncLoupePlot3dPtr_->plotUpdate();
         }
         else if (chSize == 1) {
-            const QString loupeChannelName = fChName.isEmpty() ? chs[0].portName_ : fChName;
+            const QString loupeChannelName = fChName.isEmpty() ? channelDisplayName(chs[0]) : fChName;
             syncLoupePlot3dPtr_->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, loupeChannelName);
             syncLoupePlot3dPtr_->plotUpdate();
         }
@@ -1772,11 +1754,11 @@ void Core::registerSyncLoupePlot(QObject* plotObj)
 
     if (chs.size() >= 2) {
         syncLoupePlot3dPtr_->setDataChannel(false,
-                                            chs[0].channelId_, chs[0].subChannelId_, chs[0].portName_,
-                                            chs[1].channelId_, chs[1].subChannelId_, chs[1].portName_);
+                                            chs[0].channelId_, chs[0].subChannelId_, channelDisplayName(chs[0]),
+                                            chs[1].channelId_, chs[1].subChannelId_, channelDisplayName(chs[1]));
     }
     else {
-        syncLoupePlot3dPtr_->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, chs[0].portName_);
+        syncLoupePlot3dPtr_->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, channelDisplayName(chs[0]));
     }
     syncLoupePlot3dPtr_->plotUpdate();
 }
@@ -2374,6 +2356,38 @@ void Core::initAfterApp()
     }
 
     createDataProcessor();
+}
+
+void Core::bindPlot2D(qPlot2D* plot)
+{
+    if (!plot) {
+        return;
+    }
+
+    if (datasetPtr_) {
+        plot->setPlot(datasetPtr_);
+    }
+
+    if (dataProcessor_) {
+        plot->setDataProcessor(dataProcessor_);
+    }
+
+    if (!scene3dViewPtr_) {
+        return;
+    }
+
+    constexpr const char* kFiltersInstalledKey = "_koggerScene3dFiltersInstalled";
+    if (plot->property(kFiltersInstalledKey).toBool()) {
+        return;
+    }
+
+    scene3dViewPtr_->bottomTrack()->installEventFilter(plot);
+    scene3dViewPtr_->getBoatTrackPtr()->installEventFilter(plot);
+    scene3dViewPtr_->getContactsPtr()->installEventFilter(plot);
+    plot->installEventFilter(scene3dViewPtr_->bottomTrack().get());
+    plot->installEventFilter(scene3dViewPtr_->getBoatTrackPtr().get());
+    plot->installEventFilter(scene3dViewPtr_->getContactsPtr().get());
+    plot->setProperty(kFiltersInstalledKey, true);
 }
 
 void Core::initStreamList()

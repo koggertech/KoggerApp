@@ -34,6 +34,7 @@ HEADERS += \
     src/stream_list_model.h \
     src/themes.h \
     src/ui_state_serializer.h \
+    src/input_device_tracker.h \
     src/xtf_conf.h \
     src/location_reader.h \
     src/mosaic_index_provider.h
@@ -57,6 +58,7 @@ SOURCES += \
     src/stream_list.cpp \
     src/stream_list_model.cpp \
     src/ui_state_serializer.cpp \
+    src/input_device_tracker.cpp \
     src/location_reader.cpp \
     src/mosaic_index_provider.cpp
 
@@ -77,6 +79,7 @@ TRANSLATIONS += \
 
 RESOURCES += \
     qml/qml.qrc \
+    ui_shell.qrc \
     resources/icons.qrc \
     resources/resources.qrc
 

@@ -19,8 +19,12 @@ qPlot2D::qPlot2D(QQuickItem* parent)
     qRegisterMetaType<DatasetChannel>("DatasetChannel");
 
 //    setRenderTarget(QQuickPaintedItem::FramebufferObject);
-//    connect(m_updateTimer, &QTimer::timeout, this, [&] { update(); });
+    connect(m_updateTimer, &QTimer::timeout, this, &qPlot2D::timerUpdater);
     m_updateTimer->start(30);
+    connect(this, &QQuickItem::widthChanged, this, &qPlot2D::updater);
+    connect(this, &QQuickItem::heightChanged, this, &qPlot2D::updater);
+    connect(this, &QQuickItem::visibleChanged, this, &qPlot2D::updater);
+    connect(this, &QQuickItem::parentChanged, this, [this](QQuickItem*) { updater(); });
     setFlag(ItemHasContents);
     setAcceptedMouseButtons(Qt::AllButtons);
 //    setFillColor(QColor(255, 255, 255));
@@ -186,10 +190,13 @@ void qPlot2D::paint(QPainter *painter)
 //}
 
 void qPlot2D::setPlot(Dataset *dataset) {
-    if(dataset == nullptr) { return; }
+    if (dataset == nullptr || m_plot == dataset) { return; }
+    if (m_plot != nullptr) {
+        QObject::disconnect(m_plot, &Dataset::dataUpdate, this, &qPlot2D::dataUpdate);
+    }
     m_plot = dataset;
     setDataset(dataset);
-    connect(dataset, &Dataset::dataUpdate, this, &qPlot2D::dataUpdate);
+    connect(dataset, &Dataset::dataUpdate, this, &qPlot2D::dataUpdate, Qt::UniqueConnection);
 //    connect(m_plot, &Dataset::updatedImage, this, [&] { updater(); });
 }
 
@@ -305,6 +312,10 @@ bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
 void qPlot2D::sendSyncEvent(int epoch_index, QEvent::Type eventType)
 {
     //qDebug() << "qPlot2D::sendSyncEvent: epoch_index: " << epoch_index;
+    if (!datasetPtr_ || epoch_index < 0) {
+        return;
+    }
+
     if (eventType == EpochSelected2d) {
         cursor_.selectEpochIndx = -1;
     }
@@ -429,6 +440,26 @@ void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, 
         }
     }
     plotUpdate();
+}
+
+void qPlot2D::updateBottomTrackProcessing()
+{
+    if (!datasetPtr_ || !dataProcessorPtr_)
+        return;
+
+    if (auto* btpPtr = datasetPtr_->getBottomTrackParamPtr(); btpPtr) {
+        doDistProcessing(static_cast<int>(btpPtr->preset),
+                         btpPtr->windowSize,
+                         btpPtr->verticalGap,
+                         btpPtr->minDistance,
+                         btpPtr->maxDistance,
+                         btpPtr->gainSlope,
+                         btpPtr->threshold,
+                         btpPtr->offset.x,
+                         btpPtr->offset.y,
+                         btpPtr->offset.z,
+                         true);
+    }
 }
 
 void qPlot2D::refreshDistParams(int preset, int windowSize, float verticalGap, float rangeMin, float rangeMax, float gainSlope, float threshold, float offsetX, float offsetY, float offsetZ)

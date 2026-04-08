@@ -437,6 +437,11 @@ void Plot2D::setTimelinePositionSec(float position)
 
 void Plot2D::setTimelinePositionByEpoch(int epochIndx)
 {
+    if (!datasetPtr_ || datasetPtr_->size() <= 0) {
+        cursor_.selectEpochIndx = -1;
+        return;
+    }
+
     const int halfWindow = static_cast<int>(cursor_.indexes.size() / 2);
     float pos = epochIndx == -1
         ? cursor_.position
@@ -447,6 +452,10 @@ void Plot2D::setTimelinePositionByEpoch(int epochIndx)
 
 void Plot2D::scrollPosition(int columns)
 {
+    if (!datasetPtr_ || datasetPtr_->size() <= 0) {
+        return;
+    }
+
     float new_position = timelinePosition() + (1.0f / datasetPtr_->size()) * columns;
     setTimelinePosition(new_position);
 }
@@ -824,6 +833,15 @@ void Plot2D::scrollDistance(float ratio)
 }
 
 void Plot2D::setMousePosition(int x, int y, bool isSync) {
+    if (!datasetPtr_ || canvas_.width() <= 0 || canvas_.height() <= 0) {
+        cursor_.selectEpochIndx = -1;
+        cursor_.currentEpochIndx = -1;
+        cursor_.lastEpochIndx = -1;
+        cursor_.setMouse(-1, -1);
+        cursor_.setContactPos(-1, -1);
+        plotUpdate();
+        return;
+    }
 
     const int image_width = canvas_.width();
     const int image_height = canvas_.height();
@@ -946,6 +964,12 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
 
 void Plot2D::simpleSetMousePosition(int x, int y)
 {
+    if (!datasetPtr_ || canvas_.width() <= 0 || canvas_.height() <= 0) {
+        cursor_.currentEpochIndx = -1;
+        cursor_.lastEpochIndx = -1;
+        return;
+    }
+
     const int image_width = canvas_.width();
     const int image_height = canvas_.height();
     int mouseX = -1;

@@ -1,0 +1,42 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/KQMLTypes/qmldir</file>
+        <file>qml/KQMLTypes/KTabBar.qml</file>
+        <file>qml/KQMLTypes/KCheckBox.qml</file>
+        <file>qml/KQMLTypes/KSwitch.qml</file>
+        <file>qml/KQMLTypes/KButton.qml</file>
+        <file>qml/KQMLTypes/KToolTip.qml</file>
+        <file>qml/App/qmldir</file>
+        <file>qml/App/MainWindow.qml</file>
+        <file>qml/App/GlobalPanePopup.qml</file>
+        <file>qml/App/WorkspaceStore.qml</file>
+        <file>qml/App/WorkspaceView.qml</file>
+        <file>qml/App/PaneFrame.qml</file>
+        <file>qml/App/PaneEditorChrome.qml</file>
+        <file>qml/App/BasePanePopup.qml</file>
+        <file>qml/App/FullscreenPanePopup.qml</file>
+        <file>qml/App/PaneContentLoader.qml</file>
+        <file>qml/App/Pane2DWindow.qml</file>
+        <file>qml/App/Pane3DWindow.qml</file>
+        <file>qml/App/InputDeviceState.qml</file>
+        <file>qml/App/PaneInputBridge.qml</file>
+        <file>qml/App/SettingsSidebarBase.qml</file>
+        <file>qml/App/SettingsGroup.qml</file>
+        <file>qml/App/AppSettingsPage.qml</file>
+        <file>qml/App/ConnectionsSettingsPage.qml</file>
+        <file>qml/App/Pane2DSettingsPage.qml</file>
+        <file>qml/App/Pane3DSettingsPage.qml</file>
+        <file>qml/App/ModeSettingsPanel.qml</file>
+        <file>qml/App/ActionChip.qml</file>
+        <file>qml/App/CircleIconButton.qml</file>
+        <file>qml/App/SettingsGearButton.qml</file>
+        <file>qml/App/DisclosureIndicator.qml</file>
+        <file>qml/App/HotActionsPanel.qml</file>
+        <file>qml/App/LayoutSnapshotPreview.qml</file>
+        <file>qml/App/FavoriteLayoutCard.qml</file>
+        <file>qml/App/LayoutRules.js</file>
+        <file>qml/App/LayoutTree.js</file>
+        <file>qml/App/LayoutResize.js</file>
+    </qresource>
+</RCC>

@@ -135,6 +135,7 @@ public slots:
     bool exportUSBLToCSV(QString filePath);
     bool exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation = 0);
     bool exportPlotAsXTF(QString filePath);
+    void refreshMosaicProcessing();
     void setPlotStartLevel(int level);
     void setPlotStopLevel(int level);
     void setTimelinePosition(double position);
@@ -158,6 +159,7 @@ public slots:
     Q_INVOKABLE int getDataProcessorState() const;
     Q_INVOKABLE QString getChannel1Name() const;
     Q_INVOKABLE QString getChannel2Name() const;
+    Q_INVOKABLE void registerPlot2D(QObject* plotObj);
     Q_INVOKABLE void registerSyncLoupePlot(QObject* plotObj);
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
 
@@ -209,6 +211,7 @@ private:
     void createDataProcessor();
     void destroyDataProcessor();
     void createScene3dConnections();
+    void bindPlot2D(qPlot2D* plot);
 
     void createDataHorizonConnections();
     void destroyDataHorizonConnections();

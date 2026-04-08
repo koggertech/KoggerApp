@@ -27,6 +27,7 @@
 #include "ui_state_serializer.h"
 #include "scene_object.h"
 #include "bottom_track.h"
+#include "input_device_tracker.h"
 
 
 Core core;
@@ -210,6 +211,7 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     QGuiApplication app(argc, argv);
+    InputDeviceTracker inputDeviceTracker;
     core.initAfterApp();
 
     //qDebug() << "Lib paths:" << QCoreApplication::libraryPaths();
@@ -227,6 +229,7 @@ int main(int argc, char *argv[])
     setApplicationDisplayName(app);
     QQmlApplicationEngine engine;
     engine.addImportPath("qrc:/");
+    engine.addImportPath("qrc:/qml");
 
     SceneObject::qmlDeclare();
 
@@ -241,6 +244,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
     engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
+    engine.rootContext()->setContextProperty("inputDeviceTracker", &inputDeviceTracker);
     uiStateSerializer.setLinkManagerWrapper(core.getLinkManagerWrapperPtr());
 
     QObject::connect(&theme, &Themes::interfaceChanged, &core, []() {
@@ -251,7 +255,7 @@ int main(int argc, char *argv[])
     core.consoleInfo("Run...");
     core.setEngine(&engine);
     //qDebug() << "SQL drivers =" << QSqlDatabase::drivers(); // тут должен появиться QSQLITE
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
+    const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
     QPointer<QQuickWindow> mainWindow;
     QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
                      &app,      [url](QObject *obj, const QUrl &objUrl) {
