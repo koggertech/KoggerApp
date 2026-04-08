@@ -8,6 +8,7 @@
 #include <QPixmap>
 #include <QPainter>
 #include <QEvent>
+#include <QVector3D>
 
 
 #include "plot2D_aim.h"
@@ -18,6 +19,7 @@
 #include "plot2D_dvl_beam_velocity.h"
 #include "plot2D_dvl_solution.h"
 #include "plot2D_echogram.h"
+#include "plot2D_heatmap.h"
 #include "plot2D_encoder.h"
 #include "plot2D_gnss.h"
 #include "plot2D_grid.h"
@@ -33,6 +35,11 @@
 class Plot2D
 {
 public:
+    enum class LayoutId {
+        Echogram = 0,
+        HeatMap
+    };
+
     Plot2D();
 
     void setDataset(Dataset* dataset);
@@ -90,6 +97,17 @@ public:
 
     float getCursorDistance() const;
     std::tuple<ChannelId, uint8_t, QString> getSelectedChannelId(float cursorDistance = 0.0f) const;
+    int plotLayout() const;
+    void setPlotLayout(int layoutId);
+    bool isHeatMapLayoutRequested() const;
+    bool isHeatMapActive() const;
+    const Plot2DHeatMap::State& heatMapState() const;
+    void setHeatMapVisible(bool visible);
+    bool getHeatMapVisible() const;
+    void setHeatMapSensorCount(int sensorCount);
+    int getHeatMapSensorCount() const;
+    void setHeatMapSensorPosition(int sensorIndex, const QVector3D& position);
+    QVector3D getHeatMapSensorPosition(int sensorIndex) const;
 
     float getEchogramLowLevel() const;
     float getEchogramHighLevel() const;
@@ -163,6 +181,7 @@ protected:
     Plot2DDVLBeamVelocity dvlBeamVelocity_;
     Plot2DDVLSolution dvlSolution_;
     Plot2DEchogram echogram_;
+    Plot2DHeatMap heatMap_;
     Plot2DEncoder encoder_;
     Plot2DGNSS gnss_;
     Plot2DGrid grid_;
@@ -178,6 +197,7 @@ protected:
 
 private:
     bool isEnabled_;
+    LayoutId layoutId_;
     bool isLoupeVisible_;
     int loupeSize_;
     int loupeZoom_;

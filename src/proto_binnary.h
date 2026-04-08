@@ -97,6 +97,7 @@ typedef enum ID {
     ID_RESERVED = 0x67, // 103
     ID_USBL_CONTROL = 0x68, // 104
     ID_MODEM_CONTROL = 0x69, // 105
+    ID_STAND_SCAN = 240,
     // Legacy aliases kept for older app codepaths.
     ID_SIGNAL_ENCODER = ID_MODEM_SOLUTION,
     ID_SIGNAL_DECODER = ID_RESERVED,

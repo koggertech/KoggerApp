@@ -172,15 +172,15 @@ void Dataset::addEncoder(float angle1_deg, float angle2_deg, float angle3_deg)
     if(last_epoch->isEncodersSeted()) {
         last_epoch = addNewEpoch();
 
-        if(last_epoch->isUsblSolutionAvailable()) {
-            float usbl_az = last_epoch->usblSolution().azimuth_deg;
-            pool_[endIndex()].setEncoders(angle1_deg, angle2_deg, (angle1_deg+usbl_az)*10);
-        }
+        // if(last_epoch->isUsblSolutionAvailable()) {
+            // float usbl_az = last_epoch->usblSolution().azimuth_deg;
+            pool_[endIndex()].setEncoders(angle1_deg, angle2_deg, NAN);
+        // }
     } else {
-        if(last_epoch->isUsblSolutionAvailable()) {
-            float usbl_az = last_epoch->usblSolution().azimuth_deg;
-            pool_[endIndex()].setEncoders(angle1_deg, angle2_deg, (angle1_deg+usbl_az)*10);
-        }
+        // if(last_epoch->isUsblSolutionAvailable()) {
+            // float usbl_az = last_epoch->usblSolution().azimuth_deg;
+            pool_[endIndex()].setEncoders(angle1_deg, angle2_deg, NAN);
+        // }
     }
 
     // last_epoch->setEncoders(angle1_deg, angle2_deg, NAN);

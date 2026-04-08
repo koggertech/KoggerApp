@@ -563,6 +563,227 @@ WaterFall {
                                 property alias echogramTypesList: echogramTypesList.currentIndex
                             }
                         }
+
+                    }
+
+                    QtObject {
+                        id: heatMapConfig
+
+                        function sensorCountValue() {
+                            return heatMapSensorCountCombo.currentIndex === 0 ? 4 : 5
+                        }
+
+                        function applySensorCount() {
+                            plot.plotHeatMapSensorCount(sensorCountValue())
+                        }
+
+                        function applySensorPosition(sensorIndex, xField, yField, zField) {
+                            const x = Number.fromLocaleString(Qt.locale(), xField.text)
+                            const y = Number.fromLocaleString(Qt.locale(), yField.text)
+                            const z = Number.fromLocaleString(Qt.locale(), zField.text)
+                            if (!isFinite(x) || !isFinite(y) || !isFinite(z)) {
+                                return
+                            }
+                            plot.plotHeatMapSensorPosition(sensorIndex,
+                                                           x, y, z)
+                        }
+
+                        function loadSensorFields() {
+                            sensor0X.text = Number(plot.heatMapSensorX(0)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor0Y.text = Number(plot.heatMapSensorY(0)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor0Z.text = Number(plot.heatMapSensorZ(0)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor1X.text = Number(plot.heatMapSensorX(1)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor1Y.text = Number(plot.heatMapSensorY(1)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor1Z.text = Number(plot.heatMapSensorZ(1)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor2X.text = Number(plot.heatMapSensorX(2)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor2Y.text = Number(plot.heatMapSensorY(2)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor2Z.text = Number(plot.heatMapSensorZ(2)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor3X.text = Number(plot.heatMapSensorX(3)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor3Y.text = Number(plot.heatMapSensorY(3)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor3Z.text = Number(plot.heatMapSensorZ(3)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor4X.text = Number(plot.heatMapSensorX(4)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor4Y.text = Number(plot.heatMapSensorY(4)).toLocaleString(Qt.locale(), 'f', 6)
+                            sensor4Z.text = Number(plot.heatMapSensorZ(4)).toLocaleString(Qt.locale(), 'f', 6)
+                        }
+
+                        function applyAllSensorPositions() {
+                            applySensorPosition(0, sensor0X, sensor0Y, sensor0Z)
+                            applySensorPosition(1, sensor1X, sensor1Y, sensor1Z)
+                            applySensorPosition(2, sensor2X, sensor2Y, sensor2Z)
+                            applySensorPosition(3, sensor3X, sensor3Y, sensor3Z)
+                            if (sensorCountValue() === 5) {
+                                applySensorPosition(4, sensor4X, sensor4Y, sensor4Z)
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        CCheck {
+                            id: heatMapVisible
+                            Layout.fillWidth: true
+                            checked: false
+                            text: qsTr("HeatMap")
+
+                            onCheckedChanged: plotHeatMapVisible(checked)
+                            Component.onCompleted: plotHeatMapVisible(checked)
+
+                            Settings {
+                                category: "Plot2D_" + plot.indx
+
+                                property alias heatMapVisible: heatMapVisible.checked
+                            }
+                        }
+
+                        CCombo {
+                            id: heatMapSensorCountCombo
+                            Layout.preferredWidth: 120
+                            enabled: heatMapVisible.checked
+                            model: ["4 sens", "5 sens"]
+                            currentIndex: 0
+
+                            onCurrentIndexChanged: heatMapConfig.applySensorCount()
+                            Component.onCompleted: {
+                                currentIndex = Math.max(0, plot.heatMapSensorCount() - 4)
+                                Qt.callLater(function() {
+                                    heatMapConfig.applySensorCount()
+                                    heatMapConfig.applyAllSensorPositions()
+                                })
+                            }
+
+                            Settings {
+                                category: "Plot2D_" + plot.indx
+
+                                property alias heatMapSensorCount: heatMapSensorCountCombo.currentIndex
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        visible: heatMapVisible.checked
+                        CText { text: qsTr("Sensor") }
+                        CText { Layout.preferredWidth: 90; text: "X" }
+                        CText { Layout.preferredWidth: 90; text: "Y" }
+                        CText { Layout.preferredWidth: 90; text: "Z" }
+                    }
+
+                    RowLayout {
+                        visible: heatMapVisible.checked
+                        CText { text: "S1" }
+                        CTextField {
+                            id: sensor0X
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(0, sensor0X, sensor0Y, sensor0Z)
+                        }
+                        CTextField {
+                            id: sensor0Y
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(0, sensor0X, sensor0Y, sensor0Z)
+                        }
+                        CTextField {
+                            id: sensor0Z
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(0, sensor0X, sensor0Y, sensor0Z)
+                        }
+                    }
+
+                    RowLayout {
+                        visible: heatMapVisible.checked
+                        CText { text: "S2" }
+                        CTextField {
+                            id: sensor1X
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(1, sensor1X, sensor1Y, sensor1Z)
+                        }
+                        CTextField {
+                            id: sensor1Y
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(1, sensor1X, sensor1Y, sensor1Z)
+                        }
+                        CTextField {
+                            id: sensor1Z
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(1, sensor1X, sensor1Y, sensor1Z)
+                        }
+                    }
+
+                    RowLayout {
+                        visible: heatMapVisible.checked
+                        CText { text: "S3" }
+                        CTextField {
+                            id: sensor2X
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(2, sensor2X, sensor2Y, sensor2Z)
+                        }
+                        CTextField {
+                            id: sensor2Y
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(2, sensor2X, sensor2Y, sensor2Z)
+                        }
+                        CTextField {
+                            id: sensor2Z
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(2, sensor2X, sensor2Y, sensor2Z)
+                        }
+                    }
+
+                    RowLayout {
+                        visible: heatMapVisible.checked
+                        CText { text: "S4" }
+                        CTextField {
+                            id: sensor3X
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(3, sensor3X, sensor3Y, sensor3Z)
+                        }
+                        CTextField {
+                            id: sensor3Y
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(3, sensor3X, sensor3Y, sensor3Z)
+                        }
+                        CTextField {
+                            id: sensor3Z
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(3, sensor3X, sensor3Y, sensor3Z)
+                        }
+                    }
+
+                    RowLayout {
+                        visible: heatMapVisible.checked && heatMapConfig.sensorCountValue() === 5
+                        CText { text: "S5" }
+                        CTextField {
+                            id: sensor4X
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(4, sensor4X, sensor4Y, sensor4Z)
+                        }
+                        CTextField {
+                            id: sensor4Y
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(4, sensor4X, sensor4Y, sensor4Z)
+                        }
+                        CTextField {
+                            id: sensor4Z
+                            Layout.preferredWidth: 90
+                            onEditingFinished: heatMapConfig.applySensorPosition(4, sensor4X, sensor4Y, sensor4Z)
+                        }
+                    }
+
+                    Settings {
+                        category: "Plot2D_" + plot.indx
+
+                        property alias heatMapSensor0X: sensor0X.text
+                        property alias heatMapSensor0Y: sensor0Y.text
+                        property alias heatMapSensor0Z: sensor0Z.text
+                        property alias heatMapSensor1X: sensor1X.text
+                        property alias heatMapSensor1Y: sensor1Y.text
+                        property alias heatMapSensor1Z: sensor1Z.text
+                        property alias heatMapSensor2X: sensor2X.text
+                        property alias heatMapSensor2Y: sensor2Y.text
+                        property alias heatMapSensor2Z: sensor2Z.text
+                        property alias heatMapSensor3X: sensor3X.text
+                        property alias heatMapSensor3Y: sensor3Y.text
+                        property alias heatMapSensor3Z: sensor3Z.text
+                        property alias heatMapSensor4X: sensor4X.text
+                        property alias heatMapSensor4Y: sensor4Y.text
+                        property alias heatMapSensor4Z: sensor4Z.text
                     }
 
                     RowLayout {

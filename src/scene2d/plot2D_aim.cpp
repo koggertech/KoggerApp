@@ -20,6 +20,10 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
     auto& canvas = parent->canvas();
     auto& cursor = parent->cursor();
 
+    qDebug() << "Plot2DAim::draw: mouseX=" << cursor.mouseX << " mouseY=" << cursor.mouseY
+             << " selectEpochIndx=" << cursor.selectEpochIndx
+             << " currentEpochIndx=" << cursor.currentEpochIndx;
+
     if (!dataset ||
         ((cursor.mouseX < 0 || cursor.mouseY < 0) && (cursor.selectEpochIndx == -1))) {
         return false;
@@ -90,15 +94,34 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
         p->drawLine(cursor.mouseX, 0,             cursor.mouseX, canvas.height());
     }
 
-    float canvas_height  = static_cast<float>(canvas.height());
-    float value_range    = cursor.distance.to - cursor.distance.from;
-    float value_scale    = float(cursor.mouseY) / canvas_height;
-    float cursor_distance = value_scale * value_range + cursor.distance.from;
-
     p->setCompositionMode(QPainter::CompositionMode_SourceOver);
 
-    QString distanceText = QString(QObject::tr("%1 m")).arg(cursor_distance, 0, 'g', 4);
-    QString text = distanceText;
+    QString text;
+    float cursor_distance = 0.0f;
+
+    const bool heatMapActive = parent->isHeatMapActive();
+    if (heatMapActive) {
+        const auto& state = parent->heatMapState();
+        const float xNorm = canvas.width() > 1 ? static_cast<float>(cursor.mouseX) / static_cast<float>(canvas.width() - 1) : 0.0f;
+        const float yNorm = canvas.height() > 1 ? static_cast<float>(cursor.mouseY) / static_cast<float>(canvas.height() - 1) : 0.0f;
+        const float azimuth = state.azimuthFromDeg + (state.azimuthToDeg - state.azimuthFromDeg) * xNorm;
+        const float elevation = state.elevationToDeg - (state.elevationToDeg - state.elevationFromDeg) * yNorm;
+
+        text = QObject::tr("Azimuth: ") + QString::number(azimuth, 'f', 1) + QStringLiteral(" deg");
+        text += "\n" + QObject::tr("Elevation: ") + QString::number(elevation, 'f', 1) + QStringLiteral(" deg");
+        text += "\n" + QObject::tr("Peak: ") + QString::number(state.peakAzimuthDeg, 'f', 1)
+            + QStringLiteral(" / ") + QString::number(state.peakElevationDeg, 'f', 1) + QStringLiteral(" deg");
+        text += "\n" + QObject::tr("Epoch: ") + QString::number(state.epochIndex);
+    }
+    else {
+        float canvas_height  = static_cast<float>(canvas.height());
+        float value_range    = cursor.distance.to - cursor.distance.from;
+        float value_scale    = float(cursor.mouseY) / canvas_height;
+        cursor_distance = value_scale * value_range + cursor.distance.from;
+
+        QString distanceText = QString(QObject::tr("%1 m")).arg(cursor_distance, 0, 'g', 4);
+        text = distanceText;
+    }
 
     auto [channelId, subIndx, name] = parent->getSelectedChannelId();
 
@@ -106,7 +129,7 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
         text += "\n" + QObject::tr("Channel: ") + QString("%1").arg(name);
     }
 
-    if (cursor.currentEpochIndx != -1) {
+    if (!heatMapActive && cursor.currentEpochIndx != -1) {
         text += "\n" + QObject::tr("Epoch: ")   + QString::number(cursor.currentEpochIndx);
 
         if (auto* ep = dataset->fromIndex(cursor.currentEpochIndx); ep) {
@@ -146,7 +169,7 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
     const float loupeZoomMultiplier = (loupeZoom == 1) ? 1.0f : ((loupeZoom == 2) ? 1.5f : 2.25f);
     const int previewFrameMargin = 10 * scaleFactor_;
     const int maxPreviewSize = qMin(canvas.width() - previewFrameMargin * 2, canvas.height() - previewFrameMargin * 2);
-    const bool hasPreview = loupeEnabled && maxPreviewSize > 30 * scaleFactor_;
+    const bool hasPreview = !heatMapActive && loupeEnabled && maxPreviewSize > 30 * scaleFactor_;
     const int previewSize = hasPreview ? qMin(static_cast<int>(180.0f * scaleFactor_ * loupeSizeMultiplier), maxPreviewSize) : 0;
     const int previewSourceBaseSize = hasPreview ? qMax(8, previewSize / 4) : 0;
     const int previewSourceSize = hasPreview

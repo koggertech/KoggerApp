@@ -13,6 +13,7 @@ HEADERS += \
     $$PWD/plot2D_dvl_beam_velocity.h \
     $$PWD/plot2D_dvl_solution.h \
     $$PWD/plot2D_echogram.h \
+    $$PWD/plot2D_heatmap.h \
     $$PWD/plot2D_encoder.h \
     $$PWD/plot2D_gnss.h \
     $$PWD/plot2D_grid.h \
@@ -34,6 +35,7 @@ SOURCES += \
     $$PWD/plot2D_dvl_beam_velocity.cpp \
     $$PWD/plot2D_dvl_solution.cpp \
     $$PWD/plot2D_echogram.cpp \
+    $$PWD/plot2D_heatmap.cpp \
     $$PWD/plot2D_encoder.cpp \
     $$PWD/plot2D_gnss.cpp \
     $$PWD/plot2D_grid.cpp \

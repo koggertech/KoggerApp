@@ -1297,6 +1297,64 @@ void IDBinUsblControl::setCmdSlotAsModemReceiver(uint8_t cmd_id, int bit_length)
     emit binFrameOut(proto_cmd_slot);
 }
 
+Resp IDBinStand::parsePayload(FrameParser& proto)
+{
+    Q_UNUSED(proto)
+
+    return respOk;
+}
+
+void IDBinStand::send(const StandScan& scan)
+{
+    ProtoBinOut proto;
+    proto.create(SETTING, StandScan::getVer(), id(), m_address);
+    proto.write<StandScan>(scan);
+    proto.end();
+
+    emit binFrameOut(proto);
+}
+
+void IDBinStand::nop()
+{
+    StandScan scan = {};
+    scan.cmd = StandScan::CmdNop;
+    send(scan);
+}
+
+void IDBinStand::start(StandScan scan)
+{
+    scan.cmd = StandScan::CmdStart;
+    send(scan);
+}
+
+void IDBinStand::stop()
+{
+    StandScan scan = {};
+    scan.cmd = StandScan::CmdStop;
+    send(scan);
+}
+
+void IDBinStand::pause()
+{
+    StandScan scan = {};
+    scan.cmd = StandScan::CmdPause;
+    send(scan);
+}
+
+void IDBinStand::resume()
+{
+    StandScan scan = {};
+    scan.cmd = StandScan::CmdResume;
+    send(scan);
+}
+
+void IDBinStand::home()
+{
+    StandScan scan = {};
+    scan.cmd = StandScan::CmdHome;
+    send(scan);
+}
+
 Resp IDBinModemSolution::parsePayload(FrameParser &proto) {
     if (proto.ver() != v0) {
         return respErrorVersion;

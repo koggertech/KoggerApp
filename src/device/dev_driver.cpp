@@ -88,6 +88,7 @@ DevDriver::DevDriver(QObject *parent)
     regID(idModemSolution = new IDBinModemSolution(), &DevDriver::receivedModemSolution);
 
     regID(idUSBLControl = new IDBinUsblControl(), &DevDriver::receivedUSBLControl);
+    regID(idStand = new IDBinStand(), &DevDriver::receivedStand);
 
 #ifndef SEPARATE_READING
     connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process);
@@ -868,6 +869,68 @@ void DevDriver::requestStream(int stream_id) {
     id_out.write<U4>(0xFFFFFFF);
     id_out.end();
     emit binFrameOut(id_out);
+}
+
+void DevDriver::startStand(int scanOrder,
+                           int innerStart,
+                           int innerEnd,
+                           int innerStep,
+                           int outerStart,
+                           int outerEnd,
+                           int outerStep,
+                           int firesPerStep,
+                           int settleTimeMs,
+                           int postFireWaitMs)
+{
+    if (!m_state.connect) {
+        return;
+    }
+
+    IDBinStand::StandScan scan = {};
+    scan.scan_order = static_cast<IDBinStand::StandScan::ScanOrder>(qBound(0, scanOrder, 1));
+    scan.fires_per_step = static_cast<uint16_t>(qBound(0, firesPerStep, 0xFFFF));
+    scan.settle_time_ms = static_cast<uint16_t>(qBound(0, settleTimeMs, 0xFFFF));
+    scan.post_fire_wait_ms = static_cast<uint16_t>(qBound(0, postFireWaitMs, 0xFFFF));
+    scan.inner_start = innerStart;
+    scan.inner_end = innerEnd;
+    scan.inner_step = innerStep;
+    scan.outer_start = outerStart;
+    scan.outer_end = outerEnd;
+    scan.outer_step = outerStep;
+
+    idStand->start(scan);
+}
+
+void DevDriver::stopStand()
+{
+    if (!m_state.connect) {
+        return;
+    }
+    idStand->stop();
+}
+
+void DevDriver::pauseStand()
+{
+    if (!m_state.connect) {
+        return;
+    }
+    idStand->pause();
+}
+
+void DevDriver::resumeStand()
+{
+    if (!m_state.connect) {
+        return;
+    }
+    idStand->resume();
+}
+
+void DevDriver::homeStand()
+{
+    if (!m_state.connect) {
+        return;
+    }
+    idStand->home();
 }
 
 void DevDriver::sendUpdateFW(QByteArray update_data) {
@@ -1693,6 +1756,13 @@ void DevDriver::receivedModemSolution(Parsers::Type type, Parsers::Version ver, 
 }
 
 void DevDriver::receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
+{
+    Q_UNUSED(type)
+    Q_UNUSED(ver)
+    Q_UNUSED(resp)
+}
+
+void DevDriver::receivedStand(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
 {
     Q_UNUSED(type)
     Q_UNUSED(ver)

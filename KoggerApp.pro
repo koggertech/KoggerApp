@@ -3,6 +3,7 @@ QT += core gui quick widgets network qml sql concurrent positioning quickcontrol
 CONFIG += c++23
 
 #CONFIG += FLASHER
+CONFIG += DOASPECTRAL
 #DEFINES += SEPARATE_READING # data reception in a separate thread
 #DEFINES += SCENE_TESTING # testing 3d scene
 
@@ -36,6 +37,12 @@ HEADERS += \
     src/xtf_conf.h \
     src/location_reader.h \
     src/mosaic_index_provider.h
+
+DOASPECTRAL {
+    DEFINES += DOASPECTRAL
+    HEADERS += \
+    src/DOA.h \
+}
 
 ### SOURCES
 SOURCES += \

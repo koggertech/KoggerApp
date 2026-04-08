@@ -151,8 +151,17 @@ public slots:
     uint8_t plotDatasetSubChannel2() { return cursor_.subChannel2; }
     Q_INVOKABLE QString plotDatasetChannelName() const { return cursor_.firstChannelPortName; }
     Q_INVOKABLE QString plotDatasetChannel2Name() const { return cursor_.secondChannelPortName; }
+    Q_INVOKABLE int plotLayout() const { return Plot2D::plotLayout(); }
+    Q_INVOKABLE void setPlotLayout(int layoutId) { Plot2D::setPlotLayout(layoutId); }
 
     void plotEchogramVisible(bool visible) { setEchogramVisible(visible); }
+    void plotHeatMapVisible(bool visible) { setHeatMapVisible(visible); }
+    Q_INVOKABLE int heatMapSensorCount() const { return Plot2D::getHeatMapSensorCount(); }
+    Q_INVOKABLE void plotHeatMapSensorCount(int sensorCount) { Plot2D::setHeatMapSensorCount(sensorCount); }
+    Q_INVOKABLE double heatMapSensorX(int sensorIndex) const { return Plot2D::getHeatMapSensorPosition(sensorIndex).x(); }
+    Q_INVOKABLE double heatMapSensorY(int sensorIndex) const { return Plot2D::getHeatMapSensorPosition(sensorIndex).y(); }
+    Q_INVOKABLE double heatMapSensorZ(int sensorIndex) const { return Plot2D::getHeatMapSensorPosition(sensorIndex).z(); }
+    Q_INVOKABLE void plotHeatMapSensorPosition(int sensorIndex, double x, double y, double z) { Plot2D::setHeatMapSensorPosition(sensorIndex, QVector3D(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z))); }
     Q_INVOKABLE void plotEchogramTheme(int theme_id) { setEchogramTheme(theme_id); }
     Q_INVOKABLE void plotEchogramCompensation(int compensation_id) { setEchogramCompensation(compensation_id); }
     void plotBottomTrackVisible(bool visible) { setBottomTrackVisible(visible); }

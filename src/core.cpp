@@ -844,6 +844,7 @@ bool Core::exportComplexToCSV(QString file_path) {
 
     //auto ch_list = datasetPtr_->channelsList();
     // _dataset->setRefPosition(1518);
+    bool headerWritten = false;
 
     for(int i = 0; i < datasetPtr_->size(); i++) {
         Epoch* epoch = datasetPtr_->fromIndex(i);
@@ -867,10 +868,25 @@ bool Core::exportComplexToCSV(QString file_path) {
                         ComplexF* data = sig[ch_i].data.data();
                         int data_size = sig[ch_i].data.size();
 
+                        if (!headerWritten) {
+                            QString header = "epoch,ch,ofs,cf,enc1,enc2";
+                            for (int ci = 0; ci < data_size; ci++) {
+                                header.append(QString(",re%1,im%1").arg(ci));
+                            }
+                            header.append("\n");
+                            logger_.dataExport(header);
+                            headerWritten = true;
+                        }
+
                         QString row_data;
                         row_data.append(QString("%1,%2").arg(i).arg(ch_num));
                         row_data.append(QString(",%1").arg(sig[ch_i].globalOffset));
                         row_data.append(QString(",%1").arg(sig[ch_i].sampleRate));
+                        if (epoch->isEncodersSeted()) {
+                            row_data.append(QString(",%1,%2").arg(epoch->encoder1()).arg(epoch->encoder2()));
+                        } else {
+                            row_data.append(",,");
+                        }
 
                         if(data != NULL && data_size > 0) {
                             for(int ci = 0; ci < data_size; ci++) {

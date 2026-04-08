@@ -1,6 +1,7 @@
 #include "plot2D.h"
 #include "epoch_event.h"
 #include "qmath.h"
+#include <QDebug>
 
 
 Plot2D::Plot2D()
@@ -8,6 +9,7 @@ Plot2D::Plot2D()
     , pendingBtpLambda_(nullptr)
     , isHorizontal_(true)
     , isEnabled_(true)
+    , layoutId_(LayoutId::Echogram)
     , isLoupeVisible_(false)
     , loupeSize_(1)
     , loupeZoom_(1)
@@ -17,6 +19,7 @@ Plot2D::Plot2D()
     qRegisterMetaType<ChannelId>("ChannelId");
 
     echogram_.setVisible(true);
+    heatMap_.setVisible(true);
     attitude_.setVisible(true);
     encoder_.setVisible(true);
     dvlBeamVelocity_.setVisible(true);
@@ -49,10 +52,47 @@ float Plot2D::getCursorDistance() const
 
 std::tuple<ChannelId, uint8_t, QString> Plot2D::getSelectedChannelId(float cursorDistance) const
 {
+    if (heatMap_.isVisible()) {
+        return std::make_tuple(cursor_.channel1, cursor_.subChannel1, cursor_.firstChannelPortName);
+    }
+
     const float dist = qFuzzyIsNull(cursorDistance) ? getCursorDistance() : cursorDistance;
     const bool useChannel1 = qFuzzyIsNull(dist) || dist < 0.0f || cursor_.channel2 == CHANNEL_NONE;
 
     return useChannel1 ? std::make_tuple(cursor_.channel1, cursor_.subChannel1, cursor_.firstChannelPortName) : std::make_tuple(cursor_.channel2, cursor_.subChannel2, cursor_.secondChannelPortName);
+}
+
+int Plot2D::plotLayout() const
+{
+    return static_cast<int>(layoutId_);
+}
+
+void Plot2D::setPlotLayout(int layoutId)
+{
+    const LayoutId newLayout = layoutId == static_cast<int>(LayoutId::HeatMap) ? LayoutId::HeatMap : LayoutId::Echogram;
+    if (layoutId_ == newLayout) {
+        return;
+    }
+
+    layoutId_ = newLayout;
+    qInfo().noquote() << "[HeatMap]" << "Plot layout switched to"
+                      << (layoutId_ == LayoutId::HeatMap ? "HeatMap" : "Echogram");
+    plotUpdate();
+}
+
+bool Plot2D::isHeatMapLayoutRequested() const
+{
+    return layoutId_ == LayoutId::HeatMap;
+}
+
+bool Plot2D::isHeatMapActive() const
+{
+    return heatMap_.isVisible() && heatMap_.state().valid;
+}
+
+const Plot2DHeatMap::State& Plot2D::heatMapState() const
+{
+    return heatMap_.state();
 }
 
 void Plot2D::setDataset(Dataset *dataset)
@@ -230,6 +270,15 @@ void Plot2D::draw(QPainter *painterPtr)
     painterPtr->setCompositionMode(QPainter::CompositionMode_Exclusion);
     grid_.draw(this, datasetPtr_);
     temperature_.draw(this, datasetPtr_);
+    painterPtr->setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+    if (heatMap_.isVisible()) {
+        const int insetWidth = qMax(32, canvas_.width() / 2);
+        const int insetHeight = qMax(32, canvas_.height() / 2);
+        const QRect insetRect(0, qMax(0, canvas_.height() - insetHeight), insetWidth, insetHeight);
+        heatMap_.draw(this, datasetPtr_, insetRect);
+    }
+
     aim_.draw(this, datasetPtr_);
 
     contacts_.draw(this, datasetPtr_);
@@ -418,6 +467,43 @@ void Plot2D::setEchogramVisible(bool visible) {
     echogram_.setVisible(visible);
     echogram_.resetCash();
     plotUpdate();
+}
+
+void Plot2D::setHeatMapVisible(bool visible)
+{
+    heatMap_.setVisible(visible);
+    heatMap_.resetCache();
+    qInfo().noquote() << "[HeatMap]" << "Overlay visibility =" << visible;
+    plotUpdate();
+}
+
+bool Plot2D::getHeatMapVisible() const
+{
+    return heatMap_.isVisible();
+}
+
+void Plot2D::setHeatMapSensorCount(int sensorCount)
+{
+    heatMap_.setSensorCount(sensorCount);
+    qInfo().noquote() << "[HeatMap]" << "Sensor count =" << heatMap_.sensorCount();
+    plotUpdate();
+}
+
+int Plot2D::getHeatMapSensorCount() const
+{
+    return heatMap_.sensorCount();
+}
+
+void Plot2D::setHeatMapSensorPosition(int sensorIndex, const QVector3D& position)
+{
+    heatMap_.setSensorPosition(sensorIndex, position);
+    qInfo().noquote() << "[HeatMap]" << "Sensor" << sensorIndex << "position =" << position;
+    plotUpdate();
+}
+
+QVector3D Plot2D::getHeatMapSensorPosition(int sensorIndex) const
+{
+    return heatMap_.sensorPosition(sensorIndex);
 }
 
 void Plot2D::setEchogramTheme(int theme_id) {
@@ -640,7 +726,9 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
 
     if(x == -1) {
         _mouse.x = -1;
-        cursor_.selectEpochIndx = -1;
+        if (cursor_.currentEpochIndx != -1 && isHeatMapLayoutRequested()) {
+            qInfo().noquote() << "[HeatMap]" << "Clearing current epoch" << cursor_.currentEpochIndx;
+        }
         cursor_.currentEpochIndx = -1;
         //_cursor.lastEpochIndx = -1; // ?
         plotUpdate();
@@ -678,6 +766,11 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
 //    _mouse.y = y;
 
     int epoch_index = cursor_.getIndex(x);
+    if (isHeatMapLayoutRequested()) {
+        if (cursor_.currentEpochIndx != epoch_index) {
+            qInfo().noquote() << "[HeatMap]" << "Current epoch" << epoch_index << "from plot column" << x;
+        }
+    }
     cursor_.currentEpochIndx = epoch_index;
     cursor_.lastEpochIndx = cursor_.currentEpochIndx;
     sendSyncEvent(epoch_index, EpochSelected2d);
@@ -967,6 +1060,7 @@ DatasetCursor &Plot2D::cursor() { return cursor_; }
 
 void Plot2D::resetCash() {
     echogram_.resetCash();
+    heatMap_.resetCache();
 }
 
 void Plot2D::plotUpdate() {}

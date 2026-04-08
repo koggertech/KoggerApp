@@ -1347,6 +1347,57 @@ protected:
 
 };
 
+class IDBinStand : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinStand() : IDBin() {
+    }
+
+    ID id() override { return ID_STAND_SCAN; }
+    Resp parsePayload(FrameParser& proto) override;
+
+    struct StandScan {
+        static constexpr ID getId() { return ID_STAND_SCAN; }
+        static constexpr Version getVer() { return v0; }
+
+        enum Command : uint8_t {
+            CmdNop = 0,
+            CmdStart = 1,
+            CmdStop = 2,
+            CmdPause = 3,
+            CmdResume = 4,
+            CmdHome = 5
+        } cmd = CmdNop;
+
+        enum ScanOrder : uint8_t {
+            AzimuthToElevation = 0,
+            ElevationToAzimuth = 1
+        } scan_order = AzimuthToElevation;
+
+        uint8_t reserved0 = 0;
+        uint16_t fires_per_step = 1;
+        uint16_t settle_time_ms = 250;
+        uint16_t post_fire_wait_ms = 150;
+
+        int32_t inner_start = 0;
+        int32_t inner_end = 0;
+        int32_t inner_step = 0;
+
+        int32_t outer_start = 0;
+        int32_t outer_end = 0;
+        int32_t outer_step = 0;
+    } __attribute__((packed));
+
+    void send(const StandScan& scan);
+    void nop();
+    void start(StandScan scan);
+    void stop();
+    void pause();
+    void resume();
+    void home();
+};
+
 class IDBinModemSolution : public IDBin
 {
     Q_OBJECT

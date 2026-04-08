@@ -9,11 +9,12 @@ Plot2DGrid::Plot2DGrid() : angleVisibility_(false)
 bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
 {
     Q_UNUSED(dataset);
-    auto &canvas = parent->canvas();
-    auto &cursor = parent->cursor();
+    auto& canvas = parent->canvas();
+    auto& cursor = parent->cursor();
 
-    if (!isVisible())
+    if (!isVisible()) {
         return false;
+    }
 
     QPen pen(_lineColor);
     pen.setWidth(_lineWidth);
@@ -23,30 +24,36 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
     p->setFont(QFont("Asap", 14, QFont::Normal));
     QFontMetrics fm(p->font());
 
-    const int imageHeight{ canvas.height() }, imageWidth{ canvas.width() },
-        linesCount{ _lines }, textXOffset{ 30 }, textYOffset{ 10 };
+    const int imageHeight = canvas.height();
+    const int imageWidth = canvas.width();
+    const int linesCount = _lines;
+    const int textXOffset = 30;
+    const int textYOffset = 10;
 
-    // линии
     for (int i = 1; i < linesCount; ++i) {
         const int posY = i * imageHeight / linesCount;
-
         QString lineText;
 
-        if (_velocityVisible && cursor.velocity.isValid()) { // velocity
-            const float velFrom{ cursor.velocity.from }, velTo{ cursor.velocity.to },
-                velRange{ velTo - velFrom }, attVal{ velRange * i / linesCount + velFrom };
-            lineText.append({ QString::number(attVal , 'f', 2) + QObject::tr(" m/s    ")});
+        if (_velocityVisible && cursor.velocity.isValid()) {
+            const float velFrom = cursor.velocity.from;
+            const float velTo = cursor.velocity.to;
+            const float velRange = velTo - velFrom;
+            const float attVal = velRange * i / linesCount + velFrom;
+            lineText.append(QString::number(attVal, 'f', 2) + QObject::tr(" m/s    "));
         }
-        if (angleVisibility_ && cursor.attitude.isValid()) { // angle
-            const float attFrom{ cursor.attitude.from }, attTo{ cursor.attitude.to },
-                attRange{ attTo - attFrom }, attVal{ attRange * i / linesCount + attFrom };
-            QString text{ QString::number(attVal, 'f', 0) + QStringLiteral("°    ") };
-            lineText.append(text);
+        if (angleVisibility_ && cursor.attitude.isValid()) {
+            const float attFrom = cursor.attitude.from;
+            const float attTo = cursor.attitude.to;
+            const float attRange = attTo - attFrom;
+            const float attVal = attRange * i / linesCount + attFrom;
+            lineText.append(QString::number(attVal, 'f', 0) + QStringLiteral(" deg    "));
         }
-        if (cursor.distance.isValid()) { // depth
-            const float distFrom{ cursor.distance.from }, distTo{ cursor.distance.to },
-                distRange{ distTo - distFrom }, rangeVal{ distRange * i / linesCount + distFrom };
-            lineText.append( { QString::number(rangeVal, 'f', 2) + QObject::tr(" m") } );
+        if (cursor.distance.isValid()) {
+            const float distFrom = cursor.distance.from;
+            const float distTo = cursor.distance.to;
+            const float distRange = distTo - distFrom;
+            const float rangeVal = distRange * i / linesCount + distFrom;
+            lineText.append(QString::number(rangeVal, 'f', 2) + QObject::tr(" m"));
         }
 
         const int textW = fm.horizontalAdvance(lineText);
@@ -54,13 +61,11 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
         if (isFillWidth()) {
             p->drawLine(0, posY, imageWidth, posY);
         }
+        else if (invert_) {
+            p->drawLine(0, posY, textW + textXOffset, posY);
+        }
         else {
-            if (invert_) {
-                p->drawLine(0, posY, textW + textXOffset, posY);
-            }
-            else {
-                p->drawLine(imageWidth - textW - textXOffset, posY, imageWidth, posY);
-            }
+            p->drawLine(imageWidth - textW - textXOffset, posY, imageWidth, posY);
         }
 
         if (!lineText.isEmpty()) {
@@ -69,13 +74,12 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
         }
     }
 
-    // глубина графика
     if (cursor.distance.isValid()) {
         p->setFont(QFont("Asap", 26, QFont::Normal));
         QFontMetrics fm2(p->font());
-        float val{ cursor.distance.to };
-        bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
-        QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
+        const float val = cursor.distance.to;
+        const bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
+        const QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
         const int w = fm2.horizontalAdvance(rangeText);
         const int x = invert_ ? (textXOffset * 2) : (imageWidth - textXOffset / 2 - w);
         p->drawText(x, imageHeight - 10, rangeText);

@@ -233,6 +233,20 @@ public slots:
 
     void requestStreamList();
     void requestStream(int stream_id);
+    void startStand(int scanOrder,
+                    int innerStart,
+                    int innerEnd,
+                    int innerStep,
+                    int outerStart,
+                    int outerEnd,
+                    int outerStep,
+                    int firesPerStep,
+                    int settleTimeMs,
+                    int postFireWaitMs);
+    void stopStand();
+    void pauseStand();
+    void resumeStand();
+    void homeStand();
 
     void setConsoleOut(bool is_console);
 
@@ -315,6 +329,7 @@ protected:
     IDBinUsblSolution* idUSBL = NULL;
     IDBinModemSolution* idModemSolution = NULL;
     IDBinUsblControl* idUSBLControl = NULL;
+    IDBinStand* idStand = NULL;
 
 //    QHash<ID, IDBin*> hashIDParsing;
 //    QHash<ID, ParseCallback> hashIDCallback;
@@ -432,6 +447,7 @@ protected slots:
     void receivedUSBL       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedStand      (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
 private:
     bool datasetState_;
