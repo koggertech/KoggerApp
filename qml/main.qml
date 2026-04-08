@@ -432,6 +432,18 @@ ApplicationWindow  {
                     }
                     break
                 }
+                case "scene3dZoomIn": {
+                    if (menuBar.is3DVisible) {
+                        renderer.zoomStepTrigger(1)
+                    }
+                    break
+                }
+                case "scene3dZoomOut": {
+                    if (menuBar.is3DVisible) {
+                        renderer.zoomStepTrigger(-1)
+                    }
+                    break
+                }
                 case "increaseLowLevel": {
                     let newLow = Math.min(120, waterViewFirst.getLowEchogramLevel() + p)
                     let newHigh = waterViewFirst.getHighEchogramLevel()

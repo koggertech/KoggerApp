@@ -34,6 +34,8 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="closeFile"         scanCode="75"                 description="close file"/>
     <Hotkey functionName="updateBottomTrack" scanCode="72"                 description="update bottom track"/>
     <Hotkey functionName="updateMosaic"      scanCode="74"                 description="update mosaic"/>
+    <Hotkey functionName="scene3dZoomIn"     scanCode="29"                 description="3D zoom in"/>
+    <Hotkey functionName="scene3dZoomOut"    scanCode="43"                 description="3D zoom out"/>
 </Hotkeys>
 )";
 #else
@@ -61,6 +63,8 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="closeFile"         scanCode="67"                 description="close file"/>
     <Hotkey functionName="updateBottomTrack" scanCode="64"                 description="update bottom track"/>
     <Hotkey functionName="updateMosaic"      scanCode="66"                 description="update mosaic"/>
+    <Hotkey functionName="scene3dZoomIn"     scanCode="21"                 description="3D zoom in"/>
+    <Hotkey functionName="scene3dZoomOut"    scanCode="35"                 description="3D zoom out"/>
 </Hotkeys>
 )";
 #endif

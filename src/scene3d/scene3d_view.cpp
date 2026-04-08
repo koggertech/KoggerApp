@@ -1127,6 +1127,18 @@ void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::zoomStepTrigger(qreal delta)
+{
+    if (!m_camera || !std::isfinite(delta) || std::fabs(delta) <= 1e-6) {
+        return;
+    }
+
+    const QPointF anchor(width() * 0.5, height() * 0.5);
+    zoomAroundScreenAnchor(delta, anchor);
+    updatePlaneGrid();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
 void GraphicsScene3dView::setRulerEnabled(bool enabled)
 {
     if (rulerEnabled_ == enabled) {
