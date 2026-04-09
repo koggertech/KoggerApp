@@ -23,6 +23,10 @@ Item  {
         mosaicViewSettings.updateMosaic()
     }
 
+    function resetCameraTop() {
+        Scene3dToolBarController.onSetCameraMapViewButtonClicked()
+    }
+
     function toggleBottomTrack() {
         bottomTrackCheckButton.checked = !bottomTrackCheckButton.checked
     }

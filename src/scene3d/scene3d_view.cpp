@@ -1139,6 +1139,35 @@ void GraphicsScene3dView::zoomStepTrigger(qreal delta)
     QQuickFramebufferObject::update();
     onCameraMoved();
 }
+void GraphicsScene3dView::panStepTrigger(qreal dx, qreal dy)
+{
+    if (!m_camera) {
+        return;
+    }
+
+    const float dist = std::max(1.0f, static_cast<float>(m_camera->distForMapView()));
+    const float step = std::max(5.0f, dist * 0.12f);
+
+    m_camera->m_lookAt.setX(m_camera->m_lookAt.x() + static_cast<float>(dx) * step);
+    m_camera->m_lookAt.setY(m_camera->m_lookAt.y() + static_cast<float>(dy) * step);
+    m_camera->updateViewMatrix();
+
+    updatePlaneGrid();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
+void GraphicsScene3dView::resetCameraAngleTrigger()
+{
+    if (!m_camera || !m_axesThumbnailCamera) {
+        return;
+    }
+
+    m_camera->resetRotationAngle();
+    m_axesThumbnailCamera->resetRotationAngle();
+    updatePlaneGrid();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
 void GraphicsScene3dView::setRulerEnabled(bool enabled)
 {
     if (rulerEnabled_ == enabled) {

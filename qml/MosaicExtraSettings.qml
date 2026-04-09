@@ -32,6 +32,12 @@ MenuFrame {
         mosaicTheme.currentIndex = Math.min(mosaicTheme.count - 1, mosaicTheme.currentIndex + 1)
     }
 
+    function syncLevelsSlider() {
+        mosaicLevelsSlider.startPointY = mosaicLevelsSlider.valueToPosition(mosaicLevelsSlider.startValue)
+        mosaicLevelsSlider.stopPointY = mosaicLevelsSlider.valueToPosition(mosaicLevelsSlider.stopValue)
+        mosaicLevelsSlider.update()
+    }
+
     function lowLevelUp(step) {
         const delta = step === undefined ? 1 : step
         const nextLow = Math.min(mosaicLevelsSlider.to, mosaicLevelsSlider.startValue + delta)
@@ -39,16 +45,19 @@ MenuFrame {
         if (mosaicLevelsSlider.startValue > mosaicLevelsSlider.stopValue) {
             mosaicLevelsSlider.stopValue = mosaicLevelsSlider.startValue
         }
+        syncLevelsSlider()
     }
 
     function lowLevelDown(step) {
         const delta = step === undefined ? 1 : step
         mosaicLevelsSlider.startValue = Math.max(mosaicLevelsSlider.from, mosaicLevelsSlider.startValue - delta)
+        syncLevelsSlider()
     }
 
     function highLevelUp(step) {
         const delta = step === undefined ? 1 : step
         mosaicLevelsSlider.stopValue = Math.min(mosaicLevelsSlider.to, mosaicLevelsSlider.stopValue + delta)
+        syncLevelsSlider()
     }
 
     function highLevelDown(step) {
@@ -58,6 +67,7 @@ MenuFrame {
         if (mosaicLevelsSlider.stopValue < mosaicLevelsSlider.startValue) {
             mosaicLevelsSlider.startValue = mosaicLevelsSlider.stopValue
         }
+        syncLevelsSlider()
     }
 
     visible: Qt.platform.os === "android"

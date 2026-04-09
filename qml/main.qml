@@ -522,6 +522,36 @@ ApplicationWindow  {
                     }
                     break
                 }
+                case "cameraShiftXMinus3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.panStepTrigger(-1, 0)
+                    }
+                    break
+                }
+                case "cameraShiftXPlus3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.panStepTrigger(1, 0)
+                    }
+                    break
+                }
+                case "cameraShiftYMinus3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.panStepTrigger(0, -1)
+                    }
+                    break
+                }
+                case "cameraShiftYPlus3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.panStepTrigger(0, 1)
+                    }
+                    break
+                }
+                case "resetCameraTop3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.resetCameraAngleTrigger()
+                    }
+                    break
+                }
                 case "increaseLowLevel": {
                     let newLow = Math.min(120, waterViewFirst.getLowEchogramLevel() + p)
                     let newHigh = waterViewFirst.getHighEchogramLevel()

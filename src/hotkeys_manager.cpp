@@ -49,6 +49,11 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="toggleBottomTrack3D" scanCode="50"               description="toggle 3D bottom track"/>
     <Hotkey functionName="toggleIsobaths3D"  scanCode="59"                 description="toggle 3D isobaths"/>
     <Hotkey functionName="toggleMosaic3D"    scanCode="60"                 description="toggle 3D mosaic"/>
+    <Hotkey functionName="cameraShiftXMinus3D" scanCode="10"               description="3D camera shift x minus"/>
+    <Hotkey functionName="cameraShiftXPlus3D"  scanCode="11"               description="3D camera shift x plus"/>
+    <Hotkey functionName="cameraShiftYMinus3D" scanCode="12"               description="3D camera shift y minus"/>
+    <Hotkey functionName="cameraShiftYPlus3D"  scanCode="13"               description="3D camera shift y plus"/>
+    <Hotkey functionName="resetCameraTop3D"    scanCode="14"               description="reset 3D camera to top view"/>
 </Hotkeys>
 )";
 #else
@@ -91,6 +96,11 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="toggleBottomTrack3D" scanCode="50"               description="toggle 3D bottom track"/>
     <Hotkey functionName="toggleIsobaths3D"  scanCode="51"                 description="toggle 3D isobaths"/>
     <Hotkey functionName="toggleMosaic3D"    scanCode="52"                 description="toggle 3D mosaic"/>
+    <Hotkey functionName="cameraShiftXMinus3D" scanCode="2"                description="3D camera shift x minus"/>
+    <Hotkey functionName="cameraShiftXPlus3D"  scanCode="3"                description="3D camera shift x plus"/>
+    <Hotkey functionName="cameraShiftYMinus3D" scanCode="4"                description="3D camera shift y minus"/>
+    <Hotkey functionName="cameraShiftYPlus3D"  scanCode="5"                description="3D camera shift y plus"/>
+    <Hotkey functionName="resetCameraTop3D"    scanCode="6"                description="reset 3D camera to top view"/>
 </Hotkeys>
 )";
 #endif
