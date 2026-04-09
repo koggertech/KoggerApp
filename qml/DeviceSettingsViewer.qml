@@ -11,6 +11,10 @@ MenuScroll {
         devConnection.importSettingsToAllDevices(path)
     }
 
+
+    function openFileDialog() {
+        devConnection.openNewFileDialog()
+    }
     Column {
         // width: menuWidth
         // Layout.margins: 0

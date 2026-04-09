@@ -46,6 +46,12 @@ Item {
         }
     }
 
+    function openFileDialog() {
+        if (devSettings && devSettings.openFileDialog) {
+            devSettings.openFileDialog()
+        }
+    }
+
     function clickConnections() {
         itemChangeActive(menuSettings)
     }

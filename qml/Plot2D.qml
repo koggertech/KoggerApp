@@ -102,6 +102,14 @@ WaterFall {
         return true
     }
 
+    function toggleEchogramType() {
+        if (echogramTypesList.count <= 0) {
+            return
+        }
+
+        echogramTypesList.currentIndex = (echogramTypesList.currentIndex + 1) % echogramTypesList.count
+    }
+
     function closeTransientUi() {
         let handled = false
 

@@ -359,6 +359,10 @@ ApplicationWindow  {
                 core.openLogFile(menuBar.filePath, false, false)
                 return;
             }
+            if (fn === "openFileDialog") {
+                menuBar.openFileDialog()
+                return;
+            }
             if (fn === "closeFile") {
                 core.closeLogFile()
                 return;
@@ -623,6 +627,13 @@ ApplicationWindow  {
                     if (waterViewSecond.enabled) {
                         let themeSId = waterViewSecond.getThemeId()
                         if (themeSId < 9) waterViewSecond.plotEchogramTheme(themeSId + 1)
+                    }
+                    break
+                }
+                case "toggleEchogramType": {
+                    waterViewFirst.toggleEchogramType()
+                    if (waterViewSecond.enabled) {
+                        waterViewSecond.toggleEchogramType()
                     }
                     break
                 }

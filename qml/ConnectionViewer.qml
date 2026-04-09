@@ -120,6 +120,11 @@ ColumnLayout {
         pushRecentOpenedFile(localPath)
     }
 
+    function openNewFileDialog() {
+        newFileDialog.currentFolder = connectionViewer.lastLogFolder
+        newFileDialog.open()
+    }
+
     function removeRecentFile(path) {
         var localPath = urlSource(path)
         if (!localPath.length) {
@@ -1101,8 +1106,7 @@ ColumnLayout {
             implicitWidth: theme.controlHeight
 
             onClicked: {
-                newFileDialog.currentFolder = connectionViewer.lastLogFolder
-                newFileDialog.open()
+                connectionViewer.openNewFileDialog()
             }
 
             FileDialog {

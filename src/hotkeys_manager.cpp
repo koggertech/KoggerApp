@@ -31,6 +31,7 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="nextTheme"         scanCode="55"                 description="switch the echogram theme to the next one"/>
     <Hotkey functionName="toggleFullScreen"  scanCode="95"                 description="toggle fullscreen"/>
     <Hotkey functionName="openFile"          scanCode="76"                 description="open file"/>
+    <Hotkey functionName="openFileDialog"    scanCode="96"                 description="open file dialog"/>
     <Hotkey functionName="closeFile"         scanCode="75"                 description="close file"/>
     <Hotkey functionName="updateBottomTrack" scanCode="72"                 description="update bottom track"/>
     <Hotkey functionName="updateMosaic"      scanCode="74"                 description="update mosaic"/>
@@ -54,6 +55,7 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="cameraShiftYMinus3D" scanCode="12"               description="3D camera shift y minus"/>
     <Hotkey functionName="cameraShiftYPlus3D"  scanCode="13"               description="3D camera shift y plus"/>
     <Hotkey functionName="resetCameraTop3D"    scanCode="14"               description="reset 3D camera to top view"/>
+    <Hotkey functionName="toggleEchogramType" scanCode="61"                 description="toggle echogram type raw/side-scan"/>
 </Hotkeys>
 )";
 #else
@@ -78,6 +80,7 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="nextTheme"         scanCode="47"                 description="switch the echogram theme to the next one"/>
     <Hotkey functionName="toggleFullScreen"  scanCode="87"                 description="toggle fullscreen"/>
     <Hotkey functionName="openFile"          scanCode="68"                 description="open file"/>
+    <Hotkey functionName="openFileDialog"    scanCode="88"                 description="open file dialog"/>
     <Hotkey functionName="closeFile"         scanCode="67"                 description="close file"/>
     <Hotkey functionName="updateBottomTrack" scanCode="64"                 description="update bottom track"/>
     <Hotkey functionName="updateMosaic"      scanCode="66"                 description="update mosaic"/>
@@ -101,6 +104,7 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="cameraShiftYMinus3D" scanCode="4"                description="3D camera shift y minus"/>
     <Hotkey functionName="cameraShiftYPlus3D"  scanCode="5"                description="3D camera shift y plus"/>
     <Hotkey functionName="resetCameraTop3D"    scanCode="6"                description="reset 3D camera to top view"/>
+    <Hotkey functionName="toggleEchogramType" scanCode="53"                 description="toggle echogram type raw/side-scan"/>
 </Hotkeys>
 )";
 #endif
