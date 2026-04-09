@@ -23,6 +23,18 @@ Item  {
         mosaicViewSettings.updateMosaic()
     }
 
+    function toggleBottomTrack() {
+        bottomTrackCheckButton.checked = !bottomTrackCheckButton.checked
+    }
+
+    function toggleIsobaths() {
+        isobathsCheckButton.checked = !isobathsCheckButton.checked
+    }
+
+    function toggleMosaic() {
+        mosaicViewCheckButton.checked = !mosaicViewCheckButton.checked
+    }
+
     function mosaicPrevTheme() {
         mosaicViewSettings.prevTheme()
     }

@@ -46,6 +46,9 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="surfaceNextTheme"  scanCode="47"                 description="surface next theme"/>
     <Hotkey functionName="surfaceStepDown"   scanCode="34" parameter="1"   description="surface isobaths step down"/>
     <Hotkey functionName="surfaceStepUp"     scanCode="48" parameter="1"   description="surface isobaths step up"/>
+    <Hotkey functionName="toggleBottomTrack3D" scanCode="50"               description="toggle 3D bottom track"/>
+    <Hotkey functionName="toggleIsobaths3D"  scanCode="59"                 description="toggle 3D isobaths"/>
+    <Hotkey functionName="toggleMosaic3D"    scanCode="60"                 description="toggle 3D mosaic"/>
 </Hotkeys>
 )";
 #else
@@ -85,6 +88,9 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="surfaceNextTheme"  scanCode="39"                 description="surface next theme"/>
     <Hotkey functionName="surfaceStepDown"   scanCode="26" parameter="1"   description="surface isobaths step down"/>
     <Hotkey functionName="surfaceStepUp"     scanCode="40" parameter="1"   description="surface isobaths step up"/>
+    <Hotkey functionName="toggleBottomTrack3D" scanCode="50"               description="toggle 3D bottom track"/>
+    <Hotkey functionName="toggleIsobaths3D"  scanCode="51"                 description="toggle 3D isobaths"/>
+    <Hotkey functionName="toggleMosaic3D"    scanCode="52"                 description="toggle 3D mosaic"/>
 </Hotkeys>
 )";
 #endif

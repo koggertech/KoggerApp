@@ -504,6 +504,24 @@ ApplicationWindow  {
                     }
                     break
                 }
+                case "toggleBottomTrack3D": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.toggleBottomTrack()
+                    }
+                    break
+                }
+                case "toggleIsobaths3D": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.toggleIsobaths()
+                    }
+                    break
+                }
+                case "toggleMosaic3D": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.toggleMosaic()
+                    }
+                    break
+                }
                 case "increaseLowLevel": {
                     let newLow = Math.min(120, waterViewFirst.getLowEchogramLevel() + p)
                     let newHigh = waterViewFirst.getHighEchogramLevel()
