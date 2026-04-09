@@ -78,6 +78,28 @@ MenuFrame {
         }
     }
 
+    function prevTheme() {
+        isobathsTheme.currentIndex = Math.max(0, isobathsTheme.currentIndex - 1)
+    }
+
+    function nextTheme() {
+        isobathsTheme.currentIndex = Math.min(isobathsTheme.count - 1, isobathsTheme.currentIndex + 1)
+    }
+
+    function stepDown(step) {
+        const delta = step === undefined ? 1 : step
+        for (let i = 0; i < delta; ++i) {
+            isobathsSurfaceLineStepSizeSpinBox.decrease()
+        }
+    }
+
+    function stepUp(step) {
+        const delta = step === undefined ? 1 : step
+        for (let i = 0; i < delta; ++i) {
+            isobathsSurfaceLineStepSizeSpinBox.increase()
+        }
+    }
+
     function effectiveSource(displayText, storedSource) {
         if (!displayText || !displayText.length) {
             return ""

@@ -36,6 +36,16 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="updateMosaic"      scanCode="74"                 description="update mosaic"/>
     <Hotkey functionName="scene3dZoomIn"     scanCode="29"                 description="3D zoom in"/>
     <Hotkey functionName="scene3dZoomOut"    scanCode="43"                 description="3D zoom out"/>
+    <Hotkey functionName="mosaicPrevTheme"   scanCode="30"                 description="mosaic previous theme"/>
+    <Hotkey functionName="mosaicNextTheme"   scanCode="44"                 description="mosaic next theme"/>
+    <Hotkey functionName="mosaicLowLevelUp"  scanCode="31" parameter="1"   description="mosaic lower level up"/>
+    <Hotkey functionName="mosaicLowLevelDown" scanCode="45" parameter="1"  description="mosaic lower level down"/>
+    <Hotkey functionName="mosaicHighLevelUp" scanCode="32" parameter="1"  description="mosaic upper level up"/>
+    <Hotkey functionName="mosaicHighLevelDown" scanCode="46" parameter="1" description="mosaic upper level down"/>
+    <Hotkey functionName="surfacePrevTheme"  scanCode="33"                 description="surface previous theme"/>
+    <Hotkey functionName="surfaceNextTheme"  scanCode="47"                 description="surface next theme"/>
+    <Hotkey functionName="surfaceStepDown"   scanCode="34" parameter="1"   description="surface isobaths step down"/>
+    <Hotkey functionName="surfaceStepUp"     scanCode="48" parameter="1"   description="surface isobaths step up"/>
 </Hotkeys>
 )";
 #else
@@ -65,6 +75,16 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="updateMosaic"      scanCode="66"                 description="update mosaic"/>
     <Hotkey functionName="scene3dZoomIn"     scanCode="21"                 description="3D zoom in"/>
     <Hotkey functionName="scene3dZoomOut"    scanCode="35"                 description="3D zoom out"/>
+    <Hotkey functionName="mosaicPrevTheme"   scanCode="22"                 description="mosaic previous theme"/>
+    <Hotkey functionName="mosaicNextTheme"   scanCode="36"                 description="mosaic next theme"/>
+    <Hotkey functionName="mosaicLowLevelUp"  scanCode="23" parameter="1"   description="mosaic lower level up"/>
+    <Hotkey functionName="mosaicLowLevelDown" scanCode="37" parameter="1"  description="mosaic lower level down"/>
+    <Hotkey functionName="mosaicHighLevelUp" scanCode="24" parameter="1"  description="mosaic upper level up"/>
+    <Hotkey functionName="mosaicHighLevelDown" scanCode="38" parameter="1" description="mosaic upper level down"/>
+    <Hotkey functionName="surfacePrevTheme"  scanCode="25"                 description="surface previous theme"/>
+    <Hotkey functionName="surfaceNextTheme"  scanCode="39"                 description="surface next theme"/>
+    <Hotkey functionName="surfaceStepDown"   scanCode="26" parameter="1"   description="surface isobaths step down"/>
+    <Hotkey functionName="surfaceStepUp"     scanCode="40" parameter="1"   description="surface isobaths step up"/>
 </Hotkeys>
 )";
 #endif

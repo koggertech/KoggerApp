@@ -24,6 +24,42 @@ MenuFrame {
         //plotCursorChanged(indx, cursorFrom(), cursorTo())
     }
 
+    function prevTheme() {
+        mosaicTheme.currentIndex = Math.max(0, mosaicTheme.currentIndex - 1)
+    }
+
+    function nextTheme() {
+        mosaicTheme.currentIndex = Math.min(mosaicTheme.count - 1, mosaicTheme.currentIndex + 1)
+    }
+
+    function lowLevelUp(step) {
+        const delta = step === undefined ? 1 : step
+        const nextLow = Math.min(mosaicLevelsSlider.to, mosaicLevelsSlider.startValue + delta)
+        mosaicLevelsSlider.startValue = nextLow
+        if (mosaicLevelsSlider.startValue > mosaicLevelsSlider.stopValue) {
+            mosaicLevelsSlider.stopValue = mosaicLevelsSlider.startValue
+        }
+    }
+
+    function lowLevelDown(step) {
+        const delta = step === undefined ? 1 : step
+        mosaicLevelsSlider.startValue = Math.max(mosaicLevelsSlider.from, mosaicLevelsSlider.startValue - delta)
+    }
+
+    function highLevelUp(step) {
+        const delta = step === undefined ? 1 : step
+        mosaicLevelsSlider.stopValue = Math.min(mosaicLevelsSlider.to, mosaicLevelsSlider.stopValue + delta)
+    }
+
+    function highLevelDown(step) {
+        const delta = step === undefined ? 1 : step
+        const nextHigh = Math.max(mosaicLevelsSlider.from, mosaicLevelsSlider.stopValue - delta)
+        mosaicLevelsSlider.stopValue = nextHigh
+        if (mosaicLevelsSlider.stopValue < mosaicLevelsSlider.startValue) {
+            mosaicLevelsSlider.startValue = mosaicLevelsSlider.stopValue
+        }
+    }
+
     visible: Qt.platform.os === "android"
              ? (mosaicViewCheckButton.mosaicLongPressTriggered || mosaicTheme.activeFocus || channel1Combo.activeFocus || channel2Combo.activeFocus)
              : (mosaicViewCheckButton.hovered                  ||

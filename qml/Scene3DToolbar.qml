@@ -23,6 +23,46 @@ Item  {
         mosaicViewSettings.updateMosaic()
     }
 
+    function mosaicPrevTheme() {
+        mosaicViewSettings.prevTheme()
+    }
+
+    function mosaicNextTheme() {
+        mosaicViewSettings.nextTheme()
+    }
+
+    function mosaicLowLevelUp(step) {
+        mosaicViewSettings.lowLevelUp(step)
+    }
+
+    function mosaicLowLevelDown(step) {
+        mosaicViewSettings.lowLevelDown(step)
+    }
+
+    function mosaicHighLevelUp(step) {
+        mosaicViewSettings.highLevelUp(step)
+    }
+
+    function mosaicHighLevelDown(step) {
+        mosaicViewSettings.highLevelDown(step)
+    }
+
+    function surfacePrevTheme() {
+        isobathsSettings.prevTheme()
+    }
+
+    function surfaceNextTheme() {
+        isobathsSettings.nextTheme()
+    }
+
+    function surfaceStepDown(step) {
+        isobathsSettings.stepDown(step)
+    }
+
+    function surfaceStepUp(step) {
+        isobathsSettings.stepUp(step)
+    }
+
     Component.onCompleted: {
         mosaicViewSettings.mosaicLAngleOffsetChanged.connect(mosaicLAngleOffsetChanged)
         mosaicViewSettings.mosaicRAngleOffsetChanged.connect(mosaicRAngleOffsetChanged)

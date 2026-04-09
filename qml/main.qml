@@ -444,6 +444,66 @@ ApplicationWindow  {
                     }
                     break
                 }
+                case "mosaicPrevTheme": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.mosaicPrevTheme()
+                    }
+                    break
+                }
+                case "mosaicNextTheme": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.mosaicNextTheme()
+                    }
+                    break
+                }
+                case "mosaicLowLevelUp": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.mosaicLowLevelUp(p)
+                    }
+                    break
+                }
+                case "mosaicLowLevelDown": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.mosaicLowLevelDown(p)
+                    }
+                    break
+                }
+                case "mosaicHighLevelUp": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.mosaicHighLevelUp(p)
+                    }
+                    break
+                }
+                case "mosaicHighLevelDown": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.mosaicHighLevelDown(p)
+                    }
+                    break
+                }
+                case "surfacePrevTheme": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.surfacePrevTheme()
+                    }
+                    break
+                }
+                case "surfaceNextTheme": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.surfaceNextTheme()
+                    }
+                    break
+                }
+                case "surfaceStepDown": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.surfaceStepDown(p)
+                    }
+                    break
+                }
+                case "surfaceStepUp": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.surfaceStepUp(p)
+                    }
+                    break
+                }
                 case "increaseLowLevel": {
                     let newLow = Math.min(120, waterViewFirst.getLowEchogramLevel() + p)
                     let newHigh = waterViewFirst.getHighEchogramLevel()
