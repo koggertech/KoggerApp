@@ -1156,6 +1156,14 @@ void GraphicsScene3dView::panStepTrigger(qreal dx, qreal dy)
     QQuickFramebufferObject::update();
     onCameraMoved();
 }
+void GraphicsScene3dView::zStepTrigger(qreal delta)
+{
+    if (!std::isfinite(delta) || std::fabs(delta) <= 1e-6) {
+        return;
+    }
+
+    setVerticalScale(m_verticalScale + static_cast<float>(delta * 0.3f));
+}
 void GraphicsScene3dView::resetCameraAngleTrigger()
 {
     if (!m_camera || !m_axesThumbnailCamera) {

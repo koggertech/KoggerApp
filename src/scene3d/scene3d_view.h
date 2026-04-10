@@ -263,6 +263,7 @@ public:
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
     Q_INVOKABLE void zoomStepTrigger(qreal delta);
     Q_INVOKABLE void panStepTrigger(qreal dx, qreal dy);
+    Q_INVOKABLE void zStepTrigger(qreal delta);
     Q_INVOKABLE void resetCameraAngleTrigger();
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
     Q_INVOKABLE void rulerFinishDrawing();

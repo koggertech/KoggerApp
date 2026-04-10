@@ -556,6 +556,18 @@ ApplicationWindow  {
                     }
                     break
                 }
+                case "cameraShiftZMinus3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.zStepTrigger(-1)
+                    }
+                    break
+                }
+                case "cameraShiftZPlus3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.zStepTrigger(1)
+                    }
+                    break
+                }
                 case "increaseLowLevel": {
                     let newLow = Math.min(120, waterViewFirst.getLowEchogramLevel() + p)
                     let newHigh = waterViewFirst.getHighEchogramLevel()

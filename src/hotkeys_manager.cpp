@@ -55,6 +55,8 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="cameraShiftYMinus3D" scanCode="12"               description="3D camera shift y minus"/>
     <Hotkey functionName="cameraShiftYPlus3D"  scanCode="13"               description="3D camera shift y plus"/>
     <Hotkey functionName="resetCameraTop3D"    scanCode="14"               description="reset 3D camera to top view"/>
+    <Hotkey functionName="cameraShiftZMinus3D" scanCode="15"               description="3D vertical scale down, Ctrl+wheel"/>
+    <Hotkey functionName="cameraShiftZPlus3D"  scanCode="16"               description="3D vertical scale up, Ctrl+wheel"/>
     <Hotkey functionName="toggleEchogramType" scanCode="61"                 description="toggle echogram type raw/side-scan"/>
 </Hotkeys>
 )";
@@ -104,6 +106,8 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="cameraShiftYMinus3D" scanCode="4"                description="3D camera shift y minus"/>
     <Hotkey functionName="cameraShiftYPlus3D"  scanCode="5"                description="3D camera shift y plus"/>
     <Hotkey functionName="resetCameraTop3D"    scanCode="6"                description="reset 3D camera to top view"/>
+    <Hotkey functionName="cameraShiftZMinus3D" scanCode="7"                description="3D vertical scale down, Ctrl+wheel"/>
+    <Hotkey functionName="cameraShiftZPlus3D"  scanCode="8"                description="3D vertical scale up, Ctrl+wheel"/>
     <Hotkey functionName="toggleEchogramType" scanCode="53"                 description="toggle echogram type raw/side-scan"/>
 </Hotkeys>
 )";
