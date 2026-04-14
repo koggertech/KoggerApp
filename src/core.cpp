@@ -212,6 +212,18 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 #endif
 
     qmlAppEnginePtr_->rootContext()->setContextProperty("FLASHER_STATE", flasherState);
+
+#if !defined(Q_OS_ANDROID)
+    {
+        HotkeysManager hotkeysManager;
+        qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysDisplayList", HotkeysManager::toDisplayVariantList(hotkeysManager.loadHotkeysList()));
+    }
+    hotkeysController_ = std::make_unique<HotkeysController>(qmlAppEnginePtr_, this);
+    qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysController", hotkeysController_.get());
+#else
+    qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysDisplayList", QVariantList());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysController", nullptr);
+#endif
 }
 
 Console* Core::getConsolePtr()

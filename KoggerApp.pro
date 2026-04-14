@@ -21,6 +21,7 @@ HEADERS += \
     src/dsp_defs.h \
     src/epoch.h \
     src/hotkeys_manager.h \
+    src/hotkeys_controller.h \
     src/id_binnary.h \
     src/delaunay.h \
     src/delaunay_defs.h \
@@ -50,6 +51,7 @@ SOURCES += \
     src/data_horizon.cpp \
     src/epoch.cpp \
     src/hotkeys_manager.cpp \
+    src/hotkeys_controller.cpp \
     src/id_binnary.cpp \
     src/logger.cpp \
     src/main.cpp \

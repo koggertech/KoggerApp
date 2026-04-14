@@ -10,7 +10,7 @@ struct HotkeyData {
     QString functionName;
     uint32_t scanCode{ 0 };
     uint32_t parameter{ 0 };
-    QString description;
+    QString group;
 };
 
 class HotkeysManager
@@ -22,6 +22,10 @@ public:
     void ensureDefaultHotkeysFile() const;
     QMap<uint32_t, HotkeyData> loadHotkeysMapping() const;
     static QVariantMap toVariantMap(const QMap<quint32, HotkeyData>& data);
+    static QVariantList toDisplayVariantList(const QList<HotkeyData>& list);
+    QList<HotkeyData> loadHotkeysList() const;
+    bool updateHotkey(const QString& functionName, uint32_t newScanCode, uint32_t parameter);
+    bool resetToDefaults();
 
 private:
     /*methods*/

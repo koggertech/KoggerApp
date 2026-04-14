@@ -1086,6 +1086,12 @@ GridLayout {
                     property alias consoleVisible: consoleVisible.checked
                 }
             }
+
+            CButton {
+                visible: Qt.platform.os !== "android"
+                text: qsTr("Keyboard shortcuts")
+                onClicked: hotkeysDialog.open()
+            }
         }
 
         ParamGroup {
@@ -1352,6 +1358,10 @@ GridLayout {
         ParamGroup {
             groupName: "KoggerApp 0.14.2"
         }
+    }
+
+    HotkeysDialog {
+        id: hotkeysDialog
     }
 
     Popup {

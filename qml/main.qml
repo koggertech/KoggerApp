@@ -568,6 +568,12 @@ ApplicationWindow  {
                     }
                     break
                 }
+                case "resetDepthZoom3D": {
+                    if (menuBar.is3DVisible) {
+                        Scene3dToolBarController.onCancelZoomButtonClicked()
+                    }
+                    break
+                }
                 case "increaseLowLevel": {
                     let newLow = Math.min(120, waterViewFirst.getLowEchogramLevel() + p)
                     let newHigh = waterViewFirst.getHighEchogramLevel()

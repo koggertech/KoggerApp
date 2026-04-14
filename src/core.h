@@ -30,6 +30,7 @@
 #include "npd_filter_control_menu_controller.h"
 #include "scene3d_toolbar_controller.h"
 #include "scene3d_control_menu_controller.h"
+#include "hotkeys_controller.h"
 #include "device_manager_wrapper.h"
 #include "link_manager_wrapper.h"
 #include "tile_manager.h"
@@ -253,6 +254,7 @@ private:
     std::shared_ptr<Scene3DControlMenuController> scene3dControlMenuController_;
     std::shared_ptr<Scene3dToolBarController> scene3dToolBarController_;
     std::shared_ptr<UsblViewControlMenuController> usblViewControlMenuController_;
+    std::unique_ptr<HotkeysController> hotkeysController_;
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
     InternetManager* internetManager_;
