@@ -7,7 +7,7 @@ class Plot2D;
 class Plot2DDVLBeamVelocity : public Plot2DLine {
 public:
     Plot2DDVLBeamVelocity();
-    bool draw(Plot2D* parent, Dataset* dataset);
+    bool draw(Plot2D* parent, Dataset* dataset) override;
     void setBeamFilter(int filter);
 
 protected:

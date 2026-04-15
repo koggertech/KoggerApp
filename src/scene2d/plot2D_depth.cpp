@@ -18,7 +18,7 @@ bool Plot2DDepth::draw(Plot2D* parent, Dataset* dataset)
         int pool_index = cursor.getIndex(i);
         Epoch* data = dataset->fromIndex(pool_index);
 
-        if(data != NULL && data->isAttAvail()) {
+        if(data != nullptr && data->isAttAvail()) {
             depth[i] = data->getDepth();
         } else {
             depth[i] = NAN;

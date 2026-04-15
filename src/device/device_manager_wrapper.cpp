@@ -22,7 +22,6 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
 
     workerObject_->moveToThread(workerThread_.get());
     workerThread_->setObjectName("DevManThread");
-    workerThread_->start();
 #else
     auto ct = Qt::DirectConnection;
     QObject::connect(this,                &DeviceManagerWrapper::sendOpenFile,  workerObject_.get(), &DeviceManager::openFile,                      ct);
@@ -63,6 +62,15 @@ DeviceManager* DeviceManagerWrapper::getWorker()
 QUuid DeviceManagerWrapper::getFileUuid() const
 {
     return QUuid(kFileUuidStr);
+}
+
+void DeviceManagerWrapper::startWorkerThread()
+{
+#ifdef SEPARATE_READING
+    if (workerThread_ && !workerThread_->isRunning()) {
+        workerThread_->start();
+    }
+#endif
 }
 
 void DeviceManagerWrapper::initStreamList()

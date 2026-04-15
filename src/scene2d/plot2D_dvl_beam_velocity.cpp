@@ -34,7 +34,7 @@ bool Plot2DDVLBeamVelocity::draw(Plot2D* parent, Dataset* dataset)
             int pool_index = cursor.getIndex(i);
             Epoch *data = dataset->fromIndex(pool_index);
 
-            if (data != NULL && data->isDopplerBeamAvail(ibeam)) {
+            if (data != nullptr && data->isDopplerBeamAvail(ibeam)) {
                 IDBinDVL::BeamSolution beam = data->dopplerBeam(ibeam);
                 beam_velocity[i] = beam.velocity;
                 beam_amp[i] = beam.amplitude * 0.1f;

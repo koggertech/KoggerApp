@@ -30,6 +30,7 @@
 #include "npd_filter_control_menu_controller.h"
 #include "scene3d_toolbar_controller.h"
 #include "scene3d_control_menu_controller.h"
+#include "hotkeys_controller.h"
 #include "device_manager_wrapper.h"
 #include "link_manager_wrapper.h"
 #include "tile_manager.h"
@@ -44,18 +45,18 @@ class Core : public QObject
 
 public:
     Core();
-    ~Core();
+    ~Core() override;
 
     Q_PROPERTY(bool              isGPSAlive                   READ getIsGPSAlive                   NOTIFY isGPSAliveChanged)
     Q_PROPERTY(bool              isFactoryMode                READ isFactoryMode                   CONSTANT)
     Q_PROPERTY(ConsoleListModel* consoleList                  READ consoleList                     CONSTANT)
-    Q_PROPERTY(bool              loggingKlf                   READ getKlfLogging                   WRITE setKlfLogging)
+    Q_PROPERTY(bool              loggingKlf                   READ getKlfLogging                   WRITE setKlfLogging                   NOTIFY loggingKlfChanged)
     Q_PROPERTY(bool              isKlfLogging                 READ getKlfLogging                   NOTIFY loggingKlfChanged)
-    Q_PROPERTY(bool              loggingCsv                   READ getCsvLogging                   WRITE setCsvLogging)
-    Q_PROPERTY(bool              useGPS                       READ getUseGPS                       WRITE setUseGPS)
-    Q_PROPERTY(bool              fixBlackStripesState         READ getFixBlackStripesState         WRITE setFixBlackStripesState)
-    Q_PROPERTY(int               fixBlackStripesForwardSteps  READ getFixBlackStripesForwardSteps  WRITE setFixBlackStripesForwardSteps)
-    Q_PROPERTY(int               fixBlackStripesBackwardSteps READ getFixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps)
+    Q_PROPERTY(bool              loggingCsv                   READ getCsvLogging                   WRITE setCsvLogging                   NOTIFY loggingCsvChanged)
+    Q_PROPERTY(bool              useGPS                       READ getUseGPS                       WRITE setUseGPS                       NOTIFY useGPSChanged)
+    Q_PROPERTY(bool              fixBlackStripesState         READ getFixBlackStripesState         WRITE setFixBlackStripesState         NOTIFY fixBlackStripesStateChanged)
+    Q_PROPERTY(int               fixBlackStripesForwardSteps  READ getFixBlackStripesForwardSteps  WRITE setFixBlackStripesForwardSteps  NOTIFY fixBlackStripesForwardStepsChanged)
+    Q_PROPERTY(int               fixBlackStripesBackwardSteps READ getFixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps NOTIFY fixBlackStripesBackwardStepsChanged)
     Q_PROPERTY(QString           filePath                     READ getFilePath                     NOTIFY filePathChanged)
     Q_PROPERTY(bool              isFileOpening                READ getIsFileOpening                NOTIFY sendIsFileOpening)
     Q_PROPERTY(bool              isSeparateReading            READ getIsSeparateReading            CONSTANT)
@@ -76,7 +77,6 @@ public:
     DataProcessor* getDataProcessorPtr() const;
     DeviceManagerWrapper* getDeviceManagerWrapperPtr() const;
     LinkManagerWrapper* getLinkManagerWrapperPtr() const;
-    void stopLinkManagerTimer() const;
 #ifdef SEPARATE_READING
     QString getTryOpenedfilePath() const;
     void stopDeviceManagerThread() const;
@@ -92,11 +92,18 @@ public:
     void removeDeviceManagerConnections();
 #endif
     QHash<QUuid, QString> getLinkNames() const;
-    void shutdownDataProcessor();
+    void shutdownBackgroundWorkers();
+    bool getIsGPSAlive() const { return isGPSAlive_; };
+    bool getKlfLogging() const;
+    bool getFixBlackStripesState() const;
+    int  getFixBlackStripesForwardSteps() const;
+    int  getFixBlackStripesBackwardSteps() const;
+    bool getCsvLogging() const;
+    bool getUseGPS() const;
+    bool getNeedForceZooming() const { return needForceZooming_; }
 
 public slots:    
     void setIsGPSAlive(bool state) { qDebug() << "Core::setIsGPSAlive" << state; isGPSAlive_ = state; emit isGPSAliveChanged(); }
-    bool getIsGPSAlive() const { return isGPSAlive_; };
 
 #ifdef SEPARATE_READING
     void openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
@@ -117,19 +124,12 @@ public slots:
     bool closeProxy();
     bool upgradeFW(const QString& name, QObject* dev);
     void upgradeChanged(int progressStatus);
-    bool getKlfLogging() const;
     void setKlfLogging(bool isLogging);
-    bool getFixBlackStripesState() const;
-    int  getFixBlackStripesForwardSteps() const;
-    int  getFixBlackStripesBackwardSteps() const;
     void setFixBlackStripesState(bool state);
     void setFixBlackStripesForwardSteps(int val);
     void setFixBlackStripesBackwardSteps(int val);
     void setBottomTrackRealtimeFromSettings(bool state);
-    bool getCsvLogging() const;
     void setCsvLogging(bool isLogging);
-    bool getUseGPS() const;
-    bool getNeedForceZooming() const { return needForceZooming_; }
     void setNeedForceZooming(bool state);
     void setUseGPS(bool state);
     bool exportComplexToCSV(QString filePath);
@@ -144,6 +144,7 @@ public slots:
     void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
     void onChannelsUpdated();
     void onRedrawEpochs(const QSet<int>& indxs);
+    void initAfterApp();
     void initStreamList();
 
 #ifdef FLASHER
@@ -181,6 +182,11 @@ signals:
     void needForceZoomingChanged();
     void isGPSAliveChanged();
     void loggingKlfChanged();
+    void loggingCsvChanged();
+    void useGPSChanged();
+    void fixBlackStripesStateChanged();
+    void fixBlackStripesForwardStepsChanged();
+    void fixBlackStripesBackwardStepsChanged();
     void mapTileProviderChanged();
     void internetAvailableChanged();
     void mapTileLoadingEnabledChanged();
@@ -224,6 +230,12 @@ private:
     int loadSavedMapTileProviderId() const;
     void resetRealtimeSessionState();
     void restoreRealtimeProcessingFlags();
+    void releasePlotCaches();
+    QString resolveExportBasePath(const QString& basePath) const;
+    QString buildExportFileStem(const QString& openedFilePath) const;
+#ifdef Q_OS_ANDROID
+    QString resolveAndroidUriToPath(const QString& uriString) const;
+#endif
 
     /*data*/
     Console* consolePtr_;
@@ -242,6 +254,7 @@ private:
     std::shared_ptr<Scene3DControlMenuController> scene3dControlMenuController_;
     std::shared_ptr<Scene3dToolBarController> scene3dToolBarController_;
     std::shared_ptr<UsblViewControlMenuController> usblViewControlMenuController_;
+    std::unique_ptr<HotkeysController> hotkeysController_;
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
     InternetManager* internetManager_;

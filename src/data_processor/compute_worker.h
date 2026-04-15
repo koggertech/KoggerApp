@@ -25,7 +25,7 @@ struct WorkBundle
         doIsobaths = false;
     }
 };
-Q_DECLARE_METATYPE(WorkBundle)
+Q_DECLARE_METATYPE(WorkBundle) // NOLINT(performance-enum-size)
 
 class Dataset;
 class DataProcessor;
@@ -39,7 +39,7 @@ public:
     explicit ComputeWorker(DataProcessor* ownerDp,
                            Dataset* dataset,
                            QObject* parent = nullptr);
-    ~ComputeWorker();
+    ~ComputeWorker() override;
 
     const QSet<TileKey>& getVisibleTileKeysCPtr();
 

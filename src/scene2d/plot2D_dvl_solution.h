@@ -7,7 +7,7 @@ class Plot2D;
 class Plot2DDVLSolution : public Plot2DLine {
 public:
     Plot2DDVLSolution();
-    bool draw(Plot2D* parent, Dataset* dataset);
+    bool draw(Plot2D* parent, Dataset* dataset) override;
 
 protected:
     PlotPen _penVelocity[4] = {

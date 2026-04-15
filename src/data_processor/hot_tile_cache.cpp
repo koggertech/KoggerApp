@@ -33,7 +33,7 @@ void HotTileCache::putBatch(TileMap&& tiles, DataSource source)
         TileKey     key = it.key();
         SurfaceTile val = std::move(it.value());
 
-        upsertMove(std::move(key), std::move(val), source);
+        upsertMove(key, std::move(val), source);
     }
 
     tiles.clear();
@@ -144,7 +144,7 @@ void HotTileCache::upsertMove(TileKey key, SurfaceTile &&val, DataSource source)
         }
     }
     else {
-        nodes_.push_front(Node{ std::move(key), std::move(val), source, /*blocked*/false }); // новый узел
+        nodes_.push_front(Node{ key, std::move(val), source, /*blocked*/false }); // новый узел
         index_.insert(nodes_.front().key, nodes_.begin());
     }
 }

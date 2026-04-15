@@ -22,10 +22,12 @@ public:
     Epoch* epoch() const;
     int epochIndex() const;
     DatasetChannel channel() const;
+    int eventTypeId() const;
     bool isValid() const;
     int getChannelId() const;
 
 private:
+    int m_eventTypeId = static_cast<int>(QEvent::None);
     Epoch* m_epoch = nullptr;
     int m_epochIndex = -1;
     int m_channelId;

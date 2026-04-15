@@ -31,37 +31,34 @@ void BottomTrackProcessor::setDatasetPtr(Dataset *datasetPtr)
 
 void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1, const DatasetChannel &channel2, const BottomTrackParam& btP, bool manual, bool redrawAll)
 {
-    if (btP.indexFrom > btP.indexTo) {
+    if (btP.windowSize <= 0) {
         return;
     }
-
-    auto size = btP.indexTo + btP.windowSize / 2;
 
     if (!datasetPtr_) {
         qWarning() << "[BT] dataset is null";
         return;
     }
-    //if (!datasetPtr_->size()) {
-    //    qWarning() << "[BT] !datasetPtr_->size()";
-    //    return;
-    //}
-    if (btP.indexFrom < 0 || btP.indexTo < 0) { 
-        return; 
+
+    const int datasetSize = datasetPtr_->sizeThreadSafe();
+    if (datasetSize <= 0) {
+        return;
     }
 
-    int epoch_min_index = btP.indexFrom - btP.windowSize/2;
-
-    if(epoch_min_index < 0) {
-        epoch_min_index = 0;
+    if (btP.indexFrom < 0 || btP.indexTo < 0) {
+        return;
     }
 
-    int epoch_max_index = btP.indexTo + btP.windowSize/2;
-
-    if(epoch_max_index >= size) {
-        epoch_max_index = size;
+    int epoch_start_index = std::clamp(btP.indexFrom, 0, datasetSize);
+    int epoch_stop_index  = std::clamp(btP.indexTo,   0, datasetSize);
+    if (epoch_start_index >= epoch_stop_index) {
+        return;
     }
 
-    if (epoch_max_index == epoch_min_index) {
+    int epoch_min_index = std::max(0, epoch_start_index - btP.windowSize/2);
+    int epoch_max_index = std::min(datasetSize, epoch_stop_index + btP.windowSize/2);
+
+    if (epoch_max_index <= epoch_min_index) {
         return;
     }
 
@@ -106,7 +103,6 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
 
     int istart = istart_ref;
     int init_win = init_win_ref;
-    int scale_win = scale_win_ref;
     float init_win_scaled = static_cast<float>(init_win_ref);
     float index_gain_scale = 1.0f;
     int index_gain_scale_q12 = 1 << 12;
@@ -135,37 +131,41 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
             return;
         }
 
-        Epoch epoch = datasetPtr_->fromIndexCopy(iepoch);
+        Epoch epoch = datasetPtr_->fromIndexBottomTrackCopy(iepoch);
         if (!epoch.isValid()) {
             continue;
         }
 
-        Epoch::Echogram* chart = NULL;
-        uint8_t* data = NULL;
+        Epoch::Echogram* chart = nullptr;
+        uint8_t* data = nullptr;
         int data_size = 0;
+        QVector<uint8_t> mergedData;
 
         bool ch1_avail = epoch.chartAvail(channel1.channelId_, channel1.subChannelId_);
         bool ch2_avail = epoch.chartAvail(channel2.channelId_, channel2.subChannelId_);
 
         if(ch1_avail && ch2_avail) {
             Epoch::Echogram* chart1 = epoch.chart(channel1.channelId_, channel1.subChannelId_);
+            Epoch::Echogram* chart2 = epoch.chart(channel2.channelId_, channel2.subChannelId_);
+            if (!chart1 || !chart2) {
+                continue;
+            }
             uint8_t* data1 = (uint8_t*)chart1->amplitude.constData();
             const int data_size1 = chart1->amplitude.size();
 
-            Epoch::Echogram* chart2 = epoch.chart(channel2.channelId_, channel2.subChannelId_);
             uint8_t* data2 = (uint8_t*)chart2->amplitude.constData();
             const int data_size2 = chart2->amplitude.size();
 
             if(chart1->resolution == chart2->resolution && data_size1 == data_size2) {
-                QVector<uint8_t> data12(data_size1);
-                uint8_t* data12_data = (uint8_t*)data12.constData();
+                mergedData.resize(data_size1);
+                uint8_t* mergedDataPtr = mergedData.data();
 
                 for(int idata = 0;idata < data_size1; idata++) {
-                    data12_data[idata] = ((uint16_t)data1[idata] + (uint16_t)data2[idata])>>2; //+ (uint16_t)data2[idata]
+                    mergedDataPtr[idata] = ((uint16_t)data1[idata] + (uint16_t)data2[idata])>>2; //+ (uint16_t)data2[idata]
                 }
 
                 chart = chart1;
-                data = data12_data;
+                data = mergedDataPtr;
                 data_size = data_size1;
             } else {
                 chart = chart1;
@@ -182,7 +182,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
             data_size = chart->amplitude.size();
         }
 
-        if(data == NULL) {
+        if(data == nullptr || chart == nullptr) {
             continue;
         }
 
@@ -199,9 +199,8 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
             init_win_scaled = static_cast<float>(init_win_ref) * samples_scale;
             init_win = std::max(1, static_cast<int>(std::lround(init_win_scaled)));
             index_gain_scale = resolution / kBottomTrackRefResolution;
-            scale_win = scale_win_ref;
             index_gain_scale_q12 = std::max(1, static_cast<int>(std::lround(index_gain_scale * static_cast<float>(1 << 12))));
-            scale_win_q12 = scale_win << 12;
+            scale_win_q12 = scale_win_ref << 12;
             init_scale_term_q12 = std::max(1, static_cast<int>(std::lround(init_win_scaled * static_cast<float>(scale_win_q12))));
 
             if (coeffs_initialized) {
@@ -230,10 +229,10 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
         int cash_ind = (epoch_counter-1)%btP.windowSize;
 
         int back_cash_ind = ((epoch_counter)%btP.windowSize);
-        int32_t* back_cash_data = (int32_t*)cash[back_cash_ind].constData();
+        const int32_t* back_cash_data = cash[back_cash_ind].constData();
         const int back_cash_size = cash[back_cash_ind].size();
 
-        int32_t* summ_data = (int32_t*)summ.constData();
+        int32_t* summ_data = summ.data();
 
         if(epoch_counter >= btP.windowSize) {
             for(int i = istart; i < back_cash_size; i++) { summ_data[i] -= back_cash_data[i]; }
@@ -243,11 +242,12 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
             cash[cash_ind].resize(data_size);
         }
 
-        int32_t* cash_data = (int32_t*)cash[cash_ind].constData();
+        int32_t* cash_data = cash[cash_ind].data();
 
 
-        uint8_t* data_from = &data[istart];
-        uint8_t* data_to = &data[(istart+init_win)];
+        uint8_t* data_from = data + istart;
+        uint8_t* data_to = data + (istart+init_win);
+        uint8_t* data_end = data + data_size;
 
         int data_acc = 0;
         for(int idata = istart; idata < (istart+init_win); idata++) {
@@ -256,9 +256,13 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
 
         int avrg_range = init_win;
         for(int idata = istart; (idata + avrg_range) < data_size; idata++) {
+            if (data_from >= data_end || data_to >= data_end) {
+                break;
+            }
             data_acc -= *data_from; data_from++;
             data_acc += *data_to; data_to++;
-            while((((idata << 12) + init_scale_term_q12) >= ((avrg_range = data_to - data_from) * scale_win_q12))) {
+            while((data_to < data_end) &&
+                  (((idata << 12) + init_scale_term_q12) >= ((avrg_range = data_to - data_from) * scale_win_q12))) {
                 data_acc += *data_to; data_to++;
             }
             cash_data[idata] = 10*data_acc / (avrg_range);
@@ -284,7 +288,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
 
         const int col_size = cash[cash_ind].size();
         if(summ.size() < col_size) { summ.resize(col_size); }
-        summ_data = (int32_t*)summ.constData();
+        summ_data = summ.data();
         for(int i = istart; i < col_size; i++) { summ_data[i] += cash_data[i]; }
 
 
@@ -328,7 +332,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
 
             if(epoch_counter >= btP.windowSize) {
                 if(btP.verticalGap > 0) {
-                    int32_t* center_cash_data = (int32_t*)cash[win_center_index].constData();
+                    const int32_t* center_cash_data = cash[win_center_index].constData();
                     const int center_cash_size = cash[win_center_index].size();
 
                     int start_gap_index = max_ind*(1.0f-btP.verticalGap);
@@ -355,28 +359,21 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
                         distance = ((max_gap_ind + init_win_scaled + 1.0f) * t1) * chart->resolution;
                     }
                 }
+            }
 
-                bottom_track[iepoch - epoch_min_index - btP.windowSize/2] = distance;
-            } else {
-                bottom_track[iepoch - epoch_min_index - epoch_counter/2] = distance;
+            int btIndex = (epoch_counter >= btP.windowSize)
+                    ? (iepoch - epoch_min_index - btP.windowSize/2)
+                    : (iepoch - epoch_min_index - epoch_counter/2);
+            if (btIndex >= 0 && btIndex < bottom_track.size()) {
+                bottom_track[btIndex] = distance;
             }
         }
     }
 
-
-    int epoch_start_index = btP.indexFrom;
-
-    if(epoch_start_index < 0) {
-        epoch_start_index = 0;
-    }
-
-    int epoch_stop_index = btP.indexTo;
-
-    if(epoch_stop_index >= size) {
-        epoch_stop_index = size;
-    }
-
-    const bool flushEachEpoch = datasetPtr_->getState() == Dataset::DatasetState::kConnection;
+    bool flushEachEpoch = datasetPtr_->getState() == Dataset::DatasetState::kConnection;
+#ifdef SEPARATE_READING
+    flushEachEpoch = true;
+#endif
     const int batchLimit = flushEachEpoch ? 0 : 512;
 
     QVector<BottomTrackUpdate> batch;
@@ -396,20 +393,25 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
             return;
         }
 
-        Epoch epPtr = datasetPtr_->fromIndexCopy(iepoch);
+        const int btIndex = iepoch - epoch_min_index;
+        if (btIndex < 0 || btIndex >= bottom_track.size()) {
+            continue;
+        }
+
+        Epoch epPtr = datasetPtr_->fromIndexBottomTrackCopy(iepoch);
 
         if(epPtr.chartAvail(channel1.channelId_, channel1.subChannelId_)) {
             Epoch::Echogram* chart = epPtr.chart(channel1.channelId_, channel1.subChannelId_);
-            if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSource::DistanceSourceDirectHand) {
-                float dist = bottom_track[iepoch - epoch_min_index];
+            if(chart && chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSource::DistanceSourceDirectHand) {
+                float dist = bottom_track[btIndex];
                 batch.push_back(BottomTrackUpdate{iepoch, channel1.channelId_, dist});
             }
         }
 
         if(epPtr.chartAvail(channel2.channelId_, channel2.subChannelId_)) {
             Epoch::Echogram* chart = epPtr.chart(channel2.channelId_, channel2.subChannelId_);
-            if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSource::DistanceSourceDirectHand) {
-                float dist = bottom_track[iepoch - epoch_min_index];
+            if(chart && chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSource::DistanceSourceDirectHand) {
+                float dist = bottom_track[btIndex];
                 batch.push_back(BottomTrackUpdate{iepoch, channel2.channelId_, dist});
             }
         }
@@ -429,7 +431,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
     QMetaObject::invokeMethod(dataProcessor_, "postLastBottomTrackEpochChanged", Qt::QueuedConnection,
                               Q_ARG(ChannelId, channel1.channelId_),
-                              Q_ARG(int, size),
+                              Q_ARG(int, epoch_stop_index),
                               Q_ARG(BottomTrackParam, btP),
                               Q_ARG(bool, manual),
                               Q_ARG(bool, redrawAll));

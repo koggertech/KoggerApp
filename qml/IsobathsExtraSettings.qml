@@ -11,6 +11,7 @@ MenuFrame {
 
     property CheckButton isobathsCheckButton
     property var exportSurfaceFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property string exportSurfacePathSource: ""
 
     visible: Qt.platform.os === "android"
              ? (isobathsCheckButton.isobathsLongPressTriggered || isobathsTheme.activeFocus)
@@ -43,6 +44,80 @@ MenuFrame {
                 }
             })
         }
+    }
+
+    function sourceUrl(value) {
+        if (!value) {
+            return ""
+        }
+
+        if (typeof value === "string") {
+            if (value.startsWith("file:///")) {
+                return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
+            }
+            if (value.startsWith("file://")) {
+                return value.slice(7)
+            }
+            return value
+        }
+
+        var localPath = value.toLocalFile ? value.toLocalFile() : ""
+        return localPath && localPath.length ? localPath : value.toString()
+    }
+
+    function displayUrl(value) {
+        var source = sourceUrl(value)
+        if (!source.length) {
+            return ""
+        }
+
+        try {
+            return decodeURIComponent(source)
+        } catch (error) {
+            return source
+        }
+    }
+
+    function prevTheme() {
+        isobathsTheme.currentIndex = Math.max(0, isobathsTheme.currentIndex - 1)
+    }
+
+    function nextTheme() {
+        isobathsTheme.currentIndex = Math.min(isobathsTheme.count - 1, isobathsTheme.currentIndex + 1)
+    }
+
+    function stepDown(step) {
+        const delta = step === undefined ? 1 : step
+        for (let i = 0; i < delta; ++i) {
+            isobathsSurfaceLineStepSizeSpinBox.decrease()
+        }
+    }
+
+    function stepUp(step) {
+        const delta = step === undefined ? 1 : step
+        for (let i = 0; i < delta; ++i) {
+            isobathsSurfaceLineStepSizeSpinBox.increase()
+        }
+    }
+
+    function effectiveSource(displayText, storedSource) {
+        if (!displayText || !displayText.length) {
+            return ""
+        }
+
+        if (storedSource && displayText === displayUrl(storedSource)) {
+            return storedSource
+        }
+
+        return displayText
+    }
+
+    Component.onCompleted: {
+        exportSurfacePathText.text = displayUrl(exportSurfacePathSource)
+    }
+
+    function currentExportSurfacePath() {
+        return effectiveSource(exportSurfacePathText.text, exportSurfacePathSource)
     }
 
     ColumnLayout {
@@ -217,12 +292,20 @@ MenuFrame {
         }
 
         RowLayout {
+            onFocusChanged: {
+                isobathsSettings.focus = true
+            }
+
             CTextField {
                 id: exportSurfacePathText
                 hoverEnabled: true
                 Layout.maximumWidth: 200
                 Layout.fillWidth: true
                 placeholderText: qsTr("Enter path")
+
+                onFocusChanged: {
+                    isobathsSettings.focus = true
+                }
             }
 
             CButton {
@@ -232,6 +315,10 @@ MenuFrame {
                 onClicked: {
                     exportSurfaceFileDialog.currentFolder = isobathsSettings.exportSurfaceFolder
                     exportSurfaceFileDialog.open()
+                }
+
+                onFocusChanged: {
+                    isobathsSettings.focus = true
                 }
             }
 
@@ -252,20 +339,22 @@ MenuFrame {
 
                 onAccepted: {
                     isobathsSettings.exportSurfaceFolder = exportSurfaceFileDialog.currentFolder
-                    var url = selectedFile.toString()
-
-                    if (!url.toLowerCase().endsWith(".csv")) {
-                        url += ".csv"
+                    isobathsSettings.exportSurfacePathSource = sourceUrl(selectedFile)
+                    if (!isobathsSettings.exportSurfacePathSource.toLowerCase().endsWith(".csv")) {
+                        isobathsSettings.exportSurfacePathSource += ".csv"
                     }
-
-                    exportSurfacePathText.text = url
+                    exportSurfacePathText.text = displayUrl(isobathsSettings.exportSurfacePathSource)
                 }
             }
 
             CButton {
                 text: qsTr("Export to CSV")
                 Layout.fillWidth: true
-                onClicked: Scene3DControlMenuController.onExportToCSVButtonClicked(exportSurfacePathText.text)
+                onClicked: Scene3DControlMenuController.onExportToCSVButtonClicked(isobathsSettings.currentExportSurfacePath())
+
+                onFocusChanged: {
+                    isobathsSettings.focus = true
+                }
             }
 
 
@@ -274,7 +363,7 @@ MenuFrame {
             }
 
             Settings {
-                property alias exportSurfaceFolderText: exportSurfacePathText.text
+                property alias exportSurfaceFolderText: isobathsSettings.exportSurfacePathSource
             }
         }
 

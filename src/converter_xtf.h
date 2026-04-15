@@ -15,7 +15,7 @@ public:
 
     XTFFILEHEADER header;
 
-    QByteArray toXTF(Dataset* dataset, const ChannelId& channel1, uint8_t subChannel1, const ChannelId& channel2 = CHANNEL_NONE, uint8_t subChannel2 = 0) {
+    QByteArray toXTF(Dataset* dataset, const ChannelId& channel1, uint8_t subChannel1, const ChannelId& channel2 = channelNone(), uint8_t subChannel2 = 0) {
         QByteArray xtfdata;
         XTFFILEHEADER fileheader;
 
@@ -24,7 +24,7 @@ public:
         fileheader.RecordingProgramVersion[0] = '1';
 
         fileheader.NumberOfSonarChannels = 1;
-        if(channel2 != CHANNEL_NONE) {
+        if(channel2 != channelNone()) {
             fileheader.NumberOfSonarChannels = 2;
         }
 
@@ -32,7 +32,7 @@ public:
         fileheader.ChanInfo[0].TypeOfChannel = 1;
         fileheader.ChanInfo[0].BytesPerSample = 1;
 
-        if(channel2 != CHANNEL_NONE) {
+        if(channel2 != channelNone()) {
             fileheader.ChanInfo[1].SubChannelNumber = 1;
             fileheader.ChanInfo[1].TypeOfChannel = 2;
             fileheader.ChanInfo[1].BytesPerSample = fileheader.ChanInfo[0].BytesPerSample;
@@ -53,7 +53,7 @@ public:
         for(int i = 0; i < dataset_size; i++) {
             Epoch* epoch = dataset->fromIndex(i);
 
-            if(epoch != NULL) {
+            if (epoch != nullptr) {
                 XTFPINGHEADER pingheader;
                 pingheader.NumBytesThisRecord = 0;
                 pingheader.NumBytesThisRecord += sizeof (XTFPINGHEADER);
@@ -127,7 +127,7 @@ public:
                 pingch1.ChannelNumber = 0;
                 pingch2.ChannelNumber = 1;
 
-                if(chart1 != NULL) {
+                if (chart1 != nullptr) {
                     QVector<uint8_t> raw = chart1->amplitude;
                     int constr_size = raw.size();
                     raw1.resize(constr_size);
@@ -136,7 +136,7 @@ public:
                     }
                 }
 
-                if(chart2 != NULL && channel2 != CHANNEL_NONE) {
+                if (chart2 != nullptr && channel2 != channelNone()) {
                     QVector<uint8_t> raw = chart2->amplitude;
                     int constr_size = raw.size();
                     raw2.resize(constr_size);
@@ -145,7 +145,7 @@ public:
                     }
                 }
 
-                if(raw1.size() > 0) {
+                if (chart1 != nullptr && !raw1.isEmpty()) {
                     pingheader.NumChansToFollow++;
                     pingheader.NumBytesThisRecord += sizeof (XTFPINGCHANHEADER);
                     pingheader.NumBytesThisRecord += raw1.size();
@@ -156,7 +156,7 @@ public:
                     pingch1.SecondsPerPing = 0.1;
                 }
 
-                if(raw2.size() > 0) {
+                if (chart2 != nullptr && !raw2.isEmpty()) {
                     pingheader.NumChansToFollow++;
                     pingheader.NumBytesThisRecord += sizeof (XTFPINGCHANHEADER);
                     pingheader.NumBytesThisRecord += raw2.size();
@@ -171,12 +171,12 @@ public:
                     //                    if(raw1.size() == raw2.size()) {
                     xtfdata.append((char*)&pingheader, sizeof (pingheader));
 
-                    if(raw1.size() > 0) {
+                    if (!raw1.isEmpty()) {
                         xtfdata.append((char*)&pingch1, sizeof (pingch1));
                         xtfdata.append((char*)raw1.constData(), raw1.size());
                     }
 
-                    if(raw2.size() > 0) {
+                    if (!raw2.isEmpty()) {
                         xtfdata.append((char*)&pingch2, sizeof (pingch2));
                         xtfdata.append((char*)raw2.constData(), raw2.size());
                     }

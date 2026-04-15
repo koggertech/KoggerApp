@@ -11,10 +11,10 @@ public:
     {
     public:
         NavigationArrowRenderImplementation();
-        virtual ~NavigationArrowRenderImplementation();
-        virtual void render(QOpenGLFunctions* ctx,
-                            const QMatrix4x4& mvp,
-                            const QMap<QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+        ~NavigationArrowRenderImplementation() override;
+        void render(QOpenGLFunctions* ctx,
+                    const QMatrix4x4& mvp,
+                    const QMap<QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
         QVector3D getPosition() const;
         float getAngle() const;
         int getSize() const;

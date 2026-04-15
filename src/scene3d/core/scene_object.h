@@ -5,6 +5,7 @@
 #include "ray_caster.h"
 #include "abstract_entity_data_filter.h"
 
+#include <cstdint>
 #include <QPair>
 #include <QObject>
 #include <QUuid>
@@ -20,9 +21,9 @@ class SceneObject : public QObject, public std::enable_shared_from_this<SceneObj
 {
     Q_OBJECT
     Q_PROPERTY(AbstractEntityDataFilter* filter   READ filter                       CONSTANT)
-    Q_PROPERTY(QString                   name     READ name       WRITE setName)
+    Q_PROPERTY(QString                   name     READ name       WRITE setName      NOTIFY nameChanged)
     Q_PROPERTY(SceneObjectType           type     READ type                         CONSTANT)
-    Q_PROPERTY(bool                      visible  READ isVisible  WRITE setVisible)
+    Q_PROPERTY(bool                      visible  READ isVisible  WRITE setVisible   NOTIFY visibilityChanged)
     Q_PROPERTY(QColor                    color    READ color                        CONSTANT)
     Q_PROPERTY(qreal                     width    READ width                        CONSTANT)
 
@@ -98,9 +99,9 @@ public:
 
     SceneObject(QObject *parent = nullptr);
 
-    virtual ~SceneObject();
+    ~SceneObject() override;
 
-    enum class SceneObjectType{
+    enum class SceneObjectType : uint8_t{
         Unknown      = 0,
         BoatTrack    = 1,
         BottomTrack  = 2,

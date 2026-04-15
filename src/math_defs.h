@@ -33,11 +33,7 @@ struct MatrixParams {
     int height;
 
     bool isValid() const {
-        if (width == -1 ||
-            height == -1) {
-            return false;
-        }
-        return true;
+        return width != -1 && height != -1;
     }
 
     void print(QDebug stream) const {

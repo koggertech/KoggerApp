@@ -22,6 +22,7 @@ DevDriver::DevDriver(QObject *parent)
     qRegisterMetaType<uint16_t>("uint16_t");
     qRegisterMetaType<uint32_t>("uint32_t");
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
+    qRegisterMetaType<Parsers::ProtoBinOut>("Parsers::ProtoBinOut");
     qRegisterMetaType<QVector<QVector<uint8_t>>>("QVector<QVector<uint8_t>>");
     qRegisterMetaType<ChannelId>("ChannelId");
     qRegisterMetaType<ChartParameters>("ChartParameters");
@@ -292,7 +293,7 @@ void DevDriver::importSettingsFromXML(const QString& filePath) {
             if (elementName == "Settings")
                 continue;
 
-            while (!(xmlReader.tokenType() == QXmlStreamReader::EndElement && xmlReader.name() == elementName)) {
+            while (xmlReader.tokenType() != QXmlStreamReader::EndElement || xmlReader.name() != elementName) {
                 xmlReader.readNext();
                 if (xmlReader.isStartElement()) {
                     if (elementName == "Echogram") {
@@ -418,7 +419,6 @@ void DevDriver::exportSettingsToXML(const QString& filePath) {
     xmlWriter.writeEndDocument();
     file.close();
 
-    return;
 }
 
 void DevDriver::setDatasetState(bool state) {
@@ -647,12 +647,12 @@ void DevDriver::protoComplete(Parsers::FrameParser& proto)
 
 
     if(_hashID.contains(proto.id())) {
-        if(_hashID[proto.id()].instance != NULL) {
+        if(_hashID[proto.id()].instance != nullptr) {
             IDBin* parse_instance = _hashID[proto.id()].instance;
             parse_instance->parse(proto);
             lastAddress_ = proto.route();
 
-            if(_hashID[proto.id()].callback != NULL) {
+            if(_hashID[proto.id()].callback != nullptr) {
                 ParseCallback& callback = _hashID[proto.id()].callback;
                 (this->*callback)(parse_instance->lastType(), parse_instance->lastVersion(), parse_instance->lastResp());
             }
@@ -1152,7 +1152,7 @@ void DevDriver::receivedTemp(Parsers::Type type, Parsers::Version ver, Parsers::
     //core.getDatasetPtr()->addTemp(idTemp->temp());
 }
 
-void DevDriver::receivedEncoder(Type type, Version ver, Resp resp) {
+void DevDriver::receivedEncoder(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
     Q_UNUSED(type);
     Q_UNUSED(ver);
     Q_UNUSED(resp);
@@ -1239,8 +1239,7 @@ void DevDriver::receivedVersion(Parsers::Type type, Parsers::Version ver, Parser
                 m_devName = "2D-Chirp";
                 break;
             case BoardBase:
-                m_devName = "2D-Base";
-                break;
+                [[fallthrough]];
             case BoardNBase:
                 m_devName = "2D-Base";
                 break;
@@ -1575,7 +1574,9 @@ void DevDriver::process() {
                     m_state.in_update = true;
                     // idUpdate->putUpdate();
 
-                    QTimer::singleShot(100, idUpdate, SLOT(putUpdate()));
+                    QTimer::singleShot(100, idUpdate, [update = idUpdate]() {
+                        update->putUpdate();
+                    });
                     //qDebug() << "To upgrading";
                 }
 

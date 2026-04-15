@@ -22,7 +22,7 @@ class DeviceManager : public QObject
 public:
     /*methods*/
     DeviceManager();
-    ~DeviceManager();
+    ~DeviceManager() override;
 
     Q_INVOKABLE float vruVoltage();
     Q_INVOKABLE float vruCurrent();
@@ -124,7 +124,7 @@ signals:
     void chartLossesChanged();
 
     // logger
-    void sendProtoFrame(const Parsers::ProtoBinOut& protoOut);
+    void sendProtoFrame(Parsers::ProtoBinOut protoOut);
 
 #ifdef SEPARATE_READING
     void fileStartOpening();
@@ -191,7 +191,7 @@ private:
     uint8_t upgradeAddr_;
     QByteArray upgradeData_;
     bool loggingStarted_ = false;
-    LocationReader* locReader_;
+    LocationReader* locReader_{ nullptr };
     bool useGPS_{ false };
 
 private slots:

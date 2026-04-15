@@ -292,7 +292,8 @@ ApplicationWindow  {
                 if (drag.hasUrls) {
                     for (var i = 0; i < drag.urls.length; ++i) {
                         var url = drag.urls[i]
-                        var filePath = url.toString().replace("file:///", "").toLowerCase()
+                        var localPath = url.toLocalFile ? url.toLocalFile() : ""
+                        var filePath = (localPath && localPath.length ? localPath : url.toString()).toLowerCase()
                         if (filePath.endsWith(".klf") ||
                             filePath.endsWith(".xtf")) {
                             draggedFilePath = filePath
@@ -356,6 +357,10 @@ ApplicationWindow  {
             }
             if (fn === "openFile") {
                 core.openLogFile(menuBar.filePath, false, false)
+                return;
+            }
+            if (fn === "openFileDialog") {
+                menuBar.openFileDialog()
                 return;
             }
             if (fn === "closeFile") {
@@ -428,6 +433,144 @@ ApplicationWindow  {
                     waterViewFirst.verZoomEvent(p)
                     if (waterViewSecond.enabled) {
                         waterViewSecond.verZoomEvent(p)
+                    }
+                    break
+                }
+                case "scene3dZoomIn": {
+                    if (menuBar.is3DVisible) {
+                        renderer.zoomStepTrigger(1)
+                    }
+                    break
+                }
+                case "scene3dZoomOut": {
+                    if (menuBar.is3DVisible) {
+                        renderer.zoomStepTrigger(-1)
+                    }
+                    break
+                }
+                case "mosaicPrevTheme": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.mosaicPrevTheme()
+                    }
+                    break
+                }
+                case "mosaicNextTheme": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.mosaicNextTheme()
+                    }
+                    break
+                }
+                case "mosaicLowLevelUp": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.mosaicLowLevelUp(p)
+                    }
+                    break
+                }
+                case "mosaicLowLevelDown": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.mosaicLowLevelDown(p)
+                    }
+                    break
+                }
+                case "mosaicHighLevelUp": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.mosaicHighLevelUp(p)
+                    }
+                    break
+                }
+                case "mosaicHighLevelDown": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.mosaicHighLevelDown(p)
+                    }
+                    break
+                }
+                case "surfacePrevTheme": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.surfacePrevTheme()
+                    }
+                    break
+                }
+                case "surfaceNextTheme": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.surfaceNextTheme()
+                    }
+                    break
+                }
+                case "surfaceStepDown": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.surfaceStepDown(p)
+                    }
+                    break
+                }
+                case "surfaceStepUp": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.surfaceStepUp(p)
+                    }
+                    break
+                }
+                case "toggleBottomTrack3D": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.toggleBottomTrack()
+                    }
+                    break
+                }
+                case "toggleIsobaths3D": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.toggleIsobaths()
+                    }
+                    break
+                }
+                case "toggleMosaic3D": {
+                    if (menuBar.is3DVisible) {
+                        scene3DToolbar.toggleMosaic()
+                    }
+                    break
+                }
+                case "cameraShiftXMinus3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.panStepTrigger(-1, 0)
+                    }
+                    break
+                }
+                case "cameraShiftXPlus3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.panStepTrigger(1, 0)
+                    }
+                    break
+                }
+                case "cameraShiftYMinus3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.panStepTrigger(0, -1)
+                    }
+                    break
+                }
+                case "cameraShiftYPlus3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.panStepTrigger(0, 1)
+                    }
+                    break
+                }
+                case "resetCameraTop3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.resetCameraAngleTrigger()
+                    }
+                    break
+                }
+                case "cameraShiftZMinus3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.zStepTrigger(-1)
+                    }
+                    break
+                }
+                case "cameraShiftZPlus3D": {
+                    if (menuBar.is3DVisible) {
+                        renderer.zStepTrigger(1)
+                    }
+                    break
+                }
+                case "resetDepthZoom3D": {
+                    if (menuBar.is3DVisible) {
+                        Scene3dToolBarController.onCancelZoomButtonClicked()
                     }
                     break
                 }
@@ -505,6 +648,13 @@ ApplicationWindow  {
                     }
                     break
                 }
+                case "toggleEchogramType": {
+                    waterViewFirst.toggleEchogramType()
+                    if (waterViewSecond.enabled) {
+                        waterViewSecond.toggleEchogramType()
+                    }
+                    break
+                }
                 case "clickConnections": {
                     menuBar.clickConnections()
                     break
@@ -562,6 +712,7 @@ ApplicationWindow  {
             property real splitRatio: 0.5
             property real dragRatio: 0.5
             property bool splitDragging: false
+            property bool splitRatioSyncFromUi: false
             readonly property real splitDragMinRatio: 0.0
             readonly property real splitDragMaxRatio: 1.0
             readonly property real splitMidRatio: 0.5
@@ -627,13 +778,31 @@ ApplicationWindow  {
             }
             onSplitRatioChanged: {
                 if (!splitDragging) {
+                    splitRatioSyncFromUi = true
                     appSettings.sceneSplitRatio = clampSplitRatio(splitRatio)
+                    splitRatioSyncFromUi = false
+                }
+            }
+
+            function applySceneSplitRatioFromSettings() {
+                const restoredRatio = nearestSplitRatio(appSettings.sceneSplitRatio)
+                if (Math.abs(splitRatio - restoredRatio) > 0.0001) {
+                    splitRatio = restoredRatio
+                }
+                dragRatio = splitRatio
+            }
+
+            Connections {
+                target: appSettings
+                function onSceneSplitRatioChanged() {
+                    if (!visualisationLayout.splitDragging && !visualisationLayout.splitRatioSyncFromUi) {
+                        visualisationLayout.applySceneSplitRatioFromSettings()
+                    }
                 }
             }
 
             Component.onCompleted: {
-                splitRatio = nearestSplitRatio(appSettings.sceneSplitRatio)
-                dragRatio = splitRatio
+                applySceneSplitRatioFromSettings()
             }
 
             Behavior on splitRatio {
@@ -674,6 +843,17 @@ ApplicationWindow  {
                 property int currentZoom: -1
                 property bool syncLoupeUiAllowed: (menuBar !== null) ? (menuBar.is3DVisible && !menuBar.is2DVisible) : false
 
+                function resetScenePointerState() {
+                    //console.info("resetScenePointerState")
+                    mousearea3D.startMousePos = Qt.point(-1, -1)
+                    mousearea3D.wasMoved = false
+                    mousearea3D.vertexMode = false
+                    mousearea3D.lastMouseKeyPressed = Qt.NoButton
+                    longPressTimer.stop()
+                    renderer.longPressTriggered = false
+                    renderer.cancelPointerInteraction()
+                }
+
                 onSyncLoupeUiAllowedChanged: {
                     setSyncLoupeUiAllowed(syncLoupeUiAllowed)
                 }
@@ -696,7 +876,7 @@ ApplicationWindow  {
                         mousearea3D.enabled = false
                     }
 
-                    onPinchUpdated: {
+                    onPinchUpdated: function(pinch) {
                         var shiftScale = pinch.scale - pinch.previousScale;
                         var shiftAngle = pinch.angle - pinch.previousAngle;
                         renderer.pinchTrigger(pinch.previousCenter, pinch.center, shiftScale, shiftAngle)
@@ -808,10 +988,7 @@ ApplicationWindow  {
                         }
 
                         onCanceled: {
-                            startMousePos = Qt.point(-1, -1)
-                            wasMoved = false
-                            vertexMode = false
-                            longPressTimer.stop()
+                            renderer.resetScenePointerState()
                         }
                     }
                 }
@@ -1676,7 +1853,8 @@ ApplicationWindow  {
                 return
             }
             for (var i = 0; i < stored.length; ++i) {
-                profilesModel.append({ path: stored[i] })
+                var path = stored[i] ? stored[i] : ""
+                profilesModel.append({ path: path, displayPath: pathToDisplay(path) })
             }
         }
 
@@ -1696,11 +1874,38 @@ ApplicationWindow  {
 
         function urlToPath(u) {
             if (!u) return ""
-            if (u.toLocalFile) return u.toLocalFile()
-            var s = u.toString()
-            if (s.startsWith("file:///")) s = s.slice(8)
-            else if (s.startsWith("file://")) s = s.slice(7)
-            return s
+            var localPath = u.toLocalFile ? u.toLocalFile() : ""
+            return localPath && localPath.length ? localPath : u.toString()
+        }
+
+        function pathToDisplay(path) {
+            if (!path || !path.length) {
+                return ""
+            }
+
+            if (path.startsWith("file:///")) {
+                path = Qt.platform.os === "windows" ? path.slice(8) : path.slice(7)
+            } else if (path.startsWith("file://")) {
+                path = path.slice(7)
+            }
+
+            try {
+                return decodeURIComponent(path)
+            } catch (error) {
+                return path
+            }
+        }
+
+        function effectivePath(displayText, storedPath) {
+            if (!displayText || !displayText.length) {
+                return ""
+            }
+
+            if (storedPath && displayText === pathToDisplay(storedPath)) {
+                return storedPath
+            }
+
+            return displayText
         }
 
         ListModel {
@@ -1724,6 +1929,7 @@ ApplicationWindow  {
                 profilesStorage.lastProfileFolder = profilePickDialog.currentFolder
                 const p = profilesDialog.urlToPath(profilePickDialog.selectedFile)
                 profilesModel.setProperty(profilesDialog.browseRow, "path", p)
+                profilesModel.setProperty(profilesDialog.browseRow, "displayPath", pathToDisplay(p))
                 profilesDialog.browseRow = -1
                 profilesDialog.saveProfiles()
             }
@@ -1744,7 +1950,7 @@ ApplicationWindow  {
                 CButton {
                     text: "+"
                     onClicked: {
-                        profilesModel.append({ path: "" })
+                        profilesModel.append({ path: "", displayPath: "" })
                         profilesDialog.saveProfiles()
                     }
                 }
@@ -1776,10 +1982,12 @@ ApplicationWindow  {
                                 id: pathField
                                 Layout.fillWidth: true
                                 placeholderText: qsTr("Path to profile .xml")
-                                text: path
+                                text: displayPath
                                 color: "white"
                                 onEditingFinished: {
-                                    profilesModel.setProperty(index, "path", text)
+                                    const sourcePath = effectivePath(text, path)
+                                    profilesModel.setProperty(index, "path", sourcePath)
+                                    profilesModel.setProperty(index, "displayPath", pathToDisplay(sourcePath))
                                     profilesDialog.saveProfiles()
                                 }
                             }
@@ -1797,7 +2005,7 @@ ApplicationWindow  {
                                 text: qsTr("Apply")
                                 enabled: (pathField.text && pathField.text.length > 0)
                                 onClicked: {
-                                    menuBar.applyProfileToAllDevices(pathField.text)
+                                    menuBar.applyProfileToAllDevices(effectivePath(pathField.text, path))
                                 }
                             }
 

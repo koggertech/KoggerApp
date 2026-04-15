@@ -104,11 +104,8 @@ DevSettingsBox {
                     if (!url) return
                     control.importFolder = importFileDialog.currentFolder
 
-                    let filePath = url.toString()
-
-                    if (filePath.startsWith("file:///"))
-                        filePath = filePath.slice(8)
-
+                    let localPath = url.toLocalFile ? url.toLocalFile() : ""
+                    let filePath = localPath && localPath.length ? localPath : url.toString()
                     dev.importSettingsFromXML(filePath)
                 }
             }
@@ -130,11 +127,8 @@ DevSettingsBox {
                         return
                     control.exportFolder = exportFileDialog.currentFolder
 
-                    let filePath = url.toString()
-
-                    if (filePath.startsWith("file:///"))
-                        filePath = filePath.slice(8)
-
+                    let localPath = url.toLocalFile ? url.toLocalFile() : ""
+                    let filePath = localPath && localPath.length ? localPath : url.toString()
                     dev.exportSettingsToXML(filePath)
                 }
             }

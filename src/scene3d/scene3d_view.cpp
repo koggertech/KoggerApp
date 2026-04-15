@@ -509,12 +509,9 @@ void GraphicsScene3dView::zoomAroundScreenAnchor(qreal delta, const QPointF& anc
     }
     else if (preRef.isInit && postRef.isInit) {
         NED beforeNedPre(beforePoint.x(), beforePoint.y(), 0.0);
-        LLARef preRefCopy(preRef);
-        LLA beforeLla(&beforeNedPre, &preRefCopy, prePerspective);
+        LLA beforeLla(&beforeNedPre, &preRef, prePerspective);
         if (beforeLla.isCoordinatesValid()) {
-            LLA beforeLlaCopy(beforeLla);
-            LLARef postRefCopy(postRef);
-            NED beforeNedPost(&beforeLlaCopy, &postRefCopy, postPerspective);
+            NED beforeNedPost(&beforeLla, &postRef, postPerspective);
             if (std::isfinite(beforeNedPost.n) && std::isfinite(beforeNedPost.e)) {
                 lookAtDelta = QVector2D(static_cast<float>(beforeNedPost.n) - afterPoint.x(),
                                         static_cast<float>(beforeNedPost.e) - afterPoint.y());
@@ -921,6 +918,34 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::cancelPointerInteraction()
+{
+    //qDebug() << "GraphicsScene3dView::cancelPointerInteraction";
+    clearComboSelectionRect();
+
+    if (switchedToBottomTrackVertexComboSelectionMode_) {
+        m_mode = lastMode_;
+        if (m_bottomTrack) {
+            m_bottomTrack->mouseReleaseEvent(Qt::MouseButton::NoButton, m_lastMousePos.x(), m_lastMousePos.y());
+        }
+    }
+
+    switchedToBottomTrackVertexComboSelectionMode_ = false;
+    wasMoved_ = false;
+    wasMovedMouseButton_ = Qt::MouseButton::NoButton;
+
+    if (geoJsonDragging_) {
+        stopGeoJsonDrag();
+        geoJsonRenderDirty_ = true;
+    }
+
+    geoJsonBlockCameraMove_ = false;
+    geoJsonIgnoreNextLeftRelease_ = false;
+    resetRulerInteraction();
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, QPointF angleDelta, Qt::Key keyboardKey)
 {
     bool cameraWasMoved{ false };
@@ -1102,6 +1127,55 @@ void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::zoomStepTrigger(qreal delta)
+{
+    if (!m_camera || !std::isfinite(delta) || std::fabs(delta) <= 1e-6) {
+        return;
+    }
+
+    const QPointF anchor(width() * 0.5, height() * 0.5);
+    zoomAroundScreenAnchor(delta * 0.3f, anchor);
+    updatePlaneGrid();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
+void GraphicsScene3dView::panStepTrigger(qreal dx, qreal dy)
+{
+    if (!m_camera) {
+        return;
+    }
+
+    const float dist = std::max(1.0f, static_cast<float>(m_camera->distForMapView()));
+    const float step = std::max(5.0f, dist * 0.12f);
+
+    m_camera->m_lookAt.setX(m_camera->m_lookAt.x() + static_cast<float>(dx * 0.2f) * step);
+    m_camera->m_lookAt.setY(m_camera->m_lookAt.y() + static_cast<float>(dy * 0.2f) * step);
+    m_camera->updateViewMatrix();
+
+    updatePlaneGrid();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
+void GraphicsScene3dView::zStepTrigger(qreal delta)
+{
+    if (!std::isfinite(delta) || std::fabs(delta) <= 1e-6) {
+        return;
+    }
+
+    setVerticalScale(m_verticalScale + static_cast<float>(delta * 0.3f));
+}
+void GraphicsScene3dView::resetCameraAngleTrigger()
+{
+    if (!m_camera || !m_axesThumbnailCamera) {
+        return;
+    }
+
+    m_camera->resetRotationAngle();
+    m_axesThumbnailCamera->resetRotationAngle();
+    updatePlaneGrid();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
 void GraphicsScene3dView::setRulerEnabled(bool enabled)
 {
     if (rulerEnabled_ == enabled) {
@@ -1629,9 +1703,9 @@ void GraphicsScene3dView::refreshSyncLoupePreview()
         const int datasetSize = datasetPtr_->size();
         if (syncEpochIndex_ < datasetSize) {
             if (auto* epoch = datasetPtr_->fromIndex(syncEpochIndex_); epoch) {
-                ChannelId firstChannelId = CHANNEL_NONE;
+                ChannelId firstChannelId = channelNone();
                 uint8_t firstSubChannelId = 0;
-                ChannelId secondChannelId = CHANNEL_NONE;
+                ChannelId secondChannelId = channelNone();
                 uint8_t secondSubChannelId = 0;
                 bool hasSecondChannel = false;
                 if (const auto channels = datasetPtr_->channelsList(); !channels.isEmpty()) {
@@ -1726,7 +1800,7 @@ void GraphicsScene3dView::updateProjection()
             currProj.ortho(-orthV * aspectRatio, orthV * aspectRatio, -orthV, orthV, orthV * nearPlaneOrthoCoeff_, orthV * farPlaneOrthoCoeff_);
         }
 
-        m_projection = std::move(currProj);
+        m_projection = currProj;
     }
 }
 
@@ -3306,7 +3380,7 @@ void GraphicsScene3dView::InFboRenderer::processMosaicTileTexture(QOpenGLFunctio
         const GLsizei H = defaultTileSidePixelSize;
 
         for (auto it = tasks.cbegin(); it != tasks.cend(); ++it) {
-            auto iTask = *it;
+            const auto& iTask = *it;
             const TileKey& tileId = iTask.first;
             const auto&    data   = iTask.second;
 
@@ -3437,12 +3511,12 @@ GraphicsScene3dView::Camera::Camera(qreal pitch,
                                     qreal distToFocusPoint,
                                     qreal fov,
                                     qreal sensivity)
-    :m_pitch(std::move(pitch))
-    ,m_yaw(std::move(yaw))
-    ,m_fov(std::move(fov))
-    ,m_distToFocusPoint(std::move(distToFocusPoint))
+    :m_pitch(pitch)
+    ,m_yaw(yaw)
+    ,m_fov(fov)
+    ,m_distToFocusPoint(distToFocusPoint)
     ,distForMapView_(m_distToFocusPoint)
-    ,m_sensivity(std::move(sensivity))
+    ,m_sensivity(sensivity)
 {
    setIsometricView();
 }
@@ -3623,9 +3697,7 @@ void GraphicsScene3dView::Camera::zoom(qreal delta)
         NED lookAtNed(m_lookAt.x(), m_lookAt.y(), 0.0f);
         LLA lookAtLla(&lookAtNed, &viewLlaRef_, isPerspective_);
         if (lookAtLla.isCoordinatesValid() && viewLlaRef_.isInit) {
-            LLA lookAtLlaCopy(lookAtLla);
-            LLARef viewRefCopy(viewLlaRef_);
-            NED rebasedNed(&lookAtLlaCopy, &viewRefCopy, nextPerspective);
+            NED rebasedNed(&lookAtLla, &viewLlaRef_, nextPerspective);
             if (std::isfinite(rebasedNed.n) && std::isfinite(rebasedNed.e)) {
                 m_lookAt.setX(static_cast<float>(rebasedNed.n));
                 m_lookAt.setY(static_cast<float>(rebasedNed.e));
@@ -3811,7 +3883,7 @@ void GraphicsScene3dView::Camera::updateViewMatrix()
     view.lookAt(cf + m_lookAt, m_lookAt, cu.normalized());
     view.scale(1.0f,1.0f,-1.0f);
 
-    m_view = std::move(view);
+    m_view = view;
 }
 
 void GraphicsScene3dView::Camera::checkRotateAngle()

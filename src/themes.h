@@ -16,12 +16,36 @@ class Themes : public QObject
 public:
 
     Themes() :
+        _textColor(nullptr),
+        _textSolidColor(nullptr),
+        _textErrorColor(nullptr),
+        _disabledTextColor(nullptr),
+        _disabledBackColor(nullptr),
+        _hoveredBackColor(nullptr),
+        _textFont(nullptr),
+        _textFontS(nullptr),
+        _menuBackColor(nullptr),
+        _frameBackColor(nullptr),
+        _controlBackColor(nullptr),
+        _controlBorderColor(nullptr),
+        _controlSolidBackColor(nullptr),
+        _controlSolidBorderColor(nullptr),
+        _activeControlBackColor(nullptr),
+        _sliderHandleColor(nullptr),
+        _sliderHandlePressedColor(nullptr),
+        _placeholderTextColor(nullptr),
+        _tooltipBackColor(nullptr),
+        _tooltipBorderColor(nullptr),
+        _tooltipTextColor(nullptr),
+        _controlHeight(0),
+        _menuWidth(0),
+        _isConsoleVisible(false),
         instrumentsGrade_(-1),
         resolutionCoeff_(1.0)
     {
         setTheme();
-        _isConsoleVisible = false;
     }
+    ~Themes() override { clearThemeResources(); }
 
     Q_PROPERTY(qreal resCoeff READ getResolutionCoeff NOTIFY changed)
 
@@ -111,6 +135,10 @@ public:
     }
 
     void setTheme(int theme_id = 0) {
+        clearThemeResources();
+        if (theme_id < 0 || theme_id > 7) {
+            theme_id = 0;
+        }
         _id = theme_id;
 
 #if defined(Q_OS_ANDROID)
@@ -122,7 +150,7 @@ public:
         _textFont = new QFont("PT Sans Caption", 14);
         _textFont->setPixelSize(22);
         _textFontS = new QFont("PT Sans Caption", 12);
-        _textFont->setPixelSize(18);
+        _textFontS->setPixelSize(18);
 #endif
         _textErrorColor = new QColor(250, 0, 0);
 
@@ -353,6 +381,36 @@ protected:
     bool _isConsoleVisible;
     int instrumentsGrade_;
 private:
+    void clearThemeResources()
+    {
+        auto deleteAndNull = [](auto*& ptr) {
+            delete ptr;
+            ptr = nullptr;
+        };
+
+        deleteAndNull(_textColor);
+        deleteAndNull(_textSolidColor);
+        deleteAndNull(_textErrorColor);
+        deleteAndNull(_disabledTextColor);
+        deleteAndNull(_disabledBackColor);
+        deleteAndNull(_hoveredBackColor);
+        deleteAndNull(_textFont);
+        deleteAndNull(_textFontS);
+        deleteAndNull(_menuBackColor);
+        deleteAndNull(_frameBackColor);
+        deleteAndNull(_controlBackColor);
+        deleteAndNull(_controlBorderColor);
+        deleteAndNull(_controlSolidBackColor);
+        deleteAndNull(_controlSolidBorderColor);
+        deleteAndNull(_activeControlBackColor);
+        deleteAndNull(_sliderHandleColor);
+        deleteAndNull(_sliderHandlePressedColor);
+        deleteAndNull(_placeholderTextColor);
+        deleteAndNull(_tooltipBackColor);
+        deleteAndNull(_tooltipBorderColor);
+        deleteAndNull(_tooltipTextColor);
+    }
+
     qreal checkResolutionCoeff() const;
     qreal resolutionCoeff_;
 };

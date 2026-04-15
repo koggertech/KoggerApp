@@ -17,18 +17,21 @@
 #include <QQuickStyle>
 #include <QWindow>
 #include <QStyleHints>
+#include <QLoggingCategory>
 #if defined(Q_OS_WIN)
 #include <windows.h>
 #endif
 #include "qPlot2D.h"
 #include "core.h"
 #include "themes.h"
+#include "ui_state_serializer.h"
 #include "scene_object.h"
 #include "bottom_track.h"
 
 
 Core core;
 Themes theme;
+UIStateSerializer uiStateSerializer;
 QTranslator translator;
 QVector<QString> availableLanguages{"en", "ru", "pl"};
 
@@ -191,6 +194,7 @@ int main(int argc, char *argv[])
 #if defined(Q_OS_WIN)
     //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
+    QLoggingCategory::setFilterRules(QStringLiteral("qt.network.info.netlistmanager.warning=false"));
 #endif
 
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGLRhi);
@@ -206,6 +210,7 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     QGuiApplication app(argc, argv);
+    core.initAfterApp();
 
     //qDebug() << "Lib paths:" << QCoreApplication::libraryPaths();
     //qDebug() << "SQL drivers:" << QSqlDatabase::drivers();
@@ -235,6 +240,8 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
+    engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
+    uiStateSerializer.setLinkManagerWrapper(core.getLinkManagerWrapperPtr());
 
     QObject::connect(&theme, &Themes::interfaceChanged, &core, []() {
         core.setConsoleOutputEnabled(theme.consoleVisible());
@@ -251,6 +258,12 @@ int main(int argc, char *argv[])
                                     if (!obj && url == objUrl)
                                         QCoreApplication::exit(-1);
                                 }, Qt::QueuedConnection);
+    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
+                     &uiStateSerializer, [url](QObject* obj, const QUrl& objUrl) {
+        if (obj && url == objUrl) {
+            uiStateSerializer.setQmlRootObject(obj);
+        }
+    }, Qt::QueuedConnection);
 
 // file opening on startup
 #ifndef Q_OS_ANDROID
@@ -261,18 +274,6 @@ int main(int argc, char *argv[])
                                     }, Qt::QueuedConnection);
     }
 #endif
-
-    QObject::connect(&app,  &QGuiApplication::aboutToQuit,
-                     &core, [&]() {
-                                core.shutdownDataProcessor();
-                                core.saveLLARefToSettings();
-                                core.removeLinkManagerConnections();
-                                core.stopLinkManagerTimer();
-#ifdef SEPARATE_READING
-                                void removeDeviceManagerConnections();
-                                core.stopDeviceManagerThread();
-#endif
-                            });
 
     engine.load(url);
     const auto rootObjects = engine.rootObjects();
@@ -286,6 +287,15 @@ int main(int argc, char *argv[])
         }
 #endif
     }
-    qCritical() << "App is created";
-    return app.exec();
+    qInfo() << "App is created";
+    const int retCode = app.exec();
+
+    core.shutdownBackgroundWorkers();
+    core.saveLLARefToSettings();
+    core.removeLinkManagerConnections();
+#ifdef SEPARATE_READING
+    core.stopDeviceManagerThread();
+#endif
+
+    return retCode;
 }

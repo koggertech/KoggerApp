@@ -16,15 +16,15 @@ class DevDriver : public QObject
     Q_OBJECT
 public:
     explicit DevDriver(QObject *parent = nullptr);
-    ~DevDriver();
-    typedef enum {
+    ~DevDriver() override;
+    typedef enum : quint8 {
         DatasetOff = 0,
         DatasetCh1 = 1,
         DatasetCh2 = 2,
         DatasetRequest = 255
     } DatasetChannel;
 
-    enum UpgradeStatus {
+    enum UpgradeStatus : qint8 {
         failUpgrade = -1,
         successUpgrade = 101
     };
@@ -167,6 +167,7 @@ public:
     bool getSoundSpeedState() { return soundSpeedState_; };
     bool getUartState() { return uartState_; };
     int getAverageChartLosses() const { return averageChartLosses_; };
+    QUuid getLinkUuid() const;
     void setFirmware(const QByteArray& data);
 
 signals:
@@ -261,7 +262,6 @@ public slots:
     void setSoundSpeedState(bool state);
     void setUartState(bool state);
     void setLinkUuid(QUuid linkUuid);
-    QUuid getLinkUuid() const;
     void askBeaconPosition() {
         IDBinUsblSolution::USBLRequestBeacon ask;
         askBeaconPosition(ask);
@@ -287,34 +287,34 @@ protected:
 
     //FrameParser* m_proto;
 
-    IDBinTimestamp* idTimestamp = NULL;
-    IDBinDist* idDist = NULL;
-    IDBinChart* idChart = NULL;
-    IDBinAttitude* idAtt = NULL;
-    IDBinTemp* idTemp = NULL;
-    IDBinEncoder* idEncoder = NULL;
+    IDBinTimestamp* idTimestamp = nullptr;
+    IDBinDist* idDist = nullptr;
+    IDBinChart* idChart = nullptr;
+    IDBinAttitude* idAtt = nullptr;
+    IDBinTemp* idTemp = nullptr;
+    IDBinEncoder* idEncoder = nullptr;
 
-    IDBinDataset* idDataset = NULL;
-    IDBinDistSetup* idDistSetup = NULL;
-    IDBinChartSetup* idChartSetup = NULL;
-    IDBinDSPSetup* idDSPSetup = NULL;
-    IDBinTransc* idTransc = NULL;
-    IDBinSoundSpeed* idSoundSpeed = NULL;
-    IDBinUART* idUART = NULL;
+    IDBinDataset* idDataset = nullptr;
+    IDBinDistSetup* idDistSetup = nullptr;
+    IDBinChartSetup* idChartSetup = nullptr;
+    IDBinDSPSetup* idDSPSetup = nullptr;
+    IDBinTransc* idTransc = nullptr;
+    IDBinSoundSpeed* idSoundSpeed = nullptr;
+    IDBinUART* idUART = nullptr;
 
-    IDBinVersion* idVersion = NULL;
-    IDBinMark* idMark = NULL;
-    IDBinFlash* idFlash = NULL;
-    IDBinBoot* idBoot = NULL;
-    IDBinUpdate* idUpdate = NULL;
+    IDBinVersion* idVersion = nullptr;
+    IDBinMark* idMark = nullptr;
+    IDBinFlash* idFlash = nullptr;
+    IDBinBoot* idBoot = nullptr;
+    IDBinUpdate* idUpdate = nullptr;
 
-    IDBinNav* idNav = NULL;
-    IDBinBoatStatus* idBoatStatus = NULL;
-    IDBinDVL* idDVL = NULL;
-    IDBinDVLMode* idDVLMode = NULL;
+    IDBinNav* idNav = nullptr;
+    IDBinBoatStatus* idBoatStatus = nullptr;
+    IDBinDVL* idDVL = nullptr;
+    IDBinDVLMode* idDVLMode = nullptr;
 
-    IDBinUsblSolution* idUSBL = NULL;
-    IDBinUsblControl* idUSBLControl = NULL;
+    IDBinUsblSolution* idUSBL = nullptr;
+    IDBinUsblControl* idUSBLControl = nullptr;
 
 //    QHash<ID, IDBin*> hashIDParsing;
 //    QHash<ID, ParseCallback> hashIDCallback;
@@ -322,8 +322,8 @@ protected:
 
     typedef struct ID_Instance {
         ID_Instance() {
-            instance = NULL;
-            callback = NULL;
+            instance = nullptr;
+            callback = nullptr;
             isSetup = false;
         }
 
@@ -332,20 +332,20 @@ protected:
             callback = call;
             isSetup = is_setup;
         }
-        IDBin* instance = NULL;
-        ParseCallback callback = NULL;
+        IDBin* instance = nullptr;
+        ParseCallback callback = nullptr;
         bool isSetup = false;
     } ID_Instance;
 
     QHash<ID, ID_Instance> _hashID;
 
-    typedef enum {
+    typedef enum : quint8 {
         ConfNone = 0,
         ConfRequest,
         ConfRx
     } ConfStatus;
 
-    typedef enum {
+    typedef enum : quint8 {
         UptimeNone,
         UptimeRequest,
         UptimeFix
@@ -409,7 +409,7 @@ protected slots:
     void receivedRaw        (RawData raw_data);
     void receivedAtt        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedTemp       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
-    void receivedEncoder(Type type, Version ver, Resp resp);
+    void receivedEncoder    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
     void receivedDataset    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedDistSetup  (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);

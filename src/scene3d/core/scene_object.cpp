@@ -57,13 +57,20 @@ void SceneObject::keyPressEvent(Qt::Key key)
 }
 
 SceneObject::~SceneObject()
-{}
+{
+    delete m_renderImpl;
+    m_renderImpl = nullptr;
+}
 
 void SceneObject::setName(QString name)
 {
-    if(m_name != name)
-        m_name = name;
+    if (m_name == name) {
+        return;
+    }
 
+    m_name = name;
+
+    Q_EMIT nameChanged(m_name);
     Q_EMIT changed();
 }
 
@@ -186,6 +193,10 @@ void SceneObject::clearData()
 
 void SceneObject::setVisible(bool isVisible)
 {
+    if (m_renderImpl->m_isVisible == isVisible) {
+        return;
+    }
+
     m_renderImpl->setVisible(isVisible);
 
     Q_EMIT visibilityChanged(m_renderImpl->m_isVisible);

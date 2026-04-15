@@ -14,7 +14,7 @@ public:
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
 protected:
-    virtual void findComponent() override;
+    void findComponent() override;
 
 private:
     GraphicsScene3dView* m_graphicsSceneView = nullptr;

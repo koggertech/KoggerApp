@@ -18,25 +18,25 @@ class StreamList : public QObject
     Q_OBJECT
 public:
     explicit StreamList(QObject* parent = nullptr);
-    ~StreamList();
+    ~StreamList() override;
 
     void initTimer();
 
-    typedef enum {
+    typedef enum : uint8_t {
         RecordingError,
         RecordingIdle,
         RecordingPause,
         Recording
     } RecordingState;
 
-    typedef enum {
+    typedef enum : uint8_t {
         UploadingError,
         UploadingIdle,
         UploadingPause,
         Uploading
     } UploadingState;
 
-    typedef enum {
+    typedef enum : uint8_t {
         FragmentNone,
         FragmentNew,
         FragmentWait,
@@ -90,7 +90,7 @@ public:
     }
 
     void parse(FrameParser* frame) {
-        if(frame->id() == ID_STREAM && frame->type() == CONTENT && frame->ver() == v0 && frame->resp() == false) {
+        if(frame->id() == ID_STREAM && frame->type() == CONTENT && frame->ver() == v0 && !frame->resp()) {
             int item_cnt = frame->payloadLen()/12;
             while(item_cnt--) {
                 int id = frame->read<U2>();
@@ -115,14 +115,14 @@ public:
 
     void updateStream(int id) {
         _streams[id].id = id;
-        _modelList.appendEvent(_streams[id].id, _streams[id].size, _streams[id].data.size(), "", _streams[id].recordingState, _streams[id].uploadingState);
+        Q_EMIT _modelList.appendEvent(_streams[id].id, _streams[id].size, _streams[id].data.size(), "", _streams[id].recordingState, _streams[id].uploadingState);
     }
 
     Stream* getStream(int id) {
         if(isStreamExist(id)) {
             return &_streams[id];
         } else {
-            return NULL;
+            return nullptr;
         }
     }
 

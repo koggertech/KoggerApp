@@ -16,8 +16,9 @@ Please be reminded that as a participant in this project, it is imperative that 
 
 1. Make your changes in the new branch.
 2. Ensure your code follows the project's coding standards.
-3. Write tests that cover your changes (if applicable).
-4. Commit your changes: `git commit -m "Brief description of your changes"`
+3. Run the recommended static analysis checks when touching C++ or Qt-heavy code. See `docs/static-analysis.md`.
+4. Write tests that cover your changes (if applicable).
+5. Commit your changes: `git commit -m "Brief description of your changes"`
 
 ## Submitting a Pull Request
 

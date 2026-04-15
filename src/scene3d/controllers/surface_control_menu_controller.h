@@ -47,7 +47,7 @@ Q_SIGNALS:
     void surfaceProcessorTaskFinished();
 
 protected:
-    virtual void findComponent() override;
+    void findComponent() override;
 
 private:
     Surface* surface() const;

@@ -33,7 +33,7 @@ bool Plot2DBottomProcessing::draw(Plot2D* parent, Dataset* dataset)
             for (int i = 0; i < canvas.width(); i++) {
                 int pool_index = cursor.getIndex(i);
                 Epoch *data = dataset->fromIndex(pool_index);
-                if (data != NULL) {
+                if (data != nullptr) {
                     distance1[i] = data->distProccesing(cursor.channel1);
                 }
             }
@@ -41,7 +41,7 @@ bool Plot2DBottomProcessing::draw(Plot2D* parent, Dataset* dataset)
             for (int i = 0; i < canvas.width(); i++) {
                 int pool_index = cursor.getIndex(i);
                 Epoch *data = dataset->fromIndex(pool_index);
-                if (data != NULL) {
+                if (data != nullptr) {
                     distance1[i] = -data->distProccesing(cursor.channel1);
                     distance2[i] = data->distProccesing(cursor.channel2);
                 }

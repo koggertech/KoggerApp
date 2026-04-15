@@ -5,6 +5,7 @@ EpochEvent::EpochEvent(Type eventType,
                        int epochIndex,
                        const DatasetChannel& channelId)
     : QEvent(eventType)
+    , m_eventTypeId(static_cast<int>(eventType))
     , m_epoch(epoch)
     , m_epochIndex(epochIndex)
     , m_channelId(-1)
@@ -24,6 +25,11 @@ int EpochEvent::epochIndex() const
 DatasetChannel EpochEvent::channel() const
 {
     return m_channel;
+}
+
+int EpochEvent::eventTypeId() const
+{
+    return m_eventTypeId;
 }
 
 bool EpochEvent::isValid() const

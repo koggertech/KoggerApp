@@ -20,7 +20,9 @@ MosaicIndexProvider::MosaicIndexProvider(uint64_t maxTiles, bool initByDefault) 
 
     for (int z = maxZoom_; z <= minZoom_; ++z) {
         const float pxPerMeter = ZL[z - 1].pxPerMeter;
-        if (!(pxPerMeter > 0.0f && std::isfinite(pxPerMeter))) continue;
+        if (pxPerMeter <= 0.0f || !std::isfinite(pxPerMeter)) {
+            continue;
+        }
 
         ZoomInfo zi;
         zi.z          = z;

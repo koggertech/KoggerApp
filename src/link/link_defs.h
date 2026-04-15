@@ -4,19 +4,19 @@
 #include <QList>
 
 
-enum class LinkType {
+enum class LinkType : uint8_t {
     kLinkNone = 0,
     kLinkSerial,
     kLinkIPUDP, // also is proxy
     kLinkIPTCP,
 };
 
-enum class LinkAttribute {
+enum class LinkAttribute : uint16_t {
     kLinkAttributeNone = 0,
     kLinkAttributeBoot = 0xFFFF
 };
 
-enum class ControlType {
+enum class ControlType : uint8_t {
     kManual = 0,
     kAuto,
     kAutoOnce

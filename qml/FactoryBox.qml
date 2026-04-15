@@ -9,6 +9,11 @@ DevSettingsBox {
     id: control
     isActive: true
     property var upgradeFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property string selectedFlashPathSource: ""
+
+    function currentFlashPath() {
+        return selectedFlashPathSource
+    }
 
         FileDialog {
             id: fileDialog
@@ -22,7 +27,8 @@ DevSettingsBox {
 
             onAccepted: {
                 control.upgradeFolder = fileDialog.currentFolder
-                pathText.text = fileDialog.selectedFile.toString()
+                const localPath = fileDialog.selectedFile.toLocalFile()
+                control.selectedFlashPathSource = localPath && localPath.length ? localPath : fileDialog.selectedFile.toString()
             }
             onRejected: {
             }
@@ -325,7 +331,7 @@ DevSettingsBox {
                     Layout.fillWidth: true
                     implicitHeight: 30
                     onClicked: {
-                        core.simpleFlash(fileDialog.selectedFile.toString())
+                        core.simpleFlash(control.currentFlashPath())
                     }
                 }
 

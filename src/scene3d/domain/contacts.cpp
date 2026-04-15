@@ -95,12 +95,17 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
 {
     Q_UNUSED(watched);
 
+    auto* epochEvent = dynamic_cast<EpochEvent*>(event);
+    if (!epochEvent) {
+        return false;
+    }
+
     bool beenUpdated = false;
     auto r = RENDER_IMPL(Contacts);
-    auto* epochEvent = static_cast<EpochEvent*>(event);
+    const int eventTypeId = epochEvent->eventTypeId();
     int epIndx = epochEvent->epochIndex();
 
-    if (event->type() == ContactCreated) {
+    if (eventTypeId == static_cast<int>(ContactCreated)) {
         if (!datasetPtr_) {
             return false;
         }
@@ -121,13 +126,13 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
         }
     }
 
-    if (event->type() == ContactDeleted) {
+    if (eventTypeId == static_cast<int>(ContactDeleted)) {
         if (r->points_.remove(epIndx)) {
             beenUpdated = true;
         }
     }
 
-    if (event->type() == ContactActiveChanged) {
+    if (eventTypeId == static_cast<int>(ContactActiveChanged)) {
         //qDebug() << "EVENT" << epIndx;
         r->activeContactIndx_ = epIndx;
         beenUpdated = true;

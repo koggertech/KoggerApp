@@ -33,7 +33,7 @@ bool Plot2DDVLSolution::draw(Plot2D *parent, Dataset *dataset)
         int pool_index = cursor.getIndex(i);
         Epoch *data = dataset->fromIndex(pool_index);
 
-        if (data != NULL && data->isDVLSolutionAvail()) {
+        if (data != nullptr && data->isDVLSolutionAvail()) {
             IDBinDVL::DVLSolution sol = data->dvlSolution();
             velocityX[i] = sol.velocity.x;
             velocityY[i] = sol.velocity.y;

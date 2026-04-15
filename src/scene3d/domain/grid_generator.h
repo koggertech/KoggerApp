@@ -63,7 +63,8 @@ public:
                 queue->pop();
             }
 
-        } catch (std::bad_alloc& ex) {
+        } catch (const std::bad_alloc&) {
+            return result;
         }
 
 

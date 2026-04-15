@@ -59,9 +59,9 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
                 }
 
                 const float distanceRange = cursor.distance.range();
-                int y = (cursor.channel2 != CHANNEL_NONE) ? canvas.height() / 2 : 0;
+                int y = (cursor.channel2 != channelNone()) ? canvas.height() / 2 : 0;
                 if (std::isfinite(distanceRange) && std::abs(distanceRange) > 1e-6f) {
-                    const float yFloat = (cursor.channel2 != CHANNEL_NONE)
+                    const float yFloat = (cursor.channel2 != channelNone())
                         ? static_cast<float>(canvas.height()) * 0.5f
                             - static_cast<float>(canvas.height()) * (bottomDistance / distanceRange)
                         : static_cast<float>(canvas.height()) * (bottomDistance / distanceRange);
@@ -102,7 +102,7 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
 
     auto [channelId, subIndx, name] = parent->getSelectedChannelId();
 
-    if (channelId != CHANNEL_NONE) {
+    if (channelId != channelNone()) {
         text += "\n" + QObject::tr("Channel: ") + QString("%1").arg(name);
     }
 

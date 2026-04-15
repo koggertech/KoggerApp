@@ -15,10 +15,10 @@ public:
     {
       public:
         PolygonGroupRenderImplementation();
-        virtual ~PolygonGroupRenderImplementation();
-        virtual void render(QOpenGLFunctions* ctx,
-                            const QMatrix4x4& mvp,
-                            const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+        ~PolygonGroupRenderImplementation() override;
+        void render(QOpenGLFunctions* ctx,
+                    const QMatrix4x4& mvp,
+                    const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
         void appendPolygonRenderImpl(PolygonObject::PolygonObjectRenderImplementation* impl);
          void removeAt(int index);
     private:
@@ -29,8 +29,8 @@ public:
     };
 
     explicit PolygonGroup(QObject *parent = nullptr);
-    virtual ~PolygonGroup();
-    virtual SceneObject::SceneObjectType type() const override;
+    ~PolygonGroup() override;
+    SceneObject::SceneObjectType type() const override;
     std::shared_ptr <PolygonObject> at(int index) const;
     Q_INVOKABLE PolygonObject* polygonAt(int index);
 

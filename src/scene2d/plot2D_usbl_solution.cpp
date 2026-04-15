@@ -27,7 +27,7 @@ bool Plot2DUSBLSolution::draw(Plot2D *parent, Dataset *dataset)
         int pool_index = cursor.getIndex(i);
         Epoch *data = dataset->fromIndex(pool_index);
 
-        if (data != NULL && data->isUsblSolutionAvailable()) {
+        if (data != nullptr && data->isUsblSolutionAvailable()) {
             IDBinUsblSolution::UsblSolution sol = data->usblSolution();
 
             azimuth[i] = sol.azimuth_deg;

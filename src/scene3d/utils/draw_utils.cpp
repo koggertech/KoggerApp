@@ -2,9 +2,11 @@
 
 
 mosaic::PlotColorTable::PlotColorTable()
+    : themeId_(static_cast<int>(ThemeId::kUndefined))
+    , lowLevel_(10.0f)
+    , highLevel_(100.0f)
 {
     setTheme(static_cast<int>(ThemeId::kClassic));
-    setLevels(10.0f, 100.0f);
 }
 
 void mosaic::PlotColorTable::setTheme(int id)
@@ -196,7 +198,8 @@ void mosaic::PlotColorTable::update()
     }
 
     int colorCount = colorTableWithLevels_.size();
-    rgbaColors_.resize(colorCount * 4);
+    rgbaColors_.resize(static_cast<decltype(rgbaColors_)::size_type>(colorCount) *
+                       static_cast<decltype(rgbaColors_)::size_type>(4));
     for (int i = 0; i < colorCount; ++i) {
         QRgb color = colorTableWithLevels_[i];
         rgbaColors_[i * 4 + 0] = static_cast<uint8_t>(qRed(color));

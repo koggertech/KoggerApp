@@ -10,7 +10,6 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
 
     auto connectionType = Qt::AutoConnection;
     QObject::connect(workerThread_.get(), &QThread::started,                                workerObject_.get(), &LinkManager::createAndStartTimer,          connectionType);
-    QObject::connect(this,                &LinkManagerWrapper::sendStopTimer,               workerObject_.get(), &LinkManager::stopTimer,                    connectionType);
     QObject::connect(workerObject_.get(), &LinkManager::appendModifyModel,                  this,                &LinkManagerWrapper::appendModifyModelData, connectionType);
     QObject::connect(workerObject_.get(), &LinkManager::deleteModel,                        this,                &LinkManagerWrapper::deleteModelData,       connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsSerial,            workerObject_.get(), &LinkManager::openAsSerial,                 connectionType);
@@ -47,18 +46,11 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
 
     workerObject_->moveToThread(workerThread_.get());
     workerThread_->setObjectName("LinkThread");
-
-    workerThread_->start();
 }
 
 LinkManagerWrapper::~LinkManagerWrapper()
 {
-    if (workerThread_ && workerThread_->isRunning()) {
-        workerThread_->quit();
-        workerThread_->wait();
-    }
-
-    workerThread_->deleteLater();
+    shutdownWorkerThread();
 }
 
 LinkListModel* LinkManagerWrapper::getModelPtr()
@@ -69,6 +61,44 @@ LinkListModel* LinkManagerWrapper::getModelPtr()
 LinkManager* LinkManagerWrapper::getWorker()
 {
     return workerObject_.get();
+}
+
+void LinkManagerWrapper::startWorkerThread()
+{
+    if (workerThread_ && !workerThread_->isRunning()) {
+        workerThread_->start();
+    }
+}
+
+void LinkManagerWrapper::shutdownWorkerThread()
+{
+    if (!workerThread_) {
+        workerObject_.reset();
+        return;
+    }
+
+    if (workerObject_) {
+        if (workerThread_->isRunning()) {
+            LinkManager* managerToDelete = workerObject_.release();
+            QMetaObject::invokeMethod(
+                managerToDelete,
+                [managerToDelete]() {
+                    managerToDelete->shutdown();
+                    delete managerToDelete;
+                },
+                Qt::BlockingQueuedConnection);
+        } else {
+            workerObject_->shutdown();
+            workerObject_.reset();
+        }
+    }
+
+    if (workerThread_->isRunning()) {
+        workerThread_->quit();
+        workerThread_->wait();
+    }
+
+    workerThread_.reset();
 }
 
 void LinkManagerWrapper::closeOpenedLinks()
@@ -86,6 +116,45 @@ QHash<QUuid, QString> LinkManagerWrapper::getLinkNames() const
 void LinkManagerWrapper::openClosedLinks()
 {
     emit sendOpenFLinks();
+}
+
+bool LinkManagerWrapper::reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
+                                                       bool allowSerialLinks,
+                                                       int* skippedSerialLinks,
+                                                       QString* error)
+{
+    if (!workerObject_) {
+        if (error) {
+            *error = QStringLiteral("Link worker is not available");
+        }
+        return false;
+    }
+
+    if (workerThread_ && !workerThread_->isRunning()) {
+        workerThread_->start();
+    }
+
+    if (QThread::currentThread() == workerObject_->thread()) {
+        return workerObject_->reloadPinnedLinksFromXmlData(xmlData, allowSerialLinks, skippedSerialLinks, error);
+    }
+
+    bool ok = false;
+    int localSkippedSerialLinks = 0;
+    QString localError;
+    QMetaObject::invokeMethod(workerObject_.get(), [this, &ok, &localSkippedSerialLinks, &localError, xmlData, allowSerialLinks]() {
+        ok = workerObject_->reloadPinnedLinksFromXmlData(xmlData,
+                                                         allowSerialLinks,
+                                                         &localSkippedSerialLinks,
+                                                         &localError);
+    }, Qt::BlockingQueuedConnection);
+
+    if (skippedSerialLinks) {
+        *skippedSerialLinks = localSkippedSerialLinks;
+    }
+    if (error) {
+        *error = localError;
+    }
+    return ok;
 }
 
 QVariant LinkManagerWrapper::baudrateModel() const

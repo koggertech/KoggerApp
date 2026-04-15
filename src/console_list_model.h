@@ -19,7 +19,7 @@ public:
 
     void init();
 
-    enum Roles {
+    enum Roles : uint8_t {
         Visibility,
         Time,
         Category,

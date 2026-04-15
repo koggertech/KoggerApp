@@ -130,5 +130,5 @@ void PointGroup::PointGroupRenderImplementation::updateBounds()
         bounds.merge(it->bounds());
     }
 
-    m_bounds = std::move(bounds);
+    m_bounds = bounds;
 }

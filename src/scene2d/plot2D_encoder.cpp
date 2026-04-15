@@ -21,7 +21,7 @@ bool Plot2DEncoder::draw(Plot2D *parent, Dataset *dataset) {
         int pool_index = cursor.getIndex(i);
         Epoch *data = dataset->fromIndex(pool_index);
         
-        if (data != NULL && data->isEncodersSeted()) {
+        if (data != nullptr && data->isEncodersSeted()) {
             yaw[i] = -data->encoder1();
             pitch[i] = data->encoder2();
             roll[i] = data->encoder3();

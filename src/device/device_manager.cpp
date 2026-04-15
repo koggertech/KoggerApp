@@ -19,9 +19,7 @@ DeviceManager::DeviceManager()
       upgradeAddr_(0)
 {
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
-#ifdef SEPARATE_READING
-    qRegisterMetaType<ProtoBinOut>("ProtoBinOut&");
-#endif
+    qRegisterMetaType<Parsers::ProtoBinOut>("Parsers::ProtoBinOut");
     qRegisterMetaType<uint8_t>("uint8_t");
     qRegisterMetaType<int16_t>("int16_t");
     qRegisterMetaType<QVector<uint8_t>>("QVector<uint8_t>");
@@ -71,7 +69,7 @@ int DeviceManager::calcAverageChartLosses()
     int numOfDevices = 0;
 
     for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
-        QHash<int, DevQProperty*> devs = i.value();
+        const auto& devs = i.value();
 
         for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
             ++numOfDevices;
@@ -96,7 +94,7 @@ QList<DevQProperty *> DeviceManager::getDevList()
     devList_.clear();
 
     for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
-        QHash<int, DevQProperty*> devs = i.value();
+        const auto& devs = i.value();
 
         for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
             devList_.append(k.value());
@@ -110,7 +108,7 @@ QList<DevQProperty *> DeviceManager::getDevList(BoardVersion ver) {
     QList<DevQProperty *> list;
 
     for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
-        QHash<int, DevQProperty*> devs = i.value();
+        const auto& devs = i.value();
 
         for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
             if(k.value()->boardVersion() == ver) {
@@ -139,7 +137,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 //             emit streamChanged();
 // #endif
 
-        if (link != NULL) {
+        if (link != nullptr) {
             if (frame.isProxy() || frame.completeAsKBP()) {
                 otherProtocolStat_.remove(uuid);
             }
@@ -152,7 +150,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
         if (frame.completeAsKBP() || frame.completeAsKBP2()) {
             DevQProperty* dev = getDevice(uuid, link, frame.route());
 
-            if (isConsoled_ && link && !(frame.id() == 32 || frame.id() == 33)) { // link ptr check added
+            if (isConsoled_ && link && frame.id() != 32 && frame.id() != 33) { // link ptr check added
 #ifndef SEPARATE_READING
                 core.consoleProto(frame);
 #endif
@@ -419,7 +417,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
             }
         }
 
-        if (link != NULL) {
+        if (link != nullptr) {
             if ((frame.isCompleteAsNMEA() && !((ProtoNMEA*)&frame)->isEqualId("DBT")) ||
                 frame.isCompleteAsUBX() ||
                 frame.isCompleteAsMAVLink()) {
@@ -479,7 +477,7 @@ void DeviceManager::openFile(QString filePath)
         }
 #endif
 
-        QByteArray chunk = file.read(1024 * 1024);
+        QByteArray chunk = file.read(static_cast<qint64>(1024) * 1024);
         const qint64 chunkSize = chunk.size();
 
         if (chunkSize == 0)
@@ -519,16 +517,15 @@ void DeviceManager::openFile(QString filePath)
 #endif
             frameParser.process();
             if (frameParser.isComplete()) {
-                frameInput(someUuid, NULL, frameParser);
+                frameInput(someUuid, nullptr, frameParser);
+#ifdef SEPARATE_READING
+                if (!fileReadEnough) { // TODO: check this
+                    emit onFileReadEnough();
+                    fileReadEnough = true;
+                }
+#endif
             }
         }
-
-#ifdef SEPARATE_READING
-        if (!fileReadEnough) { // it's really that?
-            emit onFileReadEnough();
-            fileReadEnough = true;
-        }
-#endif
 
         chunk.clear();
     }
@@ -627,7 +624,7 @@ void DeviceManager::setProtoBinConsoled(bool isConsoled)
 
 void DeviceManager::upgradeLastDev(QByteArray data)
 {
-    if (lastDevs_ != NULL) {
+    if (lastDevs_ != nullptr) {
         lastDevs_->sendUpdateFW(data);
     }
 }
@@ -636,7 +633,7 @@ void DeviceManager::beaconActivationReceive(uint8_t id) {
     Q_UNUSED(id)
 
     QList<DevQProperty *> usbl_devs = getDevList(BoardUSBL);
-    if(usbl_devs.size() > 0) {
+    if (!usbl_devs.isEmpty()) {
         IDBinUsblSolution::USBLRequestBeacon ask = {};
         usbl_devs[0]->askBeaconPosition(ask);
     }
@@ -645,7 +642,7 @@ void DeviceManager::beaconActivationReceive(uint8_t id) {
 void DeviceManager::beaconDirectQueueAsk() {
     QList<DevQProperty *> usbl_devs = getDevList(BoardUSBLBeacon);
     qDebug("Sent request to the Beacon # %d", -1);
-    if(usbl_devs.size() > 0) {
+    if (!usbl_devs.isEmpty()) {
         usbl_devs[0]->enableBeaconOnce(3);
         qDebug("Sent request to the Beacon # %d", 0);
     }
@@ -654,7 +651,7 @@ void DeviceManager::beaconDirectQueueAsk() {
 void DeviceManager::setUSBLBeaconDirectAsk(bool is_ask) {
     isUSBLBeaconDirectAsk = is_ask;
     qDebug("Beacon auto scan is: %d", is_ask);
-    if(is_ask == true) {
+    if (is_ask) {
         QObject::connect(&beacon_timer, &QTimer::timeout, this, &DeviceManager::beaconDirectQueueAsk);
         beacon_timer.setInterval(3000);
         beacon_timer.start();
@@ -669,7 +666,7 @@ void DeviceManager::onLoggingKlfStarted(bool started)
 
     if (loggingStarted_) {
         for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
-            QHash<int, DevQProperty*> devs = i.value();
+            const auto& devs = i.value();
             for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
                 k.value()->requestSetup();
             }
@@ -680,7 +677,7 @@ void DeviceManager::onLoggingKlfStarted(bool started)
 void DeviceManager::onSendRequestAll(QUuid uuid)
 {
     if (devTree_.contains(uuid)) {
-        QHash<int, DevQProperty*> devs = devTree_[uuid];
+        const auto& devs = devTree_[uuid];
         for (auto i = devs.cbegin(), end = devs.cend(); i != end; ++i) {
             if (auto* dev = i.value(); dev) {
                 dev->doRequestAll();
@@ -807,12 +804,12 @@ void DeviceManager::setUseGPS(bool state)
 
 DevQProperty* DeviceManager::getDevice(QUuid uuid, Link *link, uint8_t addr)
 {
-    if ((link == NULL || lastUuid_ == uuid) && lastAddress_ == addr && lastDevice_ != NULL) {
+    if ((link == nullptr || lastUuid_ == uuid) && lastAddress_ == addr && lastDevice_ != nullptr) {
         return lastDevice_;
     }
     else {
         lastDevice_ = devTree_[uuid][addr];
-        if (lastDevice_ == NULL) {
+        if (lastDevice_ == nullptr) {
             lastDevice_ = createDev(uuid, link, addr);
         }
         lastUuid_ = uuid;
@@ -837,10 +834,10 @@ void DeviceManager::delAllDev()
 void DeviceManager::deleteDevicesByLink(QUuid uuid)
 {
     if (devTree_.contains(uuid)) {
-        QHash<int, DevQProperty*> devs = devTree_[uuid];
+        const auto& devs = devTree_[uuid];
         for (auto i = devs.cbegin(), end = devs.cend(); i != end; ++i) {
             if (lastDevice_ == i.value()) {
-                lastDevice_ = NULL;
+                lastDevice_ = nullptr;
             }
             disconnect(i.value());
 
@@ -871,7 +868,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
 #ifdef SEPARATE_READING
     auto connType = Qt::AutoConnection;
 
-    if(link != NULL) {
+    if (link != nullptr) {
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut, connType);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame, connType);
         connect(dev, &DevQProperty::startUpgradingFirmware, link, &Link::onStartUpgradingFirmware, connType);
@@ -912,9 +909,9 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
 
     QMetaObject::invokeMethod(dev, "initProcessTimerConnects", Qt::QueuedConnection);
     QMetaObject::invokeMethod(dev, "initChildsTimersConnects", Qt::QueuedConnection);
-    QMetaObject::invokeMethod(dev, "startConnection", Qt::QueuedConnection, Q_ARG(bool, link != NULL));
+    QMetaObject::invokeMethod(dev, "startConnection", Qt::QueuedConnection, Q_ARG(bool, link != nullptr));
 #else
-    if(link != NULL) {
+    if (link != nullptr) {
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame);
         connect(dev, &DevQProperty::startUpgradingFirmware, link, &Link::onStartUpgradingFirmware);
@@ -948,7 +945,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::boatStatusComplete, this, &DeviceManager::boatStatusComplete);
     connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete);
 
-    dev->startConnection(link != NULL);
+    dev->startConnection(link != nullptr);
 #endif
 
     emit devChanged();

@@ -456,7 +456,7 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
         const float stepDeg  = 360.0f / static_cast<float>(parts);
 
         QVector<QVector3D> rayVertices;
-        rayVertices.reserve(parts * 2);
+        rayVertices.reserve(static_cast<size_t>(parts) * static_cast<size_t>(2));
 
         for (int i = 0; i < parts; ++i) {
             const float angleDeg = startDeg + stepDeg * static_cast<float>(i);

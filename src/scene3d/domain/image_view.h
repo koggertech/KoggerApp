@@ -20,8 +20,8 @@ public:
     {
     public:
         ImageViewRenderImplementation();
-        virtual void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp,
-                            const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>>& shaderProgramMap) const override final;
+        void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp,
+                    const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>>& shaderProgramMap) const final;
     private:
         friend class ImageView;
 
@@ -33,7 +33,7 @@ public:
 
     /*methods*/
     explicit ImageView(QObject* parent = nullptr);
-    virtual ~ImageView();
+    ~ImageView() override;
 
     void updateTexture(const QString& imagePath, QVector3D lt, QVector3D rb);
 

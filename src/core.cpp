@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cstring>
 #include <QDebug>
+#include <QFileInfo>
 #include "bottom_track.h"
 #include "hotkeys_manager.h"
 #include "tile_provider_ids.h"
@@ -55,15 +56,128 @@ Core::Core() :
 #ifdef FLASHER
     connect(&dev_flasher_, &DeviceFlasher::sendStepInfo, this, &Core::dev_flasher_rcv);
 #endif
-
-    createDataProcessor();
 }
 
 Core::~Core()
 {
-    destroyInternetManager();
-    destroyDataProcessor();
+    shutdownBackgroundWorkers();
 }
+
+QString Core::resolveExportBasePath(const QString& basePath) const
+{
+    const QUrl url(basePath);
+    if (url.isLocalFile()) {
+        return url.toLocalFile();
+    }
+
+#ifdef Q_OS_ANDROID
+    if (url.scheme() == "content") {
+        const QString resolvedPath = resolveAndroidUriToPath(basePath);
+        if (!resolvedPath.isEmpty()) {
+            return resolvedPath;
+        }
+    }
+#endif
+
+    return basePath;
+}
+
+QString Core::buildExportFileStem(const QString& openedFilePath) const
+{
+    QString stem;
+
+    if (!openedFilePath.isEmpty()) {
+        QString normalizedPath = QUrl::fromPercentEncoding(openedFilePath.toUtf8());
+        const QUrl url(openedFilePath);
+        if (url.isLocalFile()) {
+            normalizedPath = url.toLocalFile();
+        }
+#ifdef Q_OS_ANDROID
+        else if (url.scheme() == "content") {
+            const QString resolvedPath = resolveAndroidUriToPath(openedFilePath);
+            if (!resolvedPath.isEmpty()) {
+                normalizedPath = resolvedPath;
+            }
+        }
+#endif
+
+        stem = QFileInfo(normalizedPath).completeBaseName();
+        if (stem.isEmpty()) {
+            stem = QFileInfo(openedFilePath).completeBaseName();
+        }
+    }
+
+    if (!stem.isEmpty()) {
+        return stem;
+    }
+
+    return QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
+}
+
+#ifdef Q_OS_ANDROID
+QString Core::resolveAndroidUriToPath(const QString& uriString) const
+{
+    if (uriString.isEmpty()) {
+        return QString();
+    }
+
+    const QUrl url(uriString);
+    if (url.isLocalFile()) {
+        return url.toLocalFile();
+    }
+
+    if (url.scheme() != "content" || url.host() != "com.android.externalstorage.documents") {
+        return QString();
+    }
+
+    const QString encodedUri = QString::fromUtf8(url.toEncoded());
+    int markerIndex = encodedUri.indexOf("/tree/");
+    int markerSize = 6;
+    if (markerIndex < 0) {
+        markerIndex = encodedUri.indexOf("/document/");
+        markerSize = 10;
+    }
+    if (markerIndex < 0) {
+        return QString();
+    }
+
+    QString documentId = encodedUri.mid(markerIndex + markerSize);
+    const int slashIndex = documentId.indexOf('/');
+    if (slashIndex >= 0) {
+        documentId.truncate(slashIndex);
+    }
+    documentId = QUrl::fromPercentEncoding(documentId.toUtf8());
+
+    if (documentId.startsWith("raw:")) {
+        return documentId.mid(4);
+    }
+
+    const int separatorIndex = documentId.indexOf(':');
+    const QString volumeId = separatorIndex >= 0 ? documentId.left(separatorIndex) : documentId;
+    const QString relativePath = separatorIndex >= 0 ? documentId.mid(separatorIndex + 1) : QString();
+
+    QString volumePath;
+    if (volumeId.compare("primary", Qt::CaseInsensitive) == 0) {
+        volumePath = "/storage/emulated/0";
+    }
+    else if (volumeId.compare("home", Qt::CaseInsensitive) == 0) {
+        volumePath = "/storage/emulated/0/Documents";
+    }
+    else {
+        volumePath = AndroidInterface::getSDCardPath();
+    }
+
+    if (volumePath.isEmpty()) {
+        return QString();
+    }
+    if (relativePath.isEmpty()) {
+        return volumePath;
+    }
+
+    return volumePath + "/" + relativePath;
+}
+#endif
+
 
 MosaicIndexProvider *Core::getMosaicIndexProviderPtr()
 {
@@ -98,6 +212,18 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 #endif
 
     qmlAppEnginePtr_->rootContext()->setContextProperty("FLASHER_STATE", flasherState);
+
+#if !defined(Q_OS_ANDROID)
+    {
+        HotkeysManager hotkeysManager;
+        qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysDisplayList", HotkeysManager::toDisplayVariantList(hotkeysManager.loadHotkeysList()));
+    }
+    hotkeysController_ = std::make_unique<HotkeysController>(qmlAppEnginePtr_, this);
+    qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysController", hotkeysController_.get());
+#else
+    qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysDisplayList", QVariantList());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysController", nullptr);
+#endif
 }
 
 Console* Core::getConsolePtr()
@@ -123,11 +249,6 @@ DeviceManagerWrapper* Core::getDeviceManagerWrapperPtr() const
 LinkManagerWrapper* Core::getLinkManagerWrapperPtr() const
 {
     return linkManagerWrapperPtr_.get();
-}
-
-void Core::stopLinkManagerTimer() const
-{
-    emit linkManagerWrapperPtr_->sendStopTimer();
 }
 
 void Core::setConsoleOutputEnabled(bool enabled)
@@ -241,11 +362,32 @@ void Core::resetRealtimeSessionState()
         dataHorizon_->clear();
     }
 
+    releasePlotCaches();
+
     QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::BlockingQueuedConnection);
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
         scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
+    }
+}
+
+void Core::releasePlotCaches()
+{
+    const int numPlots = plot2dList_.size();
+    for (int i = 0; i < numPlots; ++i) {
+        auto* plot = plot2dList_.at(i);
+        if (!plot) {
+            continue;
+        }
+
+        plot->releaseCache();
+        plot->plotUpdate();
+    }
+
+    if (syncLoupePlot3dPtr_) {
+        syncLoupePlot3dPtr_->releaseCache();
+        syncLoupePlot3dPtr_->plotUpdate();
     }
 }
 
@@ -281,6 +423,7 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
         resetDataProcessorConnections();
         datasetPtr_->resetDataset();
         dataHorizon_->clear();
+        releasePlotCaches();
         QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
         QMetaObject::invokeMethod(dataProcessor_, "setFilePath", Qt::QueuedConnection, Q_ARG(QString, localfilePath));
         setDataProcessorConnections();
@@ -294,7 +437,7 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
 
     QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
     if (splitname.size() > 1) {
-        QString format = splitname.last();
+        const QString& format = splitname.last();
         if (format.contains("xtf", Qt::CaseInsensitive)) {
             QFile file;
             QUrl url(localfilePath);
@@ -407,6 +550,7 @@ void Core::onFileOpenBreaked(bool onOpen)
         datasetPtr_->resetDataset();
         dataHorizon_->clear();
     }
+    releasePlotCaches();
 
     QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
     QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
@@ -449,6 +593,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
             resetDataProcessorConnections();
             datasetPtr_->resetDataset();
             dataHorizon_->clear();
+            releasePlotCaches();
             QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
             QMetaObject::invokeMethod(dataProcessor_, "setFilePath", Qt::QueuedConnection, Q_ARG(QString, localfilePath));
             setDataProcessorConnections();
@@ -469,7 +614,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
         QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
 
         if (splitname.size() > 1) {
-            QString format = splitname.last();
+            const QString& format = splitname.last();
             if (format.contains("xtf", Qt::CaseInsensitive)) {
                 QFile file;
                 QUrl url(localfilePath);
@@ -523,6 +668,7 @@ bool Core::closeLogFile()
     if (datasetPtr_) {
         datasetPtr_->resetRenderBuffers();
     }
+    releasePlotCaches();
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
         scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
@@ -624,7 +770,7 @@ bool Core::openXTF(const QByteArray& data)
     }
 
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL && i < channelList.size()) {
+        if (plot2dList_.at(i) != nullptr && i < channelList.size()) {
             if (i == 0) {
                 plot2dList_.at(i)->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, fChName, channelList[1].channelId_, channelList[1].subChannelId_, sChName);
                 plot2dList_.at(i)->plotUpdate();
@@ -693,7 +839,7 @@ bool Core::openCSV(QString name, int separatorType, int firstRow, int colTime, b
             QStringList date_time = columns[colTime-1].split(' ');
             QString date, time;
 
-            if (date_time.size() > 0) {
+            if (!date_time.empty()) {
                 if (date_time[0].contains('-'))
                     date = date_time[0];
             }
@@ -828,29 +974,47 @@ int Core::getFixBlackStripesBackwardSteps() const
 
 void Core::setFixBlackStripesState(bool state)
 {
+    if (fixBlackStripesState_ == state) {
+        return;
+    }
+
     fixBlackStripesState_ = state;
 
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesState(state);
     }
+
+    emit fixBlackStripesStateChanged();
 }
 
 void Core::setFixBlackStripesForwardSteps(int val)
 {
+    if (fixBlackStripesForwardSteps_ == val) {
+        return;
+    }
+
     fixBlackStripesForwardSteps_ = val;
 
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesForwardSteps(val);
     }
+
+    emit fixBlackStripesForwardStepsChanged();
 }
 
 void Core::setFixBlackStripesBackwardSteps(int val)
 {
+    if (fixBlackStripesBackwardSteps_ == val) {
+        return;
+    }
+
     fixBlackStripesBackwardSteps_ = val;
 
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesBackwardSteps(val);
     }
+
+    emit fixBlackStripesBackwardStepsChanged();
 }
 
 void Core::setBottomTrackRealtimeFromSettings(bool state)
@@ -879,6 +1043,7 @@ void Core::setCsvLogging(bool isLogging)
         logger_.stopCsvLogging();
     }
     isLoggingCsv_ = isLogging && success;
+    emit loggingCsvChanged();
 }
 
 bool Core::getUseGPS() const
@@ -888,9 +1053,12 @@ bool Core::getUseGPS() const
 
 void Core::setUseGPS(bool state)
 {
-    //qDebug() << "Core::setUseGPS" << state;
+    const bool changed = (isUseGPS_ != state);
     isUseGPS_ = state;
     QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "setUseGPS", Qt::QueuedConnection, Q_ARG(bool, isUseGPS_));
+    if (changed) {
+        emit useGPSChanged();
+    }
 }
 
 void Core::setNeedForceZooming(bool state)
@@ -904,8 +1072,12 @@ void Core::setNeedForceZooming(bool state)
 }
 
 bool Core::exportComplexToCSV(QString file_path) {
-    QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
-    logger_.creatExportStream(file_path + "/" + export_file_name + ".csv");
+    const QString resolvedBasePath = this->resolveExportBasePath(file_path);
+    const QString export_file_name = buildExportFileStem(openedfilePath_);
+    const QString exportPath = resolvedBasePath + "/" + export_file_name + ".csv";
+    if (!logger_.creatExportStream(exportPath)) {
+        return false;
+    }
 
     //auto ch_list = datasetPtr_->channelsList();
     // _dataset->setRefPosition(1518);
@@ -913,31 +1085,31 @@ bool Core::exportComplexToCSV(QString file_path) {
     for(int i = 0; i < datasetPtr_->size(); i++) {
         Epoch* epoch = datasetPtr_->fromIndex(i);
 
-        if(epoch == NULL) { continue; }
+        if(epoch == nullptr) { continue; }
 
         if(epoch->isComplexSignalAvail()) {
             ComplexSignals& sigs = epoch->complexSignals();
 
             for (auto dev_i = sigs.cbegin(), end = sigs.cend(); dev_i != end; ++dev_i) {
-                QMap<int, QVector<ComplexSignal>> dev = dev_i.value();
+                const auto& dev = dev_i.value();
 
                 for (auto group_i = dev.cbegin(), end = dev.cend(); group_i != end; ++group_i) {
                     int group_id  = group_i.key();
-                    QVector<ComplexSignal> sig = group_i.value();
-                    int ch_size = sig.size();
+                    const auto& sig = group_i.value();
+                    const int ch_size = sig.size();
 
                     for(int ch_i = 0; ch_i < ch_size; ch_i++) {
                         int ch_num = ch_i + group_id*32;
 
-                        ComplexF* data = sig[ch_i].data.data();
-                        int data_size = sig[ch_i].data.size();
+                        const ComplexF* data = sig[ch_i].data.constData();
+                        const int data_size = sig[ch_i].data.size();
 
                         QString row_data;
                         row_data.append(QString("%1,%2").arg(i).arg(ch_num));
                         row_data.append(QString(",%1").arg(sig[ch_i].globalOffset));
                         row_data.append(QString(",%1").arg(sig[ch_i].sampleRate));
 
-                        if(data != NULL && data_size > 0) {
+                        if(data != nullptr && data_size > 0) {
                             for(int ci = 0; ci < data_size; ci++) {
                                 row_data.append(QString(",%1,%2").arg(data[ci].real).arg(data[ci].imag));
                             }
@@ -958,19 +1130,19 @@ bool Core::exportComplexToCSV(QString file_path) {
 
 bool Core::exportUSBLToCSV(QString filePath)
 {
-    QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
-
-    logger_.creatExportStream(filePath + "/" + export_file_name + ".csv");
-    //QMap<int, DatasetChannel> ch_list = datasetPtr_->channelsList();
-    //Q_UNUSED(ch_list);
-    // _dataset->setRefPosition(1518);
+    const QString resolvedBasePath = this->resolveExportBasePath(filePath);
+    const QString export_file_name = buildExportFileStem(openedfilePath_);
+    const QString exportPath = resolvedBasePath + "/" + export_file_name + ".csv";
+    if (!logger_.creatExportStream(exportPath)) {
+        return false;
+    }
 
     logger_.dataExport("epoch,yaw,pitch,roll,north,east,ping_counter,carrier_counter,snr,azimuth_deg,elevation_deg,distance_m\n");
 
     for (int i = 0; i < datasetPtr_->size(); i += 1) {
         Epoch* epoch = datasetPtr_->fromIndex(i);
 
-        if (epoch == NULL)
+        if (epoch == nullptr)
             continue;
 
         NED boatPosNed = epoch->getPositionGNSS().ned;
@@ -997,8 +1169,12 @@ bool Core::exportUSBLToCSV(QString filePath)
 
 bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation)
 {
-    QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
-    logger_.creatExportStream(filePath + "/" + export_file_name + ".csv");
+    const QString resolvedBasePath = this->resolveExportBasePath(filePath);
+    const QString export_file_name = buildExportFileStem(openedfilePath_);
+    const QString exportPath = resolvedBasePath + "/" + export_file_name + ".csv";
+    if (!logger_.creatExportStream(exportPath)) {
+        return false;
+    }
 
     bool meas_nbr = true;
     bool event_id = true;
@@ -1210,20 +1386,20 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         Epoch::Echogram* sensor = epoch->chart(channelId);
 
         if (sonar_height) {
-            if (sensor != NULL && isfinite(sensor->sensorPosition.ned.d)) {
+            if (sensor != nullptr && isfinite(sensor->sensorPosition.ned.d)) {
                 row_data.append(QString::number(-sensor->sensorPosition.ned.d, 'f', 3));
             }
-            else if (sensor != NULL && isfinite(sensor->sensorPosition.lla.altitude)) {
+            else if (sensor != nullptr && isfinite(sensor->sensorPosition.lla.altitude)) {
                 row_data.append(QString::number(sensor->sensorPosition.lla.altitude, 'f', 3));
             }
             row_data.append(",");
         }
 
         if (bottom_height) {
-            if(sensor != NULL && isfinite(sensor->bottomProcessing.bottomPoint.ned.d)) {
+            if(sensor != nullptr && isfinite(sensor->bottomProcessing.bottomPoint.ned.d)) {
                 row_data.append(QString::number(-sensor->bottomProcessing.bottomPoint.ned.d, 'f', 3));
             }
-            else if (sensor != NULL && isfinite(sensor->bottomProcessing.bottomPoint.lla.altitude)) {
+            else if (sensor != nullptr && isfinite(sensor->bottomProcessing.bottomPoint.lla.altitude)) {
                 row_data.append(QString::number(sensor->bottomProcessing.bottomPoint.lla.altitude, 'f', 3));
             }
             row_data.append(",");
@@ -1255,8 +1431,12 @@ bool Core::exportPlotAsXTF(QString filePath)
         return false;
     }
 
-    QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
-    logger_.creatExportStream(filePath + "/_" + export_file_name + ".xtf");
+    const QString resolvedBasePath = this->resolveExportBasePath(filePath);
+    const QString export_file_name = buildExportFileStem(openedfilePath_);
+    const QString exportPath = resolvedBasePath + "/_" + export_file_name + ".xtf";
+    if (!logger_.creatExportStream(exportPath)) {
+        return false;
+    }
 
     auto ch1 = plot2dList_[0]->plotDatasetChannel();
     auto subCh1 = plot2dList_[0]->plotDatasetSubChannel();
@@ -1272,7 +1452,7 @@ bool Core::exportPlotAsXTF(QString filePath)
 void Core::setPlotStartLevel(int level)
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL) {
+        if (plot2dList_.at(i) != nullptr) {
             plot2dList_.at(i)->setEchogramLowLevel(level);
         }
     }
@@ -1284,7 +1464,7 @@ void Core::setPlotStartLevel(int level)
 void Core::setPlotStopLevel(int level)
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL)
+        if (plot2dList_.at(i) != nullptr)
             plot2dList_.at(i)->setEchogramHightLevel(level);
     }
     if (syncLoupePlot3dPtr_) {
@@ -1295,7 +1475,7 @@ void Core::setPlotStopLevel(int level)
 void Core::setTimelinePosition(double position)
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL)
+        if (plot2dList_.at(i) != nullptr)
             plot2dList_.at(i)->setTimelinePosition(position);
     }
 }
@@ -1303,7 +1483,7 @@ void Core::setTimelinePosition(double position)
 void Core::resetAim()
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL)
+        if (plot2dList_.at(i) != nullptr)
             plot2dList_.at(i)->resetAim();
     }
 }
@@ -1340,7 +1520,7 @@ void Core::UILoad(QObject* object, const QUrl& url)
     datasetPtr_->setScene3D(scene3dViewPtr_);
 
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL) {
+        if (plot2dList_.at(i) != nullptr) {
             plot2dList_.at(i)->setPlot(datasetPtr_);
             plot2dList_.at(i)->setDataProcessor(dataProcessor_);
             scene3dViewPtr_->bottomTrack()->installEventFilter(plot2dList_.at(i));
@@ -1949,9 +2129,14 @@ QHash<QUuid, QString> Core::getLinkNames() const
     return retVal;
 }
 
-void Core::shutdownDataProcessor()
+void Core::shutdownBackgroundWorkers()
 {
-    QMetaObject::invokeMethod(dataProcessor_, "shutdown", Qt::BlockingQueuedConnection);
+    if (linkManagerWrapperPtr_) {
+        linkManagerWrapperPtr_->shutdownWorkerThread();
+    }
+
+    destroyInternetManager();
+    destroyDataProcessor();
 }
 
 bool Core::isOpenedFile() const
@@ -2130,7 +2315,6 @@ void Core::createInternetManager()
         internetManager_->moveToThread(internetThread_);
 
         QObject::connect(internetThread_, &QThread::started, internetManager_, &InternetManager::start, Qt::QueuedConnection);
-        QObject::connect(internetThread_, &QThread::finished, internetManager_, &QObject::deleteLater, Qt::QueuedConnection);
         QObject::connect(internetManager_, &InternetManager::internetAvailabilityChanged, this,
                          [this](bool available) {
                              internetAvailable_ = available;
@@ -2149,14 +2333,40 @@ void Core::createInternetManager()
 
 void Core::destroyInternetManager()
 {
-    if (internetManager_ && internetThread_ && internetThread_->isRunning()) {
-        QMetaObject::invokeMethod(internetManager_, "stop", Qt::BlockingQueuedConnection);
+    if (!internetManager_ && !internetThread_) {
+        return;
     }
+
+    if (internetManager_ && internetThread_ && internetThread_->isRunning()) {
+        InternetManager* managerToDelete = internetManager_;
+        const bool invokeOk = QMetaObject::invokeMethod(
+            managerToDelete,
+            [managerToDelete]() {
+                managerToDelete->stop();
+                delete managerToDelete;
+            },
+            Qt::BlockingQueuedConnection);
+
+        if (!invokeOk) {
+            if (internetThread_->isRunning()) {
+                internetThread_->quit();
+                internetThread_->wait();
+            }
+            delete internetManager_;
+        }
+    }
+    else {
+        delete internetManager_;
+    }
+
+    internetManager_ = nullptr;
+
     if (internetThread_ && internetThread_->isRunning()) {
         internetThread_->quit();
         internetThread_->wait();
     }
-    internetManager_ = nullptr;
+
+    delete internetThread_;
     internetThread_ = nullptr;
 }
 
@@ -2165,20 +2375,35 @@ int Core::getDataProcessorState() const
     return static_cast<int>(dataProcessorState_);
 }
 
+void Core::initAfterApp()
+{
+    if (linkManagerWrapperPtr_) {
+        linkManagerWrapperPtr_->startWorkerThread();
+    }
+
+    if (deviceManagerWrapperPtr_) {
+        deviceManagerWrapperPtr_->startWorkerThread();
+    }
+
+    createDataProcessor();
+}
+
 void Core::initStreamList()
 {
+    initAfterApp();
     deviceManagerWrapperPtr_->initStreamList();
 }
 
 void Core::createDataProcessor()
 {
+    if (dataProcessor_ || dataProcThread_) {
+        return;
+    }
+
     dataProcThread_ = new QThread(this);
     dataProcessor_  = new DataProcessor(nullptr, datasetPtr_);
 
     dataProcessor_->moveToThread(dataProcThread_);
-
-    QObject::connect(dataProcThread_, &QThread::finished, dataProcessor_,  &QObject::deleteLater);
-    QObject::connect(dataProcThread_, &QThread::finished, dataProcThread_, &QObject::deleteLater);
 
     dataProcThread_->setObjectName("DataProcThread");
 
@@ -2189,16 +2414,32 @@ void Core::createDataProcessor()
 
 void Core::destroyDataProcessor()
 {
+    if (!dataProcessor_ && !dataProcThread_) {
+        return;
+    }
+
     resetDataProcessorConnections();
+
+    if (dataProcessor_) {
+        if (dataProcThread_ && dataProcThread_->isRunning()) {
+            DataProcessor* processorToDelete = dataProcessor_;
+            QMetaObject::invokeMethod(processorToDelete, "shutdown", Qt::BlockingQueuedConnection);
+            QMetaObject::invokeMethod(processorToDelete, "deleteLater", Qt::BlockingQueuedConnection);
+            dataProcessor_ = nullptr;
+        } else {
+            dataProcessor_->shutdown();
+            delete dataProcessor_;
+            dataProcessor_ = nullptr;
+        }
+    }
 
     if (dataProcThread_ && dataProcThread_->isRunning()) {
         dataProcThread_->quit();
         dataProcThread_->wait();
     }
 
-    delete dataProcessor_;
+    delete dataProcThread_;
 
-    dataProcessor_ = nullptr;
     dataProcThread_ = nullptr;
 }
 

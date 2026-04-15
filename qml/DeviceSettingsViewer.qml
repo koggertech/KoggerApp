@@ -11,6 +11,10 @@ MenuScroll {
         devConnection.importSettingsToAllDevices(path)
     }
 
+
+    function openFileDialog() {
+        devConnection.openNewFileDialog()
+    }
     Column {
         // width: menuWidth
         // Layout.margins: 0
@@ -115,7 +119,7 @@ MenuScroll {
                                 anchors.fill: parent
                                 anchors.leftMargin: 6
                                 anchors.rightMargin: 6
-                                text: recentFileRow.filePath
+                                text: devConnection.urlDisplay(recentFileRow.filePath)
                                 horizontalAlignment: Text.AlignRight
                                 verticalAlignment: Text.AlignVCenter
                                 elide: Text.ElideLeft

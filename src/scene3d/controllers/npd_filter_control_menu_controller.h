@@ -12,11 +12,11 @@ class NpdFilterControlMenuController : public QmlComponentController
 public:
     NpdFilterControlMenuController(GraphicsScene3dView *sceneView = nullptr, QObject *parent = nullptr);
 
-    virtual ~NpdFilterControlMenuController();
+    ~NpdFilterControlMenuController() override;
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
 protected:
-    virtual void findComponent() override;
+    void findComponent() override;
 
 private:
     GraphicsScene3dView* m_graphicsSceneView = nullptr;

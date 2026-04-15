@@ -1,6 +1,7 @@
 #include "geojson_tree_model.h"
 
 #include <QHash>
+#include <utility>
 
 GeoJsonTreeModel::GeoJsonTreeModel(QObject* parent)
     : QAbstractItemModel(parent)
@@ -122,7 +123,7 @@ void GeoJsonTreeModel::setNodes(QVector<GeoJsonTreeNode> nodes)
     order.reserve(nodes_.size());
     storage_.reserve(static_cast<size_t>(nodes_.size()));
 
-    for (const auto& data : nodes_) {
+    for (const auto& data : std::as_const(nodes_)) {
         auto node = std::make_unique<Node>();
         node->data = data;
         Node* raw = node.get();
@@ -204,7 +205,7 @@ bool GeoJsonTreeModel::removeNode(const QString& id)
     parent->children.removeAt(row);
     endRemoveRows();
 
-    for (const auto& rid : ids) {
+    for (const auto& rid : std::as_const(ids)) {
         idMap_.remove(rid);
         for (int i = 0; i < nodes_.size(); ++i) {
             if (nodes_.at(i).id == rid) {
@@ -314,7 +315,7 @@ void GeoJsonTreeModel::collectIds(Node* node, QVector<QString>& ids) const
         return;
     }
     ids.push_back(node->data.id);
-    for (auto* child : node->children) {
+    for (auto* child : std::as_const(node->children)) {
         collectIds(child, ids);
     }
 }

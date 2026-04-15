@@ -4,7 +4,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 
-const QUrl InternetManager::probeUrl_ = QUrl(QStringLiteral("8.8.8.8")); // fallback, if reachability == Unknown "http://cp.cloudflare.com/generate_204"
+const QUrl InternetManager::probeUrl_ = QUrl(QStringLiteral("http://cp.cloudflare.com/generate_204")); // fallback, if reachability == Unknown
 
 InternetManager::InternetManager(QObject* parent) :
     QObject(parent),

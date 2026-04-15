@@ -68,7 +68,7 @@ public:
     float timelinePosition();
     void scrollPosition(int columns);
 
-    void setDataChannel(bool fromGui, const ChannelId& channel, uint8_t subChannel1, const QString& portName1, const ChannelId& channel2 = CHANNEL_NONE, uint8_t subChannel2 = 0, const QString& portName2 = QString());
+    void setDataChannel(bool fromGui, const ChannelId& channel, uint8_t subChannel1, const QString& portName1, const ChannelId& channel2 = channelNone(), uint8_t subChannel2 = 0, const QString& portName2 = QString());
 
     bool getIsContactChanged();
 
@@ -150,6 +150,7 @@ public:
     DatasetCursor& cursor();
 
     void resetCash();
+    void releaseCache();
     Canvas image(int width, int height);
     void reindexingCursor();
     void reRangeDistance();

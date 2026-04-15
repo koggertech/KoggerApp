@@ -28,6 +28,7 @@ void NearestPointFilter::setDistance(float distance)
         return;
 
     m_distance = distance;
+    emit distanceChanged();
 }
 
 void NearestPointFilter::apply(const QVector<QVector3D> &origin, QVector<QVector3D> &filtered)

@@ -13,13 +13,13 @@ class BoatTrackControlMenuController : public QmlComponentController
 
 public:
     explicit BoatTrackControlMenuController(QObject* parent = nullptr);
-    virtual ~BoatTrackControlMenuController();
+    ~BoatTrackControlMenuController() override;
 
     Q_INVOKABLE void onVisibilityCheckBoxCheckedChanged(bool checked);
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
 protected:
-    virtual void findComponent() override final;
+    void findComponent() final;
 
 private:
     BoatTrack* boatTrack() const;

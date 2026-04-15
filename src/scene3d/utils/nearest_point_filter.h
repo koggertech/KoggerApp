@@ -10,12 +10,12 @@
 class NearestPointFilter : public AbstractEntityDataFilter
 {
     Q_OBJECT
-    Q_PROPERTY(float distance READ distance WRITE setDistance)
+    Q_PROPERTY(float distance READ distance WRITE setDistance NOTIFY distanceChanged)
 
 public:
     NearestPointFilter(QObject* parent = nullptr);
     NearestPointFilter(float distance, QObject* parent = nullptr);
-    virtual ~NearestPointFilter();
+    ~NearestPointFilter() override;
 
     AbstractEntityDataFilter::FilterType type() const override;
     float distance() const;
@@ -23,6 +23,9 @@ public:
 public Q_SLOTS:
     void apply(const QVector <QVector3D>& origin, QVector <QVector3D>& filtered) override;
     void setDistance(float distance);
+
+signals:
+    void distanceChanged();
 
 private:
     float m_distance = 1.0f;

@@ -17,10 +17,7 @@ static constexpr int colorTableSize_  = 255;
 
 static bool checkLength(float dist)
 {
-    if (qFuzzyIsNull(dist) || (dist < 0.0f)) {
-        return false;
-    }
-    return true;
+    return !qFuzzyIsNull(dist) && dist >= 0.0f;
 }
 
 static int sampleIndex(Epoch::Echogram *echogramPtr, float dist)
@@ -125,7 +122,7 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     QSet<int> pendingUsedSet;
     std::priority_queue<int, std::vector<int>, std::greater<int>> pendingUsedMin;
     QVector<int> progressBatch;
-    progressBatch.reserve(kProgressStep * 2);
+    progressBatch.reserve(static_cast<size_t>(kProgressStep) * static_cast<size_t>(2));
     QVector<int> chunk;
 
     const int progressZoom = zoomFromMpp(tileResolution_);
@@ -600,7 +597,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
 
     // update matrix
     for (const auto& i : indxs) {
-        auto epoch = datasetPtr_->fromIndexCopy(i);
+        auto epoch = datasetPtr_->fromIndexMosaicCopy(i);
         if (!epoch.isValid()) {
             continue;
         }
@@ -823,8 +820,8 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
             stopAfterThis = true;
         }
 
-        auto segFEpoch = datasetPtr_->fromIndexCopy(pairEpochF);
-        auto segSEpoch = datasetPtr_->fromIndexCopy(pairEpochS);
+        auto segFEpoch = datasetPtr_->fromIndexMosaicCopy(pairEpochF);
+        auto segSEpoch = datasetPtr_->fromIndexMosaicCopy(pairEpochS);
         if (!segFEpoch.isValid() || !segSEpoch.isValid()) {
             continue;
         }
@@ -891,8 +888,8 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
             continue;
         }
 
-        float segFDistProc = -1.0f * static_cast<float>(segFIsOdd ? segFEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance() : segFEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance());
-        float segSDistProc = -1.0f * static_cast<float>(segSIsOdd ? segSEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance() : segSEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance());
+        float segFDistProc = -1.0f * static_cast<float>(segFCharts->bottomProcessing.getDistance());
+        float segSDistProc = -1.0f * static_cast<float>(segSCharts->bottomProcessing.getDistance());
         float segFPhDistX = segFPhEndPnt.x() - segFPhBegPnt.x();
         float segFPhDistY = segFPhEndPnt.y() - segFPhBegPnt.y();
         float segSPhDistX = segSPhEndPnt.x() - segSPhBegPnt.x();
@@ -1340,7 +1337,6 @@ void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles) // может вы�
         surfaceMeshPtr_->setTileUsed(initedNow, false); // поднимет счетчики, эвикт выключен чтобы не выгрузить возможно нужные тайлы
     }
 
-    return;
 }
 
 bool MosaicProcessor::prefetchTiles(const QSet<TileKey> &keys) // подгрузка тайлов с hotCache, db (dataprocessor)

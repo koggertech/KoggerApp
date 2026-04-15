@@ -47,6 +47,7 @@ public:
     bool isDbReady() const noexcept;
 
 public slots:
+    Q_INVOKABLE quint64 prefetchProgressTick() const;
     // this
     void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
     void setSuppressResults(bool state) noexcept;
@@ -109,7 +110,6 @@ public slots:
 
     void requestTilesFromDB(const QSet<TileKey>& keys);
     void filterNotFoundOut(const QSet<TileKey>& in, QSet<TileKey>* out);
-    quint64 prefetchProgressTick() const;
     void prefetchWait(quint64 lastTick);
     void shutdown(); // correct termination of processes
 

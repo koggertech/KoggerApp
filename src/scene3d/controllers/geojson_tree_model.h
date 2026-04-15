@@ -23,7 +23,7 @@ class GeoJsonTreeModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    enum Roles {
+    enum Roles : quint16 {
         IdRole = Qt::UserRole + 1,
         ParentIdRole,
         NameRole,

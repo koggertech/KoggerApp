@@ -8,17 +8,20 @@
 class MaxPointsFilter : public AbstractEntityDataFilter
 {
     Q_OBJECT
-    Q_PROPERTY(int maxPointsCount READ maxPointsCount WRITE setMaxPointsCount)
+    Q_PROPERTY(int maxPointsCount READ maxPointsCount WRITE setMaxPointsCount NOTIFY maxPointsCountChanged)
 
 public:
     explicit MaxPointsFilter(QObject* parent = nullptr);
     explicit MaxPointsFilter(int maxPointsCount, QObject* parent = nullptr);
-    virtual ~MaxPointsFilter();
+    ~MaxPointsFilter() override;
 
-    virtual AbstractEntityDataFilter::FilterType type() const override;
-    virtual void apply(const QVector <QVector3D>& origin, QVector <QVector3D>& filtered) override;
+    AbstractEntityDataFilter::FilterType type() const override;
+    void apply(const QVector <QVector3D>& origin, QVector <QVector3D>& filtered) override;
     int maxPointsCount() const;
     void setMaxPointsCount(int count);
+
+signals:
+    void maxPointsCountChanged();
 
 private:
     int m_maxPointsCount = 10000.0f;

@@ -17,6 +17,7 @@ WaterFall {
     property bool loupeZoomAdjusting: false
     property bool loupeZoomWasVisibleBeforeAdjust: false
     property int loupeZoomSavedAimEpoch: -1
+    property real settingsMenuSpacer: Math.max(4, Math.round(theme.controlHeight * 0.2))
 
     horizontal: horisontalVertical.checked
 
@@ -99,6 +100,14 @@ WaterFall {
         }
         plotCheckButton.checked = false
         return true
+    }
+
+    function toggleEchogramType() {
+        if (echogramTypesList.count <= 0) {
+            return
+        }
+
+        echogramTypesList.currentIndex = (echogramTypesList.currentIndex + 1) % echogramTypesList.count
     }
 
     function closeTransientUi() {
@@ -384,11 +393,12 @@ WaterFall {
         id: settingsRow
         anchors.left: parent.left
         anchors.bottom: parent.bottom
+        anchors.bottomMargin: settingsMenuSpacer
 
         MenuFrame {
             id: leftPanel
             isOpacityControlled: true
-            Layout.alignment: Qt.AlignLeft
+            Layout.alignment: Qt.AlignLeft | Qt.AlignBottom
             Layout.leftMargin: (indx === 1 &&
                                 !is3dVisible &&
                                 height > plot.height - 130 * theme.resCoeff)
@@ -472,7 +482,10 @@ WaterFall {
         MenuScroll {
             id: settingsScroll
             visible: plotCheckButton.checked
-            Layout.preferredHeight: parent.height
+            Layout.alignment: Qt.AlignBottom
+            readonly property real maxHeightByPlot: Math.max(theme.controlHeight * 2, plot.height - settingsMenuSpacer * 2)
+            readonly property real contentHeightWithPadding: plotSettings.implicitHeight + topPadding + bottomPadding
+            Layout.preferredHeight: Math.min(maxHeightByPlot, contentHeightWithPadding)
 
             onVisibleChanged: {
                 if (!visible) {
