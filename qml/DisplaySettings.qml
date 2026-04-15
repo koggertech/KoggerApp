@@ -1356,7 +1356,7 @@ GridLayout {
         }
 
         ParamGroup {
-            groupName: "KoggerApp 0.14.2"
+            groupName: "KoggerApp 0.14.3"
         }
     }
 
