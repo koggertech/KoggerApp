@@ -1309,9 +1309,9 @@ GridLayout {
                             if (!path.length) {
                                 return
                             }
+                            uiStateSerializer.importFromJsonFile(path)
                             uiStateImportRow.importPathSource = path
                             uiStateImportPathText.text = uiStateImportRow.displayUrl(path)
-                            uiStateSerializer.importFromJsonFile(path)
                         }
                     }
 
