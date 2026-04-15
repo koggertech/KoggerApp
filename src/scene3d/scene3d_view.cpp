@@ -1127,6 +1127,55 @@ void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::zoomStepTrigger(qreal delta)
+{
+    if (!m_camera || !std::isfinite(delta) || std::fabs(delta) <= 1e-6) {
+        return;
+    }
+
+    const QPointF anchor(width() * 0.5, height() * 0.5);
+    zoomAroundScreenAnchor(delta * 0.3f, anchor);
+    updatePlaneGrid();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
+void GraphicsScene3dView::panStepTrigger(qreal dx, qreal dy)
+{
+    if (!m_camera) {
+        return;
+    }
+
+    const float dist = std::max(1.0f, static_cast<float>(m_camera->distForMapView()));
+    const float step = std::max(5.0f, dist * 0.12f);
+
+    m_camera->m_lookAt.setX(m_camera->m_lookAt.x() + static_cast<float>(dx * 0.2f) * step);
+    m_camera->m_lookAt.setY(m_camera->m_lookAt.y() + static_cast<float>(dy * 0.2f) * step);
+    m_camera->updateViewMatrix();
+
+    updatePlaneGrid();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
+void GraphicsScene3dView::zStepTrigger(qreal delta)
+{
+    if (!std::isfinite(delta) || std::fabs(delta) <= 1e-6) {
+        return;
+    }
+
+    setVerticalScale(m_verticalScale + static_cast<float>(delta * 0.3f));
+}
+void GraphicsScene3dView::resetCameraAngleTrigger()
+{
+    if (!m_camera || !m_axesThumbnailCamera) {
+        return;
+    }
+
+    m_camera->resetRotationAngle();
+    m_axesThumbnailCamera->resetRotationAngle();
+    updatePlaneGrid();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
 void GraphicsScene3dView::setRulerEnabled(bool enabled)
 {
     if (rulerEnabled_ == enabled) {

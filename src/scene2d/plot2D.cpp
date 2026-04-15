@@ -757,28 +757,24 @@ void Plot2D::zoomDistance(float ratio)
 {
     cursor_.distance.mode = AutoRangeNone;
 
-    int  delta = ratio;
-    if(delta == 0) return;
+    const float delta = ratio;
+    if (qFuzzyIsNull(delta)) {
+        return;
+    }
 
     float from = cursor_.distance.from;
     float to = cursor_.distance.to;
-    float absrange = abs(to - from);
+    float absrange = std::abs(to - from);
 
-    float zoom = delta < 0 ? -delta*0.01f : delta*0.01f;
-    float delta_range = absrange*zoom;
-    float new_range = 0;
-
-    if(delta_range < 0.1) {
-        delta_range = 0.1;
-    } else if(delta_range > 5) {
-        delta_range = 5;
-    }
-
-    if(delta > 0) {
-        new_range = absrange + delta_range;
-    } else {
-        new_range = absrange - delta_range;
-    }
+    constexpr float kWheelStep = 120.0f;
+    constexpr float kMinZoomPerStep = 1.03f;
+    constexpr float kMaxZoomPerStep = 1.15f;
+    const float rangeNorm = qBound(0.0f,
+                                   std::log10(qMax(absrange, 1.0f)) / std::log10(500.0f),
+                                   1.0f);
+    const float zoomPerStep = kMinZoomPerStep + (kMaxZoomPerStep - kMinZoomPerStep) * rangeNorm;
+    const float steps = delta / kWheelStep;
+    float new_range = absrange * std::pow(zoomPerStep, steps);
 
     if(new_range < 1) {
         new_range = 1;
@@ -786,13 +782,12 @@ void Plot2D::zoomDistance(float ratio)
         new_range = 500;
     }
 
-
     if (cursor_.isChannelDoubled()) {
-        cursor_.distance.from = -ceil(new_range / 2);
-        cursor_.distance.to = ceil(new_range / 2);
+        cursor_.distance.from = -new_range * 0.5f;
+        cursor_.distance.to = new_range * 0.5f;
     }
     else {
-       cursor_.distance.to = ceil(cursor_.distance.from + new_range);
+       cursor_.distance.to = cursor_.distance.from + new_range;
     }
 
     plotUpdate();
@@ -1327,3 +1322,4 @@ float Plot2D::timelinePosition()
 {
     return cursor_.position;
 }
+

@@ -150,7 +150,7 @@ public:
         _textFont = new QFont("PT Sans Caption", 14);
         _textFont->setPixelSize(22);
         _textFontS = new QFont("PT Sans Caption", 12);
-        _textFontS->setPixelSize(18);
+        _textFont->setPixelSize(18);
 #endif
         _textErrorColor = new QColor(250, 0, 0);
 

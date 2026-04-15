@@ -78,5 +78,6 @@
         <file>IsobathsExtraSettings.qml</file>
         <file>LocationExtraSettings.qml</file>
         <file>MosaicExtraSettings.qml</file>
+        <file>HotkeysDialog.qml</file>
     </qresource>
 </RCC>

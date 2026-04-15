@@ -8,8 +8,8 @@ import QtCore
 GridLayout {
     id: control
 
-    readonly property real preferenceComboWidth: 300
-    readonly property real preferenceBottomTrackComboWidth: 300
+    readonly property real preferenceComboWidth: 200
+    readonly property real preferenceBottomTrackComboWidth: 250
 
     property int numPlots: numPlotsSpinBox.value
     property bool syncPlots: plotSyncCheckBox.checked
@@ -1086,6 +1086,12 @@ GridLayout {
                     property alias consoleVisible: consoleVisible.checked
                 }
             }
+
+            CButton {
+                visible: Qt.platform.os !== "android"
+                text: qsTr("Keyboard shortcuts")
+                onClicked: hotkeysDialog.open()
+            }
         }
 
         ParamGroup {
@@ -1303,9 +1309,9 @@ GridLayout {
                             if (!path.length) {
                                 return
                             }
+                            uiStateSerializer.importFromJsonFile(path)
                             uiStateImportRow.importPathSource = path
                             uiStateImportPathText.text = uiStateImportRow.displayUrl(path)
-                            uiStateSerializer.importFromJsonFile(path)
                         }
                     }
 
@@ -1350,8 +1356,12 @@ GridLayout {
         }
 
         ParamGroup {
-            groupName: "KoggerApp 0.14.2"
+            groupName: "KoggerApp 0.14.3"
         }
+    }
+
+    HotkeysDialog {
+        id: hotkeysDialog
     }
 
     Popup {
