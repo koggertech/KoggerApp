@@ -8,8 +8,8 @@ import QtCore
 GridLayout {
     id: control
 
-    readonly property real preferenceComboWidth: 300
-    readonly property real preferenceBottomTrackComboWidth: 300
+    readonly property real preferenceComboWidth: 200
+    readonly property real preferenceBottomTrackComboWidth: 250
 
     property int numPlots: numPlotsSpinBox.value
     property bool syncPlots: plotSyncCheckBox.checked
@@ -1356,7 +1356,7 @@ GridLayout {
         }
 
         ParamGroup {
-            groupName: "KoggerApp 0.14.2"
+            groupName: "KoggerApp 0.14.3"
         }
     }
 
