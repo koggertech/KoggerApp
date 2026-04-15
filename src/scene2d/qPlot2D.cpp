@@ -377,7 +377,12 @@ void qPlot2D::setPlotEnabled(bool state)
     }
     Plot2D::setPlotEnabled(state);
     Q_EMIT plotEnabledChanged();
-    update();
+    if (state) {
+        m_updateTimer->start(30);
+        update();
+    } else {
+        m_updateTimer->stop();
+    }
 }
 
 void qPlot2D::mosaicLOffsetChanged(float val)
@@ -617,9 +622,11 @@ void qPlot2D::onCursorMoved(int x, int y)
 }
 
 void qPlot2D::timerUpdater() {
-    if(m_needUpdate) {
+    if (!Plot2D::plotEnabled())
+        return;
+    if (m_needUpdate) {
         m_needUpdate = false;
-       update();
+        update();
     }
 }
 

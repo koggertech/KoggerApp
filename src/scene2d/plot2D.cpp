@@ -272,6 +272,8 @@ QPoint Plot2D::getMousePosByDepthAndEpochIndx(float depth, int epochIndx, bool i
 
 void Plot2D::addReRenderPlotIndxs(const QSet<int> &indxs)
 {
+    if (!plotEnabled())
+        return;
     echogram_.addReRenderPlotIndxs(indxs);
 }
 
