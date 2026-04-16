@@ -21,7 +21,6 @@ DevSettingsBox {
 
     readonly property int standDegUnitTenths: 18
     readonly property int standStepUnit: 16
-
     function stepsFromDegTenths(valueTenths) {
         return Math.round(valueTenths / standDegUnitTenths) * standStepUnit
     }
@@ -88,10 +87,225 @@ DevSettingsBox {
                        standPostFireWaitSpin.value)
     }
 
+    function startDownloadById(streamId) {
+        if (!dev || streamId < 0) {
+            return
+        }
+
+        deviceManagerWrapper.startStreamDownload(dev, streamId)
+    }
+
+    function startSelectedDownload() {
+        if (filesList.currentItem) {
+            startDownloadById(filesList.currentItem.streamIdValue)
+        }
+    }
+
+    function recorderBannerPalette() {
+        if (!dev || !dev.recorderStatusAvailable) {
+            return {
+                top: "#3d4657",
+                bottom: "#262f3d",
+                border: "#576174",
+                accent: "#94a3b8",
+                chip: "#2f3949",
+                strongText: "#f4f7fb",
+                softText: "#cdd7e3"
+            }
+        }
+        if (dev.recorderDeviceCondition === 3) {
+            return {
+                top: "#6b3033",
+                bottom: "#432225",
+                border: "#9d5758",
+                accent: "#f4b4ad",
+                chip: "#5a2e31",
+                strongText: "#fff1ee",
+                softText: "#f1cbc4"
+            }
+        }
+        if (dev.recorderDeviceCondition === 2) {
+            return {
+                top: "#6f5730",
+                bottom: "#453821",
+                border: "#9d8458",
+                accent: "#f2d29c",
+                chip: "#584729",
+                strongText: "#fff7e8",
+                softText: "#ecdcb7"
+            }
+        }
+        if (dev.recorderDeviceCondition === 1) {
+            return {
+                top: "#5b6230",
+                bottom: "#39401f",
+                border: "#899456",
+                accent: "#d9e7a3",
+                chip: "#4a5127",
+                strongText: "#f7fbe9",
+                softText: "#d8e2b7"
+            }
+        }
+        return {
+            top: "#214c4c",
+            bottom: "#153335",
+            border: "#4e8582",
+            accent: "#8dd8c9",
+            chip: "#1b4042",
+            strongText: "#eefcf8",
+            softText: "#c4e7df"
+        }
+    }
+
+    function formatDurationSeconds(totalSeconds) {
+        let hours = Math.floor(totalSeconds / 3600)
+        let minutes = Math.floor((totalSeconds % 3600) / 60)
+        let seconds = totalSeconds % 60
+
+        if (hours > 0) {
+            return hours + qsTr("h ") + minutes + qsTr("m ") + seconds + qsTr("s")
+        }
+        if (minutes > 0) {
+            return minutes + qsTr("m ") + seconds + qsTr("s")
+        }
+        return seconds + qsTr("s")
+    }
+
+    function formatBytes(bytes) {
+        let units = [qsTr("B"), qsTr("KB"), qsTr("MB"), qsTr("GB")]
+        let value = bytes
+        let unitIndex = 0
+
+        while (value >= 1024 && unitIndex < units.length - 1) {
+            value /= 1024
+            unitIndex++
+        }
+
+        let decimals = unitIndex === 0 ? 0 : (value >= 100 ? 0 : (value >= 10 ? 1 : 2))
+        return Number(value).toLocaleString(Qt.locale(), "f", decimals) + " " + units[unitIndex]
+    }
+
     ColumnLayout {
         id: columnItem
         spacing: 24
         Layout.margins: 24
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            implicitHeight: statusBanner.implicitHeight
+
+            Rectangle {
+                id: statusBanner
+                Layout.fillWidth: true
+                implicitHeight: 156
+                radius: 18
+                border.width: 1
+                border.color: control.recorderBannerPalette().border
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: control.recorderBannerPalette().top }
+                    GradientStop { position: 1.0; color: control.recorderBannerPalette().bottom }
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 16
+                    spacing: 12
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+
+                        Rectangle {
+                            radius: 11
+                            color: control.recorderBannerPalette().chip
+                            border.width: 1
+                            border.color: Qt.rgba(1, 1, 1, 0.12)
+                            implicitWidth: conditionText.implicitWidth + 22
+                            implicitHeight: 32
+
+                            Text {
+                                id: conditionText
+                                anchors.centerIn: parent
+                                text: dev ? dev.recorderConditionText + ", " + control.formatBytes(dev.recorderFreeSpaceBytes) + " free"  : qsTr(" ")
+                                color: control.recorderBannerPalette().strongText
+                                font.bold: true
+                                font.pixelSize: 13
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: dev ? dev.recorderReasonText : qsTr(" ")
+                                color: control.recorderBannerPalette().strongText
+                                font.pixelSize: 18
+                                font.bold: true
+                                wrapMode: Text.WordWrap
+                            }
+
+                            // Text {
+                            //     Layout.fillWidth: true
+                            //     text: !dev || !dev.recorderStatusAvailable
+                            //           ? qsTr(" ")
+                            //           : qsTr("Mode %1").arg(dev.recorderMode === 1 ? qsTr("On") : qsTr("Off"))
+                            //     color: control.recorderBannerPalette().softText
+                            //     font.pixelSize: 12
+                            //     wrapMode: Text.WordWrap
+                            // }
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        Repeater {
+                            model: [
+                                { icon: "qrc:/icons/ui/record.svg", value: dev ? dev.recorderStateText: qsTr(" ") },
+                                { icon: "qrc:/icons/ui/file.svg", value: !dev || !dev.recorderStatusAvailable ? qsTr(" ") : "#" + dev.recorderCurrentLogId},
+                                { icon: "qrc:/icons/ui/ruler_measure.svg", value: dev ? control.formatBytes(dev.recorderRecordedSizeBytes) : qsTr(" ") },
+                                // { icon: "qrc:/icons/ui/stack_forward.svg", value: dev ? dev.recorderProgressText : qsTr(" ") },
+                                { icon: "qrc:/icons/ui/clock-edit.svg", value: dev ? control.formatDurationSeconds(dev.recorderRecordingDurationSeconds) : qsTr(" ") },
+                                // { icon: "qrc:/icons/ui/clock-edit.svg", value: dev ? dev.recorderFreshnessText : qsTr(" ") },
+
+                            ]
+
+                            delegate: Rectangle {
+                                radius: 5
+                                color: control.recorderBannerPalette().chip
+                                border.width: 1
+                                border.color: Qt.rgba(1, 1, 1, 0.08)
+                                implicitHeight: 30
+                                implicitWidth: chipRow.implicitWidth + 18
+
+                                Row {
+                                    id: chipRow
+                                    anchors.centerIn: parent
+                                    spacing: 6
+
+                                    Image {
+                                        source: modelData.icon
+                                        width: 14
+                                        height: 14
+                                        fillMode: Image.PreserveAspectFit
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    Text {
+                                        text: modelData.value
+                                        color: control.recorderBannerPalette().strongText
+                                        font.pixelSize: 12
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         ParamGroup {
             groupName: qsTr("Stand")
@@ -393,6 +607,8 @@ DevSettingsBox {
                     id: wrapper
                     width: filesList.width
                     height: 28
+                    property int streamIdValue: id
+                    property string savedPathValue: savedPath
 
                     RowLayout {
                         id: rowItem
@@ -410,7 +626,7 @@ DevSettingsBox {
                         }
 
                         CTextField {
-                            text: "31.12.21 11:11"
+                            text: time
                             implicitWidth: 170
                             background: Rectangle {
                                 color: "transparent"
@@ -442,6 +658,22 @@ DevSettingsBox {
                             }
                         }
 
+                        CTextField {
+                            text: retryRound > 0 || missingRanges > 0
+                                  ? statusText + " | R" + retryRound + " | G" + missingRanges
+                                  : statusText
+                            implicitWidth: 110
+                            background: Rectangle {
+                                color: uploadState === 1 ? "#294d2a"
+                                      : uploadState === 2 ? "#6a5a14"
+                                      : uploadState === 3 ? "#1f3a5f"
+                                      : uploadState === 4 ? "#5f2d1f"
+                                      : "transparent"
+                                border.width: 1
+                                border.color: theme.controlBorderColor
+                            }
+                        }
+
                         CButton {
                             text: "D"
                             implicitWidth: 26
@@ -450,7 +682,7 @@ DevSettingsBox {
 
                             onClicked: {
                                 filesList.currentIndex = index
-                                dev.requestStream(id)
+                                control.startDownloadById(streamIdValue)
                             }
                         }
                     }
@@ -488,13 +720,27 @@ DevSettingsBox {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 100
                     text: qsTr("Download")
+                    enabled: !!filesList.currentItem
+
+                    onClicked: {
+                        control.startSelectedDownload()
+                    }
                 }
 
                 CButton {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 60
                     text: qsTr("Pause")
+                    enabled: false
                 }
+            }
+
+            CText {
+                Layout.fillWidth: true
+                visible: !!(filesList.currentItem && filesList.currentItem.savedPathValue)
+                text: visible ? qsTr("Saved: ") + filesList.currentItem.savedPathValue : ""
+                wrapMode: Text.WordWrap
+                opacity: 0.8
             }
         }
 

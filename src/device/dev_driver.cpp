@@ -8,6 +8,8 @@
 extern Core core;
 
 namespace {
+constexpr qint64 kRecorderStatusPollIntervalMs = 3000;
+
 bool parseHexPayload(const QString& text, QByteArray& outBytes, QString* err = nullptr)
 {
     outBytes.clear();
@@ -33,6 +35,36 @@ bool parseHexPayload(const QString& text, QByteArray& outBytes, QString* err = n
         outBytes.append(static_cast<char>(value));
     }
     return true;
+}
+
+QString formatDurationSeconds(quint32 totalSeconds)
+{
+    const quint32 hours = totalSeconds / 3600;
+    const quint32 minutes = (totalSeconds % 3600) / 60;
+    const quint32 seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+        return QStringLiteral("%1h %2m %3s").arg(hours).arg(minutes).arg(seconds);
+    }
+    if (minutes > 0) {
+        return QStringLiteral("%1m %2s").arg(minutes).arg(seconds);
+    }
+    return QStringLiteral("%1s").arg(seconds);
+}
+
+QString formatByteCount(quint32 bytes)
+{
+    static const char* units[] = {"B", "KB", "MB", "GB"};
+
+    double value = static_cast<double>(bytes);
+    int unitIndex = 0;
+    while (value >= 1024.0 && unitIndex < 3) {
+        value /= 1024.0;
+        ++unitIndex;
+    }
+
+    const int decimals = unitIndex == 0 ? 0 : (value >= 100.0 ? 0 : value >= 10.0 ? 1 : 2);
+    return QStringLiteral("%1 %2").arg(QString::number(value, 'f', decimals)).arg(QLatin1String(units[unitIndex]));
 }
 }
 
@@ -89,6 +121,7 @@ DevDriver::DevDriver(QObject *parent)
 
     regID(idUSBLControl = new IDBinUsblControl(), &DevDriver::receivedUSBLControl);
     regID(idStand = new IDBinStand(), &DevDriver::receivedStand);
+    regID(idRecorderStatus = new IDBinRecorderStatus(), &DevDriver::receivedRecorderStatus);
 
 #ifndef SEPARATE_READING
     connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process);
@@ -520,6 +553,169 @@ QString DevDriver::modemLastPayload() const
     return QString::fromLatin1(modemLastPayload_);
 }
 
+bool DevDriver::recorderStatusAvailable() const
+{
+    return idRecorderStatus != NULL && idRecorderStatus->isValid();
+}
+
+int DevDriver::recorderDeviceCondition() const
+{
+    return recorderStatusAvailable() ? static_cast<int>(idRecorderStatus->status().packed_status & 0x07u) : static_cast<int>(IDBinRecorderStatus::GeneralDeviceStatusV0::Fine);
+}
+
+int DevDriver::recorderMode() const
+{
+    return recorderStatusAvailable() ? static_cast<int>((idRecorderStatus->status().packed_status >> 3) & 0x03u) : static_cast<int>(IDBinRecorderStatus::GeneralDeviceStatusV0::Off);
+}
+
+int DevDriver::recorderState() const
+{
+    return recorderStatusAvailable() ? static_cast<int>((idRecorderStatus->status().packed_status >> 5) & 0x07u) : static_cast<int>(IDBinRecorderStatus::GeneralDeviceStatusV0::Initializing);
+}
+
+quint32 DevDriver::recorderStatusFlags() const
+{
+    return recorderStatusAvailable() ? idRecorderStatus->status().status_flags : 0u;
+}
+
+quint32 DevDriver::recorderWarningFlags() const
+{
+    return recorderStatusAvailable() ? idRecorderStatus->status().warning_flags : 0u;
+}
+
+quint32 DevDriver::recorderDegradedFlags() const
+{
+    return recorderStatusAvailable() ? idRecorderStatus->status().degraded_flags : 0u;
+}
+
+quint32 DevDriver::recorderCriticalFlags() const
+{
+    return recorderStatusAvailable() ? idRecorderStatus->status().critical_flags : 0u;
+}
+
+int DevDriver::recorderUptimeSeconds() const
+{
+    return recorderStatusAvailable() ? static_cast<int>(idRecorderStatus->status().uptime_10s) * 10 : 0;
+}
+
+int DevDriver::recorderCurrentLogId() const
+{
+    return recorderStatusAvailable() ? static_cast<int>(idRecorderStatus->status().current_log_id) : 0;
+}
+
+quint32 DevDriver::recorderRecordedSizeBytes() const
+{
+    return recorderStatusAvailable() ? static_cast<quint32>(idRecorderStatus->status().recorded_size_64k) * 65536u : 0u;
+}
+
+quint64 DevDriver::recorderFreeSpaceBytes() const
+{
+    return recorderStatusAvailable() ? static_cast<quint64>(idRecorderStatus->status().free_space_1m) * 1000000ull : 0ull;
+}
+
+int DevDriver::recorderRecordingDurationSeconds() const
+{
+    return recorderStatusAvailable() ? static_cast<int>(idRecorderStatus->status().recording_duration_seconds) : 0;
+}
+
+int DevDriver::recorderSecondsSinceLastWrite() const
+{
+    return recorderStatusAvailable() ? static_cast<int>(idRecorderStatus->status().seconds_since_last_write) : 0;
+}
+
+QString DevDriver::recorderConditionText() const
+{
+    if (!recorderStatusAvailable()) {
+        return QStringLiteral("No status yet");
+    }
+
+    switch (recorderDeviceCondition()) {
+    case IDBinRecorderStatus::GeneralDeviceStatusV0::Fine:
+        return QStringLiteral("Fine");
+    case IDBinRecorderStatus::GeneralDeviceStatusV0::Warning:
+        return QStringLiteral("Warning");
+    case IDBinRecorderStatus::GeneralDeviceStatusV0::Degraded:
+        return QStringLiteral("Degraded");
+    case IDBinRecorderStatus::GeneralDeviceStatusV0::Critical:
+        return QStringLiteral("Critical");
+    default:
+        return QStringLiteral("Unknown");
+    }
+}
+
+QString DevDriver::recorderStateText() const
+{
+    if (!recorderStatusAvailable()) {
+        return QStringLiteral("No status yet");
+    }
+
+    switch (recorderState()) {
+    case IDBinRecorderStatus::GeneralDeviceStatusV0::Initializing:
+        return QStringLiteral("Initializing");
+    case IDBinRecorderStatus::GeneralDeviceStatusV0::Idle:
+        return QStringLiteral("Idle");
+    case IDBinRecorderStatus::GeneralDeviceStatusV0::Recording:
+        return QStringLiteral("Recording");
+    case IDBinRecorderStatus::GeneralDeviceStatusV0::CriticalState:
+        return QStringLiteral("Critical");
+    case IDBinRecorderStatus::GeneralDeviceStatusV0::CriticalDisabled:
+        return QStringLiteral("Critical disabled");
+    default:
+        return QStringLiteral("Unknown");
+    }
+}
+
+QString DevDriver::recorderReasonText() const
+{
+    if (!recorderStatusAvailable()) {
+        return QStringLiteral("No status yet");
+    }
+
+    const quint32 criticalFlags = recorderCriticalFlags();
+    if ((criticalFlags & IDBinRecorderStatus::GeneralDeviceStatusV0::StorageUnavailable) != 0u) {
+        return QStringLiteral("Storage unavailable");
+    }
+    if ((criticalFlags & IDBinRecorderStatus::GeneralDeviceStatusV0::RecordingBackendError) != 0u) {
+        return QStringLiteral("Recording backend error");
+    }
+    if ((recorderDegradedFlags() & IDBinRecorderStatus::GeneralDeviceStatusV0::LogDrop) != 0u) {
+        return QStringLiteral("Log drop detected");
+    }
+    if (recorderDeviceCondition() == IDBinRecorderStatus::GeneralDeviceStatusV0::Critical) {
+        return QStringLiteral("Recorder critical state");
+    }
+    if (recorderState() == IDBinRecorderStatus::GeneralDeviceStatusV0::Recording) {
+        return QStringLiteral("Recording in progress");
+    }
+    if (recorderState() == IDBinRecorderStatus::GeneralDeviceStatusV0::Idle) {
+        return QStringLiteral("Ready");
+    }
+    if (recorderState() == IDBinRecorderStatus::GeneralDeviceStatusV0::Initializing) {
+        return QStringLiteral("Initializing recorder");
+    }
+    return QStringLiteral("Healthy");
+}
+
+QString DevDriver::recorderFreshnessText() const
+{
+    if (!recorderStatusAvailable()) {
+        return QStringLiteral(" ");
+    }
+
+    return QStringLiteral("%1").arg(formatDurationSeconds(recorderSecondsSinceLastWrite()));
+}
+
+QString DevDriver::recorderProgressText() const
+{
+    if (!recorderStatusAvailable()) {
+        return QStringLiteral(" ");
+    }
+
+    return QStringLiteral("%1/%2")
+        .arg(QStringLiteral("~%1").arg(formatByteCount(recorderRecordedSizeBytes())))
+        .arg(formatDurationSeconds(recorderRecordingDurationSeconds()));
+}
+
 void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask)
 {
     Q_UNUSED(ask)
@@ -772,6 +968,17 @@ void DevDriver::setFirmware(const QByteArray &data)
     sendUpdateFW(data);
 }
 
+void DevDriver::resetRecorderStatus()
+{
+    lastRecorderStatusRequestMs_ = 0;
+    if (idRecorderStatus != NULL && idRecorderStatus->isValid()) {
+        idRecorderStatus->reset();
+        emit recorderStatusChanged();
+    } else if (idRecorderStatus != NULL) {
+        idRecorderStatus->reset();
+    }
+}
+
 void DevDriver::protoComplete(Parsers::FrameParser& proto)
 {
     if (!proto.isComplete()) {
@@ -829,6 +1036,7 @@ void DevDriver::stopConnection() {
     m_state.connect = false;
     m_processTimer.stop();
     m_devName = "...";
+    resetRecorderStatus();
     emit deviceVersionChanged();
 }
 
@@ -837,6 +1045,7 @@ void DevDriver::restartState() {
     //qDebug() << "restart";
     m_state.resetState();
     idVersion->reset();
+    resetRecorderStatus();
     m_processTimer.start(200);
 }
 
@@ -850,6 +1059,15 @@ void DevDriver::requestChart() {
     idChart->simpleRequest(v0);
 }
 
+void DevDriver::requestRecorderStatus() {
+    if (!m_state.connect || !isRecorder() || idRecorderStatus == NULL) {
+        return;
+    }
+
+    lastRecorderStatusRequestMs_ = QDateTime::currentMSecsSinceEpoch();
+    idRecorderStatus->requestAll();
+}
+
 void DevDriver::requestStreamList() {
     ProtoBinOut id_out;
     id_out.create(GETTING, v0, ID_STREAM, getDevAddress());
@@ -861,12 +1079,30 @@ void DevDriver::requestStreamList() {
 }
 
 void DevDriver::requestStream(int stream_id) {
+    QVariantMap fullRange;
+    fullRange.insert(QStringLiteral("start"), 0u);
+    fullRange.insert(QStringLiteral("end"), 0x0FFFFFFFu);
+    requestStreamRanges(stream_id, {fullRange}, 0);
+}
+
+void DevDriver::requestStreamRanges(int stream_id, const QVariantList& ranges, uint16_t flags)
+{
     ProtoBinOut id_out;
     id_out.create(SETTING, v1, ID_STREAM, getDevAddress());
     id_out.write<U2>(stream_id);
-    id_out.write<U2>(0); // FLAGS
-    id_out.write<U4>(0x0);
-    id_out.write<U4>(0xFFFFFFF);
+    id_out.write<U2>(flags);
+    for (const QVariant& rangeVar : ranges) {
+        const QVariantMap range = rangeVar.toMap();
+        bool okStart = false;
+        bool okEnd = false;
+        const uint32_t start = range.value(QStringLiteral("start")).toUInt(&okStart);
+        const uint32_t end = range.value(QStringLiteral("end")).toUInt(&okEnd);
+        if (!okStart || !okEnd || end <= start) {
+            continue;
+        }
+        id_out.write<U4>(start);
+        id_out.write<U4>(end);
+    }
     id_out.end();
     emit binFrameOut(id_out);
 }
@@ -1769,6 +2005,16 @@ void DevDriver::receivedStand(Parsers::Type type, Parsers::Version ver, Parsers:
     Q_UNUSED(resp)
 }
 
+void DevDriver::receivedRecorderStatus(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
+{
+    Q_UNUSED(type)
+    Q_UNUSED(ver)
+
+    if (resp == respNone) {
+        emit recorderStatusChanged();
+    }
+}
+
 void DevDriver::process() {
     int64_t curr_time = QDateTime::currentMSecsSinceEpoch();
     if(m_state.duplex) {
@@ -1796,6 +2042,15 @@ void DevDriver::process() {
                 if(!(m_state.in_boot || m_state.in_update) && m_state.conf < ConfRequest) {
                     requestSetup();
                     //qDebug() << "Request setup";
+                }
+
+                if (m_state.connect
+                    && !m_state.in_boot
+                    && !m_state.in_update
+                    && m_state.conf >= ConfRequest
+                    && isRecorder()
+                    && curr_time - lastRecorderStatusRequestMs_ >= kRecorderStatusPollIntervalMs) {
+                    requestRecorderStatus();
                 }
 
                 if(m_state.in_update && !m_bootloaderLagacyMode) {

@@ -33,6 +33,9 @@ DeviceManager::DeviceManager()
     qRegisterMetaType<IDBinDVL::DVLSolution>("IDBinDVL::DVLSolution");
     qRegisterMetaType<uint32_t>("uint32_t");
     qRegisterMetaType<FrameParser>("FrameParser");
+
+    connect(&streamList_, &StreamList::requestRanges, this, &DeviceManager::onStreamRequestRanges);
+    connect(&streamList_, &StreamList::stateChanged, this, &DeviceManager::streamChanged);
 }
 
 DeviceManager::~DeviceManager()
@@ -92,6 +95,21 @@ void DeviceManager::initStreamList()
     streamList_.initTimer();
 }
 
+void DeviceManager::startStreamDownload(DevQProperty* dev, int id)
+{
+    activeStreamDev_ = dev;
+    streamList_.startDownload(id);
+}
+
+void DeviceManager::onStreamRequestRanges(int logId, const QVariantList& ranges)
+{
+    if (!activeStreamDev_) {
+        return;
+    }
+
+    activeStreamDev_->requestStreamRanges(logId, ranges, 0);
+}
+
 QList<DevQProperty *> DeviceManager::getDevList()
 {
     devList_.clear();
@@ -131,14 +149,14 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
     if (frame.isComplete()) {
 
-// #if !defined(Q_OS_ANDROID)
-//         if (frame.isStream())
-//             streamList_.append(&frame);
-//         if (frame.id() == ID_STREAM)
-//             streamList_.parse(&frame);
-//         if (streamList_.isListChenged())
-//             emit streamChanged();
-// #endif
+#if !defined(Q_OS_ANDROID)
+        if (frame.isStream()) {
+            streamList_.append(&frame);
+        }
+        if (frame.id() == ID_STREAM) {
+            streamList_.parse(&frame);
+        }
+#endif
 
         if (link != NULL) {
             if (frame.isProxy() || frame.completeAsKBP()) {
@@ -192,7 +210,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
             ProtoNMEA& prot_nmea = (ProtoNMEA&)frame;
             QString str_data = QByteArray((char*)prot_nmea.frame(), prot_nmea.frameLen() - 2);
 #ifndef SEPARATE_READING
-            core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
+            // core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
 #endif
             if (prot_nmea.isEqualId("DBT")) {
                 prot_nmea.skip();
@@ -314,15 +332,15 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
                 // if (isConsoled_) {
 #ifndef SEPARATE_READING
-                    core.consoleInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4, time %5:%6:%7.%8")
-                                         .arg(fix_type).arg(satellites_in_used).arg(double(lat_int)*0.0000001).arg(double(lon_int)*0.0000001).arg(h).arg(m).arg(s).arg(nanosec/1000));
+                    // core.consoleInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4, time %5:%6:%7.%8")
+                    //                      .arg(fix_type).arg(satellites_in_used).arg(double(lat_int)*0.0000001).arg(double(lon_int)*0.0000001).arg(h).arg(m).arg(s).arg(nanosec/1000));
 #endif
                     // }
             }
             else {
                 // if (isConsoled_)
 #ifndef SEPARATE_READING
-                    core.consoleInfo(QString(">> UBX: class/id 0x%1 0x%2, len %3").arg(ubx_frame.msgClass(), 2, 16, QLatin1Char('0')).arg(ubx_frame.msgId(), 2, 16, QLatin1Char('0')).arg(ubx_frame.frameLen()));
+                    // core.consoleInfo(QString(">> UBX: class/id 0x%1 0x%2, len %3").arg(ubx_frame.msgClass(), 2, 16, QLatin1Char('0')).arg(ubx_frame.msgId(), 2, 16, QLatin1Char('0')).arg(ubx_frame.frameLen()));
 #endif
             }
         }
@@ -395,7 +413,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 }
 #ifndef SEPARATE_READING
 
-                // core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+                core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
 #endif
             }
             else {

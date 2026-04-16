@@ -7,8 +7,11 @@
 #include "QMap"
 #include "proto_binnary.h"
 #include "stream_list_model.h"
+#include "QDateTime"
 #include "QTime"
 #include "QTimer"
+#include <QVariantList>
+#include <QString>
 
 
 using namespace Parsers;
@@ -30,10 +33,11 @@ public:
     } RecordingState;
 
     typedef enum {
-        UploadingError,
         UploadingIdle,
-        UploadingPause,
-        Uploading
+        Uploading,
+        UploadingRetrying,
+        UploadingComplete,
+        UploadingIncomplete
     } UploadingState;
 
     typedef enum {
@@ -49,74 +53,72 @@ public:
         FragmentStatus status;
     } Fragment;
 
+    struct RetrievalDiagnostic
+    {
+        enum ProblemId : uint16_t {
+            ProblemNone = 0,
+            WrongStart = 1,
+            WrongEnd = 2,
+            TruncatedTail = 3,
+            ReadError = 4,
+            InvalidRange = 5
+        };
+
+        enum FileState : uint16_t {
+            FileStateNone = 0,
+            Archived = 1,
+            Live = 2
+        };
+
+        uint16_t logId = 0;
+        ProblemId problemId = ProblemNone;
+        FileState fileState = FileStateNone;
+        uint16_t reserved = 0;
+        uint32_t requestedStart = 0;
+        uint32_t requestedEnd = 0;
+        uint32_t actualFileSize = 0;
+        uint32_t visibleFileSize = 0;
+
+        bool isValid() const { return problemId != ProblemNone; }
+    };
+
     struct Stream
     {
         uint16_t id = 0;
         RecordingState recordingState = RecordingError;
-        UploadingState uploadingState = UploadingError;
+        UploadingState uploadingState = UploadingIdle;
+        uint32_t listedSize = 0;
         uint32_t size = 0;
         uint32_t unixt = 0;
         QByteArray data;
         QList<Fragment> gaps;
+        QString savedFilePath;
+        RetrievalDiagnostic lastDiagnostic;
+        QString lastDiagnosticText;
         struct {
-            uint32_t _fragments;
+            uint32_t _fragments = 0;
             uint32_t _lostFragments = 0;
             uint32_t _fillFragments = 0;
         } _counter;
         int modelIndex = -1;
+        uint64_t downloadStartedAt = 0;
+        uint64_t lastDataAt = 0;
+        uint64_t lastRequestAt = 0;
+        uint32_t lastRequestedMissingBytes = 0;
+        int lastRequestedMissingRanges = 0;
+        int retryRound = 0;
+        int noProgressRetryRounds = 0;
+        bool requestInFlight = false;
+        QVariantList currentRequestRanges;
     };
 
-    void append(FrameParser* frame) {
-        if(frame->isStream()) {
-            uint16_t current_id = frame->streamId();
+    void append(FrameParser* frame);
 
-            if(_lastStreamId != current_id) {
-                if(_streams.contains(current_id)) {
-                    _lastStreamId = current_id;
-                    _lastStream = &_streams[current_id];
-                }
+    void parse(FrameParser* frame);
 
-                if(_lastStreamId != current_id) {
-                    updateStream(current_id);
-                    _lastStream = getStream(current_id);
-                    _lastStreamId = current_id;
-                }
-            }
-
-            insert(_lastStream, frame->frame(), frame->streamOffset(), frame->frameLen());
-        } else {
-             _streams[0].data.append((char*)frame->frame(), frame->frameLen());
-        }
-    }
-
-    void parse(FrameParser* frame) {
-        if(frame->id() == ID_STREAM && frame->type() == CONTENT && frame->ver() == v0 && frame->resp() == false) {
-            int item_cnt = frame->payloadLen()/12;
-            while(item_cnt--) {
-                int id = frame->read<U2>();
-                uint16_t flags = frame->read<U2>();
-                uint32_t size = frame->read<U4>();
-                uint32_t unixt = frame->read<U4>();
-
-                updateStream(id);
-                Stream* stream = getStream(id);
-
-                if(stream->size < size) { stream->size = size; }
-                stream->unixt = unixt;
-
-                stream->recordingState = (RecordingState)(flags & 0x3);
-
-                updateStream(id);
-
-                _isListChenged = true;
-            }
-        }
-    }
-
-    void updateStream(int id) {
-        _streams[id].id = id;
-        _modelList.appendEvent(_streams[id].id, _streams[id].size, _streams[id].data.size(), "", _streams[id].recordingState, _streams[id].uploadingState);
-    }
+    void updateStream(int id);
+    void startDownload(int id);
+    void handleRetrievalDiagnostic(const RetrievalDiagnostic& diagnostic);
 
     Stream* getStream(int id) {
         if(isStreamExist(id)) {
@@ -144,8 +146,9 @@ public:
 
 protected:
     QMap<int, Stream> _streams;
+    int _activeDownloadId = -1;
     uint16_t _lastStreamId = 0xFFFF;
-    Stream* _lastStream;
+    Stream* _lastStream = nullptr;
     bool _isListChenged = false;
     StreamListModel _modelList;
     QTimer* _updater = nullptr;
@@ -153,78 +156,25 @@ protected:
     uint64_t _timeLastGapsInsert = 0;
     bool _isInserting = false;
 
+    void insert(Stream* stream, uint8_t* frame, uint32_t offset, uint16_t size);
+    void trimGaps(Stream* stream, uint32_t offset, uint32_t end);
+    uint32_t coveredSize(const Stream& stream) const;
+    uint32_t missingSize(const Stream& stream) const;
+    bool isDownloadComplete(const Stream& stream) const;
+    QString statusText(const Stream& stream) const;
+    QString resolveRecorderDirectoryPath() const;
+    bool saveStreamToFile(Stream* stream);
+    void completeDownload(Stream* stream, bool isComplete);
+    QVariantList missingRanges(const Stream& stream) const;
+    QVariantList batchRanges(const QVariantList& ranges, int maxCount) const;
+    void dispatchRequest(Stream* stream, const QVariantList& ranges, bool isRetry);
+    void applyTruncatedTail(Stream* stream, const RetrievalDiagnostic& diagnostic);
+    QString diagnosticText(const RetrievalDiagnostic& diagnostic) const;
+    void emitStateChanged();
 
-
-    void insert(Stream* stream, uint8_t* frame, uint32_t offset, uint16_t size) {
-        uint32_t end = offset + size;
-        QList<Fragment>& gaps = stream->gaps;
-        QByteArray& data = stream->data;
-
-        _timeLastGapsInsert = timestamp();
-        _isInserting = true;
-
-        if(stream->size < end) {
-            stream->size = end;
-        }
-
-        if (static_cast<uint32_t>(data.size()) < offset) {
-            Fragment new_fragment = {
-                .start = (uint32_t)data.size(),
-                .end = offset,
-                .timestamp = timestamp(),
-                .status = FragmentStatus::FragmentNew
-            };
-            gaps.append(new_fragment);
-            stream->_counter._lostFragments++;
-            debugAddGap(offset, offset - (uint32_t)data.size());
-        }
-        else if (static_cast<uint32_t>(data.size()) > offset) {
-            debugSearchGap(offset, size);
-
-            for(int32_t i = 0; i < gaps.size(); i++) {
-                uint32_t g_start = gaps[i].start;
-                uint32_t g_end = gaps[i].end;
-
-                if(g_start <= offset && g_end > offset) {
-                    if(g_start == offset) {
-                        if(g_end > end) {
-                            gaps[i].start = end + 1;
-                        } else {
-                            gaps.removeAt(i);
-                            i-=1;
-                        }
-                    } else {
-                        gaps[i].end = offset - 1;
-                        if(g_end >= end) {
-                            Fragment new_fragment = {
-                                .start = end + 1,
-                                .end = g_end,
-                                .timestamp = timestamp(),
-                                .status = FragmentStatus::FragmentNew
-                            };
-
-                            gaps.insert(i, new_fragment);
-                            i+=1;
-                        }
-                    }
-
-                    gaps[i].timestamp = timestamp();
-                    gaps[i].status = FragmentStatus::FragmentProcessing;
-                    break;
-                }
-            }
-
-            stream->_counter._fillFragments++;
-        } else {
-            stream->_counter._fragments++;
-        }
-
-        data.replace(offset, size, (char*)frame, size);
-        updateStream(stream->id);
-
-        _isInserting = false;
-//        process();
-    }
+    static constexpr int kMaxRangesPerRequest = 16;
+    static constexpr uint64_t kRequestIdleMs = 1500;
+    static constexpr int kMaxNoProgressRetryRounds = 3;
 
     uint64_t timestamp() {
         return QDateTime::currentMSecsSinceEpoch();
@@ -235,6 +185,10 @@ protected:
 
 protected slots:
     void process();
+
+signals:
+    void requestRanges(int logId, const QVariantList& ranges);
+    void stateChanged();
 };
 
 #endif // STREAMLIST_H

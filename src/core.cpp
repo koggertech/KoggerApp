@@ -845,6 +845,7 @@ bool Core::exportComplexToCSV(QString file_path) {
     //auto ch_list = datasetPtr_->channelsList();
     // _dataset->setRefPosition(1518);
     bool headerWritten = false;
+    LLARef llaRef = datasetPtr_->getLlaRef();
 
     for(int i = 0; i < datasetPtr_->size(); i++) {
         Epoch* epoch = datasetPtr_->fromIndex(i);
@@ -869,7 +870,7 @@ bool Core::exportComplexToCSV(QString file_path) {
                         int data_size = sig[ch_i].data.size();
 
                         if (!headerWritten) {
-                            QString header = "epoch,ch,ofs,cf,enc1,enc2";
+                            QString header = "epoch,ch,ofs,cf,enc1,enc2,n,e,lat,lon,distance_m,yaw";
                             for (int ci = 0; ci < data_size; ci++) {
                                 header.append(QString(",re%1,im%1").arg(ci));
                             }
@@ -886,6 +887,41 @@ bool Core::exportComplexToCSV(QString file_path) {
                             row_data.append(QString(",%1,%2").arg(epoch->encoder1()).arg(epoch->encoder2()));
                         } else {
                             row_data.append(",,");
+                        }
+
+                        Position currentPosition = epoch->getPositionGNSS();
+                        if (currentPosition.lla.isCoordinatesValid()) {
+                            if (!currentPosition.ned.isCoordinatesValid() && llaRef.isInit) {
+                                currentPosition.LLA2NED(&llaRef);
+                            }
+
+                            if (currentPosition.ned.isCoordinatesValid()) {
+                                row_data.append(QString(",%1,%2,%3,%4")
+                                                    .arg(QString::number(currentPosition.ned.n, 'f', 3))
+                                                    .arg(QString::number(currentPosition.ned.e, 'f', 3))
+                                                    .arg(QString::number(currentPosition.lla.latitude, 'f', 8))
+                                                    .arg(QString::number(currentPosition.lla.longitude, 'f', 8)));
+                            }
+                            else {
+                                row_data.append(",,,,");
+                            }
+                        }
+                        else {
+                            row_data.append(",,,,");
+                        }
+
+                        if (epoch->isUsblSolutionAvailable()) {
+                            row_data.append(QString(",%1").arg(epoch->usblSolution().distance_m));
+                        }
+                        else {
+                            row_data.append(",");
+                        }
+
+                        if (epoch->isAttAvail()) {
+                            row_data.append(QString(",%1").arg(epoch->yaw()));
+                        }
+                        else {
+                            row_data.append(",");
                         }
 
                         if(data != NULL && data_size > 0) {

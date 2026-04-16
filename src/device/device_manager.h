@@ -36,6 +36,7 @@ public:
 public slots:
     Q_INVOKABLE bool isCreatedId(int id);
     Q_INVOKABLE StreamListModel* streamsList();
+    Q_INVOKABLE void startStreamDownload(DevQProperty* dev, int id);
 
     void initStreamList();
     void frameInput(QUuid uuid, Link* link, Parsers::FrameParser frame);
@@ -70,6 +71,7 @@ public slots:
     void onPositionUpdated(const QGeoPositionInfo& info);
 
     void setUseGPS(bool state);
+    void onStreamRequestRanges(int logId, const QVariantList& ranges);
 
 signals:
     void sendFrameInputToLogger(QUuid uuid, Link* link, Parsers::FrameParser frame);
@@ -164,6 +166,7 @@ private:
     QHash<QUuid, QHash<int, DevQProperty*>> devTree_;
     QHash<QUuid, int> otherProtocolStat_;
     StreamList streamList_;
+    DevQProperty* activeStreamDev_ = nullptr;
     QUuid lastUuid_;
     QUuid proxyLinkUuid_;
     QUuid mavlinUuid_;

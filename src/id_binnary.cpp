@@ -880,6 +880,20 @@ void IDBinMark::setMark() {
     emit binFrameOut(id_out);
 }
 
+Resp IDBinRecorderStatus::parsePayload(FrameParser& proto) {
+    if (proto.ver() != v0) {
+        return respErrorVersion;
+    }
+
+    if (proto.readAvailable() < static_cast<int>(sizeof(GeneralDeviceStatusV0))) {
+        return respErrorPayload;
+    }
+
+    status_ = proto.read<GeneralDeviceStatusV0>();
+    isValid_ = true;
+    return respOk;
+}
+
 
 Resp IDBinFlash::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {

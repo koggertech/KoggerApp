@@ -20,7 +20,7 @@ QHash<int, QByteArray> StreamListModel::roleNames() const {
     return _roleNames;
 }
 
-void StreamListModel::doAppend(int id, uint32_t size, uint32_t doneSize, const QString& time, int recordState, int uploadState) {
+void StreamListModel::doAppend(int id, uint32_t size, uint32_t doneSize, const QString& time, int recordState, int uploadState, const QString& statusText, const QString& savedPath, int retryRound, int missingRanges) {
 
     if(!_index.contains(id)) {
         const int line = rowCount();
@@ -33,6 +33,10 @@ void StreamListModel::doAppend(int id, uint32_t size, uint32_t doneSize, const Q
         _vectors[StreamListModel::Time].append(time);
         _vectors[StreamListModel::RecordState].append(recordState);
         _vectors[StreamListModel::UploadingState].append(uploadState);
+        _vectors[StreamListModel::StatusText].append(statusText);
+        _vectors[StreamListModel::SavedPath].append(savedPath);
+        _vectors[StreamListModel::RetryRound].append(retryRound);
+        _vectors[StreamListModel::MissingRanges].append(missingRanges);
 
         _index[id] = line;
         _size++;
@@ -46,6 +50,10 @@ void StreamListModel::doAppend(int id, uint32_t size, uint32_t doneSize, const Q
         _vectors[StreamListModel::Time][line] = (time);
         _vectors[StreamListModel::RecordState][line] = (recordState);
         _vectors[StreamListModel::UploadingState][line] = (uploadState);
+        _vectors[StreamListModel::StatusText][line] = (statusText);
+        _vectors[StreamListModel::SavedPath][line] = (savedPath);
+        _vectors[StreamListModel::RetryRound][line] = (retryRound);
+        _vectors[StreamListModel::MissingRanges][line] = (missingRanges);
         dataChanged(index(line, 0), index(line, 0));
     }
 }

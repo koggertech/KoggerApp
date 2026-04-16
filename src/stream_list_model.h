@@ -24,6 +24,10 @@ public:
         Time,
         RecordState,
         UploadingState,
+        StatusText,
+        SavedPath,
+        RetryRound,
+        MissingRanges,
     };
 
     void clear() {
@@ -38,7 +42,7 @@ public:
     }
 
 signals:
-    void appendEvent(int id, uint32_t size, uint32_t doneSize, const QString& time, int recordState, int uploadState);
+    void appendEvent(int id, uint32_t size, uint32_t doneSize, const QString& time, int recordState, int uploadState, const QString& statusText, const QString& savedPath, int retryRound, int missingRanges);
 
 private:
     Q_DISABLE_COPY(StreamListModel)
@@ -55,12 +59,16 @@ private:
         {{StreamListModel::Time}, {"time"}},
         {{StreamListModel::RecordState}, {"recordState"}},
         {{StreamListModel::UploadingState}, {"uploadState"}},
+        {{StreamListModel::StatusText}, {"statusText"}},
+        {{StreamListModel::SavedPath}, {"savedPath"}},
+        {{StreamListModel::RetryRound}, {"retryRound"}},
+        {{StreamListModel::MissingRanges}, {"missingRanges"}},
     };
     QHash<int, QVector<QVariant>> _vectors;
     QHash<int, int> _index;
 
 
-    void doAppend(int id, uint32_t size, uint32_t doneSize, const QString& time, int recordState, int uploadState);
+    void doAppend(int id, uint32_t size, uint32_t doneSize, const QString& time, int recordState, int uploadState, const QString& statusText, const QString& savedPath, int retryRound, int missingRanges);
 };
 
 #endif // STREAMLISTMODEL_H

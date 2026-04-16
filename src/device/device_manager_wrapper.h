@@ -45,6 +45,7 @@ public:
 
 public slots:
     Q_INVOKABLE bool isCreatedId(int id) { return getWorker()->isCreatedId(id); };
+    Q_INVOKABLE void startStreamDownload(DevQProperty* dev, int id) { getWorker()->startStreamDownload(dev, id); }
     void calcAverageChartLosses();
 
     bool getProtoBinConsoled() const { return protoBinConsoledState_; };

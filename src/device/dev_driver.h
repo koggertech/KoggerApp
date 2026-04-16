@@ -171,9 +171,29 @@ public:
     int getAverageChartLosses() const { return averageChartLosses_; };
     QString modemLastPayload() const;
     void setFirmware(const QByteArray& data);
+    bool recorderStatusAvailable() const;
+    int recorderDeviceCondition() const;
+    int recorderMode() const;
+    int recorderState() const;
+    quint32 recorderStatusFlags() const;
+    quint32 recorderWarningFlags() const;
+    quint32 recorderDegradedFlags() const;
+    quint32 recorderCriticalFlags() const;
+    int recorderUptimeSeconds() const;
+    int recorderCurrentLogId() const;
+    quint32 recorderRecordedSizeBytes() const;
+    quint64 recorderFreeSpaceBytes() const;
+    int recorderRecordingDurationSeconds() const;
+    int recorderSecondsSinceLastWrite() const;
+    QString recorderConditionText() const;
+    QString recorderStateText() const;
+    QString recorderReasonText() const;
+    QString recorderFreshnessText() const;
+    QString recorderProgressText() const;
 
 signals:
     void averageChartLossesChanged();
+    void recorderStatusChanged();
     void binFrameOut(Parsers::ProtoBinOut proto_out);
 
     // link
@@ -230,9 +250,11 @@ public slots:
 
     void requestDist();
     void requestChart();
+    void requestRecorderStatus();
 
     void requestStreamList();
     void requestStream(int stream_id);
+    void requestStreamRanges(int stream_id, const QVariantList& ranges, uint16_t flags = 0);
     void startStand(int scanOrder,
                     int innerStart,
                     int innerEnd,
@@ -330,6 +352,7 @@ protected:
     IDBinModemSolution* idModemSolution = NULL;
     IDBinUsblControl* idUSBLControl = NULL;
     IDBinStand* idStand = NULL;
+    IDBinRecorderStatus* idRecorderStatus = NULL;
 
 //    QHash<ID, IDBin*> hashIDParsing;
 //    QHash<ID, ParseCallback> hashIDCallback;
@@ -448,6 +471,7 @@ protected slots:
     void receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedStand      (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedRecorderStatus(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
 private:
     bool datasetState_;
@@ -461,4 +485,7 @@ private:
     int averageChartLosses_;
     QUuid linkUuid_;
     QByteArray modemLastPayload_;
+    qint64 lastRecorderStatusRequestMs_ = 0;
+
+    void resetRecorderStatus();
 };

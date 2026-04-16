@@ -735,6 +735,75 @@ protected:
     U1 m_mark = 0;
 };
 
+class IDBinRecorderStatus : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinRecorderStatus() : IDBin() {
+    }
+
+    ID id() override { return ID_RECORDER_STATUS; }
+    Resp parsePayload(FrameParser& proto) override;
+    void requestAll() override { simpleRequest(v0); }
+
+    struct GeneralDeviceStatusV0 {
+        static constexpr ID getId() { return ID_RECORDER_STATUS; }
+        static constexpr Version getVer() { return v0; }
+
+        enum DeviceCondition : uint8_t {
+            Fine = 0,
+            Warning = 1,
+            Degraded = 2,
+            Critical = 3
+        };
+
+        enum RecordingMode : uint8_t {
+            Off = 0,
+            On = 1
+        };
+
+        enum RecordingState : uint8_t {
+            Initializing = 0,
+            Idle = 1,
+            Recording = 2,
+            CriticalState = 3,
+            CriticalDisabled = 4
+        };
+
+        enum DegradedFlagBits : uint32_t {
+            LogDrop = 1u << 0
+        };
+
+        enum CriticalFlagBits : uint32_t {
+            StorageUnavailable = 1u << 0,
+            RecordingBackendError = 1u << 1
+        };
+
+        uint8_t packed_status = 0;
+        uint16_t status_flags = 0;
+        uint16_t warning_flags = 0;
+        uint16_t degraded_flags = 0;
+        uint16_t critical_flags = 0;
+        uint16_t uptime_10s = 0;
+        uint16_t current_log_id = 0;
+        uint16_t recorded_size_64k = 0;
+        uint16_t free_space_1m = 0;
+        uint16_t recording_duration_seconds = 0;
+        uint16_t seconds_since_last_write = 0;
+    } __attribute__((packed));
+
+    const GeneralDeviceStatusV0& status() const { return status_; }
+    bool isValid() const { return isValid_; }
+    void reset() {
+        status_ = {};
+        isValid_ = false;
+    }
+
+protected:
+    GeneralDeviceStatusV0 status_ = {};
+    bool isValid_ = false;
+};
+
 class IDBinFlash : public IDBin
 {
     Q_OBJECT

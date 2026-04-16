@@ -79,6 +79,7 @@ typedef enum ID {
     ID_FLASH = 0x23,
     ID_BOOT = 0x24,
     ID_UPDATE = 0x25,
+    ID_RECORDER_STATUS = 0x26,
 
     ID_EVENT = 0x30,
     ID_VOLTAGE = 0x31,
