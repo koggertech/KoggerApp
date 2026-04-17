@@ -260,12 +260,58 @@ Item {
             Repeater {
                 model: paneFrame.popupCandidates
 
-                delegate: KButton {
+                delegate: Item {
                     required property var modelData
-                    text: modelData.title + " (" + modelData.mode + ")"
-                    onClicked: {
-                        paneFrame.store.setPopupSourceForHost(paneFrame.leafId, modelData.leafId)
-                        paneFrame.popupChooserOpen = false
+                    width: chooserColumn.width - chooserColumn.anchors.margins * 2
+                    height: 36
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 6
+                        color: candidateMouse.containsMouse
+                               ? paneFrame.menuButtonHoverColor
+                               : (paneFrame.popupSourceLeafId === modelData.leafId
+                                  ? "#1E3A5F" : paneFrame.menuButtonFillColor)
+                        border.width: 1
+                        border.color: paneFrame.menuButtonBorderColor
+                    }
+
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left: parent.left
+                        anchors.leftMargin: 10
+                        spacing: 8
+
+                        Rectangle {
+                            width: 10
+                            height: 10
+                            radius: 2
+                            color: modelData.color
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Text {
+                            text: modelData.title + " (" + modelData.mode + ")"
+                            color: "#E2E8F0"
+                            font.pixelSize: 13
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    MouseArea {
+                        id: candidateMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onEntered: paneFrame.store.hoveredPopupCandidateLeafId = modelData.leafId
+                        onExited: {
+                            if (paneFrame.store.hoveredPopupCandidateLeafId === modelData.leafId)
+                                paneFrame.store.hoveredPopupCandidateLeafId = -1
+                        }
+                        onClicked: {
+                            paneFrame.store.setPopupSourceForHost(paneFrame.leafId, modelData.leafId)
+                            paneFrame.store.flashingLeafId = modelData.leafId
+                            paneFrame.popupChooserOpen = false
+                        }
                     }
                 }
             }

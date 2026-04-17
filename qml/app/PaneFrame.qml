@@ -62,6 +62,11 @@ Item {
         }
     }
 
+    onPopupChooserOpenChanged: {
+        if (!popupChooserOpen && store.hoveredPopupCandidateLeafId !== -1)
+            store.hoveredPopupCandidateLeafId = -1
+    }
+
     Connections {
         target: paneItem.store
         ignoreUnknownSignals: true
@@ -177,4 +182,41 @@ Item {
                 onTapped: store.handleLeafTap(paneItem.leafId)
             }
         }
+
+    Rectangle {
+        id: hoverHighlight
+        anchors.fill: parent
+        color: "transparent"
+        border.width: 3
+        border.color: paneItem.paneData.color
+        opacity: store.hoveredPopupCandidateLeafId === paneItem.leafId ? 1.0 : 0.0
+        z: 52
+        visible: opacity > 0
+
+        Behavior on opacity { NumberAnimation { duration: 120 } }
+    }
+
+    Rectangle {
+        id: flashOverlay
+        anchors.fill: parent
+        color: paneItem.paneData.color
+        opacity: 0
+        z: 53
+        visible: opacity > 0
+
+        SequentialAnimation {
+            id: flashAnim
+            NumberAnimation { target: flashOverlay; property: "opacity"; to: 0.5; duration: 80 }
+            NumberAnimation { target: flashOverlay; property: "opacity"; to: 0.0; duration: 500; easing.type: Easing.OutCubic }
+            ScriptAction { script: { if (paneItem.store.flashingLeafId === paneItem.leafId) paneItem.store.flashingLeafId = -1 } }
+        }
+    }
+
+    Connections {
+        target: paneItem.store
+        function onFlashingLeafIdChanged() {
+            if (paneItem.store.flashingLeafId === paneItem.leafId)
+                flashAnim.restart()
+        }
+    }
 }

@@ -63,6 +63,8 @@ property string modeSettingsMode: "2D"
 readonly property int settingsPanelSizePx: 336
 property int modePickerLeafId: -1
 property var modePickerLeafIds: []
+property int hoveredPopupCandidateLeafId: -1
+property int flashingLeafId: -1
 property var favoriteLayouts: []
 property bool currentLayoutIsFavorite: false
 property string currentLayoutFavoriteSignature: ""
