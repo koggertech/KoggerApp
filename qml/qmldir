@@ -1,0 +1,86 @@
+# Legacy KoggerApp UI components — shared across all subfolders
+# Import this directory with: import ".."
+
+# Controls
+CButton 1.0 controls/CButton.qml
+CCheck 1.0 controls/CCheck.qml
+CCombo 1.0 controls/CCombo.qml
+CMouseOpacityArea 1.0 controls/CMouseOpacityArea.qml
+CPopup 1.0 controls/CPopup.qml
+CProgress 1.0 controls/CProgress.qml
+CRButton 1.0 controls/CRButton.qml
+CRadioDel 1.0 controls/CRadioDel.qml
+CSlider 1.0 controls/CSlider.qml
+CText 1.0 controls/CText.qml
+CTextField 1.0 controls/CTextField.qml
+CheckButton 1.0 controls/CheckButton.qml
+ConnectionButton 1.0 controls/ConnectionButton.qml
+MouseOpacityArea 1.0 controls/MouseOpacityArea.qml
+SpinBoxCustom 1.0 controls/SpinBoxCustom.qml
+CustomGroupBox 1.0 controls/CustomGroupBox.qml
+AdjBox 1.0 controls/AdjBox.qml
+AdjBoxBack 1.0 controls/AdjBoxBack.qml
+BackStyle 1.0 controls/BackStyle.qml
+ComboBackStyle 1.0 controls/ComboBackStyle.qml
+TabBackStyle 1.0 controls/TabBackStyle.qml
+
+# Menus
+MainMenuBar 1.0 menus/MainMenuBar.qml
+MenuViewer 1.0 menus/MenuViewer.qml
+MenuFrame 1.0 menus/MenuFrame.qml
+MenuScroll 1.0 menus/MenuScroll.qml
+MenuBlock 1.0 menus/MenuBlock.qml
+MenuRow 1.0 menus/MenuRow.qml
+MenuButton 1.0 menus/MenuButton.qml
+ParamGroup 1.0 menus/ParamGroup.qml
+ParamSetup 1.0 menus/ParamSetup.qml
+TitleMenuBox 1.0 menus/TitleMenuBox.qml
+TitleMeasurement 1.0 menus/TitleMeasurement.qml
+TitleSetup 1.0 menus/TitleSetup.qml
+
+# Settings
+DisplaySettings 1.0 settings/DisplaySettings.qml
+DisplaySettingsViewer 1.0 settings/DisplaySettingsViewer.qml
+ExtraInfoPanel 1.0 settings/ExtraInfoPanel.qml
+GeoJsonPanel 1.0 settings/GeoJsonPanel.qml
+HotkeysDialog 1.0 settings/HotkeysDialog.qml
+CContact 1.0 settings/CContact.qml
+
+# Devices
+ConnectionViewer 1.0 devices/ConnectionViewer.qml
+DeviceItem 1.0 devices/DeviceItem.qml
+DeviceSettingsViewer 1.0 devices/DeviceSettingsViewer.qml
+DevSettingsBox 1.0 devices/DevSettingsBox.qml
+DevAddrBox 1.0 devices/DevAddrBox.qml
+SonarBox 1.0 devices/SonarBox.qml
+DopplerBox 1.0 devices/DopplerBox.qml
+USBLBox 1.0 devices/USBLBox.qml
+DatasetBox 1.0 devices/DatasetBox.qml
+DatasetCheckBox 1.0 devices/DatasetCheckBox.qml
+RecorderBox 1.0 devices/RecorderBox.qml
+FlashBox 1.0 devices/FlashBox.qml
+FactoryBox 1.0 devices/FactoryBox.qml
+ExportDist 1.0 devices/ExportDist.qml
+ExportSettings 1.0 devices/ExportSettings.qml
+UpgradeBox 1.0 devices/UpgradeBox.qml
+
+# Scene2D
+Plot2D 1.0 scene2d/Plot2D.qml
+ChartBox 1.0 scene2d/ChartBox.qml
+ChartLevel 1.0 scene2d/ChartLevel.qml
+ChartLevelSingle 1.0 scene2d/ChartLevelSingle.qml
+
+# Scene3D
+Scene3DToolbar 1.0 scene3d/Scene3DToolbar.qml
+Scene3DRightToolbar 1.0 scene3d/Scene3DRightToolbar.qml
+Scene3DGeometryPanel 1.0 scene3d/Scene3DGeometryPanel.qml
+Scene3DLayerPanel 1.0 scene3d/Scene3DLayerPanel.qml
+CalcMethodTINSettings 1.0 scene3d/CalcMethodTINSettings.qml
+SmoothMethodUGINSettings 1.0 scene3d/SmoothMethodUGINSettings.qml
+SmoothMethodTriDivideSettings 1.0 scene3d/SmoothMethodTriDivideSettings.qml
+IsobathsExtraSettings 1.0 scene3d/IsobathsExtraSettings.qml
+LocationExtraSettings 1.0 scene3d/LocationExtraSettings.qml
+MosaicExtraSettings 1.0 scene3d/MosaicExtraSettings.qml
+Settings3DExtraSettings 1.0 scene3d/Settings3DExtraSettings.qml
+Settings3DView 1.0 scene3d/Settings3DView.qml
+SurfaceControlMenu 1.0 scene3d/SurfaceControlMenu.qml

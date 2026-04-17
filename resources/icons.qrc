@@ -163,5 +163,13 @@
         <file>icons/ui/current-location-full.svg</file>
         <file>icons/ui/current-location.svg</file>
         <file>icons/ui/navigation-north.svg</file>
+        <file>icons/ui/one-finger.svg</file>
+        <file>icons/ui/settings-outline.svg</file>
+        <file>icons/ui/tool.svg</file>
+        <file>icons/ui/conn.png</file>
+        <file>icons/ui/3dcube.svg</file>
+        <file>icons/ui/code-working.svg</file>
+        <file>icons/ui/combo-selection.svg</file>
+        <file>icons/ui/fit-in-view.svg</file>
     </qresource>
 </RCC>

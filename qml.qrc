@@ -1,0 +1,140 @@
+<RCC>
+    <qresource prefix="/">
+
+        <!-- ======= Entry point ======= -->
+        <file>qml/main.qml</file>
+
+        <!-- ======= App module ======= -->
+        <file>qml/app/qmldir</file>
+        <file>qml/app/MainWindow.qml</file>
+        <file>qml/app/GlobalPanePopup.qml</file>
+        <file>qml/app/WorkspaceStore.qml</file>
+        <file>qml/app/WorkspaceView.qml</file>
+        <file>qml/app/PaneFrame.qml</file>
+        <file>qml/app/PaneEditorChrome.qml</file>
+        <file>qml/app/BasePanePopup.qml</file>
+        <file>qml/app/FullscreenPanePopup.qml</file>
+        <file>qml/app/PaneContentLoader.qml</file>
+        <file>qml/app/Pane2DWindow.qml</file>
+        <file>qml/app/Pane3DWindow.qml</file>
+        <file>qml/app/InputDeviceState.qml</file>
+        <file>qml/app/PaneInputBridge.qml</file>
+        <file>qml/app/SettingsSidebarBase.qml</file>
+        <file>qml/app/SettingsGroup.qml</file>
+        <file>qml/app/AppSettingsPage.qml</file>
+        <file>qml/app/ConnectionsSettingsPage.qml</file>
+        <file>qml/app/Pane2DSettingsPage.qml</file>
+        <file>qml/app/Pane3DSettingsPage.qml</file>
+        <file>qml/app/ModeSettingsPanel.qml</file>
+        <file>qml/app/ActionChip.qml</file>
+        <file>qml/app/CircleIconButton.qml</file>
+        <file>qml/app/SettingsGearButton.qml</file>
+        <file>qml/app/DisclosureIndicator.qml</file>
+        <file>qml/app/HotActionsPanel.qml</file>
+        <file>qml/app/LayoutSnapshotPreview.qml</file>
+        <file>qml/app/FavoriteLayoutCard.qml</file>
+        <file>qml/app/LayoutRules.js</file>
+        <file>qml/app/LayoutTree.js</file>
+        <file>qml/app/LayoutResize.js</file>
+
+        <!-- ======= KQMLTypes module ======= -->
+        <file>qml/kqml_types/qmldir</file>
+        <file>qml/kqml_types/KTabBar.qml</file>
+        <file>qml/kqml_types/KCheckBox.qml</file>
+        <file>qml/kqml_types/KSwitch.qml</file>
+        <file>qml/kqml_types/KButton.qml</file>
+        <file>qml/kqml_types/KToolTip.qml</file>
+
+        <!-- ======= Menus ======= -->
+        <file>qml/menus/qmldir</file>
+        <file>qml/menus/MainMenuBar.qml</file>
+        <file>qml/menus/MenuViewer.qml</file>
+        <file>qml/menus/MenuFrame.qml</file>
+        <file>qml/menus/MenuScroll.qml</file>
+        <file>qml/menus/MenuBlock.qml</file>
+        <file>qml/menus/MenuButton.qml</file>
+        <file>qml/menus/MenuRow.qml</file>
+        <file>qml/menus/ParamGroup.qml</file>
+        <file>qml/menus/ParamSetup.qml</file>
+        <file>qml/menus/TitleMenuBox.qml</file>
+        <file>qml/menus/TitleMeasurement.qml</file>
+        <file>qml/menus/TitleSetup.qml</file>
+        <file>qml/menus/Console.qml</file>
+
+        <!-- ======= Controls ======= -->
+        <file>qml/controls/qmldir</file>
+        <file>qml/controls/CButton.qml</file>
+        <file>qml/controls/CCheck.qml</file>
+        <file>qml/controls/CCombo.qml</file>
+        <file>qml/controls/CMouseOpacityArea.qml</file>
+        <file>qml/controls/CPopup.qml</file>
+        <file>qml/controls/CProgress.qml</file>
+        <file>qml/controls/CRButton.qml</file>
+        <file>qml/controls/CRadioDel.qml</file>
+        <file>qml/controls/CSlider.qml</file>
+        <file>qml/controls/CText.qml</file>
+        <file>qml/controls/CTextField.qml</file>
+        <file>qml/controls/CheckButton.qml</file>
+        <file>qml/controls/ConnectionButton.qml</file>
+        <file>qml/controls/MouseOpacityArea.qml</file>
+        <file>qml/controls/SpinBoxCustom.qml</file>
+        <file>qml/controls/CustomGroupBox.qml</file>
+        <file>qml/controls/AdjBox.qml</file>
+        <file>qml/controls/AdjBoxBack.qml</file>
+        <file>qml/controls/BackStyle.qml</file>
+        <file>qml/controls/ComboBackStyle.qml</file>
+        <file>qml/controls/TabBackStyle.qml</file>
+
+        <!-- ======= Devices ======= -->
+        <file>qml/devices/qmldir</file>
+        <file>qml/devices/ConnectionViewer.qml</file>
+        <file>qml/devices/DeviceItem.qml</file>
+        <file>qml/devices/DeviceSettingsViewer.qml</file>
+        <file>qml/devices/DevSettingsBox.qml</file>
+        <file>qml/devices/DevAddrBox.qml</file>
+        <file>qml/devices/SonarBox.qml</file>
+        <file>qml/devices/DopplerBox.qml</file>
+        <file>qml/devices/USBLBox.qml</file>
+        <file>qml/devices/DatasetBox.qml</file>
+        <file>qml/devices/DatasetCheckBox.qml</file>
+        <file>qml/devices/RecorderBox.qml</file>
+        <file>qml/devices/FlashBox.qml</file>
+        <file>qml/devices/FactoryBox.qml</file>
+        <file>qml/devices/ExportDist.qml</file>
+        <file>qml/devices/ExportSettings.qml</file>
+        <file>qml/devices/UpgradeBox.qml</file>
+
+        <!-- ======= Settings ======= -->
+        <file>qml/settings/qmldir</file>
+        <file>qml/settings/DisplaySettings.qml</file>
+        <file>qml/settings/DisplaySettingsViewer.qml</file>
+        <file>qml/settings/ExtraInfoPanel.qml</file>
+        <file>qml/settings/GeoJsonPanel.qml</file>
+        <file>qml/settings/HotkeysDialog.qml</file>
+        <file>qml/settings/CContact.qml</file>
+
+        <!-- ======= Scene3D ======= -->
+        <file>qml/scene3d/qmldir</file>
+        <file>qml/scene3d/Scene3DToolbar.qml</file>
+        <file>qml/scene3d/Scene3DRightToolbar.qml</file>
+        <file>qml/scene3d/Scene3DGeometryPanel.qml</file>
+        <file>qml/scene3d/Scene3DLayerPanel.qml</file>
+        <file>qml/scene3d/CalcMethodTINSettings.qml</file>
+        <file>qml/scene3d/SmoothMethodUGINSettings.qml</file>
+        <file>qml/scene3d/SmoothMethodTriDivideSettings.qml</file>
+        <file>qml/scene3d/IsobathsExtraSettings.qml</file>
+        <file>qml/scene3d/LocationExtraSettings.qml</file>
+        <file>qml/scene3d/MosaicExtraSettings.qml</file>
+        <file>qml/scene3d/Settings3DExtraSettings.qml</file>
+        <file>qml/scene3d/Settings3DView.qml</file>
+        <file>qml/scene3d/SurfaceControlMenu.qml</file>
+
+        <!-- ======= Scene2D ======= -->
+        <file>qml/scene2d/qmldir</file>
+        <file>qml/scene2d/Plot2D.qml</file>
+        <file>qml/scene2d/ChartBox.qml</file>
+        <file>qml/scene2d/ChartLevel.qml</file>
+        <file>qml/scene2d/ChartLevelSingle.qml</file>
+
+    </qresource>
+</RCC>

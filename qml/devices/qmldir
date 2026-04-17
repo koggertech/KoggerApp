@@ -1,0 +1,16 @@
+ConnectionViewer 1.0 ConnectionViewer.qml
+DatasetBox 1.0 DatasetBox.qml
+DatasetCheckBox 1.0 DatasetCheckBox.qml
+DevAddrBox 1.0 DevAddrBox.qml
+DevSettingsBox 1.0 DevSettingsBox.qml
+DeviceItem 1.0 DeviceItem.qml
+DeviceSettingsViewer 1.0 DeviceSettingsViewer.qml
+DopplerBox 1.0 DopplerBox.qml
+ExportDist 1.0 ExportDist.qml
+ExportSettings 1.0 ExportSettings.qml
+FactoryBox 1.0 FactoryBox.qml
+FlashBox 1.0 FlashBox.qml
+RecorderBox 1.0 RecorderBox.qml
+SonarBox 1.0 SonarBox.qml
+USBLBox 1.0 USBLBox.qml
+UpgradeBox 1.0 UpgradeBox.qml

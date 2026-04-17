@@ -1,0 +1,6 @@
+CContact 1.0 CContact.qml
+DisplaySettings 1.0 DisplaySettings.qml
+DisplaySettingsViewer 1.0 DisplaySettingsViewer.qml
+ExtraInfoPanel 1.0 ExtraInfoPanel.qml
+GeoJsonPanel 1.0 GeoJsonPanel.qml
+HotkeysDialog 1.0 HotkeysDialog.qml

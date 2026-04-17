@@ -1,0 +1,13 @@
+CalcMethodTINSettings 1.0 CalcMethodTINSettings.qml
+IsobathsExtraSettings 1.0 IsobathsExtraSettings.qml
+LocationExtraSettings 1.0 LocationExtraSettings.qml
+MosaicExtraSettings 1.0 MosaicExtraSettings.qml
+Scene3DGeometryPanel 1.0 Scene3DGeometryPanel.qml
+Scene3DLayerPanel 1.0 Scene3DLayerPanel.qml
+Scene3DRightToolbar 1.0 Scene3DRightToolbar.qml
+Scene3DToolbar 1.0 Scene3DToolbar.qml
+Settings3DExtraSettings 1.0 Settings3DExtraSettings.qml
+Settings3DView 1.0 Settings3DView.qml
+SmoothMethodTriDivideSettings 1.0 SmoothMethodTriDivideSettings.qml
+SmoothMethodUGINSettings 1.0 SmoothMethodUGINSettings.qml
+SurfaceControlMenu 1.0 SurfaceControlMenu.qml

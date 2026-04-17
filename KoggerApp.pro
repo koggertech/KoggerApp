@@ -80,8 +80,7 @@ TRANSLATIONS += \
     translations/translation_pl.ts
 
 RESOURCES += \
-    qml/qml.qrc \
-    ui_shell.qrc \
+    qml.qrc \
     resources/icons.qrc \
     resources/resources.qrc
 
@@ -113,38 +112,6 @@ QML_DESIGNER_IMPORT_PATH = $$PWD/qml
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
-### DISTFILES
-DISTFILES += \
-    qml/Common/MenuBlockEx.qml \
-    qml/Scene3DToolbar.qml \
-    qml/SceneObjectsControlBar/ActiveObjectParams.qml \
-    qml/SceneObjectsControlBar/BottomTrackParams.qml \
-    qml/SceneObjectsControlBar/SceneObjectsControlBar.qml \
-    qml/SceneObjectsControlBar/SceneObjectsList.qml \
-    qml/SceneObjectsControlBar/SceneObjectsListDelegate.qml \
-    qml/SceneObjectsList.qml \
-    qml/SceneObjectsListDelegate.qml \
-    qml/AdjBox.qml \
-    qml/AdjBoxBack.qml \
-    qml/BackStyle.qml \
-    qml/CButton.qml \
-    qml/CCombo.qml \
-    qml/CComboBox.qml \
-    qml/CSlider.qml \
-    qml/ComboBackStyle.qml \
-    qml/ConnectionViewer.qml \
-    qml/Console.qml \
-    qml/CustomGroupBox.qml \
-    qml/DeviceSettingsViewer.qml \
-    qml/MenuBar.qml \
-    qml/MenuFrame.qml \
-    qml/MenuButton.qml \
-    qml/MenuViewer.qml \
-    qml/TabBackStyle.qml \
-    qml/UpgradeBox.qml \
-    qml/FlashBox.qml \
-    qml/main.qml
 
 win32:RC_FILE = resources/file.rc
 

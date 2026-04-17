@@ -1,0 +1,1465 @@
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Dialogs
+import QtCore
+import "../controls"
+import "../menus"
+
+
+GridLayout {
+    id: control
+
+    readonly property real preferenceComboWidth: 200
+    readonly property real preferenceBottomTrackComboWidth: 250
+
+    property int numPlots: numPlotsSpinBox.value
+    property bool syncPlots: plotSyncCheckBox.checked
+    property int instruments: instrumentsGradeList.currentIndex
+    property var targetPlot: null
+    property bool extraInfoVis: extraInfoPanelVisible.checked
+    property bool extraInfoDepthVis: extraInfoDepthVisible.checked
+    property bool extraInfoSpeedVis: extraInfoSpeedVisible.checked
+    property bool extraInfoCoordinatesVis: extraInfoCoordinatesVisible.checked
+    property bool extraInfoActivePointVis: extraInfoActivePointVisible.checked
+    property bool extraInfoSimpleNavV2Vis: extraInfoSimpleNavV2Visible.checked
+    property bool extraInfoBoatStatusVis: extraInfoBoatStatusVisible.checked
+    property bool autopilotInfofVis: autopilotInfoVisible.checked
+    property bool profilesButtonVis: profilesButtonCheck.checked
+
+    signal languageChanged(string langStr)
+    signal syncPlotEnabled()
+
+    function updateBottomTrack() {
+        updateBottomTrackButton.clicked()
+    }
+
+    function closeExtraInfoFiltersPopup() {
+        if (extraInfoSettingsButton.checked) {
+            extraInfoSettingsButton.checked = false
+        }
+        if (extraInfoFiltersPopup.opened) {
+            extraInfoFiltersPopup.close()
+        }
+    }
+
+    function toggleExtraInfoFiltersPopup() {
+        if (extraInfoSettingsButton.checked) {
+            extraInfoFiltersPopup.close()
+            return
+        }
+
+        if (!extraInfoSettingsButton.checked) {
+            positionExtraInfoFiltersPopup()
+            extraInfoFiltersPopup.open()
+        }
+    }
+
+    function positionExtraInfoFiltersPopup() {
+        var popupParent = extraInfoFiltersPopup.parent
+        if (!popupParent) {
+            return
+        }
+
+        var p = extraInfoSettingsButton.mapToItem(popupParent, 0, 0)
+        var desiredX = p.x + extraInfoSettingsButton.width + 8
+        var maxX = popupParent.width - extraInfoFiltersPopup.width - 8
+        var popupHeight = Math.max(extraInfoFiltersPopup.height, extraInfoFiltersPopup.implicitHeight)
+        var desiredY = p.y + (extraInfoSettingsButton.height - popupHeight) * 0.5
+        var maxY = popupParent.height - popupHeight - 8
+
+        extraInfoFiltersPopup.x = Math.max(8, Math.min(desiredX, maxX))
+        extraInfoFiltersPopup.y = Math.max(8, Math.min(desiredY, maxY))
+    }
+
+    ColumnLayout {
+        id: columnItem
+        spacing: 24
+        Layout.margins: 10
+
+        ParamGroup {
+            visible: instruments > 1
+
+            groupName: qsTr("Plot")
+
+            RowLayout {
+                CText {
+                    Layout.fillWidth: true
+                    text: qsTr("Number of graphs:")
+                }
+                SpinBoxCustom {
+                    id: numPlotsSpinBox
+                    from: 1
+                    to: 2
+                    stepSize: 1
+                    value: 1
+
+                    Settings {
+                        property alias numPlotsSpinBox: numPlotsSpinBox.value
+                    }
+                }
+            }
+
+            CCheck {
+                id: plotSyncCheckBox
+                Layout.fillWidth: true
+                checked: false
+                text: qsTr("Synchronization")
+                visible: numPlotsSpinBox.value === 2
+
+                onCheckedChanged: {
+                    if (checked) {
+                        syncPlotEnabled()
+                    }
+                }
+
+                Settings {
+                    property alias plotSyncCheckBox: plotSyncCheckBox.checked
+                }
+            }
+        }
+
+        ParamGroup {
+            visible: instruments > 1
+
+            groupName: qsTr("Dataset")
+
+            RowLayout {
+
+                CCheck {
+                    id: fixBlackStripesCheckButton
+                    Layout.fillWidth: true
+                    checked: false
+                    text: qsTr("FBS, f/b")
+
+                    onCheckedChanged: core.setFixBlackStripesState(fixBlackStripesCheckButton.checked)
+                    Component.onCompleted: core.setFixBlackStripesState(fixBlackStripesCheckButton.checked)
+
+                    Settings {
+                        property alias fixBlackStripesCheckButton: fixBlackStripesCheckButton.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: fixBlackStripesForwardStepsSpinBox
+                    from: 0
+                    to: 100
+                    stepSize: 1
+                    value: 5
+
+                    onValueChanged: core.setFixBlackStripesForwardSteps(fixBlackStripesForwardStepsSpinBox.value)
+                    Component.onCompleted: core.setFixBlackStripesForwardSteps(fixBlackStripesForwardStepsSpinBox.value)
+
+                    Settings {
+                        property alias fixBlackStripesForwardStepsSpinBox: fixBlackStripesForwardStepsSpinBox.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: fixBlackStripesBackwardStepsSpinBox
+                    from: 0
+                    to: 100
+                    stepSize: 1
+                    value: 5
+
+                    onValueChanged: core.setFixBlackStripesBackwardSteps(fixBlackStripesBackwardStepsSpinBox.value)
+                    Component.onCompleted: core.setFixBlackStripesBackwardSteps(fixBlackStripesBackwardStepsSpinBox.value)
+
+                    Settings {
+                        property alias fixBlackStripesBackwardStepsSpinBox: fixBlackStripesBackwardStepsSpinBox.value
+                    }
+                }
+            }
+
+            RowLayout {
+                CCheck {
+                    id: sonarOffsetCheckButton
+                    Layout.fillWidth: true
+                    text: qsTr("S.offset, mm:")
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                        else {
+                            dataset.setSonarOffset(0, 0, 0)
+                        }
+
+                        core.setIsAttitudeExpected(checked)
+                    }
+
+                    Component.onCompleted: {
+                        core.setIsAttitudeExpected(checked)
+                    }
+
+                    Settings {
+                        property alias sonarOffsetCheckButton: sonarOffsetCheckButton.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: sonarOffsetValueX
+                    from: -9999
+                    to: 9999
+                    value: 0
+                    stepSize: 50
+
+                    onValueChanged: {
+                        if (sonarOffsetCheckButton.checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetValueX: sonarOffsetValueX.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: sonarOffsetValueY
+                    from: -9999
+                    to: 9999
+                    value: 0
+                    stepSize: 50
+
+                    onValueChanged: {
+                        if (sonarOffsetCheckButton.checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetValueY: sonarOffsetValueY.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    visible: false
+                    id: sonarOffsetValueZ
+                    spinner: false
+                    implicitWidth: 65
+                    from: -9999
+                    to: 9999
+                    value: 0
+                    stepSize: 50
+
+                    onValueChanged: {
+                        if (sonarOffsetCheckButton.checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetValueZ: sonarOffsetValueZ.value
+                    }
+                }
+            }
+        }
+
+        ParamGroup {
+            visible: instruments > 0
+            id: bottomTrackProcessingGroup
+            groupName: qsTr("Bottom-Track processing")
+
+            property bool autoApplyChange: false
+
+            Component.onCompleted: {
+                if (targetPlot) {
+                    targetPlot.refreshDistParams(bottomTrackList.currentIndex,
+                                                 bottomTrackWindow.checked ? bottomTrackWindowValue.value : 1,
+                                                 bottomTrackVerticalGap.checked ? bottomTrackVerticalGapValue.value* 0.01 : 0,
+                                                 bottomTrackMinRange.checked ? bottomTrackMinRangeValue.realValue : 0,
+                                                 bottomTrackMaxRange.checked ? bottomTrackMaxRangeValue.realValue : 1000,
+                                                 bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.realValue : 1,
+                                                 bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
+                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value *  0.001 : 0,
+                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value *  0.001 : 0,
+                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ.value * -0.001 : 0 )
+                }
+            }
+
+            function updateProcessing() {
+                if (targetPlot) {
+                    targetPlot.doDistProcessing(bottomTrackList.currentIndex,
+                                                bottomTrackWindow.checked ? bottomTrackWindowValue.value : 1,
+                                                bottomTrackVerticalGap.checked ? bottomTrackVerticalGapValue.value*0.01 : 0,
+                                                bottomTrackMinRange.checked ? bottomTrackMinRangeValue.realValue : 0,
+                                                bottomTrackMaxRange.checked ? bottomTrackMaxRangeValue.realValue : 1000,
+                                                bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.realValue : 1,
+                                                bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
+                                                bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value*0.001 : 0,
+                                                bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value*0.001 : 0,
+                                                bottomTrackSensorOffset.checked ? -bottomTrackSensorOffsetValueZ.value*0.001 : 0,
+                                                false/*manual*/);
+                }
+            }
+
+            RowLayout {
+                ParamSetup {
+                    paramName: qsTr("Preset:")
+
+                    CCombo  {
+                        id: bottomTrackList
+                        //                        Layout.fillWidth: true
+                        implicitContentWidthPolicy: ComboBox.WidestText
+                        Layout.fillWidth: false
+                        Layout.preferredWidth: preferenceBottomTrackComboWidth
+                        Layout.minimumWidth: preferenceBottomTrackComboWidth
+                        Layout.maximumWidth: preferenceBottomTrackComboWidth
+                        model: [qsTr("Normal 2D"), qsTr("Narrow 2D"), qsTr("Side-Scan")]
+                        currentIndex: 0
+
+//                        onCurrentIndexChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                        onCurrentIndexChanged: {
+                            if (targetPlot) {
+                                targetPlot.setPreset(bottomTrackList.currentIndex)
+                            }
+                        }
+
+                        Settings {
+                            property alias bottomTrackList: bottomTrackList.currentIndex
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                CCheck {
+                    id: bottomTrackGainSlope
+                    Layout.fillWidth: true
+                    text: qsTr("Gain slope:")
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            if (targetPlot) {
+                                targetPlot.setGainSlope(bottomTrackGainSlopeValue.realValue)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackGainSlope: bottomTrackGainSlope.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: bottomTrackGainSlopeValue
+                    from: 0
+                    to: 300
+                    stepSize: 10
+                    value: 100
+
+                    property int decimals: 2
+                    property real realValue: value / 100
+
+                    validator: DoubleValidator {
+                        bottom: Math.min(bottomTrackGainSlopeValue.from, bottomTrackGainSlopeValue.to)
+                        top:  Math.max(bottomTrackGainSlopeValue.from, bottomTrackGainSlopeValue.to)
+                    }
+
+                    textFromValue: function(value, locale) {
+                        return Number(value / 100).toLocaleString(locale, 'f', decimals)
+                    }
+
+                    valueFromText: function(text, locale) {
+                        return Number.fromLocaleString(locale, text) * 100
+                    }
+
+                    onRealValueChanged: {
+                        if (bottomTrackGainSlope.checked) {
+                            if (targetPlot) {
+                                targetPlot.setGainSlope(bottomTrackGainSlopeValue.realValue)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackGainSlopeValue: bottomTrackGainSlopeValue.value
+                    }
+                }
+            }
+
+            RowLayout {
+                CCheck {
+                    id: bottomTrackThreshold
+                    Layout.fillWidth: true
+                    text: qsTr("Threshold:")
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            if (targetPlot) {
+                                targetPlot.setThreshold(bottomTrackThresholdValue.realValue)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackThreshold: bottomTrackThreshold.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: bottomTrackThresholdValue
+                    from: 0
+                    to: 200
+                    stepSize: 5
+                    value: 0
+
+                    property int decimals: 2
+                    property real realValue: value / 100
+
+                    validator: DoubleValidator {
+                        bottom: Math.min(bottomTrackThresholdValue.from, bottomTrackThresholdValue.to)
+                        top:  Math.max(bottomTrackThresholdValue.from, bottomTrackThresholdValue.to)
+                    }
+
+                    textFromValue: function(value, locale) {
+                        return Number(value / 100).toLocaleString(locale, 'f', decimals)
+                    }
+
+                    valueFromText: function(text, locale) {
+                        return Number.fromLocaleString(locale, text) * 100
+                    }
+
+                    onRealValueChanged: {
+                        if (bottomTrackThreshold.checked) {
+                            if (targetPlot) {
+                                targetPlot.setThreshold(bottomTrackThresholdValue.realValue)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackThresholdValue: bottomTrackThresholdValue.value
+                    }
+                }
+            }
+
+            RowLayout {
+                CCheck {
+                    id: bottomTrackWindow
+                    Layout.fillWidth: true
+                    text: qsTr("Horizontal window:")
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            if (targetPlot) {
+                                targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackWindow: bottomTrackWindow.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: bottomTrackWindowValue
+                    from: 1
+                    to: 100
+                    stepSize: 2
+                    value: 1
+
+                    onValueChanged: {
+                        if (bottomTrackWindow.checked) {
+                            if (targetPlot) {
+                                targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackWindowValue: bottomTrackWindowValue.value
+                    }
+                }
+            }
+
+
+            RowLayout {
+                CCheck {
+                    id: bottomTrackVerticalGap
+                    Layout.fillWidth: true
+                    text: qsTr("Vertical gap, %:")
+//                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            if (targetPlot) {
+                                targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackVerticalGap: bottomTrackVerticalGap.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: bottomTrackVerticalGapValue
+                    from: 0
+                    to: 100
+                    stepSize: 2
+                    value: 10
+//                    onValueChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onValueChanged: {
+                        if (bottomTrackVerticalGap.checked) {
+                            if (targetPlot) {
+                                targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackVerticalGapValue: bottomTrackVerticalGapValue.value
+                    }
+                }
+            }
+
+            RowLayout {
+                CCheck {
+                    id: bottomTrackMinRange
+                    Layout.fillWidth: true
+                    text: qsTr("Min range, m:")
+//                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            if (targetPlot) {
+                                targetPlot.setRangeMin(bottomTrackMinRangeValue.realValue)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackMinRange: bottomTrackMinRange.checked
+                    }
+                }
+
+
+                SpinBoxCustom {
+                    id: bottomTrackMinRangeValue
+                    from: 0
+                    to: 200000
+                    stepSize: 10
+                    value: 0
+
+                    property int decimals: 2
+                    property real realValue: value / 1000
+
+                    validator: DoubleValidator {
+                        bottom: Math.min(bottomTrackMinRangeValue.from, bottomTrackMinRangeValue.to)
+                        top:  Math.max(bottomTrackMinRangeValue.from, bottomTrackMinRangeValue.to)
+                    }
+
+                    textFromValue: function(value, locale) {
+                        return Number(value / 1000).toLocaleString(locale, 'f', decimals)
+                    }
+
+                    valueFromText: function(text, locale) {
+                        return Number.fromLocaleString(locale, text) * 1000
+                    }
+
+//                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onRealValueChanged: {
+                        if (bottomTrackMinRange.checked) {
+                            if (targetPlot) {
+                                targetPlot.setRangeMin(bottomTrackMinRangeValue.realValue)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackMinRangeValue: bottomTrackMinRangeValue.value
+                    }
+                }
+            }
+
+            RowLayout {
+                CCheck {
+                    id: bottomTrackMaxRange
+                    Layout.fillWidth: true
+                    text: qsTr("Max range, m:")
+//                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            if (targetPlot) {
+                                targetPlot.setRangeMax(bottomTrackMaxRangeValue.realValue)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackMaxRange: bottomTrackMaxRange.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: bottomTrackMaxRangeValue
+                    from: 0
+                    to: 200000
+                    stepSize: 1000
+                    value: 100000
+
+                    property int decimals: 2
+                    property real realValue: value / 1000
+
+                    validator: DoubleValidator {
+                        bottom: Math.min(bottomTrackMaxRangeValue.from, bottomTrackMaxRangeValue.to)
+                        top:  Math.max(bottomTrackMaxRangeValue.from, bottomTrackMaxRangeValue.to)
+                    }
+
+                    textFromValue: function(value, locale) {
+                        return Number(value / 1000).toLocaleString(locale, 'f', decimals)
+                    }
+
+                    valueFromText: function(text, locale) {
+                        return Number.fromLocaleString(locale, text) * 1000
+                    }
+
+//                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onRealValueChanged: {
+                        if (bottomTrackMaxRange.checked) {
+                            if (targetPlot) {
+                                targetPlot.setRangeMax(bottomTrackMaxRangeValue.realValue)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackMaxRangeValue: bottomTrackMaxRangeValue.value
+                    }
+                }
+            }
+
+            RowLayout {
+                CCheck {
+                    id: bottomTrackSensorOffset
+                    Layout.fillWidth: true
+                    text: qsTr("Sonar offset XYZ, mm:")
+//                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            if (targetPlot) {
+                                targetPlot.setOffsetX(bottomTrackSensorOffsetValueX.value * 0.001)
+                                targetPlot.setOffsetY(bottomTrackSensorOffsetValueY.value * 0.001)
+                                targetPlot.setOffsetZ(bottomTrackSensorOffsetValueZ.value * 0.001)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackSensorOffset: bottomTrackSensorOffset.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: bottomTrackSensorOffsetValueX
+                    spinner: false
+                    implicitWidth: 65
+                    from: -9999
+                    to: 9999
+                    stepSize: 50
+
+//                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onValueChanged: {
+                        if (bottomTrackSensorOffset.checked) {
+                            if (targetPlot) {
+                                targetPlot.setOffsetX(bottomTrackSensorOffsetValueX.value * 0.001)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackSensorOffsetValueX: bottomTrackSensorOffsetValueX.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: bottomTrackSensorOffsetValueY
+                    spinner: false
+                    implicitWidth: 65
+                    from: -9999
+                    to: 9999
+                    stepSize: 50
+
+//                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onValueChanged: {
+                        if (bottomTrackSensorOffset.checked) {
+                            if (targetPlot) {
+                                targetPlot.setOffsetY(bottomTrackSensorOffsetValueY.value * 0.001)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackSensorOffsetValueY: bottomTrackSensorOffsetValueY.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: bottomTrackSensorOffsetValueZ
+                    spinner: false
+                    implicitWidth: 65
+                    from: -9999
+                    to: 9999
+                    stepSize: 50
+
+//                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onValueChanged: {
+                        if (bottomTrackSensorOffset.checked) {
+                            if (targetPlot) {
+                                targetPlot.setOffsetZ(bottomTrackSensorOffsetValueZ.value * 0.001)
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias bottomTrackSensorOffsetValueZ: bottomTrackSensorOffsetValueZ.value
+                    }
+                }
+            }
+
+            RowLayout {
+                CButton {
+                    id: updateBottomTrackButton
+                    text: qsTr("Processing")
+                    Layout.fillWidth: true
+                    onClicked: {
+                        bottomTrackProcessingGroup.updateProcessing()
+                    }
+                }
+
+                CButton {
+                    id: updateBottomTrackRealtimeButton
+                    text: qsTr("Realtime")
+                    checkable: true
+                    checked: false
+                    Layout.fillWidth: true
+
+                    onCheckedChanged: {
+                        core.setBottomTrackRealtimeFromSettings(checked)
+                    }
+
+                    Component.onCompleted: {
+                        core.setBottomTrackRealtimeFromSettings(checked)
+                    }
+
+                    //Settings {
+                    //    property alias updateBottomTrackRealtimeButton: updateBottomTrackRealtimeButton.checked
+                    //}
+                }
+            }
+        }
+
+        ParamGroup {
+            visible: instruments > 0
+            groupName: qsTr("Export")
+
+            ColumnLayout {
+                RowLayout {
+                    id: exportPathRow
+                    property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+                    property string exportFolderPathSource: ""
+
+                    function sourceUrl(value) {
+                        if (!value) {
+                            return ""
+                        }
+
+                        if (typeof value === "string") {
+                            if (value.startsWith("file:///")) {
+                                return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
+                            }
+                            if (value.startsWith("file://")) {
+                                return value.slice(7)
+                            }
+                            return value
+                        }
+
+                        var localPath = value.toLocalFile ? value.toLocalFile() : ""
+                        return localPath && localPath.length ? localPath : value.toString()
+                    }
+
+                    function displayUrl(value) {
+                        var source = sourceUrl(value)
+                        if (!source.length) {
+                            return ""
+                        }
+
+                        try {
+                            return decodeURIComponent(source)
+                        } catch (error) {
+                            return source
+                        }
+                    }
+
+                    function effectiveSource(displayText, storedSource) {
+                        if (!displayText || !displayText.length) {
+                            return ""
+                        }
+
+                        if (storedSource && displayText === displayUrl(storedSource)) {
+                            return storedSource
+                        }
+
+                        return displayText
+                    }
+
+                    Component.onCompleted: {
+                        exportPathText.text = displayUrl(exportFolderPathSource)
+                    }
+
+                    function currentExportFolderPath() {
+                        return effectiveSource(exportPathText.text, exportFolderPathSource)
+                    }
+
+                    CTextField {
+                        id: exportPathText
+                        hoverEnabled: true
+                        Layout.fillWidth: true
+
+                        // text: shortcuts.home // TODO
+
+                        placeholderText: qsTr("Enter path")
+                        Keys.onPressed: {
+                        }
+                    }
+
+
+                    CButton {
+                        text: "..."
+                        Layout.fillWidth: false
+                        onClicked: {
+                            exportFileDialog.currentFolder = exportPathRow.exportFolder
+                            exportFileDialog.open()
+                        }
+                    }
+
+                    FolderDialog {
+                        id: exportFileDialog
+                        title: qsTr("Select folder for export")
+
+                        onAccepted: {
+                            exportPathRow.exportFolder = exportFileDialog.currentFolder
+                            exportPathRow.exportFolderPathSource = exportPathRow.sourceUrl(selectedFolder)
+                            exportPathText.text = exportPathRow.displayUrl(exportPathRow.exportFolderPathSource)
+                        }
+                    }
+
+                    Settings {
+                        property alias exportFolder: exportPathRow.exportFolder
+                    }
+
+                    Settings {
+                        property alias exportFolderText: exportPathRow.exportFolderPathSource
+                    }
+                }
+
+                RowLayout {
+                    CCheck {
+                        id: exportDecimation
+                        Layout.fillWidth: true
+                        text: qsTr("Decimation, m:")
+    //                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
+                        Settings {
+                            property alias exportDecimation: exportDecimation.checked
+                        }
+                    }
+
+                    SpinBoxCustom {
+                        id: exportDecimationValue
+                        Layout.fillWidth: true
+                        implicitWidth: 100
+                        from: 0
+                        to: 100
+                        stepSize: 1
+                        value: 10
+                        Settings {
+                            property alias exportDecimationValue: exportDecimationValue.value
+                        }
+                    }
+
+                    CButton {
+                        text: qsTr("Export to CSV")
+                        Layout.fillWidth: true
+                        onClicked: {
+                            if (targetPlot) {
+                                core.exportPlotAsCVS(exportPathRow.currentExportFolderPath(), targetPlot.plotDatasetChannel(), exportDecimation.checked ? exportDecimationValue.value : 0);
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    CButton {
+                        text: qsTr("Export to XTF")
+                        Layout.fillWidth: true
+                        onClicked: core.exportPlotAsXTF(exportPathRow.currentExportFolderPath());
+                    }
+                }
+
+                RowLayout {
+                    CButton {
+                        text: qsTr("Complex signal to CSV")
+                        Layout.fillWidth: true
+                        onClicked: core.exportComplexToCSV(exportPathRow.currentExportFolderPath());
+                    }
+                }
+
+                RowLayout {
+                    CButton {
+                        text: qsTr("USBL to CSV")
+                        Layout.fillWidth: true
+                        onClicked: core.exportUSBLToCSV(exportPathRow.currentExportFolderPath());
+                    }
+                }
+
+            }
+        }
+
+        ParamGroup {
+            groupName: qsTr("Preference")
+
+            ParamSetup {
+                paramName: qsTr("Language:")
+
+                CCombo  {
+                    id: appLanguage
+                    implicitContentWidthPolicy: ComboBox.WidestText
+                    Layout.fillWidth: false
+                    Layout.preferredWidth: control.preferenceComboWidth
+                    Layout.minimumWidth: control.preferenceComboWidth
+                    Layout.maximumWidth: control.preferenceComboWidth
+                    model: [qsTr("English"), qsTr("Russian"), qsTr("Polish")]
+                    currentIndex: 0
+
+                    function getLanguageByIndex(index) {
+                            switch (index) {
+                                case 0:
+                                    return qsTr("English");
+                                case 1:
+                                    return qsTr("Russian");
+                                case 2:
+                                    return qsTr("Polish");
+                                default:
+                                    return qsTr("English");
+                            }
+                        }
+
+                    onCurrentIndexChanged: {
+                        control.languageChanged(getLanguageByIndex(currentIndex))
+                    }
+
+                    Settings {
+                        property alias appLanguage: appLanguage.currentIndex
+                    }
+                }
+            }
+
+            ParamSetup {
+                paramName: qsTr("Display theme:")
+
+                CCombo  {
+                    id: appTheme
+                    implicitContentWidthPolicy: ComboBox.WidestText
+                    Layout.fillWidth: false
+                    Layout.preferredWidth: control.preferenceComboWidth
+                    Layout.minimumWidth: control.preferenceComboWidth
+                    Layout.maximumWidth: control.preferenceComboWidth
+                    model: [qsTr("Dark"), qsTr("Super Dark"), qsTr("Light"), qsTr("Super Light"), qsTr("OneDarkPro"), qsTr("Monokai"), qsTr("Kimbie Dark"), qsTr("Solarized Dark")]
+                    currentIndex: 0
+
+                    onCurrentIndexChanged: theme.themeID = currentIndex
+                    Component.onCompleted: theme.themeID = currentIndex
+
+                    Settings {
+                        property alias appTheme: appTheme.currentIndex
+                    }
+                }
+            }
+
+            ParamSetup {
+                paramName: qsTr("Instruments grade:")
+
+                CCombo  {
+                    id: instrumentsGradeList
+                    implicitContentWidthPolicy: ComboBox.WidestText
+                    Layout.fillWidth: false
+                    Layout.preferredWidth: control.preferenceComboWidth
+                    Layout.minimumWidth: control.preferenceComboWidth
+                    Layout.maximumWidth: control.preferenceComboWidth
+                    model: [qsTr("Fish Finders"), qsTr("Bottom Tracking"), qsTr("Maximum")]
+                    currentIndex: 0
+
+                    onCurrentIndexChanged: theme.instrumentsGrade = currentIndex
+                    Component.onCompleted: theme.instrumentsGrade = currentIndex
+
+                    Settings {
+                        property alias instrumentsGradeList: instrumentsGradeList.currentIndex
+                    }
+                }
+            }
+        }
+
+        ParamGroup {
+            visible: instruments > 1
+            groupName: qsTr("Interface")
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                CCheck {
+                    id: extraInfoPanelVisible
+                    text: qsTr("Extra info panel")
+
+                    onCheckedChanged: {
+                        if (!checked) {
+                            extraInfoSettingsButton.checked = false 
+                            if (extraInfoFiltersPopup.opened) {
+                                extraInfoFiltersPopup.close()
+                            }
+                        }
+                    }
+
+                    Settings {
+                        property alias extraBoatInfoVisible: extraInfoPanelVisible.checked
+                    }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                CButton {
+                    id: extraInfoSettingsButton
+                    text: qsTr("filter")
+                    visible: extraInfoPanelVisible.checked
+                    checkable: true
+                    onPressed: control.toggleExtraInfoFiltersPopup()
+                }
+            }
+
+            CCheck {
+                id: profilesButtonCheck
+                text: qsTr("Profiles button")
+                checked: false
+
+                Settings {
+                    property alias profilesButtonCheck: profilesButtonCheck.checked
+                }
+            }
+            CCheck {
+                id:  autopilotInfoVisible
+                text: qsTr("Autopilot info")
+
+                Settings {
+                    property alias autopilotInfoVisible: autopilotInfoVisible.checked
+                }
+            }
+            CCheck {
+                id: consoleVisible
+                text: qsTr("Console")
+
+                onCheckedChanged: theme.consoleVisible = checked
+                Component.onCompleted: theme.consoleVisible = checked
+
+                Connections {
+                    target: theme
+                    function onInterfaceChanged() {
+                        if (consoleVisible.checked !== theme.consoleVisible) {
+                            consoleVisible.checked = theme.consoleVisible
+                        }
+                    }
+                }
+
+                Settings {
+                    property alias consoleVisible: consoleVisible.checked
+                }
+            }
+
+            CButton {
+                visible: Qt.platform.os !== "android"
+                text: qsTr("Keyboard shortcuts")
+                onClicked: hotkeysDialog.open()
+            }
+        }
+
+        ParamGroup {
+            groupName: qsTr("UI state backup")
+
+            ColumnLayout {
+                id: uiStateBackupLayout
+                spacing: 6
+                property real uiStateActionButtonWidth: Math.max(uiStateExportActionButton.implicitWidth, uiStateImportActionButton.implicitWidth)
+
+                RowLayout {
+                    id: uiStateExportRow
+                    property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+                    property string exportPathSource: ""
+
+                    function sourceUrl(value) {
+                        if (!value) {
+                            return ""
+                        }
+
+                        if (typeof value === "string") {
+                            if (value.startsWith("file:///")) {
+                                return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
+                            }
+                            if (value.startsWith("file://")) {
+                                return value.slice(7)
+                            }
+                            return value
+                        }
+
+                        var localPath = value.toLocalFile ? value.toLocalFile() : ""
+                        return localPath && localPath.length ? localPath : value.toString()
+                    }
+
+                    function displayUrl(value) {
+                        var source = sourceUrl(value)
+                        if (!source.length) {
+                            return ""
+                        }
+
+                        try {
+                            return decodeURIComponent(source)
+                        }
+                        catch (error) {
+                            return source
+                        }
+                    }
+
+                    function effectiveSource(displayText, storedSource) {
+                        if (!displayText || !displayText.length) {
+                            return ""
+                        }
+
+                        if (storedSource && displayText === displayUrl(storedSource)) {
+                            return storedSource
+                        }
+
+                        return displayText
+                    }
+
+                    function ensureJsonPath(value) {
+                        if (!value || !value.length) {
+                            return ""
+                        }
+
+                        return value.toLowerCase().endsWith(".json") ? value : value + ".json"
+                    }
+
+                    Component.onCompleted: {
+                        uiStateExportPathText.text = displayUrl(exportPathSource)
+                    }
+
+                    function currentExportPath() {
+                        return ensureJsonPath(effectiveSource(uiStateExportPathText.text, exportPathSource))
+                    }
+
+                    CTextField {
+                        id: uiStateExportPathText
+                        hoverEnabled: true
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("Enter path")
+                    }
+
+                    CButton {
+                        text: "..."
+                        Layout.fillWidth: false
+                        onClicked: {
+                            uiStateExportDialog.currentFolder = uiStateExportRow.exportFolder
+                            uiStateExportDialog.open()
+                        }
+                    }
+
+                    CButton {
+                        id: uiStateExportActionButton
+                        Layout.preferredWidth: uiStateBackupLayout.uiStateActionButtonWidth
+                        text: qsTr("Export")
+                        onClicked: {
+                            const path = uiStateExportRow.currentExportPath()
+                            if (!path.length) {
+                                return
+                            }
+                            uiStateExportRow.exportPathSource = path
+                            uiStateExportPathText.text = uiStateExportRow.displayUrl(path)
+                            uiStateSerializer.exportToJsonFile(path)
+                        }
+                    }
+
+                    FileDialog {
+                        id: uiStateExportDialog
+                        title: qsTr("Export UI state")
+                        fileMode: FileDialog.SaveFile
+                        currentFolder: uiStateExportRow.exportFolder
+                        nameFilters: ["UI State Dump (*.json)", "JSON (*.json)", "All Files (*)"]
+
+                        onCurrentFolderChanged: {
+                            uiStateExportRow.exportFolder = uiStateExportDialog.currentFolder
+                        }
+
+                        onAccepted: {
+                            uiStateExportRow.exportFolder = uiStateExportDialog.currentFolder
+                            uiStateExportRow.exportPathSource = uiStateExportRow.ensureJsonPath(uiStateExportRow.sourceUrl(selectedFile))
+                            uiStateExportPathText.text = uiStateExportRow.displayUrl(uiStateExportRow.exportPathSource)
+                        }
+                    }
+
+                    Settings {
+                        property alias uiStateExportFolder: uiStateExportRow.exportFolder
+                    }
+
+                    Settings {
+                        property alias uiStateExportPathSource: uiStateExportRow.exportPathSource
+                    }
+                }
+
+                RowLayout {
+                    id: uiStateImportRow
+                    property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+                    property string importPathSource: ""
+
+                    function sourceUrl(value) {
+                        if (!value) {
+                            return ""
+                        }
+
+                        if (typeof value === "string") {
+                            if (value.startsWith("file:///")) {
+                                return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
+                            }
+                            if (value.startsWith("file://")) {
+                                return value.slice(7)
+                            }
+                            return value
+                        }
+
+                        var localPath = value.toLocalFile ? value.toLocalFile() : ""
+                        return localPath && localPath.length ? localPath : value.toString()
+                    }
+
+                    function displayUrl(value) {
+                        var source = sourceUrl(value)
+                        if (!source.length) {
+                            return ""
+                        }
+
+                        try {
+                            return decodeURIComponent(source)
+                        }
+                        catch (error) {
+                            return source
+                        }
+                    }
+
+                    function effectiveSource(displayText, storedSource) {
+                        if (!displayText || !displayText.length) {
+                            return ""
+                        }
+
+                        if (storedSource && displayText === displayUrl(storedSource)) {
+                            return storedSource
+                        }
+
+                        return displayText
+                    }
+
+                    Component.onCompleted: {
+                        uiStateImportPathText.text = displayUrl(importPathSource)
+                    }
+
+                    function currentImportPath() {
+                        return effectiveSource(uiStateImportPathText.text, importPathSource)
+                    }
+
+                    CTextField {
+                        id: uiStateImportPathText
+                        hoverEnabled: true
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("Enter path")
+                    }
+
+                    CButton {
+                        text: "..."
+                        Layout.fillWidth: false
+                        onClicked: {
+                            uiStateImportDialog.currentFolder = uiStateImportRow.importFolder
+                            uiStateImportDialog.open()
+                        }
+                    }
+
+                    CButton {
+                        id: uiStateImportActionButton
+                        Layout.preferredWidth: uiStateBackupLayout.uiStateActionButtonWidth
+                        text: qsTr("Import")
+                        onClicked: {
+                            const path = uiStateImportRow.currentImportPath()
+                            if (!path.length) {
+                                return
+                            }
+                            uiStateSerializer.importFromJsonFile(path)
+                            uiStateImportRow.importPathSource = path
+                            uiStateImportPathText.text = uiStateImportRow.displayUrl(path)
+                        }
+                    }
+
+                    FileDialog {
+                        id: uiStateImportDialog
+                        title: qsTr("Import UI state")
+                        fileMode: FileDialog.OpenFile
+                        currentFolder: uiStateImportRow.importFolder
+                        nameFilters: ["UI State Dump (*.json)", "JSON (*.json)", "All Files (*)"]
+
+                        onCurrentFolderChanged: {
+                            uiStateImportRow.importFolder = uiStateImportDialog.currentFolder
+                        }
+
+                        onAccepted: {
+                            uiStateImportRow.importFolder = uiStateImportDialog.currentFolder
+                            uiStateImportRow.importPathSource = uiStateImportRow.sourceUrl(selectedFile)
+                            uiStateImportPathText.text = uiStateImportRow.displayUrl(uiStateImportRow.importPathSource)
+                        }
+                    }
+
+                    Settings {
+                        property alias uiStateImportFolder: uiStateImportRow.importFolder
+                    }
+
+                    Settings {
+                        property alias uiStateImportPathSource: uiStateImportRow.importPathSource
+                    }
+                }
+
+                CText {
+                    Layout.fillWidth: true
+                    small: true
+                    wrapMode: Text.WordWrap
+                    text: uiStateSerializer.lastError.length
+                          ? uiStateSerializer.lastError
+                          : uiStateSerializer.lastStatus
+                    color: uiStateSerializer.lastError.length ? "#ff6b6b" : theme.textColor
+                    visible: text.length > 0
+                }
+            }
+        }
+
+        ParamGroup {
+            groupName: "KoggerApp 0.14.3"
+        }
+    }
+
+    HotkeysDialog {
+        id: hotkeysDialog
+    }
+
+    Popup {
+        id: extraInfoFiltersPopup
+        parent: Overlay.overlay
+        //modal: false
+        focus: true
+        padding: 10
+        width: Math.max(220, theme.controlHeight * 8)
+
+        closePolicy: Popup.NoAutoClose | Popup.CloseOnEscape
+
+        background: Rectangle {
+            color: theme.menuBackColor
+            border.color: theme.controlBorderColor
+            border.width: 1
+            radius: 2
+        }
+
+        contentItem: ColumnLayout {
+            spacing: 6
+
+            CCheck {
+                id: extraInfoDepthVisible
+                text: qsTr("Depth")
+                checked: true
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoDepthVisible: extraInfoDepthVisible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoSpeedVisible
+                text: qsTr("Speed")
+                checked: true
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoSpeedVisible: extraInfoSpeedVisible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoCoordinatesVisible
+                text: qsTr("Coordinates")
+                checked: true
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoCoordinatesVisible: extraInfoCoordinatesVisible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoActivePointVisible
+                text: qsTr("Active point")
+                checked: true
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoActivePointVisible: extraInfoActivePointVisible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoSimpleNavV2Visible
+                text: qsTr("Navigation info")
+                checked: false
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoSimpleNavV2Visible: extraInfoSimpleNavV2Visible.checked
+                }
+            }
+
+            CCheck {
+                id: extraInfoBoatStatusVisible
+                text: qsTr("Boat Status")
+                checked: false
+                Layout.fillWidth: true
+
+                Settings {
+                    property alias extraInfoBoatStatusVisible: extraInfoBoatStatusVisible.checked
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: scrollBar.contentItem
+        function onContentYChanged() { // menu scroll
+            if (extraInfoSettingsButton.checked) {
+                positionExtraInfoFiltersPopup()
+            }
+        }
+    }
+}

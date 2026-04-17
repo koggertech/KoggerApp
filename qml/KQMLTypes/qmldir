@@ -1,7 +1,0 @@
-module KQMLTypes
-
-KTabBar 1.0 KTabBar.qml
-KCheckBox 1.0 KCheckBox.qml
-KSwitch 1.0 KSwitch.qml
-KButton 1.0 KButton.qml
-KToolTip 1.0 KToolTip.qml
