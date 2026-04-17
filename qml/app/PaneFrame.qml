@@ -94,20 +94,12 @@ Item {
     }
 
     Rectangle {
-        anchors.fill: parent
-        radius: 0
-        color: Qt.darker(paneItem.paneData.color, 1.35)
-        border.width: 0
-        border.color: "transparent"
-    }
-
-        Rectangle {
             anchors.fill: parent
             anchors.margins: 0
             radius: 0
-            color: paneItem.isModeSelecting ? "#111827" : paneItem.paneData.color
+            color: paneItem.isModeSelecting ? "#111827" : "#09111F"
             border.width: store.editableMode ? 1 : 0
-            border.color: paneItem.isModeSelecting ? "#E2E8F0" : "#334155"
+            border.color: paneItem.isModeSelecting ? "#E2E8F0" : paneItem.paneData.color
 
             PaneContentLoader {
                 anchors.fill: parent
