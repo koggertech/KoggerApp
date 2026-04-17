@@ -21,6 +21,7 @@ Item {
 
     PaneInputBridge {
         anchors.fill: parent
+        z: -1
         workspaceRoot: root.workspaceRoot
         leafId: root.leafId
         paneKind: "2D"
