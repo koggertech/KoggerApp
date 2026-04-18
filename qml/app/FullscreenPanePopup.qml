@@ -13,8 +13,6 @@ BasePanePopup {
     readonly property real fixedExpandedWidth: 640
     readonly property real fixedExpandedHeight: 480
     popupVisible: hostLeafId !== -1 && sourceLeafId !== -1 && paneData !== null
-    expandedWidth: fixedExpandedWidth
-    expandedHeight: fixedExpandedHeight
     popupMargin: store && store.popupMarginPx !== undefined ? store.popupMarginPx : 16
     panelColor: paneData && paneData.color ? paneData.color : "#0B1220"
 
@@ -26,8 +24,11 @@ BasePanePopup {
 
         suspendSignals = true
         syncingFromStore = true
-        expandedWidth = fixedExpandedWidth
-        expandedHeight = fixedExpandedHeight
+        var sz = store.popupExpandedSizeForHost(hostLeafId, fixedExpandedWidth, fixedExpandedHeight)
+        if (sz.width > 0 && sz.height > 0) {
+            expandedWidth = sz.width
+            expandedHeight = sz.height
+        }
         collapsed = store.popupCollapsedForHost(hostLeafId)
         var p = store.popupPositionForHost(hostLeafId, popupWidth, popupHeight)
         panelX = clampX(p.x)
@@ -40,16 +41,28 @@ BasePanePopup {
         if (popupVisible) {
             syncFromStore()
             Qt.callLater(syncFromStore)
+            Qt.callLater(resolveOverlapWithSibling)
         }
     }
 
     Component.onCompleted: {
         syncFromStore()
         Qt.callLater(syncFromStore)
+        Qt.callLater(resolveOverlapWithSibling)
     }
 
-    onHostLeafIdChanged: syncFromStore()
-    onSourceLeafIdChanged: syncFromStore()
+    onHostLeafIdChanged: {
+        syncFromStore()
+        Qt.callLater(resolveOverlapWithSibling)
+    }
+    onSourceLeafIdChanged: {
+        syncFromStore()
+        if (sourceLeafId !== -1) {
+            collapsed = false
+            store.setPopupCollapsedForHost(hostLeafId, false)
+        }
+        Qt.callLater(resolveOverlapWithSibling)
+    }
     onVisibleChanged: {
         if (visible) {
             syncFromStore()
@@ -67,6 +80,12 @@ BasePanePopup {
         if (!popupVisible || syncingFromStore)
             return
         store.setPopupPositionForHost(hostLeafId, x, y, w, h)
+    }
+
+    onSizeCommitted: function(w, h) {
+        if (!popupVisible || syncingFromStore)
+            return
+        store.setPopupExpandedSizeForHost(hostLeafId, w, h)
     }
 
     onPopupDoubleClicked: {

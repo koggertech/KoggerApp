@@ -8,13 +8,9 @@ BasePanePopup {
     required property var store
     property var workspaceRoot: null
 
-    readonly property real fixedExpandedWidth: 640
-    readonly property real fixedExpandedHeight: 480
     popupVisible: store.globalPopupEnabled
     fullscreenMode: store.globalPopupFullscreen
     dragEnabled: !store.globalPopupFullscreen
-    expandedWidth: fixedExpandedWidth
-    expandedHeight: fixedExpandedHeight
     popupMargin: store && store.popupMarginPx !== undefined ? store.popupMarginPx : 16
 
     property bool syncingFromStore: false
@@ -31,14 +27,20 @@ BasePanePopup {
 
         suspendSignals = true
         syncingFromStore = true
-        expandedWidth = fixedExpandedWidth
-        expandedHeight = fixedExpandedHeight
         collapsed = store.globalPopupCollapsed()
         var p = store.globalPopupPosition(popupWidth, popupHeight)
         panelX = clampX(p.x)
         panelY = clampY(p.y)
         syncingFromStore = false
         suspendSignals = false
+    }
+
+    function restoreSizeFromStore() {
+        var sz = store.globalPopupExpandedSize(0, 0)
+        if (sz.width > 80 && sz.height > 80) {
+            expandedWidth  = sz.width
+            expandedHeight = sz.height
+        }
     }
 
     onPopupVisibleChanged: {
@@ -50,7 +52,14 @@ BasePanePopup {
         }
     }
 
+    onSizeCommitted: function(w, h) {
+        if (!popupVisible || syncingFromStore)
+            return
+        store.setGlobalPopupExpandedSize(w, h)
+    }
+
     Component.onCompleted: {
+        restoreSizeFromStore()
         syncFromStore()
         Qt.callLater(syncFromStore)
     }

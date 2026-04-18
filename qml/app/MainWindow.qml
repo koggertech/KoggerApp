@@ -46,6 +46,21 @@ ApplicationWindow {
                                                     || hotkeysPreviewClosing)
     readonly property int hotkeysPreviewGap: 10
 
+    readonly property rect fullscreenPopupEffectiveBounds: {
+        if (!fullscreenPanePopup.visible || !fullscreenPanePopup.popupVisible
+                || fullscreenPanePopup.fullscreenMode)
+            return Qt.rect(-1, -1, 0, 0)
+        return Qt.rect(fullscreenPanePopup.panelX, fullscreenPanePopup.panelY,
+                       fullscreenPanePopup.expandedWidth, fullscreenPanePopup.expandedHeight)
+    }
+
+    readonly property rect globalPopupEffectiveBounds: {
+        var item = globalPopupLoader.item
+        if (!item || !item.popupVisible || item.fullscreenMode)
+            return Qt.rect(-1, -1, 0, 0)
+        return Qt.rect(item.panelX, item.panelY, item.expandedWidth, item.expandedHeight)
+    }
+
     function isValidUuidText(uuidValue) {
         if (uuidValue === undefined || uuidValue === null)
             return false
@@ -493,10 +508,12 @@ ApplicationWindow {
                 anchors.fill: parent
                 store: workspaceStore
                 workspaceRoot: workspaceView
+                siblingBounds: root.fullscreenPopupEffectiveBounds
             }
         }
 
         FullscreenPanePopup {
+            id: fullscreenPanePopup
             anchors.fill: parent
             z: ZOrder.fullscreenPopup
             store: workspaceStore
@@ -504,6 +521,7 @@ ApplicationWindow {
             hostLeafId: workspaceStore.maximizedLeafId
             sourceLeafId: workspaceStore.popupSourceLeafIdForHost(hostLeafId)
             visible: hostLeafId !== -1 && sourceLeafId !== -1
+            siblingBounds: root.globalPopupEffectiveBounds
         }
 
         Component {
