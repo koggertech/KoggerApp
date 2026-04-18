@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import SceneGraphRendering 1.0
 import "qrc:/qml/scene2d/"
+import kqml_types 1.0
 
 Item {
     id: workspace
@@ -13,6 +14,7 @@ Item {
     property var plotItemsByLeafId: ({})
     property Item active3DHostItem: null
     property int active3DLeafId: -1
+
     property var primaryPlotItem: null
     readonly property var leafRects: workspace.store ? workspace.store.leafRects : []
     readonly property string inputDeviceLabel: inputStateObject.displayLabel
@@ -68,6 +70,11 @@ Item {
     function cancelScene3DPointerInteraction() {
         if (scene3dView && typeof scene3dView.cancelPointerInteraction === "function")
             scene3dView.cancelPointerInteraction()
+    }
+
+    function toggleGlobalPopupFullscreen() {
+        if (workspace.store)
+            workspace.store.globalPopupFullscreen = !workspace.store.globalPopupFullscreen
     }
 
     InputDeviceState {
@@ -473,6 +480,36 @@ Item {
                 }
             }
         }
+
+        Plot2D {
+            id: globalPopupPlot
+
+            readonly property var slotHostItem: workspace.paneHostItemForLeaf(
+                workspace.store ? workspace.store.globalPopupLeafId : -1, "2D")
+
+            inputState: workspace.inputState
+            externalInputRouting: true
+            parent: slotHostItem ? slotHostItem : renderRoot
+            anchors.fill: parent
+            visible: slotHostItem !== null
+            enabled: visible
+            focus: false
+            indx: 5
+            is3dVisible: workspace.active3DHostItem !== null
+
+            Component.onCompleted: {
+                setIndx(5)
+                if (typeof core !== "undefined" && core && typeof core.registerPlot2D === "function")
+                    core.registerPlot2D(globalPopupPlot)
+                if (workspace.store && typeof workspace.registerPlotItem === "function")
+                    workspace.registerPlotItem(workspace.store.globalPopupLeafId, globalPopupPlot)
+            }
+
+            Component.onDestruction: {
+                if (workspace && workspace.store && typeof workspace.unregisterPlotItem === "function")
+                    workspace.unregisterPlotItem(workspace.store.globalPopupLeafId, globalPopupPlot)
+            }
+        }
     }
 
     Repeater {
@@ -489,7 +526,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         visible: workspace.store.modePickerLeafId !== -1
-        z: 120
+        z: ZOrder.dragOverlay
         color: "#02061799"
 
         MouseArea {
@@ -515,7 +552,7 @@ Item {
             y: vertical ? handleData.y : handleData.y - hitSize / 2
             width: vertical ? hitSize : handleData.width
             height: vertical ? handleData.height : hitSize
-            z: 45
+            z: ZOrder.dropZoneHighlight
 
             Rectangle {
                 visible: splitDragZone.showResizeHandle
@@ -648,7 +685,7 @@ Item {
         y: workspace.store.dragCursor.y - height / 2
         color: "#1E40AF"
         border.color: "#BFDBFE"
-        z: 100
+        z: ZOrder.dragOverlay
         opacity: 0.9
 
         Text {

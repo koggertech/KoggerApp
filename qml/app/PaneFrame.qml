@@ -48,7 +48,7 @@ Item {
     width: isMaximized ? workspaceItem.width : (paneRect && paneRect.width !== undefined ? paneRect.width : 0)
     height: isMaximized ? workspaceItem.height : (paneRect && paneRect.height !== undefined ? paneRect.height : 0)
     visible: !hiddenByMaximizedPane
-    z: isMaximized ? 140 : (isModeSelecting ? 130 : 0)
+    z: isMaximized ? ZOrder.maximizedPane : (isModeSelecting ? ZOrder.maximizingPane : ZOrder.workspacePane)
 
     Behavior on x { enabled: store.edgeResizeMovingSplitId < 0 && !store.layoutTransitionSuspended; NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } }
     Behavior on y { enabled: store.edgeResizeMovingSplitId < 0 && !store.layoutTransitionSuspended; NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } }

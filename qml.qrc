@@ -44,6 +44,7 @@
         <file>qml/kqml_types/KSwitch.qml</file>
         <file>qml/kqml_types/KButton.qml</file>
         <file>qml/kqml_types/KToolTip.qml</file>
+        <file>qml/kqml_types/ZOrder.qml</file>
 
         <!-- ======= Menus ======= -->
         <file>qml/menus/qmldir</file>

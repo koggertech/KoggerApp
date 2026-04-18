@@ -11,6 +11,8 @@ BasePanePopup {
     readonly property real fixedExpandedWidth: 640
     readonly property real fixedExpandedHeight: 480
     popupVisible: store.globalPopupEnabled
+    fullscreenMode: store.globalPopupFullscreen
+    dragEnabled: !store.globalPopupFullscreen
     expandedWidth: fixedExpandedWidth
     expandedHeight: fixedExpandedHeight
     popupMargin: store && store.popupMarginPx !== undefined ? store.popupMarginPx : 16
@@ -43,6 +45,8 @@ BasePanePopup {
         if (popupVisible) {
             syncFromStore()
             Qt.callLater(syncFromStore)
+        } else {
+            store.globalPopupFullscreen = false
         }
     }
 
@@ -71,6 +75,7 @@ BasePanePopup {
     }
 
     onCloseRequested: {
+        store.globalPopupFullscreen = false
         store.globalPopupEnabled = false
     }
 
@@ -93,7 +98,7 @@ BasePanePopup {
         active: root.popupVisible
         visible: !root.modeSelecting
         paneData: root.paneData
-        leafId: -1
+        leafId: root.store.globalPopupLeafId
         rotateEnabled: false
         workspaceRoot: root.workspaceRoot
     }

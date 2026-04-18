@@ -1556,6 +1556,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
     createMapTileManagerConnections();
     createScene3dConnections();
 
+    scene3dViewPtr_->forceRefresh();
+
     QMetaObject::invokeMethod(dataProcessor_, "setBottomTrackPtr", Qt::QueuedConnection, Q_ARG(BottomTrack*, scene3dViewPtr_->bottomTrack().get()));
     QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "createLocationReader", Qt::QueuedConnection);
 }

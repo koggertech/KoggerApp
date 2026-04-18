@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
+import kqml_types 1.0
 
 ApplicationWindow {
     id: root
@@ -88,10 +89,6 @@ ApplicationWindow {
         }
         if (workspaceStore.settingsPanelOpen) {
             workspaceStore.settingsPanelOpen = false
-            handled = true
-        }
-        if (workspaceStore.globalPopupEnabled) {
-            workspaceStore.globalPopupEnabled = false
             handled = true
         }
         if (workspaceStore.modePickerLeafId !== -1) {
@@ -302,8 +299,8 @@ ApplicationWindow {
                                 : 12
             anchors.topMargin: 12
             z: hotkeysPreviewMode || (workspaceStore.settingsPanelOpen && hotActions.expanded)
-               ? 2205
-               : 220
+               ? ZOrder.hotActionsActive
+               : ZOrder.hotActions
 
             store: workspaceStore
             favoritesEnabled: workspaceStore.quickActionFavoritesEnabled
@@ -438,7 +435,7 @@ ApplicationWindow {
 
         SettingsSidebarBase {
             id: settingsSidebar
-            z: 2000
+            z: ZOrder.settingsSidebar
 
             anchors.fill: parent
             open: workspaceStore.settingsPanelOpen
@@ -459,7 +456,7 @@ ApplicationWindow {
 
         ModeSettingsPanel {
             id: modeSettingsPanel
-            z: 2001
+            z: ZOrder.modeSettings
 
             anchors.fill: parent
             store: workspaceStore
@@ -467,7 +464,7 @@ ApplicationWindow {
 
         SettingsSidebarBase {
             id: legacySidebar
-            z: 2002
+            z: ZOrder.legacySidebar
 
             anchors.fill: parent
             open: legacyPanelOpen
@@ -490,7 +487,7 @@ ApplicationWindow {
             id: globalPopupLoader
 
             anchors.fill: parent
-            z: 1400
+            z: ZOrder.globalPopup
             active: workspaceStore.globalPopupEnabled
             sourceComponent: GlobalPanePopup {
                 anchors.fill: parent
@@ -501,7 +498,7 @@ ApplicationWindow {
 
         FullscreenPanePopup {
             anchors.fill: parent
-            z: 1300
+            z: ZOrder.fullscreenPopup
             store: workspaceStore
             workspaceRoot: workspaceView
             hostLeafId: workspaceStore.maximizedLeafId

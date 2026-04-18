@@ -265,6 +265,7 @@ public:
     Q_INVOKABLE void panStepTrigger(qreal dx, qreal dy);
     Q_INVOKABLE void zStepTrigger(qreal delta);
     Q_INVOKABLE void resetCameraAngleTrigger();
+    Q_INVOKABLE void forceRefresh();
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
     Q_INVOKABLE void rulerFinishDrawing();
     Q_INVOKABLE void rulerCancelDrawing();

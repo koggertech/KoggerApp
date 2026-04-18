@@ -132,9 +132,14 @@ Item {
         if (!root.workspaceRoot || !root.workspaceRoot.store || root.leafId < 0)
             return
 
+        if (root.leafId === root.workspaceRoot.store.globalPopupLeafId) {
+            if (typeof root.workspaceRoot.toggleGlobalPopupFullscreen === "function")
+                root.workspaceRoot.toggleGlobalPopupFullscreen()
+            return
+        }
+
         if (typeof root.workspaceRoot.store.toggleLeafMaximize !== "function")
             return
-
         root.workspaceRoot.store.activeLeafId = root.leafId
         root.workspaceRoot.store.toggleLeafMaximize(root.leafId)
     }

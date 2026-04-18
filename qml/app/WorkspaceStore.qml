@@ -65,6 +65,8 @@ property int modePickerLeafId: -1
 property var modePickerLeafIds: []
 property int hoveredPopupCandidateLeafId: -1
 property int flashingLeafId: -1
+readonly property int globalPopupLeafId: 9999
+property bool globalPopupFullscreen: false
 property var favoriteLayouts: []
 property bool currentLayoutIsFavorite: false
 property string currentLayoutFavoriteSignature: ""
@@ -2246,6 +2248,8 @@ function applyPaneModeSelection(leafId, mode) {
     var current3DLeaf = firstLeafIdByMode(nextTree, "3D")
     if (targetMode === "3D") {
         if (current3DLeaf !== -1 && current3DLeaf !== leafId)
+            return
+        if (globalPopupMode === "3D")
             return
     }
 

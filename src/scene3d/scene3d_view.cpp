@@ -1176,6 +1176,16 @@ void GraphicsScene3dView::resetCameraAngleTrigger()
     QQuickFramebufferObject::update();
     onCameraMoved();
 }
+
+void GraphicsScene3dView::forceRefresh()
+{
+    forceUpdateDatasetLlaRef();
+    dataZoomIndx_ = -1;
+    updateProjection();
+    onCameraMoved();
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::setRulerEnabled(bool enabled)
 {
     if (rulerEnabled_ == enabled) {
