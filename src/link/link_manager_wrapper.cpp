@@ -118,12 +118,44 @@ void LinkManagerWrapper::openClosedLinks()
     emit sendOpenFLinks();
 }
 
+QByteArray LinkManagerWrapper::exportPinnedLinksToXmlData(QString* error)
+{
+    if (!workerObject_) {
+        if (error) {
+            *error = QStringLiteral("Link worker is not available");
+        }
+        return QByteArray();
+    }
+
+    if (workerThread_ && !workerThread_->isRunning()) {
+        workerThread_->start();
+    }
+
+    if (QThread::currentThread() == workerObject_->thread()) {
+        return workerObject_->exportPinnedLinksToXmlData();
+    }
+
+    QByteArray xmlData;
+    QMetaObject::invokeMethod(workerObject_.get(), [this, &xmlData]() {
+        xmlData = workerObject_->exportPinnedLinksToXmlData();
+    }, Qt::BlockingQueuedConnection);
+    return xmlData;
+}
+
 bool LinkManagerWrapper::reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
                                                        bool allowSerialLinks,
                                                        int* skippedSerialLinks,
+                                                       bool* infrastructureUnavailable,
                                                        QString* error)
 {
+    if (infrastructureUnavailable) {
+        *infrastructureUnavailable = false;
+    }
+
     if (!workerObject_) {
+        if (infrastructureUnavailable) {
+            *infrastructureUnavailable = true;
+        }
         if (error) {
             *error = QStringLiteral("Link worker is not available");
         }

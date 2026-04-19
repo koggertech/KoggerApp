@@ -1,11 +1,14 @@
 #include "link_manager.h"
 
+#include <QBuffer>
 #include <QFile>
-#include <QXmlStreamReader>
+#include <QSaveFile>
 #include <QDebug>
 #include <QStandardPaths>
 #include <QDir>
 #include <QRegularExpression>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 
 namespace {
 
@@ -13,6 +16,48 @@ bool xmlBoolValue(const QString& value)
 {
     const QString normalized = value.trimmed().toUpper();
     return normalized == QStringLiteral("TRUE") || normalized == QStringLiteral("1");
+}
+
+QByteArray buildPinnedLinksXmlData(const QList<Link*>& links)
+{
+    QByteArray xmlData;
+    QBuffer buffer(&xmlData);
+    if (!buffer.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+        return QByteArray();
+    }
+
+    QXmlStreamWriter xmlWriter(&buffer);
+    xmlWriter.setAutoFormatting(true);
+    xmlWriter.writeStartDocument();
+    xmlWriter.writeStartElement("pinned_links");
+
+    for (Link* link : links) {
+        if (!link || !link->getIsPinned()) {
+            continue;
+        }
+
+        xmlWriter.writeStartElement("link");
+        xmlWriter.writeTextElement("uuid", link->getUuid().toString());
+        xmlWriter.writeTextElement("control_type", QString::number(static_cast<int>(link->getControlType())));
+        xmlWriter.writeTextElement("port_name", link->getPortName());
+        xmlWriter.writeTextElement("baudrate", QString::number(link->getBaudrate()));
+        xmlWriter.writeTextElement("parity", QVariant(static_cast<bool>(link->getParity())).toString());
+        xmlWriter.writeTextElement("link_type", QString::number(static_cast<int>(link->getLinkType())));
+        xmlWriter.writeTextElement("address", link->getAddress());
+        xmlWriter.writeTextElement("source_port", QString::number(link->getSourcePort()));
+        xmlWriter.writeTextElement("destination_port", QString::number(link->getDestinationPort()));
+        xmlWriter.writeTextElement("is_pinned", QVariant(static_cast<bool>(link->getIsPinned())).toString());
+        xmlWriter.writeTextElement("is_hided", QVariant(static_cast<bool>(link->getIsHided())).toString());
+        xmlWriter.writeTextElement("is_not_available", QVariant(static_cast<bool>(link->getIsNotAvailable())).toString());
+        xmlWriter.writeTextElement("connection_status", QVariant(static_cast<bool>(link->getConnectionStatus())).toString());
+        xmlWriter.writeTextElement("auto_speed_selection", QVariant(static_cast<bool>(link->getAutoSpeedSelection())).toString());
+        xmlWriter.writeEndElement();
+    }
+
+    xmlWriter.writeEndElement();
+    xmlWriter.writeEndDocument();
+    buffer.close();
+    return xmlData;
 }
 
 }
@@ -251,46 +296,34 @@ void LinkManager::exportPinnedLinksToXML()
         }
     }
 
-    QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    const QByteArray xmlData = buildPinnedLinksXmlData(list_);
+    if (xmlData.isEmpty()) {
         return;
     }
 
-    QXmlStreamWriter xmlWriter(&file);
-    xmlWriter.setAutoFormatting(true);
-    xmlWriter.writeStartDocument();
-    xmlWriter.writeStartElement("pinned_links");
-
-    for (auto& itm : list_) {
-        if (itm->getIsPinned()) {
-            xmlWriter.writeStartElement("link");
-            xmlWriter.writeTextElement("uuid", itm->getUuid().toString());
-            xmlWriter.writeTextElement("control_type", QString::number(static_cast<int>(itm->getControlType())));
-            xmlWriter.writeTextElement("port_name", itm->getPortName());
-            xmlWriter.writeTextElement("baudrate", QString::number(itm->getBaudrate()));
-            xmlWriter.writeTextElement("parity", QVariant(static_cast<bool>(itm->getParity())).toString());
-            xmlWriter.writeTextElement("link_type", QString::number(static_cast<int>(itm->getLinkType())));
-            xmlWriter.writeTextElement("address", itm->getAddress());
-            xmlWriter.writeTextElement("source_port", QString::number(itm->getSourcePort()));
-            xmlWriter.writeTextElement("destination_port", QString::number(itm->getDestinationPort()));
-            xmlWriter.writeTextElement("is_pinned", QVariant(static_cast<bool>(itm->getIsPinned())).toString());
-            xmlWriter.writeTextElement("is_hided", QVariant(static_cast<bool>(itm->getIsHided())).toString());
-            xmlWriter.writeTextElement("is_not_available", QVariant(static_cast<bool>(itm->getIsNotAvailable())).toString());
-            xmlWriter.writeTextElement("connection_status", QVariant(static_cast<bool>(itm->getConnectionStatus())).toString());
-            xmlWriter.writeTextElement("auto_speed_selection", QVariant(static_cast<bool>(itm->getAutoSpeedSelection())).toString());
-            xmlWriter.writeEndElement();
-        }
+    QSaveFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+        return;
     }
 
-    xmlWriter.writeEndElement();
-    xmlWriter.writeEndDocument();
-    file.close();
+    if (file.write(xmlData) != xmlData.size()) {
+        file.cancelWriting();
+        return;
+    }
+
+    file.commit();
 }
 
 QString LinkManager::pinnedLinksFilePath() const
 {
     return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
         + QStringLiteral("/pinned_links.xml");
+}
+
+QByteArray LinkManager::exportPinnedLinksToXmlData() const
+{
+    const TimerController timerGuard(timer_.get());
+    return buildPinnedLinksXmlData(list_);
 }
 
 bool LinkManager::parsePinnedLinksXmlData(const QByteArray& xmlData, QList<PinnedLinkRecord>* records, QString* error) const
