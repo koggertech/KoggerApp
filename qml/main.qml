@@ -17,7 +17,7 @@ ApplicationWindow  {
     height:        540
     minimumHeight: 272
     color:         "black"
-    title:         qsTr("KoggerApp, KOGGER")
+    title:         core.fileTitle !== "" ? (core.fileTitle + " — KoggerApp, KOGGER") : qsTr("KoggerApp, KOGGER")
 
     readonly property int _rightBarWidth:                360
     readonly property int _activeObjectParamsMenuHeight: 500
@@ -291,11 +291,12 @@ ApplicationWindow  {
                 draggedFilePath = ""
                 if (drag.hasUrls) {
                     for (var i = 0; i < drag.urls.length; ++i) {
-                        var url = drag.urls[i]
-                        var localPath = url.toLocalFile ? url.toLocalFile() : ""
-                        var filePath = (localPath && localPath.length ? localPath : url.toString()).toLowerCase()
-                        if (filePath.endsWith(".klf") ||
-                            filePath.endsWith(".xtf")) {
+                        var raw = drag.urls[i].toString()
+                        var filePath = raw.startsWith("file:///")
+                            ? (Qt.platform.os === "windows" ? raw.slice(8) : raw.slice(7))
+                            : raw.startsWith("file://") ? raw.slice(7) : raw
+                        if (filePath.toLowerCase().endsWith(".klf") ||
+                            filePath.toLowerCase().endsWith(".xtf")) {
                             draggedFilePath = filePath
                             overlay.opacity = 0.3
                             break

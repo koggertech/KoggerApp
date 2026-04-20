@@ -24,6 +24,13 @@ ColumnLayout {
         property alias importPathText: connectionViewer.importTrackPathSource
     }
 
+    Connections {
+        target: core
+        function onFileOpenFailed(path) {
+            connectionViewer.removeRecentFile(path)
+        }
+    }
+
     function urlSource(value) {
         if (!value) {
             return ""
