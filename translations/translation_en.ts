@@ -111,32 +111,32 @@
 <context>
     <name>ConnectionViewer</name>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="219"/>
+        <location filename="../qml/ConnectionViewer.qml" line="226"/>
         <source>Settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="234"/>
+        <location filename="../qml/ConnectionViewer.qml" line="241"/>
         <source>Unpin</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="234"/>
+        <location filename="../qml/ConnectionViewer.qml" line="241"/>
         <source>Pin</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="250"/>
+        <location filename="../qml/ConnectionViewer.qml" line="257"/>
         <source>Auto</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="267"/>
+        <location filename="../qml/ConnectionViewer.qml" line="274"/>
         <source>Delete</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="403"/>
+        <location filename="../qml/ConnectionViewer.qml" line="410"/>
         <source>src:</source>
         <translation></translation>
     </message>
@@ -146,84 +146,84 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="344"/>
+        <location filename="../qml/ConnectionViewer.qml" line="351"/>
         <source>Auto search baudrate</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="352"/>
+        <location filename="../qml/ConnectionViewer.qml" line="359"/>
         <source>UDP ip:</source>
         <translation>UDP ip:</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="352"/>
+        <location filename="../qml/ConnectionViewer.qml" line="359"/>
         <source>TCP ip:</source>
         <translation>TCP ip:</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="456"/>
+        <location filename="../qml/ConnectionViewer.qml" line="463"/>
         <source>dst:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="456"/>
+        <location filename="../qml/ConnectionViewer.qml" line="463"/>
         <source>srv:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="495"/>
+        <location filename="../qml/ConnectionViewer.qml" line="502"/>
         <source>Close</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="495"/>
+        <location filename="../qml/ConnectionViewer.qml" line="502"/>
         <source>Open</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="589"/>
+        <location filename="../qml/ConnectionViewer.qml" line="596"/>
         <source>+UDP</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="598"/>
+        <location filename="../qml/ConnectionViewer.qml" line="605"/>
         <source>+TCP</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="608"/>
+        <location filename="../qml/ConnectionViewer.qml" line="615"/>
         <source>MAVProxy</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="629"/>
+        <location filename="../qml/ConnectionViewer.qml" line="636"/>
         <source>KLF</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="660"/>
+        <location filename="../qml/ConnectionViewer.qml" line="667"/>
         <source>CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="695"/>
+        <location filename="../qml/ConnectionViewer.qml" line="702"/>
         <source>GPS</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="929"/>
-        <location filename="../qml/ConnectionViewer.qml" line="1089"/>
+        <location filename="../qml/ConnectionViewer.qml" line="936"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1096"/>
         <source>Enter path</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="1114"/>
-        <location filename="../qml/ConnectionViewer.qml" line="1154"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1121"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1161"/>
         <source>Please choose a file</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="1198"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1205"/>
         <source>Undefined</source>
         <translation></translation>
     </message>
@@ -1515,6 +1515,11 @@
         <source>Angle, °:</source>
         <translation></translation>
     </message>
+    <message>
+        <location filename="../qml/MosaicExtraSettings.qml" line="406"/>
+        <source>Trace line</source>
+        <translation></translation>
+    </message>
 </context>
 <context>
     <name>ParamGroup</name>
@@ -1806,7 +1811,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2121"/>
+        <location filename="../src/core.cpp" line="2158"/>
         <source>File</source>
         <translation>File</translation>
     </message>
@@ -2498,92 +2503,92 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1780"/>
+        <location filename="../qml/main.qml" line="1781"/>
         <source>Profiles...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1222"/>
+        <location filename="../qml/main.qml" line="1223"/>
         <source>Data prepairing...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1226"/>
+        <location filename="../qml/main.qml" line="1227"/>
         <source> cm/pix</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1226"/>
+        <location filename="../qml/main.qml" line="1227"/>
         <source>Mosaic: </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1229"/>
+        <location filename="../qml/main.qml" line="1230"/>
         <source>Surface: </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1229"/>
+        <location filename="../qml/main.qml" line="1230"/>
         <source> cm/cell</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1835"/>
+        <location filename="../qml/main.qml" line="1836"/>
         <source>Profiles</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1872"/>
+        <location filename="../qml/main.qml" line="1873"/>
         <source>Close</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1918"/>
+        <location filename="../qml/main.qml" line="1919"/>
         <source>Select profile XML</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1945"/>
+        <location filename="../qml/main.qml" line="1946"/>
         <source>Add profiles and apply them</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1984"/>
+        <location filename="../qml/main.qml" line="1985"/>
         <source>Path to profile .xml</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1996"/>
+        <location filename="../qml/main.qml" line="1997"/>
         <source>Browse</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2005"/>
+        <location filename="../qml/main.qml" line="2006"/>
         <source>Apply</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2153"/>
+        <location filename="../qml/main.qml" line="2154"/>
         <source> V   </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2153"/>
+        <location filename="../qml/main.qml" line="2154"/>
         <source> A   </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2153"/>
+        <location filename="../qml/main.qml" line="2154"/>
         <source> m/s </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2160"/>
+        <location filename="../qml/main.qml" line="2161"/>
         <source> %</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2269"/>
+        <location filename="../qml/main.qml" line="2270"/>
         <source>Please wait, the file is opening</source>
         <translation></translation>
     </message>

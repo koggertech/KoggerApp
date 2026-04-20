@@ -2644,7 +2644,7 @@ void DataProcessor::onDbAnyTileForZoom(int zoom, bool exists)
     }
 }
 
-void DataProcessor::postTraceLines(const QVector3D &leftBeg, const QVector3D &leftEnd, const QVector3D &rightBeg, const QVector3D &rightEnd)
+void DataProcessor::postTraceLines(const QVector3D &leftBeg, const QVector3D &leftEnd, const QVector3D &rightBeg, const QVector3D &rightEnd, int epochIndex)
 {
-    emit sendTraceLines(leftBeg, leftEnd, rightBeg, rightEnd);
+    emit sendTraceLines(leftBeg, leftEnd, rightBeg, rightEnd, epochIndex);
 }

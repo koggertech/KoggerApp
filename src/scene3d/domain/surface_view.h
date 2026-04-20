@@ -66,6 +66,7 @@ public:
         float cameraDist_;
         QVector<QVector3D> lastLeftLine_;
         QVector<QVector3D> lastRightLine_;
+        int   lastTraceEpoch_;
         float traceWidth_;
         bool  traceVisible_;
         float verticalScale_;
@@ -100,7 +101,8 @@ public:
     bool trySetMosaicTextureId(const TileKey& key, GLuint texId);
     bool hasTile(const TileKey& key) const;
 
-    void setTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd);
+    void setTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd, int epochIndex);
+    void setTraceVisible(bool state);
 
 public slots: // from dataprocessor
     void clear();

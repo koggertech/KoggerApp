@@ -68,4 +68,9 @@ private:
     float lAngleOffset_;
     float rAngleOffset_;
     bool generateGridContour_;
+    int lastTraceLineEpoch_;
+    QVector3D lastLeftBeg_;
+    QVector3D lastLeftEnd_;
+    QVector3D lastRightBeg_;
+    QVector3D lastRightEnd_;
 };
