@@ -8,6 +8,8 @@ Item {
     property int leafId: -1
     property string paneKind: "2D"
     property bool active: true
+
+    signal scene3dRightReleased(real x, real y)
     property bool focusOnPointer: true
     property int lastKeyPressed: Qt.Key_unknown
     property int lastMouseButtons: Qt.NoButton
@@ -187,10 +189,13 @@ Item {
 
             onReleased: function(mouse) {
                 root.markMouseKeyboardInput()
-                if (root.paneKind === "3D")
+                if (root.paneKind === "3D") {
                     root.routeScene3DRelease(mouse.button, root.lastMouseButtons, mouse.x, mouse.y)
-                else
+                    if (mouse.button === Qt.RightButton)
+                        root.scene3dRightReleased(mouse.x, mouse.y)
+                } else {
                     root.routePlotRelease(mouse.button, root.lastMouseButtons, mouse.x, mouse.y)
+                }
                 root.lastMouseButtons = Qt.NoButton
                 overlay.pointerStarted = false
             }
