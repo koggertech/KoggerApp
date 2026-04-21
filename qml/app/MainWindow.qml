@@ -14,7 +14,7 @@ ApplicationWindow {
     minimumHeight: isMobilePlatform ? 0 : 560
     visible: true
     visibility: isMobilePlatform ? Window.FullScreen : Window.Windowed
-    title: "Qt 6.8.3 | Multi Pane Workspace"
+    title: core.fileTitle !== "" ? (core.fileTitle + " — KoggerApp, KOGGER") : qsTr("KoggerApp, KOGGER")
 
     WorkspaceStore {
         id: workspaceStore
