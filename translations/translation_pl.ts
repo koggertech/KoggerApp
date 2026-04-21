@@ -111,32 +111,32 @@
 <context>
     <name>ConnectionViewer</name>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="219"/>
+        <location filename="../qml/ConnectionViewer.qml" line="226"/>
         <source>Settings</source>
         <translation>Właściwości</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="234"/>
+        <location filename="../qml/ConnectionViewer.qml" line="241"/>
         <source>Unpin</source>
         <translation>Odepnij</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="234"/>
+        <location filename="../qml/ConnectionViewer.qml" line="241"/>
         <source>Pin</source>
         <translation>Przypnij</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="250"/>
+        <location filename="../qml/ConnectionViewer.qml" line="257"/>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="267"/>
+        <location filename="../qml/ConnectionViewer.qml" line="274"/>
         <source>Delete</source>
         <translation>Usuń</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="403"/>
+        <location filename="../qml/ConnectionViewer.qml" line="410"/>
         <source>src:</source>
         <translation>src:</translation>
     </message>
@@ -146,84 +146,84 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="344"/>
+        <location filename="../qml/ConnectionViewer.qml" line="351"/>
         <source>Auto search baudrate</source>
         <translation>Automatyczne wyszukiwanie Prędkości</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="352"/>
+        <location filename="../qml/ConnectionViewer.qml" line="359"/>
         <source>UDP ip:</source>
         <translation>UDP ip:</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="352"/>
+        <location filename="../qml/ConnectionViewer.qml" line="359"/>
         <source>TCP ip:</source>
         <translation>TCP ip:</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="456"/>
+        <location filename="../qml/ConnectionViewer.qml" line="463"/>
         <source>dst:</source>
         <translation>dst:</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="456"/>
+        <location filename="../qml/ConnectionViewer.qml" line="463"/>
         <source>srv:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="495"/>
+        <location filename="../qml/ConnectionViewer.qml" line="502"/>
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="495"/>
+        <location filename="../qml/ConnectionViewer.qml" line="502"/>
         <source>Open</source>
         <translation>Otwórz</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="589"/>
+        <location filename="../qml/ConnectionViewer.qml" line="596"/>
         <source>+UDP</source>
         <translation>+UDP</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="598"/>
+        <location filename="../qml/ConnectionViewer.qml" line="605"/>
         <source>+TCP</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="608"/>
+        <location filename="../qml/ConnectionViewer.qml" line="615"/>
         <source>MAVProxy</source>
         <translation>MAVProxy</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="629"/>
+        <location filename="../qml/ConnectionViewer.qml" line="636"/>
         <source>KLF</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="660"/>
+        <location filename="../qml/ConnectionViewer.qml" line="667"/>
         <source>CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="695"/>
+        <location filename="../qml/ConnectionViewer.qml" line="702"/>
         <source>GPS</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="1198"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1205"/>
         <source>Undefined</source>
         <translation>niezdefiniowany</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="929"/>
-        <location filename="../qml/ConnectionViewer.qml" line="1089"/>
+        <location filename="../qml/ConnectionViewer.qml" line="936"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1096"/>
         <source>Enter path</source>
         <translation>Wprowadź ścieżkę</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="1114"/>
-        <location filename="../qml/ConnectionViewer.qml" line="1154"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1121"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1161"/>
         <source>Please choose a file</source>
         <translation>Proszę wybrać plik</translation>
     </message>
@@ -1001,77 +1001,77 @@
 <context>
     <name>HotkeysDialog</name>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="30"/>
+        <location filename="../qml/HotkeysDialog.qml" line="36"/>
         <source>Application</source>
         <translation>Aplikacja</translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="31"/>
+        <location filename="../qml/HotkeysDialog.qml" line="37"/>
         <source>Echogram</source>
         <translation>Echogram</translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="32"/>
+        <location filename="../qml/HotkeysDialog.qml" line="38"/>
         <source>3D</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="33"/>
+        <location filename="../qml/HotkeysDialog.qml" line="39"/>
         <source>Mosaic</source>
         <translation>Mozaika</translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="34"/>
+        <location filename="../qml/HotkeysDialog.qml" line="40"/>
         <source>Surface</source>
         <translation>Powierzchnia</translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="112"/>
+        <location filename="../qml/HotkeysDialog.qml" line="118"/>
         <source>Already used by: %1</source>
         <translation>Już w użyciu: %1</translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="136"/>
+        <location filename="../qml/HotkeysDialog.qml" line="142"/>
         <source>Keyboard Shortcuts</source>
         <translation>Skróty klawiaturowe</translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="145"/>
+        <location filename="../qml/HotkeysDialog.qml" line="156"/>
         <source>Key</source>
         <translation>Klawisz</translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="146"/>
+        <location filename="../qml/HotkeysDialog.qml" line="162"/>
         <source>Parameter</source>
         <translation>Parametr</translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="147"/>
+        <location filename="../qml/HotkeysDialog.qml" line="169"/>
         <source>Action</source>
         <translation>Działanie</translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="191"/>
+        <location filename="../qml/HotkeysDialog.qml" line="239"/>
         <source>…</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="256"/>
+        <location filename="../qml/HotkeysDialog.qml" line="314"/>
         <source>Press any key  •  click again to cancel</source>
         <translation>Naciśnij dowolny klawisz • kliknij ponownie, aby anulować</translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="257"/>
+        <location filename="../qml/HotkeysDialog.qml" line="315"/>
         <source>Click a key to reassign</source>
         <translation>Kliknij aby ponownie przypisać</translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="266"/>
+        <location filename="../qml/HotkeysDialog.qml" line="324"/>
         <source>Reset to defaults</source>
         <translation>Domyślnie</translation>
     </message>
     <message>
-        <location filename="../qml/HotkeysDialog.qml" line="275"/>
+        <location filename="../qml/HotkeysDialog.qml" line="333"/>
         <source>Close</source>
         <translation>Zamknąć</translation>
     </message>
@@ -1515,6 +1515,11 @@
         <source>Angle, °:</source>
         <translation>Kąt, °:</translation>
     </message>
+    <message>
+        <location filename="../qml/MosaicExtraSettings.qml" line="406"/>
+        <source>Trace line</source>
+        <translation>Linia trasy</translation>
+    </message>
 </context>
 <context>
     <name>ParamGroup</name>
@@ -1806,7 +1811,7 @@
         <translation>Prędkość dźwięku, m/s: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2121"/>
+        <location filename="../src/core.cpp" line="2158"/>
         <source>File</source>
         <translation>File</translation>
     </message>
@@ -2325,103 +2330,109 @@
 <context>
     <name>UIStateSerializer</name>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="323"/>
+        <location filename="../src/ui_state_serializer.cpp" line="331"/>
         <source>Export failed: file path is empty</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="353"/>
-        <source>Export failed: cannot read pinned links file</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../src/ui_state_serializer.cpp" line="366"/>
+        <location filename="../src/ui_state_serializer.cpp" line="368"/>
         <source>Export failed: cannot open file for writing</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="373"/>
+        <location filename="../src/ui_state_serializer.cpp" line="375"/>
         <source>Export failed: short write</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="378"/>
+        <location filename="../src/ui_state_serializer.cpp" line="380"/>
         <source>Exported %1 keys.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="388"/>
+        <location filename="../src/ui_state_serializer.cpp" line="390"/>
         <source>Import failed: file path is empty</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="395"/>
+        <location filename="../src/ui_state_serializer.cpp" line="397"/>
         <source>Import failed: cannot open file</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="403"/>
+        <location filename="../src/ui_state_serializer.cpp" line="405"/>
         <source>Import failed: invalid JSON: %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="409"/>
+        <location filename="../src/ui_state_serializer.cpp" line="411"/>
         <source>Import failed: root must be JSON object</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="417"/>
+        <location filename="../src/ui_state_serializer.cpp" line="419"/>
         <source>Import failed: unsupported dump type</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="424"/>
+        <location filename="../src/ui_state_serializer.cpp" line="426"/>
         <source>Import failed: unsupported schema version</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="432"/>
+        <location filename="../src/ui_state_serializer.cpp" line="434"/>
         <source>Import failed: dump app version is missing</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="439"/>
+        <location filename="../src/ui_state_serializer.cpp" line="441"/>
         <source>Import failed: version mismatch (file %1, app %2)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="447"/>
+        <location filename="../src/ui_state_serializer.cpp" line="449"/>
         <source>Import failed: settings must be JSON object</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="461"/>
-        <source>Import failed: links must be JSON object</source>
+        <location filename="../src/ui_state_serializer.cpp" line="464"/>
+        <source>links must be JSON object</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="469"/>
-        <source>Import failed: unsupported links payload format</source>
+        <location filename="../src/ui_state_serializer.cpp" line="470"/>
+        <source>unsupported links payload format</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="476"/>
-        <source>Import failed: links payload is empty</source>
+        <location filename="../src/ui_state_serializer.cpp" line="475"/>
+        <source>links payload is empty</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="483"/>
-        <source>Import failed: links payload is not valid Base64</source>
+        <location filename="../src/ui_state_serializer.cpp" line="480"/>
+        <source>links payload is not valid Base64</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="516"/>
+        <location filename="../src/ui_state_serializer.cpp" line="787"/>
+        <source>payload is empty</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="791"/>
+        <location filename="../src/ui_state_serializer.cpp" line="795"/>
+        <source>payload is not XML text</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="798"/>
+        <source>invalid XML payload</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="515"/>
         <source>Import failed: cannot write settings</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../src/ui_state_serializer.cpp" line="529"/>
-        <source>Import failed: cannot apply pinned links: %1</source>
         <translation></translation>
     </message>
     <message>
@@ -2430,12 +2441,18 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="538"/>
+        <location filename="../src/ui_state_serializer.cpp" line="539"/>
+        <source> Pinned links were skipped: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/ui_state_serializer.cpp" line="543"/>
         <source>Imported %1 keys. Applied %2 in live UI. Skipped path keys: %3. Skipped serial links: %4.%5</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="731"/>
+        <location filename="../src/ui_state_serializer.cpp" line="740"/>
+        <location filename="../src/ui_state_serializer.cpp" line="782"/>
         <source>link manager is not available</source>
         <translation></translation>
     </message>
@@ -2486,92 +2503,92 @@
         <translation>Ok</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1222"/>
+        <location filename="../qml/main.qml" line="1223"/>
         <source>Data prepairing...</source>
         <translation>Przygotowywanie danych...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1226"/>
+        <location filename="../qml/main.qml" line="1227"/>
         <source> cm/pix</source>
         <translation> cm/piks</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1226"/>
+        <location filename="../qml/main.qml" line="1227"/>
         <source>Mosaic: </source>
         <translation>Mozaika: </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1229"/>
+        <location filename="../qml/main.qml" line="1230"/>
         <source>Surface: </source>
         <translation>Powierzchnia: </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1229"/>
+        <location filename="../qml/main.qml" line="1230"/>
         <source> cm/cell</source>
         <translation> cm/komórka</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1780"/>
+        <location filename="../qml/main.qml" line="1781"/>
         <source>Profiles...</source>
         <translation>Profile...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1835"/>
+        <location filename="../qml/main.qml" line="1836"/>
         <source>Profiles</source>
         <translation>Profile</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1872"/>
+        <location filename="../qml/main.qml" line="1873"/>
         <source>Close</source>
         <translation>Zamknąć</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1918"/>
+        <location filename="../qml/main.qml" line="1919"/>
         <source>Select profile XML</source>
         <translation>Wybierz profil XML</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1945"/>
+        <location filename="../qml/main.qml" line="1946"/>
         <source>Add profiles and apply them</source>
         <translation>Dodaj profile i zastosuj je</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1984"/>
+        <location filename="../qml/main.qml" line="1985"/>
         <source>Path to profile .xml</source>
         <translation>Ścieżka do profilu .xml</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1996"/>
+        <location filename="../qml/main.qml" line="1997"/>
         <source>Browse</source>
         <translation>Przeglądać</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2005"/>
+        <location filename="../qml/main.qml" line="2006"/>
         <source>Apply</source>
         <translation>Stosować</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2153"/>
+        <location filename="../qml/main.qml" line="2154"/>
         <source> m/s </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2160"/>
+        <location filename="../qml/main.qml" line="2161"/>
         <source> %</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2153"/>
+        <location filename="../qml/main.qml" line="2154"/>
         <source> V   </source>
         <translation> V   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2153"/>
+        <location filename="../qml/main.qml" line="2154"/>
         <source> A   </source>
         <translation> A   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2269"/>
+        <location filename="../qml/main.qml" line="2270"/>
         <source>Please wait, the file is opening</source>
         <translation>Proszę czekać, plik się otwiera</translation>
     </message>

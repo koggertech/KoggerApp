@@ -402,6 +402,30 @@ MenuFrame {
                         }
                     }
                 }
+
+                RowLayout {
+                    CCheck {
+                        id: mosaicTraceLine
+                        text: qsTr("Trace line")
+                        checked: true
+
+                        onCheckedChanged: {
+                            MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
+                        }
+
+                        onFocusChanged: {
+                            mosaicViewSettings.focus = true
+                        }
+
+                        Component.onCompleted: {
+                            MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
+                        }
+
+                        Settings {
+                            property alias mosaicTraceLine: mosaicTraceLine.checked
+                        }
+                    }
+                }
             }
         }
     }

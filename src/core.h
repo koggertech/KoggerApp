@@ -58,6 +58,9 @@ public:
     Q_PROPERTY(int               fixBlackStripesForwardSteps  READ getFixBlackStripesForwardSteps  WRITE setFixBlackStripesForwardSteps  NOTIFY fixBlackStripesForwardStepsChanged)
     Q_PROPERTY(int               fixBlackStripesBackwardSteps READ getFixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps NOTIFY fixBlackStripesBackwardStepsChanged)
     Q_PROPERTY(QString           filePath                     READ getFilePath                     NOTIFY filePathChanged)
+    Q_PROPERTY(QString           openedFilePath               READ getOpenedFilePath               NOTIFY openedFilePathChanged)
+    Q_PROPERTY(bool              isAppendMode                 READ getIsAppendMode                 NOTIFY isAppendModeChanged)
+    Q_PROPERTY(QString           fileTitle                    READ getFileTitle                    NOTIFY fileTitleChanged)
     Q_PROPERTY(bool              isFileOpening                READ getIsFileOpening                NOTIFY sendIsFileOpening)
     Q_PROPERTY(bool              isSeparateReading            READ getIsSeparateReading            CONSTANT)
     Q_PROPERTY(QString           ch1Name                      READ getChannel1Name                 NOTIFY channelListUpdated FINAL)
@@ -156,6 +159,8 @@ public slots:
 
     Q_INVOKABLE void setPosZeroing(bool state);
     Q_INVOKABLE bool getIsFileOpening() const;
+    Q_INVOKABLE bool getIsAppendMode() const;
+    Q_INVOKABLE QString getFileTitle() const;
     Q_INVOKABLE bool getIsSeparateReading() const;
     Q_INVOKABLE int getDataProcessorState() const;
     Q_INVOKABLE QString getChannel1Name() const;
@@ -178,6 +183,10 @@ public slots:
 signals:
     void connectionChanged(bool duplex = false);
     void filePathChanged();
+    void openedFilePathChanged();
+    void isAppendModeChanged();
+    void fileTitleChanged();
+    void fileOpenFailed(const QString& path);
     void sendIsFileOpening();
     void channelListUpdated();
     void dataProcessorStateChanged();
@@ -228,6 +237,7 @@ private:
     bool isFactoryMode() const;
 
     QString getFilePath() const;
+    QString getOpenedFilePath() const;
     void fixFilePathString(QString& filePath) const;
     void loadLLARefFromSettings();
     int loadSavedMapTileProviderId() const;
@@ -291,6 +301,8 @@ private:
     QString sChName_;
 
     bool isFileOpening_;
+    bool isAppendMode_ = false;
+    QStringList appendedFiles_;
 
     bool isGPSAlive_;
     bool isUseGPS_;

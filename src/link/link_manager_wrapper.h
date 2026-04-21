@@ -29,9 +29,11 @@ public:
     void closeOpenedLinks();
     QHash<QUuid, QString> getLinkNames() const;
     void openClosedLinks();
+    QByteArray exportPinnedLinksToXmlData(QString* error = nullptr);
     bool reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
                                       bool allowSerialLinks = true,
                                       int* skippedSerialLinks = nullptr,
+                                      bool* infrastructureUnavailable = nullptr,
                                       QString* error = nullptr);
     QVariant baudrateModel() const;
 

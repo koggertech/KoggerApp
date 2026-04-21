@@ -378,15 +378,26 @@ bool SurfaceView::hasTile(const TileKey &key) const
     return false;
 }
 
-void SurfaceView::setTraceLines(const QVector3D &leftBeg, const QVector3D &leftEnd, const QVector3D &rightBeg, const QVector3D &rightEnd)
+void SurfaceView::setTraceLines(const QVector3D &leftBeg, const QVector3D &leftEnd, const QVector3D &rightBeg, const QVector3D &rightEnd, int epochIndex)
 {
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
+        if (epochIndex <= r->lastTraceEpoch_)
+            return;
         r->lastLeftLine_.resize(2);
         r->lastRightLine_.resize(2);
         r->lastLeftLine_[0]  = leftBeg;
         r->lastLeftLine_[1]  = leftEnd;
         r->lastRightLine_[0] = rightBeg;
         r->lastRightLine_[1] = rightEnd;
+        r->lastTraceEpoch_   = epochIndex;
+        Q_EMIT changed();
+    }
+}
+
+void SurfaceView::setTraceVisible(bool state)
+{
+    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+        r->traceVisible_ = state;
         Q_EMIT changed();
     }
 }
@@ -497,6 +508,7 @@ void SurfaceView::clear()
 
     r->lastLeftLine_.clear();
     r->lastRightLine_.clear();
+    r->lastTraceEpoch_ = -1;
 
     Q_EMIT changed();
     Q_EMIT boundsChanged();
@@ -945,7 +957,8 @@ SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
     mVis_(false),
     labelStep_(100.0f),
     cameraDist_(10.0f),
-    traceWidth_(2.0f),
+    lastTraceEpoch_(-1),
+    traceWidth_(3.0f),
     traceVisible_(true),
     verticalScale_(1.0f)
 {}
@@ -1143,7 +1156,8 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
     }
 
     { // лучи
-        if (traceVisible_ && lastLeftLine_.size() == 2 && lastRightLine_.size() == 2) {
+        if (mVis_ && traceVisible_ && lastTraceEpoch_ >= 0 && lastLeftLine_.size() == 2 && lastRightLine_.size() == 2) {
+            ctx->glDisable(GL_DEPTH_TEST);
             lineProg->bind();
 
             const int posLoc   = lineProg->attributeLocation("position");
@@ -1169,6 +1183,7 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
 
             lineProg->disableAttributeArray(posLoc);
             lineProg->release();
+            ctx->glEnable(GL_DEPTH_TEST);
         }
     }
 

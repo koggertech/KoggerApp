@@ -26,6 +26,7 @@ public:
     explicit LinkManager(QObject *parent = nullptr);
     ~LinkManager() override;
     Link *getLinkPtr(QUuid uuid);
+    QByteArray exportPinnedLinksToXmlData() const;
     bool reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
                                       bool allowSerialLinks = true,
                                       int* skippedSerialLinks = nullptr,

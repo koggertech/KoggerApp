@@ -30,6 +30,14 @@ enum class PathSyntax {
     kUnixAbsolute
 };
 
+bool looksLikePinnedLinksXmlPayload(const QByteArray& xmlData)
+{
+    const QByteArray trimmed = xmlData.trimmed();
+    return !trimmed.isEmpty() &&
+           !trimmed.contains('\0') &&
+           trimmed.startsWith('<');
+}
+
 QString normalizeOsFamilyName(const QString& osFamily)
 {
     const QString normalized = osFamily.trimmed().toLower();
@@ -347,17 +355,11 @@ bool UIStateSerializer::exportToJsonFile(const QString& path)
     rootObject.insert(QStringLiteral("app"), appObject);
     rootObject.insert(QStringLiteral("settings"), settingsObject);
 
-    QFile pinnedLinksFile(pinnedLinksFilePath());
-    if (pinnedLinksFile.exists()) {
-        if (!pinnedLinksFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            setLastError(tr("Export failed: cannot read pinned links file"));
-            setLastStatus(QString());
-            return false;
-        }
-
+    const QByteArray pinnedLinksXmlData = loadPinnedLinksXmlDataForExport();
+    if (!pinnedLinksXmlData.isEmpty()) {
         QJsonObject linksObject;
         linksObject.insert(kLinksFormatKey, kLinksFormatPinnedXmlBase64);
-        linksObject.insert(kLinksPayloadKey, QString::fromLatin1(pinnedLinksFile.readAll().toBase64()));
+        linksObject.insert(kLinksPayloadKey, QString::fromLatin1(pinnedLinksXmlData.toBase64()));
         rootObject.insert(kLinksObjectKey, linksObject);
     }
 
@@ -455,38 +457,35 @@ bool UIStateSerializer::importFromJsonFile(const QString& path)
 
     bool hasPinnedLinksPayload = false;
     QByteArray pinnedLinksXmlData;
+    QString linksWarning;
     if (rootObject.contains(kLinksObjectKey)) {
         const QJsonValue linksValue = rootObject.value(kLinksObjectKey);
         if (!linksValue.isObject()) {
-            setLastError(tr("Import failed: links must be JSON object"));
-            setLastStatus(QString());
-            return false;
+            linksWarning = tr("links must be JSON object");
         }
-
-        const QJsonObject linksObject = linksValue.toObject();
-        const QString linksFormat = linksObject.value(kLinksFormatKey).toString();
-        if (linksFormat != kLinksFormatPinnedXmlBase64) {
-            setLastError(tr("Import failed: unsupported links payload format"));
-            setLastStatus(QString());
-            return false;
+        else {
+            const QJsonObject linksObject = linksValue.toObject();
+            const QString linksFormat = linksObject.value(kLinksFormatKey).toString();
+            if (linksFormat != kLinksFormatPinnedXmlBase64) {
+                linksWarning = tr("unsupported links payload format");
+            }
+            else {
+                const QString payloadText = linksObject.value(kLinksPayloadKey).toString();
+                if (payloadText.isEmpty()) {
+                    linksWarning = tr("links payload is empty");
+                }
+                else {
+                    const auto decodedPayload = QByteArray::fromBase64Encoding(payloadText.toLatin1());
+                    if (!decodedPayload) {
+                        linksWarning = tr("links payload is not valid Base64");
+                    }
+                    else {
+                        pinnedLinksXmlData = decodedPayload.decoded;
+                        hasPinnedLinksPayload = true;
+                    }
+                }
+            }
         }
-
-        const QString payloadText = linksObject.value(kLinksPayloadKey).toString();
-        if (payloadText.isEmpty()) {
-            setLastError(tr("Import failed: links payload is empty"));
-            setLastStatus(QString());
-            return false;
-        }
-
-        const auto decodedPayload = QByteArray::fromBase64Encoding(payloadText.toLatin1());
-        if (!decodedPayload) {
-            setLastError(tr("Import failed: links payload is not valid Base64"));
-            setLastStatus(QString());
-            return false;
-        }
-
-        pinnedLinksXmlData = decodedPayload.decoded;
-        hasPinnedLinksPayload = true;
     }
 
     const QString dumpOsFamily = detectDumpOsFamily(appObject, settingsObject, pinnedLinksXmlData);
@@ -522,16 +521,22 @@ bool UIStateSerializer::importFromJsonFile(const QString& path)
     QString linksStatus;
     if (hasPinnedLinksPayload) {
         QString linksError;
+        bool linksInfrastructureUnavailable = false;
         if (!reloadPinnedLinksImmediately(pinnedLinksXmlData,
                                           !isCrossOsImport,
                                           &skippedSerialLinks,
+                                          &linksInfrastructureUnavailable,
                                           &linksError)) {
-            setLastError(tr("Import failed: cannot apply pinned links: %1").arg(linksError));
-            setLastStatus(QString());
-            return false;
+            linksWarning = userVisiblePinnedLinksWarning(pinnedLinksXmlData,
+                                                         linksInfrastructureUnavailable);
         }
+        else {
+            linksStatus = tr(" Pinned links were replaced live.");
+        }
+    }
 
-        linksStatus = tr(" Pinned links were replaced live.");
+    if (!linksWarning.isEmpty()) {
+        linksStatus = tr(" Pinned links were skipped: %1").arg(linksWarning);
     }
 
     const int appliedCount = applyImportedSettingsToQml(importedValues);
@@ -724,9 +729,13 @@ int UIStateSerializer::applyImportedSettingsToQml(const QHash<QString, QVariant>
 bool UIStateSerializer::reloadPinnedLinksImmediately(const QByteArray& xmlData,
                                                      bool allowSerialLinks,
                                                      int* skippedSerialLinks,
+                                                     bool* infrastructureUnavailable,
                                                      QString* error) const
 {
     if (!linkManagerWrapper_) {
+        if (infrastructureUnavailable) {
+            *infrastructureUnavailable = true;
+        }
         if (error) {
             *error = tr("link manager is not available");
         }
@@ -736,7 +745,57 @@ bool UIStateSerializer::reloadPinnedLinksImmediately(const QByteArray& xmlData,
     return linkManagerWrapper_->reloadPinnedLinksFromXmlData(xmlData,
                                                              allowSerialLinks,
                                                              skippedSerialLinks,
+                                                             infrastructureUnavailable,
                                                              error);
+}
+
+QByteArray UIStateSerializer::loadPinnedLinksXmlDataForExport() const
+{
+    if (linkManagerWrapper_) {
+        const QByteArray liveXmlData = linkManagerWrapper_->exportPinnedLinksToXmlData();
+        if (looksLikePinnedLinksXmlPayload(liveXmlData)) {
+            return liveXmlData;
+        }
+    }
+
+    QFile pinnedLinksFile(pinnedLinksFilePath());
+    if (!pinnedLinksFile.exists()) {
+        return QByteArray();
+    }
+
+    if (!pinnedLinksFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return QByteArray();
+    }
+
+    const QByteArray fileXmlData = pinnedLinksFile.readAll();
+    if (!looksLikePinnedLinksXmlPayload(fileXmlData)) {
+        return QByteArray();
+    }
+
+    return fileXmlData;
+}
+
+QString UIStateSerializer::userVisiblePinnedLinksWarning(const QByteArray& xmlData,
+                                                        bool infrastructureUnavailable) const
+{
+    if (infrastructureUnavailable) {
+        return tr("link manager is not available");
+    }
+
+    const QByteArray trimmedXmlData = xmlData.trimmed();
+    if (trimmedXmlData.isEmpty()) {
+        return tr("payload is empty");
+    }
+
+    if (xmlData.contains('\0')) {
+        return tr("payload is not XML text");
+    }
+
+    if (!trimmedXmlData.startsWith('<')) {
+        return tr("payload is not XML text");
+    }
+
+    return tr("invalid XML payload");
 }
 
 void UIStateSerializer::setLastError(const QString& errorText)

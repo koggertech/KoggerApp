@@ -62,7 +62,8 @@ MosaicProcessor::MosaicProcessor(DataProcessor* parent, ComputeWorker* computeWo
     lastAcceptedEpoch_(0),
     lAngleOffset_(0.0f),
     rAngleOffset_(0.0f),
-    generateGridContour_(false)
+    generateGridContour_(false),
+    lastTraceLineEpoch_(-1)
 {
     qRegisterMetaType<TileMap>("TileMap");
 }
@@ -80,6 +81,7 @@ void MosaicProcessor::clear()
 
     lastCalcEpoch_ = 0;
     lastAcceptedEpoch_ = 0;
+    lastTraceLineEpoch_ = -1;
 }
 
 void MosaicProcessor::setDatasetPtr(Dataset *datasetPtr)
@@ -593,7 +595,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
     QVector<char>       isOdds; // 0 - even, 1 - odd
     QVector<int>        epochIndxs;
     QVector3D           lastLeftBeg, lastLeftEnd, lastRightBeg, lastRightEnd;
-    //bool                haveLastPair = false;
+    bool                haveNewTraceLine = false;
 
     // update matrix
     for (const auto& i : indxs) {
@@ -611,8 +613,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
                 if (auto segFCharts = epoch.chart(segFChannelId_, segFSubChannelId_); segFCharts) {
                     double leftAzRad = azRad - M_PI_2 + qDegreesToRadians(lAngleOffset_);
                     float lDist = segFCharts->range();
-                    lastLeftBeg = QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f);
-                    lastLeftEnd = QVector3D(pos.n, pos.e, 0.0f);
+                    float lDepth = static_cast<float>(segFCharts->bottomProcessing.getDistance());
+                    float lZ = (std::isfinite(lDepth) && lDepth > 0.0f) ? -lDepth : 0.0f;
+                    lastLeftBeg = QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), lZ);
+                    lastLeftEnd = QVector3D(pos.n, pos.e, lZ);
                     measLinesVertices.append(lastLeftBeg);
                     measLinesVertices.append(lastLeftEnd);
                     measLinesEvenIndices.append(currIndxSec_++);
@@ -627,8 +631,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
                 if (auto segSCharts = epoch.chart(segSChannelId_, segSSubChannelId_); segSCharts) {
                     double rightAzRad = azRad + M_PI_2 - qDegreesToRadians(rAngleOffset_);
                     float rDist = segSCharts->range();
-                    lastRightBeg = QVector3D(pos.n, pos.e, 0.0f);
-                    lastRightEnd = QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f);
+                    float rDepth = static_cast<float>(segSCharts->bottomProcessing.getDistance());
+                    float rZ = (std::isfinite(rDepth) && rDepth > 0.0f) ? -rDepth : 0.0f;
+                    lastRightBeg = QVector3D(pos.n, pos.e, rZ);
+                    lastRightEnd = QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), rZ);
                     measLinesVertices.append(lastRightBeg);
                     measLinesVertices.append(lastRightEnd);
                     measLinesOddIndices.append(currIndxSec_++);
@@ -641,16 +647,23 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
 
             if (acceptedEven || acceptedOdd) {
                 lastAcceptedEpoch_ = std::max(lastAcceptedEpoch_, i);
+                haveNewTraceLine = true;
             }
-
-            //if (acceptedEven && acceptedOdd) {
-            //    haveLastPair = true;
-            //}
         }
     }
 
     if (measLinesVertices.empty()) {
         return;
+    }
+
+    bool traceLineUpdated = false;
+    if (haveNewTraceLine && lastAcceptedEpoch_ > lastTraceLineEpoch_) {
+        lastLeftBeg_  = lastLeftBeg;
+        lastLeftEnd_  = lastLeftEnd;
+        lastRightBeg_ = lastRightBeg;
+        lastRightEnd_ = lastRightEnd;
+        lastTraceLineEpoch_ = lastAcceptedEpoch_;
+        traceLineUpdated = true;
     }
 
     const float tileSideMeters = tileSidePixelSize_ * tileResolution_;
@@ -1091,14 +1104,16 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
 
     // emit data
     QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
-    //if (haveLastPair) {
-    //    QMetaObject::invokeMethod(dataProcessor_, "postTraceLines", Qt::QueuedConnection,
-    //        Q_ARG(QVector3D, lastLeftBeg),
-    //        Q_ARG(QVector3D, lastLeftEnd),
-    //        Q_ARG(QVector3D, lastRightBeg),
-    //        Q_ARG(QVector3D, lastRightEnd)
-    //        );
-    //}
+
+    if (traceLineUpdated) {
+        QMetaObject::invokeMethod(dataProcessor_, "postTraceLines", Qt::QueuedConnection,
+            Q_ARG(QVector3D, lastLeftBeg_),
+            Q_ARG(QVector3D, lastLeftEnd_),
+            Q_ARG(QVector3D, lastRightBeg_),
+            Q_ARG(QVector3D, lastRightEnd_),
+            Q_ARG(int, lastTraceLineEpoch_)
+        );
+    }
 }
 
 int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const

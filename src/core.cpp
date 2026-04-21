@@ -589,6 +589,11 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
             emit filePathChanged();
         }
 
+        if (!isAppend && !openedfilePath_.isEmpty()) {
+            openedfilePath_.clear();
+            emit openedFilePathChanged();
+        }
+
         linkManagerWrapperPtr_->closeOpenedLinks();
         removeLinkManagerConnections();
 
@@ -627,9 +632,18 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                 url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
                 if (file.open(QIODevice::ReadOnly)) {
                     openXTF(file.readAll());
+                    openedfilePath_ = localfilePath;
+                    emit openedFilePathChanged();
+                    if (!isAppend) appendedFiles_.clear();
+                    appendedFiles_.append(localfilePath);
+                    if (isAppendMode_ != isAppend) {
+                        isAppendMode_ = isAppend;
+                        emit isAppendModeChanged();
+                    }
+                    emit fileTitleChanged();
+                } else {
+                    emit fileOpenFailed(localfilePath);
                 }
-
-                openedfilePath_ = localfilePath;
 
                 onFileStopsOpening();
 
@@ -644,9 +658,25 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
 
         datasetPtr_->setState(Dataset::DatasetState::kFile);
 
+        bool fileOpenedOk = false;
+        auto fileOpenedConn = QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileOpened,
+                                               [&fileOpenedOk]() { fileOpenedOk = true; });
         emit deviceManagerWrapperPtr_->sendOpenFile(localfilePath);
+        QObject::disconnect(fileOpenedConn);
 
-        openedfilePath_ = localfilePath;
+        openedfilePath_ = fileOpenedOk ? localfilePath : "";
+        emit openedFilePathChanged();
+        if (fileOpenedOk) {
+            if (!isAppend) appendedFiles_.clear();
+            appendedFiles_.append(localfilePath);
+            if (isAppendMode_ != isAppend) {
+                isAppendMode_ = isAppend;
+                emit isAppendModeChanged();
+            }
+            emit fileTitleChanged();
+        } else {
+            emit fileOpenFailed(localfilePath);
+        }
 
         if (scene3dViewPtr_) {
             scene3dViewPtr_->fitAllInView();
@@ -701,6 +731,13 @@ bool Core::closeLogFile()
     emit deviceManagerWrapperPtr_->sendCloseFile();
     createLinkManagerConnections();
     openedfilePath_.clear();
+    emit openedFilePathChanged();
+    appendedFiles_.clear();
+    if (isAppendMode_) {
+        isAppendMode_ = false;
+        emit isAppendModeChanged();
+    }
+    emit fileTitleChanged();
     linkManagerWrapperPtr_->openClosedLinks();
     if (wasOpened) {
         setDataProcessorConnections();
@@ -2140,6 +2177,25 @@ bool Core::isFactoryMode() const
 QString Core::getFilePath() const
 {
     return filePath_;
+}
+
+QString Core::getOpenedFilePath() const
+{
+    return openedfilePath_;
+}
+
+bool Core::getIsAppendMode() const
+{
+    return isAppendMode_;
+}
+
+QString Core::getFileTitle() const
+{
+    if (appendedFiles_.isEmpty()) return {};
+    QStringList names;
+    for (const QString& p : appendedFiles_)
+        names.append(p.section('/', -1).section('\\', -1));
+    return names.join(" + ");
 }
 
 void Core::fixFilePathString(QString& filePath) const

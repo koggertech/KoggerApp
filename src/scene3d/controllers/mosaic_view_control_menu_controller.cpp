@@ -12,7 +12,7 @@ MosaicViewControlMenuController::MosaicViewControlMenuController(QObject *parent
       visibility_(false),
       usingFilter_(true),
       gridVisible_(false),
-      measLineVisible_(false),
+      measLineVisible_(true),
       resolution_(10.0f), // pixPerMeters
       updateState_(false),
       themeId_(0),
@@ -86,6 +86,9 @@ void MosaicViewControlMenuController::onMeasLineVisibleChanged(bool state)
     measLineVisible_ = state;
 
     if (graphicsSceneViewPtr_) {
+        if (auto surfacePtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfacePtr) {
+            surfacePtr->setTraceVisible(measLineVisible_);
+        }
     }
     else {
         tryInitPendingLambda();
@@ -222,6 +225,7 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
 
                 if (auto surfacePtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfacePtr) {
                     surfacePtr->setMVisible(visibility_);
+                    surfacePtr->setTraceVisible(measLineVisible_);
                 }
                 // if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsViewPtr(); isobathsPtr) {
                 //     isobathsPtr->setMVisible(visibility_);

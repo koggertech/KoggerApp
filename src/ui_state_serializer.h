@@ -41,9 +41,13 @@ private:
     QString currentAppVersion() const;
     QString currentMajorMinorVersion() const;
     int applyImportedSettingsToQml(const QHash<QString, QVariant>& importedValues) const;
+    QByteArray loadPinnedLinksXmlDataForExport() const;
+    QString userVisiblePinnedLinksWarning(const QByteArray& xmlData,
+                                          bool infrastructureUnavailable) const;
     bool reloadPinnedLinksImmediately(const QByteArray& xmlData,
                                       bool allowSerialLinks,
                                       int* skippedSerialLinks,
+                                      bool* infrastructureUnavailable,
                                       QString* error) const;
 
     void setLastError(const QString& errorText);
