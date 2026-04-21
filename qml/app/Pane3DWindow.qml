@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import "../scene3d"
 
 Item {
     id: root
@@ -13,10 +14,31 @@ Item {
     property bool rotateEnabled: false
     property int lastRegisteredLeafId: -1
 
+    readonly property var scene3dView: workspaceRoot ? workspaceRoot.scene3dViewItem : null
+
     Item {
         id: hostSurface
         anchors.fill: parent
         clip: true
+    }
+
+    Scene3DToolbar {
+        view: root.scene3dView
+        z: 1
+
+        onUpdateBottomTrack: {
+            if (root.workspaceRoot)
+                root.workspaceRoot.updateBottomTrackForAllPlots()
+        }
+    }
+
+    Scene3DRightToolbar {
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        view: root.scene3dView
+        geo: root.scene3dView ? root.scene3dView.geoJsonController : null
+        z: 1
     }
 
     PaneInputBridge {

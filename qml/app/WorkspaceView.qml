@@ -14,6 +14,7 @@ Item {
     property var plotItemsByLeafId: ({})
     property Item active3DHostItem: null
     property int active3DLeafId: -1
+    readonly property alias scene3dViewItem: scene3dView
 
     property var primaryPlotItem: null
     readonly property var leafRects: workspace.store ? workspace.store.leafRects : []
@@ -95,6 +96,13 @@ Item {
 
         var item = plotItemsByLeafId[String(leafId)]
         return item !== undefined && item !== null ? item : null
+    }
+
+    function updateBottomTrackForAllPlots() {
+        forEachRegisteredPlotItem(function(item) {
+            if (typeof item.updateBottomTrackProcessing === "function")
+                item.updateBottomTrackProcessing()
+        })
     }
 
     function forEachRegisteredPlotItem(callback) {
