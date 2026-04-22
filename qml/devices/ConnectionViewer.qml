@@ -1,13 +1,12 @@
 import QtQuick 2.15
-import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 import QtQuick.Dialogs
 import QtCore
-import "../controls"
-import "../menus"
+import kqml_types 1.0
+import app 1.0
 
-
-ColumnLayout {
+Column {
     id: connectionViewer
     property var dev: null
     property var devList: deviceManagerWrapper.devs
@@ -19,67 +18,44 @@ ColumnLayout {
     property string importTrackPathSource: ""
 
     Settings {
-        property alias logFolder: connectionViewer.lastLogFolder
-        property alias importTrackFolder: connectionViewer.lastImportTrackFolder
-        property alias recentOpenedFiles: connectionViewer.recentOpenedFiles
-        property alias pathText: connectionViewer.selectedLogPathSource
-        property alias importPathText: connectionViewer.importTrackPathSource
+        property alias logFolder:           connectionViewer.lastLogFolder
+        property alias importTrackFolder:   connectionViewer.lastImportTrackFolder
+        property alias recentOpenedFiles:   connectionViewer.recentOpenedFiles
+        property alias pathText:            connectionViewer.selectedLogPathSource
+        property alias importPathText:      connectionViewer.importTrackPathSource
     }
 
     Connections {
         target: core
-        function onFileOpenFailed(path) {
-            connectionViewer.removeRecentFile(path)
-        }
+        function onFileOpenFailed(path) { connectionViewer.removeRecentFile(path) }
     }
 
     function urlSource(value) {
-        if (!value) {
-            return ""
-        }
-
+        if (!value) return ""
         if (typeof value === "string") {
-            if (value.startsWith("file:///")) {
+            if (value.startsWith("file:///"))
                 return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
-            }
-            if (value.startsWith("file://")) {
+            if (value.startsWith("file://"))
                 return value.slice(7)
-            }
             return value
         }
-
-        var localPath = value.toLocalFile ? value.toLocalFile() : ""
-        return localPath && localPath.length ? localPath : value.toString()
+        var lp = value.toLocalFile ? value.toLocalFile() : ""
+        return lp.length ? lp : value.toString()
     }
 
     function urlDisplay(value) {
-        var source = urlSource(value)
-        if (!source.length) {
-            return ""
-        }
-
-        try {
-            return decodeURIComponent(source)
-        } catch (error) {
-            return source
-        }
+        var s = urlSource(value)
+        if (!s.length) return ""
+        try { return decodeURIComponent(s) } catch(e) { return s }
     }
 
     function effectiveSource(displayText, storedSource) {
-        if (!displayText || !displayText.length) {
-            return ""
-        }
-
-        if (storedSource && displayText === urlDisplay(storedSource)) {
-            return storedSource
-        }
-
+        if (!displayText || !displayText.length) return ""
+        if (storedSource && displayText === urlDisplay(storedSource)) return storedSource
         return displayText
     }
 
-    function toLocalPath(path) {
-        return urlSource(path)
-    }
+    function toLocalPath(path) { return urlSource(path) }
 
     function setLogPath(path) {
         selectedLogPathSource = urlSource(path)
@@ -100,33 +76,23 @@ ColumnLayout {
     }
 
     function pushRecentOpenedFile(path) {
-        var localPath = urlSource(path)
-        if (!localPath.length) {
-            return
-        }
-
-        var updated = [localPath]
+        var lp = urlSource(path)
+        if (!lp.length) return
+        var updated = [lp]
         for (var i = 0; i < recentOpenedFiles.length; ++i) {
             var item = recentOpenedFiles[i]
-            if (item && item !== localPath) {
-                updated.push(item)
-            }
-            if (updated.length >= 3) {
-                break
-            }
+            if (item && item !== lp) updated.push(item)
+            if (updated.length >= 3) break
         }
         recentOpenedFiles = updated
     }
 
     function openRecentFile(path) {
-        var localPath = urlSource(path)
-        if (!localPath.length) {
-            return
-        }
-
-        setLogPath(localPath)
-        core.openLogFile(localPath, false, false)
-        pushRecentOpenedFile(localPath)
+        var lp = urlSource(path)
+        if (!lp.length) return
+        setLogPath(lp)
+        core.openLogFile(lp, false, false)
+        pushRecentOpenedFile(lp)
     }
 
     function openNewFileDialog() {
@@ -135,35 +101,26 @@ ColumnLayout {
     }
 
     function removeRecentFile(path) {
-        var localPath = urlSource(path)
-        if (!localPath.length) {
-            return
-        }
-
+        var lp = urlSource(path)
+        if (!lp.length) return
         var updated = []
         for (var i = 0; i < recentOpenedFiles.length; ++i) {
             var item = recentOpenedFiles[i]
-            if (item && item !== localPath) {
-                updated.push(item)
-            }
+            if (item && item !== lp) updated.push(item)
         }
         recentOpenedFiles = updated
     }
 
     function importSettingsToAllDevices(path) {
-        if (!path || !path.length) {
-            return
-        }
+        if (!path || !path.length) return
         for (var i = 0; i < devList.length; ++i) {
             var device = devList[i]
-            if (device && device.importSettingsFromXML) {
+            if (device && device.importSettingsFromXML)
                 device.importSettingsFromXML(path)
-            }
         }
     }
 
-    Layout.margins: 0
-    spacing: 10
+    spacing: 8
 
     Component.onCompleted: {
         setLogPath(selectedLogPathSource.length ? selectedLogPathSource : core.filePath)
@@ -171,786 +128,484 @@ ColumnLayout {
     }
 
     onDevListChanged: {
-        if (devList.length > 0) {
-            dev = devList[0]
-        }
+        if (devList.length > 0) dev = devList[0]
     }
 
     Connections {
         target: core
+        function onConnectionChanged() { dev = null }
+        function onFilePathChanged()   { connectionViewer.setLogPath(core.filePath) }
+    }
 
-        function onConnectionChanged() {
-            connectionButton.connection = core.isOpenConnection()
-            dev = null
+    // ── Inline components ─────────────────────────────────────────────────
+
+    component IconBtn: Rectangle {
+        id: ib
+        property bool checked: false
+        property bool checkable: false
+        property string iconSource: ""
+        property string toolTipText: ""
+        signal clicked()
+        signal toggled(bool val)
+
+        width: 28; height: 28; radius: 5
+        color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? AppPalette.cardHover : AppPalette.card))
+        border.width: 1
+        border.color: (checked || ibMa.containsMouse) ? AppPalette.borderHover : AppPalette.border
+
+        Behavior on color { ColorAnimation { duration: 80 } }
+
+        Image {
+            anchors.centerIn: parent
+            width: 14; height: 14
+            source: ib.iconSource
+            fillMode: Image.PreserveAspectFit
+            opacity: ib.checked ? 1.0 : 0.7
         }
 
-        function onFilePathChanged() {
-            connectionViewer.setLogPath(core.filePath)
+        MouseArea {
+            id: ibMa
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                if (ib.checkable) { ib.checked = !ib.checked; ib.toggled(ib.checked) }
+                ib.clicked()
+            }
+        }
+
+        KToolTip { text: ib.toolTipText; targetItem: ib; shown: ibMa.containsMouse && ib.toolTipText.length > 0 }
+    }
+
+    component SmallCheck: Item {
+        id: sc
+        property bool checked: false
+        signal toggled(bool val)
+        width: 18; height: 18
+
+        Rectangle {
+            anchors.fill: parent; radius: 4
+            color: sc.checked ? AppPalette.accentBg : AppPalette.bg
+            border.width: 1
+            border.color: sc.checked ? AppPalette.accentBorder : AppPalette.borderHover
+            Text {
+                anchors.centerIn: parent; text: "✓"; color: AppPalette.accentBorder
+                font.pixelSize: 11; font.bold: true; visible: sc.checked
+            }
+        }
+        MouseArea {
+            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+            onClicked: { sc.checked = !sc.checked; sc.toggled(sc.checked) }
         }
     }
 
-    MenuRow {
-        // Layout.margins: 0
-        Component {
-            id: fileItem
+    component CsvSpin: Rectangle {
+        id: cs
+        property int value: 1
+        property int from: 1
+        property int to: 100
 
-            Item {
-                id: wrapper
-                width: filesList.width; height: theme.controlHeight+4
+        width: 70; height: 26; radius: 4
+        color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
 
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: 1
-                    anchors.leftMargin: 0
-                    anchors.rightMargin: 0
-                    // anchors.verticalCenter: parent
-                    color: ConnectionStatus ? (ReceivesData ? "#005000" : "#505000") : IsNotAvailable ? "#500000" : theme.controlBackColor
-                    border.width: 0
-                    border.color: theme.controlBorderColor
-                    radius: 2
+        Row {
+            anchors.fill: parent
+
+            Rectangle {
+                width: 20; height: parent.height; radius: 4
+                color: dMa.pressed ? AppPalette.bgDeep : (dMa.containsMouse ? AppPalette.cardHover : "transparent")
+                Text { anchors.centerIn: parent; text: "−"; color: AppPalette.textMuted; font.pixelSize: 13; font.bold: true }
+                MouseArea {
+                    id: dMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                    onClicked: { if (cs.value > cs.from) cs.value-- }
+                    onPressAndHold: dTim.start()
+                    onReleased: dTim.stop(); onCanceled: dTim.stop()
                 }
+                Timer { id: dTim; interval: 80; repeat: true; onTriggered: { if (cs.value > cs.from) cs.value-- } }
+            }
+
+            Text {
+                width: parent.width - 40; height: parent.height
+                text: cs.value; color: AppPalette.text; font.pixelSize: 11
+                horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+            }
+
+            Rectangle {
+                width: 20; height: parent.height; radius: 4
+                color: uMa.pressed ? AppPalette.bgDeep : (uMa.containsMouse ? AppPalette.cardHover : "transparent")
+                Text { anchors.centerIn: parent; text: "+"; color: AppPalette.textMuted; font.pixelSize: 13; font.bold: true }
+                MouseArea {
+                    id: uMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                    onClicked: { if (cs.value < cs.to) cs.value++ }
+                    onPressAndHold: uTim.start()
+                    onReleased: uTim.stop(); onCanceled: uTim.stop()
+                }
+                Timer { id: uTim; interval: 80; repeat: true; onTriggered: { if (cs.value < cs.to) cs.value++ } }
+            }
+        }
+    }
+
+    // ── Link list ─────────────────────────────────────────────────────────
+
+    ListView {
+        id: filesList
+        width: parent.width
+        visible: count > 0
+        height: Math.min(count * 34, 10 * 34)
+        spacing: 3
+        clip: true
+        model: linkManagerWrapper.linkListModel
+
+        delegate: Item {
+            width: filesList.width
+            height: 30
+
+            readonly property bool isConnected: ConnectionStatus
+            readonly property bool receivesData: ReceivesData
+            readonly property bool notAvailable: IsNotAvailable
+
+            Rectangle {
+                anchors.fill: parent; radius: 6; clip: true
+                color: isConnected ? (receivesData ? "#0D2D1A" : "#2D2200") : (notAvailable ? "#2D0D0D" : AppPalette.card)
+                border.width: 1
+                border.color: isConnected ? (receivesData ? "#10B981" : "#F59E0B") : (notAvailable ? "#EF4444" : AppPalette.border)
+                opacity: IsUpgradingState ? 0.55 : 1.0
 
                 RowLayout {
-                    spacing: 1
                     anchors.fill: parent
-                    anchors.margins: 1
+                    anchors.leftMargin: 4; anchors.rightMargin: 4
+                    spacing: 3
                     enabled: !IsUpgradingState
 
-                    CheckButton {
-                        id: linkSettingsButton
-                        width: theme.controlHeight
-                        height: theme.controlHeight
-                        icon.source: "qrc:/icons/ui/settings.svg"
-                        borderWidth: 0
-                        implicitWidth: theme.controlHeight
-
-                        ToolTip.visible: hovered
-                        ToolTip.text: qsTr("Settings")
+                    IconBtn {
+                        id: gearBtn
+                        checkable: true
+                        iconSource: "qrc:/icons/ui/settings.svg"
+                        toolTipText: "Settings"
+                        Layout.alignment: Qt.AlignVCenter
+                        width: 26; height: 26
                     }
 
-                    CheckButton {
-                        visible: linkSettingsButton.checked
-                        Layout.alignment: Qt.AlignLeft
-                        icon.source: "qrc:/icons/ui/pin.svg"
-                        checked: IsPinned
-                        implicitWidth: theme.controlHeight
-
-                        onToggled: {
-                            linkManagerWrapper.sendUpdatePinnedState(Uuid, checked)
-                        }
-
-                        ToolTip.visible: hovered
-                        ToolTip.text: checked ? qsTr("Unpin") : qsTr("Pin")
+                    IconBtn {
+                        visible: gearBtn.checked
+                        checked: IsPinned; checkable: true
+                        iconSource: "qrc:/icons/ui/pin.svg"
+                        toolTipText: checked ? "Unpin" : "Pin"
+                        Layout.alignment: Qt.AlignVCenter; width: 26; height: 26
+                        onToggled: function(v) { linkManagerWrapper.sendUpdatePinnedState(Uuid, v) }
                     }
 
-                    CheckButton {
-                        visible: linkSettingsButton.checked
-                        Layout.alignment: Qt.AlignLeft
-                        icon.source: "qrc:/icons/ui/repeat.svg"
-                        checked: ControlType
-                        // text: "Auto"
-                        implicitWidth: theme.controlHeight
-
-                        onToggled: {
-                            linkManagerWrapper.sendUpdateControlType(Uuid, Number(checked))
-                        }
-
-                        ToolTip.visible: hovered
-                        ToolTip.text: qsTr("Auto")
+                    IconBtn {
+                        visible: gearBtn.checked
+                        checked: ControlType; checkable: true
+                        iconSource: "qrc:/icons/ui/repeat.svg"
+                        toolTipText: "Auto reconnect"
+                        Layout.alignment: Qt.AlignVCenter; width: 26; height: 26
+                        onToggled: function(v) { linkManagerWrapper.sendUpdateControlType(Uuid, Number(v)) }
                     }
 
-                    CheckButton {
-                        visible: linkSettingsButton.checked && (LinkType === 2 || LinkType === 3)
-                        Layout.alignment: Qt.AlignLeft
-                        icon.source: "qrc:/icons/ui/x.svg"
-                        checked: false
-                        implicitWidth: theme.controlHeight
-
-                        onToggled: {
-                            if(checked) {
-                                linkManagerWrapper.deleteLink(Uuid)
-                            }
-                        }
-
-                        ToolTip.visible: hovered
-                        ToolTip.text: qsTr("Delete")
+                    IconBtn {
+                        visible: gearBtn.checked && (LinkType === 2 || LinkType === 3)
+                        iconSource: "qrc:/icons/ui/x.svg"; toolTipText: "Delete"
+                        Layout.alignment: Qt.AlignVCenter; width: 26; height: 26
+                        onClicked: linkManagerWrapper.deleteLink(Uuid)
                     }
 
-                    // CCheck {
-                    //     visible: linkSettingsButton.checked
-                    //     leftPadding: 6
-                    //     rightPadding: 2
-                    //     Layout.fillWidth: true
-                    //     text: "Auto"
-                    //     checked: ControlType
-                    //     background:  Rectangle {
-                    //         color: "transparent"
-                    //         border.width: 0
-                    //         border.color: theme.controlBorderColor
-                    //     }
-
-                    //     onToggled: {
-                    //         linkManagerWrapper.sendUpdateControlType(Uuid, Number(checked))
-                    //     }
-                    // }
-
-                    CTextField {
-                        width: 40
-                        Layout.fillWidth: true
-                        selectByMouse: true
-                        readOnly: true
+                    // ── Serial ──
+                    Text {
                         visible: LinkType === 1
-                        text: PortName
-
-                        background:  Rectangle {
-                            color: "transparent"
-                            border.width: 0
-                            border.color: theme.controlBorderColor
-                        }
-                    }
-
-
-
-                    CCombo  {
-                        id: baudrateCombo
-                        implicitWidth: 150
-                        visible: LinkType === 1
-                        model: linkManagerWrapper.baudrateModel
-                        currentIndex: 8
-                        displayText: Baudrate
-
-                        onActivated: {
-                            linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
-                            autoSpeedCheckBox.checked = false
-                        }
-
-                        background:  Rectangle {
-                            color: "transparent"
-                            border.width: 0
-                            border.color: theme.controlBorderColor
-                        }
-                    }
-
-                    CheckButton {
-                        id: autoSpeedCheckBox
-                        visible: LinkType === 1
-                        icon.source: "qrc:/icons/ui/refresh.svg"
-                        implicitWidth: theme.controlHeight
-
-                        checked: AutoSpeedSelection
-
-                        onCheckedChanged: {
-                            if (!checked) {
-                                linkManagerWrapper.sendAutoSpeedSelection(Uuid, false)
-                            }
-                        }
-
-                        onToggled: {
-                            linkManagerWrapper.sendAutoSpeedSelection(Uuid, checked)
-                        }
-
-                        ToolTip.visible: hovered
-                        ToolTip.text: qsTr("Auto search baudrate")
-                    }
-
-                    CText {
-                        visible: LinkType === 2 || LinkType === 3
-                        small: true
-                        leftPadding: 6
-                        rightPadding: 0
-                        text: LinkType === 2 ? qsTr("UDP ip:") : qsTr("TCP ip:")
-                    }
-
-                    CTextField {
-                        id: ipAddressText
-                        visible: LinkType === 2 || LinkType === 3
-                        hoverEnabled: true
-                        selectByMouse: true
-                        Layout.fillWidth: true
-                        leftPadding: 0
-                        rightPadding: 6
-
-                        text: Address
-                        // placeholderText: "ip"
-
-                        onTextEdited: {
-                            linkManagerWrapper.sendUpdateAddress(Uuid, ipAddressText.text)
-                        }
-
-                        background:  Rectangle {
-                            color: "transparent"
-                            border.width: 0
-                            border.color: theme.controlBorderColor
-                        }
-
-                        Keys.onPressed: function(event) {
-                            if (event.key === 16777220) {
-                                console.info(ipAddressText.text)
-                            }
-                        }
-
-                        //Settings {
-                        //    property alias ipAddressText: ipAddressText.text
-                        //}
+                        text: PortName; color: AppPalette.textSecond; font.pixelSize: 11
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: 64; elide: Text.ElideRight
                     }
 
                     Rectangle {
-                        visible: LinkType === 2
-                        color: theme.controlBackColor
-                        height: parent.height
-                        width: 2
-                        border.width: 2
-                        border.color: theme.controlBorderColor
-                        radius: 0
-                    }
-
-                    CText {
-                        visible: LinkType === 2
-                        small: true
-                        leftPadding: 4
-                        rightPadding: 0
-                        text: qsTr("src:")
-                    }
-
-                    CTextField {
-                        id: ipPortText
-                        visible: LinkType === 2
-                        hoverEnabled: true
-                        Layout.fillWidth: false
-                        implicitWidth: {
-                            if (Qt.platform.os == "android") {
-                                return 100;
+                        visible: LinkType === 1
+                        Layout.preferredWidth: 82; Layout.preferredHeight: 24
+                        radius: 4; color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
+                        Layout.alignment: Qt.AlignVCenter
+                        ComboBox {
+                            id: baudrateCombo
+                            anchors.fill: parent
+                            model: linkManagerWrapper.baudrateModel
+                            currentIndex: 8; displayText: Baudrate
+                            font.pixelSize: 11
+                            background: Rectangle { color: "transparent"; border.width: 0 }
+                            contentItem: Text {
+                                leftPadding: 4; text: baudrateCombo.displayText
+                                color: AppPalette.text; font.pixelSize: 11
+                                verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight
                             }
-                            else {
-                                return 60;
+                            onActivated: {
+                                linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(currentText))
+                                autoSpeedBtn.checked = false
                             }
                         }
+                    }
 
-                        leftPadding: 2
-                        rightPadding: 2
+                    IconBtn {
+                        id: autoSpeedBtn
+                        visible: LinkType === 1
+                        checked: AutoSpeedSelection; checkable: true
+                        iconSource: "qrc:/icons/ui/refresh.svg"; toolTipText: "Auto search baudrate"
+                        Layout.alignment: Qt.AlignVCenter; width: 26; height: 26
+                        onToggled: function(v) { linkManagerWrapper.sendAutoSpeedSelection(Uuid, v) }
+                        onCheckedChanged: { if (!checked) linkManagerWrapper.sendAutoSpeedSelection(Uuid, false) }
+                    }
 
-
-                        text: SourcePort
-                        placeholderText: qsTr("")
-
-                        background:  Rectangle {
-                            color: "transparent"
-                            border.width: 0
-                            border.color: theme.controlBorderColor
-                        }
-
-                        onTextEdited: {
-                            linkManagerWrapper.sendUpdateSourcePort(Uuid, ipPortText.text)
-                        }
-                        //Settings {
-                        //    property alias ipPortText: ipPortText.text
-                        //}
+                    // ── UDP / TCP ──
+                    Text {
+                        visible: LinkType === 2 || LinkType === 3
+                        text: LinkType === 2 ? "UDP" : "TCP"
+                        color: AppPalette.borderFocus; font.pixelSize: 10; font.bold: true
+                        Layout.alignment: Qt.AlignVCenter
                     }
 
                     Rectangle {
                         visible: LinkType === 2 || LinkType === 3
-                        color: theme.controlBackColor
-                        height: parent.height
-                        width: 2
-                        border.width: 2
-                        border.color: theme.controlBorderColor
-                        radius: 0
+                        Layout.fillWidth: true; Layout.minimumWidth: 58
+                        Layout.preferredHeight: 24
+                        radius: 4; color: AppPalette.bg; border.width: 1
+                        border.color: ipField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                        Layout.alignment: Qt.AlignVCenter
+                        TextInput {
+                            id: ipField
+                            anchors.fill: parent; anchors.margins: 4
+                            verticalAlignment: TextInput.AlignVCenter
+                            color: AppPalette.text; font.pixelSize: 11; clip: true
+                            text: Address
+                            onTextEdited: linkManagerWrapper.sendUpdateAddress(Uuid, text)
+                        }
                     }
 
-                    CText {
+                    Text {
+                        visible: LinkType === 2; text: "src:"
+                        color: AppPalette.borderFocus; font.pixelSize: 10; Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    Rectangle {
+                        visible: LinkType === 2
+                        Layout.preferredWidth: 50; Layout.preferredHeight: 24
+                        radius: 4; color: AppPalette.bg; border.width: 1
+                        border.color: srcPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                        Layout.alignment: Qt.AlignVCenter
+                        TextInput {
+                            id: srcPortField
+                            anchors.fill: parent; anchors.margins: 4
+                            verticalAlignment: TextInput.AlignVCenter
+                            color: AppPalette.text; font.pixelSize: 11
+                            text: SourcePort
+                            onTextEdited: linkManagerWrapper.sendUpdateSourcePort(Uuid, text)
+                        }
+                    }
+
+                    Text {
                         visible: LinkType === 2 || LinkType === 3
-                        small: true
-                        leftPadding: 4
-                        rightPadding: 0
-                        text: LinkType === 2 ? qsTr("dst:") : qsTr("srv:")
+                        text: LinkType === 2 ? "dst:" : "srv:"
+                        color: AppPalette.borderFocus; font.pixelSize: 10; Layout.alignment: Qt.AlignVCenter
                     }
 
-                    CTextField {
-                        id: ipPort2Text
+                    Rectangle {
                         visible: LinkType === 2 || LinkType === 3
-                        hoverEnabled: true
-                        Layout.fillWidth: false
-                        implicitWidth: {
-                            if (Qt.platform.os === "android") {
-                                return 100;
-                            }
-                            else {
-                                return 60;
-                            }
+                        Layout.preferredWidth: 50; Layout.preferredHeight: 24
+                        radius: 4; color: AppPalette.bg; border.width: 1
+                        border.color: dstPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                        Layout.alignment: Qt.AlignVCenter
+                        TextInput {
+                            id: dstPortField
+                            anchors.fill: parent; anchors.margins: 4
+                            verticalAlignment: TextInput.AlignVCenter
+                            color: AppPalette.text; font.pixelSize: 11
+                            text: DestinationPort
+                            onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
                         }
-                        leftPadding: 2
-                        rightPadding: 2
-
-                        text: DestinationPort
-                        placeholderText: qsTr("")
-
-                        background:  Rectangle {
-                            color: "transparent"
-                            border.width: 0
-                            border.color: theme.controlBorderColor
-                        }
-
-                        onTextEdited: {
-                            linkManagerWrapper.sendUpdateDestinationPort(Uuid, ipPort2Text.text)
-                        }
-
-                        //Settings {
-                        //    property alias ipPortText: ipPort2Text.text
-                        //}
                     }
 
-                    CButton {
-                        Layout.alignment: Qt.AlignRight
-                        text: ConnectionStatus ? qsTr("Close") : qsTr("Open")
-                        backColor: ConnectionStatus ? (ReceivesData ? "green" : "#adad00") : theme.controlSolidBackColor
-                        borderRadius: 2
-
+                    // Open / Close
+                    KButton {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: 58; Layout.preferredHeight: 26
+                        text: isConnected ? "Close" : "Open"
+                        fontPixelSize: 11; bold: false
+                        normalBg: AppPalette.card
+                        checkedBg: "#134E2E"; checkedBorder: "#10B981"
                         onClicked: {
-                            if (ConnectionStatus) {
+                            if (isConnected) {
                                 linkManagerWrapper.closeLink(Uuid)
-                            }
-                            else {
-                                switch(LinkType) {
-                                case 1:
-                                    core.closeLogFile();
-                                    linkManagerWrapper.openAsSerial(Uuid)
-                                    break
-                                case 2:
-                                    core.closeLogFile();
-                                    linkManagerWrapper.openAsUdp(Uuid, ipAddressText.text, Number(ipPortText.text), Number(ipPort2Text.text))
-                                    break
-                                case 3:
-                                    core.closeLogFile();
-                                    linkManagerWrapper.openAsTcp(Uuid, ipAddressText.text, Number(ipPortText.text), Number(ipPort2Text.text))
-                                    break
-                                default:
-                                    console.log("Undefined type")
-                                    break
+                            } else {
+                                switch (LinkType) {
+                                case 1: core.closeLogFile(); linkManagerWrapper.openAsSerial(Uuid); break
+                                case 2: core.closeLogFile(); linkManagerWrapper.openAsUdp(Uuid, ipField.text, Number(srcPortField.text), Number(dstPortField.text)); break
+                                case 3: core.closeLogFile(); linkManagerWrapper.openAsTcp(Uuid, ipField.text, 0, Number(dstPortField.text)); break
                                 }
-
                             }
                         }
                     }
                 }
 
                 Rectangle {
-                    id: firmwareBackground
-                    anchors.fill: parent
-                    visible: IsUpgradingState
-                    color: "#30ffffff"
-                    z: 10
-
-                    Image {
-                        anchors.fill: parent
-                        source: "qrc:/icons/ui/diagonal_stripe.png"
-                        fillMode: Image.Tile
-                        opacity: 0.5
-                    }
+                    anchors.fill: parent; radius: 6
+                    visible: IsUpgradingState; color: "#40FFFFFF"; z: 10
+                    Image { anchors.fill: parent; source: "qrc:/icons/ui/diagonal_stripe.png"; fillMode: Image.Tile; opacity: 0.4 }
                 }
             }
         }
 
-        ListView {
-            id: filesList
-            model: linkManagerWrapper.linkListModel
-            visible: count > 0
-            Layout.margins: 0
-            Layout.topMargin: 0
-            Layout.bottomMargin: 0
-            Layout.fillWidth: true
-            Layout.preferredHeight: count*(theme.controlHeight+4)
-            Layout.maximumHeight: 10*(theme.controlHeight+4)
-            delegate: fileItem
-            focus: true
-
-            onCountChanged: {
-                // qDebug("sasa");
-                // console.log(filesList.count)
-                Qt.callLater( positionViewAtEnd )
-            }
-
-            //                flickableDirection: Flickable.AutoFlickDirection
-
-            //                onCurrentIndexChanged: {
-            //                    console.log(filesList.currentIndex);
-            //                }
-
-            //                highlight: Rectangle { color: "lightsteelblue"; radius: 5 }
-
-            //                onCountChanged: {
-            //                    if(consScrollEnable.checked) {
-            //                        Qt.callLater( positionViewAtEnd )
-            //                    }
-            //                }
-
-            ScrollBar.vertical: ScrollBar { }
-
-        }
-
+        ScrollBar.vertical: ScrollBar { }
+        onCountChanged: Qt.callLater(positionViewAtEnd)
     }
 
-    MenuRow {
-        // Layout.margins: 0
-        Layout.topMargin: 0
-        Layout.fillWidth: false
+    // ── Action buttons ────────────────────────────────────────────────────
 
-        CButton {
-            text: qsTr("+UDP")
-            Layout.fillWidth: false
+    Flow {
+        width: parent.width; spacing: 6
 
-            onClicked: {
-                linkManagerWrapper.createAsUdp("", 0, 0)
-            }
+        KButton {
+            text: "+UDP"; height: 30; fontPixelSize: 12
+            onClicked: linkManagerWrapper.createAsUdp("", 0, 0)
         }
 
-        CButton {
-            text: qsTr("+TCP")
-            Layout.fillWidth: false
-
-            onClicked: {
-                linkManagerWrapper.createAsTcp("", 0, 0)
-            }
+        KButton {
+            text: "+TCP"; height: 30; fontPixelSize: 12
+            onClicked: linkManagerWrapper.createAsTcp("", 0, 0)
         }
 
-        CButton {
+        KButton {
             id: mavlinkProxy
-            text: qsTr("MAVProxy")
-            Layout.fillWidth: false
-            checkable: true
-
-            onToggled : {
-                console.info("1")
-                if (checked) {
-
-                    console.info("2")
-                    linkManagerWrapper.sendCreateAndOpenAsUdpProxy("127.0.0.1", 14551, 14550)
-                }
-                else {
-
-                    console.info("3")
-                    linkManagerWrapper.sendCloseUdpProxy()
-                }
+            text: "MAVProxy"; height: 30; fontPixelSize: 12; checkable: true
+            onToggled: {
+                if (checked) linkManagerWrapper.sendCreateAndOpenAsUdpProxy("127.0.0.1", 14551, 14550)
+                else         linkManagerWrapper.sendCloseUdpProxy()
             }
         }
 
-        CheckButton {
+        KButton {
             id: loggingCheck
-            text: qsTr("KLF")
-            checkedColor: "red"
-            color: "red"
-
-            Layout.alignment: Qt.AlignRight
-
+            text: "● KLF"; height: 30; fontPixelSize: 12; checkable: true
+            checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
             onCheckedChanged: {
-                core.setKlfLogging(loggingCheck.checked)
-                if (loggingCheck.checked !== core.loggingKlf) {
-                    loggingCheck.checked = core.loggingKlf
-                }
+                core.setKlfLogging(checked)
+                if (checked !== core.loggingKlf) checked = core.loggingKlf
             }
             Component.onCompleted: {
-                core.setKlfLogging(loggingCheck.checked)
-                if (loggingCheck.checked !== core.loggingKlf) {
-                    loggingCheck.checked = core.loggingKlf
-                }
+                core.setKlfLogging(checked)
+                if (checked !== core.loggingKlf) checked = core.loggingKlf
             }
-
-            Settings {
-                property alias loggingCheck: loggingCheck.checked
-            }
-
-            icon.source: checked ? "qrc:/icons/ui/record_fill.svg": "qrc:/icons/ui/record.svg"
-
-            // ToolTip.visible: hovered
-            // ToolTip.text: "Recording"
+            Settings { property alias loggingCheck: loggingCheck.checked }
         }
 
-        CheckButton {
+        KButton {
             id: loggingCheck2
-            text: qsTr("CSV")
-            checkedColor: "red"
-            color: "red"
-
-            Layout.alignment: Qt.AlignRight
-
+            text: "● CSV"; height: 30; fontPixelSize: 12; checkable: true
+            checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
             onCheckedChanged: {
-                core.setCsvLogging(loggingCheck2.checked)
-                if (loggingCheck2.checked !== core.loggingCsv) {
-                    loggingCheck2.checked = core.loggingCsv
-                }
+                core.setCsvLogging(checked)
+                if (checked !== core.loggingCsv) checked = core.loggingCsv
             }
             Component.onCompleted: {
-                core.setCsvLogging(loggingCheck2.checked)
-                if (loggingCheck2.checked !== core.loggingCsv) {
-                    loggingCheck2.checked = core.loggingCsv
-                }
+                core.setCsvLogging(checked)
+                if (checked !== core.loggingCsv) checked = core.loggingCsv
             }
-
-            Settings {
-                property alias loggingCheck2: loggingCheck2.checked
-            }
-
-            icon.source: checked ? "qrc:/icons/ui/record_fill.svg": "qrc:/icons/ui/record.svg"
+            Settings { property alias loggingCheck2: loggingCheck2.checked }
         }
 
-        CheckButton {
-           id: importCheck
-           text: "Import"
-           checked: false
-        }
-
-        CheckButton {
-            visible: false
-            id: gpsCheckButton
-            text: qsTr("GPS")
-            checkedBackColor: core.isGPSAlive ? "green" : "red"
-
-            Layout.alignment: Qt.AlignRight
-            onCheckedChanged: {
-
-                core.useGPS = checked
-            }
-
-            Component.onCompleted: {
-                core.useGPS = checked
-            }
-
-            Settings {
-                property alias gpsCheckButton: gpsCheckButton.checked
-            }
+        KButton {
+            id: importCheck
+            text: "Import"; height: 30; fontPixelSize: 12; checkable: true
         }
     }
 
-    ParamGroup {
-        groupName: "CSV import"
+    // ── CSV import panel ──────────────────────────────────────────────────
+
+    Column {
         visible: importCheck.checked
-        Layout.margins: 24
+        width: parent.width; spacing: 6
 
-        RowLayout {
-            ParamSetup {
-                paramName: "Separator: "
-                Layout.fillWidth: true
+        Rectangle { width: parent.width; height: 1; color: AppPalette.border }
 
-                CCombo  {
-                    id: separatorCombo
-                    //                    Layout.fillWidth: true
-                    model: ["Comma", "Tab", "Space", "SemiColon"]
+        Row {
+            width: parent.width; height: 28; spacing: 8
+            Text { text: "Separator:"; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Rectangle {
+                width: 100; height: 26; radius: 4; color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
+                anchors.verticalCenter: parent.verticalCenter
+                ComboBox {
+                    id: separatorCombo; anchors.fill: parent; model: ["Comma", "Tab", "Space", "SemiColon"]; font.pixelSize: 11
+                    background: Rectangle { color: "transparent"; border.width: 0 }
+                    contentItem: Text { leftPadding: 6; text: separatorCombo.displayText; color: AppPalette.text; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter }
+                    Settings { property alias separatorCombo: separatorCombo.currentIndex }
+                }
+            }
+            Text { text: "Ряд:"; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            CsvSpin { id: firstRow; value: 1; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVfirstRow: firstRow.value } }
+        }
 
-                    Settings {
-                        property alias separatorCombo: separatorCombo.currentIndex
+        Row {
+            width: parent.width; height: 28; spacing: 8
+            SmallCheck {
+                id: timeEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
+                Settings { property alias importCSVtimeEnable: timeEnable.checked }
+            }
+            Text { text: "Time col:"; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            CsvSpin { id: timeColumn; value: 6; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVtimeColumn: timeColumn.value } }
+            Rectangle {
+                width: 100; height: 26; radius: 4; color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
+                anchors.verticalCenter: parent.verticalCenter
+                ComboBox {
+                    id: utcGpsCombo; anchors.fill: parent; model: ["UTC time", "GPS time"]; font.pixelSize: 11
+                    background: Rectangle { color: "transparent"; border.width: 0 }
+                    contentItem: Text { leftPadding: 6; text: utcGpsCombo.displayText; color: AppPalette.text; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter }
+                    Settings { property alias utcGpsCombo: utcGpsCombo.currentIndex }
+                }
+            }
+        }
+
+        Row {
+            width: parent.width; height: 28; spacing: 8
+            SmallCheck {
+                id: latLonEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
+                Settings { property alias importCSVlatLonEnable: latLonEnable.checked }
+            }
+            Text { text: "Lat/Lon/Alt:"; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            CsvSpin { id: latColumn;  value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVlatColumn:  latColumn.value  } }
+            CsvSpin { id: lonColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVlonColumn:  lonColumn.value  } }
+            CsvSpin { id: altColumn;  value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSValtColumn:  altColumn.value  } }
+        }
+
+        Row {
+            width: parent.width; height: 28; spacing: 8
+            SmallCheck {
+                id: xyzEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
+                Settings { property alias importCSVxyzEnable: xyzEnable.checked }
+            }
+            Text { text: "NEU:"; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            CsvSpin { id: northColumn; value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVnorthColumn: northColumn.value } }
+            CsvSpin { id: eastColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVeastColumn:  eastColumn.value  } }
+            CsvSpin { id: upColumn;    value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVupColumn:    upColumn.value    } }
+        }
+
+        Row {
+            width: parent.width; height: 30; spacing: 6
+
+            Rectangle {
+                width: parent.width - 50 - 6; height: 30; radius: 6
+                color: AppPalette.bg; border.width: 1; border.color: importPathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
+
+                TextInput {
+                    id: importPathText
+                    anchors.fill: parent; anchors.margins: 8
+                    verticalAlignment: TextInput.AlignVCenter
+                    color: AppPalette.text; font.pixelSize: 12; clip: true
+                    Text { visible: !importPathText.text.length; text: "Путь к CSV..."; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                    Keys.onPressed: function(e) {
+                        if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
+                            importTrackFileDialog.openCSV()
                     }
                 }
             }
 
-            ParamSetup {
-                paramName: "Row: "
-                Layout.fillWidth: true
-
-                SpinBoxCustom {
-                    id:firstRow
-                    implicitWidth: 100
-                    from: 1
-                    to: 100
-                    stepSize: 1
-                    value: 1
-
-                    Settings {
-                        property alias importCSVfirstRow: firstRow.value
-                    }
-                }
-            }
-        }
-
-
-        RowLayout {
-            CCheck {
-                id: timeEnable
-                //                    Layout.fillWidth: true
-                //                        Layout.preferredWidth: 150
-                checked: true
-                text: "Time"
-
-                Settings {
-                    property alias importCSVtimeEnable: timeEnable.checked
-                }
-            }
-
-            //                CTextField {
-            //                    id: timeFormater
-            //                    text: "yyyy-MM-dd hh:mm:ss,zzz"
-            //                    Settings {
-            //                        property alias importCSVtimeFormater: timeFormater.text
-            //                    }
-            //                }
-
-            SpinBoxCustom {
-                id:timeColumn
-                implicitWidth: 100
-                from: 1
-                to: 100
-                stepSize: 1
-                value: 6
-
-                Settings {
-                    property alias importCSVtimeColumn: timeColumn.value
-                }
-            }
-
-            CCombo  {
-                id: utcGpsCombo
-                //                    Layout.fillWidth: true
-                model: ["UTC time", "GPS time"]
-
-                Settings {
-                    property alias utcGpsCombo: utcGpsCombo.currentIndex
-                }
-            }
-        }
-
-        //            RowLayout {
-        //                CCheck {
-        //                    id: utcTime
-        //                    Layout.fillWidth: true
-        //                    checked: true
-        //                    text: "UTC time"
-
-        //                    Settings {
-        //                        property alias utcTime: utcTime.checked
-        //                    }
-        //                }
-
-        //            }
-
-
-        RowLayout {
-            CCheck {
-                id: latLonEnable
-                Layout.fillWidth: true
-                //                        Layout.preferredWidth: 150
-                checked: true
-                text: "Lat/Lon/Alt"
-
-                Settings {
-                    property alias importCSVlatLonEnable: latLonEnable.checked
-                }
-            }
-
-            SpinBoxCustom {
-                id: latColumn
-                implicitWidth: 100
-                from: 1
-                to: 100
-                stepSize: 1
-                value: 2
-
-                Settings {
-                    property alias importCSVlatColumn: latColumn.value
-                }
-            }
-
-            SpinBoxCustom {
-                id: lonColumn
-                implicitWidth: 100
-                from: 1
-                to: 100
-                stepSize: 1
-                value: 3
-
-                Settings {
-                    property alias importCSVlonColumn: lonColumn.value
-                }
-            }
-
-            SpinBoxCustom {
-                id: altColumn
-                implicitWidth: 100
-                from: 1
-                to: 100
-                stepSize: 1
-                value: 4
-
-                Settings {
-                    property alias importCSValtColumn: altColumn.value
-                }
-            }
-        }
-
-        RowLayout {
-            CCheck {
-                id: xyzEnable
-                Layout.fillWidth: true
-                //                        Layout.preferredWidth: 150
-                checked: true
-                text: "NEU"
-
-                Settings {
-                    property alias importCSVxyzEnable: xyzEnable.checked
-                }
-            }
-
-            SpinBoxCustom {
-                id: northColumn
-                implicitWidth: 100
-                from: 1
-                to: 100
-                stepSize: 1
-                value: 2
-
-                Settings {
-                    property alias importCSVnorthColumn: northColumn.value
-                }
-            }
-
-            SpinBoxCustom {
-                id: eastColumn
-                implicitWidth: 100
-                from: 1
-                to: 100
-                stepSize: 1
-                value: 3
-
-                Settings {
-                    property alias importCSVeastColumn: eastColumn.value
-                }
-            }
-
-            SpinBoxCustom {
-                id: upColumn
-                implicitWidth: 100
-                from: 1
-                to: 100
-                stepSize: 1
-                value: 4
-
-                Settings {
-                    property alias importCSVupColumn: upColumn.value
-                }
-            }
-        }
-
-        RowLayout {
-            CTextField {
-                id: importPathText
-                hoverEnabled: true
-                Layout.fillWidth: true
-                //                    visible: connectionTypeCombo.currentText === "File"
-
-                text: ""
-                placeholderText: qsTr("Enter path")
-
-                Keys.onPressed: function(event) {
-                    if (event.key === 16777220) {
-                        importTrackFileDialog.openCSV();
-                    }
-                }
-
-            }
-
-            CButton {
-                text: "..."
-                Layout.fillWidth: false
-                //visible: true // connectionTypeCombo.currentText === "File"
-                implicitHeight: theme.controlHeight
-                implicitWidth: implicitHeight*1.1
+            KButton {
+                width: 50; height: 30; text: "..."; fontPixelSize: 12
                 onClicked: {
                     importTrackFileDialog.currentFolder = connectionViewer.lastImportTrackFolder
                     importTrackFileDialog.open()
@@ -960,82 +615,176 @@ ColumnLayout {
                     id: importTrackFileDialog
                     title: "Please choose a file"
                     currentFolder: connectionViewer.lastImportTrackFolder
-                    //                    fileMode: FileDialog.OpenFiles
-
                     nameFilters: ["Logs (*.csv *.txt)"]
-
-                    onCurrentFolderChanged: {
-                        connectionViewer.lastImportTrackFolder = currentFolder
-                    }
+                    onCurrentFolderChanged: connectionViewer.lastImportTrackFolder = currentFolder
 
                     function openCSV() {
                         const importPath = connectionViewer.currentImportTrackPath()
-                        core.openCSV(importPath, separatorCombo.currentIndex, firstRow.value, timeColumn.value, utcGpsCombo.currentIndex === 0,
-                                     latColumn.value*latLonEnable.checked, lonColumn.value*latLonEnable.checked, altColumn.value*latLonEnable.checked,
-                                     northColumn.value*xyzEnable.checked, eastColumn.value*xyzEnable.checked, upColumn.value*xyzEnable.checked);
+                        core.openCSV(importPath, separatorCombo.currentIndex, firstRow.value,
+                                     timeColumn.value, utcGpsCombo.currentIndex === 0,
+                                     latColumn.value * latLonEnable.checked,
+                                     lonColumn.value * latLonEnable.checked,
+                                     altColumn.value * latLonEnable.checked,
+                                     northColumn.value * xyzEnable.checked,
+                                     eastColumn.value * xyzEnable.checked,
+                                     upColumn.value * xyzEnable.checked)
                     }
 
                     onAccepted: {
                         connectionViewer.lastImportTrackFolder = importTrackFileDialog.currentFolder
                         connectionViewer.setImportTrackPath(importTrackFileDialog.selectedFile)
-
-                        openCSV();
+                        openCSV()
                     }
-                    onRejected: {
+                }
+            }
+        }
+    }
+
+    // ── File row ──────────────────────────────────────────────────────────
+
+    Row {
+        width: parent.width; height: 30; spacing: 6
+
+        IconBtn {
+            id: zeroingPosButton
+            checkable: true; iconSource: "qrc:/icons/ui/propeller_off.svg"; toolTipText: "Pos zeroing"
+            width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
+            onToggled: function(v) { core.setPosZeroing(v) }
+            Component.onCompleted: core.setPosZeroing(checked)
+            Settings { property alias zeroingPosButtonCheched: zeroingPosButton.checked }
+        }
+
+        Rectangle {
+            width: parent.width - 30 - 30 - 30 - 30 - 4 * 6
+            height: 30; radius: 6; color: AppPalette.bg; border.width: 1
+            border.color: pathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
+
+            TextInput {
+                id: pathText
+                anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
+                verticalAlignment: TextInput.AlignVCenter
+                color: AppPalette.text; font.pixelSize: 12; clip: true
+                Text {
+                    visible: !pathText.text.length; text: "Путь к файлу..."
+                    color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter
+                }
+                Keys.onPressed: function(event) {
+                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                        const lp = connectionViewer.currentLogPath()
+                        connectionViewer.setLogPath(lp)
+                        connectionViewer.pushRecentOpenedFile(lp)
+                        core.openLogFile(lp, false, false)
                     }
                 }
             }
         }
 
+        IconBtn {
+            iconSource: "qrc:/icons/ui/file.svg"; toolTipText: "Открыть файл"
+            width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
+            onClicked: connectionViewer.openNewFileDialog()
 
-    }
-
-
-    MenuRow {
-        visible: core.isFactoryMode
-        CheckButton {
-            id: flasherStart
-            text: "Flash Firmware"
-            Layout.fillWidth: true
-            checkable: false
-
-            onClicked: {
-                core.connectOpenedLinkAsFlasher(flasherPnText.text)
+            FileDialog {
+                id: newFileDialog
+                title: "Please choose a file"
+                currentFolder: connectionViewer.lastLogFolder
+                nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
+                onCurrentFolderChanged: connectionViewer.lastLogFolder = currentFolder
+                onAccepted: {
+                    const file = newFileDialog.selectedFile
+                    if (!file) return
+                    connectionViewer.lastLogFolder = newFileDialog.currentFolder
+                    const lp = urlSource(file)
+                    connectionViewer.setLogPath(lp)
+                    connectionViewer.pushRecentOpenedFile(lp)
+                    core.openLogFile(lp, false, false)
+                }
             }
         }
 
-        CheckButton {
-            id: flasherDataRefresh
-            Layout.fillWidth: false
-            checkable: true
-            icon.source: "qrc:/icons/ui/refresh.svg"
+        IconBtn {
+            iconSource: "qrc:/icons/ui/file_plus.svg"; toolTipText: "Добавить файл"
+            width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
+            onClicked: { appendFileDialog.currentFolder = connectionViewer.lastLogFolder; appendFileDialog.open() }
 
-            onCheckedChanged: {
-                flasherDataInput.text = ""
+            FileDialog {
+                id: appendFileDialog
+                title: "Please choose a file"
+                currentFolder: connectionViewer.lastLogFolder
+                nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
+                onCurrentFolderChanged: connectionViewer.lastLogFolder = currentFolder
+                onAccepted: {
+                    const lp = urlSource(appendFileDialog.selectedFile)
+                    connectionViewer.setLogPath(lp)
+                    connectionViewer.lastLogFolder = appendFileDialog.currentFolder
+                    connectionViewer.pushRecentOpenedFile(lp)
+                    core.openLogFile(lp, true, false)
+                }
+            }
+        }
+
+        IconBtn {
+            iconSource: "qrc:/icons/ui/file_off.svg"; toolTipText: "Закрыть файл"
+            width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
+            onClicked: core.closeLogFile()
+        }
+    }
+
+    // ── Device buttons ────────────────────────────────────────────────────
+
+    Flow {
+        visible: devList.length > 0
+        width: parent.width; spacing: 6
+
+        Repeater {
+            model: devList
+            delegate: KButton {
+                required property var modelData
+                text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : "Undefined"
+                height: 30; fontPixelSize: 11
+                opacity: dev === modelData ? 1.0 : 0.5
+                visible: modelData ? (modelData.devType !== 0) : false
+                onClicked: dev = modelData
             }
         }
     }
 
-    MenuRow {
+    // ── Factory mode ──────────────────────────────────────────────────────
+
+    Row {
+        visible: core.isFactoryMode; width: parent.width; height: 30; spacing: 6
+
+        KButton {
+            text: "Flash Firmware"; height: 30; fontPixelSize: 12
+            onClicked: core.connectOpenedLinkAsFlasher(flasherPnText.text)
+        }
+
+        IconBtn {
+            id: flasherDataRefresh; checkable: true
+            iconSource: "qrc:/icons/ui/refresh.svg"; width: 30; height: 30
+            onToggled: function(v) { if (!v) flasherDataInput.text = "" }
+        }
+    }
+
+    Row {
         visible: flasherDataRefresh.checked && core.isFactoryMode
-        CTextField {
-            id: flasherDataInput
-            Layout.fillWidth: true
-            onVisibleChanged: {
-                if(visible) {
-                    focus = true
-                }
+        width: parent.width; height: 30; spacing: 6
+
+        Rectangle {
+            width: parent.width - 36; height: 30; radius: 6
+            color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
+            TextInput {
+                id: flasherDataInput
+                anchors.fill: parent; anchors.margins: 8
+                verticalAlignment: TextInput.AlignVCenter; color: AppPalette.text; font.pixelSize: 12
+                onVisibleChanged: if (visible) focus = true
             }
         }
 
-        CheckButton {
-            Layout.fillWidth: false
-            checkable: false
-            visible: flasherDataRefresh.checked
-            icon.source: "qrc:/icons/ui/file_download.svg"
-
+        IconBtn {
+            iconSource: "qrc:/icons/ui/file_download.svg"; width: 30; height: 30
             onClicked: {
-                if(flasherDataInput.text !== "") {
+                if (flasherDataInput.text !== "") {
                     core.setFlasherData(flasherDataInput.text)
                     flasherDataInput.text = ""
                     flasherDataRefresh.checked = false
@@ -1044,175 +793,34 @@ ColumnLayout {
         }
     }
 
-    MenuRow {
-        visible: core.isFactoryMode
-        CText {
-            text: "Part Number:"
-        }
+    Row {
+        visible: core.isFactoryMode; width: parent.width; height: 30; spacing: 8
 
-        CTextField {
-            id: flasherPnText
-            Layout.fillWidth: true
-        }
+        Text { text: "Part Number:"; color: AppPalette.textSecond; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter }
 
-        Settings {
-            property alias flasherPartNumber: flasherPnText.text
-        }
-    }
-
-    MenuRow {
-        visible: core.isFactoryMode
-        CText {
-            text: FLASHER_STATE ? core.flasherTextInfo : ""
-        }
-    }
-
-    MenuRow {
-        spacing: 4
-        CheckButton { // FAKE_COORDS
-            id: zeroingPosButton
-            icon.source: "qrc:/icons/ui/propeller_off.svg"
-            backColor: theme.controlSolidBackColor
-            borderWidth: 0
-            implicitWidth: theme.controlHeight
-
-            onCheckedChanged: {
-                core.setPosZeroing(checked);
-            }
-
-            Component.onCompleted: {
-                core.setPosZeroing(checked);
-            }
-
-            Settings {
-                property alias zeroingPosButtonCheched: zeroingPosButton.checked
-            }
-        }
-
-        CTextField {
-            id: pathText
-            hoverEnabled: true
-            Layout.fillWidth: true
-
-            text: ""
-            placeholderText: qsTr("Enter path")
-
-            Keys.onPressed: function(event) {
-                if (event.key === 16777220 || event.key === Qt.Key_Enter) {
-                    const logPath = connectionViewer.currentLogPath()
-                    connectionViewer.setLogPath(logPath)
-                    connectionViewer.pushRecentOpenedFile(logPath)
-                    core.openLogFile(logPath, false, false);
-                }
-            }
-        }
-
-        CheckButton {
-            icon.source: "qrc:/icons/ui/file.svg"
-            checkable: false
-            backColor: theme.controlSolidBackColor
-            borderWidth: 0
-            implicitWidth: theme.controlHeight
-
-            onClicked: {
-                connectionViewer.openNewFileDialog()
-            }
-
-            FileDialog {
-                id: newFileDialog
-                title: qsTr("Please choose a file")
-                currentFolder: connectionViewer.lastLogFolder
-
-                nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
-
-                onCurrentFolderChanged: {
-                    connectionViewer.lastLogFolder = currentFolder
-                }
-
-                onAccepted: {
-                    const file = newFileDialog.selectedFile
-                    if (!file) {
-                        return
-                    }
-                    connectionViewer.lastLogFolder = newFileDialog.currentFolder
-
-                    const logPath = urlSource(file)
-                    connectionViewer.setLogPath(logPath)
-                    connectionViewer.pushRecentOpenedFile(logPath)
-                    core.openLogFile(logPath, false, false)
-                }
-                onRejected: {
-                }
-            }
-        }
-
-        CheckButton {
-            icon.source: "qrc:/icons/ui/file_plus.svg"
-            checkable: false
-            backColor: theme.controlSolidBackColor
-            borderWidth: 0
-            implicitWidth: theme.controlHeight
-
-            onClicked: {
-                appendFileDialog.currentFolder = connectionViewer.lastLogFolder
-                appendFileDialog.open()
-            }
-
-            FileDialog {
-                id: appendFileDialog
-                title: qsTr("Please choose a file")
-                currentFolder: connectionViewer.lastLogFolder
-
-                nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
-
-                onCurrentFolderChanged: {
-                    connectionViewer.lastLogFolder = currentFolder
-                }
-
-                onAccepted: {
-                    const logPath = urlSource(appendFileDialog.selectedFile)
-                    connectionViewer.setLogPath(logPath)
-                    connectionViewer.lastLogFolder = appendFileDialog.currentFolder
-
-                    //deviceManagerWrapper.sendOpenFile(logPath, true)
-                    connectionViewer.pushRecentOpenedFile(logPath)
-                    core.openLogFile(logPath, true, false);
-                }
-                onRejected: {
-                }
-            }
-        }
-
-        CheckButton {
-            icon.source: "qrc:/icons/ui/file_off.svg"
-            checkable: false
-            backColor: theme.controlSolidBackColor
-            borderWidth: 0
-            implicitWidth: theme.controlHeight
-
-            onClicked: {
-                core.closeLogFile();
+        Rectangle {
+            width: parent.width - 92 - 8; height: 30; radius: 6
+            color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
+            TextInput {
+                id: flasherPnText
+                anchors.fill: parent; anchors.margins: 8
+                verticalAlignment: TextInput.AlignVCenter; color: AppPalette.text; font.pixelSize: 12
+                Settings { property alias flasherPartNumber: flasherPnText.text }
             }
         }
     }
 
+    Text {
+        visible: core.isFactoryMode && FLASHER_STATE
+        text: core.isFactoryMode && FLASHER_STATE ? core.flasherTextInfo : ""
+        color: AppPalette.textMuted; font.pixelSize: 12; width: parent.width; wrapMode: Text.WordWrap
+    }
 
-    MenuRow {
-        visible: devList.length > 0
-        spacing: 10
+    // ── Device settings ───────────────────────────────────────────────────
 
-        Repeater {
-            model: devList
-            delegate: CButton {
-                text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : qsTr("Undefined")
-                Layout.fillWidth: true
-                opacity: dev === modelData ? 1 : 0.5
-                visible: modelData ? (modelData.devType === 0 ? false : true) : false
-
-                onClicked: {
-                    dev = modelData
-                }
-            }
-        }
+    DeviceSettingsPage {
+        visible: connectionViewer.dev !== null
+        width: parent.width
+        dev: connectionViewer.dev
     }
 }

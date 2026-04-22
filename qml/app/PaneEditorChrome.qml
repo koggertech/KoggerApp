@@ -86,7 +86,7 @@ Item {
                 iconPixelSize: Math.round(paneFrame.centerQuickIconSize * 0.42)
                 glyph: "P"
                 glyphPixelSize: Math.round(paneFrame.centerQuickIconSize * 0.38)
-                glyphColor: paneFrame.popupSourceLeafId !== -1 ? "#FCA5A5" : "#CBD5E1"
+                glyphColor: paneFrame.popupSourceLeafId !== -1 ? AppPalette.dangerText : AppPalette.textSecond
                 showGlyphWithIcon: false
                 z: 33
                 onClicked: paneFrame.popupChooserOpen = !paneFrame.popupChooserOpen
@@ -157,7 +157,7 @@ Item {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "Choose pane type"
-                color: "#E2E8F0"
+                color: AppPalette.text
                 font.pixelSize: 18
                 font.bold: true
             }
@@ -219,9 +219,9 @@ Item {
         x: (parent.width - width) / 2
         y: (parent.height - height) / 2
         radius: 8
-        color: "#0F172A"
+        color: AppPalette.bg
         border.width: 1
-        border.color: "#475569"
+        border.color: AppPalette.borderHover
 
         MouseArea {
             anchors.fill: parent
@@ -237,7 +237,7 @@ Item {
 
             Text {
                 text: "Fullscreen pop-up"
-                color: "#E2E8F0"
+                color: AppPalette.text
                 font.pixelSize: 13
                 font.bold: true
             }
@@ -253,7 +253,7 @@ Item {
             Text {
                 visible: paneFrame.popupCandidates.length === 0
                 text: "No neighboring panes available"
-                color: "#94A3B8"
+                color: AppPalette.textMuted
                 font.pixelSize: 12
             }
 
@@ -292,7 +292,7 @@ Item {
 
                         Text {
                             text: modelData.title + " (" + modelData.mode + ")"
-                            color: "#E2E8F0"
+                            color: AppPalette.text
                             font.pixelSize: 13
                             anchors.verticalCenter: parent.verticalCenter
                         }

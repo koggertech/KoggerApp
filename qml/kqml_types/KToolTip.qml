@@ -15,15 +15,15 @@ ToolTip {
 
     contentItem: Text {
         text: root.text
-        color: "#E2E8F0"
+        color: AppPalette.tooltipText
         font.pixelSize: 12
         wrapMode: Text.NoWrap
     }
 
     background: Rectangle {
         radius: 6
-        color: "#0B1220"
+        color: AppPalette.tooltipBg
         border.width: 1
-        border.color: "#334155"
+        border.color: AppPalette.tooltipBorder
     }
 }

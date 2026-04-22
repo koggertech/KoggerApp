@@ -36,12 +36,12 @@ Item {
     property int popupSourceLeafId: store.popupSourceLeafIdForHost(paneItem.leafId)
     property var popupCandidates: store.popupCandidateItemsForHost(paneItem.leafId)
     readonly property int centerQuickIconSize: 136
-    readonly property color menuPanelColor: "#0F172A"
-    readonly property color menuButtonFillColor: "#1E293B"
-    readonly property color menuButtonHoverColor: "#172133"
-    readonly property color menuButtonPressedColor: "#0B1220"
-    readonly property color menuButtonBorderColor: "#334155"
-    readonly property color menuButtonHoverBorderColor: "#475569"
+    readonly property color menuPanelColor: AppPalette.bg
+    readonly property color menuButtonFillColor: AppPalette.card
+    readonly property color menuButtonHoverColor: AppPalette.cardHover
+    readonly property color menuButtonPressedColor: AppPalette.bgDeep
+    readonly property color menuButtonBorderColor: AppPalette.border
+    readonly property color menuButtonHoverBorderColor: AppPalette.borderHover
 
     x: isMaximized ? 0 : (paneRect && paneRect.x !== undefined ? paneRect.x : 0)
     y: isMaximized ? 0 : (paneRect && paneRect.y !== undefined ? paneRect.y : 0)
@@ -104,7 +104,7 @@ Item {
             radius: 0
             color: paneItem.isModeSelecting ? "#111827" : "#09111F"
             border.width: store.editableMode ? 1 : 0
-            border.color: paneItem.isModeSelecting ? "#E2E8F0" : paneItem.paneData.color
+            border.color: paneItem.isModeSelecting ? AppPalette.text : paneItem.paneData.color
 
             PaneContentLoader {
                 anchors.fill: parent
@@ -158,7 +158,7 @@ Item {
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: paneItem.paneData.title
-                        color: "#E2E8F0"
+                        color: AppPalette.text
                         font.bold: true
                         font.pixelSize: 14
                     }

@@ -12,8 +12,8 @@ Item {
     property string title: "Settings"
     property string side: "left"
     property string gearMode: "app"
-    property string headerColor: "#1F2937"
-    property string panelColor: "#0F172A"
+    property color headerColor: AppPalette.headerBg
+    property color panelColor: AppPalette.bg
     property bool panelShadowEnabled: true
     property real panelShadowOpacity: 0.72
     property int panelShadowSize: 30
@@ -56,7 +56,7 @@ Item {
         height: panelRoot.height
         color: panelRoot.panelColor
         border.width: 1
-        border.color: "#334155"
+        border.color: AppPalette.border
         z: 2
 
         MouseArea {
@@ -94,7 +94,7 @@ Item {
 
                     Text {
                         text: panelRoot.title
-                        color: "#E2E8F0"
+                        color: AppPalette.text
                         font.pixelSize: 18
                         font.bold: true
                         Layout.fillWidth: true
@@ -167,15 +167,15 @@ Item {
             orientation: Gradient.Horizontal
             GradientStop {
                 position: 0.0
-                color: panelRoot.resolvedSide === "left" ? "#F0000000" : "#00000000"
+                color: panelRoot.resolvedSide === "left" ? AppPalette.shadow0 : "#00000000"
             }
             GradientStop {
                 position: 0.45
-                color: panelRoot.resolvedSide === "left" ? "#5A000000" : "#5A000000"
+                color: AppPalette.shadowMid
             }
             GradientStop {
                 position: 1.0
-                color: panelRoot.resolvedSide === "left" ? "#00000000" : "#F0000000"
+                color: panelRoot.resolvedSide === "left" ? "#00000000" : AppPalette.shadow0
             }
         }
     }

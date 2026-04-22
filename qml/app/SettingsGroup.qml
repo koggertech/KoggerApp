@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import kqml_types 1.0
 
 Item {
     id: root
@@ -12,7 +13,7 @@ Item {
     property real preferredWidth: 250
     property int contentSpacing: 10
     property int contentInset: 6
-    property color titleColor: "#E2E8F0"
+    property color titleColor: AppPalette.text
     property int titlePixelSize: 15
     default property alias contentData: contentColumn.data
 
@@ -78,9 +79,9 @@ Item {
             width: parent.width
             height: 36
             radius: 8
-            color: headerMouse.containsMouse ? "#0B1220" : "#1E293B"
+            color: headerMouse.containsMouse ? AppPalette.bgDeep : AppPalette.card
             border.width: 1
-            border.color: root.expanded ? "#64748B" : "#334155"
+            border.color: root.expanded ? AppPalette.borderFocus : AppPalette.border
 
             Rectangle {
                 width: 4
@@ -89,7 +90,7 @@ Item {
                 anchors.left: parent.left
                 anchors.leftMargin: 5
                 anchors.verticalCenter: parent.verticalCenter
-                color: root.expanded ? "#60A5FA" : (headerMouse.containsMouse ? "#64748B" : "#475569")
+                color: root.expanded ? AppPalette.accentBar : (headerMouse.containsMouse ? AppPalette.borderFocus : AppPalette.borderHover)
             }
 
             Row {
@@ -103,7 +104,7 @@ Item {
                     width: 10
                     height: 10
                     expanded: root.expanded
-                    indicatorColor: "#CBD5E1"
+                    indicatorColor: AppPalette.textSecond
                     visible: root.collapsible
                 }
 

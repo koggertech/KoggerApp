@@ -1,10 +1,11 @@
 import QtQuick 2.15
+import kqml_types 1.0
 
 Item {
     id: root
 
     property bool expanded: false
-    property color indicatorColor: "#CBD5E1"
+    property color indicatorColor: AppPalette.textSecond
 
     implicitWidth: 10
     implicitHeight: 10

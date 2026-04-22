@@ -10,12 +10,12 @@ Item {
     property int iconPixelSize: Math.round(Math.min(width, height) * 0.56)
     property bool showGlyphWithIcon: false
     property int glyphPixelSize: 18
-    property color glyphColor: "#E2E8F0"
+    property color glyphColor: AppPalette.text
     property color fillColor: "#1E293BCC"
     property color fillHoverColor: "#0F172ACC"
-    property color fillPressedColor: "#0B1220"
-    property color borderColor: "#334155"
-    property color borderHoverColor: "#475569"
+    property color fillPressedColor: AppPalette.bgDeep
+    property color borderColor: AppPalette.border
+    property color borderHoverColor: AppPalette.borderHover
     property real borderWidth: 1
     property bool enabled: true
     property bool rounded: true
@@ -143,7 +143,7 @@ Item {
         text: root.glyph
         color: root.enabled
                ? (root.hovered ? Qt.lighter(root.glyphColor, 1.12) : root.glyphColor)
-               : "#94A3B8"
+               : AppPalette.textMuted
         font.pixelSize: root.glyphPixelSize
         font.bold: true
 

@@ -22,7 +22,9 @@
         <file>qml/app/SettingsSidebarBase.qml</file>
         <file>qml/app/SettingsGroup.qml</file>
         <file>qml/app/AppSettingsPage.qml</file>
+        <file>qml/app/KSpinBox.qml</file>
         <file>qml/app/ConnectionsSettingsPage.qml</file>
+        <file>qml/app/DeviceSettingsPage.qml</file>
         <file>qml/app/Pane2DSettingsPage.qml</file>
         <file>qml/app/Pane3DSettingsPage.qml</file>
         <file>qml/app/ModeSettingsPanel.qml</file>
@@ -39,6 +41,7 @@
 
         <!-- ======= KQMLTypes module ======= -->
         <file>qml/kqml_types/qmldir</file>
+        <file>qml/kqml_types/AppPalette.qml</file>
         <file>qml/kqml_types/KTabBar.qml</file>
         <file>qml/kqml_types/KCheckBox.qml</file>
         <file>qml/kqml_types/KSwitch.qml</file>

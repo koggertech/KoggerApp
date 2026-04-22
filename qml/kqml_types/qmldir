@@ -1,6 +1,7 @@
 module kqml_types
 
 singleton ZOrder 1.0 ZOrder.qml
+singleton AppPalette 1.0 AppPalette.qml
 
 KTabBar 1.0 KTabBar.qml
 KCheckBox 1.0 KCheckBox.qml

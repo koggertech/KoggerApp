@@ -564,7 +564,7 @@ Item {
 
             Rectangle {
                 visible: splitDragZone.showResizeHandle
-                color: "#60A5FA"
+                color: AppPalette.accentBar
                 width: splitDragZone.vertical ? 2 : splitDragZone.width
                 height: splitDragZone.vertical ? splitDragZone.height : 2
                 x: splitDragZone.vertical ? (splitDragZone.width - width) / 2 : 0
@@ -596,7 +596,7 @@ Item {
                             width: 4
                             height: 2
                             radius: 1
-                            color: "#E2E8F0"
+                            color: AppPalette.text
                         }
                     }
                 }
@@ -612,7 +612,7 @@ Item {
                             width: 2
                             height: 4
                             radius: 1
-                            color: "#E2E8F0"
+                            color: AppPalette.text
                         }
                     }
                 }
@@ -699,7 +699,7 @@ Item {
         Text {
             anchors.centerIn: parent
             text: "::"
-            color: "#E2E8F0"
+            color: AppPalette.text
             font.pixelSize: 11
             font.bold: true
         }

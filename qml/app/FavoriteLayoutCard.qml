@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import kqml_types 1.0
 
 Rectangle {
     id: root
@@ -22,9 +23,9 @@ Rectangle {
     implicitWidth: showText ? 230 : previewWidth + contentMargin * 2
     implicitHeight: showText ? 88 : 76
     radius: 8
-    color: hovered ? "#0F172A" : "#1E293B"
+    color: hovered ? AppPalette.bg : AppPalette.card
     border.width: selected ? 2 : 1
-    border.color: selected ? "#FACC15" : (hovered ? "#475569" : "#334155")
+    border.color: selected ? "#FACC15" : (hovered ? AppPalette.borderHover : AppPalette.border)
 
     function leafCount(node) {
         if (!node)
@@ -54,7 +55,7 @@ Rectangle {
 
         Text {
             text: root.titlePrefix + (root.favoriteIndex + 1)
-            color: root.selected ? "#FDE68A" : "#E2E8F0"
+            color: root.selected ? "#FDE68A" : AppPalette.text
             font.pixelSize: 14
             font.bold: true
             elide: Text.ElideRight
@@ -65,7 +66,7 @@ Rectangle {
             text: root.selected
                   ? (root.leafCount(root.snapshot) + " panes • active")
                   : (root.leafCount(root.snapshot) + " panes")
-            color: "#94A3B8"
+            color: AppPalette.textMuted
             font.pixelSize: 12
             elide: Text.ElideRight
             width: parent.width
@@ -89,7 +90,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.topMargin: 6
         anchors.rightMargin: root.showText ? 36 : 6
-        color: "#0F172A"
+        color: AppPalette.bg
         border.width: 1
         border.color: "#FACC15"
 

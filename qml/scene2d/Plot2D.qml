@@ -15,9 +15,9 @@ WaterFall {
     property bool is3dVisible: false
     property int indx: 0
     property var instrumentsGradeList: null
-    property int instruments: (instrumentsGradeList && typeof instrumentsGradeList.currentIndex === "number")
-                              ? instrumentsGradeList.currentIndex
-                              : 0
+    property int instruments: theme ? theme.instrumentsGrade
+                              : ((instrumentsGradeList && typeof instrumentsGradeList.currentIndex === "number")
+                                 ? instrumentsGradeList.currentIndex : 0)
     property bool settingsOpen: plotCheckButton.checked
     property bool hasTransientUi: menuBlock.visible || contactDialog.visible
     property bool loupeZoomAdjusting: false
@@ -635,6 +635,7 @@ WaterFall {
                                     }
 
                                     channel1Combo.suppressTextSignal = false
+                                    rowDataset.setChannelNamesToBackend()
                                 }
                             }
                         }
@@ -685,6 +686,7 @@ WaterFall {
                                     }
 
                                     channel2Combo.suppressTextSignal = false
+                                    rowDataset.setChannelNamesToBackend()
                                 }
                             }
                         }

@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
+import QtCore
 import kqml_types 1.0
 
 ApplicationWindow {
@@ -28,6 +29,22 @@ ApplicationWindow {
             root.width = width
             root.height = height
         }
+    }
+
+    // Читаем глобальные настройки при запуске (те же ключи, что сохраняет AppSettingsPage)
+    Settings {
+        id: startupSettings
+        property int appTheme: 0
+        property int instrumentsGradeList: 0
+        property bool consoleVisible: false
+    }
+
+    Connections {
+        target: theme
+        ignoreUnknownSignals: true
+        function onThemeIDChanged()          { startupSettings.appTheme          = theme.themeID }
+        function onInstrumentsGradeChanged() { startupSettings.instrumentsGradeList = theme.instrumentsGrade }
+        function onInterfaceChanged()        { startupSettings.consoleVisible     = theme.consoleVisible }
     }
 
     readonly property real anySettingsProgress: Math.max(settingsSidebar.progress, modeSettingsPanel.sidebarProgress)
@@ -276,6 +293,13 @@ ApplicationWindow {
 
     Component.onDestruction: workspaceStore.saveLayoutState()
     Component.onCompleted: {
+        // Применяем сохранённые глобальные настройки сразу при запуске
+        if (theme) {
+            theme.themeID          = startupSettings.appTheme
+            theme.instrumentsGrade = startupSettings.instrumentsGradeList
+            theme.consoleVisible   = startupSettings.consoleVisible
+        }
+
         refreshConnectionsIndicator()
         if ((!workspaceStore.selectedConnectionFilePath || workspaceStore.selectedConnectionFilePath.length === 0)
                 && core && core.filePath && core.filePath.length > 0) {
@@ -558,6 +582,7 @@ ApplicationWindow {
 
             AppSettingsPage {
                 store: workspaceStore
+                targetPlot: workspaceView.primaryPlotItem
             }
         }
 

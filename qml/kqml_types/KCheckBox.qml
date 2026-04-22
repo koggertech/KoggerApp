@@ -7,14 +7,14 @@ CheckBox {
     property int rowHeight: 38
     property string toolTipText: text
     property int cornerRadius: 8
-    property color textColor: "#CBD5E1"
-    property color backgroundColor: "#0F172A"
-    property color borderColor: "#334155"
-    property color accentColor: "#1E3A8A"
-    property color accentBorderColor: "#93C5FD"
-    property color trackOffColor: "#475569"
-    property color trackOffBorderColor: "#6B7280"
-    property color knobColor: "#E2E8F0"
+    property color textColor: AppPalette.textSecond
+    property color backgroundColor: AppPalette.bg
+    property color borderColor: AppPalette.border
+    property color accentColor: AppPalette.accentBg
+    property color accentBorderColor: AppPalette.accentBorder
+    property color trackOffColor: AppPalette.trackOff
+    property color trackOffBorderColor: AppPalette.trackOffBorder
+    property color knobColor: AppPalette.knob
 
     horizontalPadding: 10
     implicitWidth: 260
@@ -74,7 +74,7 @@ CheckBox {
 
     background: Rectangle {
         radius: control.cornerRadius
-        color: control.hovered ? "#111B2E" : control.backgroundColor
+        color: control.hovered ? AppPalette.bgHover : control.backgroundColor
         border.width: 1
         border.color: control.borderColor
     }

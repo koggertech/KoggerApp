@@ -17,7 +17,7 @@ BasePanePopup {
     readonly property bool modeSelecting: store.globalPopupModePickerOpen || store.globalPopupMode === ""
     readonly property var paneData: ({
         title: "Global pop-up",
-        color: "#0F172A",
+        color: AppPalette.bg,
         mode: store.globalPopupMode === "3D" ? "3D" : "2D"
     })
 
@@ -124,7 +124,7 @@ BasePanePopup {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "Choose pane type"
-                color: "#E2E8F0"
+                color: AppPalette.text
                 font.pixelSize: 18
                 font.bold: true
             }

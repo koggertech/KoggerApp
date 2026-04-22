@@ -136,7 +136,7 @@ public:
 
     void setTheme(int theme_id = 0) {
         clearThemeResources();
-        if (theme_id < 0 || theme_id > 7) {
+        if (theme_id < 0 || theme_id > 9) {
             theme_id = 0;
         }
         _id = theme_id;
@@ -311,6 +311,46 @@ public:
             _disabledTextColor = new QColor(101, 123, 131);
             _disabledBackColor = new QColor(5, 38, 48);
             _hoveredBackColor = new QColor(14, 63, 76);
+        } else if(theme_id == 8) {
+            // Desert
+            _textColor = new QColor(36, 24, 6);
+            _textSolidColor = new QColor(36, 24, 6);
+            _menuBackColor = new QColor(196, 172, 112, 255);
+            _controlBackColor = new QColor(178, 154, 96);
+            _controlBorderColor = new QColor(138, 116, 64);
+            _controlSolidBackColor = new QColor(162, 138, 84);
+            _controlSolidBorderColor = new QColor(120, 98, 50);
+            _activeControlBackColor = new QColor(72, 52, 14);
+            _sliderHandleColor = new QColor(130, 108, 60);
+            _sliderHandlePressedColor = new QColor(150, 128, 78);
+            _placeholderTextColor = new QColor(36, 24, 6, 110);
+            _tooltipBackColor = new QColor(34, 24, 8, 242);
+            _tooltipBorderColor = new QColor(160, 134, 76, 90);
+            _tooltipTextColor = new QColor(230, 214, 176);
+
+            _disabledTextColor = new QColor(128, 108, 66);
+            _disabledBackColor = new QColor(188, 166, 108);
+            _hoveredBackColor = new QColor(212, 190, 130);
+        } else if(theme_id == 9) {
+            // Olive
+            _textColor = new QColor(218, 218, 208);
+            _textSolidColor = new QColor(218, 218, 208);
+            _menuBackColor = new QColor(52, 56, 40, 246);
+            _controlBackColor = new QColor(72, 76, 56);
+            _controlBorderColor = new QColor(36, 38, 26);
+            _controlSolidBackColor = new QColor(62, 66, 48);
+            _controlSolidBorderColor = new QColor(48, 52, 36);
+            _activeControlBackColor = new QColor(0, 0, 128);
+            _sliderHandleColor = new QColor(136, 140, 104);
+            _sliderHandlePressedColor = new QColor(156, 160, 122);
+            _placeholderTextColor = new QColor(200, 200, 186, 200);
+            _tooltipBackColor = new QColor(54, 58, 42, 240);
+            _tooltipBorderColor = new QColor(200, 200, 186, 50);
+            _tooltipTextColor = new QColor(218, 218, 208);
+
+            _disabledTextColor = new QColor(126, 128, 98);
+            _disabledBackColor = new QColor(44, 46, 34);
+            _hoveredBackColor = new QColor(86, 90, 66);
         }
 #if defined(Q_OS_ANDROID)
         _controlHeight = 48;

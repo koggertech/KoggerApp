@@ -117,9 +117,9 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: root.cornerRadius
-        color: "#0F172A"
+        color: AppPalette.bg
         border.width: 1
-        border.color: "#334155"
+        border.color: AppPalette.border
     }
 
     Rectangle {
@@ -129,9 +129,9 @@ Item {
         width: root.segmentWidth
         height: root.buttonHeight
         radius: 6
-        color: "#1E3A8A"
+        color: AppPalette.accentBg
         border.width: 1
-        border.color: "#93C5FD"
+        border.color: AppPalette.accentBorder
         z: 1
 
         Behavior on x {
@@ -196,7 +196,7 @@ Item {
                         id: label
                         anchors.centerIn: parent
                         text: tabButton.text
-                        color: selected ? "#E2E8F0" : "#CBD5E1"
+                        color: selected ? AppPalette.text : AppPalette.textSecond
                         font.pixelSize: 13
                         font.bold: true
                         elide: Text.ElideRight

@@ -9,16 +9,16 @@ Button {
     property int cornerRadius: 6
     property int fontPixelSize: 14
     property bool bold: true
-    property color normalBg: "#1E293B"
-    property color normalBorder: "#334155"
-    property color hoverBg: "#172133"
-    property color hoverBorder: "#475569"
-    property color checkedBg: "#1E3A8A"
-    property color checkedBorder: "#475569"
-    property color dangerBg: "#2A1313"
-    property color dangerHoverBg: "#1F0F0F"
-    property color dangerBorder: "#7F1D1D"
-    property color textColor: danger ? "#FCA5A5" : "#E2E8F0"
+    property color normalBg: AppPalette.card
+    property color normalBorder: AppPalette.border
+    property color hoverBg: AppPalette.cardHover
+    property color hoverBorder: AppPalette.borderHover
+    property color checkedBg: AppPalette.accentBg
+    property color checkedBorder: AppPalette.borderHover
+    property color dangerBg: AppPalette.dangerBg
+    property color dangerHoverBg: AppPalette.dangerHover
+    property color dangerBorder: AppPalette.dangerBorder
+    property color textColor: danger ? AppPalette.dangerText : AppPalette.text
     property real hoverWhiteness: 0.08
 
     horizontalPadding: 14

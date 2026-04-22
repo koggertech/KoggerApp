@@ -15,13 +15,13 @@ Item {
     property int panelPaddingX: 8
     property int panelPaddingY: 6
     property int triggerButtonWidth: 92
-    readonly property color hotkeysLayerColor: "#0F172A"
-    readonly property color hotkeysPopupLayerColor: "#0F172A"
-    readonly property color buttonFillColor: "#1E293B"
-    readonly property color buttonHoverColor: "#172133"
-    readonly property color buttonPressedColor: "#0B1220"
-    readonly property color buttonBorderColor: "#334155"
-    readonly property color buttonHoverBorderColor: "#475569"
+    readonly property color hotkeysLayerColor: AppPalette.bg
+    readonly property color hotkeysPopupLayerColor: AppPalette.bg
+    readonly property color buttonFillColor: AppPalette.card
+    readonly property color buttonHoverColor: AppPalette.cardHover
+    readonly property color buttonPressedColor: AppPalette.bgDeep
+    readonly property color buttonBorderColor: AppPalette.border
+    readonly property color buttonHoverBorderColor: AppPalette.borderHover
     readonly property int previewCardWidth: 84
     readonly property int previewCardHeight: 64
     readonly property int panelHeight: Math.max(controlHeight + panelPaddingY * 2, 48)
@@ -139,7 +139,7 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     text: "\u2699"
-                    color: "#E2E8F0"
+                    color: AppPalette.text
                     font.pixelSize: 19
                     font.bold: true
                 }
@@ -252,7 +252,7 @@ Item {
             width: 10
             height: 10
             expanded: button.open
-            indicatorColor: "#CBD5E1"
+            indicatorColor: AppPalette.textSecond
         }
 
         MouseArea {
@@ -275,7 +275,7 @@ Item {
 
         property bool highlighted: false
         property int pulseToken: 0
-        property color pulseColor: "#93C5FD"
+        property color pulseColor: AppPalette.accentBorder
         property color pulseBorderColor: "#BFDBFE"
         property int cornerRadius: 18
         default property alias contentData: contentHolder.data
@@ -376,7 +376,7 @@ Item {
             anchors.leftMargin: 8
             anchors.verticalCenter: parent.verticalCenter
             text: root.inputDeviceLabel
-            color: "#E2E8F0"
+            color: AppPalette.text
             font.pixelSize: 12
             font.bold: true
         }
@@ -393,7 +393,7 @@ Item {
         clip: true
         color: root.hotkeysLayerColor
         border.width: root.expanded ? 1 : 0
-        border.color: "#334155"
+        border.color: AppPalette.border
         opacity: root.expanded ? 1 : 0
 
         Behavior on width {
@@ -451,8 +451,8 @@ Item {
                 id: layoutsSlot
                 highlighted: root.highlightedQuickActionKey === "layouts"
                 pulseToken: root.highlightPulseToken
-                pulseColor: "#93C5FD"
-                pulseBorderColor: "#60A5FA"
+                pulseColor: AppPalette.accentBorder
+                pulseBorderColor: AppPalette.accentBar
                 width: layoutsButton.visible ? layoutsButton.implicitWidth : 0
                 height: layoutsButton.visible ? layoutsButton.implicitHeight : 0
                 cornerRadius: 18
@@ -470,8 +470,8 @@ Item {
                 id: markerSlot
                 highlighted: root.highlightedQuickActionKey === "marker"
                 pulseToken: root.highlightPulseToken
-                pulseColor: "#93C5FD"
-                pulseBorderColor: "#60A5FA"
+                pulseColor: AppPalette.accentBorder
+                pulseBorderColor: AppPalette.accentBar
                 width: markerToolButton.visible ? root.controlHeight : 0
                 height: markerToolButton.visible ? root.controlHeight : 0
                 cornerRadius: root.controlHeight / 2
@@ -484,9 +484,9 @@ Item {
                     iconPixelSize: 18
                     fillColor: root.markerToolActive ? "#1D4ED8" : root.buttonFillColor
                     fillHoverColor: root.markerToolActive ? "#1E40AF" : root.buttonHoverColor
-                    fillPressedColor: root.markerToolActive ? "#1E3A8A" : root.buttonPressedColor
-                    borderColor: root.markerToolActive ? "#60A5FA" : root.buttonBorderColor
-                    borderHoverColor: root.markerToolActive ? "#93C5FD" : root.buttonHoverBorderColor
+                    fillPressedColor: root.markerToolActive ? AppPalette.accentBg : root.buttonPressedColor
+                    borderColor: root.markerToolActive ? AppPalette.accentBar : root.buttonBorderColor
+                    borderHoverColor: root.markerToolActive ? AppPalette.accentBorder : root.buttonHoverBorderColor
                     toolTipText: root.markerToolActive ? "Marker tool enabled" : "Place marker"
                     onClicked: {
                         root.markerToolActive = !root.markerToolActive
@@ -534,7 +534,7 @@ Item {
                     radius: 4
                     color: root.connectionsOnline ? "#22C55E" : "#EF4444"
                     border.width: 1
-                    border.color: "#0B1220"
+                    border.color: AppPalette.bgDeep
                     visible: root.connectionStatusToolVisible || root.highlightedQuickActionKey === "connections"
                 }
             }
@@ -564,11 +564,11 @@ Item {
                 height: root.controlHeight
                 iconSource: "qrc:/icons/ui/ripple.svg"
                 iconPixelSize: 18
-                fillColor: "#1E3A8A"
+                fillColor: AppPalette.accentBg
                 fillHoverColor: "#1D4ED8"
                 fillPressedColor: "#172554"
-                borderColor: "#60A5FA"
-                borderHoverColor: "#93C5FD"
+                borderColor: AppPalette.accentBar
+                borderHoverColor: AppPalette.accentBorder
                 toolTipText: "Set active pane to 2D"
                 onClicked: {
                     root.mode2DTriggered()
@@ -582,11 +582,11 @@ Item {
                 height: root.controlHeight
                 iconSource: "qrc:/icons/ui/folder-open.svg"
                 iconPixelSize: 18
-                fillColor: "#1E293B"
-                fillHoverColor: "#172133"
-                fillPressedColor: "#0B1220"
-                borderColor: "#64748B"
-                borderHoverColor: "#94A3B8"
+                fillColor: AppPalette.card
+                fillHoverColor: AppPalette.cardHover
+                fillPressedColor: AppPalette.bgDeep
+                borderColor: AppPalette.borderFocus
+                borderHoverColor: AppPalette.textMuted
                 toolTipText: "Open file"
                 onClicked: {
                     root.openFileTriggered()
@@ -660,7 +660,7 @@ Item {
         radius: 12
         color: root.hotkeysPopupLayerColor
         border.width: 1
-        border.color: "#334155"
+        border.color: AppPalette.border
         z: panel.z + 20
         visible: opacity > 0.01
         opacity: root.popupShown ? 1 : 0

@@ -1,18 +1,19 @@
 import QtQuick 2.15
+import kqml_types 1.0
 
 Rectangle {
     id: root
 
     property var layoutSnapshot: null
     property var popupLinks: []
-    property color frameColor: "#334155"
-    property color baseColor: "#0B1220"
+    property color frameColor: AppPalette.border
+    property color baseColor: AppPalette.bgDeep
     property real frameRadius: 6
     property real frameWidth: 1
     property int contentMargin: 4
     property real splitGap: 4
     property color pane2DFill: "#2563EB"
-    property color pane2DStroke: "#93C5FD"
+    property color pane2DStroke: AppPalette.accentBorder
     property color pane3DFill: "#16A34A"
     property color pane3DStroke: "#86EFAC"
     property color popupFill: "#EF4444"

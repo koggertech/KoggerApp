@@ -11,12 +11,12 @@ Rectangle {
     property int iconPixelSize: Math.round(Math.min(chipWidth, chipHeight) * 0.6)
     property int chipWidth: 30
     property int chipHeight: 24
-    property color fillColor: "#1E293B"
-    property color fillHoverColor: "#172133"
-    property color fillPressedColor: "#0B1220"
-    property color borderColor: "#334155"
-    property color borderHoverColor: "#475569"
-    property color textColor: "#E2E8F0"
+    property color fillColor: AppPalette.card
+    property color fillHoverColor: AppPalette.cardHover
+    property color fillPressedColor: AppPalette.bgDeep
+    property color borderColor: AppPalette.border
+    property color borderHoverColor: AppPalette.borderHover
+    property color textColor: AppPalette.text
     property real hoverWhiteness: 0.1
     property string toolTipText: ""
     property bool autoToolTip: true

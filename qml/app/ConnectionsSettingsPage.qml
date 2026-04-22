@@ -25,7 +25,7 @@ Column {
             width: parent.width
             wrapMode: Text.WordWrap
             text: "Links, files, logging, imports and factory tools."
-            color: "#94A3B8"
+            color: AppPalette.textMuted
             font.pixelSize: 12
         }
 
@@ -42,9 +42,9 @@ Column {
                 implicitHeight: connectionsLoader.item ? connectionsLoader.item.implicitHeight + 16 : 120
                 height: implicitHeight
                 radius: 10
-                color: "#0B1220"
+                color: AppPalette.bgDeep
                 border.width: 1
-                border.color: "#334155"
+                border.color: AppPalette.border
                 clip: true
 
                 Loader {
