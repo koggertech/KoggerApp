@@ -34,6 +34,7 @@ HEADERS += \
     src/stream_list.h \
     src/stream_list_model.h \
     src/themes.h \
+    src/language_controller.h \
     src/ui_state_serializer.h \
     src/input_device_tracker.h \
     src/xtf_conf.h \

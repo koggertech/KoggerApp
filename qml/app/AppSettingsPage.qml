@@ -85,7 +85,7 @@ Column {
     SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: "Предпочтения"
+        title: qsTr("Preferences")
         stateStore: root.store
         stateKey: "app.preference"
         collapsedByDefault: false
@@ -94,27 +94,18 @@ Column {
             width: parent.width
             spacing: 8
 
-            Text { text: "Язык:"; color: AppPalette.textSecond; font.pixelSize: 14 }
+            Text { text: qsTr("Language:"); color: AppPalette.textSecond; font.pixelSize: 14 }
 
-            Item {
-                id: appLanguageHolder
+            KTabBar {
+                id: langTabBar
                 width: parent.width
-                height: langTabBar.implicitHeight
-                property int selectedIndex: 0
-
-                KTabBar {
-                    id: langTabBar
-                    width: parent.width
-                    options: [
-                        { label: "English", value: 0 },
-                        { label: "Russian", value: 1 },
-                        { label: "Polish",  value: 2 }
-                    ]
-                    currentValue: appLanguageHolder.selectedIndex
-                    onValueSelected: function(v) { appLanguageHolder.selectedIndex = v }
-                }
-
-                Settings { property alias appLanguage: appLanguageHolder.selectedIndex }
+                options: [
+                    { label: qsTr("English"), value: 0 },
+                    { label: qsTr("Russian"), value: 1 },
+                    { label: qsTr("Polish"),  value: 2 }
+                ]
+                currentValue: langController ? langController.currentIndex : 0
+                onValueSelected: function(v) { if (langController) langController.apply(v) }
             }
         }
 
@@ -122,14 +113,14 @@ Column {
             width: parent.width
             spacing: 8
 
-            Text { text: "Тема оформления:"; color: AppPalette.textSecond; font.pixelSize: 14 }
+            Text { text: qsTr("Theme:"); color: AppPalette.textSecond; font.pixelSize: 14 }
 
             Item {
                 id: appThemeHolder
                 width: parent.width
                 property int selectedIndex: 0
 
-                readonly property var names: ["Dark","S.Dark","Light","S.Light","OneDark","Monokai","Kimbie","Solar","Desert","Olive"]
+                readonly property var names: ["Dark","S.Dark","Light","S.Light","OneDark","Monokai","Kimbie","Solar","Desert","Steam 2003"]
                 readonly property int cols: 5
                 readonly property int itemH: 28
                 readonly property real itemW: (width - (cols - 1) * 4) / cols
@@ -176,7 +167,7 @@ Column {
             width: parent.width
             spacing: 8
 
-            Text { text: "Уровень функций:"; color: AppPalette.textSecond; font.pixelSize: 14 }
+            Text { text: qsTr("Feature level:"); color: AppPalette.textSecond; font.pixelSize: 14 }
 
             Item {
                 id: instrumentsGradeHolder
@@ -191,9 +182,9 @@ Column {
                     id: gradeTabBar
                     width: parent.width
                     options: [
-                        { label: "Fish Finders",  value: 0 },
-                        { label: "Bottom Track",  value: 1 },
-                        { label: "Maximum",       value: 2 }
+                        { label: qsTr("Fish Finders"),  value: 0 },
+                        { label: qsTr("Bottom Track"),  value: 1 },
+                        { label: qsTr("Maximum"),       value: 2 }
                     ]
                     currentValue: instrumentsGradeHolder.selectedIndex
                     onValueSelected: function(v) { instrumentsGradeHolder.selectedIndex = v }
@@ -210,7 +201,7 @@ Column {
         visible: instruments >= 2
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: "Интерфейс"
+        title: qsTr("Interface")
         stateStore: root.store
         stateKey: "app.interface"
         collapsedByDefault: false
@@ -218,7 +209,7 @@ Column {
         KSwitch {
             id: consoleVisible
             width: parent.width
-            text: "Консоль"
+            text: qsTr("Console")
             checked: theme ? theme.consoleVisible : false
             onToggled: if (theme) theme.consoleVisible = checked
 
@@ -237,7 +228,7 @@ Column {
         KButton {
             visible: Qt.platform.os !== "android"
             width: parent.width
-            text: "Горячие клавиши"
+            text: qsTr("Hotkeys")
             onClicked: { hotkeysLoader.active = true; hotkeysLoader.item.open() }
         }
 
@@ -254,7 +245,7 @@ Column {
         visible: instruments >= 2
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: "График"
+        title: qsTr("Chart")
         stateStore: root.store
         stateKey: "app.plot"
         collapsedByDefault: true
@@ -265,7 +256,7 @@ Column {
             spacing: 8
 
             Text {
-                text: "Число графиков:"
+                text: qsTr("Chart count:")
                 color: AppPalette.textSecond
                 font.pixelSize: 13
                 width: parent.width - numPlotsSpinBox.implicitWidth - 8
@@ -284,7 +275,7 @@ Column {
         KSwitch {
             id: plotSyncCheckBox
             width: parent.width
-            text: "Синхронизация"
+            text: qsTr("Synchronization")
             visible: numPlotsSpinBox.value >= 2
         }
 
@@ -297,7 +288,7 @@ Column {
         visible: instruments >= 2
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: "Датасет"
+        title: qsTr("Dataset")
         stateStore: root.store
         stateKey: "app.dataset"
         collapsedByDefault: true
@@ -322,7 +313,7 @@ Column {
             }
 
             Text {
-                text: "FBS вперёд / назад:"
+                text: qsTr("FBS forward / backward:")
                 color: AppPalette.textSecond
                 font.pixelSize: 13
                 width: parent.width - 18 - 93 - 93 - 32
@@ -366,7 +357,7 @@ Column {
             }
 
             Text {
-                text: "S.offset XY, мм:"
+                text: qsTr("S.offset XY, mm:")
                 color: AppPalette.textSecond
                 font.pixelSize: 13
                 width: parent.width - 18 - 93 - 93 - 32
@@ -407,7 +398,7 @@ Column {
         visible: instruments >= 1
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: "Трек дна"
+        title: qsTr("Bottom Track")
         stateStore: root.store
         stateKey: "app.bottomtrack"
         collapsedByDefault: false
@@ -455,7 +446,7 @@ Column {
             width: parent.width
             spacing: 8
 
-            Text { text: "Пресет:"; color: AppPalette.textSecond; font.pixelSize: 14 }
+            Text { text: qsTr("Preset:"); color: AppPalette.textSecond; font.pixelSize: 14 }
 
             Item {
                 id: btPresetHolder
@@ -469,9 +460,9 @@ Column {
                     id: presetTabBar
                     width: parent.width
                     options: [
-                        { label: "Normal 2D", value: 0 },
-                        { label: "Narrow 2D", value: 1 },
-                        { label: "Side-Scan", value: 2 }
+                        { label: qsTr("Normal 2D"), value: 0 },
+                        { label: qsTr("Narrow 2D"), value: 1 },
+                        { label: qsTr("Side-Scan"), value: 2 }
                     ]
                     currentValue: btPresetHolder.selectedIndex
                     onValueSelected: function(v) { btPresetHolder.selectedIndex = v }
@@ -490,7 +481,7 @@ Column {
                 onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setGainSlope(bottomTrackGainSlopeValue.value / 100) }
             }
             Text {
-                text: "Gain slope:"
+                text: qsTr("Gain slope:")
                 color: AppPalette.textSecond; font.pixelSize: 13
                 width: btGroup.labelW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
             }
@@ -513,7 +504,7 @@ Column {
                 onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setThreshold(bottomTrackThresholdValue.value / 100) }
             }
             Text {
-                text: "Threshold:"
+                text: qsTr("Threshold:")
                 color: AppPalette.textSecond; font.pixelSize: 13
                 width: btGroup.labelW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
             }
@@ -536,7 +527,7 @@ Column {
                 onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setWindowSize(bottomTrackWindowValue.value) }
             }
             Text {
-                text: "Horizontal window:"
+                text: qsTr("Horizontal window:")
                 color: AppPalette.textSecond; font.pixelSize: 13
                 width: btGroup.labelW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
             }
@@ -559,7 +550,7 @@ Column {
                 onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01) }
             }
             Text {
-                text: "Vertical gap, %:"
+                text: qsTr("Vertical gap, %:")
                 color: AppPalette.textSecond; font.pixelSize: 13
                 width: btGroup.labelW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
             }
@@ -582,7 +573,7 @@ Column {
                 onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMin(bottomTrackMinRangeValue.value / 1000) }
             }
             Text {
-                text: "Min range, m:"
+                text: qsTr("Min range, m:")
                 color: AppPalette.textSecond; font.pixelSize: 13
                 width: btGroup.labelW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
             }
@@ -605,7 +596,7 @@ Column {
                 onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMax(bottomTrackMaxRangeValue.value / 1000) }
             }
             Text {
-                text: "Max range, m:"
+                text: qsTr("Max range, m:")
                 color: AppPalette.textSecond; font.pixelSize: 13
                 width: btGroup.labelW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
             }
@@ -634,7 +625,7 @@ Column {
                 }
             }
             Text {
-                text: "Sonar offset XYZ, мм:"
+                text: qsTr("Sonar offset XYZ, mm:")
                 color: AppPalette.textSecond; font.pixelSize: 13
                 width: parent.width - 18 - 8; height: 30
                 verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight
@@ -673,14 +664,14 @@ Column {
 
             KButton {
                 width: parent.bw
-                text: "Обработка"
+                text: qsTr("Processing")
                 onClicked: btGroup.doDistProcessing()
             }
 
             KButton {
                 id: btRealtimeBtn
                 width: parent.bw
-                text: "Realtime"
+                text: qsTr("Realtime")
                 checkable: true
                 checked: false
                 onToggled: core.setBottomTrackRealtimeFromSettings(checked)
@@ -696,7 +687,7 @@ Column {
         visible: instruments >= 1
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: "Экспорт"
+        title: qsTr("Export")
         stateStore: root.store
         stateKey: "app.export"
         collapsedByDefault: true
@@ -738,7 +729,7 @@ Column {
 
                     Text {
                         visible: !exportPathField.text.length
-                        text: "Путь для экспорта..."
+                        text: qsTr("Export path...")
                         color: AppPalette.textMuted
                         font.pixelSize: 12
                         anchors.verticalCenter: parent.verticalCenter
@@ -756,7 +747,7 @@ Column {
 
             FolderDialog {
                 id: exportFolderDialog
-                title: "Папка для экспорта"
+                title: qsTr("Export folder")
                 onAccepted: {
                     exportGroup.exportFolderUrl = exportFolderDialog.currentFolder
                     exportGroup.exportFolderSource = root.localPath(exportFolderDialog.selectedFolder)
@@ -778,7 +769,7 @@ Column {
             }
 
             Text {
-                text: "Decimation, m:"
+                text: qsTr("Decimation, m:")
                 color: AppPalette.textSecond; font.pixelSize: 13
                 width: parent.width - 18 - 93 - 93 - 32
                 anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
@@ -791,7 +782,7 @@ Column {
             }
 
             KButton {
-                width: 93; height: 30; text: "CSV"
+                width: 93; height: 30; text: qsTr("CSV")
                 anchors.verticalCenter: parent.verticalCenter
                 onClicked: {
                     if (root.targetPlot)
@@ -805,17 +796,17 @@ Column {
         Settings { property alias exportDecimationValue: exportDecimationValue.value }
 
         KButton {
-            width: parent.width; text: "Export to XTF"
+            width: parent.width; text: qsTr("Export to XTF")
             onClicked: core.exportPlotAsXTF(exportGroup.currentExportPath())
         }
 
         KButton {
-            width: parent.width; text: "Complex signal to CSV"
+            width: parent.width; text: qsTr("Complex signal to CSV")
             onClicked: core.exportComplexToCSV(exportGroup.currentExportPath())
         }
 
         KButton {
-            width: parent.width; text: "USBL to CSV"
+            width: parent.width; text: qsTr("USBL to CSV")
             onClicked: core.exportUSBLToCSV(exportGroup.currentExportPath())
         }
     }
@@ -825,7 +816,7 @@ Column {
     SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: "Сохранение UI"
+        title: qsTr("UI Saving")
         stateStore: root.store
         stateKey: "app.uistate"
         collapsedByDefault: true
@@ -835,7 +826,7 @@ Column {
             width: parent.width
             spacing: 6
 
-            Text { text: "Экспорт состояния:"; color: AppPalette.textMuted; font.pixelSize: 12 }
+            Text { text: qsTr("Export state:"); color: AppPalette.textMuted; font.pixelSize: 12 }
 
             Row {
                 id: uiExportRow
@@ -863,7 +854,7 @@ Column {
                         anchors.fill: parent; anchors.margins: 8
                         verticalAlignment: TextInput.AlignVCenter
                         color: AppPalette.text; font.pixelSize: 12; clip: true
-                        Text { visible: !uiExportField.text.length; text: "Путь..."; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                        Text { visible: !uiExportField.text.length; text: qsTr("Path..."); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
                     }
                 }
 
@@ -876,7 +867,7 @@ Column {
                 }
 
                 KButton {
-                    width: 80; height: 30; text: "Экспорт"
+                    width: 80; height: 30; text: qsTr("Export")
                     onClicked: {
                         var path = parent.currentPath()
                         if (!path.length) return
@@ -888,7 +879,7 @@ Column {
 
                 FileDialog {
                     id: uiExportDialog
-                    title: "Экспорт UI состояния"
+                    title: qsTr("Export UI state")
                     fileMode: FileDialog.SaveFile
                     nameFilters: ["JSON (*.json)", "All Files (*)"]
                     onAccepted: {
@@ -910,7 +901,7 @@ Column {
             width: parent.width
             spacing: 6
 
-            Text { text: "Импорт состояния:"; color: AppPalette.textMuted; font.pixelSize: 12 }
+            Text { text: qsTr("Import state:"); color: AppPalette.textMuted; font.pixelSize: 12 }
 
             Row {
                 id: uiImportRow
@@ -938,7 +929,7 @@ Column {
                         anchors.fill: parent; anchors.margins: 8
                         verticalAlignment: TextInput.AlignVCenter
                         color: AppPalette.text; font.pixelSize: 12; clip: true
-                        Text { visible: !uiImportField.text.length; text: "Путь..."; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                        Text { visible: !uiImportField.text.length; text: qsTr("Path..."); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
                     }
                 }
 
@@ -951,7 +942,7 @@ Column {
                 }
 
                 KButton {
-                    width: 80; height: 30; text: "Импорт"
+                    width: 80; height: 30; text: qsTr("Import")
                     onClicked: {
                         var path = parent.currentPath()
                         if (!path.length) return
@@ -963,7 +954,7 @@ Column {
 
                 FileDialog {
                     id: uiImportDialog
-                    title: "Импорт UI состояния"
+                    title: qsTr("Import UI state")
                     fileMode: FileDialog.OpenFile
                     nameFilters: ["JSON (*.json)", "All Files (*)"]
                     onAccepted: {
@@ -994,27 +985,27 @@ Column {
     SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: "Workspace Layout"
+        title: qsTr("Workspace Layout")
         stateStore: root.store
         stateKey: "app.layoutPlacement"
 
         KSwitch {
             width: parent.width
-            text: "Edit"
+            text: qsTr("Edit")
             checked: root.store.editableMode
             onToggled: { root.store.editableMode = checked }
         }
 
         KSwitch {
             width: parent.width
-            text: "Workspace shift"
+            text: qsTr("Workspace shift")
             checked: root.store.settingsPushContent
             onToggled: { root.store.settingsPushContent = checked }
         }
 
         KSwitch {
             width: parent.width
-            text: "Global pop-up"
+            text: qsTr("Global pop-up")
             checked: root.store.globalPopupEnabled
             onToggled: { root.store.globalPopupEnabled = checked }
         }
@@ -1023,13 +1014,13 @@ Column {
             width: parent.width
             spacing: 8
 
-            Text { text: "Sidebar position:"; color: AppPalette.textSecond; font.pixelSize: 14 }
+            Text { text: qsTr("Sidebar position:"); color: AppPalette.textSecond; font.pixelSize: 14 }
 
             KTabBar {
                 width: parent.width
                 options: [
-                    { label: "Left",  value: "left"  },
-                    { label: "Right", value: "right" }
+                    { label: qsTr("Left"),  value: "left"  },
+                    { label: qsTr("Right"), value: "right" }
                 ]
                 currentValue: root.store.settingsSide
                 onValueSelected: function(value) { root.store.settingsSide = value }
@@ -1038,7 +1029,7 @@ Column {
 
         KButton {
             width: parent.width
-            text: "Reset workspace"
+            text: qsTr("Reset workspace")
             onClicked: root.store.resetWindowConfiguration()
         }
 
@@ -1056,16 +1047,16 @@ Column {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.store.currentLayoutIsFavorite ? "Current layout is in favorites" : "Add current layout to favorites"
+                text: root.store.currentLayoutIsFavorite ? qsTr("Current layout is in favorites") : qsTr("Add current layout to favorites")
                 color: AppPalette.textSecond; font.pixelSize: 14
             }
         }
 
-        Text { text: "Favorite layouts"; color: AppPalette.text; font.pixelSize: 15; font.bold: true }
+        Text { text: qsTr("Favorite layouts"); color: AppPalette.text; font.pixelSize: 15; font.bold: true }
 
         Text {
             visible: root.store.favoriteLayouts.length === 0
-            text: "No favorite layouts yet"
+            text: qsTr("No favorite layouts yet")
             color: AppPalette.textMuted; font.pixelSize: 12
         }
 
@@ -1096,7 +1087,7 @@ Column {
                     glyphPixelSize: 16; glyphColor: AppPalette.textSecond; fillColor: AppPalette.card
                     fillHoverColor: AppPalette.cardHover; fillPressedColor: AppPalette.bgDeep
                     borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
-                    toolTipText: "Remove favorite"; z: 6
+                    toolTipText: qsTr("Remove favorite"); z: 6
                     onClicked: root.store.removeFavoriteLayoutAt(favoriteIndex)
                 }
             }
@@ -1104,13 +1095,13 @@ Column {
 
         Rectangle { width: parent.width; height: 1; color: AppPalette.border }
 
-        Text { text: "Layout presets"; color: AppPalette.text; font.pixelSize: 15; font.bold: true }
+        Text { text: qsTr("Layout presets"); color: AppPalette.text; font.pixelSize: 15; font.bold: true }
 
         Repeater {
             model: [
-                { presetId: 1, title: "Preset 1", subtitle: "2 top panes, 1 bottom pane" },
-                { presetId: 2, title: "Preset 2", subtitle: "2 × 2 grid" },
-                { presetId: 3, title: "Preset 3", subtitle: "1 top pane, 2 bottom panes" }
+                { presetId: 1, title: qsTr("Preset 1"), subtitle: qsTr("2 top panes, 1 bottom pane") },
+                { presetId: 2, title: qsTr("Preset 2"), subtitle: qsTr("2 × 2 grid") },
+                { presetId: 3, title: qsTr("Preset 3"), subtitle: qsTr("1 top pane, 2 bottom panes") }
             ]
             delegate: Rectangle {
                 required property var modelData
@@ -1161,7 +1152,7 @@ Column {
 
         Text {
             width: parent.width; wrapMode: Text.WordWrap
-            text: "After applying a preset, choose 2D or 3D mode for each pane."
+            text: qsTr("After applying a preset, choose 2D or 3D mode for each pane.")
             color: AppPalette.textMuted; font.pixelSize: 12
         }
     }
@@ -1171,12 +1162,12 @@ Column {
     SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: "Hotkeys Window"
+        title: qsTr("Hotkeys Window")
         stateStore: root.store
         stateKey: "app.hotkeysWindow"
 
         KSwitch {
-            width: parent.width; text: "Show favorite layouts"
+            width: parent.width; text: qsTr("Show favorite layouts")
             checked: root.store.quickActionFavoritesEnabled
             highlighted: root.store.hotkeysRevealKey === "layouts"
             flashToken: root.store.hotkeysRevealNonce
@@ -1184,7 +1175,7 @@ Column {
         }
 
         KSwitch {
-            width: parent.width; text: "Show marker tool"
+            width: parent.width; text: qsTr("Show marker tool")
             checked: root.store.quickActionMarkerEnabled
             highlighted: root.store.hotkeysRevealKey === "marker"
             flashToken: root.store.hotkeysRevealNonce
@@ -1192,7 +1183,7 @@ Column {
         }
 
         KSwitch {
-            width: parent.width; text: "Show connection status"
+            width: parent.width; text: qsTr("Show connection status")
             checked: root.store.quickActionConnectionStatusEnabled
             highlighted: root.store.hotkeysRevealKey === "connections"
             flashToken: root.store.hotkeysRevealNonce

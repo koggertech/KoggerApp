@@ -28,6 +28,7 @@
 #include "scene_object.h"
 #include "bottom_track.h"
 #include "input_device_tracker.h"
+#include "language_controller.h"
 
 
 Core core;
@@ -211,6 +212,7 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     QGuiApplication app(argc, argv);
+    LanguageController langController;
     InputDeviceTracker inputDeviceTracker;
     core.initAfterApp();
 
@@ -222,6 +224,7 @@ int main(int argc, char *argv[])
     //qputenv("QT_DEBUG_PLUGINS", "1");
     //qDebug() << "libraryPaths =" << QCoreApplication::libraryPaths();
     loadLanguage(app);
+    langController.setStartupTranslator(&translator);
     core.initStreamList();
 
     QQuickStyle::setStyle("Basic");
@@ -245,7 +248,12 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
     engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
     engine.rootContext()->setContextProperty("inputDeviceTracker", &inputDeviceTracker);
+    engine.rootContext()->setContextProperty("langController", &langController);
     uiStateSerializer.setLinkManagerWrapper(core.getLinkManagerWrapperPtr());
+
+    QObject::connect(&langController, &LanguageController::currentIndexChanged, &engine, [&engine]() {
+        engine.retranslate();
+    });
 
     QObject::connect(&theme, &Themes::interfaceChanged, &core, []() {
         core.setConsoleOutputEnabled(theme.consoleVisible());

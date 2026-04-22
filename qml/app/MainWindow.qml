@@ -480,7 +480,7 @@ ApplicationWindow {
             open: workspaceStore.settingsPanelOpen
             dimEnabled: !workspaceStore.settingsPushContent
             panelShadowEnabled: !workspaceStore.editableMode
-            title: "Settings"
+            title: qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
             panelSizePx: workspaceStore.settingsPanelSizePx

@@ -156,7 +156,7 @@ Item {
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "Choose pane type"
+                text: qsTr("Choose pane type")
                 color: AppPalette.text
                 font.pixelSize: 18
                 font.bold: true
@@ -167,7 +167,7 @@ Item {
                 spacing: 10
 
                 KButton {
-                    text: "2D"
+                    text: qsTr("2D")
                     width: 76
                     height: 40
                     onClicked: paneFrame.store.applyPaneModeSelection(paneFrame.leafId, "2D")
@@ -177,7 +177,7 @@ Item {
                     readonly property int existing3DLeaf: paneFrame.store.firstLeafIdByMode(paneFrame.store.layoutTree, "3D")
                     readonly property bool canChoose3D: (existing3DLeaf === -1 || existing3DLeaf === paneFrame.leafId)
                                                          && paneFrame.store.globalPopupMode !== "3D"
-                    text: "3D"
+                    text: qsTr("3D")
                     width: 76
                     height: 40
                     enabled: canChoose3D
@@ -191,7 +191,7 @@ Item {
                 visible: (paneFrame.store.firstLeafIdByMode(paneFrame.store.layoutTree, "3D") !== -1
                          && paneFrame.store.firstLeafIdByMode(paneFrame.store.layoutTree, "3D") !== paneFrame.leafId)
                          || paneFrame.store.globalPopupMode === "3D"
-                text: "3D is already used in another pane"
+                text: qsTr("3D is already used in another pane")
                 color: "#C7D2FE"
                 font.pixelSize: 12
             }
@@ -236,7 +236,7 @@ Item {
             spacing: 8
 
             Text {
-                text: "Fullscreen pop-up"
+                text: qsTr("Fullscreen pop-up")
                 color: AppPalette.text
                 font.pixelSize: 13
                 font.bold: true
@@ -252,7 +252,7 @@ Item {
 
             Text {
                 visible: paneFrame.popupCandidates.length === 0
-                text: "No neighboring panes available"
+                text: qsTr("No neighboring panes available")
                 color: AppPalette.textMuted
                 font.pixelSize: 12
             }

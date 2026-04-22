@@ -6,9 +6,9 @@ CircleIconButton {
 
     iconSource: "qrc:/icons/ui/settings.svg"
     iconPixelSize: modeTag === "app" ? 20 : 19
-    toolTipText: modeTag === "3D" ? "3D settings"
-                                 : modeTag === "2D" ? "2D settings"
-                                                    : "Settings"
+    toolTipText: modeTag === "3D" ? qsTr("3D settings")
+                                 : modeTag === "2D" ? qsTr("2D settings")
+                                                    : qsTr("Settings")
     width: 36
     height: 36
     padding: 0

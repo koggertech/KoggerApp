@@ -39,17 +39,17 @@ Item {
         if (!autoToolTip)
             return ""
         if (glyph === "\u2715" || glyph === "\u00D7")
-            return "Close"
+            return qsTr("Close")
         if (glyph === "\u2261")
-            return "Menu"
+            return qsTr("Menu")
         if (glyph.indexOf("\u2699") !== -1)
-            return "Settings"
+            return qsTr("Settings")
         if (glyph === "P")
-            return "Assign popup"
+            return qsTr("Assign popup")
         if (glyph === "2D" || glyph === "3D")
-            return "Pane mode"
+            return qsTr("Pane mode")
         if (glyph === "MOVE")
-            return "Move pane"
+            return qsTr("Move pane")
         return ""
     }
 

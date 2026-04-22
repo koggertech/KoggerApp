@@ -12,7 +12,7 @@ Column {
 
     KSwitch {
         width: root.width
-        text: "Rotate logo"
+        text: qsTr("Rotate logo")
         checked: root.store.paneRotate3DByLeafId(root.leafId)
         onToggled: {
             root.store.setPaneRotate3DByLeafId(root.leafId, checked)

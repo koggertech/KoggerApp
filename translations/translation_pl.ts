@@ -2593,4 +2593,645 @@
         <translation>Proszę czekać, plik się otwiera</translation>
     </message>
 </context>
+<context>
+    <name>AppSettingsPage</name>
+    <message>
+        <source>Preferences</source>
+        <translation>Preferencje</translation>
+    </message>
+    <message>
+        <source>Language:</source>
+        <translation>Język:</translation>
+    </message>
+    <message>
+        <source>English</source>
+        <translation>Angielski</translation>
+    </message>
+    <message>
+        <source>Russian</source>
+        <translation>Rosyjski</translation>
+    </message>
+    <message>
+        <source>Polish</source>
+        <translation>Polski</translation>
+    </message>
+    <message>
+        <source>Theme:</source>
+        <translation>Motyw:</translation>
+    </message>
+    <message>
+        <source>Interface</source>
+        <translation>Interfejs</translation>
+    </message>
+    <message>
+        <source>Chart</source>
+        <translation>Wykres</translation>
+    </message>
+    <message>
+        <source>Dataset</source>
+        <translation>Zbiór danych</translation>
+    </message>
+    <message>
+        <source>Bottom Track</source>
+        <translation>Ślad dna</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Eksport</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Import</translation>
+    </message>
+    <message>
+        <source>UI Saving</source>
+        <translation>Zapisywanie UI</translation>
+    </message>
+    <message>
+        <source>Workspace Layout</source>
+        <translation>Układ obszaru roboczego</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Edytuj</translation>
+    </message>
+    <message>
+        <source>Sidebar position:</source>
+        <translation>Pozycja paska bocznego:</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Lewo</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Prawo</translation>
+    </message>
+    <message>
+        <source>Show marker tool</source>
+        <translation>Pokaż narzędzie znacznika</translation>
+    </message>
+    <message>
+        <source>Show connection status</source>
+        <translation>Pokaż status połączenia</translation>
+    </message>
+    <message>
+        <source>Show favorite layouts</source>
+        <translation>Pokaż ulubione układy</translation>
+    </message>
+    <message>
+        <source>Layout presets</source>
+        <translation>Szablony układów</translation>
+    </message>
+    <message>
+        <source>Preset:</source>
+        <translation>Szablon:</translation>
+    </message>
+    <message>
+        <source>Preset 1</source>
+        <translation>Szablon 1</translation>
+    </message>
+    <message>
+        <source>Preset 2</source>
+        <translation>Szablon 2</translation>
+    </message>
+    <message>
+        <source>Preset 3</source>
+        <translation>Szablon 3</translation>
+    </message>
+    <message>
+        <source>Normal 2D</source>
+        <translation>Normalny 2D</translation>
+    </message>
+    <message>
+        <source>Narrow 2D</source>
+        <translation>Wąski 2D</translation>
+    </message>
+    <message>
+        <source>1 top pane, 2 bottom panes</source>
+        <translation>1 górny panel, 2 dolne</translation>
+    </message>
+    <message>
+        <source>2 top panes, 1 bottom pane</source>
+        <translation>2 górne panele, 1 dolny</translation>
+    </message>
+    <message>
+        <source>2 × 2 grid</source>
+        <translation>Siatka 2 × 2</translation>
+    </message>
+    <message>
+        <source>After applying a preset, choose 2D or 3D mode for each pane.</source>
+        <translation>Po zastosowaniu szablonu wybierz tryb 2D lub 3D dla każdego panelu.</translation>
+    </message>
+    <message>
+        <source>Favorite layouts</source>
+        <translation>Ulubione układy</translation>
+    </message>
+    <message>
+        <source>No favorite layouts yet</source>
+        <translation>Brak ulubionych układów</translation>
+    </message>
+    <message>
+        <source>Add current layout to favorites</source>
+        <translation>Dodaj bieżący układ do ulubionych</translation>
+    </message>
+    <message>
+        <source>Current layout is in favorites</source>
+        <translation>Bieżący układ jest w ulubionych</translation>
+    </message>
+    <message>
+        <source>Remove favorite</source>
+        <translation>Usuń z ulubionych</translation>
+    </message>
+    <message>
+        <source>Reset workspace</source>
+        <translation>Resetuj obszar roboczy</translation>
+    </message>
+    <message>
+        <source>Workspace shift</source>
+        <translation>Przesunięcie obszaru roboczego</translation>
+    </message>
+    <message>
+        <source>Global pop-up</source>
+        <translation>Globalne okno podręczne</translation>
+    </message>
+    <message>
+        <source>Hotkeys</source>
+        <translation>Skróty klawiszowe</translation>
+    </message>
+    <message>
+        <source>Hotkeys Window</source>
+        <translation>Okno skrótów</translation>
+    </message>
+    <message>
+        <source>Console</source>
+        <translation>Konsola</translation>
+    </message>
+    <message>
+        <source>Processing</source>
+        <translation>Przetwarzanie</translation>
+    </message>
+    <message>
+        <source>Realtime</source>
+        <translation>W czasie rzeczywistym</translation>
+    </message>
+    <message>
+        <source>Horizontal window:</source>
+        <translation>Okno poziome:</translation>
+    </message>
+    <message>
+        <source>Vertical gap, %:</source>
+        <translation>Szczelina pionowa, %:</translation>
+    </message>
+    <message>
+        <source>Max range, m:</source>
+        <translation>Maks. zasięg, m:</translation>
+    </message>
+    <message>
+        <source>Min range, m:</source>
+        <translation>Min. zasięg, m:</translation>
+    </message>
+    <message>
+        <source>Decimation, m:</source>
+        <translation>Decymacja, m:</translation>
+    </message>
+    <message>
+        <source>Gain slope:</source>
+        <translation>Pochylenie wzmocnienia:</translation>
+    </message>
+    <message>
+        <source>Threshold:</source>
+        <translation>Próg:</translation>
+    </message>
+    <message>
+        <source>Feature level:</source>
+        <translation>Poziom cech:</translation>
+    </message>
+    <message>
+        <source>Side-Scan</source>
+        <translation>Skan boczny</translation>
+    </message>
+    <message>
+        <source>S.offset XY, mm:</source>
+        <translation>Przesunięcie boczne XY, mm:</translation>
+    </message>
+    <message>
+        <source>Sonar offset XYZ, mm:</source>
+        <translation>Przesunięcie sonaru XYZ, mm:</translation>
+    </message>
+    <message>
+        <source>Synchronization</source>
+        <translation>Synchronizacja</translation>
+    </message>
+    <message>
+        <source>Fish Finders</source>
+        <translation>Echosondery</translation>
+    </message>
+    <message>
+        <source>FBS forward / backward:</source>
+        <translation>FBS do przodu / do tyłu:</translation>
+    </message>
+    <message>
+        <source>Maximum</source>
+        <translation>Maksimum</translation>
+    </message>
+    <message>
+        <source>Chart count:</source>
+        <translation>Liczba wykresów:</translation>
+    </message>
+    <message>
+        <source>USBL to CSV</source>
+        <translation>USBL do CSV</translation>
+    </message>
+    <message>
+        <source>Complex signal to CSV</source>
+        <translation>Sygnał złożony do CSV</translation>
+    </message>
+    <message>
+        <source>Export path...</source>
+        <translation>Ścieżka eksportu...</translation>
+    </message>
+    <message>
+        <source>Export folder</source>
+        <translation>Folder eksportu</translation>
+    </message>
+    <message>
+        <source>Export state:</source>
+        <translation>Stan eksportu:</translation>
+    </message>
+    <message>
+        <source>Export to XTF</source>
+        <translation>Eksport do XTF</translation>
+    </message>
+    <message>
+        <source>Export UI state</source>
+        <translation>Eksportuj stan UI</translation>
+    </message>
+    <message>
+        <source>Import state:</source>
+        <translation>Stan importu:</translation>
+    </message>
+    <message>
+        <source>Import UI state</source>
+        <translation>Importuj stan UI</translation>
+    </message>
+    <message>
+        <source>Path...</source>
+        <translation>Ścieżka...</translation>
+    </message>
+    <message>
+        <source>CSV</source>
+        <translation>CSV</translation>
+    </message>
+</context>
+<context>
+    <name>DeviceSettingsPage</name>
+    <message>
+        <source>Echogram</source>
+        <translation>Echogram</translation>
+    </message>
+    <message>
+        <source>Echogram:</source>
+        <translation>Echogram:</translation>
+    </message>
+    <message>
+        <source>Rangefinder</source>
+        <translation>Dalmierz</translation>
+    </message>
+    <message>
+        <source>Rangefinder:</source>
+        <translation>Dalmierz:</translation>
+    </message>
+    <message>
+        <source>Transducer</source>
+        <translation>Przetwornik</translation>
+    </message>
+    <message>
+        <source>Actions</source>
+        <translation>Działania</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Resetuj</translation>
+    </message>
+    <message>
+        <source>Reboot</source>
+        <translation>Uruchom ponownie</translation>
+    </message>
+    <message>
+        <source>Set</source>
+        <translation>Ustaw</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>Włącz</translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation>Wyłącz</translation>
+    </message>
+    <message>
+        <source>DSP</source>
+        <translation>DSP</translation>
+    </message>
+    <message>
+        <source>AHRS</source>
+        <translation>AHRS</translation>
+    </message>
+    <message>
+        <source>NMEA</source>
+        <translation>NMEA</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation>Temperatura</translation>
+    </message>
+    <message>
+        <source>Timestamp</source>
+        <translation>Znacznik czasu</translation>
+    </message>
+    <message>
+        <source>Booster</source>
+        <translation>Wzmacniacz</translation>
+    </message>
+    <message>
+        <source>Baudrate:</source>
+        <translation>Prędkość transmisji:</translation>
+    </message>
+    <message>
+        <source>8-bit</source>
+        <translation>8-bitowy</translation>
+    </message>
+    <message>
+        <source>115200</source>
+        <translation>115200</translation>
+    </message>
+    <message>
+        <source>230400</source>
+        <translation>230400</translation>
+    </message>
+    <message>
+        <source>460800</source>
+        <translation>460800</translation>
+    </message>
+    <message>
+        <source>921600</source>
+        <translation>921600</translation>
+    </message>
+    <message>
+        <source>Frequency, kHz:</source>
+        <translation>Częstotliwość, kHz:</translation>
+    </message>
+    <message>
+        <source>Pulse count:</source>
+        <translation>Liczba impulsów:</translation>
+    </message>
+    <message>
+        <source>Sample count:</source>
+        <translation>Liczba próbek:</translation>
+    </message>
+    <message>
+        <source>Resolution, mm:</source>
+        <translation>Rozdzielczość, mm:</translation>
+    </message>
+    <message>
+        <source>Offset:</source>
+        <translation>Przesunięcie:</translation>
+    </message>
+    <message>
+        <source>Dead zone, mm:</source>
+        <translation>Strefa martwa, mm:</translation>
+    </message>
+    <message>
+        <source>Max distance, mm:</source>
+        <translation>Maks. odległość, mm:</translation>
+    </message>
+    <message>
+        <source>Horizontal smoothing:</source>
+        <translation>Wygładzanie poziome:</translation>
+    </message>
+    <message>
+        <source>Confidence threshold, %:</source>
+        <translation>Próg pewności, %:</translation>
+    </message>
+    <message>
+        <source>Sound speed, m/s:</source>
+        <translation>Prędkość dźwięku, m/s:</translation>
+    </message>
+    <message>
+        <source>Period, ms:</source>
+        <translation>Okres, ms:</translation>
+    </message>
+    <message>
+        <source>Export XML</source>
+        <translation>Eksport XML</translation>
+    </message>
+    <message>
+        <source>Import XML</source>
+        <translation>Import XML</translation>
+    </message>
+    <message>
+        <source>Open settings file</source>
+        <translation>Otwórz plik ustawień</translation>
+    </message>
+    <message>
+        <source>Save settings file</source>
+        <translation>Zapisz plik ustawień</translation>
+    </message>
+    <message>
+        <source>Dataset</source>
+        <translation>Zbiór danych</translation>
+    </message>
+</context>
+<context>
+    <name>ConnectionsSettingsPage</name>
+    <message>
+        <source>Connections</source>
+        <translation>Połączenia</translation>
+    </message>
+    <message>
+        <source>Links, files, logging, imports and factory tools.</source>
+        <translation>Łącza, pliki, logowanie, importy i narzędzia fabryczne.</translation>
+    </message>
+</context>
+<context>
+    <name>PaneEditorChrome</name>
+    <message>
+        <source>Choose pane type</source>
+        <translation>Wybierz typ panelu</translation>
+    </message>
+    <message>
+        <source>2D</source>
+        <translation>2D</translation>
+    </message>
+    <message>
+        <source>3D</source>
+        <translation>3D</translation>
+    </message>
+    <message>
+        <source>3D is already used in another pane</source>
+        <translation>3D jest już używane w innym panelu</translation>
+    </message>
+    <message>
+        <source>Fullscreen pop-up</source>
+        <translation>Wyskakujące okno pełnoekranowe</translation>
+    </message>
+    <message>
+        <source>No neighboring panes available</source>
+        <translation>Brak dostępnych sąsiednich paneli</translation>
+    </message>
+</context>
+<context>
+    <name>GlobalPanePopup</name>
+    <message>
+        <source>Choose pane type</source>
+        <translation>Wybierz typ panelu</translation>
+    </message>
+    <message>
+        <source>2D</source>
+        <translation>2D</translation>
+    </message>
+    <message>
+        <source>3D</source>
+        <translation>3D</translation>
+    </message>
+    <message>
+        <source>3D is already used in another pane</source>
+        <translation>3D jest już używane w innym panelu</translation>
+    </message>
+    <message>
+        <source>Global pop-up</source>
+        <translation>Globalne okno podręczne</translation>
+    </message>
+</context>
+<context>
+    <name>HotActionsPanel</name>
+    <message>
+        <source>Open layout settings</source>
+        <translation>Otwórz ustawienia układu</translation>
+    </message>
+    <message>
+        <source>Layouts</source>
+        <translation>Układy</translation>
+    </message>
+</context>
+<context>
+    <name>Pane2DSettingsPage</name>
+    <message>
+        <source>Rotate logo</source>
+        <translation>Obróć logo</translation>
+    </message>
+</context>
+<context>
+    <name>Pane3DSettingsPage</name>
+    <message>
+        <source>Rotate logo</source>
+        <translation>Obróć logo</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsSidebarBase</name>
+    <message>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+</context>
+<context>
+    <name>Pane3DWindow</name>
+    <message>
+        <source>Cancel ruler</source>
+        <translation>Anuluj linijkę</translation>
+    </message>
+    <message>
+        <source>Finish ruler</source>
+        <translation>Zakończ linijkę</translation>
+    </message>
+    <message>
+        <source>Delete ruler</source>
+        <translation>Usuń linijkę</translation>
+    </message>
+    <message>
+        <source>Deselect</source>
+        <translation>Odznacz</translation>
+    </message>
+    <message>
+        <source>Clear dist processing</source>
+        <translation>Wyczyść przetwarzanie odległości</translation>
+    </message>
+    <message>
+        <source>Set as max dist</source>
+        <translation>Ustaw jako maks. odległość</translation>
+    </message>
+    <message>
+        <source>Set as min dist</source>
+        <translation>Ustaw jako min. odległość</translation>
+    </message>
+</context>
+<context>
+    <name>MainWindow</name>
+    <message>
+        <source>KoggerApp, KOGGER</source>
+        <translation>KoggerApp, KOGGER</translation>
+    </message>
+</context>
+<context>
+    <name>MainWindow</name>
+    <message>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+</context>
+<context>
+    <name>ModeSettingsPanel</name>
+    <message>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsGearButton</name>
+    <message>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+    <message>
+        <source>3D settings</source>
+        <translation>Ustawienia 3D</translation>
+    </message>
+    <message>
+        <source>2D settings</source>
+        <translation>Ustawienia 2D</translation>
+    </message>
+</context>
+<context>
+    <name>CircleIconButton</name>
+    <message>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Menu</source>
+        <translation>Menu</translation>
+    </message>
+    <message>
+        <source>Assign popup</source>
+        <translation>Przypisz okno podręczne</translation>
+    </message>
+    <message>
+        <source>Pane mode</source>
+        <translation>Tryb panelu</translation>
+    </message>
+    <message>
+        <source>Move pane</source>
+        <translation>Przesuń panel</translation>
+    </message>
+</context>
 </TS>

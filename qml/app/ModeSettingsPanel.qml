@@ -16,7 +16,7 @@ Item {
         panelShadowEnabled: !root.store.editableMode
         title: {
             var paneNumber = root.store.paneNumberByLeafId(root.store.modeSettingsLeafId)
-            return paneNumber > 0 ? "Settings \"Pane " + paneNumber + "\"" : "Settings"
+            return paneNumber > 0 ? qsTr("Settings") + " \"Pane " + paneNumber + "\"" : qsTr("Settings")
         }
         side: root.store.settingsSide
         gearMode: root.store.modeSettingsMode

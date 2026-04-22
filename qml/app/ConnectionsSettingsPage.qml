@@ -15,7 +15,7 @@ Column {
     SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: "Connections"
+        title: qsTr("Connections")
         stateStore: root.store
         stateKey: "app.connections"
         collapsedByDefault: false
@@ -24,7 +24,7 @@ Column {
         Text {
             width: parent.width
             wrapMode: Text.WordWrap
-            text: "Links, files, logging, imports and factory tools."
+            text: qsTr("Links, files, logging, imports and factory tools.")
             color: AppPalette.textMuted
             font.pixelSize: 12
         }

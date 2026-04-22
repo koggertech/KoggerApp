@@ -2593,4 +2593,645 @@
         <translation>Пожалуйста подождите, файл открывается</translation>
     </message>
 </context>
+<context>
+    <name>AppSettingsPage</name>
+    <message>
+        <source>Preferences</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <source>Language:</source>
+        <translation>Язык:</translation>
+    </message>
+    <message>
+        <source>English</source>
+        <translation>Английский</translation>
+    </message>
+    <message>
+        <source>Russian</source>
+        <translation>Русский</translation>
+    </message>
+    <message>
+        <source>Polish</source>
+        <translation>Польский</translation>
+    </message>
+    <message>
+        <source>Theme:</source>
+        <translation>Тема оформления:</translation>
+    </message>
+    <message>
+        <source>Interface</source>
+        <translation>Интерфейс</translation>
+    </message>
+    <message>
+        <source>Chart</source>
+        <translation>График</translation>
+    </message>
+    <message>
+        <source>Dataset</source>
+        <translation>Датасет</translation>
+    </message>
+    <message>
+        <source>Bottom Track</source>
+        <translation>Трек дна</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Экспорт</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Импорт</translation>
+    </message>
+    <message>
+        <source>UI Saving</source>
+        <translation>Сохранение UI</translation>
+    </message>
+    <message>
+        <source>Workspace Layout</source>
+        <translation>Компоновка рабочего пространства</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Правка</translation>
+    </message>
+    <message>
+        <source>Sidebar position:</source>
+        <translation>Положение боковой панели:</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Слева</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Справа</translation>
+    </message>
+    <message>
+        <source>Show marker tool</source>
+        <translation>Показать инструмент маркера</translation>
+    </message>
+    <message>
+        <source>Show connection status</source>
+        <translation>Показать статус соединения</translation>
+    </message>
+    <message>
+        <source>Show favorite layouts</source>
+        <translation>Показать избранные компоновки</translation>
+    </message>
+    <message>
+        <source>Layout presets</source>
+        <translation>Шаблоны компоновок</translation>
+    </message>
+    <message>
+        <source>Preset:</source>
+        <translation>Шаблон:</translation>
+    </message>
+    <message>
+        <source>Preset 1</source>
+        <translation>Шаблон 1</translation>
+    </message>
+    <message>
+        <source>Preset 2</source>
+        <translation>Шаблон 2</translation>
+    </message>
+    <message>
+        <source>Preset 3</source>
+        <translation>Шаблон 3</translation>
+    </message>
+    <message>
+        <source>Normal 2D</source>
+        <translation>Обычный 2D</translation>
+    </message>
+    <message>
+        <source>Narrow 2D</source>
+        <translation>Узкий 2D</translation>
+    </message>
+    <message>
+        <source>1 top pane, 2 bottom panes</source>
+        <translation>1 верхняя панель, 2 нижних</translation>
+    </message>
+    <message>
+        <source>2 top panes, 1 bottom pane</source>
+        <translation>2 верхних панели, 1 нижняя</translation>
+    </message>
+    <message>
+        <source>2 × 2 grid</source>
+        <translation>Сетка 2 × 2</translation>
+    </message>
+    <message>
+        <source>After applying a preset, choose 2D or 3D mode for each pane.</source>
+        <translation>После применения шаблона выберите режим 2D или 3D для каждой панели.</translation>
+    </message>
+    <message>
+        <source>Favorite layouts</source>
+        <translation>Избранные компоновки</translation>
+    </message>
+    <message>
+        <source>No favorite layouts yet</source>
+        <translation>Избранных компоновок пока нет</translation>
+    </message>
+    <message>
+        <source>Add current layout to favorites</source>
+        <translation>Добавить текущий макет в избранное</translation>
+    </message>
+    <message>
+        <source>Current layout is in favorites</source>
+        <translation>Текущий макет в избранном</translation>
+    </message>
+    <message>
+        <source>Remove favorite</source>
+        <translation>Удалить из избранного</translation>
+    </message>
+    <message>
+        <source>Reset workspace</source>
+        <translation>Сбросить рабочую область</translation>
+    </message>
+    <message>
+        <source>Workspace shift</source>
+        <translation>Смещение рабочей области</translation>
+    </message>
+    <message>
+        <source>Global pop-up</source>
+        <translation>Глобальное всплывающее окно</translation>
+    </message>
+    <message>
+        <source>Hotkeys</source>
+        <translation>Горячие клавиши</translation>
+    </message>
+    <message>
+        <source>Hotkeys Window</source>
+        <translation>Окно горячих клавиш</translation>
+    </message>
+    <message>
+        <source>Console</source>
+        <translation>Консоль</translation>
+    </message>
+    <message>
+        <source>Processing</source>
+        <translation>Обработка</translation>
+    </message>
+    <message>
+        <source>Realtime</source>
+        <translation>В реальном времени</translation>
+    </message>
+    <message>
+        <source>Horizontal window:</source>
+        <translation>Горизонтальное окно:</translation>
+    </message>
+    <message>
+        <source>Vertical gap, %:</source>
+        <translation>Вертикальный зазор, %:</translation>
+    </message>
+    <message>
+        <source>Max range, m:</source>
+        <translation>Макс. дальность, м:</translation>
+    </message>
+    <message>
+        <source>Min range, m:</source>
+        <translation>Мин. дальность, м:</translation>
+    </message>
+    <message>
+        <source>Decimation, m:</source>
+        <translation>Децимация, м:</translation>
+    </message>
+    <message>
+        <source>Gain slope:</source>
+        <translation>Наклон усиления:</translation>
+    </message>
+    <message>
+        <source>Threshold:</source>
+        <translation>Порог:</translation>
+    </message>
+    <message>
+        <source>Feature level:</source>
+        <translation>Уровень признаков:</translation>
+    </message>
+    <message>
+        <source>Side-Scan</source>
+        <translation>Боковой обзор</translation>
+    </message>
+    <message>
+        <source>S.offset XY, mm:</source>
+        <translation>Смещение бокового обзора XY, мм:</translation>
+    </message>
+    <message>
+        <source>Sonar offset XYZ, mm:</source>
+        <translation>Смещение сонара XYZ, мм:</translation>
+    </message>
+    <message>
+        <source>Synchronization</source>
+        <translation>Синхронизация</translation>
+    </message>
+    <message>
+        <source>Fish Finders</source>
+        <translation>Эхолоты</translation>
+    </message>
+    <message>
+        <source>FBS forward / backward:</source>
+        <translation>ФБС вперёд / назад:</translation>
+    </message>
+    <message>
+        <source>Maximum</source>
+        <translation>Максимум</translation>
+    </message>
+    <message>
+        <source>Chart count:</source>
+        <translation>Количество графиков:</translation>
+    </message>
+    <message>
+        <source>USBL to CSV</source>
+        <translation>USBL в CSV</translation>
+    </message>
+    <message>
+        <source>Complex signal to CSV</source>
+        <translation>Комплексный сигнал в CSV</translation>
+    </message>
+    <message>
+        <source>Export path...</source>
+        <translation>Путь экспорта...</translation>
+    </message>
+    <message>
+        <source>Export folder</source>
+        <translation>Папка экспорта</translation>
+    </message>
+    <message>
+        <source>Export state:</source>
+        <translation>Состояние экспорта:</translation>
+    </message>
+    <message>
+        <source>Export to XTF</source>
+        <translation>Экспорт в XTF</translation>
+    </message>
+    <message>
+        <source>Export UI state</source>
+        <translation>Экспортировать состояние UI</translation>
+    </message>
+    <message>
+        <source>Import state:</source>
+        <translation>Состояние импорта:</translation>
+    </message>
+    <message>
+        <source>Import UI state</source>
+        <translation>Импортировать состояние UI</translation>
+    </message>
+    <message>
+        <source>Path...</source>
+        <translation>Путь...</translation>
+    </message>
+    <message>
+        <source>CSV</source>
+        <translation>CSV</translation>
+    </message>
+</context>
+<context>
+    <name>DeviceSettingsPage</name>
+    <message>
+        <source>Echogram</source>
+        <translation>Эхограмма</translation>
+    </message>
+    <message>
+        <source>Echogram:</source>
+        <translation>Эхограмма:</translation>
+    </message>
+    <message>
+        <source>Rangefinder</source>
+        <translation>Дальномер</translation>
+    </message>
+    <message>
+        <source>Rangefinder:</source>
+        <translation>Дальномер:</translation>
+    </message>
+    <message>
+        <source>Transducer</source>
+        <translation>Преобразователь</translation>
+    </message>
+    <message>
+        <source>Actions</source>
+        <translation>Действия</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Сбросить</translation>
+    </message>
+    <message>
+        <source>Reboot</source>
+        <translation>Перезагрузить</translation>
+    </message>
+    <message>
+        <source>Set</source>
+        <translation>Задать</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>Вкл</translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation>Выкл</translation>
+    </message>
+    <message>
+        <source>DSP</source>
+        <translation>ЦОС</translation>
+    </message>
+    <message>
+        <source>AHRS</source>
+        <translation>БИНС</translation>
+    </message>
+    <message>
+        <source>NMEA</source>
+        <translation>NMEA</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation>Температура</translation>
+    </message>
+    <message>
+        <source>Timestamp</source>
+        <translation>Метка времени</translation>
+    </message>
+    <message>
+        <source>Booster</source>
+        <translation>Усилитель</translation>
+    </message>
+    <message>
+        <source>Baudrate:</source>
+        <translation>Скорость передачи:</translation>
+    </message>
+    <message>
+        <source>8-bit</source>
+        <translation>8-бит</translation>
+    </message>
+    <message>
+        <source>115200</source>
+        <translation>115200</translation>
+    </message>
+    <message>
+        <source>230400</source>
+        <translation>230400</translation>
+    </message>
+    <message>
+        <source>460800</source>
+        <translation>460800</translation>
+    </message>
+    <message>
+        <source>921600</source>
+        <translation>921600</translation>
+    </message>
+    <message>
+        <source>Frequency, kHz:</source>
+        <translation>Частота, кГц:</translation>
+    </message>
+    <message>
+        <source>Pulse count:</source>
+        <translation>Количество импульсов:</translation>
+    </message>
+    <message>
+        <source>Sample count:</source>
+        <translation>Количество отсчётов:</translation>
+    </message>
+    <message>
+        <source>Resolution, mm:</source>
+        <translation>Разрешение, мм:</translation>
+    </message>
+    <message>
+        <source>Offset:</source>
+        <translation>Смещение:</translation>
+    </message>
+    <message>
+        <source>Dead zone, mm:</source>
+        <translation>Мёртвая зона, мм:</translation>
+    </message>
+    <message>
+        <source>Max distance, mm:</source>
+        <translation>Макс. расстояние, мм:</translation>
+    </message>
+    <message>
+        <source>Horizontal smoothing:</source>
+        <translation>Горизонтальное сглаживание:</translation>
+    </message>
+    <message>
+        <source>Confidence threshold, %:</source>
+        <translation>Порог уверенности, %:</translation>
+    </message>
+    <message>
+        <source>Sound speed, m/s:</source>
+        <translation>Скорость звука, м/с:</translation>
+    </message>
+    <message>
+        <source>Period, ms:</source>
+        <translation>Период, мс:</translation>
+    </message>
+    <message>
+        <source>Export XML</source>
+        <translation>Экспорт XML</translation>
+    </message>
+    <message>
+        <source>Import XML</source>
+        <translation>Import XML</translation>
+    </message>
+    <message>
+        <source>Open settings file</source>
+        <translation>Открыть файл настроек</translation>
+    </message>
+    <message>
+        <source>Save settings file</source>
+        <translation>Сохранить файл настроек</translation>
+    </message>
+    <message>
+        <source>Dataset</source>
+        <translation>Датасет</translation>
+    </message>
+</context>
+<context>
+    <name>ConnectionsSettingsPage</name>
+    <message>
+        <source>Connections</source>
+        <translation>Соединения</translation>
+    </message>
+    <message>
+        <source>Links, files, logging, imports and factory tools.</source>
+        <translation>Ссылки, файлы, журналирование, импорт и инструменты завода.</translation>
+    </message>
+</context>
+<context>
+    <name>PaneEditorChrome</name>
+    <message>
+        <source>Choose pane type</source>
+        <translation>Выберите тип панели</translation>
+    </message>
+    <message>
+        <source>2D</source>
+        <translation>2D</translation>
+    </message>
+    <message>
+        <source>3D</source>
+        <translation>3D</translation>
+    </message>
+    <message>
+        <source>3D is already used in another pane</source>
+        <translation>3D уже используется в другой панели</translation>
+    </message>
+    <message>
+        <source>Fullscreen pop-up</source>
+        <translation>Полноэкранное всплывающее окно</translation>
+    </message>
+    <message>
+        <source>No neighboring panes available</source>
+        <translation>Нет доступных соседних панелей</translation>
+    </message>
+</context>
+<context>
+    <name>GlobalPanePopup</name>
+    <message>
+        <source>Choose pane type</source>
+        <translation>Выберите тип панели</translation>
+    </message>
+    <message>
+        <source>2D</source>
+        <translation>2D</translation>
+    </message>
+    <message>
+        <source>3D</source>
+        <translation>3D</translation>
+    </message>
+    <message>
+        <source>3D is already used in another pane</source>
+        <translation>3D уже используется в другой панели</translation>
+    </message>
+    <message>
+        <source>Global pop-up</source>
+        <translation>Глобальное всплывающее окно</translation>
+    </message>
+</context>
+<context>
+    <name>HotActionsPanel</name>
+    <message>
+        <source>Open layout settings</source>
+        <translation>Открыть настройки компоновки</translation>
+    </message>
+    <message>
+        <source>Layouts</source>
+        <translation>Компоновки</translation>
+    </message>
+</context>
+<context>
+    <name>Pane2DSettingsPage</name>
+    <message>
+        <source>Rotate logo</source>
+        <translation>Поворот логотипа</translation>
+    </message>
+</context>
+<context>
+    <name>Pane3DSettingsPage</name>
+    <message>
+        <source>Rotate logo</source>
+        <translation>Поворот логотипа</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsSidebarBase</name>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+</context>
+<context>
+    <name>Pane3DWindow</name>
+    <message>
+        <source>Cancel ruler</source>
+        <translation>Отменить линейку</translation>
+    </message>
+    <message>
+        <source>Finish ruler</source>
+        <translation>Завершить линейку</translation>
+    </message>
+    <message>
+        <source>Delete ruler</source>
+        <translation>Удалить линейку</translation>
+    </message>
+    <message>
+        <source>Deselect</source>
+        <translation>Снять выделение</translation>
+    </message>
+    <message>
+        <source>Clear dist processing</source>
+        <translation>Очистить обработку расстояния</translation>
+    </message>
+    <message>
+        <source>Set as max dist</source>
+        <translation>Установить как максимальное расстояние</translation>
+    </message>
+    <message>
+        <source>Set as min dist</source>
+        <translation>Установить как минимальное расстояние</translation>
+    </message>
+</context>
+<context>
+    <name>MainWindow</name>
+    <message>
+        <source>KoggerApp, KOGGER</source>
+        <translation>KoggerApp, KOGGER</translation>
+    </message>
+</context>
+<context>
+    <name>MainWindow</name>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+</context>
+<context>
+    <name>ModeSettingsPanel</name>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsGearButton</name>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <source>3D settings</source>
+        <translation>Настройки 3D</translation>
+    </message>
+    <message>
+        <source>2D settings</source>
+        <translation>Настройки 2D</translation>
+    </message>
+</context>
+<context>
+    <name>CircleIconButton</name>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>Menu</source>
+        <translation>Меню</translation>
+    </message>
+    <message>
+        <source>Assign popup</source>
+        <translation>Назначить всплывающее</translation>
+    </message>
+    <message>
+        <source>Pane mode</source>
+        <translation>Режим панели</translation>
+    </message>
+    <message>
+        <source>Move pane</source>
+        <translation>Переместить панель</translation>
+    </message>
+</context>
 </TS>

@@ -16,7 +16,7 @@ BasePanePopup {
     property bool syncingFromStore: false
     readonly property bool modeSelecting: store.globalPopupModePickerOpen || store.globalPopupMode === ""
     readonly property var paneData: ({
-        title: "Global pop-up",
+        title: qsTr("Global pop-up"),
         color: AppPalette.bg,
         mode: store.globalPopupMode === "3D" ? "3D" : "2D"
     })
@@ -123,7 +123,7 @@ BasePanePopup {
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "Choose pane type"
+                text: qsTr("Choose pane type")
                 color: AppPalette.text
                 font.pixelSize: 18
                 font.bold: true
@@ -134,7 +134,7 @@ BasePanePopup {
                 spacing: 10
 
                 KButton {
-                    text: "2D"
+                    text: qsTr("2D")
                     width: 76
                     height: 40
                     onClicked: root.store.setGlobalPopupMode("2D")
@@ -142,7 +142,7 @@ BasePanePopup {
 
                 KButton {
                     readonly property bool canChoose3D: root.store.globalPopupCanChoose3D()
-                    text: "3D"
+                    text: qsTr("3D")
                     width: 76
                     height: 40
                     enabled: canChoose3D
@@ -154,7 +154,7 @@ BasePanePopup {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: !root.store.globalPopupCanChoose3D()
-                text: "3D is already used in another pane"
+                text: qsTr("3D is already used in another pane")
                 color: "#C7D2FE"
                 font.pixelSize: 12
             }

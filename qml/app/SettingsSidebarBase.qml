@@ -9,7 +9,7 @@ Item {
 
     property bool open: false
     property bool dimEnabled: true
-    property string title: "Settings"
+    property string title: qsTr("Settings")
     property string side: "left"
     property string gearMode: "app"
     property color headerColor: AppPalette.headerBg

@@ -126,9 +126,9 @@ Item {
                 fillPressedColor: paneItem.menuButtonPressedColor
                 borderColor: paneItem.menuButtonBorderColor
                 borderHoverColor: paneItem.menuButtonHoverBorderColor
-                anchors.top: parent.top
+                anchors.bottom: parent.bottom
                 anchors.right: parent.right
-                anchors.topMargin: 8
+                anchors.bottomMargin: 8
                 anchors.rightMargin: 8
                 z: 32
                 onClicked: store.openModeSettingsForLeaf(paneItem.leafId)
