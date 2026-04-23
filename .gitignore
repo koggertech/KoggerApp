@@ -13,3 +13,5 @@ flasher
 .git
 .qtcreator
 .vscode
+*.py
+docs/KoggerApp/
