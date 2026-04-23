@@ -29,6 +29,7 @@ property int draggedLeafId: -1
 property int dropTargetLeafId: -1
 property point dragCursor: Qt.point(0, 0)
 property bool dragActive: false
+property var slotContentIds: []
 
 property int activeLeafId: -1
 property int edgeResizeMovingSplitId: -1
@@ -1576,6 +1577,7 @@ function restoreLayoutState() {
     var hadModeField = layoutHasAnyModeField(parsed)
     layoutTree = normalizeAndFixPaneModes(parsed, !hadModeField)
     layoutTree = renumberPanes(layoutTree)
+    layoutTree = ensureContentIds(layoutTree)
     nextLeafSerial = Math.max(layoutStore.nextLeafSerialStored, maxLeafIdInTree(layoutTree))
     nextSplitSerial = Math.max(layoutStore.nextSplitSerialStored, maxSplitIdInTree(layoutTree))
     activeLeafId = hasLeafIdInTree(layoutTree, layoutStore.activeLeafIdStored) ? layoutStore.activeLeafIdStored : firstLeafId()
@@ -1848,7 +1850,8 @@ function renumberPanes(tree) {
             color: targetColor,
             mode: normalizedPaneMode(paneObj.mode),
             rotate3DLogoOnSphere: normalizedPaneRotate3D(paneObj.rotate3DLogoOnSphere),
-            rotate2DLogoHorizontal: normalizedPaneRotate2D(paneObj.rotate2DLogoHorizontal)
+            rotate2DLogoHorizontal: normalizedPaneRotate2D(paneObj.rotate2DLogoHorizontal),
+            contentId: paneObj.contentId || ""
         })
     }
 
@@ -1861,10 +1864,19 @@ function makePane(paneNumber, mode) {
 
 function makeLeaf(paneObj) {
     nextLeafSerial += 1
+    var pane = paneObj.contentId ? paneObj : {
+        paneId: paneObj.paneId,
+        title: paneObj.title,
+        color: paneObj.color,
+        mode: paneObj.mode,
+        rotate3DLogoOnSphere: paneObj.rotate3DLogoOnSphere,
+        rotate2DLogoHorizontal: paneObj.rotate2DLogoHorizontal,
+        contentId: appUtils.generateUuid()
+    }
     return {
         type: "leaf",
         leafId: nextLeafSerial,
-        pane: paneObj
+        pane: pane
     }
 }
 
@@ -1882,6 +1894,68 @@ function makeSplit(orientation, firstNode, secondNode, ratio) {
 
 function splitRectByHandle(node, x, y, w, h, outRects, outHandles) {
     Resize.splitRectByHandle(node, x, y, w, h, outRects, outHandles, splitterThickness)
+}
+
+function syncSlotContentIds(newRects) {
+    var next = slotContentIds.slice()
+    while (next.length < maxPaneCount) next.push("")
+
+    // Keep existing slot assignments that still have a live contentId in newRects.
+    var liveIds = {}
+    for (var i = 0; i < newRects.length; ++i) {
+        var cid = newRects[i].pane && newRects[i].pane.contentId
+        if (cid) liveIds[cid] = true
+    }
+    for (var s = 0; s < next.length; ++s) {
+        if (next[s] && !liveIds[next[s]])
+            next[s] = ""
+    }
+
+    // Assign any new contentIds that have no slot yet.
+    for (var r = 0; r < newRects.length; ++r) {
+        var rcid = newRects[r].pane && newRects[r].pane.contentId
+        if (!rcid) continue
+        var already = false
+        for (var ss = 0; ss < next.length; ++ss) {
+            if (next[ss] === rcid) { already = true; break }
+        }
+        if (!already) {
+            for (var fs = 0; fs < next.length; ++fs) {
+                if (!next[fs]) { next[fs] = rcid; break }
+            }
+        }
+    }
+
+    slotContentIds = next
+}
+
+function ensureContentIds(node) {
+    if (!node) return node
+    if (node.type === "leaf") {
+        if (!node.pane || node.pane.contentId)
+            return node
+        var pane = {
+            paneId: node.pane.paneId,
+            title: node.pane.title,
+            color: node.pane.color,
+            mode: node.pane.mode,
+            rotate3DLogoOnSphere: node.pane.rotate3DLogoOnSphere,
+            rotate2DLogoHorizontal: node.pane.rotate2DLogoHorizontal,
+            contentId: appUtils.generateUuid()
+        }
+        return { type: "leaf", leafId: node.leafId, pane: pane }
+    }
+    if (node.type === "split") {
+        return {
+            type: "split",
+            splitId: node.splitId,
+            orientation: node.orientation,
+            ratio: node.ratio,
+            first: ensureContentIds(node.first),
+            second: ensureContentIds(node.second)
+        }
+    }
+    return node
 }
 
 function rebuildLayoutCaches(updateHandles) {
@@ -1902,6 +1976,7 @@ function rebuildLayoutCaches(updateHandles) {
     splitRectByHandle(layoutTree, 0, 0, effectiveWorkspaceWidth(), effectiveWorkspaceHeight(), newRects, newHandles)
     leafRects = newRects
     syncRectModel(leafRectModel, "rectData", newRects, "leafId")
+    syncSlotContentIds(newRects)
 
     if (updateHandles)
         splitHandles = newHandles
@@ -2271,6 +2346,9 @@ function swapLeafPanes(leafA, leafB) {
     if (!paneA || !paneB)
         return
 
+    // Swap pane data (including contentId) between the two leaf nodes.
+    // Each Plot2D slot tracks its contentId, so it automatically follows
+    // the pane to its new host after rebuildLayoutCaches updates slotContentIds.
     var nextTree = updatePaneInLeaf(layoutTree, leafA, paneB)
     nextTree = updatePaneInLeaf(nextTree, leafB, paneA)
     layoutTree = nextTree

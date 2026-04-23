@@ -39,7 +39,8 @@ HEADERS += \
     src/input_device_tracker.h \
     src/xtf_conf.h \
     src/location_reader.h \
-    src/mosaic_index_provider.h
+    src/mosaic_index_provider.h \
+    src/app_utils.h
 
 ### SOURCES
 SOURCES += \

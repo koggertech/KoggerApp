@@ -29,9 +29,11 @@
 #include "bottom_track.h"
 #include "input_device_tracker.h"
 #include "language_controller.h"
+#include "app_utils.h"
 
 
 Core core;
+AppUtils appUtils;
 Themes theme;
 UIStateSerializer uiStateSerializer;
 QTranslator translator;
@@ -249,6 +251,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
     engine.rootContext()->setContextProperty("inputDeviceTracker", &inputDeviceTracker);
     engine.rootContext()->setContextProperty("langController", &langController);
+    engine.rootContext()->setContextProperty("appUtils", &appUtils);
     uiStateSerializer.setLinkManagerWrapper(core.getLinkManagerWrapperPtr());
 
     QObject::connect(&langController, &LanguageController::currentIndexChanged, &engine, [&engine]() {

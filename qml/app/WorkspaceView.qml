@@ -439,12 +439,18 @@ Item {
 
                 required property int index
                 readonly property int slotIndex: index
-                readonly property int slotLeafId: workspace.store
-                                                && workspace.store.leafRects
-                                                && slotIndex < workspace.store.leafRects.length
-                                                && workspace.store.leafRects[slotIndex]
-                                                ? workspace.store.leafRects[slotIndex].leafId
-                                                : -1
+                readonly property int slotLeafId: {
+                    if (!workspace.store) return -1
+                    var slotIds = workspace.store.slotContentIds
+                    if (!slotIds || slotIndex >= slotIds.length) return -1
+                    var cid = slotIds[slotIndex]
+                    if (!cid) return -1
+                    var rects = workspace.store.leafRects
+                    for (var i = 0; i < rects.length; ++i)
+                        if (rects[i].pane && rects[i].pane.contentId === cid)
+                            return rects[i].leafId
+                    return -1
+                }
                 readonly property var slotLeafRect: workspace.leafRectForId(slotLeafId)
                 readonly property var slotHostItem: workspace.paneHostItemForLeaf(slotLeafId, "2D")
                 property int registeredLeafId: -1

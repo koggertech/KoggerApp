@@ -35,7 +35,8 @@ function paneWithMode(paneObj, mode) {
         color: paneObj.color,
         mode: normalizedPaneMode(mode),
         rotate3DLogoOnSphere: normalizedPaneRotate3D(paneObj.rotate3DLogoOnSphere),
-        rotate2DLogoHorizontal: normalizedPaneRotate2D(paneObj.rotate2DLogoHorizontal)
+        rotate2DLogoHorizontal: normalizedPaneRotate2D(paneObj.rotate2DLogoHorizontal),
+        contentId: paneObj.contentId || ""
     }
 }
 
@@ -47,7 +48,8 @@ function makePane(paneNumber, mode) {
         color: paletteColor(paneNumber - 1),
         mode: normalizedPaneMode(resolvedMode),
         rotate3DLogoOnSphere: false,
-        rotate2DLogoHorizontal: false
+        rotate2DLogoHorizontal: false,
+        contentId: ""
     }
 }
 
