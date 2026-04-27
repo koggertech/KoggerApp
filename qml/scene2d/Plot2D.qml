@@ -13,6 +13,32 @@ WaterFall {
     id: plot
 
     property bool is3dVisible: false
+    property bool scrollBarsShown: true
+    property bool isLiveMode: core.openedFilePath.length === 0
+    onIsLiveModeChanged: {
+        if (isLiveMode) {
+            timelinePosition = 1.0
+            updateOtherPlot(indx)
+        }
+    }
+
+    Connections {
+        target: core
+        function onChannelListUpdated() {
+            if (plot.isLiveMode) {
+                plot.timelinePosition = 1.0
+                updateOtherPlot(plot.indx)
+            }
+        }
+    }
+
+    Timer {
+        id: scrollHideTimer
+        interval: 5000
+        repeat: false
+        onTriggered: plot.scrollBarsShown = false
+        Component.onCompleted: start()
+    }
     property int indx: 0
     property var instrumentsGradeList: null
     property int instruments: theme ? theme.instrumentsGrade
@@ -198,6 +224,8 @@ WaterFall {
 
     function handlePointerPress(mouseButton, buttons, x, y, keyboardKey) {
         markMouseKeyboardInput()
+        scrollBarsShown = true
+        scrollHideTimer.restart()
         pointerLastMouseX = x
         pointerLastMouseY = y
         forceActiveFocus()
@@ -1362,6 +1390,308 @@ WaterFall {
         contactDialog.lat = plot.contactLat
         contactDialog.lon = plot.contactLon
         contactDialog.depth = plot.contactDepth
+    }
+
+    // Horizontal mode scroll bookmark (bottom edge)
+    Item {
+        id: echoScrollBarH
+
+        property bool isScrolling: false
+        property real grabOffsetX: 0
+        property real prevTimelinePos: -1
+
+        readonly property bool trackVisible: scrollMouseH.pressed || isScrolling
+        readonly property real thumbW: (scrollMouseH.pressed || isScrolling) ? 96 : 68
+        readonly property real thumbH: (scrollMouseH.pressed || isScrolling) ? 28 : 20
+
+        visible: plot.horizontal && plot.hasData
+        opacity: (plot.scrollBarsShown || trackVisible) ? 1.0 : 0.0
+
+        onTrackVisibleChanged: {
+            if (trackVisible) {
+                plot.scrollBarsShown = true
+                scrollHideTimer.restart()
+            }
+        }
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 6
+        anchors.rightMargin: 6
+        anchors.bottomMargin: 6
+        height: thumbH
+        z: 10
+
+        Behavior on height   { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        Behavior on opacity  { NumberAnimation { duration: 400 } }
+
+        Timer {
+            id: scrollFadeH
+            interval: 250
+            repeat: false
+            onTriggered: echoScrollBarH.isScrolling = false
+        }
+
+        Connections {
+            target: plot
+            function onTimelinePositionChanged() {
+                if (scrollMouseH.pressed) return
+                const pos = plot.timelinePosition
+                if (Math.abs(pos - echoScrollBarH.prevTimelinePos) > 0.00005) {
+                    echoScrollBarH.isScrolling = true
+                    scrollFadeH.restart()
+                }
+                echoScrollBarH.prevTimelinePos = pos
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.height / 2
+            color: Qt.rgba(0, 0, 0, 0.25)
+            opacity: echoScrollBarH.trackVisible ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 200 } }
+        }
+
+        Rectangle {
+            id: snapTrailH
+            x: scrollThumbH.x
+            width: Math.max(0, echoScrollBarH.width - x)
+            height: parent.height
+            radius: height / 2
+            color: theme.controlBorderColor
+            opacity: (scrollMouseH.pressed && plot.isLiveMode && scrollThumbH.progress > 0.85) ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 150 } }
+        }
+
+        Rectangle {
+            id: ghostThumbH
+            x: echoScrollBarH.width - width
+            width: echoScrollBarH.thumbW
+            height: parent.height
+            radius: height / 2
+            color: "transparent"
+            border.color: theme.controlBorderColor
+            border.width: 2
+            opacity: (scrollMouseH.pressed && plot.isLiveMode && scrollThumbH.progress > 0.85) ? 0.65 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 150 } }
+        }
+
+        Rectangle {
+            id: scrollThumbH
+
+            readonly property real scrollRange: 1.0 - plot.viewportRatio
+            readonly property real progress: {
+                if (scrollRange <= 0.0001) return 1.0
+                return Math.max(0, Math.min(1, (plot.timelinePosition - plot.viewportRatio) / scrollRange))
+            }
+
+            x: {
+                const restingW = 68
+                const center = progress * (echoScrollBarH.width - restingW) + restingW / 2
+                return Math.max(0, Math.min(echoScrollBarH.width - width, center - width / 2))
+            }
+            width: echoScrollBarH.thumbW
+            height: parent.height
+            radius: height / 2
+            color: theme.controlBorderColor
+            opacity: scrollMouseH.pressed ? 1.0 : 0.60
+
+            Behavior on opacity { NumberAnimation { duration: 150 } }
+            Behavior on width   { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        }
+
+        NumberAnimation {
+            id: snapToEndH
+            target: plot
+            property: "timelinePosition"
+            to: 1.0
+            duration: 380
+            easing.type: Easing.OutCubic
+            onStopped: updateOtherPlot(indx)
+        }
+
+        MouseArea {
+            id: scrollMouseH
+            anchors.fill: parent
+            enabled: plot.scrollBarsShown || echoScrollBarH.trackVisible
+
+            onPressed: function(mouse) {
+                snapToEndH.stop()
+                echoScrollBarH.grabOffsetX = mouse.x - scrollThumbH.x
+                if (echoScrollBarH.grabOffsetX < 0 || echoScrollBarH.grabOffsetX > echoScrollBarH.thumbW)
+                    echoScrollBarH.grabOffsetX = echoScrollBarH.thumbW / 2
+            }
+            onReleased: {
+                if (plot.isLiveMode && scrollThumbH.progress > 0.85)
+                    snapToEndH.start()
+            }
+            onCanceled: {
+                if (plot.isLiveMode && scrollThumbH.progress > 0.85)
+                    snapToEndH.start()
+            }
+            onPositionChanged: function(mouse) {
+                if (!pressed) return
+                const trackPx = echoScrollBarH.width - echoScrollBarH.thumbW
+                if (trackPx <= 0) return
+                const prog = Math.max(0, Math.min(1, (mouse.x - echoScrollBarH.grabOffsetX) / trackPx))
+                plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
+                updateOtherPlot(indx)
+            }
+        }
+    }
+
+    // Vertical mode scroll bookmark (right edge)
+    Item {
+        id: echoScrollBarV
+
+        property bool isScrolling: false
+        property real grabOffsetY: 0
+        property real prevTimelinePos: -1
+
+        readonly property bool trackVisible: scrollMouseV.pressed || isScrolling
+        readonly property real thumbH: (scrollMouseV.pressed || isScrolling) ? 96 : 68
+        readonly property real thumbW: (scrollMouseV.pressed || isScrolling) ? 28 : 20
+
+        visible: !plot.horizontal && plot.hasData
+        opacity: (plot.scrollBarsShown || trackVisible) ? 1.0 : 0.0
+
+        onTrackVisibleChanged: {
+            if (trackVisible) {
+                plot.scrollBarsShown = true
+                scrollHideTimer.restart()
+            }
+        }
+
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        anchors.topMargin: 6
+        anchors.bottomMargin: 6
+        anchors.rightMargin: 6
+        width: thumbW
+        z: 10
+
+        Behavior on width    { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        Behavior on opacity  { NumberAnimation { duration: 400 } }
+
+        Timer {
+            id: scrollFadeV
+            interval: 250
+            repeat: false
+            onTriggered: echoScrollBarV.isScrolling = false
+        }
+
+        Connections {
+            target: plot
+            function onTimelinePositionChanged() {
+                if (scrollMouseV.pressed) return
+                const pos = plot.timelinePosition
+                if (Math.abs(pos - echoScrollBarV.prevTimelinePos) > 0.00005) {
+                    echoScrollBarV.isScrolling = true
+                    scrollFadeV.restart()
+                }
+                echoScrollBarV.prevTimelinePos = pos
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.width / 2
+            color: Qt.rgba(0, 0, 0, 0.25)
+            opacity: echoScrollBarV.trackVisible ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 200 } }
+        }
+
+        Rectangle {
+            id: snapTrailV
+            y: 0
+            height: Math.max(0, scrollThumbV.y + scrollThumbV.height)
+            width: parent.width
+            radius: width / 2
+            color: theme.controlBorderColor
+            opacity: (scrollMouseV.pressed && plot.isLiveMode && scrollThumbV.progress > 0.85) ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 150 } }
+        }
+
+        Rectangle {
+            id: ghostThumbV
+            y: 0
+            width: parent.width
+            height: echoScrollBarV.thumbH
+            radius: width / 2
+            color: "transparent"
+            border.color: theme.controlBorderColor
+            border.width: 2
+            opacity: (scrollMouseV.pressed && plot.isLiveMode && scrollThumbV.progress > 0.85) ? 0.65 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 150 } }
+        }
+
+        Rectangle {
+            id: scrollThumbV
+
+            readonly property real scrollRange: 1.0 - plot.viewportRatio
+            readonly property real progress: {
+                if (scrollRange <= 0.0001) return 1.0
+                return Math.max(0, Math.min(1, (plot.timelinePosition - plot.viewportRatio) / scrollRange))
+            }
+
+            y: {
+                const restingH = 68
+                const vp = 1.0 - progress
+                const center = vp * (echoScrollBarV.height - restingH) + restingH / 2
+                return Math.max(0, Math.min(echoScrollBarV.height - height, center - height / 2))
+            }
+            width: parent.width
+            height: echoScrollBarV.thumbH
+            radius: width / 2
+            color: theme.controlBorderColor
+            opacity: scrollMouseV.pressed ? 1.0 : 0.60
+
+            Behavior on opacity { NumberAnimation { duration: 150 } }
+            Behavior on height  { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        }
+
+        NumberAnimation {
+            id: snapToEndV
+            target: plot
+            property: "timelinePosition"
+            to: 1.0
+            duration: 380
+            easing.type: Easing.OutCubic
+            onStopped: updateOtherPlot(indx)
+        }
+
+        MouseArea {
+            id: scrollMouseV
+            anchors.fill: parent
+            enabled: plot.scrollBarsShown || echoScrollBarV.trackVisible
+
+            onPressed: function(mouse) {
+                snapToEndV.stop()
+                echoScrollBarV.grabOffsetY = mouse.y - scrollThumbV.y
+                if (echoScrollBarV.grabOffsetY < 0 || echoScrollBarV.grabOffsetY > echoScrollBarV.thumbH)
+                    echoScrollBarV.grabOffsetY = echoScrollBarV.thumbH / 2
+            }
+            onReleased: {
+                if (plot.isLiveMode && scrollThumbV.progress > 0.85)
+                    snapToEndV.start()
+            }
+            onCanceled: {
+                if (plot.isLiveMode && scrollThumbV.progress > 0.85)
+                    snapToEndV.start()
+            }
+            onPositionChanged: function(mouse) {
+                if (!pressed) return
+                const trackPx = echoScrollBarV.height - echoScrollBarV.thumbH
+                if (trackPx <= 0) return
+                const visualProg = Math.max(0, Math.min(1, (mouse.y - echoScrollBarV.grabOffsetY) / trackPx))
+                const prog = 1.0 - visualProg
+                plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
+                updateOtherPlot(indx)
+            }
+        }
     }
 
     RowLayout {

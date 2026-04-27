@@ -332,6 +332,12 @@ void qPlot2D::horScrollEvent(int delta) {
     } else {
         scrollPosition(delta);
     }
+
+    // Don't allow scrolling into empty space — clamp to valid data range
+    const float minPos = viewportRatio();
+    if (cursor_.position < minPos) {
+        Plot2D::setTimelinePosition(minPos);
+    }
 }
 
 void qPlot2D::verZoomEvent(int delta) {

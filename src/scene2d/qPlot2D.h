@@ -16,6 +16,8 @@ class qPlot2D : public QQuickPaintedItem, public Plot2D
 public:
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal NOTIFY plotHorizontalChanged)
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
+    Q_PROPERTY(float viewportRatio READ viewportRatio NOTIFY timelinePositionChanged)
+    Q_PROPERTY(bool hasData READ hasData NOTIFY timelinePositionChanged)
     Q_PROPERTY(bool isEnabled READ getPlotEnabled WRITE setPlotEnabled NOTIFY plotEnabledChanged)
     Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo     NOTIFY contactChanged)
     Q_PROPERTY(bool    contactVisible   READ getContactVisible   WRITE setContactVisible  NOTIFY contactChanged)
@@ -34,6 +36,17 @@ public:
     void setDataProcessor(DataProcessor* dataProcessorPtr);
 
     bool isHorizontal() { return _isHorizontal; }
+
+    float viewportRatio() const {
+        if (!datasetPtr_ || datasetPtr_->size() <= 0) return 1.0f;
+        const float dim = _isHorizontal ? static_cast<float>(width()) : static_cast<float>(height());
+        return qBound(0.0f, dim / static_cast<float>(datasetPtr_->size()), 1.0f);
+    }
+
+    bool hasData() const {
+        return datasetPtr_ != nullptr && datasetPtr_->size() > 0;
+    }
+
     void setHorizontal(bool is_horizontal) {
         if (_isHorizontal == is_horizontal) {
             return;
