@@ -258,12 +258,13 @@ function openConnectionsSettings() {
 }
 
 function toggleAppLayoutSettings() {
-    if (settingsPanelOpen && isSettingsGroupExpanded("app.layoutPlacement")) {
+    if (settingsPanelOpen) {
         settingsPanelOpen = false
         return
     }
 
-    openAppLayoutSettings()
+    closeModeSettingsPanel()
+    settingsPanelOpen = true
 }
 
 function toggleConnectionsSettings() {
