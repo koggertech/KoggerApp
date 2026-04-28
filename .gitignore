@@ -23,5 +23,6 @@ AGENTS.md
 .aider*
 .continue/
 .codeium/
+.claude/
 docs/KoggerApp/
 *.py
