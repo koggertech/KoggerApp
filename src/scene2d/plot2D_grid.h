@@ -18,6 +18,7 @@ public:
     void setFillWidth(bool state) { fillWidth_ = state; }
     bool isInvert() const { return invert_; }
     void setInvert(bool state) { invert_ = state; }
+    int lastRightTextX() const { return lastRightTextX_; }
 
 protected:
     void drawTextWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text) const;
@@ -29,4 +30,5 @@ protected:
     QColor _lineColor = QColor(255, 255, 255, 255);
     bool fillWidth_ = false;
     bool invert_ = false;
+    int lastRightTextX_ = 0;
 };

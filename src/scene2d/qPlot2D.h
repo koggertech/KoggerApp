@@ -28,6 +28,11 @@ public:
 
     qPlot2D(QQuickItem* parent = nullptr);
     void paint(QPainter *painter) override;
+    void geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry) override {
+        QQuickPaintedItem::geometryChange(newGeometry, oldGeometry);
+        if (newGeometry.size() != oldGeometry.size())
+            update();
+    }
 //    QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
 
     void setPlot(Dataset* plot);
@@ -184,7 +189,9 @@ public slots:
     void plotAttitudeVisible(bool visible) { setAttitudeVisible(visible); }
     void plotTemperatureVisible(bool visible) { setTemperatureVisible(visible); }
     void plotDopplerBeamVisible(bool visible, int beam_filter) { setDopplerBeamVisible(visible, beam_filter); }
-    void plotDopplerInstrumentVisible(bool visible) { setDopplerInstrumentVisible(visible); }
+    void plotDopplerInstrumentVisible(bool visible, int line_filter = -1) { setDopplerInstrumentVisible(visible, line_filter); }
+    void plotDVLLegendVisible(bool visible) { setDVLLegendVisible(visible); }
+    void plotDVLLegendPosition(int pos) { setDVLLegendPosition(pos); }
 
     void plotGNSSVisible(bool visible, int flags) { setGNSSVisible(visible, flags);}
 
