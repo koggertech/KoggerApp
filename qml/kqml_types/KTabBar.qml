@@ -149,6 +149,7 @@ Item {
         }
     }
 
+    // Visual labels only — interaction handled by tabMouseArea below
     TabBar {
         id: tabBar
 
@@ -160,13 +161,6 @@ Item {
         z: 2
 
         background: Item {}
-
-        onCurrentIndexChanged: {
-            if (root.syncingFromValue)
-                return
-            if (!dragHandler.active)
-                root.applyIndex(currentIndex)
-        }
 
         Repeater {
             model: root.optionCount
@@ -206,29 +200,40 @@ Item {
         }
     }
 
-    DragHandler {
-        id: dragHandler
+    MouseArea {
+        id: tabMouseArea
+        anchors.fill: parent
+        z: 3
 
-        target: null
-        enabled: root.dragSelectEnabled
-        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchScreen | PointerDevice.TouchPad
+        property real pressX: 0
+        property bool dragging: false
 
-        onActiveChanged: {
-            if (active) {
-                root.dragPreviewIndex = root.indexFromPosition(centroid.position.x)
-                return
-            }
-
-            var indexToApply = root.dragPreviewIndex
-            root.dragPreviewIndex = -1
-            root.applyIndex(indexToApply)
+        onPressed: function(mouse) {
+            pressX = mouse.x
+            dragging = false
+            if (root.dragSelectEnabled)
+                root.dragPreviewIndex = root.indexFromPosition(mouse.x)
         }
 
-        onCentroidChanged: {
-            if (!active)
+        onPositionChanged: function(mouse) {
+            if (!root.dragSelectEnabled)
                 return
-            root.dragPreviewIndex = root.indexFromPosition(centroid.position.x)
+            if (!dragging && Math.abs(mouse.x - pressX) > 6)
+                dragging = true
+            if (dragging)
+                root.dragPreviewIndex = root.indexFromPosition(mouse.x)
+        }
+
+        onReleased: function(mouse) {
+            var idx = root.indexFromPosition(mouse.x)
+            root.dragPreviewIndex = -1
+            dragging = false
+            root.applyIndex(idx)
+        }
+
+        onCanceled: {
+            root.dragPreviewIndex = -1
+            dragging = false
         }
     }
-
 }
