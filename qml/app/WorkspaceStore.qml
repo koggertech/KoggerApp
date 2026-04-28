@@ -1,4 +1,4 @@
-﻿import QtQuick 2.15
+import QtQuick 2.15
 import QtCore
 import "LayoutRules.js" as Rules
 import "LayoutTree.js" as Tree
@@ -61,7 +61,7 @@ property string hotkeysRevealKey: ""
 property int hotkeysRevealNonce: 0
 property int modeSettingsLeafId: -1
 property string modeSettingsMode: "2D"
-readonly property int settingsPanelSizePx: 380
+readonly property int settingsPanelSizePx: 430
 property int modePickerLeafId: -1
 property var modePickerLeafIds: []
 property int hoveredPopupCandidateLeafId: -1
