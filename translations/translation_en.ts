@@ -1655,92 +1655,142 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="790"/>
+        <location filename="../qml/Plot2D.qml" line="796"/>
         <source>Doppler Beams</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="855"/>
+        <location filename="../qml/Plot2D.qml" line="805"/>
+        <location filename="../qml/Plot2D.qml" line="809"/>
+        <location filename="../qml/Plot2D.qml" line="817"/>
+        <location filename="../qml/Plot2D.qml" line="821"/>
+        <location filename="../qml/Plot2D.qml" line="858"/>
+        <source>Depth</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="806"/>
+        <location filename="../qml/Plot2D.qml" line="810"/>
+        <location filename="../qml/Plot2D.qml" line="818"/>
+        <location filename="../qml/Plot2D.qml" line="822"/>
+        <source>Velocity</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="807"/>
+        <location filename="../qml/Plot2D.qml" line="811"/>
+        <location filename="../qml/Plot2D.qml" line="819"/>
+        <location filename="../qml/Plot2D.qml" line="823"/>
+        <source>Mode</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="845"/>
         <source>Doppler Instrument</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="896"/>
+        <location filename="../qml/Plot2D.qml" line="857"/>
+        <source>Abs. Velocity</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="869"/>
+        <source>DVL Legend</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="878"/>
+        <source>Top</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="878"/>
+        <source>Center</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="878"/>
+        <source>Bottom</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="898"/>
         <source>Acoustic angle</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="908"/>
+        <location filename="../qml/Plot2D.qml" line="910"/>
         <source>Doppler Profiler</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="918"/>
+        <location filename="../qml/Plot2D.qml" line="920"/>
         <source>GNSS data</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="937"/>
+        <location filename="../qml/Plot2D.qml" line="939"/>
         <source>Grid</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="943"/>
+        <location filename="../qml/Plot2D.qml" line="945"/>
         <source>fill</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="959"/>
+        <location filename="../qml/Plot2D.qml" line="961"/>
         <source>invert</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="997"/>
+        <location filename="../qml/Plot2D.qml" line="999"/>
         <source>Angle range, °</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1049"/>
+        <location filename="../qml/Plot2D.qml" line="1051"/>
         <source>Velocity range, m/s</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1106"/>
+        <location filename="../qml/Plot2D.qml" line="1108"/>
         <source>Distance auto range</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1122"/>
+        <location filename="../qml/Plot2D.qml" line="1124"/>
         <source>Last data       </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1122"/>
+        <location filename="../qml/Plot2D.qml" line="1124"/>
         <source>Last on screen</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1122"/>
+        <location filename="../qml/Plot2D.qml" line="1124"/>
         <source>Max on screen</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1138"/>
+        <location filename="../qml/Plot2D.qml" line="1140"/>
         <source>Horizontal</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1146"/>
+        <location filename="../qml/Plot2D.qml" line="1148"/>
         <source>Loupe</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1156"/>
+        <location filename="../qml/Plot2D.qml" line="1158"/>
         <source>size</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="1174"/>
+        <location filename="../qml/Plot2D.qml" line="1176"/>
         <source>zoom</source>
         <translation></translation>
     </message>
@@ -1748,14 +1798,14 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="68"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="70"/>
         <source> m/s    </source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/scene2d/plot2D_bottom_processing.cpp" line="94"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="79"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="108"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="81"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="112"/>
         <location filename="../src/scene2d/plot2D_rangefinder.cpp" line="72"/>
         <source> m</source>
         <translation></translation>
@@ -1814,6 +1864,44 @@
         <location filename="../src/core.cpp" line="2158"/>
         <source>File</source>
         <translation>File</translation>
+    </message>
+    <message>
+        <location filename="../src/scene2d/plot2D_dvl_beam_velocity.cpp" line="106"/>
+        <location filename="../src/scene2d/plot2D_dvl_beam_velocity.cpp" line="173"/>
+        <location filename="../src/scene2d/plot2D_dvl_solution.cpp" line="94"/>
+        <location filename="../src/scene2d/plot2D_dvl_solution.cpp" line="163"/>
+        <source>Depth</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/scene2d/plot2D_dvl_beam_velocity.cpp" line="107"/>
+        <location filename="../src/scene2d/plot2D_dvl_beam_velocity.cpp" line="174"/>
+        <source>Velocity</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/scene2d/plot2D_dvl_beam_velocity.cpp" line="108"/>
+        <location filename="../src/scene2d/plot2D_dvl_beam_velocity.cpp" line="175"/>
+        <source>Mode</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/scene2d/plot2D_dvl_beam_velocity.cpp" line="114"/>
+        <location filename="../src/scene2d/plot2D_dvl_beam_velocity.cpp" line="163"/>
+        <source>Doppler Beams</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/scene2d/plot2D_dvl_solution.cpp" line="93"/>
+        <location filename="../src/scene2d/plot2D_dvl_solution.cpp" line="163"/>
+        <source>Abs. Velocity</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/scene2d/plot2D_dvl_solution.cpp" line="108"/>
+        <location filename="../src/scene2d/plot2D_dvl_solution.cpp" line="157"/>
+        <source>Doppler Instr.</source>
+        <translation></translation>
     </message>
 </context>
 <context>

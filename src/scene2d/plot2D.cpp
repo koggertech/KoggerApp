@@ -364,6 +364,7 @@ void Plot2D::draw(QPainter *painterPtr)
     encoder_.draw(this, datasetPtr_);
     dvlBeamVelocity_.draw(this, datasetPtr_);
     dvlSolution_.draw(this, datasetPtr_);
+
     usblSolution_.draw(this, datasetPtr_);
     bottomProcessing_.draw(this, datasetPtr_);
     rangefinder_.draw(this, datasetPtr_);
@@ -371,11 +372,40 @@ void Plot2D::draw(QPainter *painterPtr)
     gnss_.draw(this, datasetPtr_);
     quadrature_.draw(this, datasetPtr_);
 
+    // grid draws first — sets lastRightTextX_ so legend uses current-frame value
     painterPtr->setCompositionMode(QPainter::CompositionMode_Exclusion);
     grid_.draw(this, datasetPtr_);
+    painterPtr->setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+    if (dvlLegendVisible_) {
+        const bool beamShow = dvlBeamVelocity_.isVisible() && dvlBeamVelocity_.hasData();
+        const bool solShow  = dvlSolution_.isVisible()     && dvlSolution_.hasData();
+        if (beamShow || solShow) {
+            constexpr int rowH = 22, headerH = 25, padV = 12, margin = 8;
+            const int beamH  = beamShow ? padV + headerH + dvlBeamVelocity_.countLegendItems() * rowH : 0;
+            const int solH   = solShow  ? padV + headerH + dvlSolution_.countLegendItems()     * rowH : 0;
+            const int totalH = beamH + (beamH > 0 && solH > 0 ? 4 : 0) + solH;
+
+            const int gridTextX = grid_.lastRightTextX();
+            const int rightLimit = (grid_.isVisible() && !grid_.isInvert() && gridTextX < canvas_.width())
+                ? gridTextX - margin
+                : canvas_.width() - margin;
+            const int bw  = beamShow ? dvlBeamVelocity_.boxWidth(canvas_) : 0;
+            const int sw  = solShow  ? dvlSolution_.boxWidth(canvas_)     : 0;
+            const int lx  = rightLimit - qMax(bw, sw);
+
+            const int startY = (dvlLegendPosIndex_ == 0) ? margin
+                : (dvlLegendPosIndex_ == 1) ? canvas_.height() / 2 - totalH / 2
+                : canvas_.height() - totalH - 55;
+
+            int y = startY;
+            y = dvlBeamVelocity_.drawLegend(canvas_, lx, y);
+            dvlSolution_.drawLegend(canvas_, lx, y);
+        }
+    }
+
     temperature_.draw(this, datasetPtr_);
     aim_.draw(this, datasetPtr_);
-
     contacts_.draw(this, datasetPtr_);
 }
 
@@ -688,8 +718,20 @@ void Plot2D::setDopplerBeamVisible(bool visible, int beam_filter) {
     plotUpdate();
 }
 
-void Plot2D::setDopplerInstrumentVisible(bool visible) {
+void Plot2D::setDopplerInstrumentVisible(bool visible, int line_filter) {
     dvlSolution_.setVisible(visible);
+    if (line_filter >= 0)
+        dvlSolution_.setLineFilter(line_filter);
+    plotUpdate();
+}
+
+void Plot2D::setDVLLegendVisible(bool visible) {
+    dvlLegendVisible_ = visible;
+    plotUpdate();
+}
+
+void Plot2D::setDVLLegendPosition(int pos) {
+    dvlLegendPosIndex_ = pos;
     plotUpdate();
 }
 

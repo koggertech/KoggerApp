@@ -117,7 +117,9 @@ public:
     bool hasTemperatureValue() const;
     bool hasRangefinderDepthTextValue() const;
     void setDopplerBeamVisible(bool visible, int beam_filter);
-    void setDopplerInstrumentVisible(bool visible);
+    void setDopplerInstrumentVisible(bool visible, int line_filter = -1);
+    void setDVLLegendVisible(bool visible);
+    void setDVLLegendPosition(int pos);
 
     void setGNSSVisible(bool visible, int flags);
 
@@ -184,6 +186,8 @@ protected:
     DataProcessor* dataProcessorPtr_;
     std::function<void()> pendingBtpLambda_;
     bool isHorizontal_;
+    bool dvlLegendVisible_ = true;
+    int  dvlLegendPosIndex_ = 0;
 
 private:
     bool isEnabled_;

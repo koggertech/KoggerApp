@@ -870,114 +870,130 @@ WaterFall {
                         Component.onCompleted: plotTemperatureVisible(checked)
                     }
 
-                    RowLayout {
+                    ColumnLayout {
                         visible: instruments > 1
                         id: dopplerBeamVisibleGroup
                         spacing: 0
                         function updateDopplerBeamVisible() {
-                            var beamfilter = dopplerBeam1Visible.checked*1 + dopplerBeam2Visible.checked*2 + dopplerBeam3Visible.checked*4 + dopplerBeam4Visible.checked*8
-                            plotDopplerBeamVisible(dopplerBeamVisible.checked,
-                                                   beamfilter)
+                            // 3 bits per beam: V=bit(i*3), A=bit(i*3+1), M=bit(i*3+2)
+                            var beamfilter =
+                                dopplerBeam1V.checked*1    + dopplerBeam1A.checked*2    + dopplerBeam1M.checked*4 +
+                                dopplerBeam2V.checked*8    + dopplerBeam2A.checked*16   + dopplerBeam2M.checked*32 +
+                                dopplerBeam3V.checked*64   + dopplerBeam3A.checked*128  + dopplerBeam3M.checked*256 +
+                                dopplerBeam4V.checked*512  + dopplerBeam4A.checked*1024 + dopplerBeam4M.checked*2048
+                            plotDopplerBeamVisible(dopplerBeamVisible.checked, beamfilter)
                         }
 
-                        CCheck {
-                            id: dopplerBeamVisible
-                            Layout.fillWidth: true
-                            text: qsTr("Doppler Beams")
-                            onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
-                            Component.onCompleted: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
+                        RowLayout {
+                            spacing: 0
+                            CCheck {
+                                id: dopplerBeamVisible
+                                Layout.fillWidth: true
+                                text: qsTr("Doppler Beams")
+                                onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
+                                Component.onCompleted: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
+                            }
                         }
 
-                        CCheck {
-                            id: dopplerBeam1Visible
-                            enabled: true
-                            checked: true
-                            text: "1"
-
-                            onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
+                        RowLayout {
+                            visible: dopplerBeamVisible.checked
+                            spacing: 4
+                            Item { width: 8 }
+                            CCheck { id: dopplerBeam1A; checked: true; text: "1 " + qsTr("Depth");    onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible() }
+                            CCheck { id: dopplerBeam1V; checked: true; text: "1 " + qsTr("Velocity"); onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible() }
+                            CCheck { id: dopplerBeam1M; checked: true; text: "1 " + qsTr("Mode");     onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible() }
                         }
 
-                        CCheck {
-                            id: dopplerBeam2Visible
-                            leftPadding: 0
-                            enabled: true
-                            checked: true
-                            text: "2"
-                            onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
+                        RowLayout {
+                            visible: dopplerBeamVisible.checked
+                            spacing: 4
+                            Item { width: 8 }
+                            CCheck { id: dopplerBeam2A; checked: true; text: "2 " + qsTr("Depth");    onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible() }
+                            CCheck { id: dopplerBeam2V; checked: true; text: "2 " + qsTr("Velocity"); onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible() }
+                            CCheck { id: dopplerBeam2M; checked: true; text: "2 " + qsTr("Mode");     onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible() }
                         }
 
-                        CCheck {
-                            id: dopplerBeam3Visible
-                            leftPadding: 0
-                            enabled: true
-                            checked: true
-                            text: "3"
-                            onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
+                        RowLayout {
+                            visible: dopplerBeamVisible.checked
+                            spacing: 4
+                            Item { width: 8 }
+                            CCheck { id: dopplerBeam3A; checked: true; text: "3 " + qsTr("Depth");    onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible() }
+                            CCheck { id: dopplerBeam3V; checked: true; text: "3 " + qsTr("Velocity"); onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible() }
+                            CCheck { id: dopplerBeam3M; checked: true; text: "3 " + qsTr("Mode");     onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible() }
                         }
 
-                        CCheck {
-                            id: dopplerBeam4Visible
-                            leftPadding: 0
-                            enabled: true
-                            checked: true
-                            text: "4"
-                            onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
+                        RowLayout {
+                            visible: dopplerBeamVisible.checked
+                            spacing: 4
+                            Item { width: 8 }
+                            CCheck { id: dopplerBeam4A; checked: true; text: "4 " + qsTr("Depth");    onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible() }
+                            CCheck { id: dopplerBeam4V; checked: true; text: "4 " + qsTr("Velocity"); onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible() }
+                            CCheck { id: dopplerBeam4M; checked: true; text: "4 " + qsTr("Mode");     onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible() }
+                        }
+                    }
+
+                    ColumnLayout {
+                        visible: instruments > 1
+                        id: dopplerInstrumentVisibleGroup
+                        spacing: 0
+                        function updateDopplerInstrumentVisible() {
+                            var linefilter = dopplerInstrumentXVisible.checked*1 +
+                                             dopplerInstrumentYVisible.checked*2 +
+                                             dopplerInstrumentZVisible.checked*4 +
+                                             dopplerInstrumentAVisible.checked*8 +
+                                             dopplerInstrumentDstVisible.checked*16
+                            plotDopplerInstrumentVisible(dopplerInstrumentVisible.checked, linefilter)
                         }
 
-                        CCheck {
-                            id: dopplerBeamAmpVisible
-                            enabled: true
-                            checked: true
-                            text: "A"
-                            onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
+                        RowLayout {
+                            spacing: 0
+                            CCheck {
+                                id: dopplerInstrumentVisible
+                                Layout.fillWidth: true
+                                text: qsTr("Doppler Instrument")
+                                onCheckedChanged: dopplerInstrumentVisibleGroup.updateDopplerInstrumentVisible()
+                                Component.onCompleted: dopplerInstrumentVisibleGroup.updateDopplerInstrumentVisible()
+                            }
                         }
 
-                        CCheck {
-                            id: dopplerBeamModeVisible
-                            leftPadding: 0
-                            enabled: true
-                            checked: true
-                            text: "M"
-                            onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
+                        RowLayout {
+                            visible: dopplerInstrumentVisible.checked
+                            spacing: 4
+                            Item { width: 8 }
+                            CCheck { id: dopplerInstrumentXVisible;   checked: true; text: "X";                   onCheckedChanged: dopplerInstrumentVisibleGroup.updateDopplerInstrumentVisible() }
+                            CCheck { id: dopplerInstrumentYVisible;   checked: true; text: "Y";                   onCheckedChanged: dopplerInstrumentVisibleGroup.updateDopplerInstrumentVisible() }
+                            CCheck { id: dopplerInstrumentZVisible;   checked: true; text: "Z";                   onCheckedChanged: dopplerInstrumentVisibleGroup.updateDopplerInstrumentVisible() }
+                            CCheck { id: dopplerInstrumentAVisible;   checked: true; text: qsTr("Abs. Velocity"); onCheckedChanged: dopplerInstrumentVisibleGroup.updateDopplerInstrumentVisible() }
+                            CCheck { id: dopplerInstrumentDstVisible; checked: true; text: qsTr("Depth");         onCheckedChanged: dopplerInstrumentVisibleGroup.updateDopplerInstrumentVisible() }
                         }
                     }
 
                     RowLayout {
                         visible: instruments > 1
                         spacing: 0
+
                         CCheck {
-                            id: dopplerInstrumentVisible
+                            id: dvlLegendVisible
                             Layout.fillWidth: true
-                            text: qsTr("Doppler Instrument")
-                            onCheckedChanged: plotDopplerInstrumentVisible(checked)
-                            Component.onCompleted: plotDopplerInstrumentVisible(checked)
+                            text: qsTr("DVL Legend")
+                            checked: true
+                            onCheckedChanged: plotDVLLegendVisible(checked)
+                            Component.onCompleted: plotDVLLegendVisible(checked)
                         }
 
-                        CCheck {
-                            id: dopplerInstrumentXVisible
-                            enabled: false
-                            checked: true
-                            text: "X"
-                            //                        onCheckedChanged: setDopplerInstrumentVis(checked)
-                            //                        Component.onCompleted: setDopplerInstrumentVis(checked)
-                        }
+                        CCombo {
+                            visible: dvlLegendVisible.checked
+                            id: dvlLegendPosition
+                            enabled: dvlLegendVisible.checked
+                            model: [qsTr("Top"), qsTr("Center"), qsTr("Bottom")]
+                            currentIndex: 0
+                            onCurrentIndexChanged: plotDVLLegendPosition(currentIndex)
+                            Component.onCompleted: plotDVLLegendPosition(currentIndex)
 
-                        CCheck {
-                            id: dopplerInstrumentYVisible
-                            enabled: false
-                            checked: true
-                            text: "Y"
-                            //                        onCheckedChanged: setDopplerInstrumentVis(checked)
-                            //                        Component.onCompleted: setDopplerInstrumentVis(checked)
-                        }
-
-                        CCheck {
-                            id: dopplerInstrumentZVisible
-                            enabled: false
-                            checked: true
-                            text: "Z"
-                            //                        onCheckedChanged: setDopplerInstrumentVis(checked)
-                            //                        Component.onCompleted: setDopplerInstrumentVis(checked)
+                            Settings {
+                                category: "Plot2D_" + plot.indx
+                                property alias dvlLegendPosition: dvlLegendPosition.currentIndex
+                            }
                         }
                     }
 
@@ -1320,7 +1336,25 @@ WaterFall {
                         property alias temperatureVisible: temperatureVisible.checked
                         property alias gridVisible: gridVisible.checked
                         property alias dopplerBeamVisible: dopplerBeamVisible.checked
+                        property alias dopplerBeam1A: dopplerBeam1A.checked
+                        property alias dopplerBeam1V: dopplerBeam1V.checked
+                        property alias dopplerBeam1M: dopplerBeam1M.checked
+                        property alias dopplerBeam2A: dopplerBeam2A.checked
+                        property alias dopplerBeam2V: dopplerBeam2V.checked
+                        property alias dopplerBeam2M: dopplerBeam2M.checked
+                        property alias dopplerBeam3A: dopplerBeam3A.checked
+                        property alias dopplerBeam3V: dopplerBeam3V.checked
+                        property alias dopplerBeam3M: dopplerBeam3M.checked
+                        property alias dopplerBeam4A: dopplerBeam4A.checked
+                        property alias dopplerBeam4V: dopplerBeam4V.checked
+                        property alias dopplerBeam4M: dopplerBeam4M.checked
                         property alias dopplerInstrumentVisible: dopplerInstrumentVisible.checked
+                        property alias dopplerInstrumentX: dopplerInstrumentXVisible.checked
+                        property alias dopplerInstrumentY: dopplerInstrumentYVisible.checked
+                        property alias dopplerInstrumentZ: dopplerInstrumentZVisible.checked
+                        property alias dopplerInstrumentA: dopplerInstrumentAVisible.checked
+                        property alias dopplerInstrumentDst: dopplerInstrumentDstVisible.checked
+                        property alias dvlLegendVisible: dvlLegendVisible.checked
                         property alias horisontalVertical: horisontalVertical.checked
                         property alias loupeVisible: loupeVisible.checked
                         property alias loupeSize: loupeSize.value
