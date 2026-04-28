@@ -816,6 +816,64 @@ Column {
         color: AppPalette.textMuted; font.pixelSize: 12; width: parent.width; wrapMode: Text.WordWrap
     }
 
+    // ── Recent files ──────────────────────────────────────────────────────
+
+    Column {
+        visible: recentOpenedFiles.length > 0
+        width: parent.width
+        spacing: 3
+
+        Text {
+            text: qsTr("Recently opened:")
+            color: AppPalette.textMuted
+            font.pixelSize: 11
+            leftPadding: 2
+        }
+
+        Repeater {
+            model: Math.min(recentOpenedFiles.length, 3)
+
+            Row {
+                width: parent.width
+                spacing: 4
+
+                property string filePath: recentOpenedFiles[index] || ""
+
+                Rectangle {
+                    width: parent.width - 34
+                    height: 28; radius: 6
+                    color: recentMa.containsMouse ? AppPalette.cardHover : AppPalette.card
+                    border.width: 1; border.color: AppPalette.border
+                    Behavior on color { ColorAnimation { duration: 80 } }
+
+                    Text {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8; anchors.rightMargin: 8
+                        text: connectionViewer.urlDisplay(parent.parent.filePath)
+                        color: AppPalette.text; font.pixelSize: 11
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideLeft
+                    }
+
+                    MouseArea {
+                        id: recentMa
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: connectionViewer.openRecentFile(parent.parent.filePath)
+                    }
+                }
+
+                IconBtn {
+                    iconSource: "qrc:/icons/ui/x.svg"
+                    width: 28; height: 28
+                    toolTipText: qsTr("Remove")
+                    onClicked: connectionViewer.removeRecentFile(parent.filePath)
+                }
+            }
+        }
+    }
+
     // ── Device settings ───────────────────────────────────────────────────
 
     DeviceSettingsPage {
