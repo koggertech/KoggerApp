@@ -2,6 +2,7 @@
 
 #include <QtMath>
 #include <QDebug>
+#include <QElapsedTimer>
 #include <QThread>
 #include <functional>
 #include <limits>
