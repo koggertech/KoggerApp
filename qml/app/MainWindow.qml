@@ -594,7 +594,21 @@ ApplicationWindow {
             anchors.bottom: parent.bottom
             anchors.leftMargin: root.settingsInsetLeft
             anchors.rightMargin: root.settingsInsetRight
+            anchors.bottomMargin: consoleDrawer.height
             store: workspaceStore
+        }
+
+        ConsolePanelDrawer {
+            id: consoleDrawer
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: root.settingsInsetLeft
+            anchors.rightMargin: root.settingsInsetRight
+            z: ZOrder.consolePanel
+            consoleOpen: theme ? theme.consoleVisible : false
+            maxHeight: parent.height
+            hotActionsRight: hotActions.x + hotActions.width
         }
     }
 }

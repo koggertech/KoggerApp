@@ -10,6 +10,7 @@ QtObject {
     readonly property int maximizedPane:     140    // maximized/fullscreen pane tile
 
     // ── MainWindow level ─────────────────────────────────────────────────────
+    readonly property int consolePanel:       10    // bottom console drawer
     readonly property int hotActions:        220    // HotActionsPanel collapsed
     readonly property int hotActionsActive: 2205    // HotActionsPanel when settings open
 

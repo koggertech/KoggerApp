@@ -24,6 +24,8 @@ Pane2DSettingsPage 1.0 Pane2DSettingsPage.qml
 Pane3DSettingsPage 1.0 Pane3DSettingsPage.qml
 ModeSettingsPanel 1.0 ModeSettingsPanel.qml
 
+ConsolePanelDrawer 1.0 ConsolePanelDrawer.qml
+
 ActionChip 1.0 ActionChip.qml
 CircleIconButton 1.0 CircleIconButton.qml
 SettingsGearButton 1.0 SettingsGearButton.qml

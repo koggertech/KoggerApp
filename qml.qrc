@@ -28,6 +28,7 @@
         <file>qml/app/Pane2DSettingsPage.qml</file>
         <file>qml/app/Pane3DSettingsPage.qml</file>
         <file>qml/app/ModeSettingsPanel.qml</file>
+        <file>qml/app/ConsolePanelDrawer.qml</file>
         <file>qml/app/ActionChip.qml</file>
         <file>qml/app/CircleIconButton.qml</file>
         <file>qml/app/SettingsGearButton.qml</file>
