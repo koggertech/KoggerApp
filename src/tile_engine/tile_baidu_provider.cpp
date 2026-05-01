@@ -3,6 +3,7 @@
 #include <QtMath>
 #include <cmath>
 #include <algorithm>
+#include <limits>
 
 namespace map {
 
@@ -245,8 +246,26 @@ std::tuple<int32_t, int32_t, int32_t> TileBaiduProviderBase::lonToTileXWithWrapA
         qWarning() << "Baidu: invalid zoom level:" << z;
         return {-1, -1, -1};
     }
-    int32_t tileStart = lonToTileX(lonStart, z);
-    int32_t tileEnd = lonToTileX(lonEnd - 1e-9, z);
+
+    // Baidu's BD-MC X depends on latitude (because the GCJ-02 ↔ WGS84 chain
+    // couples lon to lat). The base lonToTileX uses lat=0 which is wrong for
+    // viewing inside China. Sample the X across a few representative latitudes
+    // covering Baidu's coverage area and take the widest possible range — this
+    // guarantees the visible tiles aren't cut at the right (or left) edge.
+    const double tileSize = tileSizeMetersForZ(z);
+    auto xAt = [&](double lon, double lat) -> int32_t {
+        double mcX, mcY;
+        wgs84ToMercator(lat, lon, mcX, mcY);
+        return static_cast<int32_t>(std::floor(mcX / tileSize));
+    };
+
+    constexpr double kSampleLats[] = {0.0, 22.0, 35.0, 50.0};
+    int32_t tileStart = std::numeric_limits<int32_t>::max();
+    int32_t tileEnd = std::numeric_limits<int32_t>::min();
+    for (double lat : kSampleLats) {
+        tileStart = std::min(tileStart, xAt(lonStart, lat));
+        tileEnd = std::max(tileEnd, xAt(lonEnd - 1e-9, lat));
+    }
     // Baidu coverage is regional (China); antimeridian wrap is not meaningful here.
     return {tileStart, tileEnd, -1};
 }
@@ -388,7 +407,11 @@ QString TileBaiduHybridProvider::createURL(const map::TileIndex& tileIndx) const
 QString TileBaiduHybridProvider::createOverlayURL(const map::TileIndex& tileIndx) const
 {
     const int32_t rawY = flipBaiduY(tileIndx.y_, tileIndx.z_);
-    return QString(QStringLiteral("https://maponline%1.bdimg.com/tile/?qt=satepclabel&styles=sl&x=%2&y=%3&z=%4&v=020&udt=20231201"))
+    // Same vtile endpoint as the schema layer (which is confirmed working) but
+    // with styles=sl (street/label) instead of pl (plain map). This returns a
+    // transparent PNG containing only roads + labels, suitable as an overlay
+    // on top of the satellite imagery.
+    return QString(QStringLiteral("https://maponline%1.bdimg.com/tile/?qt=vtile&styles=sl&x=%2&y=%3&z=%4&scaler=1&udt=20231201"))
         .arg(subdomainFor(tileIndx.x_, rawY))
         .arg(tileIndx.x_)
         .arg(rawY)

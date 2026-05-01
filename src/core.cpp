@@ -1963,7 +1963,7 @@ QVariantList Core::getMapTileProviders() const
     baiduHybrid["id"] = map::kBaiduHybridProviderId;
     baiduHybrid["name"] = QStringLiteral("Baidu Hybrid");
     baiduHybrid["layer_type"] = QStringLiteral("satellite");
-    //providers.append(baiduHybrid);
+    providers.append(baiduHybrid);
 
     QVariantMap baiduSchema;
     baiduSchema["id"] = map::kBaiduSchemaProviderId;

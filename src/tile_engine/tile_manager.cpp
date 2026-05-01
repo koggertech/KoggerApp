@@ -272,12 +272,8 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
     QSet<TileIndex> indxRequest;
 
     if (boundaryTile == -1) {
-        // Use per-LLA min/max X computed via llaToTileIndex (which knows the real
-        // latitude) instead of lonStartTile/lonEndTile. For Google/OSM these are
-        // identical (X doesn't depend on lat); for projections with lat-dependent
-        // X (e.g. Baidu BD-MC + GCJ-02) it's the only correct range.
         const qint64 xTileCountSigned =
-            static_cast<qint64>(maxX) - static_cast<qint64>(minX) + 1;
+            static_cast<qint64>(lonEndTile) - static_cast<qint64>(lonStartTile) + 1;
         const qint64 yTileCountSigned =
             static_cast<qint64>(maxY) - static_cast<qint64>(minY) + 1;
         if (xTileCountSigned <= 0 || yTileCountSigned <= 0) {
@@ -287,7 +283,7 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
         const uint64_t yTileCount = static_cast<uint64_t>(yTileCountSigned);
         reqSize = xTileCount * yTileCount;
         if (reqSize < minTilesCapacity_) {
-            for (int x = minX; x <= maxX; ++x) {
+            for (int x = lonStartTile; x <= lonEndTile; ++x) {
                 for (int y = minY; y <= maxY; ++y) {
                     TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
                     indxRequest.insert(tileIndx);
