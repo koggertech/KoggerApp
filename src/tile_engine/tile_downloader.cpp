@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QPainter>
 
 #include "tile_provider_ids.h"
 
@@ -152,15 +153,25 @@ void TileDownloader::startNextDownload()
 
     QNetworkRequest request(url);
     if (auto sharedProvider = tileProvider_.lock(); sharedProvider) {
-        if (sharedProvider->getProviderId() == kOsmProviderId) {
-            request.setHeader(QNetworkRequest::UserAgentHeader, "KoggerApp/1.0 (contact: support@kogger.tech)");
-        }
+        applyProviderHeaders(request, sharedProvider->getProviderId());
     }
     QNetworkReply* reply = networkManager_->get(request);
     reply->setProperty("tileIndex", QVariant::fromValue(index));
 
     activeReplies_.insert(reply);
     activeDownloads_++;
+}
+
+void TileDownloader::applyProviderHeaders(QNetworkRequest& request, int32_t providerId) const
+{
+    if (providerId == kOsmProviderId) {
+        request.setHeader(QNetworkRequest::UserAgentHeader, "KoggerApp/1.0 (contact: support@kogger.tech)");
+    } else if (providerId == kBaiduSatProviderId ||
+               providerId == kBaiduSchemaProviderId ||
+               providerId == kBaiduHybridProviderId) {
+        request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 KoggerApp/1.0");
+        request.setRawHeader("Referer", "https://map.baidu.com/");
+    }
 }
 
 void TileDownloader::onTileDownloaded(QNetworkReply *reply)
@@ -171,10 +182,21 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
     }
 
     TileIndex index = reply->property("tileIndex").value<TileIndex>();
+    const bool isOverlayStage = reply->property("isOverlay").toBool();
 
     if (reply->error() != QNetworkReply::NoError) {
         if (reply->error() == QNetworkReply::OperationCanceledError) {
             emit downloadStopped(index);
+        }
+        else if (isOverlayStage) {
+            // Overlay fetch failed — fall back to the base satellite image we
+            // already have, so the tile still renders without labels.
+            QImage baseImage = reply->property("baseImage").value<QImage>();
+            if (!baseImage.isNull()) {
+                emit tileDownloaded(index, baseImage);
+            } else {
+                emit downloadFailed(index, reply->errorString());
+            }
         }
         else {
             emit downloadFailed(index, reply->errorString());
@@ -183,9 +205,61 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
     else {
         QByteArray imageData = reply->readAll();
         QImage image;
+        const bool decoded = image.loadFromData(imageData);
 
-        if (image.loadFromData(imageData)) {
+        if (isOverlayStage) {
+            // Stage 2: composite overlay onto the previously downloaded base.
+            QImage baseImage = reply->property("baseImage").value<QImage>();
+            if (!baseImage.isNull()) {
+                if (decoded && !image.isNull()) {
+                    QImage merged = baseImage.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+                    QPainter painter(&merged);
+                    painter.drawImage(merged.rect(), image, image.rect());
+                    painter.end();
+                    emit tileDownloaded(index, merged);
+                } else {
+                    // Couldn't decode overlay — graceful fallback to base only.
+                    emit tileDownloaded(index, baseImage);
+                }
+            } else if (decoded) {
                 emit tileDownloaded(index, image);
+            } else {
+                emit downloadFailed(index, "Failed to load overlay image");
+            }
+        }
+        else if (decoded) {
+            // Stage 1 succeeded. If the provider wants an overlay (Baidu hybrid),
+            // launch a second request and composite when it finishes; otherwise
+            // emit the tile right away.
+            QString overlayUrl;
+            if (auto sharedProvider = tileProvider_.lock(); sharedProvider) {
+                overlayUrl = sharedProvider->createOverlayURL(index);
+            }
+
+            if (overlayUrl.isEmpty()) {
+                emit tileDownloaded(index, image);
+            } else {
+                QUrl url(overlayUrl);
+                if (url.isValid()) {
+                    QNetworkRequest oreq(url);
+                    if (auto sharedProvider = tileProvider_.lock(); sharedProvider) {
+                        applyProviderHeaders(oreq, sharedProvider->getProviderId());
+                    }
+                    QNetworkReply* oreply = networkManager_->get(oreq);
+                    oreply->setProperty("tileIndex", QVariant::fromValue(index));
+                    oreply->setProperty("isOverlay", true);
+                    oreply->setProperty("baseImage", QVariant::fromValue(image));
+                    activeReplies_.insert(oreply);
+                    // Note: don't decrement activeDownloads_ here — the overlay
+                    // reply continues to occupy this slot until it completes.
+                    activeReplies_.remove(reply);
+                    reply->deleteLater();
+                    return;
+                } else {
+                    // Bad overlay URL — return base image as-is.
+                    emit tileDownloaded(index, image);
+                }
+            }
         }
         else {
             emit downloadFailed(index, "Failed to load image from data");

@@ -1924,6 +1924,15 @@ QString Core::getMapTileProviderName() const
     if (savedProvider == map::kOsmProviderId) {
         return QStringLiteral("OpenStreetMap");
     }
+    if (savedProvider == map::kBaiduSatProviderId) {
+        return QStringLiteral("Baidu Satellite");
+    }
+    if (savedProvider == map::kBaiduSchemaProviderId) {
+        return QStringLiteral("Baidu Schema");
+    }
+    if (savedProvider == map::kBaiduHybridProviderId) {
+        return QStringLiteral("Baidu Hybrid");
+    }
 
     return QStringLiteral("Google Satellite");
 }
@@ -1943,6 +1952,24 @@ QVariantList Core::getMapTileProviders() const
     google["name"] = QStringLiteral("Google Satellite");
     google["layer_type"] = QStringLiteral("satellite");
     providers.append(google);
+
+    QVariantMap baiduSat;
+    baiduSat["id"] = map::kBaiduSatProviderId;
+    baiduSat["name"] = QStringLiteral("Baidu Satellite");
+    baiduSat["layer_type"] = QStringLiteral("satellite");
+    providers.append(baiduSat);
+
+    QVariantMap baiduHybrid;
+    baiduHybrid["id"] = map::kBaiduHybridProviderId;
+    baiduHybrid["name"] = QStringLiteral("Baidu Hybrid");
+    baiduHybrid["layer_type"] = QStringLiteral("satellite");
+    //providers.append(baiduHybrid);
+
+    QVariantMap baiduSchema;
+    baiduSchema["id"] = map::kBaiduSchemaProviderId;
+    baiduSchema["name"] = QStringLiteral("Baidu Schema");
+    baiduSchema["layer_type"] = QStringLiteral("street");
+    providers.append(baiduSchema);
 
     return providers;
 }

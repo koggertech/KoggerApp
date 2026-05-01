@@ -6,6 +6,7 @@ HEADERS *= \
 	$$PWD/tile_downloader.h \
 	$$PWD/tile_google_provider.h \
 	$$PWD/tile_osm_provider.h \
+	$$PWD/tile_baidu_provider.h \
 	$$PWD/tile_manager.h \
 	$$PWD/tile_provider.h \
 	$$PWD/tile_provider_ids.h \
@@ -16,6 +17,7 @@ SOURCES *= \
 	$$PWD/tile_downloader.cpp \
 	$$PWD/tile_google_provider.cpp \
 	$$PWD/tile_osm_provider.cpp \
+	$$PWD/tile_baidu_provider.cpp \
 	$$PWD/tile_manager.cpp \
 	$$PWD/tile_provider.cpp \
 	$$PWD/tile_set.cpp
