@@ -1069,7 +1069,7 @@ ColumnLayout {
         spacing: 4
         CheckButton { // FAKE_COORDS
             id: zeroingPosButton
-            icon.source: "qrc:/icons/ui/propeller_off.svg"
+            icon.source: "qrc:/icons/ui/route_crossed_out.svg"
             backColor: theme.controlSolidBackColor
             borderWidth: 0
             implicitWidth: theme.controlHeight
@@ -1084,6 +1084,26 @@ ColumnLayout {
 
             Settings {
                 property alias zeroingPosButtonCheched: zeroingPosButton.checked
+            }
+        }
+
+        CheckButton { // ZERO_BOTTOM_TRACK
+            id: zeroingBottomTrackButton
+            icon.source: "qrc:/icons/ui/double_route_crossed_out.svg"
+            backColor: theme.controlSolidBackColor
+            borderWidth: 0
+            implicitWidth: theme.controlHeight
+
+            onCheckedChanged: {
+                core.setBottomTrackZeroing(checked);
+            }
+
+            Component.onCompleted: {
+                core.setBottomTrackZeroing(checked);
+            }
+
+            Settings {
+                property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked
             }
         }
 
@@ -1189,7 +1209,11 @@ ColumnLayout {
             implicitWidth: theme.controlHeight
 
             onClicked: {
-                core.closeLogFile();
+                if (core.openedFilePath.length > 0) {
+                    core.closeLogFile();
+                } else {
+                    core.onRequestClearing();
+                }
             }
         }
     }

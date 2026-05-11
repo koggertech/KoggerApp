@@ -68,6 +68,7 @@ public slots:
     void applySurfaceZoomChange(const TileMap& cached, bool fullCoverage);
     void setMinZ(float v);
     void setMaxZ(float v);
+    void setBottomTrackZeroDepth(bool state);
 
     // tasks
     void bottomTrackProcessing(const DatasetChannel& ch1, const DatasetChannel& ch2, const BottomTrackParam& p, bool manual, bool redrawAll);

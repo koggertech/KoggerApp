@@ -157,6 +157,7 @@ public slots:
 #endif
 
     Q_INVOKABLE void setPosZeroing(bool state);
+    Q_INVOKABLE void setBottomTrackZeroing(bool state);
     Q_INVOKABLE bool getIsFileOpening() const;
     Q_INVOKABLE bool getIsAppendMode() const;
     Q_INVOKABLE QString getFileTitle() const;
@@ -313,6 +314,7 @@ private:
     int  fixBlackStripesBackwardSteps_;
 
     bool isActiveZeroing_;
+    bool isBottomTrackZeroing_;
 
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)

@@ -774,6 +774,11 @@ void DataProcessor::bottomTrackProcessing(const DatasetChannel &ch1, const Datas
                               Q_ARG(bool, redrawAll));
 }
 
+void DataProcessor::setBottomTrackZeroDepth(bool state)
+{
+    QMetaObject::invokeMethod(worker_, "setBottomTrackZeroDepth", Qt::QueuedConnection, Q_ARG(bool, state));
+}
+
 void DataProcessor::setSurfaceColorTableThemeById(int id)
 {
     QMetaObject::invokeMethod(worker_, "setSurfaceThemeId", Qt::QueuedConnection, Q_ARG(int, id));

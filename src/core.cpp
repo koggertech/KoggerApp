@@ -41,6 +41,7 @@ Core::Core() :
     fixBlackStripesForwardSteps_(0),
     fixBlackStripesBackwardSteps_(0),
     isActiveZeroing_(false),
+    isBottomTrackZeroing_(false),
     lastSub1_(0),
     lastSub2_(0),
     mosaicIndexProvider_(6200)
@@ -2033,6 +2034,15 @@ void Core::setPosZeroing(bool state)
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->setActiveZeroing(isActiveZeroing_);
+    }
+}
+
+void Core::setBottomTrackZeroing(bool state)
+{
+    isBottomTrackZeroing_ = state;
+
+    if (dataProcessor_) {
+        dataProcessor_->setBottomTrackZeroDepth(isBottomTrackZeroing_);
     }
 }
 

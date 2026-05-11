@@ -182,6 +182,11 @@ void ComputeWorker::setMaxZ(float v)
     isobaths_.setMaxZ(v);
 }
 
+void ComputeWorker::setBottomTrackZeroDepth(bool state)
+{
+    bottom_.setZeroDepth(state);
+}
+
 void ComputeWorker::bottomTrackProcessing(const DatasetChannel& ch1, const DatasetChannel& ch2, const BottomTrackParam& p, bool manual, bool redrawAll)
 {
     emit bottomTrackStarted();
