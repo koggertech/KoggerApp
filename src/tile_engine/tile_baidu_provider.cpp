@@ -297,8 +297,6 @@ map::TileInfo TileBaiduProviderBase::indexToTileInfo(map::TileIndex tileIndx, ma
     const double mcXMax = (tileIndx.x_ + 1) * tileSize;
     const double mcYMin = rawY * tileSize;            // south edge in Baidu (y up)
     const double mcYMax = (rawY + 1) * tileSize;      // north edge
-    const double mcXCenter = (mcXMin + mcXMax) * 0.5;
-    const double mcYCenter = (mcYMin + mcYMax) * 0.5;
 
     // Compute the four true WGS84 corners of the BD-MC tile. Adjacent tiles
     // share the *same* BD-MC corner point at their shared edge endpoints, so
