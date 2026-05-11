@@ -2154,17 +2154,26 @@ void Core::createLinkManagerConnections()
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkOpened,  deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLinkOpened,   linkManagerConnection));
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkDeleted, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLinkDeleted,  linkManagerConnection));
 
-    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkOpened,  this, [this]() {
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkOpened,  this, [this](QUuid uuid) {
 #ifdef SEPARATE_READING
                                                                                                                                      tryOpenedfilePath_.clear();
 #endif
                                                                                                                                      datasetPtr_->setState(Dataset::DatasetState::kConnection);
+
+                                                                                                                                     if (!openLinkOrder_.contains(uuid)) openLinkOrder_.append(uuid);
+                                                                                                                                     emit fileTitleChanged();
                                                                                                                                  }, linkManagerConnection));
 
-    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkClosed,  this, [this]() {
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkClosed,  this, [this](QUuid uuid) {
                                                                                                                                      if (scene3dViewPtr_) {
                                                                                                                                          scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
                                                                                                                                      }
+
+                                                                                                                                     if (openLinkOrder_.removeOne(uuid)) emit fileTitleChanged();
+                                                                                                                                 }, linkManagerConnection));
+
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkDeleted, this, [this](QUuid uuid) {
+                                                                                                                                     if (openLinkOrder_.removeOne(uuid)) emit fileTitleChanged();
                                                                                                                                  }, linkManagerConnection));
 
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::sendDoRequestAll, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onSendRequestAll, linkManagerConnection));
@@ -2234,11 +2243,22 @@ bool Core::getIsAppendMode() const
 
 QString Core::getFileTitle() const
 {
-    if (appendedFiles_.isEmpty()) return {};
-    QStringList names;
-    for (const QString& p : appendedFiles_)
-        names.append(p.section('/', -1).section('\\', -1));
-    return names.join(" + ");
+    if (!appendedFiles_.isEmpty()) {
+        QStringList names;
+        for (const QString& p : appendedFiles_)
+            names.append(p.section('/', -1).section('\\', -1));
+        return names.join(" + ");
+    }
+    if (!openLinkOrder_.isEmpty()) {
+        const auto names = linkManagerWrapperPtr_->getLinkNames();
+        QStringList result;
+        for (const QUuid& uuid : openLinkOrder_) {
+            const auto it = names.find(uuid);
+            if (it != names.end()) result.append(it.value());
+        }
+        return result.join(" + ");
+    }
+    return {};
 }
 
 void Core::fixFilePathString(QString& filePath) const

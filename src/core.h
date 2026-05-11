@@ -300,6 +300,7 @@ private:
     bool isFileOpening_;
     bool isAppendMode_ = false;
     QStringList appendedFiles_;
+    QList<QUuid> openLinkOrder_;
 
     bool isGPSAlive_;
     bool isUseGPS_;
