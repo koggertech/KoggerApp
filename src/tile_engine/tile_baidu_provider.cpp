@@ -9,6 +9,9 @@ namespace map {
 
 namespace {
 
+constexpr const char* kBaiduSatTilesetVersion = "009";
+constexpr const char* kBaiduUdt = "20231201";
+
 // BD-MC projection lookup tables (publicly known Baidu Mercator coefficients).
 // Bands selected by absolute latitude for LL2MC, by absolute mc_y for MC2LL.
 const double LLBAND[6] = {75.0, 60.0, 45.0, 30.0, 15.0, 0.0};
@@ -361,11 +364,13 @@ TileBaiduSatProvider::TileBaiduSatProvider() :
 QString TileBaiduSatProvider::createURL(const map::TileIndex& tileIndx) const
 {
     const int32_t rawY = flipBaiduY(tileIndx.y_, tileIndx.z_);
-    return QString(QStringLiteral("https://maponline%1.bdimg.com/starpic/?qt=satepc&u=x=%2;y=%3;z=%4;v=009;type=sate&fm=46&udt=20231201"))
+    return QString(QStringLiteral("https://maponline%1.bdimg.com/starpic/?qt=satepc&u=x=%2;y=%3;z=%4;v=%5;type=sate&fm=46&udt=%6"))
         .arg(subdomainFor(tileIndx.x_, rawY))
         .arg(tileIndx.x_)
         .arg(rawY)
-        .arg(tileIndx.z_);
+        .arg(tileIndx.z_)
+        .arg(QLatin1String(kBaiduSatTilesetVersion))
+        .arg(QLatin1String(kBaiduUdt));
 }
 
 
@@ -379,11 +384,12 @@ TileBaiduSchemaProvider::TileBaiduSchemaProvider() :
 QString TileBaiduSchemaProvider::createURL(const map::TileIndex& tileIndx) const
 {
     const int32_t rawY = flipBaiduY(tileIndx.y_, tileIndx.z_);
-    return QString(QStringLiteral("https://maponline%1.bdimg.com/tile/?qt=vtile&x=%2&y=%3&z=%4&styles=pl&scaler=1&udt=20231201"))
+    return QString(QStringLiteral("https://maponline%1.bdimg.com/tile/?qt=vtile&x=%2&y=%3&z=%4&styles=pl&scaler=1&udt=%5"))
         .arg(subdomainFor(tileIndx.x_, rawY))
         .arg(tileIndx.x_)
         .arg(rawY)
-        .arg(tileIndx.z_);
+        .arg(tileIndx.z_)
+        .arg(QLatin1String(kBaiduUdt));
 }
 
 
@@ -397,11 +403,13 @@ TileBaiduHybridProvider::TileBaiduHybridProvider() :
 QString TileBaiduHybridProvider::createURL(const map::TileIndex& tileIndx) const
 {
     const int32_t rawY = flipBaiduY(tileIndx.y_, tileIndx.z_);
-    return QString(QStringLiteral("https://maponline%1.bdimg.com/starpic/?qt=satepc&u=x=%2;y=%3;z=%4;v=009;type=sate&fm=46&udt=20231201"))
+    return QString(QStringLiteral("https://maponline%1.bdimg.com/starpic/?qt=satepc&u=x=%2;y=%3;z=%4;v=%5;type=sate&fm=46&udt=%6"))
         .arg(subdomainFor(tileIndx.x_, rawY))
         .arg(tileIndx.x_)
         .arg(rawY)
-        .arg(tileIndx.z_);
+        .arg(tileIndx.z_)
+        .arg(QLatin1String(kBaiduSatTilesetVersion))
+        .arg(QLatin1String(kBaiduUdt));
 }
 
 QString TileBaiduHybridProvider::createOverlayURL(const map::TileIndex& tileIndx) const
@@ -411,11 +419,12 @@ QString TileBaiduHybridProvider::createOverlayURL(const map::TileIndex& tileIndx
     // with styles=sl (street/label) instead of pl (plain map). This returns a
     // transparent PNG containing only roads + labels, suitable as an overlay
     // on top of the satellite imagery.
-    return QString(QStringLiteral("https://maponline%1.bdimg.com/tile/?qt=vtile&styles=sl&x=%2&y=%3&z=%4&scaler=1&udt=20231201"))
+    return QString(QStringLiteral("https://maponline%1.bdimg.com/tile/?qt=vtile&styles=sl&x=%2&y=%3&z=%4&scaler=1&udt=%5"))
         .arg(subdomainFor(tileIndx.x_, rawY))
         .arg(tileIndx.x_)
         .arg(rawY)
-        .arg(tileIndx.z_);
+        .arg(tileIndx.z_)
+        .arg(QLatin1String(kBaiduUdt));
 }
 
 } // namespace map
