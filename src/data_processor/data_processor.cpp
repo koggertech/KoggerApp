@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QtGlobal>
 #include <cmath>
+#include "bt_worker.h"
 #include "compute_worker.h"
 #include "dataset.h"
 #include "data_processor_defs.h"
@@ -51,6 +52,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     : QObject(parent),
     datasetPtr_(datasetPtr),
     worker_(nullptr),
+    btWorker_(nullptr),
     state_(DataProcessorType::kUndefined),
     chartsCounter_(0),
     bottomTrackCounter_(0),
@@ -113,7 +115,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
 
     cameraRectCoalesceTimer_.setParent(this);
     cameraRectCoalesceTimer_.setSingleShot(true);
-    cameraRectCoalesceTimer_.setInterval(20);
+    cameraRectCoalesceTimer_.setInterval(8);
     connect(&cameraRectCoalesceTimer_, &QTimer::timeout, this, [this]() {
         if (shuttingDown_.load() || !cameraRectPending_) {
             return;
@@ -136,11 +138,18 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     worker_->moveToThread(&computeThread_);
 
     connect(worker_, &ComputeWorker::jobFinished,          this, &DataProcessor::onWorkerFinished,      Qt::QueuedConnection);
-    connect(worker_, &ComputeWorker::bottomTrackStarted,   this, &DataProcessor::onBottomTrackStarted,  Qt::QueuedConnection);
-    connect(worker_, &ComputeWorker::bottomTrackFinished,  this, &DataProcessor::onBottomTrackFinished, Qt::QueuedConnection);
 
     computeThread_.setObjectName("ComputeWorkerThread");
     computeThread_.start();
+
+    btWorker_ = new BtWorker(this, datasetPtr_);
+    btWorker_->moveToThread(&btThread_);
+
+    connect(btWorker_, &BtWorker::bottomTrackStarted,  this, &DataProcessor::onBottomTrackStarted,  Qt::QueuedConnection);
+    connect(btWorker_, &BtWorker::bottomTrackFinished, this, &DataProcessor::onBottomTrackFinished, Qt::QueuedConnection);
+
+    btThread_.setObjectName("BtWorkerThread");
+    btThread_.start();
 }
 
 DataProcessor::~DataProcessor()
@@ -157,13 +166,23 @@ DataProcessor::~DataProcessor()
         delete worker_;
         worker_ = nullptr;
     }
+
+    if (btWorker_) {
+        if (btThread_.isRunning()) {
+            btThread_.quit();
+            btThread_.wait();
+        }
+        delete btWorker_;
+        btWorker_ = nullptr;
+    }
 }
 
 void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
 {
     datasetPtr_ = datasetPtr;
 
-    QMetaObject::invokeMethod(worker_, "setDatasetPtr", Qt::QueuedConnection, Q_ARG(Dataset*, datasetPtr_));
+    QMetaObject::invokeMethod(worker_,   "setDatasetPtr", Qt::QueuedConnection, Q_ARG(Dataset*, datasetPtr_));
+    QMetaObject::invokeMethod(btWorker_, "setDatasetPtr", Qt::QueuedConnection, Q_ARG(Dataset*, datasetPtr_));
     updateDatasetSpatialIndexingState();
 }
 
@@ -198,8 +217,8 @@ void DataProcessor::prepareForFileClose(int timeoutMs)
     QEventLoop loop;
     QTimer timer;
     timer.setSingleShot(true);
-    QObject::connect(worker_, &ComputeWorker::jobFinished, &loop, &QEventLoop::quit);
-    QObject::connect(worker_, &ComputeWorker::bottomTrackFinished, &loop, &QEventLoop::quit);
+    QObject::connect(worker_,   &ComputeWorker::jobFinished,         &loop, &QEventLoop::quit);
+    QObject::connect(btWorker_, &BtWorker::bottomTrackFinished,      &loop, &QEventLoop::quit);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     timer.start(timeoutMs);
 
@@ -618,7 +637,7 @@ void DataProcessor::tryScheduleAutoBottomTrack(uint64_t indx)
 
     btBusy_ = true;
 
-    QMetaObject::invokeMethod(worker_, "bottomTrackProcessing", Qt::QueuedConnection,
+    QMetaObject::invokeMethod(btWorker_, "bottomTrackProcessing", Qt::QueuedConnection,
                               Q_ARG(DatasetChannel, ch1),
                               Q_ARG(DatasetChannel, ch2),
                               Q_ARG(BottomTrackParam, btP),
@@ -766,7 +785,7 @@ void DataProcessor::bottomTrackProcessing(const DatasetChannel &ch1, const Datas
         forceVisibleRefreshAfterBottomTrack_ = true;
     }
 
-    QMetaObject::invokeMethod(worker_, "bottomTrackProcessing", Qt::QueuedConnection,
+    QMetaObject::invokeMethod(btWorker_, "bottomTrackProcessing", Qt::QueuedConnection,
                               Q_ARG(DatasetChannel, ch1),
                               Q_ARG(DatasetChannel, ch2),
                               Q_ARG(BottomTrackParam, p),
@@ -776,7 +795,7 @@ void DataProcessor::bottomTrackProcessing(const DatasetChannel &ch1, const Datas
 
 void DataProcessor::setBottomTrackZeroDepth(bool state)
 {
-    QMetaObject::invokeMethod(worker_, "setBottomTrackZeroDepth", Qt::QueuedConnection, Q_ARG(bool, state));
+    QMetaObject::invokeMethod(btWorker_, "setBottomTrackZeroDepth", Qt::QueuedConnection, Q_ARG(bool, state));
 }
 
 void DataProcessor::setSurfaceColorTableThemeById(int id)
@@ -1120,7 +1139,6 @@ void DataProcessor::runCoalescedWork()
         auto it = pendingMosaicIndxs_.begin();
         while (it != pendingMosaicIndxs_.end()) {
             const int idx = *it;
-
             if (processedMosaic.contains(idx)) {
                 it = pendingMosaicIndxs_.erase(it);
                 continue;
@@ -1129,7 +1147,6 @@ void DataProcessor::runCoalescedWork()
                 ++it;
                 continue;
             }
-
             if (idx <= mosaicCounter_) {
                 wb.mosaicVec.append(idx);
                 mosaicInFlightIndxs_.insert(idx);
@@ -1139,7 +1156,6 @@ void DataProcessor::runCoalescedWork()
                 ++it;
             }
         }
-
         if (!wb.mosaicVec.isEmpty()) {
             std::sort(wb.mosaicVec.begin(), wb.mosaicVec.end());
         }
@@ -1544,7 +1560,7 @@ void DataProcessor::clearBottomTrackProcessing()
     btBusy_ = false;
     forceVisibleRefreshAfterBottomTrack_ = false;
 
-    QMetaObject::invokeMethod(worker_, "clearBottomTrack", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(btWorker_, "clearBottomTrack", Qt::QueuedConnection);
 }
 
 void DataProcessor::clearIsobathsProcessing()
@@ -2182,6 +2198,7 @@ void DataProcessor::shutdown()
 
     requestCancel();
     computeThread_.requestInterruption();
+    btThread_.requestInterruption();
     dbReadThread_.requestInterruption();
     dbWriteThread_.requestInterruption();
 
@@ -2209,6 +2226,14 @@ void DataProcessor::shutdown()
         computeThread_.requestInterruption();
         computeThread_.quit();
         waitForThread(computeThread_, 7000);
+    }
+
+    btThread_.quit();
+    if (!waitForThread(btThread_, 3000)) {
+        qWarning() << "BtWorkerThread did not stop in time; retrying graceful wait";
+        btThread_.requestInterruption();
+        btThread_.quit();
+        waitForThread(btThread_, 7000);
     }
 
     if (dbReader_) {

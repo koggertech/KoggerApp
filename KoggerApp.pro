@@ -37,7 +37,8 @@ HEADERS += \
     src/ui_state_serializer.h \
     src/xtf_conf.h \
     src/location_reader.h \
-    src/mosaic_index_provider.h
+    src/mosaic_index_provider.h \
+    src/ui_keepalive.h
 
 ### SOURCES
 SOURCES += \
@@ -60,7 +61,8 @@ SOURCES += \
     src/stream_list_model.cpp \
     src/ui_state_serializer.cpp \
     src/location_reader.cpp \
-    src/mosaic_index_provider.cpp
+    src/mosaic_index_provider.cpp \
+    src/ui_keepalive.cpp
 
 FLASHER {
     DEFINES += FLASHER

@@ -19,8 +19,7 @@ ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
       surfaceMesh_(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, defaultTileResolution),
       surface_(ownerDp),
       isobaths_(ownerDp),
-      mosaic_(ownerDp, this),
-      bottom_(ownerDp)
+      mosaic_(ownerDp, this)
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
 
@@ -30,7 +29,6 @@ ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
     isobaths_.setSurfaceMeshPtr(&surfaceMesh_);
     mosaic_.setSurfaceMeshPtr(&surfaceMesh_);
 
-    bottom_.setDatasetPtr(dataset_);
     mosaic_.setDatasetPtr(dataset_);
 }
 
@@ -46,7 +44,6 @@ void ComputeWorker::clearAll()
     surface_.clear();
     mosaic_.clear();
     isobaths_.clear();
-    bottom_.clear();
 
     surfaceMesh_.clear();
 }
@@ -74,11 +71,6 @@ void ComputeWorker::clearIsobaths()
     isobaths_.clear();
 }
 
-void ComputeWorker::clearBottomTrack()
-{
-    bottom_.clear();
-}
-
 inline bool ComputeWorker::isCanceled() const noexcept
 {
     return dp_ && dp_->isCancelRequested();
@@ -87,7 +79,6 @@ inline bool ComputeWorker::isCanceled() const noexcept
 void ComputeWorker::setDatasetPtr(Dataset* ds)
 {
     dataset_ = ds;
-    bottom_.setDatasetPtr(ds);
     mosaic_.setDatasetPtr(ds);
 }
 
@@ -180,20 +171,6 @@ void ComputeWorker::setMinZ(float v)
 void ComputeWorker::setMaxZ(float v)
 {
     isobaths_.setMaxZ(v);
-}
-
-void ComputeWorker::setBottomTrackZeroDepth(bool state)
-{
-    bottom_.setZeroDepth(state);
-}
-
-void ComputeWorker::bottomTrackProcessing(const DatasetChannel& ch1, const DatasetChannel& ch2, const BottomTrackParam& p, bool manual, bool redrawAll)
-{
-    emit bottomTrackStarted();
-
-    bottom_.bottomTrackProcessing(ch1, ch2, p, manual, redrawAll);
-
-    emit bottomTrackFinished();
 }
 
 void ComputeWorker::processBundle(const WorkBundle& wb)

@@ -37,6 +37,7 @@
 #include "internet_manager.h"
 #include "data_horizon.h"
 #include "mosaic_index_provider.h"
+#include "ui_keepalive.h"
 
 
 class Core : public QObject
@@ -343,4 +344,6 @@ signals:
     uint8_t   lastSub2_;
 
     MosaicIndexProvider mosaicIndexProvider_;
+
+    UiKeepalive uiKeepalive_;
 };

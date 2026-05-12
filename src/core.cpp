@@ -2490,6 +2490,8 @@ int Core::getDataProcessorState() const
 
 void Core::initAfterApp()
 {
+    uiKeepalive_.start();
+
     if (linkManagerWrapperPtr_) {
         linkManagerWrapperPtr_->startWorkerThread();
     }

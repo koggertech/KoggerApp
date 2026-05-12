@@ -27,6 +27,7 @@
 class Dataset;
 class BottomTrack;
 class ComputeWorker;
+class BtWorker;
 
 class DataProcessor : public QObject {
     Q_OBJECT
@@ -248,6 +249,9 @@ private:
     
     QThread computeThread_;
     ComputeWorker* worker_;
+
+    QThread btThread_;
+    BtWorker* btWorker_;
 
     DataProcessorType state_;
     uint64_t chartsCounter_;
