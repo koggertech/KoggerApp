@@ -37,6 +37,7 @@
 #include "internet_manager.h"
 #include "data_horizon.h"
 #include "mosaic_index_provider.h"
+#include "ui_keepalive.h"
 
 
 class Core : public QObject
@@ -158,6 +159,11 @@ public slots:
 #endif
 
     Q_INVOKABLE void setPosZeroing(bool state);
+    Q_INVOKABLE void setBottomTrackZeroing(bool state);
+    Q_INVOKABLE void setTgcGainNear(float val);
+    Q_INVOKABLE void setTgcGainFar(float val);
+    Q_INVOKABLE void setTgcCompensate(bool state);
+    Q_INVOKABLE void setMosaicSource(int source);
     Q_INVOKABLE bool getIsFileOpening() const;
     Q_INVOKABLE bool getIsAppendMode() const;
     Q_INVOKABLE QString getFileTitle() const;
@@ -240,6 +246,7 @@ private:
     QString getOpenedFilePath() const;
     void fixFilePathString(QString& filePath) const;
     void loadLLARefFromSettings();
+    void onTgcParamsChanged();
     int loadSavedMapTileProviderId() const;
     void resetRealtimeSessionState();
     void restoreRealtimeProcessingFlags();
@@ -303,6 +310,7 @@ private:
     bool isFileOpening_;
     bool isAppendMode_ = false;
     QStringList appendedFiles_;
+    QList<QUuid> openLinkOrder_;
 
     bool isGPSAlive_;
     bool isUseGPS_;
@@ -315,6 +323,7 @@ private:
     int  fixBlackStripesBackwardSteps_;
 
     bool isActiveZeroing_;
+    bool isBottomTrackZeroing_;
 
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)
@@ -343,4 +352,6 @@ signals:
     uint8_t   lastSub2_;
 
     MosaicIndexProvider mosaicIndexProvider_;
+
+    UiKeepalive uiKeepalive_;
 };

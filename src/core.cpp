@@ -47,6 +47,7 @@ Core::Core() :
     fixBlackStripesForwardSteps_(0),
     fixBlackStripesBackwardSteps_(0),
     isActiveZeroing_(false),
+    isBottomTrackZeroing_(false),
     lastSub1_(0),
     lastSub2_(0),
     mosaicIndexProvider_(6200)
@@ -1908,6 +1909,15 @@ QString Core::getMapTileProviderName() const
     if (savedProvider == map::kOsmProviderId) {
         return QStringLiteral("OpenStreetMap");
     }
+    if (savedProvider == map::kBaiduSatProviderId) {
+        return QStringLiteral("Baidu Satellite");
+    }
+    if (savedProvider == map::kBaiduSchemaProviderId) {
+        return QStringLiteral("Baidu Schema");
+    }
+    if (savedProvider == map::kBaiduHybridProviderId) {
+        return QStringLiteral("Baidu Hybrid");
+    }
 
     return QStringLiteral("Google Satellite");
 }
@@ -1927,6 +1937,24 @@ QVariantList Core::getMapTileProviders() const
     google["name"] = QStringLiteral("Google Satellite");
     google["layer_type"] = QStringLiteral("satellite");
     providers.append(google);
+
+    QVariantMap baiduSat;
+    baiduSat["id"] = map::kBaiduSatProviderId;
+    baiduSat["name"] = QStringLiteral("Baidu Satellite");
+    baiduSat["layer_type"] = QStringLiteral("satellite");
+    providers.append(baiduSat);
+
+    QVariantMap baiduHybrid;
+    baiduHybrid["id"] = map::kBaiduHybridProviderId;
+    baiduHybrid["name"] = QStringLiteral("Baidu Hybrid");
+    baiduHybrid["layer_type"] = QStringLiteral("satellite");
+    providers.append(baiduHybrid);
+
+    QVariantMap baiduSchema;
+    baiduSchema["id"] = map::kBaiduSchemaProviderId;
+    baiduSchema["name"] = QStringLiteral("Baidu Schema");
+    baiduSchema["layer_type"] = QStringLiteral("street");
+    providers.append(baiduSchema);
 
     return providers;
 }
@@ -1990,6 +2018,54 @@ void Core::setPosZeroing(bool state)
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->setActiveZeroing(isActiveZeroing_);
+    }
+}
+
+void Core::setBottomTrackZeroing(bool state)
+{
+    isBottomTrackZeroing_ = state;
+
+    if (dataProcessor_) {
+        dataProcessor_->setBottomTrackZeroDepth(isBottomTrackZeroing_);
+    }
+}
+
+void Core::setTgcGainNear(float val)
+{
+    Epoch::Echogram::gTgcGainNear.store(val, std::memory_order_relaxed);
+    onTgcParamsChanged();
+}
+
+void Core::setTgcGainFar(float val)
+{
+    Epoch::Echogram::gTgcGainFar.store(val, std::memory_order_relaxed);
+    onTgcParamsChanged();
+}
+
+void Core::setTgcCompensate(bool state)
+{
+    Epoch::Echogram::gTgcCompensate.store(state, std::memory_order_relaxed);
+    onTgcParamsChanged();
+}
+
+void Core::onTgcParamsChanged()
+{
+    if (datasetPtr_) {
+        datasetPtr_->invalidateEpochTgc();
+    }
+
+    for (int i = 0; i < plot2dList_.size(); ++i) {
+        if (plot2dList_.at(i) != nullptr) {
+            plot2dList_.at(i)->resetCash();
+            plot2dList_.at(i)->plotUpdate();
+        }
+    }
+}
+
+void Core::setMosaicSource(int source)
+{
+    if (dataProcessor_) {
+        dataProcessor_->setMosaicSource(source);
     }
 }
 
@@ -2111,17 +2187,26 @@ void Core::createLinkManagerConnections()
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkOpened,  deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLinkOpened,   linkManagerConnection));
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkDeleted, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLinkDeleted,  linkManagerConnection));
 
-    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkOpened,  this, [this]() {
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkOpened,  this, [this](QUuid uuid) {
 #ifdef SEPARATE_READING
                                                                                                                                      tryOpenedfilePath_.clear();
 #endif
                                                                                                                                      datasetPtr_->setState(Dataset::DatasetState::kConnection);
+
+                                                                                                                                     if (!openLinkOrder_.contains(uuid)) openLinkOrder_.append(uuid);
+                                                                                                                                     emit fileTitleChanged();
                                                                                                                                  }, linkManagerConnection));
 
-    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkClosed,  this, [this]() {
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkClosed,  this, [this](QUuid uuid) {
                                                                                                                                      if (scene3dViewPtr_) {
                                                                                                                                          scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
                                                                                                                                      }
+
+                                                                                                                                     if (openLinkOrder_.removeOne(uuid)) emit fileTitleChanged();
+                                                                                                                                 }, linkManagerConnection));
+
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkDeleted, this, [this](QUuid uuid) {
+                                                                                                                                     if (openLinkOrder_.removeOne(uuid)) emit fileTitleChanged();
                                                                                                                                  }, linkManagerConnection));
 
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::sendDoRequestAll, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onSendRequestAll, linkManagerConnection));
@@ -2191,11 +2276,22 @@ bool Core::getIsAppendMode() const
 
 QString Core::getFileTitle() const
 {
-    if (appendedFiles_.isEmpty()) return {};
-    QStringList names;
-    for (const QString& p : appendedFiles_)
-        names.append(p.section('/', -1).section('\\', -1));
-    return names.join(" + ");
+    if (!appendedFiles_.isEmpty()) {
+        QStringList names;
+        for (const QString& p : appendedFiles_)
+            names.append(p.section('/', -1).section('\\', -1));
+        return names.join(" + ");
+    }
+    if (!openLinkOrder_.isEmpty()) {
+        const auto names = linkManagerWrapperPtr_->getLinkNames();
+        QStringList result;
+        for (const QUuid& uuid : openLinkOrder_) {
+            const auto it = names.find(uuid);
+            if (it != names.end()) result.append(it.value());
+        }
+        return result.join(" + ");
+    }
+    return {};
 }
 
 void Core::fixFilePathString(QString& filePath) const
@@ -2417,6 +2513,8 @@ int Core::getDataProcessorState() const
 
 void Core::initAfterApp()
 {
+    uiKeepalive_.start();
+
     if (linkManagerWrapperPtr_) {
         linkManagerWrapperPtr_->startWorkerThread();
     }

@@ -27,6 +27,7 @@
 class Dataset;
 class BottomTrack;
 class ComputeWorker;
+class BtWorker;
 
 class DataProcessor : public QObject {
     Q_OBJECT
@@ -74,6 +75,7 @@ public slots:
     void onMosaicCanCalc(uint64_t indx);
     // BottomTrackProcessor
     void bottomTrackProcessing(const DatasetChannel& channel1, const DatasetChannel& channel2, const BottomTrackParam& bottomTrackParam, bool manual, bool redrawAll); // CALC BOTTOM TRACK BY BUTTON, qPlot2D
+    void setBottomTrackZeroDepth(bool state);
     // SurfaceProcessor
     void setSurfaceColorTableThemeById(int id);
     void setSurfaceEdgeLimit(int val);
@@ -91,6 +93,8 @@ public slots:
     void setMosaicLevels(float lowLevel, float highLevel);
     void setMosaicLowLevel(float val);
     void setMosaicHighLevel(float val);
+    void setMosaicSource(int source);
+    void restartMosaic();
     void askColorTableForMosaic();
     void onMosaicEpochsProcessed(const QVector<int>& indxs, int zoom);
 
@@ -247,6 +251,9 @@ private:
     
     QThread computeThread_;
     ComputeWorker* worker_;
+
+    QThread btThread_;
+    BtWorker* btWorker_;
 
     DataProcessorType state_;
     uint64_t chartsCounter_;

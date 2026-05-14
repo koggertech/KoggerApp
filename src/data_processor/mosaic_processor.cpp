@@ -291,6 +291,11 @@ void MosaicProcessor::setTileResolution(float tileResolution)
     aliasWindow_ = 100 / pixOnMeters_;
 }
 
+void MosaicProcessor::setSource(Source source)
+{
+    source_ = source;
+}
+
 void MosaicProcessor::setGenerageGridContour(bool state)
 {
     generateGridContour_ = state;
@@ -859,11 +864,26 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
             !isfinite(segSCharts->bottomProcessing.getDistance())) {
             continue;
         }
-        if (segFCharts->amplitude.size() != segFCharts->compensated.size()) {
-            segFCharts->updateCompesated();
-        }
-        if (segSCharts->amplitude.size() != segSCharts->compensated.size()) {
-            segSCharts->updateCompesated();
+        switch (source_) {
+        case Source::Amplitude:
+            // ничего готовить не надо — читаем сырое
+            break;
+        case Source::Tgc:
+            if (segFCharts->amplitude.size() != segFCharts->tgc.size()) {
+                segFCharts->updateTgc();
+            }
+            if (segSCharts->amplitude.size() != segSCharts->tgc.size()) {
+                segSCharts->updateTgc();
+            }
+            break;
+        case Source::SideScan:
+            if (segFCharts->amplitude.size() != segFCharts->compensated.size()) {
+                segFCharts->updateCompesated();
+            }
+            if (segSCharts->amplitude.size() != segSCharts->compensated.size()) {
+                segSCharts->updateCompesated();
+            }
+            break;
         }
 
         // Bresenham, first segment
@@ -1125,11 +1145,15 @@ int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
         return retVal;
     }
 
-    const auto ampSize = charts->compensated.size();
+    const QVector<uint8_t>& srcArr =
+        (source_ == Source::Tgc)       ? charts->tgc       :
+        (source_ == Source::Amplitude) ? charts->amplitude :
+                                         charts->compensated;
+    const auto ampSize = srcArr.size();
 
     if (ampSize > ampIndx) {
         if (aliasWindow_ == 1) {
-            int cVal = charts->compensated[ampIndx] ;
+            int cVal = srcArr[ampIndx];
             cVal = std::min(colorTableSize_, cVal);
             retVal = cVal;
         }
@@ -1142,14 +1166,14 @@ int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
                 rIndx > 0 && ampSize > rIndx) {
                 int newColorIndx = 0;
                 for (int i = lIndx; i < rIndx; ++i) {
-                    int cVal = charts->compensated[i] ;
+                    int cVal = srcArr[i];
                     cVal = std::min(colorTableSize_, cVal);
                     newColorIndx += cVal;
                 }
                 retVal = float(newColorIndx) / float(aliasWindow_);
             }
             else {
-                int cVal = charts->compensated[ampIndx] ;
+                int cVal = srcArr[ampIndx];
                 cVal = std::min(colorTableSize_, cVal);
                 retVal = cVal;
             }

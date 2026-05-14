@@ -647,15 +647,24 @@ Column {
 
         IconBtn {
             id: zeroingPosButton
-            checkable: true; iconSource: "qrc:/icons/ui/propeller_off.svg"; toolTipText: "Pos zeroing"
+            checkable: true; iconSource: "qrc:/icons/ui/route_crossed_out.svg"; toolTipText: "Pos zeroing"
             width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
             onToggled: function(v) { core.setPosZeroing(v) }
             Component.onCompleted: core.setPosZeroing(checked)
             Settings { property alias zeroingPosButtonCheched: zeroingPosButton.checked }
         }
 
+        IconBtn {
+            id: zeroingBottomTrackButton
+            checkable: true; iconSource: "qrc:/icons/ui/double_route_crossed_out.svg"; toolTipText: "Bottom track zeroing"
+            width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
+            onToggled: function(v) { core.setBottomTrackZeroing(v) }
+            Component.onCompleted: core.setBottomTrackZeroing(checked)
+            Settings { property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
+        }
+
         Rectangle {
-            width: parent.width - 30 - 30 - 30 - 30 - 4 * 6
+            width: parent.width - 30 - 30 - 30 - 30 - 30 - 5 * 6
             height: 30; radius: 6; color: AppPalette.bg; border.width: 1
             border.color: pathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
 
@@ -726,7 +735,13 @@ Column {
         IconBtn {
             iconSource: "qrc:/icons/ui/file_off.svg"; toolTipText: "Закрыть файл"
             width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
-            onClicked: core.closeLogFile()
+            onClicked: {
+                if (core.openedFilePath.length > 0) {
+                    core.closeLogFile();
+                } else {
+                    core.onRequestClearing();
+                }
+            }
         }
     }
 

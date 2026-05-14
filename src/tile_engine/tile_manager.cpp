@@ -6,6 +6,7 @@
 #include "map_defs.h"
 #include "tile_google_provider.h"
 #include "tile_osm_provider.h"
+#include "tile_baidu_provider.h"
 #include "tile_provider_ids.h"
 
 
@@ -79,7 +80,9 @@ void TileManager::setProvider(int32_t providerId)
         return;
     }
 
-    if (providerId != kGoogleProviderId && providerId != kOsmProviderId) {
+    if (providerId != kGoogleProviderId && providerId != kOsmProviderId &&
+        providerId != kBaiduSatProviderId && providerId != kBaiduSchemaProviderId &&
+        providerId != kBaiduHybridProviderId) {
         qWarning() << "TileManager::setProvider: unsupported providerId" << providerId;
         return;
     }
@@ -95,10 +98,23 @@ void TileManager::setProvider(int32_t providerId)
         tileSet_->resetForProviderSwitch();
     }
 
-    if (providerId_ == kGoogleProviderId) {
+    switch (providerId_) {
+    case kGoogleProviderId:
         tileProvider_ = std::make_shared<TileGoogleProvider>();
-    } else {
+        break;
+    case kBaiduSatProviderId:
+        tileProvider_ = std::make_shared<TileBaiduSatProvider>();
+        break;
+    case kBaiduSchemaProviderId:
+        tileProvider_ = std::make_shared<TileBaiduSchemaProvider>();
+        break;
+    case kBaiduHybridProviderId:
+        tileProvider_ = std::make_shared<TileBaiduHybridProvider>();
+        break;
+    case kOsmProviderId:
+    default:
         tileProvider_ = std::make_shared<TileOsmProvider>();
+        break;
     }
 
     if (tileDownloader_) {
@@ -118,7 +134,14 @@ void TileManager::setProvider(int32_t providerId)
 
 void TileManager::toggleProvider()
 {
-    int32_t nextProvider = (providerId_ == kGoogleProviderId) ? kOsmProviderId : kGoogleProviderId;
+    int32_t nextProvider = kGoogleProviderId;
+    switch (providerId_) {
+    case kGoogleProviderId:       nextProvider = kOsmProviderId;            break;
+    case kOsmProviderId:          nextProvider = kBaiduSatProviderId;       break;
+    case kBaiduSatProviderId:     nextProvider = kBaiduSchemaProviderId;    break;
+    case kBaiduSchemaProviderId:  nextProvider = kBaiduHybridProviderId;    break;
+    case kBaiduHybridProviderId:  nextProvider = kGoogleProviderId;         break;
+    }
     setProvider(nextProvider);
 }
 
@@ -169,6 +192,12 @@ QString TileManager::providerNameForId(int32_t providerId)
         return QStringLiteral("Google Satellite");
     case kOsmProviderId:
         return QStringLiteral("OpenStreetMap");
+    case kBaiduSatProviderId:
+        return QStringLiteral("Baidu Satellite");
+    case kBaiduSchemaProviderId:
+        return QStringLiteral("Baidu Schema");
+    case kBaiduHybridProviderId:
+        return QStringLiteral("Baidu Hybrid");
     default:
         return QStringLiteral("Unknown");
     }

@@ -13,6 +13,14 @@ class SurfaceMesh;
 class MosaicProcessor
 {
 public:
+    // Источник амплитуды для отрисовки мозайки.
+    // Значения должны совпадать с порядком в qml/MosaicExtraSettings.qml (CCombo mosaicSource).
+    enum class Source : int {
+        Amplitude = 0,  // Echogram::amplitude (сырое)
+        SideScan  = 1,  // Echogram::compensated (gain-compensation)
+        Tgc       = 2,  // Echogram::tgc (линейный TGC, параметры — Echogram::gTgc*)
+    };
+
     explicit MosaicProcessor(DataProcessor* parent, ComputeWorker* computeWorker);
     ~MosaicProcessor();
 
@@ -28,6 +36,7 @@ public:
     void setRAngleOffset(float val);
     void setTileResolution(float tileResolution);
     void setGenerageGridContour(bool state);
+    void setSource(Source source);
 
     QPair<ChannelId, uint8_t> getFirstChannelId()  const { return qMakePair(segFChannelId_, segFSubChannelId_); };
     QPair<ChannelId, uint8_t> getSecondChannelId() const { return qMakePair(segSChannelId_, segSSubChannelId_); };
@@ -68,6 +77,7 @@ private:
     float lAngleOffset_;
     float rAngleOffset_;
     bool generateGridContour_;
+    Source source_ = Source::SideScan;
     int lastTraceLineEpoch_;
     QVector3D lastLeftBeg_;
     QVector3D lastLeftEnd_;

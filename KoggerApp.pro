@@ -40,7 +40,8 @@ HEADERS += \
     src/xtf_conf.h \
     src/location_reader.h \
     src/mosaic_index_provider.h \
-    src/app_utils.h
+    src/app_utils.h \
+    src/ui_keepalive.h
 
 ### SOURCES
 SOURCES += \
@@ -64,7 +65,8 @@ SOURCES += \
     src/ui_state_serializer.cpp \
     src/input_device_tracker.cpp \
     src/location_reader.cpp \
-    src/mosaic_index_provider.cpp
+    src/mosaic_index_provider.cpp \
+    src/ui_keepalive.cpp
 
 FLASHER {
     DEFINES += FLASHER

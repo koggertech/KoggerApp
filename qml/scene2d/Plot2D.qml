@@ -758,7 +758,7 @@ WaterFall {
                             id: echogramTypesList
                             //                        Layout.fillWidth: true
                             Layout.preferredWidth: 150
-                            model: [qsTr("Raw"), qsTr("Side-Scan")]
+                            model: [qsTr("Raw"), qsTr("Side-Scan"), qsTr("TGC")]
                             currentIndex: 0
 
                             onCurrentIndexChanged: plotEchogramCompensation(currentIndex) // TODO

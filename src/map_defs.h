@@ -72,8 +72,25 @@ struct GeoBounds {
     double west;
 };
 
+// Explicit four corners of a tile in WGS84 (lat, lon). For projections that
+// produce axis-aligned WGS84 rectangles (Google, OSM Web Mercator) these are
+// just the four combinations of bounds.{north,south} × bounds.{east,west}.
+// For projections where a tile is *not* an axis-aligned rectangle in WGS84
+// (e.g. Baidu BD-MC + GCJ-02), each corner is computed independently and the
+// rendered quad becomes a true non-rectangular quadrilateral. Adjacent tiles
+// share the exact same WGS84 corner at their shared edge endpoints, so they
+// always tile seamlessly.
+// Order matches Tile::updateVertices: SW, NW, NE, SE.
+struct GeoCorners {
+    double swLat, swLon;
+    double nwLat, nwLon;
+    double neLat, neLon;
+    double seLat, seLon;
+};
+
 struct TileInfo {
     GeoBounds bounds;
+    GeoCorners corners;
     double tileSizeMeters;
 
     friend QDebug operator<<(QDebug dbg, const TileInfo& info) {
