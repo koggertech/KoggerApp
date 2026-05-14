@@ -93,6 +93,8 @@ public slots:
     void setMosaicLevels(float lowLevel, float highLevel);
     void setMosaicLowLevel(float val);
     void setMosaicHighLevel(float val);
+    void setMosaicSource(int source);
+    void restartMosaic();
     void askColorTableForMosaic();
     void onMosaicEpochsProcessed(const QVector<int>& indxs, int zoom);
 

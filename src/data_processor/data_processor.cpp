@@ -984,6 +984,31 @@ void DataProcessor::askColorTableForMosaic()
     emitMosaicColorTable();
 }
 
+void DataProcessor::setMosaicSource(int source)
+{
+    QMetaObject::invokeMethod(worker_, "setMosaicSource", Qt::QueuedConnection, Q_ARG(int, source));
+    restartMosaic();
+}
+
+void DataProcessor::restartMosaic()
+{
+    hotCache_.clear();
+
+    QMetaObject::invokeMethod(worker_, "clearMosaic", Qt::QueuedConnection);
+
+    pendingMosaicIndxs_.clear();
+    mosaicTaskEpochIndxsByZoom_.clear();
+    mosaicInFlightIndxs_.clear();
+
+    emit mosaicProcessingCleared();
+
+    for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+        pendingMosaicIndxs_.insert(*it);
+    }
+
+    scheduleLatest(WorkSet(WF_Mosaic), /*replace*/true);
+}
+
 void DataProcessor::emitMosaicColorTable()
 {
     const auto table = mosaicColorTable_.getRgbaColors();

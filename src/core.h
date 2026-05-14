@@ -159,6 +159,10 @@ public slots:
 
     Q_INVOKABLE void setPosZeroing(bool state);
     Q_INVOKABLE void setBottomTrackZeroing(bool state);
+    Q_INVOKABLE void setTgcGainNear(float val);
+    Q_INVOKABLE void setTgcGainFar(float val);
+    Q_INVOKABLE void setTgcCompensate(bool state);
+    Q_INVOKABLE void setMosaicSource(int source);
     Q_INVOKABLE bool getIsFileOpening() const;
     Q_INVOKABLE bool getIsAppendMode() const;
     Q_INVOKABLE QString getFileTitle() const;
@@ -239,6 +243,7 @@ private:
     QString getOpenedFilePath() const;
     void fixFilePathString(QString& filePath) const;
     void loadLLARefFromSettings();
+    void onTgcParamsChanged();
     int loadSavedMapTileProviderId() const;
     void resetRealtimeSessionState();
     void restoreRealtimeProcessingFlags();

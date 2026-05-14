@@ -2046,6 +2046,45 @@ void Core::setBottomTrackZeroing(bool state)
     }
 }
 
+void Core::setTgcGainNear(float val)
+{
+    Epoch::Echogram::gTgcGainNear.store(val, std::memory_order_relaxed);
+    onTgcParamsChanged();
+}
+
+void Core::setTgcGainFar(float val)
+{
+    Epoch::Echogram::gTgcGainFar.store(val, std::memory_order_relaxed);
+    onTgcParamsChanged();
+}
+
+void Core::setTgcCompensate(bool state)
+{
+    Epoch::Echogram::gTgcCompensate.store(state, std::memory_order_relaxed);
+    onTgcParamsChanged();
+}
+
+void Core::onTgcParamsChanged()
+{
+    if (datasetPtr_) {
+        datasetPtr_->invalidateEpochTgc();
+    }
+
+    for (int i = 0; i < plot2dList_.size(); ++i) {
+        if (plot2dList_.at(i) != nullptr) {
+            plot2dList_.at(i)->resetCash();
+            plot2dList_.at(i)->plotUpdate();
+        }
+    }
+}
+
+void Core::setMosaicSource(int source)
+{
+    if (dataProcessor_) {
+        dataProcessor_->setMosaicSource(source);
+    }
+}
+
 ConsoleListModel* Core::consoleList()
 {
     return consolePtr_->listModel();

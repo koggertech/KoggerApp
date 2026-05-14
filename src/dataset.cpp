@@ -208,6 +208,14 @@ void Dataset::setSonarOffset(float x, float y, float z)
     sonarOffset_ = QVector3D(x, y, z);
 }
 
+void Dataset::invalidateEpochTgc()
+{
+    QWriteLocker wl(&poolMtx_);
+    for (auto& epoch : pool_) {
+        epoch.invalidateTgc();
+    }
+}
+
 void Dataset::setChartSetup(const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset)
 {
     usingRecordParameters_[channelId].resol  = resol;

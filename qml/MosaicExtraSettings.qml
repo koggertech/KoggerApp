@@ -71,12 +71,13 @@ MenuFrame {
     }
 
     visible: Qt.platform.os === "android"
-             ? (mosaicViewCheckButton.mosaicLongPressTriggered || mosaicTheme.activeFocus || channel1Combo.activeFocus || channel2Combo.activeFocus)
+             ? (mosaicViewCheckButton.mosaicLongPressTriggered || mosaicTheme.activeFocus || channel1Combo.activeFocus || channel2Combo.activeFocus || mosaicSource.activeFocus)
              : (mosaicViewCheckButton.hovered                  ||
                 isHovered                                      ||
                 mosaicTheme.activeFocus                        ||
                 channel1Combo.activeFocus                      ||
-                channel2Combo.activeFocus)
+                channel2Combo.activeFocus                      ||
+                mosaicSource.activeFocus)
 
     z: mosaicViewSettings.visible
     Layout.alignment: Qt.AlignCenter
@@ -420,6 +421,40 @@ MenuFrame {
 
                         Settings {
                             property alias mosaicTraceLine: mosaicTraceLine.checked
+                        }
+                    }
+                }
+
+                RowLayout {
+                    CText {
+                        text: qsTr("Source:")
+                    }
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                    CCombo {
+                        id: mosaicSource
+                        Layout.preferredWidth: 200
+
+                        model: [qsTr("Raw"), qsTr("Side-Scan"), qsTr("TGC")]
+                        currentIndex: 1  // дефолт — Side-Scan
+
+                        onCurrentIndexChanged: {
+                            core.setMosaicSource(currentIndex)
+                        }
+
+                        onFocusChanged: {
+                            if (Qt.platform.os === 'android') {
+                                mosaicViewSettings.focus = true
+                            }
+                        }
+
+                        Component.onCompleted: {
+                            core.setMosaicSource(currentIndex)
+                        }
+
+                        Settings {
+                            property alias mosaicSource: mosaicSource.currentIndex
                         }
                     }
                 }

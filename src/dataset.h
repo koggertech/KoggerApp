@@ -299,6 +299,7 @@ public slots:
     void setTranscSetup(const ChannelId& channelId, uint16_t freq, uint8_t pulse, uint8_t boost);
     void setSoundSpeed (const ChannelId& channelId, uint32_t soundSpeed);
     void setSonarOffset(float x, float y, float z);
+    void invalidateEpochTgc();
     void setFixBlackStripesState(bool state);
     void setFixBlackStripesForwardSteps(int val);
     void setFixBlackStripesBackwardSteps(int val);

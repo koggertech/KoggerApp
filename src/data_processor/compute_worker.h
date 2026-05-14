@@ -63,6 +63,7 @@ public slots:
     void setMosaicLAngleOffset(float val);
     void setMosaicRAngleOffset(float val);
     void setMosaicTileResolution(float res);
+    void setMosaicSource(int source);
     void applySurfaceZoomChange(const TileMap& cached, bool fullCoverage);
     void setMinZ(float v);
     void setMaxZ(float v);

@@ -256,6 +256,179 @@ GridLayout {
 
         ParamGroup {
             visible: instruments > 0
+            groupName: qsTr("TGC")
+
+            RowLayout {
+                CText {
+                    Layout.fillWidth: true
+                    text: qsTr("Near gain:")
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: tgcGainNearSlider.value = 100
+                    }
+                }
+
+                CSlider {
+                    id: tgcGainNearSlider
+                    Layout.preferredWidth: 200
+                    implicitHeight: theme.controlHeight
+                    height: theme.controlHeight
+                    barWidth: 12 * theme.resCoeff
+                    from: 0
+                    to: 500     // 0..500% → gain 0..5
+                    stepSize: 1
+                    value: 50   // дефолт 50%
+
+                    onValueChanged: if (!pressed) core.setTgcGainNear(value * 0.01)
+                    onPressedChanged: if (!pressed) core.setTgcGainNear(value * 0.01)
+                    Component.onCompleted: core.setTgcGainNear(value * 0.01)
+
+                    Settings {
+                        property alias tgcGainNearSlider: tgcGainNearSlider.value
+                    }
+                }
+
+                CText {
+                    Layout.preferredWidth: 70
+                    horizontalAlignment: Text.AlignRight
+                    text: tgcGainNearSlider.value + "%"
+                }
+            }
+
+            RowLayout {
+                CText {
+                    Layout.fillWidth: true
+                    text: qsTr("Far gain:")
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: tgcGainFarSlider.value = 100
+                    }
+                }
+
+                CSlider {
+                    id: tgcGainFarSlider
+                    Layout.preferredWidth: 200
+                    implicitHeight: theme.controlHeight
+                    height: theme.controlHeight
+                    barWidth: 12 * theme.resCoeff
+                    from: 0
+                    to: 1000    // 0..1000% (×0..×10) — для слабых сигналов на больших глубинах
+                    stepSize: 1
+                    value: 250  // дефолт 250%
+
+                    // См. tgcGainNearSlider — обновляем в Core по отпусканию.
+                    onValueChanged: if (!pressed) core.setTgcGainFar(value * 0.01)
+                    onPressedChanged: if (!pressed) core.setTgcGainFar(value * 0.01)
+                    Component.onCompleted: core.setTgcGainFar(value * 0.01)
+
+                    Settings {
+                        property alias tgcGainFarSlider: tgcGainFarSlider.value
+                    }
+                }
+
+                CText {
+                    Layout.preferredWidth: 70
+                    horizontalAlignment: Text.AlignRight
+                    text: tgcGainFarSlider.value + "%"
+                }
+            }
+
+            Canvas {
+                id: tgcCurveCanvas
+                Layout.fillWidth: true
+                Layout.preferredHeight: 100
+                Layout.topMargin: 4
+
+                Connections {
+                    target: tgcGainNearSlider
+                    function onValueChanged() { tgcCurveCanvas.requestPaint() }
+                }
+                Connections {
+                    target: tgcGainFarSlider
+                    function onValueChanged() { tgcCurveCanvas.requestPaint() }
+                }
+
+                onPaint: {
+                    var ctx = getContext("2d")
+                    var w = width
+                    var h = height
+
+                    // Фон
+                    ctx.fillStyle = theme.controlBackColor
+                    ctx.fillRect(0, 0, w, h)
+
+                    // Текущие коэффициенты в abs gain (1.0 == 100%)
+                    var gNear = tgcGainNearSlider.value / 100.0
+                    var gFar  = tgcGainFarSlider.value / 100.0
+
+                    // Y-шкала: вместим 100% и максимум кривой, плюс небольшой отступ
+                    var yMax = Math.max(gNear, gFar, 1.0) * 1.15
+                    if (yMax < 0.5) yMax = 0.5
+
+                    function yFor(g) {
+                        return h - (g / yMax) * h
+                    }
+
+                    // Нижняя ось (gain = 0)
+                    ctx.strokeStyle = theme.controlBorderColor
+                    ctx.lineWidth = 1
+                    ctx.beginPath()
+                    ctx.moveTo(0, h - 0.5)
+                    ctx.lineTo(w, h - 0.5)
+                    ctx.stroke()
+
+                    // 100% reference (пунктир)
+                    var y100 = yFor(1.0)
+                    ctx.strokeStyle = theme.textColor
+                    ctx.globalAlpha = 0.35
+                    if (ctx.setLineDash) ctx.setLineDash([3, 3])
+                    ctx.beginPath()
+                    ctx.moveTo(0, y100)
+                    ctx.lineTo(w, y100)
+                    ctx.stroke()
+                    if (ctx.setLineDash) ctx.setLineDash([])
+                    ctx.globalAlpha = 1.0
+
+                    // Сама кривая (прямая from→to)
+                    ctx.strokeStyle = "#F07000"
+                    ctx.lineWidth = 2
+                    ctx.beginPath()
+                    ctx.moveTo(0, yFor(gNear))
+                    ctx.lineTo(w, yFor(gFar))
+                    ctx.stroke()
+
+                    // Подпись «100%» у пунктира (мелким)
+                    ctx.fillStyle = theme.textColor
+                    ctx.globalAlpha = 0.6
+                    ctx.font = "10px sans-serif"
+                    ctx.fillText("100%", 4, Math.max(y100 - 2, 10))
+                    ctx.globalAlpha = 1.0
+                }
+            }
+
+            RowLayout {
+                CCheck {
+                    id: tgcCompensateCheck
+                    Layout.fillWidth: true
+                    checked: false
+                    text: qsTr("Compensate")
+
+                    onCheckedChanged: core.setTgcCompensate(checked)
+                    Component.onCompleted: core.setTgcCompensate(checked)
+
+                    Settings {
+                        property alias tgcCompensateCheck: tgcCompensateCheck.checked
+                    }
+                }
+            }
+        }
+
+        ParamGroup {
+            visible: instruments > 0
             id: bottomTrackProcessingGroup
             groupName: qsTr("Bottom-Track processing")
 

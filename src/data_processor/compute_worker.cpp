@@ -64,6 +64,16 @@ void ComputeWorker::clearSurface()
 void ComputeWorker::clearMosaic()
 {
     mosaic_.clear();
+
+    for (SurfaceTile* t : surfaceMesh_.getTilesCRef()) {
+        if (!t) {
+            continue;
+        }
+        t->setHeadIndx(-1);
+        auto& img = t->getMosaicImageDataRef();
+        std::fill(img.begin(), img.end(), uint8_t(0));
+        t->setIsUpdated(true);
+    }
 }
 
 void ComputeWorker::clearIsobaths()
@@ -136,6 +146,11 @@ void ComputeWorker::setMosaicLAngleOffset(float val)
 void ComputeWorker::setMosaicRAngleOffset(float val)
 {
     mosaic_.setRAngleOffset(val);
+}
+
+void ComputeWorker::setMosaicSource(int source)
+{
+    mosaic_.setSource(static_cast<MosaicProcessor::Source>(source));
 }
 
 void ComputeWorker::setMosaicTileResolution(float res)
