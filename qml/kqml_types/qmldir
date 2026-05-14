@@ -6,5 +6,6 @@ singleton AppPalette 1.0 AppPalette.qml
 KTabBar 1.0 KTabBar.qml
 KCheckBox 1.0 KCheckBox.qml
 KSwitch 1.0 KSwitch.qml
+KSlider 1.0 KSlider.qml
 KButton 1.0 KButton.qml
 KToolTip 1.0 KToolTip.qml

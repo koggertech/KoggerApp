@@ -680,6 +680,185 @@ Column {
         }
     }
 
+    // ── TGC ──────────────────────────────────────────────────────────────────
+
+    SettingsGroup {
+        id: tgcGroup
+        visible: instruments >= 1
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("TGC")
+        stateStore: root.store
+        stateKey: "app.tgc"
+        collapsedByDefault: true
+
+        readonly property int valueLabelW: 60
+        readonly property int labelW: 92
+
+        Component.onCompleted: {
+            core.setTgcGainNear(tgcGainNearSlider.value * 0.01)
+            core.setTgcGainFar(tgcGainFarSlider.value * 0.01)
+            core.setTgcCompensate(tgcCompensateSwitch.checked)
+        }
+
+        // Near gain
+        Row {
+            width: parent.width; height: 30; spacing: 8
+
+            Text {
+                text: qsTr("Near gain:")
+                color: AppPalette.textSecond; font.pixelSize: 13
+                width: tgcGroup.labelW
+                anchors.verticalCenter: parent.verticalCenter
+                elide: Text.ElideRight
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        tgcGainNearSlider.value = 100
+                        core.setTgcGainNear(1.0)
+                    }
+                }
+            }
+
+            KSlider {
+                id: tgcGainNearSlider
+                width: parent.width - tgcGroup.labelW - tgcGroup.valueLabelW - 16
+                anchors.verticalCenter: parent.verticalCenter
+                from: 0; to: 500; stepSize: 1; value: 50
+                valueSuffix: "%"
+                onValueModified: function(v) { core.setTgcGainNear(v * 0.01) }
+            }
+
+            Text {
+                width: tgcGroup.valueLabelW
+                horizontalAlignment: Text.AlignRight
+                anchors.verticalCenter: parent.verticalCenter
+                text: tgcGainNearSlider.value + "%"
+                color: AppPalette.text; font.pixelSize: 13
+            }
+        }
+
+        Settings { property alias appTgcGainNear: tgcGainNearSlider.value }
+
+        // Far gain
+        Row {
+            width: parent.width; height: 30; spacing: 8
+
+            Text {
+                text: qsTr("Far gain:")
+                color: AppPalette.textSecond; font.pixelSize: 13
+                width: tgcGroup.labelW
+                anchors.verticalCenter: parent.verticalCenter
+                elide: Text.ElideRight
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        tgcGainFarSlider.value = 100
+                        core.setTgcGainFar(1.0)
+                    }
+                }
+            }
+
+            KSlider {
+                id: tgcGainFarSlider
+                width: parent.width - tgcGroup.labelW - tgcGroup.valueLabelW - 16
+                anchors.verticalCenter: parent.verticalCenter
+                from: 0; to: 1000; stepSize: 1; value: 250
+                valueSuffix: "%"
+                onValueModified: function(v) { core.setTgcGainFar(v * 0.01) }
+            }
+
+            Text {
+                width: tgcGroup.valueLabelW
+                horizontalAlignment: Text.AlignRight
+                anchors.verticalCenter: parent.verticalCenter
+                text: tgcGainFarSlider.value + "%"
+                color: AppPalette.text; font.pixelSize: 13
+            }
+        }
+
+        Settings { property alias appTgcGainFar: tgcGainFarSlider.value }
+
+        // Curve preview
+        Canvas {
+            id: tgcCurveCanvas
+            width: parent.width
+            height: 100
+
+            Connections {
+                target: tgcGainNearSlider
+                function onValueChanged() { tgcCurveCanvas.requestPaint() }
+            }
+            Connections {
+                target: tgcGainFarSlider
+                function onValueChanged() { tgcCurveCanvas.requestPaint() }
+            }
+
+            onPaint: {
+                var ctx = getContext("2d")
+                var w = width
+                var h = height
+
+                ctx.fillStyle = AppPalette.bg
+                ctx.fillRect(0, 0, w, h)
+
+                var gNear = tgcGainNearSlider.value / 100.0
+                var gFar  = tgcGainFarSlider.value / 100.0
+
+                var yMax = Math.max(gNear, gFar, 1.0) * 1.15
+                if (yMax < 0.5) yMax = 0.5
+
+                function yFor(g) { return h - (g / yMax) * h }
+
+                ctx.strokeStyle = AppPalette.border
+                ctx.lineWidth = 1
+                ctx.beginPath()
+                ctx.moveTo(0, h - 0.5)
+                ctx.lineTo(w, h - 0.5)
+                ctx.stroke()
+
+                var y100 = yFor(1.0)
+                ctx.strokeStyle = AppPalette.text
+                ctx.globalAlpha = 0.35
+                if (ctx.setLineDash) ctx.setLineDash([3, 3])
+                ctx.beginPath()
+                ctx.moveTo(0, y100)
+                ctx.lineTo(w, y100)
+                ctx.stroke()
+                if (ctx.setLineDash) ctx.setLineDash([])
+                ctx.globalAlpha = 1.0
+
+                ctx.strokeStyle = "#F07000"
+                ctx.lineWidth = 2
+                ctx.beginPath()
+                ctx.moveTo(0, yFor(gNear))
+                ctx.lineTo(w, yFor(gFar))
+                ctx.stroke()
+
+                ctx.fillStyle = AppPalette.text
+                ctx.globalAlpha = 0.6
+                ctx.font = "10px sans-serif"
+                ctx.fillText("100%", 4, Math.max(y100 - 2, 10))
+                ctx.globalAlpha = 1.0
+            }
+        }
+
+        // Compensate
+        KSwitch {
+            id: tgcCompensateSwitch
+            width: parent.width
+            text: qsTr("Compensate")
+            checked: false
+            onToggled: core.setTgcCompensate(checked)
+        }
+
+        Settings { property alias appTgcCompensate: tgcCompensateSwitch.checked }
+    }
+
     // ── Экспорт ───────────────────────────────────────────────────────────────
 
     SettingsGroup {
