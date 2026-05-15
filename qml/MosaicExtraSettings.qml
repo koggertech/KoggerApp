@@ -77,7 +77,8 @@ MenuFrame {
                 channel2Combo.activeFocus                      ||
                 mosaicSource.activeFocus                       ||
                 mosaicLAngleOffset.activeFocus                 ||
-                mosaicRAngleOffset.activeFocus)
+                mosaicRAngleOffset.activeFocus                 ||
+                fakeCoordsLastNSlider.activeFocus)
              : (mosaicViewCheckButton.hovered                  ||
                 isHovered                                      ||
                 mosaicTheme.activeFocus                        ||
@@ -85,7 +86,8 @@ MenuFrame {
                 channel2Combo.activeFocus                      ||
                 mosaicSource.activeFocus                       ||
                 mosaicLAngleOffset.activeFocus                 ||
-                mosaicRAngleOffset.activeFocus)
+                mosaicRAngleOffset.activeFocus                 ||
+                fakeCoordsLastNSlider.activeFocus)
 
     z: mosaicViewSettings.visible
     Layout.alignment: Qt.AlignCenter
@@ -180,16 +182,19 @@ MenuFrame {
             }
 
             ColumnLayout {
+                id: mosaicSettingsRightColumn
+
+                readonly property int labelW: 160
+                readonly property int ctrlW: 240
+
                 RowLayout {
                     CText {
                         text: qsTr("Theme:")
-                    }
-                    Item {
-                        Layout.fillWidth: true
+                        Layout.preferredWidth: mosaicSettingsRightColumn.labelW
                     }
                     CCombo {
                         id: mosaicTheme
-                        Layout.preferredWidth: 200
+                        Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
 
                         model: [qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green"), qsTr("Midnight")]
                         currentIndex: 0
@@ -216,18 +221,17 @@ MenuFrame {
                 RowLayout {
                     CText {
                         text: qsTr("Channels:")
-                    }
-                    Item {
-                        Layout.fillWidth: true
+                        Layout.preferredWidth: mosaicSettingsRightColumn.labelW
+                        Layout.alignment: Qt.AlignTop
                     }
                     ColumnLayout {
                         id: rowDataset
 
-                        implicitWidth: 200
+                        Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
 
                         CCombo  {
                             id: channel1Combo
-                            Layout.preferredWidth: 200
+                            Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
 
                             property bool suppressTextSignal: false
                             visible: true
@@ -285,7 +289,7 @@ MenuFrame {
 
                             property bool suppressTextSignal: false
 
-                            Layout.preferredWidth: 200
+                            Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
                             visible: true
 
                             onFocusChanged: {
@@ -342,14 +346,15 @@ MenuFrame {
                 RowLayout {
                     CText {
                         text: qsTr("Angle, °:")
-                    }
-                    Item {
-                        Layout.fillWidth: true
+                        Layout.preferredWidth: mosaicSettingsRightColumn.labelW
+                        Layout.alignment: Qt.AlignTop
                     }
                     ColumnLayout {
+                        Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
                         SpinBoxCustom  {
                             id: mosaicLAngleOffset
-                            implicitWidth: 200
+                            Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
+                            implicitWidth: mosaicSettingsRightColumn.ctrlW
                             from: -90
                             to: 90
                             stepSize: 1
@@ -380,7 +385,8 @@ MenuFrame {
 
                         SpinBoxCustom  {
                             id: mosaicRAngleOffset
-                            implicitWidth: 200
+                            Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
+                            implicitWidth: mosaicSettingsRightColumn.ctrlW
                             from: -90
                             to: 90
                             stepSize: 1
@@ -438,13 +444,11 @@ MenuFrame {
                 RowLayout {
                     CText {
                         text: qsTr("Source:")
-                    }
-                    Item {
-                        Layout.fillWidth: true
+                        Layout.preferredWidth: mosaicSettingsRightColumn.labelW
                     }
                     CCombo {
                         id: mosaicSource
-                        Layout.preferredWidth: 200
+                        Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
 
                         model: [qsTr("Raw"), qsTr("Side-Scan"), qsTr("TGC")]
                         currentIndex: 1  // дефолт — Side-Scan
@@ -466,6 +470,41 @@ MenuFrame {
                         Settings {
                             property alias mosaicSource: mosaicSource.currentIndex
                         }
+                    }
+                }
+
+                RowLayout {
+                    visible: core.posZeroing
+                    CText {
+                        text: qsTr("Calc last N epochs:")
+                        Layout.preferredWidth: mosaicSettingsRightColumn.labelW
+                    }
+                    CSlider {
+                        id: fakeCoordsLastNSlider
+                        Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW - 60
+                        implicitHeight: theme.controlHeight
+                        height: theme.controlHeight
+                        barWidth: 12 * theme.resCoeff
+                        from: 10
+                        to: 3000
+                        stepSize: 10
+                        value: 500
+
+                        // Crank slider all the way right → no limit (process every epoch).
+                        readonly property int effectiveN: value >= to ? 0 : value
+
+                        onEffectiveNChanged: core.setMosaicFakeCoordsLastN(effectiveN)
+                        Component.onCompleted: core.setMosaicFakeCoordsLastN(effectiveN)
+
+                        Settings {
+                            property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value
+                        }
+                    }
+                    CText {
+                        Layout.preferredWidth: 60
+                        horizontalAlignment: Text.AlignRight
+                        text: fakeCoordsLastNSlider.value >= fakeCoordsLastNSlider.to
+                              ? qsTr("All") : fakeCoordsLastNSlider.value
                     }
                 }
             }

@@ -2028,6 +2028,9 @@ void Core::onSendMapTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint t
 
 void Core::setPosZeroing(bool state)
 {
+    if (isActiveZeroing_ == state) {
+        return;
+    }
     isActiveZeroing_ = state;
 
     datasetPtr_->setActiveZeroing(isActiveZeroing_);
@@ -2035,6 +2038,12 @@ void Core::setPosZeroing(bool state)
     if (scene3dViewPtr_) {
         scene3dViewPtr_->setActiveZeroing(isActiveZeroing_);
     }
+
+    if (dataProcessor_) {
+        dataProcessor_->setActiveZeroing(isActiveZeroing_);
+    }
+
+    emit posZeroingChanged();
 }
 
 void Core::setBottomTrackZeroing(bool state)
@@ -2082,6 +2091,13 @@ void Core::setMosaicSource(int source)
 {
     if (dataProcessor_) {
         dataProcessor_->setMosaicSource(source);
+    }
+}
+
+void Core::setMosaicFakeCoordsLastN(int n)
+{
+    if (dataProcessor_) {
+        dataProcessor_->setMosaicFakeCoordsLastN(n);
     }
 }
 
