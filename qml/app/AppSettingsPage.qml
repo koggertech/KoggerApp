@@ -863,13 +863,24 @@ Column {
 
     SettingsGroup {
         id: mosaicGroup
-        visible: core ? core.posZeroing : false
+        property bool fakeCoordsActive: core ? core.posZeroing : false
+        visible: fakeCoordsActive
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Mosaic")
         stateStore: root.store
         stateKey: "app.mosaic"
         collapsedByDefault: true
+
+        Component.onCompleted: fakeCoordsActive = core ? core.posZeroing : false
+
+        Connections {
+            target: core
+            ignoreUnknownSignals: true
+            function onPosZeroingChanged() {
+                mosaicGroup.fakeCoordsActive = core.posZeroing
+            }
+        }
 
         readonly property int valueLabelW: 60
         readonly property int labelW: 120

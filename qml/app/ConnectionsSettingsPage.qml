@@ -54,6 +54,7 @@ Column {
                     anchors.top: parent.top
                     anchors.margins: 8
                     active: true
+                    asynchronous: true
                     source: "qrc:/qml/devices/ConnectionViewer.qml"
 
                     onLoaded: {

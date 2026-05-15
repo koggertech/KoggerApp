@@ -488,7 +488,8 @@ ApplicationWindow {
 
             Loader {
                 width: parent.width
-                active: settingsSidebar.progress > 0.01 || workspaceStore.settingsPanelOpen
+                active: true
+                asynchronous: true
                 sourceComponent: appSettingsPageComponent
             }
         }
