@@ -74,6 +74,9 @@ void TileDownloader::stopAndClearRequests()
         reply->abort();
     }
 
+    // Release Qt's idle HTTP keep-alive sockets
+    networkManager_->clearConnectionCache();
+
     for (auto& itm : stoppedDownloads) {
         emit downloadStopped(itm);
     }

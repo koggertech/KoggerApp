@@ -12,7 +12,7 @@ ComboBox {
         contentItem: CText {
             text: modelData
             small: false
-//            elide: Text.ElideRight
+            elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
             color: itemDelegate.highlighted ? theme.textSolidColor :  theme.textColor
         }
@@ -73,7 +73,7 @@ ComboBox {
         verticalAlignment: Text.AlignVCenter
         small: false
 
-//        elide: Text.ElideRight
+        elide: Text.ElideRight
 
         color: contentText.highlighted ? theme.textSolidColor :  theme.textColor
 

@@ -73,6 +73,7 @@ public:
     Q_PROPERTY(bool              internetAvailable            READ getInternetAvailable            NOTIFY internetAvailableChanged)
     Q_PROPERTY(bool              mapTileLoadingEnabled        READ getMapTileLoadingEnabled        WRITE setMapTileLoadingEnabled NOTIFY mapTileLoadingEnabledChanged)
     Q_PROPERTY(bool              needForceZooming             READ getNeedForceZooming             WRITE setNeedForceZooming NOTIFY needForceZoomingChanged)
+    Q_PROPERTY(bool              posZeroing                   READ getPosZeroing                   NOTIFY posZeroingChanged)
 
     MosaicIndexProvider* getMosaicIndexProviderPtr();
     void setEngine(QQmlApplicationEngine *engine);
@@ -164,6 +165,8 @@ public slots:
     Q_INVOKABLE void setTgcGainFar(float val);
     Q_INVOKABLE void setTgcCompensate(bool state);
     Q_INVOKABLE void setMosaicSource(int source);
+    Q_INVOKABLE void setMosaicFakeCoordsLastN(int n);
+    bool getPosZeroing() const { return isActiveZeroing_; }
     Q_INVOKABLE bool getIsFileOpening() const;
     Q_INVOKABLE bool getIsAppendMode() const;
     Q_INVOKABLE QString getFileTitle() const;
@@ -207,6 +210,7 @@ signals:
     void mapTileProviderChanged();
     void internetAvailableChanged();
     void mapTileLoadingEnabledChanged();
+    void posZeroingChanged();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);

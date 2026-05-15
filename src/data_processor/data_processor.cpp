@@ -519,13 +519,17 @@ void DataProcessor::onCameraMoved()
     const QSet<int> visibleSurfaceEpochs = collectVisibleSurfaceEpochsSet(zoom);
     const QSet<int> visibleMosaicEpochs  = updateMosaic_ ? collectEpochsForTilesSet(zoom, lastVisTileKeys_) : QSet<int>();
 
+    const int mosaicLowAllowed = (activeZeroing_ && mosaicFakeCoordsLastN_ > 0)
+        ? std::max(0, mosaicCounter_ - mosaicFakeCoordsLastN_ + 1)
+        : 0;
+
     if (updateMosaic_ && !pendingMosaicIndxs_.isEmpty()) {
         // Keep mosaic queue focused on current viewport to avoid processing stale backlog
         // accumulated during rapid camera moves.
         QSet<int> filteredPending;
         filteredPending.reserve(qMin(pendingMosaicIndxs_.size(), visibleMosaicEpochs.size()));
         for (int idx : std::as_const(pendingMosaicIndxs_)) {
-            if (visibleMosaicEpochs.contains(idx)) {
+            if (visibleMosaicEpochs.contains(idx) && idx >= mosaicLowAllowed) {
                 filteredPending.insert(idx);
             }
         }
@@ -549,6 +553,9 @@ void DataProcessor::onCameraMoved()
 
     if (updateMosaic_) {
         for (int itm : std::as_const(visibleMosaicEpochs)) {
+            if (itm < mosaicLowAllowed) {
+                continue;
+            }
             if (!processedMosaic.contains(itm) && !pendingMosaicIndxs_.contains(itm)) {
                 pendingMosaicIndxs_.insert(itm);
                 addedMosaic = true;
@@ -880,7 +887,13 @@ void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const 
 
     //return;
 
+    const int mosaicLowAllowed = (activeZeroing_ && mosaicFakeCoordsLastN_ > 0)
+        ? std::max(0, mosaicCounter_ - mosaicFakeCoordsLastN_ + 1)
+        : 0;
     for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+        if (*it < mosaicLowAllowed) {
+            continue;
+        }
         pendingMosaicIndxs_.insert(*it);
     }
     for (auto it = vertIndxsFromBottomTrack_.cbegin(); it != vertIndxsFromBottomTrack_.cend(); ++it) {
@@ -990,6 +1003,16 @@ void DataProcessor::setMosaicSource(int source)
     restartMosaic();
 }
 
+void DataProcessor::setActiveZeroing(bool state)
+{
+    activeZeroing_ = state;
+}
+
+void DataProcessor::setMosaicFakeCoordsLastN(int n)
+{
+    mosaicFakeCoordsLastN_ = std::max(0, n);
+}
+
 void DataProcessor::restartMosaic()
 {
     hotCache_.clear();
@@ -1002,7 +1025,13 @@ void DataProcessor::restartMosaic()
 
     emit mosaicProcessingCleared();
 
+    const int mosaicLowAllowed = (activeZeroing_ && mosaicFakeCoordsLastN_ > 0)
+        ? std::max(0, mosaicCounter_ - mosaicFakeCoordsLastN_ + 1)
+        : 0;
     for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+        if (*it < mosaicLowAllowed) {
+            continue;
+        }
         pendingMosaicIndxs_.insert(*it);
     }
 
