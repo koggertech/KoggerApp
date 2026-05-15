@@ -293,6 +293,7 @@ private:
     bool                   surfaceEdgeLimitDirty_;
     QSet<int>              surfaceEdgeLimitUpdatedZooms_;
     bool                   bottomTrackFullRecalcPending_;
+    bool                   mosaicBootstrapPending_ = false;
     QSet<int>              pendingMosaicIndxs_;
     QSet<int>              mosaicInFlightIndxs_;
     bool                   pendingIsobathsWork_;

@@ -425,7 +425,7 @@ Item  {
                 }
 
                 Settings {
-                    //property alias bottomTrackCheckButton: bottomTrackCheckButton.checked
+                    property alias bottomTrackCheckButton: bottomTrackCheckButton.checked
                 }
             }
 
@@ -515,7 +515,7 @@ Item  {
                     }
 
                     Settings {
-                        //property alias isobathsCheckButton: isobathsCheckButton.checked
+                        property alias isobathsCheckButton: isobathsCheckButton.checked
                     }
                 }
 
@@ -617,7 +617,7 @@ Item  {
 
 
                     Settings {
-                        //property alias mosaicViewCheckButton: mosaicViewCheckButton.checked
+                        property alias mosaicViewCheckButton: mosaicViewCheckButton.checked
                     }
                 }
 

@@ -461,6 +461,7 @@ void DataProcessor::setUpdateMosaic(bool state)
         if (!wasMosaic) {
             pendingMosaicIndxs_.clear();
             mosaicInFlightIndxs_.clear();
+            mosaicBootstrapPending_ = true;
         }
 
         if (hotCache_.checkAnyTileForZoom(lastDataZoomIndx_)) {
@@ -476,6 +477,7 @@ void DataProcessor::setUpdateMosaic(bool state)
     else {
         pendingMosaicIndxs_.clear();
         mosaicInFlightIndxs_.clear();
+        mosaicBootstrapPending_ = false;
         pendingIsobathsWork_ = true; // мозаика могла изменить поверхность
         scheduleLatest(WorkSet(WF_Isobaths));
     }
@@ -498,6 +500,8 @@ void DataProcessor::onCameraMoved()
     if (!updateMosaic_ && !updateSurface_) {
         return;
     }
+
+    mosaicBootstrapPending_ = false;
 
     // Keep already queued mosaic epochs (e.g. from realtime bottom-track updates).
     // Camera movement should only add visible work, not drop pending work.
@@ -742,6 +746,10 @@ void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVec
                 pendingMosaicIndxs_.insert(ep);
             }
         }
+    }
+
+    if (mosaicBootstrapPending_ && updateMosaic_) {
+        onCameraMoved();
     }
 
     scheduleLatest(WorkSet(WF_All));
