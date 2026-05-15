@@ -859,6 +859,59 @@ Column {
         Settings { property alias appTgcCompensate: tgcCompensateSwitch.checked }
     }
 
+    // ── Mosaic ───────────────────────────────────────────────────────────────
+
+    SettingsGroup {
+        id: mosaicGroup
+        visible: core ? core.posZeroing : false
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Mosaic")
+        stateStore: root.store
+        stateKey: "app.mosaic"
+        collapsedByDefault: true
+
+        readonly property int valueLabelW: 60
+        readonly property int labelW: 120
+
+        // Calc last N epochs (only meaningful with fake coords / pos zeroing)
+        Row {
+            width: parent.width; height: 30; spacing: 8
+
+            Text {
+                text: qsTr("Calc last N epochs:")
+                color: AppPalette.textSecond; font.pixelSize: 13
+                width: mosaicGroup.labelW
+                anchors.verticalCenter: parent.verticalCenter
+                elide: Text.ElideRight
+            }
+
+            KSlider {
+                id: fakeCoordsLastNSlider
+                width: parent.width - mosaicGroup.labelW - mosaicGroup.valueLabelW - 16
+                anchors.verticalCenter: parent.verticalCenter
+                from: 10; to: 3000; stepSize: 10; value: 500
+                // Crank slider all the way right → no limit (process every epoch).
+                readonly property int effectiveN: value >= to ? 0 : value
+                toolTipText: effectiveN === 0 ? qsTr("All") : String(effectiveN)
+
+                onEffectiveNChanged: core.setMosaicFakeCoordsLastN(effectiveN)
+                Component.onCompleted: core.setMosaicFakeCoordsLastN(effectiveN)
+            }
+
+            Text {
+                width: mosaicGroup.valueLabelW
+                horizontalAlignment: Text.AlignRight
+                anchors.verticalCenter: parent.verticalCenter
+                text: fakeCoordsLastNSlider.value >= fakeCoordsLastNSlider.to
+                      ? qsTr("All") : fakeCoordsLastNSlider.value
+                color: AppPalette.text; font.pixelSize: 13
+            }
+        }
+
+        Settings { property alias appMosaicFakeCoordsLastN: fakeCoordsLastNSlider.value }
+    }
+
     // ── Экспорт ───────────────────────────────────────────────────────────────
 
     SettingsGroup {
