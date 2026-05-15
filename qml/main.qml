@@ -861,10 +861,23 @@ ApplicationWindow  {
 
                 Component.onCompleted: {
                     setSyncLoupeUiAllowed(syncLoupeUiAllowed)
+
+                    if (rendererPersist.verticalScale !== renderer.verticalScale) {
+                        renderer.setVerticalScale(rendererPersist.verticalScale)
+                    }
                 }
 
                 onSendDataZoom: function(zoom) {
                     currentZoom = zoom;
+                }
+
+                onVerticalScaleChanged: {
+                    rendererPersist.verticalScale = renderer.verticalScale
+                }
+
+                Settings {
+                    id: rendererPersist
+                    property real verticalScale: 1.0
                 }
 
                 PinchArea {

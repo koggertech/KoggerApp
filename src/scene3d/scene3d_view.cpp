@@ -2104,6 +2104,7 @@ void GraphicsScene3dView::setVerticalScale(float scale)
     }
 
     QQuickFramebufferObject::update();
+    emit verticalScaleChanged();
 }
 
 void GraphicsScene3dView::shiftCameraZAxis(float shift)

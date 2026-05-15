@@ -49,6 +49,7 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(float syncLoupeCenterDepth READ syncLoupeCenterDepth NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(bool syncLoupeFlipY READ syncLoupeFlipY NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(int syncLoupeSize READ syncLoupeSize NOTIFY syncLoupeStateChanged)
+    Q_PROPERTY(float verticalScale READ verticalScale NOTIFY verticalScaleChanged)
     Q_PROPERTY(int syncLoupeZoom READ syncLoupeZoom NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(bool syncLoupeZoomAdjusting READ syncLoupeZoomAdjusting NOTIFY syncLoupeStateChanged)
 
@@ -362,6 +363,7 @@ signals:
     void sendVisibleTileKeys(int zoomIndx, const QSet<TileKey>& tileKeys);
     void forceSingleZoomAutoStateChanged(bool active);
     void syncLoupeStateChanged();
+    void verticalScaleChanged();
 
 private:
     void updateBounds();
