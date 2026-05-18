@@ -519,6 +519,116 @@ protected:
 
 
 
+class IDBinServoControl : public IDBin
+{
+    Q_OBJECT
+public:
+    static constexpr int AngleScale = 100;
+
+    enum GeneralBits : U2 { GenEnable = 0x0001 };
+    enum OptionsBits : U2 { OptReverse = 0x0001 };
+
+    explicit IDBinServoControl() : IDBin() {}
+
+    ID id() override { return ID_SERVO_CONTROL; }
+    Resp parsePayload(FrameParser &proto) override;
+    void startColdStartTimer() override;
+
+    void setAll(U2 general, U2 options, U2 pwm_min_us, U2 pwm_max_us,
+                S2 angle_range_deg, S2 step_deg, S2 range_deg, S2 center_deg);
+
+    bool enabled() const { return (m_general & GenEnable) != 0; }
+    void setEnabled(bool on) {
+        U2 g = on ? (m_general | GenEnable) : (m_general & ~GenEnable);
+        setAll(g, m_options, m_pwmMinUs, m_pwmMaxUs, m_angleRangeDeg, m_stepDeg, m_rangeDeg, m_centerDeg);
+    }
+
+    bool reverse() const { return (m_options & OptReverse) != 0; }
+    void setReverse(bool on) {
+        U2 o = on ? (m_options | OptReverse) : (m_options & ~OptReverse);
+        setAll(m_general, o, m_pwmMinUs, m_pwmMaxUs, m_angleRangeDeg, m_stepDeg, m_rangeDeg, m_centerDeg);
+    }
+
+    U2 pwmMinUs() const { return m_pwmMinUs; }
+    void setPwmMinUs(U2 v) {
+        setAll(m_general, m_options, v, m_pwmMaxUs, m_angleRangeDeg, m_stepDeg, m_rangeDeg, m_centerDeg);
+    }
+
+    U2 pwmMaxUs() const { return m_pwmMaxUs; }
+    void setPwmMaxUs(U2 v) {
+        setAll(m_general, m_options, m_pwmMinUs, v, m_angleRangeDeg, m_stepDeg, m_rangeDeg, m_centerDeg);
+    }
+
+    S2 angleRangeDeg() const { return m_angleRangeDeg; }
+    void setAngleRangeDeg(S2 v) {
+        setAll(m_general, m_options, m_pwmMinUs, m_pwmMaxUs, v, m_stepDeg, m_rangeDeg, m_centerDeg);
+    }
+
+    S2 stepDeg() const { return m_stepDeg; }
+    void setStepDeg(S2 v) {
+        setAll(m_general, m_options, m_pwmMinUs, m_pwmMaxUs, m_angleRangeDeg, v, m_rangeDeg, m_centerDeg);
+    }
+
+    S2 rangeDeg() const { return m_rangeDeg; }
+    void setRangeDeg(S2 v) {
+        setAll(m_general, m_options, m_pwmMinUs, m_pwmMaxUs, m_angleRangeDeg, m_stepDeg, v, m_centerDeg);
+    }
+
+    S2 centerDeg() const { return m_centerDeg; }
+    void setCenterDeg(S2 v) {
+        setAll(m_general, m_options, m_pwmMinUs, m_pwmMaxUs, m_angleRangeDeg, m_stepDeg, m_rangeDeg, v);
+    }
+
+    void requestAll() override { simpleRequest(v0); }
+
+protected:
+    U2 m_general       = 0;
+    U2 m_options       = 0;
+    U2 m_pwmMinUs      = 500;
+    U2 m_pwmMaxUs      = 2500;
+    S2 m_angleRangeDeg = 18000;
+    S2 m_stepDeg       = 450;
+    S2 m_rangeDeg      = 18000;
+    S2 m_centerDeg     = 0;
+};
+
+
+
+class IDBinPwmRoute : public IDBin
+{
+    Q_OBJECT
+public:
+    static constexpr int PwmOutCount = 3;
+    enum Target : U1 { TargetOff = 0, TargetServoScan = 1 };
+
+    explicit IDBinPwmRoute() : IDBin() {}
+
+    ID id() override { return ID_PWM_ROUTE; }
+    Resp parsePayload(FrameParser &proto) override;
+    void startColdStartTimer() override;
+
+    void setRoute(U1 out1, U1 out2, U1 out3);
+
+    U1 target(int idx) const {
+        return (idx >= 0 && idx < PwmOutCount) ? m_target[idx] : static_cast<U1>(TargetOff);
+    }
+    void setTarget(int idx, U1 t) {
+        if (idx < 0 || idx >= PwmOutCount) return;
+        U1 t0 = m_target[0], t1 = m_target[1], t2 = m_target[2];
+        if (idx == 0) t0 = t;
+        else if (idx == 1) t1 = t;
+        else t2 = t;
+        setRoute(t0, t1, t2);
+    }
+
+    void requestAll() override { simpleRequest(v0); }
+
+protected:
+    U1 m_target[PwmOutCount] = { TargetServoScan, TargetOff, TargetOff };
+};
+
+
+
 class IDBinChartSetup : public IDBin
 {
     Q_OBJECT

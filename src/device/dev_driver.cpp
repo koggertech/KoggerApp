@@ -59,6 +59,9 @@ DevDriver::DevDriver(QObject *parent)
 
     regID(idUSBLControl = new IDBinUsblControl(), &DevDriver::receivedUSBLControl);
 
+    regID(idServoControl = new IDBinServoControl(), &DevDriver::receivedServoControl, true);
+    regID(idPwmRoute = new IDBinPwmRoute(), &DevDriver::receivedPwmRoute, true);
+
 #ifndef SEPARATE_READING
     connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process);
 #endif
@@ -70,6 +73,8 @@ DevDriver::DevDriver(QObject *parent)
     QObject::connect(idTransc, &IDBin::notifyDevDriver, this, &DevDriver::setTranscState);
     QObject::connect(idSoundSpeed, &IDBin::notifyDevDriver, this, &DevDriver::setSoundSpeedState);
     QObject::connect(idUART, &IDBin::notifyDevDriver, this, &DevDriver::setUartState);
+    QObject::connect(idServoControl, &IDBin::notifyDevDriver, this, &DevDriver::setServoControlState);
+    QObject::connect(idPwmRoute, &IDBin::notifyDevDriver, this, &DevDriver::setPwmRouteState);
 }
 
 DevDriver::~DevDriver()
@@ -470,6 +475,20 @@ void DevDriver::setUartState(bool state) {
     if (state != uartState_) {
         uartState_ = state;
         emit UARTChanged();
+    }
+}
+
+void DevDriver::setServoControlState(bool state) {
+    if (state != servoControlState_) {
+        servoControlState_ = state;
+        emit servoControlChanged();
+    }
+}
+
+void DevDriver::setPwmRouteState(bool state) {
+    if (state != pwmRouteState_) {
+        pwmRouteState_ = state;
+        emit pwmRouteChanged();
     }
 }
 
@@ -1141,6 +1160,8 @@ void DevDriver::receivedAtt(Parsers::Type type, Parsers::Version ver, Parsers::R
     if (!qFuzzyIsNull(yaw) || !qFuzzyIsNull(pitch) || !qFuzzyIsNull(roll)) {
         emit attitudeComplete(yaw, idAtt->pitch(), idAtt->roll());
     }
+
+    emit servoCurrentAngleChanged();
 }
 
 void DevDriver::receivedTemp(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
@@ -1173,6 +1194,20 @@ void DevDriver::receivedDistSetup(Parsers::Type type, Parsers::Version ver, Pars
     Q_UNUSED(ver);
 
     if(resp == respNone) {   emit distSetupChanged();  }
+}
+
+void DevDriver::receivedServoControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
+    if (resp == respNone) { emit servoControlChanged(); }
+}
+
+void DevDriver::receivedPwmRoute(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
+    if (resp == respNone) { emit pwmRouteChanged(); }
 }
 
 void DevDriver::receivedChartSetup(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {

@@ -71,6 +71,7 @@
         <file>CheckButton.qml</file>
         <file>MouseOpacityArea.qml</file>
         <file>USBLBox.qml</file>
+        <file>ServoBox.qml</file>
         <file>DeviceItem.qml</file>
         <file>CPopup.qml</file>
         <file>CMouseOpacityArea.qml</file>

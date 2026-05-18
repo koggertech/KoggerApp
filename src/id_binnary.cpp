@@ -639,6 +639,86 @@ void IDBinDistSetup::setConfidence(int confidence) {
 }
 
 
+Resp IDBinServoControl::parsePayload(FrameParser &proto) {
+    if (proto.ver() == v0) {
+        m_general       = proto.read<U2>();
+        m_options       = proto.read<U2>();
+        m_pwmMinUs      = proto.read<U2>();
+        m_pwmMaxUs      = proto.read<U2>();
+        m_angleRangeDeg = proto.read<S2>();
+        m_stepDeg       = proto.read<S2>();
+        m_rangeDeg      = proto.read<S2>();
+        m_centerDeg     = proto.read<S2>();
+    } else {
+        return respErrorVersion;
+    }
+    return respOk;
+}
+
+void IDBinServoControl::startColdStartTimer()
+{
+    interExecColdStartTimer();
+}
+
+void IDBinServoControl::setAll(U2 general, U2 options, U2 pwm_min_us, U2 pwm_max_us,
+                               S2 angle_range_deg, S2 step_deg, S2 range_deg, S2 center_deg) {
+    m_general       = general;
+    m_options       = options;
+    m_pwmMinUs      = pwm_min_us;
+    m_pwmMaxUs      = pwm_max_us;
+    m_angleRangeDeg = angle_range_deg;
+    m_stepDeg       = step_deg;
+    m_rangeDeg      = range_deg;
+    m_centerDeg     = center_deg;
+
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v0, id(), m_address);
+    id_out.write<U2>(general);
+    id_out.write<U2>(options);
+    id_out.write<U2>(pwm_min_us);
+    id_out.write<U2>(pwm_max_us);
+    id_out.write<S2>(angle_range_deg);
+    id_out.write<S2>(step_deg);
+    id_out.write<S2>(range_deg);
+    id_out.write<S2>(center_deg);
+    id_out.end();
+
+    hashBinFrameOut(id_out);
+}
+
+
+Resp IDBinPwmRoute::parsePayload(FrameParser &proto) {
+    if (proto.ver() == v0) {
+        for (int i = 0; i < PwmOutCount; ++i) {
+            m_target[i] = proto.read<U1>();
+        }
+    } else {
+        return respErrorVersion;
+    }
+    return respOk;
+}
+
+void IDBinPwmRoute::startColdStartTimer()
+{
+    interExecColdStartTimer();
+}
+
+void IDBinPwmRoute::setRoute(U1 out1, U1 out2, U1 out3) {
+    m_target[0] = out1;
+    m_target[1] = out2;
+    m_target[2] = out3;
+
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v0, id(), m_address);
+    id_out.write<U1>(out1);
+    id_out.write<U1>(out2);
+    id_out.write<U1>(out3);
+    id_out.end();
+
+    hashBinFrameOut(id_out);
+}
+
+
 Resp IDBinChartSetup::parsePayload(FrameParser &proto) {
     if (proto.ver() == v0) {
         m_sanpleCount = proto.read<U2>();

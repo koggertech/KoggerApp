@@ -80,6 +80,9 @@ enum ID : uint16_t {
     ID_BOOT = 0x24,
     ID_UPDATE = 0x25,
 
+    ID_SERVO_CONTROL = 0x27,
+    ID_PWM_ROUTE     = 0x28,
+
     ID_EVENT = 0x30,
     ID_VOLTAGE = 0x31,
 
