@@ -15,6 +15,7 @@ struct WorkBundle
     QVector<QPair<char,int>> surfaceVec;
     QVector<int>             mosaicVec;
     bool                     doIsobaths{false};
+    bool                     batchMosaicEmit{false};
 
     void clear() {
         surfaceVec.clear();
@@ -22,6 +23,7 @@ struct WorkBundle
         mosaicVec.clear();
         mosaicVec.shrink_to_fit();
         doIsobaths = false;
+        batchMosaicEmit = false;
     }
 };
 Q_DECLARE_METATYPE(WorkBundle) // NOLINT(performance-enum-size)

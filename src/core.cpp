@@ -2085,6 +2085,13 @@ void Core::setMosaicFakeCoordsLastN(int n)
     }
 }
 
+void Core::setMosaicFakeCoordsClearOldData(bool state)
+{
+    if (dataProcessor_) {
+        dataProcessor_->setMosaicFakeCoordsClearOldData(state);
+    }
+}
+
 ConsoleListModel* Core::consoleList()
 {
     return consolePtr_->listModel();

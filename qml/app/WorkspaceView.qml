@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import SceneGraphRendering 1.0
+import QtCore
 import "qrc:/qml/scene2d/"
 import kqml_types 1.0
 
@@ -429,6 +430,19 @@ Item {
             anchors.fill: parent
             visible: workspace.active3DHostItem !== null
             focus: true
+
+            // verticalScale persistence (перенесено с develop, где было в qml/main.qml)
+            Component.onCompleted: {
+                if (rendererPersist.verticalScale !== scene3dView.verticalScale)
+                    scene3dView.setVerticalScale(rendererPersist.verticalScale)
+            }
+
+            onVerticalScaleChanged: rendererPersist.verticalScale = scene3dView.verticalScale
+
+            Settings {
+                id: rendererPersist
+                property real verticalScale: 1.0
+            }
         }
 
         Repeater {

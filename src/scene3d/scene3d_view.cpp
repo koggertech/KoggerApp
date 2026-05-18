@@ -2114,6 +2114,7 @@ void GraphicsScene3dView::setVerticalScale(float scale)
     }
 
     QQuickFramebufferObject::update();
+    emit verticalScaleChanged();
 }
 
 void GraphicsScene3dView::shiftCameraZAxis(float shift)
@@ -2955,7 +2956,10 @@ std::tuple<float, float, float, float> GraphicsScene3dView::getFieldViewDim() co
         }
 
         if (point == QVector3D()) {
-            break;
+            // Up-tilted ray from a near camera can miss the ground plane on far corners.
+            // Skip the failed corner but accept bounds from the corners that did project —
+            // otherwise close-camera views emit no rect at all and mosaic paint stalls.
+            continue;
         }
 
         minX = std::min(minX, point.x());

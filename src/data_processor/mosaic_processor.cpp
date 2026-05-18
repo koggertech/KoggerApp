@@ -105,7 +105,7 @@ void MosaicProcessor::setChannels(const ChannelId& firstChId, uint8_t firstSubCh
     segSSubChannelId_ = secondSubChId;
 }
 
-void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
+void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs, bool batchEmit)
 {
     //qDebug() << "";
     //qDebug() << "MosaicProcessor::updateDataWrapper" << indxs;
@@ -115,6 +115,13 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     }
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kMosaic));
+
+    // Batch chunk emissions only when the caller opted in (FAKE_COORDS+N radical repaints).
+    // Default off preserves the original incremental streaming behavior for real-time paint.
+    inBatch_ = batchEmit;
+    if (inBatch_) {
+        batchedTiles_.clear();
+    }
 
     // чанкование задачи
     const int kStep = 10;
@@ -261,6 +268,14 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
         QMetaObject::invokeMethod(dataProcessor_, "onMosaicEpochsProcessed", Qt::QueuedConnection,
                                   Q_ARG(QVector<int>, usedVec),
                                   Q_ARG(int, zoom));
+    }
+
+    // Flush all accumulated chunks as a single tile delta — renderer transitions in one shot.
+    inBatch_ = false;
+    if (!batchedTiles_.isEmpty()) {
+        QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection,
+                                  Q_ARG(TileMap, batchedTiles_), Q_ARG(bool, true));
+        batchedTiles_.clear();
     }
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
@@ -1123,8 +1138,14 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
         qDebug() << "post up time, ms" << et.elapsed();
     }
 
-    // emit data
-    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
+    // emit data — buffer if we're in a batched run, else push immediately
+    if (inBatch_) {
+        for (auto it = res.cbegin(); it != res.cend(); ++it) {
+            batchedTiles_.insert(it.key(), it.value());
+        }
+    } else {
+        QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
+    }
 
     if (traceLineUpdated) {
         QMetaObject::invokeMethod(dataProcessor_, "postTraceLines", Qt::QueuedConnection,

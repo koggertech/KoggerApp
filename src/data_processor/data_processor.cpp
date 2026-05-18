@@ -461,6 +461,7 @@ void DataProcessor::setUpdateMosaic(bool state)
         if (!wasMosaic) {
             pendingMosaicIndxs_.clear();
             mosaicInFlightIndxs_.clear();
+            mosaicBootstrapPending_ = true;
         }
 
         if (hotCache_.checkAnyTileForZoom(lastDataZoomIndx_)) {
@@ -476,6 +477,7 @@ void DataProcessor::setUpdateMosaic(bool state)
     else {
         pendingMosaicIndxs_.clear();
         mosaicInFlightIndxs_.clear();
+        mosaicBootstrapPending_ = false;
         pendingIsobathsWork_ = true; // мозаика могла изменить поверхность
         scheduleLatest(WorkSet(WF_Isobaths));
     }
@@ -498,6 +500,8 @@ void DataProcessor::onCameraMoved()
     if (!updateMosaic_ && !updateSurface_) {
         return;
     }
+
+    mosaicBootstrapPending_ = false;
 
     // Keep already queued mosaic epochs (e.g. from realtime bottom-track updates).
     // Camera movement should only add visible work, not drop pending work.
@@ -744,6 +748,10 @@ void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVec
         }
     }
 
+    if (mosaicBootstrapPending_ && updateMosaic_) {
+        onCameraMoved();
+    }
+
     scheduleLatest(WorkSet(WF_All));
 }
 
@@ -887,13 +895,7 @@ void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const 
 
     //return;
 
-    const int mosaicLowAllowed = (activeZeroing_ && mosaicFakeCoordsLastN_ > 0)
-        ? std::max(0, mosaicCounter_ - mosaicFakeCoordsLastN_ + 1)
-        : 0;
     for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
-        if (*it < mosaicLowAllowed) {
-            continue;
-        }
         pendingMosaicIndxs_.insert(*it);
     }
     for (auto it = vertIndxsFromBottomTrack_.cbegin(); it != vertIndxsFromBottomTrack_.cend(); ++it) {
@@ -1005,12 +1007,30 @@ void DataProcessor::setMosaicSource(int source)
 
 void DataProcessor::setActiveZeroing(bool state)
 {
+    if (activeZeroing_ == state) {
+        return;
+    }
     activeZeroing_ = state;
+
+    if (!state) {
+        return;
+    }
+    // Toggling FAKE_COORDS on with a bounded window: pre-toggle paint (possibly real-coords
+    // history) would otherwise remain stuck visible on the same zoom. Restart so the next
+    // radical recalc replays only the last N onto a clean slate.
+    if (mosaicFakeCoordsLastN_ > 0) {
+        restartMosaic();
+    }
 }
 
 void DataProcessor::setMosaicFakeCoordsLastN(int n)
 {
     mosaicFakeCoordsLastN_ = std::max(0, n);
+}
+
+void DataProcessor::setMosaicFakeCoordsClearOldData(bool state)
+{
+    mosaicFakeCoordsClearOldData_ = state;
 }
 
 void DataProcessor::restartMosaic()
@@ -1183,16 +1203,49 @@ void DataProcessor::runCoalescedWork()
         }
     }
 
-    if (wantMosaic && !pendingMosaicIndxs_.isEmpty() && updateMosaic_) {
+    if (wantMosaic && updateMosaic_ && activeZeroing_ && mosaicFakeCoordsLastN_ > 0 && mosaicFakeCoordsClearOldData_) {
+        // Radical FAKE_COORDS+N path: every mosaic recalc is a full restart. Wipe caches,
+        // queue worker clearMosaic, then schedule a fresh paint of the last N epochs from
+        // epIndxsFromBottomTrack_. By design every tick re-renders the tail from scratch.
+        hotCache_.clear();
+        QMetaObject::invokeMethod(worker_, "clearMosaic", Qt::QueuedConnection);
+        mosaicTaskEpochIndxsByZoom_.clear();
+        pendingMosaicIndxs_.clear();
+        mosaicInFlightIndxs_.clear();
+
+        const int mosaicLowAllowed = std::max(0, mosaicCounter_ - mosaicFakeCoordsLastN_ + 1);
+        wb.mosaicVec.reserve(mosaicFakeCoordsLastN_);
+        for (int idx : std::as_const(epIndxsFromBottomTrack_)) {
+            if (idx >= mosaicLowAllowed && idx <= mosaicCounter_) {
+                wb.mosaicVec.append(idx);
+            }
+        }
+        std::sort(wb.mosaicVec.begin(), wb.mosaicVec.end());
+        for (int idx : std::as_const(wb.mosaicVec)) {
+            mosaicInFlightIndxs_.insert(idx);
+        }
+        wb.batchMosaicEmit = true;
+    }
+    else if (wantMosaic && !pendingMosaicIndxs_.isEmpty() && updateMosaic_) {
         int mosaicZoom = lastDataZoomIndx_;
         if (mosaicZoom <= 0) {
             mosaicZoom = zoomFromMpp(tileResolution_);
         }
         auto& processedMosaic = mosaicTaskEpochIndxsByZoom_[mosaicZoom];
 
+        // FAKE_COORDS+N without "Clear old data": still cap work to the last-N window so old
+        // backlog doesn't drown the worker. Old paint already on tiles stays as-is.
+        const int mosaicLowAllowed = (activeZeroing_ && mosaicFakeCoordsLastN_ > 0)
+            ? std::max(0, mosaicCounter_ - mosaicFakeCoordsLastN_ + 1)
+            : 0;
+
         auto it = pendingMosaicIndxs_.begin();
         while (it != pendingMosaicIndxs_.end()) {
             const int idx = *it;
+            if (idx < mosaicLowAllowed) {
+                it = pendingMosaicIndxs_.erase(it);
+                continue;
+            }
             if (processedMosaic.contains(idx)) {
                 it = pendingMosaicIndxs_.erase(it);
                 continue;
@@ -1465,6 +1518,11 @@ void DataProcessor::onSendSavedKeys(QVector<TileKey> savedKeys)
 void DataProcessor::requestTilesFromDB(const QSet<TileKey>& keys)
 {
     if (shuttingDown_.load() || suppressResults_.load() || !dbReader_ || keys.isEmpty()) {
+        return;
+    }
+    // FAKE_COORDS + bounded window: DB holds pre-erase paint that doesn't match the rolling
+    // window state. Showing it would leak "old garbage" into the renderer.
+    if (activeZeroing_ && mosaicFakeCoordsLastN_ > 0) {
         return;
     }
 
@@ -2043,6 +2101,14 @@ void DataProcessor::onUpdateDataZoom(int zoom) // calc or db
     emit mosaicProcessingCleared();
     emit surfaceProcessingCleared();
 
+    // FAKE_COORDS + bounded last-N: wipe mosaic state on zoom change and replay only the last N
+    // epochs. Without this the new zoom would either lazy-erase huge backlogs as soon as the
+    // first new epoch arrives, or inherit stale paint from a prior visit.
+    if (activeZeroing_ && mosaicFakeCoordsLastN_ > 0) {
+        restartMosaic();
+        return;
+    }
+
     if (hotCache_.checkAnyTileForZoom(lastDataZoomIndx_)) {
         pumpVisible();
     }
@@ -2150,6 +2216,7 @@ void DataProcessor::onSendDataRectRequest(float minX, float minY, float maxX, fl
     lastViewRect_ = viewRect;
     lastVisTileKeys_ = tiles;
     lastVisTilesZoom_ = reqZoom;
+
     if (updateSurface_ && !reopenTiles.isEmpty()) {
         int zoom = reqZoom;
         if (zoom <= 0) {
@@ -2500,6 +2567,19 @@ bool DataProcessor::isDbReady() const noexcept
 void DataProcessor::onDbSaveTiles(const QHash<TileKey, SurfaceTile> &tiles)
 {
     if (shuttingDown_.load() || suppressResults_.load()) {
+        return;
+    }
+    // FAKE_COORDS + bounded window: don't persist the rolling-window state. Without this the
+    // DB would gradually accept (and later replay) snapshots that contradict the gate logic.
+    // Hot cache needs an ACK to release the blocked nodes, so we still drive the save-cycle —
+    // just without actually writing anywhere.
+    if (activeZeroing_ && mosaicFakeCoordsLastN_ > 0) {
+        QVector<TileKey> ackKeys;
+        ackKeys.reserve(tiles.size());
+        for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) {
+            ackKeys.append(it.key());
+        }
+        hotCache_.onSendSavedTiles(ackKeys);
         return;
     }
     emit dbSaveTiles(engineVer_, tiles, true, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);

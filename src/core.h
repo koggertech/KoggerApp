@@ -166,6 +166,7 @@ public slots:
     Q_INVOKABLE void setTgcCompensate(bool state);
     Q_INVOKABLE void setMosaicSource(int source);
     Q_INVOKABLE void setMosaicFakeCoordsLastN(int n);
+    Q_INVOKABLE void setMosaicFakeCoordsClearOldData(bool state);
     bool getPosZeroing() const { return isActiveZeroing_; }
     Q_INVOKABLE bool getIsFileOpening() const;
     Q_INVOKABLE bool getIsAppendMode() const;

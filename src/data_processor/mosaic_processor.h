@@ -31,7 +31,7 @@ public:
 
     // PROCESSING
     void setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId);
-    void updateDataWrapper(const QVector<int>& indxs);
+    void updateDataWrapper(const QVector<int>& indxs, bool batchEmit = false);
     void setLAngleOffset(float val);
     void setRAngleOffset(float val);
     void setTileResolution(float tileResolution);
@@ -78,6 +78,12 @@ private:
     float rAngleOffset_;
     bool generateGridContour_;
     Source source_ = Source::SideScan;
+    // When true, updateData buffers per-chunk tile updates into batchedTiles_ instead of
+    // pushing each chunk to the renderer immediately. updateDataWrapper flushes once at the
+    // end. Eliminates piece-by-piece flicker for multi-chunk batches (e.g. FAKE_COORDS+N
+    // full-restart repaints of last-N epochs).
+    bool inBatch_ = false;
+    TileMap batchedTiles_;
     int lastTraceLineEpoch_;
     QVector3D lastLeftBeg_;
     QVector3D lastLeftEnd_;

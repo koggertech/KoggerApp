@@ -1466,108 +1466,113 @@
 <context>
     <name>MosaicExtraSettings</name>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="130"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="132"/>
         <source>Mosaic settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="192"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="194"/>
         <source>Theme:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>Blue</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>Sepia</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>WRGBD</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>WhiteBlack</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>BlackWhite</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>Sepia New</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>DeepBlue</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>Ice</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>Green</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>Midnight</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="223"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="225"/>
         <source>Channels:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="348"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="350"/>
         <source>Angle, °:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="423"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="425"/>
         <source>Trace line</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="446"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="448"/>
         <source>Source:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="453"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="455"/>
         <source>Raw</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="453"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="455"/>
         <source>Side-Scan</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="453"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="455"/>
         <source>TGC</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="479"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="481"/>
         <source>Calc last N epochs:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="507"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="509"/>
         <source>All</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/MosaicExtraSettings.qml" line="517"/>
+        <source>Clear old data (*)</source>
         <translation></translation>
     </message>
 </context>
@@ -1916,7 +1921,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2259"/>
+        <location filename="../src/core.cpp" line="2266"/>
         <source>File</source>
         <translation>File</translation>
     </message>
@@ -2646,92 +2651,92 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1781"/>
+        <location filename="../qml/main.qml" line="1794"/>
         <source>Profiles...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1223"/>
+        <location filename="../qml/main.qml" line="1236"/>
         <source>Data prepairing...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1227"/>
+        <location filename="../qml/main.qml" line="1240"/>
         <source> cm/pix</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1227"/>
+        <location filename="../qml/main.qml" line="1240"/>
         <source>Mosaic: </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1230"/>
+        <location filename="../qml/main.qml" line="1243"/>
         <source>Surface: </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1230"/>
+        <location filename="../qml/main.qml" line="1243"/>
         <source> cm/cell</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1836"/>
+        <location filename="../qml/main.qml" line="1849"/>
         <source>Profiles</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1873"/>
+        <location filename="../qml/main.qml" line="1886"/>
         <source>Close</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1919"/>
+        <location filename="../qml/main.qml" line="1932"/>
         <source>Select profile XML</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1946"/>
+        <location filename="../qml/main.qml" line="1959"/>
         <source>Add profiles and apply them</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1985"/>
+        <location filename="../qml/main.qml" line="1998"/>
         <source>Path to profile .xml</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1997"/>
+        <location filename="../qml/main.qml" line="2010"/>
         <source>Browse</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2006"/>
+        <location filename="../qml/main.qml" line="2019"/>
         <source>Apply</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2154"/>
+        <location filename="../qml/main.qml" line="2167"/>
         <source> V   </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2154"/>
+        <location filename="../qml/main.qml" line="2167"/>
         <source> A   </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2154"/>
+        <location filename="../qml/main.qml" line="2167"/>
         <source> m/s </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2161"/>
+        <location filename="../qml/main.qml" line="2174"/>
         <source> %</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2270"/>
+        <location filename="../qml/main.qml" line="2283"/>
         <source>Please wait, the file is opening</source>
         <translation></translation>
     </message>

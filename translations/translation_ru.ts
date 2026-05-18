@@ -1466,109 +1466,114 @@
 <context>
     <name>MosaicExtraSettings</name>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="130"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="132"/>
         <source>Mosaic settings</source>
         <translation>Мозайка</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="192"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="194"/>
         <source>Theme:</source>
         <translation>Тема:</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>Blue</source>
         <translation>Синий</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>Sepia</source>
         <translation>Сепия</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>WRGBD</source>
         <translation>WRGBD</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>WhiteBlack</source>
         <translation>Бело-черный</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>BlackWhite</source>
         <translation>Черно-белый</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>Sepia New</source>
         <translation>Сепия новая</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>DeepBlue</source>
         <translation>Глубокий синий</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>Ice</source>
         <translation>Лёд</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>Green</source>
         <translation>Зелёный</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="199"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="201"/>
         <source>Midnight</source>
         <translation>Полночь</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="223"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="225"/>
         <source>Channels:</source>
         <translation>Каналы:</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="348"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="350"/>
         <source>Angle, °:</source>
         <translation>Угол, °:</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="423"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="425"/>
         <source>Trace line</source>
         <translation>Линия трассировки</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="446"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="448"/>
         <source>Source:</source>
         <translation>Источник:</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="453"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="455"/>
         <source>Raw</source>
         <translation>Исходные</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="453"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="455"/>
         <source>Side-Scan</source>
         <translation>Сайд скан</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="453"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="455"/>
         <source>TGC</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="479"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="481"/>
         <source>Calc last N epochs:</source>
         <translation>Расч. посл. N эпох:</translation>
     </message>
     <message>
-        <location filename="../qml/MosaicExtraSettings.qml" line="507"/>
+        <location filename="../qml/MosaicExtraSettings.qml" line="509"/>
         <source>All</source>
         <translation>Все</translation>
+    </message>
+    <message>
+        <location filename="../qml/MosaicExtraSettings.qml" line="517"/>
+        <source>Clear old data (*)</source>
+        <translation>Удалять стар.д. (*)</translation>
     </message>
 </context>
 <context>
@@ -1916,7 +1921,7 @@
         <translation>Скорость звука, м/с: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2259"/>
+        <location filename="../src/core.cpp" line="2266"/>
         <source>File</source>
         <translation>Файл</translation>
     </message>
@@ -2646,92 +2651,92 @@
         <translation>Ок</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1223"/>
+        <location filename="../qml/main.qml" line="1236"/>
         <source>Data prepairing...</source>
         <translation>Подготовка данных...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1227"/>
+        <location filename="../qml/main.qml" line="1240"/>
         <source> cm/pix</source>
         <translation> см/пикс</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1227"/>
+        <location filename="../qml/main.qml" line="1240"/>
         <source>Mosaic: </source>
         <translation>Мозайка: </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1230"/>
+        <location filename="../qml/main.qml" line="1243"/>
         <source>Surface: </source>
         <translation>Поверхность: </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1230"/>
+        <location filename="../qml/main.qml" line="1243"/>
         <source> cm/cell</source>
         <translation> см/ячейка</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1781"/>
+        <location filename="../qml/main.qml" line="1794"/>
         <source>Profiles...</source>
         <translation>Профили...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1836"/>
+        <location filename="../qml/main.qml" line="1849"/>
         <source>Profiles</source>
         <translation>Профили</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1873"/>
+        <location filename="../qml/main.qml" line="1886"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1919"/>
+        <location filename="../qml/main.qml" line="1932"/>
         <source>Select profile XML</source>
         <translation>Выберите профиль XML</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1946"/>
+        <location filename="../qml/main.qml" line="1959"/>
         <source>Add profiles and apply them</source>
         <translation>Добавьте профиль и примените его</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1985"/>
+        <location filename="../qml/main.qml" line="1998"/>
         <source>Path to profile .xml</source>
         <translation>Путь до профиля .xml</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1997"/>
+        <location filename="../qml/main.qml" line="2010"/>
         <source>Browse</source>
         <translation>Выбрать</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2006"/>
+        <location filename="../qml/main.qml" line="2019"/>
         <source>Apply</source>
         <translation>Применить</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2154"/>
+        <location filename="../qml/main.qml" line="2167"/>
         <source> m/s </source>
         <translation> м/с </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2161"/>
+        <location filename="../qml/main.qml" line="2174"/>
         <source> %</source>
         <translation> %</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2154"/>
+        <location filename="../qml/main.qml" line="2167"/>
         <source> V   </source>
         <translation> В   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2154"/>
+        <location filename="../qml/main.qml" line="2167"/>
         <source> A   </source>
         <translation> А   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="2270"/>
+        <location filename="../qml/main.qml" line="2283"/>
         <source>Please wait, the file is opening</source>
         <translation>Пожалуйста подождите, файл открывается</translation>
     </message>

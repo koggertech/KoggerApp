@@ -202,7 +202,7 @@ void ComputeWorker::processBundle(const WorkBundle& wb)
     }
 
     if (!wb.mosaicVec.isEmpty() && !isCanceled()) {
-        mosaic_.updateDataWrapper(wb.mosaicVec);
+        mosaic_.updateDataWrapper(wb.mosaicVec, wb.batchMosaicEmit);
     }
 
     emit jobFinished();
