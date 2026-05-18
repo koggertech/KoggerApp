@@ -267,11 +267,19 @@ int main(int argc, char *argv[])
 
 // file opening on startup
 #ifndef Q_OS_ANDROID
-    if (argc > 1) {
-        QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
-                         &core,     [&argv]() {
-                                        core.openLogFile(argv[1], false, true);
-                                    }, Qt::QueuedConnection);
+    {
+        const QStringList appArgs = app.arguments();
+        if (appArgs.size() > 1) {
+            const QString startupFilePath = appArgs.at(1);
+            auto* startupConn = new QMetaObject::Connection;
+            *startupConn = QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
+                                            &core, [startupFilePath, startupConn, url](QObject* obj, const QUrl& objUrl) {
+                                                if (!obj || url != objUrl) return;
+                                                QObject::disconnect(*startupConn);
+                                                delete startupConn;
+                                                core.openLogFile(startupFilePath, false, true);
+                                            }, Qt::QueuedConnection);
+        }
     }
 #endif
 
