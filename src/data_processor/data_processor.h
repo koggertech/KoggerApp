@@ -96,6 +96,7 @@ public slots:
     void setMosaicSource(int source);
     void setActiveZeroing(bool state);
     void setMosaicFakeCoordsLastN(int n);
+    void setMosaicFakeCoordsClearOldData(bool state);
     void restartMosaic();
     void askColorTableForMosaic();
     void onMosaicEpochsProcessed(const QVector<int>& indxs, int zoom);
@@ -277,6 +278,10 @@ private:
     bool activeZeroing_ = false;
     // 0 disables the cap; otherwise only epochs in [mosaicCounter_-N+1, mosaicCounter_] are scheduled when activeZeroing_ is on
     int mosaicFakeCoordsLastN_ = 0;
+    // When true (default), entering FAKE_COORDS+N enables full-restart radical repaints in
+    // runCoalescedWork. When false, the gate only filters which epochs reach work — old paint
+    // stays on tiles, new last-N adds incrementally.
+    bool mosaicFakeCoordsClearOldData_ = true;
     mosaic::PlotColorTable mosaicColorTable_;
     // Surface
     float tileResolution_;

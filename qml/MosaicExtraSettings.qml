@@ -78,7 +78,8 @@ MenuFrame {
                 mosaicSource.activeFocus                       ||
                 mosaicLAngleOffset.activeFocus                 ||
                 mosaicRAngleOffset.activeFocus                 ||
-                fakeCoordsLastNSlider.activeFocus)
+                fakeCoordsLastNSlider.activeFocus              ||
+                fakeCoordsClearOldDataCheck.activeFocus)
              : (mosaicViewCheckButton.hovered                  ||
                 isHovered                                      ||
                 mosaicTheme.activeFocus                        ||
@@ -87,7 +88,8 @@ MenuFrame {
                 mosaicSource.activeFocus                       ||
                 mosaicLAngleOffset.activeFocus                 ||
                 mosaicRAngleOffset.activeFocus                 ||
-                fakeCoordsLastNSlider.activeFocus)
+                fakeCoordsLastNSlider.activeFocus              ||
+                fakeCoordsClearOldDataCheck.activeFocus)
 
     z: mosaicViewSettings.visible
     Layout.alignment: Qt.AlignCenter
@@ -473,38 +475,94 @@ MenuFrame {
                     }
                 }
 
-                RowLayout {
+                // FAKE_COORDS-related controls grouped inside a bordered frame with the
+                // route_crossed_out icon on top (centered, tinted white via Button.icon.color
+                // — the SVG's own colors are overridden by Qt's icon coloring system).
+                Rectangle {
+                    id: fakeCoordsGroup
                     visible: core.posZeroing
-                    CText {
-                        text: qsTr("Calc last N epochs:")
-                        Layout.preferredWidth: mosaicSettingsRightColumn.labelW
-                    }
-                    CSlider {
-                        id: fakeCoordsLastNSlider
-                        Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW - 60
-                        implicitHeight: theme.controlHeight
-                        height: theme.controlHeight
-                        barWidth: 12 * theme.resCoeff
-                        from: 10
-                        to: 3000
-                        stepSize: 10
-                        value: 500
+                    Layout.fillWidth: true
+                    Layout.topMargin: 8
+                    implicitHeight: fakeCoordsGroupContent.implicitHeight + 24
+                    color: "transparent"
+                    border.color: "#808080"
+                    border.width: 1
+                    radius: 4
 
-                        // Crank slider all the way right → no limit (process every epoch).
-                        readonly property int effectiveN: value >= to ? 0 : value
+                    ColumnLayout {
+                        id: fakeCoordsGroupContent
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        spacing: 8
 
-                        onEffectiveNChanged: core.setMosaicFakeCoordsLastN(effectiveN)
-                        Component.onCompleted: core.setMosaicFakeCoordsLastN(effectiveN)
-
-                        Settings {
-                            property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value
+                        Button {
+                            Layout.alignment: Qt.AlignHCenter
+                            flat: true
+                            enabled: false
+                            padding: 0
+                            background: null
+                            icon.source: "qrc:/icons/ui/route_crossed_out.svg"
+                            icon.color: "white"
+                            icon.width: theme.controlHeight * 1.1
+                            icon.height: theme.controlHeight * 1.1
+                            implicitWidth: theme.controlHeight * 1.1
+                            implicitHeight: theme.controlHeight * 1.1
                         }
-                    }
-                    CText {
-                        Layout.preferredWidth: 60
-                        horizontalAlignment: Text.AlignRight
-                        text: fakeCoordsLastNSlider.value >= fakeCoordsLastNSlider.to
-                              ? qsTr("All") : fakeCoordsLastNSlider.value
+
+                        RowLayout {
+                            CText {
+                                text: qsTr("Calc last N epochs:")
+                                Layout.preferredWidth: mosaicSettingsRightColumn.labelW
+                            }
+                            CSlider {
+                                id: fakeCoordsLastNSlider
+                                Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW - 90
+                                implicitHeight: theme.controlHeight
+                                height: theme.controlHeight
+                                barWidth: 12 * theme.resCoeff
+                                from: 10
+                                to: 3000
+                                stepSize: 10
+                                value: 500
+
+                                // Gate the effective value on core.posZeroing — the cap only applies in
+                                // FAKE_COORDS. Slider at "to" means "All" (no cap, process every epoch).
+                                readonly property int effectiveN: (core.posZeroing && value < to) ? value : 0
+
+                                onEffectiveNChanged: core.setMosaicFakeCoordsLastN(effectiveN)
+                                Component.onCompleted: core.setMosaicFakeCoordsLastN(effectiveN)
+
+                                Settings {
+                                    property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value
+                                }
+                            }
+                            CText {
+                                Layout.preferredWidth: 50
+                                horizontalAlignment: Text.AlignRight
+                                text: fakeCoordsLastNSlider.value >= fakeCoordsLastNSlider.to
+                                      ? qsTr("All") : fakeCoordsLastNSlider.value
+                            }
+                        }
+
+                        RowLayout {
+                            CCheck {
+                                id: fakeCoordsClearOldDataCheck
+                                text: qsTr("Clear old data (*)")
+                                checked: true
+
+                                // Gate the effective value on core.posZeroing — radical clear must NEVER
+                                // fire outside FAKE_COORDS, even if the user's checked state was persisted
+                                // from a prior session when posZeroing was on.
+                                readonly property bool effectiveClearOldData: checked && core.posZeroing
+
+                                onEffectiveClearOldDataChanged: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
+                                Component.onCompleted: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
+
+                                Settings {
+                                    property alias fakeCoordsClearOldDataCheck: fakeCoordsClearOldDataCheck.checked
+                                }
+                            }
+                        }
                     }
                 }
             }
