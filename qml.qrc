@@ -104,6 +104,7 @@
         <file>qml/devices/DatasetBox.qml</file>
         <file>qml/devices/DatasetCheckBox.qml</file>
         <file>qml/devices/RecorderBox.qml</file>
+        <file>qml/devices/ServoBox.qml</file>
         <file>qml/devices/FlashBox.qml</file>
         <file>qml/devices/FactoryBox.qml</file>
         <file>qml/devices/ExportDist.qml</file>

@@ -11,6 +11,7 @@ ExportSettings 1.0 ExportSettings.qml
 FactoryBox 1.0 FactoryBox.qml
 FlashBox 1.0 FlashBox.qml
 RecorderBox 1.0 RecorderBox.qml
+ServoBox 1.0 ServoBox.qml
 SonarBox 1.0 SonarBox.qml
 USBLBox 1.0 USBLBox.qml
 UpgradeBox 1.0 UpgradeBox.qml

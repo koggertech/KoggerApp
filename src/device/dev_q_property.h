@@ -1,6 +1,8 @@
 #ifndef SONARDRIVERINTERFACE_H
 #define SONARDRIVERINTERFACE_H
 
+#include <QVariantList>
+#include <QVariantMap>
 #include "dev_driver.h"
 
 class DevQProperty : public DevDriver
@@ -70,8 +72,100 @@ public:
     Q_PROPERTY(bool isSoundSpeedSupport READ isSoundSpeedSupport NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isAddressSupport READ isAddressSupport NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isUpgradeSupport READ isUpgradeSupport NOTIFY deviceVersionChanged)
+
+    Q_PROPERTY(bool isServoSupport READ getServoControlState NOTIFY servoControlChanged)
+    Q_PROPERTY(bool servoEnabled READ servoEnabled WRITE setServoEnabled NOTIFY servoControlChanged)
+    Q_PROPERTY(bool servoReverse READ servoReverse WRITE setServoReverse NOTIFY servoControlChanged)
+    Q_PROPERTY(int servoPwmMinUs READ servoPwmMinUs WRITE setServoPwmMinUs NOTIFY servoControlChanged)
+    Q_PROPERTY(int servoPwmMaxUs READ servoPwmMaxUs WRITE setServoPwmMaxUs NOTIFY servoControlChanged)
+    Q_PROPERTY(double servoAngleRangeDeg READ servoAngleRangeDeg WRITE setServoAngleRangeDeg NOTIFY servoControlChanged)
+    Q_PROPERTY(double servoStepDeg READ servoStepDeg WRITE setServoStepDeg NOTIFY servoControlChanged)
+    Q_PROPERTY(double servoRangeDeg READ servoRangeDeg WRITE setServoRangeDeg NOTIFY servoControlChanged)
+    Q_PROPERTY(double servoCenterDeg READ servoCenterDeg WRITE setServoCenterDeg NOTIFY servoControlChanged)
+    Q_PROPERTY(double servoCurrentAngleDeg READ servoCurrentAngleDeg NOTIFY servoCurrentAngleChanged)
+
+    Q_PROPERTY(int pwmRouteOut1 READ pwmRouteOut1 WRITE setPwmRouteOut1 NOTIFY pwmRouteChanged)
+    Q_PROPERTY(int pwmRouteOut2 READ pwmRouteOut2 WRITE setPwmRouteOut2 NOTIFY pwmRouteChanged)
+    Q_PROPERTY(int pwmRouteOut3 READ pwmRouteOut3 WRITE setPwmRouteOut3 NOTIFY pwmRouteChanged)
+
+    Q_PROPERTY(bool isDevSyncSynced READ getDevSyncState NOTIFY devSyncChanged)
+    Q_PROPERTY(int  devSyncPeriodMs READ devSyncPeriodMs WRITE setDevSyncPeriodMs NOTIFY devSyncChanged)
+    Q_PROPERTY(QVariantList devSyncPorts READ devSyncPorts NOTIFY devSyncChanged)
 #endif
 
+    int devSyncPeriodMs() const { return idDevSync ? idDevSync->periodMs() : 0; }
+
+    QVariantList devSyncPorts() const {
+        QVariantList list;
+        if (!idDevSync) return list;
+        for (int i = 0; i < idDevSync->portCount(); ++i) {
+            const U1 src = idDevSync->portSource(i);
+            QVariantMap m;
+            m["index"]   = i;
+            m["source"]  = int(src);
+            m["isKnown"] = (src == IDBinDevSync::SyncOff || src == IDBinDevSync::SyncTimer);
+            list.append(m);
+        }
+        return list;
+    }
+
+    // ----- servo getters/setters (inline pass-through к IDBin*) -----
+    bool servoEnabled() const { return idServoControl ? idServoControl->enabled() : false; }
+    void setServoEnabled(bool v) { if (idServoControl) idServoControl->setEnabled(v); }
+
+    bool servoReverse() const { return idServoControl ? idServoControl->reverse() : false; }
+    void setServoReverse(bool v) { if (idServoControl) idServoControl->setReverse(v); }
+
+    int servoPwmMinUs() const { return idServoControl ? idServoControl->pwmMinUs() : 0; }
+    void setServoPwmMinUs(int v) { if (idServoControl) idServoControl->setPwmMinUs(static_cast<U2>(v)); }
+
+    int servoPwmMaxUs() const { return idServoControl ? idServoControl->pwmMaxUs() : 0; }
+    void setServoPwmMaxUs(int v) { if (idServoControl) idServoControl->setPwmMaxUs(static_cast<U2>(v)); }
+
+    double servoAngleRangeDeg() const {
+        return idServoControl ? double(idServoControl->angleRangeDeg()) / IDBinServoControl::AngleScale : 0.0;
+    }
+    void setServoAngleRangeDeg(double deg) {
+        if (idServoControl) idServoControl->setAngleRangeDeg(degToS2(deg));
+    }
+
+    double servoStepDeg() const {
+        return idServoControl ? double(idServoControl->stepDeg()) / IDBinServoControl::AngleScale : 0.0;
+    }
+    void setServoStepDeg(double deg) {
+        if (idServoControl) idServoControl->setStepDeg(degToS2(deg));
+    }
+
+    double servoRangeDeg() const {
+        return idServoControl ? double(idServoControl->rangeDeg()) / IDBinServoControl::AngleScale : 0.0;
+    }
+    void setServoRangeDeg(double deg) {
+        if (idServoControl) idServoControl->setRangeDeg(degToS2(deg));
+    }
+
+    double servoCenterDeg() const {
+        return idServoControl ? double(idServoControl->centerDeg()) / IDBinServoControl::AngleScale : 0.0;
+    }
+    void setServoCenterDeg(double deg) {
+        if (idServoControl) idServoControl->setCenterDeg(degToS2(deg));
+    }
+
+    double servoCurrentAngleDeg() const { return idAtt ? idAtt->roll() : 0.0; }
+
+    int pwmRouteOut1() const { return idPwmRoute ? idPwmRoute->target(0) : 0; }
+    void setPwmRouteOut1(int v) { if (idPwmRoute) idPwmRoute->setTarget(0, static_cast<U1>(v)); }
+    int pwmRouteOut2() const { return idPwmRoute ? idPwmRoute->target(1) : 0; }
+    void setPwmRouteOut2(int v) { if (idPwmRoute) idPwmRoute->setTarget(1, static_cast<U1>(v)); }
+    int pwmRouteOut3() const { return idPwmRoute ? idPwmRoute->target(2) : 0; }
+    void setPwmRouteOut3(int v) { if (idPwmRoute) idPwmRoute->setTarget(2, static_cast<U1>(v)); }
+
+private:
+    static S2 degToS2(double deg) {
+        double scaled = deg * IDBinServoControl::AngleScale;
+        if (scaled >  32767.0) scaled =  32767.0;
+        if (scaled < -32768.0) scaled = -32768.0;
+        return static_cast<S2>(scaled);
+    }
 };
 
 

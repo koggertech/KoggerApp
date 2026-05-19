@@ -188,6 +188,80 @@ DevSettingsBox {
             }
         }
 
+        ParamGroup {
+            groupName: qsTr("Downstream sync")
+
+            ColumnLayout {
+                id: syncCol
+                Layout.fillWidth: true
+                readonly property bool synced: !!(dev && dev.isDevSyncSynced)
+                enabled: synced
+                opacity: synced ? 1.0 : 0.5
+                spacing: 6
+
+                RowLayout {
+                    CText { text: qsTr("Min period, ms") }
+                    SpinBoxCustom {
+                        visible: syncCol.synced
+                        from: 1
+                        to: 10000
+                        stepSize: 1
+                        devValue: dev ? dev.devSyncPeriodMs : 1
+                        onValueChanged: {
+                            if (dev && value !== dev.devSyncPeriodMs)
+                                dev.devSyncPeriodMs = value
+                        }
+                    }
+                    CText {
+                        visible: !syncCol.synced
+                        text: "—"
+                    }
+                }
+
+                Repeater {
+                    model: dev ? dev.devSyncPorts : []
+
+                    RowLayout {
+                        required property var modelData
+                        CText { text: qsTr("Port %1").arg(modelData.index + 1) }
+                        CCombo {
+                            visible: modelData.isKnown
+                            model: [qsTr("Off"), qsTr("Timer")]
+                            currentIndex: modelData.source
+                            onActivated: function(index) {
+                                if (dev) dev.setDevSyncPortSource(modelData.index, index)
+                            }
+                        }
+                        CText {
+                            visible: !modelData.isKnown
+                            text: qsTr("Unknown (%1)").arg(modelData.source)
+                        }
+                    }
+                }
+
+                CText {
+                    id: devSyncErrLabel
+                    Layout.fillWidth: true
+                    visible: text.length > 0
+                    color: "red"
+                    text: ""
+                    Connections {
+                        target: dev
+                        function onDevSyncErrorOccurred(reason) {
+                            devSyncErrLabel.text = reason
+                            devSyncErrClear.restart()
+                        }
+                    }
+                    Timer {
+                        id: devSyncErrClear
+                        interval: 5000
+                        repeat: false
+                        onTriggered: devSyncErrLabel.text = ""
+                    }
+                }
+            }
+        }
+
 
         RowLayout {
             Layout.fillWidth: true

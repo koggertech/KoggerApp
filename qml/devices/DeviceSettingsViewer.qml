@@ -67,6 +67,16 @@ MenuScroll {
         }
 
         MenuFrame {
+            visible: servoBox.isActive
+            ServoBox {
+                id: servoBox
+                visible: isActive
+                dev: devConnection.dev
+                width: menuWidth
+            }
+        }
+
+        MenuFrame {
             visible: recorderBox.isActive
             RecorderBox {
                 id: recorderBox
