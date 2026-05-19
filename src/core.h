@@ -212,6 +212,7 @@ signals:
     void internetAvailableChanged();
     void mapTileLoadingEnabledChanged();
     void posZeroingChanged();
+    void languageChanged();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);

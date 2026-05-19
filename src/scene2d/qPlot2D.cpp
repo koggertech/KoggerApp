@@ -8,7 +8,10 @@
 #include <QQuickWindow>
 #include <cmath>
 #include <limits>
+#include "core.h"
 #include "epoch_event.h"
+
+extern Core core;
 
 
 qPlot2D::qPlot2D(QQuickItem* parent)
@@ -25,6 +28,7 @@ qPlot2D::qPlot2D(QQuickItem* parent)
     connect(this, &QQuickItem::heightChanged, this, &qPlot2D::updater);
     connect(this, &QQuickItem::visibleChanged, this, &qPlot2D::updater);
     connect(this, &QQuickItem::parentChanged, this, [this](QQuickItem*) { updater(); });
+    connect(&core, &Core::languageChanged, this, &qPlot2D::updater);
     setFlag(ItemHasContents);
     setAcceptedMouseButtons(Qt::AllButtons);
 //    setFillColor(QColor(255, 255, 255));

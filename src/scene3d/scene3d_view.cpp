@@ -153,6 +153,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(rulerTool_.get(), &RulerTool::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(geoJsonLayer_.get(), &GeoJsonLayer::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(&core, &Core::languageChanged, this, &QQuickFramebufferObject::update);
     QObject::connect(geoJsonController_, &GeoJsonController::documentChanged, this, [this]() {
         geoJsonRenderDirty_ = true;
         rebuildGeoJsonLayerIfNeeded();

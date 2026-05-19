@@ -1,5 +1,6 @@
 #include "plane_grid.h"
 
+#include <QCoreApplication>
 #include <QtMath>
 #include <utility>
 #include "draw_utils.h"
@@ -507,7 +508,7 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
                 QVector2D pScreen(pWin.x(), vport.height() - pWin.y());
                 pScreen.setY(pScreen.y() + 8.0f);
 
-                QString text = QString::number(static_cast<int>(qRound(r))) + " m";
+                QString text = QString::number(static_cast<int>(qRound(r))) + QCoreApplication::translate("PlaneGrid", " m");
                 labelItems.append(TextRenderer::Text2DItem{std::move(text), 0.7f, pScreen, true});
             }
 
