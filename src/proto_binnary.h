@@ -72,6 +72,7 @@ enum ID : uint16_t {
     ID_ACC_SETUP = 0x1C,
     ID_MAG_SETUP = 0x1D,
     ID_BARO_SETUP = 0x1E,
+    ID_DEV_SYNC = 0x1F,
 
     ID_VERSION = 0x20,
     ID_MARK = 0x21,

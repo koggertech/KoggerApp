@@ -719,6 +719,41 @@ void IDBinPwmRoute::setRoute(U1 out1, U1 out2, U1 out3) {
 }
 
 
+Resp IDBinDevSync::parsePayload(FrameParser &proto) {
+    if (proto.ver() != v0)         return respErrorVersion;
+    if (proto.readAvailable() < 2) return respErrorPayload;
+
+    m_periodMs = proto.read<U2>();
+
+    const int n = proto.readAvailable();
+    m_portSource.resize(n);
+    for (int i = 0; i < n; ++i)
+        m_portSource[i] = static_cast<char>(proto.read<U1>());
+
+    m_synced = true;
+    return respOk;
+}
+
+void IDBinDevSync::startColdStartTimer()
+{
+    interExecColdStartTimer();
+}
+
+void IDBinDevSync::flushPending() {
+    if (!m_synced || !m_pending) return;
+
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v0, id(), m_address);
+    id_out.write<U2>(m_periodMs);
+    for (char b : m_portSource)
+        id_out.write<U1>(static_cast<U1>(b));
+    id_out.end();
+
+    hashBinFrameOut(id_out);
+    m_pending = false;
+}
+
+
 Resp IDBinChartSetup::parsePayload(FrameParser &proto) {
     if (proto.ver() == v0) {
         m_sanpleCount = proto.read<U2>();

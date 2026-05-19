@@ -168,6 +168,7 @@ public:
     bool getUartState() { return uartState_; };
     bool getServoControlState() { return servoControlState_; };
     bool getPwmRouteState() { return pwmRouteState_; };
+    bool getDevSyncState() { return devSyncState_; };
     int getAverageChartLosses() const { return averageChartLosses_; };
     QUuid getLinkUuid() const;
     void setFirmware(const QByteArray& data);
@@ -225,6 +226,8 @@ signals:
     void servoControlChanged();
     void pwmRouteChanged();
     void servoCurrentAngleChanged();
+    void devSyncChanged();
+    void devSyncErrorOccurred(QString reason);
     void upgradeProgressChanged(int progress_status);
     void upgradeChanged();
     void deviceVersionChanged();
@@ -268,6 +271,9 @@ public slots:
     void setUartState(bool state);
     void setServoControlState(bool state);
     void setPwmRouteState(bool state);
+    void setDevSyncState(bool state);
+    void setDevSyncPeriodMs(int ms);
+    void setDevSyncPortSource(int idx, int src);
     void setLinkUuid(QUuid linkUuid);
     void askBeaconPosition() {
         IDBinUsblSolution::USBLRequestBeacon ask;
@@ -325,6 +331,7 @@ protected:
 
     IDBinServoControl* idServoControl = nullptr;
     IDBinPwmRoute* idPwmRoute = nullptr;
+    IDBinDevSync* idDevSync = nullptr;
 
 //    QHash<ID, IDBin*> hashIDParsing;
 //    QHash<ID, ParseCallback> hashIDCallback;
@@ -446,6 +453,9 @@ protected slots:
     void receivedServoControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedPwmRoute    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
+    void receivedDevSync     (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void onDevSyncDebounceFired();
+
 private:
     bool datasetState_;
     bool distSetupState_;
@@ -456,6 +466,8 @@ private:
     bool uartState_;
     bool servoControlState_ = false;
     bool pwmRouteState_ = false;
+    bool devSyncState_ = false;
+    QTimer m_devSyncDebounceTimer;
     int errorFreezeCnt_;
     int averageChartLosses_;
     QUuid linkUuid_;

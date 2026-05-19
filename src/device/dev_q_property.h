@@ -1,6 +1,8 @@
 #ifndef SONARDRIVERINTERFACE_H
 #define SONARDRIVERINTERFACE_H
 
+#include <QVariantList>
+#include <QVariantMap>
 #include "dev_driver.h"
 
 class DevQProperty : public DevDriver
@@ -85,7 +87,27 @@ public:
     Q_PROPERTY(int pwmRouteOut1 READ pwmRouteOut1 WRITE setPwmRouteOut1 NOTIFY pwmRouteChanged)
     Q_PROPERTY(int pwmRouteOut2 READ pwmRouteOut2 WRITE setPwmRouteOut2 NOTIFY pwmRouteChanged)
     Q_PROPERTY(int pwmRouteOut3 READ pwmRouteOut3 WRITE setPwmRouteOut3 NOTIFY pwmRouteChanged)
+
+    Q_PROPERTY(bool isDevSyncSynced READ getDevSyncState NOTIFY devSyncChanged)
+    Q_PROPERTY(int  devSyncPeriodMs READ devSyncPeriodMs WRITE setDevSyncPeriodMs NOTIFY devSyncChanged)
+    Q_PROPERTY(QVariantList devSyncPorts READ devSyncPorts NOTIFY devSyncChanged)
 #endif
+
+    int devSyncPeriodMs() const { return idDevSync ? idDevSync->periodMs() : 0; }
+
+    QVariantList devSyncPorts() const {
+        QVariantList list;
+        if (!idDevSync) return list;
+        for (int i = 0; i < idDevSync->portCount(); ++i) {
+            const U1 src = idDevSync->portSource(i);
+            QVariantMap m;
+            m["index"]   = i;
+            m["source"]  = int(src);
+            m["isKnown"] = (src == IDBinDevSync::SyncOff || src == IDBinDevSync::SyncTimer);
+            list.append(m);
+        }
+        return list;
+    }
 
     // ----- servo getters/setters (inline pass-through к IDBin*) -----
     bool servoEnabled() const { return idServoControl ? idServoControl->enabled() : false; }

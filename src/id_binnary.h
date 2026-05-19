@@ -629,6 +629,73 @@ protected:
 
 
 
+class IDBinDevSync : public IDBin
+{
+    Q_OBJECT
+public:
+    enum SyncSource : U1 { SyncOff = 0, SyncTimer = 1 };
+
+    explicit IDBinDevSync() : IDBin() {}
+
+    ID id() override { return ID_DEV_SYNC; }
+    Resp parsePayload(FrameParser &proto) override;
+    void startColdStartTimer() override;
+    void requestAll() override { simpleRequest(v0); }
+
+    int  portCount() const { return m_portSource.size(); }
+    U1   portSource(int idx) const {
+        return (idx >= 0 && idx < m_portSource.size())
+            ? static_cast<U1>(m_portSource.at(idx))
+            : static_cast<U1>(SyncOff);
+    }
+    U2   periodMs() const { return m_periodMs; }
+    bool synced()  const { return m_synced; }
+
+    void setPortSource(int idx, U1 src) {
+        if (idx < 0 || idx >= m_portSource.size()) return;
+        if (static_cast<U1>(m_portSource.at(idx)) == src) return;
+        m_portSource[idx] = static_cast<char>(src);
+        m_pending = true;
+    }
+    void setPeriodMs(U2 ms) {
+        if (m_periodMs == ms) return;
+        m_periodMs = ms;
+        m_pending = true;
+    }
+
+    void flushPending();
+    void commitFromDisplayed() {
+        m_committedPortSource = m_portSource;
+        m_committedPeriodMs   = m_periodMs;
+        m_pending = false;
+    }
+    void revertToCommitted() {
+        m_portSource = m_committedPortSource;
+        m_periodMs   = m_committedPeriodMs;
+        m_pending = false;
+    }
+    void reset() {
+        m_synced  = false;
+        m_pending = false;
+        m_periodMs = 20;
+        m_portSource.clear();
+        m_committedPeriodMs = 20;
+        m_committedPortSource.clear();
+    }
+
+protected:
+    QByteArray m_portSource;
+    U2         m_periodMs = 20;
+    bool       m_synced   = false;
+
+    QByteArray m_committedPortSource;
+    U2         m_committedPeriodMs = 20;
+
+    bool       m_pending  = false;
+};
+
+
+
 class IDBinChartSetup : public IDBin
 {
     Q_OBJECT
