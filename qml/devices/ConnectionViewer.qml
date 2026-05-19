@@ -281,7 +281,7 @@ Column {
                         id: gearBtn
                         checkable: true
                         iconSource: "qrc:/icons/ui/settings.svg"
-                        toolTipText: "Settings"
+                        toolTipText: qsTr("Settings")
                         Layout.alignment: Qt.AlignVCenter
                         width: 26; height: 26
                     }
@@ -290,7 +290,7 @@ Column {
                         visible: gearBtn.checked
                         checked: IsPinned; checkable: true
                         iconSource: "qrc:/icons/ui/pin.svg"
-                        toolTipText: checked ? "Unpin" : "Pin"
+                        toolTipText: checked ? qsTr("Unpin") : qsTr("Pin")
                         Layout.alignment: Qt.AlignVCenter; width: 26; height: 26
                         onToggled: function(v) { linkManagerWrapper.sendUpdatePinnedState(Uuid, v) }
                     }
@@ -299,14 +299,14 @@ Column {
                         visible: gearBtn.checked
                         checked: ControlType; checkable: true
                         iconSource: "qrc:/icons/ui/repeat.svg"
-                        toolTipText: "Auto reconnect"
+                        toolTipText: qsTr("Auto reconnect")
                         Layout.alignment: Qt.AlignVCenter; width: 26; height: 26
                         onToggled: function(v) { linkManagerWrapper.sendUpdateControlType(Uuid, Number(v)) }
                     }
 
                     IconBtn {
                         visible: gearBtn.checked && (LinkType === 2 || LinkType === 3)
-                        iconSource: "qrc:/icons/ui/x.svg"; toolTipText: "Delete"
+                        iconSource: "qrc:/icons/ui/x.svg"; toolTipText: qsTr("Delete")
                         Layout.alignment: Qt.AlignVCenter; width: 26; height: 26
                         onClicked: linkManagerWrapper.deleteLink(Uuid)
                     }
@@ -347,7 +347,7 @@ Column {
                         id: autoSpeedBtn
                         visible: LinkType === 1
                         checked: AutoSpeedSelection; checkable: true
-                        iconSource: "qrc:/icons/ui/refresh.svg"; toolTipText: "Auto search baudrate"
+                        iconSource: "qrc:/icons/ui/refresh.svg"; toolTipText: qsTr("Auto search baudrate")
                         Layout.alignment: Qt.AlignVCenter; width: 26; height: 26
                         onToggled: function(v) { linkManagerWrapper.sendAutoSpeedSelection(Uuid, v) }
                         onCheckedChanged: { if (!checked) linkManagerWrapper.sendAutoSpeedSelection(Uuid, false) }
@@ -379,7 +379,7 @@ Column {
                     }
 
                     Text {
-                        visible: LinkType === 2; text: "src:"
+                        visible: LinkType === 2; text: qsTr("src:")
                         color: AppPalette.borderFocus; font.pixelSize: 10; Layout.alignment: Qt.AlignVCenter
                     }
 
@@ -401,7 +401,7 @@ Column {
 
                     Text {
                         visible: LinkType === 2 || LinkType === 3
-                        text: LinkType === 2 ? "dst:" : "srv:"
+                        text: LinkType === 2 ? qsTr("dst:") : qsTr("srv:")
                         color: AppPalette.borderFocus; font.pixelSize: 10; Layout.alignment: Qt.AlignVCenter
                     }
 
@@ -425,7 +425,7 @@ Column {
                     KButton {
                         Layout.alignment: Qt.AlignVCenter
                         Layout.preferredWidth: 58; Layout.preferredHeight: 26
-                        text: isConnected ? "Close" : "Open"
+                        text: isConnected ? qsTr("Close") : qsTr("Open")
                         fontPixelSize: 11; bold: false
                         normalBg: AppPalette.card
                         checkedBg: "#134E2E"; checkedBorder: "#10B981"
@@ -461,18 +461,18 @@ Column {
         width: parent.width; spacing: 6
 
         KButton {
-            text: "+UDP"; height: 30; fontPixelSize: 12
+            text: qsTr("+UDP"); height: 30; fontPixelSize: 12
             onClicked: linkManagerWrapper.createAsUdp("", 0, 0)
         }
 
         KButton {
-            text: "+TCP"; height: 30; fontPixelSize: 12
+            text: qsTr("+TCP"); height: 30; fontPixelSize: 12
             onClicked: linkManagerWrapper.createAsTcp("", 0, 0)
         }
 
         KButton {
             id: mavlinkProxy
-            text: "MAVProxy"; height: 30; fontPixelSize: 12; checkable: true
+            text: qsTr("MAVProxy"); height: 30; fontPixelSize: 12; checkable: true
             onToggled: {
                 if (checked) linkManagerWrapper.sendCreateAndOpenAsUdpProxy("127.0.0.1", 14551, 14550)
                 else         linkManagerWrapper.sendCloseUdpProxy()
@@ -481,7 +481,7 @@ Column {
 
         KButton {
             id: loggingCheck
-            text: "● KLF"; height: 30; fontPixelSize: 12; checkable: true
+            text: qsTr("● KLF"); height: 30; fontPixelSize: 12; checkable: true
             checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
             onCheckedChanged: {
                 core.setKlfLogging(checked)
@@ -496,7 +496,7 @@ Column {
 
         KButton {
             id: loggingCheck2
-            text: "● CSV"; height: 30; fontPixelSize: 12; checkable: true
+            text: qsTr("● CSV"); height: 30; fontPixelSize: 12; checkable: true
             checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
             onCheckedChanged: {
                 core.setCsvLogging(checked)
@@ -511,7 +511,7 @@ Column {
 
         KButton {
             id: importCheck
-            text: "Import"; height: 30; fontPixelSize: 12; checkable: true
+            text: qsTr("Import"); height: 30; fontPixelSize: 12; checkable: true
         }
     }
 
@@ -525,7 +525,7 @@ Column {
 
         Row {
             width: parent.width; height: 28; spacing: 8
-            Text { text: "Separator:"; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: qsTr("Separator:"); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
             Rectangle {
                 width: 100; height: 26; radius: 4; color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
                 anchors.verticalCenter: parent.verticalCenter
@@ -536,7 +536,7 @@ Column {
                     Settings { property alias separatorCombo: separatorCombo.currentIndex }
                 }
             }
-            Text { text: "Ряд:"; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: qsTr("Row:"); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
             CsvSpin { id: firstRow; value: 1; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVfirstRow: firstRow.value } }
         }
 
@@ -546,7 +546,7 @@ Column {
                 id: timeEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
                 Settings { property alias importCSVtimeEnable: timeEnable.checked }
             }
-            Text { text: "Time col:"; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: qsTr("Time col:"); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
             CsvSpin { id: timeColumn; value: 6; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVtimeColumn: timeColumn.value } }
             Rectangle {
                 width: 100; height: 26; radius: 4; color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
@@ -566,7 +566,7 @@ Column {
                 id: latLonEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
                 Settings { property alias importCSVlatLonEnable: latLonEnable.checked }
             }
-            Text { text: "Lat/Lon/Alt:"; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: qsTr("Lat/Lon/Alt:"); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
             CsvSpin { id: latColumn;  value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVlatColumn:  latColumn.value  } }
             CsvSpin { id: lonColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVlonColumn:  lonColumn.value  } }
             CsvSpin { id: altColumn;  value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSValtColumn:  altColumn.value  } }
@@ -578,7 +578,7 @@ Column {
                 id: xyzEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
                 Settings { property alias importCSVxyzEnable: xyzEnable.checked }
             }
-            Text { text: "NEU:"; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: qsTr("NEU:"); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
             CsvSpin { id: northColumn; value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVnorthColumn: northColumn.value } }
             CsvSpin { id: eastColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVeastColumn:  eastColumn.value  } }
             CsvSpin { id: upColumn;    value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVupColumn:    upColumn.value    } }
@@ -596,7 +596,7 @@ Column {
                     anchors.fill: parent; anchors.margins: 8
                     verticalAlignment: TextInput.AlignVCenter
                     color: AppPalette.text; font.pixelSize: 12; clip: true
-                    Text { visible: !importPathText.text.length; text: "Путь к CSV..."; color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                    Text { visible: !importPathText.text.length; text: qsTr("CSV path..."); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
                     Keys.onPressed: function(e) {
                         if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
                             importTrackFileDialog.openCSV()
@@ -613,7 +613,7 @@ Column {
 
                 FileDialog {
                     id: importTrackFileDialog
-                    title: "Please choose a file"
+                    title: qsTr("Please choose a file")
                     currentFolder: connectionViewer.lastImportTrackFolder
                     nameFilters: ["Logs (*.csv *.txt)"]
                     onCurrentFolderChanged: connectionViewer.lastImportTrackFolder = currentFolder
@@ -647,7 +647,7 @@ Column {
 
         IconBtn {
             id: zeroingPosButton
-            checkable: true; iconSource: "qrc:/icons/ui/route_crossed_out.svg"; toolTipText: "Pos zeroing"
+            checkable: true; iconSource: "qrc:/icons/ui/route_crossed_out.svg"; toolTipText: qsTr("Pos zeroing")
             width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
             onToggled: function(v) { core.setPosZeroing(v) }
             Component.onCompleted: core.setPosZeroing(checked)
@@ -656,7 +656,7 @@ Column {
 
         IconBtn {
             id: zeroingBottomTrackButton
-            checkable: true; iconSource: "qrc:/icons/ui/double_route_crossed_out.svg"; toolTipText: "Bottom track zeroing"
+            checkable: true; iconSource: "qrc:/icons/ui/double_route_crossed_out.svg"; toolTipText: qsTr("Bottom track zeroing")
             width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
             onToggled: function(v) { core.setBottomTrackZeroing(v) }
             Component.onCompleted: core.setBottomTrackZeroing(checked)
@@ -674,7 +674,7 @@ Column {
                 verticalAlignment: TextInput.AlignVCenter
                 color: AppPalette.text; font.pixelSize: 12; clip: true
                 Text {
-                    visible: !pathText.text.length; text: "Путь к файлу..."
+                    visible: !pathText.text.length; text: qsTr("File path...")
                     color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter
                 }
                 Keys.onPressed: function(event) {
@@ -689,13 +689,13 @@ Column {
         }
 
         IconBtn {
-            iconSource: "qrc:/icons/ui/file.svg"; toolTipText: "Открыть файл"
+            iconSource: "qrc:/icons/ui/file.svg"; toolTipText: qsTr("Open file")
             width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
             onClicked: connectionViewer.openNewFileDialog()
 
             FileDialog {
                 id: newFileDialog
-                title: "Please choose a file"
+                title: qsTr("Please choose a file")
                 currentFolder: connectionViewer.lastLogFolder
                 nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
                 onCurrentFolderChanged: connectionViewer.lastLogFolder = currentFolder
@@ -712,13 +712,13 @@ Column {
         }
 
         IconBtn {
-            iconSource: "qrc:/icons/ui/file_plus.svg"; toolTipText: "Добавить файл"
+            iconSource: "qrc:/icons/ui/file_plus.svg"; toolTipText: qsTr("Append file")
             width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
             onClicked: { appendFileDialog.currentFolder = connectionViewer.lastLogFolder; appendFileDialog.open() }
 
             FileDialog {
                 id: appendFileDialog
-                title: "Please choose a file"
+                title: qsTr("Please choose a file")
                 currentFolder: connectionViewer.lastLogFolder
                 nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
                 onCurrentFolderChanged: connectionViewer.lastLogFolder = currentFolder
@@ -733,7 +733,7 @@ Column {
         }
 
         IconBtn {
-            iconSource: "qrc:/icons/ui/file_off.svg"; toolTipText: "Закрыть файл"
+            iconSource: "qrc:/icons/ui/file_off.svg"; toolTipText: qsTr("Close file")
             width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
             onClicked: {
                 if (core.openedFilePath.length > 0) {
@@ -755,7 +755,7 @@ Column {
             model: devList
             delegate: KButton {
                 required property var modelData
-                text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : "Undefined"
+                text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : qsTr("Undefined")
                 height: 30; fontPixelSize: 11
                 opacity: dev === modelData ? 1.0 : 0.5
                 visible: modelData ? (modelData.devType !== 0) : false
@@ -770,7 +770,7 @@ Column {
         visible: core.isFactoryMode; width: parent.width; height: 30; spacing: 6
 
         KButton {
-            text: "Flash Firmware"; height: 30; fontPixelSize: 12
+            text: qsTr("Flash Firmware"); height: 30; fontPixelSize: 12
             onClicked: core.connectOpenedLinkAsFlasher(flasherPnText.text)
         }
 
@@ -811,7 +811,7 @@ Column {
     Row {
         visible: core.isFactoryMode; width: parent.width; height: 30; spacing: 8
 
-        Text { text: "Part Number:"; color: AppPalette.textSecond; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter }
+        Text { text: qsTr("Part Number:"); color: AppPalette.textSecond; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter }
 
         Rectangle {
             width: parent.width - 92 - 8; height: 30; radius: 6

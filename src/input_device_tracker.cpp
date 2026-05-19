@@ -31,8 +31,8 @@ bool InputDeviceTracker::touchMode() const
 
 QString InputDeviceTracker::displayLabel() const
 {
-    return touchMode() ? QStringLiteral("Touchscreen")
-                       : QStringLiteral("Keyboard+Mouse");
+    return touchMode() ? tr("Touchscreen")
+                       : tr("Keyboard+Mouse");
 }
 
 QColor InputDeviceTracker::displayColor() const

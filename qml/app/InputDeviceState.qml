@@ -8,7 +8,7 @@ QtObject {
     property int suppressMouseUntilMs: 0
 
     readonly property bool touchMode: tracker ? tracker.touchMode : currentMode === "touchScreen"
-    readonly property string displayLabel: tracker ? tracker.displayLabel : (touchMode ? "Touchscreen" : "Keyboard+Mouse")
+    readonly property string displayLabel: tracker ? tracker.displayLabel : (touchMode ? qsTr("Touchscreen") : qsTr("Keyboard+Mouse"))
     readonly property color displayColor: tracker ? tracker.displayColor : (touchMode ? "#16A34A" : "#2563EB")
 
     function markMouseKeyboardInput() {
