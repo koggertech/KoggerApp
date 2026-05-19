@@ -902,8 +902,9 @@ Column {
                 width: parent.width - mosaicGroup.labelW - mosaicGroup.valueLabelW - 16
                 anchors.verticalCenter: parent.verticalCenter
                 from: 10; to: 3000; stepSize: 10; value: 500
-                // Crank slider all the way right → no limit (process every epoch).
-                readonly property int effectiveN: value >= to ? 0 : value
+                // Gate на core.posZeroing — лимит работает только в FAKE_COORDS.
+                // Слайдер до упора вправо → "All" (no cap, process every epoch).
+                readonly property int effectiveN: (mosaicGroup.fakeCoordsActive && value < to) ? value : 0
                 toolTipText: effectiveN === 0 ? qsTr("All") : String(effectiveN)
 
                 onEffectiveNChanged: core.setMosaicFakeCoordsLastN(effectiveN)
@@ -921,6 +922,21 @@ Column {
         }
 
         Settings { property alias appMosaicFakeCoordsLastN: fakeCoordsLastNSlider.value }
+
+        // Clear old data (*) — radical clear доступен только в FAKE_COORDS,
+        // даже если persisted checked === true из прошлой сессии.
+        KSwitch {
+            id: fakeCoordsClearOldDataSwitch
+            width: parent.width
+            text: qsTr("Clear old data (*)")
+            checked: true
+            readonly property bool effectiveClearOldData: checked && mosaicGroup.fakeCoordsActive
+
+            onEffectiveClearOldDataChanged: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
+            Component.onCompleted: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
+        }
+
+        Settings { property alias appMosaicFakeCoordsClearOldData: fakeCoordsClearOldDataSwitch.checked }
     }
 
     // ── Экспорт ───────────────────────────────────────────────────────────────
