@@ -42,4 +42,6 @@ Item {
     onIndicatorColorChanged: indicatorCanvas.requestPaint()
     onWidthChanged: indicatorCanvas.requestPaint()
     onHeightChanged: indicatorCanvas.requestPaint()
+
+    Component.onCompleted: indicatorCanvas.requestPaint()
 }
