@@ -5,6 +5,18 @@ import QtQuick.Controls 2.12
 ComboBox {
     id: control
 
+    // Same retranslate-survival as CCombo (see CCombo.qml).
+    property int _persistedIndex: 0
+    Connections {
+        target: typeof langController !== "undefined" ? langController : null
+        ignoreUnknownSignals: true
+        function onAboutToRetranslate() { control._persistedIndex = control.currentIndex }
+        function onRetranslated() {
+            if (control._persistedIndex >= 0 && control._persistedIndex < control.count)
+                control.currentIndex = control._persistedIndex
+        }
+    }
+
     delegate: ItemDelegate {
         width: control.width
         contentItem: Text {

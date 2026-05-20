@@ -47,6 +47,11 @@ public:
 
 signals:
     void currentIndexChanged();
+    // Emitted by main.cpp around engine.retranslate() so QML can preserve state
+    // that gets reset on model rebuild (e.g. ComboBox.currentIndex when its
+    // model is `[qsTr("A"), qsTr("B"), ...]`).
+    void aboutToRetranslate();
+    void retranslated();
 
 private:
     QTranslator  translator_;

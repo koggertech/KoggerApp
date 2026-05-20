@@ -254,11 +254,13 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("appUtils", &appUtils);
     uiStateSerializer.setLinkManagerWrapper(core.getLinkManagerWrapperPtr());
 
-    QObject::connect(&langController, &LanguageController::currentIndexChanged, &engine, [&engine, &app, &inputDeviceTracker]() {
+    QObject::connect(&langController, &LanguageController::currentIndexChanged, &engine, [&engine, &app, &langController, &inputDeviceTracker]() {
+        emit langController.aboutToRetranslate();
         engine.retranslate();
         setApplicationDisplayName(app);
         emit core.languageChanged();
         emit inputDeviceTracker.currentModeChanged();
+        emit langController.retranslated();
     });
 
     QObject::connect(&theme, &Themes::interfaceChanged, &core, []() {

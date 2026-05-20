@@ -5,6 +5,19 @@ import QtQuick.Layouts 1.15
 ComboBox {
     id: control
 
+    // Preserve user's selection across engine.retranslate() — rebuilding a
+    // [qsTr(...), ...] model resets ComboBox.currentIndex to 0 by default.
+    property int _persistedIndex: 0
+    Connections {
+        target: typeof langController !== "undefined" ? langController : null
+        ignoreUnknownSignals: true
+        function onAboutToRetranslate() { control._persistedIndex = control.currentIndex }
+        function onRetranslated() {
+            if (control._persistedIndex >= 0 && control._persistedIndex < control.count)
+                control.currentIndex = control._persistedIndex
+        }
+    }
+
     delegate: ItemDelegate {
         id: itemDelegate
         width: control.width
