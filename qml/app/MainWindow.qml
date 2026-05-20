@@ -12,8 +12,8 @@ ApplicationWindow {
     // OS-active window tracker for F11 routing (updated via onActiveChanged of both windows).
     property var lastActiveWindow: root
 
-    width: isMobilePlatform ? Screen.width : 1200
-    height: isMobilePlatform ? Screen.height : 760
+    width: isMobilePlatform ? Screen.width : 1440
+    height: isMobilePlatform ? Screen.height : 720
     minimumWidth: isMobilePlatform ? 0 : 900
     minimumHeight: isMobilePlatform ? 0 : 560
     visible: true
@@ -26,13 +26,6 @@ ApplicationWindow {
 
         windowWidth: root.width
         windowHeight: root.height
-
-        onWindowGeometryRestoreRequested: function(width, height) {
-            if (root.isMobilePlatform)
-                return
-            root.width = width
-            root.height = height
-        }
     }
 
     // Читаем глобальные настройки при запуске (те же ключи, что сохраняет AppSettingsPage)
@@ -43,26 +36,21 @@ ApplicationWindow {
         property bool consoleVisible: false
     }
 
-    Settings {
-        id: secondWindowSettings
-        category: "secondWindow"
-        property int width: 900
-        property int height: 600
-    }
-
     ApplicationWindow {
         id: secondWindow
-        width: secondWindowSettings.width
-        height: secondWindowSettings.height
+        objectName: "secondaryAppWindow"
+        width: 1080
+        height: 540
         title: (core.fileTitle !== "" ? core.fileTitle + " — KoggerApp, KOGGER" : qsTr("KoggerApp, KOGGER"))
                + qsTr(" — Second window")
         visible: workspaceStore.secondaryWindowOpen
         onClosing: function(close) { workspaceStore.closeSecondaryWindow() }
-        onWidthChanged:  if (visible) secondWindowSettings.width = width
-        onHeightChanged: if (visible) secondWindowSettings.height = height
         onActiveChanged: if (active) root.lastActiveWindow = secondWindow
         onVisibleChanged: {
             if (visible) {
+                // Force default size every time the window opens — no persistence.
+                width = 1080
+                height = 540
                 raise()
                 requestActivate()
             }
@@ -71,6 +59,10 @@ ApplicationWindow {
         SecondaryWindow {
             anchors.fill: parent
             store: workspaceStore
+            onHotkeyReceived: function(event) {
+                if (root.handleHotkeyKeyEvent(event))
+                    event.accepted = true
+            }
         }
     }
 

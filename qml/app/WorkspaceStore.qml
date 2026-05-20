@@ -14,8 +14,6 @@ QtObject {
     property real pendingWorkspaceWidth: 0
     property real pendingWorkspaceHeight: 0
 
-    signal windowGeometryRestoreRequested(int width, int height)
-
     property var layoutTree: null
     property var leafRects: []
     property var splitHandles: []
@@ -115,8 +113,6 @@ property Settings layoutStore: Settings {
     property int nextLeafSerialStored: 0
     property int nextSplitSerialStored: 0
     property int activeLeafIdStored: -1
-    property int windowWidthStored: 0
-    property int windowHeightStored: 0
     property bool settingsPushContentStored: false
     property string settingsSideStored: "left"
     property bool quickActionFavoritesEnabledStored: true
@@ -466,21 +462,26 @@ function canGlobalPopupChoose2D() {
 
 function openSecondaryWindow() {
     secondaryWindowOpen = true
-    // Validate persisted mode; reset to picker if slot is no longer available.
-    // (3D in secondary not supported yet — filtered here too.)
-    if (secondaryWindowMode === "3D") {
-        secondaryWindowMode = ""
-    } else if (secondaryWindowMode === "2D") {
-        var active = paneCountByMode("2D") + (globalPopupMode === "2D" ? 1 : 0)
-        if (active >= 5)
-            secondaryWindowMode = ""
-    }
+    // Secondary window always hosts a dedicated 2D plot (indx=6).
+    // If 2D slot is available — activate; otherwise leave "" so the window shows
+    // an "echogram limit reached" message and reactivates when a slot frees up.
+    var active = paneCountByMode("2D") + (globalPopupMode === "2D" ? 1 : 0)
+    secondaryWindowMode = (active < 5) ? "2D" : ""
     saveLayoutState()
 }
 
 function closeSecondaryWindow() {
     secondaryWindowOpen = false
     saveLayoutState()
+}
+
+// Auto-activate 2D plot in secondary when a 2D slot frees up (pane removed,
+// popup switched off, etc.). Secondary stays "limit reached" until a slot opens.
+onActiveTwoDCountChanged: {
+    if (secondaryWindowOpen && secondaryWindowMode === "" && activeTwoDCount < 5) {
+        secondaryWindowMode = "2D"
+        saveLayoutState()
+    }
 }
 
 function setSecondaryWindowMode(mode) {
@@ -1624,8 +1625,6 @@ function saveLayoutState() {
     layoutStore.nextLeafSerialStored = Math.max(nextLeafSerial, maxLeafIdInTree(layoutTree))
     layoutStore.nextSplitSerialStored = Math.max(nextSplitSerial, maxSplitIdInTree(layoutTree))
     layoutStore.activeLeafIdStored = activeLeafId
-    layoutStore.windowWidthStored = Math.round(windowWidth)
-    layoutStore.windowHeightStored = Math.round(windowHeight)
     layoutStore.settingsPushContentStored = settingsPushContent
     layoutStore.settingsSideStored = settingsSide
     layoutStore.quickActionFavoritesEnabledStored = quickActionFavoritesEnabled
@@ -1649,9 +1648,6 @@ function restoreLayoutState() {
 
     if (!isValidLayoutNode(parsed))
         return false
-
-    if (layoutStore.windowWidthStored > 0 && layoutStore.windowHeightStored > 0)
-        windowGeometryRestoreRequested(layoutStore.windowWidthStored, layoutStore.windowHeightStored)
 
     var hadModeField = layoutHasAnyModeField(parsed)
     layoutTree = normalizeAndFixPaneModes(parsed, !hadModeField)

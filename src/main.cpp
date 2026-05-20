@@ -311,6 +311,11 @@ int main(int argc, char *argv[])
             applyWindowsSystemTitleBarTheme(window);
             applyWindowsFullscreenBorderWorkaround(window);
         }
+        // Same dark titlebar + fullscreen border workaround for the secondary window.
+        if (auto* secondary = rootObject->findChild<QWindow*>(QStringLiteral("secondaryAppWindow"))) {
+            applyWindowsSystemTitleBarTheme(secondary);
+            applyWindowsFullscreenBorderWorkaround(secondary);
+        }
 #endif
     }
     qInfo() << "App is created";

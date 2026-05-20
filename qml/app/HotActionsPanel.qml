@@ -436,6 +436,7 @@ Item {
             }
 
             CircleIconButton {
+                visible: Qt.platform.os !== "android" && Qt.platform.os !== "ios"
                 width: root.controlHeight
                 height: root.controlHeight
                 iconSource: "qrc:/icons/ui/external-link.svg"
@@ -447,7 +448,10 @@ Item {
                 fillPressedColor: root.buttonPressedColor
                 borderColor:      root.secondWindowOpen ? AppPalette.accentBorder : root.buttonBorderColor
                 borderHoverColor: root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverBorderColor
-                onClicked: root.secondWindowToggleRequested()
+                onClicked: {
+                    root.secondWindowToggleRequested()
+                    root.expanded = false
+                }
             }
         }
     }

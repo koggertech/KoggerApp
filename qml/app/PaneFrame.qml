@@ -117,23 +117,6 @@ Item {
                 z: 3
             }
 
-            SettingsGearButton {
-                id: paneModeSettingsButton
-                visible: !paneItem.isModeSelecting
-                modeTag: paneItem.paneData.mode
-                fillColor: paneItem.menuButtonFillColor
-                fillHoverColor: paneItem.menuButtonHoverColor
-                fillPressedColor: paneItem.menuButtonPressedColor
-                borderColor: paneItem.menuButtonBorderColor
-                borderHoverColor: paneItem.menuButtonHoverBorderColor
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                anchors.bottomMargin: 8
-                anchors.rightMargin: 8
-                z: 32
-                onClicked: store.openModeSettingsForLeaf(paneItem.leafId)
-            }
-
             Rectangle {
                 id: titleBadge
                 visible: !paneItem.isModeSelecting
