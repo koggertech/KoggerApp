@@ -28,11 +28,18 @@ Item {
     }
 
     // ── Plot2D (dedicated indx=6, settings persisted under "Plot2D_6") ──
+    // Smooth resize on window fullscreen toggle — mirrors PaneFrame's animation.
     Loader {
-        anchors.fill: parent
+        x: 0
+        y: 0
+        width: parent.width
+        height: parent.height
         visible: root.mode === "2D"
         active: root.mode === "2D"
         sourceComponent: plot2DComponent
+
+        Behavior on width  { NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } }
+        Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } }
     }
 
     Component {
