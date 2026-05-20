@@ -9,6 +9,9 @@ ApplicationWindow {
 
     readonly property bool isMobilePlatform: Qt.platform.os === "android" || Qt.platform.os === "ios"
 
+    // OS-active window tracker for F11 routing (updated via onActiveChanged of both windows).
+    property var lastActiveWindow: root
+
     width: isMobilePlatform ? Screen.width : 1200
     height: isMobilePlatform ? Screen.height : 760
     minimumWidth: isMobilePlatform ? 0 : 900
@@ -16,6 +19,7 @@ ApplicationWindow {
     visible: true
     visibility: isMobilePlatform ? Window.FullScreen : Window.Windowed
     title: core.fileTitle !== "" ? (core.fileTitle + " — KoggerApp, KOGGER") : qsTr("KoggerApp, KOGGER")
+    onActiveChanged: if (active) root.lastActiveWindow = root
 
     WorkspaceStore {
         id: workspaceStore
@@ -37,6 +41,37 @@ ApplicationWindow {
         property int appTheme: 0
         property int instrumentsGradeList: 0
         property bool consoleVisible: false
+    }
+
+    Settings {
+        id: secondWindowSettings
+        category: "secondWindow"
+        property int width: 900
+        property int height: 600
+    }
+
+    ApplicationWindow {
+        id: secondWindow
+        width: secondWindowSettings.width
+        height: secondWindowSettings.height
+        title: (core.fileTitle !== "" ? core.fileTitle + " — KoggerApp, KOGGER" : qsTr("KoggerApp, KOGGER"))
+               + qsTr(" — Second window")
+        visible: workspaceStore.secondaryWindowOpen
+        onClosing: function(close) { workspaceStore.closeSecondaryWindow() }
+        onWidthChanged:  if (visible) secondWindowSettings.width = width
+        onHeightChanged: if (visible) secondWindowSettings.height = height
+        onActiveChanged: if (active) root.lastActiveWindow = secondWindow
+        onVisibleChanged: {
+            if (visible) {
+                raise()
+                requestActivate()
+            }
+        }
+
+        SecondaryWindow {
+            anchors.fill: parent
+            store: workspaceStore
+        }
     }
 
     Connections {
@@ -149,6 +184,21 @@ ApplicationWindow {
         return true
     }
 
+    // F11 toggles the active window (see lastActiveWindow).
+    Shortcut {
+        sequence: "F11"
+        context: Qt.ApplicationShortcut
+        onActivated: {
+            if (root.lastActiveWindow === secondWindow && secondWindow.visible) {
+                secondWindow.visibility = secondWindow.visibility === Window.FullScreen
+                                          ? Window.Windowed
+                                          : Window.FullScreen
+            } else {
+                root.toggleFullScreenMode()
+            }
+        }
+    }
+
     function openSelectedFile() {
         var filePath = workspaceStore.selectedConnectionFilePath
         if (!filePath && core && core.filePath && core.filePath.length > 0)
@@ -218,8 +268,7 @@ ApplicationWindow {
         if (fn === "")
             return false
 
-        if (fn === "toggleFullScreen")
-            return toggleFullScreenMode()
+        // F11 handled by Shortcut above (lastActiveWindow routing).
         if (fn === "openFile")
             return openSelectedFile()
         if (fn === "closeFile")
@@ -273,8 +322,6 @@ ApplicationWindow {
 
         if (event.key === Qt.Key_Escape || event.key === Qt.Key_Back)
             return closeTransientUi()
-        if (event.key === Qt.Key_F11)
-            return toggleFullScreenMode()
         if (event.key === Qt.Key_F10)
             return openSelectedFile()
         if (event.key === Qt.Key_F9)
@@ -374,6 +421,14 @@ ApplicationWindow {
                     workspaceStore.closeModeSettingsPanel()
                 }
                 legacyPanelOpen = !legacyPanelOpen
+            }
+
+            secondWindowOpen: workspaceStore.secondaryWindowOpen
+            onSecondWindowToggleRequested: {
+                if (workspaceStore.secondaryWindowOpen)
+                    workspaceStore.closeSecondaryWindow()
+                else
+                    workspaceStore.openSecondaryWindow()
             }
         }
 

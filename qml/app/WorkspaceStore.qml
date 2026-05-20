@@ -78,6 +78,18 @@ property bool globalPopupEnabled: false
 property string globalPopupMode: ""
 property bool globalPopupModePickerOpen: false
 property bool globalPopupPreferencesLoading: false
+
+property bool secondaryWindowOpen: false
+property string secondaryWindowMode: ""   // "" | "2D" | "3D"
+
+// Closed window releases its slot even if "2D" is persisted in Settings.
+readonly property string effectiveSecondaryMode: secondaryWindowOpen ? secondaryWindowMode : ""
+
+// Total active 2D echograms across panes + globalPopup + secondary; limit is 5.
+readonly property int activeTwoDCount: paneCountByMode("2D")
+    + (globalPopupMode === "2D" ? 1 : 0)
+    + (effectiveSecondaryMode === "2D" ? 1 : 0)
+readonly property bool secondary2DAvailable: effectiveSecondaryMode === "2D" || activeTwoDCount < 5
 property var globalPopupState: ({
     x: -1,
     y: -1,
@@ -118,6 +130,8 @@ property Settings layoutStore: Settings {
     property bool globalPopupEnabledStored: false
     property string globalPopupModeStored: ""
     property string globalPopupStateJson: "{\"x\":-1,\"y\":-1,\"collapsed\":false,\"expandedWidth\":-1,\"expandedHeight\":-1}"
+    property bool secondaryWindowOpenStored: false
+    property string secondaryWindowModeStored: ""
 }
 
 onEditableModeChanged: {
@@ -419,11 +433,73 @@ function globalPopupCanChoose3D() {
     return firstLeafIdByMode(layoutTree, "3D") === -1
 }
 
+// Counts only panes with an explicit mode ("2D"/"3D"); picker state ("") excluded.
+function paneCountByMode(mode) {
+    if (!layoutTree)
+        return 0
+    var panes = []
+    Tree.allLeafPanes(layoutTree, panes)
+    var n = 0
+    for (var i = 0; i < panes.length; ++i) {
+        var p = panes[i]
+        if (p && p.mode === mode)
+            n++
+    }
+    return n
+}
+
+// Shared 2D echogram limit: panes + globalPopup + secondary <= 5.
+function canSecondaryWindowChoose2D() {
+    if (effectiveSecondaryMode === "2D")
+        return true   // already active, self-toggle ok
+    var active = paneCountByMode("2D") + (globalPopupMode === "2D" ? 1 : 0)
+    return active < 5
+}
+
+// Same gate for GlobalPopup; accounts for secondary's claim.
+function canGlobalPopupChoose2D() {
+    if (globalPopupMode === "2D")
+        return true
+    var active = paneCountByMode("2D") + (effectiveSecondaryMode === "2D" ? 1 : 0)
+    return active < 5
+}
+
+function openSecondaryWindow() {
+    secondaryWindowOpen = true
+    // Validate persisted mode; reset to picker if slot is no longer available.
+    // (3D in secondary not supported yet — filtered here too.)
+    if (secondaryWindowMode === "3D") {
+        secondaryWindowMode = ""
+    } else if (secondaryWindowMode === "2D") {
+        var active = paneCountByMode("2D") + (globalPopupMode === "2D" ? 1 : 0)
+        if (active >= 5)
+            secondaryWindowMode = ""
+    }
+    saveLayoutState()
+}
+
+function closeSecondaryWindow() {
+    secondaryWindowOpen = false
+    saveLayoutState()
+}
+
+function setSecondaryWindowMode(mode) {
+    // 3D in secondary not supported yet — UI keeps the button disabled.
+    var next = (mode === "2D") ? "2D" : ""
+    if (next === "2D" && !canSecondaryWindowChoose2D())
+        return false
+    secondaryWindowMode = next
+    saveLayoutState()
+    return true
+}
+
 function setGlobalPopupMode(mode) {
     var nextMode = normalizedGlobalPopupMode(mode)
     if (nextMode === "")
         return false
     if (nextMode === "3D" && !globalPopupCanChoose3D())
+        return false
+    if (nextMode === "2D" && !canGlobalPopupChoose2D())
         return false
 
     globalPopupMode = nextMode
@@ -1556,6 +1632,8 @@ function saveLayoutState() {
     layoutStore.quickActionMarkerEnabledStored = quickActionMarkerEnabled
     layoutStore.quickActionConnectionStatusEnabledStored = quickActionConnectionStatusEnabled
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
+    layoutStore.secondaryWindowOpenStored = secondaryWindowOpen
+    layoutStore.secondaryWindowModeStored = secondaryWindowMode
 }
 
 function restoreLayoutState() {
@@ -1588,6 +1666,9 @@ function restoreLayoutState() {
     quickActionMarkerEnabled = layoutStore.quickActionMarkerEnabledStored
     quickActionConnectionStatusEnabled = layoutStore.quickActionConnectionStatusEnabledStored
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
+    var storedSecondaryMode = layoutStore.secondaryWindowModeStored
+    secondaryWindowMode = (storedSecondaryMode === "2D" || storedSecondaryMode === "3D") ? storedSecondaryMode : ""
+    secondaryWindowOpen = layoutStore.secondaryWindowOpenStored
     sanitizeFullscreenPopupConfig()
     maximizedLeafId = -1
     clearModePickerSelection()
@@ -2327,6 +2408,17 @@ function applyPaneModeSelection(leafId, mode) {
             return
         if (globalPopupMode === "3D")
             return
+    }
+
+    if (targetMode === "2D") {
+        var currentPaneMode = (targetPane && targetPane.mode === "3D") ? "3D" : "2D"
+        if (currentPaneMode !== "2D") {
+            var projected = paneCountByMode("2D") + 1
+                          + (globalPopupMode === "2D" ? 1 : 0)
+                          + (effectiveSecondaryMode === "2D" ? 1 : 0)
+            if (projected > 5)
+                return
+        }
     }
 
     var updatedTargetPane = paneByLeafId(nextTree, leafId)

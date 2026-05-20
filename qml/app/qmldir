@@ -11,6 +11,7 @@ FullscreenPanePopup 1.0 FullscreenPanePopup.qml
 PaneContentLoader 1.0 PaneContentLoader.qml
 Pane2DWindow 1.0 Pane2DWindow.qml
 Pane3DWindow 1.0 Pane3DWindow.qml
+SecondaryWindow 1.0 SecondaryWindow.qml
 InputDeviceState 1.0 InputDeviceState.qml
 PaneInputBridge 1.0 PaneInputBridge.qml
 

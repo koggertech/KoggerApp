@@ -1768,14 +1768,24 @@
 <context>
     <name>HotActionsPanel</name>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="163"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="165"/>
         <source>Open layout settings</source>
         <translation>Открыть настройки компоновки</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="267"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="269"/>
         <source>Layouts</source>
         <translation>Компоновки</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="443"/>
+        <source>Close second window</source>
+        <translation>Закрыть второе окно</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="444"/>
+        <source>Open second window</source>
+        <translation>Открыть второе окно</translation>
     </message>
 </context>
 <context>
@@ -2253,11 +2263,17 @@
     <name>MainWindow</name>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="18"/>
+        <location filename="../qml/app/MainWindow.qml" line="53"/>
         <source>KoggerApp, KOGGER</source>
         <translation>KoggerApp, KOGGER</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="483"/>
+        <location filename="../qml/app/MainWindow.qml" line="54"/>
+        <source> — Second window</source>
+        <translation> — Второе окно</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="521"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
@@ -3198,6 +3214,29 @@
         <location filename="../qml/scene3d/Scene3DToolbar.qml" line="393"/>
         <source>Bottom track</source>
         <translation>Трек дна</translation>
+    </message>
+</context>
+<context>
+    <name>SecondaryWindow</name>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="42"/>
+        <source>2D</source>
+        <translation>2D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="57"/>
+        <source>3D</source>
+        <translation>3D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="57"/>
+        <source>3D in second window: coming soon</source>
+        <translation>3D во втором окне: скоро</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="72"/>
+        <source>Choose 2D or 3D</source>
+        <translation>Выберите 2D или 3D</translation>
     </message>
 </context>
 <context>

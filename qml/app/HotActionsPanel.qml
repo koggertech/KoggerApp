@@ -63,6 +63,8 @@ Item {
     signal mode3DTriggered()
     signal mode2DTriggered()
     signal legacyRequested()
+    signal secondWindowToggleRequested()
+    property bool secondWindowOpen: false
 
     Component {
         id: layoutsPopupContentComponent
@@ -431,6 +433,21 @@ Item {
                     root.settingsTriggered()
                     root.expanded = false
                 }
+            }
+
+            CircleIconButton {
+                width: root.controlHeight
+                height: root.controlHeight
+                iconSource: "qrc:/icons/ui/external-link.svg"
+                toolTipText: root.secondWindowOpen
+                             ? qsTr("Close second window")
+                             : qsTr("Open second window")
+                fillColor:        root.secondWindowOpen ? AppPalette.accentBg     : root.buttonFillColor
+                fillHoverColor:   root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverColor
+                fillPressedColor: root.buttonPressedColor
+                borderColor:      root.secondWindowOpen ? AppPalette.accentBorder : root.buttonBorderColor
+                borderHoverColor: root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverBorderColor
+                onClicked: root.secondWindowToggleRequested()
             }
         }
     }
