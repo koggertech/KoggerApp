@@ -700,6 +700,16 @@ Item {
                         workspace.store.finishEdgeResize()
                     resizing = false
                 }
+
+                onDoubleClicked: function(mouse) {
+                    // Reset split to centre (0.5) — PaneFrame's Behavior animates panes smoothly.
+                    if (resizing) {
+                        workspace.store.finishEdgeResize()
+                        resizing = false
+                    }
+                    workspace.store.setSplitRatioById(splitDragZone.handleData.splitId, 0.5)
+                    mouse.accepted = true
+                }
             }
         }
     }
