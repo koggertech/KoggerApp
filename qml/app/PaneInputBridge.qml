@@ -162,12 +162,14 @@ Item {
         property bool pinchActive: false
         property bool pointerStarted: false
 
+        // Mouse + single-finger touch (synthesis). preventStealing intentionally
+        // false — lets PinchHandler grab both touches for 2-finger pinch.
         MouseArea {
             id: pointerArea
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
             hoverEnabled: true
-            preventStealing: true
+            preventStealing: false
             enabled: root.active && !overlay.pinchActive
             cursorShape: Qt.ArrowCursor
 
@@ -231,7 +233,6 @@ Item {
                 root.markMouseKeyboardInput()
                 if (root.focusOnPointer)
                     overlay.forceActiveFocus()
-
                 mouse.accepted = true
                 root.suppressNextClickAfterDoubleClick = true
                 doubleClickBlocker.restart()
@@ -247,41 +248,59 @@ Item {
             }
         }
 
-        PinchArea {
-            id: pinchArea
-            anchors.fill: parent
-            enabled: root.active
+        // 2-finger pinch — Qt 6 pointer handler. Pinch deltas are derived from
+        // active{Scale,Rotation,Centroid} to keep the existing route* delta API.
+        PinchHandler {
+            id: pinchHandler
+            target: null
+            minimumPointCount: 2
+            maximumPointCount: 2
 
-            onPinchStarted: {
-                root.markTouchInput()
-                root.markActiveLeaf()
-                overlay.pinchActive = true
-                pointerArea.enabled = false
-                if (root.paneKind === "2D")
-                    root.routePlotPinchStarted(pinch.center.x, pinch.center.y)
-            }
+            property real _prevScale: 1.0
+            property real _prevRotation: 0
+            property point _prevCenter: Qt.point(0, 0)
 
-            onPinchUpdated: function(pinch) {
-                root.markTouchInput()
-                if (root.paneKind === "3D") {
-                    root.routeScene3DPinch(pinch.previousCenter.x, pinch.previousCenter.y,
-                                           pinch.center.x, pinch.center.y,
-                                           pinch.scale - pinch.previousScale,
-                                           pinch.angle - pinch.previousAngle)
+            onActiveChanged: {
+                if (active) {
+                    root.markTouchInput()
+                    root.markActiveLeaf()
+                    overlay.pinchActive = true
+                    pointerArea.enabled = false
+                    pinchHandler._prevScale = activeScale
+                    pinchHandler._prevRotation = activeRotation
+                    pinchHandler._prevCenter = centroid.position
+                    if (root.paneKind === "2D")
+                        root.routePlotPinchStarted(centroid.position.x, centroid.position.y)
                 } else {
-                    root.routePlotPinchUpdated(pinch.previousCenter.x, pinch.previousCenter.y,
-                                                pinch.center.x, pinch.center.y,
-                                                pinch.previousScale, pinch.scale,
-                                                pinch.previousAngle, pinch.angle)
+                    root.markTouchInput()
+                    if (root.paneKind === "2D")
+                        root.routePlotPinchFinished()
+                    overlay.pinchActive = false
+                    pointerArea.enabled = true
                 }
             }
 
-            onPinchFinished: {
-                root.markTouchInput()
-                if (root.paneKind === "2D")
-                    root.routePlotPinchFinished()
-                overlay.pinchActive = false
-                pointerArea.enabled = true
+            onActiveScaleChanged: pinchHandler._emitUpdate()
+            onActiveRotationChanged: pinchHandler._emitUpdate()
+            onCentroidChanged: pinchHandler._emitUpdate()
+
+            function _emitUpdate() {
+                if (!active) return
+                var currCenter = centroid.position
+                if (root.paneKind === "3D") {
+                    root.routeScene3DPinch(_prevCenter.x, _prevCenter.y,
+                                           currCenter.x, currCenter.y,
+                                           activeScale - _prevScale,
+                                           activeRotation - _prevRotation)
+                } else {
+                    root.routePlotPinchUpdated(_prevCenter.x, _prevCenter.y,
+                                                currCenter.x, currCenter.y,
+                                                _prevScale, activeScale,
+                                                _prevRotation, activeRotation)
+                }
+                _prevScale = activeScale
+                _prevRotation = activeRotation
+                _prevCenter = currCenter
             }
         }
 
