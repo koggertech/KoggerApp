@@ -1,8 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
-import "../controls"
-import "../menus"
+import kqml_types 1.0
 
 Popup {
     id: hotkeysDialog
@@ -11,10 +10,10 @@ Popup {
     anchors.centerIn: parent
     modal: true
     focus: true
-    padding: 12
+    padding: 14
 
     width:  Math.min(720, parent ? parent.width  * 0.95 : 720)
-    height: Math.min(600, parent ? parent.height * 0.90 : 600)
+    height: Math.min(640, parent ? parent.height * 0.90 : 640)
 
     closePolicy: listeningIndex >= 0 ? Popup.NoAutoClose
                                      : Popup.CloseOnEscape | Popup.CloseOnPressOutside
@@ -30,8 +29,9 @@ Popup {
     // effective list content width (leaves room for scrollbar)
     readonly property real _listW: listView.width - 14
 
-    readonly property int  _colKey:   120
-    readonly property int  _colParam: 88
+    readonly property int _colKey:   128
+    readonly property int _colParam:  88
+    readonly property int _rowH:      34
 
     function groupName(g) {
         switch (g) {
@@ -56,7 +56,7 @@ Popup {
         }
     }
 
-    // Full rebuild — used on open only
+    // Full rebuild — used on open only.
     function rebuildModel() {
         listModel.clear()
         for (var i = 0; i < hotkeysDisplayList.length; ++i)
@@ -64,7 +64,7 @@ Popup {
         listeningIndex = -1
     }
 
-    // In-place update — preserves scroll position
+    // In-place update — preserves scroll position.
     function refreshModel() {
         for (var i = 0; i < hotkeysDisplayList.length && i < listModel.count; ++i)
             listModel.set(i, hotkeysDisplayList[i])
@@ -92,17 +92,17 @@ Popup {
     ListModel { id: listModel }
 
     background: Rectangle {
-        color: theme.menuBackColor
-        border.color: theme.controlBorderColor
+        color: AppPalette.bgDeep
+        border.color: AppPalette.border
         border.width: 1
-        radius: 2
+        radius: 10
     }
 
     contentItem: Item {
         id: keyCapture
         focus: true
 
-        // ---- key capture when listening ----
+        // ── key capture when listening ────────────────────────────────────────
         Keys.onPressed: function(event) {
             if (hotkeysDialog.listeningIndex < 0) return
 
@@ -112,7 +112,6 @@ Popup {
                 return
             }
 
-            // Check for conflict with another hotkey
             var sc = event.nativeScanCode
             for (var i = 0; i < listModel.count; ++i) {
                 if (i === hotkeysDialog.listeningIndex) continue
@@ -126,120 +125,147 @@ Popup {
             hotkeysDialog._conflictText = ""
             var item = listModel.get(hotkeysDialog.listeningIndex)
             if (hotkeysController)
-                hotkeysController.updateHotkey(item.functionName,
-                                               sc,
-                                               item.parameter)
+                hotkeysController.updateHotkey(item.functionName, sc, item.parameter)
             event.accepted = true
         }
 
         ColumnLayout {
             anchors.fill: parent
-            spacing: 8
+            spacing: 10
 
-            // ---- title (ParamGroup style) ----
-            RowLayout {
+            // ── Title ─────────────────────────────────────────────────────────
+            Text {
                 Layout.fillWidth: true
-                spacing: 16
-                Rectangle { Layout.fillWidth: true; height: 2; color: "#808080" }
-                CText { text: qsTr("Keyboard Shortcuts") }
-                Rectangle { Layout.fillWidth: true; height: 2; color: "#808080" }
+                horizontalAlignment: Text.AlignHCenter
+                text: qsTr("Keyboard Shortcuts")
+                color: AppPalette.text
+                font.pixelSize: 16
+                font.bold: true
             }
 
-            // ---- column headers ----
-            Item {
+            // ── Column headers ────────────────────────────────────────────────
+            Rectangle {
                 Layout.fillWidth: true
-                height: 20
+                height: 28
+                radius: 6
+                color: AppPalette.headerBg
+                border.color: AppPalette.border
+                border.width: 1
 
                 Row {
-                    x: 0; width: hotkeysDialog._listW; height: parent.height
+                    anchors.fill: parent
 
-                    CText {
+                    Text {
                         width: hotkeysDialog._colKey; height: parent.height
-                        text: qsTr("Key"); small: true
+                        text: qsTr("Key")
+                        color: AppPalette.textSecond
+                        font.pixelSize: 12; font.bold: true
+                        verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: Text.AlignHCenter
                     }
-                    Rectangle { width: 1; height: parent.height; color: theme.controlBorderColor }
-                    CText {
+                    Rectangle { width: 1; height: parent.height; color: AppPalette.border }
+                    Text {
                         width: hotkeysDialog._colParam; height: parent.height
-                        text: qsTr("Parameter"); small: true
+                        text: qsTr("Parameter")
+                        color: AppPalette.textSecond
+                        font.pixelSize: 12; font.bold: true
+                        verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: Text.AlignHCenter
                     }
-                    Rectangle { width: 1; height: parent.height; color: theme.controlBorderColor }
-                    CText {
-                        width: hotkeysDialog._listW - hotkeysDialog._colKey - hotkeysDialog._colParam - 2
+                    Rectangle { width: 1; height: parent.height; color: AppPalette.border }
+                    Text {
+                        width: parent.width - hotkeysDialog._colKey - hotkeysDialog._colParam - 2
                         height: parent.height
-                        text: qsTr("Action"); small: true
-                        leftPadding: 8
+                        text: qsTr("Action")
+                        color: AppPalette.textSecond
+                        font.pixelSize: 12; font.bold: true
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 10
                     }
                 }
             }
 
-            Rectangle { Layout.fillWidth: true; height: 1; color: theme.controlBorderColor }
-
-            // ---- list ----
+            // ── List ──────────────────────────────────────────────────────────
             ListView {
                 id: listView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
                 model: listModel
+                spacing: 2
                 ScrollBar.vertical: ScrollBar {}
 
                 section.property: "group"
                 section.delegate: Item {
                     width: hotkeysDialog._listW
-                    height: 24
+                    height: 26
                     Row {
                         anchors.fill: parent
                         spacing: 8
-                        Rectangle { width: (parent.width - sectionLabel.implicitWidth - 16) / 2; height: 2; anchors.verticalCenter: parent.verticalCenter; color: "#808080" }
-                        CText { id: sectionLabel; text: hotkeysDialog.groupName(section); small: true; anchors.verticalCenter: parent.verticalCenter }
-                        Rectangle { width: (parent.width - sectionLabel.implicitWidth - 16) / 2; height: 2; anchors.verticalCenter: parent.verticalCenter; color: "#808080" }
+                        Rectangle {
+                            width: Math.max(0, (parent.width - sectionLabel.implicitWidth - 16) / 2)
+                            height: 1
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: AppPalette.border
+                        }
+                        Text {
+                            id: sectionLabel
+                            text: hotkeysDialog.groupName(section)
+                            color: AppPalette.textSecond
+                            font.pixelSize: 11; font.bold: true
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Rectangle {
+                            width: Math.max(0, (parent.width - sectionLabel.implicitWidth - 16) / 2)
+                            height: 1
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: AppPalette.border
+                        }
                     }
                 }
 
                 delegate: Item {
                     id: row
                     width: hotkeysDialog._listW
-                    implicitHeight: Math.max(theme.controlHeight, descText.implicitHeight + 8)
+                    implicitHeight: Math.max(hotkeysDialog._rowH, descText.implicitHeight + 10)
                     height: implicitHeight
 
                     readonly property bool listening: hotkeysDialog.listeningIndex === index
-                    readonly property int  cellH: theme.controlHeight - 4
+                    readonly property int  cellH: hotkeysDialog._rowH - 6
                     readonly property real cellY: Math.floor((height - cellH) / 2)
 
-                    // column separator lines (full row height)
+                    // hover background
                     Rectangle {
-                        x: hotkeysDialog._colKey
-                        width: 1; height: parent.height
-                        color: theme.controlBorderColor
-                        opacity: 0.5
+                        anchors.fill: parent
+                        color: rowMouse.containsMouse ? AppPalette.cardHover : "transparent"
+                        radius: 4
                     }
-                    Rectangle {
-                        x: hotkeysDialog._colKey + 1 + hotkeysDialog._colParam
-                        width: 1; height: parent.height
-                        color: theme.controlBorderColor
-                        opacity: 0.5
+                    MouseArea {
+                        id: rowMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        acceptedButtons: Qt.NoButton
                     }
 
                     // -- key badge --
                     Rectangle {
-                        x: 3
+                        x: 4
                         y: row.cellY
-                        width: hotkeysDialog._colKey - 6
+                        width: hotkeysDialog._colKey - 8
                         height: row.cellH
-                        radius: 2
+                        radius: 6
                         clip: true
-                        color: row.listening ? theme.controlSolidBackColor : theme.controlBackColor
-                        border.color: row.listening ? theme.controlSolidBorderColor : theme.controlBorderColor
+                        color: row.listening ? AppPalette.accentBg : AppPalette.card
+                        border.color: row.listening ? AppPalette.accentBorder : AppPalette.border
                         border.width: 1
 
-                        CText {
+                        Text {
                             anchors.centerIn: parent
-                            width: parent.width - 6
+                            width: parent.width - 8
                             horizontalAlignment: Text.AlignHCenter
                             text: row.listening ? qsTr("…") : (model.keyName || "")
-                            color: row.listening ? theme.textSolidColor : theme.textColor
+                            color: AppPalette.text
+                            font.pixelSize: 13
                         }
 
                         MouseArea {
@@ -255,24 +281,25 @@ Popup {
 
                     // -- parameter badge (editable, centered like key badge) --
                     Rectangle {
-                        x: hotkeysDialog._colKey + 1 + 3
+                        x: hotkeysDialog._colKey + 4
                         y: row.cellY
-                        width: hotkeysDialog._colParam - 6
+                        width: hotkeysDialog._colParam - 8
                         height: row.cellH
                         visible: model.parameter > 0
-                        radius: 2
+                        radius: 6
                         clip: true
-                        color: theme.controlBackColor
-                        border.color: theme.controlBorderColor
+                        color: AppPalette.card
+                        border.color: paramInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
                         border.width: 1
 
                         TextInput {
+                            id: paramInput
                             anchors.centerIn: parent
-                            width: parent.width - 6
+                            width: parent.width - 8
                             horizontalAlignment: TextInput.AlignHCenter
-                            color: theme.textColor
-                            font: theme.textFont
-                            selectionColor: theme.controlSolidBackColor
+                            color: AppPalette.text
+                            font.pixelSize: 13
+                            selectionColor: AppPalette.accentBg
                             text: model.parameter > 0 ? model.parameter.toString() : ""
                             inputMethodHints: Qt.ImhDigitsOnly
                             validator: IntValidator { bottom: 1; top: 99999 }
@@ -289,40 +316,46 @@ Popup {
                     }
 
                     // -- description --
-                    CText {
+                    Text {
                         id: descText
-                        x: hotkeysDialog._colKey + 1 + hotkeysDialog._colParam + 1 + 8
-                        width: hotkeysDialog._listW - x
+                        x: hotkeysDialog._colKey + hotkeysDialog._colParam + 10
+                        width: row.width - x - 4
                         anchors.verticalCenter: parent.verticalCenter
                         text: model.description || ""
+                        color: AppPalette.text
+                        font.pixelSize: 13
                         wrapMode: Text.WordWrap
                     }
                 }
             }
 
-            Rectangle { Layout.fillWidth: true; height: 1; color: theme.controlBorderColor }
+            // ── Bottom bar ────────────────────────────────────────────────────
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppPalette.border }
 
-            // ---- bottom bar ----
             RowLayout {
                 Layout.fillWidth: true
+                spacing: 8
 
-                CText {
+                Text {
                     Layout.fillWidth: true
-                    small: true
                     leftPadding: 4
+                    font.pixelSize: 12
                     text: hotkeysDialog._conflictText !== ""
                           ? hotkeysDialog._conflictText
                           : hotkeysDialog.listeningIndex >= 0
                             ? qsTr("Press any key  •  click again to cancel")
                             : qsTr("Click a key to reassign")
                     color: hotkeysDialog._conflictText !== ""
-                           ? "#e05050"
+                           ? AppPalette.dangerText
                            : hotkeysDialog.listeningIndex >= 0
-                             ? theme.textSolidColor : theme.textColor
+                             ? AppPalette.accentBorder
+                             : AppPalette.textSecond
+                    elide: Text.ElideRight
                 }
 
-                CButton {
-                    width: 130
+                KButton {
+                    width: 150
+                    height: 30
                     text: qsTr("Reset to defaults")
                     onClicked: {
                         if (hotkeysController)
@@ -330,8 +363,9 @@ Popup {
                     }
                 }
 
-                CButton {
+                KButton {
                     width: 80
+                    height: 30
                     text: qsTr("Close")
                     onClicked: hotkeysDialog.close()
                 }
