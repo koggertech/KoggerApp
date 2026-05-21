@@ -15,6 +15,9 @@ Item {
     property int contentInset: 6
     property color titleColor: AppPalette.text
     property int titlePixelSize: 15
+    // When false, the group header turns red — used to signal that a setting in
+    // the group has been changed locally but the device hasn't acked yet.
+    property bool confirmed: true
     default property alias contentData: contentColumn.data
 
     property bool _stateReady: false
@@ -68,6 +71,17 @@ Item {
 
     Component.onCompleted: loadExpandedState()
 
+    // Danger underlay — tints the whole group (header + content) when unconfirmed.
+    Rectangle {
+        anchors.fill: parent
+        visible: !root.confirmed
+        color: AppPalette.dangerBg
+        border.color: AppPalette.dangerBorder
+        border.width: 1
+        radius: 8
+        z: -1
+    }
+
     Column {
         id: contentWrapper
 
@@ -79,9 +93,13 @@ Item {
             width: parent.width
             height: 36
             radius: 8
-            color: headerMouse.containsMouse ? AppPalette.bgDeep : AppPalette.card
+            color: !root.confirmed
+                   ? AppPalette.dangerBg
+                   : (headerMouse.containsMouse ? AppPalette.bgDeep : AppPalette.card)
             border.width: 1
-            border.color: root.expanded ? AppPalette.borderFocus : AppPalette.border
+            border.color: !root.confirmed
+                          ? AppPalette.dangerBorder
+                          : (root.expanded ? AppPalette.borderFocus : AppPalette.border)
 
             Rectangle {
                 width: 4
@@ -90,7 +108,9 @@ Item {
                 anchors.left: parent.left
                 anchors.leftMargin: 5
                 anchors.verticalCenter: parent.verticalCenter
-                color: root.expanded ? AppPalette.accentBar : (headerMouse.containsMouse ? AppPalette.borderFocus : AppPalette.borderHover)
+                color: !root.confirmed
+                       ? AppPalette.dangerBorder
+                       : (root.expanded ? AppPalette.accentBar : (headerMouse.containsMouse ? AppPalette.borderFocus : AppPalette.borderHover))
             }
 
             Row {

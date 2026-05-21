@@ -53,6 +53,7 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Echogram"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.echogram"; collapsedByDefault: false
+        confirmed: dev ? dev.chartSetupState : true
 
         Row {
             width: parent.width; height: 30; spacing: 8
@@ -79,6 +80,7 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Rangefinder"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.rangefinder"; collapsedByDefault: true
+        confirmed: dev ? dev.distSetupState : true
 
         Row {
             width: parent.width; height: 30; spacing: 8
@@ -105,6 +107,7 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Transducer"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.transducer"; collapsedByDefault: true
+        confirmed: dev ? dev.transcState : true
 
         Row {
             width: parent.width; height: 30; spacing: 8
@@ -139,6 +142,7 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("DSP"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.dsp"; collapsedByDefault: true
+        confirmed: dev ? (dev.dspState && dev.soundState) : true
 
         Row {
             width: parent.width; height: 30; spacing: 8
@@ -159,6 +163,7 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Dataset"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.dataset"; collapsedByDefault: true
+        confirmed: dev ? dev.datasetState : true
 
         Row {
             width: parent.width; height: 30; spacing: 8
@@ -249,6 +254,7 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Actions"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.actions"; collapsedByDefault: false
+        confirmed: dev ? dev.uartState : true
 
         property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
