@@ -13,6 +13,9 @@ Item {
     // Forwarded to MainWindow.handleHotkeyKeyEvent so all hotkeys work in second window.
     signal hotkeyReceived(var event)
 
+    // Exposed for ESC close in MainWindow.
+    readonly property var plot2DInstance: plot2DLoader.item
+
     focus: true
     Keys.onReleased: function(event) {
         root.hotkeyReceived(event)
@@ -30,6 +33,7 @@ Item {
     // ── Plot2D (dedicated indx=6, settings persisted under "Plot2D_6") ──
     // Smooth resize on window fullscreen toggle — mirrors PaneFrame's animation.
     Loader {
+        id: plot2DLoader
         x: 0
         y: 0
         width: parent.width

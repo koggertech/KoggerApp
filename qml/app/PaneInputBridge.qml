@@ -30,6 +30,12 @@ Item {
         }
     }
 
+    // Mark pane active on user interaction.
+    function markActiveLeaf() {
+        if (root.workspaceRoot && root.workspaceRoot.store && root.leafId >= 0)
+            root.workspaceRoot.store.activeLeafId = root.leafId
+    }
+
     function markKeyboardInput() {
         if (root.workspaceRoot
                 && root.workspaceRoot.inputState
@@ -171,6 +177,7 @@ Item {
                 if (root.focusOnPointer)
                     overlay.forceActiveFocus()
                 root.markMouseKeyboardInput()
+                root.markActiveLeaf()
                 root.lastMouseButtons = mouse.buttons
                 overlay.pointerStarted = true
                 if (root.paneKind === "3D")
@@ -247,6 +254,7 @@ Item {
 
             onPinchStarted: {
                 root.markTouchInput()
+                root.markActiveLeaf()
                 overlay.pinchActive = true
                 pointerArea.enabled = false
                 if (root.paneKind === "2D")

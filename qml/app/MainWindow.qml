@@ -57,6 +57,7 @@ ApplicationWindow {
         }
 
         SecondaryWindow {
+            id: secondaryContent
             anchors.fill: parent
             store: workspaceStore
             onHotkeyReceived: function(event) {
@@ -135,34 +136,72 @@ ApplicationWindow {
                    || focusItem instanceof TextInput)
     }
 
-    function closeTransientUi() {
-        var handled = false
+    // Re-entrancy guard.
+    property bool _closingTransientUi: false
 
-        if (legacyPanelOpen) {
-            legacyPanelOpen = false
-            handled = true
-        }
-        if (workspaceStore.modeSettingsPanelOpen) {
-            workspaceStore.closeModeSettingsPanel()
-            handled = true
-        }
-        if (workspaceStore.settingsPanelOpen) {
-            workspaceStore.settingsPanelOpen = false
-            handled = true
-        }
-        if (workspaceStore.modePickerLeafId !== -1) {
+    // Plot2D owning the currently-focused echogram (secondary window wins when active).
+    function _activePlot2D() {
+        if (root.lastActiveWindow === secondWindow && secondWindow.visible)
+            return secondaryContent ? secondaryContent.plot2DInstance : null
+        if (!workspaceView || !workspaceView.plotItemsByLeafId) return null
+        if (workspaceStore.activeLeafId < 0) return null
+        return workspaceView.plotItemsByLeafId[String(workspaceStore.activeLeafId)] || null
+    }
+
+    // ESC priority — one layer per call, innermost first. Reorder to repriortize.
+    readonly property var _transientUiLayers: [
+        function() {  // active Plot2D gear
+            var p = root._activePlot2D()
+            if (!p || !p.settingsOpen) return false
+            p.closeSettings()
+            return true
+        },
+        function() {  // pane mode picker
+            if (workspaceStore.modePickerLeafId === -1) return false
             workspaceStore.clearModePickerSelection()
-            handled = true
-        }
-        if (hotActions.layoutsMenuOpen) {
+            return true
+        },
+        function() {  // pane mode settings
+            if (!workspaceStore.modeSettingsPanelOpen) return false
+            workspaceStore.closeModeSettingsPanel()
+            return true
+        },
+        function() {  // HotActions favorites popup
+            if (!hotActions.layoutsMenuOpen) return false
             hotActions.layoutsMenuOpen = false
-            handled = true
-        }
-        if (hotActions.expanded) {
+            return true
+        },
+        function() {  // HotActions expanded
+            if (!hotActions.expanded) return false
             hotActions.expanded = false
-            handled = true
+            return true
+        },
+        function() {  // legacy main panel
+            if (!legacyPanelOpen) return false
+            legacyPanelOpen = false
+            return true
+        },
+        function() {  // main app settings (last resort)
+            if (!workspaceStore.settingsPanelOpen) return false
+            workspaceStore.settingsPanelOpen = false
+            return true
+        }
+    ]
+
+    function closeTransientUi() {
+        if (_closingTransientUi)
+            return false
+        _closingTransientUi = true
+
+        var handled = false
+        for (var i = 0; i < _transientUiLayers.length; ++i) {
+            if (_transientUiLayers[i]()) {
+                handled = true
+                break
+            }
         }
 
+        _closingTransientUi = false
         return handled
     }
 
@@ -188,6 +227,18 @@ ApplicationWindow {
             } else {
                 root.toggleFullScreenMode()
             }
+        }
+    }
+
+    // Global Esc — Plot2D/3D scene swallow keys before mainLayer.Keys.onReleased.
+    Shortcut {
+        sequence: "Esc"
+        context: Qt.ApplicationShortcut
+        autoRepeat: false
+        onActivated: {
+            if (root.isTextInputFocused())
+                return
+            root.closeTransientUi()
         }
     }
 
@@ -298,6 +349,10 @@ ApplicationWindow {
     }
 
     function handleHotkeyKeyEvent(event) {
+        // Esc handled by ApplicationShortcut — skip legacy hotkey (scanCode 1 → "closeSettings").
+        if (event && event.key === Qt.Key_Escape)
+            return false
+
         var scanCode = event && typeof event.nativeScanCode === "number" && event.nativeScanCode > 0
                      ? event.nativeScanCode.toString()
                      : ""
@@ -312,7 +367,8 @@ ApplicationWindow {
         if (!event)
             return false
 
-        if (event.key === Qt.Key_Escape || event.key === Qt.Key_Back)
+        // Android hardware back.
+        if (event.key === Qt.Key_Back)
             return closeTransientUi()
         if (event.key === Qt.Key_F10)
             return openSelectedFile()

@@ -490,6 +490,11 @@ Item {
                     syncPlotRegistration()
                 }
 
+                onSettingsClicked: {
+                    if (workspace.store && slotLeafId > 0)
+                        workspace.store.activeLeafId = slotLeafId
+                }
+
                 Component.onDestruction: {
                     if (registeredLeafId > 0 && workspace && typeof workspace.unregisterPlotItem === "function")
                         workspace.unregisterPlotItem(registeredLeafId, slotPlot)
@@ -536,6 +541,11 @@ Item {
             Component.onDestruction: {
                 if (workspace && workspace.store && typeof workspace.unregisterPlotItem === "function")
                     workspace.unregisterPlotItem(workspace.store.globalPopupLeafId, globalPopupPlot)
+            }
+
+            onSettingsClicked: {
+                if (workspace.store)
+                    workspace.store.activeLeafId = workspace.store.globalPopupLeafId
             }
         }
     }
