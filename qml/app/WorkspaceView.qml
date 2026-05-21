@@ -15,6 +15,7 @@ Item {
     property var plotItemsByLeafId: ({})
     property Item active3DHostItem: null
     property int active3DLeafId: -1
+    property var active3DPane: null   // current Pane3DWindow, for ESC routing
     readonly property alias scene3dViewItem: scene3dView
 
     property var primaryPlotItem: null

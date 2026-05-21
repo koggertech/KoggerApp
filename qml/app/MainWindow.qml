@@ -148,9 +148,41 @@ ApplicationWindow {
         return workspaceView.plotItemsByLeafId[String(workspaceStore.activeLeafId)] || null
     }
 
+    // "2D" | "3D" | "" — mode of the currently-focused pane (ESC routing).
+    function _activeLeafMode() {
+        if (root.lastActiveWindow === secondWindow && secondWindow.visible)
+            return "2D"
+        if (workspaceStore.activeLeafId < 0) return ""
+        if (workspaceStore.activeLeafId === workspaceStore.globalPopupLeafId)
+            return workspaceStore.globalPopupMode || "2D"
+        var rects = workspaceStore.leafRects
+        if (!rects) return ""
+        for (var i = 0; i < rects.length; ++i) {
+            if (rects[i].leafId === workspaceStore.activeLeafId)
+                return rects[i].pane ? rects[i].pane.mode : ""
+        }
+        return ""
+    }
+
     // ESC priority — one layer per call, innermost first. Reorder to repriortize.
+    // Layers 1–3 are gated by _activeLeafMode() so the focused pane's UI always wins.
     readonly property var _transientUiLayers: [
-        function() {  // active Plot2D gear
+        function() {  // 2D-only: Plot2D right-click menu + contact dialog
+            if (root._activeLeafMode() !== "2D") return false
+            var p = root._activePlot2D()
+            if (!p || !p.hasTransientUi) return false
+            p.closeTransientUi()
+            return true
+        },
+        function() {  // 3D-only: context menu → ruler cancel → layers/geometry panels
+            if (root._activeLeafMode() !== "3D") return false
+            var p3 = workspaceView ? workspaceView.active3DPane : null
+            if (!p3 || !p3.hasTransientUi) return false
+            p3.closeTransientUi()
+            return true
+        },
+        function() {  // 2D-only: Plot2D gear
+            if (root._activeLeafMode() !== "2D") return false
             var p = root._activePlot2D()
             if (!p || !p.settingsOpen) return false
             p.closeSettings()

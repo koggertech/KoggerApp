@@ -35,12 +35,46 @@ Item {
     }
 
     Scene3DRightToolbar {
+        id: rightToolbar
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         view: root.scene3dView
         geo: root.scene3dView ? root.scene3dView.geoJsonController : null
         z: 1
+    }
+
+    readonly property bool hasTransientUi: contextMenu3D.visible
+                                         || (root.scene3dView !== null
+                                             && (root.scene3dView.rulerDrawing || root.scene3dView.rulerEnabled))
+                                         || rightToolbar.layersOpen
+                                         || rightToolbar.geometryOpen
+
+    function closeTransientUi() {
+        // Context menu wins alone — ephemeral right-click popup.
+        if (contextMenu3D.visible) {
+            contextMenu3D.visible = false
+            return true
+        }
+        // Tools/panels — ruler reset + layers + geometry collapse together.
+        var handled = false
+        if (root.scene3dView && (root.scene3dView.rulerDrawing || root.scene3dView.rulerEnabled)) {
+            if (root.scene3dView.rulerDrawing
+                    && typeof root.scene3dView.rulerCancelDrawing === "function") {
+                root.scene3dView.rulerCancelDrawing()
+            }
+            root.scene3dView.rulerEnabled = false
+            handled = true
+        }
+        if (rightToolbar.layersOpen) {
+            rightToolbar.layersOpen = false
+            handled = true
+        }
+        if (rightToolbar.geometryOpen) {
+            rightToolbar.geometryOpen = false
+            handled = true
+        }
+        return handled
     }
 
     RowLayout {
@@ -177,13 +211,21 @@ Item {
         lastRegisteredLeafId = leafId
     }
 
-    Component.onCompleted: syncHostRegistration()
-    onWorkspaceRootChanged: syncHostRegistration()
+    function syncActive3DPane() {
+        if (!workspaceRoot) return
+        if (typeof workspaceRoot.active3DPane === "undefined") return
+        workspaceRoot.active3DPane = root
+    }
+
+    Component.onCompleted: { syncHostRegistration(); syncActive3DPane() }
+    onWorkspaceRootChanged: { syncHostRegistration(); syncActive3DPane() }
     onLeafIdChanged: syncHostRegistration()
 
     Component.onDestruction: {
         if (workspaceRoot && typeof workspaceRoot.unregisterPaneHost === "function" && lastRegisteredLeafId !== -1) {
             workspaceRoot.unregisterPaneHost(lastRegisteredLeafId, hostSurface)
         }
+        if (workspaceRoot && workspaceRoot.active3DPane === root)
+            workspaceRoot.active3DPane = null
     }
 }
