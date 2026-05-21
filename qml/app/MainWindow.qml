@@ -658,5 +658,7 @@ ApplicationWindow {
             maxHeight: parent.height
             hotActionsRight: hotActions.x + hotActions.width
         }
+
+        FileOpeningOverlay { }
     }
 }

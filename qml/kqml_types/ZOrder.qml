@@ -20,4 +20,6 @@ QtObject {
     readonly property int settingsSidebar:  2000    // AppSettings sidebar
     readonly property int modeSettings:     2001    // ModeSettingsPanel
     readonly property int legacySidebar:    2002    // legacy menus sidebar
+
+    readonly property int fileOpeningOverlay: 5000  // modal "file is opening" banner
 }

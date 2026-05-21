@@ -66,4 +66,6 @@ Item {
         color: AppPalette.textSecond
         font.pixelSize: 16
     }
+
+    FileOpeningOverlay { }
 }

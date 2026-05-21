@@ -1720,6 +1720,14 @@
     </message>
 </context>
 <context>
+    <name>FileOpeningOverlay</name>
+    <message>
+        <location filename="../qml/app/FileOpeningOverlay.qml" line="47"/>
+        <source>Please wait, the file is opening</source>
+        <translation>Подождите, открывается файл</translation>
+    </message>
+</context>
+<context>
     <name>FlashBox</name>
     <message>
         <location filename="../qml/devices/FlashBox.qml" line="29"/>
@@ -1778,12 +1786,12 @@
         <translation>Компоновки</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="443"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="444"/>
         <source>Close second window</source>
         <translation>Закрыть второе окно</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="444"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="445"/>
         <source>Open second window</source>
         <translation>Открыть второе окно</translation>
     </message>
@@ -2262,18 +2270,18 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="18"/>
-        <location filename="../qml/app/MainWindow.qml" line="53"/>
+        <location filename="../qml/app/MainWindow.qml" line="21"/>
+        <location filename="../qml/app/MainWindow.qml" line="44"/>
         <source>KoggerApp, KOGGER</source>
         <translation>KoggerApp, KOGGER</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="54"/>
+        <location filename="../qml/app/MainWindow.qml" line="45"/>
         <source> — Second window</source>
         <translation> — Второе окно</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="521"/>
+        <location filename="../qml/app/MainWindow.qml" line="530"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
@@ -3219,24 +3227,9 @@
 <context>
     <name>SecondaryWindow</name>
     <message>
-        <location filename="../qml/app/SecondaryWindow.qml" line="42"/>
-        <source>2D</source>
-        <translation>2D</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/SecondaryWindow.qml" line="57"/>
-        <source>3D</source>
-        <translation>3D</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/SecondaryWindow.qml" line="57"/>
-        <source>3D in second window: coming soon</source>
-        <translation>3D во втором окне: скоро</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/SecondaryWindow.qml" line="72"/>
-        <source>Choose 2D or 3D</source>
-        <translation>Выберите 2D или 3D</translation>
+        <location filename="../qml/app/SecondaryWindow.qml" line="65"/>
+        <source>Echogram limit reached</source>
+        <translation>Достигнут лимит эхограмм</translation>
     </message>
 </context>
 <context>
