@@ -952,11 +952,10 @@ function favoriteLayoutSnapshotFromNode(node, state) {
 
     if (node.type === "split") {
         var ratio = typeof node.ratio === "number" ? node.ratio : 0.5
-        var normalizedRatio = Math.round(clamp(ratio, 0.001, 0.999) * 1000) / 1000
         return {
             type: "split",
             orientation: node.orientation === "horizontal" ? "horizontal" : "vertical",
-            ratio: normalizedRatio,
+            ratio: ratio,
             first: favoriteLayoutSnapshotFromNode(node.first, snapshotState),
             second: favoriteLayoutSnapshotFromNode(node.second, snapshotState)
         }
@@ -1150,11 +1149,28 @@ function favoriteLayoutEntryFromCurrent() {
     }
 }
 
+// Strip ratio from layout snapshot so signatures compare structure only
+// (which panes, how they're split, orientations, modes). Ratios are still
+// kept on the original snapshot for restoration via applyFavoriteLayout.
+function stripRatiosFromSnapshot(node) {
+    if (!node || typeof node !== "object")
+        return node
+    if (node.type === "split") {
+        return {
+            type: "split",
+            orientation: node.orientation,
+            first: stripRatiosFromSnapshot(node.first),
+            second: stripRatiosFromSnapshot(node.second)
+        }
+    }
+    return node
+}
+
 function favoriteLayoutSignatureFromEntry(entry) {
     if (!entry || !entry.layout)
         return ""
     return JSON.stringify({
-        layout: entry.layout,
+        layout: stripRatiosFromSnapshot(entry.layout),
         popupLinks: Array.isArray(entry.popupLinks) ? entry.popupLinks : []
     })
 }
@@ -1330,16 +1346,33 @@ function updateCurrentLayoutFavoriteState() {
         return
     }
 
-    var currentSignature = currentFavoriteLayoutSignature()
+    var currentEntry = favoriteLayoutEntryFromCurrent()
+    var currentSignature = favoriteLayoutSignatureFromEntry(currentEntry)
     currentLayoutFavoriteSignature = currentSignature
-    var isFavorite = false
+    var matchedIndex = -1
     for (var i = 0; i < favoriteLayouts.length; ++i) {
         if (favoriteLayoutSignatureFromEntry(favoriteLayouts[i]) === currentSignature) {
-            isFavorite = true
+            matchedIndex = i
             break
         }
     }
-    currentLayoutIsFavorite = isFavorite
+    currentLayoutIsFavorite = matchedIndex !== -1
+
+    // When current layout matches an existing favourite by structure, keep that
+    // favourite's stored ratios in sync with the current arrangement so a later
+    // applyFavoriteLayout() restores the splits the way the user last left them.
+    if (matchedIndex !== -1 && currentEntry) {
+        var stored = favoriteLayouts[matchedIndex]
+        if (JSON.stringify(stored.layout) !== JSON.stringify(currentEntry.layout)) {
+            var next = favoriteLayouts.slice(0)
+            next[matchedIndex] = {
+                layout: currentEntry.layout,
+                popupLinks: stored.popupLinks
+            }
+            favoriteLayouts = next
+            saveFavoriteLayoutsState()
+        }
+    }
 }
 
 function favoriteLayoutIsCurrent(favoriteIndex) {
