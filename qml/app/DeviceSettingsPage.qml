@@ -47,29 +47,6 @@ Column {
         }
     }
 
-    // ── Device header ──────────────────────────────────────────────────────
-
-    Rectangle {
-        width: root.groupWidth; height: 34; radius: 8
-        color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
-
-        Row {
-            anchors.fill: parent; anchors.margins: 10; spacing: 8
-
-            Rectangle {
-                width: 8; height: 8; radius: 4; color: "#10B981"
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Text {
-                text: dev ? (dev.devName + "  " + dev.fwVersion + "  [SN: " + dev.devSN + "]") : ""
-                color: AppPalette.textSecond; font.pixelSize: 12
-                anchors.verticalCenter: parent.verticalCenter
-                elide: Text.ElideRight; width: parent.width - 20
-            }
-        }
-    }
-
     // ── Эхограмма ─────────────────────────────────────────────────────────
 
     SettingsGroup {

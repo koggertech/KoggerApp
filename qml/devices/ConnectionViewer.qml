@@ -831,6 +831,14 @@ Column {
         color: AppPalette.textMuted; font.pixelSize: 12; width: parent.width; wrapMode: Text.WordWrap
     }
 
+    // ── Device settings ───────────────────────────────────────────────────
+
+    DeviceSettingsPage {
+        visible: connectionViewer.dev !== null
+        width: parent.width
+        dev: connectionViewer.dev
+    }
+
     // ── Recent files ──────────────────────────────────────────────────────
 
     Column {
@@ -887,13 +895,5 @@ Column {
                 }
             }
         }
-    }
-
-    // ── Device settings ───────────────────────────────────────────────────
-
-    DeviceSettingsPage {
-        visible: connectionViewer.dev !== null
-        width: parent.width
-        dev: connectionViewer.dev
     }
 }
