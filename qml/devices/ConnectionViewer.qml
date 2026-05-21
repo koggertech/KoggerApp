@@ -8,8 +8,22 @@ import app 1.0
 
 Column {
     id: connectionViewer
-    property var dev: null
+
+    // Injected by ConnectionsSettingsPage.onLoaded.
+    property var store: null
+
     property var devList: deviceManagerWrapper.devs
+
+    // Resolved via store.activeDeviceSN, falls back to devList[0].
+    readonly property var dev: {
+        if (!devList || devList.length === 0) return null
+        var sn = store ? store.activeDeviceSN : -1
+        for (var i = 0; i < devList.length; ++i) {
+            if (devList[i] && devList[i].devSN === sn)
+                return devList[i]
+        }
+        return devList[0]
+    }
     property string filePath: currentLogPath()
     property var lastLogFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     property var lastImportTrackFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
@@ -127,14 +141,30 @@ Column {
         setImportTrackPath(importTrackPathSource)
     }
 
-    onDevListChanged: {
-        if (devList.length > 0) dev = devList[0]
+    onDevListChanged: syncActiveDevice()
+
+    function syncActiveDevice() {
+        if (!store) return
+        if (!devList || devList.length === 0) {
+            store.setActiveDeviceSN(-1)
+            return
+        }
+        var sn = store.activeDeviceSN
+        for (var i = 0; i < devList.length; ++i) {
+            if (devList[i] && devList[i].devSN === sn)
+                return
+        }
+        store.setActiveDeviceSN(devList[0].devSN)
     }
+
+    onStoreChanged: syncActiveDevice()
 
     Connections {
         target: core
-        function onConnectionChanged() { dev = null }
-        function onFilePathChanged()   { connectionViewer.setLogPath(core.filePath) }
+        function onConnectionChanged() {
+            if (store) store.setActiveDeviceSN(-1)
+        }
+        function onFilePathChanged() { connectionViewer.setLogPath(core.filePath) }
     }
 
     // ── Inline components ─────────────────────────────────────────────────
@@ -314,9 +344,18 @@ Column {
                     // ── Serial ──
                     Text {
                         visible: LinkType === 1
-                        text: PortName; color: AppPalette.textSecond; font.pixelSize: 11
+                        text: PortName
+                        color: AppPalette.text
+                        font.pixelSize: 13; font.bold: true
                         Layout.alignment: Qt.AlignVCenter
                         Layout.preferredWidth: 64; elide: Text.ElideRight
+                    }
+
+                    // Serial: spacer pushes baudrate/autospeed/Open right.
+                    Item {
+                        visible: LinkType === 1
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
                     }
 
                     Rectangle {
@@ -332,9 +371,63 @@ Column {
                             font.pixelSize: 11
                             background: Rectangle { color: "transparent"; border.width: 0 }
                             contentItem: Text {
-                                leftPadding: 4; text: baudrateCombo.displayText
+                                leftPadding: 4
+                                rightPadding: 16
+                                text: baudrateCombo.displayText
                                 color: AppPalette.text; font.pixelSize: 11
                                 verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight
+                            }
+                            indicator: Image {
+                                anchors.right: parent.right
+                                anchors.rightMargin: 4
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 10; height: 10
+                                source: "qrc:/icons/ui/chevron-down.svg"
+                                fillMode: Image.PreserveAspectFit
+                                smooth: true
+                            }
+                            delegate: ItemDelegate {
+                                width: baudrateCombo.width
+                                height: 26
+                                contentItem: Text {
+                                    text: modelData
+                                    color: AppPalette.text
+                                    font.pixelSize: 11
+                                    verticalAlignment: Text.AlignVCenter
+                                    leftPadding: 8
+                                }
+                                background: Rectangle {
+                                    color: highlighted ? AppPalette.accentBg : "transparent"
+                                }
+                                highlighted: baudrateCombo.highlightedIndex === index
+                            }
+                            popup: Popup {
+                                readonly property int itemHeight: 26
+                                readonly property int maxVisibleItems: 9
+                                y: baudrateCombo.height + 2
+                                width: baudrateCombo.width
+                                // Exact item-multiple cap avoids edge-snap on hover.
+                                implicitHeight: Math.min(contentItem.implicitHeight,
+                                                         itemHeight * maxVisibleItems)
+                                padding: 1
+                                background: Rectangle {
+                                    color: AppPalette.bgDeep
+                                    border.color: AppPalette.border
+                                    border.width: 1
+                                    radius: 4
+                                }
+                                contentItem: ListView {
+                                    id: baudrateListView
+                                    clip: true
+                                    implicitHeight: contentHeight
+                                    model: baudrateCombo.popup.visible ? baudrateCombo.delegateModel : null
+                                    boundsBehavior: Flickable.StopAtBounds
+                                    highlightRangeMode: ListView.NoHighlightRange
+                                    flickableDirection: Flickable.VerticalFlick
+                                    ScrollIndicator.vertical: ScrollIndicator {}
+                                }
+                                onOpened: baudrateListView.positionViewAtIndex(baudrateCombo.currentIndex,
+                                                                                ListView.Contain)
                             }
                             onActivated: {
                                 linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(currentText))
@@ -357,13 +450,16 @@ Column {
                     Text {
                         visible: LinkType === 2 || LinkType === 3
                         text: LinkType === 2 ? "UDP" : "TCP"
-                        color: AppPalette.borderFocus; font.pixelSize: 10; font.bold: true
+                        color: AppPalette.text
+                        font.pixelSize: 13; font.bold: true
                         Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: 32
                     }
 
                     Rectangle {
                         visible: LinkType === 2 || LinkType === 3
-                        Layout.fillWidth: true; Layout.minimumWidth: 58
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 40   // shrinks so Open/Close stays visible
                         Layout.preferredHeight: 24
                         radius: 4; color: AppPalette.bg; border.width: 1
                         border.color: ipField.activeFocus ? AppPalette.accentBorder : AppPalette.border
@@ -379,13 +475,16 @@ Column {
                     }
 
                     Text {
-                        visible: LinkType === 2; text: qsTr("src:")
+                        visible: LinkType === 2 && !gearBtn.checked
+                        text: qsTr("src:")
                         color: AppPalette.borderFocus; font.pixelSize: 10; Layout.alignment: Qt.AlignVCenter
                     }
 
                     Rectangle {
                         visible: LinkType === 2
-                        Layout.preferredWidth: 50; Layout.preferredHeight: 24
+                        Layout.preferredWidth: 50
+                        Layout.minimumWidth: 40
+                        Layout.preferredHeight: 24
                         radius: 4; color: AppPalette.bg; border.width: 1
                         border.color: srcPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                         Layout.alignment: Qt.AlignVCenter
@@ -400,14 +499,16 @@ Column {
                     }
 
                     Text {
-                        visible: LinkType === 2 || LinkType === 3
+                        visible: (LinkType === 2 || LinkType === 3) && !gearBtn.checked
                         text: LinkType === 2 ? qsTr("dst:") : qsTr("srv:")
                         color: AppPalette.borderFocus; font.pixelSize: 10; Layout.alignment: Qt.AlignVCenter
                     }
 
                     Rectangle {
                         visible: LinkType === 2 || LinkType === 3
-                        Layout.preferredWidth: 50; Layout.preferredHeight: 24
+                        Layout.preferredWidth: 50
+                        Layout.minimumWidth: 40
+                        Layout.preferredHeight: 24
                         radius: 4; color: AppPalette.bg; border.width: 1
                         border.color: dstPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                         Layout.alignment: Qt.AlignVCenter
@@ -424,7 +525,10 @@ Column {
                     // Open / Close
                     KButton {
                         Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredWidth: 58; Layout.preferredHeight: 26
+                        Layout.preferredWidth: 64
+                        Layout.minimumWidth: 64
+                        Layout.maximumWidth: 64
+                        Layout.preferredHeight: 26
                         text: isConnected ? qsTr("Close") : qsTr("Open")
                         fontPixelSize: 11; bold: false
                         normalBg: AppPalette.card
@@ -455,24 +559,32 @@ Column {
         onCountChanged: Qt.callLater(positionViewAtEnd)
     }
 
-    // ── Action buttons ────────────────────────────────────────────────────
+    // ── Action buttons (4 per row, equal width) ───────────────────────────
 
-    Flow {
-        width: parent.width; spacing: 6
+    Grid {
+        id: actionsGrid
+        width: parent.width
+        columns: 4
+        rowSpacing: 6
+        columnSpacing: 6
+        readonly property real cellW: Math.max(0, (width - columnSpacing * (columns - 1)) / columns)
 
         KButton {
-            text: qsTr("+UDP"); height: 30; fontPixelSize: 12
+            width: actionsGrid.cellW; height: 30; fontPixelSize: 12
+            text: qsTr("+UDP")
             onClicked: linkManagerWrapper.createAsUdp("", 0, 0)
         }
 
         KButton {
-            text: qsTr("+TCP"); height: 30; fontPixelSize: 12
+            width: actionsGrid.cellW; height: 30; fontPixelSize: 12
+            text: qsTr("+TCP")
             onClicked: linkManagerWrapper.createAsTcp("", 0, 0)
         }
 
         KButton {
             id: mavlinkProxy
-            text: qsTr("MAVProxy"); height: 30; fontPixelSize: 12; checkable: true
+            width: actionsGrid.cellW; height: 30; fontPixelSize: 12; checkable: true
+            text: qsTr("MAVProxy")
             onToggled: {
                 if (checked) linkManagerWrapper.sendCreateAndOpenAsUdpProxy("127.0.0.1", 14551, 14550)
                 else         linkManagerWrapper.sendCloseUdpProxy()
@@ -481,7 +593,8 @@ Column {
 
         KButton {
             id: loggingCheck
-            text: qsTr("● KLF"); height: 30; fontPixelSize: 12; checkable: true
+            width: actionsGrid.cellW; height: 30; fontPixelSize: 12; checkable: true
+            text: qsTr("● KLF")
             checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
             onCheckedChanged: {
                 core.setKlfLogging(checked)
@@ -496,7 +609,8 @@ Column {
 
         KButton {
             id: loggingCheck2
-            text: qsTr("● CSV"); height: 30; fontPixelSize: 12; checkable: true
+            width: actionsGrid.cellW; height: 30; fontPixelSize: 12; checkable: true
+            text: qsTr("● CSV")
             checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
             onCheckedChanged: {
                 core.setCsvLogging(checked)
@@ -511,7 +625,8 @@ Column {
 
         KButton {
             id: importCheck
-            text: qsTr("Import"); height: 30; fontPixelSize: 12; checkable: true
+            width: actionsGrid.cellW; height: 30; fontPixelSize: 12; checkable: true
+            text: qsTr("Import")
         }
     }
 
@@ -745,22 +860,44 @@ Column {
         }
     }
 
-    // ── Device buttons ────────────────────────────────────────────────────
+    // ── Device tabs ───────────────────────────────────────────────────────
 
-    Flow {
+    Column {
         visible: devList.length > 0
-        width: parent.width; spacing: 6
+        width: parent.width
+        spacing: 6
 
-        Repeater {
-            model: devList
-            delegate: KButton {
-                required property var modelData
-                text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : qsTr("Undefined")
-                height: 30; fontPixelSize: 11
-                opacity: dev === modelData ? 1.0 : 0.5
-                visible: modelData ? (modelData.devType !== 0) : false
-                onClicked: dev = modelData
+        Text {
+            text: qsTr("Devices")
+            color: AppPalette.textSecond
+            font.pixelSize: 11; font.bold: true
+        }
+
+        Flow {
+            width: parent.width; spacing: 6
+
+            Repeater {
+                model: devList
+                delegate: KButton {
+                    required property var modelData
+                    text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : qsTr("Undefined")
+                    height: 30; fontPixelSize: 11
+                    checkable: true
+                    checked: dev === modelData
+                    checkedBorder: AppPalette.accentBorder
+                    visible: modelData ? (modelData.devType !== 0) : false
+                    onClicked: {
+                        if (store && modelData)
+                            store.setActiveDeviceSN(modelData.devSN)
+                    }
+                }
             }
+        }
+
+        Rectangle {
+            width: parent.width
+            height: 1
+            color: AppPalette.border
         }
     }
 

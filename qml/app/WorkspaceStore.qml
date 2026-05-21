@@ -59,7 +59,7 @@ property string hotkeysRevealKey: ""
 property int hotkeysRevealNonce: 0
 property int modeSettingsLeafId: -1
 property string modeSettingsMode: "2D"
-readonly property int settingsPanelSizePx: 430
+readonly property int settingsPanelSizePx: 480
 property int modePickerLeafId: -1
 property var modePickerLeafIds: []
 property int hoveredPopupCandidateLeafId: -1
@@ -88,6 +88,10 @@ readonly property int activeTwoDCount: paneCountByMode("2D")
     + (globalPopupMode === "2D" ? 1 : 0)
     + (effectiveSecondaryMode === "2D" ? 1 : 0)
 readonly property bool secondary2DAvailable: effectiveSecondaryMode === "2D" || activeTwoDCount < 5
+
+// Active device (devSN); -1 = none. Session-only, shared with HotActionsPanel.
+property int activeDeviceSN: -1
+
 property var globalPopupState: ({
     x: -1,
     y: -1,
@@ -265,6 +269,17 @@ function openConnectionsSettings() {
     closeModeSettingsPanel()
     settingsPanelOpen = true
     setSettingsGroupExpanded("app.connections", true)
+}
+
+function setActiveDeviceSN(sn) {
+    if (typeof sn !== "number")
+        return
+    activeDeviceSN = sn
+}
+
+function openConnectionsWithDevice(sn) {
+    setActiveDeviceSN(sn)
+    openConnectionsSettings()
 }
 
 function toggleAppLayoutSettings() {

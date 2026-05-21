@@ -121,10 +121,11 @@ Column {
                 property int selectedIndex: 0
 
                 readonly property var names: ["Dark","S.Dark","Light","S.Light","OneDark","Monokai","Kimbie","Solar","Desert","Steam 2003"]
-                readonly property int cols: 5
+                readonly property int cols: 4
                 readonly property int itemH: 28
                 readonly property real itemW: (width - (cols - 1) * 4) / cols
-                height: 2 * itemH + 4
+                readonly property int rows: Math.ceil(10 / cols)
+                height: rows * itemH + (rows - 1) * 4
 
                 onSelectedIndexChanged: if (theme) theme.themeID = selectedIndex
                 Component.onCompleted: if (theme) theme.themeID = selectedIndex
@@ -134,8 +135,8 @@ Column {
                     delegate: Rectangle {
                         required property int index
                         readonly property bool sel: index === appThemeHolder.selectedIndex
-                        x: (index % 5) * (appThemeHolder.itemW + 4)
-                        y: Math.floor(index / 5) * (appThemeHolder.itemH + 4)
+                        x: (index % appThemeHolder.cols) * (appThemeHolder.itemW + 4)
+                        y: Math.floor(index / appThemeHolder.cols) * (appThemeHolder.itemH + 4)
                         width: appThemeHolder.itemW
                         height: appThemeHolder.itemH
                         radius: 6

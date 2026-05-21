@@ -58,8 +58,10 @@ Column {
                     source: "qrc:/qml/devices/ConnectionViewer.qml"
 
                     onLoaded: {
-                        if (item)
+                        if (item) {
                             item.width = width
+                            item.store = root.store
+                        }
                         if (item && item.filePath && item.filePath.length > 0)
                             root.store.selectedConnectionFilePath = item.filePath
                     }

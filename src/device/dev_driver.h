@@ -173,6 +173,12 @@ public:
     QUuid getLinkUuid() const;
     void setFirmware(const QByteArray& data);
 
+    // Link status mirror — pushed by DeviceManager.
+    bool linkConnected()    const { return linkConnected_; }
+    bool linkReceivesData() const { return linkReceivesData_; }
+    bool linkNotAvailable() const { return linkNotAvailable_; }
+    void setLinkStatus(bool connected, bool receivesData, bool notAvailable);
+
 signals:
     void averageChartLossesChanged();
     void binFrameOut(Parsers::ProtoBinOut proto_out);
@@ -228,6 +234,7 @@ signals:
     void servoCurrentAngleChanged();
     void devSyncChanged();
     void devSyncErrorOccurred(QString reason);
+    void linkStatusChanged();
     void upgradeProgressChanged(int progress_status);
     void upgradeChanged();
     void deviceVersionChanged();
@@ -471,4 +478,7 @@ private:
     int errorFreezeCnt_;
     int averageChartLosses_;
     QUuid linkUuid_;
+    bool linkConnected_    = false;
+    bool linkReceivesData_ = false;
+    bool linkNotAvailable_ = false;
 };

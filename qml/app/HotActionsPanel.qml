@@ -66,6 +66,34 @@ Item {
     signal secondWindowToggleRequested()
     property bool secondWindowOpen: false
 
+    // Devices bound from MainWindow (deviceManagerWrapper.devs).
+    // Status colors mirror ConnectionViewer link-row palette.
+    property var devices: []
+    signal deviceTriggered(int devSN)
+
+    function iconForDevice(d) {
+        if (!d) return "qrc:/icons/ui/device-unknown.svg"
+        if (d.isSonar)                  return "qrc:/icons/ui/device-transducer.svg"
+        if (d.isDoppler)                return "qrc:/icons/ui/device-doppler.svg"
+        if (d.isUSBLBeacon || d.isUSBL) return "qrc:/icons/ui/device-usbl.svg"
+        if (d.isRecorder)               return "qrc:/icons/ui/device-recorder.svg"
+        return "qrc:/icons/ui/device-unknown.svg"
+    }
+
+    function linkFillColor(d) {
+        if (!d) return buttonFillColor
+        if (d.linkConnected)    return d.linkReceivesData ? "#0D2D1A" : "#2D2200"
+        if (d.linkNotAvailable) return "#2D0D0D"
+        return buttonFillColor
+    }
+
+    function linkBorderColor(d) {
+        if (!d) return buttonBorderColor
+        if (d.linkConnected)    return d.linkReceivesData ? "#10B981" : "#F59E0B"
+        if (d.linkNotAvailable) return "#EF4444"
+        return buttonBorderColor
+    }
+
     Component {
         id: layoutsPopupContentComponent
 
@@ -451,6 +479,33 @@ Item {
                 onClicked: {
                     root.secondWindowToggleRequested()
                     root.expanded = false
+                }
+            }
+
+            Repeater {
+                model: root.devices
+                delegate: CircleIconButton {
+                    required property var modelData
+                    readonly property color _fill:   root.linkFillColor(modelData)
+                    readonly property color _border: root.linkBorderColor(modelData)
+
+                    visible: modelData ? (modelData.devType !== 0) : false
+                    width: visible ? root.controlHeight : 0
+                    height: root.controlHeight
+                    iconSource: root.iconForDevice(modelData)
+                    toolTipText: modelData
+                                 ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]")
+                                 : ""
+                    fillColor:        _fill
+                    fillHoverColor:   _fill
+                    fillPressedColor: root.buttonPressedColor
+                    borderColor:      _border
+                    borderHoverColor: _border
+                    onClicked: {
+                        if (!modelData) return
+                        root.deviceTriggered(modelData.devSN)
+                        root.expanded = false
+                    }
                 }
             }
         }

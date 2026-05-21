@@ -422,6 +422,12 @@ ApplicationWindow {
                 else
                     workspaceStore.openSecondaryWindow()
             }
+
+            devices: deviceManagerWrapper ? deviceManagerWrapper.devs : []
+            onDeviceTriggered: function(sn) {
+                workspaceStore.openConnectionsWithDevice(sn)
+                refreshConnectionsIndicator()
+            }
         }
 
         Timer {

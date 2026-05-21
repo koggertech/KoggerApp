@@ -91,6 +91,10 @@ public:
     Q_PROPERTY(bool isDevSyncSynced READ getDevSyncState NOTIFY devSyncChanged)
     Q_PROPERTY(int  devSyncPeriodMs READ devSyncPeriodMs WRITE setDevSyncPeriodMs NOTIFY devSyncChanged)
     Q_PROPERTY(QVariantList devSyncPorts READ devSyncPorts NOTIFY devSyncChanged)
+
+    Q_PROPERTY(bool linkConnected     READ linkConnected     NOTIFY linkStatusChanged)
+    Q_PROPERTY(bool linkReceivesData  READ linkReceivesData  NOTIFY linkStatusChanged)
+    Q_PROPERTY(bool linkNotAvailable  READ linkNotAvailable  NOTIFY linkStatusChanged)
 #endif
 
     int devSyncPeriodMs() const { return idDevSync ? idDevSync->periodMs() : 0; }

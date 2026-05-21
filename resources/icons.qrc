@@ -110,6 +110,11 @@
         <file>icons/ui/minus.svg</file>
         <file>icons/ui/file-check.svg</file>
         <file>icons/ui/building-broadcast-tower.svg</file>
+        <file>icons/ui/device-transducer.svg</file>
+        <file>icons/ui/device-usbl.svg</file>
+        <file>icons/ui/device-recorder.svg</file>
+        <file>icons/ui/device-doppler.svg</file>
+        <file>icons/ui/device-unknown.svg</file>
         <file>icons/ui/json.svg</file>
         <file>icons/ui/clock-edit.svg</file>
         <file>icons/ui/file-pencil.svg</file>
