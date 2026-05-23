@@ -6,11 +6,12 @@ Item {
 
     property var options: []
     property var currentValue
-    property int buttonHeight: 30
-    property int buttonSpacing: 6
-    property int horizontalPadding: 4
-    property int verticalPadding: 4
-    property int cornerRadius: 8
+    property int buttonHeight: Math.round(30 * AppPalette.scale)
+    property int buttonSpacing: Math.round(6 * AppPalette.scale)
+    property int horizontalPadding: Math.round(4 * AppPalette.scale)
+    property int verticalPadding: Math.round(4 * AppPalette.scale)
+    property int cornerRadius: Math.round(8 * AppPalette.scale)
+    property int fontPixelSize: Math.round(13 * AppPalette.scale)
     property bool dragSelectEnabled: true
     signal valueSelected(var value)
 
@@ -24,7 +25,10 @@ Item {
     readonly property int visualIndex: dragPreviewIndex >= 0 ? dragPreviewIndex : selectedIndex
     property bool syncingFromValue: false
 
-    implicitWidth: Math.max(120, optionCount * 92 + Math.max(0, optionCount - 1) * buttonSpacing + horizontalPadding * 2)
+    implicitWidth: Math.max(Math.round(120 * AppPalette.scale),
+                            optionCount * Math.round(92 * AppPalette.scale)
+                            + Math.max(0, optionCount - 1) * buttonSpacing
+                            + horizontalPadding * 2)
     implicitHeight: buttonHeight + verticalPadding * 2
 
     function optionAt(idx) {
@@ -128,7 +132,7 @@ Item {
         y: root.verticalPadding
         width: root.segmentWidth
         height: root.buttonHeight
-        radius: 6
+        radius: Math.round(6 * AppPalette.scale)
         color: AppPalette.accentBg
         border.width: 1
         border.color: AppPalette.accentBorder
@@ -191,7 +195,7 @@ Item {
                         anchors.centerIn: parent
                         text: tabButton.text
                         color: selected ? AppPalette.text : AppPalette.textSecond
-                        font.pixelSize: 13
+                        font.pixelSize: root.fontPixelSize
                         font.bold: true
                         elide: Text.ElideRight
                     }
@@ -218,7 +222,7 @@ Item {
         onPositionChanged: function(mouse) {
             if (!root.dragSelectEnabled)
                 return
-            if (!dragging && Math.abs(mouse.x - pressX) > 6)
+            if (!dragging && Math.abs(mouse.x - pressX) > Math.round(6 * AppPalette.scale))
                 dragging = true
             if (dragging)
                 root.dragPreviewIndex = root.indexFromPosition(mouse.x)

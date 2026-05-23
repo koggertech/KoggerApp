@@ -178,8 +178,15 @@ void applyWindowsFullscreenBorderWorkaround(QWindow* window)
 int main(int argc, char *argv[])
 {
 #ifdef Q_OS_ANDROID
-    qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "0");  // TODO: use qt scaling!
-    qputenv("QT_SCALE_FACTOR", "0.5");            //
+    // Disable Qt's automatic per-screen scaling: we drive our own DPI-aware
+    // UI sizing via Themes::resCoeff (see themes.h). QT_SCALE_FACTOR=0.5
+    // halves Qt's internal coordinate system so a high-density tablet
+    // doesn't render at the device's full pixel grid (physical px is what
+    // we then scale up via resCoeff = physicalDPI / logicalDPI). Net effect
+    // on a typical tablet (~2× density): UI sizes match the Desktop 100%
+    // baseline at manualScale=1.0.
+    qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "0");
+    qputenv("QT_SCALE_FACTOR", "0.5");
 #endif
 
 #if defined(Q_OS_LINUX)
@@ -214,6 +221,27 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     QGuiApplication app(argc, argv);
+
+    // Themes global was constructed before QGuiApplication + org name — now
+    // safe to read QSettings and primaryScreen() for DPI-aware resCoeff.
+    theme.initSettings();
+
+    // One-shot migration: the "Chart" group (multi-plot + synchronisation) was
+    // removed from the new settings UI. Force any persisted multi-plot OR
+    // sync-on state back to single-plot, no-sync. OR (not AND) — otherwise
+    // users with numPlots=2,sync=false stay stuck in a layout the new UI
+    // can no longer toggle off.
+    {
+        QSettings s;
+        const bool needMigration =
+            s.value("numPlotsSpinBox", 1).toInt() >= 2 ||
+            s.value("plotSyncCheckBox", false).toBool();
+        if (needMigration) {
+            s.setValue("numPlotsSpinBox", 1);
+            s.setValue("plotSyncCheckBox", false);
+        }
+    }
+
     LanguageController langController;
     InputDeviceTracker inputDeviceTracker;
     core.initAfterApp();
@@ -252,6 +280,15 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("inputDeviceTracker", &inputDeviceTracker);
     engine.rootContext()->setContextProperty("langController", &langController);
     engine.rootContext()->setContextProperty("appUtils", &appUtils);
+
+    // Expose compile-time MANUAL_TESTING flag to QML — the Settings panel
+    // shows a "Test" group (with developer-only knobs) only when this is true.
+#ifdef MANUAL_TESTING
+    engine.rootContext()->setContextProperty("manualTesting", true);
+#else
+    engine.rootContext()->setContextProperty("manualTesting", false);
+#endif
+
     uiStateSerializer.setLinkManagerWrapper(core.getLinkManagerWrapperPtr());
 
     QObject::connect(&langController, &LanguageController::currentIndexChanged, &engine, [&engine, &app, &langController, &inputDeviceTracker]() {

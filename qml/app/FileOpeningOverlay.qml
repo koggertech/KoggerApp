@@ -34,9 +34,9 @@ Item {
     // Card with the message.
     Rectangle {
         anchors.centerIn: parent
-        width: messageText.implicitWidth + 56
-        height: messageText.implicitHeight + 36
-        radius: 10
+        width: messageText.implicitWidth + 2 * Tokens.spaceXxl
+        height: messageText.implicitHeight + 2 * Tokens.spaceLg + Tokens.spaceSm
+        radius: Tokens.radiusLg + Tokens.radiusSm / 2
         color: AppPalette.card
         border.width: 1
         border.color: AppPalette.border
@@ -46,7 +46,7 @@ Item {
             anchors.centerIn: parent
             text: qsTr("Please wait, the file is opening")
             color: AppPalette.text
-            font.pixelSize: 16
+            font.pixelSize: Tokens.fontLg
         }
     }
 }

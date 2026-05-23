@@ -178,7 +178,7 @@ Column {
         signal clicked()
         signal toggled(bool val)
 
-        width: 28; height: 28; radius: 5
+        width: Math.round(28 * AppPalette.scale); height: Math.round(28 * AppPalette.scale); radius: Tokens.radiusSm + 1
         color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? AppPalette.cardHover : AppPalette.card))
         border.width: 1
         border.color: (checked || ibMa.containsMouse) ? AppPalette.borderHover : AppPalette.border
@@ -187,10 +187,14 @@ Column {
 
         Image {
             anchors.centerIn: parent
-            width: 14; height: 14
+            // Proportional to outer — scales reliably regardless of consumer's
+            // width/height override (gear, autoSpeed, etc. set their own size).
+            width: Math.round(ib.width * 0.55)
+            height: Math.round(ib.height * 0.55)
             source: ib.iconSource
             fillMode: Image.PreserveAspectFit
             opacity: ib.checked ? 1.0 : 0.7
+            smooth: true
         }
 
         MouseArea {
@@ -207,24 +211,41 @@ Column {
         KToolTip { text: ib.toolTipText; targetItem: ib; shown: ibMa.containsMouse && ib.toolTipText.length > 0 }
     }
 
+    // Inline toggle switch (matches KSwitch's indicator size, same as
+    // AppSettingsPage SmallCheck — consistent across the app, easy to tap).
     component SmallCheck: Item {
         id: sc
         property bool checked: false
         signal toggled(bool val)
-        width: 18; height: 18
+
+        readonly property int _knobMargin: Math.max(2, Math.round(2 * AppPalette.scale))
+
+        width: Math.round(44 * AppPalette.scale)
+        height: Math.round(24 * AppPalette.scale)
 
         Rectangle {
-            anchors.fill: parent; radius: 4
-            color: sc.checked ? AppPalette.accentBg : AppPalette.bg
+            anchors.fill: parent
+            radius: height / 2
+            color: sc.checked ? AppPalette.accentBg : AppPalette.trackOff
             border.width: 1
-            border.color: sc.checked ? AppPalette.accentBorder : AppPalette.borderHover
-            Text {
-                anchors.centerIn: parent; text: "✓"; color: AppPalette.accentBorder
-                font.pixelSize: 11; font.bold: true; visible: sc.checked
+            border.color: sc.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
+            Behavior on color { ColorAnimation { duration: 120 } }
+
+            Rectangle {
+                width: parent.height - 2 * sc._knobMargin
+                height: width
+                radius: width / 2
+                y: sc._knobMargin
+                x: sc.checked ? parent.width - width - sc._knobMargin : sc._knobMargin
+                color: AppPalette.knob
+                border.width: 1
+                border.color: "#00000022"
+                Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
             }
         }
         MouseArea {
-            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
             onClicked: { sc.checked = !sc.checked; sc.toggled(sc.checked) }
         }
     }
@@ -235,16 +256,16 @@ Column {
         property int from: 1
         property int to: 100
 
-        width: 70; height: 26; radius: 4
+        width: Math.round(70 * AppPalette.scale); height: Math.round(26 * AppPalette.scale); radius: Tokens.radiusSm
         color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
 
         Row {
             anchors.fill: parent
 
             Rectangle {
-                width: 20; height: parent.height; radius: 4
+                width: Math.round(20 * AppPalette.scale); height: parent.height; radius: Tokens.radiusSm
                 color: dMa.pressed ? AppPalette.bgDeep : (dMa.containsMouse ? AppPalette.cardHover : "transparent")
-                Text { anchors.centerIn: parent; text: "−"; color: AppPalette.textMuted; font.pixelSize: 13; font.bold: true }
+                Text { anchors.centerIn: parent; text: "−"; color: AppPalette.textMuted; font.pixelSize: Tokens.fontMd; font.bold: true }
                 MouseArea {
                     id: dMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                     onClicked: { if (cs.value > cs.from) cs.value-- }
@@ -256,14 +277,14 @@ Column {
 
             Text {
                 width: parent.width - 40; height: parent.height
-                text: cs.value; color: AppPalette.text; font.pixelSize: 11
+                text: cs.value; color: AppPalette.text; font.pixelSize: Tokens.fontXs
                 horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
             }
 
             Rectangle {
-                width: 20; height: parent.height; radius: 4
+                width: Math.round(20 * AppPalette.scale); height: parent.height; radius: Tokens.radiusSm
                 color: uMa.pressed ? AppPalette.bgDeep : (uMa.containsMouse ? AppPalette.cardHover : "transparent")
-                Text { anchors.centerIn: parent; text: "+"; color: AppPalette.textMuted; font.pixelSize: 13; font.bold: true }
+                Text { anchors.centerIn: parent; text: "+"; color: AppPalette.textMuted; font.pixelSize: Tokens.fontMd; font.bold: true }
                 MouseArea {
                     id: uMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                     onClicked: { if (cs.value < cs.to) cs.value++ }
@@ -277,18 +298,37 @@ Column {
 
     // ── Link list ─────────────────────────────────────────────────────────
 
+    Text {
+        visible: filesList.count > 0
+        text: qsTr("Connections:")
+        color: AppPalette.textMuted
+        font.pixelSize: Tokens.fontXs
+        leftPadding: Tokens.spaceXxs
+    }
+
     ListView {
         id: filesList
         width: parent.width
         visible: count > 0
-        height: Math.min(count * 34, 10 * 34)
-        spacing: 3
+        readonly property int rowHeight: Tokens.controlHMd
+        readonly property int gap: Tokens.spaceXxs + 1
+        // Tight height — no phantom trailing space; spacing between sections
+        // stays governed by Column.spacing.
+        height: Math.min(count * rowHeight + Math.max(0, count - 1) * gap,
+                         10 * rowHeight + 9 * gap)
+        spacing: gap
         clip: true
         model: linkManagerWrapper.linkListModel
 
+        // ListView caches delegate positions — force relayout when scale changes.
+        Connections {
+            target: theme
+            function onChanged() { Qt.callLater(filesList.forceLayout) }
+        }
+
         delegate: Item {
             width: filesList.width
-            height: 30
+            height: Tokens.controlHMd
 
             readonly property bool isConnected: ConnectionStatus
             readonly property bool receivesData: ReceivesData
@@ -303,8 +343,8 @@ Column {
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 4; anchors.rightMargin: 4
-                    spacing: 3
+                    anchors.leftMargin: Tokens.spaceXs; anchors.rightMargin: Tokens.spaceXs
+                    spacing: Tokens.spaceXxs + 1
                     enabled: !IsUpgradingState
 
                     IconBtn {
@@ -313,7 +353,7 @@ Column {
                         iconSource: "qrc:/icons/ui/settings.svg"
                         toolTipText: qsTr("Settings")
                         Layout.alignment: Qt.AlignVCenter
-                        width: 26; height: 26
+                        Layout.preferredWidth: Tokens.controlHSm; Layout.preferredHeight: Tokens.controlHSm
                     }
 
                     IconBtn {
@@ -321,7 +361,7 @@ Column {
                         checked: IsPinned; checkable: true
                         iconSource: "qrc:/icons/ui/pin.svg"
                         toolTipText: checked ? qsTr("Unpin") : qsTr("Pin")
-                        Layout.alignment: Qt.AlignVCenter; width: 26; height: 26
+                        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHSm; Layout.preferredHeight: Tokens.controlHSm
                         onToggled: function(v) { linkManagerWrapper.sendUpdatePinnedState(Uuid, v) }
                     }
 
@@ -330,14 +370,14 @@ Column {
                         checked: ControlType; checkable: true
                         iconSource: "qrc:/icons/ui/repeat.svg"
                         toolTipText: qsTr("Auto reconnect")
-                        Layout.alignment: Qt.AlignVCenter; width: 26; height: 26
+                        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHSm; Layout.preferredHeight: Tokens.controlHSm
                         onToggled: function(v) { linkManagerWrapper.sendUpdateControlType(Uuid, Number(v)) }
                     }
 
                     IconBtn {
                         visible: gearBtn.checked && (LinkType === 2 || LinkType === 3)
                         iconSource: "qrc:/icons/ui/x.svg"; toolTipText: qsTr("Delete")
-                        Layout.alignment: Qt.AlignVCenter; width: 26; height: 26
+                        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHSm; Layout.preferredHeight: Tokens.controlHSm
                         onClicked: linkManagerWrapper.deleteLink(Uuid)
                     }
 
@@ -346,9 +386,10 @@ Column {
                         visible: LinkType === 1
                         text: PortName
                         color: AppPalette.text
-                        font.pixelSize: 13; font.bold: true
+                        font.pixelSize: Tokens.fontMd; font.bold: true
                         Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredWidth: 64; elide: Text.ElideRight
+                        Layout.leftMargin: gearBtn.checked ? 0 : Tokens.spaceXs
+                        Layout.preferredWidth: Math.round(64 * AppPalette.scale); elide: Text.ElideRight
                     }
 
                     // Serial: spacer pushes baudrate/autospeed/Open right.
@@ -358,81 +399,21 @@ Column {
                         Layout.preferredHeight: 1
                     }
 
-                    Rectangle {
+                    KCombo {
+                        id: baudrateCombo
                         visible: LinkType === 1
-                        Layout.preferredWidth: 82; Layout.preferredHeight: 24
-                        radius: 4; color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
+                        Layout.preferredWidth: Math.round(82 * AppPalette.scale)
+                        Layout.preferredHeight: Tokens.controlHSm
                         Layout.alignment: Qt.AlignVCenter
-                        ComboBox {
-                            id: baudrateCombo
-                            anchors.fill: parent
-                            model: linkManagerWrapper.baudrateModel
-                            currentIndex: 8; displayText: Baudrate
-                            font.pixelSize: 11
-                            background: Rectangle { color: "transparent"; border.width: 0 }
-                            contentItem: Text {
-                                leftPadding: 4
-                                rightPadding: 16
-                                text: baudrateCombo.displayText
-                                color: AppPalette.text; font.pixelSize: 11
-                                verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight
-                            }
-                            indicator: Image {
-                                anchors.right: parent.right
-                                anchors.rightMargin: 4
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 10; height: 10
-                                source: "qrc:/icons/ui/chevron-down.svg"
-                                fillMode: Image.PreserveAspectFit
-                                smooth: true
-                            }
-                            delegate: ItemDelegate {
-                                width: baudrateCombo.width
-                                height: 26
-                                contentItem: Text {
-                                    text: modelData
-                                    color: AppPalette.text
-                                    font.pixelSize: 11
-                                    verticalAlignment: Text.AlignVCenter
-                                    leftPadding: 8
-                                }
-                                background: Rectangle {
-                                    color: highlighted ? AppPalette.accentBg : "transparent"
-                                }
-                                highlighted: baudrateCombo.highlightedIndex === index
-                            }
-                            popup: Popup {
-                                readonly property int itemHeight: 26
-                                readonly property int maxVisibleItems: 9
-                                y: baudrateCombo.height + 2
-                                width: baudrateCombo.width
-                                // Exact item-multiple cap avoids edge-snap on hover.
-                                implicitHeight: Math.min(contentItem.implicitHeight,
-                                                         itemHeight * maxVisibleItems)
-                                padding: 1
-                                background: Rectangle {
-                                    color: AppPalette.bgDeep
-                                    border.color: AppPalette.border
-                                    border.width: 1
-                                    radius: 4
-                                }
-                                contentItem: ListView {
-                                    id: baudrateListView
-                                    clip: true
-                                    implicitHeight: contentHeight
-                                    model: baudrateCombo.popup.visible ? baudrateCombo.delegateModel : null
-                                    boundsBehavior: Flickable.StopAtBounds
-                                    highlightRangeMode: ListView.NoHighlightRange
-                                    flickableDirection: Flickable.VerticalFlick
-                                    ScrollIndicator.vertical: ScrollIndicator {}
-                                }
-                                onOpened: baudrateListView.positionViewAtIndex(baudrateCombo.currentIndex,
-                                                                                ListView.Contain)
-                            }
-                            onActivated: {
-                                linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(currentText))
-                                autoSpeedBtn.checked = false
-                            }
+                        model: linkManagerWrapper.baudrateModel
+                        currentIndex: 8
+                        displayTextOverride: Baudrate
+                        fontPixelSize: Tokens.fontXs
+                        bold: false
+                        maxVisibleItems: 9
+                        onActivated: {
+                            linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                            autoSpeedBtn.checked = false
                         }
                     }
 
@@ -441,7 +422,7 @@ Column {
                         visible: LinkType === 1
                         checked: AutoSpeedSelection; checkable: true
                         iconSource: "qrc:/icons/ui/refresh.svg"; toolTipText: qsTr("Auto search baudrate")
-                        Layout.alignment: Qt.AlignVCenter; width: 26; height: 26
+                        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHSm; Layout.preferredHeight: Tokens.controlHSm
                         onToggled: function(v) { linkManagerWrapper.sendAutoSpeedSelection(Uuid, v) }
                         onCheckedChanged: { if (!checked) linkManagerWrapper.sendAutoSpeedSelection(Uuid, false) }
                     }
@@ -451,24 +432,29 @@ Column {
                         visible: LinkType === 2 || LinkType === 3
                         text: LinkType === 2 ? "UDP" : "TCP"
                         color: AppPalette.text
-                        font.pixelSize: 13; font.bold: true
+                        font.pixelSize: Tokens.fontMd; font.bold: true
                         Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredWidth: 32
+                        Layout.leftMargin: gearBtn.checked ? 0 : Tokens.spaceXs
+                        Layout.preferredWidth: Math.round(36 * AppPalette.scale)
                     }
 
                     Rectangle {
                         visible: LinkType === 2 || LinkType === 3
                         Layout.fillWidth: true
-                        Layout.minimumWidth: 40   // shrinks so Open/Close stays visible
-                        Layout.preferredHeight: 24
-                        radius: 4; color: AppPalette.bg; border.width: 1
+                        Layout.minimumWidth: Math.round(40 * AppPalette.scale)
+                        Layout.preferredHeight: Tokens.controlHSm
+                        radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
                         border.color: ipField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                         Layout.alignment: Qt.AlignVCenter
                         TextInput {
                             id: ipField
-                            anchors.fill: parent; anchors.margins: 4
+                            anchors.fill: parent
+                            anchors.leftMargin: Tokens.spaceSm
+                            anchors.rightMargin: Tokens.spaceXs
+                            anchors.topMargin: Tokens.spaceXxs
+                            anchors.bottomMargin: Tokens.spaceXxs
                             verticalAlignment: TextInput.AlignVCenter
-                            color: AppPalette.text; font.pixelSize: 11; clip: true
+                            color: AppPalette.text; font.pixelSize: Tokens.fontXs; clip: true
                             text: Address
                             onTextEdited: linkManagerWrapper.sendUpdateAddress(Uuid, text)
                         }
@@ -477,22 +463,26 @@ Column {
                     Text {
                         visible: LinkType === 2 && !gearBtn.checked
                         text: qsTr("src:")
-                        color: AppPalette.borderFocus; font.pixelSize: 10; Layout.alignment: Qt.AlignVCenter
+                        color: AppPalette.borderFocus; font.pixelSize: Tokens.fontXs; Layout.alignment: Qt.AlignVCenter
                     }
 
                     Rectangle {
                         visible: LinkType === 2
-                        Layout.preferredWidth: 50
-                        Layout.minimumWidth: 40
-                        Layout.preferredHeight: 24
-                        radius: 4; color: AppPalette.bg; border.width: 1
+                        Layout.preferredWidth: Math.round(50 * AppPalette.scale)
+                        Layout.minimumWidth: Math.round(40 * AppPalette.scale)
+                        Layout.preferredHeight: Tokens.controlHSm
+                        radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
                         border.color: srcPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                         Layout.alignment: Qt.AlignVCenter
                         TextInput {
                             id: srcPortField
-                            anchors.fill: parent; anchors.margins: 4
+                            anchors.fill: parent
+                            anchors.leftMargin: Tokens.spaceSm
+                            anchors.rightMargin: Tokens.spaceXs
+                            anchors.topMargin: Tokens.spaceXxs
+                            anchors.bottomMargin: Tokens.spaceXxs
                             verticalAlignment: TextInput.AlignVCenter
-                            color: AppPalette.text; font.pixelSize: 11
+                            color: AppPalette.text; font.pixelSize: Tokens.fontXs
                             text: SourcePort
                             onTextEdited: linkManagerWrapper.sendUpdateSourcePort(Uuid, text)
                         }
@@ -501,22 +491,26 @@ Column {
                     Text {
                         visible: (LinkType === 2 || LinkType === 3) && !gearBtn.checked
                         text: LinkType === 2 ? qsTr("dst:") : qsTr("srv:")
-                        color: AppPalette.borderFocus; font.pixelSize: 10; Layout.alignment: Qt.AlignVCenter
+                        color: AppPalette.borderFocus; font.pixelSize: Tokens.fontXs; Layout.alignment: Qt.AlignVCenter
                     }
 
                     Rectangle {
                         visible: LinkType === 2 || LinkType === 3
-                        Layout.preferredWidth: 50
-                        Layout.minimumWidth: 40
-                        Layout.preferredHeight: 24
-                        radius: 4; color: AppPalette.bg; border.width: 1
+                        Layout.preferredWidth: Math.round(50 * AppPalette.scale)
+                        Layout.minimumWidth: Math.round(40 * AppPalette.scale)
+                        Layout.preferredHeight: Tokens.controlHSm
+                        radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
                         border.color: dstPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                         Layout.alignment: Qt.AlignVCenter
                         TextInput {
                             id: dstPortField
-                            anchors.fill: parent; anchors.margins: 4
+                            anchors.fill: parent
+                            anchors.leftMargin: Tokens.spaceSm
+                            anchors.rightMargin: Tokens.spaceXs
+                            anchors.topMargin: Tokens.spaceXxs
+                            anchors.bottomMargin: Tokens.spaceXxs
                             verticalAlignment: TextInput.AlignVCenter
-                            color: AppPalette.text; font.pixelSize: 11
+                            color: AppPalette.text; font.pixelSize: Tokens.fontXs
                             text: DestinationPort
                             onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
                         }
@@ -524,13 +518,14 @@ Column {
 
                     // Open / Close
                     KButton {
+                        readonly property int openCloseW: Math.round(64 * AppPalette.scale)
                         Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredWidth: 64
-                        Layout.minimumWidth: 64
-                        Layout.maximumWidth: 64
-                        Layout.preferredHeight: 26
+                        Layout.preferredWidth: openCloseW
+                        Layout.minimumWidth: openCloseW
+                        Layout.maximumWidth: openCloseW
+                        Layout.preferredHeight: Tokens.controlHSm
                         text: isConnected ? qsTr("Close") : qsTr("Open")
-                        fontPixelSize: 11; bold: false
+                        fontPixelSize: Tokens.fontXs; bold: false
                         normalBg: AppPalette.card
                         checkedBg: "#134E2E"; checkedBorder: "#10B981"
                         onClicked: {
@@ -561,29 +556,37 @@ Column {
 
     // ── Action buttons (4 per row, equal width) ───────────────────────────
 
+    Text {
+        text: qsTr("Add connection / logging:")
+        color: AppPalette.textMuted
+        font.pixelSize: Tokens.fontXs
+        leftPadding: Tokens.spaceXxs
+    }
+
     Grid {
         id: actionsGrid
         width: parent.width
-        columns: 4
-        rowSpacing: 6
-        columnSpacing: 6
+        readonly property int cellMinW: Math.round(100 * AppPalette.scale)
+        columns: Tokens.gridColumns(width, cellMinW, Tokens.spaceSm, 6)
+        rowSpacing: Tokens.spaceSm
+        columnSpacing: Tokens.spaceSm
         readonly property real cellW: Math.max(0, (width - columnSpacing * (columns - 1)) / columns)
 
         KButton {
-            width: actionsGrid.cellW; height: 30; fontPixelSize: 12
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
             text: qsTr("+UDP")
             onClicked: linkManagerWrapper.createAsUdp("", 0, 0)
         }
 
         KButton {
-            width: actionsGrid.cellW; height: 30; fontPixelSize: 12
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
             text: qsTr("+TCP")
             onClicked: linkManagerWrapper.createAsTcp("", 0, 0)
         }
 
         KButton {
             id: mavlinkProxy
-            width: actionsGrid.cellW; height: 30; fontPixelSize: 12; checkable: true
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
             text: qsTr("MAVProxy")
             onToggled: {
                 if (checked) linkManagerWrapper.sendCreateAndOpenAsUdpProxy("127.0.0.1", 14551, 14550)
@@ -593,7 +596,7 @@ Column {
 
         KButton {
             id: loggingCheck
-            width: actionsGrid.cellW; height: 30; fontPixelSize: 12; checkable: true
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
             text: qsTr("● KLF")
             checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
             onCheckedChanged: {
@@ -609,7 +612,7 @@ Column {
 
         KButton {
             id: loggingCheck2
-            width: actionsGrid.cellW; height: 30; fontPixelSize: 12; checkable: true
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
             text: qsTr("● CSV")
             checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
             onCheckedChanged: {
@@ -625,7 +628,7 @@ Column {
 
         KButton {
             id: importCheck
-            width: actionsGrid.cellW; height: 30; fontPixelSize: 12; checkable: true
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
             text: qsTr("Import")
         }
     }
@@ -639,79 +642,79 @@ Column {
         Rectangle { width: parent.width; height: 1; color: AppPalette.border }
 
         Row {
-            width: parent.width; height: 28; spacing: 8
-            Text { text: qsTr("Separator:"); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            width: parent.width; height: Tokens.controlHMd - Tokens.spaceXxs; spacing: Tokens.spaceMd
+            Text { text: qsTr("Separator:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
             Rectangle {
-                width: 100; height: 26; radius: 4; color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
+                width: Math.round(100 * AppPalette.scale); height: Math.round(26 * AppPalette.scale); radius: Tokens.radiusSm; color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
                 anchors.verticalCenter: parent.verticalCenter
                 ComboBox {
-                    id: separatorCombo; anchors.fill: parent; model: ["Comma", "Tab", "Space", "SemiColon"]; font.pixelSize: 11
+                    id: separatorCombo; anchors.fill: parent; model: ["Comma", "Tab", "Space", "SemiColon"]; font.pixelSize: Tokens.fontXs
                     background: Rectangle { color: "transparent"; border.width: 0 }
-                    contentItem: Text { leftPadding: 6; text: separatorCombo.displayText; color: AppPalette.text; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter }
+                    contentItem: Text { leftPadding: 6; text: separatorCombo.displayText; color: AppPalette.text; font.pixelSize: Tokens.fontXs; verticalAlignment: Text.AlignVCenter }
                     Settings { property alias separatorCombo: separatorCombo.currentIndex }
                 }
             }
-            Text { text: qsTr("Row:"); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: qsTr("Row:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
             CsvSpin { id: firstRow; value: 1; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVfirstRow: firstRow.value } }
         }
 
         Row {
-            width: parent.width; height: 28; spacing: 8
+            width: parent.width; height: Tokens.controlHMd - Tokens.spaceXxs; spacing: Tokens.spaceMd
             SmallCheck {
                 id: timeEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
                 Settings { property alias importCSVtimeEnable: timeEnable.checked }
             }
-            Text { text: qsTr("Time col:"); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: qsTr("Time col:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
             CsvSpin { id: timeColumn; value: 6; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVtimeColumn: timeColumn.value } }
             Rectangle {
-                width: 100; height: 26; radius: 4; color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
+                width: Math.round(100 * AppPalette.scale); height: Math.round(26 * AppPalette.scale); radius: Tokens.radiusSm; color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
                 anchors.verticalCenter: parent.verticalCenter
                 ComboBox {
-                    id: utcGpsCombo; anchors.fill: parent; model: ["UTC time", "GPS time"]; font.pixelSize: 11
+                    id: utcGpsCombo; anchors.fill: parent; model: ["UTC time", "GPS time"]; font.pixelSize: Tokens.fontXs
                     background: Rectangle { color: "transparent"; border.width: 0 }
-                    contentItem: Text { leftPadding: 6; text: utcGpsCombo.displayText; color: AppPalette.text; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter }
+                    contentItem: Text { leftPadding: 6; text: utcGpsCombo.displayText; color: AppPalette.text; font.pixelSize: Tokens.fontXs; verticalAlignment: Text.AlignVCenter }
                     Settings { property alias utcGpsCombo: utcGpsCombo.currentIndex }
                 }
             }
         }
 
         Row {
-            width: parent.width; height: 28; spacing: 8
+            width: parent.width; height: Tokens.controlHMd - Tokens.spaceXxs; spacing: Tokens.spaceMd
             SmallCheck {
                 id: latLonEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
                 Settings { property alias importCSVlatLonEnable: latLonEnable.checked }
             }
-            Text { text: qsTr("Lat/Lon/Alt:"); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: qsTr("Lat/Lon/Alt:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
             CsvSpin { id: latColumn;  value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVlatColumn:  latColumn.value  } }
             CsvSpin { id: lonColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVlonColumn:  lonColumn.value  } }
             CsvSpin { id: altColumn;  value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSValtColumn:  altColumn.value  } }
         }
 
         Row {
-            width: parent.width; height: 28; spacing: 8
+            width: parent.width; height: Tokens.controlHMd - Tokens.spaceXxs; spacing: Tokens.spaceMd
             SmallCheck {
                 id: xyzEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
                 Settings { property alias importCSVxyzEnable: xyzEnable.checked }
             }
-            Text { text: qsTr("NEU:"); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: qsTr("NEU:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
             CsvSpin { id: northColumn; value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVnorthColumn: northColumn.value } }
             CsvSpin { id: eastColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVeastColumn:  eastColumn.value  } }
             CsvSpin { id: upColumn;    value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVupColumn:    upColumn.value    } }
         }
 
         Row {
-            width: parent.width; height: 30; spacing: 6
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
 
             Rectangle {
-                width: parent.width - 50 - 6; height: 30; radius: 6
+                width: parent.width - Math.round(50 * AppPalette.scale) - Tokens.spaceSm; height: Tokens.controlHMd; radius: Tokens.radiusMd
                 color: AppPalette.bg; border.width: 1; border.color: importPathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
 
                 TextInput {
                     id: importPathText
                     anchors.fill: parent; anchors.margins: 8
                     verticalAlignment: TextInput.AlignVCenter
-                    color: AppPalette.text; font.pixelSize: 12; clip: true
-                    Text { visible: !importPathText.text.length; text: qsTr("CSV path..."); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                    color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
+                    Text { visible: !importPathText.text.length; text: qsTr("CSV path..."); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
                     Keys.onPressed: function(e) {
                         if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
                             importTrackFileDialog.openCSV()
@@ -720,7 +723,7 @@ Column {
             }
 
             KButton {
-                width: 50; height: 30; text: "..."; fontPixelSize: 12
+                width: Math.round(50 * AppPalette.scale); height: Tokens.controlHMd; text: "..."; fontPixelSize: Tokens.fontSm
                 onClicked: {
                     importTrackFileDialog.currentFolder = connectionViewer.lastImportTrackFolder
                     importTrackFileDialog.open()
@@ -757,13 +760,20 @@ Column {
 
     // ── File row ──────────────────────────────────────────────────────────
 
+    Text {
+        text: qsTr("Open file:")
+        color: AppPalette.textMuted
+        font.pixelSize: Tokens.fontXs
+        leftPadding: Tokens.spaceXxs
+    }
+
     Row {
-        width: parent.width; height: 30; spacing: 6
+        width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
 
         IconBtn {
             id: zeroingPosButton
             checkable: true; iconSource: "qrc:/icons/ui/route_crossed_out.svg"; toolTipText: qsTr("Pos zeroing")
-            width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
+            width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
             onToggled: function(v) { core.setPosZeroing(v) }
             Component.onCompleted: core.setPosZeroing(checked)
             Settings { property alias zeroingPosButtonCheched: zeroingPosButton.checked }
@@ -772,25 +782,26 @@ Column {
         IconBtn {
             id: zeroingBottomTrackButton
             checkable: true; iconSource: "qrc:/icons/ui/double_route_crossed_out.svg"; toolTipText: qsTr("Bottom track zeroing")
-            width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
+            width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
             onToggled: function(v) { core.setBottomTrackZeroing(v) }
             Component.onCompleted: core.setBottomTrackZeroing(checked)
             Settings { property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
         }
 
         Rectangle {
-            width: parent.width - 30 - 30 - 30 - 30 - 30 - 5 * 6
-            height: 30; radius: 6; color: AppPalette.bg; border.width: 1
+            // 5 IconBtn-ов по controlHMd + 5 spacing-ов между 6 элементами Row.
+            width: parent.width - 5 * Tokens.controlHMd - 5 * Tokens.spaceSm
+            height: Tokens.controlHMd; radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
             border.color: pathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
 
             TextInput {
                 id: pathText
-                anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
+                anchors.fill: parent; anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
                 verticalAlignment: TextInput.AlignVCenter
-                color: AppPalette.text; font.pixelSize: 12; clip: true
+                color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
                 Text {
                     visible: !pathText.text.length; text: qsTr("File path...")
-                    color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter
+                    color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter
                 }
                 Keys.onPressed: function(event) {
                     if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -805,7 +816,7 @@ Column {
 
         IconBtn {
             iconSource: "qrc:/icons/ui/file.svg"; toolTipText: qsTr("Open file")
-            width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
+            width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
             onClicked: connectionViewer.openNewFileDialog()
 
             FileDialog {
@@ -828,7 +839,7 @@ Column {
 
         IconBtn {
             iconSource: "qrc:/icons/ui/file_plus.svg"; toolTipText: qsTr("Append file")
-            width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
+            width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
             onClicked: { appendFileDialog.currentFolder = connectionViewer.lastLogFolder; appendFileDialog.open() }
 
             FileDialog {
@@ -849,7 +860,7 @@ Column {
 
         IconBtn {
             iconSource: "qrc:/icons/ui/file_off.svg"; toolTipText: qsTr("Close file")
-            width: 30; height: 30; anchors.verticalCenter: parent.verticalCenter
+            width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
             onClicked: {
                 if (core.openedFilePath.length > 0) {
                     core.closeLogFile();
@@ -865,23 +876,23 @@ Column {
     Column {
         visible: devList.length > 0
         width: parent.width
-        spacing: 6
+        spacing: Tokens.spaceSm
 
         Text {
             text: qsTr("Devices")
             color: AppPalette.textSecond
-            font.pixelSize: 11; font.bold: true
+            font.pixelSize: Tokens.fontSm; font.bold: true
         }
 
         Flow {
-            width: parent.width; spacing: 6
+            width: parent.width; spacing: Tokens.spaceSm
 
             Repeater {
                 model: devList
                 delegate: KButton {
                     required property var modelData
                     text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : qsTr("Undefined")
-                    height: 30; fontPixelSize: 11
+                    height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
                     checkable: true
                     checked: dev === modelData
                     checkedBorder: AppPalette.accentBorder
@@ -894,47 +905,44 @@ Column {
             }
         }
 
-        Rectangle {
-            width: parent.width
-            height: 1
-            color: AppPalette.border
-        }
+        // Visual breathing room between device tabs and the settings card below.
+        Item { width: 1; height: Tokens.spaceSm }
     }
 
     // ── Factory mode ──────────────────────────────────────────────────────
 
     Row {
-        visible: core.isFactoryMode; width: parent.width; height: 30; spacing: 6
+        visible: core.isFactoryMode; width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
 
         KButton {
-            text: qsTr("Flash Firmware"); height: 30; fontPixelSize: 12
+            text: qsTr("Flash Firmware"); height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
             onClicked: core.connectOpenedLinkAsFlasher(flasherPnText.text)
         }
 
         IconBtn {
             id: flasherDataRefresh; checkable: true
-            iconSource: "qrc:/icons/ui/refresh.svg"; width: 30; height: 30
+            iconSource: "qrc:/icons/ui/refresh.svg"; width: Tokens.controlHMd; height: Tokens.controlHMd
             onToggled: function(v) { if (!v) flasherDataInput.text = "" }
         }
     }
 
     Row {
         visible: flasherDataRefresh.checked && core.isFactoryMode
-        width: parent.width; height: 30; spacing: 6
+        width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
 
         Rectangle {
-            width: parent.width - 36; height: 30; radius: 6
+            width: parent.width - Tokens.controlHLg; height: Tokens.controlHMd; radius: Tokens.radiusMd
             color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
             TextInput {
                 id: flasherDataInput
                 anchors.fill: parent; anchors.margins: 8
-                verticalAlignment: TextInput.AlignVCenter; color: AppPalette.text; font.pixelSize: 12
+                verticalAlignment: TextInput.AlignVCenter; color: AppPalette.text; font.pixelSize: Tokens.fontSm
                 onVisibleChanged: if (visible) focus = true
             }
         }
 
         IconBtn {
-            iconSource: "qrc:/icons/ui/file_download.svg"; width: 30; height: 30
+            iconSource: "qrc:/icons/ui/file_download.svg"; width: Tokens.controlHMd; height: Tokens.controlHMd
             onClicked: {
                 if (flasherDataInput.text !== "") {
                     core.setFlasherData(flasherDataInput.text)
@@ -948,7 +956,7 @@ Column {
     Row {
         visible: core.isFactoryMode; width: parent.width; height: 30; spacing: 8
 
-        Text { text: qsTr("Part Number:"); color: AppPalette.textSecond; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter }
+        Text { text: qsTr("Part Number:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; anchors.verticalCenter: parent.verticalCenter }
 
         Rectangle {
             width: parent.width - 92 - 8; height: 30; radius: 6
@@ -956,7 +964,7 @@ Column {
             TextInput {
                 id: flasherPnText
                 anchors.fill: parent; anchors.margins: 8
-                verticalAlignment: TextInput.AlignVCenter; color: AppPalette.text; font.pixelSize: 12
+                verticalAlignment: TextInput.AlignVCenter; color: AppPalette.text; font.pixelSize: Tokens.fontSm
                 Settings { property alias flasherPartNumber: flasherPnText.text }
             }
         }
@@ -965,7 +973,7 @@ Column {
     Text {
         visible: core.isFactoryMode && FLASHER_STATE
         text: core.isFactoryMode && FLASHER_STATE ? core.flasherTextInfo : ""
-        color: AppPalette.textMuted; font.pixelSize: 12; width: parent.width; wrapMode: Text.WordWrap
+        color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; width: parent.width; wrapMode: Text.WordWrap
     }
 
     // ── Device settings ───────────────────────────────────────────────────
@@ -981,13 +989,13 @@ Column {
     Column {
         visible: recentOpenedFiles.length > 0
         width: parent.width
-        spacing: 3
+        spacing: Tokens.spaceXxs + 1
 
         Text {
             text: qsTr("Recently opened:")
             color: AppPalette.textMuted
-            font.pixelSize: 11
-            leftPadding: 2
+            font.pixelSize: Tokens.fontXs
+            leftPadding: Tokens.spaceXxs
         }
 
         Repeater {
@@ -995,22 +1003,22 @@ Column {
 
             Row {
                 width: parent.width
-                spacing: 4
+                spacing: Tokens.spaceXs
 
                 property string filePath: recentOpenedFiles[index] || ""
 
                 Rectangle {
-                    width: parent.width - 34
-                    height: 28; radius: 6
+                    width: parent.width - removeBtn.width - parent.spacing
+                    height: Tokens.controlHMd - Tokens.spaceXxs; radius: Tokens.radiusMd
                     color: recentMa.containsMouse ? AppPalette.cardHover : AppPalette.card
                     border.width: 1; border.color: AppPalette.border
                     Behavior on color { ColorAnimation { duration: 80 } }
 
                     Text {
                         anchors.fill: parent
-                        anchors.leftMargin: 8; anchors.rightMargin: 8
+                        anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
                         text: connectionViewer.urlDisplay(parent.parent.filePath)
-                        color: AppPalette.text; font.pixelSize: 11
+                        color: AppPalette.text; font.pixelSize: Tokens.fontXs
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideLeft
                     }
@@ -1025,8 +1033,10 @@ Column {
                 }
 
                 IconBtn {
+                    id: removeBtn
                     iconSource: "qrc:/icons/ui/x.svg"
-                    width: 28; height: 28
+                    width: Tokens.controlHMd - Tokens.spaceXxs
+                    height: Tokens.controlHMd - Tokens.spaceXxs
                     toolTipText: qsTr("Remove")
                     onClicked: connectionViewer.removeRecentFile(parent.filePath)
                 }

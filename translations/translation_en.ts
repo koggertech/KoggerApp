@@ -12,386 +12,436 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="88"/>
-        <source>Preferences</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="97"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="229"/>
         <source>Language:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="103"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="235"/>
         <source>English</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="104"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="236"/>
         <source>Russian</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="105"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="237"/>
         <source>Polish</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="116"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="248"/>
         <source>Theme:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="170"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="305"/>
         <source>Feature level:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="185"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="320"/>
         <source>Fish Finders</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="186"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="401"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="321"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="509"/>
         <source>Bottom Track</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="187"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="322"/>
         <source>Maximum</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="204"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="219"/>
         <source>Interface</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="212"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="220"/>
+        <source>Language, theme, UI scale and panel visibility.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="341"/>
+        <source>UI scale:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="375"/>
         <source>Console</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="231"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="394"/>
         <source>Hotkeys</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="248"/>
-        <source>Chart</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="259"/>
-        <source>Chart count:</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="278"/>
-        <source>Synchronization</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="291"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="412"/>
         <source>Dataset</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="316"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="413"/>
+        <source>Black-stripe smoothing and sonar mount-point offset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="428"/>
         <source>FBS forward / backward:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="360"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="461"/>
         <source>S.offset XY, mm:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="449"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="510"/>
+        <source>Bottom detection presets, thresholds and search window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="557"/>
         <source>Preset:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="463"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="571"/>
         <source>Normal 2D</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="464"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="572"/>
         <source>Narrow 2D</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="465"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="573"/>
         <source>Side-Scan</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="484"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="586"/>
         <source>Gain slope:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="507"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="607"/>
         <source>Threshold:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="530"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="627"/>
         <source>Horizontal window:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="553"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="647"/>
         <source>Vertical gap, %:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="576"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="667"/>
         <source>Min range, m:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="599"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="687"/>
         <source>Max range, m:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="628"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="707"/>
         <source>Sonar offset XYZ, mm:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="667"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="749"/>
         <source>Processing</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="674"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="756"/>
         <source>Realtime</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="690"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="772"/>
         <source>TGC</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="709"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="773"/>
+        <source>Time-varying gain and depth-based amplification curve.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="792"/>
         <source>Near gain:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="750"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="833"/>
         <source>Far gain:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="854"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="937"/>
         <source>Compensate</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="869"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1049"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="952"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1130"/>
         <source>Export</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="911"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="953"/>
+        <source>Export plot data as XTF, CSV (regular or complex) or USBL.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="995"/>
         <source>Export path...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="929"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1013"/>
         <source>Export folder</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="951"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1028"/>
         <source>Decimation, m:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="964"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1045"/>
         <source>CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="978"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1058"/>
         <source>Export to XTF</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="983"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1063"/>
         <source>Complex signal to CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="988"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1068"/>
         <source>USBL to CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="998"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1078"/>
         <source>UI Saving</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1008"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
+        <source>Save the current workspace layout and settings to a JSON file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1089"/>
         <source>Export state:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1036"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1111"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1117"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1192"/>
         <source>Path...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1061"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1142"/>
         <source>Export UI state</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1083"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1164"/>
         <source>Import state:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1124"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1205"/>
         <source>Import</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1136"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1217"/>
         <source>Import UI state</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1167"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1248"/>
         <source>Workspace Layout</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1173"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1249"/>
+        <source>Pane editing, favorites and ready-made layout presets.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1255"/>
         <source>Edit</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1180"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1262"/>
         <source>Workspace shift</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1187"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1269"/>
         <source>Global pop-up</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1196"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1278"/>
         <source>Sidebar position:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1201"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1283"/>
         <source>Left</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1202"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1284"/>
         <source>Right</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1211"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1293"/>
         <source>Reset workspace</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1229"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1311"/>
         <source>Current layout is in favorites</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1229"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1311"/>
         <source>Add current layout to favorites</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1234"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1316"/>
         <source>Favorite layouts</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1238"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1320"/>
         <source>No favorite layouts yet</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1269"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1352"/>
         <source>Remove favorite</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1277"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1360"/>
         <source>Layout presets</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1281"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1364"/>
         <source>Preset 1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1281"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1364"/>
         <source>2 top panes, 1 bottom pane</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1282"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1365"/>
         <source>Preset 2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1282"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1365"/>
         <source>2 × 2 grid</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1283"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1366"/>
         <source>Preset 3</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1283"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1366"/>
         <source>1 top pane, 2 bottom panes</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1334"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1417"/>
         <source>After applying a preset, choose 2D or 3D mode for each pane.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1344"/>
-        <source>Hotkeys Window</source>
-        <translation></translation>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1427"/>
+        <source>Quick action menu</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1349"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1428"/>
+        <source>Quick-action menu contents: favorite layouts and connected device icons.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1444"/>
+        <source>Show connected devices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1467"/>
+        <source>Test</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1468"/>
+        <source>Developer knobs — visible only in MANUAL_TESTING builds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1482"/>
+        <source>Double-tap tolerance, px:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1512"/>
+        <source>Split grab thickness, px:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1541"/>
+        <source>Sidebar slide, ms:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1570"/>
+        <source>Workspace adjust, ms:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1433"/>
         <source>Show favorite layouts</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1357"/>
-        <source>Show marker tool</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1365"/>
-        <source>Show connection status</source>
         <translation></translation>
     </message>
 </context>
@@ -479,32 +529,32 @@
 <context>
     <name>CircleIconButton</name>
     <message>
-        <location filename="../qml/app/CircleIconButton.qml" line="42"/>
+        <location filename="../qml/app/CircleIconButton.qml" line="46"/>
         <source>Close</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/CircleIconButton.qml" line="44"/>
+        <location filename="../qml/app/CircleIconButton.qml" line="48"/>
         <source>Menu</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/CircleIconButton.qml" line="46"/>
+        <location filename="../qml/app/CircleIconButton.qml" line="50"/>
         <source>Settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/CircleIconButton.qml" line="48"/>
+        <location filename="../qml/app/CircleIconButton.qml" line="52"/>
         <source>Assign popup</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/CircleIconButton.qml" line="50"/>
+        <location filename="../qml/app/CircleIconButton.qml" line="54"/>
         <source>Pane mode</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/CircleIconButton.qml" line="52"/>
+        <location filename="../qml/app/CircleIconButton.qml" line="56"/>
         <source>Move pane</source>
         <translation></translation>
     </message>
@@ -535,179 +585,199 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="284"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="303"/>
+        <source>Connections:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="354"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="293"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="363"/>
         <source>Unpin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="293"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="363"/>
         <source>Pin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="302"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="372"/>
         <source>Auto reconnect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="309"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="379"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="350"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="424"/>
         <source>Auto search baudrate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="382"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="465"/>
         <source>src:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="404"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="493"/>
         <source>dst:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="404"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="493"/>
         <source>srv:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="428"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="527"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="428"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="527"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="464"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="560"/>
+        <source>Add connection / logging:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="577"/>
         <source>+UDP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="469"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="583"/>
         <source>+TCP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="475"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="590"/>
         <source>MAVProxy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="484"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="600"/>
         <source>● KLF</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="499"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="616"/>
         <source>● CSV</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="514"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="632"/>
         <source>Import</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="528"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="646"/>
         <source>Separator:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="539"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="657"/>
         <source>Row:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="549"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="667"/>
         <source>Time col:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="569"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="687"/>
         <source>Lat/Lon/Alt:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="581"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="699"/>
         <source>NEU:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="599"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="717"/>
         <source>CSV path...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="616"/>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="698"/>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="721"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="734"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="824"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="847"/>
         <source>Please choose a file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="650"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="764"/>
+        <source>Open file:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="775"/>
         <source>Pos zeroing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="659"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="784"/>
         <source>Bottom track zeroing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="677"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="803"/>
         <source>File path...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="692"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="818"/>
         <source>Open file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="715"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="841"/>
         <source>Append file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="736"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="862"/>
         <source>Close file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="758"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="882"/>
+        <source>Devices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="894"/>
         <source>Undefined</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="773"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="918"/>
         <source>Flash Firmware</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="814"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="959"/>
         <source>Part Number:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="842"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="995"/>
         <source>Recently opened:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="885"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1040"/>
         <source>Remove</source>
         <translation></translation>
     </message>
@@ -720,7 +790,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="27"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="19"/>
         <source>Links, files, logging, imports and factory tools.</source>
         <translation></translation>
     </message>
@@ -857,7 +927,7 @@
 <context>
     <name>DevDriver</name>
     <message>
-        <location filename="../src/device/dev_driver.cpp" line="1260"/>
+        <location filename="../src/device/dev_driver.cpp" line="1273"/>
         <source>Sync config rejected by device</source>
         <translation></translation>
     </message>
@@ -1013,203 +1083,198 @@
 <context>
     <name>DeviceSettingsPage</name>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="77"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="54"/>
+        <source>Settings:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="64"/>
         <source>Echogram</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="82"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="70"/>
         <source>Resolution, mm:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="88"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="76"/>
         <source>Sample count:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="94"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="82"/>
         <source>Offset:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="103"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="91"/>
         <source>Rangefinder</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="108"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="97"/>
         <source>Max distance, mm:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="114"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="103"/>
         <source>Dead zone, mm:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="120"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="109"/>
         <source>Confidence threshold, %:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="129"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="118"/>
         <source>Transducer</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="134"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="124"/>
         <source>Pulse count:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="140"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="130"/>
         <source>Frequency, kHz:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="146"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="136"/>
         <source>Booster</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="163"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="153"/>
         <source>DSP</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="168"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="159"/>
         <source>Horizontal smoothing:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="174"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="165"/>
         <source>Sound speed, m/s:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="183"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="174"/>
         <source>Dataset</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="188"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="180"/>
         <source>Period, ms:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="194"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="186"/>
         <source>Echogram:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="197"/>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="212"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="189"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="204"/>
         <source>Off</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="197"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="189"/>
         <source>8-bit</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="209"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="201"/>
         <source>Rangefinder:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="212"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="204"/>
         <source>On</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="212"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="204"/>
         <source>NMEA</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="229"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="221"/>
         <source>AHRS</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="242"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="234"/>
         <source>Temperature</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="255"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="247"/>
         <source>Timestamp</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="273"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="265"/>
         <source>Actions</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="286"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="281"/>
         <source>Open settings file</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="301"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="296"/>
         <source>Save settings file</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="318"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="311"/>
+        <source>Firmware:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="320"/>
         <source>Save</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="319"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="326"/>
         <source>Reset</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="320"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="332"/>
         <source>Reboot</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="326"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="339"/>
         <source>Baudrate:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="333"/>
-        <source>115200</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="334"/>
-        <source>230400</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="335"/>
-        <source>460800</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="336"/>
-        <source>921600</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="342"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="357"/>
         <source>Set</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="352"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="364"/>
+        <source>Settings file:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="373"/>
         <source>Import XML</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="353"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="379"/>
         <source>Export XML</source>
         <translation></translation>
     </message>
@@ -1529,32 +1594,32 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/DisplaySettings.qml" line="1564"/>
+        <location filename="../qml/settings/DisplaySettings.qml" line="1568"/>
         <source>Depth</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/DisplaySettings.qml" line="1575"/>
+        <location filename="../qml/settings/DisplaySettings.qml" line="1579"/>
         <source>Speed</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/DisplaySettings.qml" line="1586"/>
+        <location filename="../qml/settings/DisplaySettings.qml" line="1590"/>
         <source>Coordinates</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/DisplaySettings.qml" line="1597"/>
+        <location filename="../qml/settings/DisplaySettings.qml" line="1601"/>
         <source>Active point</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/DisplaySettings.qml" line="1608"/>
+        <location filename="../qml/settings/DisplaySettings.qml" line="1612"/>
         <source>Navigation info</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/DisplaySettings.qml" line="1619"/>
+        <location filename="../qml/settings/DisplaySettings.qml" line="1623"/>
         <source>Boat Status</source>
         <translation></translation>
     </message>
@@ -1776,22 +1841,22 @@
 <context>
     <name>HotActionsPanel</name>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="165"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="202"/>
         <source>Open layout settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="269"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="323"/>
         <source>Layouts</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="444"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="547"/>
         <source>Close second window</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="445"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="548"/>
         <source>Open second window</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1799,77 +1864,77 @@
 <context>
     <name>HotkeysDialog</name>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="38"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="43"/>
         <source>Application</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="39"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="44"/>
         <source>Echogram</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="40"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="45"/>
         <source>3D</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="41"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="46"/>
         <source>Mosaic</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="42"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="47"/>
         <source>Surface</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="120"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="153"/>
         <source>Already used by: %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="144"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="174"/>
         <source>Keyboard Shortcuts</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="158"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="194"/>
         <source>Key</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="164"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="203"/>
         <source>Parameter</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="171"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="213"/>
         <source>Action</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="241"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="300"/>
         <source>…</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="316"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="380"/>
         <source>Press any key  •  click again to cancel</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="317"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="381"/>
         <source>Click a key to reassign</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="326"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="393"/>
         <source>Reset to defaults</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="335"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="403"/>
         <source>Close</source>
         <translation></translation>
     </message>
@@ -2281,7 +2346,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="530"/>
+        <location filename="../qml/app/MainWindow.qml" line="692"/>
         <source>Settings</source>
         <translation></translation>
     </message>
@@ -2426,37 +2491,37 @@
 <context>
     <name>Pane3DWindow</name>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="70"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="104"/>
         <source>Finish ruler</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="80"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="114"/>
         <source>Cancel ruler</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="93"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="127"/>
         <source>Delete ruler</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="103"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="137"/>
         <source>Set as min dist</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="112"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="146"/>
         <source>Set as max dist</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="121"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="155"/>
         <source>Clear dist processing</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="130"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="164"/>
         <source>Deselect</source>
         <translation></translation>
     </message>
@@ -2521,262 +2586,262 @@
 <context>
     <name>Plot2D</name>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="594"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="599"/>
         <source>Plot</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="614"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="619"/>
         <source>Channels:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="729"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="734"/>
         <source>Echogram</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="738"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="743"/>
         <source>Blue</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="738"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="743"/>
         <source>Sepia</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="738"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="743"/>
         <source>WRGBD</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="738"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="743"/>
         <source>WhiteBlack</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="738"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="743"/>
         <source>BlackWhite</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="738"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="743"/>
         <source>Sepia New</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="738"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="743"/>
         <source>DeepBlue</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="738"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="743"/>
         <source>Ice</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="738"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="743"/>
         <source>Green</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="738"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="743"/>
         <source>Midnight</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="761"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="766"/>
         <source>Raw</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="761"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="766"/>
         <source>Side-Scan</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="779"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="784"/>
         <source>Bottom-Track</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="784"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="824"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="789"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="829"/>
         <source>Value</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="819"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="824"/>
         <source>Rangefinder</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="793"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="802"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="833"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="842"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="798"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="807"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="838"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="847"/>
         <source>Line</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="761"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="766"/>
         <source>TGC</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="802"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="842"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="807"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="847"/>
         <source>Points</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="860"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="865"/>
         <source>Attitude</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="868"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="873"/>
         <source>Temperature</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="892"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="897"/>
         <source>Doppler Beams</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="902"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="911"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="920"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="929"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="967"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="907"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="916"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="925"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="934"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="972"/>
         <source>Depth</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="903"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="912"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="921"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="930"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="908"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="917"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="926"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="935"/>
         <source>Velocity</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="904"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="913"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="922"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="931"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="909"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="918"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="927"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="936"/>
         <source>Mode</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="953"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="958"/>
         <source>Doppler Instrument</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="966"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="971"/>
         <source>Abs. Velocity</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="978"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="983"/>
         <source>DVL Legend</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="988"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="993"/>
         <source>Top</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="988"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="993"/>
         <source>Center</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="988"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="993"/>
         <source>Bottom</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1008"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1013"/>
         <source>Acoustic angle</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1020"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1025"/>
         <source>Doppler Profiler</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1030"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1035"/>
         <source>GNSS data</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1049"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1054"/>
         <source>Grid</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1055"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1060"/>
         <source>fill</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1071"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1076"/>
         <source>invert</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1109"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1114"/>
         <source>Angle range, °</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1161"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1166"/>
         <source>Velocity range, m/s</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1218"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1223"/>
         <source>Distance auto range</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1234"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1239"/>
         <source>Last data       </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1234"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1239"/>
         <source>Last on screen</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1234"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1239"/>
         <source>Max on screen</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1250"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1255"/>
         <source>Horizontal</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1258"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1263"/>
         <source>Loupe</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1268"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1273"/>
         <source>size</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1286"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1291"/>
         <source>zoom</source>
         <translation></translation>
     </message>
@@ -3132,23 +3197,23 @@
 <context>
     <name>Scene3DLayerPanel</name>
     <message>
-        <location filename="../qml/scene3d/Scene3DLayerPanel.qml" line="48"/>
-        <location filename="../qml/scene3d/Scene3DLayerPanel.qml" line="84"/>
+        <location filename="../qml/scene3d/Scene3DLayerPanel.qml" line="50"/>
+        <location filename="../qml/scene3d/Scene3DLayerPanel.qml" line="90"/>
         <source>Map settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DLayerPanel.qml" line="98"/>
+        <location filename="../qml/scene3d/Scene3DLayerPanel.qml" line="104"/>
         <source>Visibility</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DLayerPanel.qml" line="117"/>
+        <location filename="../qml/scene3d/Scene3DLayerPanel.qml" line="123"/>
         <source>Internet</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DLayerPanel.qml" line="134"/>
+        <location filename="../qml/scene3d/Scene3DLayerPanel.qml" line="140"/>
         <source>Providers</source>
         <translation></translation>
     </message>
@@ -3156,47 +3221,47 @@
 <context>
     <name>Scene3DRightToolbar</name>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="67"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="70"/>
         <source>Map settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="86"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="89"/>
         <source>Ruler</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="126"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="129"/>
         <source>GeoJSON</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="148"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="151"/>
         <source>Point</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="168"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="171"/>
         <source>Line</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="188"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="191"/>
         <source>Polygon</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="213"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="216"/>
         <source>Finish drawing</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="231"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="234"/>
         <source>Undo</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="249"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="252"/>
         <source>Cancel drawing</source>
         <translation></translation>
     </message>
@@ -3204,22 +3269,22 @@
 <context>
     <name>Scene3DToolbar</name>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="143"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="146"/>
         <source>Reset camera</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="169"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="172"/>
         <source>GeoJSON</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="361"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="364"/>
         <source>Boat track</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="393"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="396"/>
         <source>Bottom track</source>
         <translation></translation>
     </message>
@@ -3227,7 +3292,7 @@
 <context>
     <name>SecondaryWindow</name>
     <message>
-        <location filename="../qml/app/SecondaryWindow.qml" line="65"/>
+        <location filename="../qml/app/SecondaryWindow.qml" line="69"/>
         <source>Echogram limit reached</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3463,17 +3528,17 @@
 <context>
     <name>SettingsGearButton</name>
     <message>
-        <location filename="../qml/app/SettingsGearButton.qml" line="9"/>
+        <location filename="../qml/app/SettingsGearButton.qml" line="13"/>
         <source>3D settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/SettingsGearButton.qml" line="10"/>
+        <location filename="../qml/app/SettingsGearButton.qml" line="14"/>
         <source>2D settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/SettingsGearButton.qml" line="11"/>
+        <location filename="../qml/app/SettingsGearButton.qml" line="15"/>
         <source>Settings</source>
         <translation></translation>
     </message>

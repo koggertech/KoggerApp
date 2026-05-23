@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtCore
+import kqml_types 1.0
 import "../controls"
 import "../menus"
 
@@ -43,8 +44,10 @@ Item {
         id: buttonColumn
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.topMargin: 12
-        anchors.rightMargin: 12
+        // Offset by half the split-drag hit zone so corner touches go to the
+        // pane resize, not these buttons.
+        anchors.topMargin: 12 + AppPalette.splitHitSizePx / 2
+        anchors.rightMargin: 12 + AppPalette.splitHitSizePx / 2
         spacing: 6
         z: 3
 

@@ -5,6 +5,7 @@ import QtQuick.Dialogs
 import QtCore
 
 import WaterFall 1.0
+import kqml_types 1.0
 import "../controls"
 import "../menus"
 import "../settings"
@@ -50,6 +51,9 @@ WaterFall {
     property bool loupeZoomWasVisibleBeforeAdjust: false
     property int loupeZoomSavedAimEpoch: -1
     property real settingsMenuSpacer: Math.max(4, Math.round(theme.controlHeight * 0.2))
+    // Keep inner edge-anchored widgets clear of the split-drag hit zone so a
+    // touch near the pane border drags the split instead of jabbing a button.
+    readonly property real edgeSafetyMargin: AppPalette.splitHitSizePx / 2
     property var inputState: null
     property bool externalInputRouting: false
     property int pointerLastMouseX: -1
@@ -487,7 +491,8 @@ WaterFall {
         id: settingsRow
         anchors.left: parent.left
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: settingsMenuSpacer
+        anchors.leftMargin: plot.edgeSafetyMargin
+        anchors.bottomMargin: settingsMenuSpacer + plot.edgeSafetyMargin
 
         MenuFrame {
             id: leftPanel
@@ -1451,9 +1456,9 @@ WaterFall {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.leftMargin: 6
-        anchors.rightMargin: 6
-        anchors.bottomMargin: 6
+        anchors.leftMargin: 6 + plot.edgeSafetyMargin
+        anchors.rightMargin: 6 + plot.edgeSafetyMargin
+        anchors.bottomMargin: 6 + plot.edgeSafetyMargin
         height: thumbH
         z: 10
 
@@ -1601,9 +1606,9 @@ WaterFall {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.right: parent.right
-        anchors.topMargin: 6
-        anchors.bottomMargin: 6
-        anchors.rightMargin: 6
+        anchors.topMargin: 6 + plot.edgeSafetyMargin
+        anchors.bottomMargin: 6 + plot.edgeSafetyMargin
+        anchors.rightMargin: 6 + plot.edgeSafetyMargin
         width: thumbW
         z: 10
 

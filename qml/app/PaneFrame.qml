@@ -161,8 +161,41 @@ Item {
             }
 
             TapHandler {
+                id: paneTap
                 enabled: store.modePickerLeafId === -1 && !store.editableMode
-                onTapped: store.handleLeafTap(paneItem.leafId)
+                gesturePolicy: TapHandler.ReleaseWithinBounds
+
+                // Manual double-tap detection — same recipe as KTapArea but
+                // here directly inside the TapHandler that already owns the
+                // pane's touch stream (otherwise PaneInputBridge MouseArea
+                // never sees these taps under TapHandler's grab).
+                property real _lastTapMs: 0
+                property point _lastTapPos: Qt.point(-10000, -10000)
+
+                onTapped: function(eventPoint) {
+                    store.handleLeafTap(paneItem.leafId)
+
+                    var now = Date.now()
+                    var pos = eventPoint && eventPoint.position
+                              ? eventPoint.position
+                              : Qt.point(0, 0)
+                    var dx = pos.x - _lastTapPos.x
+                    var dy = pos.y - _lastTapPos.y
+                    var distSq = dx * dx + dy * dy
+                    var maxDist = AppPalette.doubleTapDistancePx
+
+                    if ((now - _lastTapMs) <= 500 && distSq <= maxDist * maxDist) {
+                        _lastTapMs = 0
+                        _lastTapPos = Qt.point(-10000, -10000)
+                        if (store && typeof store.toggleLeafMaximize === "function") {
+                            store.activeLeafId = paneItem.leafId
+                            store.toggleLeafMaximize(paneItem.leafId)
+                        }
+                        return
+                    }
+                    _lastTapMs = now
+                    _lastTapPos = pos
+                }
             }
         }
 

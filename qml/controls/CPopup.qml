@@ -44,16 +44,16 @@ Popup {
         color: customPopup.bubbleColor
         border.color: customPopup.bubbleBorderColor
         border.width: 1
-        radius: 5
-        implicitWidth: textItem.implicitWidth + 10
-        implicitHeight: textItem.implicitHeight + 10
+        radius: Math.round(5 * theme.resCoeff)
+        implicitWidth: textItem.implicitWidth + Math.round(10 * theme.resCoeff)
+        implicitHeight: textItem.implicitHeight + Math.round(10 * theme.resCoeff)
 
         Text {
             id: textItem
             anchors.centerIn: parent
             text: popupText
             color: customPopup.bubbleTextColor
-            font.pixelSize: 14
+            font.pixelSize: Math.round(14 * theme.resCoeff)
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
         }

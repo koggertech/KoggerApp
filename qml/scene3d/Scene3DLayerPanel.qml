@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtCore
+import kqml_types 1.0
 import "../controls"
 import "../menus"
 
@@ -40,8 +41,9 @@ Item {
 
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.topMargin: 8
-        anchors.rightMargin: 8
+        // Stay clear of the split-drag hit zone at the top-right corner.
+        anchors.topMargin: 8 + AppPalette.splitHitSizePx / 2
+        anchors.rightMargin: 8 + AppPalette.splitHitSizePx / 2
         visible: showToggleButton
 
         CMouseOpacityArea {
@@ -62,7 +64,11 @@ Item {
         anchors.right: showToggleButton ? toggleButton.left : parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        anchors.rightMargin: showToggleButton ? 6 : 0
+        // When the toggle button shows, panel sits behind it (already offset).
+        // Without toggle button, push panel off the right split-zone directly.
+        anchors.rightMargin: showToggleButton ? 6 : AppPalette.splitHitSizePx / 2
+        anchors.topMargin: AppPalette.splitHitSizePx / 2
+        anchors.bottomMargin: AppPalette.splitHitSizePx / 2
         color: theme.menuBackColor
         border.color: theme.controlBorderColor
         border.width: 1

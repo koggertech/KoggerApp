@@ -5,6 +5,7 @@ CONFIG += c++23
 #CONFIG += FLASHER
 #DEFINES += SEPARATE_READING # data reception in a separate thread
 #DEFINES += SCENE_TESTING # testing 3d scene
+#DEFINES += MANUAL_TESTING
 
 ### HEADERS
 HEADERS += \

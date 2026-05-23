@@ -12,7 +12,7 @@ Item {
 
         anchors.fill: parent
         open: root.store.modeSettingsPanelOpen
-        dimEnabled: !root.store.settingsPushContent
+        dimEnabled: !root.store.effectivePushContent
         panelShadowEnabled: !root.store.editableMode
         title: {
             var paneNumber = root.store.paneNumberByLeafId(root.store.modeSettingsLeafId)
@@ -22,6 +22,7 @@ Item {
         gearMode: root.store.modeSettingsMode
         headerColor: root.store.paneColorByLeafId(root.store.modeSettingsLeafId)
         panelSizePx: root.store.settingsPanelSizePx
+        store: root.store
         onCloseRequested: root.store.closeModeSettingsPanel()
 
         Loader {

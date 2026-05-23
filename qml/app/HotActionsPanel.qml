@@ -10,11 +10,15 @@ Item {
     property bool expanded: false
     property bool showToggleButton: true
     property int revealShiftX: 0
-    property real maxExpandedWidth: 620
-    property int controlHeight: 34
-    property int panelPaddingX: 8
-    property int panelPaddingY: 6
-    property int triggerButtonWidth: 92
+    // Cap by window width so panel never overflows on narrow screens.
+    readonly property int _windowW: store ? store.windowWidth : 1440
+    property real maxExpandedWidth: Math.max(240,
+                                             Math.min(620 * AppPalette.scale,
+                                                      _windowW - 32 * AppPalette.scale))
+    property int controlHeight: Tokens.controlHLg - 2
+    property int panelPaddingX: Tokens.spaceMd
+    property int panelPaddingY: Tokens.spaceSm
+    property int triggerButtonWidth: Math.round(92 * AppPalette.scale)
     readonly property color hotkeysLayerColor: AppPalette.bg
     readonly property color hotkeysPopupLayerColor: AppPalette.bg
     readonly property color buttonFillColor: AppPalette.card
@@ -22,29 +26,35 @@ Item {
     readonly property color buttonPressedColor: AppPalette.bgDeep
     readonly property color buttonBorderColor: AppPalette.border
     readonly property color buttonHoverBorderColor: AppPalette.borderHover
-    readonly property int previewCardWidth: 84
-    readonly property int previewCardHeight: 64
-    readonly property int panelHeight: Math.max(controlHeight + panelPaddingY * 2, 48)
-    readonly property bool hasFavoriteLayouts: favoritesEnabled
+    readonly property int previewCardWidth: Math.round(84 * AppPalette.scale)
+    readonly property int previewCardHeight: Math.round(64 * AppPalette.scale)
+    readonly property int panelHeight: Math.max(controlHeight + panelPaddingY * 2, Tokens.controlHXl)
+    // While the "layouts" reveal sequence is active we keep showing the icons
+    // even if the user just disabled them — so they're visible during the
+    // whole open → pulse → close cycle instead of disappearing instantly.
+    readonly property bool _favoritesRevealOverride: _revealActiveKey === "layouts"
+    readonly property bool hasFavoriteLayouts: (favoritesEnabled || _favoritesRevealOverride)
                                               && store
                                               && store.favoriteLayouts
                                               && store.favoriteLayouts.length > 0
     readonly property int favoriteCount: hasFavoriteLayouts ? store.favoriteLayouts.length : 0
     property bool layoutsMenuOpen: false
-    property int favoriteItemSpacing: 6
-    property int favoriteListMaxHeight: 244
-    property bool markerToolActive: false
+    property int favoriteItemSpacing: Tokens.spaceSm
+    property int favoriteListMaxHeight: Math.round(244 * AppPalette.scale)
     property bool connectionsOnline: true
-    property bool markerToolVisible: true
     property bool connectionStatusToolVisible: true
     property string highlightedQuickActionKey: ""
     property int highlightPulseToken: 0
+    // Tracks the active reveal for the whole sequence — set when reveal fires,
+    // cleared only when the panel actually collapses. Used to keep the
+    // about-to-disappear icons visible until the very end of the close.
+    property string _revealActiveKey: ""
     property string inputDeviceLabel: ""
     property color inputDeviceColor: "#2563EB"
-    readonly property int inputDeviceStackSpacing: 8
+    readonly property int inputDeviceStackSpacing: Tokens.spaceMd
 
     readonly property bool popupShown: root.expanded && root.layoutsMenuOpen && root.hasFavoriteLayouts
-    readonly property int favoriteItemHeight: 76
+    readonly property int favoriteItemHeight: Math.round(76 * AppPalette.scale)
     readonly property int favoriteListContentHeight: favoriteCount > 0
                                                      ? favoriteCount * favoriteItemHeight + (favoriteCount - 1) * favoriteItemSpacing
                                                      : 0
@@ -54,7 +64,6 @@ Item {
 
     signal settingsTriggered()
     signal connectionsTriggered()
-    signal markerPlacementTriggered()
     signal connectionStatusChanged(bool connected)
     signal openFileTriggered()
     signal closeFileTriggered()
@@ -198,19 +207,36 @@ Item {
         }
     }
 
+    // Stage 1: open the panel and make the about-to-flash icons visible
+    // (via _revealActiveKey override). No pulse yet — see pulseRevealedAction.
     function revealQuickAction(key) {
-        highlightedQuickActionKey = typeof key === "string" ? key : ""
-        highlightPulseToken += 1
+        var k = typeof key === "string" ? key : ""
+        _revealActiveKey = k
+        highlightedQuickActionKey = ""
         expanded = true
+    }
+
+    // Stage 2: bump flashToken so icons (already rendered) start pulsing.
+    function pulseRevealedAction() {
+        if (_revealActiveKey === "")
+            return
+        highlightedQuickActionKey = _revealActiveKey
+        highlightPulseToken += 1
     }
 
     function clearQuickActionReveal() {
         highlightedQuickActionKey = ""
+        // Clear the override too so disabled icons VANISH at this point
+        // (while the panel is still open). Panel closure follows a moment
+        // later via the close timer in MainWindow.
+        _revealActiveKey = ""
     }
 
     onExpandedChanged: {
-        if (!expanded)
+        if (!expanded) {
             layoutsMenuOpen = false
+            _revealActiveKey = ""
+        }
     }
 
     onHasFavoriteLayoutsChanged: {
@@ -350,11 +376,12 @@ Item {
         anchors.left: parent.left
         anchors.top: parent.top
         visible: root.showToggleButton
-        width: visible ? 48 : 0
-        height: visible ? 48 : 0
+        // Match panel height so toggle and expanded panel are flush vertically.
+        width: visible ? root.panelHeight : 0
+        height: visible ? root.panelHeight : 0
         iconSource: root.expanded ? "qrc:/icons/ui/x.svg"
                                   : "qrc:/icons/ui/menu-2.svg"
-        iconPixelSize: root.expanded ? 19 : 20
+        iconPixelSize: Math.round((root.expanded ? 19 : 20) * AppPalette.scale)
         fillColor: root.buttonFillColor
         fillHoverColor: root.buttonHoverColor
         fillPressedColor: root.buttonPressedColor
@@ -375,8 +402,9 @@ Item {
         anchors.top: toggleButton.bottom
         anchors.topMargin: root.inputDeviceStackSpacing
         visible: root.inputDeviceBadgeVisible
-        implicitWidth: Math.max(76, inputDeviceText.implicitWidth + 34)
-        implicitHeight: 26
+        implicitWidth: Math.max(Math.round(76 * AppPalette.scale),
+                                inputDeviceText.implicitWidth + Math.round(34 * AppPalette.scale))
+        implicitHeight: Math.round(26 * AppPalette.scale)
         width: implicitWidth
         height: implicitHeight
 
@@ -392,22 +420,22 @@ Item {
         Rectangle {
             id: inputDeviceDot
             anchors.left: parent.left
-            anchors.leftMargin: 10
+            anchors.leftMargin: Tokens.spaceLg
             anchors.verticalCenter: parent.verticalCenter
-            width: 8
-            height: 8
-            radius: 4
+            width: Math.round(8 * AppPalette.scale)
+            height: width
+            radius: width / 2
             color: root.inputDeviceColor
         }
 
         Text {
             id: inputDeviceText
             anchors.left: inputDeviceDot.right
-            anchors.leftMargin: 8
+            anchors.leftMargin: Tokens.spaceMd
             anchors.verticalCenter: parent.verticalCenter
             text: root.inputDeviceLabel
             color: AppPalette.text
-            font.pixelSize: 12
+            font.pixelSize: Tokens.fontSm
             font.bold: true
         }
     }
@@ -448,6 +476,53 @@ Item {
             spacing: 8
             height: root.controlHeight
 
+            // ── Favorite layout pictograms ─────────────────────────────────
+            // One thumbnail per favorite. Click applies it. Skipped when the
+            // user disabled the group in Menu settings (favoritesEnabled).
+            Repeater {
+                model: root.hasFavoriteLayouts ? root.favoriteCount : 0
+                delegate: FavoriteLayoutCard {
+                    required property int index
+                    readonly property var favoriteEntry: (root.store
+                                                          && root.store.favoriteLayouts
+                                                          && index < root.store.favoriteLayouts.length)
+                                                         ? root.store.favoriteLayouts[index]
+                                                         : null
+                    readonly property var snapshotData: favoriteEntry && favoriteEntry.layout
+                                                       ? favoriteEntry.layout
+                                                       : favoriteEntry
+                    readonly property var popupLinksData: favoriteEntry && favoriteEntry.popupLinks
+                                                         ? favoriteEntry.popupLinks
+                                                         : []
+
+                    showText: false
+                    // Wider pill button without stretching the preview itself:
+                    // small aspect bump (1.25×) + generous horizontal padding.
+                    previewHeight: root.controlHeight - Math.round(10 * AppPalette.scale)
+                    previewWidth:  Math.round(previewHeight * 1.25)
+                    contentMargin: Math.round(10 * AppPalette.scale)
+                    width: previewWidth + 2 * contentMargin
+                    height: root.controlHeight
+                    radius: height / 2
+
+                    snapshot: snapshotData
+                    popupLinks: popupLinksData
+                    favoriteIndex: index
+                    selected: root.store && root.store.favoriteLayoutIsCurrent
+                              ? root.store.favoriteLayoutIsCurrent(index)
+                              : false
+
+                    highlighted: root.highlightedQuickActionKey === "layouts"
+                    flashToken: root.highlightPulseToken
+
+                    onClicked: {
+                        if (root.store && root.store.applyFavoriteLayout)
+                            root.store.applyFavoriteLayout(index)
+                        root.expanded = false
+                    }
+                }
+            }
+
             SettingsGearButton {
                 width: root.controlHeight
                 height: root.controlHeight
@@ -483,7 +558,11 @@ Item {
             }
 
             Repeater {
-                model: root.devices
+                // Skip instantiation entirely when the user disabled the
+                // "connected devices" group in Menu settings — unless we're
+                // mid-reveal (so the user sees them flash before disappearing).
+                readonly property bool _devicesRevealOverride: root._revealActiveKey === "connections"
+                model: (root.connectionStatusToolVisible || _devicesRevealOverride) ? root.devices : 0
                 delegate: CircleIconButton {
                     required property var modelData
                     readonly property color _fill:   root.linkFillColor(modelData)
@@ -501,6 +580,10 @@ Item {
                     fillPressedColor: root.buttonPressedColor
                     borderColor:      _border
                     borderHoverColor: _border
+
+                    highlighted: root.highlightedQuickActionKey === "connections"
+                    flashToken: root.highlightPulseToken
+
                     onClicked: {
                         if (!modelData) return
                         root.deviceTriggered(modelData.devSN)

@@ -15,30 +15,161 @@ Column {
     readonly property real groupWidth: Math.max(0, width)
 
     width: parent ? parent.width : implicitWidth
-    spacing: 10
+    spacing: Tokens.spaceLg
 
-    // Small inline checkbox for parameter rows
+    // Parameter row card — matches KSwitch's full-width pattern.
+    //
+    //   [ label                  (interactive area)              [TOGGLE] ]
+    //                                  [ optional spinbox slot ]
+    //
+    // Click anywhere on the card (except the spinbox area) flips the toggle.
+    // Hover highlights the whole card. The default property is a content slot
+    // sized by `slotWidth` — drop a KSpinBox (or any control) inside it.
+    component ParamCard: Rectangle {
+        id: pcard
+
+        property string label: ""
+        property bool checked: false
+        property int slotWidth: 0
+        signal toggled(bool val)
+
+        default property alias contentData: pcardSlot.data
+
+        readonly property int _knobMargin: Math.max(2, Math.round(2 * AppPalette.scale))
+        readonly property bool _hovered: cardMouseLeft.containsMouse || cardMouseRight.containsMouse
+
+        width: parent ? parent.width : implicitWidth
+        height: Math.round(38 * AppPalette.scale)
+        radius: Tokens.radiusLg
+        color: pcard._hovered ? AppPalette.bgHover : AppPalette.bg
+        border.width: 1
+        border.color: pcard._hovered ? AppPalette.borderHover : AppPalette.border
+
+        Behavior on color       { ColorAnimation { duration: 110 } }
+        Behavior on border.color { ColorAnimation { duration: 110 } }
+
+        function _flip() {
+            pcard.checked = !pcard.checked
+            pcard.toggled(pcard.checked)
+        }
+
+        // ── Click-catchers: two MouseAreas flanking pcardSlot ──────────────
+        // Splitting around the slot prevents stray clicks in the slot's
+        // un-widget-covered gaps (e.g. between a KSpinBox's text and its +/−
+        // buttons) from bubbling up and accidentally toggling the card.
+        MouseArea {
+            id: cardMouseLeft
+            anchors.left: parent.left
+            anchors.right: pcardSlot.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            z: -1
+            onClicked: pcard._flip()
+        }
+        MouseArea {
+            id: cardMouseRight
+            anchors.left: pcardSlot.right
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            z: -1
+            onClicked: pcard._flip()
+        }
+
+        // ── Label on the left ──────────────────────────────────────────────
+        Text {
+            anchors.left: parent.left
+            anchors.leftMargin: Tokens.spaceMd
+            anchors.right: pcardSlot.left
+            anchors.rightMargin: Tokens.spaceMd
+            anchors.verticalCenter: parent.verticalCenter
+            text: pcard.label
+            color: AppPalette.textSecond
+            font.pixelSize: Tokens.fontMd
+            elide: Text.ElideRight
+            verticalAlignment: Text.AlignVCenter
+        }
+
+        // ── Optional content slot (spinbox etc.) between label and toggle ──
+        Item {
+            id: pcardSlot
+            width: pcard.slotWidth
+            height: parent.height
+            anchors.right: pcardToggle.left
+            anchors.rightMargin: pcard.slotWidth > 0 ? Tokens.spaceMd : 0
+        }
+
+        // ── Toggle pill on the right (same look as KSwitch indicator) ─────
+        Item {
+            id: pcardToggle
+            width: Math.round(44 * AppPalette.scale)
+            height: Math.round(24 * AppPalette.scale)
+            anchors.right: parent.right
+            anchors.rightMargin: Tokens.spaceMd
+            anchors.verticalCenter: parent.verticalCenter
+
+            Rectangle {
+                anchors.fill: parent
+                radius: height / 2
+                color: pcard.checked ? AppPalette.accentBg : AppPalette.trackOff
+                border.width: 1
+                border.color: pcard.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
+                Behavior on color { ColorAnimation { duration: 120 } }
+
+                Rectangle {
+                    width: parent.height - 2 * pcard._knobMargin
+                    height: width
+                    radius: width / 2
+                    y: pcard._knobMargin
+                    x: pcard.checked ? parent.width - width - pcard._knobMargin : pcard._knobMargin
+                    color: AppPalette.knob
+                    border.width: 1
+                    border.color: "#00000022"
+                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                }
+            }
+        }
+    }
+
+    // Inline toggle switch for parameter rows — same visual size as KSwitch's
+    // indicator so all toggles in the app look identical and are easy to tap.
     component SmallCheck: Item {
         id: sc
         property bool checked: false
         signal toggled(bool val)
-        width: 18
-        height: 18
+
+        readonly property int _knobMargin: Math.max(2, Math.round(2 * AppPalette.scale))
+
+        width: Math.round(44 * AppPalette.scale)
+        height: Math.round(24 * AppPalette.scale)
 
         Rectangle {
+            id: scTrack
             anchors.fill: parent
-            radius: 4
-            color: sc.checked ? AppPalette.accentBg : AppPalette.bg
+            radius: height / 2
+            color: sc.checked ? AppPalette.accentBg : AppPalette.trackOff
             border.width: 1
-            border.color: sc.checked ? AppPalette.accentBorder : AppPalette.borderHover
+            border.color: sc.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
 
-            Text {
-                anchors.centerIn: parent
-                text: "✓"
-                color: AppPalette.accentBorder
-                font.pixelSize: 11
-                font.bold: true
-                visible: sc.checked
+            Behavior on color { ColorAnimation { duration: 120 } }
+
+            Rectangle {
+                width: parent.height - 2 * sc._knobMargin
+                height: width
+                radius: width / 2
+                y: sc._knobMargin
+                x: sc.checked ? parent.width - width - sc._knobMargin : sc._knobMargin
+                color: AppPalette.knob
+                border.width: 1
+                border.color: "#00000022"
+
+                Behavior on x {
+                    NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                }
             }
         }
 
@@ -80,21 +211,22 @@ Column {
         store: root.store
     }
 
-    // ── Предпочтения ─────────────────────────────────────────────────────────
+    // ── Интерфейс ─────────────────────────────────────────────────────────────
 
     SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: qsTr("Preferences")
+        title: qsTr("Interface")
+        description: qsTr("Language, theme, UI scale and panel visibility.")
         stateStore: root.store
         stateKey: "app.preference"
         collapsedByDefault: false
 
         Column {
             width: parent.width
-            spacing: 8
+            spacing: Tokens.spaceMd
 
-            Text { text: qsTr("Language:"); color: AppPalette.textSecond; font.pixelSize: 14 }
+            Text { text: qsTr("Language:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
 
             KTabBar {
                 id: langTabBar
@@ -111,9 +243,9 @@ Column {
 
         Column {
             width: parent.width
-            spacing: 8
+            spacing: Tokens.spaceMd
 
-            Text { text: qsTr("Theme:"); color: AppPalette.textSecond; font.pixelSize: 14 }
+            Text { text: qsTr("Theme:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
 
             Item {
                 id: appThemeHolder
@@ -121,11 +253,13 @@ Column {
                 property int selectedIndex: 0
 
                 readonly property var names: ["Dark","S.Dark","Light","S.Light","OneDark","Monokai","Kimbie","Solar","Desert","Steam 2003"]
-                readonly property int cols: 4
-                readonly property int itemH: 28
-                readonly property real itemW: (width - (cols - 1) * 4) / cols
+                readonly property int gap: Tokens.spaceXs
+                readonly property int cellMinW: Math.round(80 * AppPalette.scale)
+                readonly property int cols: Tokens.gridColumns(width, cellMinW, gap, 5)
+                readonly property int itemH: Tokens.controlHMd
+                readonly property real itemW: (width - (cols - 1) * gap) / cols
                 readonly property int rows: Math.ceil(10 / cols)
-                height: rows * itemH + (rows - 1) * 4
+                height: rows * itemH + (rows - 1) * gap
 
                 onSelectedIndexChanged: if (theme) theme.themeID = selectedIndex
                 Component.onCompleted: if (theme) theme.themeID = selectedIndex
@@ -135,11 +269,11 @@ Column {
                     delegate: Rectangle {
                         required property int index
                         readonly property bool sel: index === appThemeHolder.selectedIndex
-                        x: (index % appThemeHolder.cols) * (appThemeHolder.itemW + 4)
-                        y: Math.floor(index / appThemeHolder.cols) * (appThemeHolder.itemH + 4)
+                        x: (index % appThemeHolder.cols) * (appThemeHolder.itemW + appThemeHolder.gap)
+                        y: Math.floor(index / appThemeHolder.cols) * (appThemeHolder.itemH + appThemeHolder.gap)
                         width: appThemeHolder.itemW
                         height: appThemeHolder.itemH
-                        radius: 6
+                        radius: Tokens.radiusMd
                         color: sel ? AppPalette.accentBg : AppPalette.bg
                         border.width: 1
                         border.color: sel ? AppPalette.accentBorder : AppPalette.border
@@ -148,7 +282,7 @@ Column {
                             anchors.centerIn: parent
                             text: appThemeHolder.names[index]
                             color: AppPalette.text
-                            font.pixelSize: 11
+                            font.pixelSize: Tokens.fontXs
                             elide: Text.ElideRight
                         }
 
@@ -166,9 +300,9 @@ Column {
 
         Column {
             width: parent.width
-            spacing: 8
+            spacing: Tokens.spaceMd
 
-            Text { text: qsTr("Feature level:"); color: AppPalette.textSecond; font.pixelSize: 14 }
+            Text { text: qsTr("Feature level:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
 
             Item {
                 id: instrumentsGradeHolder
@@ -194,21 +328,49 @@ Column {
                 Settings { property alias instrumentsGradeList: instrumentsGradeHolder.selectedIndex }
             }
         }
-    }
 
-    // ── Интерфейс ─────────────────────────────────────────────────────────────
+        // UI scale — DPI auto-detect + user override. Persisted via theme.manualScale.
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceMd
 
-    SettingsGroup {
-        visible: instruments >= 2
-        width: root.groupWidth
-        preferredWidth: root.groupWidth
-        title: qsTr("Interface")
-        stateStore: root.store
-        stateKey: "app.interface"
-        collapsedByDefault: false
+            Row {
+                width: parent.width
+                spacing: Tokens.spaceMd
+                Text {
+                    text: qsTr("UI scale:")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontBase
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Text {
+                    text: theme ? Math.round(theme.manualScale * 100) + "%" : "100%"
+                    color: AppPalette.text
+                    font.pixelSize: Tokens.fontBase; font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+
+            KTabBar {
+                id: uiScaleTabBar
+                width: parent.width
+                options: [
+                    { label: "75%",  value: 0.75 },
+                    { label: "100%", value: 1.00 },
+                    { label: "125%", value: 1.25 },
+                    { label: "150%", value: 1.50 },
+                    { label: "200%", value: 2.00 }
+                ]
+                currentValue: theme ? theme.manualScale : 1.0
+                onValueSelected: function(v) { if (theme) theme.manualScale = v }
+            }
+        }
+
+        // ── Merged from former "Interface" group ──────────────────────────
 
         KSwitch {
             id: consoleVisible
+            visible: instruments >= 2
             width: parent.width
             text: qsTr("Console")
             checked: theme ? theme.consoleVisible : false
@@ -237,50 +399,8 @@ Column {
             id: hotkeysLoader
             active: false
             source: "qrc:/qml/settings/HotkeysDialog.qml"
+            onLoaded: { if (item) item.store = root.store }
         }
-    }
-
-    // ── График ────────────────────────────────────────────────────────────────
-
-    SettingsGroup {
-        visible: instruments >= 2
-        width: root.groupWidth
-        preferredWidth: root.groupWidth
-        title: qsTr("Chart")
-        stateStore: root.store
-        stateKey: "app.plot"
-        collapsedByDefault: true
-
-        Row {
-            width: parent.width
-            height: 30
-            spacing: 8
-
-            Text {
-                text: qsTr("Chart count:")
-                color: AppPalette.textSecond
-                font.pixelSize: 13
-                width: parent.width - numPlotsSpinBox.implicitWidth - 8
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            KSpinBox {
-                id: numPlotsSpinBox
-                from: 1; to: 2; stepSize: 1; value: 1
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-
-        Settings { property alias numPlotsSpinBox: numPlotsSpinBox.value }
-
-        KSwitch {
-            id: plotSyncCheckBox
-            width: parent.width
-            text: qsTr("Synchronization")
-            visible: numPlotsSpinBox.value >= 2
-        }
-
-        Settings { property alias plotSyncCheckBox: plotSyncCheckBox.checked }
     }
 
     // ── Датасет ───────────────────────────────────────────────────────────────
@@ -290,6 +410,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Dataset")
+        description: qsTr("Black-stripe smoothing and sonar mount-point offset.")
         stateStore: root.store
         stateKey: "app.dataset"
         collapsedByDefault: true
@@ -302,37 +423,30 @@ Column {
         }
 
         // FBS row
-        Row {
-            width: parent.width
-            height: 30
-            spacing: 8
-
-            SmallCheck {
-                id: fixBlackStripesCheckButton
-                anchors.verticalCenter: parent.verticalCenter
-                onToggled: function(v) { core.setFixBlackStripesState(v) }
-            }
-
-            Text {
-                text: qsTr("FBS forward / backward:")
-                color: AppPalette.textSecond
-                font.pixelSize: 13
-                width: parent.width - 18 - 93 - 93 - 32
-                anchors.verticalCenter: parent.verticalCenter
-                elide: Text.ElideRight
-            }
+        ParamCard {
+            id: fixBlackStripesCheckButton
+            label: qsTr("FBS forward / backward:")
+            slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
+            onToggled: function(v) { core.setFixBlackStripesState(v) }
 
             KSpinBox {
                 id: fixBlackStripesForwardStepsSpinBox
-                width: 93; from: 0; to: 100; stepSize: 1; value: 5
+                width: Math.round(93 * AppPalette.scale)
+                height: Tokens.controlHMd
+                anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
+                from: 0; to: 100; stepSize: 1; value: 5
                 onValueModified: function(v) { core.setFixBlackStripesForwardSteps(v) }
             }
 
             KSpinBox {
                 id: fixBlackStripesBackwardStepsSpinBox
-                width: 93; from: 0; to: 100; stepSize: 1; value: 5
+                width: Math.round(93 * AppPalette.scale)
+                height: Tokens.controlHMd
+                anchors.left: fixBlackStripesForwardStepsSpinBox.right
+                anchors.leftMargin: Tokens.spaceXs
                 anchors.verticalCenter: parent.verticalCenter
+                from: 0; to: 100; stepSize: 1; value: 5
                 onValueModified: function(v) { core.setFixBlackStripesBackwardSteps(v) }
             }
         }
@@ -342,34 +456,23 @@ Column {
         Settings { property alias fixBlackStripesBackwardStepsSpinBox: fixBlackStripesBackwardStepsSpinBox.value }
 
         // Sonar offset row
-        Row {
-            width: parent.width
-            height: 30
-            spacing: 8
-
-            SmallCheck {
-                id: sonarOffsetCheckButton
-                anchors.verticalCenter: parent.verticalCenter
-                onToggled: function(v) {
-                    if (v) dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, 0)
-                    else   dataset.setSonarOffset(0, 0, 0)
-                    core.setIsAttitudeExpected(v)
-                }
-            }
-
-            Text {
-                text: qsTr("S.offset XY, mm:")
-                color: AppPalette.textSecond
-                font.pixelSize: 13
-                width: parent.width - 18 - 93 - 93 - 32
-                anchors.verticalCenter: parent.verticalCenter
-                elide: Text.ElideRight
+        ParamCard {
+            id: sonarOffsetCheckButton
+            label: qsTr("S.offset XY, mm:")
+            slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
+            onToggled: function(v) {
+                if (v) dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, 0)
+                else   dataset.setSonarOffset(0, 0, 0)
+                core.setIsAttitudeExpected(v)
             }
 
             KSpinBox {
                 id: sonarOffsetValueX
-                width: 93; from: -9999; to: 9999; stepSize: 50; value: 0
+                width: Math.round(93 * AppPalette.scale)
+                height: Tokens.controlHMd
+                anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
+                from: -9999; to: 9999; stepSize: 50; value: 0
                 onValueModified: function(v) {
                     if (sonarOffsetCheckButton.checked)
                         dataset.setSonarOffset(v * 0.001, sonarOffsetValueY.value * 0.001, 0)
@@ -378,8 +481,12 @@ Column {
 
             KSpinBox {
                 id: sonarOffsetValueY
-                width: 93; from: -9999; to: 9999; stepSize: 50; value: 0
+                width: Math.round(93 * AppPalette.scale)
+                height: Tokens.controlHMd
+                anchors.left: sonarOffsetValueX.right
+                anchors.leftMargin: Tokens.spaceXs
                 anchors.verticalCenter: parent.verticalCenter
+                from: -9999; to: 9999; stepSize: 50; value: 0
                 onValueModified: function(v) {
                     if (sonarOffsetCheckButton.checked)
                         dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, v * 0.001, 0)
@@ -400,12 +507,12 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Bottom Track")
+        description: qsTr("Bottom detection presets, thresholds and search window.")
         stateStore: root.store
         stateKey: "app.bottomtrack"
         collapsedByDefault: false
 
-        readonly property int spinW: 115
-        readonly property int labelW: parent.width - 18 - spinW - 16
+        readonly property int spinW: Math.round(115 * AppPalette.scale)
 
         function refreshParams() {
             if (!root.targetPlot) return
@@ -445,9 +552,9 @@ Column {
         // Preset
         Column {
             width: parent.width
-            spacing: 8
+            spacing: Tokens.spaceMd
 
-            Text { text: qsTr("Preset:"); color: AppPalette.textSecond; font.pixelSize: 14 }
+            Text { text: qsTr("Preset:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
 
             Item {
                 id: btPresetHolder
@@ -474,22 +581,20 @@ Column {
         }
 
         // Gain slope
-        Row {
-            width: parent.width; height: 30; spacing: 8
-            SmallCheck {
-                id: bottomTrackGainSlope; checked: true
-                anchors.verticalCenter: parent.verticalCenter
-                onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setGainSlope(bottomTrackGainSlopeValue.value / 100) }
-            }
-            Text {
-                text: qsTr("Gain slope:")
-                color: AppPalette.textSecond; font.pixelSize: 13
-                width: btGroup.labelW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-            }
+        ParamCard {
+            id: bottomTrackGainSlope
+            label: qsTr("Gain slope:")
+            checked: true
+            slotWidth: btGroup.spinW
+            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setGainSlope(bottomTrackGainSlopeValue.value / 100) }
+
             KSpinBox {
                 id: bottomTrackGainSlopeValue
-                from: 0; to: 300; stepSize: 10; value: 100; divisor: 100; decimals: 2
+                anchors.left: parent.left
+                anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+                height: Tokens.controlHMd
+                from: 0; to: 300; stepSize: 10; value: 100; divisor: 100; decimals: 2
                 onValueModified: function(v) { if (bottomTrackGainSlope.checked && root.targetPlot) root.targetPlot.setGainSlope(v / 100) }
             }
         }
@@ -497,22 +602,19 @@ Column {
         Settings { property alias bottomTrackGainSlopeValue: bottomTrackGainSlopeValue.value }
 
         // Threshold
-        Row {
-            width: parent.width; height: 30; spacing: 8
-            SmallCheck {
-                id: bottomTrackThreshold
-                anchors.verticalCenter: parent.verticalCenter
-                onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setThreshold(bottomTrackThresholdValue.value / 100) }
-            }
-            Text {
-                text: qsTr("Threshold:")
-                color: AppPalette.textSecond; font.pixelSize: 13
-                width: btGroup.labelW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-            }
+        ParamCard {
+            id: bottomTrackThreshold
+            label: qsTr("Threshold:")
+            slotWidth: btGroup.spinW
+            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setThreshold(bottomTrackThresholdValue.value / 100) }
+
             KSpinBox {
                 id: bottomTrackThresholdValue
-                from: 0; to: 200; stepSize: 5; value: 0; divisor: 100; decimals: 2
+                anchors.left: parent.left
+                anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+                height: Tokens.controlHMd
+                from: 0; to: 200; stepSize: 5; value: 0; divisor: 100; decimals: 2
                 onValueModified: function(v) { if (bottomTrackThreshold.checked && root.targetPlot) root.targetPlot.setThreshold(v / 100) }
             }
         }
@@ -520,22 +622,19 @@ Column {
         Settings { property alias bottomTrackThresholdValue: bottomTrackThresholdValue.value }
 
         // Horizontal window
-        Row {
-            width: parent.width; height: 30; spacing: 8
-            SmallCheck {
-                id: bottomTrackWindow
-                anchors.verticalCenter: parent.verticalCenter
-                onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setWindowSize(bottomTrackWindowValue.value) }
-            }
-            Text {
-                text: qsTr("Horizontal window:")
-                color: AppPalette.textSecond; font.pixelSize: 13
-                width: btGroup.labelW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-            }
+        ParamCard {
+            id: bottomTrackWindow
+            label: qsTr("Horizontal window:")
+            slotWidth: btGroup.spinW
+            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setWindowSize(bottomTrackWindowValue.value) }
+
             KSpinBox {
                 id: bottomTrackWindowValue
-                from: 1; to: 100; stepSize: 2; value: 1
+                anchors.left: parent.left
+                anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+                height: Tokens.controlHMd
+                from: 1; to: 100; stepSize: 2; value: 1
                 onValueModified: function(v) { if (bottomTrackWindow.checked && root.targetPlot) root.targetPlot.setWindowSize(v) }
             }
         }
@@ -543,22 +642,19 @@ Column {
         Settings { property alias bottomTrackWindowValue: bottomTrackWindowValue.value }
 
         // Vertical gap
-        Row {
-            width: parent.width; height: 30; spacing: 8
-            SmallCheck {
-                id: bottomTrackVerticalGap
-                anchors.verticalCenter: parent.verticalCenter
-                onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01) }
-            }
-            Text {
-                text: qsTr("Vertical gap, %:")
-                color: AppPalette.textSecond; font.pixelSize: 13
-                width: btGroup.labelW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-            }
+        ParamCard {
+            id: bottomTrackVerticalGap
+            label: qsTr("Vertical gap, %:")
+            slotWidth: btGroup.spinW
+            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01) }
+
             KSpinBox {
                 id: bottomTrackVerticalGapValue
-                from: 0; to: 100; stepSize: 2; value: 10
+                anchors.left: parent.left
+                anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+                height: Tokens.controlHMd
+                from: 0; to: 100; stepSize: 2; value: 10
                 onValueModified: function(v) { if (bottomTrackVerticalGap.checked && root.targetPlot) root.targetPlot.setVerticalGap(v * 0.01) }
             }
         }
@@ -566,22 +662,19 @@ Column {
         Settings { property alias bottomTrackVerticalGapValue: bottomTrackVerticalGapValue.value }
 
         // Min range
-        Row {
-            width: parent.width; height: 30; spacing: 8
-            SmallCheck {
-                id: bottomTrackMinRange
-                anchors.verticalCenter: parent.verticalCenter
-                onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMin(bottomTrackMinRangeValue.value / 1000) }
-            }
-            Text {
-                text: qsTr("Min range, m:")
-                color: AppPalette.textSecond; font.pixelSize: 13
-                width: btGroup.labelW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-            }
+        ParamCard {
+            id: bottomTrackMinRange
+            label: qsTr("Min range, m:")
+            slotWidth: btGroup.spinW
+            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMin(bottomTrackMinRangeValue.value / 1000) }
+
             KSpinBox {
                 id: bottomTrackMinRangeValue
-                from: 0; to: 200000; stepSize: 10; value: 0; divisor: 1000; decimals: 2
+                anchors.left: parent.left
+                anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+                height: Tokens.controlHMd
+                from: 0; to: 200000; stepSize: 10; value: 0; divisor: 1000; decimals: 2
                 onValueModified: function(v) { if (bottomTrackMinRange.checked && root.targetPlot) root.targetPlot.setRangeMin(v / 1000) }
             }
         }
@@ -589,22 +682,19 @@ Column {
         Settings { property alias bottomTrackMinRangeValue: bottomTrackMinRangeValue.value }
 
         // Max range
-        Row {
-            width: parent.width; height: 30; spacing: 8
-            SmallCheck {
-                id: bottomTrackMaxRange
-                anchors.verticalCenter: parent.verticalCenter
-                onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMax(bottomTrackMaxRangeValue.value / 1000) }
-            }
-            Text {
-                text: qsTr("Max range, m:")
-                color: AppPalette.textSecond; font.pixelSize: 13
-                width: btGroup.labelW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-            }
+        ParamCard {
+            id: bottomTrackMaxRange
+            label: qsTr("Max range, m:")
+            slotWidth: btGroup.spinW
+            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMax(bottomTrackMaxRangeValue.value / 1000) }
+
             KSpinBox {
                 id: bottomTrackMaxRangeValue
-                from: 0; to: 200000; stepSize: 1000; value: 100000; divisor: 1000; decimals: 2
+                anchors.left: parent.left
+                anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+                height: Tokens.controlHMd
+                from: 0; to: 200000; stepSize: 1000; value: 100000; divisor: 1000; decimals: 2
                 onValueModified: function(v) { if (bottomTrackMaxRange.checked && root.targetPlot) root.targetPlot.setRangeMax(v / 1000) }
             }
         }
@@ -612,30 +702,21 @@ Column {
         Settings { property alias bottomTrackMaxRangeValue: bottomTrackMaxRangeValue.value }
 
         // Sensor offset (label row + values row)
-        Row {
-            width: parent.width; height: 30; spacing: 8
-            SmallCheck {
-                id: bottomTrackSensorOffset
-                anchors.verticalCenter: parent.verticalCenter
-                onToggled: function(v) {
-                    if (v && root.targetPlot) {
-                        root.targetPlot.setOffsetX(btOffX.value *  0.001)
-                        root.targetPlot.setOffsetY(btOffY.value *  0.001)
-                        root.targetPlot.setOffsetZ(btOffZ.value *  0.001)
-                    }
+        ParamCard {
+            id: bottomTrackSensorOffset
+            label: qsTr("Sonar offset XYZ, mm:")
+            onToggled: function(v) {
+                if (v && root.targetPlot) {
+                    root.targetPlot.setOffsetX(btOffX.value *  0.001)
+                    root.targetPlot.setOffsetY(btOffY.value *  0.001)
+                    root.targetPlot.setOffsetZ(btOffZ.value *  0.001)
                 }
-            }
-            Text {
-                text: qsTr("Sonar offset XYZ, mm:")
-                color: AppPalette.textSecond; font.pixelSize: 13
-                width: parent.width - 18 - 8; height: 30
-                verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight
             }
         }
         Row {
             visible: bottomTrackSensorOffset.checked
-            width: parent.width; height: 30; spacing: 4
-            readonly property real sw: (width - 2 * 4) / 3
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceXs
+            readonly property real sw: (width - 2 * Tokens.spaceXs) / 3
 
             KSpinBox {
                 id: btOffX
@@ -660,8 +741,8 @@ Column {
 
         // Action buttons
         Row {
-            width: parent.width; spacing: 8
-            readonly property real bw: (width - 8) / 2
+            width: parent.width; spacing: Tokens.spaceMd
+            readonly property real bw: (width - Tokens.spaceMd) / 2
 
             KButton {
                 width: parent.bw
@@ -689,12 +770,13 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("TGC")
+        description: qsTr("Time-varying gain and depth-based amplification curve.")
         stateStore: root.store
         stateKey: "app.tgc"
         collapsedByDefault: true
 
-        readonly property int valueLabelW: 60
-        readonly property int labelW: 92
+        readonly property int valueLabelW: Math.round(60 * AppPalette.scale)
+        readonly property int labelW: Math.round(92 * AppPalette.scale)
 
         Component.onCompleted: {
             core.setTgcGainNear(tgcGainNearSlider.value * 0.01)
@@ -704,11 +786,11 @@ Column {
 
         // Near gain
         Row {
-            width: parent.width; height: 30; spacing: 8
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
 
             Text {
                 text: qsTr("Near gain:")
-                color: AppPalette.textSecond; font.pixelSize: 13
+                color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd
                 width: tgcGroup.labelW
                 anchors.verticalCenter: parent.verticalCenter
                 elide: Text.ElideRight
@@ -725,7 +807,7 @@ Column {
 
             KSlider {
                 id: tgcGainNearSlider
-                width: parent.width - tgcGroup.labelW - tgcGroup.valueLabelW - 16
+                width: parent.width - tgcGroup.labelW - tgcGroup.valueLabelW - 2 * Tokens.spaceMd
                 anchors.verticalCenter: parent.verticalCenter
                 from: 0; to: 500; stepSize: 1; value: 50
                 valueSuffix: "%"
@@ -737,7 +819,7 @@ Column {
                 horizontalAlignment: Text.AlignRight
                 anchors.verticalCenter: parent.verticalCenter
                 text: tgcGainNearSlider.value + "%"
-                color: AppPalette.text; font.pixelSize: 13
+                color: AppPalette.text; font.pixelSize: Tokens.fontMd
             }
         }
 
@@ -745,11 +827,11 @@ Column {
 
         // Far gain
         Row {
-            width: parent.width; height: 30; spacing: 8
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
 
             Text {
                 text: qsTr("Far gain:")
-                color: AppPalette.textSecond; font.pixelSize: 13
+                color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd
                 width: tgcGroup.labelW
                 anchors.verticalCenter: parent.verticalCenter
                 elide: Text.ElideRight
@@ -766,7 +848,7 @@ Column {
 
             KSlider {
                 id: tgcGainFarSlider
-                width: parent.width - tgcGroup.labelW - tgcGroup.valueLabelW - 16
+                width: parent.width - tgcGroup.labelW - tgcGroup.valueLabelW - 2 * Tokens.spaceMd
                 anchors.verticalCenter: parent.verticalCenter
                 from: 0; to: 1000; stepSize: 1; value: 250
                 valueSuffix: "%"
@@ -778,7 +860,7 @@ Column {
                 horizontalAlignment: Text.AlignRight
                 anchors.verticalCenter: parent.verticalCenter
                 text: tgcGainFarSlider.value + "%"
-                color: AppPalette.text; font.pixelSize: 13
+                color: AppPalette.text; font.pixelSize: Tokens.fontMd
             }
         }
 
@@ -788,7 +870,7 @@ Column {
         Canvas {
             id: tgcCurveCanvas
             width: parent.width
-            height: 100
+            height: Math.round(100 * AppPalette.scale)
 
             Connections {
                 target: tgcGainNearSlider
@@ -868,6 +950,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Export")
+        description: qsTr("Export plot data as XTF, CSV (regular or complex) or USBL.")
         stateStore: root.store
         stateKey: "app.export"
         collapsedByDefault: true
@@ -887,12 +970,12 @@ Column {
 
         // Path row
         Row {
-            width: parent.width; height: 30; spacing: 8
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
 
             Rectangle {
-                width: parent.width - 44 - 8
-                height: 30
-                radius: 6
+                width: parent.width - Math.round(44 * AppPalette.scale) - Tokens.spaceMd
+                height: Tokens.controlHMd
+                radius: Tokens.radiusMd
                 color: AppPalette.bg
                 border.width: 1
                 border.color: exportPathField.activeFocus ? AppPalette.accentBorder : AppPalette.border
@@ -900,25 +983,25 @@ Column {
                 TextInput {
                     id: exportPathField
                     anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 8
+                    anchors.leftMargin: Tokens.spaceMd
+                    anchors.rightMargin: Tokens.spaceMd
                     verticalAlignment: TextInput.AlignVCenter
                     color: AppPalette.text
-                    font.pixelSize: 12
+                    font.pixelSize: Tokens.fontSm
                     clip: true
 
                     Text {
                         visible: !exportPathField.text.length
                         text: qsTr("Export path...")
                         color: AppPalette.textMuted
-                        font.pixelSize: 12
+                        font.pixelSize: Tokens.fontSm
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
             }
 
             KButton {
-                width: 44; height: 30; text: "..."
+                width: Math.round(44 * AppPalette.scale); height: Tokens.controlHMd; text: "..."
                 onClicked: {
                     exportFolderDialog.currentFolder = exportGroup.exportFolderUrl
                     exportFolderDialog.open()
@@ -940,30 +1023,26 @@ Column {
         Settings { property alias exportFolderText: exportGroup.exportFolderSource }
 
         // Decimation + CSV
-        Row {
-            width: parent.width; height: 30; spacing: 8
-
-            SmallCheck {
-                id: exportDecimation
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Text {
-                text: qsTr("Decimation, m:")
-                color: AppPalette.textSecond; font.pixelSize: 13
-                width: parent.width - 18 - 93 - 93 - 32
-                anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-            }
+        ParamCard {
+            id: exportDecimation
+            label: qsTr("Decimation, m:")
+            slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
 
             KSpinBox {
                 id: exportDecimationValue
-                width: 93; from: 0; to: 100; stepSize: 1; value: 10
+                width: Math.round(93 * AppPalette.scale)
+                height: Tokens.controlHMd
+                anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
+                from: 0; to: 100; stepSize: 1; value: 10
             }
 
             KButton {
-                width: 93; height: 30; text: qsTr("CSV")
+                width: Math.round(93 * AppPalette.scale); height: Tokens.controlHMd
+                anchors.left: exportDecimationValue.right
+                anchors.leftMargin: Tokens.spaceXs
                 anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("CSV")
                 onClicked: {
                     if (root.targetPlot)
                         core.exportPlotAsCVS(exportGroup.currentExportPath(), root.targetPlot.plotDatasetChannel(),
@@ -997,6 +1076,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("UI Saving")
+        description: qsTr("Save the current workspace layout and settings to a JSON file.")
         stateStore: root.store
         stateKey: "app.uistate"
         collapsedByDefault: true
@@ -1004,13 +1084,13 @@ Column {
         // Export row
         Column {
             width: parent.width
-            spacing: 6
+            spacing: Tokens.spaceSm
 
-            Text { text: qsTr("Export state:"); color: AppPalette.textMuted; font.pixelSize: 12 }
+            Text { text: qsTr("Export state:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm }
 
             Row {
                 id: uiExportRow
-                width: parent.width; height: 30; spacing: 8
+                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
 
                 property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
                 property string exportPathSource: ""
@@ -1026,20 +1106,20 @@ Column {
                 }
 
                 Rectangle {
-                    width: parent.width - 44 - 80 - 16
-                    height: 30; radius: 6; color: AppPalette.bg
+                    width: parent.width - Math.round((44 + 80) * AppPalette.scale) - 2 * Tokens.spaceMd
+                    height: Tokens.controlHMd; radius: Tokens.radiusMd; color: AppPalette.bg
                     border.width: 1; border.color: uiExportField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                     TextInput {
                         id: uiExportField
-                        anchors.fill: parent; anchors.margins: 8
+                        anchors.fill: parent; anchors.margins: Tokens.spaceMd
                         verticalAlignment: TextInput.AlignVCenter
-                        color: AppPalette.text; font.pixelSize: 12; clip: true
-                        Text { visible: !uiExportField.text.length; text: qsTr("Path..."); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                        color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
+                        Text { visible: !uiExportField.text.length; text: qsTr("Path..."); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
                     }
                 }
 
                 KButton {
-                    width: 44; height: 30; text: "..."
+                    width: Math.round(44 * AppPalette.scale); height: Tokens.controlHMd; text: "..."
                     onClicked: {
                         uiExportDialog.currentFolder = uiExportRow.exportFolder
                         uiExportDialog.open()
@@ -1047,7 +1127,7 @@ Column {
                 }
 
                 KButton {
-                    width: 80; height: 30; text: qsTr("Export")
+                    width: Math.round(80 * AppPalette.scale); height: Tokens.controlHMd; text: qsTr("Export")
                     onClicked: {
                         var path = parent.currentPath()
                         if (!path.length) return
@@ -1079,13 +1159,13 @@ Column {
         // Import row
         Column {
             width: parent.width
-            spacing: 6
+            spacing: Tokens.spaceSm
 
-            Text { text: qsTr("Import state:"); color: AppPalette.textMuted; font.pixelSize: 12 }
+            Text { text: qsTr("Import state:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm }
 
             Row {
                 id: uiImportRow
-                width: parent.width; height: 30; spacing: 8
+                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
 
                 property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
                 property string importPathSource: ""
@@ -1101,20 +1181,20 @@ Column {
                 }
 
                 Rectangle {
-                    width: parent.width - 44 - 80 - 16
-                    height: 30; radius: 6; color: AppPalette.bg
+                    width: parent.width - Math.round((44 + 80) * AppPalette.scale) - 2 * Tokens.spaceMd
+                    height: Tokens.controlHMd; radius: Tokens.radiusMd; color: AppPalette.bg
                     border.width: 1; border.color: uiImportField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                     TextInput {
                         id: uiImportField
-                        anchors.fill: parent; anchors.margins: 8
+                        anchors.fill: parent; anchors.margins: Tokens.spaceMd
                         verticalAlignment: TextInput.AlignVCenter
-                        color: AppPalette.text; font.pixelSize: 12; clip: true
-                        Text { visible: !uiImportField.text.length; text: qsTr("Path..."); color: AppPalette.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                        color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
+                        Text { visible: !uiImportField.text.length; text: qsTr("Path..."); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
                     }
                 }
 
                 KButton {
-                    width: 44; height: 30; text: "..."
+                    width: Math.round(44 * AppPalette.scale); height: Tokens.controlHMd; text: "..."
                     onClicked: {
                         uiImportDialog.currentFolder = uiImportRow.importFolder
                         uiImportDialog.open()
@@ -1122,7 +1202,7 @@ Column {
                 }
 
                 KButton {
-                    width: 80; height: 30; text: qsTr("Import")
+                    width: Math.round(80 * AppPalette.scale); height: Tokens.controlHMd; text: qsTr("Import")
                     onClicked: {
                         var path = parent.currentPath()
                         if (!path.length) return
@@ -1156,7 +1236,7 @@ Column {
             visible: text.length > 0
             text: uiStateSerializer ? (uiStateSerializer.lastError.length ? uiStateSerializer.lastError : uiStateSerializer.lastStatus) : ""
             color: uiStateSerializer && uiStateSerializer.lastError.length ? "#FF6B6B" : AppPalette.textMuted
-            font.pixelSize: 12
+            font.pixelSize: Tokens.fontSm
         }
     }
 
@@ -1166,6 +1246,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Workspace Layout")
+        description: qsTr("Pane editing, favorites and ready-made layout presets.")
         stateStore: root.store
         stateKey: "app.layoutPlacement"
 
@@ -1192,9 +1273,9 @@ Column {
 
         Column {
             width: parent.width
-            spacing: 8
+            spacing: Tokens.spaceMd
 
-            Text { text: qsTr("Sidebar position:"); color: AppPalette.textSecond; font.pixelSize: 14 }
+            Text { text: qsTr("Sidebar position:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
 
             KTabBar {
                 width: parent.width
@@ -1214,30 +1295,30 @@ Column {
         }
 
         Row {
-            spacing: 10
+            spacing: Tokens.spaceLg
 
             KButton {
-                width: 36; height: 36
+                width: Tokens.controlHLg; height: Tokens.controlHLg
                 text: root.store.currentLayoutIsFavorite ? "★" : "☆"
                 checkable: true
                 checked: root.store.currentLayoutIsFavorite
-                fontPixelSize: 20
+                fontPixelSize: Tokens.fontXl
                 onClicked: root.store.toggleCurrentLayoutFavorite()
             }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.store.currentLayoutIsFavorite ? qsTr("Current layout is in favorites") : qsTr("Add current layout to favorites")
-                color: AppPalette.textSecond; font.pixelSize: 14
+                color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase
             }
         }
 
-        Text { text: qsTr("Favorite layouts"); color: AppPalette.text; font.pixelSize: 15; font.bold: true }
+        Text { text: qsTr("Favorite layouts"); color: AppPalette.text; font.pixelSize: Tokens.fontLg; font.bold: true }
 
         Text {
             visible: root.store.favoriteLayouts.length === 0
             text: qsTr("No favorite layouts yet")
-            color: AppPalette.textMuted; font.pixelSize: 12
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
         }
 
         Repeater {
@@ -1261,10 +1342,11 @@ Column {
                 }
 
                 CircleIconButton {
-                    anchors.top: parent.top; anchors.right: parent.right
-                    anchors.topMargin: 6; anchors.rightMargin: 6
-                    width: 24; height: 24; iconSource: ""; glyph: "×"
-                    glyphPixelSize: 16; glyphColor: AppPalette.textSecond; fillColor: AppPalette.card
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    anchors.rightMargin: Tokens.spaceSm
+                    width: Tokens.iconLg; height: Tokens.iconLg; iconSource: ""; glyph: "×"
+                    glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.card
                     fillHoverColor: AppPalette.cardHover; fillPressedColor: AppPalette.bgDeep
                     borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
                     toolTipText: qsTr("Remove favorite"); z: 6
@@ -1275,7 +1357,7 @@ Column {
 
         Rectangle { width: parent.width; height: 1; color: AppPalette.border }
 
-        Text { text: qsTr("Layout presets"); color: AppPalette.text; font.pixelSize: 15; font.bold: true }
+        Text { text: qsTr("Layout presets"); color: AppPalette.text; font.pixelSize: Tokens.fontLg; font.bold: true }
 
         Repeater {
             model: [
@@ -1287,17 +1369,17 @@ Column {
                 required property var modelData
                 readonly property var preset: modelData
                 readonly property bool hovered: cardMouse.containsMouse
-                width: parent.width; height: 88; radius: 8
+                width: parent.width; height: Math.round(88 * AppPalette.scale); radius: Tokens.radiusLg
                 color: hovered ? AppPalette.bg : AppPalette.card; border.width: 1
                 border.color: hovered ? AppPalette.borderHover : AppPalette.border
 
                 Row {
-                    anchors.fill: parent; anchors.margins: 8; spacing: 10
+                    anchors.fill: parent; anchors.margins: Tokens.spaceMd; spacing: Tokens.spaceLg
                     Rectangle {
-                        width: 84; height: 64; radius: 6; color: AppPalette.bgDeep
+                        width: Math.round(84 * AppPalette.scale); height: Math.round(64 * AppPalette.scale); radius: Tokens.radiusMd; color: AppPalette.bgDeep
                         border.width: 1; border.color: AppPalette.border
                         Canvas {
-                            anchors.fill: parent; anchors.margins: 4
+                            anchors.fill: parent; anchors.margins: Tokens.spaceXs
                             onPaint: {
                                 var ctx = getContext("2d")
                                 ctx.clearRect(0, 0, width, height)
@@ -1321,9 +1403,9 @@ Column {
                     }
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: Math.max(0, parent.width - 84 - 10); spacing: 4
-                        Text { text: preset.title; color: AppPalette.text; font.pixelSize: 14; font.bold: true }
-                        Text { text: preset.subtitle; color: AppPalette.textMuted; font.pixelSize: 12 }
+                        width: Math.max(0, parent.width - Math.round(84 * AppPalette.scale) - Tokens.spaceLg); spacing: Tokens.spaceXs
+                        Text { text: preset.title; color: AppPalette.text; font.pixelSize: Tokens.fontBase; font.bold: true }
+                        Text { text: preset.subtitle; color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm }
                     }
                 }
                 MouseArea { id: cardMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.store.applyLayoutPreset(preset.presetId) }
@@ -1333,41 +1415,187 @@ Column {
         Text {
             width: parent.width; wrapMode: Text.WordWrap
             text: qsTr("After applying a preset, choose 2D or 3D mode for each pane.")
-            color: AppPalette.textMuted; font.pixelSize: 12
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
         }
     }
 
-    // ── Hotkeys Window ────────────────────────────────────────────────────────
+    // ── Quick action menu ─────────────────────────────────────────────────────
 
     SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: qsTr("Hotkeys Window")
+        title: qsTr("Quick action menu")
+        description: qsTr("Quick-action menu contents: favorite layouts and connected device icons.")
         stateStore: root.store
         stateKey: "app.hotkeysWindow"
 
         KSwitch {
             width: parent.width; text: qsTr("Show favorite layouts")
             checked: root.store.quickActionFavoritesEnabled
-            highlighted: root.store.hotkeysRevealKey === "layouts"
-            flashToken: root.store.hotkeysRevealNonce
-            onToggled: { root.store.quickActionFavoritesEnabled = checked; root.store.requestHotkeysReveal("layouts") }
+            onToggled: {
+                root.store.quickActionFavoritesEnabled = checked
+                // Skip the reveal animation if there's nothing to flash.
+                if (root.store.favoriteLayouts && root.store.favoriteLayouts.length > 0)
+                    root.store.requestHotkeysReveal("layouts")
+            }
         }
 
         KSwitch {
-            width: parent.width; text: qsTr("Show marker tool")
-            checked: root.store.quickActionMarkerEnabled
-            highlighted: root.store.hotkeysRevealKey === "marker"
-            flashToken: root.store.hotkeysRevealNonce
-            onToggled: { root.store.quickActionMarkerEnabled = checked; root.store.requestHotkeysReveal("marker") }
-        }
-
-        KSwitch {
-            width: parent.width; text: qsTr("Show connection status")
+            width: parent.width; text: qsTr("Show connected devices")
             checked: root.store.quickActionConnectionStatusEnabled
-            highlighted: root.store.hotkeysRevealKey === "connections"
-            flashToken: root.store.hotkeysRevealNonce
-            onToggled: { root.store.quickActionConnectionStatusEnabled = checked; root.store.requestHotkeysReveal("connections") }
+            onToggled: {
+                root.store.quickActionConnectionStatusEnabled = checked
+                if (!deviceManagerWrapper || !deviceManagerWrapper.devs)
+                    return
+                for (var i = 0; i < deviceManagerWrapper.devs.length; ++i) {
+                    var d = deviceManagerWrapper.devs[i]
+                    if (d && d.devType !== 0) {
+                        root.store.requestHotkeysReveal("connections")
+                        break
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Test (developer-only — compiled with MANUAL_TESTING) ─────────────────
+
+    SettingsGroup {
+        visible: typeof manualTesting !== "undefined" && manualTesting === true
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Test")
+        description: qsTr("Developer knobs — visible only in MANUAL_TESTING builds.")
+        stateStore: root.store
+        stateKey: "app.test"
+        collapsedByDefault: false
+
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            Row {
+                width: parent.width
+                spacing: Tokens.spaceMd
+
+                Text {
+                    text: qsTr("Double-tap tolerance, px:")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontBase
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Text {
+                    text: Math.round(AppPalette.doubleTapDistancePx) + " px"
+                    color: AppPalette.text
+                    font.pixelSize: Tokens.fontBase; font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+
+            KSlider {
+                id: tapTolerSlider
+                width: parent.width
+                from: 1; to: 500; stepSize: 1
+                value: AppPalette.doubleTapDistancePx
+                onValueModified: function(v) { AppPalette.doubleTapDistancePx = v }
+            }
+
+            // Persists the chosen value across launches.
+            Settings { property alias appDoubleTapDistancePx: tapTolerSlider.value }
+
+            // ── Pane split grab thickness ────────────────────────────────
+            Row {
+                width: parent.width
+                spacing: Tokens.spaceMd
+
+                Text {
+                    text: qsTr("Split grab thickness, px:")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontBase
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Text {
+                    text: Math.round(AppPalette.splitHitSizePx) + " px"
+                    color: AppPalette.text
+                    font.pixelSize: Tokens.fontBase; font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+
+            KSlider {
+                id: splitHitSlider
+                width: parent.width
+                from: 4; to: 200; stepSize: 1
+                value: AppPalette.splitHitSizePx
+                onValueModified: function(v) { AppPalette.splitHitSizePx = v }
+            }
+
+            Settings { property alias appSplitHitSizePx: splitHitSlider.value }
+
+            // ── Sidebar slide animation duration ─────────────────────────
+            Row {
+                width: parent.width
+                spacing: Tokens.spaceMd
+
+                Text {
+                    text: qsTr("Sidebar slide, ms:")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontBase
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Text {
+                    text: Math.round(AppPalette.sidebarAnimMs) + " ms"
+                    color: AppPalette.text
+                    font.pixelSize: Tokens.fontBase; font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+
+            KSlider {
+                id: sidebarAnimSlider
+                width: parent.width
+                from: 0; to: 5000; stepSize: 10
+                value: AppPalette.sidebarAnimMs
+                onValueModified: function(v) { AppPalette.sidebarAnimMs = v }
+            }
+
+            Settings { property alias appSidebarAnimMs: sidebarAnimSlider.value }
+
+            // ── Workspace rubber-band adjustment duration ────────────────
+            Row {
+                width: parent.width
+                spacing: Tokens.spaceMd
+
+                Text {
+                    text: qsTr("Workspace adjust, ms:")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontBase
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Text {
+                    text: Math.round(AppPalette.workspaceAnimMs) + " ms"
+                    color: AppPalette.text
+                    font.pixelSize: Tokens.fontBase; font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+
+            KSlider {
+                id: workspaceAnimSlider
+                width: parent.width
+                from: 0; to: 5000; stepSize: 10
+                value: AppPalette.workspaceAnimMs
+                onValueModified: function(v) { AppPalette.workspaceAnimMs = v }
+            }
+
+            Settings { property alias appWorkspaceAnimMs: workspaceAnimSlider.value }
+
+            Component.onCompleted: {
+                AppPalette.doubleTapDistancePx = tapTolerSlider.value
+                AppPalette.splitHitSizePx = splitHitSlider.value
+                AppPalette.sidebarAnimMs = sidebarAnimSlider.value
+                AppPalette.workspaceAnimMs = workspaceAnimSlider.value
+            }
         }
     }
 }

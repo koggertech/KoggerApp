@@ -318,6 +318,9 @@ Item {
         ]
 
         // Blocks pointer/wheel events from leaking under the popup.
+        // The mouse-path double-click still fires via MouseArea.onDoubleClicked
+        // (works fine with a real mouse on desktop); for touch we use a
+        // sibling TapHandler that has a touch-friendly recognizer.
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.AllButtons
@@ -330,6 +333,11 @@ Item {
             onClicked:       function(mouse) { mouse.accepted = true }
             onDoubleClicked: function(mouse) { mouse.accepted = true; root.popupDoubleClicked() }
             onWheel:         function(wheel)  { wheel.accepted = true }
+        }
+
+        TapHandler {
+            acceptedDevices: PointerDevice.TouchScreen
+            onDoubleTapped: root.popupDoubleClicked()
         }
 
         // Drag handle header strip — only area that initiates popup drag.

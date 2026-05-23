@@ -583,9 +583,20 @@ Item {
             required property var handleData
 
             readonly property bool vertical: handleData.orientation === "vertical"
-            readonly property real hitSize: 20
+            // Active grab thickness around the split line. Wider = easier to
+            // hit with a finger. Tunable from the "Test" settings group.
+            readonly property real hitSize: AppPalette.splitHitSizePx
             readonly property bool isActiveResizeSplit: workspace.store.edgeResizeMovingSplitId === handleData.splitId
-            readonly property bool showResizeHandle: splitDragMouse.resizing || isActiveResizeSplit
+            // Show the handle while the user hovers the zone or an actual
+            // resize is in flight. Intentionally NOT keyed on bare `pressed`:
+            // with preventStealing the MouseArea keeps the press grab even
+            // after the cursor leaves the zone, so a press-then-quickly-drag-
+            // away (where no resize was actually started, slices unchanged)
+            // would keep the highlight pinned. Tying to containsMouse lets
+            // it follow user intent — leave the zone, highlight vanishes.
+            readonly property bool showResizeHandle: splitDragMouse.resizing
+                                                     || isActiveResizeSplit
+                                                     || splitDragMouse.containsMouse
 
             x: vertical ? handleData.x - hitSize / 2 : handleData.x
             y: vertical ? handleData.y : handleData.y - hitSize / 2
@@ -593,14 +604,62 @@ Item {
             height: vertical ? handleData.height : hitSize
             z: ZOrder.dropZoneHighlight
 
+            // Wide translucent "ghost" band — sits under the finger during
+            // drag, follows it exactly even if the underlying split position
+            // hasn't caught up yet (rate-limited / snapping in the store).
+            // Only shown when a resize is actually in progress; on plain press
+            // or hover the thin centre line alone is enough.
+            Rectangle {
+                id: ghostBand
+                visible: splitDragMouse.resizing || splitDragZone.isActiveResizeSplit
+                color: AppPalette.accentBar
+                opacity: 0.18
+                radius: 2
+
+                readonly property bool tracking: splitDragMouse.pressed
+                readonly property int bandThickness: splitDragZone.hitSize
+
+                width:  splitDragZone.vertical ? bandThickness : splitDragZone.width
+                height: splitDragZone.vertical ? splitDragZone.height : bandThickness
+                x: splitDragZone.vertical
+                   ? (tracking ? splitDragMouse.mouseX - width / 2
+                               : (splitDragZone.width - width) / 2)
+                   : 0
+                y: splitDragZone.vertical
+                   ? 0
+                   : (tracking ? splitDragMouse.mouseY - height / 2
+                               : (splitDragZone.height - height) / 2)
+
+                Behavior on opacity {
+                    NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                }
+            }
+
+            // Solid centre line — the precise edge under the finger. Thicker
+            // during active drag; tracks splitDragMouse.mouseX/mouseY so it
+            // visually leads if the snap line lags behind the touch.
             Rectangle {
                 visible: splitDragZone.showResizeHandle
                 color: AppPalette.accentBar
-                width: splitDragZone.vertical ? 2 : splitDragZone.width
-                height: splitDragZone.vertical ? splitDragZone.height : 2
-                x: splitDragZone.vertical ? (splitDragZone.width - width) / 2 : 0
-                y: splitDragZone.vertical ? 0 : (splitDragZone.height - height) / 2
-                opacity: 0.9
+
+                readonly property int activeThickness: splitDragMouse.resizing
+                                                       || splitDragZone.isActiveResizeSplit ? 4 : 2
+                readonly property bool tracking: splitDragMouse.pressed
+
+                width:  splitDragZone.vertical ? activeThickness : splitDragZone.width
+                height: splitDragZone.vertical ? splitDragZone.height : activeThickness
+                x: splitDragZone.vertical
+                   ? (tracking ? splitDragMouse.mouseX - width / 2
+                               : (splitDragZone.width - width) / 2)
+                   : 0
+                y: splitDragZone.vertical
+                   ? 0
+                   : (tracking ? splitDragMouse.mouseY - height / 2
+                               : (splitDragZone.height - height) / 2)
+                opacity: 0.95
+
+                Behavior on width  { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+                Behavior on height { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
             }
 
             Rectangle {
@@ -608,8 +667,17 @@ Item {
                 visible: splitDragZone.showResizeHandle
                 width: splitDragZone.vertical ? 12 : 38
                 height: splitDragZone.vertical ? 38 : 12
-                x: (splitDragZone.width - width) / 2
-                y: (splitDragZone.height - height) / 2
+
+                readonly property bool tracking: splitDragMouse.pressed
+
+                x: splitDragZone.vertical
+                   ? (tracking ? splitDragMouse.mouseX - width / 2
+                               : (splitDragZone.width - width) / 2)
+                   : (splitDragZone.width - width) / 2
+                y: splitDragZone.vertical
+                   ? (splitDragZone.height - height) / 2
+                   : (tracking ? splitDragMouse.mouseY - height / 2
+                               : (splitDragZone.height - height) / 2)
                 radius: 6
                 color: "#1D4ED8"
                 border.width: 1
@@ -713,14 +781,25 @@ Item {
                 }
 
                 onDoubleClicked: function(mouse) {
-                    // Reset split to centre (0.5) — PaneFrame's Behavior animates panes smoothly.
-                    if (resizing) {
-                        workspace.store.finishEdgeResize()
-                        resizing = false
-                    }
-                    workspace.store.setSplitRatioById(splitDragZone.handleData.splitId, 0.5)
+                    splitDragZone._resetSplitToCentre()
                     mouse.accepted = true
                 }
+            }
+
+            // Touch-friendly double-tap path. The MouseArea above keeps owning
+            // the drag, so TapHandler only handles double-tap for touchscreens
+            // where MouseArea.onDoubleClicked is unreliable on Android.
+            TapHandler {
+                acceptedDevices: PointerDevice.TouchScreen
+                onDoubleTapped: splitDragZone._resetSplitToCentre()
+            }
+
+            function _resetSplitToCentre() {
+                if (splitDragMouse.resizing) {
+                    workspace.store.finishEdgeResize()
+                    splitDragMouse.resizing = false
+                }
+                workspace.store.setSplitRatioById(splitDragZone.handleData.splitId, 0.5)
             }
         }
     }

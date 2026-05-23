@@ -6,14 +6,19 @@ import kqml_types 1.0
 Popup {
     id: hotkeysDialog
 
+    // Injected by the host (e.g. AppSettingsPage's Loader). Used to register
+    // this dialog as the topmost modal so MainWindow's global Esc closes it
+    // instead of unwinding the settings panel.
+    property var store: null
+
     parent: Overlay.overlay
     anchors.centerIn: parent
     modal: true
     focus: true
-    padding: 14
+    padding: Math.round(14 * AppPalette.scale)
 
-    width:  Math.min(720, parent ? parent.width  * 0.95 : 720)
-    height: Math.min(640, parent ? parent.height * 0.90 : 640)
+    width:  Math.min(Math.round(720 * AppPalette.scale), parent ? parent.width  * 0.95 : 720)
+    height: Math.min(Math.round(640 * AppPalette.scale), parent ? parent.height * 0.90 : 640)
 
     closePolicy: listeningIndex >= 0 ? Popup.NoAutoClose
                                      : Popup.CloseOnEscape | Popup.CloseOnPressOutside
@@ -27,11 +32,11 @@ Popup {
     property string _conflictText:  ""
 
     // effective list content width (leaves room for scrollbar)
-    readonly property real _listW: listView.width - 14
+    readonly property real _listW: listView.width - Math.round(14 * AppPalette.scale)
 
-    readonly property int _colKey:   128
-    readonly property int _colParam:  88
-    readonly property int _rowH:      34
+    readonly property int _colKey:   Math.round(128 * AppPalette.scale)
+    readonly property int _colParam: Math.round(88 * AppPalette.scale)
+    readonly property int _rowH:     Math.round(34 * AppPalette.scale)
 
     function groupName(g) {
         switch (g) {
@@ -74,6 +79,8 @@ Popup {
     onOpened: {
         rebuildModel()
         keyCapture.forceActiveFocus()
+        if (store)
+            store.activeHotkeysDialog = hotkeysDialog
     }
 
     onClosed: {
@@ -82,6 +89,17 @@ Popup {
             if (hotkeysController && _pendingFn !== "")
                 hotkeysController.updateHotkey(_pendingFn, _pendingSc, _pendingParam)
         }
+        if (store && store.activeHotkeysDialog === hotkeysDialog)
+            store.activeHotkeysDialog = null
+    }
+
+    // Belt-and-braces: if the host Loader unloads while the dialog is open,
+    // onClosed never fires but the QObject IS destroyed. Without this hook
+    // store.activeHotkeysDialog would keep a dangling reference and the next
+    // Esc would invoke .close() on a deleted object.
+    Component.onDestruction: {
+        if (store && store.activeHotkeysDialog === hotkeysDialog)
+            store.activeHotkeysDialog = null
     }
 
     Connections {
@@ -104,7 +122,23 @@ Popup {
 
         // ── key capture when listening ────────────────────────────────────────
         Keys.onPressed: function(event) {
-            if (hotkeysDialog.listeningIndex < 0) return
+            // Esc: cancel listening if active, otherwise close the dialog.
+            if (event.key === Qt.Key_Escape) {
+                if (hotkeysDialog.listeningIndex >= 0) {
+                    hotkeysDialog.listeningIndex = -1
+                    hotkeysDialog._conflictText = ""
+                } else {
+                    hotkeysDialog.close()
+                }
+                event.accepted = true
+                return
+            }
+
+            // Pass through anything else while not listening for a reassign.
+            if (hotkeysDialog.listeningIndex < 0) {
+                event.accepted = false
+                return
+            }
 
             if (event.key === Qt.Key_Control || event.key === Qt.Key_Shift ||
                 event.key === Qt.Key_Alt    || event.key === Qt.Key_Meta) {
@@ -139,15 +173,15 @@ Popup {
                 horizontalAlignment: Text.AlignHCenter
                 text: qsTr("Keyboard Shortcuts")
                 color: AppPalette.text
-                font.pixelSize: 16
+                font.pixelSize: Math.round(16 * AppPalette.scale)
                 font.bold: true
             }
 
             // ── Column headers ────────────────────────────────────────────────
             Rectangle {
                 Layout.fillWidth: true
-                height: 28
-                radius: 6
+                height: Math.round(28 * AppPalette.scale)
+                radius: Tokens.radiusMd
                 color: AppPalette.headerBg
                 border.color: AppPalette.border
                 border.width: 1
@@ -159,7 +193,7 @@ Popup {
                         width: hotkeysDialog._colKey; height: parent.height
                         text: qsTr("Key")
                         color: AppPalette.textSecond
-                        font.pixelSize: 12; font.bold: true
+                        font.pixelSize: Tokens.fontSm; font.bold: true
                         verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -168,7 +202,7 @@ Popup {
                         width: hotkeysDialog._colParam; height: parent.height
                         text: qsTr("Parameter")
                         color: AppPalette.textSecond
-                        font.pixelSize: 12; font.bold: true
+                        font.pixelSize: Tokens.fontSm; font.bold: true
                         verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -178,9 +212,9 @@ Popup {
                         height: parent.height
                         text: qsTr("Action")
                         color: AppPalette.textSecond
-                        font.pixelSize: 12; font.bold: true
+                        font.pixelSize: Tokens.fontSm; font.bold: true
                         verticalAlignment: Text.AlignVCenter
-                        leftPadding: 10
+                        leftPadding: Tokens.spaceLg
                     }
                 }
             }
@@ -212,7 +246,7 @@ Popup {
                             id: sectionLabel
                             text: hotkeysDialog.groupName(section)
                             color: AppPalette.textSecond
-                            font.pixelSize: 11; font.bold: true
+                            font.pixelSize: Math.round(11 * AppPalette.scale); font.bold: true
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         Rectangle {
@@ -265,7 +299,7 @@ Popup {
                             horizontalAlignment: Text.AlignHCenter
                             text: row.listening ? qsTr("…") : (model.keyName || "")
                             color: AppPalette.text
-                            font.pixelSize: 13
+                            font.pixelSize: Math.round(13 * AppPalette.scale)
                         }
 
                         MouseArea {
@@ -298,7 +332,7 @@ Popup {
                             width: parent.width - 8
                             horizontalAlignment: TextInput.AlignHCenter
                             color: AppPalette.text
-                            font.pixelSize: 13
+                            font.pixelSize: Math.round(13 * AppPalette.scale)
                             selectionColor: AppPalette.accentBg
                             text: model.parameter > 0 ? model.parameter.toString() : ""
                             inputMethodHints: Qt.ImhDigitsOnly
@@ -323,7 +357,7 @@ Popup {
                         anchors.verticalCenter: parent.verticalCenter
                         text: model.description || ""
                         color: AppPalette.text
-                        font.pixelSize: 13
+                        font.pixelSize: Math.round(13 * AppPalette.scale)
                         wrapMode: Text.WordWrap
                     }
                 }
@@ -339,7 +373,7 @@ Popup {
                 Text {
                     Layout.fillWidth: true
                     leftPadding: 4
-                    font.pixelSize: 12
+                    font.pixelSize: Math.round(12 * AppPalette.scale)
                     text: hotkeysDialog._conflictText !== ""
                           ? hotkeysDialog._conflictText
                           : hotkeysDialog.listeningIndex >= 0

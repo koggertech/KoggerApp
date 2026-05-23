@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Window 2.15
+import kqml_types 1.0
 
 Item {
     id: root
@@ -175,6 +176,18 @@ Item {
 
             onEntered: if (root.focusOnPointer) overlay.forceActiveFocus()
 
+            // Manual double-tap detection — Qt's MouseArea.onDoubleClicked
+            // uses tight thresholds (~5 px, ~400ms) that synthesised touch on
+            // Android often misses. Track press timestamps here ourselves.
+            property real _lastPressMs: 0
+            property point _lastPressPos: Qt.point(-10000, -10000)
+
+            // Set when a press was swallowed by the manual double-tap
+            // recognizer. The matching release must NOT be routed to the
+            // plot/3D scene, otherwise it sees a Release without a Press
+            // and can leave hover/drag/selection state inconsistent.
+            property bool _skipNextRelease: false
+
             onPressed: function(mouse) {
                 if (root.focusOnPointer)
                     overlay.forceActiveFocus()
@@ -182,6 +195,35 @@ Item {
                 root.markActiveLeaf()
                 root.lastMouseButtons = mouse.buttons
                 overlay.pointerStarted = true
+
+                // Manual double-tap recognizer (touch-friendly thresholds via
+                // AppPalette.doubleTapDistancePx; interval ~500ms).
+                if (mouse.button === Qt.LeftButton) {
+                    var now = Date.now()
+                    var dx = mouse.x - pointerArea._lastPressPos.x
+                    var dy = mouse.y - pointerArea._lastPressPos.y
+                    var distSq = dx * dx + dy * dy
+                    var maxDist = AppPalette.doubleTapDistancePx
+                    var dt = now - pointerArea._lastPressMs
+
+                    if (dt <= 500 && distSq <= maxDist * maxDist) {
+                        pointerArea._lastPressMs = 0
+                        pointerArea._lastPressPos = Qt.point(-10000, -10000)
+                        root.markMouseKeyboardInput()
+                        if (root.focusOnPointer)
+                            overlay.forceActiveFocus()
+                        root.suppressNextClickAfterDoubleClick = true
+                        doubleClickBlocker.restart()
+                        pointerArea._skipNextRelease = true
+                        root.toggleLeafFullscreen()
+                        mouse.accepted = true
+                        return
+                    }
+                    pointerArea._lastPressMs = now
+                    pointerArea._lastPressPos = Qt.point(mouse.x, mouse.y)
+                }
+
+                pointerArea._skipNextRelease = false
                 if (root.paneKind === "3D")
                     root.routeScene3DPress(mouse.button, mouse.buttons, mouse.x, mouse.y)
                 else
@@ -198,6 +240,16 @@ Item {
 
             onReleased: function(mouse) {
                 root.markMouseKeyboardInput()
+                // If the matching press was swallowed by the double-tap
+                // recognizer, drop this release too — routing it would
+                // give the plot/3D scene an unbalanced Release.
+                if (pointerArea._skipNextRelease) {
+                    pointerArea._skipNextRelease = false
+                    root.lastMouseButtons = Qt.NoButton
+                    overlay.pointerStarted = false
+                    mouse.accepted = true
+                    return
+                }
                 if (root.paneKind === "3D") {
                     root.routeScene3DRelease(mouse.button, root.lastMouseButtons, mouse.x, mouse.y)
                     if (mouse.button === Qt.RightButton)
@@ -230,6 +282,14 @@ Item {
             }
 
             onDoubleClicked: function(mouse) {
+                // Skip if manual onPressed recognizer already fired — otherwise
+                // both paths toggle and cancel each other (stationary cursor
+                // hits both Qt's tight 5 px / 400 ms threshold AND our wider
+                // doubleTapDistancePx / 500 ms threshold).
+                if (root.suppressNextClickAfterDoubleClick) {
+                    mouse.accepted = true
+                    return
+                }
                 root.markMouseKeyboardInput()
                 if (root.focusOnPointer)
                     overlay.forceActiveFocus()

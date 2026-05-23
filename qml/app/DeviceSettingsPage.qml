@@ -11,11 +11,13 @@ Column {
     property var store: null
 
     readonly property real groupWidth: Math.max(0, width)
-    readonly property real spinW: 115
-    readonly property real lblW: groupWidth - spinW - 8
+    readonly property real spinW: Math.round(115 * AppPalette.scale)
+    // Spinbox label width — account for SettingsGroup's content card padding
+    // (Tokens.spaceMd on each side) plus row spacing + small safety margin.
+    readonly property real lblW: Math.max(0, groupWidth - 2 * Tokens.spaceMd - spinW - Tokens.spaceMd - Tokens.spaceSm)
 
     width: parent ? parent.width : implicitWidth
-    spacing: 10
+    spacing: Tokens.spaceLg
 
     // KSpinBox wrapper that syncs with a C++ device property
     component DevSpin: Item {
@@ -28,7 +30,7 @@ Column {
         property int decimals: 0
         property var writeBack: null  // function(v) called on user interaction
 
-        implicitWidth: 115; implicitHeight: 30
+        implicitWidth: Math.round(115 * AppPalette.scale); implicitHeight: Tokens.controlHMd
         property bool _in: false
 
         onDevValueChanged: {
@@ -47,29 +49,37 @@ Column {
         }
     }
 
+    // Section heading above the per-area device settings groups.
+    Text {
+        text: qsTr("Settings:")
+        color: AppPalette.textMuted
+        font.pixelSize: Tokens.fontXs
+        leftPadding: Tokens.spaceXxs
+    }
+
     // ── Эхограмма ─────────────────────────────────────────────────────────
 
     SettingsGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Echogram"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.echogram"; collapsedByDefault: false
-        confirmed: dev ? dev.chartSetupState : true
+        stateStore: root.store; stateKey: "dev.echogram"; collapsedByDefault: true
+        confirmed: !(dev && dev.chartSetupState === false)
 
         Row {
-            width: parent.width; height: 30; spacing: 8
-            Text { text: qsTr("Resolution, mm:"); color: AppPalette.textSecond; font.pixelSize: 13; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            Text { text: qsTr("Resolution, mm:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
             DevSpin { from: 10; to: 100; stepSize: 10; devValue: dev ? (dev.chartResolution || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartResolution = v } }
         }
 
         Row {
-            width: parent.width; height: 30; spacing: 8
-            Text { text: qsTr("Sample count:"); color: AppPalette.textSecond; font.pixelSize: 13; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            Text { text: qsTr("Sample count:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
             DevSpin { from: 100; to: 15000; stepSize: 100; devValue: dev ? (dev.chartSamples || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartSamples = v } }
         }
 
         Row {
-            width: parent.width; height: 30; spacing: 8
-            Text { text: qsTr("Offset:"); color: AppPalette.textSecond; font.pixelSize: 13; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            Text { text: qsTr("Offset:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
             DevSpin { from: 0; to: 10000; stepSize: 100; devValue: dev ? (dev.chartOffset || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartOffset = v } }
         }
     }
@@ -80,23 +90,23 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Rangefinder"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.rangefinder"; collapsedByDefault: true
-        confirmed: dev ? dev.distSetupState : true
+        confirmed: !(dev && dev.distSetupState === false)
 
         Row {
-            width: parent.width; height: 30; spacing: 8
-            Text { text: qsTr("Max distance, mm:"); color: AppPalette.textSecond; font.pixelSize: 13; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            Text { text: qsTr("Max distance, mm:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
             DevSpin { from: 0; to: 50000; stepSize: 1000; devValue: dev ? (dev.distMax || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distMax = v } }
         }
 
         Row {
-            width: parent.width; height: 30; spacing: 8
-            Text { text: qsTr("Dead zone, mm:"); color: AppPalette.textSecond; font.pixelSize: 13; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            Text { text: qsTr("Dead zone, mm:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
             DevSpin { from: 0; to: 50000; stepSize: 100; devValue: dev ? (dev.distDeadZone || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distDeadZone = v } }
         }
 
         Row {
-            width: parent.width; height: 30; spacing: 8
-            Text { text: qsTr("Confidence threshold, %:"); color: AppPalette.textSecond; font.pixelSize: 13; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            Text { text: qsTr("Confidence threshold, %:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
             DevSpin { from: 0; to: 100; stepSize: 1; devValue: dev ? (dev.distConfidence || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distConfidence = v } }
         }
     }
@@ -107,17 +117,17 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Transducer"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.transducer"; collapsedByDefault: true
-        confirmed: dev ? dev.transcState : true
+        confirmed: !(dev && dev.transcState === false)
 
         Row {
-            width: parent.width; height: 30; spacing: 8
-            Text { text: qsTr("Pulse count:"); color: AppPalette.textSecond; font.pixelSize: 13; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            Text { text: qsTr("Pulse count:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
             DevSpin { from: 0; to: 5000; stepSize: 1; devValue: dev ? (dev.transPulse || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transPulse = v } }
         }
 
         Row {
-            width: parent.width; height: 30; spacing: 8
-            Text { text: qsTr("Frequency, kHz:"); color: AppPalette.textSecond; font.pixelSize: 13; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            Text { text: qsTr("Frequency, kHz:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
             DevSpin { from: 40; to: 6000; stepSize: 5; devValue: dev ? (dev.transFreq || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transFreq = v } }
         }
 
@@ -142,17 +152,17 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("DSP"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.dsp"; collapsedByDefault: true
-        confirmed: dev ? (dev.dspState && dev.soundState) : true
+        confirmed: !(dev && (dev.dspState === false || dev.soundState === false))
 
         Row {
-            width: parent.width; height: 30; spacing: 8
-            Text { text: qsTr("Horizontal smoothing:"); color: AppPalette.textSecond; font.pixelSize: 13; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            Text { text: qsTr("Horizontal smoothing:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
             DevSpin { from: 0; to: 4; stepSize: 1; devValue: dev ? (dev.dspHorSmooth || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.dspHorSmooth = v } }
         }
 
         Row {
-            width: parent.width; height: 30; spacing: 8
-            Text { text: qsTr("Sound speed, m/s:"); color: AppPalette.textSecond; font.pixelSize: 13; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            Text { text: qsTr("Sound speed, m/s:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
             DevSpin { from: 300; to: 6000; stepSize: 5; devValue: dev ? Math.round((dev.soundSpeed || 0) / 1000) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.soundSpeed = v * 1000 } }
         }
     }
@@ -163,17 +173,17 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Dataset"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.dataset"; collapsedByDefault: true
-        confirmed: dev ? dev.datasetState : true
+        confirmed: !(dev && dev.datasetState === false)
 
         Row {
-            width: parent.width; height: 30; spacing: 8
-            Text { text: qsTr("Period, ms:"); color: AppPalette.textSecond; font.pixelSize: 13; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            Text { text: qsTr("Period, ms:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
             DevSpin { from: 0; to: 2000; stepSize: 50; devValue: dev ? (dev.ch1Period || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.ch1Period = v } }
         }
 
         Column {
-            width: parent.width; spacing: 6
-            Text { text: qsTr("Echogram:"); color: AppPalette.textSecond; font.pixelSize: 13 }
+            width: parent.width; spacing: Tokens.spaceSm
+            Text { text: qsTr("Echogram:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd }
             KTabBar {
                 id: datasetChartTab; width: parent.width
                 options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("8-bit"), value: 1 }]
@@ -187,8 +197,8 @@ Column {
         }
 
         Column {
-            width: parent.width; spacing: 6
-            Text { text: qsTr("Rangefinder:"); color: AppPalette.textSecond; font.pixelSize: 13 }
+            width: parent.width; spacing: Tokens.spaceSm
+            Text { text: qsTr("Rangefinder:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd }
             KTabBar {
                 id: datasetDistTab; width: parent.width
                 options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("On"), value: 1 }, { label: qsTr("NMEA"), value: 2 }]
@@ -253,11 +263,13 @@ Column {
         id: devActionsGroup
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Actions"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.actions"; collapsedByDefault: false
-        confirmed: dev ? dev.uartState : true
+        stateStore: root.store; stateKey: "dev.actions"; collapsedByDefault: true
+        confirmed: !(dev && dev.uartState === false)
 
         property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+        readonly property var baudrateOptions: [9600, 19200, 38400, 57600, 115200,
+                                                230400, 460800, 921600, 1200000, 2000000]
 
         Settings {
             property alias devImportFolder: devActionsGroup.importFolder
@@ -294,46 +306,79 @@ Column {
             }
         }
 
-        // Flash / Erase / Reboot
-        Row {
-            width: parent.width; spacing: 6
-            readonly property real bw: (width - 12) / 3
-            KButton { width: parent.bw; height: 30; text: qsTr("Save");     onClicked: { if (dev) dev.flashSettings() } }
-            KButton { width: parent.bw; height: 30; text: qsTr("Reset"); danger: true; onClicked: { if (dev) dev.resetSettings() } }
-            KButton { width: parent.bw; height: 30; text: qsTr("Reboot"); onClicked: { if (dev) dev.reboot() } }
+        // ── Firmware ─────────────────────────────────────────────────────
+        Text {
+            text: qsTr("Firmware:")
+            color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd
         }
-
-        // Baudrate
-        Column {
-            width: parent.width; spacing: 6
-            Text { text: qsTr("Baudrate:"); color: AppPalette.textSecond; font.pixelSize: 13 }
-            Row {
-                width: parent.width; spacing: 6
-                KTabBar {
-                    id: baudrateTab
-                    width: parent.width - setBaudrateBtn.implicitWidth - 6
-                    options: [
-                        { label: qsTr("115200"), value: 115200 },
-                        { label: qsTr("230400"), value: 230400 },
-                        { label: qsTr("460800"), value: 460800 },
-                        { label: qsTr("921600"), value: 921600 }
-                    ]
-                    currentValue: 115200
-                }
-                KButton {
-                    id: setBaudrateBtn
-                    height: 30; text: qsTr("Set")
-                    onClicked: { if (dev) dev.baudrate = baudrateTab.currentValue }
-                }
+        Row {
+            width: parent.width; spacing: Tokens.spaceSm
+            readonly property real bw: (width - 2 * Tokens.spaceSm) / 3
+            KButton {
+                width: parent.bw; height: Tokens.controlHMd
+                fontPixelSize: Tokens.fontMd
+                text: qsTr("Save")
+                onClicked: { if (dev) dev.flashSettings() }
+            }
+            KButton {
+                width: parent.bw; height: Tokens.controlHMd
+                fontPixelSize: Tokens.fontMd
+                text: qsTr("Reset"); danger: true
+                onClicked: { if (dev) dev.resetSettings() }
+            }
+            KButton {
+                width: parent.bw; height: Tokens.controlHMd
+                fontPixelSize: Tokens.fontMd
+                text: qsTr("Reboot")
+                onClicked: { if (dev) dev.reboot() }
             }
         }
 
-        // Import / Export XML
+        // ── Connection ───────────────────────────────────────────────────
+        Text {
+            text: qsTr("Baudrate:")
+            color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd
+        }
         Row {
-            width: parent.width; spacing: 6
-            readonly property real bw: (width - 6) / 2
-            KButton { width: parent.bw; height: 30; text: qsTr("Import XML"); onClicked: { importXmlDialog.currentFolder = devActionsGroup.importFolder; importXmlDialog.open() } }
-            KButton { width: parent.bw; height: 30; text: qsTr("Export XML"); onClicked: { exportXmlDialog.currentFolder = devActionsGroup.exportFolder; exportXmlDialog.open() } }
+            width: parent.width; spacing: Tokens.spaceSm
+            readonly property real setW: Math.round(72 * AppPalette.scale)
+
+            KCombo {
+                id: baudrateCombo
+                width: parent.width - parent.setW - Tokens.spaceSm
+                height: Tokens.controlHMd
+                model: devActionsGroup.baudrateOptions
+                currentIndex: devActionsGroup.baudrateOptions.indexOf(115200)
+            }
+
+            KButton {
+                width: parent.setW; height: Tokens.controlHMd
+                fontPixelSize: Tokens.fontMd
+                text: qsTr("Set")
+                onClicked: { if (dev) dev.baudrate = devActionsGroup.baudrateOptions[baudrateCombo.currentIndex] }
+            }
+        }
+
+        // ── Settings file ────────────────────────────────────────────────
+        Text {
+            text: qsTr("Settings file:")
+            color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd
+        }
+        Row {
+            width: parent.width; spacing: Tokens.spaceSm
+            readonly property real bw: (width - Tokens.spaceSm) / 2
+            KButton {
+                width: parent.bw; height: Tokens.controlHMd
+                fontPixelSize: Tokens.fontMd
+                text: qsTr("Import XML")
+                onClicked: { importXmlDialog.currentFolder = devActionsGroup.importFolder; importXmlDialog.open() }
+            }
+            KButton {
+                width: parent.bw; height: Tokens.controlHMd
+                fontPixelSize: Tokens.fontMd
+                text: qsTr("Export XML")
+                onClicked: { exportXmlDialog.currentFolder = devActionsGroup.exportFolder; exportXmlDialog.open() }
+            }
         }
     }
 }

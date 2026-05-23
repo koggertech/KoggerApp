@@ -26,6 +26,10 @@ Item {
     property string toolTipText: ""
     property bool autoToolTip: true
     property real hoverWhiteness: 0.12
+    // External "look here" pulse — bumped via flashToken when highlighted.
+    property bool highlighted: false
+    property int flashToken: 0
+    property color highlightBorderColor: AppPalette.accentBorder
     readonly property bool hovered: hitArea.containsMouse
     readonly property bool pressed: hitArea.pressed
     readonly property real backgroundScale: !root.enabled ? 1.0 : (root.pressed ? 0.97 : (root.hovered ? 1.035 : 1.0))
@@ -137,9 +141,47 @@ Item {
         opacity: root.enabled ? 1.0 : 0.7
     }
 
+    // "×" / "✕" glyphs are drawn geometrically — Text's bbox center doesn't
+    // match the visual cross center in most fonts. Two rotated bars give a
+    // pixel-perfect, perfectly-centered close icon.
+    readonly property bool _isCrossGlyph: root.glyph === "×" || root.glyph === "✕"
+
+    Item {
+        anchors.centerIn: parent
+        visible: (!root.hasIcon || root.showGlyphWithIcon) && root._isCrossGlyph
+        width: root.glyphPixelSize
+        height: root.glyphPixelSize
+
+        readonly property color _stroke: root.enabled
+                                         ? (root.hovered ? Qt.lighter(root.glyphColor, 1.12) : root.glyphColor)
+                                         : AppPalette.textMuted
+        readonly property int _thickness: Math.max(2, Math.round(root.glyphPixelSize * 0.15))
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: parent.width
+            height: parent._thickness
+            radius: height / 2
+            color: parent._stroke
+            rotation: 45
+        }
+        Rectangle {
+            anchors.centerIn: parent
+            width: parent.width
+            height: parent._thickness
+            radius: height / 2
+            color: parent._stroke
+            rotation: -45
+        }
+
+        Behavior on opacity {
+            NumberAnimation { duration: 110; easing.type: Easing.OutCubic }
+        }
+    }
+
     Text {
         anchors.centerIn: parent
-        visible: !root.hasIcon || root.showGlyphWithIcon
+        visible: (!root.hasIcon || root.showGlyphWithIcon) && !root._isCrossGlyph
         text: root.glyph
         color: root.enabled
                ? (root.hovered ? Qt.lighter(root.glyphColor, 1.12) : root.glyphColor)
@@ -153,6 +195,44 @@ Item {
                 easing.type: Easing.OutCubic
             }
         }
+    }
+
+    // Pulse overlay — flashes when flashToken changes while highlighted.
+    Rectangle {
+        id: highlightOverlay
+        anchors.fill: parent
+        radius: root.cornerRadius
+        color: "transparent"
+        border.width: Math.max(2, Math.round(2 * AppPalette.scale))
+        border.color: root.highlightBorderColor
+        opacity: 0
+        visible: root.highlighted
+        z: 10
+    }
+
+    SequentialAnimation {
+        id: highlightPulse
+        running: false
+        NumberAnimation { target: highlightOverlay; property: "opacity"; to: 0.95; duration: 90;  easing.type: Easing.OutQuad }
+        NumberAnimation { target: highlightOverlay; property: "opacity"; to: 0.30; duration: 180; easing.type: Easing.OutCubic }
+        NumberAnimation { target: highlightOverlay; property: "opacity"; to: 0.0;  duration: 280; easing.type: Easing.OutCubic }
+    }
+
+    onFlashTokenChanged: {
+        if (highlighted)
+            highlightPulse.restart()
+    }
+
+    onHighlightedChanged: {
+        if (!highlighted)
+            highlightOverlay.opacity = 0.0
+    }
+
+    // Trigger initial pulse when the delegate spawns already highlighted —
+    // onFlashTokenChanged only fires on changes after construction.
+    Component.onCompleted: {
+        if (highlighted)
+            highlightPulse.restart()
     }
 
     MouseArea {

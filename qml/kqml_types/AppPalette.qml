@@ -6,6 +6,34 @@ QtObject {
 
     readonly property bool isDark: !theme || theme.themeID < 2 || theme.themeID > 3
 
+    // ── Scaling ───────────────────────────────────────────────────────────────
+    // Multiply hardcoded pixel values by scale to adapt to DPI / user preference.
+    // E.g. `font.pixelSize: AppPalette.px(14)` / `height: AppPalette.px(30)`.
+    readonly property real scale: theme ? theme.resCoeff : 1.0
+    function px(base) { return base * scale }
+
+    // ── Tap recognition tolerance (runtime-tunable) ───────────────────────────
+    // KTapArea reads this for the double-tap distance threshold. Exposed
+    // through the "Test" settings group when the app is compiled with
+    // MANUAL_TESTING — lets us empirically dial in a comfortable value on
+    // touch hardware without recompiling.
+    property int doubleTapDistancePx: 100
+
+    // Pane split-drag-zone hit area — the invisible thickness around the
+    // line between panes where a press/drag is recognised as a resize gesture.
+    // Wider = easier to grab with a finger; default 40 px (was 20 in code).
+    // Tunable via the "Test" settings group.
+    property int splitHitSizePx: 50
+
+    // Sidebar slide-in/out animation duration (panel.x, opacity). Tunable
+    // independently from the workspace rubber-band so the two motions can
+    // be dialled separately. Used by SettingsSidebarBase.progress Behavior.
+    property int sidebarAnimMs: 166
+
+    // Workspace inset animation duration. Used by MainWindow's
+    // Behavior on settingsInsetLeft/Right. Independent of sidebarAnimMs.
+    property int workspaceAnimMs: 166
+
     // ── Backgrounds ───────────────────────────────────────────────────────────
     // menuBackColor has per-theme alpha (semi-transparent menus in old UI);
     // strip it here so new opaque panels get a solid background.

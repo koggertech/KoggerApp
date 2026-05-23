@@ -6,8 +6,8 @@ Button {
 
     property bool danger: false
     property string toolTipText: text
-    property int cornerRadius: 6
-    property int fontPixelSize: 14
+    property int cornerRadius: Tokens.radiusMd
+    property int fontPixelSize: Tokens.fontBase
     property bool bold: true
     property color normalBg: AppPalette.card
     property color normalBorder: AppPalette.border
@@ -21,10 +21,10 @@ Button {
     property color textColor: danger ? AppPalette.dangerText : AppPalette.text
     property real hoverWhiteness: 0.08
 
-    horizontalPadding: 14
-    verticalPadding: 7
-    implicitWidth: Math.max(64, label.implicitWidth + horizontalPadding * 2)
-    implicitHeight: Math.max(30, label.implicitHeight + verticalPadding * 2)
+    horizontalPadding: Math.round(14 * AppPalette.scale)
+    verticalPadding: Math.round(7 * AppPalette.scale)
+    implicitWidth: Math.max(Math.round(64 * AppPalette.scale), label.implicitWidth + horizontalPadding * 2)
+    implicitHeight: Math.max(Tokens.controlHMd, label.implicitHeight + verticalPadding * 2)
     opacity: enabled ? 1.0 : 0.45
     hoverEnabled: true
     scale: pressed ? 0.985 : (hovered ? 1.02 : 1.0)

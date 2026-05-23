@@ -9,80 +9,50 @@ Column {
     required property var store
 
     width: parent ? parent.width : implicitWidth
-    spacing: 10
+    spacing: Tokens.spaceLg
     readonly property real groupWidth: Math.max(0, width)
 
     SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Connections")
+        description: qsTr("Links, files, logging, imports and factory tools.")
         stateStore: root.store
         stateKey: "app.connections"
         collapsedByDefault: false
-        contentSpacing: 10
+        contentSpacing: Tokens.spaceMd
 
-        Text {
+        Loader {
+            id: connectionsLoader
             width: parent.width
-            wrapMode: Text.WordWrap
-            text: qsTr("Links, files, logging, imports and factory tools.")
-            color: AppPalette.textMuted
-            font.pixelSize: 12
+            active: true
+            asynchronous: true
+            source: "qrc:/qml/devices/ConnectionViewer.qml"
+
+            onLoaded: {
+                if (item) {
+                    item.width = width
+                    item.store = root.store
+                }
+                if (item && item.filePath && item.filePath.length > 0)
+                    root.store.selectedConnectionFilePath = item.filePath
+            }
+
+            onWidthChanged: {
+                if (item)
+                    item.width = width
+            }
         }
 
-        Item {
-            width: parent.width
-            implicitHeight: connectionsCard.implicitHeight
-            height: implicitHeight
+        Connections {
+            target: connectionsLoader.item
+            ignoreUnknownSignals: true
 
-            Rectangle {
-                id: connectionsCard
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                implicitHeight: connectionsLoader.item ? connectionsLoader.item.implicitHeight + 16 : 120
-                height: implicitHeight
-                radius: 10
-                color: AppPalette.bgDeep
-                border.width: 1
-                border.color: AppPalette.border
-                clip: true
-
-                Loader {
-                    id: connectionsLoader
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.margins: 8
-                    active: true
-                    asynchronous: true
-                    source: "qrc:/qml/devices/ConnectionViewer.qml"
-
-                    onLoaded: {
-                        if (item) {
-                            item.width = width
-                            item.store = root.store
-                        }
-                        if (item && item.filePath && item.filePath.length > 0)
-                            root.store.selectedConnectionFilePath = item.filePath
-                    }
-
-                    onWidthChanged: {
-                        if (item)
-                            item.width = width
-                    }
-                }
-
-                Connections {
-                    target: connectionsLoader.item
-                    ignoreUnknownSignals: true
-
-                    function onFilePathChanged() {
-                        if (connectionsLoader.item
-                                && connectionsLoader.item.filePath
-                                && connectionsLoader.item.filePath.length > 0) {
-                            root.store.selectedConnectionFilePath = connectionsLoader.item.filePath
-                        }
-                    }
+            function onFilePathChanged() {
+                if (connectionsLoader.item
+                        && connectionsLoader.item.filePath
+                        && connectionsLoader.item.filePath.length > 0) {
+                    root.store.selectedConnectionFilePath = connectionsLoader.item.filePath
                 }
             }
         }

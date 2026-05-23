@@ -1537,6 +1537,10 @@ GridLayout {
 
     HotkeysDialog {
         id: hotkeysDialog
+        // Pick up the root-scope WorkspaceStore so the dialog registers with
+        // store.activeHotkeysDialog — without it, MainWindow's global Esc
+        // chain falls through and closes the underlying settings panel.
+        store: (typeof workspaceStore !== "undefined") ? workspaceStore : null
     }
 
     Popup {

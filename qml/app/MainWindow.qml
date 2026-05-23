@@ -75,11 +75,48 @@ ApplicationWindow {
         function onInterfaceChanged()        { startupSettings.consoleVisible     = theme.consoleVisible }
     }
 
-    readonly property real anySettingsProgress: Math.max(settingsSidebar.progress, modeSettingsPanel.sidebarProgress)
-    readonly property real settingsInsetLeft: workspaceStore.settingsPushContent && workspaceStore.settingsSide === "left"
-                                             ? anySettingsProgress * workspaceStore.settingsPanelSizePx : 0
-    readonly property real settingsInsetRight: workspaceStore.settingsPushContent && workspaceStore.settingsSide === "right"
-                                              ? anySettingsProgress * workspaceStore.settingsPanelSizePx : 0
+    // Sidebar moves first, workspace waits, then catches up.
+    //
+    //   t=0          : user toggles. Sidebar starts sliding (sidebarAnimMs).
+    //   t=sidebarMs  : sidebar finished. Workspace target changes; Behavior
+    //                  starts animating the inset (workspaceAnimMs).
+    //   t=sidebarMs + workspaceMs : everything settled.
+    //
+    // If the user re-toggles before workspace started, the delay timer
+    // just restarts — workspace never sees the intermediate intent.
+    // If they re-toggle WHILE workspace is animating, the Behavior
+    // re-targets and interpolates from the current value (no snap).
+    readonly property int _sidebarAnimMs: AppPalette.sidebarAnimMs
+    readonly property int _workspaceAnimMs: AppPalette.workspaceAnimMs
+    readonly property bool _anyPushSidebarOpen: workspaceStore.effectivePushContent
+                                                && (workspaceStore.settingsPanelOpen
+                                                    || workspaceStore.modeSettingsPanelOpen)
+
+    // Gated copy of the open state — flips only after sidebar has finished
+    // sliding (workspaceShiftDelayTimer below). The Behavior is on the 0..1
+    // *progress*, not on the inset itself — so a window-resize that changes
+    // settingsPanelSizePx propagates immediately into the inset without
+    // re-triggering a 166 ms animation every drag tick.
+    property bool _workspaceShouldShift: false
+    property real _workspaceShiftProgress: 0.0
+
+    on_AnyPushSidebarOpenChanged: workspaceShiftDelayTimer.restart()
+    on_WorkspaceShouldShiftChanged: _workspaceShiftProgress = _workspaceShouldShift ? 1.0 : 0.0
+
+    Timer {
+        id: workspaceShiftDelayTimer
+        interval: root._sidebarAnimMs
+        onTriggered: root._workspaceShouldShift = root._anyPushSidebarOpen
+    }
+
+    Behavior on _workspaceShiftProgress {
+        NumberAnimation { duration: root._workspaceAnimMs; easing.type: Easing.OutCubic }
+    }
+
+    readonly property real settingsInsetLeft: workspaceStore.settingsSide === "left"
+                                              ? _workspaceShiftProgress * workspaceStore.settingsPanelSizePx : 0
+    readonly property real settingsInsetRight: workspaceStore.settingsSide === "right"
+                                               ? _workspaceShiftProgress * workspaceStore.settingsPanelSizePx : 0
     readonly property bool hotkeysPreviewMode: workspaceStore.settingsPanelOpen && workspaceStore.hotkeysRevealKey !== ""
     property bool hotkeysPreviewClosing: false
     property bool legacyPanelOpen: false
@@ -167,6 +204,14 @@ ApplicationWindow {
     // ESC priority — one layer per call, innermost first. Reorder to repriortize.
     // Layers 1–3 are gated by _activeLeafMode() so the focused pane's UI always wins.
     readonly property var _transientUiLayers: [
+        function() {  // HotkeysDialog (and other registered modal dialogs) — always wins.
+            if (workspaceStore.activeHotkeysDialog
+                    && typeof workspaceStore.activeHotkeysDialog.close === "function") {
+                workspaceStore.activeHotkeysDialog.close()
+                return true
+            }
+            return false
+        },
         function() {  // 2D-only: Plot2D right-click menu + contact dialog
             if (root._activeLeafMode() !== "2D") return false
             var p = root._activePlot2D()
@@ -448,10 +493,10 @@ ApplicationWindow {
         }
 
         Rectangle {
-            x: root.settingsInsetLeft
-            y: 0
-            width: root.width - root.settingsInsetLeft - root.settingsInsetRight
-            height: root.height
+            // Full-width window fill — independent of sidebar/workspace
+            // shift so the area being uncovered during sidebar close
+            // doesn't flash the ApplicationWindow default background.
+            anchors.fill: parent
             color: "#0B1220"
         }
 
@@ -470,7 +515,6 @@ ApplicationWindow {
 
             store: workspaceStore
             favoritesEnabled: workspaceStore.quickActionFavoritesEnabled
-            markerToolVisible: workspaceStore.quickActionMarkerEnabled
             connectionStatusToolVisible: workspaceStore.quickActionConnectionStatusEnabled
             inputDeviceLabel: workspaceView.inputDeviceLabel
             inputDeviceColor: workspaceView.inputDeviceColor
@@ -519,8 +563,10 @@ ApplicationWindow {
         }
 
         Timer {
+            // Pulse runs 90+180+280 = 550ms — keep the highlight a bit longer
+            // so the icons sit visibly after the flash before fading out.
             id: hotkeysRevealHideTimer
-            interval: 900
+            interval: 800
             repeat: false
             onTriggered: {
                 workspaceStore.hotkeysRevealKey = ""
@@ -530,8 +576,11 @@ ApplicationWindow {
         }
 
         Timer {
+            // Pause after icons vanish (hide-timer cleared the override) and
+            // before the panel itself collapses. Gives the user a clear beat
+            // to see "the things I just toggled are gone" — then menu closes.
             id: hotkeysRevealCloseTimer
-            interval: 650
+            interval: 450
             repeat: false
             onTriggered: {
                 hotkeysPreviewClosing = true
@@ -604,11 +653,30 @@ ApplicationWindow {
             target: workspaceStore
             ignoreUnknownSignals: true
 
+            // Reveal sequence:
+            //   t=0      → panel starts expanding + icons rendered (revealQuickAction)
+            //   t=300ms  → icons start pulsing (pulseRevealedAction)
+            //   t=300+800=1100ms → highlight + override cleared (revealHideTimer):
+            //                       disabled icons VANISH while panel is still open
+            //   t=1100+450=1550ms → panel collapses (revealCloseTimer)
+            //                        — gives the user a clear beat to see
+            //                        "the toggled items are gone" before close.
             function onHotkeysRevealNonceChanged() {
                 hotActions.revealQuickAction(workspaceStore.hotkeysRevealKey)
                 hotkeysPreviewClosing = false
                 hotkeysRevealUnpinTimer.stop()
                 hotkeysRevealCloseTimer.stop()
+                hotkeysRevealHideTimer.stop()
+                hotkeysRevealActivateTimer.restart()
+            }
+        }
+
+        Timer {
+            id: hotkeysRevealActivateTimer
+            interval: 300
+            repeat: false
+            onTriggered: {
+                hotActions.pulseRevealedAction()
                 hotkeysRevealHideTimer.restart()
             }
         }
@@ -619,12 +687,13 @@ ApplicationWindow {
 
             anchors.fill: parent
             open: workspaceStore.settingsPanelOpen
-            dimEnabled: !workspaceStore.settingsPushContent
+            dimEnabled: !workspaceStore.effectivePushContent
             panelShadowEnabled: !workspaceStore.editableMode
             title: qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
             panelSizePx: workspaceStore.settingsPanelSizePx
+            store: workspaceStore
             onCloseRequested: workspaceStore.settingsPanelOpen = false
 
             Loader {
@@ -655,6 +724,7 @@ ApplicationWindow {
             side: workspaceStore.settingsSide
             gearMode: "app"
             panelSizePx: 560
+            store: workspaceStore
             onCloseRequested: legacyPanelOpen = false
 
             Loader {

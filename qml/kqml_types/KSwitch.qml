@@ -4,10 +4,10 @@ import QtQuick.Controls 2.15
 Switch {
     id: control
 
-    property int rowHeight: 38
+    property int rowHeight: Math.round(38 * AppPalette.scale)
     property string toolTipText: text
-    property int switchHorizontalPadding: 10
-    property int cornerRadius: 8
+    property int switchHorizontalPadding: Math.round(10 * AppPalette.scale)
+    property int cornerRadius: Tokens.radiusLg
     property color textColor: AppPalette.textSecond
     property color backgroundColor: AppPalette.bg
     property color borderColor: AppPalette.border
@@ -16,14 +16,18 @@ Switch {
     property color trackOffColor: AppPalette.trackOff
     property color trackOffBorderColor: AppPalette.trackOffBorder
     property color knobColor: AppPalette.knob
-    property int trackWidth: 44
-    property int trackHeight: 24
-    property int trackSpacing: 10
+    property int trackWidth: Math.round(44 * AppPalette.scale)
+    property int trackHeight: Math.round(24 * AppPalette.scale)
+    property int trackSpacing: Math.round(10 * AppPalette.scale)
     property bool highlighted: false
     property int flashToken: 0
     property color highlightBorderColor: AppPalette.accentBorder
+    property int fontPixelSize: Tokens.fontBase
 
-    implicitWidth: 260
+    readonly property int _knobMargin: Math.max(2, Math.round(2 * AppPalette.scale))
+    readonly property int _knobSize: Math.max(8, trackHeight - 2 * _knobMargin)
+
+    implicitWidth: Math.round(260 * AppPalette.scale)
     implicitHeight: rowHeight
     opacity: enabled ? 1.0 : 0.55
 
@@ -44,11 +48,11 @@ Switch {
         }
 
         Rectangle {
-            width: 20
-            height: 20
+            width: control._knobSize
+            height: control._knobSize
             radius: width / 2
-            y: 2
-            x: control.checked ? parent.width - width - 2 : 2
+            y: control._knobMargin
+            x: control.checked ? parent.width - width - control._knobMargin : control._knobMargin
             color: control.knobColor
             border.width: 1
             border.color: "#00000022"
@@ -71,7 +75,7 @@ Switch {
             anchors.rightMargin: control.switchHorizontalPadding + control.trackWidth + control.trackSpacing
             text: control.text
             color: control.textColor
-            font.pixelSize: 14
+            font.pixelSize: control.fontPixelSize
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
         }

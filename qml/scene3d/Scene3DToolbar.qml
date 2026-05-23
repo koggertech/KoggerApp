@@ -3,6 +3,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import QtQuick.Dialogs
 import QtCore
+import kqml_types 1.0
 import "../controls"
 import "../menus"
 
@@ -11,7 +12,9 @@ Item  {
     id: toolbarRoot
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom:           parent.bottom
-    anchors.bottomMargin:     8
+    // Push above the split-drag hit zone so touches near the bottom border
+    // resize the pane instead of poking through to toolbar buttons.
+    anchors.bottomMargin:     8 + AppPalette.splitHitSizePx / 2
 
     width: rowButtons.implicitWidth
     height: rowButtons.implicitHeight

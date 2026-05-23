@@ -17,8 +17,12 @@ Item {
     property bool panelShadowEnabled: true
     property real panelShadowOpacity: 0.72
     property int panelShadowSize: 30
-    property int panelSizePx: 300
-    property int scrollBarReservePx: 14
+    property real panelSizePx: 300
+    // Width of the column reserved for the vertical scrollbar (right side of
+    // contentFlick). Slightly wider than the visible thumb so the thumb has
+    // breathing room on both sides — easier to grab with a finger.
+    property int scrollBarReservePx: Math.round(20 * AppPalette.scale)
+    readonly property int _scrollThumbW: Math.round(12 * AppPalette.scale)
     readonly property string resolvedSide: side === "right" ? "right" : "left"
     property real progress: open ? 1.0 : 0.0
     readonly property real panelWidth: panelSizePx
@@ -27,11 +31,21 @@ Item {
 
     default property alias contentData: contentColumn.data
 
+    // Optional store reference. When set, double-clicking the title delegates
+    // to store.toggleAllSettingsGroups() which iterates the registered groups
+    // directly — no fragile recursive parent-walk.
+    property var store: null
+
+    function _toggleAllGroups() {
+        if (store && typeof store.toggleAllSettingsGroups === "function")
+            store.toggleAllSettingsGroups()
+    }
+
     visible: progress > 0.01
 
     Behavior on progress {
         NumberAnimation {
-            duration: 220
+            duration: AppPalette.sidebarAnimMs
             easing.type: Easing.InOutCubic
         }
     }
@@ -73,7 +87,7 @@ Item {
             anchors.right: parent.right
             anchors.top: parent.top
             color: panelRoot.headerColor
-            height: topSectionContent.y + topSectionContent.implicitHeight + 14
+            height: topSectionContent.y + topSectionContent.implicitHeight + Tokens.spaceXl
             z: 1
 
             Column {
@@ -82,30 +96,36 @@ Item {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.leftMargin: 14
-                anchors.rightMargin: 14
-                anchors.topMargin: 14
-                spacing: 12
+                anchors.leftMargin: Tokens.spaceXl
+                anchors.rightMargin: Tokens.spaceXl
+                anchors.topMargin: Tokens.spaceXl
+                spacing: Tokens.spaceLg
 
                 RowLayout {
                     width: parent.width
-                    height: 46
-                    spacing: 8
+                    height: Tokens.controlHXl - Tokens.spaceXs
+                    spacing: Tokens.spaceMd
 
                     Text {
+                        id: titleText
                         text: panelRoot.title
                         color: AppPalette.text
-                        font.pixelSize: 18
+                        font.pixelSize: Tokens.fontXl
                         font.bold: true
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter
+
+                        // Double-tap toggles all SettingsGroup descendants.
+                        KTapArea {
+                            onDoubleTapped: panelRoot._toggleAllGroups()
+                        }
                     }
 
                     KButton {
                         text: "\u2715"
-                        width: 36
-                        height: 36
-                        fontPixelSize: 20
+                        width: Tokens.controlHLg
+                        height: Tokens.controlHLg
+                        fontPixelSize: Tokens.fontXxl
                         Layout.preferredWidth: width
                         Layout.preferredHeight: height
                         Layout.minimumWidth: width
@@ -126,10 +146,15 @@ Item {
             anchors.right: parent.right
             anchors.top: topSection.bottom
             anchors.bottom: parent.bottom
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
-            anchors.bottomMargin: 14
-            anchors.topMargin: 12
+            anchors.leftMargin: Tokens.spaceXl
+            // No right margin: the scrollbar lives in scrollBarReservePx on
+            // the right side of the Flickable — pushing the Flickable further
+            // left makes the scrollbar look off-centre (large gap to panel
+            // edge, small gap to content). Content right padding is provided
+            // entirely by the reserve column.
+            anchors.rightMargin: 0
+            anchors.bottomMargin: Tokens.spaceXl
+            anchors.topMargin: Tokens.spaceLg
 
             clip: true
             boundsBehavior: Flickable.StopAtBounds
@@ -139,15 +164,114 @@ Item {
             interactive: contentHeight > height + 1
             z: 2
 
+            // Attached ScrollBar.vertical: positioning intentionally NOT
+            // delegated to Qt's internal layout — Qt fixes x at flickable
+            // edge regardless of anchors.rightMargin, and doesn't reflow on
+            // AppPalette.scale changes. We attach for behaviour, but a
+            // standalone styled ScrollBar below paints/handles input.
             ScrollBar.vertical: ScrollBar {
-                policy: ScrollBar.AsNeeded
+                id: vScrollAttached
+                policy: ScrollBar.AlwaysOff   // hide Qt's default thumb
             }
 
             Column {
                 id: contentColumn
 
                 width: Math.max(0, contentFlick.width - panelRoot.scrollBarReservePx)
-                spacing: 10
+                spacing: Tokens.spaceLg
+            }
+        }
+
+        // ── Custom standalone vertical scrollbar ──────────────────────────
+        // Reasons to avoid the attached Flickable.ScrollBar.vertical:
+        //  • Qt fixes x at flickable.right and ignores anchors.rightMargin
+        //    overrides — can't centre the thumb in the reserve column.
+        //  • Doesn't reflow on AppPalette.scale changes (cached layout).
+        // This standalone ScrollBar binds bidirectionally to contentFlick
+        // via size/position and writes contentY when dragged. Full control
+        // over geometry, width and styling.
+        ScrollBar {
+            id: vScroll
+            orientation: Qt.Vertical
+            policy: contentFlick.contentHeight > contentFlick.height + 1
+                    ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+
+            parent: panel
+            anchors.top: contentFlick.top
+            anchors.bottom: contentFlick.bottom
+            anchors.right: contentFlick.right
+            anchors.rightMargin: Math.round((panelRoot.scrollBarReservePx - panelRoot._scrollThumbW) / 2)
+            width: panelRoot._scrollThumbW
+            implicitWidth: panelRoot._scrollThumbW
+            z: 4
+
+            size: contentFlick.contentHeight > 0
+                  ? Math.min(1, contentFlick.height / contentFlick.contentHeight) : 0
+            position: contentFlick.contentHeight > 0
+                      ? contentFlick.contentY / contentFlick.contentHeight : 0
+            stepSize: 0.04
+            active: contentFlick.movingVertically || pressed || hovered
+
+            onPositionChanged: {
+                if (vScroll.pressed) {
+                    contentFlick.contentY = vScroll.position * contentFlick.contentHeight
+                }
+            }
+
+            contentItem: Rectangle {
+                implicitWidth: vScroll.width
+                radius: width / 2
+                color: vScroll.pressed
+                       ? AppPalette.text
+                       : (vScroll.hovered ? AppPalette.textSecond : AppPalette.textMuted)
+                opacity: vScroll.pressed ? 0.85 : (vScroll.hovered ? 0.65 : 0.45)
+                Behavior on color   { ColorAnimation { duration: 120 } }
+                Behavior on opacity { NumberAnimation { duration: 120 } }
+            }
+            background: Item {}
+        }
+
+        // ── Scroll-edge fade overlays ─────────────────────────────────────
+        // Cheap: GPU-rendered Rectangle gradients. They sit on top of the
+        // Flickable (z: 3) and fade content into panelColor where it slides
+        // out of view. Hidden when scrolled to the edge (atYBeginning/End).
+        readonly property color _fadeStart: panelRoot.panelColor
+        readonly property color _fadeEnd: Qt.rgba(panelRoot.panelColor.r,
+                                                  panelRoot.panelColor.g,
+                                                  panelRoot.panelColor.b, 0)
+        readonly property int _fadeHeight: Math.round(24 * AppPalette.scale)
+
+        Rectangle {
+            id: topFade
+            x: contentFlick.x
+            y: contentFlick.y
+            width: contentFlick.width - panelRoot.scrollBarReservePx
+            height: panel._fadeHeight
+            z: 3
+            opacity: contentFlick.atYBeginning ? 0.0 : 1.0
+            visible: opacity > 0.01
+            Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: panel._fadeStart }
+                GradientStop { position: 1.0; color: panel._fadeEnd }
+            }
+        }
+
+        Rectangle {
+            id: bottomFade
+            x: contentFlick.x
+            y: contentFlick.y + contentFlick.height - height
+            width: contentFlick.width - panelRoot.scrollBarReservePx
+            height: panel._fadeHeight
+            z: 3
+            opacity: contentFlick.atYEnd ? 0.0 : 1.0
+            visible: opacity > 0.01
+            Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: panel._fadeEnd }
+                GradientStop { position: 1.0; color: panel._fadeStart }
             }
         }
     }

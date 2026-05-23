@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtCore
+import kqml_types 1.0
 import "LayoutRules.js" as Rules
 import "LayoutTree.js" as Tree
 import "LayoutResize.js" as Resize
@@ -53,13 +54,27 @@ property bool layoutTransitionSuspended: false
 property string settingsSide: "left"
 property string selectedConnectionFilePath: ""
 property bool quickActionFavoritesEnabled: true
-property bool quickActionMarkerEnabled: true
 property bool quickActionConnectionStatusEnabled: true
 property string hotkeysRevealKey: ""
 property int hotkeysRevealNonce: 0
+// Live reference to the HotkeysDialog while it's open (set by the dialog
+// itself on Component.onCompleted/Destruction + onOpened/onClosed). The
+// global Esc handler in MainWindow uses this to close ONLY the dialog
+// instead of unwinding the whole settings UI.
+property var activeHotkeysDialog: null
 property int modeSettingsLeafId: -1
 property string modeSettingsMode: "2D"
-readonly property int settingsPanelSizePx: 480
+// Adaptive: fullscreen on compact (< 800px window), else min(50% window, 480 * scale).
+readonly property real settingsPanelSizePx: {
+    var w = windowWidth > 0 ? windowWidth : 800
+    if (Tokens.isCompact(w)) return w
+    return Math.min(w * 0.5, 480 * AppPalette.scale)
+}
+readonly property bool _compactMode: Tokens.isCompact(windowWidth)
+// Effective push behaviour: user preference, OR forced by compact-mode. Read
+// this instead of `settingsPushContent` for layout decisions — keeps the user
+// preference value intact across compact↔wide window transitions.
+readonly property bool effectivePushContent: settingsPushContent || _compactMode
 property int modePickerLeafId: -1
 property var modePickerLeafIds: []
 property int hoveredPopupCandidateLeafId: -1
@@ -120,7 +135,6 @@ property Settings layoutStore: Settings {
     property bool settingsPushContentStored: false
     property string settingsSideStored: "left"
     property bool quickActionFavoritesEnabledStored: true
-    property bool quickActionMarkerEnabledStored: true
     property bool quickActionConnectionStatusEnabledStored: true
     property string selectedConnectionFilePathStored: ""
     property string favoriteLayoutsJson: "[]"
@@ -1305,6 +1319,45 @@ function isSettingsGroupExpanded(groupKey) {
     return settingsGroupExpandedMap[key] === true
 }
 
+// Direct registry of live SettingsGroup instances. Each group adds itself
+// in Component.onCompleted and removes itself in Component.onDestruction.
+// Avoids fragile recursive parent-walks for bulk operations.
+property var _settingsGroupInstances: []
+
+function registerSettingsGroup(group) {
+    if (!group) return
+    if (_settingsGroupInstances.indexOf(group) >= 0) return
+    var arr = _settingsGroupInstances.slice()
+    arr.push(group)
+    _settingsGroupInstances = arr
+}
+
+function unregisterSettingsGroup(group) {
+    if (!group) return
+    var idx = _settingsGroupInstances.indexOf(group)
+    if (idx < 0) return
+    var arr = _settingsGroupInstances.slice()
+    arr.splice(idx, 1)
+    _settingsGroupInstances = arr
+}
+
+function toggleAllSettingsGroups() {
+    var anyOpen = false
+    var i, g
+    for (i = 0; i < _settingsGroupInstances.length; ++i) {
+        g = _settingsGroupInstances[i]
+        if (g && g.collapsible && g.expanded === true) {
+            anyOpen = true
+            break
+        }
+    }
+    for (i = 0; i < _settingsGroupInstances.length; ++i) {
+        g = _settingsGroupInstances[i]
+        if (g && g.collapsible)
+            g.expanded = !anyOpen
+    }
+}
+
 function setSettingsGroupExpanded(groupKey, expanded) {
     var key = normalizedSettingsGroupKey(groupKey)
     if (key === "")
@@ -1676,7 +1729,6 @@ function saveLayoutState() {
     layoutStore.settingsPushContentStored = settingsPushContent
     layoutStore.settingsSideStored = settingsSide
     layoutStore.quickActionFavoritesEnabledStored = quickActionFavoritesEnabled
-    layoutStore.quickActionMarkerEnabledStored = quickActionMarkerEnabled
     layoutStore.quickActionConnectionStatusEnabledStored = quickActionConnectionStatusEnabled
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
     layoutStore.secondaryWindowOpenStored = secondaryWindowOpen
@@ -1707,7 +1759,6 @@ function restoreLayoutState() {
     settingsPushContent = layoutStore.settingsPushContentStored
     settingsSide = normalizedSettingsSide(layoutStore.settingsSideStored)
     quickActionFavoritesEnabled = layoutStore.quickActionFavoritesEnabledStored
-    quickActionMarkerEnabled = layoutStore.quickActionMarkerEnabledStored
     quickActionConnectionStatusEnabled = layoutStore.quickActionConnectionStatusEnabledStored
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored
