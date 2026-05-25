@@ -4,6 +4,8 @@ import QtQuick.Layouts 1.15
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
+import "../controls"
+import "../scene2d"
 
 Column {
     id: root
@@ -499,8 +501,27 @@ Column {
         Settings { property alias sonarOffsetValueY: sonarOffsetValueY.value }
     }
 
-    // ── Трек дна ──────────────────────────────────────────────────────────────
+    // Boat Track
+    SettingsGroup {
+        id: boatTrackGroup
+        visible: instruments >= 1
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Boat track")
+        description: qsTr("Vessel track displayed in the 3D scene.")
+        stateStore: root.store
+        stateKey: "app.boattrack"
+        collapsedByDefault: true
 
+        ParamCard {
+            id: boatTrackVisible3d
+            label: qsTr("Show in 3D")
+            checked: root.store ? root.store.boatTrackVisible : true
+            onToggled: function(v) { if (root.store) root.store.boatTrackVisible = v }
+        }
+    }
+
+    // Bottom Track
     SettingsGroup {
         id: btGroup
         visible: instruments >= 1
@@ -548,6 +569,13 @@ Column {
         }
 
         Component.onCompleted: refreshParams()
+
+        ParamCard {
+            id: bottomTrackVisible3d
+            label: qsTr("Show in 3D")
+            checked: root.store ? root.store.bottomTrackVisible : false
+            onToggled: function(v) { if (root.store) root.store.bottomTrackVisible = v }
+        }
 
         // Preset
         Column {
@@ -758,6 +786,583 @@ Column {
                 checked: false
                 onToggled: core.setBottomTrackRealtimeFromSettings(checked)
                 Component.onCompleted: core.setBottomTrackRealtimeFromSettings(false)
+            }
+        }
+    }
+
+    // Isobaths
+    SettingsGroup {
+        id: isobathsGroup
+        visible: instruments >= 1
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Isobaths")
+        description: qsTr("Equal-depth contour lines on the surface.")
+        stateStore: root.store
+        stateKey: "app.isobaths"
+        collapsedByDefault: true
+
+        readonly property int ctrlW: Math.round(200 * AppPalette.scale)
+        property var exportSurfaceFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+        property string exportSurfacePathSource: ""
+
+        // Hotkey API — invoked from WorkspaceStore.applyIsobathsHotkey().
+        function prevTheme() {
+            isobathsTheme.currentIndex = Math.max(0, isobathsTheme.currentIndex - 1)
+        }
+        function nextTheme() {
+            isobathsTheme.currentIndex = Math.min(isobathsTheme.model.length - 1, isobathsTheme.currentIndex + 1)
+        }
+        function stepDown(step) {
+            var d = step === undefined ? 1 : step
+            for (var i = 0; i < d; ++i) isobathsSurfaceLineStepSizeSpinBox.decrement()
+        }
+        function stepUp(step) {
+            var d = step === undefined ? 1 : step
+            for (var i = 0; i < d; ++i) isobathsSurfaceLineStepSizeSpinBox.increment()
+        }
+
+        function isoSourceUrl(value) {
+            if (!value) return ""
+            if (typeof value === "string") {
+                if (value.startsWith("file:///"))
+                    return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
+                if (value.startsWith("file://"))
+                    return value.slice(7)
+                return value
+            }
+            var lp = value.toLocalFile ? value.toLocalFile() : ""
+            return lp.length ? lp : value.toString()
+        }
+        function isoDisplayUrl(value) {
+            var s = isoSourceUrl(value)
+            if (!s.length) return ""
+            try { return decodeURIComponent(s) } catch (e) { return s }
+        }
+        function isoEffectiveSource(displayText, storedSource) {
+            if (!displayText || !displayText.length) return ""
+            if (storedSource && displayText === isoDisplayUrl(storedSource)) return storedSource
+            return displayText
+        }
+        function currentExportSurfacePath() {
+            return isoEffectiveSource(exportSurfacePathText.text, exportSurfacePathSource)
+        }
+
+        Component.onCompleted: {
+            exportSurfacePathText.text = isoDisplayUrl(exportSurfacePathSource)
+        }
+
+        ParamCard {
+            id: isobathsVisible3d
+            label: qsTr("Show in 3D")
+            checked: root.store ? root.store.isobathsVisible : false
+            onToggled: function(v) { if (root.store) root.store.isobathsVisible = v }
+        }
+
+        RowLayout {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            Text {
+                text: qsTr("Theme:")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
+                Layout.fillWidth: true
+            }
+            KCombo {
+                id: isobathsTheme
+                Layout.preferredWidth: isobathsGroup.ctrlW
+                model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("Standard"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green")]
+                currentIndex: 0
+                onCurrentIndexChanged: IsobathsViewControlMenuController.onThemeChanged(currentIndex)
+                Component.onCompleted: IsobathsViewControlMenuController.onThemeChanged(currentIndex)
+                Settings { property alias isobathsTheme: isobathsTheme.currentIndex }
+            }
+        }
+
+        RowLayout {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            Text {
+                text: qsTr("Edge limit, m:")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
+                Layout.fillWidth: true
+            }
+            KSpinBox {
+                id: isobathsEdgeLimitSpinBox
+                Layout.preferredWidth: isobathsGroup.ctrlW
+                from: 10; to: 1000; stepSize: 5; value: 100
+                editable: false
+                onValueModified: function(v) { IsobathsViewControlMenuController.onEdgeLimitChanged(v) }
+                Component.onCompleted: IsobathsViewControlMenuController.onEdgeLimitChanged(value)
+                Settings { property alias isobathsEdgeLimitSpinBox: isobathsEdgeLimitSpinBox.value }
+            }
+        }
+
+        RowLayout {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            Text {
+                text: qsTr("Step, m:")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
+                Layout.fillWidth: true
+            }
+            KSpinBox {
+                id: isobathsSurfaceLineStepSizeSpinBox
+                Layout.preferredWidth: isobathsGroup.ctrlW
+                from: 1; to: 200; stepSize: 1; value: 10
+                divisor: 10; decimals: 1
+                editable: false
+                readonly property real realValue: value / 10
+                onValueModified: function(v) { IsobathsViewControlMenuController.onSetSurfaceLineStepSize(v / 10) }
+                Component.onCompleted: IsobathsViewControlMenuController.onSetSurfaceLineStepSize(realValue)
+                Settings { property alias isobathsSurfaceLineStepSizeSpinBox: isobathsSurfaceLineStepSizeSpinBox.value }
+            }
+        }
+
+        RowLayout {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            Text {
+                text: qsTr("Extra width, m:")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
+                Layout.fillWidth: true
+            }
+            KSpinBox {
+                id: extraWidthSpinBox
+                Layout.preferredWidth: isobathsGroup.ctrlW
+                from: 5; to: 100; stepSize: 5; value: 10
+                editable: false
+                onValueModified: function(v) { IsobathsViewControlMenuController.onSetExtraWidth(v) }
+                Component.onCompleted: IsobathsViewControlMenuController.onSetExtraWidth(value)
+                Settings { property alias extraWidthSpinBox: extraWidthSpinBox.value }
+            }
+        }
+
+        RowLayout {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            CTextField {
+                id: exportSurfacePathText
+                hoverEnabled: true
+                Layout.maximumWidth: isobathsGroup.ctrlW
+                Layout.fillWidth: true
+                placeholderText: qsTr("Enter path")
+            }
+
+            KButton {
+                text: "..."
+                Layout.fillWidth: false
+                implicitWidth: Math.round(40 * AppPalette.scale)
+                onClicked: {
+                    exportSurfaceFileDialog.currentFolder = isobathsGroup.exportSurfaceFolder
+                    exportSurfaceFileDialog.open()
+                }
+            }
+
+            FileDialog {
+                id: exportSurfaceFileDialog
+                title: qsTr("Select folder and set .csv file name")
+                currentFolder: isobathsGroup.exportSurfaceFolder
+                fileMode: FileDialog.SaveFile
+                nameFilters: ["CSV Files (*.csv)", "All Files (*)"]
+                defaultSuffix: "csv"
+                onCurrentFolderChanged: { isobathsGroup.exportSurfaceFolder = currentFolder }
+                onAccepted: {
+                    isobathsGroup.exportSurfaceFolder = exportSurfaceFileDialog.currentFolder
+                    isobathsGroup.exportSurfacePathSource = isobathsGroup.isoSourceUrl(selectedFile)
+                    if (!isobathsGroup.exportSurfacePathSource.toLowerCase().endsWith(".csv")) {
+                        isobathsGroup.exportSurfacePathSource += ".csv"
+                    }
+                    exportSurfacePathText.text = isobathsGroup.isoDisplayUrl(isobathsGroup.exportSurfacePathSource)
+                }
+            }
+
+            KButton {
+                text: qsTr("Export to CSV")
+                Layout.fillWidth: true
+                onClicked: Scene3DControlMenuController.onExportToCSVButtonClicked(isobathsGroup.currentExportSurfacePath())
+            }
+
+            Settings { property alias exportSurfaceFolder:     isobathsGroup.exportSurfaceFolder }
+            Settings { property alias exportSurfaceFolderText: isobathsGroup.exportSurfacePathSource }
+        }
+    }
+
+    // Mpsaic
+    SettingsGroup {
+        id: mosaicGroup
+        visible: instruments >= 1
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Mosaic")
+        description: qsTr("Side-scan mosaic visualisation.")
+        stateStore: root.store
+        stateKey: "app.mosaic"
+        collapsedByDefault: true
+
+        readonly property int labelW: Math.round(140 * AppPalette.scale)
+        readonly property int ctrlW:  Math.round(220 * AppPalette.scale)
+
+        function setChannelNamesToBackend() {
+            core.setMosaicChannels(channel1Combo.currentText, channel2Combo.currentText)
+        }
+
+        // Hotkey API — invoked from WorkspaceStore.applyMosaicHotkey().
+        function prevTheme() {
+            mosaicTheme.currentIndex = Math.max(0, mosaicTheme.currentIndex - 1)
+        }
+        function nextTheme() {
+            mosaicTheme.currentIndex = Math.min(mosaicTheme.model.length - 1, mosaicTheme.currentIndex + 1)
+        }
+        function lowLevelUp(step) {
+            var d = step === undefined ? 1 : step
+            var v = Math.min(mosaicLevelsSlider.to, mosaicLevelsSlider.startValue + d)
+            mosaicLevelsSlider.startValue = v
+            if (mosaicLevelsSlider.startValue > mosaicLevelsSlider.stopValue)
+                mosaicLevelsSlider.stopValue = mosaicLevelsSlider.startValue
+        }
+        function lowLevelDown(step) {
+            var d = step === undefined ? 1 : step
+            mosaicLevelsSlider.startValue = Math.max(mosaicLevelsSlider.from, mosaicLevelsSlider.startValue - d)
+        }
+        function highLevelUp(step) {
+            var d = step === undefined ? 1 : step
+            mosaicLevelsSlider.stopValue = Math.min(mosaicLevelsSlider.to, mosaicLevelsSlider.stopValue + d)
+        }
+        function highLevelDown(step) {
+            var d = step === undefined ? 1 : step
+            var v = Math.max(mosaicLevelsSlider.from, mosaicLevelsSlider.stopValue - d)
+            mosaicLevelsSlider.stopValue = v
+            if (mosaicLevelsSlider.stopValue < mosaicLevelsSlider.startValue)
+                mosaicLevelsSlider.startValue = mosaicLevelsSlider.stopValue
+        }
+
+        ParamCard {
+            id: mosaicVisible3d
+            label: qsTr("Show in 3D")
+            checked: root.store ? root.store.mosaicVisible : false
+            onToggled: function(v) { if (root.store) root.store.mosaicVisible = v }
+        }
+
+        RowLayout {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            ColumnLayout {
+                Layout.preferredWidth: Math.round(Tokens.controlHMd * 1.4)
+
+                Text {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    text: mosaicLevelsSlider.stopValue
+                    color: AppPalette.text
+                    font.pixelSize: Tokens.fontSm
+                }
+                ChartLevel {
+                    id: mosaicLevelsSlider
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.round(160 * AppPalette.scale)
+                    Layout.alignment: Qt.AlignHCenter
+                    onStartValueChanged: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
+                    onStopValueChanged:  MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
+                    Component.onCompleted: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
+                    Settings {
+                        property alias mosaicLevelsStart: mosaicLevelsSlider.startValue
+                        property alias mosaicLevelsStop:  mosaicLevelsSlider.stopValue
+                    }
+                }
+                Text {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    text: mosaicLevelsSlider.startValue
+                    color: AppPalette.text
+                    font.pixelSize: Tokens.fontSm
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Tokens.spaceMd
+
+                RowLayout {
+                    spacing: Tokens.spaceMd
+                    Text {
+                        text: qsTr("Theme:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
+                        Layout.fillWidth: true
+                    }
+                    KCombo {
+                        id: mosaicTheme
+                        Layout.preferredWidth: mosaicGroup.ctrlW
+                        model: [qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green"), qsTr("Midnight")]
+                        currentIndex: 0
+                        onCurrentIndexChanged: MosaicViewControlMenuController.onThemeChanged(currentIndex)
+                        Component.onCompleted: MosaicViewControlMenuController.onThemeChanged(currentIndex)
+                        Settings { property alias mosaicTheme: mosaicTheme.currentIndex }
+                    }
+                }
+
+                RowLayout {
+                    spacing: Tokens.spaceMd
+                    Text {
+                        text: qsTr("Channels:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignTop
+                    }
+                    ColumnLayout {
+                        spacing: Tokens.spaceXs
+                        Layout.preferredWidth: mosaicGroup.ctrlW
+
+                        KCombo {
+                            id: channel1Combo
+                            Layout.preferredWidth: mosaicGroup.ctrlW
+                            property bool suppressTextSignal: false
+
+                            onCurrentTextChanged: {
+                                if (suppressTextSignal) return
+                                mosaicGroup.setChannelNamesToBackend()
+                            }
+
+                            Component.onCompleted: {
+                                model = dataset.channelsNameList()
+                                let index = model.indexOf(core.ch1Name)
+                                // Auto-fill consistent with WorkspaceStore.pushMosaicChannelsFromCore:
+                                // list[0] is "None", first real channel is list[1].
+                                if (index >= 0) channel1Combo.currentIndex = index
+                                else if (model.length > 1) channel1Combo.currentIndex = 1
+                            }
+
+                            Connections {
+                                target: core
+                                function onChannelListUpdated() {
+                                    let list = dataset.channelsNameList()
+
+                                    channel1Combo.suppressTextSignal = true
+
+                                    channel1Combo.model = []
+                                    channel1Combo.model = list
+
+                                    let newIndex = list.indexOf(core.ch1Name)
+                                    if (newIndex < 0) newIndex = list.length > 1 ? 1 : 0
+
+                                    // Force re-sync: model reset puts the inner
+                                    // ComboBox.currentIndex at 0. If root.currentIndex
+                                    // already equals newIndex, onCurrentIndexChanged
+                                    // won't fire and the inner combo stays at 0.
+                                    // Bouncing through -1 guarantees the signal fires.
+                                    channel1Combo.currentIndex = -1
+                                    channel1Combo.currentIndex = newIndex
+
+                                    mosaicGroup.setChannelNamesToBackend()
+
+                                    channel1Combo.suppressTextSignal = false
+                                }
+                            }
+                        }
+
+                        KCombo {
+                            id: channel2Combo
+                            Layout.preferredWidth: mosaicGroup.ctrlW
+                            property bool suppressTextSignal: false
+
+                            onCurrentTextChanged: {
+                                if (suppressTextSignal) return
+                                mosaicGroup.setChannelNamesToBackend()
+                            }
+
+                            Component.onCompleted: {
+                                model = dataset.channelsNameList()
+                                let index = model.indexOf(core.ch2Name)
+                                if (index >= 0)             channel2Combo.currentIndex = index
+                                else if (model.length > 2)  channel2Combo.currentIndex = 2
+                                else if (model.length > 1)  channel2Combo.currentIndex = 1
+                            }
+
+                            Connections {
+                                target: core
+                                function onChannelListUpdated() {
+                                    let list = dataset.channelsNameList()
+
+                                    channel2Combo.suppressTextSignal = true
+
+                                    channel2Combo.model = []
+                                    channel2Combo.model = list
+
+                                    let newIndex = list.indexOf(core.ch2Name)
+                                    if (newIndex < 0) {
+                                        newIndex = list.length > 2 ? 2
+                                                 : list.length > 1 ? 1
+                                                 : 0
+                                    }
+
+                                    channel2Combo.currentIndex = -1
+                                    channel2Combo.currentIndex = newIndex
+
+                                    mosaicGroup.setChannelNamesToBackend()
+
+                                    channel2Combo.suppressTextSignal = false
+                                }
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    spacing: Tokens.spaceMd
+                    Text {
+                        text: qsTr("Angle, °:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignTop
+                    }
+                    ColumnLayout {
+                        spacing: Tokens.spaceXs
+                        Layout.preferredWidth: mosaicGroup.ctrlW
+
+                        KSpinBox {
+                            id: mosaicLAngleOffset
+                            Layout.preferredWidth: mosaicGroup.ctrlW
+                            from: -90; to: 90; stepSize: 1; value: 0
+                            onValueModified: function(v) {
+                                MosaicViewControlMenuController.onSetLAngleOffset(v)
+                                dataset.onSetLAngleOffset(v)
+                            }
+                            Component.onCompleted: {
+                                MosaicViewControlMenuController.onSetLAngleOffset(value)
+                                dataset.onSetLAngleOffset(value)
+                            }
+                            Settings { property alias mosaicLAngleOffset: mosaicLAngleOffset.value }
+                        }
+
+                        KSpinBox {
+                            id: mosaicRAngleOffset
+                            Layout.preferredWidth: mosaicGroup.ctrlW
+                            from: -90; to: 90; stepSize: 1; value: 0
+                            onValueModified: function(v) {
+                                MosaicViewControlMenuController.onSetRAngleOffset(v)
+                                dataset.onSetRAngleOffset(v)
+                            }
+                            Component.onCompleted: {
+                                MosaicViewControlMenuController.onSetRAngleOffset(value)
+                                dataset.onSetRAngleOffset(value)
+                            }
+                            Settings { property alias mosaicRAngleOffset: mosaicRAngleOffset.value }
+                        }
+                    }
+                }
+
+                KSwitch {
+                    id: mosaicTraceLine
+                    text: qsTr("Trace line")
+                    checked: true
+                    Layout.fillWidth: true
+                    onToggled: MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
+                    Component.onCompleted: MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
+                    Settings { property alias mosaicTraceLine: mosaicTraceLine.checked }
+                }
+
+                RowLayout {
+                    spacing: Tokens.spaceMd
+                    Text {
+                        text: qsTr("Source:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
+                        Layout.fillWidth: true
+                    }
+                    KCombo {
+                        id: mosaicSource
+                        Layout.preferredWidth: mosaicGroup.ctrlW
+                        model: [qsTr("Raw"), qsTr("Side-Scan"), qsTr("TGC")]
+                        currentIndex: 1
+                        onCurrentIndexChanged: core.setMosaicSource(currentIndex)
+                        Component.onCompleted: core.setMosaicSource(currentIndex)
+                        Settings { property alias mosaicSource: mosaicSource.currentIndex }
+                    }
+                }
+
+                Rectangle {
+                    id: fakeCoordsGroup
+                    visible: core.posZeroing
+                    Layout.fillWidth: true
+                    Layout.topMargin: Tokens.spaceMd
+                    implicitHeight: fakeCoordsGroupContent.implicitHeight + 2 * Tokens.spaceLg
+                    color: "transparent"
+                    border.color: AppPalette.border
+                    border.width: 1
+                    radius: Tokens.radiusMd
+
+                    ColumnLayout {
+                        id: fakeCoordsGroupContent
+                        anchors.fill: parent
+                        anchors.margins: Tokens.spaceLg
+                        spacing: Tokens.spaceMd
+
+                        Button {
+                            Layout.alignment: Qt.AlignHCenter
+                            flat: true
+                            enabled: false
+                            padding: 0
+                            background: null
+                            icon.source: "qrc:/icons/ui/route_crossed_out.svg"
+                            icon.color: AppPalette.text
+                            icon.width: Tokens.controlHMd * 1.1
+                            icon.height: Tokens.controlHMd * 1.1
+                            implicitWidth: Tokens.controlHMd * 1.1
+                            implicitHeight: Tokens.controlHMd * 1.1
+                        }
+
+                        RowLayout {
+                            spacing: Tokens.spaceMd
+                            Text {
+                                text: qsTr("Calc last N epochs:")
+                                color: AppPalette.textSecond
+                                font.pixelSize: Tokens.fontMd
+                                Layout.fillWidth: true
+                            }
+                            KSlider {
+                                id: fakeCoordsLastNSlider
+                                Layout.preferredWidth: mosaicGroup.ctrlW - Math.round(70 * AppPalette.scale)
+                                from: 10; to: 3000; stepSize: 10; value: 500
+                                readonly property int effectiveN: (core.posZeroing && value < to) ? value : 0
+                                onEffectiveNChanged: core.setMosaicFakeCoordsLastN(effectiveN)
+                                Component.onCompleted: core.setMosaicFakeCoordsLastN(effectiveN)
+                                Settings { property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value }
+                            }
+                            Text {
+                                Layout.preferredWidth: Math.round(50 * AppPalette.scale)
+                                horizontalAlignment: Text.AlignRight
+                                color: AppPalette.text
+                                font.pixelSize: Tokens.fontMd
+                                text: fakeCoordsLastNSlider.value >= fakeCoordsLastNSlider.to
+                                      ? qsTr("All") : fakeCoordsLastNSlider.value
+                            }
+                        }
+
+                        KSwitch {
+                            id: fakeCoordsClearOldDataCheck
+                            text: qsTr("Clear old data (*)")
+                            checked: true
+                            Layout.fillWidth: true
+                            readonly property bool effectiveClearOldData: checked && core.posZeroing
+                            onEffectiveClearOldDataChanged: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
+                            Component.onCompleted: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
+                            Settings { property alias fakeCoordsClearOldDataCheck: fakeCoordsClearOldDataCheck.checked }
+                        }
+                    }
+                }
             }
         }
     }

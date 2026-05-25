@@ -135,9 +135,7 @@
         <file>qml/scene3d/CalcMethodTINSettings.qml</file>
         <file>qml/scene3d/SmoothMethodUGINSettings.qml</file>
         <file>qml/scene3d/SmoothMethodTriDivideSettings.qml</file>
-        <file>qml/scene3d/IsobathsExtraSettings.qml</file>
         <file>qml/scene3d/LocationExtraSettings.qml</file>
-        <file>qml/scene3d/MosaicExtraSettings.qml</file>
         <file>qml/scene3d/Settings3DExtraSettings.qml</file>
         <file>qml/scene3d/Settings3DView.qml</file>
         <file>qml/scene3d/SurfaceControlMenu.qml</file>

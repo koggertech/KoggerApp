@@ -1,7 +1,5 @@
 CalcMethodTINSettings 1.0 CalcMethodTINSettings.qml
-IsobathsExtraSettings 1.0 IsobathsExtraSettings.qml
 LocationExtraSettings 1.0 LocationExtraSettings.qml
-MosaicExtraSettings 1.0 MosaicExtraSettings.qml
 Scene3DGeometryPanel 1.0 Scene3DGeometryPanel.qml
 Scene3DLayerPanel 1.0 Scene3DLayerPanel.qml
 Scene3DRightToolbar 1.0 Scene3DRightToolbar.qml

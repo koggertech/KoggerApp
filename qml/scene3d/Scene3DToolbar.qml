@@ -19,82 +19,20 @@ Item  {
     width: rowButtons.implicitWidth
     height: rowButtons.implicitHeight
 
-    signal updateBottomTrack()
-
-    signal mosaicLAngleOffsetChanged(int val)
-    signal mosaicRAngleOffsetChanged(int val)
-
-    function updateMosaic() {
-        mosaicViewSettings.updateMosaic()
-    }
-
-    function resetCameraTop() {
-        Scene3dToolBarController.onSetCameraMapViewButtonClicked()
-    }
-
-    function toggleBottomTrack() {
-        bottomTrackCheckButton.checked = !bottomTrackCheckButton.checked
-    }
-
-    function toggleIsobaths() {
-        isobathsCheckButton.checked = !isobathsCheckButton.checked
-    }
-
-    function toggleMosaic() {
-        mosaicViewCheckButton.checked = !mosaicViewCheckButton.checked
-    }
-
-    function mosaicPrevTheme() {
-        mosaicViewSettings.prevTheme()
-    }
-
-    function mosaicNextTheme() {
-        mosaicViewSettings.nextTheme()
-    }
-
-    function mosaicLowLevelUp(step) {
-        mosaicViewSettings.lowLevelUp(step)
-    }
-
-    function mosaicLowLevelDown(step) {
-        mosaicViewSettings.lowLevelDown(step)
-    }
-
-    function mosaicHighLevelUp(step) {
-        mosaicViewSettings.highLevelUp(step)
-    }
-
-    function mosaicHighLevelDown(step) {
-        mosaicViewSettings.highLevelDown(step)
-    }
-
-    function surfacePrevTheme() {
-        isobathsSettings.prevTheme()
-    }
-
-    function surfaceNextTheme() {
-        isobathsSettings.nextTheme()
-    }
-
-    function surfaceStepDown(step) {
-        isobathsSettings.stepDown(step)
-    }
-
-    function surfaceStepUp(step) {
-        isobathsSettings.stepUp(step)
-    }
-
-    Component.onCompleted: {
-        mosaicViewSettings.mosaicLAngleOffsetChanged.connect(mosaicLAngleOffsetChanged)
-        mosaicViewSettings.mosaicRAngleOffsetChanged.connect(mosaicRAngleOffsetChanged)
-    }
+    // Mosaic/Isobaths hotkeys now dispatch through WorkspaceStore.applyMosaicHotkey
+    // / applyIsobathsHotkey into the App Settings groups (app.mosaic / app.isobaths).
+    // MainWindow.handleLegacyHotkey wires them in — see that file for the chain.
+    function resetCameraTop()         { Scene3dToolBarController.onSetCameraMapViewButtonClicked() }
+    function toggleBottomTrack()      { if (store) store.bottomTrackVisible = !store.bottomTrackVisible }
+    function toggleIsobaths()         { if (store) store.isobathsVisible   = !store.isobathsVisible   }
+    function toggleMosaic()           { if (store) store.mosaicVisible     = !store.mosaicVisible     }
 
     // opacity
     property bool isFitViewCheckButtonHovered: false
     property bool isBoatTrackCheckButtonHovered: false
     property bool isBottomTrackCheckButtonHovered: false
     property var view: null
-    property alias mosaicEnabled: mosaicViewCheckButton.checked
+    property var store: null
     readonly property bool showMosaicQualityLabel: false
     property bool toolbarHovered:
         Qt.platform.os === "android" ?
@@ -105,11 +43,7 @@ Item  {
      || isBottomTrackCheckButtonHovered
      || isFitViewCheckButtonHovered )
 
-    property bool menuOpened:
-        isobathsSettings.visible
-    || mosaicViewSettings.visible
-
-    opacity: (toolbarHovered || menuOpened) ? 1.0 : 0.5
+    opacity: toolbarHovered ? 1.0 : 0.5
     Behavior on opacity { NumberAnimation { duration: 120 } }
 
     HoverHandler {
@@ -204,9 +138,10 @@ Item  {
                 id: boatTrackCheckButton
                 iconSource: "qrc:/icons/ui/route.svg"
                 backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
+                borderColor: (toolbarRoot.store && toolbarRoot.store.boatTrackVisible)
+                             ? theme.controlBorderColor : theme.controlBackColor
                 checkedBorderColor: theme.controlBorderColor
-                checked: true
+                checkable: false
                 implicitHeight: theme.controlHeight * 1.3
                 implicitWidth: theme.controlHeight * 1.3
 
@@ -220,16 +155,9 @@ Item  {
                     popupPosition: "topRight"
                 }
 
-                onCheckedChanged: {
-                    BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
-                }
-
-                Component.onCompleted: {
-                    BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
-                }
-
-                Settings {
-                    property alias boatTrackCheckButton: boatTrackCheckButton.checked
+                onClicked: {
+                    if (toolbarRoot.store)
+                        toolbarRoot.store.toggleAppSettingsAtGroup("app.boattrack")
                 }
             }
 
@@ -237,9 +165,10 @@ Item  {
                 id: bottomTrackCheckButton
                 iconSource: "qrc:/icons/ui/double_route.svg"
                 backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
+                borderColor: (toolbarRoot.store && toolbarRoot.store.bottomTrackVisible)
+                             ? theme.controlBorderColor : theme.controlBackColor
                 checkedBorderColor: theme.controlBorderColor
-                checked: false
+                checkable: false
                 implicitHeight: theme.controlHeight * 1.3
                 implicitWidth: theme.controlHeight * 1.3
 
@@ -270,216 +199,85 @@ Item  {
                     toolbarRoot.isBottomTrackCheckButtonHovered = hovered
                 }
 
-                onCheckedChanged: {
-                    Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(checked) // calc state
-                    BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
-
-                    if (checked) {
-                        toolbarRoot.updateBottomTrack()
-                    }
-                }
-
-                Component.onCompleted: {
-                    Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(checked)
-                    BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
-                }
-
-                Settings {
-                    property alias bottomTrackCheckButton: bottomTrackCheckButton.checked
+                onClicked: {
+                    if (toolbarRoot.store)
+                        toolbarRoot.store.toggleAppSettingsAtGroup("app.bottomtrack")
                 }
             }
 
-            Item {
-                id: isobathsWrapper
-                width : isobathsCheckButton.implicitWidth
-                height: isobathsCheckButton.implicitHeight
+            CheckButton {
+                id: isobathsCheckButton
+                iconSource: "qrc:/icons/ui/isobaths.svg"
+                backColor: theme.controlBackColor
+                borderColor: (toolbarRoot.store && toolbarRoot.store.isobathsVisible)
+                             ? theme.controlBorderColor : theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checkable: false
+                implicitHeight: theme.controlHeight * 1.3
+                implicitWidth: theme.controlHeight * 1.3
 
-                CheckButton {
-                    id: isobathsCheckButton
-                    iconSource: "qrc:/icons/ui/isobaths.svg"
-                    backColor: theme.controlBackColor
-                    borderColor: theme.controlBackColor
-                    checkedBorderColor: theme.controlBorderColor
-                    checked: false
-                    implicitHeight: theme.controlHeight * 1.3
-                    implicitWidth: theme.controlHeight * 1.3
+                property bool pulse: core.dataProcessorState === 2 || core.dataProcessorState === 4
 
-                    property bool pulse: core.dataProcessorState === 2 || core.dataProcessorState === 4
+                SequentialAnimation {
+                    id: pulseIsobathsAnimation
+                    running: isobathsCheckButton.pulse
+                    loops: Animation.Infinite
+                    NumberAnimation { target: isobathsCheckButton; property: "opacity"; to: 0.2; duration: 500 }
+                    NumberAnimation { target: isobathsCheckButton; property: "opacity"; to: 1.0; duration: 500 }
+                }
 
-                    SequentialAnimation {
-                        id: pulseIsobathsAnimation
-                        running: isobathsCheckButton.pulse
-                        loops: Animation.Infinite
-                        NumberAnimation { target: isobathsCheckButton; property: "opacity"; to: 0.2; duration: 500 }
-                        NumberAnimation { target: isobathsCheckButton; property: "opacity"; to: 1.0; duration: 500 }
-                    }
-
-                    onPulseChanged: {
-                        if (!pulse) {
-                            isobathsCheckButton.opacity = 1.0;
-                        }
-                    }
-
-                    onCheckedChanged: {
-                        if (checked) {
-                            toolbarRoot.updateBottomTrack()
-                        }
-
-                        IsobathsViewControlMenuController.onProcessStateChanged(checked); // calc state/calc
-                        IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
-                    }
-
-                    Component.onCompleted: {
-                        IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
-                        IsobathsViewControlMenuController.onProcessStateChanged(checked);
-                    }
-
-                    property bool isobathsLongPressTriggered: false
-
-                    MouseArea {
-                        id: isobathsTouchArea
-                        anchors.fill: parent
-                        enabled: Qt.platform.os === "android"
-
-                        onPressed: {
-                            if (enabled) {
-                                isobathsLongPressTimer.start()
-                                isobathsCheckButton.isobathsLongPressTriggered = false
-                            }
-                        }
-
-                        onReleased: {
-                            if (enabled) {
-                                if (!isobathsCheckButton.isobathsLongPressTriggered) {
-                                    isobathsCheckButton.checked = !isobathsCheckButton.checked
-                                }
-                                isobathsLongPressTimer.stop()
-                            }
-                        }
-
-                        onCanceled: {
-                            if (enabled) {
-                                isobathsLongPressTimer.stop()
-                            }
-                        }
-                    }
-
-                    Timer {
-                        id: isobathsLongPressTimer
-                        interval: 100 // ms
-                        repeat: false
-                        running : false
-                        onTriggered: {
-                            isobathsCheckButton.isobathsLongPressTriggered = true;
-                        }
-                    }
-
-                    Settings {
-                        property alias isobathsCheckButton: isobathsCheckButton.checked
+                onPulseChanged: {
+                    if (!pulse) {
+                        isobathsCheckButton.opacity = 1.0;
                     }
                 }
 
-                IsobathsExtraSettings {
-                    id: isobathsSettings
-                    isobathsCheckButton: isobathsCheckButton
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Isobaths")
+                    popupPosition: "topRight"
+                }
+
+                onClicked: {
+                    if (toolbarRoot.store)
+                        toolbarRoot.store.toggleAppSettingsAtGroup("app.isobaths")
                 }
             }
 
-            Item {
-                id: mosaicViewWrapper
-                width : mosaicViewCheckButton.implicitWidth
-                height: mosaicViewCheckButton.implicitHeight
+            CheckButton {
+                id: mosaicViewCheckButton
+                iconSource: "qrc:/icons/ui/side_scan.svg"
+                backColor: theme.controlBackColor
+                borderColor: (toolbarRoot.store && toolbarRoot.store.mosaicVisible)
+                             ? theme.controlBorderColor : theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checkable: false
+                implicitHeight: theme.controlHeight * 1.3
+                implicitWidth: theme.controlHeight * 1.3
 
-                CheckButton { // side scan
-                    id: mosaicViewCheckButton
-                    iconSource: "qrc:/icons/ui/side_scan.svg"
-                    backColor: theme.controlBackColor
-                    borderColor: theme.controlBackColor
-                    checkedBorderColor: theme.controlBorderColor
-                    checked: false
-                    implicitHeight: theme.controlHeight * 1.3
-                    implicitWidth: theme.controlHeight * 1.3
+                property bool pulse: core.dataProcessorState === 3
 
-                    property bool pulse: core.dataProcessorState === 3
+                SequentialAnimation {
+                    id: pulseMosaicAnimation
+                    running: mosaicViewCheckButton.pulse
+                    loops: Animation.Infinite
+                    NumberAnimation { target: mosaicViewCheckButton; property: "opacity"; to: 0.2; duration: 500 }
+                    NumberAnimation { target: mosaicViewCheckButton; property: "opacity"; to: 1.0; duration: 500 }
+                }
 
-                    SequentialAnimation {
-                        id: pulseMosaicAnimation
-                        running: mosaicViewCheckButton.pulse
-                        loops: Animation.Infinite
-                        NumberAnimation { target: mosaicViewCheckButton; property: "opacity"; to: 0.2; duration: 500 }
-                        NumberAnimation { target: mosaicViewCheckButton; property: "opacity"; to: 1.0; duration: 500 }
-                    }
-
-                    onPulseChanged: {
-                        if (!pulse) {
-                            mosaicViewCheckButton.opacity = 1.0;
-                        }
-                    }
-
-                    onCheckedChanged: {
-                        if (checked) {
-                            toolbarRoot.updateBottomTrack()
-                        }
-
-                        MosaicViewControlMenuController.onUpdateStateChanged(checked) // calc state/calc
-                        MosaicViewControlMenuController.onVisibilityChanged(checked)
-                    }
-
-                    Component.onCompleted: {
-                        MosaicViewControlMenuController.onVisibilityChanged(checked)
-                        MosaicViewControlMenuController.onUpdateStateChanged(checked)
-                    }
-
-                    property bool mosaicLongPressTriggered: false
-
-                    MouseArea {
-                        id: mosaicViewTouchArea
-                        anchors.fill: parent
-                        enabled: Qt.platform.os === "android"
-
-                        onPressed: {
-                            if (enabled) {
-                                mosaicViewLongPressTimer.start()
-                                mosaicViewCheckButton.mosaicLongPressTriggered = false
-                            }
-                        }
-
-                        onReleased: {
-                            if (enabled) {
-                                if (!mosaicViewCheckButton.mosaicLongPressTriggered) {
-                                    mosaicViewCheckButton.checked = !mosaicViewCheckButton.checked
-                                }
-                                mosaicViewLongPressTimer.stop()
-                            }
-                        }
-
-                        onCanceled: {
-                            if (enabled) {
-                                mosaicViewLongPressTimer.stop()
-                            }
-                        }
-                    }
-
-                    Timer {
-                        id: mosaicViewLongPressTimer
-                        interval: 100 // ms
-                        repeat: false
-                        running: false
-
-                        onTriggered: {
-                            mosaicViewCheckButton.mosaicLongPressTriggered = true;
-                        }
-                    }
-
-
-                    Settings {
-                        property alias mosaicViewCheckButton: mosaicViewCheckButton.checked
+                onPulseChanged: {
+                    if (!pulse) {
+                        mosaicViewCheckButton.opacity = 1.0;
                     }
                 }
 
-                MosaicExtraSettings {
-                    id: mosaicViewSettings
-                    mosaicViewCheckButton: mosaicViewCheckButton
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Mosaic")
+                    popupPosition: "topRight"
+                }
+
+                onClicked: {
+                    if (toolbarRoot.store)
+                        toolbarRoot.store.toggleAppSettingsAtGroup("app.mosaic")
                 }
             }
 

@@ -175,7 +175,7 @@ Item {
 
             onClicked: {
                 if (root.store && typeof root.store.openAppSettingsAtGroup === "function")
-                    root.store.openAppSettingsAtGroup("app.scene3d")
+                    root.store.toggleAppSettingsAtGroup("app.scene3d")
             }
         }
 

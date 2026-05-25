@@ -27,12 +27,8 @@ Item {
     Scene3DToolbar {
         id: scene3dToolbar
         view: root.scene3dView
-        z: menuOpened ? 100 : 1
-
-        onUpdateBottomTrack: {
-            if (root.workspaceRoot)
-                root.workspaceRoot.updateBottomTrackForAllPlots()
-        }
+        store: root.workspaceRoot ? root.workspaceRoot.store : null
+        z: 1
     }
 
     Scene3DRightToolbar {

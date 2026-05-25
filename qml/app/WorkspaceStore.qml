@@ -133,6 +133,109 @@ property Settings scene3dPersistedSettings: Settings {
 property alias navigationViewEnabled: scene3dPersistedSettings.navigationViewButton
 property alias useAngleEnabled: scene3dPersistedSettings.useAngleButton
 
+property Settings scene3dLayerVisibility: Settings {
+    id: scene3dLayerVisibility
+    property bool boatTrackCheckButton: true
+    property bool bottomTrackCheckButton: false
+    property bool isobathsCheckButton: false
+    property bool mosaicViewCheckButton: false
+}
+property alias boatTrackVisible:   scene3dLayerVisibility.boatTrackCheckButton
+property alias bottomTrackVisible: scene3dLayerVisibility.bottomTrackCheckButton
+property alias isobathsVisible:    scene3dLayerVisibility.isobathsCheckButton
+property alias mosaicVisible:      scene3dLayerVisibility.mosaicViewCheckButton
+
+signal surfaceLayersRefreshRequested()
+
+onBoatTrackVisibleChanged: {
+    BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(boatTrackVisible)
+}
+onBottomTrackVisibleChanged: {
+    Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(bottomTrackVisible)
+    BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(bottomTrackVisible)
+    if (bottomTrackVisible) surfaceLayersRefreshRequested()
+}
+onIsobathsVisibleChanged: {
+    if (isobathsVisible) surfaceLayersRefreshRequested()
+    IsobathsViewControlMenuController.onProcessStateChanged(isobathsVisible)
+    IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(isobathsVisible)
+}
+onMosaicVisibleChanged: {
+    if (mosaicVisible) surfaceLayersRefreshRequested()
+    MosaicViewControlMenuController.onUpdateStateChanged(mosaicVisible)
+    MosaicViewControlMenuController.onVisibilityChanged(mosaicVisible)
+}
+
+function initLayerVisibilityControllers() {
+    BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(boatTrackVisible)
+    Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(bottomTrackVisible)
+    BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(bottomTrackVisible)
+    IsobathsViewControlMenuController.onProcessStateChanged(isobathsVisible)
+    IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(isobathsVisible)
+    MosaicViewControlMenuController.onVisibilityChanged(mosaicVisible)
+    MosaicViewControlMenuController.onUpdateStateChanged(mosaicVisible)
+    pushMosaicChannelsFromCore()
+}
+
+// Hotkey dispatch — finds the matching SettingsGroup instance by stateKey and
+// invokes the named hotkey function on it. Returns true on success so callers
+// can short-circuit. Used by MainWindow.handleLegacyHotkey for Mosaic/Isobaths
+// shortcut groups (prev/next theme, level adjust, step etc.).
+function _invokeGroupHotkey(stateKey, fnName, arg) {
+    for (var i = 0; i < _settingsGroupInstances.length; ++i) {
+        var g = _settingsGroupInstances[i]
+        if (!g || g.stateKey !== stateKey) continue
+        if (typeof g[fnName] !== "function") return false
+        if (arg === undefined) g[fnName]()
+        else                   g[fnName](arg)
+        return true
+    }
+    return false
+}
+function applyMosaicHotkey(fn, parameter) {
+    switch (fn) {
+    case "mosaicPrevTheme":     return _invokeGroupHotkey("app.mosaic", "prevTheme")
+    case "mosaicNextTheme":     return _invokeGroupHotkey("app.mosaic", "nextTheme")
+    case "mosaicLowLevelUp":    return _invokeGroupHotkey("app.mosaic", "lowLevelUp",   parameter)
+    case "mosaicLowLevelDown":  return _invokeGroupHotkey("app.mosaic", "lowLevelDown", parameter)
+    case "mosaicHighLevelUp":   return _invokeGroupHotkey("app.mosaic", "highLevelUp",  parameter)
+    case "mosaicHighLevelDown": return _invokeGroupHotkey("app.mosaic", "highLevelDown",parameter)
+    }
+    return false
+}
+function applyIsobathsHotkey(fn, parameter) {
+    switch (fn) {
+    case "surfacePrevTheme": return _invokeGroupHotkey("app.isobaths", "prevTheme")
+    case "surfaceNextTheme": return _invokeGroupHotkey("app.isobaths", "nextTheme")
+    case "surfaceStepDown":  return _invokeGroupHotkey("app.isobaths", "stepDown", parameter)
+    case "surfaceStepUp":    return _invokeGroupHotkey("app.isobaths", "stepUp",   parameter)
+    }
+    return false
+}
+
+function pushMosaicChannelsFromCore() {
+    if (!core || !dataset) return
+    if (typeof core.setMosaicChannels !== "function") return
+    if (typeof dataset.channelsNameList !== "function") return
+    for (var i = 0; i < _settingsGroupInstances.length; ++i) {
+        var g = _settingsGroupInstances[i]
+        if (g && g.stateKey === "app.mosaic") return
+    }
+    var list = dataset.channelsNameList()
+    var ch1 = core.ch1Name
+    var ch2 = core.ch2Name
+    if (!ch1 || list.indexOf(ch1) <= 0) ch1 = list.length > 1 ? list[1] : ""
+    if (!ch2 || list.indexOf(ch2) <= 0) ch2 = list.length > 2 ? list[2] : ch1
+    if (!ch1 && !ch2) return
+    core.setMosaicChannels(ch1, ch2)
+}
+
+property Connections _coreChannelConn: Connections {
+    target: core
+    ignoreUnknownSignals: true
+    function onChannelListUpdated() { pushMosaicChannelsFromCore() }
+}
+
 property Settings layoutStore: Settings {
     category: "workspace"
 
@@ -297,7 +400,10 @@ function openAppSettingsAtGroup(stateKey) {
     if (key === "")
         return
 
-    setSettingsGroupExpanded(key, true)
+    var nextMap = {}
+    nextMap[key] = true
+    settingsGroupExpandedMap = nextMap
+    saveSettingsGroupsState()
     pendingScrollGroupKey = key
 
     for (var i = 0; i < _settingsGroupInstances.length; ++i) {
@@ -308,6 +414,15 @@ function openAppSettingsAtGroup(stateKey) {
             break
         }
     }
+}
+
+function toggleAppSettingsAtGroup(stateKey) {
+    var key = normalizedSettingsGroupKey(stateKey)
+    if (settingsPanelOpen && key !== "" && isSettingsGroupExpanded(key)) {
+        settingsPanelOpen = false
+        return
+    }
+    openAppSettingsAtGroup(stateKey)
 }
 
 function openConnectionsSettings() {

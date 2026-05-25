@@ -78,9 +78,7 @@ Scene3DLayerPanel 1.0 scene3d/Scene3DLayerPanel.qml
 CalcMethodTINSettings 1.0 scene3d/CalcMethodTINSettings.qml
 SmoothMethodUGINSettings 1.0 scene3d/SmoothMethodUGINSettings.qml
 SmoothMethodTriDivideSettings 1.0 scene3d/SmoothMethodTriDivideSettings.qml
-IsobathsExtraSettings 1.0 scene3d/IsobathsExtraSettings.qml
 LocationExtraSettings 1.0 scene3d/LocationExtraSettings.qml
-MosaicExtraSettings 1.0 scene3d/MosaicExtraSettings.qml
 Settings3DExtraSettings 1.0 scene3d/Settings3DExtraSettings.qml
 Settings3DView 1.0 scene3d/Settings3DView.qml
 SurfaceControlMenu 1.0 scene3d/SurfaceControlMenu.qml

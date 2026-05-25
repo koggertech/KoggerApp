@@ -100,13 +100,6 @@ Item {
         return item !== undefined && item !== null ? item : null
     }
 
-    function updateBottomTrackForAllPlots() {
-        forEachRegisteredPlotItem(function(item) {
-            if (typeof item.updateBottomTrackProcessing === "function")
-                item.updateBottomTrackProcessing()
-        })
-    }
-
     function forEachRegisteredPlotItem(callback) {
         if (typeof callback !== "function")
             return

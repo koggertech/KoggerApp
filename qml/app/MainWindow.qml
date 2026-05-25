@@ -26,6 +26,9 @@ ApplicationWindow {
 
         windowWidth: root.width
         windowHeight: root.height
+
+        onSurfaceLayersRefreshRequested: updateBottomTrackForRegisteredPlots()
+        Component.onCompleted: initLayerVisibilityControllers()
     }
 
     // Читаем глобальные настройки при запуске (те же ключи, что сохраняет AppSettingsPage)
@@ -405,6 +408,11 @@ ApplicationWindow {
 
         var handled = workspaceView.applyLegacy2DHotkey(fn, parameter)
         if (handled)
+            return true
+
+        if (workspaceStore.applyMosaicHotkey(fn, parameter))
+            return true
+        if (workspaceStore.applyIsobathsHotkey(fn, parameter))
             return true
 
         if (fn === "clickConnections") {
