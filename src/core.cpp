@@ -6,6 +6,8 @@
 #include <cstring>
 #include <QDebug>
 #include <QFileInfo>
+#include <QStandardPaths>
+#include <QDateTime>
 #include "bottom_track.h"
 #include "hotkeys_manager.h"
 #include "tile_provider_ids.h"
@@ -1926,37 +1928,78 @@ QVariantList Core::getMapTileProviders() const
 {
     QVariantList providers;
 
+    // Provider `name` fields are brand/product names — left untranslated.
+    // `layer_type` is a generic descriptor shown in the UI — wrapped in tr()
+    // so lupdate picks it up and the user sees a localised label.
     QVariantMap osm;
     osm["id"] = map::kOsmProviderId;
     osm["name"] = QStringLiteral("OpenStreetMap");
-    osm["layer_type"] = QStringLiteral("street");
+    osm["layer_type"] = tr("street");
     providers.append(osm);
 
     QVariantMap google;
     google["id"] = map::kGoogleProviderId;
     google["name"] = QStringLiteral("Google Satellite");
-    google["layer_type"] = QStringLiteral("satellite");
+    google["layer_type"] = tr("satellite");
     providers.append(google);
 
     QVariantMap baiduSat;
     baiduSat["id"] = map::kBaiduSatProviderId;
     baiduSat["name"] = QStringLiteral("Baidu Satellite");
-    baiduSat["layer_type"] = QStringLiteral("satellite");
+    baiduSat["layer_type"] = tr("satellite");
     providers.append(baiduSat);
 
     QVariantMap baiduHybrid;
     baiduHybrid["id"] = map::kBaiduHybridProviderId;
     baiduHybrid["name"] = QStringLiteral("Baidu Hybrid");
-    baiduHybrid["layer_type"] = QStringLiteral("satellite");
+    baiduHybrid["layer_type"] = tr("satellite");
     providers.append(baiduHybrid);
 
     QVariantMap baiduSchema;
     baiduSchema["id"] = map::kBaiduSchemaProviderId;
     baiduSchema["name"] = QStringLiteral("Baidu Schema");
-    baiduSchema["layer_type"] = QStringLiteral("street");
+    baiduSchema["layer_type"] = tr("street");
     providers.append(baiduSchema);
 
     return providers;
+}
+
+QVariantMap Core::getMapTileDbInfo(int providerId) const
+{
+    QVariantMap result;
+    result["exists"]   = false;
+    result["sizeBytes"] = qint64(0);
+    result["created"]  = QString();
+    result["modified"] = QString();
+    result["path"]     = QString();
+
+    QString dbName;
+    switch (providerId) {
+        case map::kGoogleProviderId:      dbName = QStringLiteral("tiles_google");        break;
+        case map::kOsmProviderId:         dbName = QStringLiteral("tiles_osm");           break;
+        case map::kBaiduSatProviderId:    dbName = QStringLiteral("tiles_baidu_sat");     break;
+        case map::kBaiduSchemaProviderId: dbName = QStringLiteral("tiles_baidu_schema");  break;
+        case map::kBaiduHybridProviderId: dbName = QStringLiteral("tiles_baidu_hybrid");  break;
+        default: return result;
+    }
+
+    const QString dbPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                           + QStringLiteral("/") + dbName + QStringLiteral(".db");
+    result["path"] = dbPath;
+
+    QFileInfo fi(dbPath);
+    if (!fi.exists() || !fi.isFile())
+        return result;
+
+    result["exists"]   = true;
+    result["sizeBytes"] = fi.size();
+    // birthTime() may be invalid on filesystems that don't track creation
+    // time (most Linux ext4 setups) — fall back to lastModified in that case.
+    const QDateTime birth = fi.birthTime();
+    const QDateTime modified = fi.lastModified();
+    result["created"]  = (birth.isValid() ? birth : modified).toString(Qt::ISODate);
+    result["modified"] = modified.toString(Qt::ISODate);
+    return result;
 }
 
 bool Core::getInternetAvailable() const

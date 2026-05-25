@@ -47,7 +47,6 @@ Item {
     readonly property bool hasTransientUi: contextMenu3D.visible
                                          || (root.scene3dView !== null
                                              && (root.scene3dView.rulerDrawing || root.scene3dView.rulerEnabled))
-                                         || rightToolbar.layersOpen
                                          || rightToolbar.geometryOpen
 
     function closeTransientUi() {
@@ -56,7 +55,9 @@ Item {
             contextMenu3D.visible = false
             return true
         }
-        // Tools/panels — ruler reset + layers + geometry collapse together.
+        // Tools/panels — ruler reset + geometry collapse together. The
+        // map-layer panel lived here too, but moved to AppSettings — no
+        // local transient state for it any more.
         var handled = false
         if (root.scene3dView && (root.scene3dView.rulerDrawing || root.scene3dView.rulerEnabled)) {
             if (root.scene3dView.rulerDrawing
@@ -64,10 +65,6 @@ Item {
                 root.scene3dView.rulerCancelDrawing()
             }
             root.scene3dView.rulerEnabled = false
-            handled = true
-        }
-        if (rightToolbar.layersOpen) {
-            rightToolbar.layersOpen = false
             handled = true
         }
         if (rightToolbar.geometryOpen) {

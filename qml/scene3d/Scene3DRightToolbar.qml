@@ -11,16 +11,29 @@ Item {
 
     property var geo: null
     property var view: null
+    // Kept for backwards compatibility with Pane3DWindow.closeTransientUi().
+    // Map-tile-provider menu lives in AppSettings now; this property is always
+    // false and the toggleLayers() function is a no-op.
     property bool layersOpen: false
     property bool geometryOpen: false
     property real buttonSize: theme.controlHeight * 1.3
     property bool toolbarHovered: buttonColumnHoverHandler.hovered
-    property bool toolbarPressed: layersButton.down || rulerToolButton.down
-    property bool menuOpened: root.layersOpen || root.geometryOpen
+    property bool toolbarPressed: rulerToolButton.down || zoomInButton.down || zoomOutButton.down
+    property bool menuOpened: root.geometryOpen
 
-    width: buttonColumn.width + Math.max(layerPanel.width, geometryPanel.width) + 8
+    width: buttonColumn.width + geometryPanel.width + 8
     opacity: (toolbarHovered || toolbarPressed || menuOpened) ? 1.0 : 0.5
     Behavior on opacity { NumberAnimation { duration: 120 } }
+
+    // One mouse-wheel step at the centre of the 3D viewport. The C++ side
+    // divides angleDelta.y by 120 to get logical steps and clamps to ±8.
+    function _zoom(steps) {
+        if (!root.view || typeof root.view.mouseWheelTrigger !== "function")
+            return
+        var cx = root.view.width  / 2
+        var cy = root.view.height / 2
+        root.view.mouseWheelTrigger(Qt.NoButton, cx, cy, Qt.point(0, steps * 120), 0)
+    }
 
     HoverHandler {
         onHoveredChanged: {
@@ -30,23 +43,19 @@ Item {
         }
     }
 
-    function toggleLayers() {
-        layersOpen = !layersOpen
-        if (layersOpen) geometryOpen = false
-    }
+    function toggleLayers() { /* moved to AppSettings; kept for ESC compatibility */ }
 
     function toggleGeometry() {
         geometryOpen = !geometryOpen
-        if (geometryOpen) layersOpen = false
     }
 
     ColumnLayout {
         id: buttonColumn
         anchors.right: parent.right
-        anchors.top: parent.top
-        // Offset by half the split-drag hit zone so corner touches go to the
-        // pane resize, not these buttons.
-        anchors.topMargin: 12 + AppPalette.splitHitSizePx / 2
+        // Vertically centred against the pane — Ruler sits in the middle,
+        // zoom-in / zoom-out stack right above it.
+        anchors.verticalCenter: parent.verticalCenter
+        // Stay clear of split-drag hit zone on the right edge.
         anchors.rightMargin: 12 + AppPalette.splitHitSizePx / 2
         spacing: 6
         z: 3
@@ -56,10 +65,9 @@ Item {
         }
 
         CheckButton {
-            id: layersButton
+            id: zoomInButton
             checkable: false
-            checked: root.layersOpen
-            iconSource: "qrc:/icons/ui/map.svg"
+            iconSource: "qrc:/icons/ui/zoom-in.svg"
             implicitWidth: buttonSize
             implicitHeight: buttonSize
             backColor: theme.controlBackColor
@@ -67,11 +75,29 @@ Item {
             checkedBorderColor: theme.controlBorderColor
 
             CMouseOpacityArea {
-                toolTipText: qsTr("Map settings")
+                toolTipText: qsTr("Zoom in")
                 popupPosition: "bottomLeft"
             }
 
-            onClicked: root.toggleLayers()
+            onClicked: root._zoom(+4)
+        }
+
+        CheckButton {
+            id: zoomOutButton
+            checkable: false
+            iconSource: "qrc:/icons/ui/zoom-out.svg"
+            implicitWidth: buttonSize
+            implicitHeight: buttonSize
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+
+            CMouseOpacityArea {
+                toolTipText: qsTr("Zoom out")
+                popupPosition: "bottomLeft"
+            }
+
+            onClicked: root._zoom(-4)
         }
 
         CheckButton {
@@ -255,20 +281,6 @@ Item {
 
                 onClicked: if (geo) geo.cancelDrawing()
             }
-        }
-    }
-
-    Scene3DLayerPanel {
-        id: layerPanel
-        showToggleButton: false
-        expanded: root.layersOpen
-        anchors.right: buttonColumn.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        z: 2
-
-        onRequestClose: {
-            root.layersOpen = false
         }
     }
 

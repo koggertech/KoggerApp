@@ -942,6 +942,174 @@ Column {
         Settings { property alias appTgcCompensate: tgcCompensateSwitch.checked }
     }
 
+    // ── 3D scene (map provider) ──────────────────────────────────────────────
+
+    SettingsGroup {
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("3D scene")
+        description: qsTr("Map tile provider for the 3D scene background.")
+        stateStore: root.store
+        stateKey: "app.scene3d"
+        collapsedByDefault: true
+
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            // ── Visibility toggle ────────────────────────────────────────
+            ParamCard {
+                width: parent.width
+                label: qsTr("Show map tiles")
+                checked: mapVisibilitySettings.mapViewCheckButton
+                onToggled: function(v) {
+                    mapVisibilitySettings.mapViewCheckButton = v
+                    if (typeof MapViewControlMenuController !== "undefined")
+                        MapViewControlMenuController.onVisibilityChanged(v)
+                    core.setMapTileLoadingEnabled(v)
+                }
+            }
+
+            // Persisted under the legacy QSettings key so existing user
+            // preferences carry over from the old in-3D-toolbar UI.
+            Settings {
+                id: mapVisibilitySettings
+                property bool mapViewCheckButton: true
+            }
+            Component.onCompleted: {
+                if (typeof MapViewControlMenuController !== "undefined")
+                    MapViewControlMenuController.onVisibilityChanged(mapVisibilitySettings.mapViewCheckButton)
+                core.setMapTileLoadingEnabled(mapVisibilitySettings.mapViewCheckButton)
+            }
+
+            // ── Internet status row ──────────────────────────────────────
+            Row {
+                width: parent.width
+                spacing: Tokens.spaceMd
+                height: Tokens.controlHSm
+
+                Rectangle {
+                    width: Math.round(10 * AppPalette.scale)
+                    height: width
+                    radius: width / 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: core.internetAvailable ? "#35c759" : "#ff3b30"
+                    border.width: 1
+                    border.color: AppPalette.border
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: core.internetAvailable ? qsTr("Internet available")
+                                                 : qsTr("Internet unavailable")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontMd
+                }
+            }
+
+            Text {
+                width: parent.width
+                text: qsTr("Providers")
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontSm
+                topPadding: Tokens.spaceXs
+            }
+
+            // ── Provider selector (single-pick rows) ─────────────────────
+            Repeater {
+                model: core.mapTileProviders
+                delegate: Rectangle {
+                    width: parent.width
+                    implicitHeight: rowCol.implicitHeight + 2 * Tokens.spaceSm
+                    height: implicitHeight
+                    radius: Tokens.radiusMd
+
+                    readonly property bool isSelected: modelData.id === core.mapTileProviderId
+                    // Cached once per delegate (providers list is CONSTANT).
+                    // Refreshed on click — see below.
+                    property var dbInfo: core.getMapTileDbInfo(modelData.id)
+
+                    color: isSelected
+                           ? AppPalette.accentBg
+                           : (providerMouse.containsMouse ? AppPalette.bgHover : AppPalette.bg)
+                    border.width: 1
+                    border.color: isSelected
+                                  ? AppPalette.accentBorder
+                                  : (providerMouse.containsMouse ? AppPalette.borderHover : AppPalette.border)
+                    Behavior on color       { ColorAnimation { duration: 110 } }
+                    Behavior on border.color { ColorAnimation { duration: 110 } }
+
+                    Column {
+                        id: rowCol
+                        anchors.left: parent.left
+                        anchors.leftMargin: Tokens.spaceMd
+                        anchors.right: parent.right
+                        anchors.rightMargin: Tokens.spaceMd
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 2
+
+                        // ── Top line: name + layer type ────────────────
+                        Item {
+                            width: parent.width
+                            height: nameLabel.implicitHeight
+
+                            Text {
+                                id: nameLabel
+                                anchors.left: parent.left
+                                anchors.right: typeLabel.left
+                                anchors.rightMargin: Tokens.spaceMd
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: modelData.name
+                                color: AppPalette.text
+                                font.pixelSize: Tokens.fontMd
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                id: typeLabel
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: modelData.layer_type
+                                color: AppPalette.textMuted
+                                font.pixelSize: Tokens.fontSm
+                            }
+                        }
+
+                        // ── Bottom line: cache age + size ──────────────
+                        Text {
+                            width: parent.width
+                            text: {
+                                if (!dbInfo || !dbInfo.exists)
+                                    return qsTr("Cache: empty")
+                                var mb = (dbInfo.sizeBytes / (1024 * 1024)).toFixed(1)
+                                var iso = dbInfo.created || dbInfo.modified || ""
+                                var d = new Date(iso)
+                                var dateStr = isNaN(d.getTime())
+                                              ? iso
+                                              : d.toLocaleDateString(Qt.locale(), Locale.ShortFormat)
+                                return qsTr("Cache since %1  •  %2 MB").arg(dateStr).arg(mb)
+                            }
+                            color: AppPalette.textMuted
+                            font.pixelSize: Tokens.fontXs
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    MouseArea {
+                        id: providerMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            core.setMapTileProvider(modelData.id)
+                            // Re-query in case selection just created a new
+                            // empty DB on disk for this provider.
+                            dbInfo = core.getMapTileDbInfo(modelData.id)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // ── Экспорт ───────────────────────────────────────────────────────────────
 
     SettingsGroup {

@@ -185,6 +185,7 @@ public slots:
     Q_INVOKABLE int getMapTileProviderId() const;
     Q_INVOKABLE QString getMapTileProviderName() const;
     Q_INVOKABLE QVariantList getMapTileProviders() const;
+    Q_INVOKABLE QVariantMap getMapTileDbInfo(int providerId) const;
     Q_INVOKABLE bool getInternetAvailable() const;
     Q_INVOKABLE bool getMapTileLoadingEnabled() const;
     Q_INVOKABLE void setMapTileLoadingEnabled(bool enabled);
