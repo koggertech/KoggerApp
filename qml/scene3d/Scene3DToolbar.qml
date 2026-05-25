@@ -95,7 +95,7 @@ Item  {
     property bool isBottomTrackCheckButtonHovered: false
     property var view: null
     property alias mosaicEnabled: mosaicViewCheckButton.checked
-    property alias showMosaicQualityLabel: settings3DSettings.showQualityLabel
+    readonly property bool showMosaicQualityLabel: false
     property bool toolbarHovered:
         Qt.platform.os === "android" ?
     (   setCameraIsometricView.down
@@ -106,9 +106,7 @@ Item  {
      || isFitViewCheckButtonHovered )
 
     property bool menuOpened:
-        settings3DSettings.visible
-    || locationSettings.visible
-    || isobathsSettings.visible
+        isobathsSettings.visible
     || mosaicViewSettings.visible
 
     opacity: (toolbarHovered || menuOpened) ? 1.0 : 0.5
@@ -199,149 +197,6 @@ Item  {
 
                 Settings {
                     property alias geoJsonToolButton: geoJsonToolButton.checked
-                }
-            }
-
-            Item {
-                //visible: false
-                id:     locationWrapper
-                width : locationCheckButton.implicitWidth
-                height: locationCheckButton.implicitHeight
-
-                CheckButton {
-                    id: locationCheckButton
-                    iconSource: "qrc:/icons/ui/location.svg"
-                    backColor:          theme.controlBackColor
-                    borderColor:        theme.controlBackColor
-                    checkedBorderColor: theme.controlBorderColor
-                    checked:            false
-                    implicitHeight:     theme.controlHeight * 1.3
-                    implicitWidth:      theme.controlHeight * 1.3
-
-                    onCheckedChanged: {
-                        Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
-                    }
-
-                    Component.onCompleted: {
-                        Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
-                    }
-
-                    property bool locationLongPressTriggered: false
-
-                    MouseArea {
-                        id: locationTouchArea
-                        anchors.fill: parent
-                        enabled: Qt.platform.os === "android"
-
-                        onPressed: {
-                            if (enabled) {
-                                locationLongPressTimer.start()
-                                locationCheckButton.locationLongPressTriggered = false
-                            }
-                        }
-
-                        onReleased: {
-                            if (enabled) {
-                                if (!locationCheckButton.locationLongPressTriggered) {
-                                    locationCheckButton.checked = !locationCheckButton.checked
-                                }
-                                locationLongPressTimer.stop()
-                            }
-                        }
-
-                        onCanceled: {
-                            if (enabled) {
-                                locationLongPressTimer.stop()
-                            }
-                        }
-                    }
-
-                    Timer {
-                        id: locationLongPressTimer
-                        interval: 100 // ms
-                        repeat: false
-                        running : false
-                        onTriggered: {
-                            locationCheckButton.locationLongPressTriggered = true;
-                        }
-                    }
-
-                    Settings {
-                        property alias locationCheckButton: locationCheckButton.checked
-                    }
-                }
-
-                LocationExtraSettings {
-                    id: locationSettings
-                    locationCheckButton:      locationCheckButton
-
-                    anchors.bottom:           locationCheckButton.top
-                    anchors.horizontalCenter: locationCheckButton.horizontalCenter
-                    z: 2
-                }
-            }
-
-            Item {
-                id: settings3DWrapper
-                width : settings3DCheckButton.implicitWidth
-                height: settings3DCheckButton.implicitHeight
-
-                CheckButton {
-                    id: settings3DCheckButton
-                    iconSource: "qrc:/icons/ui/settings.svg"
-                    backColor: theme.controlBackColor
-                    borderColor: theme.controlBackColor
-                    checkedBorderColor: theme.controlBorderColor
-                    checkable: false
-                    checked: false
-                    implicitHeight: theme.controlHeight * 1.3
-                    implicitWidth: theme.controlHeight * 1.3
-
-                    property bool settings3DLongPressTriggered: false
-
-                    MouseArea {
-                        id: settings3DTouchArea
-                        anchors.fill: parent
-                        enabled: Qt.platform.os === "android"
-
-                        onPressed: {
-                            if (enabled) {
-                                settings3DLongPressTimer.start()
-                                settings3DCheckButton.settings3DLongPressTriggered = false
-                            }
-                        }
-
-                        onReleased: {
-                            if (enabled) {
-                                settings3DLongPressTimer.stop()
-                            }
-                        }
-
-                        onCanceled: {
-                            if (enabled) {
-                                settings3DLongPressTimer.stop()
-                            }
-                        }
-                    }
-
-                    Timer {
-                        id: settings3DLongPressTimer
-                        interval: 100 // ms
-                        repeat: false
-                        running : false
-
-                        onTriggered: {
-                            settings3DCheckButton.settings3DLongPressTriggered = true;
-                        }
-                    }
-                }
-
-                Settings3DExtraSettings {
-                    id: settings3DSettings
-                    settings3DCheckButton: settings3DCheckButton
-                    anchors.bottom:        settings3DCheckButton.top
-                    anchors.horizontalCenter: settings3DCheckButton.horizontalCenter
-                    z: 2
                 }
             }
 
@@ -527,10 +382,6 @@ Item  {
                 IsobathsExtraSettings {
                     id: isobathsSettings
                     isobathsCheckButton: isobathsCheckButton
-
-                    anchors.bottom:           isobathsCheckButton.top
-                    anchors.horizontalCenter: isobathsCheckButton.horizontalCenter
-                    z: 2
                 }
             }
 
@@ -629,10 +480,6 @@ Item  {
                 MosaicExtraSettings {
                     id: mosaicViewSettings
                     mosaicViewCheckButton: mosaicViewCheckButton
-
-                    anchors.bottom:           mosaicViewCheckButton.top
-                    anchors.horizontalCenter: mosaicViewCheckButton.horizontalCenter
-                    z: 2
                 }
             }
 

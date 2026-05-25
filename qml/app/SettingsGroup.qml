@@ -80,6 +80,11 @@ Item {
         loadExpandedState()
         if (stateStore && typeof stateStore.registerSettingsGroup === "function")
             stateStore.registerSettingsGroup(root)
+        if (stateStore
+                && typeof stateStore.pendingScrollGroupKey === "string"
+                && stateStore.pendingScrollGroupKey === stateKey) {
+            pendingTopScrollTimer.restart()
+        }
     }
 
     Component.onDestruction: {
@@ -96,6 +101,32 @@ Item {
         interval: 60
         repeat: false
         onTriggered: root._scrollIntoView()
+    }
+
+    Timer {
+        id: pendingTopScrollTimer
+        interval: 220
+        repeat: false
+        onTriggered: {
+            root._scrollToTop()
+            if (root.stateStore
+                    && root.stateStore.pendingScrollGroupKey === root.stateKey)
+                root.stateStore.pendingScrollGroupKey = ""
+        }
+    }
+
+    Connections {
+        target: root.stateStore
+        ignoreUnknownSignals: true
+        function onPendingScrollGroupKeyChanged() {
+            // Group already alive when openAppSettingsAtGroup() ran with no
+            // prior registry hit — pick up the request now.
+            if (root.stateStore
+                    && root.stateStore.pendingScrollGroupKey === root.stateKey
+                    && root.stateKey !== "") {
+                pendingTopScrollTimer.restart()
+            }
+        }
     }
 
     function _findAncestorFlickable() {
@@ -142,6 +173,27 @@ Item {
         if (countedKids > 1)
             h += (countedKids - 1) * contentWrapper.spacing
         return h
+    }
+
+    function _scrollToTop() {
+        var flick = _findAncestorFlickable()
+        if (!flick) return
+
+        var topInContent = root.mapToItem(flick.contentItem, 0, 0).y
+        var target = Math.max(0, topInContent - Tokens.spaceLg)
+        // Predict content height in case the expand animation hasn't finished
+        // and the Flickable hasn't grown its contentHeight yet.
+        var fullH = _predictedFullHeight()
+        var predictedContentH = Math.max(flick.contentHeight,
+                                         topInContent + fullH + Tokens.spaceLg)
+        target = Math.min(target, Math.max(0, predictedContentH - flick.height))
+
+        if (Math.abs(target - flick.contentY) < 0.5) return
+
+        scrollIntoViewAnim.target = flick
+        scrollIntoViewAnim.from = flick.contentY
+        scrollIntoViewAnim.to = target
+        scrollIntoViewAnim.restart()
     }
 
     function _scrollIntoView() {

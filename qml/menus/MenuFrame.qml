@@ -67,8 +67,9 @@ Item {
             }
             mouse.accepted = true
         }
-        onReleased: function(mouse) { mouse.accepted = true }
-        onClicked:  function(mouse) { mouse.accepted = true }
+        onReleased:      function(mouse) { mouse.accepted = true }
+        onClicked:       function(mouse) { mouse.accepted = true }
+        onDoubleClicked: function(mouse) { mouse.accepted = true }
 
         drag.target: isDraggable ? control : undefined
         drag.axis: Drag.XandYAxis

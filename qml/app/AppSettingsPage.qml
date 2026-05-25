@@ -957,6 +957,133 @@ Column {
             width: parent.width
             spacing: Tokens.spaceMd
 
+            Text {
+                width: parent.width
+                text: qsTr("Rendering")
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontSm
+                topPadding: Tokens.spaceXs
+            }
+
+            Row {
+                width: parent.width
+                spacing: Tokens.spaceMd
+                KButton {
+                    text: qsTr("Reset depth zoom")
+                    width: (parent.width - Tokens.spaceMd) / 2
+                    visible: Qt.platform.os !== "android"
+                    onClicked: {
+                        if (typeof Scene3dToolBarController !== "undefined")
+                            Scene3dToolBarController.onCancelZoomButtonClicked()
+                    }
+                }
+                KButton {
+                    text: qsTr("Reset surface")
+                    width: (parent.width - Tokens.spaceMd) / 2
+                    onClicked: {
+                        if (typeof Scene3dToolBarController !== "undefined")
+                            Scene3dToolBarController.onResetProcessingButtonClicked()
+                    }
+                }
+            }
+
+            ParamCard {
+                width: parent.width
+                label: qsTr("Show surface quality")
+                checked: render3dSettings.showQualityLabelCheck
+                onToggled: function(v) {
+                    render3dSettings.showQualityLabelCheck = v
+                }
+            }
+
+            ParamCard {
+                width: parent.width
+                label: qsTr("Force zoom")
+                visible: core.needForceZooming
+                checked: render3dSettings.forceSingleZoomCheckButton
+                onToggled: function(v) {
+                    render3dSettings.forceSingleZoomCheckButton = v
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onForceSingleZoomCheckedChanged(v)
+                }
+            }
+
+            ParamCard {
+                width: parent.width
+                label: qsTr("Loupe")
+                checked: render3dSettings.syncLoupeCheckButton
+                onToggled: function(v) {
+                    render3dSettings.syncLoupeCheckButton = v
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onSyncLoupeVisibleChanged(v)
+                }
+            }
+
+            ParamCard {
+                width: parent.width
+                label: qsTr("North mode")
+                checked: render3dSettings.isNorthViewButton
+                onToggled: function(v) {
+                    render3dSettings.isNorthViewButton = v
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onIsNorthLocationButtonChanged(v)
+                }
+            }
+
+            ParamCard {
+                width: parent.width
+                label: qsTr("Sync echogram")
+                checked: render3dSettings.selectionToolButton
+                onToggled: function(v) {
+                    render3dSettings.selectionToolButton = v
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(v)
+                }
+            }
+
+            ParamCard {
+                width: parent.width
+                label: qsTr("Grid")
+                checked: render3dSettings.gridCheckButton
+                onToggled: function(v) {
+                    render3dSettings.gridCheckButton = v
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onGridVisibilityCheckedChanged(v)
+                }
+            }
+
+            ParamCard {
+                width: parent.width
+                label: qsTr("Shadows")
+                checked: render3dSettings.shadowEnabledCheckButton
+                onToggled: function(v) {
+                    render3dSettings.shadowEnabledCheckButton = v
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onShadowsEnabledChanged(v)
+                }
+            }
+
+            Settings {
+                id: render3dSettings
+                property bool showQualityLabelCheck: false
+                property bool forceSingleZoomCheckButton: false
+                property bool syncLoupeCheckButton: false
+                property bool isNorthViewButton: false
+                property bool selectionToolButton: true
+                property bool gridCheckButton: false
+                property bool shadowEnabledCheckButton: true
+            }
+
+            Item { width: parent.width; height: Tokens.spaceMd }
+
+            Text {
+                width: parent.width
+                text: qsTr("Map")
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontSm
+                topPadding: Tokens.spaceXs
+            }
+
             // ── Visibility toggle ────────────────────────────────────────
             ParamCard {
                 width: parent.width
@@ -975,11 +1102,6 @@ Column {
             Settings {
                 id: mapVisibilitySettings
                 property bool mapViewCheckButton: true
-            }
-            Component.onCompleted: {
-                if (typeof MapViewControlMenuController !== "undefined")
-                    MapViewControlMenuController.onVisibilityChanged(mapVisibilitySettings.mapViewCheckButton)
-                core.setMapTileLoadingEnabled(mapVisibilitySettings.mapViewCheckButton)
             }
 
             // ── Internet status row ──────────────────────────────────────
@@ -1105,6 +1227,54 @@ Column {
                             dbInfo = core.getMapTileDbInfo(modelData.id)
                         }
                     }
+                }
+            }
+
+            Item { width: parent.width; height: Tokens.spaceMd }
+
+            Text {
+                width: parent.width
+                text: qsTr("Navigator")
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontSm
+                topPadding: Tokens.spaceXs
+            }
+
+            ParamCard {
+                width: parent.width
+                label: qsTr("Use angle")
+                checked: root.store.useAngleEnabled
+                onToggled: function(v) {
+                    root.store.useAngleEnabled = v
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onUseAngleLocationButtonChanged(v)
+                }
+            }
+
+            ParamCard {
+                width: parent.width
+                label: qsTr("Navigator view")
+                checked: root.store.navigationViewEnabled
+                onToggled: function(v) {
+                    root.store.navigationViewEnabled = v
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onNavigatorLocationButtonChanged(v)
+                }
+            }
+
+            Component.onCompleted: {
+                if (typeof MapViewControlMenuController !== "undefined")
+                    MapViewControlMenuController.onVisibilityChanged(mapVisibilitySettings.mapViewCheckButton)
+                core.setMapTileLoadingEnabled(mapVisibilitySettings.mapViewCheckButton)
+                if (typeof Scene3dToolBarController !== "undefined") {
+                    Scene3dToolBarController.onUseAngleLocationButtonChanged(root.store.useAngleEnabled)
+                    Scene3dToolBarController.onNavigatorLocationButtonChanged(root.store.navigationViewEnabled)
+                    Scene3dToolBarController.onForceSingleZoomCheckedChanged(render3dSettings.forceSingleZoomCheckButton)
+                    Scene3dToolBarController.onSyncLoupeVisibleChanged(render3dSettings.syncLoupeCheckButton)
+                    Scene3dToolBarController.onIsNorthLocationButtonChanged(render3dSettings.isNorthViewButton)
+                    Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(render3dSettings.selectionToolButton)
+                    Scene3dToolBarController.onGridVisibilityCheckedChanged(render3dSettings.gridCheckButton)
+                    Scene3dToolBarController.onShadowsEnabledChanged(render3dSettings.shadowEnabledCheckButton)
                 }
             }
         }

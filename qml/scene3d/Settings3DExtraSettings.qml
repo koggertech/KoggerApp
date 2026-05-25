@@ -1,14 +1,14 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
-import QtQuick.Dialogs
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 import QtCore
+import kqml_types 1.0
+import app 1.0
 import "../controls"
 import "../menus"
 import "../scene2d"
 
 
-// settings3D extra settings
 MenuFrame {
     id: settings3DSettings
 
@@ -22,6 +22,10 @@ MenuFrame {
 
     z: settings3DSettings.visible
     Layout.alignment: Qt.AlignCenter
+    backgroundColor: AppPalette.bg
+    horizontalMargins: Tokens.spaceLg
+    verticalMargins: Tokens.spaceLg
+    spacing: Tokens.spaceMd
 
     onIsHoveredChanged: {
         if (Qt.platform.os === "android") {
@@ -51,34 +55,24 @@ MenuFrame {
     }
 
     ColumnLayout {
+        spacing: Tokens.spaceMd
+
         RowLayout {
-            spacing: 16
+            Layout.fillWidth: true
+            spacing: Tokens.spaceMd
 
-            Rectangle {
-                Layout.fillWidth: true
-                height: 2
-                color: "#808080"
-            }
-
-            CText {
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppPalette.border }
+            Text {
                 text: qsTr("3d scene settings")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
+                font.bold: true
             }
-
-            Rectangle {
-                Layout.fillWidth: true
-                height: 2
-                color: "#808080"
-            }
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppPalette.border }
         }
 
-        CheckButton{
+        KButton {
             id: cancelZoomViewButton
-            iconSource: "qrc:/icons/ui/zoom_cancel.svg"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            checkable: false
-            checked: false
             text: qsTr("Reset depth zoom")
             Layout.fillWidth: true
             visible: Qt.platform.os !== "android"
@@ -88,15 +82,9 @@ MenuFrame {
             }
         }
 
-        CheckButton {
+        KButton {
             id: resetProcessingButton
             objectName: "resetProcessingButton"
-            iconSource: "qrc:/icons/ui/refresh.svg"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            checkable: false
-            checked: false
             text: qsTr("Reset surface")
             Layout.fillWidth: true
 
@@ -109,17 +97,12 @@ MenuFrame {
             }
         }
 
-        CheckButton {
+        KToggleRow {
             id: showQualityLabelCheck
             objectName: "showQualityLabelCheck"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            checked: false
-            text: qsTr("Show surface quality")
-            Layout.fillWidth: true
+            label: qsTr("Show surface quality")
 
-            onFocusChanged: {
+            onToggled: function(v) {
                 settings3DSettings.focus = true
             }
 
@@ -128,25 +111,19 @@ MenuFrame {
             }
         }
 
-        RowLayout { // forcing zoom
+        RowLayout {
             visible: core.needForceZooming
+            Layout.fillWidth: true
+            spacing: Tokens.spaceMd
 
-            CheckButton {
+            KToggleRow {
                 id: forceSingleZoomCheckButton
                 objectName: "forceSingleZoomCheckButton"
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checked: false
-                text: qsTr("Force zoom")
+                label: qsTr("Force zoom")
                 Layout.fillWidth: true
 
-                onToggled: {
-                    Scene3dToolBarController.onForceSingleZoomCheckedChanged(checked)
-                }
-
-                onFocusChanged: {
-                    settings3DSettings.focus = true
+                onToggled: function(v) {
+                    Scene3dToolBarController.onForceSingleZoomCheckedChanged(v)
                 }
 
                 Component.onCompleted: {
@@ -158,7 +135,7 @@ MenuFrame {
                 }
             }
 
-            SpinBoxCustom {
+            KSpinBox {
                 id: forceSingleZoomSpinBox
                 objectName: "forceSingleZoomSpinBox"
                 from: 2
@@ -167,12 +144,8 @@ MenuFrame {
                 value: 5
                 enabled: forceSingleZoomCheckButton.checked
 
-                onValueChanged: {
-                    Scene3dToolBarController.onForceSingleZoomValueChanged(value)
-                }
-
-                onFocusChanged: {
-                    settings3DSettings.focus = true
+                onValueModified: function(v) {
+                    Scene3dToolBarController.onForceSingleZoomValueChanged(v)
                 }
 
                 Component.onCompleted: {
@@ -186,21 +159,16 @@ MenuFrame {
         }
 
         RowLayout {
-            CheckButton {
+            Layout.fillWidth: true
+            spacing: Tokens.spaceMd
+
+            KToggleRow {
                 id: syncLoupeCheckButton
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checked: false
-                text: qsTr("Loupe")
+                label: qsTr("Loupe")
                 Layout.fillWidth: true
 
-                onToggled: {
-                    Scene3dToolBarController.onSyncLoupeVisibleChanged(checked)
-                }
-
-                onFocusChanged: {
-                    settings3DSettings.focus = true
+                onToggled: function(v) {
+                    Scene3dToolBarController.onSyncLoupeVisibleChanged(v)
                 }
 
                 Component.onCompleted: {
@@ -209,22 +177,21 @@ MenuFrame {
             }
             RowLayout {
                 visible: syncLoupeCheckButton.checked
-                CText {
+                spacing: Tokens.spaceXs
+                Text {
                     text: qsTr("size")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontMd
                 }
-                SpinBoxCustom {
+                KSpinBox {
                     id: syncLoupeSizeSpinBox
                     from: 1
                     to: 3
                     stepSize: 1
                     value: 1
 
-                    onValueChanged: {
-                        Scene3dToolBarController.onSyncLoupeSizeChanged(value)
-                    }
-
-                    onFocusChanged: {
-                        settings3DSettings.focus = true
+                    onValueModified: function(v) {
+                        Scene3dToolBarController.onSyncLoupeSizeChanged(v)
                     }
 
                     Component.onCompleted: {
@@ -235,16 +202,18 @@ MenuFrame {
 
             RowLayout {
                 visible: syncLoupeCheckButton.checked
-                spacing: Math.max(6, Math.round(theme.controlHeight * 0.2))
+                spacing: Math.max(Tokens.spaceSm, Math.round(Tokens.controlHMd * 0.2))
 
-                CText {
+                Text {
                     text: qsTr("zoom")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontMd
                 }
 
                 ChartLevelSingle {
                     id: syncLoupeZoomSpinBox
                     Layout.fillWidth: true
-                    Layout.preferredWidth: theme.controlHeight * 5
+                    Layout.preferredWidth: Tokens.controlHMd * 5
                     from: 0
                     to: 300
                     stepSize: 1
@@ -275,11 +244,12 @@ MenuFrame {
                     }
                 }
 
-                CText {
+                Text {
                     text: Math.round(syncLoupeZoomSpinBox.value) + "%"
-                    small: true
+                    color: AppPalette.text
+                    font.pixelSize: Tokens.fontSm
                     horizontalAlignment: Text.AlignRight
-                    Layout.preferredWidth: theme.controlHeight * 1.7
+                    Layout.preferredWidth: Tokens.controlHMd * 1.7
                 }
             }
 
@@ -290,22 +260,14 @@ MenuFrame {
             }
         }
 
-        CheckButton {
+        KToggleRow {
             id: isNorthViewButton
             objectName: "isNorthViewButton"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
+            label: qsTr("North mode")
             iconSource: "qrc:/icons/ui/location_pin.svg"
-            text: qsTr("North mode")
-            Layout.fillWidth: true
 
-            onToggled: {
-                Scene3dToolBarController.onIsNorthLocationButtonChanged(checked)
-            }
-
-            onFocusChanged: {
-                settings3DSettings.focus = true
+            onToggled: function(v) {
+                Scene3dToolBarController.onIsNorthLocationButtonChanged(v)
             }
 
             Component.onCompleted: {
@@ -317,23 +279,15 @@ MenuFrame {
             }
         }
 
-        CheckButton {
+        KToggleRow {
             id: selectionToolButton
             objectName: "selectionToolButton"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
+            label: qsTr("Sync echogram")
             iconSource: "qrc:/icons/ui/click.svg"
-            text: qsTr("Sync echogram")
-            Layout.fillWidth: true
             checked: true
 
-            onToggled: {
-                Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
-            }
-
-            onFocusChanged: {
-                settings3DSettings.focus = true
+            onToggled: function(v) {
+                Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(v)
             }
 
             Component.onCompleted: {
@@ -345,52 +299,19 @@ MenuFrame {
             }
         }
 
-        // CheckButton {
-        //     id: trackLastDataCheckButton
-        //     objectName: "trackLastDataCheckButton"
-        //     backColor: theme.controlBackColor
-        //     borderColor: theme.controlBackColor
-        //     checkedBorderColor: theme.controlBorderColor
-        //     checked: false
-        //     iconSource: "qrc:/icons/ui/location.svg"
-        //     text: qsTr("Follow last location")
-        //     Layout.fillWidth: true
-
-        //     onToggled: {
-        //         Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
-        //     }
-
-        //     onFocusChanged: {
-        //         settings3DSettings.focus = true
-        //     }
-
-        //     Component.onCompleted: {
-        //         Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
-        //     }
-
-        //     Settings {
-        //         property alias trackLastDataCheckButton: trackLastDataCheckButton.checked
-        //     }
-        // }
-
         RowLayout {
-            CheckButton {
+            Layout.fillWidth: true
+            spacing: Tokens.spaceMd
+
+            KToggleRow {
                 id: gridCheckButton
                 objectName: "gridCheckButton"
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checked: false
+                label: qsTr("Grid")
                 iconSource: "qrc:/icons/ui/grid_4x4.svg"
-                text: qsTr("Grid")
                 Layout.fillWidth: true
 
-                onToggled: {
-                    Scene3dToolBarController.onGridVisibilityCheckedChanged(checked)
-                }
-
-                onFocusChanged: {
-                    settings3DSettings.focus = true
+                onToggled: function(v) {
+                    Scene3dToolBarController.onGridVisibilityCheckedChanged(v)
                 }
 
                 Component.onCompleted: {
@@ -404,23 +325,16 @@ MenuFrame {
 
             ColumnLayout {
                 visible: gridCheckButton.checked
+                spacing: Tokens.spaceXs
 
-                CheckButton {
+                KToggleRow {
                     id: gridTypeCheckButton
                     objectName: "gridTypeCheckButton"
-                    backColor: theme.controlBackColor
-                    borderColor: theme.controlBackColor
-                    checkedBorderColor: theme.controlBorderColor
-                    checked: false
-                    //iconSource: "qrc:/icons/ui/gps.svg"
-                    text: qsTr("Circle")
+                    label: qsTr("Circle")
                     Layout.fillWidth: true
 
-                    onToggled: {
-                        Scene3dToolBarController.onPlaneGridTypeChanged(!checked)
-                    }
-                    onFocusChanged: {
-                        settings3DSettings.focus = true
+                    onToggled: function(v) {
+                        Scene3dToolBarController.onPlaneGridTypeChanged(!v)
                     }
                     Component.onCompleted: {
                         Scene3dToolBarController.onPlaneGridTypeChanged(!checked)
@@ -430,24 +344,17 @@ MenuFrame {
                     }
                 }
 
-                CheckButton {
+                KToggleRow {
                     visible: gridTypeCheckButton.checked
 
                     id: gridLabelsCheckButton
                     objectName: "gridLabelsCheckButton"
-                    backColor: theme.controlBackColor
-                    borderColor: theme.controlBackColor
-                    checkedBorderColor: theme.controlBorderColor
+                    label: qsTr("Labels")
                     checked: true
-                    //iconSource: "qrc:/icons/ui/gps.svg"
-                    text: qsTr("Labels")
                     Layout.fillWidth: true
 
-                    onToggled: {
-                        Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(checked)
-                    }
-                    onFocusChanged: {
-                        settings3DSettings.focus = true
+                    onToggled: function(v) {
+                        Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(v)
                     }
                     Component.onCompleted: {
                         Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(checked)
@@ -459,16 +366,24 @@ MenuFrame {
 
                 RowLayout {
                     visible: gridTypeCheckButton.checked
+                    spacing: Tokens.spaceMd
 
                     ColumnLayout {
-                        CText {
+                        spacing: Tokens.spaceXs
+                        Text {
                             text: qsTr("Size:")
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontMd
                         }
-                        CText {
+                        Text {
                             text: qsTr("Step:")
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontMd
                         }
-                        CText {
+                        Text {
                             text: qsTr("Angle:")
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontMd
                         }
                     }
 
@@ -477,18 +392,16 @@ MenuFrame {
                     }
 
                     ColumnLayout {
-                        SpinBoxCustom {
+                        spacing: Tokens.spaceXs
+                        KSpinBox {
                             id: circleGridSizeSpinBox
                             from: 1
                             to: 3
                             stepSize: 1
                             value: 1
 
-                            onValueChanged: {
-                                Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(value)
-                            }
-                            onFocusChanged: {
-                                settings3DSettings.focus = true
+                            onValueModified: function(v) {
+                                Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(v)
                             }
                             Component.onCompleted: {
                                 Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(value)
@@ -498,18 +411,15 @@ MenuFrame {
                             }
                         }
 
-                        SpinBoxCustom {
+                        KSpinBox {
                             id: circleGridStepSpinBox
                             from: 1
                             to: 20
                             stepSize: 1
                             value: 1
 
-                            onValueChanged: {
-                                Scene3dToolBarController.onPlaneGridCircleGridStepChanged(value)
-                            }
-                            onFocusChanged: {
-                                settings3DSettings.focus = true
+                            onValueModified: function(v) {
+                                Scene3dToolBarController.onPlaneGridCircleGridStepChanged(v)
                             }
                             Component.onCompleted: {
                                 Scene3dToolBarController.onPlaneGridCircleGridStepChanged(value)
@@ -519,18 +429,15 @@ MenuFrame {
                             }
                         }
 
-                        SpinBoxCustom {
+                        KSpinBox {
                             id: circleGridAngleSpinBox
                             from: 1
                             to: 5
                             stepSize: 1
                             value: 1
 
-                            onValueChanged: {
-                                Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(value)
-                            }
-                            onFocusChanged: {
-                                settings3DSettings.focus = true
+                            onValueModified: function(v) {
+                                Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(v)
                             }
                             Component.onCompleted: {
                                 Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(value)
@@ -544,22 +451,14 @@ MenuFrame {
             }
         }
 
-        CheckButton {
+        KToggleRow {
             id: shadowEnabledCheckButton
             objectName: "shadowEnabledCheckButton"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
+            label: qsTr("Shadows")
             checked: true
-            text: qsTr("Shadows")
-            Layout.fillWidth: true
 
-            onToggled: {
-                Scene3dToolBarController.onShadowsEnabledChanged(checked)
-            }
-
-            onFocusChanged: {
-                settings3DSettings.focus = true
+            onToggled: function(v) {
+                Scene3dToolBarController.onShadowsEnabledChanged(v)
             }
 
             Component.onCompleted: {
@@ -567,6 +466,7 @@ MenuFrame {
             }
         }
 
+        // (visible: false in original — preserved here)
         RowLayout {
             id: shadowSettingsRow
             Layout.fillWidth: true
@@ -578,17 +478,20 @@ MenuFrame {
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 4
+                spacing: Tokens.spaceXs
 
                 RowLayout {
                     Layout.fillWidth: true
+                    spacing: Tokens.spaceMd
 
-                    CText {
-                        Layout.preferredWidth: 84
+                    Text {
+                        Layout.preferredWidth: Math.round(84 * AppPalette.scale)
                         text: qsTr("Vector X:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
                     }
 
-                    Slider {
+                    KSlider {
                         id: shadowVectorXSlider
                         objectName: "shadowVectorXSpinBox"
                         Layout.fillWidth: true
@@ -597,6 +500,7 @@ MenuFrame {
                         stepSize: 0.01
                         value: 0.40
                         enabled: shadowEnabledCheckButton.checked
+                        valueDecimals: 2
 
                         onPressedChanged: {
                             if (pressed) {
@@ -604,8 +508,8 @@ MenuFrame {
                             }
                         }
 
-                        onValueChanged: {
-                            Scene3dToolBarController.onShadowVectorXChanged(value)
+                        onValueModified: function(v) {
+                            Scene3dToolBarController.onShadowVectorXChanged(v)
                         }
 
                         Component.onCompleted: {
@@ -613,22 +517,27 @@ MenuFrame {
                         }
                     }
 
-                    CText {
-                        Layout.preferredWidth: 48
+                    Text {
+                        Layout.preferredWidth: Math.round(48 * AppPalette.scale)
                         horizontalAlignment: Text.AlignRight
                         text: shadowSettingsRow.formatShadowValue(shadowVectorXSlider.value)
+                        color: AppPalette.text
+                        font.pixelSize: Tokens.fontMd
                     }
                 }
 
                 RowLayout {
                     Layout.fillWidth: true
+                    spacing: Tokens.spaceMd
 
-                    CText {
-                        Layout.preferredWidth: 84
+                    Text {
+                        Layout.preferredWidth: Math.round(84 * AppPalette.scale)
                         text: qsTr("Vector Y:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
                     }
 
-                    Slider {
+                    KSlider {
                         id: shadowVectorYSlider
                         objectName: "shadowVectorYSpinBox"
                         Layout.fillWidth: true
@@ -637,6 +546,7 @@ MenuFrame {
                         stepSize: 0.01
                         value: 0.40
                         enabled: shadowEnabledCheckButton.checked
+                        valueDecimals: 2
 
                         onPressedChanged: {
                             if (pressed) {
@@ -644,8 +554,8 @@ MenuFrame {
                             }
                         }
 
-                        onValueChanged: {
-                            Scene3dToolBarController.onShadowVectorYChanged(value)
+                        onValueModified: function(v) {
+                            Scene3dToolBarController.onShadowVectorYChanged(v)
                         }
 
                         Component.onCompleted: {
@@ -653,22 +563,27 @@ MenuFrame {
                         }
                     }
 
-                    CText {
-                        Layout.preferredWidth: 48
+                    Text {
+                        Layout.preferredWidth: Math.round(48 * AppPalette.scale)
                         horizontalAlignment: Text.AlignRight
                         text: shadowSettingsRow.formatShadowValue(shadowVectorYSlider.value)
+                        color: AppPalette.text
+                        font.pixelSize: Tokens.fontMd
                     }
                 }
 
                 RowLayout {
                     Layout.fillWidth: true
+                    spacing: Tokens.spaceMd
 
-                    CText {
-                        Layout.preferredWidth: 84
+                    Text {
+                        Layout.preferredWidth: Math.round(84 * AppPalette.scale)
                         text: qsTr("Vector Z:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
                     }
 
-                    Slider {
+                    KSlider {
                         id: shadowVectorZSlider
                         objectName: "shadowVectorZSpinBox"
                         Layout.fillWidth: true
@@ -677,6 +592,7 @@ MenuFrame {
                         stepSize: 0.01
                         value: 0.40
                         enabled: shadowEnabledCheckButton.checked
+                        valueDecimals: 2
 
                         onPressedChanged: {
                             if (pressed) {
@@ -684,8 +600,8 @@ MenuFrame {
                             }
                         }
 
-                        onValueChanged: {
-                            Scene3dToolBarController.onShadowVectorZChanged(value)
+                        onValueModified: function(v) {
+                            Scene3dToolBarController.onShadowVectorZChanged(v)
                         }
 
                         Component.onCompleted: {
@@ -693,22 +609,27 @@ MenuFrame {
                         }
                     }
 
-                    CText {
-                        Layout.preferredWidth: 48
+                    Text {
+                        Layout.preferredWidth: Math.round(48 * AppPalette.scale)
                         horizontalAlignment: Text.AlignRight
                         text: shadowSettingsRow.formatShadowValue(shadowVectorZSlider.value)
+                        color: AppPalette.text
+                        font.pixelSize: Tokens.fontMd
                     }
                 }
 
                 RowLayout {
                     Layout.fillWidth: true
+                    spacing: Tokens.spaceMd
 
-                    CText {
-                        Layout.preferredWidth: 84
+                    Text {
+                        Layout.preferredWidth: Math.round(84 * AppPalette.scale)
                         text: qsTr("Ambient:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
                     }
 
-                    Slider {
+                    KSlider {
                         id: shadowAmbientSlider
                         objectName: "shadowAmbientSpinBox"
                         Layout.fillWidth: true
@@ -717,6 +638,7 @@ MenuFrame {
                         stepSize: 0.05
                         value: 0.35
                         enabled: shadowEnabledCheckButton.checked
+                        valueDecimals: 2
 
                         onPressedChanged: {
                             if (pressed) {
@@ -724,8 +646,8 @@ MenuFrame {
                             }
                         }
 
-                        onValueChanged: {
-                            Scene3dToolBarController.onShadowAmbientChanged(value)
+                        onValueModified: function(v) {
+                            Scene3dToolBarController.onShadowAmbientChanged(v)
                         }
 
                         Component.onCompleted: {
@@ -733,22 +655,27 @@ MenuFrame {
                         }
                     }
 
-                    CText {
-                        Layout.preferredWidth: 48
+                    Text {
+                        Layout.preferredWidth: Math.round(48 * AppPalette.scale)
                         horizontalAlignment: Text.AlignRight
                         text: shadowSettingsRow.formatShadowValue(shadowAmbientSlider.value)
+                        color: AppPalette.text
+                        font.pixelSize: Tokens.fontMd
                     }
                 }
 
                 RowLayout {
                     Layout.fillWidth: true
+                    spacing: Tokens.spaceMd
 
-                    CText {
-                        Layout.preferredWidth: 84
+                    Text {
+                        Layout.preferredWidth: Math.round(84 * AppPalette.scale)
                         text: qsTr("Highlight:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
                     }
 
-                    Slider {
+                    KSlider {
                         id: shadowHighlightSlider
                         objectName: "shadowHighlightSpinBox"
                         Layout.fillWidth: true
@@ -757,6 +684,7 @@ MenuFrame {
                         stepSize: 0.05
                         value: 0.70
                         enabled: shadowEnabledCheckButton.checked
+                        valueDecimals: 2
 
                         onPressedChanged: {
                             if (pressed) {
@@ -764,8 +692,8 @@ MenuFrame {
                             }
                         }
 
-                        onValueChanged: {
-                            Scene3dToolBarController.onShadowHighlightChanged(value)
+                        onValueModified: function(v) {
+                            Scene3dToolBarController.onShadowHighlightChanged(v)
                         }
 
                         Component.onCompleted: {
@@ -773,10 +701,12 @@ MenuFrame {
                         }
                     }
 
-                    CText {
-                        Layout.preferredWidth: 48
+                    Text {
+                        Layout.preferredWidth: Math.round(48 * AppPalette.scale)
                         horizontalAlignment: Text.AlignRight
                         text: shadowSettingsRow.formatShadowValue(shadowHighlightSlider.value)
+                        color: AppPalette.text
+                        font.pixelSize: Tokens.fontMd
                     }
                 }
             }
@@ -792,23 +722,19 @@ MenuFrame {
         }
 
         RowLayout {
-            CheckButton {
+            Layout.fillWidth: true
+            spacing: Tokens.spaceMd
+
+            KToggleRow {
                 id: navigationArrowCheckButton
                 objectName: "navigationArrowCheckButton"
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checked: true
+                label: qsTr("Boat")
                 iconSource: "qrc:/icons/ui/speedboat.svg"
-                text: qsTr("Boat")
+                checked: true
                 Layout.fillWidth: true
 
-                onToggled: {
-                    NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
-                }
-
-                onFocusChanged: {
-                    settings3DSettings.focus = true
+                onToggled: function(v) {
+                    NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(v)
                 }
 
                 Component.onCompleted: {
@@ -818,24 +744,23 @@ MenuFrame {
 
             RowLayout {
                 visible: navigationArrowCheckButton.checked
+                spacing: Tokens.spaceXs
 
-                CText {
+                Text {
                     text: qsTr("Size:")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontMd
                 }
 
-                SpinBoxCustom {
+                KSpinBox {
                     id: navigationArrowSizeSpinBox
                     from: 1
                     to: 5
                     stepSize: 1
                     value: 1
 
-                    onValueChanged: {
-                        NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(value)
-                    }
-
-                    onFocusChanged: {
-                        settings3DSettings.focus = true
+                    onValueModified: function(v) {
+                        NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(v)
                     }
 
                     Component.onCompleted: {
@@ -851,23 +776,19 @@ MenuFrame {
         }
 
         RowLayout {
-            CheckButton {
+            Layout.fillWidth: true
+            spacing: Tokens.spaceMd
+
+            KToggleRow {
                 id: compassCheckButton
                 objectName: "compassCheckButton"
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checked: true
+                label: qsTr("Compass")
                 iconSource: "qrc:/icons/ui/compass.svg"
-                text: qsTr("Compass")
+                checked: true
                 Layout.fillWidth: true
 
-                onToggled: {
-                    Scene3dToolBarController.onCompassButtonChanged(checked)
-                }
-
-                onFocusChanged: {
-                    settings3DSettings.focus = true
+                onToggled: function(v) {
+                    Scene3dToolBarController.onCompassButtonChanged(v)
                 }
 
                 Component.onCompleted: {
@@ -881,13 +802,19 @@ MenuFrame {
 
             RowLayout {
                 visible: compassCheckButton.checked
+                spacing: Tokens.spaceMd
 
                 ColumnLayout {
-                    CText {
+                    spacing: Tokens.spaceXs
+                    Text {
                         text: qsTr("Pos:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
                     }
-                    CText {
+                    Text {
                         text: qsTr("Size:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
                     }
                 }
 
@@ -896,18 +823,16 @@ MenuFrame {
                 }
 
                 ColumnLayout {
-                    SpinBoxCustom {
+                    spacing: Tokens.spaceXs
+                    KSpinBox {
                         id: compassPosSpinBox
                         from: 1
                         to: 3
                         stepSize: 1
                         value: 2
 
-                        onValueChanged: {
-                            Scene3dToolBarController.onCompassPosChanged(value)
-                        }
-                        onFocusChanged: {
-                            settings3DSettings.focus = true
+                        onValueModified: function(v) {
+                            Scene3dToolBarController.onCompassPosChanged(v)
                         }
                         Component.onCompleted: {
                             Scene3dToolBarController.onCompassPosChanged(value)
@@ -917,18 +842,15 @@ MenuFrame {
                         }
                     }
 
-                    SpinBoxCustom {
+                    KSpinBox {
                         id: compassSizeSpinBox
                         from: 1
                         to: 5
                         stepSize: 1
                         value: 1
 
-                        onValueChanged: {
-                            Scene3dToolBarController.onCompassSizeChanged(value)
-                        }
-                        onFocusChanged: {
-                            settings3DSettings.focus = true
+                        onValueModified: function(v) {
+                            Scene3dToolBarController.onCompassSizeChanged(v)
                         }
                         Component.onCompleted: {
                             Scene3dToolBarController.onCompassSizeChanged(value)

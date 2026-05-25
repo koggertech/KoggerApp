@@ -1,13 +1,15 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 import QtQuick.Dialogs
+import QtQuick.Window 2.15
 import QtCore
+import kqml_types 1.0
+import app 1.0
 import "../controls"
 import "../menus"
 
 
-// isobaths extra settings
 MenuFrame {
     id: isobathsSettings
 
@@ -15,14 +17,50 @@ MenuFrame {
     property var exportSurfaceFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     property string exportSurfacePathSource: ""
 
-    visible: Qt.platform.os === "android"
-             ? (isobathsCheckButton.isobathsLongPressTriggered || isobathsTheme.activeFocus)
-             : (isobathsCheckButton.hovered                    ||
-                isHovered                                      ||
-                isobathsTheme.activeFocus)
+    readonly property Item _overlayItem: Window.window ? Window.window.contentItem : null
+    parent: _overlayItem
+    z: 1000
 
-    z: isobathsSettings.visible
-    Layout.alignment: Qt.AlignCenter
+    function _updatePosition() {
+        if (!parent || !isobathsCheckButton) return
+        var p = isobathsCheckButton.mapToItem(parent, 0, 0)
+        var nx = p.x + isobathsCheckButton.width / 2 - width / 2
+        var ny = p.y - height
+        if (nx < 0) nx = 0
+        if (ny < 0) ny = 0
+        if (parent.width  > 0 && nx + width  > parent.width)  nx = parent.width  - width
+        if (parent.height > 0 && ny + height > parent.height) ny = parent.height - height
+        x = nx
+        y = ny
+    }
+    onWidthChanged:  _updatePosition()
+    onHeightChanged: _updatePosition()
+    Connections {
+        target: isobathsSettings.isobathsCheckButton
+        ignoreUnknownSignals: true
+        function onXChanged()      { isobathsSettings._updatePosition() }
+        function onYChanged()      { isobathsSettings._updatePosition() }
+        function onWidthChanged()  { isobathsSettings._updatePosition() }
+        function onHeightChanged() { isobathsSettings._updatePosition() }
+    }
+
+    readonly property bool anyComboPopupOpen:
+        isobathsTheme.popup && isobathsTheme.popup.visible
+
+    readonly property bool anyHoverSource:
+        isobathsCheckButton.hovered ||
+        isHovered                   ||
+        anyComboPopupOpen           ||
+        isobathsTheme.activeFocus
+
+    visible: Qt.platform.os === "android"
+             ? (isobathsCheckButton.isobathsLongPressTriggered || anyHoverSource)
+             : anyHoverSource
+
+    backgroundColor: AppPalette.bg
+    horizontalMargins: Tokens.spaceLg
+    verticalMargins: Tokens.spaceLg
+    spacing: Tokens.spaceMd
 
     onIsHoveredChanged: {
         if (Qt.platform.os === "android") {
@@ -35,6 +73,7 @@ MenuFrame {
     onVisibleChanged: {
         if (visible) {
             focus = true;
+            _updatePosition()
         }
     }
 
@@ -85,20 +124,20 @@ MenuFrame {
     }
 
     function nextTheme() {
-        isobathsTheme.currentIndex = Math.min(isobathsTheme.count - 1, isobathsTheme.currentIndex + 1)
+        isobathsTheme.currentIndex = Math.min(isobathsTheme.model.length - 1, isobathsTheme.currentIndex + 1)
     }
 
     function stepDown(step) {
         const delta = step === undefined ? 1 : step
         for (let i = 0; i < delta; ++i) {
-            isobathsSurfaceLineStepSizeSpinBox.decrease()
+            isobathsSurfaceLineStepSizeSpinBox.decrement()
         }
     }
 
     function stepUp(step) {
         const delta = step === undefined ? 1 : step
         for (let i = 0; i < delta; ++i) {
-            isobathsSurfaceLineStepSizeSpinBox.increase()
+            isobathsSurfaceLineStepSizeSpinBox.increment()
         }
     }
 
@@ -122,44 +161,47 @@ MenuFrame {
         return effectiveSource(exportSurfacePathText.text, exportSurfacePathSource)
     }
 
+    readonly property int labelW: Math.round(120 * AppPalette.scale)
+    readonly property int ctrlW:  Math.round(200 * AppPalette.scale)
+
     ColumnLayout {
+        spacing: Tokens.spaceMd
+
         RowLayout {
-            spacing: 16
+            Layout.fillWidth: true
+            spacing: Tokens.spaceMd
 
-            Rectangle {
-                Layout.fillWidth: true
-                height: 2
-                color: "#808080"
-            }
-
-            CText {
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppPalette.border }
+            Text {
                 text: qsTr("Isobaths settings")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
+                font.bold: true
             }
-
-            Rectangle {
-                Layout.fillWidth: true
-                height: 2
-                color: "#808080"
-            }
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppPalette.border }
         }
+
         RowLayout {
-            //visible: !isobathsDebugModeCheckButton.checked
-            CText {
+            spacing: Tokens.spaceMd
+            Layout.fillWidth: true
+
+            Text {
                 text: qsTr("Theme:")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
+                Layout.preferredWidth: isobathsSettings.labelW
             }
-            Item {
-                Layout.fillWidth: true
-            }
-            CCombo  {
+            Item { Layout.fillWidth: true }
+            KCombo  {
                 id: isobathsTheme
-                Layout.preferredWidth: 200
+                Layout.preferredWidth: isobathsSettings.ctrlW
                 model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("Standard"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green")]
                 currentIndex: 0
                 onCurrentIndexChanged: {
                     IsobathsViewControlMenuController.onThemeChanged(currentIndex)
                 }
 
-                onFocusChanged: {
+                onActiveFocusChanged: {
                     if (Qt.platform.os === 'android') {
                         isobathsSettings.focus = true
                     }
@@ -176,31 +218,30 @@ MenuFrame {
         }
 
         RowLayout {
-            CText {
+            spacing: Tokens.spaceMd
+            Layout.fillWidth: true
+
+            Text {
                 text: qsTr("Edge limit, m:")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
                 Layout.fillWidth: true
             }
-            SpinBoxCustom {
+            KSpinBox {
                 id: isobathsEdgeLimitSpinBox
-                implicitWidth: 200
+                Layout.preferredWidth: isobathsSettings.ctrlW
                 from: 10
                 to: 1000
                 stepSize: 5
                 value: 100
                 editable: false
 
-                property int decimals: 1
-
-                onFocusChanged: {
-                    isobathsSettings.focus = true
+                onValueModified: function(v) {
+                    IsobathsViewControlMenuController.onEdgeLimitChanged(v)
                 }
 
                 Component.onCompleted: {
-                    IsobathsViewControlMenuController.onEdgeLimitChanged(isobathsEdgeLimitSpinBox.value)
-                }
-
-                onValueChanged: {
-                    IsobathsViewControlMenuController.onEdgeLimitChanged(isobathsEdgeLimitSpinBox.value)
+                    IsobathsViewControlMenuController.onEdgeLimitChanged(value)
                 }
 
                 Settings {
@@ -210,48 +251,34 @@ MenuFrame {
         }
 
         RowLayout {
-            //visible: !isobathsDebugModeCheckButton.checked
+            spacing: Tokens.spaceMd
+            Layout.fillWidth: true
 
-            CText {
+            Text {
                 text: qsTr("Step, m:")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
                 Layout.fillWidth: true
-
             }
-            SpinBoxCustom {
+            KSpinBox {
                 id: isobathsSurfaceLineStepSizeSpinBox
-                implicitWidth: 200
+                Layout.preferredWidth: isobathsSettings.ctrlW
                 from: 1
                 to: 200
                 stepSize: 1
                 value: 10
+                divisor: 10
+                decimals: 1
                 editable: false
 
-                property int decimals: 1
-                property real realValue: value / 10
+                readonly property real realValue: value / 10
 
-                validator: DoubleValidator {
-                    bottom: Math.min(isobathsSurfaceLineStepSizeSpinBox.from, isobathsSurfaceLineStepSizeSpinBox.to)
-                    top:  Math.max(isobathsSurfaceLineStepSizeSpinBox.from, isobathsSurfaceLineStepSizeSpinBox.to)
-                }
-
-                textFromValue: function(value, locale) {
-                    return Number(value / 10).toLocaleString(locale, 'f', decimals)
-                }
-
-                valueFromText: function(text, locale) {
-                    return Number.fromLocaleString(locale, text) * 10
-                }
-
-                onFocusChanged: {
-                    isobathsSettings.focus = true
+                onValueModified: function(v) {
+                    IsobathsViewControlMenuController.onSetSurfaceLineStepSize(v / 10)
                 }
 
                 Component.onCompleted: {
-                    IsobathsViewControlMenuController.onSetSurfaceLineStepSize(isobathsSurfaceLineStepSizeSpinBox.realValue)
-                }
-
-                onRealValueChanged: {
-                    IsobathsViewControlMenuController.onSetSurfaceLineStepSize(isobathsSurfaceLineStepSizeSpinBox.realValue)
+                    IsobathsViewControlMenuController.onSetSurfaceLineStepSize(realValue)
                 }
 
                 Settings {
@@ -261,27 +288,26 @@ MenuFrame {
         }
 
         RowLayout {
-            CText {
+            spacing: Tokens.spaceMd
+            Layout.fillWidth: true
+
+            Text {
                 text: qsTr("Extra width, m:")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
             }
-            Item {
-                Layout.fillWidth: true
-            }
-            SpinBoxCustom {
+            Item { Layout.fillWidth: true }
+            KSpinBox {
                 id: extraWidthSpinBox
-                implicitWidth: 200
+                Layout.preferredWidth: isobathsSettings.ctrlW
                 from: 5
                 to: 100
                 stepSize: 5
                 value: 10
                 editable: false
 
-                onFocusChanged: {
-                    isobathsSettings.focus = true
-                }
-
-                onValueChanged: {
-                    IsobathsViewControlMenuController.onSetExtraWidth(value)
+                onValueModified: function(v) {
+                    IsobathsViewControlMenuController.onSetExtraWidth(v)
                 }
                 Component.onCompleted: {
                     IsobathsViewControlMenuController.onSetExtraWidth(value)
@@ -294,6 +320,9 @@ MenuFrame {
         }
 
         RowLayout {
+            spacing: Tokens.spaceMd
+            Layout.fillWidth: true
+
             onFocusChanged: {
                 isobathsSettings.focus = true
             }
@@ -301,7 +330,7 @@ MenuFrame {
             CTextField {
                 id: exportSurfacePathText
                 hoverEnabled: true
-                Layout.maximumWidth: 200
+                Layout.maximumWidth: isobathsSettings.ctrlW
                 Layout.fillWidth: true
                 placeholderText: qsTr("Enter path")
 
@@ -310,9 +339,10 @@ MenuFrame {
                 }
             }
 
-            CButton {
+            KButton {
                 text: "..."
                 Layout.fillWidth: false
+                implicitWidth: Math.round(40 * AppPalette.scale)
 
                 onClicked: {
                     exportSurfaceFileDialog.currentFolder = isobathsSettings.exportSurfaceFolder
@@ -349,7 +379,7 @@ MenuFrame {
                 }
             }
 
-            CButton {
+            KButton {
                 text: qsTr("Export to CSV")
                 Layout.fillWidth: true
                 onClicked: Scene3DControlMenuController.onExportToCSVButtonClicked(isobathsSettings.currentExportSurfacePath())
@@ -368,114 +398,5 @@ MenuFrame {
                 property alias exportSurfaceFolderText: isobathsSettings.exportSurfacePathSource
             }
         }
-
-        // RowLayout {
-        //     visible: !isobathsDebugModeCheckButton.checked
-
-        //     CText {
-        //         text: qsTr("Label step, m:")
-        //         Layout.fillWidth: true
-        //     }
-        //     SpinBoxCustom {
-        //         id: isobathsLabelStepSpinBox
-        //         implicitWidth: 200
-        //         from: 10
-        //         to: 1000
-        //         stepSize: 5
-        //         value: 100
-        //         editable: false
-
-        //         property int decimals: 1
-
-        //         onFocusChanged: {
-        //             isobathsSettings.focus = true
-        //         }
-
-        //         Component.onCompleted: {
-        //             IsobathsViewControlMenuController.onSetLabelStepSize(isobathsLabelStepSpinBox.value)
-        //         }
-
-        //         onValueChanged: {
-        //             IsobathsViewControlMenuController.onSetLabelStepSize(isobathsLabelStepSpinBox.value)
-        //         }
-
-        //         Settings {
-        //             property alias isobathsLabelStepSpinBox: isobathsLabelStepSpinBox.value
-        //         }
-        //     }
-        // }
-
-        // CheckButton {
-        //     text: qsTr("Triangles")
-        //     Layout.fillWidth: true
-        //     checked: true
-        //     visible: isobathsDebugModeCheckButton.checked
-
-        //     onCheckedChanged: {
-        //         IsobathsViewControlMenuController.onTrianglesVisible(checked);
-        //     }
-
-        //     onFocusChanged: {
-        //         isobathsSettings.focus = true
-        //     }
-        // }
-
-        // CheckButton {
-        //     text: qsTr("Edges")
-        //     Layout.fillWidth: true
-        //     checked: true
-        //     visible: isobathsDebugModeCheckButton.checked
-
-        //     onCheckedChanged: {
-        //         IsobathsViewControlMenuController.onEdgesVisible(checked);
-        //     }
-
-        //     onFocusChanged: {
-        //         isobathsSettings.focus = true
-        //     }
-        // }
-
-        // CheckButton {
-        //     id: isobathsDebugModeCheckButton
-        //     text: qsTr("Debug mode")
-        //     Layout.fillWidth: true
-        //     checked: false
-
-        //     onCheckedChanged: {
-        //         IsobathsViewControlMenuController.onDebugModeView(checked);
-        //     }
-
-        //     onFocusChanged: {
-        //         isobathsSettings.focus = true
-        //     }
-        // }
-
-        // CButton {
-        //     id: resetIsobathsButton
-        //     text: qsTr("Clear")
-        //     Layout.fillWidth: true
-        //     onClicked: {
-        //         IsobathsViewControlMenuController.onResetIsobathsButtonClicked()
-        //     }
-
-        //     onFocusChanged: {
-        //         isobathsSettings.focus = true
-        //     }
-        // }
-
-        // CButton {
-        //     id: updateIsobathsButton
-        //     text: qsTr("Update")
-        //     Layout.fillWidth: true
-
-        //     onClicked: {
-        //         //IsobathsViewControlMenuController.onResetIsobathsButtonClicked()
-        //         IsobathsViewControlMenuController.onUpdateIsobathsButtonClicked()
-        //     }
-
-        //     onFocusChanged: {
-        //         isobathsSettings.focus = true
-        //     }
-        // }
     }
 }

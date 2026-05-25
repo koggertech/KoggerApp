@@ -39,6 +39,28 @@ Item {
     function _toggleAllGroups() {
         if (store && typeof store.toggleAllSettingsGroups === "function")
             store.toggleAllSettingsGroups()
+        scrollToTopTimer.restart()
+    }
+
+    Timer {
+        id: scrollToTopTimer
+        interval: 80
+        repeat: false
+        onTriggered: {
+            if (contentFlick.contentHeight > contentFlick.height)
+                scrollToTopAnim.restart()
+            else
+                contentFlick.contentY = 0
+        }
+    }
+
+    NumberAnimation {
+        id: scrollToTopAnim
+        target: contentFlick
+        property: "contentY"
+        to: 0
+        duration: 220
+        easing.type: Easing.OutCubic
     }
 
     visible: progress > 0.01

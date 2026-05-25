@@ -1,19 +1,47 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
-import QtQuick.Dialogs
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Window 2.15
 import QtCore
+import kqml_types 1.0
+import app 1.0
 import "../controls"
 import "../menus"
 import "../scene2d"
 
 
-// side-scan extra settings
 MenuFrame {
     id: mosaicViewSettings
 
     signal mosaicLAngleOffsetChanged(int val)
     signal mosaicRAngleOffsetChanged(int val)
+
+    readonly property Item _overlayItem: Window.window ? Window.window.contentItem : null
+    parent: _overlayItem
+    z: 1000
+
+    function _updatePosition() {
+        if (!parent || !mosaicViewCheckButton) return
+        var p = mosaicViewCheckButton.mapToItem(parent, 0, 0)
+        var nx = p.x + mosaicViewCheckButton.width / 2 - width / 2
+        var ny = p.y - height
+        if (nx < 0) nx = 0
+        if (ny < 0) ny = 0
+        if (parent.width  > 0 && nx + width  > parent.width)  nx = parent.width  - width
+        if (parent.height > 0 && ny + height > parent.height) ny = parent.height - height
+        x = nx
+        y = ny
+    }
+    onWidthChanged:  _updatePosition()
+    onHeightChanged: _updatePosition()
+    Connections {
+        target: mosaicViewSettings.mosaicViewCheckButton
+        ignoreUnknownSignals: true
+        function onXChanged()      { mosaicViewSettings._updatePosition() }
+        function onYChanged()      { mosaicViewSettings._updatePosition() }
+        function onWidthChanged()  { mosaicViewSettings._updatePosition() }
+        function onHeightChanged() { mosaicViewSettings._updatePosition() }
+    }
 
     property CheckButton mosaicViewCheckButton
 
@@ -22,9 +50,7 @@ MenuFrame {
     }
 
     function setChannelNamesToBackend() {
-        //plotDatasetChannelFromStrings(channel1Combo.currentText, channel2Combo.currentText)
         core.setMosaicChannels(channel1Combo.currentText, channel2Combo.currentText);
-        //plotCursorChanged(indx, cursorFrom(), cursorTo())
     }
 
     function prevTheme() {
@@ -32,7 +58,7 @@ MenuFrame {
     }
 
     function nextTheme() {
-        mosaicTheme.currentIndex = Math.min(mosaicTheme.count - 1, mosaicTheme.currentIndex + 1)
+        mosaicTheme.currentIndex = Math.min(mosaicTheme.model.length - 1, mosaicTheme.currentIndex + 1)
     }
 
     function syncLevelsSlider() {
@@ -73,29 +99,33 @@ MenuFrame {
         syncLevelsSlider()
     }
 
-    visible: Qt.platform.os === "android"
-             ? (mosaicViewCheckButton.mosaicLongPressTriggered ||
-                mosaicTheme.activeFocus                        ||
-                channel1Combo.activeFocus                      ||
-                channel2Combo.activeFocus                      ||
-                mosaicSource.activeFocus                       ||
-                mosaicLAngleOffset.activeFocus                 ||
-                mosaicRAngleOffset.activeFocus                 ||
-                fakeCoordsLastNSlider.activeFocus              ||
-                fakeCoordsClearOldDataCheck.activeFocus)
-             : (mosaicViewCheckButton.hovered                  ||
-                isHovered                                      ||
-                mosaicTheme.activeFocus                        ||
-                channel1Combo.activeFocus                      ||
-                channel2Combo.activeFocus                      ||
-                mosaicSource.activeFocus                       ||
-                mosaicLAngleOffset.activeFocus                 ||
-                mosaicRAngleOffset.activeFocus                 ||
-                fakeCoordsLastNSlider.activeFocus              ||
-                fakeCoordsClearOldDataCheck.activeFocus)
+    readonly property bool anyComboPopupOpen:
+        (mosaicTheme.popup    && mosaicTheme.popup.visible)    ||
+        (channel1Combo.popup  && channel1Combo.popup.visible)  ||
+        (channel2Combo.popup  && channel2Combo.popup.visible)  ||
+        (mosaicSource.popup   && mosaicSource.popup.visible)
 
-    z: mosaicViewSettings.visible
-    Layout.alignment: Qt.AlignCenter
+    readonly property bool anyHoverSource:
+        mosaicViewCheckButton.hovered     ||
+        isHovered                         ||
+        anyComboPopupOpen                 ||
+        mosaicTheme.activeFocus           ||
+        channel1Combo.activeFocus         ||
+        channel2Combo.activeFocus         ||
+        mosaicSource.activeFocus          ||
+        mosaicLAngleOffset.activeFocus    ||
+        mosaicRAngleOffset.activeFocus    ||
+        fakeCoordsLastNSlider.activeFocus ||
+        fakeCoordsClearOldDataCheck.activeFocus
+
+    visible: Qt.platform.os === "android"
+             ? (mosaicViewCheckButton.mosaicLongPressTriggered || anyHoverSource)
+             : anyHoverSource
+
+    backgroundColor: AppPalette.bg
+    horizontalMargins: Tokens.spaceLg
+    verticalMargins: Tokens.spaceLg
+    spacing: Tokens.spaceMd
 
     onIsHoveredChanged: {
         if (Qt.platform.os === "android") {
@@ -108,6 +138,7 @@ MenuFrame {
     onVisibleChanged: {
         if (visible) {
             focus = true;
+            _updatePosition()
         }
     }
 
@@ -122,39 +153,39 @@ MenuFrame {
     }
 
     ColumnLayout {
+        spacing: Tokens.spaceMd
+
         RowLayout {
-            spacing: 16
+            Layout.fillWidth: true
+            spacing: Tokens.spaceMd
 
-            Rectangle {
-                Layout.fillWidth: true
-                height: 2
-                color: "#808080"
-            }
-
-            CText {
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppPalette.border }
+            Text {
                 text: qsTr("Mosaic settings")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
+                font.bold: true
             }
-
-            Rectangle {
-                Layout.fillWidth: true
-                height: 2
-                color: "#808080"
-            }
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppPalette.border }
         }
+
         RowLayout {
-            ColumnLayout { // levels
-                CText {
+            spacing: Tokens.spaceMd
+
+            ColumnLayout {
+                Text {
                     Layout.fillWidth: true
                     Layout.topMargin: 0
-                    Layout.preferredWidth: theme.controlHeight*1.2
+                    Layout.preferredWidth: Tokens.controlHMd * 1.2
                     horizontalAlignment: Text.AlignHCenter
                     text: mosaicLevelsSlider.stopValue
-                    small: true
+                    color: AppPalette.text
+                    font.pixelSize: Tokens.fontSm
                 }
                 ChartLevel {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
-                    Layout.preferredWidth: theme.controlHeight * 1.2
+                    Layout.preferredWidth: Tokens.controlHMd * 1.2
                     id: mosaicLevelsSlider
                     Layout.alignment: Qt.AlignHCenter
 
@@ -175,29 +206,33 @@ MenuFrame {
                         property alias mosaicLevelsStop: mosaicLevelsSlider.stopValue
                     }
                 }
-                CText {
+                Text {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: theme.controlHeight * 1.2
+                    Layout.preferredWidth: Tokens.controlHMd * 1.2
                     Layout.bottomMargin: 0
                     horizontalAlignment: Text.AlignHCenter
-
                     text: mosaicLevelsSlider.startValue
-                    small: true
+                    color: AppPalette.text
+                    font.pixelSize: Tokens.fontSm
                 }
             }
 
             ColumnLayout {
                 id: mosaicSettingsRightColumn
+                spacing: Tokens.spaceMd
 
-                readonly property int labelW: 160
-                readonly property int ctrlW: 240
+                readonly property int labelW: Math.round(160 * AppPalette.scale)
+                readonly property int ctrlW:  Math.round(240 * AppPalette.scale)
 
                 RowLayout {
-                    CText {
+                    spacing: Tokens.spaceMd
+                    Text {
                         text: qsTr("Theme:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
                         Layout.preferredWidth: mosaicSettingsRightColumn.labelW
                     }
-                    CCombo {
+                    KCombo {
                         id: mosaicTheme
                         Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
 
@@ -207,7 +242,7 @@ MenuFrame {
                             MosaicViewControlMenuController.onThemeChanged(currentIndex)
                         }
 
-                        onFocusChanged: {
+                        onActiveFocusChanged: {
                             if (Qt.platform.os === 'android') {
                                 mosaicViewSettings.focus = true
                             }
@@ -224,24 +259,28 @@ MenuFrame {
                 }
 
                 RowLayout {
-                    CText {
+                    spacing: Tokens.spaceMd
+                    Text {
                         text: qsTr("Channels:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
                         Layout.preferredWidth: mosaicSettingsRightColumn.labelW
                         Layout.alignment: Qt.AlignTop
                     }
                     ColumnLayout {
                         id: rowDataset
+                        spacing: Tokens.spaceXs
 
                         Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
 
-                        CCombo  {
+                        KCombo  {
                             id: channel1Combo
                             Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
 
                             property bool suppressTextSignal: false
                             visible: true
 
-                            onFocusChanged: {
+                            onActiveFocusChanged: {
                                 if (Qt.platform.os === 'android') {
                                     mosaicViewSettings.focus = true
                                 }
@@ -289,7 +328,7 @@ MenuFrame {
                             }
                         }
 
-                        CCombo  {
+                        KCombo  {
                             id: channel2Combo
 
                             property bool suppressTextSignal: false
@@ -297,7 +336,7 @@ MenuFrame {
                             Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
                             visible: true
 
-                            onFocusChanged: {
+                            onActiveFocusChanged: {
                                 if (Qt.platform.os === 'android') {
                                     mosaicViewSettings.focus = true
                                 }
@@ -349,32 +388,29 @@ MenuFrame {
                 }
 
                 RowLayout {
-                    CText {
+                    spacing: Tokens.spaceMd
+                    Text {
                         text: qsTr("Angle, °:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
                         Layout.preferredWidth: mosaicSettingsRightColumn.labelW
                         Layout.alignment: Qt.AlignTop
                     }
                     ColumnLayout {
+                        spacing: Tokens.spaceXs
                         Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
-                        SpinBoxCustom  {
+                        KSpinBox  {
                             id: mosaicLAngleOffset
                             Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
-                            implicitWidth: mosaicSettingsRightColumn.ctrlW
                             from: -90
                             to: 90
                             stepSize: 1
                             value: 0
 
-                            onValueChanged: {
-                                mosaicViewSettings.mosaicLAngleOffsetChanged(value)
-                                MosaicViewControlMenuController.onSetLAngleOffset(value)
-                                dataset.onSetLAngleOffset(value);
-                            }
-
-                            onFocusChanged: {
-                                if (Qt.platform.os === 'android') {
-                                    mosaicViewSettings.focus = true
-                                }
+                            onValueModified: function(v) {
+                                mosaicViewSettings.mosaicLAngleOffsetChanged(v)
+                                MosaicViewControlMenuController.onSetLAngleOffset(v)
+                                dataset.onSetLAngleOffset(v);
                             }
 
                             Component.onCompleted: {
@@ -388,25 +424,18 @@ MenuFrame {
                             }
                         }
 
-                        SpinBoxCustom  {
+                        KSpinBox  {
                             id: mosaicRAngleOffset
                             Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
-                            implicitWidth: mosaicSettingsRightColumn.ctrlW
                             from: -90
                             to: 90
                             stepSize: 1
                             value: 0
 
-                            onValueChanged: {
-                                mosaicViewSettings.mosaicRAngleOffsetChanged(value)
-                                MosaicViewControlMenuController.onSetRAngleOffset(value)
-                                dataset.onSetRAngleOffset(value);
-                            }
-
-                            onFocusChanged: {
-                                if (Qt.platform.os === 'android') {
-                                    mosaicViewSettings.focus = true
-                                }
+                            onValueModified: function(v) {
+                                mosaicViewSettings.mosaicRAngleOffsetChanged(v)
+                                MosaicViewControlMenuController.onSetRAngleOffset(v)
+                                dataset.onSetRAngleOffset(v);
                             }
 
                             Component.onCompleted: {
@@ -422,36 +451,38 @@ MenuFrame {
                     }
                 }
 
-                RowLayout {
-                    CCheck {
-                        id: mosaicTraceLine
-                        text: qsTr("Trace line")
-                        checked: true
+                KSwitch {
+                    id: mosaicTraceLine
+                    text: qsTr("Trace line")
+                    checked: true
+                    Layout.fillWidth: true
 
-                        onCheckedChanged: {
-                            MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
-                        }
+                    onToggled: {
+                        MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
+                    }
 
-                        onFocusChanged: {
-                            mosaicViewSettings.focus = true
-                        }
+                    onActiveFocusChanged: {
+                        mosaicViewSettings.focus = true
+                    }
 
-                        Component.onCompleted: {
-                            MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
-                        }
+                    Component.onCompleted: {
+                        MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
+                    }
 
-                        Settings {
-                            property alias mosaicTraceLine: mosaicTraceLine.checked
-                        }
+                    Settings {
+                        property alias mosaicTraceLine: mosaicTraceLine.checked
                     }
                 }
 
                 RowLayout {
-                    CText {
+                    spacing: Tokens.spaceMd
+                    Text {
                         text: qsTr("Source:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
                         Layout.preferredWidth: mosaicSettingsRightColumn.labelW
                     }
-                    CCombo {
+                    KCombo {
                         id: mosaicSource
                         Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW
 
@@ -462,7 +493,7 @@ MenuFrame {
                             core.setMosaicSource(currentIndex)
                         }
 
-                        onFocusChanged: {
+                        onActiveFocusChanged: {
                             if (Qt.platform.os === 'android') {
                                 mosaicViewSettings.focus = true
                             }
@@ -478,25 +509,25 @@ MenuFrame {
                     }
                 }
 
-                // FAKE_COORDS-related controls grouped inside a bordered frame with the
-                // route_crossed_out icon on top (centered, tinted white via Button.icon.color
-                // — the SVG's own colors are overridden by Qt's icon coloring system).
+                // Grouped inside a bordered frame with the route_crossed_out icon
+                // on top (tinted via Button.icon.color so the SVG colors are
+                // overridden by Qt's icon coloring system).
                 Rectangle {
                     id: fakeCoordsGroup
                     visible: core.posZeroing
                     Layout.fillWidth: true
-                    Layout.topMargin: 8
-                    implicitHeight: fakeCoordsGroupContent.implicitHeight + 24
+                    Layout.topMargin: Tokens.spaceMd
+                    implicitHeight: fakeCoordsGroupContent.implicitHeight + 2 * Tokens.spaceLg
                     color: "transparent"
-                    border.color: "#808080"
+                    border.color: AppPalette.border
                     border.width: 1
-                    radius: 4
+                    radius: Tokens.radiusMd
 
                     ColumnLayout {
                         id: fakeCoordsGroupContent
                         anchors.fill: parent
-                        anchors.margins: 12
-                        spacing: 8
+                        anchors.margins: Tokens.spaceLg
+                        spacing: Tokens.spaceMd
 
                         Button {
                             Layout.alignment: Qt.AlignHCenter
@@ -505,24 +536,24 @@ MenuFrame {
                             padding: 0
                             background: null
                             icon.source: "qrc:/icons/ui/route_crossed_out.svg"
-                            icon.color: "white"
-                            icon.width: theme.controlHeight * 1.1
-                            icon.height: theme.controlHeight * 1.1
-                            implicitWidth: theme.controlHeight * 1.1
-                            implicitHeight: theme.controlHeight * 1.1
+                            icon.color: AppPalette.text
+                            icon.width: Tokens.controlHMd * 1.1
+                            icon.height: Tokens.controlHMd * 1.1
+                            implicitWidth: Tokens.controlHMd * 1.1
+                            implicitHeight: Tokens.controlHMd * 1.1
                         }
 
                         RowLayout {
-                            CText {
+                            spacing: Tokens.spaceMd
+                            Text {
                                 text: qsTr("Calc last N epochs:")
+                                color: AppPalette.textSecond
+                                font.pixelSize: Tokens.fontMd
                                 Layout.preferredWidth: mosaicSettingsRightColumn.labelW
                             }
-                            CSlider {
+                            KSlider {
                                 id: fakeCoordsLastNSlider
-                                Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW - 90
-                                implicitHeight: theme.controlHeight
-                                height: theme.controlHeight
-                                barWidth: 12 * theme.resCoeff
+                                Layout.preferredWidth: mosaicSettingsRightColumn.ctrlW - Math.round(90 * AppPalette.scale)
                                 from: 10
                                 to: 3000
                                 stepSize: 10
@@ -539,31 +570,29 @@ MenuFrame {
                                     property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value
                                 }
                             }
-                            CText {
-                                Layout.preferredWidth: 50
+                            Text {
+                                Layout.preferredWidth: Math.round(50 * AppPalette.scale)
                                 horizontalAlignment: Text.AlignRight
+                                color: AppPalette.text
+                                font.pixelSize: Tokens.fontMd
                                 text: fakeCoordsLastNSlider.value >= fakeCoordsLastNSlider.to
                                       ? qsTr("All") : fakeCoordsLastNSlider.value
                             }
                         }
 
-                        RowLayout {
-                            CCheck {
-                                id: fakeCoordsClearOldDataCheck
-                                text: qsTr("Clear old data (*)")
-                                checked: true
+                        KSwitch {
+                            id: fakeCoordsClearOldDataCheck
+                            text: qsTr("Clear old data (*)")
+                            checked: true
+                            Layout.fillWidth: true
 
-                                // Gate the effective value on core.posZeroing — radical clear must NEVER
-                                // fire outside FAKE_COORDS, even if the user's checked state was persisted
-                                // from a prior session when posZeroing was on.
-                                readonly property bool effectiveClearOldData: checked && core.posZeroing
+                            readonly property bool effectiveClearOldData: checked && core.posZeroing
 
-                                onEffectiveClearOldDataChanged: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
-                                Component.onCompleted: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
+                            onEffectiveClearOldDataChanged: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
+                            Component.onCompleted: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
 
-                                Settings {
-                                    property alias fakeCoordsClearOldDataCheck: fakeCoordsClearOldDataCheck.checked
-                                }
+                            Settings {
+                                property alias fakeCoordsClearOldDataCheck: fakeCoordsClearOldDataCheck.checked
                             }
                         }
                     }

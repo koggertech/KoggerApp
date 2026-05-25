@@ -25,8 +25,9 @@ Item {
     }
 
     Scene3DToolbar {
+        id: scene3dToolbar
         view: root.scene3dView
-        z: 1
+        z: menuOpened ? 100 : 1
 
         onUpdateBottomTrack: {
             if (root.workspaceRoot)
@@ -41,6 +42,7 @@ Item {
         anchors.bottom: parent.bottom
         view: root.scene3dView
         geo: root.scene3dView ? root.scene3dView.geoJsonController : null
+        store: root.workspaceRoot ? root.workspaceRoot.store : null
         z: 1
     }
 

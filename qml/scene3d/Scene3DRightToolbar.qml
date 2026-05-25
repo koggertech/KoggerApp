@@ -3,6 +3,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtCore
 import kqml_types 1.0
+import app 1.0
 import "../controls"
 import "../menus"
 
@@ -11,29 +12,18 @@ Item {
 
     property var geo: null
     property var view: null
-    // Kept for backwards compatibility with Pane3DWindow.closeTransientUi().
-    // Map-tile-provider menu lives in AppSettings now; this property is always
-    // false and the toggleLayers() function is a no-op.
-    property bool layersOpen: false
+    property var store: null
     property bool geometryOpen: false
-    property real buttonSize: theme.controlHeight * 1.3
+    property real buttonSize: Math.round(40 * (theme ? theme.resCoeff : 1.0))
     property bool toolbarHovered: buttonColumnHoverHandler.hovered
-    property bool toolbarPressed: rulerToolButton.down || zoomInButton.down || zoomOutButton.down
+    property bool toolbarPressed: rulerToolButton.pressed || navArrowButton.pressed
     property bool menuOpened: root.geometryOpen
 
-    width: buttonColumn.width + geometryPanel.width + 8
-    opacity: (toolbarHovered || toolbarPressed || menuOpened) ? 1.0 : 0.5
-    Behavior on opacity { NumberAnimation { duration: 120 } }
+    property bool layersOpen: false
+    function toggleLayers() { layersOpen = false }
+    function toggleGeometry() { geometryOpen = !geometryOpen }
 
-    // One mouse-wheel step at the centre of the 3D viewport. The C++ side
-    // divides angleDelta.y by 120 to get logical steps and clamps to ±8.
-    function _zoom(steps) {
-        if (!root.view || typeof root.view.mouseWheelTrigger !== "function")
-            return
-        var cx = root.view.width  / 2
-        var cy = root.view.height / 2
-        root.view.mouseWheelTrigger(Qt.NoButton, cx, cy, Qt.point(0, steps * 120), 0)
-    }
+    width: buttonColumn.width + 8
 
     HoverHandler {
         onHoveredChanged: {
@@ -43,88 +33,113 @@ Item {
         }
     }
 
-    function toggleLayers() { /* moved to AppSettings; kept for ESC compatibility */ }
-
-    function toggleGeometry() {
-        geometryOpen = !geometryOpen
+    function _zoom(steps) {
+        if (!root.view || typeof root.view.mouseWheelTrigger !== "function")
+            return
+        var cx = root.view.width  / 2
+        var cy = root.view.height / 2
+        root.view.mouseWheelTrigger(Qt.NoButton, cx, cy, Qt.point(0, steps * 120), 0)
     }
 
     ColumnLayout {
         id: buttonColumn
         anchors.right: parent.right
-        // Vertically centred against the pane — Ruler sits in the middle,
-        // zoom-in / zoom-out stack right above it.
         anchors.verticalCenter: parent.verticalCenter
-        // Stay clear of split-drag hit zone on the right edge.
         anchors.rightMargin: 12 + AppPalette.splitHitSizePx / 2
-        spacing: 6
+        spacing: Math.round(6 * AppPalette.scale)
         z: 3
 
         HoverHandler {
             id: buttonColumnHoverHandler
         }
 
-        CheckButton {
+        CircleIconButton {
             id: zoomInButton
-            checkable: false
+            width: root.buttonSize
+            height: root.buttonSize
+            Layout.preferredWidth: root.buttonSize
+            Layout.preferredHeight: root.buttonSize
             iconSource: "qrc:/icons/ui/zoom-in.svg"
-            implicitWidth: buttonSize
-            implicitHeight: buttonSize
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-
-            CMouseOpacityArea {
-                toolTipText: qsTr("Zoom in")
-                popupPosition: "bottomLeft"
-            }
-
+            iconColor: AppPalette.text
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            borderColor: AppPalette.border
+            toolTipText: qsTr("Zoom in")
             onClicked: root._zoom(+4)
         }
 
-        CheckButton {
+        CircleIconButton {
             id: zoomOutButton
-            checkable: false
+            width: root.buttonSize
+            height: root.buttonSize
+            Layout.preferredWidth: root.buttonSize
+            Layout.preferredHeight: root.buttonSize
             iconSource: "qrc:/icons/ui/zoom-out.svg"
-            implicitWidth: buttonSize
-            implicitHeight: buttonSize
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-
-            CMouseOpacityArea {
-                toolTipText: qsTr("Zoom out")
-                popupPosition: "bottomLeft"
-            }
-
+            iconColor: AppPalette.text
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            borderColor: AppPalette.border
+            toolTipText: qsTr("Zoom out")
             onClicked: root._zoom(-4)
         }
 
-        CheckButton {
-            id: rulerToolButton
-            checkable: true
-            checked: false
-            iconSource: "qrc:/icons/ui/ruler_measure.svg"
-            implicitWidth: buttonSize
-            implicitHeight: buttonSize
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
+        Item { Layout.preferredHeight: Tokens.spaceLg; Layout.preferredWidth: 1 }
 
-            CMouseOpacityArea {
-                toolTipText: qsTr("Ruler")
-                popupPosition: "bottomLeft"
+        CircleIconButton {
+            id: navArrowButton
+            objectName: "navigationViewButton"
+            width: root.buttonSize
+            height: root.buttonSize
+            Layout.preferredWidth: root.buttonSize
+            Layout.preferredHeight: root.buttonSize
+            iconSource: "qrc:/icons/ui/location.svg"
+            iconColor: AppPalette.text
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            toolTipText: qsTr("Navigator view")
+
+            readonly property bool checked: root.store ? root.store.navigationViewEnabled : false
+            borderColor: checked ? AppPalette.accentBorder : AppPalette.border
+            borderWidth: checked ? 2 : 1
+
+            onClicked: {
+                if (!root.store) return
+                root.store.navigationViewEnabled = !root.store.navigationViewEnabled
+                Scene3dToolBarController.onNavigatorLocationButtonChanged(root.store.navigationViewEnabled)
             }
 
-            onToggled: {
+            Component.onCompleted: {
+                Scene3dToolBarController.onNavigatorLocationButtonChanged(checked)
+            }
+        }
+
+        CircleIconButton {
+            id: rulerToolButton
+            objectName: "rulerToolButton"
+            width: root.buttonSize
+            height: root.buttonSize
+            Layout.preferredWidth: root.buttonSize
+            Layout.preferredHeight: root.buttonSize
+            iconSource: "qrc:/icons/ui/ruler_measure.svg"
+            iconColor: AppPalette.text
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            toolTipText: qsTr("Ruler")
+
+            property bool checked: false
+            borderColor: checked ? AppPalette.accentBorder : AppPalette.border
+            borderWidth: checked ? 2 : 1
+
+            onClicked: {
+                checked = !checked
                 Scene3dToolBarController.onRulerModeChanged(checked)
             }
 
             Component.onCompleted: {
-                if (root.view) {
-                    checked = root.view.rulerEnabled
-                }
                 Scene3dToolBarController.onRulerModeChanged(checked)
+                if (root.view && root.view.rulerEnabled !== checked) {
+                    root.view.rulerEnabled = checked
+                }
             }
 
             Settings {
@@ -141,145 +156,120 @@ Item {
             }
         }
 
-        CheckButton {
-            checkable: false
-            iconSource: "qrc:/icons/ui/map_pin_cog.svg"
-            implicitWidth: buttonSize
-            implicitHeight: buttonSize
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            visible: false
+        Item { Layout.preferredHeight: Tokens.spaceLg; Layout.preferredWidth: 1 }
 
-            CMouseOpacityArea {
-                toolTipText: qsTr("GeoJSON")
-                popupPosition: "bottomLeft"
+        CircleIconButton {
+            id: settingsGearButton
+            objectName: "settingsGearButton"
+            width: root.buttonSize
+            height: root.buttonSize
+            Layout.preferredWidth: root.buttonSize
+            Layout.preferredHeight: root.buttonSize
+            iconSource: "qrc:/icons/ui/settings.svg"
+            iconColor: AppPalette.text
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            borderColor: AppPalette.border
+            toolTipText: qsTr("3D scene settings")
+            visible: root.store !== null
+
+            onClicked: {
+                if (root.store && typeof root.store.openAppSettingsAtGroup === "function")
+                    root.store.openAppSettingsAtGroup("app.scene3d")
             }
-
-            onClicked: root.toggleGeometry()
         }
 
         ColumnLayout {
-            spacing: 6
-            visible: root.geometryOpen || (geo && geo.tool !== 0)
+            spacing: Math.round(6 * AppPalette.scale)
+            visible: root.geometryOpen || (root.geo && root.geo.tool !== 0)
 
-            CheckButton {
-                checkable: true
-                checked: geo ? geo.tool === 1 : false
+            CircleIconButton {
+                width: root.buttonSize
+                height: root.buttonSize
+                Layout.preferredWidth: root.buttonSize
+                Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/point.svg"
-                implicitWidth: buttonSize
-                implicitHeight: buttonSize
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-
-                CMouseOpacityArea {
-                    toolTipText: qsTr("Point")
-                    popupPosition: "bottomLeft"
-                }
-
-                onClicked: {
-                    if (geo) geo.tool = (geo.tool === 1 ? 0 : 1)
-                }
+                iconColor: AppPalette.text
+                fillHoverColor: AppPalette.cardHover
+                toolTipText: qsTr("Point")
+                property bool checked: root.geo ? root.geo.tool === 1 : false
+                fillColor: checked ? AppPalette.accentBg : AppPalette.card
+                borderColor: checked ? AppPalette.accentBorder : AppPalette.border
+                onClicked: if (root.geo) root.geo.tool = (root.geo.tool === 1 ? 0 : 1)
             }
 
-            CheckButton {
-                checkable: true
-                checked: geo ? geo.tool === 2 : false
+            CircleIconButton {
+                width: root.buttonSize
+                height: root.buttonSize
+                Layout.preferredWidth: root.buttonSize
+                Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/line.svg"
-                implicitWidth: buttonSize
-                implicitHeight: buttonSize
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-
-                CMouseOpacityArea {
-                    toolTipText: qsTr("Line")
-                    popupPosition: "bottomLeft"
-                }
-
-                onClicked: {
-                    if (geo) geo.tool = (geo.tool === 2 ? 0 : 2)
-                }
+                iconColor: AppPalette.text
+                fillHoverColor: AppPalette.cardHover
+                toolTipText: qsTr("Line")
+                property bool checked: root.geo ? root.geo.tool === 2 : false
+                fillColor: checked ? AppPalette.accentBg : AppPalette.card
+                borderColor: checked ? AppPalette.accentBorder : AppPalette.border
+                onClicked: if (root.geo) root.geo.tool = (root.geo.tool === 2 ? 0 : 2)
             }
 
-            CheckButton {
-                checkable: true
-                checked: geo ? geo.tool === 3 : false
+            CircleIconButton {
+                width: root.buttonSize
+                height: root.buttonSize
+                Layout.preferredWidth: root.buttonSize
+                Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/polygon.svg"
-                implicitWidth: buttonSize
-                implicitHeight: buttonSize
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-
-                CMouseOpacityArea {
-                    toolTipText: qsTr("Polygon")
-                    popupPosition: "bottomLeft"
-                }
-
-                onClicked: {
-                    if (geo) geo.tool = (geo.tool === 3 ? 0 : 3)
-                }
+                iconColor: AppPalette.text
+                fillHoverColor: AppPalette.cardHover
+                toolTipText: qsTr("Polygon")
+                property bool checked: root.geo ? root.geo.tool === 3 : false
+                fillColor: checked ? AppPalette.accentBg : AppPalette.card
+                borderColor: checked ? AppPalette.accentBorder : AppPalette.border
+                onClicked: if (root.geo) root.geo.tool = (root.geo.tool === 3 ? 0 : 3)
             }
         }
 
         ColumnLayout {
-            spacing: 6
-            visible: geo ? geo.drawing : false
+            spacing: Math.round(6 * AppPalette.scale)
+            visible: root.geo ? root.geo.drawing : false
 
-            CheckButton {
-                checkable: false
+            CircleIconButton {
+                width: root.buttonSize
+                height: root.buttonSize
+                Layout.preferredWidth: root.buttonSize
+                Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/file-check.svg"
-                implicitWidth: buttonSize
-                implicitHeight: buttonSize
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                enabled: geo ? geo.drawing : false
-
-                CMouseOpacityArea {
-                    toolTipText: qsTr("Finish drawing")
-                    popupPosition: "bottomLeft"
-                }
-
-                onClicked: if (geo) geo.finishDrawing()
+                iconColor: AppPalette.text
+                fillHoverColor: AppPalette.cardHover
+                toolTipText: qsTr("Finish drawing")
+                enabled: root.geo ? root.geo.drawing : false
+                onClicked: if (root.geo) root.geo.finishDrawing()
             }
 
-            CheckButton {
-                checkable: false
+            CircleIconButton {
+                width: root.buttonSize
+                height: root.buttonSize
+                Layout.preferredWidth: root.buttonSize
+                Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/repeat.svg"
-                implicitWidth: buttonSize
-                implicitHeight: buttonSize
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                enabled: geo ? geo.drawing : false
-
-                CMouseOpacityArea {
-                    toolTipText: qsTr("Undo")
-                    popupPosition: "bottomLeft"
-                }
-
-                onClicked: if (geo) geo.undoLastVertex()
+                iconColor: AppPalette.text
+                fillHoverColor: AppPalette.cardHover
+                toolTipText: qsTr("Undo")
+                enabled: root.geo ? root.geo.drawing : false
+                onClicked: if (root.geo) root.geo.undoLastVertex()
             }
 
-            CheckButton {
-                checkable: false
+            CircleIconButton {
+                width: root.buttonSize
+                height: root.buttonSize
+                Layout.preferredWidth: root.buttonSize
+                Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/x.svg"
-                implicitWidth: buttonSize
-                implicitHeight: buttonSize
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                enabled: geo ? geo.drawing : false
-
-                CMouseOpacityArea {
-                    toolTipText: qsTr("Cancel drawing")
-                    popupPosition: "bottomLeft"
-                }
-
-                onClicked: if (geo) geo.cancelDrawing()
+                iconColor: AppPalette.text
+                fillHoverColor: AppPalette.cardHover
+                toolTipText: qsTr("Cancel drawing")
+                enabled: root.geo ? root.geo.drawing : false
+                onClicked: if (root.geo) root.geo.cancelDrawing()
             }
         }
     }

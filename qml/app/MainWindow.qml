@@ -500,8 +500,29 @@ ApplicationWindow {
             color: "#0B1220"
         }
 
+        Connections {
+            target: workspaceStore
+            function onSettingsPanelOpenChanged() {
+                if (workspaceStore.settingsPanelOpen) {
+                    hotActions.expanded = false
+                    hotActions.layoutsMenuOpen = false
+                }
+            }
+            function onModeSettingsPanelOpenChanged() {
+                if (workspaceStore.modeSettingsPanelOpen) {
+                    hotActions.expanded = false
+                    hotActions.layoutsMenuOpen = false
+                }
+            }
+        }
+
         HotActionsPanel {
             id: hotActions
+
+            visible: !workspaceStore.settingsPanelOpen
+                     && !workspaceStore.modeSettingsPanelOpen
+                     || hotkeysPreviewMode
+                     || hotkeysPreviewPinned
 
             anchors.left: parent.left
             anchors.top: parent.top

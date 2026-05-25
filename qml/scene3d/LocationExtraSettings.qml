@@ -1,13 +1,13 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 import QtQuick.Dialogs
 import QtCore
+import kqml_types 1.0
 import "../controls"
 import "../menus"
 
 
-// location extra settings
 MenuFrame {
     id: locationSettings
 
@@ -15,23 +15,24 @@ MenuFrame {
 
     visible: Qt.platform.os === "android"
              ? locationCheckButton.locationLongPressTriggered
-             : (locationCheckButton.hovered                    ||
-                isHovered)
+             : (locationCheckButton.hovered || isHovered)
 
     z: locationSettings.visible
     Layout.alignment: Qt.AlignCenter
+    backgroundColor: AppPalette.bg
+    horizontalMargins: Tokens.spaceLg
+    verticalMargins: Tokens.spaceLg
+    spacing: Tokens.spaceMd
 
     onIsHoveredChanged: {
-        if (Qt.platform.os === "android") {
-            if (isHovered) {
-                isHovered = false
-            }
+        if (Qt.platform.os === "android" && isHovered) {
+            isHovered = false
         }
     }
 
     onVisibleChanged: {
         if (visible) {
-            focus = true;
+            focus = true
         }
     }
 
@@ -45,79 +46,47 @@ MenuFrame {
         }
     }
 
+    readonly property int _rowWidth: Math.round(260 * AppPalette.scale)
+
     ColumnLayout {
+        spacing: Tokens.spaceMd
+
         RowLayout {
-            spacing: 16
+            Layout.fillWidth: true
+            spacing: Tokens.spaceMd
 
-            Rectangle {
-                Layout.fillWidth: true
-                height: 2
-                color: "#808080"
-            }
-
-            CText {
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppPalette.border }
+            Text {
                 text: qsTr("Location settings")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
+                font.bold: true
             }
-
-            Rectangle {
-                Layout.fillWidth: true
-                height: 2
-                color: "#808080"
-            }
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppPalette.border }
         }
 
-        CheckButton {
+        KToggleRow {
             id: useAngleButton
             objectName: "useAngleButton"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
+            label: qsTr("Use angle")
             iconSource: "qrc:/icons/ui/focus_2.svg"
-            text: qsTr("Use angle")
-            Layout.fillWidth: true
+            Layout.preferredWidth: locationSettings._rowWidth
 
-            onToggled: {
-                Scene3dToolBarController.onUseAngleLocationButtonChanged(checked)
-            }
-
-            onFocusChanged: {
-                locationSettings.focus = true
-            }
-
-            Component.onCompleted: {
-                Scene3dToolBarController.onUseAngleLocationButtonChanged(checked)
-            }
-
-            Settings {
-                property alias useAngleButton: useAngleButton.checked
-            }
+            onToggled: function(v) { Scene3dToolBarController.onUseAngleLocationButtonChanged(v) }
+            Component.onCompleted: Scene3dToolBarController.onUseAngleLocationButtonChanged(checked)
+            Settings { property alias useAngleButton: useAngleButton.checked }
         }
 
-        CheckButton {
+        KToggleRow {
             id: navigationViewButton
             objectName: "navigationViewButton"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
+            label: qsTr("Navigator view")
             iconSource: "qrc:/icons/ui/arrow_bar_to_down.svg"
-            text: qsTr("Navigator view")
-            Layout.fillWidth: true
+            Layout.preferredWidth: locationSettings._rowWidth
 
-            onToggled: {
-                Scene3dToolBarController.onNavigatorLocationButtonChanged(checked)
-            }
-
-            onFocusChanged: {
-                locationSettings.focus = true
-            }
-
-            Component.onCompleted: {
-                Scene3dToolBarController.onNavigatorLocationButtonChanged(checked)
-            }
-
-            Settings {
-                property alias navigationViewButton: navigationViewButton.checked
-            }
+            onToggled: function(v) { Scene3dToolBarController.onNavigatorLocationButtonChanged(v) }
+            Component.onCompleted: Scene3dToolBarController.onNavigatorLocationButtonChanged(checked)
+            Settings { property alias navigationViewButton: navigationViewButton.checked }
         }
     }
 }

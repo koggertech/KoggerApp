@@ -157,7 +157,10 @@ Column {
         store.setActiveDeviceSN(devList[0].devSN)
     }
 
-    onStoreChanged: syncActiveDevice()
+    onStoreChanged: {
+        syncActiveDevice()
+        _claimScrollEpoch()
+    }
 
     Connections {
         target: core
@@ -979,9 +982,78 @@ Column {
     // ── Device settings ───────────────────────────────────────────────────
 
     DeviceSettingsPage {
+        id: deviceSettingsAnchor
         visible: connectionViewer.dev !== null
         width: parent.width
         dev: connectionViewer.dev
+    }
+
+    property int _lastHandledScrollEpoch: -1
+
+    Timer {
+        id: scrollToDeviceSettingsTimer
+        interval: 240
+        repeat: false
+        onTriggered: connectionViewer._scrollToDeviceSettings()
+    }
+
+    function _claimScrollEpoch() {
+        if (!connectionViewer.store
+                || typeof connectionViewer.store.scrollToDeviceSettingsEpoch !== "number")
+            return
+        var e = connectionViewer.store.scrollToDeviceSettingsEpoch
+        if (_lastHandledScrollEpoch < 0) {
+            _lastHandledScrollEpoch = e
+            return
+        }
+        if (e === _lastHandledScrollEpoch) return
+        _lastHandledScrollEpoch = e
+        if (e > 0)
+            scrollToDeviceSettingsTimer.restart()
+    }
+
+    Connections {
+        target: connectionViewer.store
+        ignoreUnknownSignals: true
+        function onScrollToDeviceSettingsEpochChanged() {
+            connectionViewer._claimScrollEpoch()
+        }
+    }
+
+    function _findAncestorFlickable() {
+        var item = connectionViewer.parent
+        while (item) {
+            if (item.contentY !== undefined
+                    && item.contentHeight !== undefined
+                    && item.contentWidth !== undefined)
+                return item
+            item = item.parent
+        }
+        return null
+    }
+
+    function _scrollToDeviceSettings() {
+        if (!deviceSettingsAnchor || !deviceSettingsAnchor.visible)
+            return
+        var flick = _findAncestorFlickable()
+        if (!flick) return
+
+        var topInContent = deviceSettingsAnchor.mapToItem(flick.contentItem, 0, 0).y
+        var target = Math.max(0, topInContent - Tokens.spaceLg)
+        target = Math.min(target, Math.max(0, flick.contentHeight - flick.height))
+        if (Math.abs(target - flick.contentY) < 0.5) return
+
+        scrollToDeviceAnim.target = flick
+        scrollToDeviceAnim.from = flick.contentY
+        scrollToDeviceAnim.to = target
+        scrollToDeviceAnim.restart()
+    }
+
+    NumberAnimation {
+        id: scrollToDeviceAnim
+        property: "contentY"
+        duration: 240
+        easing.type: Easing.OutCubic
     }
 
     // ── Recent files ──────────────────────────────────────────────────────

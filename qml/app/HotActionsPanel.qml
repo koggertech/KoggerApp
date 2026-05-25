@@ -59,7 +59,10 @@ Item {
                                                      ? favoriteCount * favoriteItemHeight + (favoriteCount - 1) * favoriteItemSpacing
                                                      : 0
     readonly property int favoriteListViewportHeight: Math.min(favoriteListMaxHeight, favoriteListContentHeight)
-    readonly property bool inputDeviceBadgeVisible: root.showToggleButton && root.inputDeviceLabel !== ""
+    readonly property bool inputDeviceBadgeVisible:
+        root.showToggleButton
+        && root.inputDeviceLabel !== ""
+        && (typeof manualTesting !== "undefined" && manualTesting === true)
     readonly property int inputDeviceBadgeWidth: inputDeviceBadgeVisible ? inputDeviceBadge.implicitWidth : 0
 
     signal settingsTriggered()
@@ -476,6 +479,53 @@ Item {
             spacing: 8
             height: root.controlHeight
 
+            SettingsGearButton {
+                width: root.controlHeight
+                height: root.controlHeight
+                modeTag: "app"
+                fillColor: root.buttonFillColor
+                fillHoverColor: root.buttonHoverColor
+                fillPressedColor: root.buttonPressedColor
+                borderColor: root.buttonBorderColor
+                borderHoverColor: root.buttonHoverBorderColor
+                onClicked: {
+                    root.settingsTriggered()
+                    root.expanded = false
+                }
+            }
+
+            Repeater {
+                readonly property bool _devicesRevealOverride: root._revealActiveKey === "connections"
+                model: (root.connectionStatusToolVisible || _devicesRevealOverride) ? root.devices : 0
+                delegate: CircleIconButton {
+                    required property var modelData
+                    readonly property color _fill:   root.linkFillColor(modelData)
+                    readonly property color _border: root.linkBorderColor(modelData)
+
+                    visible: modelData ? (modelData.devType !== 0) : false
+                    width: visible ? root.controlHeight : 0
+                    height: root.controlHeight
+                    iconSource: root.iconForDevice(modelData)
+                    toolTipText: modelData
+                                 ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]")
+                                 : ""
+                    fillColor:        _fill
+                    fillHoverColor:   _fill
+                    fillPressedColor: root.buttonPressedColor
+                    borderColor:      _border
+                    borderHoverColor: _border
+
+                    highlighted: root.highlightedQuickActionKey === "connections"
+                    flashToken: root.highlightPulseToken
+
+                    onClicked: {
+                        if (!modelData) return
+                        root.deviceTriggered(modelData.devSN)
+                        root.expanded = false
+                    }
+                }
+            }
+
             // ── Favorite layout pictograms ─────────────────────────────────
             // One thumbnail per favorite. Click applies it. Skipped when the
             // user disabled the group in Menu settings (favoritesEnabled).
@@ -523,21 +573,6 @@ Item {
                 }
             }
 
-            SettingsGearButton {
-                width: root.controlHeight
-                height: root.controlHeight
-                modeTag: "app"
-                fillColor: root.buttonFillColor
-                fillHoverColor: root.buttonHoverColor
-                fillPressedColor: root.buttonPressedColor
-                borderColor: root.buttonBorderColor
-                borderHoverColor: root.buttonHoverBorderColor
-                onClicked: {
-                    root.settingsTriggered()
-                    root.expanded = false
-                }
-            }
-
             CircleIconButton {
                 visible: Qt.platform.os !== "android" && Qt.platform.os !== "ios"
                 width: root.controlHeight
@@ -557,40 +592,6 @@ Item {
                 }
             }
 
-            Repeater {
-                // Skip instantiation entirely when the user disabled the
-                // "connected devices" group in Menu settings — unless we're
-                // mid-reveal (so the user sees them flash before disappearing).
-                readonly property bool _devicesRevealOverride: root._revealActiveKey === "connections"
-                model: (root.connectionStatusToolVisible || _devicesRevealOverride) ? root.devices : 0
-                delegate: CircleIconButton {
-                    required property var modelData
-                    readonly property color _fill:   root.linkFillColor(modelData)
-                    readonly property color _border: root.linkBorderColor(modelData)
-
-                    visible: modelData ? (modelData.devType !== 0) : false
-                    width: visible ? root.controlHeight : 0
-                    height: root.controlHeight
-                    iconSource: root.iconForDevice(modelData)
-                    toolTipText: modelData
-                                 ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]")
-                                 : ""
-                    fillColor:        _fill
-                    fillHoverColor:   _fill
-                    fillPressedColor: root.buttonPressedColor
-                    borderColor:      _border
-                    borderHoverColor: _border
-
-                    highlighted: root.highlightedQuickActionKey === "connections"
-                    flashToken: root.highlightPulseToken
-
-                    onClicked: {
-                        if (!modelData) return
-                        root.deviceTriggered(modelData.devSN)
-                        root.expanded = false
-                    }
-                }
-            }
         }
     }
 

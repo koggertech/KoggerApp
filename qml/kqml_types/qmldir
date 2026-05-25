@@ -7,6 +7,7 @@ singleton Tokens 1.0 Tokens.qml
 KTabBar 1.0 KTabBar.qml
 KCheckBox 1.0 KCheckBox.qml
 KSwitch 1.0 KSwitch.qml
+KToggleRow 1.0 KToggleRow.qml
 KSlider 1.0 KSlider.qml
 KButton 1.0 KButton.qml
 KCombo 1.0 KCombo.qml

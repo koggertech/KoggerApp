@@ -125,6 +125,14 @@ readonly property int workspaceResizeDebounceMs: 120
 
 signal workspaceSizeCommitRequested()
 
+property Settings scene3dPersistedSettings: Settings {
+    id: scene3dPersistedSettings
+    property bool navigationViewButton: false
+    property bool useAngleButton: false
+}
+property alias navigationViewEnabled: scene3dPersistedSettings.navigationViewButton
+property alias useAngleEnabled: scene3dPersistedSettings.useAngleButton
+
 property Settings layoutStore: Settings {
     category: "workspace"
 
@@ -279,6 +287,29 @@ function openAppLayoutSettings() {
     setSettingsGroupExpanded("app.layoutPlacement", true)
 }
 
+property string pendingScrollGroupKey: ""
+
+function openAppSettingsAtGroup(stateKey) {
+    closeModeSettingsPanel()
+    settingsPanelOpen = true
+
+    var key = normalizedSettingsGroupKey(stateKey)
+    if (key === "")
+        return
+
+    setSettingsGroupExpanded(key, true)
+    pendingScrollGroupKey = key
+
+    for (var i = 0; i < _settingsGroupInstances.length; ++i) {
+        var g = _settingsGroupInstances[i]
+        if (g && g.stateKey === key && typeof g._scrollToTop === "function") {
+            Qt.callLater(g._scrollToTop)
+            pendingScrollGroupKey = ""
+            break
+        }
+    }
+}
+
 function openConnectionsSettings() {
     closeModeSettingsPanel()
     settingsPanelOpen = true
@@ -291,9 +322,12 @@ function setActiveDeviceSN(sn) {
     activeDeviceSN = sn
 }
 
+property int scrollToDeviceSettingsEpoch: 0
+
 function openConnectionsWithDevice(sn) {
     setActiveDeviceSN(sn)
     openConnectionsSettings()
+    scrollToDeviceSettingsEpoch += 1
 }
 
 function toggleAppLayoutSettings() {
