@@ -100,7 +100,8 @@ Item {
                 y: combo.height + Tokens.spaceXxs
                 width: combo.width
                 implicitHeight: Math.min(contentItem.implicitHeight,
-                                         itemHeight * root.maxVisibleItems + 2 * Tokens.spaceXs)
+                                         itemHeight * root.maxVisibleItems)
+                                + 2 * Tokens.spaceXs
                 padding: Tokens.spaceXs
 
                 background: Rectangle {

@@ -7,6 +7,7 @@ KCircleIconButton {
     property string modeTag: "app"
 
     iconSource: "qrc:/icons/ui/settings.svg"
+    iconTintColor: AppPalette.text
     // Gear has more internal whitespace than other Tabler icons, so push it
     // to ~64% of the button (vs the 56% default). Scales with manualScale.
     iconPixelSize: Math.round((modeTag === "app" ? 24 : 22) * AppPalette.scale)

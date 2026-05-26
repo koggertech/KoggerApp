@@ -70,9 +70,10 @@ QtObject {
     readonly property color knobBorder:     "#00000022"
 
     // ── Accent (design constant – blue; shifts light/dark only) ───────────────
-    readonly property color accentBg:     isDark ? "#1E3A8A" : "#EFF6FF"
-    readonly property color accentBorder: isDark ? "#93C5FD" : "#60A5FA"
-    readonly property color accentBar:    isDark ? "#60A5FA" : "#3B82F6"
+    readonly property color accentBg:       isDark ? "#1E3A8A" : "#EFF6FF"
+    readonly property color accentBgStrong: isDark ? "#1E3A8A" : "#93C5FD"
+    readonly property color accentBorder:   isDark ? "#93C5FD" : "#60A5FA"
+    readonly property color accentBar:      isDark ? "#60A5FA" : "#3B82F6"
 
     // ── Danger ────────────────────────────────────────────────────────────────
     readonly property color dangerBg:     isDark ? "#2A1313" : "#FEF2F2"

@@ -384,6 +384,7 @@ Item {
         height: visible ? root.panelHeight : 0
         iconSource: root.expanded ? "qrc:/icons/ui/x.svg"
                                   : "qrc:/icons/ui/menu-2.svg"
+        iconTintColor: AppPalette.text
         iconPixelSize: Math.round((root.expanded ? 19 : 20) * AppPalette.scale)
         fillColor: root.buttonFillColor
         fillHoverColor: root.buttonHoverColor
@@ -506,6 +507,7 @@ Item {
                     width: visible ? root.controlHeight : 0
                     height: root.controlHeight
                     iconSource: root.iconForDevice(modelData)
+                    iconTintColor: AppPalette.text
                     toolTipText: modelData
                                  ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]")
                                  : ""
@@ -578,10 +580,11 @@ Item {
                 width: root.controlHeight
                 height: root.controlHeight
                 iconSource: "qrc:/icons/ui/external-link.svg"
+                iconTintColor: AppPalette.text
                 toolTipText: root.secondWindowOpen
                              ? qsTr("Close second window")
                              : qsTr("Open second window")
-                fillColor:        root.secondWindowOpen ? AppPalette.accentBg     : root.buttonFillColor
+                fillColor:        root.secondWindowOpen ? AppPalette.accentBgStrong : root.buttonFillColor
                 fillHoverColor:   root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverColor
                 fillPressedColor: root.buttonPressedColor
                 borderColor:      root.secondWindowOpen ? AppPalette.accentBorder : root.buttonBorderColor

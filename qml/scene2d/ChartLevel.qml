@@ -77,13 +77,31 @@ Item {
         canvas.requestPaint()
     }
 
-    MouseArea {
-        id:mouseArea
-        anchors.fill: parent
+    property int wheelStep: 1
 
-        // hoverEnabled: true
-        // onEntered: parent.color = 'yellow'
-        // onExited: parent.color = 'black'
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        preventStealing: true
+
+        onWheel: function(wheel) {
+            var delta = wheel.angleDelta.y > 0 ? control.wheelStep : -control.wheelStep
+            var closeToStart = Math.abs(startPointY - wheel.y) < Math.abs(stopPointY - wheel.y)
+            if (startPointY === stopPointY) {
+                closeToStart = wheel.y > startPointY
+            }
+            if (closeToStart) {
+                startValue = Math.max(from, Math.min(to, startValue + delta))
+                if (startValue > stopValue) stopValue = startValue
+            } else {
+                stopValue = Math.max(from, Math.min(to, stopValue + delta))
+                if (stopValue < startValue) startValue = stopValue
+            }
+            startPointY = valueToPosition(startValue)
+            stopPointY  = valueToPosition(stopValue)
+            canvas.requestPaint()
+            wheel.accepted = true
+        }
 
         onPressed: {
             updateValue(mouseX, mouseY, true)

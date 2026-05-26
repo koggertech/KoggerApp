@@ -51,7 +51,7 @@ Item  {
             Layout.preferredWidth: toolbarRoot.buttonSize
             Layout.preferredHeight: toolbarRoot.buttonSize
             iconSource: "qrc:/icons/ui/fit-in-view.svg"
-            iconColor: AppPalette.text
+            iconTintColor: AppPalette.text
             fillColor: AppPalette.card
             fillHoverColor: AppPalette.cardHover
             borderColor: AppPalette.border
@@ -107,11 +107,11 @@ Item  {
             Layout.preferredWidth: toolbarRoot.buttonSize
             Layout.preferredHeight: toolbarRoot.buttonSize
             iconSource: "qrc:/icons/ui/route.svg"
-            iconColor: AppPalette.text
+            iconTintColor: AppPalette.text
             fillHoverColor: AppPalette.cardHover
 
             readonly property bool active: toolbarRoot.store ? toolbarRoot.store.boatTrackVisible : false
-            fillColor: active ? AppPalette.accentBg : AppPalette.card
+            fillColor: active ? AppPalette.accentBgStrong : AppPalette.card
             borderColor: active ? AppPalette.accentBorder : AppPalette.border
             borderWidth: active ? 2 : 1
 
@@ -129,11 +129,11 @@ Item  {
             Layout.preferredWidth: toolbarRoot.buttonSize
             Layout.preferredHeight: toolbarRoot.buttonSize
             iconSource: "qrc:/icons/ui/double_route.svg"
-            iconColor: AppPalette.text
+            iconTintColor: AppPalette.text
             fillHoverColor: AppPalette.cardHover
 
             readonly property bool active: toolbarRoot.store ? toolbarRoot.store.bottomTrackVisible : false
-            fillColor: active ? AppPalette.accentBg : AppPalette.card
+            fillColor: active ? AppPalette.accentBgStrong : AppPalette.card
             borderColor: active ? AppPalette.accentBorder : AppPalette.border
             borderWidth: active ? 2 : 1
 
@@ -161,11 +161,11 @@ Item  {
             Layout.preferredWidth: toolbarRoot.buttonSize
             Layout.preferredHeight: toolbarRoot.buttonSize
             iconSource: "qrc:/icons/ui/isobaths.svg"
-            iconColor: AppPalette.text
+            iconTintColor: AppPalette.text
             fillHoverColor: AppPalette.cardHover
 
             readonly property bool active: toolbarRoot.store ? toolbarRoot.store.isobathsVisible : false
-            fillColor: active ? AppPalette.accentBg : AppPalette.card
+            fillColor: active ? AppPalette.accentBgStrong : AppPalette.card
             borderColor: active ? AppPalette.accentBorder : AppPalette.border
             borderWidth: active ? 2 : 1
 
@@ -193,11 +193,11 @@ Item  {
             Layout.preferredWidth: toolbarRoot.buttonSize
             Layout.preferredHeight: toolbarRoot.buttonSize
             iconSource: "qrc:/icons/ui/side_scan.svg"
-            iconColor: AppPalette.text
+            iconTintColor: AppPalette.text
             fillHoverColor: AppPalette.cardHover
 
             readonly property bool active: toolbarRoot.store ? toolbarRoot.store.mosaicVisible : false
-            fillColor: active ? AppPalette.accentBg : AppPalette.card
+            fillColor: active ? AppPalette.accentBgStrong : AppPalette.card
             borderColor: active ? AppPalette.accentBorder : AppPalette.border
             borderWidth: active ? 2 : 1
 

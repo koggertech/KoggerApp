@@ -59,7 +59,7 @@ Item {
             Layout.preferredWidth: root.buttonSize
             Layout.preferredHeight: root.buttonSize
             iconSource: "qrc:/icons/ui/zoom-in.svg"
-            iconColor: AppPalette.text
+            iconTintColor: AppPalette.text
             fillColor: AppPalette.card
             fillHoverColor: AppPalette.cardHover
             borderColor: AppPalette.border
@@ -74,7 +74,7 @@ Item {
             Layout.preferredWidth: root.buttonSize
             Layout.preferredHeight: root.buttonSize
             iconSource: "qrc:/icons/ui/zoom-out.svg"
-            iconColor: AppPalette.text
+            iconTintColor: AppPalette.text
             fillColor: AppPalette.card
             fillHoverColor: AppPalette.cardHover
             borderColor: AppPalette.border
@@ -92,12 +92,12 @@ Item {
             Layout.preferredWidth: root.buttonSize
             Layout.preferredHeight: root.buttonSize
             iconSource: "qrc:/icons/ui/location.svg"
-            iconColor: AppPalette.text
+            iconTintColor: AppPalette.text
             fillHoverColor: AppPalette.cardHover
             toolTipText: qsTr("Navigator view")
 
             readonly property bool checked: root.store ? root.store.navigationViewEnabled : false
-            fillColor: checked ? AppPalette.accentBg : AppPalette.card
+            fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
             borderColor: checked ? AppPalette.accentBorder : AppPalette.border
             borderWidth: checked ? 2 : 1
 
@@ -120,12 +120,12 @@ Item {
             Layout.preferredWidth: root.buttonSize
             Layout.preferredHeight: root.buttonSize
             iconSource: "qrc:/icons/ui/ruler_measure.svg"
-            iconColor: AppPalette.text
+            iconTintColor: AppPalette.text
             fillHoverColor: AppPalette.cardHover
             toolTipText: qsTr("Ruler")
 
             property bool checked: false
-            fillColor: checked ? AppPalette.accentBg : AppPalette.card
+            fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
             borderColor: checked ? AppPalette.accentBorder : AppPalette.border
             borderWidth: checked ? 2 : 1
 
@@ -165,7 +165,7 @@ Item {
             Layout.preferredWidth: root.buttonSize
             Layout.preferredHeight: root.buttonSize
             iconSource: "qrc:/icons/ui/settings.svg"
-            iconColor: AppPalette.text
+            iconTintColor: AppPalette.text
             fillColor: AppPalette.card
             fillHoverColor: AppPalette.cardHover
             borderColor: AppPalette.border
@@ -188,11 +188,11 @@ Item {
                 Layout.preferredWidth: root.buttonSize
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/point.svg"
-                iconColor: AppPalette.text
+                iconTintColor: AppPalette.text
                 fillHoverColor: AppPalette.cardHover
                 toolTipText: qsTr("Point")
                 property bool checked: root.geo ? root.geo.tool === 1 : false
-                fillColor: checked ? AppPalette.accentBg : AppPalette.card
+                fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
                 onClicked: if (root.geo) root.geo.tool = (root.geo.tool === 1 ? 0 : 1)
             }
@@ -203,11 +203,11 @@ Item {
                 Layout.preferredWidth: root.buttonSize
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/line.svg"
-                iconColor: AppPalette.text
+                iconTintColor: AppPalette.text
                 fillHoverColor: AppPalette.cardHover
                 toolTipText: qsTr("Line")
                 property bool checked: root.geo ? root.geo.tool === 2 : false
-                fillColor: checked ? AppPalette.accentBg : AppPalette.card
+                fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
                 onClicked: if (root.geo) root.geo.tool = (root.geo.tool === 2 ? 0 : 2)
             }
@@ -218,11 +218,11 @@ Item {
                 Layout.preferredWidth: root.buttonSize
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/polygon.svg"
-                iconColor: AppPalette.text
+                iconTintColor: AppPalette.text
                 fillHoverColor: AppPalette.cardHover
                 toolTipText: qsTr("Polygon")
                 property bool checked: root.geo ? root.geo.tool === 3 : false
-                fillColor: checked ? AppPalette.accentBg : AppPalette.card
+                fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
                 onClicked: if (root.geo) root.geo.tool = (root.geo.tool === 3 ? 0 : 3)
             }
@@ -238,7 +238,7 @@ Item {
                 Layout.preferredWidth: root.buttonSize
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/file-check.svg"
-                iconColor: AppPalette.text
+                iconTintColor: AppPalette.text
                 fillHoverColor: AppPalette.cardHover
                 toolTipText: qsTr("Finish drawing")
                 enabled: root.geo ? root.geo.drawing : false
@@ -251,7 +251,7 @@ Item {
                 Layout.preferredWidth: root.buttonSize
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/repeat.svg"
-                iconColor: AppPalette.text
+                iconTintColor: AppPalette.text
                 fillHoverColor: AppPalette.cardHover
                 toolTipText: qsTr("Undo")
                 enabled: root.geo ? root.geo.drawing : false
@@ -264,7 +264,7 @@ Item {
                 Layout.preferredWidth: root.buttonSize
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/x.svg"
-                iconColor: AppPalette.text
+                iconTintColor: AppPalette.text
                 fillHoverColor: AppPalette.cardHover
                 toolTipText: qsTr("Cancel drawing")
                 enabled: root.geo ? root.geo.drawing : false

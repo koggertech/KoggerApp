@@ -182,6 +182,128 @@ Column {
         }
     }
 
+    component ParamCardGroup: Rectangle {
+        id: pgroup
+
+        property string label: ""
+        property bool checked: false
+        signal toggled(bool val)
+
+        default property alias bodyData: pgroupBody.data
+
+        readonly property int _knobMargin: Math.max(2, Math.round(2 * AppPalette.scale))
+        readonly property int _headerH: Math.round(38 * AppPalette.scale)
+        readonly property bool _hovered: pgroupHeaderMouse.containsMouse
+
+        width: parent ? parent.width : implicitWidth
+        height: _headerH + bodyContainer.height
+        radius: Tokens.radiusLg
+        color: pgroup._hovered ? AppPalette.bgHover : AppPalette.bg
+        border.width: 1
+        border.color: pgroup._hovered ? AppPalette.borderHover : AppPalette.border
+        clip: true
+
+        Behavior on color       { ColorAnimation { duration: 110 } }
+        Behavior on border.color { ColorAnimation { duration: 110 } }
+
+        function _flip() {
+            pgroup.checked = !pgroup.checked
+            pgroup.toggled(pgroup.checked)
+        }
+
+        // ── Header (clickable, toggle on the right) ────────────────────────
+        Item {
+            id: pgroupHeader
+            width: parent.width
+            height: pgroup._headerH
+
+            MouseArea {
+                id: pgroupHeaderMouse
+                anchors.left: parent.left
+                anchors.right: pgroupToggle.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: pgroup._flip()
+            }
+
+            Text {
+                anchors.left: parent.left
+                anchors.leftMargin: Tokens.spaceMd
+                anchors.right: pgroupToggle.left
+                anchors.rightMargin: Tokens.spaceMd
+                anchors.verticalCenter: parent.verticalCenter
+                text: pgroup.label
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
+                elide: Text.ElideRight
+                verticalAlignment: Text.AlignVCenter
+            }
+
+            // Toggle pill (same look as ParamCard / SmallCheck)
+            Item {
+                id: pgroupToggle
+                width: Math.round(44 * AppPalette.scale)
+                height: Math.round(24 * AppPalette.scale)
+                anchors.right: parent.right
+                anchors.rightMargin: Tokens.spaceMd
+                anchors.verticalCenter: parent.verticalCenter
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: height / 2
+                    color: pgroup.checked ? AppPalette.accentBgStrong : AppPalette.trackOff
+                    border.width: 1
+                    border.color: pgroup.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
+                    Behavior on color       { ColorAnimation { duration: 120 } }
+                    Behavior on border.color { ColorAnimation { duration: 120 } }
+                }
+                Rectangle {
+                    width: parent.height - 2 * pgroup._knobMargin
+                    height: width
+                    radius: width / 2
+                    y: pgroup._knobMargin
+                    x: pgroup.checked ? parent.width - width - pgroup._knobMargin : pgroup._knobMargin
+                    color: AppPalette.knob
+                    border.width: 1
+                    border.color: "#00000022"
+                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: pgroup._flip()
+                }
+            }
+        }
+
+        // ── Body (animated; clipped during shrink) ─────────────────────────
+        Item {
+            id: bodyContainer
+            anchors.top: pgroupHeader.bottom
+            width: parent.width
+            clip: true
+            height: pgroup.checked ? pgroupBody.implicitHeight + 2 * Tokens.spaceSm : 0
+
+            Behavior on height {
+                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+            }
+
+            Column {
+                id: pgroupBody
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.leftMargin: Tokens.spaceMd
+                anchors.rightMargin: Tokens.spaceMd
+                anchors.top: parent.top
+                anchors.topMargin: Tokens.spaceSm
+                spacing: Tokens.spaceXs
+            }
+        }
+    }
+
     // URL helpers (for export/import paths)
     function localPath(value) {
         if (!value) return ""
@@ -1617,14 +1739,67 @@ Column {
                 }
             }
 
-            ParamCard {
-                width: parent.width
+            // Loupe — toggle + Size/Zoom row in animated card body.
+            ParamCardGroup {
+                id: loupeCard
                 label: qsTr("Loupe")
                 checked: render3dSettings.syncLoupeCheckButton
                 onToggled: function(v) {
                     render3dSettings.syncLoupeCheckButton = v
                     if (typeof Scene3dToolBarController !== "undefined")
                         Scene3dToolBarController.onSyncLoupeVisibleChanged(v)
+                }
+
+                Row {
+                    width: parent.width
+                    height: Tokens.controlHMd
+                    spacing: Tokens.spaceXs
+                    readonly property real sw: (width - Tokens.spaceXs) / 2
+
+                    Row {
+                        width: parent.sw
+                        height: parent.height
+                        spacing: Tokens.spaceSm
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("Size:")
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontMd
+                        }
+                        KSpinBox {
+                            id: syncLoupeSizeSpinBox
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - 56
+                            from: 1; to: 3; stepSize: 1; value: 1
+                            onValueModified: function(v) {
+                                if (typeof Scene3dToolBarController !== "undefined")
+                                    Scene3dToolBarController.onSyncLoupeSizeChanged(v)
+                            }
+                        }
+                    }
+                    Row {
+                        width: parent.sw
+                        height: parent.height
+                        spacing: Tokens.spaceSm
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("Zoom, %:")
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontMd
+                        }
+                        KSpinBox {
+                            id: syncLoupeZoomSpinBox
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - 80
+                            from: 0; to: 300; stepSize: 10; value: 100
+                            onValueModified: function(v) {
+                                if (typeof Scene3dToolBarController !== "undefined") {
+                                    Scene3dToolBarController.onSyncLoupeZoomChanged(Math.round(v))
+                                    Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(true)
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -1650,14 +1825,108 @@ Column {
                 }
             }
 
-            ParamCard {
-                width: parent.width
+            // Grid — toggle with nested Circle sub-group (Labels + Size/Step/Angle).
+            ParamCardGroup {
+                id: gridCard
                 label: qsTr("Grid")
                 checked: render3dSettings.gridCheckButton
                 onToggled: function(v) {
                     render3dSettings.gridCheckButton = v
                     if (typeof Scene3dToolBarController !== "undefined")
                         Scene3dToolBarController.onGridVisibilityCheckedChanged(v)
+                }
+
+                // Nested: Circle sub-group with its own animated body.
+                ParamCardGroup {
+                    id: gridTypeCard
+                    label: qsTr("Circle")
+                    checked: render3dSettings.gridTypeCheckButton
+                    onToggled: function(v) {
+                        render3dSettings.gridTypeCheckButton = v
+                        if (typeof Scene3dToolBarController !== "undefined")
+                            Scene3dToolBarController.onPlaneGridTypeChanged(!v)
+                    }
+
+                    ParamCard {
+                        width: parent.width
+                        label: qsTr("Labels")
+                        checked: render3dSettings.gridLabelsCheckButton
+                        onToggled: function(v) {
+                            render3dSettings.gridLabelsCheckButton = v
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(v)
+                        }
+                    }
+                    Row {
+                        width: parent.width
+                        height: Tokens.controlHMd
+                        spacing: Tokens.spaceXs
+                        readonly property real sw: (width - 2 * Tokens.spaceXs) / 3
+
+                        Row {
+                            width: parent.sw
+                            height: parent.height
+                            spacing: Tokens.spaceSm
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: qsTr("Size:")
+                                color: AppPalette.textSecond
+                                font.pixelSize: Tokens.fontMd
+                            }
+                            KSpinBox {
+                                id: circleGridSizeSpinBox
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width - 56
+                                from: 1; to: 3; stepSize: 1; value: 1
+                                onValueModified: function(v) {
+                                    if (typeof Scene3dToolBarController !== "undefined")
+                                        Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(v)
+                                }
+                            }
+                        }
+                        Row {
+                            width: parent.sw
+                            height: parent.height
+                            spacing: Tokens.spaceSm
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: qsTr("Step:")
+                                color: AppPalette.textSecond
+                                font.pixelSize: Tokens.fontMd
+                            }
+                            KSpinBox {
+                                id: circleGridStepSpinBox
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width - 56
+                                from: 1; to: 20; stepSize: 1; value: 1
+                                onValueModified: function(v) {
+                                    if (typeof Scene3dToolBarController !== "undefined")
+                                        Scene3dToolBarController.onPlaneGridCircleGridStepChanged(v)
+                                }
+                            }
+                        }
+                        Row {
+                            width: parent.sw
+                            height: parent.height
+                            spacing: Tokens.spaceSm
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: qsTr("Angle:")
+                                color: AppPalette.textSecond
+                                font.pixelSize: Tokens.fontMd
+                            }
+                            KSpinBox {
+                                id: circleGridAngleSpinBox
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width - 64
+                                from: 1; to: 5; stepSize: 1; value: 1
+                                onValueModified: function(v) {
+                                    if (typeof Scene3dToolBarController !== "undefined")
+                                        Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(v)
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -1672,6 +1941,105 @@ Column {
                 }
             }
 
+            // Boat (NavigationArrow) — toggle + animated Size row in same card.
+            ParamCardGroup {
+                id: boatCard
+                label: qsTr("Boat")
+                checked: render3dSettings.navigationArrowCheckButton
+                onToggled: function(v) {
+                    render3dSettings.navigationArrowCheckButton = v
+                    if (typeof NavigationArrowControlMenuController !== "undefined")
+                        NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(v)
+                }
+
+                Row {
+                    width: parent.width
+                    height: Tokens.controlHMd
+                    spacing: Tokens.spaceSm
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: qsTr("Size:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
+                    }
+                    KSpinBox {
+                        id: navigationArrowSizeSpinBox
+                        anchors.verticalCenter: parent.verticalCenter
+                        // Fixed reasonable width so single-cell rows don't
+                        // stretch the spinbox across the entire body; value
+                        // (1-5) fits comfortably with -/+ buttons + padding.
+                        width: Math.round(140 * AppPalette.scale)
+                        from: 1; to: 5; stepSize: 1; value: 1
+                        onValueModified: function(v) {
+                            if (typeof NavigationArrowControlMenuController !== "undefined")
+                                NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(v)
+                        }
+                    }
+                }
+            }
+
+            // Compass — toggle + animated Pos/Size row in same card.
+            ParamCardGroup {
+                id: compassCard
+                label: qsTr("Compass")
+                checked: render3dSettings.compassCheckButton
+                onToggled: function(v) {
+                    render3dSettings.compassCheckButton = v
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onCompassButtonChanged(v)
+                }
+
+                Row {
+                    width: parent.width
+                    height: Tokens.controlHMd
+                    spacing: Tokens.spaceXs
+                    readonly property real sw: (width - Tokens.spaceXs) / 2
+
+                    Row {
+                        width: parent.sw
+                        height: parent.height
+                        spacing: Tokens.spaceSm
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("Pos:")
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontMd
+                        }
+                        KSpinBox {
+                            id: compassPosSpinBox
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - 56
+                            from: 1; to: 3; stepSize: 1; value: 2
+                            onValueModified: function(v) {
+                                if (typeof Scene3dToolBarController !== "undefined")
+                                    Scene3dToolBarController.onCompassPosChanged(v)
+                            }
+                        }
+                    }
+                    Row {
+                        width: parent.sw
+                        height: parent.height
+                        spacing: Tokens.spaceSm
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("Size:")
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontMd
+                        }
+                        KSpinBox {
+                            id: compassSizeSpinBox
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - 56
+                            from: 1; to: 5; stepSize: 1; value: 1
+                            onValueModified: function(v) {
+                                if (typeof Scene3dToolBarController !== "undefined")
+                                    Scene3dToolBarController.onCompassSizeChanged(v)
+                            }
+                        }
+                    }
+                }
+            }
+
             Settings {
                 id: render3dSettings
                 property bool showQualityLabelCheck: false
@@ -1680,8 +2048,20 @@ Column {
                 property bool isNorthViewButton: false
                 property bool selectionToolButton: true
                 property bool gridCheckButton: false
+                property bool gridTypeCheckButton: false
+                property bool gridLabelsCheckButton: true
                 property bool shadowEnabledCheckButton: true
+                property bool navigationArrowCheckButton: true
+                property bool compassCheckButton: true
             }
+            Settings { property alias syncLoupeSize:        syncLoupeSizeSpinBox.value }
+            Settings { property alias syncLoupeZoom:        syncLoupeZoomSpinBox.value }
+            Settings { property alias circleGridSize:       circleGridSizeSpinBox.value }
+            Settings { property alias circleGridStep:       circleGridStepSpinBox.value }
+            Settings { property alias circleGridAngle:      circleGridAngleSpinBox.value }
+            Settings { property alias navigationArrowSize:  navigationArrowSizeSpinBox.value }
+            Settings { property alias compassPos:           compassPosSpinBox.value }
+            Settings { property alias compassSize:          compassSizeSpinBox.value }
 
             Item { width: parent.width; height: Tokens.spaceMd }
 
@@ -1880,10 +2260,24 @@ Column {
                     Scene3dToolBarController.onNavigatorLocationButtonChanged(root.store.navigationViewEnabled)
                     Scene3dToolBarController.onForceSingleZoomCheckedChanged(render3dSettings.forceSingleZoomCheckButton)
                     Scene3dToolBarController.onSyncLoupeVisibleChanged(render3dSettings.syncLoupeCheckButton)
+                    Scene3dToolBarController.onSyncLoupeSizeChanged(syncLoupeSizeSpinBox.value)
+                    Scene3dToolBarController.onSyncLoupeZoomChanged(Math.round(syncLoupeZoomSpinBox.value))
                     Scene3dToolBarController.onIsNorthLocationButtonChanged(render3dSettings.isNorthViewButton)
                     Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(render3dSettings.selectionToolButton)
                     Scene3dToolBarController.onGridVisibilityCheckedChanged(render3dSettings.gridCheckButton)
+                    Scene3dToolBarController.onPlaneGridTypeChanged(!render3dSettings.gridTypeCheckButton)
+                    Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(render3dSettings.gridLabelsCheckButton)
+                    Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(circleGridSizeSpinBox.value)
+                    Scene3dToolBarController.onPlaneGridCircleGridStepChanged(circleGridStepSpinBox.value)
+                    Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(circleGridAngleSpinBox.value)
                     Scene3dToolBarController.onShadowsEnabledChanged(render3dSettings.shadowEnabledCheckButton)
+                    Scene3dToolBarController.onCompassButtonChanged(render3dSettings.compassCheckButton)
+                    Scene3dToolBarController.onCompassPosChanged(compassPosSpinBox.value)
+                    Scene3dToolBarController.onCompassSizeChanged(compassSizeSpinBox.value)
+                }
+                if (typeof NavigationArrowControlMenuController !== "undefined") {
+                    NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(render3dSettings.navigationArrowCheckButton)
+                    NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(navigationArrowSizeSpinBox.value)
                 }
             }
         }

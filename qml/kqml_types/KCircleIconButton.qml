@@ -1,6 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Window 2.15
-import QtQuick.Effects
+import Qt5Compat.GraphicalEffects
 import kqml_types 1.0
 
 Item {
@@ -12,7 +12,7 @@ Item {
     property bool showGlyphWithIcon: false
     property int glyphPixelSize: 18
     property color glyphColor: AppPalette.text
-    property color iconColor: "transparent"
+    property color iconTintColor: "transparent"
     property color fillColor: "#1E293BCC"
     property color fillHoverColor: "#0F172ACC"
     property color fillPressedColor: AppPalette.bgDeep
@@ -127,27 +127,37 @@ Item {
         }
     }
 
-    Image {
-        id: iconImage
+    Item {
+        id: iconWrap
         anchors.centerIn: parent
         visible: root.hasIcon
-        source: root.iconSource
         width: root.iconPixelSize
         height: root.iconPixelSize
-        sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
-        sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
-        fillMode: Image.PreserveAspectFit
-        cache: true
-        asynchronous: false
-        smooth: false
-        mipmap: false
-        opacity: root.enabled ? 1.0 : 0.7
-        layer.enabled: root.iconColor.a > 0
-        layer.effect: MultiEffect {
-            colorization: 1.0
-            colorizationColor: root.iconColor
-            brightness: 0
-            saturation: 0
+
+        readonly property bool tintActive: root.iconTintColor.a > 0
+
+        Image {
+            id: iconImage
+            anchors.fill: parent
+            source: root.iconSource
+            sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+            sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+            fillMode: Image.PreserveAspectFit
+            cache: true
+            asynchronous: false
+            smooth: true
+            mipmap: false
+            opacity: root.enabled ? 1.0 : 0.7
+            visible: !iconWrap.tintActive
+            layer.enabled: iconWrap.tintActive
+        }
+
+        ColorOverlay {
+            anchors.fill: iconImage
+            source: iconImage
+            visible: iconWrap.tintActive
+            color: root.iconTintColor
+            cached: true
         }
     }
 

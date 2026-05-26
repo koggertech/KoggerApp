@@ -83,6 +83,7 @@ Item {
                 borderColor: paneFrame.menuButtonBorderColor
                 borderHoverColor: paneFrame.menuButtonHoverBorderColor
                 iconSource: "qrc:/icons/ui/anchor.svg"
+                iconTintColor: paneFrame.popupSourceLeafId !== -1 ? AppPalette.dangerText : AppPalette.textSecond
                 iconPixelSize: Math.round(paneFrame.centerQuickIconSize * 0.42)
                 glyph: "P"
                 glyphPixelSize: Math.round(paneFrame.centerQuickIconSize * 0.38)
