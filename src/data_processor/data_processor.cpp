@@ -473,6 +473,16 @@ void DataProcessor::setUpdateMosaic(bool state)
             }
         }
         onCameraMoved();
+
+        if (!wasMosaic && !epIndxsFromBottomTrack_.isEmpty()) {
+            const bool hadPending = !pendingMosaicIndxs_.isEmpty();
+            for (int ep : std::as_const(epIndxsFromBottomTrack_)) {
+                pendingMosaicIndxs_.insert(ep);
+            }
+            if (!hadPending) {
+                scheduleLatest(WorkSet(WF_Mosaic));
+            }
+        }
     }
     else {
         pendingMosaicIndxs_.clear();
@@ -501,7 +511,9 @@ void DataProcessor::onCameraMoved()
         return;
     }
 
-    mosaicBootstrapPending_ = false;
+    if (!lastVisTileKeys_.isEmpty()) {
+        mosaicBootstrapPending_ = false;
+    }
 
     // Keep already queued mosaic epochs (e.g. from realtime bottom-track updates).
     // Camera movement should only add visible work, not drop pending work.
@@ -527,7 +539,7 @@ void DataProcessor::onCameraMoved()
         ? std::max(0, mosaicCounter_ - mosaicFakeCoordsLastN_ + 1)
         : 0;
 
-    if (updateMosaic_ && !pendingMosaicIndxs_.isEmpty()) {
+    if (updateMosaic_ && !pendingMosaicIndxs_.isEmpty() && !lastVisTileKeys_.isEmpty()) {
         // Keep mosaic queue focused on current viewport to avoid processing stale backlog
         // accumulated during rapid camera moves.
         QSet<int> filteredPending;
@@ -1332,15 +1344,30 @@ void DataProcessor::startTimerIfNeeded()
 
 void DataProcessor::onWorkerFinished()
 {
+    const bool wasCanceled = cancelRequested_.load();
+
     jobRunning_.store(false);
 
     if (!mosaicInFlightIndxs_.isEmpty()) {
+        if (wasCanceled) {
+            for (int idx : std::as_const(mosaicInFlightIndxs_)) {
+                pendingMosaicIndxs_.insert(idx);
+            }
+        }
         mosaicInFlightIndxs_.clear();
     }
+
+    cancelRequested_.store(false);
 
     if (resetInProgress_.load()) {
         tryFinalizeResetProcessing();
         return;
+    }
+
+    if (wasCanceled && updateMosaic_ && !pendingMosaicIndxs_.isEmpty()
+            && !suppressResults_.load()) {
+        requestedMask_.fetch_or(WF_Mosaic);
+        nextRunPending_.store(true);
     }
 
     if (nextRunPending_.load() && !shuttingDown_.load()) {
@@ -1775,6 +1802,9 @@ void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnreque
         if (jobRunning_.load()) {
             cancelRequested_.store(true);
             if (m & WF_Mosaic) {
+                for (int idx : std::as_const(mosaicInFlightIndxs_)) {
+                    pendingMosaicIndxs_.insert(idx);
+                }
                 mosaicInFlightIndxs_.clear();
             }
         }
