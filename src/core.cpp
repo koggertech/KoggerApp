@@ -1178,7 +1178,7 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
 
     bool meas_nbr = true;
     bool event_id = true;
-    bool rangefinder = false;
+    bool rangefinder = true;
     bool bottom_depth = true;
     bool pos_lat_lon = true;
     bool pos_time = true;
@@ -1217,9 +1217,6 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         logger_.dataExport("Event ID,");
     }
 
-    if (rangefinder)
-        logger_.dataExport("Rangefinder,");
-
     if (bottom_depth)
         logger_.dataExport("Beam distance,");
 
@@ -1255,7 +1252,10 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         logger_.dataExport("ContactTitle,");
     }
     if (contactDistance) {
-        logger_.dataExport("ContactDistance");
+        logger_.dataExport(rangefinder ? "ContactDistance," : "ContactDistance");
+    }
+    if (rangefinder) {
+        logger_.dataExport("Rangefinder");
     }
 
     logger_.dataExport("\n");
@@ -1317,9 +1317,6 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
             }
             row_data.append(QString("%1,%2,%3,").arg(prev_unix).arg(prev_timestamp).arg(prev_event_id));
         }
-
-        if (rangefinder)
-            epoch->distAvail() ? row_data.append(QString("%1,").arg((float)epoch->rangeFinder())) : row_data.append("0,");
 
         if (bottom_depth) {
             prev_dist_proc = epoch->distProccesing(channelId);
@@ -1413,6 +1410,20 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
             }
             if (contactDistance) {
                 row_data.append(QString::number(contact.echogramDistance, 'f', 4));
+                if (rangefinder) {
+                    row_data.append(",");
+                }
+            }
+        } else if (rangefinder) {
+            if (contactInfo) row_data.append(",");
+            if (contactDistance) row_data.append(",");
+        }
+
+        if (rangefinder) {
+            if (epoch->distAvail()) {
+                row_data.append(QString::number((float)epoch->rangeFinder()));
+            } else {
+                row_data.append("0");
             }
         }
 
