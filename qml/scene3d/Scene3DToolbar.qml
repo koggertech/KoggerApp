@@ -27,24 +27,9 @@ Item  {
     function toggleIsobaths()         { if (store) store.isobathsVisible   = !store.isobathsVisible   }
     function toggleMosaic()           { if (store) store.mosaicVisible     = !store.mosaicVisible     }
 
-    // opacity
-    property bool isFitViewCheckButtonHovered: false
-    property bool isBoatTrackCheckButtonHovered: false
-    property bool isBottomTrackCheckButtonHovered: false
     property var view: null
     property var store: null
-    readonly property bool showMosaicQualityLabel: false
-    property bool toolbarHovered:
-        Qt.platform.os === "android" ?
-    (   setCameraIsometricView.down
-     || boatTrackCheckButton.down
-     || bottomTrackCheckButton.down ) :
-    (   isBoatTrackCheckButtonHovered
-     || isBottomTrackCheckButtonHovered
-     || isFitViewCheckButtonHovered )
-
-    opacity: toolbarHovered ? 1.0 : 0.5
-    Behavior on opacity { NumberAnimation { duration: 120 } }
+    property real buttonSize: Math.round(40 * (theme ? theme.resCoeff : 1.0))
 
     HoverHandler {
         onHoveredChanged: {
@@ -54,244 +39,182 @@ Item  {
         }
     }
 
-    ColumnLayout {
-        id: column
+    RowLayout {
+        id: rowButtons
+        spacing: Math.round(6 * AppPalette.scale)
+        anchors.horizontalCenter: parent.horizontalCenter
 
-        // buttons
-        RowLayout {
-            id: rowButtons
-            spacing: 3
-            Layout.alignment: Qt.AlignHCenter
+        KCircleIconButton {
+            id: resetCamBtn
+            width: toolbarRoot.buttonSize
+            height: toolbarRoot.buttonSize
+            Layout.preferredWidth: toolbarRoot.buttonSize
+            Layout.preferredHeight: toolbarRoot.buttonSize
+            iconSource: "qrc:/icons/ui/fit-in-view.svg"
+            iconColor: AppPalette.text
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            borderColor: AppPalette.border
+            toolTipText: qsTr("Reset camera")
+            onClicked: Scene3dToolBarController.onSetCameraMapViewButtonClicked()
+        }
 
-            CheckButton {
-                id: setCameraIsometricView
-                iconSource: "qrc:/icons/ui/fit-in-view.svg"
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checkable: false
-                checked: false
-                implicitHeight: theme.controlHeight * 1.3
-                implicitWidth: theme.controlHeight * 1.3
+        // Hidden, kept solely for QSettings persistence of the legacy GeoJSON
+        // mode flag. UI-wise removed (see qml-scene3d.md).
+        CheckButton {
+            id: geoJsonToolButton
+            iconSource: "qrc:/icons/ui/map_pin_cog.svg"
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: false
+            implicitHeight: theme.controlHeight * 1.3
+            implicitWidth: theme.controlHeight * 1.3
+            visible: false
 
-                CMouseOpacityArea {
-                    toolTipText: qsTr("Reset camera")
-                    popupPosition: "topRight"
+            onToggled: {
+                if (!visible && checked) {
+                    checked = false
+                    return
                 }
+                Scene3dToolBarController.onGeoJsonModeChanged(checked)
+            }
 
-                hoverEnabled: true
-                onHoveredChanged: {
-                    toolbarRoot.isFitViewCheckButtonHovered = hovered
+            Component.onCompleted: {
+                if (!visible && checked) {
+                    checked = false
                 }
+                Scene3dToolBarController.onGeoJsonModeChanged(checked)
+            }
 
-                onClicked: {
-                    Scene3dToolBarController.onSetCameraMapViewButtonClicked()
+            onVisibleChanged: {
+                if (!visible && checked) {
+                    checked = false
+                } else if (!visible) {
+                    Scene3dToolBarController.onGeoJsonModeChanged(false)
                 }
             }
 
-            CheckButton {
-                id: geoJsonToolButton
-                iconSource: "qrc:/icons/ui/map_pin_cog.svg"
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checked: false
-                implicitHeight: theme.controlHeight * 1.3
-                implicitWidth: theme.controlHeight * 1.3
-                visible: false
-
-                CMouseOpacityArea {
-                    toolTipText: qsTr("GeoJSON")
-                    popupPosition: "topRight"
-                }
-
-                onToggled: {
-                    if (!visible && checked) {
-                        // GeoJSON button is hidden; never allow persisted "true" state to activate mode.
-                        checked = false
-                        return
-                    }
-                    Scene3dToolBarController.onGeoJsonModeChanged(checked)
-                }
-
-                Component.onCompleted: {
-                    if (!visible && checked) {
-                        checked = false
-                    }
-                    Scene3dToolBarController.onGeoJsonModeChanged(checked)
-                }
-
-                onVisibleChanged: {
-                    if (!visible && checked) {
-                        checked = false
-                    } else if (!visible) {
-                        Scene3dToolBarController.onGeoJsonModeChanged(false)
-                    }
-                }
-
-                Settings {
-                    property alias geoJsonToolButton: geoJsonToolButton.checked
-                }
+            Settings {
+                property alias geoJsonToolButton: geoJsonToolButton.checked
             }
+        }
 
-            CheckButton {
-                id: boatTrackCheckButton
-                iconSource: "qrc:/icons/ui/route.svg"
-                backColor: theme.controlBackColor
-                borderColor: (toolbarRoot.store && toolbarRoot.store.boatTrackVisible)
-                             ? theme.controlBorderColor : theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checkable: false
-                implicitHeight: theme.controlHeight * 1.3
-                implicitWidth: theme.controlHeight * 1.3
+        KCircleIconButton {
+            id: boatTrackBtn
+            width: toolbarRoot.buttonSize
+            height: toolbarRoot.buttonSize
+            Layout.preferredWidth: toolbarRoot.buttonSize
+            Layout.preferredHeight: toolbarRoot.buttonSize
+            iconSource: "qrc:/icons/ui/route.svg"
+            iconColor: AppPalette.text
+            fillHoverColor: AppPalette.cardHover
 
-                hoverEnabled: true
-                onHoveredChanged: {
-                    toolbarRoot.isBoatTrackCheckButtonHovered = hovered
-                }
+            readonly property bool active: toolbarRoot.store ? toolbarRoot.store.boatTrackVisible : false
+            fillColor: active ? AppPalette.accentBg : AppPalette.card
+            borderColor: active ? AppPalette.accentBorder : AppPalette.border
+            borderWidth: active ? 2 : 1
 
-                CMouseOpacityArea {
-                    toolTipText: qsTr("Boat track")
-                    popupPosition: "topRight"
-                }
-
-                onClicked: {
-                    if (toolbarRoot.store)
-                        toolbarRoot.store.toggleAppSettingsAtGroup("app.boattrack")
-                }
+            toolTipText: qsTr("Boat track")
+            onClicked: {
+                if (toolbarRoot.store)
+                    toolbarRoot.store.toggleAppSettingsAtGroup("app.boattrack")
             }
+        }
 
-            CheckButton {
-                id: bottomTrackCheckButton
-                iconSource: "qrc:/icons/ui/double_route.svg"
-                backColor: theme.controlBackColor
-                borderColor: (toolbarRoot.store && toolbarRoot.store.bottomTrackVisible)
-                             ? theme.controlBorderColor : theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checkable: false
-                implicitHeight: theme.controlHeight * 1.3
-                implicitWidth: theme.controlHeight * 1.3
+        KCircleIconButton {
+            id: bottomTrackBtn
+            width: toolbarRoot.buttonSize
+            height: toolbarRoot.buttonSize
+            Layout.preferredWidth: toolbarRoot.buttonSize
+            Layout.preferredHeight: toolbarRoot.buttonSize
+            iconSource: "qrc:/icons/ui/double_route.svg"
+            iconColor: AppPalette.text
+            fillHoverColor: AppPalette.cardHover
 
-                hoverEnabled: true
+            readonly property bool active: toolbarRoot.store ? toolbarRoot.store.bottomTrackVisible : false
+            fillColor: active ? AppPalette.accentBg : AppPalette.card
+            borderColor: active ? AppPalette.accentBorder : AppPalette.border
+            borderWidth: active ? 2 : 1
 
-                property bool pulse: core.dataProcessorState === 1
-
-                CMouseOpacityArea {
-                    toolTipText: qsTr("Bottom track")
-                    popupPosition: "topRight"
-                }
-
-                SequentialAnimation {
-                    id: pulseBottomTrackAnimation
-                    running: bottomTrackCheckButton.pulse
-                    loops: Animation.Infinite
-                    NumberAnimation { target: bottomTrackCheckButton; property: "opacity"; to: 0.2; duration: 500 }
-                    NumberAnimation { target: bottomTrackCheckButton; property: "opacity"; to: 1.0; duration: 500 }
-                }
-
-                onPulseChanged: {
-                    if (!pulse) {
-                        bottomTrackCheckButton.opacity = 1.0;
-                    }
-                }
-
-                onHoveredChanged: {
-                    toolbarRoot.isBottomTrackCheckButtonHovered = hovered
-                }
-
-                onClicked: {
-                    if (toolbarRoot.store)
-                        toolbarRoot.store.toggleAppSettingsAtGroup("app.bottomtrack")
-                }
+            property bool pulse: core.dataProcessorState === 1
+            SequentialAnimation {
+                id: pulseBottomTrackAnimation
+                running: bottomTrackBtn.pulse
+                loops: Animation.Infinite
+                NumberAnimation { target: bottomTrackBtn; property: "opacity"; to: 0.2; duration: 500 }
+                NumberAnimation { target: bottomTrackBtn; property: "opacity"; to: 1.0; duration: 500 }
             }
+            onPulseChanged: { if (!pulse) bottomTrackBtn.opacity = 1.0 }
 
-            CheckButton {
-                id: isobathsCheckButton
-                iconSource: "qrc:/icons/ui/isobaths.svg"
-                backColor: theme.controlBackColor
-                borderColor: (toolbarRoot.store && toolbarRoot.store.isobathsVisible)
-                             ? theme.controlBorderColor : theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checkable: false
-                implicitHeight: theme.controlHeight * 1.3
-                implicitWidth: theme.controlHeight * 1.3
-
-                property bool pulse: core.dataProcessorState === 2 || core.dataProcessorState === 4
-
-                SequentialAnimation {
-                    id: pulseIsobathsAnimation
-                    running: isobathsCheckButton.pulse
-                    loops: Animation.Infinite
-                    NumberAnimation { target: isobathsCheckButton; property: "opacity"; to: 0.2; duration: 500 }
-                    NumberAnimation { target: isobathsCheckButton; property: "opacity"; to: 1.0; duration: 500 }
-                }
-
-                onPulseChanged: {
-                    if (!pulse) {
-                        isobathsCheckButton.opacity = 1.0;
-                    }
-                }
-
-                CMouseOpacityArea {
-                    toolTipText: qsTr("Isobaths")
-                    popupPosition: "topRight"
-                }
-
-                onClicked: {
-                    if (toolbarRoot.store)
-                        toolbarRoot.store.toggleAppSettingsAtGroup("app.isobaths")
-                }
+            toolTipText: qsTr("Bottom track")
+            onClicked: {
+                if (toolbarRoot.store)
+                    toolbarRoot.store.toggleAppSettingsAtGroup("app.bottomtrack")
             }
+        }
 
-            CheckButton {
-                id: mosaicViewCheckButton
-                iconSource: "qrc:/icons/ui/side_scan.svg"
-                backColor: theme.controlBackColor
-                borderColor: (toolbarRoot.store && toolbarRoot.store.mosaicVisible)
-                             ? theme.controlBorderColor : theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checkable: false
-                implicitHeight: theme.controlHeight * 1.3
-                implicitWidth: theme.controlHeight * 1.3
+        KCircleIconButton {
+            id: isobathsBtn
+            width: toolbarRoot.buttonSize
+            height: toolbarRoot.buttonSize
+            Layout.preferredWidth: toolbarRoot.buttonSize
+            Layout.preferredHeight: toolbarRoot.buttonSize
+            iconSource: "qrc:/icons/ui/isobaths.svg"
+            iconColor: AppPalette.text
+            fillHoverColor: AppPalette.cardHover
 
-                property bool pulse: core.dataProcessorState === 3
+            readonly property bool active: toolbarRoot.store ? toolbarRoot.store.isobathsVisible : false
+            fillColor: active ? AppPalette.accentBg : AppPalette.card
+            borderColor: active ? AppPalette.accentBorder : AppPalette.border
+            borderWidth: active ? 2 : 1
 
-                SequentialAnimation {
-                    id: pulseMosaicAnimation
-                    running: mosaicViewCheckButton.pulse
-                    loops: Animation.Infinite
-                    NumberAnimation { target: mosaicViewCheckButton; property: "opacity"; to: 0.2; duration: 500 }
-                    NumberAnimation { target: mosaicViewCheckButton; property: "opacity"; to: 1.0; duration: 500 }
-                }
-
-                onPulseChanged: {
-                    if (!pulse) {
-                        mosaicViewCheckButton.opacity = 1.0;
-                    }
-                }
-
-                CMouseOpacityArea {
-                    toolTipText: qsTr("Mosaic")
-                    popupPosition: "topRight"
-                }
-
-                onClicked: {
-                    if (toolbarRoot.store)
-                        toolbarRoot.store.toggleAppSettingsAtGroup("app.mosaic")
-                }
+            property bool pulse: core.dataProcessorState === 2 || core.dataProcessorState === 4
+            SequentialAnimation {
+                id: pulseIsobathsAnimation
+                running: isobathsBtn.pulse
+                loops: Animation.Infinite
+                NumberAnimation { target: isobathsBtn; property: "opacity"; to: 0.2; duration: 500 }
+                NumberAnimation { target: isobathsBtn; property: "opacity"; to: 1.0; duration: 500 }
             }
+            onPulseChanged: { if (!pulse) isobathsBtn.opacity = 1.0 }
 
-            ButtonGroup {
-                property bool buttonChangeFlag : false
-                id: buttonGroup
-                onCheckedButtonChanged: buttonChangeFlag = true
-                onClicked: {
-                    if (!buttonChangeFlag) {
-                        checkedButton = null
-                    }
+            toolTipText: qsTr("Isobaths")
+            onClicked: {
+                if (toolbarRoot.store)
+                    toolbarRoot.store.toggleAppSettingsAtGroup("app.isobaths")
+            }
+        }
 
-                    buttonChangeFlag = false;
-                }
+        KCircleIconButton {
+            id: mosaicBtn
+            width: toolbarRoot.buttonSize
+            height: toolbarRoot.buttonSize
+            Layout.preferredWidth: toolbarRoot.buttonSize
+            Layout.preferredHeight: toolbarRoot.buttonSize
+            iconSource: "qrc:/icons/ui/side_scan.svg"
+            iconColor: AppPalette.text
+            fillHoverColor: AppPalette.cardHover
+
+            readonly property bool active: toolbarRoot.store ? toolbarRoot.store.mosaicVisible : false
+            fillColor: active ? AppPalette.accentBg : AppPalette.card
+            borderColor: active ? AppPalette.accentBorder : AppPalette.border
+            borderWidth: active ? 2 : 1
+
+            property bool pulse: core.dataProcessorState === 3
+            SequentialAnimation {
+                id: pulseMosaicAnimation
+                running: mosaicBtn.pulse
+                loops: Animation.Infinite
+                NumberAnimation { target: mosaicBtn; property: "opacity"; to: 0.2; duration: 500 }
+                NumberAnimation { target: mosaicBtn; property: "opacity"; to: 1.0; duration: 500 }
+            }
+            onPulseChanged: { if (!pulse) mosaicBtn.opacity = 1.0 }
+
+            toolTipText: qsTr("Mosaic")
+            onClicked: {
+                if (toolbarRoot.store)
+                    toolbarRoot.store.toggleAppSettingsAtGroup("app.mosaic")
             }
         }
     }

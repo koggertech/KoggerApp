@@ -81,4 +81,3 @@ SmoothMethodTriDivideSettings 1.0 scene3d/SmoothMethodTriDivideSettings.qml
 LocationExtraSettings 1.0 scene3d/LocationExtraSettings.qml
 Settings3DExtraSettings 1.0 scene3d/Settings3DExtraSettings.qml
 Settings3DView 1.0 scene3d/Settings3DView.qml
-SurfaceControlMenu 1.0 scene3d/SurfaceControlMenu.qml

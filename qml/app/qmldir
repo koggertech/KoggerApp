@@ -19,7 +19,6 @@ PaneInputBridge 1.0 PaneInputBridge.qml
 SettingsSidebarBase 1.0 SettingsSidebarBase.qml
 SettingsGroup 1.0 SettingsGroup.qml
 AppSettingsPage 1.0 AppSettingsPage.qml
-KSpinBox 1.0 KSpinBox.qml
 ConnectionsSettingsPage 1.0 ConnectionsSettingsPage.qml
 DeviceSettingsPage 1.0 DeviceSettingsPage.qml
 Pane2DSettingsPage 1.0 Pane2DSettingsPage.qml
@@ -29,7 +28,6 @@ ModeSettingsPanel 1.0 ModeSettingsPanel.qml
 ConsolePanelDrawer 1.0 ConsolePanelDrawer.qml
 
 ActionChip 1.0 ActionChip.qml
-CircleIconButton 1.0 CircleIconButton.qml
 SettingsGearButton 1.0 SettingsGearButton.qml
 DisclosureIndicator 1.0 DisclosureIndicator.qml
 HotActionsPanel 1.0 HotActionsPanel.qml

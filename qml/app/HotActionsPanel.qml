@@ -374,7 +374,7 @@ Item {
         }
     }
 
-    CircleIconButton {
+    KCircleIconButton {
         id: toggleButton
         anchors.left: parent.left
         anchors.top: parent.top
@@ -497,7 +497,7 @@ Item {
             Repeater {
                 readonly property bool _devicesRevealOverride: root._revealActiveKey === "connections"
                 model: (root.connectionStatusToolVisible || _devicesRevealOverride) ? root.devices : 0
-                delegate: CircleIconButton {
+                delegate: KCircleIconButton {
                     required property var modelData
                     readonly property color _fill:   root.linkFillColor(modelData)
                     readonly property color _border: root.linkBorderColor(modelData)
@@ -573,7 +573,7 @@ Item {
                 }
             }
 
-            CircleIconButton {
+            KCircleIconButton {
                 visible: Qt.platform.os !== "android" && Qt.platform.os !== "ios"
                 width: root.controlHeight
                 height: root.controlHeight

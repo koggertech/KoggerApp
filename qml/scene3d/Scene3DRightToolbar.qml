@@ -3,7 +3,6 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtCore
 import kqml_types 1.0
-import app 1.0
 import "../controls"
 import "../menus"
 
@@ -53,7 +52,7 @@ Item {
             id: buttonColumnHoverHandler
         }
 
-        CircleIconButton {
+        KCircleIconButton {
             id: zoomInButton
             width: root.buttonSize
             height: root.buttonSize
@@ -68,7 +67,7 @@ Item {
             onClicked: root._zoom(+4)
         }
 
-        CircleIconButton {
+        KCircleIconButton {
             id: zoomOutButton
             width: root.buttonSize
             height: root.buttonSize
@@ -85,7 +84,7 @@ Item {
 
         Item { Layout.preferredHeight: Tokens.spaceLg; Layout.preferredWidth: 1 }
 
-        CircleIconButton {
+        KCircleIconButton {
             id: navArrowButton
             objectName: "navigationViewButton"
             width: root.buttonSize
@@ -94,11 +93,11 @@ Item {
             Layout.preferredHeight: root.buttonSize
             iconSource: "qrc:/icons/ui/location.svg"
             iconColor: AppPalette.text
-            fillColor: AppPalette.card
             fillHoverColor: AppPalette.cardHover
             toolTipText: qsTr("Navigator view")
 
             readonly property bool checked: root.store ? root.store.navigationViewEnabled : false
+            fillColor: checked ? AppPalette.accentBg : AppPalette.card
             borderColor: checked ? AppPalette.accentBorder : AppPalette.border
             borderWidth: checked ? 2 : 1
 
@@ -113,7 +112,7 @@ Item {
             }
         }
 
-        CircleIconButton {
+        KCircleIconButton {
             id: rulerToolButton
             objectName: "rulerToolButton"
             width: root.buttonSize
@@ -122,11 +121,11 @@ Item {
             Layout.preferredHeight: root.buttonSize
             iconSource: "qrc:/icons/ui/ruler_measure.svg"
             iconColor: AppPalette.text
-            fillColor: AppPalette.card
             fillHoverColor: AppPalette.cardHover
             toolTipText: qsTr("Ruler")
 
             property bool checked: false
+            fillColor: checked ? AppPalette.accentBg : AppPalette.card
             borderColor: checked ? AppPalette.accentBorder : AppPalette.border
             borderWidth: checked ? 2 : 1
 
@@ -158,7 +157,7 @@ Item {
 
         Item { Layout.preferredHeight: Tokens.spaceLg; Layout.preferredWidth: 1 }
 
-        CircleIconButton {
+        KCircleIconButton {
             id: settingsGearButton
             objectName: "settingsGearButton"
             width: root.buttonSize
@@ -183,7 +182,7 @@ Item {
             spacing: Math.round(6 * AppPalette.scale)
             visible: root.geometryOpen || (root.geo && root.geo.tool !== 0)
 
-            CircleIconButton {
+            KCircleIconButton {
                 width: root.buttonSize
                 height: root.buttonSize
                 Layout.preferredWidth: root.buttonSize
@@ -198,7 +197,7 @@ Item {
                 onClicked: if (root.geo) root.geo.tool = (root.geo.tool === 1 ? 0 : 1)
             }
 
-            CircleIconButton {
+            KCircleIconButton {
                 width: root.buttonSize
                 height: root.buttonSize
                 Layout.preferredWidth: root.buttonSize
@@ -213,7 +212,7 @@ Item {
                 onClicked: if (root.geo) root.geo.tool = (root.geo.tool === 2 ? 0 : 2)
             }
 
-            CircleIconButton {
+            KCircleIconButton {
                 width: root.buttonSize
                 height: root.buttonSize
                 Layout.preferredWidth: root.buttonSize
@@ -233,7 +232,7 @@ Item {
             spacing: Math.round(6 * AppPalette.scale)
             visible: root.geo ? root.geo.drawing : false
 
-            CircleIconButton {
+            KCircleIconButton {
                 width: root.buttonSize
                 height: root.buttonSize
                 Layout.preferredWidth: root.buttonSize
@@ -246,7 +245,7 @@ Item {
                 onClicked: if (root.geo) root.geo.finishDrawing()
             }
 
-            CircleIconButton {
+            KCircleIconButton {
                 width: root.buttonSize
                 height: root.buttonSize
                 Layout.preferredWidth: root.buttonSize
@@ -259,7 +258,7 @@ Item {
                 onClicked: if (root.geo) root.geo.undoLastVertex()
             }
 
-            CircleIconButton {
+            KCircleIconButton {
                 width: root.buttonSize
                 height: root.buttonSize
                 Layout.preferredWidth: root.buttonSize

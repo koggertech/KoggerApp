@@ -2284,7 +2284,7 @@ Column {
                     onClicked: root.store.applyFavoriteLayout(favoriteCard.favoriteIndex)
                 }
 
-                CircleIconButton {
+                KCircleIconButton {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: Tokens.spaceSm

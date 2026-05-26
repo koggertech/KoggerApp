@@ -11,5 +11,7 @@ KToggleRow 1.0 KToggleRow.qml
 KSlider 1.0 KSlider.qml
 KButton 1.0 KButton.qml
 KCombo 1.0 KCombo.qml
+KSpinBox 1.0 KSpinBox.qml
 KTapArea 1.0 KTapArea.qml
 KToolTip 1.0 KToolTip.qml
+KCircleIconButton 1.0 KCircleIconButton.qml

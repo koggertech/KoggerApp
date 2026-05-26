@@ -24,7 +24,6 @@
         <file>qml/app/SettingsSidebarBase.qml</file>
         <file>qml/app/SettingsGroup.qml</file>
         <file>qml/app/AppSettingsPage.qml</file>
-        <file>qml/app/KSpinBox.qml</file>
         <file>qml/app/ConnectionsSettingsPage.qml</file>
         <file>qml/app/DeviceSettingsPage.qml</file>
         <file>qml/app/Pane2DSettingsPage.qml</file>
@@ -32,7 +31,6 @@
         <file>qml/app/ModeSettingsPanel.qml</file>
         <file>qml/app/ConsolePanelDrawer.qml</file>
         <file>qml/app/ActionChip.qml</file>
-        <file>qml/app/CircleIconButton.qml</file>
         <file>qml/app/SettingsGearButton.qml</file>
         <file>qml/app/DisclosureIndicator.qml</file>
         <file>qml/app/HotActionsPanel.qml</file>
@@ -52,8 +50,10 @@
         <file>qml/kqml_types/KSlider.qml</file>
         <file>qml/kqml_types/KButton.qml</file>
         <file>qml/kqml_types/KCombo.qml</file>
+        <file>qml/kqml_types/KSpinBox.qml</file>
         <file>qml/kqml_types/KTapArea.qml</file>
         <file>qml/kqml_types/KToolTip.qml</file>
+        <file>qml/kqml_types/KCircleIconButton.qml</file>
         <file>qml/kqml_types/ZOrder.qml</file>
         <file>qml/kqml_types/Tokens.qml</file>
 
@@ -138,7 +138,6 @@
         <file>qml/scene3d/LocationExtraSettings.qml</file>
         <file>qml/scene3d/Settings3DExtraSettings.qml</file>
         <file>qml/scene3d/Settings3DView.qml</file>
-        <file>qml/scene3d/SurfaceControlMenu.qml</file>
 
         <!-- ======= Scene2D ======= -->
         <file>qml/scene2d/qmldir</file>

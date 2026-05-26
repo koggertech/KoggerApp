@@ -2,7 +2,7 @@ import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import kqml_types 1.0
 
-CircleIconButton {
+KCircleIconButton {
     id: gear
     property string modeTag: "app"
 

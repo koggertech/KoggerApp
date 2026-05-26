@@ -44,7 +44,7 @@ Item {
             columnSpacing: centerQuickActions.iconSpacing
             rowSpacing: centerQuickActions.iconSpacing
 
-            CircleIconButton {
+            KCircleIconButton {
                 id: paneModeQuickButton
                 width: paneFrame.centerQuickIconSize
                 height: paneFrame.centerQuickIconSize
@@ -68,7 +68,7 @@ Item {
                 }
             }
 
-            CircleIconButton {
+            KCircleIconButton {
                 id: popupAssignButton
                 width: paneFrame.centerQuickIconSize
                 height: paneFrame.centerQuickIconSize
@@ -92,7 +92,7 @@ Item {
                 onClicked: paneFrame.popupChooserOpen = !paneFrame.popupChooserOpen
             }
 
-            CircleIconButton {
+            KCircleIconButton {
                 id: movePaneButton
                 width: paneFrame.centerQuickIconSize
                 height: paneFrame.centerQuickIconSize
