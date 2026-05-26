@@ -1185,9 +1185,12 @@ Column {
                             Component.onCompleted: {
                                 model = dataset.channelsNameList()
                                 let index = model.indexOf(core.ch2Name)
+                                // Only second real channel (index 2) auto-fills.
+                                // Single-channel datasets leave ch2 on "None" (index 0)
+                                // so the mosaic processor doesn't receive ch1 twice.
                                 if (index >= 0)             channel2Combo.currentIndex = index
                                 else if (model.length > 2)  channel2Combo.currentIndex = 2
-                                else if (model.length > 1)  channel2Combo.currentIndex = 1
+                                else                        channel2Combo.currentIndex = 0
                             }
 
                             Connections {
@@ -1202,9 +1205,10 @@ Column {
 
                                     let newIndex = list.indexOf(core.ch2Name)
                                     if (newIndex < 0) {
-                                        newIndex = list.length > 2 ? 2
-                                                 : list.length > 1 ? 1
-                                                 : 0
+                                        // Same rule as Component.onCompleted: only auto-fill
+                                        // when a second real channel exists. Otherwise keep
+                                        // ch2 on "None" (index 0) to avoid duplicating ch1.
+                                        newIndex = list.length > 2 ? 2 : 0
                                     }
 
                                     channel2Combo.currentIndex = -1

@@ -225,7 +225,10 @@ function pushMosaicChannelsFromCore() {
     var ch1 = core.ch1Name
     var ch2 = core.ch2Name
     if (!ch1 || list.indexOf(ch1) <= 0) ch1 = list.length > 1 ? list[1] : ""
-    if (!ch2 || list.indexOf(ch2) <= 0) ch2 = list.length > 2 ? list[2] : ch1
+    // ch2 fallback: only second real channel (list[2]). When only one real
+    // channel exists, leave ch2 empty — must NOT duplicate ch1 onto both slots
+    // (would double-feed the mosaic processor).
+    if (!ch2 || list.indexOf(ch2) <= 0) ch2 = list.length > 2 ? list[2] : ""
     if (!ch1 && !ch2) return
     core.setMosaicChannels(ch1, ch2)
 }
