@@ -288,7 +288,7 @@ Column {
             height: pgroup.checked ? pgroupBody.implicitHeight + 2 * Tokens.spaceSm : 0
 
             Behavior on height {
-                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing }
             }
 
             Column {

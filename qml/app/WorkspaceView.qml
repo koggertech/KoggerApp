@@ -639,9 +639,9 @@ Item {
                 x: splitDragZone.vertical ? (ghostLocal - width / 2)  : 0
                 y: splitDragZone.vertical ? 0 : (ghostLocal - height / 2)
 
-                Behavior on x { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
-                Behavior on y { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
-                Behavior on opacity { NumberAnimation { duration: 90 } }
+                Behavior on x { NumberAnimation { duration: Anim.splitGhostMs; easing.type: Anim.splitGhostEasing } }
+                Behavior on y { NumberAnimation { duration: Anim.splitGhostMs; easing.type: Anim.splitGhostEasing } }
+                Behavior on opacity { NumberAnimation { duration: Anim.splitGhostMs } }
             }
 
             readonly property point cursorInZone: barGrab.pressed

@@ -102,7 +102,7 @@ Switch {
         SequentialAnimation {
             id: highlightPulse
             running: false
-            NumberAnimation { target: highlightOverlay; property: "opacity"; to: 0.92; duration: 90; easing.type: Easing.OutQuad }
+            NumberAnimation { target: highlightOverlay; property: "opacity"; to: 0.92; duration: 90; easing.type: Easing.OutCubic }
             NumberAnimation { target: highlightOverlay; property: "opacity"; to: 0.26; duration: 180; easing.type: Easing.OutCubic }
             NumberAnimation { target: highlightOverlay; property: "opacity"; to: 0.0; duration: 260; easing.type: Easing.OutCubic }
         }

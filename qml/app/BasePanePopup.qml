@@ -312,7 +312,7 @@ Item {
                 NumberAnimation {
                     properties: "x,y,width,height,radius"
                     duration: 220
-                    easing.type: Easing.InOutQuad
+                    easing.type: Easing.OutCubic
                 }
             }
         ]
@@ -352,7 +352,7 @@ Item {
             visible: opacity > 0
 
             Behavior on opacity {
-                NumberAnimation { duration: 180; easing.type: Easing.InOutQuad }
+                NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
             }
 
             // Grip dots — visible hint that this area is draggable.

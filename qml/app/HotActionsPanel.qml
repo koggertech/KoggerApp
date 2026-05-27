@@ -358,7 +358,7 @@ Item {
         SequentialAnimation {
             id: pulseAnim
             running: false
-            NumberAnimation { target: pulseRing; property: "opacity"; to: 0.95; duration: 90; easing.type: Easing.OutQuad }
+            NumberAnimation { target: pulseRing; property: "opacity"; to: 0.95; duration: 90; easing.type: Easing.OutCubic }
             NumberAnimation { target: pulseRing; property: "opacity"; to: 0.32; duration: 180; easing.type: Easing.OutCubic }
             NumberAnimation { target: pulseRing; property: "opacity"; to: 0.0; duration: 280; easing.type: Easing.OutCubic }
         }
@@ -468,7 +468,7 @@ Item {
         Behavior on opacity {
             NumberAnimation {
                 duration: 170
-                easing.type: Easing.OutQuad
+                easing.type: Easing.OutCubic
             }
         }
 

@@ -78,7 +78,7 @@ Item {
         visible: root.expanded || width > 0
         opacity: root.expanded ? 1.0 : 0.0
 
-        Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutQuad } }
+        Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
         Behavior on opacity { NumberAnimation { duration: 120 } }
 
         ColumnLayout {

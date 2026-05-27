@@ -75,6 +75,6 @@ Button {
 
     scale: pressed ? 0.96 : 1
     Behavior on scale {
-        NumberAnimation { duration: 100; easing.type: Easing.OutQuad }
+        NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
     }
 }

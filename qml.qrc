@@ -56,6 +56,7 @@
         <file>qml/kqml_types/KCircleIconButton.qml</file>
         <file>qml/kqml_types/ZOrder.qml</file>
         <file>qml/kqml_types/Tokens.qml</file>
+        <file>qml/kqml_types/Anim.qml</file>
 
         <!-- ======= Menus ======= -->
         <file>qml/menus/qmldir</file>

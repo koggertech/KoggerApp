@@ -68,7 +68,7 @@ Item {
     Behavior on progress {
         NumberAnimation {
             duration: AppPalette.sidebarAnimMs
-            easing.type: Easing.InOutCubic
+            easing.type: Easing.OutCubic
         }
     }
 

@@ -347,8 +347,8 @@ Item {
 
             Behavior on height {
                 NumberAnimation {
-                    duration: 200
-                    easing.type: Easing.OutCubic
+                    duration: Anim.disclosureMs
+                    easing.type: Anim.disclosureEasing
                 }
             }
 
