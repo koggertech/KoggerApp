@@ -1657,9 +1657,10 @@ void DataProcessor::postMinZ(float val)
 
     emit sendSurfaceMinZ(val); // to surface view
 
-    pendingIsobathsWork_ = true;
-
-    scheduleLatest(WorkSet(WF_Isobaths));
+    if (!updateMosaic_) {
+        pendingIsobathsWork_ = true;
+        scheduleLatest(WorkSet(WF_Isobaths));
+    }
 }
 
 void DataProcessor::postMaxZ(float val)
@@ -1668,9 +1669,10 @@ void DataProcessor::postMaxZ(float val)
 
     emit sendSurfaceMaxZ(val); // to surface view
 
-    pendingIsobathsWork_ = true;
-
-    scheduleLatest(WorkSet(WF_Isobaths));
+    if (!updateMosaic_) {
+        pendingIsobathsWork_ = true;
+        scheduleLatest(WorkSet(WF_Isobaths));
+    }
 }
 
 void DataProcessor::postSurfaceColorTable(const std::vector<uint8_t> &t)
