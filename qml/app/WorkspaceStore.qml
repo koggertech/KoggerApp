@@ -42,6 +42,9 @@ property real edgeResizePointerStart: 0
 property real edgeResizeMovingCoordStart: 0
 property real edgeResizeFixedCoord: 0
 property string edgeResizeFavoriteSignatureBefore: ""
+property bool edgeResizeGhostActive: false
+property real edgeResizeGhostCoord: 0       // workspace-axis coord of ghost split line (render)
+property real edgeResizeGhostSplitCoord: 0  // split-coord to apply on commit
 property bool editableMode: false
 property int maximizedLeafId: -1
 property int lastTappedLeafId: -1
@@ -2783,7 +2786,26 @@ function beginEdgeResizeWithFallback(leafId, edge, absX, absY) {
     return started
 }
 
-function updateEdgeResize(absX, absY) {
+function stepSnapSplitCoord(splitId, splitCoord) {
+    var limits = splitCoordLimitsById(splitId)
+    if (!limits || limits.parentLength <= 0)
+        return splitCoord
+
+    var best = splitCoord
+    var bestDist = 1e9
+    for (var step = 1; step <= 7; ++step) {
+        var cand = clamp(limits.parentStart + limits.parentLength * (step / 8) - splitterThickness / 2,
+                         limits.min, limits.max)
+        var d = Math.abs(splitCoord - cand)
+        if (d < bestDist) {
+            bestDist = d
+            best = cand
+        }
+    }
+    return best
+}
+
+function updateEdgeResizePreview(absX, absY) {
     if (edgeResizeMovingSplitId < 0)
         return
 
@@ -2804,23 +2826,12 @@ function updateEdgeResize(absX, absY) {
             movingCoord = clamp(movingCoord, 0, effectiveWorkspaceHeight())
     }
 
-    var prevTree = layoutTree
-
     var movingSplitCoord = splitCoordForLeafSide(edgeResizeMovingSide, movingCoord)
-    movingSplitCoord = snappedSplitCoord(edgeResizeMovingSplitId, movingSplitCoord)
-    setSplitCoordById(edgeResizeMovingSplitId, movingSplitCoord, false)
+    movingSplitCoord = stepSnapSplitCoord(edgeResizeMovingSplitId, movingSplitCoord)
 
-    if (edgeResizeFixedSplitId >= 0) {
-        var desiredFixedSplitCoord = splitCoordForLeafSide(edgeResizeFixedSide, edgeResizeFixedCoord)
-        setSplitCoordById(edgeResizeFixedSplitId, desiredFixedSplitCoord, false)
-
-        var actualFixedSplitCoord = splitCoordById(edgeResizeFixedSplitId)
-        if (isNaN(actualFixedSplitCoord) || Math.abs(actualFixedSplitCoord - desiredFixedSplitCoord) > 0.5) {
-            layoutTree = prevTree
-            rebuildLayoutCaches(false)
-        }
-    }
-
+    edgeResizeGhostSplitCoord = movingSplitCoord
+    edgeResizeGhostCoord = movingSplitCoord  // splitterThickness == 0 → == workspace coord
+    edgeResizeGhostActive = true
 }
 
 function clearEdgeResizeState() {
@@ -2832,16 +2843,42 @@ function clearEdgeResizeState() {
     edgeResizeHighlightLeafId = -1
     edgeResizeHighlightEdge = ""
     edgeResizeFavoriteSignatureBefore = ""
+    edgeResizeGhostActive = false
 }
 
-function finishEdgeResize() {
-    var hadResize = edgeResizeMovingSplitId >= 0
+function commitEdgeResize() {
+    if (!edgeResizeGhostActive || edgeResizeMovingSplitId < 0) {
+        clearEdgeResizeState()
+        return
+    }
+
+    var movingSplitId = edgeResizeMovingSplitId
+    var movingSplitCoord = edgeResizeGhostSplitCoord
+    var fixedSplitId = edgeResizeFixedSplitId
+    var fixedSide = edgeResizeFixedSide
+    var fixedCoord = edgeResizeFixedCoord
 
     clearEdgeResizeState()
-    if (hadResize) {
-        rebuildLayoutCaches(true)
-        updateCurrentLayoutFavoriteState()
+
+    var prevTree = layoutTree
+    setSplitCoordById(movingSplitId, movingSplitCoord, false)
+
+    if (fixedSplitId >= 0) {
+        var desiredFixedSplitCoord = splitCoordForLeafSide(fixedSide, fixedCoord)
+        setSplitCoordById(fixedSplitId, desiredFixedSplitCoord, false)
+
+        var actualFixedSplitCoord = splitCoordById(fixedSplitId)
+        if (isNaN(actualFixedSplitCoord) || Math.abs(actualFixedSplitCoord - desiredFixedSplitCoord) > 0.5) {
+            layoutTree = prevTree
+        }
     }
+
+    rebuildLayoutCaches(true)
+    updateCurrentLayoutFavoriteState()
+}
+
+function cancelEdgeResizePreview() {
+    clearEdgeResizeState()
 }
 
 function chooseSplitOrientation(edge, leafRect) {

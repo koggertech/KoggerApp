@@ -50,10 +50,10 @@ Item {
     visible: !hiddenByMaximizedPane
     z: isMaximized ? ZOrder.maximizedPane : (isModeSelecting ? ZOrder.maximizingPane : ZOrder.workspacePane)
 
-    Behavior on x { enabled: store.edgeResizeMovingSplitId < 0 && !store.layoutTransitionSuspended; NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } }
-    Behavior on y { enabled: store.edgeResizeMovingSplitId < 0 && !store.layoutTransitionSuspended; NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } }
-    Behavior on width { enabled: store.edgeResizeMovingSplitId < 0 && !store.layoutTransitionSuspended; NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } }
-    Behavior on height { enabled: store.edgeResizeMovingSplitId < 0 && !store.layoutTransitionSuspended; NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } }
+    Behavior on x { enabled: store.edgeResizeMovingSplitId < 0 && !store.layoutTransitionSuspended; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+    Behavior on y { enabled: store.edgeResizeMovingSplitId < 0 && !store.layoutTransitionSuspended; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+    Behavior on width { enabled: store.edgeResizeMovingSplitId < 0 && !store.layoutTransitionSuspended; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+    Behavior on height { enabled: store.edgeResizeMovingSplitId < 0 && !store.layoutTransitionSuspended; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
     onVisibleChanged: {
         if (!visible) {
