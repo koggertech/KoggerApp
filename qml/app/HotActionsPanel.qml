@@ -10,15 +10,15 @@ Item {
     property bool expanded: false
     property bool showToggleButton: true
     property int revealShiftX: 0
-    // Cap by window width so panel never overflows on narrow screens.
+    readonly property real _s: 1.5 * (theme ? theme.resCoeff : 1.0)
     readonly property int _windowW: store ? store.windowWidth : 1440
     property real maxExpandedWidth: Math.max(240,
-                                             Math.min(620 * AppPalette.scale,
-                                                      _windowW - 32 * AppPalette.scale))
-    property int controlHeight: Tokens.controlHLg - 2
-    property int panelPaddingX: Tokens.spaceMd
-    property int panelPaddingY: Tokens.spaceSm
-    property int triggerButtonWidth: Math.round(92 * AppPalette.scale)
+                                             Math.min(620 * root._s,
+                                                      _windowW - 32 * root._s))
+    property int controlHeight: Math.round(36 * root._s) - 2
+    property int panelPaddingX: Math.round(8 * root._s)
+    property int panelPaddingY: Math.round(6 * root._s)
+    property int triggerButtonWidth: Math.round(92 * root._s)
     readonly property color hotkeysLayerColor: AppPalette.bg
     readonly property color hotkeysPopupLayerColor: AppPalette.bg
     readonly property color buttonFillColor: AppPalette.card
@@ -26,9 +26,9 @@ Item {
     readonly property color buttonPressedColor: AppPalette.bgDeep
     readonly property color buttonBorderColor: AppPalette.border
     readonly property color buttonHoverBorderColor: AppPalette.borderHover
-    readonly property int previewCardWidth: Math.round(84 * AppPalette.scale)
-    readonly property int previewCardHeight: Math.round(64 * AppPalette.scale)
-    readonly property int panelHeight: Math.max(controlHeight + panelPaddingY * 2, Tokens.controlHXl)
+    readonly property int previewCardWidth: Math.round(84 * root._s)
+    readonly property int previewCardHeight: Math.round(64 * root._s)
+    readonly property int panelHeight: Math.max(controlHeight + panelPaddingY * 2, Math.round(48 * root._s))
     // While the "layouts" reveal sequence is active we keep showing the icons
     // even if the user just disabled them — so they're visible during the
     // whole open → pulse → close cycle instead of disappearing instantly.
@@ -39,8 +39,8 @@ Item {
                                               && store.favoriteLayouts.length > 0
     readonly property int favoriteCount: hasFavoriteLayouts ? store.favoriteLayouts.length : 0
     property bool layoutsMenuOpen: false
-    property int favoriteItemSpacing: Tokens.spaceSm
-    property int favoriteListMaxHeight: Math.round(244 * AppPalette.scale)
+    property int favoriteItemSpacing: Math.round(6 * root._s)
+    property int favoriteListMaxHeight: Math.round(244 * root._s)
     property bool connectionsOnline: true
     property bool connectionStatusToolVisible: true
     property string highlightedQuickActionKey: ""
@@ -51,10 +51,10 @@ Item {
     property string _revealActiveKey: ""
     property string inputDeviceLabel: ""
     property color inputDeviceColor: "#2563EB"
-    readonly property int inputDeviceStackSpacing: Tokens.spaceMd
+    readonly property int inputDeviceStackSpacing: Math.round(8 * root._s)
 
     readonly property bool popupShown: root.expanded && root.layoutsMenuOpen && root.hasFavoriteLayouts
-    readonly property int favoriteItemHeight: Math.round(76 * AppPalette.scale)
+    readonly property int favoriteItemHeight: Math.round(76 * root._s)
     readonly property int favoriteListContentHeight: favoriteCount > 0
                                                      ? favoriteCount * favoriteItemHeight + (favoriteCount - 1) * favoriteItemSpacing
                                                      : 0
@@ -114,8 +114,8 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 7
-            spacing: 7
+            anchors.margins: Math.round(7 * root._s)
+            spacing: Math.round(7 * root._s)
 
             Flickable {
                 id: favoritesFlick
@@ -151,6 +151,10 @@ Item {
                             readonly property var popupLinksData: favoriteEntry && favoriteEntry.popupLinks ? favoriteEntry.popupLinks : []
 
                             width: favoritesList.width
+                            height: root.favoriteItemHeight
+                            previewWidth:  Math.round(84 * root._s)
+                            previewHeight: Math.round(64 * root._s)
+                            contentMargin: Math.round(6 * root._s)
                             snapshot: snapshotData
                             popupLinks: popupLinksData
                             favoriteIndex: favoriteEntryIndex
@@ -173,7 +177,7 @@ Item {
             Rectangle {
                 width: parent.width
                 height: root.controlHeight
-                radius: 8
+                radius: Math.round(8 * root._s)
                 color: settingsMouse.containsMouse ? root.buttonHoverColor : root.buttonFillColor
                 border.width: 1
                 border.color: settingsMouse.containsMouse ? root.buttonHoverBorderColor : root.buttonBorderColor
@@ -182,7 +186,7 @@ Item {
                     anchors.centerIn: parent
                     text: "\u2699"
                     color: AppPalette.text
-                    font.pixelSize: 19
+                    font.pixelSize: Math.round(19 * root._s)
                     font.bold: true
                 }
 
@@ -254,7 +258,7 @@ Item {
                                                 ? toggleButton.height
                                                   + (inputDeviceBadgeVisible ? inputDeviceStackSpacing + inputDeviceBadge.height : 0)
                                                 : 0
-    readonly property int panelOffsetX: (root.showToggleButton ? toggleButton.width + 8 : 0) + root.revealShiftX
+    readonly property int panelOffsetX: (root.showToggleButton ? toggleButton.width + Math.round(8 * root._s) : 0) + root.revealShiftX
 
     width: Math.max(leadingClusterWidth, root.expanded ? panelOffsetX + panel.width : panelOffsetX)
     height: Math.max(leadingClusterHeight, panel.height)
@@ -274,10 +278,10 @@ Item {
 
         Canvas {
             id: iconCanvas
-            width: 46
-            height: 22
+            width: Math.round(46 * root._s)
+            height: Math.round(22 * root._s)
             anchors.centerIn: parent
-            anchors.horizontalCenterOffset: -6
+            anchors.horizontalCenterOffset: -Math.round(6 * root._s)
 
             onPaint: {
                 var ctx = getContext("2d")
@@ -306,10 +310,10 @@ Item {
 
         DisclosureIndicator {
             anchors.right: parent.right
-            anchors.rightMargin: 10
+            anchors.rightMargin: Math.round(10 * root._s)
             anchors.verticalCenter: parent.verticalCenter
-            width: 10
-            height: 10
+            width: Math.round(10 * root._s)
+            height: Math.round(10 * root._s)
             expanded: button.open
             indicatorColor: AppPalette.textSecond
         }
@@ -385,7 +389,7 @@ Item {
         iconSource: root.expanded ? "qrc:/icons/ui/x.svg"
                                   : "qrc:/icons/ui/menu-2.svg"
         iconTintColor: AppPalette.text
-        iconPixelSize: Math.round((root.expanded ? 19 : 20) * AppPalette.scale)
+        iconPixelSize: Math.round((root.expanded ? 19 : 20) * root._s)
         fillColor: root.buttonFillColor
         fillHoverColor: root.buttonHoverColor
         fillPressedColor: root.buttonPressedColor
@@ -406,9 +410,9 @@ Item {
         anchors.top: toggleButton.bottom
         anchors.topMargin: root.inputDeviceStackSpacing
         visible: root.inputDeviceBadgeVisible
-        implicitWidth: Math.max(Math.round(76 * AppPalette.scale),
-                                inputDeviceText.implicitWidth + Math.round(34 * AppPalette.scale))
-        implicitHeight: Math.round(26 * AppPalette.scale)
+        implicitWidth: Math.max(Math.round(76 * root._s),
+                                inputDeviceText.implicitWidth + Math.round(34 * root._s))
+        implicitHeight: Math.round(26 * root._s)
         width: implicitWidth
         height: implicitHeight
 
@@ -424,9 +428,9 @@ Item {
         Rectangle {
             id: inputDeviceDot
             anchors.left: parent.left
-            anchors.leftMargin: Tokens.spaceLg
+            anchors.leftMargin: Math.round(12 * root._s)
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.round(8 * AppPalette.scale)
+            width: Math.round(8 * root._s)
             height: width
             radius: width / 2
             color: root.inputDeviceColor
@@ -435,11 +439,11 @@ Item {
         Text {
             id: inputDeviceText
             anchors.left: inputDeviceDot.right
-            anchors.leftMargin: Tokens.spaceMd
+            anchors.leftMargin: Math.round(8 * root._s)
             anchors.verticalCenter: parent.verticalCenter
             text: root.inputDeviceLabel
             color: AppPalette.text
-            font.pixelSize: Tokens.fontSm
+            font.pixelSize: Math.round(12 * root._s)
             font.bold: true
         }
     }
@@ -477,7 +481,7 @@ Item {
             anchors.left: parent.left
             anchors.leftMargin: root.panelPaddingX
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 8
+            spacing: Math.round(8 * root._s)
             height: root.controlHeight
 
             SettingsGearButton {
@@ -550,9 +554,9 @@ Item {
                     showText: false
                     // Wider pill button without stretching the preview itself:
                     // small aspect bump (1.25×) + generous horizontal padding.
-                    previewHeight: root.controlHeight - Math.round(10 * AppPalette.scale)
+                    previewHeight: root.controlHeight - Math.round(10 * root._s)
                     previewWidth:  Math.round(previewHeight * 1.25)
-                    contentMargin: Math.round(10 * AppPalette.scale)
+                    contentMargin: Math.round(10 * root._s)
                     width: previewWidth + 2 * contentMargin
                     height: root.controlHeight
                     radius: height / 2
