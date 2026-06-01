@@ -9,7 +9,7 @@ Item {
     property string title: ""
     property real expandedWidth: 640
     property real expandedHeight: 480
-    property real collapsedSize: 36
+    property real collapsedSize: Math.round(36 * AppPalette.scale)
     property real popupWidth: collapsed ? collapsedSize : expandedWidth
     property real popupHeight: collapsed ? collapsedSize : expandedHeight
     property real panelX: 0
@@ -23,8 +23,8 @@ Item {
     property color panelColor: "#0B1220"
     property color panelBorderColor: "#93C5FD77"
 
-    readonly property real headerHeight: 32
-    readonly property real contentPadding: 4
+    readonly property real headerHeight: Math.round(32 * AppPalette.scale)
+    readonly property real contentPadding: Tokens.spaceXs
 
     property bool  _snapActive: false
     property real  _snapPreviewX: 0
@@ -358,13 +358,15 @@ Item {
             // Grip dots — visible hint that this area is draggable.
             Row {
                 anchors.centerIn: parent
-                anchors.horizontalCenterOffset: root.collapseButtonVisible ? -20 : 0
-                spacing: 5
+                anchors.horizontalCenterOffset: root.collapseButtonVisible ? -Math.round(20 * AppPalette.scale) : 0
+                spacing: Math.round(5 * AppPalette.scale)
                 visible: !root.collapsed
                 Repeater {
                     model: 4
                     delegate: Rectangle {
-                        width: 4; height: 4; radius: 2
+                        width: Math.round(4 * AppPalette.scale)
+                        height: Math.round(4 * AppPalette.scale)
+                        radius: Math.round(2 * AppPalette.scale)
                         color: "#475569"
                     }
                 }
@@ -438,16 +440,16 @@ Item {
             KButton {
                 id: collapseButton
                 visible: root.collapseButtonVisible
-                width: 32
-                height: 30
+                width: Math.round(32 * AppPalette.scale)
+                height: Tokens.controlHMd
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.rightMargin: 2
+                anchors.rightMargin: Tokens.spaceXxs
                 text: root.collapsed ? "\u25A1" : "\u2014"
-                fontPixelSize: 15
+                fontPixelSize: Math.round(15 * AppPalette.scale)
                 horizontalPadding: 0
                 verticalPadding: 0
-                cornerRadius: 6
+                cornerRadius: Tokens.radiusMd
                 normalBg: "#1E293BA6"
                 hoverBg: "#0F172ACC"
                 normalBorder: "#334155"
@@ -487,17 +489,20 @@ Item {
             id: resizeHandle
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            width: 20
-            height: 20
+            width: Math.round(26 * AppPalette.scale)
+            height: Math.round(26 * AppPalette.scale)
             visible: !root.collapsed && !root.fullscreenMode
             z: 10
 
             // Grip: 6 dots in bottom-right triangle pattern
             Repeater {
-                model: [{x:10,y:2},{x:6,y:6},{x:10,y:6},{x:2,y:10},{x:6,y:10},{x:10,y:10}]
+                model: [{x:13,y:3},{x:8,y:8},{x:13,y:8},{x:3,y:13},{x:8,y:13},{x:13,y:13}]
                 Rectangle {
-                    x: modelData.x; y: modelData.y
-                    width: 2; height: 2; radius: 1
+                    x: modelData.x * AppPalette.scale
+                    y: modelData.y * AppPalette.scale
+                    width: Math.max(1, Math.round(2 * AppPalette.scale))
+                    height: Math.max(1, Math.round(2 * AppPalette.scale))
+                    radius: Math.max(1, Math.round(1 * AppPalette.scale))
                     color: resizeDrag.active ? "#93C5FD" : (resizeHover.hovered ? "#94A3B8" : "#475569")
                 }
             }
