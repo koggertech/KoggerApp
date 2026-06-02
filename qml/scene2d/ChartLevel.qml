@@ -6,8 +6,8 @@ import "../menus"
 
 Item {
     id: control
-    width: 87
-    height: theme.controlHeight * heightCoeff
+    implicitWidth: 87
+    implicitHeight: theme.controlHeight * heightCoeff
 
     property int heightCoeff: 5
     property int widthSlider: theme.controlHeight
@@ -78,6 +78,12 @@ Item {
     }
 
     property int wheelStep: 1
+
+    onMouseRangeChanged: {
+        startPointY = valueToPosition(startValue)
+        stopPointY  = valueToPosition(stopValue)
+        canvas.requestPaint()
+    }
 
     MouseArea {
         id: mouseArea
