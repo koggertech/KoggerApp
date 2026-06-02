@@ -26,8 +26,6 @@ Item {
     readonly property color buttonPressedColor: AppPalette.bgDeep
     readonly property color buttonBorderColor: AppPalette.border
     readonly property color buttonHoverBorderColor: AppPalette.borderHover
-    readonly property int previewCardWidth: Math.round(84 * root._s)
-    readonly property int previewCardHeight: Math.round(64 * root._s)
     readonly property int panelHeight: Math.max(controlHeight + panelPaddingY * 2, Math.round(48 * root._s))
     // While the "layouts" reveal sequence is active we keep showing the icons
     // even if the user just disabled them — so they're visible during the
@@ -53,8 +51,7 @@ Item {
     property color inputDeviceColor: "#2563EB"
     readonly property int inputDeviceStackSpacing: Math.round(8 * root._s)
 
-    readonly property bool popupShown: root.expanded && root.layoutsMenuOpen && root.hasFavoriteLayouts
-    readonly property int favoriteItemHeight: Math.round(76 * root._s)
+    readonly property int favoriteItemHeight: Math.round(62 * root._s)
     readonly property int favoriteListContentHeight: favoriteCount > 0
                                                      ? favoriteCount * favoriteItemHeight + (favoriteCount - 1) * favoriteItemSpacing
                                                      : 0
@@ -128,12 +125,15 @@ Item {
                 boundsBehavior: Flickable.StopAtBounds
 
                 ScrollBar.vertical: ScrollBar {
+                    id: favScrollBar
                     policy: ScrollBar.AsNeeded
+                    width: Math.round(6 * root._s)
                 }
 
                 Column {
                     id: favoritesList
                     width: favoritesFlick.width
+                           - (favoritesFlick.interactive ? favScrollBar.width + Math.round(4 * root._s) : 0)
                     spacing: root.favoriteItemSpacing
 
                     Repeater {
@@ -152,9 +152,9 @@ Item {
 
                             width: favoritesList.width
                             height: root.favoriteItemHeight
-                            previewWidth:  Math.round(84 * root._s)
-                            previewHeight: Math.round(64 * root._s)
                             contentMargin: Math.round(6 * root._s)
+                            previewWidth:  Math.round(60 * root._s)
+                            previewHeight: Math.round(46 * root._s)
                             snapshot: snapshotData
                             popupLinks: popupLinksData
                             favoriteIndex: favoriteEntryIndex
@@ -174,27 +174,16 @@ Item {
                 }
             }
 
-            Rectangle {
+            Item {
                 width: parent.width
                 height: root.controlHeight
-                radius: Math.round(8 * root._s)
-                color: settingsMouse.containsMouse ? root.buttonHoverColor : root.buttonFillColor
-                border.width: 1
-                border.color: settingsMouse.containsMouse ? root.buttonHoverBorderColor : root.buttonBorderColor
 
-                Text {
+                SettingsGearButton {
                     anchors.centerIn: parent
-                    text: "\u2699"
-                    color: AppPalette.text
-                    font.pixelSize: Math.round(19 * root._s)
-                    font.bold: true
-                }
-
-                MouseArea {
-                    id: settingsMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
+                    width: root.controlHeight
+                    height: root.controlHeight
+                    modeTag: "app"
+                    toolTipText: qsTr("Open layout settings")
                     onClicked: {
                         if (root.store && typeof root.store.openAppLayoutSettings === "function")
                             root.store.openAppLayoutSettings()
@@ -203,12 +192,6 @@ Item {
                         root.layoutsMenuOpen = false
                         root.expanded = false
                     }
-                }
-
-                KToolTip {
-                    text: qsTr("Open layout settings")
-                    targetItem: parent
-                    shown: settingsMouse.containsMouse
                 }
             }
         }
@@ -261,51 +244,42 @@ Item {
     readonly property int panelOffsetX: (root.showToggleButton ? toggleButton.width + Math.round(8 * root._s) : 0) + root.revealShiftX
 
     width: Math.max(leadingClusterWidth, root.expanded ? panelOffsetX + panel.width : panelOffsetX)
-    height: Math.max(leadingClusterHeight, panel.height)
+    height: Math.max(leadingClusterHeight, panel.height, layoutsCombo.y + backing.height)
 
     component LayoutsTriggerButton: Rectangle {
         id: button
 
         property bool open: false
+        property bool dropped: false       // dropdown open/animating → merge into container
+        property bool highlighted: false   // "look here" reveal hint (layouts hotkey)
+        property int flashToken: 0
         signal clicked()
+
+        readonly property var currentEntry: root.store && root.store.favoriteLayoutEntryFromCurrent
+                                            ? root.store.favoriteLayoutEntryFromCurrent()
+                                            : null
+        readonly property int containerRadius: Math.round(14 * root._s)
+        readonly property int iconH: root.controlHeight - Math.round(12 * root._s)
+        readonly property int iconW: Math.round(button.iconH * 21 / 16)
 
         implicitWidth: root.triggerButtonWidth
         implicitHeight: root.controlHeight
-        radius: height / 2
+        radius: button.dropped ? containerRadius : height / 2
         color: buttonMouse.containsMouse ? root.buttonHoverColor : root.buttonFillColor
         border.width: 1
-        border.color: buttonMouse.containsMouse ? root.buttonHoverBorderColor : root.buttonBorderColor
+        border.color: button.dropped
+                      ? AppPalette.border
+                      : (buttonMouse.containsMouse ? root.buttonHoverBorderColor : root.buttonBorderColor)
 
-        Canvas {
-            id: iconCanvas
-            width: Math.round(46 * root._s)
-            height: Math.round(22 * root._s)
+        LayoutSnapshotPreview {
+            id: iconPreview
+            width: button.iconW
+            height: button.iconH
             anchors.centerIn: parent
             anchors.horizontalCenterOffset: -Math.round(6 * root._s)
-
-            onPaint: {
-                var ctx = getContext("2d")
-                ctx.clearRect(0, 0, width, height)
-
-                var gap = 2
-                var leftWidth = Math.floor(width * 0.48)
-                var rightWidth = width - leftWidth - gap
-                var topLeftHeight = Math.floor((height - gap) * 0.5)
-                var bottomLeftHeight = height - topLeftHeight - gap
-
-                function pane(x, y, w, h, fill, stroke) {
-                    ctx.fillStyle = fill
-                    ctx.strokeStyle = stroke
-                    ctx.lineWidth = 1
-                    ctx.fillRect(x, y, w, h)
-                    if (w > 1 && h > 1)
-                        ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1)
-                }
-
-                pane(0, 0, leftWidth, topLeftHeight, "#2563EB", "#93C5FD")
-                pane(0, topLeftHeight + gap, leftWidth, bottomLeftHeight, "#2563EB", "#93C5FD")
-                pane(leftWidth + gap, 0, rightWidth, height, "#16A34A", "#86EFAC")
-            }
+            layoutSnapshot: button.currentEntry ? button.currentEntry.layout : null
+            popupLinks: button.currentEntry && button.currentEntry.popupLinks
+                        ? button.currentEntry.popupLinks : []
         }
 
         DisclosureIndicator {
@@ -331,6 +305,30 @@ Item {
             targetItem: button
             shown: buttonMouse.containsMouse
         }
+
+        Rectangle {
+            id: revealPulse
+            anchors.fill: parent
+            radius: button.radius
+            color: "transparent"
+            border.width: Math.max(2, Math.round(2 * root._s))
+            border.color: AppPalette.accentBorder
+            opacity: 0
+            visible: button.highlighted
+            z: 10
+        }
+
+        SequentialAnimation {
+            id: revealPulseAnim
+            running: false
+            NumberAnimation { target: revealPulse; property: "opacity"; to: 0.95; duration: 90;  easing.type: Easing.OutCubic }
+            NumberAnimation { target: revealPulse; property: "opacity"; to: 0.30; duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { target: revealPulse; property: "opacity"; to: 0.0;  duration: 280; easing.type: Easing.OutCubic }
+        }
+
+        onFlashTokenChanged: if (button.highlighted) revealPulseAnim.restart()
+        onHighlightedChanged: if (!button.highlighted) revealPulse.opacity = 0.0
+        Component.onCompleted: if (button.highlighted) revealPulseAnim.restart()
     }
 
     component PulseSlot: Item {
@@ -532,51 +530,11 @@ Item {
                 }
             }
 
-            // ── Favorite layout pictograms ─────────────────────────────────
-            // One thumbnail per favorite. Click applies it. Skipped when the
-            // user disabled the group in Menu settings (favoritesEnabled).
-            Repeater {
-                model: root.hasFavoriteLayouts ? root.favoriteCount : 0
-                delegate: FavoriteLayoutCard {
-                    required property int index
-                    readonly property var favoriteEntry: (root.store
-                                                          && root.store.favoriteLayouts
-                                                          && index < root.store.favoriteLayouts.length)
-                                                         ? root.store.favoriteLayouts[index]
-                                                         : null
-                    readonly property var snapshotData: favoriteEntry && favoriteEntry.layout
-                                                       ? favoriteEntry.layout
-                                                       : favoriteEntry
-                    readonly property var popupLinksData: favoriteEntry && favoriteEntry.popupLinks
-                                                         ? favoriteEntry.popupLinks
-                                                         : []
-
-                    showText: false
-                    // Wider pill button without stretching the preview itself:
-                    // small aspect bump (1.25×) + generous horizontal padding.
-                    previewHeight: root.controlHeight - Math.round(10 * root._s)
-                    previewWidth:  Math.round(previewHeight * 1.25)
-                    contentMargin: Math.round(10 * root._s)
-                    width: previewWidth + 2 * contentMargin
-                    height: root.controlHeight
-                    radius: height / 2
-
-                    snapshot: snapshotData
-                    popupLinks: popupLinksData
-                    favoriteIndex: index
-                    selected: root.store && root.store.favoriteLayoutIsCurrent
-                              ? root.store.favoriteLayoutIsCurrent(index)
-                              : false
-
-                    highlighted: root.highlightedQuickActionKey === "layouts"
-                    flashToken: root.highlightPulseToken
-
-                    onClicked: {
-                        if (root.store && root.store.applyFavoriteLayout)
-                            root.store.applyFavoriteLayout(index)
-                        root.expanded = false
-                    }
-                }
+            Item {
+                id: layoutsSlot
+                visible: root.hasFavoriteLayouts
+                width: visible ? root.triggerButtonWidth : 0
+                height: root.controlHeight
             }
 
             KCircleIconButton {
@@ -599,6 +557,71 @@ Item {
                 }
             }
 
+        }
+    }
+
+    Item {
+        id: layoutsCombo
+        readonly property int comboW: root.triggerButtonWidth
+        readonly property int gap: Math.round(6 * root._s)
+        readonly property int dropBodyH: root.favoriteListViewportHeight
+                                         + root.controlHeight + Math.round(22 * root._s)
+        readonly property bool dropped: root.layoutsMenuOpen
+                                        || backing.height > root.controlHeight + 1
+        visible: root.hasFavoriteLayouts && panel.opacity > 0.01
+        opacity: panel.opacity         // fade in/out together with the pill
+        x: panel.x + topRow.x + layoutsSlot.x
+        y: panel.y + topRow.y
+        width: comboW
+        z: panel.z + 1                 // above the toolbar; the button is the head
+        height: backing.height
+
+        Rectangle {
+            id: backing
+            width: parent.width
+            y: 0
+            height: root.controlHeight
+                    + (root.layoutsMenuOpen ? layoutsCombo.gap + layoutsCombo.dropBodyH : 0)
+            radius: Math.round(14 * root._s)
+            color: root.hotkeysLayerColor
+            border.width: layoutsCombo.dropped ? 1 : 0
+            border.color: AppPalette.border
+            clip: true
+
+            Behavior on height {
+                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.AllButtons
+                onPressed: function(mouse) { mouse.accepted = true }
+                onClicked: function(mouse) { mouse.accepted = true }
+                onWheel: function(wheel) { wheel.accepted = true }
+            }
+
+            Loader {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.topMargin: root.controlHeight + layoutsCombo.gap   // below the head
+                sourceComponent: layoutsPopupContentComponent
+            }
+        }
+
+        LayoutsTriggerButton {
+            id: layoutsTrigger
+            anchors.top: parent.top
+            anchors.left: parent.left
+            width: layoutsCombo.comboW
+            height: root.controlHeight
+            open: root.layoutsMenuOpen
+            dropped: layoutsCombo.dropped
+            highlighted: root.highlightedQuickActionKey === "layouts"
+            flashToken: root.highlightPulseToken
+            onClicked: root.layoutsMenuOpen = !root.layoutsMenuOpen
         }
     }
 
