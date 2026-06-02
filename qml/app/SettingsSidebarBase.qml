@@ -353,23 +353,63 @@ Item {
                 id: subFlick
                 anchors.fill: parent
                 anchors.leftMargin: Tokens.spaceXl
-                anchors.rightMargin: Tokens.spaceXl
+                anchors.rightMargin: 0
                 anchors.topMargin: Tokens.spaceLg
                 anchors.bottomMargin: Tokens.spaceXl
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 flickableDirection: Flickable.VerticalFlick
-                contentWidth: width
+                contentWidth: Math.max(0, width - panelRoot.scrollBarReservePx)
                 contentHeight: Math.max(height, subLoader.implicitHeight)
                 interactive: contentHeight > height + 1
-                ScrollBar.vertical: ScrollBar { }
+                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }
 
                 Loader {
                     id: subLoader
-                    width: subFlick.width
+                    width: subFlick.contentWidth
                     active: panelRoot.subPage !== null
                     sourceComponent: panelRoot.subPage
                 }
+            }
+
+            ScrollBar {
+                id: subVScroll
+                orientation: Qt.Vertical
+                policy: subFlick.contentHeight > subFlick.height + 1
+                        ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+
+                parent: subPageHost
+                anchors.top: subFlick.top
+                anchors.bottom: subFlick.bottom
+                anchors.right: subFlick.right
+                anchors.rightMargin: Math.round((panelRoot.scrollBarReservePx - panelRoot._scrollThumbW) / 2)
+                width: panelRoot._scrollThumbW
+                implicitWidth: panelRoot._scrollThumbW
+                z: 4
+
+                size: subFlick.contentHeight > 0
+                      ? Math.min(1, subFlick.height / subFlick.contentHeight) : 0
+                position: subFlick.contentHeight > 0
+                          ? subFlick.contentY / subFlick.contentHeight : 0
+                stepSize: 0.04
+                active: subFlick.movingVertically || pressed || hovered
+
+                onPositionChanged: {
+                    if (subVScroll.pressed)
+                        subFlick.contentY = subVScroll.position * subFlick.contentHeight
+                }
+
+                contentItem: Rectangle {
+                    implicitWidth: subVScroll.width
+                    radius: width / 2
+                    color: subVScroll.pressed
+                           ? AppPalette.text
+                           : (subVScroll.hovered ? AppPalette.textSecond : AppPalette.textMuted)
+                    opacity: subVScroll.pressed ? 0.85 : (subVScroll.hovered ? 0.65 : 0.45)
+                    Behavior on color   { ColorAnimation { duration: 120 } }
+                    Behavior on opacity { NumberAnimation { duration: 120 } }
+                }
+                background: Item {}
             }
         }
     }
