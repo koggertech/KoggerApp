@@ -501,8 +501,8 @@ WaterFall {
         anchors.leftMargin: Math.round(10 * AppPalette.scale) + plot.edgeSafetyMargin
                             + (_shiftRight ? width : 0)
         anchors.bottomMargin: plot.edgeSafetyMargin
-                              + ((plot.horizontal && plot.hasData) ? _scrollClearance
-                                                                   : plot.settingsMenuSpacer)
+                              + (plot.horizontal ? _scrollClearance
+                                                 : plot.settingsMenuSpacer)
         spacing: Math.round(6 * AppPalette.scale)
 
         KChartLevelCapsule {
