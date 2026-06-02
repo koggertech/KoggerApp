@@ -55,6 +55,9 @@ WaterFall {
     // Keep inner edge-anchored widgets clear of the split-drag hit zone so a
     // touch near the pane border drags the split instead of jabbing a button.
     readonly property real edgeSafetyMargin: AppPalette.splitHitSizePx / 2
+    readonly property int  scrollEdgeMargin: Math.round(6 * AppPalette.scale) + plot.edgeSafetyMargin
+    readonly property color scrollThumbColor: theme.controlBorderColor   // цвет темы
+    readonly property real scrollThumbOpacity: 0.7                        // resting; pressed → 1.0 (opaque)
     property alias viewState: echoViewState
     property var inputState: null
     property bool externalInputRouting: false
@@ -494,7 +497,7 @@ WaterFall {
 
         readonly property bool _shiftRight: indx === 1 && !is3dVisible
                                             && height > plot.height - 130 * theme.resCoeff
-        readonly property int _scrollClearance: 34 + Math.round(10 * AppPalette.scale)
+        readonly property int _scrollClearance: Math.round(44 * AppPalette.scale)
 
         anchors.left: parent.left
         anchors.bottom: parent.bottom
@@ -1472,8 +1475,8 @@ WaterFall {
         property real prevTimelinePos: -1
 
         readonly property bool trackVisible: scrollMouseH.pressed || isScrolling
-        readonly property real thumbW: (scrollMouseH.pressed || isScrolling) ? 96 : 68
-        readonly property real thumbH: (scrollMouseH.pressed || isScrolling) ? 28 : 20
+        readonly property real thumbW: Math.round(((scrollMouseH.pressed || isScrolling) ? 96 : 68) * AppPalette.scale)
+        readonly property real thumbH: Math.round(((scrollMouseH.pressed || isScrolling) ? 28 : 20) * AppPalette.scale)
 
         visible: plot.horizontal && plot.hasData
         opacity: (plot.scrollBarsShown || trackVisible) ? 1.0 : 0.0
@@ -1488,9 +1491,9 @@ WaterFall {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.leftMargin: 6 + plot.edgeSafetyMargin
-        anchors.rightMargin: 6 + plot.edgeSafetyMargin
-        anchors.bottomMargin: 6 + plot.edgeSafetyMargin
+        anchors.leftMargin: plot.scrollEdgeMargin
+        anchors.rightMargin: plot.scrollEdgeMargin
+        anchors.bottomMargin: plot.scrollEdgeMargin
         height: thumbH
         z: 10
 
@@ -1559,15 +1562,15 @@ WaterFall {
             }
 
             x: {
-                const restingW = 68
+                const restingW = Math.round(68 * AppPalette.scale)
                 const center = progress * (echoScrollBarH.width - restingW) + restingW / 2
                 return Math.max(0, Math.min(echoScrollBarH.width - width, center - width / 2))
             }
             width: echoScrollBarH.thumbW
             height: parent.height
             radius: height / 2
-            color: theme.controlBorderColor
-            opacity: scrollMouseH.pressed ? 1.0 : 0.60
+            color: plot.scrollThumbColor
+            opacity: scrollMouseH.pressed ? 1.0 : plot.scrollThumbOpacity
 
             Behavior on opacity { NumberAnimation { duration: 150 } }
             Behavior on width   { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -1622,8 +1625,8 @@ WaterFall {
         property real prevTimelinePos: -1
 
         readonly property bool trackVisible: scrollMouseV.pressed || isScrolling
-        readonly property real thumbH: (scrollMouseV.pressed || isScrolling) ? 96 : 68
-        readonly property real thumbW: (scrollMouseV.pressed || isScrolling) ? 28 : 20
+        readonly property real thumbH: Math.round(((scrollMouseV.pressed || isScrolling) ? 96 : 68) * AppPalette.scale)
+        readonly property real thumbW: Math.round(((scrollMouseV.pressed || isScrolling) ? 28 : 20) * AppPalette.scale)
 
         visible: !plot.horizontal && plot.hasData
         opacity: (plot.scrollBarsShown || trackVisible) ? 1.0 : 0.0
@@ -1638,9 +1641,9 @@ WaterFall {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.right: parent.right
-        anchors.topMargin: 6 + plot.edgeSafetyMargin
-        anchors.bottomMargin: 6 + plot.edgeSafetyMargin
-        anchors.rightMargin: 6 + plot.edgeSafetyMargin
+        anchors.topMargin: plot.scrollEdgeMargin
+        anchors.bottomMargin: plot.scrollEdgeMargin
+        anchors.rightMargin: plot.scrollEdgeMargin
         width: thumbW
         z: 10
 
@@ -1709,7 +1712,7 @@ WaterFall {
             }
 
             y: {
-                const restingH = 68
+                const restingH = Math.round(68 * AppPalette.scale)
                 const vp = 1.0 - progress
                 const center = vp * (echoScrollBarV.height - restingH) + restingH / 2
                 return Math.max(0, Math.min(echoScrollBarV.height - height, center - height / 2))
@@ -1717,8 +1720,8 @@ WaterFall {
             width: parent.width
             height: echoScrollBarV.thumbH
             radius: width / 2
-            color: theme.controlBorderColor
-            opacity: scrollMouseV.pressed ? 1.0 : 0.60
+            color: plot.scrollThumbColor
+            opacity: scrollMouseV.pressed ? 1.0 : plot.scrollThumbOpacity
 
             Behavior on opacity { NumberAnimation { duration: 150 } }
             Behavior on height  { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
