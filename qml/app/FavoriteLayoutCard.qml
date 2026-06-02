@@ -13,7 +13,6 @@ Rectangle {
     property int previewHeight:   Math.round(64 * AppPalette.scale)
     property int contentMargin:   Tokens.spaceSm
     property int contentSpacing:  Tokens.spaceMd
-    property string titlePrefix: "Favorite "
     property int previewRedrawDebounceMs: 48
 
     // External "look here" pulse — bumped via flashToken when highlighted.
@@ -61,7 +60,7 @@ Rectangle {
         spacing: Tokens.spaceXs
 
         Text {
-            text: root.titlePrefix + (root.favoriteIndex + 1)
+            text: qsTr("Favorite %1").arg(root.favoriteIndex + 1)
             color: root.selected ? "#FDE68A" : AppPalette.text
             font.pixelSize: Tokens.fontBase
             font.bold: true
@@ -71,8 +70,8 @@ Rectangle {
 
         Text {
             text: root.selected
-                  ? (root.leafCount(root.snapshot) + " panes • active")
-                  : (root.leafCount(root.snapshot) + " panes")
+                  ? qsTr("%1 panes (active)").arg(root.leafCount(root.snapshot))
+                  : qsTr("%1 panes").arg(root.leafCount(root.snapshot))
             color: AppPalette.textMuted
             font.pixelSize: Tokens.fontSm
             elide: Text.ElideRight

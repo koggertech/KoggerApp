@@ -12,6 +12,7 @@ Column {
 
     required property var store
     property var targetPlot: null
+    property var echograms: []
 
     readonly property int instruments: theme ? theme.instrumentsGrade : 0
     readonly property real groupWidth: Math.max(0, width)
@@ -27,115 +28,6 @@ Column {
     // Click anywhere on the card (except the spinbox area) flips the toggle.
     // Hover highlights the whole card. The default property is a content slot
     // sized by `slotWidth` — drop a KSpinBox (or any control) inside it.
-    component ParamCard: Rectangle {
-        id: pcard
-
-        property string label: ""
-        property bool checked: false
-        property int slotWidth: 0
-        signal toggled(bool val)
-
-        default property alias contentData: pcardSlot.data
-
-        readonly property int _knobMargin: Math.max(2, Math.round(2 * AppPalette.scale))
-        readonly property bool _hovered: cardMouseLeft.containsMouse || cardMouseRight.containsMouse
-
-        width: parent ? parent.width : implicitWidth
-        height: Math.round(38 * AppPalette.scale)
-        radius: Tokens.radiusLg
-        color: pcard._hovered ? AppPalette.bgHover : AppPalette.bg
-        border.width: 1
-        border.color: pcard._hovered ? AppPalette.borderHover : AppPalette.border
-
-        Behavior on color       { ColorAnimation { duration: 110 } }
-        Behavior on border.color { ColorAnimation { duration: 110 } }
-
-        function _flip() {
-            pcard.checked = !pcard.checked
-            pcard.toggled(pcard.checked)
-        }
-
-        // ── Click-catchers: two MouseAreas flanking pcardSlot ──────────────
-        // Splitting around the slot prevents stray clicks in the slot's
-        // un-widget-covered gaps (e.g. between a KSpinBox's text and its +/−
-        // buttons) from bubbling up and accidentally toggling the card.
-        MouseArea {
-            id: cardMouseLeft
-            anchors.left: parent.left
-            anchors.right: pcardSlot.left
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            z: -1
-            onClicked: pcard._flip()
-        }
-        MouseArea {
-            id: cardMouseRight
-            anchors.left: pcardSlot.right
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            z: -1
-            onClicked: pcard._flip()
-        }
-
-        // ── Label on the left ──────────────────────────────────────────────
-        Text {
-            anchors.left: parent.left
-            anchors.leftMargin: Tokens.spaceMd
-            anchors.right: pcardSlot.left
-            anchors.rightMargin: Tokens.spaceMd
-            anchors.verticalCenter: parent.verticalCenter
-            text: pcard.label
-            color: AppPalette.textSecond
-            font.pixelSize: Tokens.fontMd
-            elide: Text.ElideRight
-            verticalAlignment: Text.AlignVCenter
-        }
-
-        // ── Optional content slot (spinbox etc.) between label and toggle ──
-        Item {
-            id: pcardSlot
-            width: pcard.slotWidth
-            height: parent.height
-            anchors.right: pcardToggle.left
-            anchors.rightMargin: pcard.slotWidth > 0 ? Tokens.spaceMd : 0
-        }
-
-        // ── Toggle pill on the right (same look as KSwitch indicator) ─────
-        Item {
-            id: pcardToggle
-            width: Math.round(44 * AppPalette.scale)
-            height: Math.round(24 * AppPalette.scale)
-            anchors.right: parent.right
-            anchors.rightMargin: Tokens.spaceMd
-            anchors.verticalCenter: parent.verticalCenter
-
-            Rectangle {
-                anchors.fill: parent
-                radius: height / 2
-                color: pcard.checked ? AppPalette.accentBg : AppPalette.trackOff
-                border.width: 1
-                border.color: pcard.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
-                Behavior on color { ColorAnimation { duration: 120 } }
-
-                Rectangle {
-                    width: parent.height - 2 * pcard._knobMargin
-                    height: width
-                    radius: width / 2
-                    y: pcard._knobMargin
-                    x: pcard.checked ? parent.width - width - pcard._knobMargin : pcard._knobMargin
-                    color: AppPalette.knob
-                    border.width: 1
-                    border.color: "#00000022"
-                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                }
-            }
-        }
-    }
 
     // Inline toggle switch for parameter rows — same visual size as KSwitch's
     // indicator so all toggles in the app look identical and are easy to tap.
@@ -182,127 +74,6 @@ Column {
         }
     }
 
-    component ParamCardGroup: Rectangle {
-        id: pgroup
-
-        property string label: ""
-        property bool checked: false
-        signal toggled(bool val)
-
-        default property alias bodyData: pgroupBody.data
-
-        readonly property int _knobMargin: Math.max(2, Math.round(2 * AppPalette.scale))
-        readonly property int _headerH: Math.round(38 * AppPalette.scale)
-        readonly property bool _hovered: pgroupHeaderMouse.containsMouse
-
-        width: parent ? parent.width : implicitWidth
-        height: _headerH + bodyContainer.height
-        radius: Tokens.radiusLg
-        color: pgroup._hovered ? AppPalette.bgHover : AppPalette.bg
-        border.width: 1
-        border.color: pgroup._hovered ? AppPalette.borderHover : AppPalette.border
-        clip: true
-
-        Behavior on color       { ColorAnimation { duration: 110 } }
-        Behavior on border.color { ColorAnimation { duration: 110 } }
-
-        function _flip() {
-            pgroup.checked = !pgroup.checked
-            pgroup.toggled(pgroup.checked)
-        }
-
-        // ── Header (clickable, toggle on the right) ────────────────────────
-        Item {
-            id: pgroupHeader
-            width: parent.width
-            height: pgroup._headerH
-
-            MouseArea {
-                id: pgroupHeaderMouse
-                anchors.left: parent.left
-                anchors.right: pgroupToggle.left
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: pgroup._flip()
-            }
-
-            Text {
-                anchors.left: parent.left
-                anchors.leftMargin: Tokens.spaceMd
-                anchors.right: pgroupToggle.left
-                anchors.rightMargin: Tokens.spaceMd
-                anchors.verticalCenter: parent.verticalCenter
-                text: pgroup.label
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontMd
-                elide: Text.ElideRight
-                verticalAlignment: Text.AlignVCenter
-            }
-
-            // Toggle pill (same look as ParamCard / SmallCheck)
-            Item {
-                id: pgroupToggle
-                width: Math.round(44 * AppPalette.scale)
-                height: Math.round(24 * AppPalette.scale)
-                anchors.right: parent.right
-                anchors.rightMargin: Tokens.spaceMd
-                anchors.verticalCenter: parent.verticalCenter
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: height / 2
-                    color: pgroup.checked ? AppPalette.accentBgStrong : AppPalette.trackOff
-                    border.width: 1
-                    border.color: pgroup.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
-                    Behavior on color       { ColorAnimation { duration: 120 } }
-                    Behavior on border.color { ColorAnimation { duration: 120 } }
-                }
-                Rectangle {
-                    width: parent.height - 2 * pgroup._knobMargin
-                    height: width
-                    radius: width / 2
-                    y: pgroup._knobMargin
-                    x: pgroup.checked ? parent.width - width - pgroup._knobMargin : pgroup._knobMargin
-                    color: AppPalette.knob
-                    border.width: 1
-                    border.color: "#00000022"
-                    Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: pgroup._flip()
-                }
-            }
-        }
-
-        // ── Body (animated; clipped during shrink) ─────────────────────────
-        Item {
-            id: bodyContainer
-            anchors.top: pgroupHeader.bottom
-            width: parent.width
-            clip: true
-            height: pgroup.checked ? pgroupBody.implicitHeight + 2 * Tokens.spaceSm : 0
-
-            Behavior on height {
-                NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing }
-            }
-
-            Column {
-                id: pgroupBody
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: Tokens.spaceMd
-                anchors.rightMargin: Tokens.spaceMd
-                anchors.top: parent.top
-                anchors.topMargin: Tokens.spaceSm
-                spacing: Tokens.spaceXs
-            }
-        }
-    }
 
     // URL helpers (for export/import paths)
     function localPath(value) {
@@ -1674,6 +1445,83 @@ Column {
     }
 
     // ── 3D scene (map provider) ──────────────────────────────────────────────
+
+    SettingsGroup {
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Echograms")
+        description: qsTr("Per-echogram display settings.")
+        stateStore: root.store
+        stateKey: "app.echograms"
+        collapsedByDefault: true
+
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceXs
+
+            HoverHandler {
+                onHoveredChanged: if (!hovered) root.store.highlightedLeafId = -1
+            }
+
+            Text {
+                width: parent.width
+                visible: root.echograms.length === 0
+                text: qsTr("No echograms displayed")
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontMd
+                wrapMode: Text.WordWrap
+            }
+
+            Repeater {
+                model: root.echograms
+                delegate: Rectangle {
+                    required property var modelData
+                    width: parent.width
+                    height: Math.round(38 * AppPalette.scale)
+                    radius: Tokens.radiusLg
+                    color: navMouse.containsMouse ? AppPalette.bgHover : AppPalette.bg
+                    border.width: 1
+                    border.color: navMouse.containsMouse ? AppPalette.borderHover : AppPalette.border
+                    Behavior on color       { ColorAnimation { duration: 110 } }
+                    Behavior on border.color { ColorAnimation { duration: 110 } }
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.leftMargin: Tokens.spaceMd
+                        anchors.right: navChevron.left
+                        anchors.rightMargin: Tokens.spaceMd
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.label
+                        color: AppPalette.text
+                        font.pixelSize: Tokens.fontMd
+                        elide: Text.ElideRight
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    DisclosureIndicator {
+                        id: navChevron
+                        anchors.right: parent.right
+                        anchors.rightMargin: Tokens.spaceMd
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.round(10 * AppPalette.scale)
+                        height: width
+                        expanded: false
+                        indicatorColor: AppPalette.textSecond
+                    }
+
+                    MouseArea {
+                        id: navMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onContainsMouseChanged: if (containsMouse && !root.store.echogramSettingsActive)
+                                                    root.store.highlightedLeafId = modelData.key
+                        onClicked: root.store.openEchogramSettings(modelData.plot, modelData.label)
+                    }
+                }
+            }
+        }
+    }
 
     SettingsGroup {
         width: root.groupWidth

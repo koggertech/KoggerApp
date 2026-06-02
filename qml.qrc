@@ -36,6 +36,10 @@
         <file>qml/app/HotActionsPanel.qml</file>
         <file>qml/app/LayoutSnapshotPreview.qml</file>
         <file>qml/app/FavoriteLayoutCard.qml</file>
+        <file>qml/app/ParamCard.qml</file>
+        <file>qml/app/ParamCardGroup.qml</file>
+        <file>qml/app/EchogramSettingsPanel.qml</file>
+        <file>qml/app/EchogramSettingsTab.qml</file>
         <file>qml/app/LayoutRules.js</file>
         <file>qml/app/LayoutTree.js</file>
         <file>qml/app/LayoutResize.js</file>

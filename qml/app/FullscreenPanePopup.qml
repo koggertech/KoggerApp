@@ -15,6 +15,7 @@ BasePanePopup {
     popupVisible: hostLeafId !== -1 && sourceLeafId !== -1 && paneData !== null
     popupMargin: store && store.popupMarginPx !== undefined ? store.popupMarginPx : 16
     panelColor: paneData && paneData.color ? paneData.color : "#0B1220"
+    contentHighlighted: store && sourceLeafId !== -1 && store.highlightedLeafId === sourceLeafId
 
     property bool syncingFromStore: false
 

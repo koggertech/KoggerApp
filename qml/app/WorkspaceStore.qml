@@ -50,6 +50,9 @@ property int maximizedLeafId: -1
 property int lastTappedLeafId: -1
 property real lastTapTimestamp: 0
 property bool settingsPanelOpen: false
+property bool echogramSettingsActive: false
+property var echogramSettingsPlot: null     // the Plot2D whose gear was clicked
+property string echogramSettingsTitle: ""   // header title on the sub-page
 property bool modeSettingsPanelOpen: false
 property bool settingsPushContent: false
 property bool resizeActive: false
@@ -82,7 +85,9 @@ property int modePickerLeafId: -1
 property var modePickerLeafIds: []
 property int hoveredPopupCandidateLeafId: -1
 property int flashingLeafId: -1
+property int highlightedLeafId: -1
 readonly property int globalPopupLeafId: 9999
+readonly property int secondaryEchogramKey: 10000
 property bool globalPopupFullscreen: false
 property var favoriteLayouts: []
 property bool currentLayoutIsFavorite: false
@@ -392,14 +397,30 @@ function syncRectModel(model, roleName, items, keyName) {
 
 function openAppLayoutSettings() {
     closeModeSettingsPanel()
+    echogramSettingsActive = false
     settingsPanelOpen = true
     setSettingsGroupExpanded("app.layoutPlacement", true)
+}
+
+function openEchogramSettings(plot, title) {
+    closeModeSettingsPanel()
+    highlightedLeafId = -1            // drop hover-highlight when drilling in
+    echogramSettingsPlot = plot
+    echogramSettingsTitle = title ? title : qsTr("Echogram")
+    echogramSettingsActive = true
+    settingsPanelOpen = true
+    setSettingsGroupExpanded("app.echograms", true)
+}
+
+function closeEchogramSettings() {
+    echogramSettingsActive = false
 }
 
 property string pendingScrollGroupKey: ""
 
 function openAppSettingsAtGroup(stateKey) {
     closeModeSettingsPanel()
+    echogramSettingsActive = false
     settingsPanelOpen = true
 
     var key = normalizedSettingsGroupKey(stateKey)
@@ -433,6 +454,7 @@ function toggleAppSettingsAtGroup(stateKey) {
 
 function openConnectionsSettings() {
     closeModeSettingsPanel()
+    echogramSettingsActive = false
     settingsPanelOpen = true
     setSettingsGroupExpanded("app.connections", true)
 }
@@ -458,6 +480,7 @@ function toggleAppLayoutSettings() {
     }
 
     closeModeSettingsPanel()
+    echogramSettingsActive = false
     settingsPanelOpen = true
 }
 

@@ -102,6 +102,8 @@ BasePanePopup {
         }
     }
 
+    contentHighlighted: root.store.highlightedLeafId === root.store.globalPopupLeafId
+
     PaneContentLoader {
         anchors.fill: parent
         active: root.popupVisible

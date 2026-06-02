@@ -19,7 +19,32 @@ Item {
     readonly property alias scene3dViewItem: scene3dView
 
     property var primaryPlotItem: null
+    property var secondaryPlotItem: null
+    readonly property int secondaryEchogramKey: workspace.store ? workspace.store.secondaryEchogramKey : 10000
     readonly property var leafRects: workspace.store ? workspace.store.leafRects : []
+
+    readonly property var visibleEchograms: {
+        var out = []
+        var map = workspace.plotItemsByLeafId
+        var st = workspace.store
+        if (!map || !st) return out
+        for (var key in map) {
+            if (!Object.prototype.hasOwnProperty.call(map, key)) continue
+            var plot = map[key]
+            if (!plot || plot.visible === false) continue
+            var leafId = parseInt(key)
+            var label = (leafId === st.globalPopupLeafId)
+                        ? qsTr("Global pop-up")
+                        : qsTr("Echogram") + " " + plot.indx
+            out.push({ key: leafId, label: label, plot: plot })
+        }
+        out.sort(function(a, b) { return (a.plot.indx || 0) - (b.plot.indx || 0) })
+        if (workspace.secondaryPlotItem && st.effectiveSecondaryMode === "2D")
+            out.push({ key: workspace.secondaryEchogramKey,
+                       label: qsTr("Second window"),
+                       plot: workspace.secondaryPlotItem })
+        return out
+    }
     readonly property string inputDeviceLabel: inputStateObject.displayLabel
     readonly property color inputDeviceColor: inputStateObject.displayColor
 
@@ -485,8 +510,10 @@ Item {
                 }
 
                 onSettingsClicked: {
-                    if (workspace.store && slotLeafId > 0)
+                    if (!workspace.store) return
+                    if (slotLeafId > 0)
                         workspace.store.activeLeafId = slotLeafId
+                    workspace.store.openEchogramSettings(slotPlot, qsTr("Echogram") + " " + indx)
                 }
 
                 Component.onDestruction: {
@@ -538,8 +565,9 @@ Item {
             }
 
             onSettingsClicked: {
-                if (workspace.store)
-                    workspace.store.activeLeafId = workspace.store.globalPopupLeafId
+                if (!workspace.store) return
+                workspace.store.activeLeafId = workspace.store.globalPopupLeafId
+                workspace.store.openEchogramSettings(globalPopupPlot, qsTr("Global pop-up"))
             }
         }
     }

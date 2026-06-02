@@ -54,12 +54,24 @@ Item {
             externalInputRouting: false
             is3dVisible: false
 
+            onSettingsClicked: if (root.store) root.store.openEchogramSettings(this, qsTr("Second window"))
+
             Component.onCompleted: {
                 setIndx(6)
                 if (typeof core !== "undefined" && core && typeof core.registerPlot2D === "function")
                     core.registerPlot2D(this)
             }
         }
+    }
+
+    Rectangle {
+        anchors.fill: plot2DLoader
+        color: "#FFFFFF"
+        opacity: (root.mode === "2D" && root.store
+                  && root.store.highlightedLeafId === root.store.secondaryEchogramKey) ? 0.16 : 0.0
+        visible: opacity > 0
+        z: 50
+        Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
     }
 
     // ── Empty state: shown only when 2D slot is unavailable (5-echogram limit). ──

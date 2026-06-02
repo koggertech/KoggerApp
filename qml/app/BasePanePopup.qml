@@ -15,6 +15,7 @@ Item {
     property real panelX: 0
     property real panelY: 0
     property bool collapsed: false
+    property bool contentHighlighted: false
     property int popupMargin: 16
     property bool dragEnabled: true
     property bool suspendSignals: false
@@ -483,6 +484,15 @@ Item {
             Behavior on anchors.bottomMargin {
                 NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
             }
+        }
+
+        Rectangle {
+            anchors.fill: contentHost
+            color: "#FFFFFF"
+            opacity: root.contentHighlighted && !root.collapsed ? 0.16 : 0.0
+            visible: opacity > 0
+            z: 3
+            Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
         }
 
         Item {

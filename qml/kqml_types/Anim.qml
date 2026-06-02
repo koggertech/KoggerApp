@@ -51,6 +51,10 @@ QtObject {
     property int disclosureMs: 200
     readonly property int disclosureEasing: easingStd
 
+    // ── Settings sub-page push/pop (drill-in echogram page slide) ────────────
+    property int subpageMs: 260
+    readonly property int subpageEasing: easingStd
+
     // ── Sidebars + workspace inset ────────────────────────────────────────────
     // Sourced from AppPalette so the existing Test-group sliders keep driving
     // them; exposed here for a single discoverable surface.

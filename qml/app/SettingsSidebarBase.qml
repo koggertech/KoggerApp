@@ -18,9 +18,6 @@ Item {
     property real panelShadowOpacity: 0.72
     property int panelShadowSize: 30
     property real panelSizePx: 300
-    // Width of the column reserved for the vertical scrollbar (right side of
-    // contentFlick). Slightly wider than the visible thumb so the thumb has
-    // breathing room on both sides — easier to grab with a finger.
     property int scrollBarReservePx: Math.round(20 * AppPalette.scale)
     readonly property int _scrollThumbW: Math.round(12 * AppPalette.scale)
     readonly property string resolvedSide: side === "right" ? "right" : "left"
@@ -29,14 +26,19 @@ Item {
 
     signal closeRequested()
 
+    property bool showBack: false
+    signal backRequested()
+
+    property Component subPage: null
+    property bool subPageOpen: false
+
     default property alias contentData: contentColumn.data
 
-    // Optional store reference. When set, double-clicking the title delegates
-    // to store.toggleAllSettingsGroups() which iterates the registered groups
-    // directly — no fragile recursive parent-walk.
     property var store: null
 
     function _toggleAllGroups() {
+        if (subPageOpen)
+            return
         if (store && typeof store.toggleAllSettingsGroups === "function")
             store.toggleAllSettingsGroups()
         scrollToTopTimer.restart()
@@ -128,6 +130,29 @@ Item {
                     height: Tokens.controlHXl - Tokens.spaceXs
                     spacing: Tokens.spaceMd
 
+                    KButton {
+                        id: backButton
+                        visible: panelRoot.showBack
+                        text: ""
+                        Layout.preferredWidth:  visible ? Tokens.controlHLg : 0
+                        Layout.maximumWidth:    visible ? Tokens.controlHLg : 0
+                        Layout.preferredHeight: Tokens.controlHLg
+                        Layout.minimumHeight:   Tokens.controlHLg
+                        Layout.maximumHeight:   Tokens.controlHLg
+                        Layout.alignment: Qt.AlignVCenter
+                        onClicked: panelRoot.backRequested()
+
+                        DisclosureIndicator {
+                            anchors.centerIn: parent
+                            width: Math.round(12 * AppPalette.scale)
+                            height: width
+                            rotation: 180
+                            expanded: false
+                            indicatorColor: backButton.hovered ? Qt.lighter(AppPalette.text, 1.08)
+                                                               : AppPalette.text
+                        }
+                    }
+
                     Text {
                         id: titleText
                         text: panelRoot.title
@@ -136,6 +161,7 @@ Item {
                         font.bold: true
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter
+                        elide: Text.ElideRight
 
                         // Double-tap toggles all SettingsGroup descendants.
                         KTapArea {
@@ -294,6 +320,56 @@ Item {
             gradient: Gradient {
                 GradientStop { position: 0.0; color: panel._fadeEnd }
                 GradientStop { position: 1.0; color: panel._fadeStart }
+            }
+        }
+
+        Item {
+            id: subPageHost
+            anchors.top: topSection.bottom
+            anchors.bottom: parent.bottom
+            width: panel.width
+            z: 5                                   // above content (2), fades (3), scrollbar (4)
+            clip: true
+            x: panelRoot.subPageOpen ? 0 : -width
+            visible: panelRoot.subPage !== null && (panelRoot.subPageOpen || x > -width + 0.5)
+
+            Behavior on x {
+                NumberAnimation { duration: Anim.subpageMs; easing.type: Anim.subpageEasing }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: panelRoot.panelColor
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.AllButtons
+                    onPressed: function(mouse) { mouse.accepted = true }
+                    onWheel: function(wheel) { wheel.accepted = true }
+                }
+            }
+
+            Flickable {
+                id: subFlick
+                anchors.fill: parent
+                anchors.leftMargin: Tokens.spaceXl
+                anchors.rightMargin: Tokens.spaceXl
+                anchors.topMargin: Tokens.spaceLg
+                anchors.bottomMargin: Tokens.spaceXl
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                flickableDirection: Flickable.VerticalFlick
+                contentWidth: width
+                contentHeight: Math.max(height, subLoader.implicitHeight)
+                interactive: contentHeight > height + 1
+                ScrollBar.vertical: ScrollBar { }
+
+                Loader {
+                    id: subLoader
+                    width: subFlick.width
+                    active: panelRoot.subPage !== null
+                    sourceComponent: panelRoot.subPage
+                }
             }
         }
     }

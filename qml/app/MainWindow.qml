@@ -261,6 +261,12 @@ ApplicationWindow {
             legacyPanelOpen = false
             return true
         },
+        function() {
+            if (!workspaceStore.settingsPanelOpen || !workspaceStore.echogramSettingsActive)
+                return false
+            workspaceStore.closeEchogramSettings()
+            return true
+        },
         function() {  // main app settings (last resort)
             if (!workspaceStore.settingsPanelOpen) return false
             workspaceStore.settingsPanelOpen = false
@@ -718,12 +724,20 @@ ApplicationWindow {
             open: workspaceStore.settingsPanelOpen
             dimEnabled: !workspaceStore.effectivePushContent
             panelShadowEnabled: !workspaceStore.editableMode
-            title: qsTr("Settings")
+            title: workspaceStore.echogramSettingsActive
+                   ? workspaceStore.echogramSettingsTitle
+                   : qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
             panelSizePx: workspaceStore.settingsPanelSizePx
             store: workspaceStore
             onCloseRequested: workspaceStore.settingsPanelOpen = false
+
+            showBack: workspaceStore.echogramSettingsActive
+            onBackRequested: workspaceStore.closeEchogramSettings()
+
+            subPage: echogramSettingsTabComponent
+            subPageOpen: workspaceStore.echogramSettingsActive
 
             Loader {
                 width: parent.width
@@ -819,11 +833,20 @@ ApplicationWindow {
         }
 
         Component {
+            id: echogramSettingsTabComponent
+
+            EchogramSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
             id: appSettingsPageComponent
 
             AppSettingsPage {
                 store: workspaceStore
                 targetPlot: workspaceView.primaryPlotItem
+                echograms: workspaceView.visibleEchograms
             }
         }
 
@@ -837,6 +860,7 @@ ApplicationWindow {
             anchors.rightMargin: root.settingsInsetRight
             anchors.bottomMargin: consoleDrawer.height
             store: workspaceStore
+            secondaryPlotItem: secondaryContent ? secondaryContent.plot2DInstance : null
         }
 
         ConsolePanelDrawer {

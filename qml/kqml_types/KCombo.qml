@@ -33,6 +33,7 @@ Item {
     }
 
     onCurrentIndexChanged: syncFromExternalIndex()
+    onModelChanged: Qt.callLater(syncFromExternalIndex)
 
     Rectangle {
         anchors.fill: parent

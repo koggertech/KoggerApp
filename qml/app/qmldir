@@ -33,3 +33,7 @@ DisclosureIndicator 1.0 DisclosureIndicator.qml
 HotActionsPanel 1.0 HotActionsPanel.qml
 LayoutSnapshotPreview 1.0 LayoutSnapshotPreview.qml
 FavoriteLayoutCard 1.0 FavoriteLayoutCard.qml
+ParamCard 1.0 ParamCard.qml
+ParamCardGroup 1.0 ParamCardGroup.qml
+EchogramSettingsPanel 1.0 EchogramSettingsPanel.qml
+EchogramSettingsTab 1.0 EchogramSettingsTab.qml

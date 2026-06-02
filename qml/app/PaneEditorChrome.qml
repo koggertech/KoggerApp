@@ -679,11 +679,4 @@ Item {
         }
     }
 
-    Rectangle {
-        anchors.fill: parent
-        color: paneFrame.store.dropTargetLeafId === paneFrame.leafId ? "#DC262622" : "transparent"
-        border.width: paneFrame.store.dropTargetLeafId === paneFrame.leafId ? 6 : 0
-        border.color: "#EF4444"
-        z: 40
-    }
 }

@@ -54,6 +54,7 @@ WaterFall {
     // Keep inner edge-anchored widgets clear of the split-drag hit zone so a
     // touch near the pane border drags the split instead of jabbing a button.
     readonly property real edgeSafetyMargin: AppPalette.splitHitSizePx / 2
+    property alias viewState: echoViewState
     property var inputState: null
     property bool externalInputRouting: false
     property int pointerLastMouseX: -1
@@ -515,15 +516,9 @@ WaterFall {
                     checkedBorderColor: theme.controlBorderColor
                     iconSource: "qrc:/icons/ui/settings.svg"
                     implicitWidth: theme.controlHeight*1.2
+                    checkable: false
 
-                    onCheckedChanged: {
-                        if (checked) {
-                            settingsClicked()
-                        }
-                        else {
-                            plot.endLoupeZoomPreview()
-                        }
-                    }
+                    onClicked: settingsClicked()
                 }
 
                 // brightess slider
@@ -577,26 +572,66 @@ WaterFall {
                 }
             }
         }
+    }
+    Item {
+        id: echoViewState
+        visible: false
+        width: 0
+        height: 0
 
-        MenuScroll {
-            id: settingsScroll
-            visible: plotCheckButton.checked
-            Layout.alignment: Qt.AlignBottom
-            readonly property real maxHeightByPlot: Math.max(theme.controlHeight * 2, plot.height - settingsMenuSpacer * 2)
-            readonly property real contentHeightWithPadding: plotSettings.implicitHeight + topPadding + bottomPadding
-            Layout.preferredHeight: Math.min(maxHeightByPlot, contentHeightWithPadding)
+        property alias ch1Index:           channel1Combo.currentIndex
+        property alias ch2Index:           channel2Combo.currentIndex
+        property alias channelModel:       channel1Combo.model
+        property alias echogramVisible:    echogramVisible.checked
+        property alias echoThemeIndex:     echoTheme.currentIndex
+        property alias compensationIndex:  echogramTypesList.currentIndex
+        property alias bottomTrackValue:   bottomTrackValueVisible.checked
+        property alias bottomTrackLine:    bottomTrackGraphicsVisible.checked
+        property alias bottomTrackTheme:   bottomTrackThemeList.currentIndex
+        property alias rangefinderValue:   rangefinderValueVisible.checked
+        property alias rangefinderLine:    rangefinderGraphicsVisible.checked
+        property alias rangefinderTheme:   rangefinderThemeList.currentIndex
+        property alias ahrsVisible:        ahrsVisible.checked
+        property alias temperatureVisible: temperatureVisible.checked
+        property alias dopplerBeamVisible: dopplerBeamVisible.checked
+        property alias dopplerBeam1A: dopplerBeam1A.checked
+        property alias dopplerBeam1V: dopplerBeam1V.checked
+        property alias dopplerBeam1M: dopplerBeam1M.checked
+        property alias dopplerBeam2A: dopplerBeam2A.checked
+        property alias dopplerBeam2V: dopplerBeam2V.checked
+        property alias dopplerBeam2M: dopplerBeam2M.checked
+        property alias dopplerBeam3A: dopplerBeam3A.checked
+        property alias dopplerBeam3V: dopplerBeam3V.checked
+        property alias dopplerBeam3M: dopplerBeam3M.checked
+        property alias dopplerBeam4A: dopplerBeam4A.checked
+        property alias dopplerBeam4V: dopplerBeam4V.checked
+        property alias dopplerBeam4M: dopplerBeam4M.checked
+        property alias dopplerInstrumentVisible: dopplerInstrumentVisible.checked
+        property alias dopplerInstrumentX:   dopplerInstrumentXVisible.checked
+        property alias dopplerInstrumentY:   dopplerInstrumentYVisible.checked
+        property alias dopplerInstrumentZ:   dopplerInstrumentZVisible.checked
+        property alias dopplerInstrumentA:   dopplerInstrumentAVisible.checked
+        property alias dopplerInstrumentDst: dopplerInstrumentDstVisible.checked
+        property alias dvlLegendVisible:   dvlLegendVisible.checked
+        property alias dvlLegendPosition:  dvlLegendPosition.currentIndex
+        property alias acousticAngleVisible: acousticAngleVisible.checked
+        property alias gnssVisible:        gnssVisible.checked
+        property alias gridVisible:        gridVisible.checked
+        property alias gridFill:           fillWidthGrid.checked
+        property alias gridInvert:         invertGrid.checked
+        property alias gridNumber:         gridNumber.value
+        property alias angleVisible:       angleVisible.checked
+        property alias angleRange:         angleRange.value
+        property alias velocityVisible:    velocityVisible.checked
+        property alias velocityRange:      velocityRange.value
+        property alias distanceAutoRange:  distanceAutoRange.checked
+        property alias distanceAutoRangeIndex: distanceAutoRangeList.currentIndex
+        property alias horizontalMode:     horisontalVertical.checked
+        property alias loupeVisible:       loupeVisible.checked
+        property alias loupeSize:          loupeSize.value
+        property alias loupeZoom:          loupeZoom.value
 
-            onVisibleChanged: {
-                if (!visible) {
-                    plot.endLoupeZoomPreview()
-                }
-            }
-
-            MenuFrame {
-                id: plotSettings
-
-                ParamGroup {
-                    groupName: qsTr("Plot")
+        ColumnLayout {
 
                     RowLayout {
                         id: rowDataset
@@ -1365,10 +1400,8 @@ WaterFall {
                         property alias loupeSize: loupeSize.value
                         property alias loupeZoom: loupeZoom.value
                     }
-                }
-            } // menu frame
-        } // menu scrol
-    } // row layout
+        }   // ColumnLayout (relocated settings controls)
+    }   // echoViewState
 
     CContact {
         id: contactDialog
