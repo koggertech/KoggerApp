@@ -3045,6 +3045,11 @@
 <context>
     <name>Plot2D</name>
     <message>
+        <location filename="../qml/scene2d/Plot2D.qml" line="581"/>
+        <source>Echogram settings</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../qml/scene2d/Plot2D.qml" line="668"/>
         <source>Channels:</source>
         <translation></translation>

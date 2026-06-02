@@ -416,6 +416,15 @@ function closeEchogramSettings() {
     echogramSettingsActive = false
 }
 
+function toggleEchogramSettings(plot, title) {
+    if (settingsPanelOpen && echogramSettingsActive && echogramSettingsPlot === plot) {
+        echogramSettingsActive = false
+        settingsPanelOpen = false
+        return
+    }
+    openEchogramSettings(plot, title)
+}
+
 property string pendingScrollGroupKey: ""
 
 function openAppSettingsAtGroup(stateKey) {

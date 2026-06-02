@@ -54,7 +54,7 @@ Item {
             externalInputRouting: false
             is3dVisible: false
 
-            onSettingsClicked: if (root.store) root.store.openEchogramSettings(this, qsTr("Second window"))
+            onSettingsClicked: if (root.store) root.store.toggleEchogramSettings(this, qsTr("Second window"))
 
             Component.onCompleted: {
                 setIndx(6)

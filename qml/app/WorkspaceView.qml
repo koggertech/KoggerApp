@@ -513,7 +513,7 @@ Item {
                     if (!workspace.store) return
                     if (slotLeafId > 0)
                         workspace.store.activeLeafId = slotLeafId
-                    workspace.store.openEchogramSettings(slotPlot, qsTr("Echogram") + " " + indx)
+                    workspace.store.toggleEchogramSettings(slotPlot, qsTr("Echogram") + " " + indx)
                 }
 
                 Component.onDestruction: {
@@ -567,7 +567,7 @@ Item {
             onSettingsClicked: {
                 if (!workspace.store) return
                 workspace.store.activeLeafId = workspace.store.globalPopupLeafId
-                workspace.store.openEchogramSettings(globalPopupPlot, qsTr("Global pop-up"))
+                workspace.store.toggleEchogramSettings(globalPopupPlot, qsTr("Global pop-up"))
             }
         }
     }

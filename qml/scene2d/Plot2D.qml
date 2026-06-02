@@ -51,6 +51,7 @@ WaterFall {
     property bool loupeZoomWasVisibleBeforeAdjust: false
     property int loupeZoomSavedAimEpoch: -1
     property real settingsMenuSpacer: Math.max(4, Math.round(theme.controlHeight * 0.2))
+    readonly property real controlButtonSize: Math.round(40 * (theme ? theme.resCoeff : 1.0))
     // Keep inner edge-anchored widgets clear of the split-drag hit zone so a
     // touch near the pane border drags the split instead of jabbing a button.
     readonly property real edgeSafetyMargin: AppPalette.splitHitSizePx / 2
@@ -488,69 +489,54 @@ WaterFall {
         }
     }
 
-    RowLayout {
+    ColumnLayout {
         id: settingsRow
+
+        readonly property bool _shiftRight: indx === 1 && !is3dVisible
+                                            && height > plot.height - 130 * theme.resCoeff
+        readonly property int _scrollClearance: 34 + Math.round(10 * AppPalette.scale)
+
         anchors.left: parent.left
         anchors.bottom: parent.bottom
-        anchors.leftMargin: plot.edgeSafetyMargin
-        anchors.bottomMargin: settingsMenuSpacer + plot.edgeSafetyMargin
+        anchors.leftMargin: Math.round(10 * AppPalette.scale) + plot.edgeSafetyMargin
+                            + (_shiftRight ? width : 0)
+        anchors.bottomMargin: plot.edgeSafetyMargin
+                              + ((plot.horizontal && plot.hasData) ? _scrollClearance
+                                                                   : plot.settingsMenuSpacer)
+        spacing: Math.round(6 * AppPalette.scale)
 
-        MenuFrame {
-            id: leftPanel
-            isOpacityControlled: true
-            Layout.alignment: Qt.AlignLeft | Qt.AlignBottom
-            Layout.leftMargin: (indx === 1 &&
-                                !is3dVisible &&
-                                height > plot.height - 130 * theme.resCoeff)
-                               ? width
-                               : 0
+        Rectangle {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: plot.controlButtonSize
+            implicitHeight: sliderColumn.implicitHeight + Math.round(20 * AppPalette.scale)
+            radius: width / 2          // capsule — the tall analog of the round 3D buttons
+            color: AppPalette.card
+            border.color: AppPalette.border
+            border.width: 1
 
             ColumnLayout {
-                id: plotControl
-                spacing: 4
+                id: sliderColumn
+                anchors.centerIn: parent
+                width: parent.width
+                spacing: 2
 
-                CheckButton {
-                    id: plotCheckButton
-                    backColor: theme.controlBackColor
-                    borderColor: theme.controlBackColor
-                    checkedBorderColor: theme.controlBorderColor
-                    iconSource: "qrc:/icons/ui/settings.svg"
-                    implicitWidth: theme.controlHeight*1.2
-                    checkable: false
-
-                    onClicked: settingsClicked()
-                }
-
-                // brightess slider
                 CText {
                     Layout.fillWidth: true
-                    Layout.topMargin: 0
-                    Layout.preferredWidth: theme.controlHeight*1.2
-                    // visible: chartEnable.checked // TODO
                     horizontalAlignment: Text.AlignHCenter
                     text: echogramLevelsSlider.stopValue
                     small: true
                 }
 
                 ChartLevel {
-                    // opacity: 0.8
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: theme.controlHeight*1.2
                     id: echogramLevelsSlider
-                    // visible: chartEnable.checked // TODO
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: plot.controlButtonSize
                     Layout.alignment: Qt.AlignHCenter
+                    widthSlider: plot.controlButtonSize - Math.round(14 * AppPalette.scale)
 
-                    onStartValueChanged: {
-                        plot.plotEchogramSetLevels(startValue, stopValue);
-                    }
-
-                    onStopValueChanged: {
-                        plot.plotEchogramSetLevels(startValue, stopValue);
-                    }
-
-                    Component.onCompleted: {
-                        plot.plotEchogramSetLevels(startValue, stopValue);
-                    }
+                    onStartValueChanged: plot.plotEchogramSetLevels(startValue, stopValue)
+                    onStopValueChanged:  plot.plotEchogramSetLevels(startValue, stopValue)
+                    Component.onCompleted: plot.plotEchogramSetLevels(startValue, stopValue)
 
                     Settings {
                         category: "Plot2D_" + plot.indx
@@ -562,15 +548,28 @@ WaterFall {
 
                 CText {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: theme.controlHeight*1.2
-                    Layout.bottomMargin: 0
-                    // visible: chartEnable.checked // TODO
                     horizontalAlignment: Text.AlignHCenter
-
                     text: echogramLevelsSlider.startValue
                     small: true
                 }
             }
+        }
+
+        KCircleIconButton {
+            id: plotCheckButton
+            property bool checked: false   // vestigial — settingsOpen / closeSettings()
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: plot.controlButtonSize
+            Layout.preferredHeight: plot.controlButtonSize
+            width: plot.controlButtonSize
+            height: plot.controlButtonSize
+            iconSource: "qrc:/icons/ui/settings.svg"
+            iconTintColor: AppPalette.text
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            borderColor: AppPalette.border
+            toolTipText: qsTr("Echogram settings")
+            onClicked: settingsClicked()
         }
     }
     Item {
