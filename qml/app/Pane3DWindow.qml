@@ -24,22 +24,27 @@ Item {
         clip: true
     }
 
-    Scene3DToolbar {
-        id: scene3dToolbar
-        view: root.scene3dView
-        store: root.workspaceRoot ? root.workspaceRoot.store : null
+    Item {
+        id: toolbarLayer
+        anchors.fill: parent
+        clip: true
         z: 1
-    }
 
-    Scene3DRightToolbar {
-        id: rightToolbar
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        view: root.scene3dView
-        geo: root.scene3dView ? root.scene3dView.geoJsonController : null
-        store: root.workspaceRoot ? root.workspaceRoot.store : null
-        z: 1
+        Scene3DToolbar {
+            id: scene3dToolbar
+            view: root.scene3dView
+            store: root.workspaceRoot ? root.workspaceRoot.store : null
+        }
+
+        Scene3DRightToolbar {
+            id: rightToolbar
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            view: root.scene3dView
+            geo: root.scene3dView ? root.scene3dView.geoJsonController : null
+            store: root.workspaceRoot ? root.workspaceRoot.store : null
+        }
     }
 
     readonly property bool hasTransientUi: contextMenu3D.visible
