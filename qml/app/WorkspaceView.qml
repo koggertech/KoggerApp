@@ -691,10 +691,10 @@ Item {
                    ? (splitDragZone.height - height) / 2
                    : (tracking ? splitDragZone.cursorInZone.y - height / 2
                                : (splitDragZone.height - height) / 2)
-                radius: 6
-                color: "#808080"
+                radius: Math.round(splitDragZone.barThickness / 2)   // capsule, like the 3D/2D buttons
+                color: AppPalette.card
                 border.width: 1
-                border.color: "#A0A0A0"
+                border.color: AppPalette.border
                 opacity: splitDragZone.barShown ? 0.95 : 0.0
                 visible: opacity > 0.01
 
