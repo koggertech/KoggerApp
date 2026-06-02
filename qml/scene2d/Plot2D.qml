@@ -82,9 +82,6 @@ WaterFall {
     function setLevels(low, high) {
         echogramLevelsSlider.startValue = low
         echogramLevelsSlider.stopValue = high
-        echogramLevelsSlider.startPointY = echogramLevelsSlider.valueToPosition(low);
-        echogramLevelsSlider.stopPointY = echogramLevelsSlider.valueToPosition(high);
-        echogramLevelsSlider.update()
     }
 
     function updateBottomTrackPresentation() {
@@ -508,53 +505,20 @@ WaterFall {
                                                                    : plot.settingsMenuSpacer)
         spacing: Math.round(6 * AppPalette.scale)
 
-        Rectangle {
+        KChartLevelCapsule {
+            id: echogramLevelsSlider
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: plot.controlButtonSize
-            implicitHeight: sliderColumn.implicitHeight + Math.round(20 * AppPalette.scale)
-            radius: width / 2          // capsule — the tall analog of the round 3D buttons
-            color: AppPalette.card
-            border.color: AppPalette.border
-            border.width: 1
+            capsuleWidth: plot.controlButtonSize
 
-            ColumnLayout {
-                id: sliderColumn
-                anchors.centerIn: parent
-                width: parent.width
-                spacing: 2
+            onStartValueChanged: plot.plotEchogramSetLevels(startValue, stopValue)
+            onStopValueChanged:  plot.plotEchogramSetLevels(startValue, stopValue)
+            Component.onCompleted: plot.plotEchogramSetLevels(startValue, stopValue)
 
-                CText {
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: echogramLevelsSlider.stopValue
-                    small: true
-                }
+            Settings {
+                category: "Plot2D_" + plot.indx
 
-                ChartLevel {
-                    id: echogramLevelsSlider
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: plot.controlButtonSize
-                    Layout.alignment: Qt.AlignHCenter
-                    widthSlider: plot.controlButtonSize - Math.round(14 * AppPalette.scale)
-
-                    onStartValueChanged: plot.plotEchogramSetLevels(startValue, stopValue)
-                    onStopValueChanged:  plot.plotEchogramSetLevels(startValue, stopValue)
-                    Component.onCompleted: plot.plotEchogramSetLevels(startValue, stopValue)
-
-                    Settings {
-                        category: "Plot2D_" + plot.indx
-
-                        property alias echogramLevelsStart: echogramLevelsSlider.startValue
-                        property alias echogramLevelsStop: echogramLevelsSlider.stopValue
-                    }
-                }
-
-                CText {
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: echogramLevelsSlider.startValue
-                    small: true
-                }
+                property alias echogramLevelsStart: echogramLevelsSlider.startValue
+                property alias echogramLevelsStop: echogramLevelsSlider.stopValue
             }
         }
 

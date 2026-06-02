@@ -149,6 +149,7 @@
         <file>qml/scene2d/Plot2D.qml</file>
         <file>qml/scene2d/ChartBox.qml</file>
         <file>qml/scene2d/ChartLevel.qml</file>
+        <file>qml/scene2d/KChartLevelCapsule.qml</file>
         <file>qml/scene2d/ChartLevelSingle.qml</file>
 
     </qresource>

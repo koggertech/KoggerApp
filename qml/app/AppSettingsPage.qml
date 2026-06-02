@@ -949,36 +949,15 @@ Column {
             width: parent.width
             spacing: Tokens.spaceMd
 
-            ColumnLayout {
-                Layout.preferredWidth: Math.round(Tokens.controlHMd * 1.4)
-
-                Text {
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: mosaicLevelsSlider.stopValue
-                    color: AppPalette.text
-                    font.pixelSize: Tokens.fontSm
-                }
-                ChartLevel {
-                    id: mosaicLevelsSlider
-                    Layout.fillHeight: true
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Math.round(160 * AppPalette.scale)
-                    Layout.alignment: Qt.AlignHCenter
-                    onStartValueChanged: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
-                    onStopValueChanged:  MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
-                    Component.onCompleted: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
-                    Settings {
-                        property alias mosaicLevelsStart: mosaicLevelsSlider.startValue
-                        property alias mosaicLevelsStop:  mosaicLevelsSlider.stopValue
-                    }
-                }
-                Text {
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: mosaicLevelsSlider.startValue
-                    color: AppPalette.text
-                    font.pixelSize: Tokens.fontSm
+            KChartLevelCapsule {
+                id: mosaicLevelsSlider
+                Layout.fillHeight: true
+                onStartValueChanged: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
+                onStopValueChanged:  MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
+                Component.onCompleted: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
+                Settings {
+                    property alias mosaicLevelsStart: mosaicLevelsSlider.startValue
+                    property alias mosaicLevelsStop:  mosaicLevelsSlider.stopValue
                 }
             }
 
