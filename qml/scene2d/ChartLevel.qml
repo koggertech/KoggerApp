@@ -82,7 +82,16 @@ Item {
     onMouseRangeChanged: {
         startPointY = valueToPosition(startValue)
         stopPointY  = valueToPosition(stopValue)
-        canvas.requestPaint()
+        if (canvas) canvas.requestPaint()
+    }
+
+    onStartValueChanged: {
+        startPointY = valueToPosition(startValue)
+        if (canvas) canvas.requestPaint()
+    }
+    onStopValueChanged: {
+        stopPointY = valueToPosition(stopValue)
+        if (canvas) canvas.requestPaint()
     }
 
     MouseArea {
