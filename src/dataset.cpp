@@ -364,6 +364,7 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
         validateChannelList(channelId, i);
     }
 
+    markDataAvailable(hasChartData_);
     emit dataUpdate();
     emit chartAdded(lastIndx);
 }
@@ -490,6 +491,8 @@ void Dataset::addRangefinder(const ChannelId& channelId, float distance)
     setLastRangefinderDepth(distance);
     setLastDepth(distance);
 
+    if (isfinite(distance))
+        markDataAvailable(hasRangefinderData_);
     emit dataUpdate();
 }
 
@@ -560,6 +563,7 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         pool_[poolIndex].set(data);
     }
 
+    markDataAvailable(hasUsblData_);
     emit dataUpdate();
 }
 
@@ -579,6 +583,8 @@ void Dataset::addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
 
         pool_[pool_index].setDopplerBeam(beams, cnt);
     }
+    if (cnt > 0)
+        markDataAvailable(hasDopplerBeamData_);
     emit dataUpdate();
 }
 
@@ -598,6 +604,7 @@ void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
 
         pool_[pool_index].setDVLSolution(dvlSolution);
     }
+    markDataAvailable(hasDvlSolutionData_);
     emit dataUpdate();
 }
 
@@ -671,6 +678,8 @@ void Dataset::addAtt(float yaw, float pitch, float roll)
 
     interpolator_.interpolateAtt(false);
 
+    if (isfinite(yaw) || isfinite(pitch) || isfinite(roll))
+        markDataAvailable(hasAttitudeData_);
     emit attitudeAdded(lastIndx);
     emit dataUpdate();
 }
@@ -693,6 +702,8 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
         }
 
         tryResetDataset(pos.lla.latitude, pos.lla.longitude);
+
+        markDataAvailable(hasPositionData_);
 
         uint64_t lastIndx = 0;
         bool needEmitSpeedChanged = false;
@@ -908,17 +919,24 @@ void Dataset::addSimpleNavV2(uint8_t gnssFixType,
     simpleNavV2PitchDeg_ = pitchDeg;
     simpleNavV2RollDeg_ = rollDeg;
 
+    if (gnssFixType > 0)
+        markDataAvailable(hasPositionData_);
     emit simpleNavV2Changed();
 }
 
 void Dataset::addTemp(float temp_c) {
     lastTemp_ = temp_c;
 
-    QWriteLocker wl(&poolMtx_);
-    if (pool_.isEmpty()) {
-        pool_.resize(1);
+    {
+        QWriteLocker wl(&poolMtx_);
+        if (pool_.isEmpty()) {
+            pool_.resize(1);
+        }
+        pool_.last().setTemp(temp_c);
     }
-    pool_.last().setTemp(temp_c);
+
+    if (isfinite(temp_c))
+        markDataAvailable(hasTemperatureData_);
 }
 
 void Dataset::addBoatStatus(uint8_t batteryBoatPercent, uint8_t batteryBridgePercent, uint8_t signalQualityBoatPercent, uint8_t signalQualityBridgePercent)
@@ -1104,6 +1122,7 @@ void Dataset::resetRenderBuffers()
     tracks.clear();
     pool_.clear();
     pool_.shrink_to_fit();//
+    resetDataAvailability();
     lastAYaw_ = NAN;
     lastAPitch_ = NAN;
     lastARoll_ = NAN;
