@@ -153,6 +153,14 @@ property alias bottomTrackVisible: scene3dLayerVisibility.bottomTrackCheckButton
 property alias isobathsVisible:    scene3dLayerVisibility.isobathsCheckButton
 property alias mosaicVisible:      scene3dLayerVisibility.mosaicViewCheckButton
 
+// Interface pref: hide echogram-settings controls whose data type isn't in the
+// dataset (default on). Toggled from the Interface settings group.
+property Settings echogramUiPrefs: Settings {
+    id: echogramUiPrefs
+    property bool hideEmptyEchogramControls: true
+}
+property alias hideEmptyEchogramControls: echogramUiPrefs.hideEmptyEchogramControls
+
 signal surfaceLayersRefreshRequested()
 
 onBoatTrackVisibleChanged: {

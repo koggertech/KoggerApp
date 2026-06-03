@@ -12,6 +12,11 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="288"/>
+        <source>Hide controls without data</source>
+        <translation>Ukryj elementy bez danych</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="127"/>
         <source>Language:</source>
         <translation>Język:</translation>

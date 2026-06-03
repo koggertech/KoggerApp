@@ -39,6 +39,7 @@ Column {
         EchogramSettingsPanel {
             width: panelLoader.width
             plot: panelLoader.currentPlot
+            hideEmpty: page.store ? page.store.hideEmptyEchogramControls : true
         }
     }
 

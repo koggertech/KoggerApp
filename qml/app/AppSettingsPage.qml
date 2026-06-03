@@ -283,6 +283,13 @@ Column {
 
         Settings { property alias consoleVisible: consoleVisible.checked }
 
+        KSwitch {
+            width: parent.width
+            text: qsTr("Hide controls without data")
+            checked: root.store ? root.store.hideEmptyEchogramControls : true
+            onToggled: if (root.store) root.store.hideEmptyEchogramControls = checked
+        }
+
         KButton {
             visible: Qt.platform.os !== "android"
             width: parent.width

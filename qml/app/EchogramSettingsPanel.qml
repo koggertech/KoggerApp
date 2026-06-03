@@ -17,6 +17,8 @@ Column {
     readonly property var vs: plot ? plot.viewState : null
     readonly property int instruments: theme ? theme.instrumentsGrade : 0
     readonly property var ds: (typeof dataset !== "undefined") ? dataset : null
+    property bool hideEmpty: true
+    function dataGate(present) { return !panel.hideEmpty || present }
 
     readonly property int comboW: Math.round(150 * AppPalette.scale)
 
@@ -109,7 +111,7 @@ Column {
     Column {
         width: parent.width
         spacing: Tokens.spaceXs
-        visible: panel.instruments > 0 && panel.ds && panel.ds.hasChartData
+        visible: panel.instruments > 0 && panel.dataGate(panel.ds && panel.ds.hasChartData)
 
         SectionLabel { text: qsTr("Bottom-Track") }
 
@@ -140,7 +142,7 @@ Column {
     Column {
         width: parent.width
         spacing: Tokens.spaceXs
-        visible: panel.ds && panel.ds.hasRangefinderData
+        visible: panel.dataGate(panel.ds && panel.ds.hasRangefinderData)
 
         SectionLabel { text: qsTr("Rangefinder") }
 
@@ -168,14 +170,14 @@ Column {
     // ══ Attitude / Temperature (instruments > 1) ════════════════════════════════
     KSwitch {
         width: parent.width
-        visible: panel.instruments > 1 && panel.ds && panel.ds.hasAttitudeData
+        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasAttitudeData)
         text: qsTr("Attitude")
         checked: panel.vs ? panel.vs.ahrsVisible : false
         onToggled: if (panel.vs) panel.vs.ahrsVisible = checked
     }
     KSwitch {
         width: parent.width
-        visible: panel.instruments > 1 && panel.ds && panel.ds.hasTemperatureData
+        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasTemperatureData)
         text: qsTr("Temperature")
         checked: panel.vs ? panel.vs.temperatureVisible : false
         onToggled: if (panel.vs) panel.vs.temperatureVisible = checked
@@ -184,7 +186,7 @@ Column {
     // ══ Doppler Beams (instruments > 1) ══════════════════════════════════════════
     ParamCardGroup {
         width: parent.width
-        visible: panel.instruments > 1 && panel.ds && panel.ds.hasDopplerBeamData
+        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasDopplerBeamData)
         label: qsTr("Doppler Beams")
         checked: panel.vs ? panel.vs.dopplerBeamVisible : false
         onToggled: function(v) { if (panel.vs) panel.vs.dopplerBeamVisible = v }
@@ -217,7 +219,7 @@ Column {
     // ══ Doppler Instrument (instruments > 1) ═════════════════════════════════════
     ParamCardGroup {
         width: parent.width
-        visible: panel.instruments > 1 && panel.ds && panel.ds.hasDvlSolutionData
+        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasDvlSolutionData)
         label: qsTr("Doppler Instrument")
         checked: panel.vs ? panel.vs.dopplerInstrumentVisible : false
         onToggled: function(v) { if (panel.vs) panel.vs.dopplerInstrumentVisible = v }
@@ -243,7 +245,7 @@ Column {
     // ══ DVL Legend (instruments > 1) ═════════════════════════════════════════════
     ParamCardGroup {
         width: parent.width
-        visible: panel.instruments > 1 && panel.ds && panel.ds.hasDvlSolutionData
+        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasDvlSolutionData)
         label: qsTr("DVL Legend")
         checked: panel.vs ? panel.vs.dvlLegendVisible : false
         onToggled: function(v) { if (panel.vs) panel.vs.dvlLegendVisible = v }
@@ -259,7 +261,7 @@ Column {
     // ══ Acoustic angle / Doppler Profiler / GNSS (instruments > 1) ═══════════════
     KSwitch {
         width: parent.width
-        visible: panel.instruments > 1 && panel.ds && panel.ds.hasUsblData
+        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasUsblData)
         text: qsTr("Acoustic angle")
         checked: panel.vs ? panel.vs.acousticAngleVisible : false
         onToggled: if (panel.vs) panel.vs.acousticAngleVisible = checked
@@ -272,7 +274,7 @@ Column {
     }
     KSwitch {
         width: parent.width
-        visible: panel.instruments > 1 && panel.ds && panel.ds.hasPositionData
+        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasPositionData)
         text: qsTr("GNSS data")
         checked: panel.vs ? panel.vs.gnssVisible : false
         onToggled: if (panel.vs) panel.vs.gnssVisible = checked
@@ -319,7 +321,7 @@ Column {
     // ══ Angle range (instruments > 1) ════════════════════════════════════════════
     ParamCard {
         width: parent.width
-        visible: panel.instruments > 1 && panel.ds && panel.ds.hasUsblData
+        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasUsblData)
         label: qsTr("Angle range, °")
         slotWidth: panel.comboW
         checked: panel.vs ? panel.vs.angleVisible : false
@@ -337,8 +339,8 @@ Column {
     // ══ Velocity range (instruments > 1) ═════════════════════════════════════════
     ParamCard {
         width: parent.width
-        visible: panel.instruments > 1 && panel.ds
-                 && (panel.ds.hasDopplerBeamData || panel.ds.hasDvlSolutionData)
+        visible: panel.instruments > 1
+                 && panel.dataGate(panel.ds && (panel.ds.hasDopplerBeamData || panel.ds.hasDvlSolutionData))
         label: qsTr("Velocity range, m/s")
         slotWidth: panel.comboW
         checked: panel.vs ? panel.vs.velocityVisible : false
