@@ -37,6 +37,7 @@ HEADERS += \
     src/themes.h \
     src/language_controller.h \
     src/ui_state_serializer.h \
+    src/echogram_state_serializer.h \
     src/input_device_tracker.h \
     src/xtf_conf.h \
     src/location_reader.h \
@@ -64,6 +65,7 @@ SOURCES += \
     src/stream_list.cpp \
     src/stream_list_model.cpp \
     src/ui_state_serializer.cpp \
+    src/echogram_state_serializer.cpp \
     src/input_device_tracker.cpp \
     src/location_reader.cpp \
     src/mosaic_index_provider.cpp \

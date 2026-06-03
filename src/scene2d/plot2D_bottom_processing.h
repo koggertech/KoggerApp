@@ -14,6 +14,7 @@ public:
     void setTheme(int theme_id);
     int getThemeId() const { return themeId_; }
     void setDepthTextVisible(bool state) { drawDepthText_ = state; }
+    bool isDepthTextVisible() const { return drawDepthText_; }
 
 protected:
     PlotPen _penLine = PlotPen(PlotColor(50, 255, 0), 2, PlotPen::LineStyleSolid);

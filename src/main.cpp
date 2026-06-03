@@ -25,6 +25,7 @@
 #include "core.h"
 #include "themes.h"
 #include "ui_state_serializer.h"
+#include "echogram_state_serializer.h"
 #include "scene_object.h"
 #include "bottom_track.h"
 #include "input_device_tracker.h"
@@ -36,6 +37,7 @@ Core core;
 AppUtils appUtils;
 Themes theme;
 UIStateSerializer uiStateSerializer;
+EchogramStateSerializer echogramStateSerializer;
 QTranslator translator;
 QVector<QString> availableLanguages{"en", "ru", "pl"};
 
@@ -277,6 +279,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
     engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
+    engine.rootContext()->setContextProperty("echogramStateSerializer", &echogramStateSerializer);
     engine.rootContext()->setContextProperty("inputDeviceTracker", &inputDeviceTracker);
     engine.rootContext()->setContextProperty("langController", &langController);
     engine.rootContext()->setContextProperty("appUtils", &appUtils);

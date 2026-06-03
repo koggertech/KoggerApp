@@ -10,6 +10,7 @@ public:
     Plot2DDVLSolution();
     bool draw(Plot2D* parent, Dataset* dataset) override;
     void setLineFilter(int filter) { _lineFilter = filter; }
+    int getLineFilter() const { return _lineFilter; }
     int drawLegend(Canvas& canvas, int x, int y);
     int boxWidth(Canvas& canvas) const;
     bool hasData() const { return _hasData; }
