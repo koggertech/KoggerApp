@@ -2993,6 +2993,34 @@
 <context>
     <name>PaneEditorChrome</name>
     <message>
+        <source>Pane %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>No pop-up</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Remove pop-up</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Move pane</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Add pane</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Remove pane</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Pop-up link</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../qml/app/PaneEditorChrome.qml" line="160"/>
         <source>Choose pane type</source>
         <translation></translation>

@@ -3008,6 +3008,34 @@
 <context>
     <name>PaneEditorChrome</name>
     <message>
+        <source>Pane %1</source>
+        <translation>Panel %1</translation>
+    </message>
+    <message>
+        <source>No pop-up</source>
+        <translation>Bez pop-up</translation>
+    </message>
+    <message>
+        <source>Remove pop-up</source>
+        <translation>Usuń pop-up</translation>
+    </message>
+    <message>
+        <source>Move pane</source>
+        <translation>Przenieś panel</translation>
+    </message>
+    <message>
+        <source>Add pane</source>
+        <translation>Dodaj panel</translation>
+    </message>
+    <message>
+        <source>Remove pane</source>
+        <translation>Usuń panel</translation>
+    </message>
+    <message>
+        <source>Pop-up link</source>
+        <translation>Powiązanie pop-up</translation>
+    </message>
+    <message>
         <location filename="../qml/app/PaneEditorChrome.qml" line="160"/>
         <source>Choose pane type</source>
         <translation>Wybierz typ panelu</translation>

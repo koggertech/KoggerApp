@@ -610,7 +610,7 @@ Item {
             readonly property bool isActiveResizeSplit: workspace.store.edgeResizeMovingSplitId === handleData.splitId
             property bool barRevealed: false
             readonly property int barHideMs: 1600
-            readonly property bool barShown: barRevealed || barGrab.resizing || isActiveResizeSplit
+            readonly property bool barShown: barRevealed || barGrab.resizing || isActiveResizeSplit || workspace.store.editableMode
 
             readonly property int barLength: Math.round(56 * AppPalette.scale)
             readonly property int barThickness: Math.round(16 * AppPalette.scale)

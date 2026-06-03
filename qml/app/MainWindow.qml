@@ -238,7 +238,7 @@ ApplicationWindow {
         },
         function() {  // pane mode picker
             if (workspaceStore.modePickerLeafId === -1) return false
-            workspaceStore.clearModePickerSelection()
+            workspaceStore.cancelModePicker()
             return true
         },
         function() {  // pane mode settings

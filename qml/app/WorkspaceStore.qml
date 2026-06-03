@@ -83,6 +83,7 @@ readonly property bool _compactMode: Tokens.isCompact(windowWidth)
 readonly property bool effectivePushContent: settingsPushContent || _compactMode
 property int modePickerLeafId: -1
 property var modePickerLeafIds: []
+property int pendingCreatedLeafId: -1
 property int hoveredPopupCandidateLeafId: -1
 property int flashingLeafId: -1
 property int highlightedLeafId: -1
@@ -522,6 +523,16 @@ function syncModePickerLeafId() {
 function clearModePickerSelection() {
     modePickerLeafIds = []
     modePickerLeafId = -1
+    pendingCreatedLeafId = -1
+}
+
+function cancelModePicker() {
+    if (modePickerLeafId === -1)
+        return
+    var created = pendingCreatedLeafId
+    clearModePickerSelection()
+    if (created !== -1 && leafCount() > 1)
+        removePane(created)
 }
 
 function setModePickerLeafIds(ids) {
@@ -547,6 +558,9 @@ function setModePickerLeafIds(ids) {
 }
 
 function removeModePickerLeafId(leafId) {
+    if (leafId === pendingCreatedLeafId)
+        pendingCreatedLeafId = -1
+
     if (modePickerLeafIds.length === 0) {
         modePickerLeafId = -1
         return
@@ -2991,6 +3005,7 @@ function createPaneInLeaf(leafId, edge) {
     activeLeafId = newLeaf.leafId
     rebuildLayoutCaches()
     setModePickerLeafIds([newLeaf.leafId])
+    pendingCreatedLeafId = newLeaf.leafId
 }
 
 function removePane(leafId) {

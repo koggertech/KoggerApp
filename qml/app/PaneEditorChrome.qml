@@ -8,23 +8,81 @@ Item {
 
     required property Item paneFrame
 
+    readonly property real addInset: paneFrame.edgeSafetyMargin + Math.round(8 * AppPalette.scale)
+    readonly property string addHoverSide: editableTopActions.hovered ? "top"
+                                           : editableBottomActions.hovered ? "bottom"
+                                           : editableLeftActions.hovered ? "left"
+                                           : editableRightActions.hovered ? "right" : ""
+    readonly property real chooserRowHeight: Math.round(34 * AppPalette.scale)
+
     anchors.fill: parent
+
+    component ChooserRow: Rectangle {
+        id: crow
+        property string label: ""
+        property color dotColor: "transparent"
+        property bool selected: false
+        readonly property bool hovered: crowMouse.containsMouse
+        signal activated()
+
+        height: root.chooserRowHeight
+        radius: Tokens.radiusMd
+        color: crowMouse.containsMouse ? paneFrame.menuButtonHoverColor
+               : (crow.selected ? AppPalette.accentBg : paneFrame.menuButtonFillColor)
+        border.width: 1
+        border.color: crowMouse.containsMouse ? paneFrame.menuButtonHoverBorderColor
+                                              : paneFrame.menuButtonBorderColor
+
+        Rectangle {
+            id: crowDot
+            visible: crow.dotColor.a > 0
+            anchors.left: parent.left
+            anchors.leftMargin: Tokens.spaceMd
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.round(10 * AppPalette.scale)
+            height: width
+            radius: Math.round(3 * AppPalette.scale)
+            color: crow.dotColor
+        }
+
+        Text {
+            anchors.left: crowDot.visible ? crowDot.right : parent.left
+            anchors.leftMargin: Tokens.spaceMd
+            anchors.right: parent.right
+            anchors.rightMargin: Tokens.spaceMd
+            anchors.verticalCenter: parent.verticalCenter
+            text: crow.label
+            color: AppPalette.text
+            font.pixelSize: Tokens.fontBase
+            elide: Text.ElideRight
+            verticalAlignment: Text.AlignVCenter
+        }
+
+        MouseArea {
+            id: crowMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: crow.activated()
+        }
+    }
 
     Item {
         id: centerQuickActions
         visible: paneFrame.store.editableMode
                  && paneFrame.store.modePickerLeafId === -1
                  && !paneFrame.isModeSelecting
-        readonly property real horizontalPadding: 12
-        readonly property real verticalPadding: 12
-        readonly property real iconSpacing: 14
-        readonly property real singleRowWidth: paneFrame.centerQuickIconSize * 3 + iconSpacing * 2
+        readonly property real horizontalPadding: Math.round(12 * AppPalette.scale)
+        readonly property real verticalPadding: Math.round(12 * AppPalette.scale)
+        readonly property real iconSpacing: Math.round(10 * AppPalette.scale)
+        readonly property real quadRowWidth: paneFrame.centerQuickIconSize * 4 + iconSpacing * 3
         readonly property real doubleRowWidth: paneFrame.centerQuickIconSize * 2 + iconSpacing
+        readonly property real sideReserve: root.addInset + paneFrame.edgeAddButtonSize + Math.round(12 * AppPalette.scale)
         readonly property real layoutWidth: Math.max(0, width - horizontalPadding * 2)
-        readonly property int quickColumns: layoutWidth >= singleRowWidth ? 3 : (layoutWidth >= doubleRowWidth ? 2 : 1)
+        readonly property int quickColumns: layoutWidth >= quadRowWidth ? 4 : (layoutWidth >= doubleRowWidth ? 2 : 1)
         readonly property real topSafeInset: editableTopActions.visible ? (editableTopActions.height + 8) : 0
         readonly property real bottomSafeInset: editableBottomActions.visible ? (editableBottomActions.height + 8) : 0
-        width: Math.min(parent.width - 20, singleRowWidth + horizontalPadding * 2)
+        width: Math.min(parent.width - 2 * sideReserve, quadRowWidth + horizontalPadding * 2)
         height: quickActionsGrid.implicitHeight + verticalPadding * 2
         z: 36
         x: (parent.width - width) / 2
@@ -50,8 +108,6 @@ Item {
                 height: paneFrame.centerQuickIconSize
                 Layout.preferredWidth: paneFrame.centerQuickIconSize
                 Layout.preferredHeight: paneFrame.centerQuickIconSize
-                rounded: false
-                cornerRadius: 0
                 borderWidth: 1
                 fillColor: paneFrame.menuButtonFillColor
                 fillHoverColor: paneFrame.menuButtonHoverColor
@@ -60,7 +116,7 @@ Item {
                 borderHoverColor: paneFrame.menuButtonHoverBorderColor
                 glyph: paneFrame.paneData.mode === "3D" ? "3D" : "2D"
                 glyphPixelSize: Math.round(paneFrame.centerQuickIconSize * 0.34)
-                glyphColor: paneFrame.paneData.mode === "3D" ? "#86EFAC" : "#93C5FD"
+                glyphColor: AppPalette.accentBorder
                 z: 33
                 onClicked: {
                     paneFrame.popupChooserOpen = false
@@ -74,8 +130,6 @@ Item {
                 height: paneFrame.centerQuickIconSize
                 Layout.preferredWidth: paneFrame.centerQuickIconSize
                 Layout.preferredHeight: paneFrame.centerQuickIconSize
-                rounded: false
-                cornerRadius: 0
                 borderWidth: 1
                 fillColor: paneFrame.menuButtonFillColor
                 fillHoverColor: paneFrame.menuButtonHoverColor
@@ -85,10 +139,7 @@ Item {
                 iconSource: "qrc:/icons/ui/anchor.svg"
                 iconTintColor: paneFrame.popupSourceLeafId !== -1 ? AppPalette.dangerText : AppPalette.textSecond
                 iconPixelSize: Math.round(paneFrame.centerQuickIconSize * 0.42)
-                glyph: "P"
-                glyphPixelSize: Math.round(paneFrame.centerQuickIconSize * 0.38)
-                glyphColor: paneFrame.popupSourceLeafId !== -1 ? AppPalette.dangerText : AppPalette.textSecond
-                showGlyphWithIcon: false
+                toolTipText: qsTr("Pop-up link")
                 z: 33
                 onClicked: paneFrame.popupChooserOpen = !paneFrame.popupChooserOpen
             }
@@ -99,22 +150,16 @@ Item {
                 height: paneFrame.centerQuickIconSize
                 Layout.preferredWidth: paneFrame.centerQuickIconSize
                 Layout.preferredHeight: paneFrame.centerQuickIconSize
-                rounded: false
-                cornerRadius: 0
                 borderWidth: 1
                 fillColor: paneFrame.menuButtonFillColor
                 fillHoverColor: paneFrame.menuButtonHoverColor
                 fillPressedColor: paneFrame.menuButtonPressedColor
                 borderColor: paneFrame.menuButtonBorderColor
                 borderHoverColor: paneFrame.menuButtonHoverBorderColor
-                Layout.columnSpan: centerQuickActions.quickColumns === 2 ? 2 : 1
-                Layout.alignment: Qt.AlignHCenter
                 iconSource: "qrc:/icons/ui/arrows-cross.svg"
+                iconTintColor: AppPalette.textSecond
                 iconPixelSize: Math.round(paneFrame.centerQuickIconSize * 0.42)
-                glyph: "MOVE"
-                glyphPixelSize: Math.round(paneFrame.centerQuickIconSize * 0.22)
-                glyphColor: "#FDE68A"
-                showGlyphWithIcon: false
+                toolTipText: qsTr("Move pane")
                 cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                 z: 33
 
@@ -138,7 +183,57 @@ Item {
                 onPressEnded: paneFrame.store.finishPaneDrag()
                 onPressCanceled: paneFrame.store.finishPaneDrag()
             }
+
+            KCircleIconButton {
+                id: deletePaneButton
+                width: paneFrame.centerQuickIconSize
+                height: paneFrame.centerQuickIconSize
+                Layout.preferredWidth: paneFrame.centerQuickIconSize
+                Layout.preferredHeight: paneFrame.centerQuickIconSize
+                borderWidth: 1
+                fillColor: paneFrame.menuButtonFillColor
+                fillHoverColor: paneFrame.menuButtonHoverColor
+                fillPressedColor: paneFrame.menuButtonPressedColor
+                borderColor: paneFrame.menuButtonBorderColor
+                borderHoverColor: paneFrame.menuButtonHoverBorderColor
+                iconSource: "qrc:/icons/ui/x.svg"
+                iconTintColor: AppPalette.dangerText
+                iconPixelSize: Math.round(paneFrame.centerQuickIconSize * 0.42)
+                enabled: paneFrame.store.leafCount() > 1
+                opacity: enabled ? 1.0 : 0.45
+                toolTipText: qsTr("Remove pane")
+                z: 33
+                onClicked: {
+                    if (paneFrame.store.leafCount() > 1)
+                        paneFrame.store.removePane(paneFrame.leafId)
+                }
+            }
         }
+    }
+
+    Rectangle {
+        id: deleteHoverOverlay
+        anchors.fill: parent
+        color: AppPalette.dangerText
+        opacity: (paneFrame.store.editableMode && deletePaneButton.hovered) ? 0.18 : 0.0
+        visible: opacity > 0.001
+        z: 25
+        Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+    }
+
+    Rectangle {
+        id: addPreviewOverlay
+        visible: root.addHoverSide !== ""
+        z: 27
+        color: AppPalette.accentBorder
+        opacity: root.addHoverSide !== "" ? 0.22 : 0.0
+        border.width: Math.max(2, Math.round(2 * AppPalette.scale))
+        border.color: AppPalette.accentBorder
+        x: root.addHoverSide === "right" ? parent.width / 2 : 0
+        y: root.addHoverSide === "bottom" ? parent.height / 2 : 0
+        width: (root.addHoverSide === "left" || root.addHoverSide === "right") ? parent.width / 2 : parent.width
+        height: (root.addHoverSide === "top" || root.addHoverSide === "bottom") ? parent.height / 2 : parent.height
+        Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
     }
 
     Rectangle {
@@ -215,11 +310,14 @@ Item {
         id: popupChooserPanel
         visible: paneFrame.store.editableMode && paneFrame.popupChooserOpen && paneFrame.store.modePickerLeafId === -1
         z: 73
-        width: Math.max(180, Math.min(parent.width - 24, 270))
-        height: Math.min(parent.height - 24, chooserColumn.implicitHeight + 16)
+        readonly property real maxPanelHeight: parent.height - Tokens.spaceXl * 2
+        readonly property real chromeV: Tokens.spaceMd * 2 + Tokens.spaceSm
+        width: Math.max(Math.round(200 * AppPalette.scale),
+                        Math.min(parent.width - Tokens.spaceXl * 2, Math.round(264 * AppPalette.scale)))
+        height: Math.min(maxPanelHeight, chooserHeader.implicitHeight + chooserBody.height + chromeV)
         x: (parent.width - width) / 2
         y: (parent.height - height) / 2
-        radius: 8
+        radius: Tokens.radiusLg
         color: AppPalette.bg
         border.width: 1
         border.color: AppPalette.borderHover
@@ -231,248 +329,165 @@ Item {
         }
 
         Column {
-            id: chooserColumn
             anchors.fill: parent
-            anchors.margins: 8
-            spacing: 8
+            anchors.margins: Tokens.spaceMd
+            spacing: Tokens.spaceSm
 
             Text {
+                id: chooserHeader
+                width: parent.width
                 text: qsTr("Fullscreen pop-up")
                 color: AppPalette.text
-                font.pixelSize: 13
+                font.pixelSize: Tokens.fontMd
                 font.bold: true
+                wrapMode: Text.WordWrap
             }
 
-            KButton {
-                text: paneFrame.popupSourceLeafId !== -1 ? "Remove pop-up" : "No pop-up"
-                onClicked: {
-                    paneFrame.store.setPopupSourceForHost(paneFrame.leafId, -1)
-                    paneFrame.popupChooserOpen = false
-                }
-            }
+            Flickable {
+                id: chooserBody
+                width: parent.width
+                height: Math.max(0, Math.min(chooserList.implicitHeight,
+                                             popupChooserPanel.maxPanelHeight
+                                             - chooserHeader.implicitHeight - popupChooserPanel.chromeV))
+                contentWidth: width
+                contentHeight: chooserList.implicitHeight
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                interactive: contentHeight > height + 1
+                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
-            Text {
-                visible: paneFrame.popupCandidates.length === 0
-                text: qsTr("No neighboring panes available")
-                color: AppPalette.textMuted
-                font.pixelSize: 12
-            }
+                Column {
+                    id: chooserList
+                    width: chooserBody.width
+                    spacing: Tokens.spaceSm
 
-            Repeater {
-                model: paneFrame.popupCandidates
-
-                delegate: Item {
-                    required property var modelData
-                    width: chooserColumn.width - chooserColumn.anchors.margins * 2
-                    height: 36
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: 6
-                        color: candidateMouse.containsMouse
-                               ? paneFrame.menuButtonHoverColor
-                               : (paneFrame.popupSourceLeafId === modelData.leafId
-                                  ? "#1E3A5F" : paneFrame.menuButtonFillColor)
-                        border.width: 1
-                        border.color: paneFrame.menuButtonBorderColor
-                    }
-
-                    Row {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: 10
-                        spacing: 8
-
-                        Rectangle {
-                            width: 10
-                            height: 10
-                            radius: 2
-                            color: modelData.color
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        Text {
-                            text: modelData.title + " (" + modelData.mode + ")"
-                            color: AppPalette.text
-                            font.pixelSize: 13
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-                    MouseArea {
-                        id: candidateMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onEntered: paneFrame.store.hoveredPopupCandidateLeafId = modelData.leafId
-                        onExited: {
-                            if (paneFrame.store.hoveredPopupCandidateLeafId === modelData.leafId)
-                                paneFrame.store.hoveredPopupCandidateLeafId = -1
-                        }
-                        onClicked: {
-                            paneFrame.store.setPopupSourceForHost(paneFrame.leafId, modelData.leafId)
-                            paneFrame.store.flashingLeafId = modelData.leafId
+                    ChooserRow {
+                        width: parent.width
+                        label: paneFrame.popupSourceLeafId !== -1 ? qsTr("Remove pop-up") : qsTr("No pop-up")
+                        onActivated: {
+                            paneFrame.store.setPopupSourceForHost(paneFrame.leafId, -1)
                             paneFrame.popupChooserOpen = false
                         }
                     }
+
+                    Text {
+                        visible: paneFrame.popupCandidates.length === 0
+                        width: parent.width
+                        text: qsTr("No neighboring panes available")
+                        color: AppPalette.textMuted
+                        font.pixelSize: Tokens.fontSm
+                        wrapMode: Text.WordWrap
+                    }
+
+                    Repeater {
+                        model: paneFrame.popupCandidates
+
+                        delegate: ChooserRow {
+                            required property var modelData
+                            width: parent.width
+                            label: qsTr("Pane %1").arg(modelData.paneId) + " (" + modelData.mode + ")"
+                            dotColor: modelData.color
+                            selected: paneFrame.popupSourceLeafId === modelData.leafId
+                            onActivated: {
+                                paneFrame.store.setPopupSourceForHost(paneFrame.leafId, modelData.leafId)
+                                paneFrame.store.flashingLeafId = modelData.leafId
+                                paneFrame.popupChooserOpen = false
+                            }
+                            onHoveredChanged: {
+                                if (hovered)
+                                    paneFrame.store.hoveredPopupCandidateLeafId = modelData.leafId
+                                else if (paneFrame.store.hoveredPopupCandidateLeafId === modelData.leafId)
+                                    paneFrame.store.hoveredPopupCandidateLeafId = -1
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
-    Rectangle {
+    KCircleIconButton {
         id: editableTopActions
-        visible: paneFrame.store.editableMode && paneFrame.store.modePickerLeafId === -1
-        width: topActionsRow.implicitWidth + 10
-        height: topActionsRow.implicitHeight + 8
-        radius: 8
-        color: paneFrame.menuPanelColor
-        border.width: 1
-        border.color: paneFrame.menuButtonBorderColor
+        visible: paneFrame.store.editableMode && paneFrame.store.modePickerLeafId === -1 && paneFrame.canAddPane
+        width: paneFrame.edgeAddButtonSize
+        height: paneFrame.edgeAddButtonSize
+        borderWidth: 1
+        fillColor: paneFrame.menuButtonFillColor
+        fillHoverColor: paneFrame.menuButtonHoverColor
+        fillPressedColor: paneFrame.menuButtonPressedColor
+        borderColor: paneFrame.menuButtonBorderColor
+        borderHoverColor: paneFrame.menuButtonHoverBorderColor
+        iconSource: "qrc:/icons/ui/plus.svg"
+        iconTintColor: AppPalette.text
+        iconPixelSize: Math.round(paneFrame.edgeAddButtonSize * 0.46)
+        toolTipText: qsTr("Add pane")
         z: 31
         x: (parent.width - width) / 2
-        y: 0
-
-        Row {
-            id: topActionsRow
-            anchors.centerIn: parent
-            spacing: paneFrame.canAddPane ? 6 : 0
-
-            ActionChip {
-                visible: paneFrame.canAddPane
-                chipWidth: paneFrame.canAddPane ? 40 : 0
-                chipHeight: paneFrame.canAddPane ? 32 : 0
-                label: "+"
-                onClicked: paneFrame.store.createPaneInLeaf(paneFrame.leafId, "top")
-            }
-
-            ActionChip {
-                chipWidth: 40
-                chipHeight: 32
-                label: "-"
-                opacity: paneFrame.store.leafCount() > 1 ? 1.0 : 0.45
-                onClicked: {
-                    if (paneFrame.store.leafCount() > 1)
-                        paneFrame.store.removePane(paneFrame.leafId)
-                }
-            }
-        }
+        y: root.addInset
+        onClicked: paneFrame.store.createPaneInLeaf(paneFrame.leafId, "top")
     }
 
-    Rectangle {
+    KCircleIconButton {
         id: editableBottomActions
-        visible: paneFrame.store.editableMode && paneFrame.store.modePickerLeafId === -1
-        width: bottomActionsRow.implicitWidth + 10
-        height: bottomActionsRow.implicitHeight + 8
-        radius: 8
-        color: paneFrame.menuPanelColor
-        border.width: 1
-        border.color: paneFrame.menuButtonBorderColor
+        visible: paneFrame.store.editableMode && paneFrame.store.modePickerLeafId === -1 && paneFrame.canAddPane
+        width: paneFrame.edgeAddButtonSize
+        height: paneFrame.edgeAddButtonSize
+        borderWidth: 1
+        fillColor: paneFrame.menuButtonFillColor
+        fillHoverColor: paneFrame.menuButtonHoverColor
+        fillPressedColor: paneFrame.menuButtonPressedColor
+        borderColor: paneFrame.menuButtonBorderColor
+        borderHoverColor: paneFrame.menuButtonHoverBorderColor
+        iconSource: "qrc:/icons/ui/plus.svg"
+        iconTintColor: AppPalette.text
+        iconPixelSize: Math.round(paneFrame.edgeAddButtonSize * 0.46)
+        toolTipText: qsTr("Add pane")
         z: 31
         x: (parent.width - width) / 2
-        y: parent.height - height
-
-        Row {
-            id: bottomActionsRow
-            anchors.centerIn: parent
-            spacing: paneFrame.canAddPane ? 6 : 0
-
-            ActionChip {
-                visible: paneFrame.canAddPane
-                chipWidth: paneFrame.canAddPane ? 40 : 0
-                chipHeight: paneFrame.canAddPane ? 32 : 0
-                label: "+"
-                onClicked: paneFrame.store.createPaneInLeaf(paneFrame.leafId, "bottom")
-            }
-
-            ActionChip {
-                chipWidth: 40
-                chipHeight: 32
-                label: "-"
-                opacity: paneFrame.store.leafCount() > 1 ? 1.0 : 0.45
-                onClicked: {
-                    if (paneFrame.store.leafCount() > 1)
-                        paneFrame.store.removePane(paneFrame.leafId)
-                }
-            }
-        }
+        y: parent.height - height - root.addInset
+        onClicked: paneFrame.store.createPaneInLeaf(paneFrame.leafId, "bottom")
     }
 
-    Rectangle {
+    KCircleIconButton {
         id: editableLeftActions
-        visible: paneFrame.store.editableMode && paneFrame.store.modePickerLeafId === -1
-        width: leftActionsColumn.implicitWidth + 6
-        height: leftActionsColumn.implicitHeight + 8
-        radius: 8
-        color: paneFrame.menuPanelColor
-        border.width: 1
-        border.color: paneFrame.menuButtonBorderColor
+        visible: paneFrame.store.editableMode && paneFrame.store.modePickerLeafId === -1 && paneFrame.canAddPane
+        width: paneFrame.edgeAddButtonSize
+        height: paneFrame.edgeAddButtonSize
+        borderWidth: 1
+        fillColor: paneFrame.menuButtonFillColor
+        fillHoverColor: paneFrame.menuButtonHoverColor
+        fillPressedColor: paneFrame.menuButtonPressedColor
+        borderColor: paneFrame.menuButtonBorderColor
+        borderHoverColor: paneFrame.menuButtonHoverBorderColor
+        iconSource: "qrc:/icons/ui/plus.svg"
+        iconTintColor: AppPalette.text
+        iconPixelSize: Math.round(paneFrame.edgeAddButtonSize * 0.46)
+        toolTipText: qsTr("Add pane")
         z: 31
-        x: 0
+        x: root.addInset
         y: (parent.height - height) / 2
-
-        Column {
-            id: leftActionsColumn
-            anchors.centerIn: parent
-            spacing: paneFrame.canAddPane ? 6 : 0
-
-            ActionChip {
-                visible: paneFrame.canAddPane
-                chipWidth: paneFrame.canAddPane ? 40 : 0
-                chipHeight: paneFrame.canAddPane ? 32 : 0
-                label: "+"
-                onClicked: paneFrame.store.createPaneInLeaf(paneFrame.leafId, "left")
-            }
-
-            ActionChip {
-                chipWidth: 40
-                chipHeight: 32
-                label: "-"
-                opacity: paneFrame.store.leafCount() > 1 ? 1.0 : 0.45
-                onClicked: {
-                    if (paneFrame.store.leafCount() > 1)
-                        paneFrame.store.removePane(paneFrame.leafId)
-                }
-            }
-        }
+        onClicked: paneFrame.store.createPaneInLeaf(paneFrame.leafId, "left")
     }
 
-    Rectangle {
+    KCircleIconButton {
         id: editableRightActions
-        visible: paneFrame.store.editableMode && paneFrame.store.modePickerLeafId === -1
-        width: rightActionsColumn.implicitWidth + 6
-        height: rightActionsColumn.implicitHeight + 8
-        radius: 8
-        color: paneFrame.menuPanelColor
-        border.width: 1
-        border.color: paneFrame.menuButtonBorderColor
+        visible: paneFrame.store.editableMode && paneFrame.store.modePickerLeafId === -1 && paneFrame.canAddPane
+        width: paneFrame.edgeAddButtonSize
+        height: paneFrame.edgeAddButtonSize
+        borderWidth: 1
+        fillColor: paneFrame.menuButtonFillColor
+        fillHoverColor: paneFrame.menuButtonHoverColor
+        fillPressedColor: paneFrame.menuButtonPressedColor
+        borderColor: paneFrame.menuButtonBorderColor
+        borderHoverColor: paneFrame.menuButtonHoverBorderColor
+        iconSource: "qrc:/icons/ui/plus.svg"
+        iconTintColor: AppPalette.text
+        iconPixelSize: Math.round(paneFrame.edgeAddButtonSize * 0.46)
+        toolTipText: qsTr("Add pane")
         z: 31
-        x: parent.width - width
+        x: parent.width - width - root.addInset
         y: (parent.height - height) / 2
-
-        Column {
-            id: rightActionsColumn
-            anchors.centerIn: parent
-            spacing: paneFrame.canAddPane ? 6 : 0
-
-            ActionChip {
-                visible: paneFrame.canAddPane
-                chipWidth: paneFrame.canAddPane ? 40 : 0
-                chipHeight: paneFrame.canAddPane ? 32 : 0
-                label: "+"
-                onClicked: paneFrame.store.createPaneInLeaf(paneFrame.leafId, "right")
-            }
-
-            ActionChip {
-                chipWidth: 40
-                chipHeight: 32
-                label: "-"
-                opacity: paneFrame.store.leafCount() > 1 ? 1.0 : 0.45
-                onClicked: {
-                    if (paneFrame.store.leafCount() > 1)
-                        paneFrame.store.removePane(paneFrame.leafId)
-                }
-            }
-        }
+        onClicked: paneFrame.store.createPaneInLeaf(paneFrame.leafId, "right")
     }
 
     Timer {

@@ -35,7 +35,9 @@ Item {
     property bool popupChooserOpen: false
     property int popupSourceLeafId: store.popupSourceLeafIdForHost(paneItem.leafId)
     property var popupCandidates: store.popupCandidateItemsForHost(paneItem.leafId)
-    readonly property int centerQuickIconSize: 136
+    readonly property int centerQuickIconSize: Math.round(66 * AppPalette.scale)
+    readonly property int edgeAddButtonSize: Math.round(42 * AppPalette.scale)
+    readonly property real edgeSafetyMargin: AppPalette.splitHitSizePx / 2
     readonly property color menuPanelColor: AppPalette.bg
     readonly property color menuButtonFillColor: AppPalette.card
     readonly property color menuButtonHoverColor: AppPalette.cardHover
@@ -146,6 +148,15 @@ Item {
                         font.pixelSize: 14
                     }
                 }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: "#020617"
+                opacity: store.editableMode ? 0.72 : 0.0
+                visible: opacity > 0.001
+                z: 35
+                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             }
 
             Loader {
