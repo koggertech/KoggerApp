@@ -290,6 +290,30 @@ Column {
             onToggled: if (root.store) root.store.hideEmptyEchogramControls = checked
         }
 
+        KSwitch {
+            width: parent.width
+            text: qsTr("Workspace shift")
+            checked: root.store.settingsPushContent
+            onToggled: { root.store.settingsPushContent = checked }
+        }
+
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            Text { text: qsTr("Sidebar position:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
+
+            KTabBar {
+                width: parent.width
+                options: [
+                    { label: qsTr("Left"),  value: "left"  },
+                    { label: qsTr("Right"), value: "right" }
+                ]
+                currentValue: root.store.settingsSide
+                onValueSelected: function(value) { root.store.settingsSide = value }
+            }
+        }
+
         KButton {
             visible: Qt.platform.os !== "android"
             width: parent.width
@@ -302,6 +326,161 @@ Column {
             active: false
             source: "qrc:/qml/settings/HotkeysDialog.qml"
             onLoaded: { if (item) item.store = root.store }
+        }
+    }
+
+    // ── Workspace Layout ──────────────────────────────────────────────────────
+
+    SettingsGroup {
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Workspace Layout")
+        description: qsTr("Pane editing, favorites and ready-made layout presets.")
+        stateStore: root.store
+        stateKey: "app.layoutPlacement"
+
+        KSwitch {
+            width: parent.width
+            text: qsTr("Edit")
+            checked: root.store.editableMode
+            onToggled: { root.store.editableMode = checked }
+        }
+
+        KSwitch {
+            width: parent.width
+            text: qsTr("Global pop-up")
+            checked: root.store.globalPopupEnabled
+            onToggled: { root.store.globalPopupEnabled = checked }
+        }
+
+        KButton {
+            width: parent.width
+            text: qsTr("Reset workspace")
+            onClicked: root.store.resetWindowConfiguration()
+        }
+
+        Row {
+            spacing: Tokens.spaceLg
+
+            KButton {
+                width: Tokens.controlHLg; height: Tokens.controlHLg
+                text: root.store.currentLayoutIsFavorite ? "★" : "☆"
+                checkable: true
+                checked: root.store.currentLayoutIsFavorite
+                fontPixelSize: Tokens.fontXl
+                onClicked: root.store.toggleCurrentLayoutFavorite()
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.store.currentLayoutIsFavorite ? qsTr("Current layout is in favorites") : qsTr("Add current layout to favorites")
+                color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase
+            }
+        }
+
+        Text { text: qsTr("Favorite layouts"); color: AppPalette.text; font.pixelSize: Tokens.fontLg; font.bold: true }
+
+        Text {
+            visible: root.store.favoriteLayouts.length === 0
+            text: qsTr("No favorite layouts yet")
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
+        }
+
+        Repeater {
+            model: root.store.favoriteLayouts.length
+            delegate: Item {
+                id: favoriteCard
+                required property int index
+                readonly property int favoriteIndex: index
+                readonly property var favoriteEntry: (favoriteIndex >= 0 && favoriteIndex < root.store.favoriteLayouts.length) ? root.store.favoriteLayouts[favoriteIndex] : null
+                readonly property var snapshot: favoriteEntry && favoriteEntry.layout ? favoriteEntry.layout : favoriteEntry
+                readonly property var popupLinks: favoriteEntry && favoriteEntry.popupLinks ? favoriteEntry.popupLinks : []
+                readonly property bool selected: root.store.favoriteLayoutIsCurrent(favoriteIndex)
+                width: parent.width; height: favoriteCardView.implicitHeight
+
+                FavoriteLayoutCard {
+                    id: favoriteCardView
+                    anchors.fill: parent
+                    snapshot: favoriteCard.snapshot; popupLinks: favoriteCard.popupLinks
+                    favoriteIndex: favoriteCard.favoriteIndex; selected: favoriteCard.selected; showText: true
+                    onClicked: root.store.applyFavoriteLayout(favoriteCard.favoriteIndex)
+                }
+
+                KCircleIconButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    anchors.rightMargin: Tokens.spaceSm
+                    width: Tokens.iconLg; height: Tokens.iconLg; iconSource: ""; glyph: "×"
+                    glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.card
+                    fillHoverColor: AppPalette.cardHover; fillPressedColor: AppPalette.bgDeep
+                    borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
+                    toolTipText: qsTr("Remove favorite"); z: 6
+                    onClicked: root.store.removeFavoriteLayoutAt(favoriteIndex)
+                }
+            }
+        }
+
+        Rectangle { width: parent.width; height: 1; color: AppPalette.border }
+
+        Text { text: qsTr("Layout presets"); color: AppPalette.text; font.pixelSize: Tokens.fontLg; font.bold: true }
+
+        Repeater {
+            model: [
+                { presetId: 1, title: qsTr("Preset 1"), subtitle: qsTr("2 top panes, 1 bottom pane") },
+                { presetId: 2, title: qsTr("Preset 2"), subtitle: qsTr("2 × 2 grid") },
+                { presetId: 3, title: qsTr("Preset 3"), subtitle: qsTr("1 top pane, 2 bottom panes") }
+            ]
+            delegate: Rectangle {
+                required property var modelData
+                readonly property var preset: modelData
+                readonly property bool hovered: cardMouse.containsMouse
+                width: parent.width; height: Math.round(88 * AppPalette.scale); radius: Tokens.radiusLg
+                color: hovered ? AppPalette.bg : AppPalette.card; border.width: 1
+                border.color: hovered ? AppPalette.borderHover : AppPalette.border
+
+                Row {
+                    anchors.fill: parent; anchors.margins: Tokens.spaceMd; spacing: Tokens.spaceLg
+                    Rectangle {
+                        width: Math.round(84 * AppPalette.scale); height: Math.round(64 * AppPalette.scale); radius: Tokens.radiusMd; color: AppPalette.bgDeep
+                        border.width: 1; border.color: AppPalette.border
+                        Canvas {
+                            anchors.fill: parent; anchors.margins: Tokens.spaceXs
+                            onPaint: {
+                                var ctx = getContext("2d")
+                                ctx.clearRect(0, 0, width, height)
+                                var gap = 4, iw = width, ih = height
+                                function pane(x, y, w, h) {
+                                    ctx.fillStyle = "rgba(0,0,0,0)"; ctx.strokeStyle = "#64748B"
+                                    ctx.lineWidth = 1; ctx.fillRect(x,y,w,h); ctx.strokeRect(x+.5,y+.5,w-1,h-1)
+                                }
+                                if (preset.presetId === 1) {
+                                    var tH=ih*.5-gap/2, bH=ih-tH-gap, lW=iw*.5-gap/2, rW=iw-lW-gap
+                                    pane(0,0,lW,tH); pane(lW+gap,0,rW,tH); pane(0,tH+gap,iw,bH)
+                                } else if (preset.presetId === 2) {
+                                    var lW2=iw*.5-gap/2, rW2=iw-lW2-gap, tH2=ih*.5-gap/2, bH2=ih-tH2-gap
+                                    pane(0,0,lW2,tH2); pane(lW2+gap,0,rW2,tH2); pane(0,tH2+gap,lW2,bH2); pane(lW2+gap,tH2+gap,rW2,bH2)
+                                } else {
+                                    var tH3=ih*.5-gap/2, bH3=ih-tH3-gap, lW3=iw*.5-gap/2, rW3=iw-lW3-gap
+                                    pane(0,0,iw,tH3); pane(0,tH3+gap,lW3,bH3); pane(lW3+gap,tH3+gap,rW3,bH3)
+                                }
+                            }
+                        }
+                    }
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.max(0, parent.width - Math.round(84 * AppPalette.scale) - Tokens.spaceLg); spacing: Tokens.spaceXs
+                        Text { text: preset.title; color: AppPalette.text; font.pixelSize: Tokens.fontBase; font.bold: true }
+                        Text { text: preset.subtitle; color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm }
+                    }
+                }
+                MouseArea { id: cardMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.store.applyLayoutPreset(preset.presetId) }
+            }
+        }
+
+        Text {
+            width: parent.width; wrapMode: Text.WordWrap
+            text: qsTr("After applying a preset, choose 2D or 3D mode for each pane.")
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
         }
     }
 
@@ -2412,185 +2591,6 @@ Column {
             text: uiStateSerializer ? (uiStateSerializer.lastError.length ? uiStateSerializer.lastError : uiStateSerializer.lastStatus) : ""
             color: uiStateSerializer && uiStateSerializer.lastError.length ? "#FF6B6B" : AppPalette.textMuted
             font.pixelSize: Tokens.fontSm
-        }
-    }
-
-    // ── Workspace Layout ──────────────────────────────────────────────────────
-
-    SettingsGroup {
-        width: root.groupWidth
-        preferredWidth: root.groupWidth
-        title: qsTr("Workspace Layout")
-        description: qsTr("Pane editing, favorites and ready-made layout presets.")
-        stateStore: root.store
-        stateKey: "app.layoutPlacement"
-
-        KSwitch {
-            width: parent.width
-            text: qsTr("Edit")
-            checked: root.store.editableMode
-            onToggled: { root.store.editableMode = checked }
-        }
-
-        KSwitch {
-            width: parent.width
-            text: qsTr("Workspace shift")
-            checked: root.store.settingsPushContent
-            onToggled: { root.store.settingsPushContent = checked }
-        }
-
-        KSwitch {
-            width: parent.width
-            text: qsTr("Global pop-up")
-            checked: root.store.globalPopupEnabled
-            onToggled: { root.store.globalPopupEnabled = checked }
-        }
-
-        Column {
-            width: parent.width
-            spacing: Tokens.spaceMd
-
-            Text { text: qsTr("Sidebar position:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
-
-            KTabBar {
-                width: parent.width
-                options: [
-                    { label: qsTr("Left"),  value: "left"  },
-                    { label: qsTr("Right"), value: "right" }
-                ]
-                currentValue: root.store.settingsSide
-                onValueSelected: function(value) { root.store.settingsSide = value }
-            }
-        }
-
-        KButton {
-            width: parent.width
-            text: qsTr("Reset workspace")
-            onClicked: root.store.resetWindowConfiguration()
-        }
-
-        Row {
-            spacing: Tokens.spaceLg
-
-            KButton {
-                width: Tokens.controlHLg; height: Tokens.controlHLg
-                text: root.store.currentLayoutIsFavorite ? "★" : "☆"
-                checkable: true
-                checked: root.store.currentLayoutIsFavorite
-                fontPixelSize: Tokens.fontXl
-                onClicked: root.store.toggleCurrentLayoutFavorite()
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.store.currentLayoutIsFavorite ? qsTr("Current layout is in favorites") : qsTr("Add current layout to favorites")
-                color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase
-            }
-        }
-
-        Text { text: qsTr("Favorite layouts"); color: AppPalette.text; font.pixelSize: Tokens.fontLg; font.bold: true }
-
-        Text {
-            visible: root.store.favoriteLayouts.length === 0
-            text: qsTr("No favorite layouts yet")
-            color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
-        }
-
-        Repeater {
-            model: root.store.favoriteLayouts.length
-            delegate: Item {
-                id: favoriteCard
-                required property int index
-                readonly property int favoriteIndex: index
-                readonly property var favoriteEntry: (favoriteIndex >= 0 && favoriteIndex < root.store.favoriteLayouts.length) ? root.store.favoriteLayouts[favoriteIndex] : null
-                readonly property var snapshot: favoriteEntry && favoriteEntry.layout ? favoriteEntry.layout : favoriteEntry
-                readonly property var popupLinks: favoriteEntry && favoriteEntry.popupLinks ? favoriteEntry.popupLinks : []
-                readonly property bool selected: root.store.favoriteLayoutIsCurrent(favoriteIndex)
-                width: parent.width; height: favoriteCardView.implicitHeight
-
-                FavoriteLayoutCard {
-                    id: favoriteCardView
-                    anchors.fill: parent
-                    snapshot: favoriteCard.snapshot; popupLinks: favoriteCard.popupLinks
-                    favoriteIndex: favoriteCard.favoriteIndex; selected: favoriteCard.selected; showText: true
-                    onClicked: root.store.applyFavoriteLayout(favoriteCard.favoriteIndex)
-                }
-
-                KCircleIconButton {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.right
-                    anchors.rightMargin: Tokens.spaceSm
-                    width: Tokens.iconLg; height: Tokens.iconLg; iconSource: ""; glyph: "×"
-                    glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.card
-                    fillHoverColor: AppPalette.cardHover; fillPressedColor: AppPalette.bgDeep
-                    borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
-                    toolTipText: qsTr("Remove favorite"); z: 6
-                    onClicked: root.store.removeFavoriteLayoutAt(favoriteIndex)
-                }
-            }
-        }
-
-        Rectangle { width: parent.width; height: 1; color: AppPalette.border }
-
-        Text { text: qsTr("Layout presets"); color: AppPalette.text; font.pixelSize: Tokens.fontLg; font.bold: true }
-
-        Repeater {
-            model: [
-                { presetId: 1, title: qsTr("Preset 1"), subtitle: qsTr("2 top panes, 1 bottom pane") },
-                { presetId: 2, title: qsTr("Preset 2"), subtitle: qsTr("2 × 2 grid") },
-                { presetId: 3, title: qsTr("Preset 3"), subtitle: qsTr("1 top pane, 2 bottom panes") }
-            ]
-            delegate: Rectangle {
-                required property var modelData
-                readonly property var preset: modelData
-                readonly property bool hovered: cardMouse.containsMouse
-                width: parent.width; height: Math.round(88 * AppPalette.scale); radius: Tokens.radiusLg
-                color: hovered ? AppPalette.bg : AppPalette.card; border.width: 1
-                border.color: hovered ? AppPalette.borderHover : AppPalette.border
-
-                Row {
-                    anchors.fill: parent; anchors.margins: Tokens.spaceMd; spacing: Tokens.spaceLg
-                    Rectangle {
-                        width: Math.round(84 * AppPalette.scale); height: Math.round(64 * AppPalette.scale); radius: Tokens.radiusMd; color: AppPalette.bgDeep
-                        border.width: 1; border.color: AppPalette.border
-                        Canvas {
-                            anchors.fill: parent; anchors.margins: Tokens.spaceXs
-                            onPaint: {
-                                var ctx = getContext("2d")
-                                ctx.clearRect(0, 0, width, height)
-                                var gap = 4, iw = width, ih = height
-                                function pane(x, y, w, h) {
-                                    ctx.fillStyle = "rgba(0,0,0,0)"; ctx.strokeStyle = "#64748B"
-                                    ctx.lineWidth = 1; ctx.fillRect(x,y,w,h); ctx.strokeRect(x+.5,y+.5,w-1,h-1)
-                                }
-                                if (preset.presetId === 1) {
-                                    var tH=ih*.5-gap/2, bH=ih-tH-gap, lW=iw*.5-gap/2, rW=iw-lW-gap
-                                    pane(0,0,lW,tH); pane(lW+gap,0,rW,tH); pane(0,tH+gap,iw,bH)
-                                } else if (preset.presetId === 2) {
-                                    var lW2=iw*.5-gap/2, rW2=iw-lW2-gap, tH2=ih*.5-gap/2, bH2=ih-tH2-gap
-                                    pane(0,0,lW2,tH2); pane(lW2+gap,0,rW2,tH2); pane(0,tH2+gap,lW2,bH2); pane(lW2+gap,tH2+gap,rW2,bH2)
-                                } else {
-                                    var tH3=ih*.5-gap/2, bH3=ih-tH3-gap, lW3=iw*.5-gap/2, rW3=iw-lW3-gap
-                                    pane(0,0,iw,tH3); pane(0,tH3+gap,lW3,bH3); pane(lW3+gap,tH3+gap,rW3,bH3)
-                                }
-                            }
-                        }
-                    }
-                    Column {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.max(0, parent.width - Math.round(84 * AppPalette.scale) - Tokens.spaceLg); spacing: Tokens.spaceXs
-                        Text { text: preset.title; color: AppPalette.text; font.pixelSize: Tokens.fontBase; font.bold: true }
-                        Text { text: preset.subtitle; color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm }
-                    }
-                }
-                MouseArea { id: cardMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.store.applyLayoutPreset(preset.presetId) }
-            }
-        }
-
-        Text {
-            width: parent.width; wrapMode: Text.WordWrap
-            text: qsTr("After applying a preset, choose 2D or 3D mode for each pane.")
-            color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
         }
     }
 
