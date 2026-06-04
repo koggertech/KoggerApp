@@ -443,25 +443,30 @@ Column {
                     Rectangle {
                         width: Math.round(84 * AppPalette.scale); height: Math.round(64 * AppPalette.scale); radius: Tokens.radiusMd; color: AppPalette.bgDeep
                         border.width: 1; border.color: AppPalette.border
-                        Canvas {
+                        Item {
+                            id: previewArea
                             anchors.fill: parent; anchors.margins: Tokens.spaceXs
-                            onPaint: {
-                                var ctx = getContext("2d")
-                                ctx.clearRect(0, 0, width, height)
-                                var gap = 4, iw = width, ih = height
-                                function pane(x, y, w, h) {
-                                    ctx.fillStyle = "rgba(0,0,0,0)"; ctx.strokeStyle = "#64748B"
-                                    ctx.lineWidth = 1; ctx.fillRect(x,y,w,h); ctx.strokeRect(x+.5,y+.5,w-1,h-1)
+                            readonly property real gap: 4
+                            Repeater {
+                                model: {
+                                    var iw = previewArea.width, ih = previewArea.height, g = previewArea.gap
+                                    if (iw <= 0 || ih <= 0) return []
+                                    if (preset.presetId === 1) {
+                                        var tH = ih*.5-g/2, bH = ih-tH-g, lW = iw*.5-g/2, rW = iw-lW-g
+                                        return [ {x:0,y:0,w:lW,h:tH}, {x:lW+g,y:0,w:rW,h:tH}, {x:0,y:tH+g,w:iw,h:bH} ]
+                                    } else if (preset.presetId === 2) {
+                                        var lW2 = iw*.5-g/2, rW2 = iw-lW2-g, tH2 = ih*.5-g/2, bH2 = ih-tH2-g
+                                        return [ {x:0,y:0,w:lW2,h:tH2}, {x:lW2+g,y:0,w:rW2,h:tH2}, {x:0,y:tH2+g,w:lW2,h:bH2}, {x:lW2+g,y:tH2+g,w:rW2,h:bH2} ]
+                                    }
+                                    var tH3 = ih*.5-g/2, bH3 = ih-tH3-g, lW3 = iw*.5-g/2, rW3 = iw-lW3-g
+                                    return [ {x:0,y:0,w:iw,h:tH3}, {x:0,y:tH3+g,w:lW3,h:bH3}, {x:lW3+g,y:tH3+g,w:rW3,h:bH3} ]
                                 }
-                                if (preset.presetId === 1) {
-                                    var tH=ih*.5-gap/2, bH=ih-tH-gap, lW=iw*.5-gap/2, rW=iw-lW-gap
-                                    pane(0,0,lW,tH); pane(lW+gap,0,rW,tH); pane(0,tH+gap,iw,bH)
-                                } else if (preset.presetId === 2) {
-                                    var lW2=iw*.5-gap/2, rW2=iw-lW2-gap, tH2=ih*.5-gap/2, bH2=ih-tH2-gap
-                                    pane(0,0,lW2,tH2); pane(lW2+gap,0,rW2,tH2); pane(0,tH2+gap,lW2,bH2); pane(lW2+gap,tH2+gap,rW2,bH2)
-                                } else {
-                                    var tH3=ih*.5-gap/2, bH3=ih-tH3-gap, lW3=iw*.5-gap/2, rW3=iw-lW3-gap
-                                    pane(0,0,iw,tH3); pane(0,tH3+gap,lW3,bH3); pane(lW3+gap,tH3+gap,rW3,bH3)
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    x: modelData.x; y: modelData.y
+                                    width: modelData.w; height: modelData.h
+                                    color: "transparent"
+                                    border.width: 1; border.color: "#64748B"
                                 }
                             }
                         }

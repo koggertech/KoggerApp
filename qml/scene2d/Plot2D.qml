@@ -40,6 +40,13 @@ WaterFall {
         onTriggered: plot.scrollBarsShown = false
         Component.onCompleted: start()
     }
+
+    Timer {
+        id: echogramCaptureDebounce
+        interval: 250
+        repeat: false
+        onTriggered: if (!plot.suspendCapture) plot.echogramStateChanged()
+    }
     property int indx: 0
     property var instrumentsGradeList: null
     property int instruments: theme ? theme.instrumentsGrade
@@ -59,6 +66,8 @@ WaterFall {
     readonly property color scrollThumbColor: theme.controlBorderColor   // цвет темы
     readonly property real scrollThumbOpacity: 0.7                        // resting; pressed → 1.0 (opaque)
     property alias viewState: echoViewState
+    signal echogramStateChanged()
+    property bool suspendCapture: false
     property var inputState: null
     property bool externalInputRouting: false
     property int pointerLastMouseX: -1
@@ -493,13 +502,13 @@ WaterFall {
         id: settingsRow
 
         readonly property bool _shiftRight: indx === 1 && !is3dVisible
-                                            && height > plot.height - 130 * theme.resCoeff
+                                            && height > plot.height - 170 * theme.resCoeff
         readonly property int _scrollClearance: Math.round(44 * AppPalette.scale)
 
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.leftMargin: Math.round(10 * AppPalette.scale) + plot.edgeSafetyMargin
-                            + (_shiftRight ? width : 0)
+                            + (_shiftRight ? width + Math.round(12 * AppPalette.scale) : 0)
         anchors.bottomMargin: plot.edgeSafetyMargin
                               + (plot.horizontal ? _scrollClearance
                                                  : plot.settingsMenuSpacer)
@@ -596,6 +605,100 @@ WaterFall {
         property alias loupeVisible:       loupeVisible.checked
         property alias loupeSize:          loupeSize.value
         property alias loupeZoom:          loupeZoom.value
+
+        readonly property var _changeProbe: [
+            ch1Index, ch2Index, echogramVisible, echoThemeIndex, compensationIndex,
+            bottomTrackValue, bottomTrackLine, bottomTrackTheme,
+            rangefinderValue, rangefinderLine, rangefinderTheme,
+            ahrsVisible, temperatureVisible,
+            dopplerBeamVisible, dopplerBeam1A, dopplerBeam1V, dopplerBeam1M,
+            dopplerBeam2A, dopplerBeam2V, dopplerBeam2M,
+            dopplerBeam3A, dopplerBeam3V, dopplerBeam3M,
+            dopplerBeam4A, dopplerBeam4V, dopplerBeam4M,
+            dopplerInstrumentVisible, dopplerInstrumentX, dopplerInstrumentY,
+            dopplerInstrumentZ, dopplerInstrumentA, dopplerInstrumentDst,
+            dvlLegendVisible, dvlLegendPosition, acousticAngleVisible, gnssVisible,
+            gridVisible, gridFill, gridInvert, gridNumber,
+            angleVisible, angleRange, velocityVisible, velocityRange,
+            distanceAutoRange, distanceAutoRangeIndex, horizontalMode,
+            loupeVisible, loupeSize, loupeZoom,
+            echogramLevelsSlider.startValue, echogramLevelsSlider.stopValue
+        ]
+        on_ChangeProbeChanged: if (!plot.suspendCapture) echogramCaptureDebounce.restart()
+
+        function reloadFromPlot() {
+            plot.suspendCapture = true
+            try {
+                var m = channel1Combo.model
+                if (m) {
+                    var i1 = m.indexOf(plot.plotDatasetChannelName())
+                    var i2 = m.indexOf(plot.plotDatasetChannel2Name())
+                    channel1Combo.suppressTextSignal = true
+                    channel2Combo.suppressTextSignal = true
+                    if (i1 >= 0) channel1Combo.currentIndex = i1
+                    if (i2 >= 0) channel2Combo.currentIndex = i2
+                    channel1Combo.suppressTextSignal = false
+                    channel2Combo.suppressTextSignal = false
+                }
+
+                echogramVisible.checked        = plot.getEchogramVisible()
+                echoTheme.currentIndex         = plot.getThemeId()
+                echogramTypesList.currentIndex = plot.getEchogramCompensation()
+                plot.setLevels(plot.getLowEchogramLevel(), plot.getHighEchogramLevel())
+
+                bottomTrackValueVisible.checked    = plot.getBottomTrackDepthTextVisible()
+                bottomTrackGraphicsVisible.checked = plot.getBottomTrackVisible()
+                bottomTrackThemeList.currentIndex  = plot.getBottomTrackThemeId()
+                rangefinderValueVisible.checked    = plot.getRangefinderDepthTextVisible()
+                rangefinderGraphicsVisible.checked = plot.getRangefinderVisible()
+                rangefinderThemeList.currentIndex  = plot.getRangefinderThemeId()
+
+                ahrsVisible.checked        = plot.getAttitudeVisible()
+                temperatureVisible.checked = plot.getTemperatureVisible()
+
+                var bf = plot.getDopplerBeamFilter()
+                dopplerBeamVisible.checked = plot.getDopplerBeamVisible()
+                dopplerBeam1V.checked = (bf & 1)    !== 0; dopplerBeam1A.checked = (bf & 2)    !== 0; dopplerBeam1M.checked = (bf & 4)    !== 0
+                dopplerBeam2V.checked = (bf & 8)    !== 0; dopplerBeam2A.checked = (bf & 16)   !== 0; dopplerBeam2M.checked = (bf & 32)   !== 0
+                dopplerBeam3V.checked = (bf & 64)   !== 0; dopplerBeam3A.checked = (bf & 128)  !== 0; dopplerBeam3M.checked = (bf & 256)  !== 0
+                dopplerBeam4V.checked = (bf & 512)  !== 0; dopplerBeam4A.checked = (bf & 1024) !== 0; dopplerBeam4M.checked = (bf & 2048) !== 0
+
+                var lf = plot.getDopplerInstrumentFilter()
+                dopplerInstrumentVisible.checked    = plot.getDopplerInstrumentVisible()
+                dopplerInstrumentXVisible.checked   = (lf & 1)  !== 0
+                dopplerInstrumentYVisible.checked   = (lf & 2)  !== 0
+                dopplerInstrumentZVisible.checked   = (lf & 4)  !== 0
+                dopplerInstrumentAVisible.checked   = (lf & 8)  !== 0
+                dopplerInstrumentDstVisible.checked = (lf & 16) !== 0
+
+                dvlLegendVisible.checked       = plot.getDVLLegendVisible()
+                dvlLegendPosition.currentIndex = plot.getDVLLegendPosition()
+                acousticAngleVisible.checked   = plot.getAcousticAngleVisible()
+                gnssVisible.checked            = plot.getGNSSVisible()
+
+                var gn = plot.getGridVerticalNumber()
+                gridVisible.checked = gn > 0
+                if (gn > 0) gridNumber.value = gn
+                fillWidthGrid.checked = plot.getGridFillWidth()
+                invertGrid.checked    = plot.getGridInvert()
+
+                angleVisible.checked    = plot.getAngleVisibility()
+                angleRange.value        = plot.getAngleRange()
+                velocityVisible.checked = plot.getVelocityVisible()
+                velocityRange.value     = Math.round(plot.getVelocityRange() * 1000)
+
+                var dm = plot.getDistanceAutoRange()
+                distanceAutoRange.checked = dm >= 0
+                if (dm >= 0) distanceAutoRangeList.currentIndex = dm
+
+                horisontalVertical.checked = plot.horizontal
+                loupeVisible.checked = plot.getLoupeVisible()
+                loupeSize.value      = plot.getLoupeSize()
+                loupeZoom.value      = plot.getLoupeZoom()
+            } finally {
+                plot.suspendCapture = false
+            }
+        }
 
         ColumnLayout {
 

@@ -80,6 +80,10 @@ Column {
         return effectiveSource(pathText.text, selectedLogPathSource)
     }
 
+    function escapeHtml(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    }
+
     function setImportTrackPath(path) {
         importTrackPathSource = urlSource(path)
         importPathText.text = urlDisplay(importTrackPathSource)
@@ -313,14 +317,16 @@ Column {
         id: filesList
         width: parent.width
         visible: count > 0
-        readonly property int rowHeight: Tokens.controlHMd
         readonly property int gap: Tokens.spaceXxs + 1
-        // Tight height — no phantom trailing space; spacing between sections
-        // stays governed by Column.spacing.
-        height: Math.min(count * rowHeight + Math.max(0, count - 1) * gap,
-                         10 * rowHeight + 9 * gap)
+        readonly property int collapsedRowH: Tokens.controlHMd + 2 * Tokens.spaceXs
+        readonly property int maxVisibleRows: 7
+        readonly property int sbReserve: Math.round(12 * AppPalette.scale)
+        readonly property bool overflowing: contentHeight > height + 0.5
+        height: Math.min(contentHeight,
+                         maxVisibleRows * collapsedRowH + (maxVisibleRows - 1) * gap)
+        clip: overflowing
+        interactive: overflowing
         spacing: gap
-        clip: true
         model: linkManagerWrapper.linkListModel
 
         // ListView caches delegate positions — force relayout when scale changes.
@@ -330,215 +336,271 @@ Column {
         }
 
         delegate: Item {
-            width: filesList.width
-            height: Tokens.controlHMd
+            id: connRow
+            width: filesList.width - (filesList.overflowing ? filesList.sbReserve : 0)
 
             readonly property bool isConnected: ConnectionStatus
             readonly property bool receivesData: ReceivesData
             readonly property bool notAvailable: IsNotAvailable
+            readonly property bool editing: gearBtn.checked
+            property int vPad: connRow.editing ? Tokens.spaceSm : Tokens.spaceXs
+            Behavior on vPad { NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
+            readonly property string typeLabel: LinkType === 1 ? PortName : (LinkType === 2 ? "UDP" : "TCP")
+
+            height: content.implicitHeight + 2 * vPad
 
             Rectangle {
-                anchors.fill: parent; radius: 6; clip: true
+                anchors.fill: parent; radius: Tokens.radiusMd; clip: true
                 color: isConnected ? (receivesData ? "#0D2D1A" : "#2D2200") : (notAvailable ? "#2D0D0D" : AppPalette.card)
-                border.width: 1
-                border.color: isConnected ? (receivesData ? "#10B981" : "#F59E0B") : (notAvailable ? "#EF4444" : AppPalette.border)
+                border.width: connRow.editing ? 2 : 1
+                border.color: connRow.editing ? AppPalette.accentBorder
+                       : isConnected ? (receivesData ? "#10B981" : "#F59E0B") : (notAvailable ? "#EF4444" : AppPalette.border)
                 opacity: IsUpgradingState ? 0.55 : 1.0
+                Behavior on color { ColorAnimation { duration: Anim.fadeMs } }
+                Behavior on border.color { ColorAnimation { duration: Anim.fadeMs } }
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: Tokens.spaceXs; anchors.rightMargin: Tokens.spaceXs
-                    spacing: Tokens.spaceXxs + 1
+                Column {
+                    id: content
+                    anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
+                    anchors.leftMargin: connRow.vPad; anchors.rightMargin: connRow.vPad
+                    anchors.topMargin: connRow.vPad
+                    spacing: 0
                     enabled: !IsUpgradingState
 
-                    IconBtn {
-                        id: gearBtn
-                        checkable: true
-                        iconSource: "qrc:/icons/ui/settings.svg"
-                        toolTipText: qsTr("Settings")
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredWidth: Tokens.controlHSm; Layout.preferredHeight: Tokens.controlHSm
+                    // ── Заголовок (одна строка, всегда) ──
+                    RowLayout {
+                        width: parent.width
+                        height: Tokens.controlHMd
+                        spacing: Tokens.spaceXs
+
+                        IconBtn {
+                            id: gearBtn
+                            checkable: true
+                            iconSource: "qrc:/icons/ui/settings.svg"
+                            toolTipText: qsTr("Settings")
+                            Layout.alignment: Qt.AlignVCenter
+                            Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                        }
+
+                        Text {
+                            text: connectionViewer.escapeHtml(connRow.typeLabel)
+                            color: AppPalette.text
+                            font.pixelSize: Tokens.fontXl; font.bold: true
+                            textFormat: Text.StyledText
+                            elide: Text.ElideRight
+                            Layout.fillHeight: true
+                            verticalAlignment: Text.AlignVCenter
+                            Layout.maximumWidth: Math.round((LinkType === 1 ? 80 : 44) * AppPalette.scale)
+                        }
+
+                        // Компактный read-only итог (тип уже отдельным бейджем выше)
+                        Text {
+                            visible: !connRow.editing
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
+                            color: AppPalette.text
+                            font.pixelSize: Tokens.fontLg
+                            textFormat: Text.StyledText
+                            text: {
+                                var muted = AppPalette.textMuted
+                                var esc = connectionViewer.escapeHtml
+                                if (LinkType === 1)
+                                    return '<font color="' + muted + '">' + esc(Baudrate) + '</font>'
+                                var a = esc((Address && Address.length) ? Address : "—")
+                                if (LinkType === 2)
+                                    return a + '  <font color="' + muted + '">·  ' + esc(SourcePort) + ' → ' + esc(DestinationPort) + '</font>'
+                                return a + '  <font color="' + muted + '">·  ' + esc(DestinationPort) + '</font>'
+                            }
+                        }
+
+                        // Доп.кнопки режима редактирования
+                        IconBtn {
+                            visible: connRow.editing
+                            checked: IsPinned; checkable: true
+                            iconSource: "qrc:/icons/ui/pin.svg"
+                            toolTipText: checked ? qsTr("Unpin") : qsTr("Pin")
+                            Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                            onToggled: function(v) { linkManagerWrapper.sendUpdatePinnedState(Uuid, v) }
+                        }
+                        IconBtn {
+                            visible: connRow.editing
+                            checked: ControlType; checkable: true
+                            iconSource: "qrc:/icons/ui/repeat.svg"
+                            toolTipText: qsTr("Auto reconnect")
+                            Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                            onToggled: function(v) { linkManagerWrapper.sendUpdateControlType(Uuid, Number(v)) }
+                        }
+                        IconBtn {
+                            visible: connRow.editing && (LinkType === 2 || LinkType === 3)
+                            iconSource: "qrc:/icons/ui/x.svg"; toolTipText: qsTr("Delete")
+                            Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                            onClicked: linkManagerWrapper.deleteLink(Uuid)
+                        }
+
+                        Item { visible: connRow.editing; Layout.fillWidth: true; Layout.preferredHeight: 1 }
+
+                        // Открыть / Закрыть — всегда; читает сохранённые значения из модели
+                        KButton {
+                            readonly property int openCloseW: Math.round(84 * AppPalette.scale)
+                            Layout.alignment: Qt.AlignVCenter
+                            Layout.preferredWidth: openCloseW
+                            Layout.minimumWidth: openCloseW
+                            Layout.maximumWidth: openCloseW
+                            Layout.preferredHeight: Tokens.controlHMd
+                            text: isConnected ? qsTr("Close") : qsTr("Open")
+                            fontPixelSize: Tokens.fontSm; bold: false
+                            normalBg: AppPalette.card
+                            checkedBg: "#134E2E"; checkedBorder: "#10B981"
+                            onClicked: {
+                                if (isConnected) {
+                                    linkManagerWrapper.closeLink(Uuid)
+                                } else {
+                                    switch (LinkType) {
+                                    case 1: core.closeLogFile(); linkManagerWrapper.openAsSerial(Uuid); break
+                                    case 2: core.closeLogFile(); linkManagerWrapper.openAsUdp(Uuid, Address, Number(SourcePort), Number(DestinationPort)); break
+                                    case 3: core.closeLogFile(); linkManagerWrapper.openAsTcp(Uuid, Address, 0, Number(DestinationPort)); break
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    IconBtn {
-                        visible: gearBtn.checked
-                        checked: IsPinned; checkable: true
-                        iconSource: "qrc:/icons/ui/pin.svg"
-                        toolTipText: checked ? qsTr("Unpin") : qsTr("Pin")
-                        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHSm; Layout.preferredHeight: Tokens.controlHSm
-                        onToggled: function(v) { linkManagerWrapper.sendUpdatePinnedState(Uuid, v) }
-                    }
-
-                    IconBtn {
-                        visible: gearBtn.checked
-                        checked: ControlType; checkable: true
-                        iconSource: "qrc:/icons/ui/repeat.svg"
-                        toolTipText: qsTr("Auto reconnect")
-                        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHSm; Layout.preferredHeight: Tokens.controlHSm
-                        onToggled: function(v) { linkManagerWrapper.sendUpdateControlType(Uuid, Number(v)) }
-                    }
-
-                    IconBtn {
-                        visible: gearBtn.checked && (LinkType === 2 || LinkType === 3)
-                        iconSource: "qrc:/icons/ui/x.svg"; toolTipText: qsTr("Delete")
-                        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHSm; Layout.preferredHeight: Tokens.controlHSm
-                        onClicked: linkManagerWrapper.deleteLink(Uuid)
-                    }
-
-                    // ── Serial ──
-                    Text {
-                        visible: LinkType === 1
-                        text: PortName
-                        color: AppPalette.text
-                        font.pixelSize: Tokens.fontMd; font.bold: true
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.leftMargin: gearBtn.checked ? 0 : Tokens.spaceXs
-                        Layout.preferredWidth: Math.round(64 * AppPalette.scale); elide: Text.ElideRight
-                    }
-
-                    // Serial: spacer pushes baudrate/autospeed/Open right.
+                    // ── Тело редактора (раскрывается анимированно) ──
                     Item {
-                        visible: LinkType === 1
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 1
-                    }
+                        id: editBody
+                        width: parent.width
+                        clip: true
+                        height: connRow.editing ? bodyCol.implicitHeight + connRow.vPad : 0
+                        opacity: connRow.editing ? 1 : 0
+                        Behavior on height { NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
+                        Behavior on opacity { NumberAnimation { duration: Anim.fadeMs } }
 
-                    KCombo {
-                        id: baudrateCombo
-                        visible: LinkType === 1
-                        Layout.preferredWidth: Math.round(82 * AppPalette.scale)
-                        Layout.preferredHeight: Tokens.controlHSm
-                        Layout.alignment: Qt.AlignVCenter
-                        model: linkManagerWrapper.baudrateModel
-                        currentIndex: 8
-                        displayTextOverride: Baudrate
-                        fontPixelSize: Tokens.fontXs
-                        bold: false
-                        maxVisibleItems: 9
-                        onActivated: {
-                            linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
-                            autoSpeedBtn.checked = false
-                        }
-                    }
+                        ColumnLayout {
+                            id: bodyCol
+                            y: connRow.vPad
+                            width: parent.width
+                            spacing: Tokens.spaceXs
 
-                    IconBtn {
-                        id: autoSpeedBtn
-                        visible: LinkType === 1
-                        checked: AutoSpeedSelection; checkable: true
-                        iconSource: "qrc:/icons/ui/refresh.svg"; toolTipText: qsTr("Auto search baudrate")
-                        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHSm; Layout.preferredHeight: Tokens.controlHSm
-                        onToggled: function(v) { linkManagerWrapper.sendAutoSpeedSelection(Uuid, v) }
-                        onCheckedChanged: { if (!checked) linkManagerWrapper.sendAutoSpeedSelection(Uuid, false) }
-                    }
+                            // UDP/TCP — адрес
+                            RowLayout {
+                                visible: LinkType === 2 || LinkType === 3
+                                Layout.fillWidth: true
+                                spacing: Tokens.spaceXs
+                                Text { text: qsTr("IP"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; Layout.preferredWidth: Math.round(34 * AppPalette.scale) }
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+                                    border.color: ipField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                    TextInput {
+                                        id: ipField
+                                        anchors.fill: parent
+                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
+                                        text: Address
+                                        onTextEdited: linkManagerWrapper.sendUpdateAddress(Uuid, text)
+                                    }
+                                }
+                            }
 
-                    // ── UDP / TCP ──
-                    Text {
-                        visible: LinkType === 2 || LinkType === 3
-                        text: LinkType === 2 ? "UDP" : "TCP"
-                        color: AppPalette.text
-                        font.pixelSize: Tokens.fontMd; font.bold: true
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.leftMargin: gearBtn.checked ? 0 : Tokens.spaceXs
-                        Layout.preferredWidth: Math.round(36 * AppPalette.scale)
-                    }
+                            // UDP — порты src/dst во всю строку
+                            RowLayout {
+                                visible: LinkType === 2
+                                Layout.fillWidth: true
+                                spacing: Tokens.spaceXs
+                                Text { text: qsTr("src"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; Layout.preferredWidth: Math.round(34 * AppPalette.scale) }
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+                                    border.color: srcPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                    TextInput {
+                                        id: srcPortField
+                                        anchors.fill: parent
+                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase
+                                        text: SourcePort
+                                        onTextEdited: linkManagerWrapper.sendUpdateSourcePort(Uuid, text)
+                                    }
+                                }
+                                Text { text: qsTr("dst"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase }
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+                                    border.color: dstPortFieldUdp.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                    TextInput {
+                                        id: dstPortFieldUdp
+                                        anchors.fill: parent
+                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase
+                                        text: DestinationPort
+                                        onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
+                                    }
+                                }
+                            }
 
-                    Rectangle {
-                        visible: LinkType === 2 || LinkType === 3
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: Math.round(40 * AppPalette.scale)
-                        Layout.preferredHeight: Tokens.controlHSm
-                        radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
-                        border.color: ipField.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                        Layout.alignment: Qt.AlignVCenter
-                        TextInput {
-                            id: ipField
-                            anchors.fill: parent
-                            anchors.leftMargin: Tokens.spaceSm
-                            anchors.rightMargin: Tokens.spaceXs
-                            anchors.topMargin: Tokens.spaceXxs
-                            anchors.bottomMargin: Tokens.spaceXxs
-                            verticalAlignment: TextInput.AlignVCenter
-                            color: AppPalette.text; font.pixelSize: Tokens.fontXs; clip: true
-                            text: Address
-                            onTextEdited: linkManagerWrapper.sendUpdateAddress(Uuid, text)
-                        }
-                    }
+                            // TCP — порт сервера в половину строки
+                            RowLayout {
+                                visible: LinkType === 3
+                                Layout.fillWidth: true
+                                spacing: Tokens.spaceXs
+                                Text { text: qsTr("srv"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; Layout.preferredWidth: Math.round(34 * AppPalette.scale) }
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+                                    border.color: dstPortFieldTcp.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                    TextInput {
+                                        id: dstPortFieldTcp
+                                        anchors.fill: parent
+                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase
+                                        text: DestinationPort
+                                        onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
+                                    }
+                                }
+                                Item { Layout.fillWidth: true }
+                            }
 
-                    Text {
-                        visible: LinkType === 2 && !gearBtn.checked
-                        text: qsTr("src:")
-                        color: AppPalette.borderFocus; font.pixelSize: Tokens.fontXs; Layout.alignment: Qt.AlignVCenter
-                    }
-
-                    Rectangle {
-                        visible: LinkType === 2
-                        Layout.preferredWidth: Math.round(50 * AppPalette.scale)
-                        Layout.minimumWidth: Math.round(40 * AppPalette.scale)
-                        Layout.preferredHeight: Tokens.controlHSm
-                        radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
-                        border.color: srcPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                        Layout.alignment: Qt.AlignVCenter
-                        TextInput {
-                            id: srcPortField
-                            anchors.fill: parent
-                            anchors.leftMargin: Tokens.spaceSm
-                            anchors.rightMargin: Tokens.spaceXs
-                            anchors.topMargin: Tokens.spaceXxs
-                            anchors.bottomMargin: Tokens.spaceXxs
-                            verticalAlignment: TextInput.AlignVCenter
-                            color: AppPalette.text; font.pixelSize: Tokens.fontXs
-                            text: SourcePort
-                            onTextEdited: linkManagerWrapper.sendUpdateSourcePort(Uuid, text)
-                        }
-                    }
-
-                    Text {
-                        visible: (LinkType === 2 || LinkType === 3) && !gearBtn.checked
-                        text: LinkType === 2 ? qsTr("dst:") : qsTr("srv:")
-                        color: AppPalette.borderFocus; font.pixelSize: Tokens.fontXs; Layout.alignment: Qt.AlignVCenter
-                    }
-
-                    Rectangle {
-                        visible: LinkType === 2 || LinkType === 3
-                        Layout.preferredWidth: Math.round(50 * AppPalette.scale)
-                        Layout.minimumWidth: Math.round(40 * AppPalette.scale)
-                        Layout.preferredHeight: Tokens.controlHSm
-                        radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
-                        border.color: dstPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                        Layout.alignment: Qt.AlignVCenter
-                        TextInput {
-                            id: dstPortField
-                            anchors.fill: parent
-                            anchors.leftMargin: Tokens.spaceSm
-                            anchors.rightMargin: Tokens.spaceXs
-                            anchors.topMargin: Tokens.spaceXxs
-                            anchors.bottomMargin: Tokens.spaceXxs
-                            verticalAlignment: TextInput.AlignVCenter
-                            color: AppPalette.text; font.pixelSize: Tokens.fontXs
-                            text: DestinationPort
-                            onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
-                        }
-                    }
-
-                    // Open / Close
-                    KButton {
-                        readonly property int openCloseW: Math.round(64 * AppPalette.scale)
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredWidth: openCloseW
-                        Layout.minimumWidth: openCloseW
-                        Layout.maximumWidth: openCloseW
-                        Layout.preferredHeight: Tokens.controlHSm
-                        text: isConnected ? qsTr("Close") : qsTr("Open")
-                        fontPixelSize: Tokens.fontXs; bold: false
-                        normalBg: AppPalette.card
-                        checkedBg: "#134E2E"; checkedBorder: "#10B981"
-                        onClicked: {
-                            if (isConnected) {
-                                linkManagerWrapper.closeLink(Uuid)
-                            } else {
-                                switch (LinkType) {
-                                case 1: core.closeLogFile(); linkManagerWrapper.openAsSerial(Uuid); break
-                                case 2: core.closeLogFile(); linkManagerWrapper.openAsUdp(Uuid, ipField.text, Number(srcPortField.text), Number(dstPortField.text)); break
-                                case 3: core.closeLogFile(); linkManagerWrapper.openAsTcp(Uuid, ipField.text, 0, Number(dstPortField.text)); break
+                            // Serial — бодрейт + автопоиск
+                            RowLayout {
+                                visible: LinkType === 1
+                                Layout.fillWidth: true
+                                spacing: Tokens.spaceXs
+                                Text { text: qsTr("baudrate"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; Layout.preferredWidth: Math.round(70 * AppPalette.scale) }
+                                KCombo {
+                                    id: baudrateCombo
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    model: linkManagerWrapper.baudrateModel
+                                    currentIndex: 8
+                                    displayTextOverride: Baudrate
+                                    fontPixelSize: Tokens.fontBase
+                                    bold: false
+                                    maxVisibleItems: 9
+                                    onActivated: {
+                                        linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                                        autoSpeedBtn.checked = false
+                                    }
+                                }
+                                IconBtn {
+                                    id: autoSpeedBtn
+                                    checked: AutoSpeedSelection; checkable: true
+                                    iconSource: "qrc:/icons/ui/refresh.svg"; toolTipText: qsTr("Auto search baudrate")
+                                    Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                                    onToggled: function(v) { linkManagerWrapper.sendAutoSpeedSelection(Uuid, v) }
+                                    onCheckedChanged: { if (!checked) linkManagerWrapper.sendAutoSpeedSelection(Uuid, false) }
                                 }
                             }
                         }
@@ -553,7 +615,10 @@ Column {
             }
         }
 
-        ScrollBar.vertical: ScrollBar { }
+        ScrollBar.vertical: ScrollBar {
+            policy: filesList.overflowing ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+            width: filesList.sbReserve
+        }
         onCountChanged: Qt.callLater(positionViewAtEnd)
     }
 

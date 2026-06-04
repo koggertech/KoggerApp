@@ -931,6 +931,31 @@
         <translation>Auto search baudrate</translation>
     </message>
     <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="475"/>
+        <source>IP</source>
+        <translation>IP</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="499"/>
+        <source>src</source>
+        <translation>src</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="516"/>
+        <source>dst</source>
+        <translation>dst</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="541"/>
+        <source>srv</source>
+        <translation>srv</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="566"/>
+        <source>baudrate</source>
+        <translation>baudrate</translation>
+    </message>
+    <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="468"/>
         <source>src:</source>
         <translation>src:</translation>

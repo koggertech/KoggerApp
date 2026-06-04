@@ -13,6 +13,7 @@ Column {
     readonly property real groupWidth: Math.max(0, width)
 
     SettingsGroup {
+        id: connGroup
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Connections")
@@ -25,7 +26,8 @@ Column {
         Loader {
             id: connectionsLoader
             width: parent.width
-            active: true
+            active: connGroup.expanded
+                    && (root.store ? root.store.settingsPanelOpen === true : false)
             asynchronous: true
             source: "qrc:/qml/devices/ConnectionViewer.qml"
 

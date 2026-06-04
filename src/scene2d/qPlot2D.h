@@ -239,6 +239,31 @@ public slots:
     Q_INVOKABLE int getEchogramCompensation() const { return Plot2D::getEchogramCompensation(); }
     Q_INVOKABLE float getLoupeDepthForEpoch(int epochIndx) const;
     Q_INVOKABLE int getPreferredLoupeEpochIndex(int preferredEpochIndx = -1) const;
+
+    Q_INVOKABLE bool getEchogramVisible() const { return Plot2D::getEchogramVisible(); }
+    Q_INVOKABLE bool getBottomTrackDepthTextVisible() const { return Plot2D::getBottomTrackDepthTextVisible(); }
+    Q_INVOKABLE bool getRangefinderDepthTextVisible() const { return Plot2D::getRangefinderDepthTextVisible(); }
+    Q_INVOKABLE bool getAttitudeVisible() const { return Plot2D::getAttitudeVisible(); }
+    Q_INVOKABLE bool getTemperatureVisible() const { return Plot2D::getTemperatureVisible(); }
+    Q_INVOKABLE bool getDopplerBeamVisible() const { return Plot2D::getDopplerBeamVisible(); }
+    Q_INVOKABLE int getDopplerBeamFilter() const { return Plot2D::getDopplerBeamFilter(); }
+    Q_INVOKABLE bool getDopplerInstrumentVisible() const { return Plot2D::getDopplerInstrumentVisible(); }
+    Q_INVOKABLE int getDopplerInstrumentFilter() const { return Plot2D::getDopplerInstrumentFilter(); }
+    Q_INVOKABLE bool getDVLLegendVisible() const { return Plot2D::getDVLLegendVisible(); }
+    Q_INVOKABLE int getDVLLegendPosition() const { return Plot2D::getDVLLegendPosition(); }
+    Q_INVOKABLE bool getAcousticAngleVisible() const { return Plot2D::getAcousticAngleVisible(); }
+    Q_INVOKABLE bool getGNSSVisible() const { return Plot2D::getGNSSVisible(); }
+    Q_INVOKABLE int getGridVerticalNumber() const { return Plot2D::getGridVerticalNumber(); }
+    Q_INVOKABLE bool getGridFillWidth() const { return Plot2D::getGridFillWidth(); }
+    Q_INVOKABLE bool getGridInvert() const { return Plot2D::getGridInvert(); }
+    Q_INVOKABLE bool getAngleVisibility() const { return Plot2D::getAngleVisibility(); }
+    Q_INVOKABLE int getAngleRange() const { return Plot2D::getAngleRange(); }
+    Q_INVOKABLE bool getVelocityVisible() const { return Plot2D::getVelocityVisible(); }
+    Q_INVOKABLE float getVelocityRange() const { return Plot2D::getVelocityRange(); }
+    Q_INVOKABLE int getDistanceAutoRange() const { return Plot2D::getDistanceAutoRange(); }
+    Q_INVOKABLE bool getLoupeVisible() const { return Plot2D::getLoupeVisible(); }
+    Q_INVOKABLE int getLoupeSize() const { return Plot2D::getLoupeSize(); }
+    Q_INVOKABLE int getLoupeZoom() const { return Plot2D::getLoupeZoom(); }
     void doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz, bool manual);
     void refreshDistParams(int preset, int windowSize, float verticalGap, float rangeMin, float rangeMax, float gainSlope, float threshold, float offsetX, float offsetY, float offsetZ);
 

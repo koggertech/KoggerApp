@@ -503,10 +503,17 @@ Item {
                     if (typeof core !== "undefined" && core && typeof core.registerPlot2D === "function")
                         core.registerPlot2D(slotPlot)
                     syncPlotRegistration()
+                    restoreEchogramForThisSlot()
                 }
 
                 onSlotLeafIdChanged: {
                     syncPlotRegistration()
+                    restoreEchogramForThisSlot()
+                }
+
+                onEchogramStateChanged: {
+                    if (workspace.store && slotLeafId > 0)
+                        workspace.store.captureEchogramState(slotPlot, slotLeafId)
                 }
 
                 onSettingsClicked: {
@@ -531,6 +538,15 @@ Item {
                         workspace.registerPlotItem(slotLeafId, slotPlot)
                         registeredLeafId = slotLeafId
                     }
+                }
+
+                function restoreEchogramForThisSlot() {
+                    if (!workspace.store || slotLeafId <= 0)
+                        return
+                    Qt.callLater(function() {
+                        if (workspace.store && slotLeafId > 0)
+                            workspace.store.restoreEchogramStateForLeaf(slotPlot, slotLeafId)
+                    })
                 }
             }
         }

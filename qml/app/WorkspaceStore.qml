@@ -29,6 +29,7 @@ property int dropTargetLeafId: -1
 property point dragCursor: Qt.point(0, 0)
 property bool dragActive: false
 property var slotContentIds: []
+property var liveEchogramStates: ({})
 
 property int activeLeafId: -1
 property int edgeResizeMovingSplitId: -1
@@ -277,6 +278,19 @@ property Settings layoutStore: Settings {
     property string globalPopupStateJson: "{\"x\":-1,\"y\":-1,\"collapsed\":false,\"expandedWidth\":-1,\"expandedHeight\":-1}"
     property bool secondaryWindowOpenStored: false
     property string secondaryWindowModeStored: ""
+    property string liveEchogramStatesJson: "{}"
+}
+
+property Timer liveEchogramPersistTimer: Timer {
+    interval: 400
+    repeat: false
+    onTriggered: layoutStore.liveEchogramStatesJson = JSON.stringify(liveEchogramStates)
+}
+
+property Timer favoriteStateSaveTimer: Timer {
+    interval: 400
+    repeat: false
+    onTriggered: saveFavoriteLayoutsState()
 }
 
 onEditableModeChanged: {
@@ -408,7 +422,18 @@ function openAppLayoutSettings() {
     closeModeSettingsPanel()
     echogramSettingsActive = false
     settingsPanelOpen = true
-    setSettingsGroupExpanded("app.layoutPlacement", true)
+
+    var key = "app.layoutPlacement"
+    setSettingsGroupExpanded(key, true)
+    pendingScrollGroupKey = key
+    for (var i = 0; i < _settingsGroupInstances.length; ++i) {
+        var g = _settingsGroupInstances[i]
+        if (g && g.stateKey === key && typeof g._scrollToTop === "function") {
+            Qt.callLater(g._scrollToTop)
+            pendingScrollGroupKey = ""
+            break
+        }
+    }
 }
 
 function openEchogramSettings(plot, title) {
@@ -1363,9 +1388,20 @@ function normalizeFavoriteLayoutEntry(rawEntry) {
         return null
 
     var normalizedLinks = normalizeFavoritePopupLinks(rawEntry.popupLinks, normalizedLayout)
+    var normalizedStates = {}
+    if (rawEntry.echogramStates && typeof rawEntry.echogramStates === "object") {
+        for (var pk in rawEntry.echogramStates) {
+            if (!rawEntry.echogramStates.hasOwnProperty(pk))
+                continue
+            var v = rawEntry.echogramStates[pk]
+            if (typeof v === "string" && v.length > 0)
+                normalizedStates[String(pk)] = v
+        }
+    }
     return {
         layout: normalizedLayout,
-        popupLinks: normalizedLinks
+        popupLinks: normalizedLinks,
+        echogramStates: normalizedStates
     }
 }
 
@@ -1383,7 +1419,8 @@ function favoriteLayoutEntryFromCurrent() {
 
     return {
         layout: layoutSnapshot,
-        popupLinks: favoritePopupLinksFromLeafMapping(snapshotState.leafIdToPaneId, fullscreenPopupSourceByHost)
+        popupLinks: favoritePopupLinksFromLeafMapping(snapshotState.leafIdToPaneId, fullscreenPopupSourceByHost),
+        echogramStates: echogramStatesForCurrentTree(snapshotState.leafIdToPaneId)
     }
 }
 
@@ -1426,6 +1463,135 @@ function favoriteLayoutIndexBySignature(signature) {
             return i
     }
     return -1
+}
+
+function persistLiveEchogramStatesSoon() {
+    liveEchogramPersistTimer.restart()
+}
+
+function loadLiveEchogramStates() {
+    var parsed = {}
+    try { parsed = JSON.parse(layoutStore.liveEchogramStatesJson || "{}") } catch (e) { parsed = {} }
+    liveEchogramStates = (parsed && typeof parsed === "object" && !Array.isArray(parsed)) ? parsed : ({})
+}
+
+function echogramStatesForCurrentTree(leafIdToPaneId) {
+    var out = {}
+    if (!leafIdToPaneId)
+        return out
+    for (var leafKey in leafIdToPaneId) {
+        if (!leafIdToPaneId.hasOwnProperty(leafKey))
+            continue
+        var pane = paneByLeafId(layoutTree, parseInt(leafKey))
+        if (!pane || normalizedPaneMode(pane.mode) !== "2D" || !pane.contentId)
+            continue
+        var s = liveEchogramStates[pane.contentId]
+        if (s)
+            out[String(leafIdToPaneId[leafKey])] = s
+    }
+    return out
+}
+
+function activeFavoriteIndex() {
+    return favoriteLayoutIndexBySignature(currentLayoutFavoriteSignature)
+}
+
+function writeActiveFavoriteEchogramState(paneId, s) {
+    var idx = activeFavoriteIndex()
+    if (idx < 0)
+        return
+    var next = favoriteLayouts.slice(0)
+    var entry = next[idx]
+    var states = (entry.echogramStates && typeof entry.echogramStates === "object")
+        ? Object.assign({}, entry.echogramStates) : ({})
+    states[String(paneId)] = s
+    next[idx] = { layout: entry.layout, popupLinks: entry.popupLinks, echogramStates: states }
+    favoriteLayouts = next
+    favoriteStateSaveTimer.restart()
+}
+
+function captureEchogramState(plot, leafId, includeFavorite) {
+    if (includeFavorite === undefined)
+        includeFavorite = true
+    if (!plot || leafId < 0)
+        return
+    var pane = paneByLeafId(layoutTree, leafId)
+    if (!pane || normalizedPaneMode(pane.mode) !== "2D" || !pane.contentId)
+        return
+    var s = echogramStateSerializer.serialize(plot)
+    if (!s || s.length === 0)
+        return
+    var next = Object.assign({}, liveEchogramStates)
+    next[pane.contentId] = s
+    liveEchogramStates = next
+    persistLiveEchogramStatesSoon()
+    if (includeFavorite && currentLayoutIsFavorite)
+        writeActiveFavoriteEchogramState(pane.paneId, s)
+}
+
+function restoreEchogramStateForLeaf(plot, leafId) {
+    if (!plot || leafId < 0)
+        return
+    var pane = paneByLeafId(layoutTree, leafId)
+    if (!pane || normalizedPaneMode(pane.mode) !== "2D" || !pane.contentId)
+        return
+    var s = liveEchogramStates[pane.contentId]
+    if (!s) {
+        captureEchogramState(plot, leafId, false)
+        return
+    }
+    if (echogramStateSerializer.deserialize(plot, s)) {
+        if (plot.viewState && typeof plot.viewState.reloadFromPlot === "function")
+            plot.viewState.reloadFromPlot()
+    }
+}
+
+function seedLiveEchogramStatesFromFavorite(entry, tree) {
+    if (!entry || !entry.echogramStates || !tree)
+        return
+    var panes = []
+    allLeafPanes(tree, panes)
+    var next = Object.assign({}, liveEchogramStates)
+    var changed = false
+    for (var i = 0; i < panes.length; ++i) {
+        var p = panes[i]
+        if (!p || normalizedPaneMode(p.mode) !== "2D" || !p.contentId)
+            continue
+        var s = entry.echogramStates[String(p.paneId)]
+        if (s) {
+            next[p.contentId] = s
+            changed = true
+        }
+    }
+    if (changed) {
+        liveEchogramStates = next
+        persistLiveEchogramStatesSoon()
+    }
+}
+
+function pruneLiveEchogramStates() {
+    if (!layoutTree)
+        return
+    var panes = []
+    allLeafPanes(layoutTree, panes)
+    var alive = {}
+    for (var i = 0; i < panes.length; ++i)
+        if (panes[i] && panes[i].contentId)
+            alive[panes[i].contentId] = true
+    var next = {}
+    var changed = false
+    for (var k in liveEchogramStates) {
+        if (!liveEchogramStates.hasOwnProperty(k))
+            continue
+        if (alive[k])
+            next[k] = liveEchogramStates[k]
+        else
+            changed = true
+    }
+    if (changed) {
+        liveEchogramStates = next
+        persistLiveEchogramStatesSoon()
+    }
 }
 
 function captureEdgeResizeFavoriteSignature() {
@@ -1644,7 +1810,8 @@ function updateCurrentLayoutFavoriteState() {
             var next = favoriteLayouts.slice(0)
             next[matchedIndex] = {
                 layout: currentEntry.layout,
-                popupLinks: stored.popupLinks
+                popupLinks: stored.popupLinks,
+                echogramStates: stored.echogramStates || {}
             }
             favoriteLayouts = next
             saveFavoriteLayoutsState()
@@ -1929,6 +2096,13 @@ function saveLayoutState() {
     if (!layoutTree)
         return
 
+    pruneLiveEchogramStates()
+    liveEchogramPersistTimer.stop()
+    layoutStore.liveEchogramStatesJson = JSON.stringify(liveEchogramStates)
+    if (favoriteStateSaveTimer.running) {
+        favoriteStateSaveTimer.stop()
+        saveFavoriteLayoutsState()
+    }
     saveFullscreenPopupState()
     saveGlobalPopupPreferences()
     layoutStore.layoutJson = JSON.stringify(layoutTree)
@@ -2149,6 +2323,7 @@ function applyFavoriteLayout(favoriteIndex) {
 
     var normalizedTree = normalizeAndFixPaneModes(renumberPanes(tree), false)
     layoutTree = normalizedTree
+    seedLiveEchogramStatesFromFavorite(entry, normalizedTree)
     fullscreenPopupSourceByHost = popupSourceMapFromFavoriteEntry(entry, normalizedTree)
     fullscreenPopupStateByHost = ({})
     sanitizeFullscreenPopupConfig()
@@ -3068,6 +3243,7 @@ function finishPaneDrag() {
 Component.onCompleted: {
     loadSettingsGroupsState()
     loadFavoriteLayoutsState()
+    loadLiveEchogramStates()
     loadFullscreenPopupState()
     loadGlobalPopupPreferences()
     if (!restoreLayoutState()) {
