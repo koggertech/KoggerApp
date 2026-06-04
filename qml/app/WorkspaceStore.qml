@@ -508,12 +508,12 @@ function setActiveDeviceSN(sn) {
     activeDeviceSN = sn
 }
 
-property int scrollToDeviceSettingsEpoch: 0
+property bool deviceSettingsScrollPending: false   // one-shot; survives lazy ConnectionViewer load (see qml-devices.md)
 
 function openConnectionsWithDevice(sn) {
     setActiveDeviceSN(sn)
     openConnectionsSettings()
-    scrollToDeviceSettingsEpoch += 1
+    deviceSettingsScrollPending = true
 }
 
 function toggleAppLayoutSettings() {

@@ -103,7 +103,7 @@ Column {
 
     onStoreChanged: {
         syncActiveDevice()
-        _claimScrollEpoch()
+        _maybeScrollToDevice()
     }
 
     Connections {
@@ -879,35 +879,27 @@ Column {
         dev: connectionViewer.dev
     }
 
-    property int _lastHandledScrollEpoch: -1
-
     Timer {
         id: scrollToDeviceSettingsTimer
         interval: 240
         repeat: false
-        onTriggered: connectionViewer._scrollToDeviceSettings()
+        onTriggered: {
+            connectionViewer._scrollToDeviceSettings()
+            if (connectionViewer.store)
+                connectionViewer.store.deviceSettingsScrollPending = false
+        }
     }
 
-    function _claimScrollEpoch() {
-        if (!connectionViewer.store
-                || typeof connectionViewer.store.scrollToDeviceSettingsEpoch !== "number")
-            return
-        var e = connectionViewer.store.scrollToDeviceSettingsEpoch
-        if (_lastHandledScrollEpoch < 0) {
-            _lastHandledScrollEpoch = e
-            return
-        }
-        if (e === _lastHandledScrollEpoch) return
-        _lastHandledScrollEpoch = e
-        if (e > 0)
+    function _maybeScrollToDevice() {
+        if (connectionViewer.store && connectionViewer.store.deviceSettingsScrollPending === true)
             scrollToDeviceSettingsTimer.restart()
     }
 
     Connections {
         target: connectionViewer.store
         ignoreUnknownSignals: true
-        function onScrollToDeviceSettingsEpochChanged() {
-            connectionViewer._claimScrollEpoch()
+        function onDeviceSettingsScrollPendingChanged() {
+            connectionViewer._maybeScrollToDevice()
         }
     }
 
