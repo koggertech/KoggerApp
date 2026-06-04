@@ -246,6 +246,14 @@ ApplicationWindow {
             workspaceStore.closeModeSettingsPanel()
             return true
         },
+        function() {  // HotActions bottom-track edit tool — Esc cancels edit mode
+            var toolActive = typeof core !== "undefined" && core && core.bottomTrackEditTool !== 0
+            if (!hotActions.btEditMenuOpen && !toolActive) return false
+            hotActions.btEditMenuOpen = false
+            if (typeof core !== "undefined" && core)
+                core.setBottomTrackEditTool(0)
+            return true
+        },
         function() {  // HotActions favorites popup
             if (!hotActions.layoutsMenuOpen) return false
             hotActions.layoutsMenuOpen = false
@@ -551,6 +559,7 @@ ApplicationWindow {
             store: workspaceStore
             favoritesEnabled: workspaceStore.quickActionFavoritesEnabled
             connectionStatusToolVisible: workspaceStore.quickActionConnectionStatusEnabled
+            bottomTrackEditorEnabled: workspaceStore.quickActionBottomTrackEnabled
             inputDeviceLabel: workspaceView.inputDeviceLabel
             inputDeviceColor: workspaceView.inputDeviceColor
             showToggleButton: !workspaceStore.settingsPanelOpen && !workspaceStore.modeSettingsPanelOpen

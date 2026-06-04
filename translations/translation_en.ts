@@ -13,6 +13,11 @@
     <name>AppSettingsPage</name>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Show bottom track editing</source>
+        <translation>Show bottom track editing</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
         <source>Pos zeroing</source>
         <translation>Pos zeroing</translation>
     </message>
@@ -2517,6 +2522,36 @@
 </context>
 <context>
     <name>HotActionsPanel</name>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Navigate</source>
+        <translation>Navigate</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Draw bottom track</source>
+        <translation>Draw bottom track</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Raise bottom track</source>
+        <translation>Raise bottom track</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Lower bottom track</source>
+        <translation>Lower bottom track</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Erase bottom track</source>
+        <translation>Erase bottom track</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Bottom track editing</source>
+        <translation>Bottom track editing</translation>
+    </message>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="209"/>
         <source>Open layout settings</source>

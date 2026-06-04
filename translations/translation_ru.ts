@@ -13,6 +13,11 @@
     <name>AppSettingsPage</name>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Show bottom track editing</source>
+        <translation>Показывать редактирование трека дна</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
         <source>Pos zeroing</source>
         <translation>Обнуление координат</translation>
     </message>
@@ -2532,6 +2537,36 @@
 </context>
 <context>
     <name>HotActionsPanel</name>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Navigate</source>
+        <translation>Навигация</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Draw bottom track</source>
+        <translation>Рисовать трек дна</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Raise bottom track</source>
+        <translation>Поднять трек дна</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Lower bottom track</source>
+        <translation>Опустить трек дна</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Erase bottom track</source>
+        <translation>Стереть трек дна</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Bottom track editing</source>
+        <translation>Редактирование трека дна</translation>
+    </message>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="209"/>
         <source>Open layout settings</source>

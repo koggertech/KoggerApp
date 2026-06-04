@@ -13,6 +13,11 @@
     <name>AppSettingsPage</name>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Show bottom track editing</source>
+        <translation>Pokaż edycję śladu dna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
         <source>Pos zeroing</source>
         <translation>Zerowanie pozycji</translation>
     </message>
@@ -2532,6 +2537,36 @@
 </context>
 <context>
     <name>HotActionsPanel</name>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Navigate</source>
+        <translation>Nawigacja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Draw bottom track</source>
+        <translation>Rysuj ślad dna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Raise bottom track</source>
+        <translation>Podnieś ślad dna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Lower bottom track</source>
+        <translation>Obniż ślad dna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Erase bottom track</source>
+        <translation>Wymaż ślad dna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Bottom track editing</source>
+        <translation>Edycja śladu dna</translation>
+    </message>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="209"/>
         <source>Open layout settings</source>

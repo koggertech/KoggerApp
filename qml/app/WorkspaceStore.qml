@@ -62,6 +62,7 @@ property string settingsSide: "left"
 property string selectedConnectionFilePath: ""
 property bool quickActionFavoritesEnabled: true
 property bool quickActionConnectionStatusEnabled: true
+property bool quickActionBottomTrackEnabled: true
 property string hotkeysRevealKey: ""
 property int hotkeysRevealNonce: 0
 // Live reference to the HotkeysDialog while it's open (set by the dialog
@@ -268,6 +269,7 @@ property Settings layoutStore: Settings {
     property string settingsSideStored: "left"
     property bool quickActionFavoritesEnabledStored: true
     property bool quickActionConnectionStatusEnabledStored: true
+    property bool quickActionBottomTrackEnabledStored: true
     property string selectedConnectionFilePathStored: ""
     property string favoriteLayoutsJson: "[]"
     property string settingsGroupExpandedJson: "{}"
@@ -2113,6 +2115,7 @@ function saveLayoutState() {
     layoutStore.settingsSideStored = settingsSide
     layoutStore.quickActionFavoritesEnabledStored = quickActionFavoritesEnabled
     layoutStore.quickActionConnectionStatusEnabledStored = quickActionConnectionStatusEnabled
+    layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
     layoutStore.secondaryWindowOpenStored = secondaryWindowOpen
     layoutStore.secondaryWindowModeStored = secondaryWindowMode
@@ -2143,6 +2146,7 @@ function restoreLayoutState() {
     settingsSide = normalizedSettingsSide(layoutStore.settingsSideStored)
     quickActionFavoritesEnabled = layoutStore.quickActionFavoritesEnabledStored
     quickActionConnectionStatusEnabled = layoutStore.quickActionConnectionStatusEnabledStored
+    quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored
     secondaryWindowMode = (storedSecondaryMode === "2D" || storedSecondaryMode === "3D") ? storedSecondaryMode : ""

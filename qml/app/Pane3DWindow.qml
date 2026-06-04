@@ -127,43 +127,6 @@ Item {
             CMouseOpacityArea { toolTipText: qsTr("Delete ruler"); popupPosition: "topRight" }
             onClicked: { if (root.scene3dView) root.scene3dView.rulerDeleteSelected(); contextMenu3D.visible = false }
         }
-        // BottomTrack actions (when ruler/geojson not active)
-        CheckButton {
-            checkable: false; iconSource: "qrc:/icons/ui/arrow_bar_to_down.svg"
-            backColor: theme.controlBackColor; borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            implicitHeight: theme.controlHeight * 1.3; implicitWidth: theme.controlHeight * 1.3
-            visible: root.scene3dView ? !(root.scene3dView.rulerEnabled || root.scene3dView.rulerSelected || root.scene3dView.geoJsonEnabled) : true
-            CMouseOpacityArea { toolTipText: qsTr("Set as min dist"); popupPosition: "topRight" }
-            onClicked: { if (root.scene3dView) root.scene3dView.bottomTrackActionEvent(3); contextMenu3D.visible = false }
-        }
-        CheckButton {
-            checkable: false; iconSource: "qrc:/icons/ui/arrow_bar_to_up.svg"
-            backColor: theme.controlBackColor; borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            implicitHeight: theme.controlHeight * 1.3; implicitWidth: theme.controlHeight * 1.3
-            visible: root.scene3dView ? !(root.scene3dView.rulerEnabled || root.scene3dView.rulerSelected || root.scene3dView.geoJsonEnabled) : true
-            CMouseOpacityArea { toolTipText: qsTr("Set as max dist"); popupPosition: "topRight" }
-            onClicked: { if (root.scene3dView) root.scene3dView.bottomTrackActionEvent(2); contextMenu3D.visible = false }
-        }
-        CheckButton {
-            checkable: false; iconSource: "qrc:/icons/ui/eraser.svg"
-            backColor: theme.controlBackColor; borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            implicitHeight: theme.controlHeight * 1.3; implicitWidth: theme.controlHeight * 1.3
-            visible: root.scene3dView ? !(root.scene3dView.rulerEnabled || root.scene3dView.rulerSelected || root.scene3dView.geoJsonEnabled) : true
-            CMouseOpacityArea { toolTipText: qsTr("Clear dist processing"); popupPosition: "topRight" }
-            onClicked: { if (root.scene3dView) root.scene3dView.bottomTrackActionEvent(1); contextMenu3D.visible = false }
-        }
-        CheckButton {
-            checkable: false; iconSource: "qrc:/icons/ui/x.svg"
-            backColor: theme.controlBackColor; borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            implicitHeight: theme.controlHeight * 1.3; implicitWidth: theme.controlHeight * 1.3
-            visible: root.scene3dView ? !(root.scene3dView.rulerEnabled || root.scene3dView.rulerSelected || root.scene3dView.geoJsonEnabled) : true
-            CMouseOpacityArea { toolTipText: qsTr("Deselect"); popupPosition: "topRight" }
-            onClicked: { if (root.scene3dView) root.scene3dView.bottomTrackActionEvent(0); contextMenu3D.visible = false }
-        }
     }
 
     PaneInputBridge {
@@ -178,8 +141,18 @@ Item {
                     || (!root.workspaceRoot.store.editableMode
                         && root.workspaceRoot.store.modePickerLeafId === -1))
 
-        onScene3dRightReleased: function(x, y) {
-            contextMenu3D.position(x, y)
+        onScene3dRightReleased: function(x, y, wasDrag) {
+            var v = root.scene3dView
+            // Ruler / GeoJSON keep their own context menu.
+            if (v && (v.rulerEnabled || v.rulerSelected || v.geoJsonEnabled)) {
+                contextMenu3D.position(x, y)
+                return
+            }
+            // Box-selection finished → apply active tool to selected vertices.
+            // unified 2=up→MaxDistProc(2), 3=down→MinDistProc(3), 4=delete→ClearDistProc(1)
+            var tool = (typeof core !== "undefined" && core) ? core.bottomTrackEditTool : 0
+            if (wasDrag && v && (tool === 2 || tool === 3 || tool === 4))
+                v.bottomTrackActionEvent(tool === 4 ? 1 : tool)
         }
     }
 

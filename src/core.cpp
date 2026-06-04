@@ -2073,6 +2073,15 @@ void Core::setPosZeroing(bool state)
     emit posZeroingChanged();
 }
 
+void Core::setBottomTrackEditTool(int tool)
+{
+    if (bottomTrackEditTool_ == tool) {
+        return;
+    }
+    bottomTrackEditTool_ = tool;
+    emit bottomTrackEditToolChanged();
+}
+
 void Core::setBottomTrackZeroing(bool state)
 {
     isBottomTrackZeroing_ = state;

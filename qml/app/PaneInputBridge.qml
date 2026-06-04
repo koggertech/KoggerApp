@@ -10,7 +10,7 @@ Item {
     property string paneKind: "2D"
     property bool active: true
 
-    signal scene3dRightReleased(real x, real y)
+    signal scene3dRightReleased(real x, real y, bool wasDrag)
     property bool focusOnPointer: true
     property int lastKeyPressed: Qt.Key_unknown
     property int lastMouseButtons: Qt.NoButton
@@ -188,6 +188,10 @@ Item {
             // and can leave hover/drag/selection state inconsistent.
             property bool _skipNextRelease: false
 
+            // RMB press position — used to tell a click (open editor) from a
+            // drag (box-select → apply active bottom-track tool) on release.
+            property point _rmbPressPos: Qt.point(-10000, -10000)
+
             onPressed: function(mouse) {
                 if (root.focusOnPointer)
                     overlay.forceActiveFocus()
@@ -195,6 +199,9 @@ Item {
                 root.markActiveLeaf()
                 root.lastMouseButtons = mouse.buttons
                 overlay.pointerStarted = true
+
+                if (mouse.button === Qt.RightButton)
+                    pointerArea._rmbPressPos = Qt.point(mouse.x, mouse.y)
 
                 // Manual double-tap recognizer (touch-friendly thresholds via
                 // AppPalette.doubleTapDistancePx; interval ~500ms).
@@ -252,8 +259,11 @@ Item {
                 }
                 if (root.paneKind === "3D") {
                     root.routeScene3DRelease(mouse.button, root.lastMouseButtons, mouse.x, mouse.y)
-                    if (mouse.button === Qt.RightButton)
-                        root.scene3dRightReleased(mouse.x, mouse.y)
+                    if (mouse.button === Qt.RightButton) {
+                        var rdx = mouse.x - pointerArea._rmbPressPos.x
+                        var rdy = mouse.y - pointerArea._rmbPressPos.y
+                        root.scene3dRightReleased(mouse.x, mouse.y, (rdx * rdx + rdy * rdy) > 36)
+                    }
                 } else {
                     root.routePlotRelease(mouse.button, root.lastMouseButtons, mouse.x, mouse.y)
                 }

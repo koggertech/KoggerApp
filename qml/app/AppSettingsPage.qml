@@ -2659,6 +2659,16 @@ Column {
                 }
             }
         }
+
+        KSwitch {
+            width: parent.width; text: qsTr("Show bottom track editing")
+            checked: root.store.quickActionBottomTrackEnabled
+            onToggled: {
+                root.store.quickActionBottomTrackEnabled = checked
+                if (checked)
+                    root.store.requestHotkeysReveal("bottomTrack")
+            }
+        }
     }
 
     // ── Test (developer-only — compiled with MANUAL_TESTING) ─────────────────

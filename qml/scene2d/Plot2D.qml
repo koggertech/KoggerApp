@@ -407,6 +407,22 @@ WaterFall {
 
     Component.onCompleted: {
         setPlotEnabled(enabled)
+        _applyBtTool()
+    }
+
+    // Global bottom-track edit tool (core.bottomTrackEditTool) → per-plot mouse tool.
+    // Unified enum 0=nav,1=pencil,2=up,3=down,4=erase → plotMouseTool 1/3/4/2/5.
+    function _applyBtTool() {
+        if (typeof core === "undefined" || !core)
+            return
+        var t = core.bottomTrackEditTool
+        plot.plotMouseTool(t === 1 ? 3 : (t === 2 ? 4 : (t === 3 ? 2 : (t === 4 ? 5 : 1))))
+    }
+
+    Connections {
+        target: core
+        ignoreUnknownSignals: true
+        function onBottomTrackEditToolChanged() { plot._applyBtTool() }
     }
 
     signal plotCursorChanged(int indx, real from, real to)
@@ -649,10 +665,10 @@ WaterFall {
 
                 bottomTrackValueVisible.checked    = plot.getBottomTrackDepthTextVisible()
                 bottomTrackGraphicsVisible.checked = plot.getBottomTrackVisible()
-                bottomTrackThemeList.currentIndex  = plot.getBottomTrackThemeId()
+                bottomTrackThemeList.currentIndex  = Math.max(0, plot.getBottomTrackThemeId() - 1)
                 rangefinderValueVisible.checked    = plot.getRangefinderDepthTextVisible()
                 rangefinderGraphicsVisible.checked = plot.getRangefinderVisible()
-                rangefinderThemeList.currentIndex  = plot.getRangefinderThemeId()
+                rangefinderThemeList.currentIndex  = Math.max(0, plot.getRangefinderThemeId() - 1)
 
                 ahrsVisible.checked        = plot.getAttitudeVisible()
                 temperatureVisible.checked = plot.getTemperatureVisible()
@@ -1864,79 +1880,6 @@ WaterFall {
 //            backgrn.focus = true
         }
 
-        ButtonGroup { id: pencilbuttonGroup }
-
-        CheckButton {
-            icon.source: "qrc:/icons/ui/direction_arrows.svg"
-            checked: true
-            backColor: theme.controlBackColor
-            implicitWidth: theme.controlHeight
-
-            onCheckedChanged: {
-                if (checked) {
-                    plot.plotMouseTool(1)
-                }
-            }
-
-            ButtonGroup.group: pencilbuttonGroup
-        }
-
-        CheckButton {
-            icon.source: "qrc:/icons/ui/arrow_bar_to_down.svg"
-            backColor: theme.controlBackColor
-            implicitWidth: theme.controlHeight
-
-            onCheckedChanged: {
-                if (checked) {
-                    plot.plotMouseTool(2)
-                }
-            }
-
-            ButtonGroup.group: pencilbuttonGroup
-        }
-
-        CheckButton {
-            icon.source: "qrc:/icons/ui/pencil.svg"
-            backColor: theme.controlBackColor
-            implicitWidth: theme.controlHeight
-
-            onCheckedChanged: {
-                if (checked) {
-                    plot.plotMouseTool(3)
-                }
-            }
-
-            ButtonGroup.group: pencilbuttonGroup
-        }
-
-        CheckButton {
-            icon.source: "qrc:/icons/ui/arrow_bar_to_up.svg"
-            backColor: theme.controlBackColor
-            implicitWidth: theme.controlHeight
-
-            onCheckedChanged: {
-                if (checked) {
-                    plot.plotMouseTool(4)
-                }
-            }
-
-            ButtonGroup.group: pencilbuttonGroup
-        }
-
-        CheckButton {
-            icon.source: "qrc:/icons/ui/eraser.svg"
-            backColor: theme.controlBackColor
-            implicitWidth: theme.controlHeight
-
-            onCheckedChanged: {
-                if (checked) {
-                    plot.plotMouseTool(5)
-                }
-            }
-
-            ButtonGroup.group: pencilbuttonGroup
-        }
-
         CheckButton {
             icon.source: "qrc:/icons/ui/anchor.svg"
             backColor: theme.controlBackColor
@@ -1952,8 +1895,6 @@ WaterFall {
 
                 menuBlock.visible = false
             }
-
-            ButtonGroup.group: pencilbuttonGroup
         }
 
         CheckButton {
@@ -1965,8 +1906,6 @@ WaterFall {
             onClicked: {
                 menuBlock.visible = false
             }
-
-            ButtonGroup.group: pencilbuttonGroup
         }
     }
 }
