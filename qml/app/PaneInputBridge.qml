@@ -53,6 +53,12 @@ Item {
         }
     }
 
+    function modifierKey(modifiers) {
+        if (modifiers & Qt.ControlModifier) return Qt.Key_Control
+        if (modifiers & Qt.ShiftModifier)   return Qt.Key_Shift
+        return Qt.Key_unknown
+    }
+
     function routeScene3DPress(mouseButton, buttons, x, y) {
         if (!root.workspaceRoot || typeof root.workspaceRoot.forwardScene3DMousePress !== "function")
             return
@@ -199,6 +205,7 @@ Item {
                 root.markActiveLeaf()
                 root.lastMouseButtons = mouse.buttons
                 overlay.pointerStarted = true
+                root.lastKeyPressed = root.modifierKey(mouse.modifiers)
 
                 if (mouse.button === Qt.RightButton)
                     pointerArea._rmbPressPos = Qt.point(mouse.x, mouse.y)
@@ -239,6 +246,7 @@ Item {
 
             onPositionChanged: function(mouse) {
                 root.markMouseKeyboardInput()
+                root.lastKeyPressed = root.modifierKey(mouse.modifiers)
                 if (root.paneKind === "3D")
                     root.routeScene3DMove(mouse.buttons, mouse.x, mouse.y)
                 else
@@ -247,6 +255,7 @@ Item {
 
             onReleased: function(mouse) {
                 root.markMouseKeyboardInput()
+                root.lastKeyPressed = root.modifierKey(mouse.modifiers)
                 // If the matching press was swallowed by the double-tap
                 // recognizer, drop this release too — routing it would
                 // give the plot/3D scene an unbalanced Release.
@@ -311,6 +320,7 @@ Item {
 
             onWheel: function(wheel) {
                 root.markMouseKeyboardInput()
+                root.lastKeyPressed = root.modifierKey(wheel.modifiers)
                 if (root.paneKind === "3D")
                     root.routeScene3DWheel(wheel.buttons, wheel.x, wheel.y, wheel.angleDelta)
                 else
