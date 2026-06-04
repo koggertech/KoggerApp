@@ -639,6 +639,7 @@ WaterFall {
                     if (i2 >= 0) channel2Combo.currentIndex = i2
                     channel1Combo.suppressTextSignal = false
                     channel2Combo.suppressTextSignal = false
+                    rowDataset.setChannelNamesToBackend()   // render-kick (see scene2d.md); NOT redundant
                 }
 
                 echogramVisible.checked        = plot.getEchogramVisible()
