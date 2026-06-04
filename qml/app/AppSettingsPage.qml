@@ -2665,8 +2665,7 @@ Column {
             checked: root.store.quickActionBottomTrackEnabled
             onToggled: {
                 root.store.quickActionBottomTrackEnabled = checked
-                if (checked)
-                    root.store.requestHotkeysReveal("bottomTrack")
+                root.store.requestHotkeysReveal("bottomTrack")
             }
         }
     }

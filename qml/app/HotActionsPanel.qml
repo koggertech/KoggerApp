@@ -278,18 +278,25 @@ Item {
         readonly property var currentEntry: root.store && root.store.favoriteLayoutEntryFromCurrent
                                             ? root.store.favoriteLayoutEntryFromCurrent()
                                             : null
-        readonly property int containerRadius: Math.round(14 * root._s)
         readonly property int iconH: root.controlHeight - Math.round(12 * root._s)
         readonly property int iconW: Math.round(button.iconH * 21 / 16)
 
         implicitWidth: root.triggerButtonWidth
         implicitHeight: root.controlHeight
-        radius: button.dropped ? containerRadius : height / 2
-        color: buttonMouse.containsMouse ? root.buttonHoverColor : root.buttonFillColor
-        border.width: 1
-        border.color: button.dropped
-                      ? AppPalette.border
-                      : (buttonMouse.containsMouse ? root.buttonHoverBorderColor : root.buttonBorderColor)
+        radius: height / 2
+        color: button.dropped ? "transparent" : (buttonMouse.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
+        border.width: button.dropped ? 0 : 1
+        border.color: buttonMouse.containsMouse ? root.buttonHoverBorderColor : root.buttonBorderColor
+
+        // Hover whiteness — same feel as KCircleIconButton (the pencil trigger).
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: "#FFFFFF"
+            opacity: buttonMouse.containsMouse ? 0.12 : 0.0
+            visible: opacity > 0.001
+            Behavior on opacity { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+        }
 
         LayoutSnapshotPreview {
             id: iconPreview
@@ -591,15 +598,16 @@ Item {
         id: layoutsCombo
         readonly property int comboW: root.triggerButtonWidth
         readonly property int gap: Math.round(6 * root._s)
+        readonly property int sidePad: Math.round(3 * root._s)
         readonly property int dropBodyH: root.favoriteListViewportHeight
                                          + root.controlHeight + Math.round(22 * root._s)
         readonly property bool dropped: root.layoutsMenuOpen
-                                        || backing.height > root.controlHeight + 1
+                                        || backing.height > root.controlHeight + layoutsCombo.sidePad * 2 + 1
         visible: root.hasFavoriteLayouts && panel.opacity > 0.01
         opacity: panel.opacity         // fade in/out together with the pill
-        x: panel.x + topRow.x + layoutsSlot.x
-        y: panel.y + topRow.y
-        width: comboW
+        x: panel.x + topRow.x + layoutsSlot.x - layoutsCombo.sidePad
+        y: panel.y + topRow.y - layoutsCombo.sidePad
+        width: comboW + layoutsCombo.sidePad * 2
         z: panel.z + 1                 // above the toolbar; the button is the head
         height: backing.height
 
@@ -607,10 +615,10 @@ Item {
             id: backing
             width: parent.width
             y: 0
-            height: root.controlHeight
-                    + (root.layoutsMenuOpen ? layoutsCombo.gap + layoutsCombo.dropBodyH : 0)
-            radius: Math.round(14 * root._s)
-            color: root.hotkeysLayerColor
+            height: layoutsCombo.sidePad + root.controlHeight
+                    + (root.layoutsMenuOpen ? layoutsCombo.gap + layoutsCombo.dropBodyH : layoutsCombo.sidePad)
+            radius: btEditCombo.width / 2   // не больше скругления задника bottom-track
+            color: layoutsCombo.dropped ? root.hotkeysLayerColor : "transparent"
             border.width: layoutsCombo.dropped ? 1 : 0
             border.color: AppPalette.border
             clip: true
@@ -633,7 +641,7 @@ Item {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                anchors.topMargin: root.controlHeight + layoutsCombo.gap   // below the head
+                anchors.topMargin: layoutsCombo.sidePad + root.controlHeight + layoutsCombo.gap   // below the head
                 sourceComponent: layoutsPopupContentComponent
             }
         }
@@ -641,7 +649,8 @@ Item {
         LayoutsTriggerButton {
             id: layoutsTrigger
             anchors.top: parent.top
-            anchors.left: parent.left
+            anchors.topMargin: layoutsCombo.sidePad
+            anchors.horizontalCenter: parent.horizontalCenter
             width: layoutsCombo.comboW
             height: root.controlHeight
             open: root.layoutsMenuOpen
@@ -658,7 +667,7 @@ Item {
         readonly property int toolGap: Math.round(6 * root._s)
         // Breathing room around buttons so the hover scale (KCircleIconButton
         // grows ~3.5%) stays inside the rounded backing.
-        readonly property int sidePad: Math.round(5 * root._s)
+        readonly property int sidePad: Math.round(3 * root._s)
         readonly property int bodyH: btEditCombo.gap
                                      + root.btTools.length * root.controlHeight
                                      + (root.btTools.length - 1) * btEditCombo.toolGap
