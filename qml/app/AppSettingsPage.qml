@@ -106,6 +106,13 @@ Column {
         store: root.store
     }
 
+    // ── Files ──────────────────────────────────────────────────────────────
+
+    FilesSettingsPage {
+        width: root.groupWidth
+        store: root.store
+    }
+
     // ── Интерфейс ─────────────────────────────────────────────────────────────
 
     SettingsGroup {
@@ -506,6 +513,8 @@ Column {
             core.setFixBlackStripesForwardSteps(fixBlackStripesForwardStepsSpinBox.value)
             core.setFixBlackStripesBackwardSteps(fixBlackStripesBackwardStepsSpinBox.value)
             core.setIsAttitudeExpected(sonarOffsetCheckButton.checked)
+            core.setPosZeroing(zeroingPosButton.checked)
+            core.setBottomTrackZeroing(zeroingBottomTrackButton.checked)
         }
 
         // FBS row
@@ -583,6 +592,20 @@ Column {
         Settings { property alias sonarOffsetCheckButton: sonarOffsetCheckButton.checked }
         Settings { property alias sonarOffsetValueX: sonarOffsetValueX.value }
         Settings { property alias sonarOffsetValueY: sonarOffsetValueY.value }
+
+        ParamCard {
+            id: zeroingPosButton
+            label: qsTr("Pos zeroing")
+            onToggled: function(v) { core.setPosZeroing(v) }
+        }
+        Settings { property alias zeroingPosButtonCheched: zeroingPosButton.checked }
+
+        ParamCard {
+            id: zeroingBottomTrackButton
+            label: qsTr("Bottom track zeroing")
+            onToggled: function(v) { core.setBottomTrackZeroing(v) }
+        }
+        Settings { property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
     }
 
     // Boat Track

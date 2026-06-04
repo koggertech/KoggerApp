@@ -8,14 +8,14 @@ import "../menus"
 MenuScroll {
     id: scrollBar
     property int menuWidth: 200
-    property string filePath: devConnection.filePath
+    property string filePath: devFiles.filePath
     function importProfileForAllDevices(path) {
         devConnection.importSettingsToAllDevices(path)
     }
 
 
     function openFileDialog() {
-        devConnection.openNewFileDialog()
+        devFiles.openNewFileDialog()
     }
     Column {
         // width: menuWidth
@@ -25,6 +25,13 @@ MenuScroll {
         MenuFrame {
             ConnectionViewer {
                 id: devConnection
+                width: menuWidth
+            }
+        }
+
+        MenuFrame {
+            FilesViewer {
+                id: devFiles
                 width: menuWidth
             }
         }

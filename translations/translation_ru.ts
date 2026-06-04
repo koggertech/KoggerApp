@@ -12,6 +12,16 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Pos zeroing</source>
+        <translation>Обнуление координат</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Bottom track zeroing</source>
+        <translation>Обнуление трека дна</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="288"/>
         <source>Hide controls without data</source>
         <translation>Скрывать элементы без данных</translation>
@@ -4375,6 +4385,62 @@
         <location filename="../qml/app/WorkspaceView.qml" line="1"/>
         <source>Second window</source>
         <translation>Второе окно</translation>
+    </message>
+</context>
+<context>
+    <name>FilesSettingsPage</name>
+    <message>
+        <location filename="../qml/app/FilesSettingsPage.qml"/>
+        <source>Files</source>
+        <translation>Файлы</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FilesSettingsPage.qml"/>
+        <source>Open log files and reopen recent ones.</source>
+        <translation>Открытие лог-файлов и повторное открытие недавних.</translation>
+    </message>
+</context>
+<context>
+    <name>FilesViewer</name>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Open file:</source>
+        <translation>Открыть файл:</translation>
+    </message>
+<message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>File path...</source>
+        <translation>Путь к файлу...</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Open file</source>
+        <translation>Открыть файл</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Please choose a file</source>
+        <translation>Выберите файл</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Append file</source>
+        <translation>Добавить файл</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Close file</source>
+        <translation>Закрыть файл</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Recently opened:</source>
+        <translation>Недавно открытые:</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Remove</source>
+        <translation>Удалить</translation>
     </message>
 </context>
 </TS>

@@ -12,6 +12,16 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Pos zeroing</source>
+        <translation>Pos zeroing</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Bottom track zeroing</source>
+        <translation>Bottom track zeroing</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="288"/>
         <source>Hide controls without data</source>
         <translation></translation>
@@ -4355,6 +4365,62 @@
         <location filename="../qml/app/WorkspaceView.qml" line="545"/>
         <source>Global pop-up</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FilesSettingsPage</name>
+    <message>
+        <location filename="../qml/app/FilesSettingsPage.qml"/>
+        <source>Files</source>
+        <translation>Files</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FilesSettingsPage.qml"/>
+        <source>Open log files and reopen recent ones.</source>
+        <translation>Open log files and reopen recent ones.</translation>
+    </message>
+</context>
+<context>
+    <name>FilesViewer</name>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Open file:</source>
+        <translation>Open file:</translation>
+    </message>
+<message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>File path...</source>
+        <translation>File path...</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Open file</source>
+        <translation>Open file</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Please choose a file</source>
+        <translation>Please choose a file</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Append file</source>
+        <translation>Append file</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Close file</source>
+        <translation>Close file</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Recently opened:</source>
+        <translation>Recently opened:</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Remove</source>
+        <translation>Remove</translation>
     </message>
 </context>
 </TS>

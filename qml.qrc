@@ -25,6 +25,7 @@
         <file>qml/app/SettingsGroup.qml</file>
         <file>qml/app/AppSettingsPage.qml</file>
         <file>qml/app/ConnectionsSettingsPage.qml</file>
+        <file>qml/app/FilesSettingsPage.qml</file>
         <file>qml/app/DeviceSettingsPage.qml</file>
         <file>qml/app/Pane2DSettingsPage.qml</file>
         <file>qml/app/Pane3DSettingsPage.qml</file>
@@ -105,6 +106,7 @@
         <!-- ======= Devices ======= -->
         <file>qml/devices/qmldir</file>
         <file>qml/devices/ConnectionViewer.qml</file>
+        <file>qml/devices/FilesViewer.qml</file>
         <file>qml/devices/DeviceItem.qml</file>
         <file>qml/devices/DeviceSettingsViewer.qml</file>
         <file>qml/devices/DevSettingsBox.qml</file>

@@ -24,24 +24,12 @@ Column {
         }
         return devList[0]
     }
-    property string filePath: currentLogPath()
-    property var lastLogFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     property var lastImportTrackFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
-    property var recentOpenedFiles: []
-    property string selectedLogPathSource: ""
     property string importTrackPathSource: ""
 
     Settings {
-        property alias logFolder:           connectionViewer.lastLogFolder
         property alias importTrackFolder:   connectionViewer.lastImportTrackFolder
-        property alias recentOpenedFiles:   connectionViewer.recentOpenedFiles
-        property alias pathText:            connectionViewer.selectedLogPathSource
         property alias importPathText:      connectionViewer.importTrackPathSource
-    }
-
-    Connections {
-        target: core
-        function onFileOpenFailed(path) { connectionViewer.removeRecentFile(path) }
     }
 
     function urlSource(value) {
@@ -69,17 +57,6 @@ Column {
         return displayText
     }
 
-    function toLocalPath(path) { return urlSource(path) }
-
-    function setLogPath(path) {
-        selectedLogPathSource = urlSource(path)
-        pathText.text = urlDisplay(selectedLogPathSource)
-    }
-
-    function currentLogPath() {
-        return effectiveSource(pathText.text, selectedLogPathSource)
-    }
-
     function escapeHtml(s) {
         return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     }
@@ -91,42 +68,6 @@ Column {
 
     function currentImportTrackPath() {
         return effectiveSource(importPathText.text, importTrackPathSource)
-    }
-
-    function pushRecentOpenedFile(path) {
-        var lp = urlSource(path)
-        if (!lp.length) return
-        var updated = [lp]
-        for (var i = 0; i < recentOpenedFiles.length; ++i) {
-            var item = recentOpenedFiles[i]
-            if (item && item !== lp) updated.push(item)
-            if (updated.length >= 3) break
-        }
-        recentOpenedFiles = updated
-    }
-
-    function openRecentFile(path) {
-        var lp = urlSource(path)
-        if (!lp.length) return
-        setLogPath(lp)
-        core.openLogFile(lp, false, false)
-        pushRecentOpenedFile(lp)
-    }
-
-    function openNewFileDialog() {
-        newFileDialog.currentFolder = connectionViewer.lastLogFolder
-        newFileDialog.open()
-    }
-
-    function removeRecentFile(path) {
-        var lp = urlSource(path)
-        if (!lp.length) return
-        var updated = []
-        for (var i = 0; i < recentOpenedFiles.length; ++i) {
-            var item = recentOpenedFiles[i]
-            if (item && item !== lp) updated.push(item)
-        }
-        recentOpenedFiles = updated
     }
 
     function importSettingsToAllDevices(path) {
@@ -141,7 +82,6 @@ Column {
     spacing: 8
 
     Component.onCompleted: {
-        setLogPath(selectedLogPathSource.length ? selectedLogPathSource : core.filePath)
         setImportTrackPath(importTrackPathSource)
     }
 
@@ -171,7 +111,6 @@ Column {
         function onConnectionChanged() {
             if (store) store.setActiveDeviceSN(-1)
         }
-        function onFilePathChanged() { connectionViewer.setLogPath(core.filePath) }
     }
 
     // ── Inline components ─────────────────────────────────────────────────
@@ -826,119 +765,6 @@ Column {
         }
     }
 
-    // ── File row ──────────────────────────────────────────────────────────
-
-    Text {
-        text: qsTr("Open file:")
-        color: AppPalette.textMuted
-        font.pixelSize: Tokens.fontXs
-        leftPadding: Tokens.spaceXxs
-    }
-
-    Row {
-        width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
-
-        IconBtn {
-            id: zeroingPosButton
-            checkable: true; iconSource: "qrc:/icons/ui/route_crossed_out.svg"; toolTipText: qsTr("Pos zeroing")
-            width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
-            onToggled: function(v) { core.setPosZeroing(v) }
-            Component.onCompleted: core.setPosZeroing(checked)
-            Settings { property alias zeroingPosButtonCheched: zeroingPosButton.checked }
-        }
-
-        IconBtn {
-            id: zeroingBottomTrackButton
-            checkable: true; iconSource: "qrc:/icons/ui/double_route_crossed_out.svg"; toolTipText: qsTr("Bottom track zeroing")
-            width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
-            onToggled: function(v) { core.setBottomTrackZeroing(v) }
-            Component.onCompleted: core.setBottomTrackZeroing(checked)
-            Settings { property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
-        }
-
-        Rectangle {
-            // 5 IconBtn-ов по controlHMd + 5 spacing-ов между 6 элементами Row.
-            width: parent.width - 5 * Tokens.controlHMd - 5 * Tokens.spaceSm
-            height: Tokens.controlHMd; radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
-            border.color: pathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
-
-            TextInput {
-                id: pathText
-                anchors.fill: parent; anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
-                verticalAlignment: TextInput.AlignVCenter
-                color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
-                Text {
-                    visible: !pathText.text.length; text: qsTr("File path...")
-                    color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter
-                }
-                Keys.onPressed: function(event) {
-                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        const lp = connectionViewer.currentLogPath()
-                        connectionViewer.setLogPath(lp)
-                        connectionViewer.pushRecentOpenedFile(lp)
-                        core.openLogFile(lp, false, false)
-                    }
-                }
-            }
-        }
-
-        IconBtn {
-            iconSource: "qrc:/icons/ui/file.svg"; toolTipText: qsTr("Open file")
-            width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
-            onClicked: connectionViewer.openNewFileDialog()
-
-            FileDialog {
-                id: newFileDialog
-                title: qsTr("Please choose a file")
-                currentFolder: connectionViewer.lastLogFolder
-                nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
-                onCurrentFolderChanged: connectionViewer.lastLogFolder = currentFolder
-                onAccepted: {
-                    const file = newFileDialog.selectedFile
-                    if (!file) return
-                    connectionViewer.lastLogFolder = newFileDialog.currentFolder
-                    const lp = urlSource(file)
-                    connectionViewer.setLogPath(lp)
-                    connectionViewer.pushRecentOpenedFile(lp)
-                    core.openLogFile(lp, false, false)
-                }
-            }
-        }
-
-        IconBtn {
-            iconSource: "qrc:/icons/ui/file_plus.svg"; toolTipText: qsTr("Append file")
-            width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
-            onClicked: { appendFileDialog.currentFolder = connectionViewer.lastLogFolder; appendFileDialog.open() }
-
-            FileDialog {
-                id: appendFileDialog
-                title: qsTr("Please choose a file")
-                currentFolder: connectionViewer.lastLogFolder
-                nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
-                onCurrentFolderChanged: connectionViewer.lastLogFolder = currentFolder
-                onAccepted: {
-                    const lp = urlSource(appendFileDialog.selectedFile)
-                    connectionViewer.setLogPath(lp)
-                    connectionViewer.lastLogFolder = appendFileDialog.currentFolder
-                    connectionViewer.pushRecentOpenedFile(lp)
-                    core.openLogFile(lp, true, false)
-                }
-            }
-        }
-
-        IconBtn {
-            iconSource: "qrc:/icons/ui/file_off.svg"; toolTipText: qsTr("Close file")
-            width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
-            onClicked: {
-                if (core.openedFilePath.length > 0) {
-                    core.closeLogFile();
-                } else {
-                    core.onRequestClearing();
-                }
-            }
-        }
-    }
-
     // ── Device tabs ───────────────────────────────────────────────────────
 
     Column {
@@ -1121,63 +947,4 @@ Column {
         easing.type: Easing.OutCubic
     }
 
-    // ── Recent files ──────────────────────────────────────────────────────
-
-    Column {
-        visible: recentOpenedFiles.length > 0
-        width: parent.width
-        spacing: Tokens.spaceXxs + 1
-
-        Text {
-            text: qsTr("Recently opened:")
-            color: AppPalette.textMuted
-            font.pixelSize: Tokens.fontXs
-            leftPadding: Tokens.spaceXxs
-        }
-
-        Repeater {
-            model: Math.min(recentOpenedFiles.length, 3)
-
-            Row {
-                width: parent.width
-                spacing: Tokens.spaceXs
-
-                property string filePath: recentOpenedFiles[index] || ""
-
-                Rectangle {
-                    width: parent.width - removeBtn.width - parent.spacing
-                    height: Tokens.controlHMd - Tokens.spaceXxs; radius: Tokens.radiusMd
-                    color: recentMa.containsMouse ? AppPalette.cardHover : AppPalette.card
-                    border.width: 1; border.color: AppPalette.border
-                    Behavior on color { ColorAnimation { duration: 80 } }
-
-                    Text {
-                        anchors.fill: parent
-                        anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
-                        text: connectionViewer.urlDisplay(parent.parent.filePath)
-                        color: AppPalette.text; font.pixelSize: Tokens.fontXs
-                        verticalAlignment: Text.AlignVCenter
-                        elide: Text.ElideLeft
-                    }
-
-                    MouseArea {
-                        id: recentMa
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: connectionViewer.openRecentFile(parent.parent.filePath)
-                    }
-                }
-
-                IconBtn {
-                    id: removeBtn
-                    iconSource: "qrc:/icons/ui/x.svg"
-                    width: Tokens.controlHMd - Tokens.spaceXxs
-                    height: Tokens.controlHMd - Tokens.spaceXxs
-                    toolTipText: qsTr("Remove")
-                    onClicked: connectionViewer.removeRecentFile(parent.filePath)
-                }
-            }
-        }
-    }
 }

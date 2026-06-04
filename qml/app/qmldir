@@ -20,6 +20,7 @@ SettingsSidebarBase 1.0 SettingsSidebarBase.qml
 SettingsGroup 1.0 SettingsGroup.qml
 AppSettingsPage 1.0 AppSettingsPage.qml
 ConnectionsSettingsPage 1.0 ConnectionsSettingsPage.qml
+FilesSettingsPage 1.0 FilesSettingsPage.qml
 DeviceSettingsPage 1.0 DeviceSettingsPage.qml
 Pane2DSettingsPage 1.0 Pane2DSettingsPage.qml
 Pane3DSettingsPage 1.0 Pane3DSettingsPage.qml

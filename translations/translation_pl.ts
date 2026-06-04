@@ -12,6 +12,16 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Pos zeroing</source>
+        <translation>Zerowanie pozycji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Bottom track zeroing</source>
+        <translation>Zerowanie śledzenia dna</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="288"/>
         <source>Hide controls without data</source>
         <translation>Ukryj elementy bez danych</translation>
@@ -4375,6 +4385,62 @@
         <location filename="../qml/app/WorkspaceView.qml" line="1"/>
         <source>Second window</source>
         <translation>Drugie okno</translation>
+    </message>
+</context>
+<context>
+    <name>FilesSettingsPage</name>
+    <message>
+        <location filename="../qml/app/FilesSettingsPage.qml"/>
+        <source>Files</source>
+        <translation>Pliki</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FilesSettingsPage.qml"/>
+        <source>Open log files and reopen recent ones.</source>
+        <translation>Otwieranie plików logów i ponowne otwieranie ostatnich.</translation>
+    </message>
+</context>
+<context>
+    <name>FilesViewer</name>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Open file:</source>
+        <translation>Otwórz plik:</translation>
+    </message>
+<message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>File path...</source>
+        <translation>Ścieżka pliku...</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Open file</source>
+        <translation>Otwórz plik</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Please choose a file</source>
+        <translation>Proszę wybrać plik</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Append file</source>
+        <translation>Dołącz plik</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Close file</source>
+        <translation>Zamknij plik</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Recently opened:</source>
+        <translation>Ostatnio otwarte:</translation>
+    </message>
+    <message>
+        <location filename="../qml/devices/FilesViewer.qml"/>
+        <source>Remove</source>
+        <translation>Usuń</translation>
     </message>
 </context>
 </TS>
