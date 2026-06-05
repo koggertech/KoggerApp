@@ -13,6 +13,7 @@ BasePanePopup {
     readonly property real fixedExpandedWidth: 640
     readonly property real fixedExpandedHeight: 480
     popupVisible: hostLeafId !== -1 && sourceLeafId !== -1 && paneData !== null
+    overlayChrome: true
     popupMargin: store && store.popupMarginPx !== undefined ? store.popupMarginPx : 16
     panelColor: paneData && paneData.color ? paneData.color : "#0B1220"
     contentHighlighted: store && sourceLeafId !== -1 && store.highlightedLeafId === sourceLeafId

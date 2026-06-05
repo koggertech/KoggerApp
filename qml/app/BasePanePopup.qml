@@ -18,6 +18,9 @@ Item {
     property bool contentHighlighted: false
     property int popupMargin: 16
     property bool dragEnabled: true
+    property bool resizeEnabled: true
+    property int headerDragBarLength: 0
+    property bool overlayChrome: false
     property bool suspendSignals: false
     property bool collapseButtonVisible: true
     property bool fullscreenMode: false
@@ -34,13 +37,36 @@ Item {
     property real  _resizePreviewW: expandedWidth
     property real  _resizePreviewH: expandedHeight
 
-    property var   siblingBounds: Qt.rect(-1, -1, 0, 0)
+    property var   siblingBoundsList: []
     property real  siblingSnapGap: 8
     property real  siblingSnapThreshold: 60
 
     property bool  _siblingSnapActive: false
     property real  _siblingSnapX: 0
     property real  _siblingSnapY: 0
+
+    property bool  _chromeRevealed: false
+    readonly property int chromeHideMs: 1600
+    readonly property bool chromeShown: !overlayChrome
+                                        || _chromeRevealed
+                                        || headerDrag.active
+                                        || resizeDrag.active
+
+    Timer {
+        id: chromeHideTimer
+        interval: root.chromeHideMs
+        onTriggered: root._chromeRevealed = false
+    }
+
+    Connections {
+        target: root
+        function onVisibleChanged() {
+            if (root.visible && root.overlayChrome) {
+                root._chromeRevealed = true
+                chromeHideTimer.restart()
+            }
+        }
+    }
 
     signal collapsedToggled(bool collapsed)
     signal positionCommitted(real x, real y, real popupWidth, real popupHeight)
@@ -93,10 +119,23 @@ Item {
                      : Qt.point(x, y)
     }
 
-    function computeSiblingSnap(x, y) {
-        var bw = siblingBounds.width, bh = siblingBounds.height
+    function _overlapsAnySibling(x, y) {
+        var list = siblingBoundsList
+        if (!list) return false
+        var aw = expandedWidth, ah = expandedHeight
+        for (var i = 0; i < list.length; i++) {
+            var b = list[i]
+            if (!b || b.width <= 0 || b.height <= 0) continue
+            if (x < b.x + b.width && x + aw > b.x && y < b.y + b.height && y + ah > b.y)
+                return true
+        }
+        return false
+    }
+
+    function _snapForBounds(x, y, b) {
+        var bw = b.width, bh = b.height
         if (bw <= 0 || bh <= 0) return null
-        var bx = siblingBounds.x, by = siblingBounds.y
+        var bx = b.x, by = b.y
         var aw = expandedWidth, ah = expandedHeight
         var gap = siblingSnapGap
         var thr = siblingSnapThreshold
@@ -131,28 +170,45 @@ Item {
             if (dBottom < bestDist && !(snapX < bx+bw && snapX+aw > bx && by2 < by+bh && by2+ah > by))
                 { bestDist = dBottom; best = Qt.point(snapX, by2) }
         }
-        return best
+        return best === null ? null : { point: best, dist: bestDist }
+    }
+
+    function computeSiblingSnap(x, y) {
+        var list = siblingBoundsList
+        if (!list || !list.length) return null
+        var winner = null, winnerDist = Infinity
+        for (var i = 0; i < list.length; i++) {
+            var b = list[i]
+            if (!b) continue
+            var r = _snapForBounds(x, y, b)
+            if (r !== null && r.dist < winnerDist && !_overlapsAnySibling(r.point.x, r.point.y)) {
+                winnerDist = r.dist
+                winner = r.point
+            }
+        }
+        return winner
     }
 
     function resolveOverlapWithSibling() {
         if (!popupVisible) return
-        var bw = siblingBounds.width, bh = siblingBounds.height
-        if (bw <= 0 || bh <= 0) return
-        var bx = siblingBounds.x, by = siblingBounds.y
+        var list = siblingBoundsList
+        if (!list || !list.length) return
+        if (!_overlapsAnySibling(panelX, panelY)) return
         var aw = expandedWidth, ah = expandedHeight
-        if (panelX >= bx + bw || panelX + aw <= bx || panelY >= by + bh || panelY + ah <= by) return
         var gap = siblingSnapGap
-        // 4 candidates clockwise: left, top, right, bottom
-        var candidates = [
-            Qt.point(clampX(bx - gap - aw), panelY),
-            Qt.point(panelX, clampY(by - gap - ah)),
-            Qt.point(clampX(bx + bw + gap), panelY),
-            Qt.point(panelX, clampY(by + bh + gap))
-        ]
+        var candidates = []
+        for (var i = 0; i < list.length; i++) {
+            var b = list[i]
+            if (!b || b.width <= 0 || b.height <= 0) continue
+            candidates.push(Qt.point(clampX(b.x - gap - aw), panelY))
+            candidates.push(Qt.point(panelX, clampY(b.y - gap - ah)))
+            candidates.push(Qt.point(clampX(b.x + b.width + gap), panelY))
+            candidates.push(Qt.point(panelX, clampY(b.y + b.height + gap)))
+        }
         var best = null, bestDist = Infinity
-        for (var i = 0; i < candidates.length; i++) {
-            var c = candidates[i]
-            if (c.x < bx + bw && c.x + aw > bx && c.y < by + bh && c.y + ah > by) continue
+        for (var j = 0; j < candidates.length; j++) {
+            var c = candidates[j]
+            if (_overlapsAnySibling(c.x, c.y)) continue
             var d = Math.abs(c.x - panelX) + Math.abs(c.y - panelY)
             if (d < bestDist) { bestDist = d; best = c }
         }
@@ -286,6 +342,18 @@ Item {
         layer.enabled: true
         layer.smooth: true
 
+        HoverHandler {
+            id: chromeHover
+            onHoveredChanged: {
+                if (hovered) {
+                    root._chromeRevealed = true
+                    chromeHideTimer.stop()
+                } else {
+                    chromeHideTimer.restart()
+                }
+            }
+        }
+
         states: State {
             name: "fullscreen"
             when: root.fullscreenMode
@@ -341,7 +409,6 @@ Item {
             onDoubleTapped: root.popupDoubleClicked()
         }
 
-        // Drag handle header strip — only area that initiates popup drag.
         Item {
             id: headerStrip
             anchors.top: parent.top
@@ -356,47 +423,50 @@ Item {
                 NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
             }
 
-            // Grip dots — visible hint that this area is draggable.
-            Row {
-                anchors.centerIn: parent
-                anchors.horizontalCenterOffset: root.collapseButtonVisible ? -Math.round(20 * AppPalette.scale) : 0
-                spacing: Math.round(5 * AppPalette.scale)
-                visible: !root.collapsed
-                Repeater {
-                    model: 4
-                    delegate: Rectangle {
-                        width: Math.round(4 * AppPalette.scale)
-                        height: Math.round(4 * AppPalette.scale)
-                        radius: Math.round(2 * AppPalette.scale)
-                        color: "#475569"
-                    }
+            Item {
+                id: dragGrip
+                anchors.horizontalCenter: parent.horizontalCenter   // строго по центру сверху
+                anchors.verticalCenter: parent.verticalCenter
+                width: grip.width
+                height: parent.height
+                opacity: (root.chromeShown && !root.collapsed) ? 1.0 : 0.0
+                visible: opacity > 0.01
+                Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
+
+                KDragBar {
+                    id: grip
+                    anchors.centerIn: parent
+                    orientation: "horizontal"
+                    barColor: root.overlayChrome ? "transparent" : AppPalette.card
+                    barLength: root.headerDragBarLength > 0
+                               ? root.headerDragBarLength
+                               : Math.round(AppPalette.dragBarLengthPx * AppPalette.scale)
                 }
-            }
 
-            MouseArea {
-                anchors.fill: parent
-                acceptedButtons: Qt.AllButtons
-                propagateComposedEvents: false
-                hoverEnabled: false
-                cursorShape: Qt.OpenHandCursor
-                onPressed:       function(mouse) { mouse.accepted = true }
-                onReleased:      function(mouse) { mouse.accepted = true }
-                onClicked:       function(mouse) { mouse.accepted = true }
-                onDoubleClicked: function(mouse) { mouse.accepted = true }
-                onWheel:         function(wheel)  { wheel.accepted = false }
-            }
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.AllButtons
+                    propagateComposedEvents: false
+                    hoverEnabled: false
+                    cursorShape: Qt.OpenHandCursor
+                    onPressed:       function(mouse) { mouse.accepted = true }
+                    onReleased:      function(mouse) { mouse.accepted = true }
+                    onClicked:       function(mouse) { mouse.accepted = true }
+                    onDoubleClicked: function(mouse) { mouse.accepted = true }
+                    onWheel:         function(wheel)  { wheel.accepted = false }
+                }
 
-            DragHandler {
-                id: headerDrag
-                target: null
-                enabled: root.dragEnabled && !root.fullscreenMode
-                xAxis.enabled: true
-                yAxis.enabled: true
+                DragHandler {
+                    id: headerDrag
+                    target: null
+                    enabled: root.dragEnabled && !root.fullscreenMode
+                    xAxis.enabled: true
+                    yAxis.enabled: true
 
-                property real startX: 0
-                property real startY: 0
+                    property real startX: 0
+                    property real startY: 0
 
-                onActiveChanged: {
+                    onActiveChanged: {
                     if (active) {
                         startX = root.panelX
                         startY = root.panelY
@@ -436,11 +506,14 @@ Item {
                     root.panelX = Math.round(rawX)
                     root.panelY = Math.round(rawY)
                 }
+                }
             }
 
             KButton {
                 id: collapseButton
-                visible: root.collapseButtonVisible
+                opacity: (root.collapsed || root.chromeShown) ? 1.0 : 0.0
+                visible: root.collapseButtonVisible && opacity > 0.01
+                Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
                 width: Math.round(32 * AppPalette.scale)
                 height: Tokens.controlHMd
                 anchors.right: parent.right
@@ -451,11 +524,11 @@ Item {
                 horizontalPadding: 0
                 verticalPadding: 0
                 cornerRadius: Tokens.radiusMd
-                normalBg: "#1E293BA6"
-                hoverBg: "#0F172ACC"
+                normalBg: root.overlayChrome ? "transparent" : "#1E293B"
+                hoverBg: root.overlayChrome ? "#0F172A99" : "#0F172A"
                 normalBorder: "#334155"
                 hoverBorder: "#475569"
-                textColor: "#E2E8F0EE"
+                textColor: "#E2E8F0"
                 z: 6
                 onClicked: root.toggleCollapsedFromButton()
             }
@@ -467,7 +540,7 @@ Item {
             anchors.fill: parent
             anchors.leftMargin: root.fullscreenMode ? 0 : root.contentPadding
             anchors.rightMargin: root.fullscreenMode ? 0 : root.contentPadding
-            anchors.topMargin: root.fullscreenMode ? 0 : root.headerHeight
+            anchors.topMargin: root.fullscreenMode ? 0 : (root.overlayChrome ? root.contentPadding : root.headerHeight)
             anchors.bottomMargin: root.fullscreenMode ? 0 : root.contentPadding
             visible: !root.collapsed
             z: 2
@@ -501,7 +574,9 @@ Item {
             anchors.bottom: parent.bottom
             width: Math.round(26 * AppPalette.scale)
             height: Math.round(26 * AppPalette.scale)
-            visible: !root.collapsed && !root.fullscreenMode
+            opacity: root.chromeShown ? 1.0 : 0.0
+            visible: !root.collapsed && !root.fullscreenMode && root.resizeEnabled && opacity > 0.01
+            Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
             z: 10
 
             // Grip: 6 dots in bottom-right triangle pattern

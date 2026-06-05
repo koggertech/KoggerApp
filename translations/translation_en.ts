@@ -2582,6 +2582,44 @@
         <source>Open hotkeys</source>
         <translation>Open hotkeys</translation>
     </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="698"/>
+        <source>Close bottom track editing</source>
+        <translation>Close bottom track editing</translation>
+    </message>
+</context>
+<context>
+    <name>BottomTrackEditPopup</name>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Navigate</source>
+        <translation>Navigate</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Draw bottom track</source>
+        <translation>Draw bottom track</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Raise bottom track</source>
+        <translation>Raise bottom track</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Lower bottom track</source>
+        <translation>Lower bottom track</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Erase bottom track</source>
+        <translation>Erase bottom track</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Close</source>
+        <translation>Close</translation>
+    </message>
 </context>
 <context>
     <name>HotkeysDialog</name>

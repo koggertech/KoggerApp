@@ -2597,6 +2597,44 @@
         <source>Open hotkeys</source>
         <translation>Otwórz menu szybkich akcji</translation>
     </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="698"/>
+        <source>Close bottom track editing</source>
+        <translation>Zamknij edytor śladu dna</translation>
+    </message>
+</context>
+<context>
+    <name>BottomTrackEditPopup</name>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Navigate</source>
+        <translation>Nawigacja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Draw bottom track</source>
+        <translation>Rysuj ślad dna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Raise bottom track</source>
+        <translation>Podnieś ślad dna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Lower bottom track</source>
+        <translation>Obniż ślad dna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Erase bottom track</source>
+        <translation>Wymaż ślad dna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
 </context>
 <context>
     <name>HotkeysDialog</name>

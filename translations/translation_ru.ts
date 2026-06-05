@@ -2597,6 +2597,44 @@
         <source>Open hotkeys</source>
         <translation>Открыть быстрые действия</translation>
     </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="698"/>
+        <source>Close bottom track editing</source>
+        <translation>Закрыть редактор трека дна</translation>
+    </message>
+</context>
+<context>
+    <name>BottomTrackEditPopup</name>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Navigate</source>
+        <translation>Навигация</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Draw bottom track</source>
+        <translation>Рисовать трек дна</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Raise bottom track</source>
+        <translation>Поднять трек дна</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Lower bottom track</source>
+        <translation>Опустить трек дна</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Erase bottom track</source>
+        <translation>Стереть трек дна</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/BottomTrackEditPopup.qml"/>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
 </context>
 <context>
     <name>HotkeysDialog</name>

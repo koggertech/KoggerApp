@@ -16,3 +16,4 @@ KSpinBox 1.0 KSpinBox.qml
 KTapArea 1.0 KTapArea.qml
 KToolTip 1.0 KToolTip.qml
 KCircleIconButton 1.0 KCircleIconButton.qml
+KDragBar 1.0 KDragBar.qml

@@ -9,6 +9,7 @@ BasePanePopup {
     property var workspaceRoot: null
 
     popupVisible: store.globalPopupEnabled
+    overlayChrome: true
     fullscreenMode: store.globalPopupFullscreen
     dragEnabled: !store.globalPopupFullscreen
     popupMargin: store && store.popupMarginPx !== undefined ? store.popupMarginPx : 16

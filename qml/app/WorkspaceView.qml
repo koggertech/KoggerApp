@@ -628,8 +628,8 @@ Item {
             readonly property int barHideMs: 1600
             readonly property bool barShown: barRevealed || barGrab.resizing || isActiveResizeSplit || workspace.store.editableMode
 
-            readonly property int barLength: Math.round(56 * AppPalette.scale)
-            readonly property int barThickness: Math.round(16 * AppPalette.scale)
+            readonly property int barLength: Math.round(AppPalette.dragBarLengthPx * AppPalette.scale)
+            readonly property int barThickness: Math.round(AppPalette.dragBarThicknessPx * AppPalette.scale)
 
             Timer {
                 id: barHideTimer
@@ -692,10 +692,11 @@ Item {
                 ? barGrab.mapToItem(splitDragZone, barGrab.mouseX, barGrab.mouseY)
                 : Qt.point(splitDragZone.width / 2, splitDragZone.height / 2)
 
-            Rectangle {
+            KDragBar {
                 id: splitResizeThumb
-                width: splitDragZone.vertical ? splitDragZone.barThickness : splitDragZone.barLength
-                height: splitDragZone.vertical ? splitDragZone.barLength : splitDragZone.barThickness
+                orientation: splitDragZone.vertical ? "vertical" : "horizontal"
+                barLength: splitDragZone.barLength
+                barThickness: splitDragZone.barThickness
 
                 readonly property bool tracking: barGrab.pressed
 
@@ -707,46 +708,10 @@ Item {
                    ? (splitDragZone.height - height) / 2
                    : (tracking ? splitDragZone.cursorInZone.y - height / 2
                                : (splitDragZone.height - height) / 2)
-                radius: Math.round(splitDragZone.barThickness / 2)   // capsule, like the 3D/2D buttons
-                color: AppPalette.card
-                border.width: 1
-                border.color: AppPalette.border
                 opacity: splitDragZone.barShown ? 0.95 : 0.0
                 visible: opacity > 0.01
 
                 Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
-
-                Column {
-                    anchors.centerIn: parent
-                    visible: splitDragZone.vertical
-                    spacing: 3
-
-                    Repeater {
-                        model: 3
-                        delegate: Rectangle {
-                            width: 4
-                            height: 2
-                            radius: 1
-                            color: AppPalette.text
-                        }
-                    }
-                }
-
-                Row {
-                    anchors.centerIn: parent
-                    visible: !splitDragZone.vertical
-                    spacing: 3
-
-                    Repeater {
-                        model: 3
-                        delegate: Rectangle {
-                            width: 2
-                            height: 4
-                            radius: 1
-                            color: AppPalette.text
-                        }
-                    }
-                }
             }
 
             MouseArea {

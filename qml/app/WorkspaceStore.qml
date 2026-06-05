@@ -126,6 +126,9 @@ property var globalPopupState: ({
     expandedHeight: -1
 })
 
+property bool bottomTrackEditorOpen: false
+property var btEditPopupState: ({ x: -1, y: -1 })
+
 readonly property real splitterThickness: 0
 readonly property real minPaneSize: 120
 readonly property real splitSnapThresholdPx: 18
@@ -278,6 +281,7 @@ property Settings layoutStore: Settings {
     property bool globalPopupEnabledStored: false
     property string globalPopupModeStored: ""
     property string globalPopupStateJson: "{\"x\":-1,\"y\":-1,\"collapsed\":false,\"expandedWidth\":-1,\"expandedHeight\":-1}"
+    property string btEditPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool secondaryWindowOpenStored: false
     property string secondaryWindowModeStored: ""
     property string liveEchogramStatesJson: "{}"
@@ -838,6 +842,43 @@ function setGlobalPopupPosition(x, y, popupWidth, popupHeight) {
     nextState.y = clamp(y, minY, maxY)
     globalPopupState = nextState
     saveGlobalPopupPreferences()
+}
+
+function _btEditPopupBounds(popupWidth, popupHeight) {
+    var areaWidth = windowWidth > 0 ? windowWidth : workspaceWidth
+    var areaHeight = windowHeight > 0 ? windowHeight : workspaceHeight
+    var spacing = popupMarginPx
+    var minX = spacing, minY = spacing
+    var maxX = areaWidth - popupWidth - spacing
+    var maxY = areaHeight - popupHeight - spacing
+    if (maxX < minX) { minX = 0; maxX = Math.max(0, areaWidth - popupWidth) }
+    if (maxY < minY) { minY = 0; maxY = Math.max(0, areaHeight - popupHeight) }
+    return { minX: minX, minY: minY, maxX: maxX, maxY: maxY }
+}
+
+function btEditPopupPosition(popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    var s = btEditPopupState || { x: -1, y: -1 }
+    var x = (typeof s.x === "number" && s.x >= 0) ? s.x : b.maxX   // default right
+    var y = (typeof s.y === "number" && s.y >= 0) ? s.y : b.minY   // default top
+    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
+}
+
+function setBtEditPopupPosition(x, y, popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    btEditPopupState = { x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) }
+    layoutStore.btEditPopupStateJson = JSON.stringify(btEditPopupState)
+}
+
+function loadBtEditPopupPreferences() {
+    var parsed = { x: -1, y: -1 }
+    if (layoutStore.btEditPopupStateJson && layoutStore.btEditPopupStateJson !== "") {
+        try { parsed = JSON.parse(layoutStore.btEditPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
+    }
+    btEditPopupState = {
+        x: (typeof parsed.x === "number") ? parsed.x : -1,
+        y: (typeof parsed.y === "number") ? parsed.y : -1
+    }
 }
 
 function globalPopupCollapsed() {
@@ -3250,6 +3291,7 @@ Component.onCompleted: {
     loadLiveEchogramStates()
     loadFullscreenPopupState()
     loadGlobalPopupPreferences()
+    loadBtEditPopupPreferences()
     if (!restoreLayoutState()) {
         var paneNumber = nextPaneNumber()
         var firstLeaf = makeLeaf(makePane(paneNumber, "3D"))

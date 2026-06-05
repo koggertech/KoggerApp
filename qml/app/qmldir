@@ -8,6 +8,7 @@ PaneFrame 1.0 PaneFrame.qml
 PaneEditorChrome 1.0 PaneEditorChrome.qml
 BasePanePopup 1.0 BasePanePopup.qml
 FullscreenPanePopup 1.0 FullscreenPanePopup.qml
+BottomTrackEditPopup 1.0 BottomTrackEditPopup.qml
 PaneContentLoader 1.0 PaneContentLoader.qml
 Pane2DWindow 1.0 Pane2DWindow.qml
 Pane3DWindow 1.0 Pane3DWindow.qml

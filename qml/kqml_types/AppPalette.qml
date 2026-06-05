@@ -25,6 +25,12 @@ QtObject {
     // Tunable via the "Test" settings group.
     property int splitHitSizePx: 50
 
+    // Unified drag-handle bar (pane-split bars, popup headers, bottom-track
+    // palette). One finger-sized control everywhere. Base px — consumers scale.
+    // Length runs along the drag axis; thickness is the finger-critical size.
+    readonly property int dragBarLengthPx: 72
+    readonly property int dragBarThicknessPx: 22
+
     // Sidebar slide-in/out animation duration (panel.x, opacity). Tunable
     // independently from the workspace rubber-band so the two motions can
     // be dialled separately. Used by SettingsSidebarBase.progress Behavior.

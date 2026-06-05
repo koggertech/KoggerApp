@@ -14,6 +14,7 @@
         <file>qml/app/PaneEditorChrome.qml</file>
         <file>qml/app/BasePanePopup.qml</file>
         <file>qml/app/FullscreenPanePopup.qml</file>
+        <file>qml/app/BottomTrackEditPopup.qml</file>
         <file>qml/app/PaneContentLoader.qml</file>
         <file>qml/app/Pane2DWindow.qml</file>
         <file>qml/app/Pane3DWindow.qml</file>
@@ -59,6 +60,7 @@
         <file>qml/kqml_types/KTapArea.qml</file>
         <file>qml/kqml_types/KToolTip.qml</file>
         <file>qml/kqml_types/KCircleIconButton.qml</file>
+        <file>qml/kqml_types/KDragBar.qml</file>
         <file>qml/kqml_types/ZOrder.qml</file>
         <file>qml/kqml_types/Tokens.qml</file>
         <file>qml/kqml_types/Anim.qml</file>

@@ -246,10 +246,10 @@ ApplicationWindow {
             workspaceStore.closeModeSettingsPanel()
             return true
         },
-        function() {  // HotActions bottom-track edit tool — Esc cancels edit mode
+        function() {  // bottom-track edit palette — Esc closes it (resets tool)
             var toolActive = typeof core !== "undefined" && core && core.bottomTrackEditTool !== 0
-            if (!hotActions.btEditMenuOpen && !toolActive) return false
-            hotActions.btEditMenuOpen = false
+            if (!workspaceStore.bottomTrackEditorOpen && !toolActive) return false
+            workspaceStore.bottomTrackEditorOpen = false
             if (typeof core !== "undefined" && core)
                 core.setBottomTrackEditTool(0)
             return true
@@ -796,7 +796,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 store: workspaceStore
                 workspaceRoot: workspaceView
-                siblingBounds: root.fullscreenPopupEffectiveBounds
+                siblingBoundsList: [root.fullscreenPopupEffectiveBounds]
             }
         }
 
@@ -809,7 +809,15 @@ ApplicationWindow {
             hostLeafId: workspaceStore.maximizedLeafId
             sourceLeafId: workspaceStore.popupSourceLeafIdForHost(hostLeafId)
             visible: hostLeafId !== -1 && sourceLeafId !== -1
-            siblingBounds: root.globalPopupEffectiveBounds
+            siblingBoundsList: [root.globalPopupEffectiveBounds]
+        }
+
+        BottomTrackEditPopup {
+            id: btEditPopup
+            anchors.fill: parent
+            z: ZOrder.bottomTrackEditPopup   // поверх глобал/фуллскрин попапов
+            store: workspaceStore
+            siblingBoundsList: []
         }
 
         Component {

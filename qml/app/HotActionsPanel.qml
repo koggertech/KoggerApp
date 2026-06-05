@@ -38,17 +38,9 @@ Item {
     readonly property int favoriteCount: hasFavoriteLayouts ? store.favoriteLayouts.length : 0
     property bool layoutsMenuOpen: false
     property bool bottomTrackEditorEnabled: true
-    property bool btEditMenuOpen: false
     readonly property bool _btEditRevealOverride: _revealActiveKey === "bottomTrack"
     readonly property bool showBtEdit: bottomTrackEditorEnabled || _btEditRevealOverride
     readonly property int btTool: (typeof core !== "undefined" && core) ? core.bottomTrackEditTool : 0
-    readonly property var btTools: [
-        { tool: 0, icon: "qrc:/icons/ui/direction_arrows.svg",  tip: qsTr("Navigate") },
-        { tool: 1, icon: "qrc:/icons/ui/pencil.svg",            tip: qsTr("Draw bottom track") },
-        { tool: 2, icon: "qrc:/icons/ui/arrow_bar_to_up.svg",   tip: qsTr("Raise bottom track") },
-        { tool: 3, icon: "qrc:/icons/ui/arrow_bar_to_down.svg", tip: qsTr("Lower bottom track") },
-        { tool: 4, icon: "qrc:/icons/ui/eraser.svg",            tip: qsTr("Erase bottom track") }
-    ]
     property int favoriteItemSpacing: Math.round(6 * root._s)
     property int favoriteListMaxHeight: Math.round(244 * root._s)
     property bool connectionsOnline: true
@@ -237,16 +229,8 @@ Item {
     onExpandedChanged: {
         if (!expanded) {
             layoutsMenuOpen = false
-            btEditMenuOpen = false
             _revealActiveKey = ""
         }
-    }
-
-    // Closing the bottom-track tools (menu collapsed / panel closed / Esc)
-    // resets the active tool back to navigation.
-    onBtEditMenuOpenChanged: {
-        if (!btEditMenuOpen && typeof core !== "undefined" && core)
-            core.setBottomTrackEditTool(0)
     }
 
     onHasFavoriteLayoutsChanged: {
@@ -690,97 +674,40 @@ Item {
 
     Item {
         id: btEditCombo
-        readonly property int gap: Math.round(6 * root._s)
-        readonly property int toolGap: Math.round(6 * root._s)
-        // Breathing room around buttons so the hover scale (KCircleIconButton
-        // grows ~3.5%) stays inside the rounded backing.
         readonly property int sidePad: Math.round(3 * root._s)
-        readonly property int bodyH: btEditCombo.gap
-                                     + root.btTools.length * root.controlHeight
-                                     + (root.btTools.length - 1) * btEditCombo.toolGap
-                                     + btEditCombo.sidePad
         visible: root.showBtEdit && panel.opacity > 0.01
         opacity: panel.opacity
         x: panel.x + topRow.x + btEditSlot.x - btEditCombo.sidePad
         y: panel.y + topRow.y - btEditCombo.sidePad
         width: root.controlHeight + btEditCombo.sidePad * 2
-        height: btBacking.height
+        height: root.controlHeight + btEditCombo.sidePad * 2
         z: panel.z + 1
-
-        Rectangle {
-            id: btBacking
-            width: btEditCombo.width
-            y: 0
-            height: btEditCombo.sidePad + root.controlHeight
-                    + (root.btEditMenuOpen ? btEditCombo.bodyH : btEditCombo.sidePad)
-            radius: width / 2
-            color: root.btEditMenuOpen ? root.hotkeysLayerColor : "transparent"
-            border.width: root.btEditMenuOpen ? 1 : 0
-            border.color: AppPalette.border
-            clip: true
-
-            Behavior on height {
-                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                acceptedButtons: Qt.AllButtons
-                onPressed: function(mouse) { mouse.accepted = true }
-                onClicked: function(mouse) { mouse.accepted = true }
-                onWheel: function(wheel) { wheel.accepted = true }
-            }
-
-            Column {
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: btEditCombo.sidePad + root.controlHeight + btEditCombo.gap
-                spacing: btEditCombo.toolGap
-
-                Repeater {
-                    model: root.btTools
-                    delegate: KCircleIconButton {
-                        required property var modelData
-                        readonly property bool _sel: root.btTool === modelData.tool
-                        width: root.controlHeight
-                        height: root.controlHeight
-                        iconSource: modelData.icon
-                        iconTintColor: AppPalette.text
-                        toolTipText: modelData.tip
-                        fillColor:        _sel ? AppPalette.accentBgStrong : root.buttonFillColor
-                        fillHoverColor:   _sel ? AppPalette.accentBorder : root.buttonHoverColor
-                        fillPressedColor: root.buttonPressedColor
-                        borderColor:      _sel ? AppPalette.accentBorder : root.buttonBorderColor
-                        borderHoverColor: _sel ? AppPalette.accentBorder : root.buttonHoverBorderColor
-                        onClicked: {
-                            if (typeof core !== "undefined" && core)
-                                core.setBottomTrackEditTool(modelData.tool)
-                        }
-                    }
-                }
-            }
-        }
 
         KCircleIconButton {
             id: btEditTrigger
-            anchors.top: parent.top
-            anchors.topMargin: btEditCombo.sidePad
-            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.centerIn: parent
             width: root.controlHeight
             height: root.controlHeight
-            readonly property bool _active: root.btTool !== 0
-            iconSource: "qrc:/icons/ui/pencil.svg"
+            readonly property bool _open: root.store && root.store.bottomTrackEditorOpen
+            readonly property bool _accent: root.btTool !== 0 || _open
+            iconSource: _open ? "qrc:/icons/ui/x.svg" : "qrc:/icons/ui/pencil.svg"
             iconTintColor: AppPalette.text
-            toolTipText: qsTr("Bottom track editing")
-            borderWidth:      root.btEditMenuOpen ? 0 : 1
-            fillColor:        root.btEditMenuOpen ? "transparent" : (_active ? AppPalette.accentBgStrong : root.buttonFillColor)
-            fillHoverColor:   root.btEditMenuOpen ? "transparent" : (_active ? AppPalette.accentBorder : root.buttonHoverColor)
-            fillPressedColor: root.btEditMenuOpen ? "transparent" : root.buttonPressedColor
-            borderColor:      root.btEditMenuOpen ? "transparent" : (_active ? AppPalette.accentBorder : root.buttonBorderColor)
-            borderHoverColor: root.btEditMenuOpen ? "transparent" : (_active ? AppPalette.accentBorder : root.buttonHoverBorderColor)
+            toolTipText: _open ? qsTr("Close bottom track editing")
+                               : qsTr("Bottom track editing")
+            fillColor:        _accent ? AppPalette.accentBgStrong : root.buttonFillColor
+            fillHoverColor:   _accent ? AppPalette.accentBorder : root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      _accent ? AppPalette.accentBorder : root.buttonBorderColor
+            borderHoverColor: _accent ? AppPalette.accentBorder : root.buttonHoverBorderColor
             highlighted: root.highlightedQuickActionKey === "bottomTrack"
             flashToken: root.highlightPulseToken
-            onClicked: root.btEditMenuOpen = !root.btEditMenuOpen
+            onClicked: {
+                if (!root.store) return
+                var willOpen = !root.store.bottomTrackEditorOpen
+                root.store.bottomTrackEditorOpen = willOpen
+                if (willOpen)
+                    root.expanded = false
+            }
         }
     }
 
