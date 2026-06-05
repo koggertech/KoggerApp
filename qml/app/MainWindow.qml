@@ -600,8 +600,8 @@ ApplicationWindow {
             }
 
             devices: deviceManagerWrapper ? deviceManagerWrapper.devs : []
-            onDeviceTriggered: function(sn) {
-                workspaceStore.openConnectionsWithDevice(sn)
+            onDeviceTriggered: function(devIndex) {
+                workspaceStore.openConnectionsWithDeviceIndex(devIndex)
                 refreshConnectionsIndicator()
             }
         }

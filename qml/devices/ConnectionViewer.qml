@@ -14,14 +14,12 @@ Column {
 
     property var devList: deviceManagerWrapper.devs
 
-    // Resolved via store.activeDeviceSN, falls back to devList[0].
+    // Resolved via store.activeDeviceIndex (devSN not unique), falls back to devList[0].
     readonly property var dev: {
         if (!devList || devList.length === 0) return null
-        var sn = store ? store.activeDeviceSN : -1
-        for (var i = 0; i < devList.length; ++i) {
-            if (devList[i] && devList[i].devSN === sn)
-                return devList[i]
-        }
+        var idx = store ? store.activeDeviceIndex : -1
+        if (idx >= 0 && idx < devList.length)
+            return devList[idx]
         return devList[0]
     }
     property var lastImportTrackFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
@@ -90,15 +88,13 @@ Column {
     function syncActiveDevice() {
         if (!store) return
         if (!devList || devList.length === 0) {
-            store.setActiveDeviceSN(-1)
+            store.setActiveDeviceIndex(-1)
             return
         }
-        var sn = store.activeDeviceSN
-        for (var i = 0; i < devList.length; ++i) {
-            if (devList[i] && devList[i].devSN === sn)
-                return
-        }
-        store.setActiveDeviceSN(devList[0].devSN)
+        var idx = store.activeDeviceIndex
+        if (idx >= 0 && idx < devList.length)
+            return
+        store.setActiveDeviceIndex(0)
     }
 
     onStoreChanged: {
@@ -109,7 +105,7 @@ Column {
     Connections {
         target: core
         function onConnectionChanged() {
-            if (store) store.setActiveDeviceSN(-1)
+            if (store) store.setActiveDeviceIndex(-1)
         }
     }
 
@@ -787,15 +783,16 @@ Column {
                 model: devList
                 delegate: KButton {
                     required property var modelData
+                    required property int index
                     text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : qsTr("Undefined")
                     height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
                     checkable: true
-                    checked: dev === modelData
+                    checked: store && store.activeDeviceIndex === index
                     checkedBorder: AppPalette.accentBorder
                     visible: modelData ? (modelData.devType !== 0) : false
                     onClicked: {
-                        if (store && modelData)
-                            store.setActiveDeviceSN(modelData.devSN)
+                        if (store)
+                            store.setActiveDeviceIndex(index)
                     }
                 }
             }

@@ -115,8 +115,10 @@ readonly property int activeTwoDCount: paneCountByMode("2D")
     + (effectiveSecondaryMode === "2D" ? 1 : 0)
 readonly property bool secondary2DAvailable: effectiveSecondaryMode === "2D" || activeTwoDCount < 5
 
-// Active device (devSN); -1 = none. Session-only, shared with HotActionsPanel.
-property int activeDeviceSN: -1
+// Active device by INDEX into deviceManagerWrapper.devs; -1 = none. Index (not
+// devSN) because two identical devices can report the same serial — SN isn't a
+// reliable selector. Session-only.
+property int activeDeviceIndex: -1
 
 property var globalPopupState: ({
     x: -1,
@@ -508,16 +510,16 @@ function openConnectionsSettings() {
     setSettingsGroupExpanded("app.connections", true)
 }
 
-function setActiveDeviceSN(sn) {
-    if (typeof sn !== "number")
+function setActiveDeviceIndex(i) {
+    if (typeof i !== "number")
         return
-    activeDeviceSN = sn
+    activeDeviceIndex = i
 }
 
 property bool deviceSettingsScrollPending: false   // one-shot; survives lazy ConnectionViewer load (see qml-devices.md)
 
-function openConnectionsWithDevice(sn) {
-    setActiveDeviceSN(sn)
+function openConnectionsWithDeviceIndex(idx) {
+    setActiveDeviceIndex(idx)
     openConnectionsSettings()
     deviceSettingsScrollPending = true
 }

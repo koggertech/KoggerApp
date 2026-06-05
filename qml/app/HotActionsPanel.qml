@@ -82,7 +82,8 @@ Item {
     // Devices bound from MainWindow (deviceManagerWrapper.devs).
     // Status colors mirror ConnectionViewer link-row palette.
     property var devices: []
-    signal deviceTriggered(int devSN)
+    // Index into `devices` (= deviceManagerWrapper.devs) — devSN can collide.
+    signal deviceTriggered(int devIndex)
 
     function iconForDevice(d) {
         if (!d) return "qrc:/icons/ui/device-unknown.svg"
@@ -394,6 +395,7 @@ Item {
 
         KCircleIconButton {
             required property var modelData
+            required property int index
             readonly property color _fill:   root.linkFillColor(modelData)
             readonly property color _border: root.linkBorderColor(modelData)
 
@@ -416,8 +418,23 @@ Item {
 
             onClicked: {
                 if (!modelData) return
-                root.deviceTriggered(modelData.devSN)
+                root.deviceTriggered(index)
                 root.expanded = false
+            }
+
+            // Set sonar frequency (transducer kHz) — small number, bottom-right.
+            Text {
+                visible: modelData && modelData.isTransducerSupport && modelData.transFreq > 0
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                anchors.bottomMargin: Math.round(2 * root._s)
+                anchors.rightMargin: Math.round(4 * root._s)
+                text: modelData ? modelData.transFreq : ""
+                color: AppPalette.text
+                font.pixelSize: Math.round(9 * root._s)
+                font.bold: true
+                style: Text.Outline
+                styleColor: "#000000B0"
             }
         }
     }
