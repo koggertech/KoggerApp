@@ -256,6 +256,7 @@ Column {
         id: filesList
         width: parent.width
         visible: count > 0
+        property string expandedUuid: ""
         readonly property int gap: Tokens.spaceXxs + 1
         readonly property int collapsedRowH: Tokens.controlHMd + 2 * Tokens.spaceXs
         readonly property int maxVisibleRows: 7
@@ -281,7 +282,7 @@ Column {
             readonly property bool isConnected: ConnectionStatus
             readonly property bool receivesData: ReceivesData
             readonly property bool notAvailable: IsNotAvailable
-            readonly property bool editing: gearBtn.checked
+            readonly property bool editing: filesList.expandedUuid === String(Uuid)
             property int vPad: connRow.editing ? Tokens.spaceSm : Tokens.spaceXs
             Behavior on vPad { NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
             readonly property string typeLabel: LinkType === 1 ? PortName : (LinkType === 2 ? "UDP" : "TCP")
@@ -314,11 +315,12 @@ Column {
 
                         IconBtn {
                             id: gearBtn
-                            checkable: true
+                            checked: connRow.editing
                             iconSource: "qrc:/icons/ui/settings.svg"
                             toolTipText: qsTr("Settings")
                             Layout.alignment: Qt.AlignVCenter
                             Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                            onClicked: filesList.expandedUuid = connRow.editing ? "" : String(Uuid)
                         }
 
                         Text {
