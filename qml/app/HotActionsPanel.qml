@@ -263,7 +263,9 @@ Item {
                                                 : 0
     readonly property int panelOffsetX: (root.showToggleButton ? toggleButton.width + Math.round(8 * root._s) : 0) + root.revealShiftX
 
-    width: Math.max(leadingClusterWidth, root.expanded ? panelOffsetX + panel.width : panelOffsetX)
+    width: Math.max(leadingClusterWidth,
+                    root.expanded ? panelOffsetX + panel.width
+                                  : panelOffsetX + (collapsedDeviceRow.visible ? collapsedDeviceRow.width : 0))
     height: Math.max(leadingClusterHeight, panel.height, layoutsCombo.y + backing.height, btEditCombo.y + btEditCombo.height)
 
     component LayoutsTriggerButton: Rectangle {
@@ -403,6 +405,39 @@ Item {
         }
     }
 
+    Component {
+        id: deviceShortcutDelegate
+
+        KCircleIconButton {
+            required property var modelData
+            readonly property color _fill:   root.linkFillColor(modelData)
+            readonly property color _border: root.linkBorderColor(modelData)
+
+            visible: modelData ? (modelData.devType !== 0) : false
+            width: visible ? root.controlHeight : 0
+            height: root.controlHeight
+            iconSource: root.iconForDevice(modelData)
+            iconTintColor: AppPalette.text
+            toolTipText: modelData
+                         ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]")
+                         : ""
+            fillColor:        _fill
+            fillHoverColor:   _fill
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      _border
+            borderHoverColor: _border
+
+            highlighted: root.highlightedQuickActionKey === "connections"
+            flashToken: root.highlightPulseToken
+
+            onClicked: {
+                if (!modelData) return
+                root.deviceTriggered(modelData.devSN)
+                root.expanded = false
+            }
+        }
+    }
+
     KCircleIconButton {
         id: toggleButton
         anchors.left: parent.left
@@ -420,7 +455,7 @@ Item {
         fillPressedColor: root.buttonPressedColor
         borderColor: root.buttonBorderColor
         borderHoverColor: root.buttonHoverBorderColor
-        toolTipText: root.expanded ? "Collapse hotkeys" : "Open hotkeys"
+        toolTipText: root.expanded ? qsTr("Collapse hotkeys") : qsTr("Open hotkeys")
 
         onClicked: {
             if (!root.showToggleButton)
@@ -470,6 +505,25 @@ Item {
             color: AppPalette.text
             font.pixelSize: Math.round(12 * root._s)
             font.bold: true
+        }
+    }
+
+    Row {
+        id: collapsedDeviceRow
+        anchors.left: parent.left
+        anchors.leftMargin: root.panelOffsetX
+        anchors.verticalCenter: toggleButton.verticalCenter
+        spacing: Math.round(8 * root._s)
+        visible: root.showToggleButton && !root.expanded && root.connectionStatusToolVisible
+        opacity: visible ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation { duration: 170; easing.type: Easing.OutCubic }
+        }
+
+        Repeater {
+            model: root.connectionStatusToolVisible ? root.devices : 0
+            delegate: deviceShortcutDelegate
         }
     }
 
@@ -527,34 +581,7 @@ Item {
             Repeater {
                 readonly property bool _devicesRevealOverride: root._revealActiveKey === "connections"
                 model: (root.connectionStatusToolVisible || _devicesRevealOverride) ? root.devices : 0
-                delegate: KCircleIconButton {
-                    required property var modelData
-                    readonly property color _fill:   root.linkFillColor(modelData)
-                    readonly property color _border: root.linkBorderColor(modelData)
-
-                    visible: modelData ? (modelData.devType !== 0) : false
-                    width: visible ? root.controlHeight : 0
-                    height: root.controlHeight
-                    iconSource: root.iconForDevice(modelData)
-                    iconTintColor: AppPalette.text
-                    toolTipText: modelData
-                                 ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]")
-                                 : ""
-                    fillColor:        _fill
-                    fillHoverColor:   _fill
-                    fillPressedColor: root.buttonPressedColor
-                    borderColor:      _border
-                    borderHoverColor: _border
-
-                    highlighted: root.highlightedQuickActionKey === "connections"
-                    flashToken: root.highlightPulseToken
-
-                    onClicked: {
-                        if (!modelData) return
-                        root.deviceTriggered(modelData.devSN)
-                        root.expanded = false
-                    }
-                }
+                delegate: deviceShortcutDelegate
             }
 
             Item {

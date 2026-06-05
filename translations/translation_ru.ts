@@ -2587,6 +2587,16 @@
         <source>Open second window</source>
         <translation>Открыть второе окно</translation>
     </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="460"/>
+        <source>Collapse hotkeys</source>
+        <translation>Свернуть быстрые действия</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="460"/>
+        <source>Open hotkeys</source>
+        <translation>Открыть быстрые действия</translation>
+    </message>
 </context>
 <context>
     <name>HotkeysDialog</name>

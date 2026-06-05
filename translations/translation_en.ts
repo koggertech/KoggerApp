@@ -2572,6 +2572,16 @@
         <source>Open second window</source>
         <translation>Open second window</translation>
     </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="460"/>
+        <source>Collapse hotkeys</source>
+        <translation>Collapse hotkeys</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="460"/>
+        <source>Open hotkeys</source>
+        <translation>Open hotkeys</translation>
+    </message>
 </context>
 <context>
     <name>HotkeysDialog</name>
