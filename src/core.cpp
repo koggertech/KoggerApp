@@ -1525,6 +1525,11 @@ void Core::UILoad(QObject* object, const QUrl& url)
         }
         registerPlot2D(plot);
     }
+    // Re-bind plots registered before scene3dViewPtr_ existed (findChildren misses
+    // reparented slot delegates). See docs scene2d.md "2D↔3D синхронизация эпох".
+    for (auto* plot : plot2dList_) {
+        bindPlot2D(plot);
+    }
     scene3dViewPtr_->setDataset(datasetPtr_);
     scene3dViewPtr_->setDataProcessorPtr(dataProcessor_);
     datasetPtr_->setScene3D(scene3dViewPtr_);

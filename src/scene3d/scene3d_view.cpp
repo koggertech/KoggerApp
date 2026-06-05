@@ -640,12 +640,6 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
         }
     }
 
-    if (qmlRootObject_) { // maybe this will be removed
-        if (auto selectionToolButton = qmlRootObject_->findChild<QObject*>("selectionToolButton"); selectionToolButton) {
-            selectionToolButton->property("checked").toBool() ? m_mode = ActiveMode::BottomTrackVertexSelectionMode : m_mode = ActiveMode::Idle;
-        }
-    }
-
     if (mouseButton == Qt::MouseButton::RightButton) {
         switchToBottomTrackVertexComboSelectionMode(x, y);
     }
@@ -1659,6 +1653,22 @@ void GraphicsScene3dView::setSyncEpochIndex(int epochIndex)
 
     refreshSyncLoupePreview();
     emit syncLoupeStateChanged();
+}
+
+void GraphicsScene3dView::setEpochSyncEnabled(bool state)
+{
+    if (epochSyncEnabled_ == state) {
+        return;
+    }
+
+    epochSyncEnabled_ = state;
+
+    if (!epochSyncEnabled_) {
+        m_bottomTrack->resetVertexSelection();
+        boatTrack_->clearSelectedEpoch();
+        setSyncEpochIndex(-1);
+        QQuickFramebufferObject::update();
+    }
 }
 
 void GraphicsScene3dView::updateForceSingleZoomAutoState()

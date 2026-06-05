@@ -130,9 +130,7 @@ Rectangle {
     // same vertical line as that X button. Inline mode (HotActions) shows
     // a smaller corner badge that fits inside the pill button.
     Rectangle {
-        readonly property int _size: root.showText
-                                     ? Math.round(24 * AppPalette.scale)
-                                     : Math.round(10 * AppPalette.scale)
+        readonly property int _size: Math.round(24 * AppPalette.scale)
 
         visible: root.selected
         width: _size
