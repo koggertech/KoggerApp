@@ -210,8 +210,8 @@ Item {
                 if (mouse.button === Qt.RightButton)
                     pointerArea._rmbPressPos = Qt.point(mouse.x, mouse.y)
 
-                // Manual double-tap recognizer (touch-friendly thresholds via
-                // AppPalette.doubleTapDistancePx; interval ~500ms).
+                // Manual double-tap recognizer (touch-friendly distance via
+                // AppPalette.doubleTapDistancePx; interval = canonical 320ms).
                 if (mouse.button === Qt.LeftButton) {
                     var now = Date.now()
                     var dx = mouse.x - pointerArea._lastPressPos.x
@@ -220,7 +220,7 @@ Item {
                     var maxDist = AppPalette.doubleTapDistancePx
                     var dt = now - pointerArea._lastPressMs
 
-                    if (dt <= 500 && distSq <= maxDist * maxDist) {
+                    if (dt <= 320 && distSq <= maxDist * maxDist) {
                         pointerArea._lastPressMs = 0
                         pointerArea._lastPressPos = Qt.point(-10000, -10000)
                         root.markMouseKeyboardInput()

@@ -224,6 +224,8 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
 
+    app.styleHints()->setMouseDoubleClickInterval(320);
+
     // Themes global was constructed before QGuiApplication + org name — now
     // safe to read QSettings and primaryScreen() for DPI-aware resCoeff.
     theme.initSettings();

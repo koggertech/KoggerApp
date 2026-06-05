@@ -195,7 +195,7 @@ Item {
                     var distSq = dx * dx + dy * dy
                     var maxDist = AppPalette.doubleTapDistancePx
 
-                    if ((now - _lastTapMs) <= 500 && distSq <= maxDist * maxDist) {
+                    if ((now - _lastTapMs) <= 320 && distSq <= maxDist * maxDist) {
                         _lastTapMs = 0
                         _lastTapPos = Qt.point(-10000, -10000)
                         if (store && typeof store.toggleLeafMaximize === "function") {
