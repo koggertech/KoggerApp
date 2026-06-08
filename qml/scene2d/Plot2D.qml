@@ -1559,11 +1559,12 @@ WaterFall {
         property real prevTimelinePos: -1
 
         readonly property bool trackVisible: scrollMouseH.pressed || isScrolling
+        readonly property bool scrolledBackLive: plot.isLiveMode && scrollThumbH.progress < 0.999
         readonly property real thumbW: Math.round(((scrollMouseH.pressed || isScrolling) ? 96 : 68) * AppPalette.scale)
         readonly property real thumbH: Math.round(((scrollMouseH.pressed || isScrolling) ? 28 : 20) * AppPalette.scale)
 
         visible: plot.horizontal && plot.hasData
-        opacity: (plot.scrollBarsShown || trackVisible) ? 1.0 : 0.0
+        opacity: (plot.scrollBarsShown || trackVisible || scrolledBackLive) ? 1.0 : 0.0
 
         onTrackVisibleChanged: {
             if (trackVisible) {
@@ -1596,6 +1597,10 @@ WaterFall {
             function onTimelinePositionChanged() {
                 if (scrollMouseH.pressed) return
                 const pos = plot.timelinePosition
+                if (echoScrollBarH.scrolledBackLive) {
+                    echoScrollBarH.prevTimelinePos = pos
+                    return
+                }
                 if (Math.abs(pos - echoScrollBarH.prevTimelinePos) > 0.00005) {
                     echoScrollBarH.isScrolling = true
                     scrollFadeH.restart()
@@ -1673,7 +1678,7 @@ WaterFall {
         MouseArea {
             id: scrollMouseH
             anchors.fill: parent
-            enabled: plot.scrollBarsShown || echoScrollBarH.trackVisible
+            enabled: plot.scrollBarsShown || echoScrollBarH.trackVisible || echoScrollBarH.scrolledBackLive
 
             onPressed: function(mouse) {
                 snapToEndH.stop()
@@ -1709,11 +1714,12 @@ WaterFall {
         property real prevTimelinePos: -1
 
         readonly property bool trackVisible: scrollMouseV.pressed || isScrolling
+        readonly property bool scrolledBackLive: plot.isLiveMode && scrollThumbV.progress < 0.999
         readonly property real thumbH: Math.round(((scrollMouseV.pressed || isScrolling) ? 96 : 68) * AppPalette.scale)
         readonly property real thumbW: Math.round(((scrollMouseV.pressed || isScrolling) ? 28 : 20) * AppPalette.scale)
 
         visible: !plot.horizontal && plot.hasData
-        opacity: (plot.scrollBarsShown || trackVisible) ? 1.0 : 0.0
+        opacity: (plot.scrollBarsShown || trackVisible || scrolledBackLive) ? 1.0 : 0.0
 
         onTrackVisibleChanged: {
             if (trackVisible) {
@@ -1746,6 +1752,10 @@ WaterFall {
             function onTimelinePositionChanged() {
                 if (scrollMouseV.pressed) return
                 const pos = plot.timelinePosition
+                if (echoScrollBarV.scrolledBackLive) {
+                    echoScrollBarV.prevTimelinePos = pos
+                    return
+                }
                 if (Math.abs(pos - echoScrollBarV.prevTimelinePos) > 0.00005) {
                     echoScrollBarV.isScrolling = true
                     scrollFadeV.restart()
@@ -1824,7 +1834,7 @@ WaterFall {
         MouseArea {
             id: scrollMouseV
             anchors.fill: parent
-            enabled: plot.scrollBarsShown || echoScrollBarV.trackVisible
+            enabled: plot.scrollBarsShown || echoScrollBarV.trackVisible || echoScrollBarV.scrolledBackLive
 
             onPressed: function(mouse) {
                 snapToEndV.stop()
