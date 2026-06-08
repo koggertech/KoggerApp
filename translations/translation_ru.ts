@@ -13,6 +13,11 @@
     <name>AppSettingsPage</name>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Show profiles button</source>
+        <translation>Показывать кнопку профилей</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
         <source>Show bottom track editing</source>
         <translation>Показывать редактирование трека дна</translation>
     </message>
@@ -2539,6 +2544,21 @@
     <name>HotActionsPanel</name>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Settings profiles</source>
+        <translation>Профили настроек</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Close profiles</source>
+        <translation>Закрыть профили</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Apply profile to all devices</source>
+        <translation>Применить профиль ко всем устройствам</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
         <source>Navigate</source>
         <translation>Навигация</translation>
     </message>
@@ -2601,6 +2621,29 @@
         <location filename="../qml/app/HotActionsPanel.qml" line="698"/>
         <source>Close bottom track editing</source>
         <translation>Закрыть редактор трека дна</translation>
+    </message>
+</context>
+<context>
+    <name>ProfilesPopup</name>
+    <message>
+        <location filename="../qml/app/ProfilesPopup.qml"/>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ProfilesPopup.qml"/>
+        <source>Add profile</source>
+        <translation>Добавить профиль</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ProfilesPopup.qml"/>
+        <source>Edit profiles</source>
+        <translation>Редактировать профили</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ProfilesPopup.qml"/>
+        <source>Remove profile</source>
+        <translation>Удалить профиль</translation>
     </message>
 </context>
 <context>
@@ -3044,6 +3087,11 @@
 </context>
 <context>
     <name>MainWindow</name>
+    <message>
+        <location filename="../qml/app/MainWindow.qml"/>
+        <source>Apply profile to all devices</source>
+        <translation>Применить профиль ко всем устройствам</translation>
+    </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="21"/>
         <location filename="../qml/app/MainWindow.qml" line="47"/>

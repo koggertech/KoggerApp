@@ -40,6 +40,7 @@ Item {
     property var   siblingBoundsList: []
     property real  siblingSnapGap: 8
     property real  siblingSnapThreshold: 60
+    property bool  siblingSnapAlignTop: false
 
     property bool  _siblingSnapActive: false
     property real  _siblingSnapX: 0
@@ -149,7 +150,9 @@ Item {
         var xCenterDist = Math.abs((x + aw / 2) - (bx + bw / 2))
         var yProximity = overlapping || (yCenterDist < (ah / 2 + bh / 2 + thr))
         var xProximity = overlapping || (xCenterDist < (aw / 2 + bw / 2 + thr))
-        var snapY = (yCenterDist < thr) ? clampY(by + bh / 2 - ah / 2) : clampY(y)
+        var snapY = siblingSnapAlignTop
+                    ? ((Math.abs(y - by) < thr) ? clampY(by) : clampY(y))
+                    : ((yCenterDist < thr) ? clampY(by + bh / 2 - ah / 2) : clampY(y))
         var snapX = (xCenterDist < thr) ? clampX(bx + bw / 2 - aw / 2) : clampX(x)
         var dLeft   = Math.abs(x - leftTarget)
         var dRight  = Math.abs(x - rightTarget)

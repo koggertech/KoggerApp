@@ -41,6 +41,9 @@ Item {
     readonly property bool _btEditRevealOverride: _revealActiveKey === "bottomTrack"
     readonly property bool showBtEdit: bottomTrackEditorEnabled || _btEditRevealOverride
     readonly property int btTool: (typeof core !== "undefined" && core) ? core.bottomTrackEditTool : 0
+    property bool profilesEnabled: true
+    readonly property bool _profilesRevealOverride: _revealActiveKey === "profiles"
+    readonly property bool showProfiles: profilesEnabled || _profilesRevealOverride
     property int favoriteItemSpacing: Math.round(6 * root._s)
     property int favoriteListMaxHeight: Math.round(244 * root._s)
     property bool connectionsOnline: true
@@ -616,6 +619,30 @@ Item {
                 onClicked: {
                     root.secondWindowToggleRequested()
                     root.expanded = false
+                }
+            }
+
+            KCircleIconButton {
+                readonly property bool _open: root.store && root.store.profilesPopupOpen
+                visible: root.showProfiles
+                width: visible ? root.controlHeight : 0
+                height: root.controlHeight
+                iconSource: _open ? "qrc:/icons/ui/x.svg" : "qrc:/icons/ui/file_settings.svg"
+                iconTintColor: AppPalette.text
+                toolTipText: _open ? qsTr("Close profiles") : qsTr("Settings profiles")
+                fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
+                fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
+                fillPressedColor: root.buttonPressedColor
+                borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
+                borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
+                highlighted: root.highlightedQuickActionKey === "profiles"
+                flashToken: root.highlightPulseToken
+                onClicked: {
+                    if (!root.store) return
+                    var willOpen = !root.store.profilesPopupOpen
+                    root.store.profilesPopupOpen = willOpen
+                    if (willOpen)
+                        root.expanded = false
                 }
             }
 

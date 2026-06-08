@@ -37,6 +37,7 @@ BasePanePopup {
     panelColor: "transparent"
     panelBorderColor: "transparent"
     headerDragBarLength: Math.max(Math.round(24 * _s), _pillW - _sidePad * 2)
+    siblingSnapAlignTop: true
 
     function _applySize() {
         expandedWidth = _wantW

@@ -63,6 +63,7 @@ property string selectedConnectionFilePath: ""
 property bool quickActionFavoritesEnabled: true
 property bool quickActionConnectionStatusEnabled: true
 property bool quickActionBottomTrackEnabled: true
+property bool quickActionProfilesEnabled: true
 property string hotkeysRevealKey: ""
 property int hotkeysRevealNonce: 0
 // Live reference to the HotkeysDialog while it's open (set by the dialog
@@ -130,6 +131,12 @@ property var globalPopupState: ({
 
 property bool bottomTrackEditorOpen: false
 property var btEditPopupState: ({ x: -1, y: -1 })
+
+property bool profilesPopupOpen: false
+property var settingsProfiles: []
+property var profilesPopupState: ({ x: -1, y: -1 })
+
+onProfilesPopupOpenChanged: layoutStore.profilesPopupOpenStored = profilesPopupOpen
 
 readonly property real splitterThickness: 0
 readonly property real minPaneSize: 120
@@ -275,6 +282,7 @@ property Settings layoutStore: Settings {
     property bool quickActionFavoritesEnabledStored: true
     property bool quickActionConnectionStatusEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
+    property bool quickActionProfilesEnabledStored: true
     property string selectedConnectionFilePathStored: ""
     property string favoriteLayoutsJson: "[]"
     property string settingsGroupExpandedJson: "{}"
@@ -284,6 +292,9 @@ property Settings layoutStore: Settings {
     property string globalPopupModeStored: ""
     property string globalPopupStateJson: "{\"x\":-1,\"y\":-1,\"collapsed\":false,\"expandedWidth\":-1,\"expandedHeight\":-1}"
     property string btEditPopupStateJson: "{\"x\":-1,\"y\":-1}"
+    property string settingsProfilesJson: "[]"
+    property string profilesPopupStateJson: "{\"x\":-1,\"y\":-1}"
+    property bool profilesPopupOpenStored: false
     property bool secondaryWindowOpenStored: false
     property string secondaryWindowModeStored: ""
     property string liveEchogramStatesJson: "{}"
@@ -878,6 +889,63 @@ function loadBtEditPopupPreferences() {
         try { parsed = JSON.parse(layoutStore.btEditPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
     }
     btEditPopupState = {
+        x: (typeof parsed.x === "number") ? parsed.x : -1,
+        y: (typeof parsed.y === "number") ? parsed.y : -1
+    }
+}
+
+// ── Settings profiles list ──
+function addSettingsProfile(path) {
+    if (!path || !path.length) return
+    var next = (settingsProfiles || []).slice(0)
+    for (var i = 0; i < next.length; ++i)
+        if (next[i] && next[i].path === path) return   // skip duplicates
+    next.push({ path: path })
+    settingsProfiles = next
+    saveSettingsProfiles()
+}
+
+function removeSettingsProfile(index) {
+    if (!settingsProfiles || index < 0 || index >= settingsProfiles.length) return
+    var next = settingsProfiles.slice(0)
+    next.splice(index, 1)
+    settingsProfiles = next
+    saveSettingsProfiles()
+}
+
+function saveSettingsProfiles() {
+    layoutStore.settingsProfilesJson = JSON.stringify(settingsProfiles || [])
+}
+
+function loadSettingsProfiles() {
+    var parsed = []
+    if (layoutStore.settingsProfilesJson && layoutStore.settingsProfilesJson !== "") {
+        try { parsed = JSON.parse(layoutStore.settingsProfilesJson) } catch (e) { parsed = [] }
+    }
+    settingsProfiles = Array.isArray(parsed) ? parsed : []
+}
+
+// ── Profiles popup position (mirror of btEdit; default top-right) ──
+function profilesPopupPosition(popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    var s = profilesPopupState || { x: -1, y: -1 }
+    var x = (typeof s.x === "number" && s.x >= 0) ? s.x : b.maxX
+    var y = (typeof s.y === "number" && s.y >= 0) ? s.y : b.minY
+    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
+}
+
+function setProfilesPopupPosition(x, y, popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    profilesPopupState = { x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) }
+    layoutStore.profilesPopupStateJson = JSON.stringify(profilesPopupState)
+}
+
+function loadProfilesPopupPreferences() {
+    var parsed = { x: -1, y: -1 }
+    if (layoutStore.profilesPopupStateJson && layoutStore.profilesPopupStateJson !== "") {
+        try { parsed = JSON.parse(layoutStore.profilesPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
+    }
+    profilesPopupState = {
         x: (typeof parsed.x === "number") ? parsed.x : -1,
         y: (typeof parsed.y === "number") ? parsed.y : -1
     }
@@ -2159,6 +2227,7 @@ function saveLayoutState() {
     layoutStore.quickActionFavoritesEnabledStored = quickActionFavoritesEnabled
     layoutStore.quickActionConnectionStatusEnabledStored = quickActionConnectionStatusEnabled
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
+    layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
     layoutStore.secondaryWindowOpenStored = secondaryWindowOpen
     layoutStore.secondaryWindowModeStored = secondaryWindowMode
@@ -2190,6 +2259,7 @@ function restoreLayoutState() {
     quickActionFavoritesEnabled = layoutStore.quickActionFavoritesEnabledStored
     quickActionConnectionStatusEnabled = layoutStore.quickActionConnectionStatusEnabledStored
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
+    quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored
     secondaryWindowMode = (storedSecondaryMode === "2D" || storedSecondaryMode === "3D") ? storedSecondaryMode : ""
@@ -3294,6 +3364,9 @@ Component.onCompleted: {
     loadFullscreenPopupState()
     loadGlobalPopupPreferences()
     loadBtEditPopupPreferences()
+    loadSettingsProfiles()
+    loadProfilesPopupPreferences()
+    profilesPopupOpen = layoutStore.profilesPopupOpenStored
     if (!restoreLayoutState()) {
         var paneNumber = nextPaneNumber()
         var firstLeaf = makeLeaf(makePane(paneNumber, "3D"))

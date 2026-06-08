@@ -146,6 +146,20 @@ ApplicationWindow {
         return Qt.rect(item.panelX, item.panelY, item.expandedWidth, item.expandedHeight)
     }
 
+    readonly property rect btEditPopupEffectiveBounds: {
+        if (!btEditPopup.visible || !btEditPopup.popupVisible)
+            return Qt.rect(-1, -1, 0, 0)
+        return Qt.rect(btEditPopup.panelX, btEditPopup.panelY,
+                       btEditPopup.expandedWidth, btEditPopup.expandedHeight)
+    }
+
+    readonly property rect profilesPopupEffectiveBounds: {
+        if (!profilesPopup.visible || !profilesPopup.popupVisible)
+            return Qt.rect(-1, -1, 0, 0)
+        return Qt.rect(profilesPopup.panelX, profilesPopup.panelY,
+                       profilesPopup.expandedWidth, profilesPopup.expandedHeight)
+    }
+
     function isValidUuidText(uuidValue) {
         if (uuidValue === undefined || uuidValue === null)
             return false
@@ -252,6 +266,11 @@ ApplicationWindow {
             workspaceStore.bottomTrackEditorOpen = false
             if (typeof core !== "undefined" && core)
                 core.setBottomTrackEditTool(0)
+            return true
+        },
+        function() {  // settings-profile palette — Esc closes it
+            if (!workspaceStore.profilesPopupOpen) return false
+            workspaceStore.profilesPopupOpen = false
             return true
         },
         function() {  // HotActions favorites popup
@@ -560,6 +579,7 @@ ApplicationWindow {
             favoritesEnabled: workspaceStore.quickActionFavoritesEnabled
             connectionStatusToolVisible: workspaceStore.quickActionConnectionStatusEnabled
             bottomTrackEditorEnabled: workspaceStore.quickActionBottomTrackEnabled
+            profilesEnabled: workspaceStore.quickActionProfilesEnabled
             inputDeviceLabel: workspaceView.inputDeviceLabel
             inputDeviceColor: workspaceView.inputDeviceColor
             showToggleButton: !workspaceStore.settingsPanelOpen && !workspaceStore.modeSettingsPanelOpen
@@ -817,7 +837,15 @@ ApplicationWindow {
             anchors.fill: parent
             z: ZOrder.bottomTrackEditPopup   // поверх глобал/фуллскрин попапов
             store: workspaceStore
-            siblingBoundsList: []
+            siblingBoundsList: [root.profilesPopupEffectiveBounds]
+        }
+
+        ProfilesPopup {
+            id: profilesPopup
+            anchors.fill: parent
+            z: ZOrder.profilesPopup
+            store: workspaceStore
+            siblingBoundsList: [root.btEditPopupEffectiveBounds]
         }
 
         Component {

@@ -2668,6 +2668,15 @@ Column {
                 root.store.requestHotkeysReveal("bottomTrack")
             }
         }
+
+        KSwitch {
+            width: parent.width; text: qsTr("Show profiles button")
+            checked: root.store.quickActionProfilesEnabled
+            onToggled: {
+                root.store.quickActionProfilesEnabled = checked
+                root.store.requestHotkeysReveal("profiles")
+            }
+        }
     }
 
     // ── Test (developer-only — compiled with MANUAL_TESTING) ─────────────────

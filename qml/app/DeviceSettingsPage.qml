@@ -276,6 +276,20 @@ Column {
             property alias devExportFolder: devActionsGroup.exportFolder
         }
 
+        function _localPath(u) {
+            if (!u) return ""
+            if (typeof u !== "string" && u.toLocalFile) {
+                var lp = u.toLocalFile()
+                if (lp && lp.length) return lp
+            }
+            var s = String(u)
+            if (s.indexOf("file:///") === 0)
+                return Qt.platform.os === "windows" ? s.slice(8) : s.slice(7)
+            if (s.indexOf("file://") === 0)
+                return s.slice(7)
+            return s
+        }
+
         FileDialog {
             id: importXmlDialog
             title: qsTr("Open settings file")
@@ -284,10 +298,8 @@ Column {
             onCurrentFolderChanged: devActionsGroup.importFolder = currentFolder
             onAccepted: {
                 devActionsGroup.importFolder = importXmlDialog.currentFolder
-                var url = importXmlDialog.selectedFile
-                if (!url) return
-                var lp = url.toLocalFile ? url.toLocalFile() : url.toString()
-                if (dev) dev.importSettingsFromXML(lp)
+                var lp = devActionsGroup._localPath(importXmlDialog.selectedFile)
+                if (dev && lp.length) dev.importSettingsFromXML(lp)
             }
         }
 
@@ -296,13 +308,12 @@ Column {
             title: qsTr("Save settings file")
             fileMode: FileDialog.SaveFile
             nameFilters: ["XML files (*.xml)"]
+            defaultSuffix: "xml"
             onCurrentFolderChanged: devActionsGroup.exportFolder = currentFolder
             onAccepted: {
                 devActionsGroup.exportFolder = exportXmlDialog.currentFolder
-                var url = exportXmlDialog.selectedFile
-                if (!url || url.toString() === "") return
-                var lp = url.toLocalFile ? url.toLocalFile() : url.toString()
-                if (dev) dev.exportSettingsToXML(lp)
+                var lp = devActionsGroup._localPath(exportXmlDialog.selectedFile)
+                if (dev && lp.length) dev.exportSettingsToXML(lp)
             }
         }
 
