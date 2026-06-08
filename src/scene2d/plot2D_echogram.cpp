@@ -74,11 +74,15 @@ void Plot2DEchogram::setThemeId(int theme_id) {
 
     QVector<QColor> coloros;
     QVector<int> levels;
+    colormapFor(static_cast<int>(themeId_), coloros, levels);
+    setColorScheme(coloros, levels);
+}
 
-    if(theme_id == ClassicTheme) {
-        coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(20, 5, 80), QColor::fromRgb(50, 180, 230), QColor::fromRgb(190, 240, 250), QColor::fromRgb(255, 255, 255)};
-        levels = {0, 30, 130, 220, 255};
-    } else if(theme_id == SepiaTheme) {
+void Plot2DEchogram::colormapFor(int theme_id, QVector<QColor>& coloros, QVector<int>& levels) {
+    coloros.clear();
+    levels.clear();
+
+    if(theme_id == SepiaTheme) {
         coloros = { QColor::fromRgb(0,   0,   0),
                     QColor::fromRgb(50,  50,  10),
                     QColor::fromRgb(230, 200, 100),
@@ -161,9 +165,10 @@ void Plot2DEchogram::setThemeId(int theme_id) {
                     QColor::fromRgb(230, 153, 51),
                     QColor::fromRgb(255, 179, 26) };
         levels = {0, 28, 56, 84, 112, 140, 168, 196, 224, 255};
+    } else {
+        coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(20, 5, 80), QColor::fromRgb(50, 180, 230), QColor::fromRgb(190, 240, 250), QColor::fromRgb(255, 255, 255)};
+        levels = {0, 30, 130, 220, 255};
     }
-
-    setColorScheme(coloros, levels);
 }
 
 void Plot2DEchogram::setCompensation(int compensation_id)

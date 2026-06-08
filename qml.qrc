@@ -156,6 +156,7 @@
         <file>qml/scene2d/ChartLevel.qml</file>
         <file>qml/scene2d/KChartLevelCapsule.qml</file>
         <file>qml/scene2d/ChartLevelSingle.qml</file>
+        <file>qml/scene2d/KThemeSwitcher.qml</file>
 
     </qresource>
 </RCC>

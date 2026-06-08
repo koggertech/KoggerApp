@@ -3,6 +3,7 @@
 #include <QImage>
 #include <QQuickPaintedItem>
 #include <QObject>
+#include <QVariant>
 #include <dataset.h>
 #include <QTimer>
 #include "plot2D.h"
@@ -232,6 +233,7 @@ public slots:
     Q_INVOKABLE float getLowEchogramLevel() const;
     Q_INVOKABLE float getHighEchogramLevel() const;
     Q_INVOKABLE int getThemeId() const;
+    Q_INVOKABLE QVariantList echogramThemeStops(int id) const;
     Q_INVOKABLE bool getBottomTrackVisible() const { return Plot2D::getBottomTrackVisible(); }
     Q_INVOKABLE int getBottomTrackThemeId() const;
     Q_INVOKABLE bool getRangefinderVisible() const { return Plot2D::getRangefinderVisible(); }

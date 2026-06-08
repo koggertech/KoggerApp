@@ -420,6 +420,23 @@ int qPlot2D::getThemeId() const
     return Plot2D::getThemeId();
 }
 
+QVariantList qPlot2D::echogramThemeStops(int id) const
+{
+    QVector<QColor> coloros;
+    QVector<int> levels;
+    Plot2DEchogram::colormapFor(id, coloros, levels);
+
+    QVariantList out;
+    const int n = qMin(coloros.size(), levels.size());
+    for (int i = 0; i < n; ++i) {
+        QVariantMap stop;
+        stop.insert("pos", levels[i] / 255.0);
+        stop.insert("color", coloros[i]);
+        out.append(stop);
+    }
+    return out;
+}
+
 int qPlot2D::getBottomTrackThemeId() const
 {
     return Plot2D::getBottomTrackTheme();

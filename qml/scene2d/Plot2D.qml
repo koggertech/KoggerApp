@@ -530,6 +530,20 @@ WaterFall {
                                                  : plot.settingsMenuSpacer)
         spacing: Math.round(6 * AppPalette.scale)
 
+        KThemeSwitcher {
+            id: themeSwitcher
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: plot.controlButtonSize
+            Layout.preferredHeight: plot.controlButtonSize
+            buttonSize: plot.controlButtonSize
+            currentId: echoTheme.currentIndex
+            themeNames: echoTheme.model
+            maxStripWidth: Math.max(plot.controlButtonSize * 3,
+                                    plot.width - Math.round(20 * AppPalette.scale) - plot.edgeSafetyMargin * 2)
+            stopsFor: function(id) { return plot.echogramThemeStops(id) }
+            onPicked: function(index) { echoTheme.currentIndex = index }
+        }
+
         KChartLevelCapsule {
             id: echogramLevelsSlider
             Layout.alignment: Qt.AlignHCenter
