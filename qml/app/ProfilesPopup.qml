@@ -37,6 +37,7 @@ BasePanePopup {
     panelBorderColor: "transparent"
     headerDragBarLength: Math.max(Math.round(24 * _s), _pillW - _sidePad * 2)
     siblingSnapAlignTop: true
+    snapEdgeCenters: true
 
     property var _profileFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     Settings { property alias profilesImportFolder: root._profileFolder }

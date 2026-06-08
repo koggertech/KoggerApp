@@ -18,6 +18,11 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Autopilot panel</source>
+        <translation>Panel autopilota</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
         <source>Show bottom track editing</source>
         <translation>Pokaż edycję śladu dna</translation>
     </message>
@@ -2621,6 +2626,44 @@
         <location filename="../qml/app/HotActionsPanel.qml" line="698"/>
         <source>Close bottom track editing</source>
         <translation>Zamknij edytor śladu dna</translation>
+    </message>
+</context>
+<context>
+    <name>AutopilotPopup</name>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Battery</source>
+        <translation>Bateria</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Current</source>
+        <translation>Prąd</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Speed</source>
+        <translation>Prędkość</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Mode</source>
+        <translation>Tryb</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Arm</source>
+        <translation>Stan</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>ARMED</source>
+        <translation>UZBROJONY</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>DISARMED</source>
+        <translation>ROZBROJONY</translation>
     </message>
 </context>
 <context>

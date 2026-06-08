@@ -279,6 +279,7 @@ Column {
             readonly property bool receivesData: ReceivesData
             readonly property bool notAvailable: IsNotAvailable
             readonly property bool editing: filesList.expandedUuid === String(Uuid)
+            readonly property int rowIndex: index
             property int vPad: connRow.editing ? Tokens.spaceSm : Tokens.spaceXs
             Behavior on vPad { NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
             readonly property string typeLabel: LinkType === 1 ? PortName : (LinkType === 2 ? "UDP" : "TCP")
@@ -316,7 +317,12 @@ Column {
                             toolTipText: qsTr("Settings")
                             Layout.alignment: Qt.AlignVCenter
                             Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
-                            onClicked: filesList.expandedUuid = connRow.editing ? "" : String(Uuid)
+                            onClicked: {
+                                var willOpen = !connRow.editing
+                                filesList.expandedUuid = willOpen ? String(Uuid) : ""
+                                if (willOpen)
+                                    connectionViewer._requestExpandScroll(connRow.rowIndex)
+                            }
                         }
 
                         Text {
@@ -936,6 +942,61 @@ Column {
         property: "contentY"
         duration: 240
         easing.type: Easing.OutCubic
+    }
+
+    property int _pendingExpandIndex: -1
+
+    Timer {
+        id: expandScrollTimer
+        interval: Anim.disclosureMs + 30
+        onTriggered: connectionViewer._scrollExpandedIntoView()
+    }
+
+    NumberAnimation {
+        id: rowScrollAnim
+        property: "contentY"
+        duration: 240
+        easing.type: Easing.OutCubic
+    }
+
+    function _requestExpandScroll(idx) {
+        _pendingExpandIndex = idx
+        expandScrollTimer.restart()
+    }
+
+    function _scrollExpandedIntoView() {
+        var idx = _pendingExpandIndex
+        if (idx < 0)
+            return
+        if (filesList.overflowing)
+            filesList.positionViewAtIndex(idx, ListView.Contain)
+
+        var item = filesList.itemAtIndex(idx)
+        var flick = _findAncestorFlickable()
+        if (!item || !flick)
+            return
+
+        var pad = Tokens.spaceSm
+        var rowTop = item.mapToItem(flick.contentItem, 0, 0).y
+        var rowH = item.height
+        var viewTop = flick.contentY
+        var viewBottom = flick.contentY + flick.height
+
+        var target = flick.contentY
+        if (rowH >= flick.height || rowTop < viewTop)
+            target = rowTop - pad
+        else if (rowTop + rowH > viewBottom)
+            target = rowTop + rowH - flick.height + pad
+
+        target = Math.max(0, Math.min(target, Math.max(0, flick.contentHeight - flick.height)))
+        if (Math.abs(target - flick.contentY) < 0.5)
+            return
+
+        rowScrollAnim.stop()
+        rowScrollAnim.target = flick
+        rowScrollAnim.from = flick.contentY
+        rowScrollAnim.to = target
+        rowScrollAnim.start()
     }
 
 }

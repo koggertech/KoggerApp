@@ -16,6 +16,7 @@
         <file>qml/app/FullscreenPanePopup.qml</file>
         <file>qml/app/BottomTrackEditPopup.qml</file>
         <file>qml/app/ProfilesPopup.qml</file>
+        <file>qml/app/AutopilotPopup.qml</file>
         <file>qml/app/PaneContentLoader.qml</file>
         <file>qml/app/Pane2DWindow.qml</file>
         <file>qml/app/Pane3DWindow.qml</file>

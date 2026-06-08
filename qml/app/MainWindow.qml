@@ -160,6 +160,13 @@ ApplicationWindow {
                        profilesPopup.expandedWidth, profilesPopup.expandedHeight)
     }
 
+    readonly property rect autopilotPopupEffectiveBounds: {
+        if (!autopilotPopup.visible || !autopilotPopup.popupVisible)
+            return Qt.rect(-1, -1, 0, 0)
+        return Qt.rect(autopilotPopup.panelX, autopilotPopup.panelY,
+                       autopilotPopup.expandedWidth, autopilotPopup.expandedHeight)
+    }
+
     function isValidUuidText(uuidValue) {
         if (uuidValue === undefined || uuidValue === null)
             return false
@@ -837,7 +844,7 @@ ApplicationWindow {
             anchors.fill: parent
             z: ZOrder.bottomTrackEditPopup   // поверх глобал/фуллскрин попапов
             store: workspaceStore
-            siblingBoundsList: [root.profilesPopupEffectiveBounds]
+            siblingBoundsList: [root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
         }
 
         ProfilesPopup {
@@ -845,7 +852,15 @@ ApplicationWindow {
             anchors.fill: parent
             z: ZOrder.profilesPopup
             store: workspaceStore
-            siblingBoundsList: [root.btEditPopupEffectiveBounds]
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
+        }
+
+        AutopilotPopup {
+            id: autopilotPopup
+            anchors.fill: parent
+            z: ZOrder.autopilotPopup
+            store: workspaceStore
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
         }
 
         Component {

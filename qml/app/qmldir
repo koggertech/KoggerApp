@@ -10,6 +10,7 @@ BasePanePopup 1.0 BasePanePopup.qml
 FullscreenPanePopup 1.0 FullscreenPanePopup.qml
 BottomTrackEditPopup 1.0 BottomTrackEditPopup.qml
 ProfilesPopup 1.0 ProfilesPopup.qml
+AutopilotPopup 1.0 AutopilotPopup.qml
 PaneContentLoader 1.0 PaneContentLoader.qml
 Pane2DWindow 1.0 Pane2DWindow.qml
 Pane3DWindow 1.0 Pane3DWindow.qml

@@ -18,6 +18,11 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Autopilot panel</source>
+        <translation>Панель автопилота</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
         <source>Show bottom track editing</source>
         <translation>Показывать редактирование трека дна</translation>
     </message>
@@ -2621,6 +2626,44 @@
         <location filename="../qml/app/HotActionsPanel.qml" line="698"/>
         <source>Close bottom track editing</source>
         <translation>Закрыть редактор трека дна</translation>
+    </message>
+</context>
+<context>
+    <name>AutopilotPopup</name>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Battery</source>
+        <translation>Батарея</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Current</source>
+        <translation>Ток</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Speed</source>
+        <translation>Скорость</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Mode</source>
+        <translation>Режим</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Arm</source>
+        <translation>Статус</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>ARMED</source>
+        <translation>ВЗВЕДЁН</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>DISARMED</source>
+        <translation>СНЯТ</translation>
     </message>
 </context>
 <context>

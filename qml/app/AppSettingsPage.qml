@@ -299,6 +299,13 @@ Column {
 
         KSwitch {
             width: parent.width
+            text: qsTr("Autopilot panel")
+            checked: root.store ? root.store.autopilotEnabled : true
+            onToggled: if (root.store) root.store.autopilotEnabled = checked
+        }
+
+        KSwitch {
+            width: parent.width
             text: qsTr("Workspace shift")
             checked: root.store.settingsPushContent
             onToggled: { root.store.settingsPushContent = checked }

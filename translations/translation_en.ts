@@ -18,6 +18,11 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Autopilot panel</source>
+        <translation>Autopilot panel</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
         <source>Show bottom track editing</source>
         <translation>Show bottom track editing</translation>
     </message>
@@ -2606,6 +2611,44 @@
         <location filename="../qml/app/HotActionsPanel.qml" line="698"/>
         <source>Close bottom track editing</source>
         <translation>Close bottom track editing</translation>
+    </message>
+</context>
+<context>
+    <name>AutopilotPopup</name>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Battery</source>
+        <translation>Battery</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Current</source>
+        <translation>Current</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Speed</source>
+        <translation>Speed</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Mode</source>
+        <translation>Mode</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>Arm</source>
+        <translation>Arm</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>ARMED</source>
+        <translation>ARMED</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml"/>
+        <source>DISARMED</source>
+        <translation>DISARMED</translation>
     </message>
 </context>
 <context>

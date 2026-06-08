@@ -136,7 +136,11 @@ property bool profilesPopupOpen: false
 property var settingsProfiles: []
 property var profilesPopupState: ({ x: -1, y: -1 })
 
+property var autopilotPopupState: ({ x: -1, y: -1 })
+property bool autopilotEnabled: true
+
 onProfilesPopupOpenChanged: layoutStore.profilesPopupOpenStored = profilesPopupOpen
+onAutopilotEnabledChanged: layoutStore.autopilotEnabledStored = autopilotEnabled
 
 readonly property real splitterThickness: 0
 readonly property real minPaneSize: 120
@@ -295,6 +299,8 @@ property Settings layoutStore: Settings {
     property string settingsProfilesJson: "[]"
     property string profilesPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool profilesPopupOpenStored: false
+    property string autopilotPopupStateJson: "{\"x\":-1,\"y\":-1}"
+    property bool autopilotEnabledStored: true
     property bool secondaryWindowOpenStored: false
     property string secondaryWindowModeStored: ""
     property string liveEchogramStatesJson: "{}"
@@ -946,6 +952,31 @@ function loadProfilesPopupPreferences() {
         try { parsed = JSON.parse(layoutStore.profilesPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
     }
     profilesPopupState = {
+        x: (typeof parsed.x === "number") ? parsed.x : -1,
+        y: (typeof parsed.y === "number") ? parsed.y : -1
+    }
+}
+
+function autopilotPopupPosition(popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    var s = autopilotPopupState || { x: -1, y: -1 }
+    var x = (typeof s.x === "number" && s.x >= 0) ? s.x : Math.round((b.minX + b.maxX) / 2)
+    var y = (typeof s.y === "number" && s.y >= 0) ? s.y : b.minY
+    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
+}
+
+function setAutopilotPopupPosition(x, y, popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    autopilotPopupState = { x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) }
+    layoutStore.autopilotPopupStateJson = JSON.stringify(autopilotPopupState)
+}
+
+function loadAutopilotPopupPreferences() {
+    var parsed = { x: -1, y: -1 }
+    if (layoutStore.autopilotPopupStateJson && layoutStore.autopilotPopupStateJson !== "") {
+        try { parsed = JSON.parse(layoutStore.autopilotPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
+    }
+    autopilotPopupState = {
         x: (typeof parsed.x === "number") ? parsed.x : -1,
         y: (typeof parsed.y === "number") ? parsed.y : -1
     }
@@ -3367,6 +3398,8 @@ Component.onCompleted: {
     loadSettingsProfiles()
     loadProfilesPopupPreferences()
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
+    loadAutopilotPopupPreferences()
+    autopilotEnabled = layoutStore.autopilotEnabledStored
     if (!restoreLayoutState()) {
         var paneNumber = nextPaneNumber()
         var firstLeaf = makeLeaf(makePane(paneNumber, "3D"))

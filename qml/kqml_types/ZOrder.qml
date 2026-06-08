@@ -18,6 +18,7 @@ QtObject {
     readonly property int globalPopup:      1400    // GlobalPanePopup (floating window)
     readonly property int bottomTrackEditPopup: 1500 // bottom-track tool palette (always on top)
     readonly property int profilesPopup:        1510 // settings-profile palette (tool level, with bt-edit)
+    readonly property int autopilotPopup:       1520 // autopilot telemetry plate (tool level)
 
     readonly property int settingsSidebar:  2000    // AppSettings sidebar
     readonly property int modeSettings:     2001    // ModeSettingsPanel

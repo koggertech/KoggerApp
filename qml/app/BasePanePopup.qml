@@ -41,6 +41,7 @@ Item {
     property real  siblingSnapGap: 8
     property real  siblingSnapThreshold: 60
     property bool  siblingSnapAlignTop: false
+    property bool  snapEdgeCenters: false
 
     property bool  _siblingSnapActive: false
     property real  _siblingSnapX: 0
@@ -109,6 +110,10 @@ Item {
             Qt.point(W - hw, H - hh ),  // bottom-right corner
             Qt.point(W * 0.5, H * 0.5) // center
         ]
+        if (snapEdgeCenters) {
+            pts.push(Qt.point(W * 0.5, hh))
+            pts.push(Qt.point(W * 0.5, H - hh))
+        }
         var best2 = snapThreshold * snapThreshold
         var bx = x, by = y, found = false
         for (var i = 0; i < pts.length; i++) {

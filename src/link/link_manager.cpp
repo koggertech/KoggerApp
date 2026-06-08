@@ -812,7 +812,7 @@ void LinkManager::updateAddress(QUuid uuid, const QString &address)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAddress(address);
 
-        //doEmitAppendModifyModel(linkPtr); // why not?
+        doEmitAppendModifyModel(linkPtr);
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
@@ -825,7 +825,7 @@ void LinkManager::updateAutoSpeedSelection(QUuid uuid, bool state)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAutoSpeedSelection(state);
 
-        //doEmitAppendModifyModel(linkPtr); // why not?
+        doEmitAppendModifyModel(linkPtr);
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
@@ -838,7 +838,7 @@ void LinkManager::updateSourcePort(QUuid uuid, int sourcePort)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setSourcePort(sourcePort);
 
-        //doEmitAppendModifyModel(linkPtr); //
+        doEmitAppendModifyModel(linkPtr);
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
@@ -851,7 +851,7 @@ void LinkManager::updateDestinationPort(QUuid uuid, int destinationPort)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setDestinationPort(destinationPort);
 
-        //doEmitAppendModifyModel(linkPtr); //
+        doEmitAppendModifyModel(linkPtr);
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
@@ -864,6 +864,7 @@ void LinkManager::updatePinnedState(QUuid uuid, bool state)
     if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setIsPinned(state);
 
+        doEmitAppendModifyModel(linkPtr);
         exportPinnedLinksToXML();
     }
 }
@@ -875,6 +876,7 @@ void LinkManager::updateControlType(QUuid uuid, ControlType controlType)
     if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setControlType(controlType);
 
+        doEmitAppendModifyModel(linkPtr);
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
