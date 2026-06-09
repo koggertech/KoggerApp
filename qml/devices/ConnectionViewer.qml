@@ -451,6 +451,7 @@ Column {
                                             regularExpression: /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){0,3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)?$/
                                         }
                                         text: Address
+                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: ipField.selectAll() }
                                         onTextEdited: {
                                             var parts = text.split('.')
                                             var lastSeg = parts[parts.length - 1]
@@ -491,6 +492,7 @@ Column {
                                         maximumLength: 5
                                         validator: IntValidator { bottom: 0; top: 65535 }
                                         text: SourcePort
+                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: srcPortField.selectAll() }
                                         onTextEdited: linkManagerWrapper.sendUpdateSourcePort(Uuid, text)
                                     }
                                 }
@@ -511,6 +513,7 @@ Column {
                                         maximumLength: 5
                                         validator: IntValidator { bottom: 0; top: 65535 }
                                         text: DestinationPort
+                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: dstPortFieldUdp.selectAll() }
                                         onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
                                     }
                                 }
@@ -538,6 +541,7 @@ Column {
                                         maximumLength: 5
                                         validator: IntValidator { bottom: 0; top: 65535 }
                                         text: DestinationPort
+                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: dstPortFieldTcp.selectAll() }
                                         onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
                                     }
                                 }
@@ -624,16 +628,6 @@ Column {
         }
 
         KButton {
-            id: mavlinkProxy
-            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
-            text: qsTr("MAVProxy")
-            onToggled: {
-                if (checked) linkManagerWrapper.sendCreateAndOpenAsUdpProxy("127.0.0.1", 14551, 14550)
-                else         linkManagerWrapper.sendCloseUdpProxy()
-            }
-        }
-
-        KButton {
             id: loggingCheck
             width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
             text: qsTr("● KLF")
@@ -666,7 +660,18 @@ Column {
         }
 
         KButton {
+            id: mavlinkProxy
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
+            text: qsTr("MAVProxy")
+            onToggled: {
+                if (checked) linkManagerWrapper.sendCreateAndOpenAsUdpProxy("127.0.0.1", 14551, 14550)
+                else         linkManagerWrapper.sendCloseUdpProxy()
+            }
+        }
+
+        KButton {
             id: importCheck
+            visible: false
             width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
             text: qsTr("Import")
         }
@@ -751,6 +756,7 @@ Column {
                 TextInput {
                     id: importPathText
                     anchors.fill: parent; anchors.margins: 8
+                    TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: importPathText.selectAll() }
                     verticalAlignment: TextInput.AlignVCenter
                     color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
                     Text { visible: !importPathText.text.length; text: qsTr("CSV path..."); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }

@@ -2432,6 +2432,7 @@ Column {
                     anchors.fill: parent
                     anchors.leftMargin: Tokens.spaceMd
                     anchors.rightMargin: Tokens.spaceMd
+                    TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: exportPathField.selectAll() }
                     verticalAlignment: TextInput.AlignVCenter
                     color: AppPalette.text
                     font.pixelSize: Tokens.fontSm
@@ -2559,6 +2560,7 @@ Column {
                     TextInput {
                         id: uiExportField
                         anchors.fill: parent; anchors.margins: Tokens.spaceMd
+                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: uiExportField.selectAll() }
                         verticalAlignment: TextInput.AlignVCenter
                         color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
                         Text { visible: !uiExportField.text.length; text: qsTr("Path..."); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
@@ -2634,6 +2636,7 @@ Column {
                     TextInput {
                         id: uiImportField
                         anchors.fill: parent; anchors.margins: Tokens.spaceMd
+                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: uiImportField.selectAll() }
                         verticalAlignment: TextInput.AlignVCenter
                         color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
                         Text { visible: !uiImportField.text.length; text: qsTr("Path..."); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }

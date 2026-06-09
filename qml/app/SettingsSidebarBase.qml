@@ -102,6 +102,7 @@ Item {
             acceptedButtons: Qt.AllButtons
             onPressed: function(mouse) { mouse.accepted = true }
             onClicked: {}
+            onWheel: function(wheel) { wheel.accepted = true }
         }
 
         Rectangle {

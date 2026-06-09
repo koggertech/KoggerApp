@@ -163,6 +163,7 @@ Column {
             TextInput {
                 id: pathText
                 anchors.fill: parent; anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
+                TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: pathText.selectAll() }
                 verticalAlignment: TextInput.AlignVCenter
                 color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
                 Text {
