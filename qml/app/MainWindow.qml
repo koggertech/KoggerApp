@@ -167,6 +167,13 @@ ApplicationWindow {
                        autopilotPopup.expandedWidth, autopilotPopup.expandedHeight)
     }
 
+    readonly property rect extraInfoPopupEffectiveBounds: {
+        if (!extraInfoPopup.visible || !extraInfoPopup.popupVisible)
+            return Qt.rect(-1, -1, 0, 0)
+        return Qt.rect(extraInfoPopup.panelX, extraInfoPopup.panelY,
+                       extraInfoPopup.expandedWidth, extraInfoPopup.expandedHeight)
+    }
+
     function isValidUuidText(uuidValue) {
         if (uuidValue === undefined || uuidValue === null)
             return false
@@ -278,6 +285,11 @@ ApplicationWindow {
         function() {  // settings-profile palette — Esc closes it
             if (!workspaceStore.profilesPopupOpen) return false
             workspaceStore.profilesPopupOpen = false
+            return true
+        },
+        function() {  // extra info panel — Esc hides it
+            if (!workspaceStore.extraInfoVisible) return false
+            workspaceStore.extraInfoVisible = false
             return true
         },
         function() {  // HotActions favorites popup
@@ -587,6 +599,7 @@ ApplicationWindow {
             connectionStatusToolVisible: workspaceStore.quickActionConnectionStatusEnabled
             bottomTrackEditorEnabled: workspaceStore.quickActionBottomTrackEnabled
             profilesEnabled: workspaceStore.quickActionProfilesEnabled
+            extraInfoEnabled: workspaceStore.quickActionExtraInfoEnabled
             inputDeviceLabel: workspaceView.inputDeviceLabel
             inputDeviceColor: workspaceView.inputDeviceColor
             showToggleButton: !workspaceStore.settingsPanelOpen && !workspaceStore.modeSettingsPanelOpen
@@ -823,7 +836,9 @@ ApplicationWindow {
                 anchors.fill: parent
                 store: workspaceStore
                 workspaceRoot: workspaceView
+                popupId: "global"
                 siblingBoundsList: [root.fullscreenPopupEffectiveBounds]
+                siblingIdList: ["fullscreen"]
             }
         }
 
@@ -836,7 +851,9 @@ ApplicationWindow {
             hostLeafId: workspaceStore.maximizedLeafId
             sourceLeafId: workspaceStore.popupSourceLeafIdForHost(hostLeafId)
             visible: hostLeafId !== -1 && sourceLeafId !== -1
+            popupId: "fullscreen"
             siblingBoundsList: [root.globalPopupEffectiveBounds]
+            siblingIdList: ["global"]
         }
 
         BottomTrackEditPopup {
@@ -844,7 +861,9 @@ ApplicationWindow {
             anchors.fill: parent
             z: ZOrder.bottomTrackEditPopup   // поверх глобал/фуллскрин попапов
             store: workspaceStore
-            siblingBoundsList: [root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
+            popupId: "btEdit"
+            siblingBoundsList: [root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
+            siblingIdList: ["profiles", "autopilot", "extraInfo"]
         }
 
         ProfilesPopup {
@@ -852,7 +871,9 @@ ApplicationWindow {
             anchors.fill: parent
             z: ZOrder.profilesPopup
             store: workspaceStore
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
+            popupId: "profiles"
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.autopilotPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "autopilot", "extraInfo"]
         }
 
         AutopilotPopup {
@@ -860,7 +881,19 @@ ApplicationWindow {
             anchors.fill: parent
             z: ZOrder.autopilotPopup
             store: workspaceStore
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+            popupId: "autopilot"
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles", "extraInfo"]
+        }
+
+        ExtraInfoPopup {
+            id: extraInfoPopup
+            anchors.fill: parent
+            z: ZOrder.extraInfoPopup
+            store: workspaceStore
+            popupId: "extraInfo"
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles", "autopilot"]
         }
 
         Component {

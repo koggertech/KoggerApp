@@ -13,6 +13,56 @@
     <name>AppSettingsPage</name>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Extra info panel</source>
+        <translation>Экстра-инфо панель</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Show extra info panel</source>
+        <translation>Показывать экстра-инфо панель</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Fields:</source>
+        <translation>Поля:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Depth</source>
+        <translation>Глубина</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Speed</source>
+        <translation>Скорость</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Coordinates</source>
+        <translation>Координаты</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Active point</source>
+        <translation>Активная точка</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Navigation info</source>
+        <translation>Навигация</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Boat status</source>
+        <translation>Статус борта</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Show extra info button</source>
+        <translation>Кнопка экстра-инфо</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
         <source>Show profiles button</source>
         <translation>Показывать кнопку профилей</translation>
     </message>
@@ -2549,6 +2599,16 @@
     <name>HotActionsPanel</name>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Hide extra info</source>
+        <translation>Скрыть экстра-инфо</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Extra info panel</source>
+        <translation>Экстра-инфо панель</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
         <source>Settings profiles</source>
         <translation>Профили настроек</translation>
     </message>
@@ -2626,6 +2686,134 @@
         <location filename="../qml/app/HotActionsPanel.qml" line="698"/>
         <source>Close bottom track editing</source>
         <translation>Закрыть редактор трека дна</translation>
+    </message>
+</context>
+<context>
+    <name>ExtraInfoPopup</name>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Depth</source>
+        <translation>Глубина</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>m</source>
+        <translation>м</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Speed</source>
+        <translation>Скорость</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>km/h</source>
+        <translation>км/ч</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Boat position</source>
+        <translation>Положение лодки</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Lat</source>
+        <translation>Шир.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Lon</source>
+        <translation>Долг.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Active point</source>
+        <translation>Активная точка</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Distance</source>
+        <translation>Расстояние</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Angle</source>
+        <translation>Угол</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Navigation</source>
+        <translation>Навигация</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>GNSS fix</source>
+        <translation>GNSS фикс</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Sats</source>
+        <translation>Спутники</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Time</source>
+        <translation>Время</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Offset</source>
+        <translation>Смещение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Course</source>
+        <translation>Курс</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Velocity</source>
+        <translation>Скорость</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Yaw</source>
+        <translation>Рыскание</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Pitch</source>
+        <translation>Тангаж</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Roll</source>
+        <translation>Крен</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Boat status</source>
+        <translation>Статус борта</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Battery (boat)</source>
+        <translation>Батарея (лодка)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Battery (bridge)</source>
+        <translation>Батарея (пульт)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Signal (boat)</source>
+        <translation>Сигнал (лодка)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Signal (bridge)</source>
+        <translation>Сигнал (пульт)</translation>
     </message>
 </context>
 <context>

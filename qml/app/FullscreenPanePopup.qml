@@ -84,6 +84,11 @@ BasePanePopup {
         store.setPopupPositionForHost(hostLeafId, x, y, w, h)
     }
 
+    dockState: store ? store.popupDock(popupId) : null
+    onDockCommitted: function(targetId, side, gap, crossOffset) {
+        store.setPopupDock(popupId, { targetId: targetId, side: side, gap: gap, cross: crossOffset })
+    }
+
     onSizeCommitted: function(w, h) {
         if (!popupVisible || syncingFromStore)
             return

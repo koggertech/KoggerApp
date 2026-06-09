@@ -47,6 +47,8 @@ BasePanePopup {
         expandedHeight = _wantH
     }
 
+    property bool _synced: false
+
     function syncFromStore() {
         if (!popupVisible)
             return
@@ -55,6 +57,7 @@ BasePanePopup {
         panelX = clampX(p.x)
         panelY = clampY(p.y)
         suspendSignals = false
+        _synced = true
     }
 
     function _fileName(p) {
@@ -107,6 +110,7 @@ BasePanePopup {
         _applySize()
         syncFromStore()
         Qt.callLater(syncFromStore)
+        Qt.callLater(resolveOverlapWithSibling)
     }
 
     onPopupVisibleChanged: {
@@ -114,14 +118,20 @@ BasePanePopup {
             _applySize()
             syncFromStore()
             Qt.callLater(syncFromStore)
+            Qt.callLater(resolveOverlapWithSibling)
         } else {
             _editMode = false
         }
     }
 
     onPositionCommitted: function(x, y, w, h) {
-        if (popupVisible)
+        if (_synced)
             store.setProfilesPopupPosition(x, y, w, h)
+    }
+
+    dockState: store ? store.popupDock(popupId) : null
+    onDockCommitted: function(targetId, side, gap, crossOffset) {
+        store.setPopupDock(popupId, { targetId: targetId, side: side, gap: gap, cross: crossOffset })
     }
 
     onCloseRequested: store.profilesPopupOpen = false

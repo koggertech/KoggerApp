@@ -84,6 +84,11 @@ BasePanePopup {
         store.setGlobalPopupPosition(x, y, w, h)
     }
 
+    dockState: store ? store.popupDock(popupId) : null
+    onDockCommitted: function(targetId, side, gap, crossOffset) {
+        store.setPopupDock(popupId, { targetId: targetId, side: side, gap: gap, cross: crossOffset })
+    }
+
     onCloseRequested: {
         store.globalPopupFullscreen = false
         store.globalPopupEnabled = false

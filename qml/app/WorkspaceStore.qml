@@ -64,6 +64,7 @@ property bool quickActionFavoritesEnabled: true
 property bool quickActionConnectionStatusEnabled: true
 property bool quickActionBottomTrackEnabled: true
 property bool quickActionProfilesEnabled: true
+property bool quickActionExtraInfoEnabled: true
 property string hotkeysRevealKey: ""
 property int hotkeysRevealNonce: 0
 // Live reference to the HotkeysDialog while it's open (set by the dialog
@@ -139,8 +140,26 @@ property var profilesPopupState: ({ x: -1, y: -1 })
 property var autopilotPopupState: ({ x: -1, y: -1 })
 property bool autopilotEnabled: true
 
+property var extraInfoPopupState: ({ x: -1, y: -1 })
+property bool extraInfoVisible: false
+
+property var popupDocks: ({})
+property bool extraInfoDepth: true
+property bool extraInfoSpeed: true
+property bool extraInfoCoordinates: true
+property bool extraInfoActivePoint: true
+property bool extraInfoNav: false
+property bool extraInfoBoatStatus: false
+
 onProfilesPopupOpenChanged: layoutStore.profilesPopupOpenStored = profilesPopupOpen
 onAutopilotEnabledChanged: layoutStore.autopilotEnabledStored = autopilotEnabled
+onExtraInfoVisibleChanged:     layoutStore.extraInfoVisibleStored = extraInfoVisible
+onExtraInfoDepthChanged:       layoutStore.extraInfoDepthStored = extraInfoDepth
+onExtraInfoSpeedChanged:       layoutStore.extraInfoSpeedStored = extraInfoSpeed
+onExtraInfoCoordinatesChanged: layoutStore.extraInfoCoordinatesStored = extraInfoCoordinates
+onExtraInfoActivePointChanged: layoutStore.extraInfoActivePointStored = extraInfoActivePoint
+onExtraInfoNavChanged:         layoutStore.extraInfoNavStored = extraInfoNav
+onExtraInfoBoatStatusChanged:  layoutStore.extraInfoBoatStatusStored = extraInfoBoatStatus
 
 readonly property real splitterThickness: 0
 readonly property real minPaneSize: 120
@@ -295,12 +314,22 @@ property Settings layoutStore: Settings {
     property bool globalPopupEnabledStored: false
     property string globalPopupModeStored: ""
     property string globalPopupStateJson: "{\"x\":-1,\"y\":-1,\"collapsed\":false,\"expandedWidth\":-1,\"expandedHeight\":-1}"
+    property string popupDocksJson: "{}"
     property string btEditPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property string settingsProfilesJson: "[]"
     property string profilesPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool profilesPopupOpenStored: false
     property string autopilotPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool autopilotEnabledStored: true
+    property string extraInfoPopupStateJson: "{\"x\":-1,\"y\":-1}"
+    property bool extraInfoVisibleStored: false
+    property bool extraInfoDepthStored: true
+    property bool extraInfoSpeedStored: true
+    property bool extraInfoCoordinatesStored: true
+    property bool extraInfoActivePointStored: true
+    property bool extraInfoNavStored: false
+    property bool extraInfoBoatStatusStored: false
+    property bool quickActionExtraInfoEnabledStored: true
     property bool secondaryWindowOpenStored: false
     property string secondaryWindowModeStored: ""
     property string liveEchogramStatesJson: "{}"
@@ -900,6 +929,62 @@ function loadBtEditPopupPreferences() {
     }
 }
 
+// ── Sibling docking (popup B glued to popup A's side) ──
+function popupDock(id) {
+    var d = (popupDocks && id) ? popupDocks[id] : null
+    if (!d || !d.targetId)
+        return { targetId: "", side: "", gap: 0, cross: 0 }
+    return {
+        targetId: d.targetId,
+        side: d.side || "",
+        gap: (typeof d.gap === "number") ? d.gap : 8,
+        cross: (typeof d.cross === "number") ? d.cross : 0
+    }
+}
+
+function _dockChainReaches(startId, goalId) {
+    var cur = startId, steps = 0
+    while (cur && steps < 16) {
+        if (cur === goalId) return true
+        var d = popupDocks ? popupDocks[cur] : null
+        cur = (d && d.targetId) ? d.targetId : ""
+        steps++
+    }
+    return false
+}
+
+function wouldDockCycle(fromId, toId) {
+    if (!fromId || !toId) return false
+    if (fromId === toId) return true
+    return _dockChainReaches(toId, fromId)   // toId's chain already reaches fromId
+}
+
+function setPopupDock(id, dock) {
+    if (!id) return
+    var next = {}
+    for (var k in popupDocks) next[k] = popupDocks[k]
+    if (!dock || !dock.targetId || wouldDockCycle(id, dock.targetId)) {
+        delete next[id]
+    } else {
+        next[id] = {
+            targetId: dock.targetId,
+            side: dock.side || "",
+            gap: (typeof dock.gap === "number") ? dock.gap : 8,
+            cross: (typeof dock.cross === "number") ? dock.cross : 0
+        }
+    }
+    popupDocks = next
+    layoutStore.popupDocksJson = JSON.stringify(popupDocks)
+}
+
+function loadPopupDocks() {
+    var parsed = {}
+    if (layoutStore.popupDocksJson && layoutStore.popupDocksJson !== "") {
+        try { parsed = JSON.parse(layoutStore.popupDocksJson) } catch (e) { parsed = {} }
+    }
+    popupDocks = (parsed && typeof parsed === "object") ? parsed : {}
+}
+
 // ── Settings profiles list ──
 function addSettingsProfile(path) {
     if (!path || !path.length) return
@@ -977,6 +1062,31 @@ function loadAutopilotPopupPreferences() {
         try { parsed = JSON.parse(layoutStore.autopilotPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
     }
     autopilotPopupState = {
+        x: (typeof parsed.x === "number") ? parsed.x : -1,
+        y: (typeof parsed.y === "number") ? parsed.y : -1
+    }
+}
+
+function extraInfoPopupPosition(popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    var s = extraInfoPopupState || { x: -1, y: -1 }
+    var x = (typeof s.x === "number" && s.x >= 0) ? s.x : Math.round((b.minX + b.maxX) / 2)
+    var y = (typeof s.y === "number" && s.y >= 0) ? s.y : b.minY
+    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
+}
+
+function setExtraInfoPopupPosition(x, y, popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    extraInfoPopupState = { x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) }
+    layoutStore.extraInfoPopupStateJson = JSON.stringify(extraInfoPopupState)
+}
+
+function loadExtraInfoPopupPreferences() {
+    var parsed = { x: -1, y: -1 }
+    if (layoutStore.extraInfoPopupStateJson && layoutStore.extraInfoPopupStateJson !== "") {
+        try { parsed = JSON.parse(layoutStore.extraInfoPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
+    }
+    extraInfoPopupState = {
         x: (typeof parsed.x === "number") ? parsed.x : -1,
         y: (typeof parsed.y === "number") ? parsed.y : -1
     }
@@ -2259,6 +2369,7 @@ function saveLayoutState() {
     layoutStore.quickActionConnectionStatusEnabledStored = quickActionConnectionStatusEnabled
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
+    layoutStore.quickActionExtraInfoEnabledStored = quickActionExtraInfoEnabled
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
     layoutStore.secondaryWindowOpenStored = secondaryWindowOpen
     layoutStore.secondaryWindowModeStored = secondaryWindowMode
@@ -2291,6 +2402,7 @@ function restoreLayoutState() {
     quickActionConnectionStatusEnabled = layoutStore.quickActionConnectionStatusEnabledStored
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
+    quickActionExtraInfoEnabled = layoutStore.quickActionExtraInfoEnabledStored
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored
     secondaryWindowMode = (storedSecondaryMode === "2D" || storedSecondaryMode === "3D") ? storedSecondaryMode : ""
@@ -3400,6 +3512,15 @@ Component.onCompleted: {
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
     loadAutopilotPopupPreferences()
     autopilotEnabled = layoutStore.autopilotEnabledStored
+    loadExtraInfoPopupPreferences()
+    loadPopupDocks()
+    extraInfoVisible     = layoutStore.extraInfoVisibleStored
+    extraInfoDepth       = layoutStore.extraInfoDepthStored
+    extraInfoSpeed       = layoutStore.extraInfoSpeedStored
+    extraInfoCoordinates = layoutStore.extraInfoCoordinatesStored
+    extraInfoActivePoint = layoutStore.extraInfoActivePointStored
+    extraInfoNav         = layoutStore.extraInfoNavStored
+    extraInfoBoatStatus  = layoutStore.extraInfoBoatStatusStored
     if (!restoreLayoutState()) {
         var paneNumber = nextPaneNumber()
         var firstLeaf = makeLeaf(makePane(paneNumber, "3D"))

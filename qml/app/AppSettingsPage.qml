@@ -503,6 +503,62 @@ Column {
         }
     }
 
+    // ── Extra info panel ──────────────────────────────────────────────────────
+
+    SettingsGroup {
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Extra info panel")
+        stateStore: root.store
+        stateKey: "app.extraInfo"
+        collapsedByDefault: true
+
+        KSwitch {
+            width: parent.width
+            text: qsTr("Show extra info panel")
+            checked: root.store ? root.store.extraInfoVisible : false
+            onToggled: if (root.store) root.store.extraInfoVisible = checked
+        }
+
+        Text {
+            text: qsTr("Fields:")
+            color: AppPalette.textMuted
+            font.pixelSize: Tokens.fontXs
+            leftPadding: Tokens.spaceXxs
+        }
+
+        KSwitch {
+            width: parent.width; text: qsTr("Depth")
+            checked: root.store ? root.store.extraInfoDepth : true
+            onToggled: if (root.store) root.store.extraInfoDepth = checked
+        }
+        KSwitch {
+            width: parent.width; text: qsTr("Speed")
+            checked: root.store ? root.store.extraInfoSpeed : true
+            onToggled: if (root.store) root.store.extraInfoSpeed = checked
+        }
+        KSwitch {
+            width: parent.width; text: qsTr("Coordinates")
+            checked: root.store ? root.store.extraInfoCoordinates : true
+            onToggled: if (root.store) root.store.extraInfoCoordinates = checked
+        }
+        KSwitch {
+            width: parent.width; text: qsTr("Active point")
+            checked: root.store ? root.store.extraInfoActivePoint : true
+            onToggled: if (root.store) root.store.extraInfoActivePoint = checked
+        }
+        KSwitch {
+            width: parent.width; text: qsTr("Navigation info")
+            checked: root.store ? root.store.extraInfoNav : false
+            onToggled: if (root.store) root.store.extraInfoNav = checked
+        }
+        KSwitch {
+            width: parent.width; text: qsTr("Boat status")
+            checked: root.store ? root.store.extraInfoBoatStatus : false
+            onToggled: if (root.store) root.store.extraInfoBoatStatus = checked
+        }
+    }
+
     // ── Датасет ───────────────────────────────────────────────────────────────
 
     SettingsGroup {
@@ -2684,6 +2740,15 @@ Column {
             onToggled: {
                 root.store.quickActionProfilesEnabled = checked
                 root.store.requestHotkeysReveal("profiles")
+            }
+        }
+
+        KSwitch {
+            width: parent.width; text: qsTr("Show extra info button")
+            checked: root.store.quickActionExtraInfoEnabled
+            onToggled: {
+                root.store.quickActionExtraInfoEnabled = checked
+                root.store.requestHotkeysReveal("extraInfo")
             }
         }
     }

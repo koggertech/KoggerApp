@@ -38,14 +38,24 @@ Item {
     property real  _resizePreviewH: expandedHeight
 
     property var   siblingBoundsList: []
+    property var   siblingIdList: []
+    property string popupId: ""
     property real  siblingSnapGap: 8
     property real  siblingSnapThreshold: 60
     property bool  siblingSnapAlignTop: false
     property bool  snapEdgeCenters: false
 
+    property var    dockState: null
+    property string dockTargetId: ""
+    property string dockSide: ""
+    property real   dockGap: 8
+    property real   dockCrossOffset: 0
+
     property bool  _siblingSnapActive: false
     property real  _siblingSnapX: 0
     property real  _siblingSnapY: 0
+    property string _siblingSnapSide: ""
+    property int   _siblingSnapTargetIdx: -1
 
     property bool  _chromeRevealed: false
     readonly property int chromeHideMs: 1600
@@ -75,6 +85,7 @@ Item {
     signal sizeCommitted(real expandedWidth, real expandedHeight)
     signal closeRequested()
     signal popupDoubleClicked()
+    signal dockCommitted(string targetId, string side, real gap, real crossOffset)
 
     default property alias popupContent: contentHost.data
 
@@ -165,20 +176,20 @@ Item {
         var dBottom = Math.abs(y - bottomTarget)
         var lx = clampX(leftTarget),  rx = clampX(rightTarget)
         var ty = clampY(topTarget),   by2 = clampY(bottomTarget)
-        var best = null, bestDist = effectiveThr
+        var best = null, bestDist = effectiveThr, bestSide = ""
         if (yProximity) {
             if (dLeft  < bestDist && !(lx < bx+bw && lx+aw > bx && snapY < by+bh && snapY+ah > by))
-                { bestDist = dLeft;  best = Qt.point(lx, snapY) }
+                { bestDist = dLeft;  best = Qt.point(lx, snapY); bestSide = "left" }
             if (dRight < bestDist && !(rx < bx+bw && rx+aw > bx && snapY < by+bh && snapY+ah > by))
-                { bestDist = dRight; best = Qt.point(rx, snapY) }
+                { bestDist = dRight; best = Qt.point(rx, snapY); bestSide = "right" }
         }
         if (xProximity) {
             if (dTop    < bestDist && !(snapX < bx+bw && snapX+aw > bx && ty  < by+bh && ty+ah  > by))
-                { bestDist = dTop;    best = Qt.point(snapX, ty) }
+                { bestDist = dTop;    best = Qt.point(snapX, ty);  bestSide = "top" }
             if (dBottom < bestDist && !(snapX < bx+bw && snapX+aw > bx && by2 < by+bh && by2+ah > by))
-                { bestDist = dBottom; best = Qt.point(snapX, by2) }
+                { bestDist = dBottom; best = Qt.point(snapX, by2); bestSide = "bottom" }
         }
-        return best === null ? null : { point: best, dist: bestDist }
+        return best === null ? null : { point: best, dist: bestDist, side: bestSide }
     }
 
     function computeSiblingSnap(x, y) {
@@ -191,7 +202,7 @@ Item {
             var r = _snapForBounds(x, y, b)
             if (r !== null && r.dist < winnerDist && !_overlapsAnySibling(r.point.x, r.point.y)) {
                 winnerDist = r.dist
-                winner = r.point
+                winner = { x: r.point.x, y: r.point.y, side: r.side, targetIndex: i }
             }
         }
         return winner
@@ -199,6 +210,7 @@ Item {
 
     function resolveOverlapWithSibling() {
         if (!popupVisible) return
+        if (dockTargetId !== "") { _applyDock(); return }   // docked → keep glued, dock wins over auto-resolve
         var list = siblingBoundsList
         if (!list || !list.length) return
         if (!_overlapsAnySibling(panelX, panelY)) return
@@ -231,6 +243,39 @@ Item {
         positionCommitted(panelX, panelY, expandedWidth, expandedHeight)
     }
 
+    function _applyDock() {
+        if (dockTargetId === "") return
+        var ids = siblingIdList
+        if (!ids || !ids.length) return
+        var idx = ids.indexOf(dockTargetId)
+        if (idx < 0 || idx >= siblingBoundsList.length) return
+        var b = siblingBoundsList[idx]
+        if (!b || b.width <= 0 || b.height <= 0) return   // target hidden → keep position
+        var nx = panelX, ny = panelY
+        if (dockSide === "left")        { nx = b.x - dockGap - expandedWidth;   ny = b.y + dockCrossOffset }
+        else if (dockSide === "right")  { nx = b.x + b.width + dockGap;          ny = b.y + dockCrossOffset }
+        else if (dockSide === "top")    { ny = b.y - dockGap - expandedHeight;   nx = b.x + dockCrossOffset }
+        else if (dockSide === "bottom") { ny = b.y + b.height + dockGap;         nx = b.x + dockCrossOffset }
+        else return
+        panelX = clampX(nx)
+        panelY = clampY(ny)
+    }
+
+    onDockStateChanged: {
+        var d = dockState
+        dockTargetId    = (d && d.targetId) ? d.targetId : ""
+        dockSide        = (d && d.side) ? d.side : ""
+        dockGap         = (d && typeof d.gap === "number") ? d.gap : siblingSnapGap
+        dockCrossOffset = (d && typeof d.cross === "number") ? d.cross : 0
+        if (dockTargetId !== "")
+            Qt.callLater(_applyDock)
+    }
+
+    onSiblingBoundsListChanged: {
+        if (dockTargetId !== "" && !headerDrag.active)
+            Qt.callLater(_applyDock)
+    }
+
     function toggleCollapsedFromButton() {
         collapsed = !collapsed
         commitPosition()
@@ -251,8 +296,8 @@ Item {
         Qt.size(960, 720)
     ]
 
-    onExpandedWidthChanged:  panelX = clampX(panelX)
-    onExpandedHeightChanged: panelY = clampY(panelY)
+    onExpandedWidthChanged:  { if (dockTargetId !== "") _applyDock(); else panelX = clampX(panelX) }
+    onExpandedHeightChanged: { if (dockTargetId !== "") _applyDock(); else panelY = clampY(panelY) }
 
     property real lastParentWidth: 0
     property real lastParentHeight: 0
@@ -279,19 +324,29 @@ Item {
 
     onWidthChanged: {
         if (width <= 0) return
-        if (lastParentWidth > 0) rescaleX(lastParentWidth)
-        else panelX = clampX(panelX)
+        if (dockTargetId !== "") {
+            _applyDock()
+            Qt.callLater(_applyDock)   // re-derive after target repositions this frame
+        } else {
+            if (lastParentWidth > 0) rescaleX(lastParentWidth)
+            else panelX = clampX(panelX)
+            Qt.callLater(commitPosition)
+            Qt.callLater(resolveOverlapWithSibling)
+        }
         lastParentWidth = width
-        Qt.callLater(commitPosition)
-        Qt.callLater(resolveOverlapWithSibling)
     }
     onHeightChanged: {
         if (height <= 0) return
-        if (lastParentHeight > 0) rescaleY(lastParentHeight)
-        else panelY = clampY(panelY)
+        if (dockTargetId !== "") {
+            _applyDock()
+            Qt.callLater(_applyDock)
+        } else {
+            if (lastParentHeight > 0) rescaleY(lastParentHeight)
+            else panelY = clampY(panelY)
+            Qt.callLater(commitPosition)
+            Qt.callLater(resolveOverlapWithSibling)
+        }
         lastParentHeight = height
-        Qt.callLater(commitPosition)
-        Qt.callLater(resolveOverlapWithSibling)
     }
     onFullscreenModeChanged: if (fullscreenMode) collapsed = false
 
@@ -486,8 +541,23 @@ Item {
                             root.panelX = Math.round(root._snapPreviewX)
                             root.panelY = Math.round(root._snapPreviewY)
                         }
+                        var wasDock = root._siblingSnapActive
+                        var dIdx = root._siblingSnapTargetIdx
+                        var dSide = root._siblingSnapSide
                         root._siblingSnapActive = false
                         root._snapActive = false
+                        var ids = root.siblingIdList, bnds = root.siblingBoundsList
+                        var tb = (wasDock && dIdx >= 0 && ids && bnds
+                                  && dIdx < ids.length && dIdx < bnds.length) ? bnds[dIdx] : null
+                        if (tb && tb.width > 0 && tb.height > 0) {
+                            var cross = (dSide === "left" || dSide === "right")
+                                        ? (root.panelY - tb.y) : (root.panelX - tb.x)
+                            root.dockCommitted(ids[dIdx], dSide, root.siblingSnapGap, cross)
+                        } else {
+                            root.dockCommitted("", "", 0, 0)
+                        }
+                        root._siblingSnapTargetIdx = -1
+                        root._siblingSnapSide = ""
                         root.commitPosition()
                         Qt.callLater(root.resolveOverlapWithSibling)
                     }
@@ -502,9 +572,12 @@ Item {
                         root._siblingSnapActive = true
                         root._siblingSnapX = sibSnap.x
                         root._siblingSnapY = sibSnap.y
+                        root._siblingSnapSide = sibSnap.side
+                        root._siblingSnapTargetIdx = sibSnap.targetIndex
                         root._snapActive = false
                     } else {
                         root._siblingSnapActive = false
+                        root._siblingSnapTargetIdx = -1
                         var snapped = root.snapToGrid(rawX, rawY)
                         var isSnapping = Math.abs(snapped.x - rawX) > 0.1 || Math.abs(snapped.y - rawY) > 0.1
                         root._snapActive   = isSnapping

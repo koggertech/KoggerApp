@@ -45,6 +45,8 @@ BasePanePopup {
         expandedHeight = _wantH
     }
 
+    property bool _synced: false
+
     function syncFromStore() {
         if (!popupVisible)
             return
@@ -53,6 +55,7 @@ BasePanePopup {
         panelX = clampX(p.x)
         panelY = clampY(p.y)
         suspendSignals = false
+        _synced = true
     }
 
     on_WantWChanged: _applySize()
@@ -62,6 +65,7 @@ BasePanePopup {
         _applySize()
         syncFromStore()
         Qt.callLater(syncFromStore)
+        Qt.callLater(resolveOverlapWithSibling)
     }
 
     onPopupVisibleChanged: {
@@ -69,14 +73,20 @@ BasePanePopup {
             _applySize()
             syncFromStore()
             Qt.callLater(syncFromStore)
+            Qt.callLater(resolveOverlapWithSibling)
         } else if (typeof core !== "undefined" && core) {
             core.setBottomTrackEditTool(0)   // closing resets to navigation
         }
     }
 
     onPositionCommitted: function(x, y, w, h) {
-        if (popupVisible)
+        if (_synced)
             store.setBtEditPopupPosition(x, y, w, h)
+    }
+
+    dockState: store ? store.popupDock(popupId) : null
+    onDockCommitted: function(targetId, side, gap, crossOffset) {
+        store.setPopupDock(popupId, { targetId: targetId, side: side, gap: gap, cross: crossOffset })
     }
 
     onCloseRequested: store.bottomTrackEditorOpen = false

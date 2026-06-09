@@ -44,6 +44,9 @@ Item {
     property bool profilesEnabled: true
     readonly property bool _profilesRevealOverride: _revealActiveKey === "profiles"
     readonly property bool showProfiles: profilesEnabled || _profilesRevealOverride
+    property bool extraInfoEnabled: true
+    readonly property bool _extraInfoRevealOverride: _revealActiveKey === "extraInfo"
+    readonly property bool showExtraInfo: extraInfoEnabled || _extraInfoRevealOverride
     property int favoriteItemSpacing: Math.round(6 * root._s)
     property int favoriteListMaxHeight: Math.round(244 * root._s)
     property bool connectionsOnline: true
@@ -643,6 +646,27 @@ Item {
                     root.store.profilesPopupOpen = willOpen
                     if (willOpen)
                         root.expanded = false
+                }
+            }
+
+            KCircleIconButton {
+                readonly property bool _open: root.store && root.store.extraInfoVisible
+                visible: root.showExtraInfo
+                width: visible ? root.controlHeight : 0
+                height: root.controlHeight
+                iconSource: _open ? "qrc:/icons/ui/x.svg" : "qrc:/icons/ui/list-details.svg"
+                iconTintColor: AppPalette.text
+                toolTipText: _open ? qsTr("Hide extra info") : qsTr("Extra info panel")
+                fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
+                fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
+                fillPressedColor: root.buttonPressedColor
+                borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
+                borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
+                highlighted: root.highlightedQuickActionKey === "extraInfo"
+                flashToken: root.highlightPulseToken
+                onClicked: {
+                    if (!root.store) return
+                    root.store.extraInfoVisible = !root.store.extraInfoVisible
                 }
             }
 

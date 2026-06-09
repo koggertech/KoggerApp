@@ -13,6 +13,56 @@
     <name>AppSettingsPage</name>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Extra info panel</source>
+        <translation>Extra info panel</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Show extra info panel</source>
+        <translation>Show extra info panel</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Fields:</source>
+        <translation>Fields:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Depth</source>
+        <translation>Depth</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Speed</source>
+        <translation>Speed</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Coordinates</source>
+        <translation>Coordinates</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Active point</source>
+        <translation>Active point</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Navigation info</source>
+        <translation>Navigation info</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Boat status</source>
+        <translation>Boat status</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
+        <source>Show extra info button</source>
+        <translation>Show extra info button</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml"/>
         <source>Show profiles button</source>
         <translation>Show profiles button</translation>
     </message>
@@ -2534,6 +2584,16 @@
     <name>HotActionsPanel</name>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Hide extra info</source>
+        <translation>Hide extra info</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
+        <source>Extra info panel</source>
+        <translation>Extra info panel</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml"/>
         <source>Settings profiles</source>
         <translation>Settings profiles</translation>
     </message>
@@ -2611,6 +2671,134 @@
         <location filename="../qml/app/HotActionsPanel.qml" line="698"/>
         <source>Close bottom track editing</source>
         <translation>Close bottom track editing</translation>
+    </message>
+</context>
+<context>
+    <name>ExtraInfoPopup</name>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Depth</source>
+        <translation>Depth</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>m</source>
+        <translation>m</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Speed</source>
+        <translation>Speed</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>km/h</source>
+        <translation>km/h</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Boat position</source>
+        <translation>Boat position</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Lat</source>
+        <translation>Lat</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Lon</source>
+        <translation>Lon</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Active point</source>
+        <translation>Active point</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Distance</source>
+        <translation>Distance</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Angle</source>
+        <translation>Angle</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Navigation</source>
+        <translation>Navigation</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>GNSS fix</source>
+        <translation>GNSS fix</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Sats</source>
+        <translation>Sats</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Time</source>
+        <translation>Time</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Offset</source>
+        <translation>Offset</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Course</source>
+        <translation>Course</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Velocity</source>
+        <translation>Velocity</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Yaw</source>
+        <translation>Yaw</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Pitch</source>
+        <translation>Pitch</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Roll</source>
+        <translation>Roll</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Boat status</source>
+        <translation>Boat status</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Battery (boat)</source>
+        <translation>Battery (boat)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Battery (bridge)</source>
+        <translation>Battery (bridge)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Signal (boat)</source>
+        <translation>Signal (boat)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ExtraInfoPopup.qml"/>
+        <source>Signal (bridge)</source>
+        <translation>Signal (bridge)</translation>
     </message>
 </context>
 <context>
