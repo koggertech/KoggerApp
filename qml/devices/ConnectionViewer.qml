@@ -439,13 +439,32 @@ Column {
                                     border.color: ipField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
                                         id: ipField
+                                        property int _prevLen: 0
                                         anchors.fill: parent
                                         anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
                                         anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
                                         verticalAlignment: TextInput.AlignVCenter
                                         color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
+                                        maximumLength: 15
+                                        inputMethodHints: Qt.ImhPreferNumbers | Qt.ImhNoPredictiveText
+                                        validator: RegularExpressionValidator {
+                                            regularExpression: /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){0,3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)?$/
+                                        }
                                         text: Address
-                                        onTextEdited: linkManagerWrapper.sendUpdateAddress(Uuid, text)
+                                        onTextEdited: {
+                                            var parts = text.split('.')
+                                            var lastSeg = parts[parts.length - 1]
+                                            if (text.length > ipField._prevLen
+                                                    && cursorPosition === text.length
+                                                    && parts.length < 4
+                                                    && lastSeg.length === 3
+                                                    && text.charAt(text.length - 1) !== '.') {
+                                                text = text + '.'
+                                                cursorPosition = text.length
+                                            }
+                                            ipField._prevLen = text.length
+                                            linkManagerWrapper.sendUpdateAddress(Uuid, text)
+                                        }
                                     }
                                 }
                             }
@@ -468,6 +487,9 @@ Column {
                                         anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
                                         verticalAlignment: TextInput.AlignVCenter
                                         color: AppPalette.text; font.pixelSize: Tokens.fontBase
+                                        inputMethodHints: Qt.ImhDigitsOnly
+                                        maximumLength: 5
+                                        validator: IntValidator { bottom: 0; top: 65535 }
                                         text: SourcePort
                                         onTextEdited: linkManagerWrapper.sendUpdateSourcePort(Uuid, text)
                                     }
@@ -485,6 +507,9 @@ Column {
                                         anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
                                         verticalAlignment: TextInput.AlignVCenter
                                         color: AppPalette.text; font.pixelSize: Tokens.fontBase
+                                        inputMethodHints: Qt.ImhDigitsOnly
+                                        maximumLength: 5
+                                        validator: IntValidator { bottom: 0; top: 65535 }
                                         text: DestinationPort
                                         onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
                                     }
@@ -509,6 +534,9 @@ Column {
                                         anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
                                         verticalAlignment: TextInput.AlignVCenter
                                         color: AppPalette.text; font.pixelSize: Tokens.fontBase
+                                        inputMethodHints: Qt.ImhDigitsOnly
+                                        maximumLength: 5
+                                        validator: IntValidator { bottom: 0; top: 65535 }
                                         text: DestinationPort
                                         onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
                                     }
