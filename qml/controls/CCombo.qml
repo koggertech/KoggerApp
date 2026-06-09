@@ -58,6 +58,8 @@ ComboBox {
         }
 
         onPaint: {
+            if (!context)
+                return;
             context.reset();
 
             if(control.popup.visible) {

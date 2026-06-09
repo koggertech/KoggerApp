@@ -17,6 +17,8 @@ Item {
 
         onPaint: {
             var ctx = getContext("2d")
+            if (!ctx)
+                return
             ctx.clearRect(0, 0, width, height)
             ctx.fillStyle = root.indicatorColor
             ctx.beginPath()

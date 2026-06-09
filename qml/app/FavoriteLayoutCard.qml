@@ -154,6 +154,8 @@ Rectangle {
             height: width
             onPaint: {
                 var ctx = getContext("2d")
+                if (!ctx)
+                    return
                 ctx.clearRect(0, 0, width, height)
                 ctx.strokeStyle = "#FDE68A"
                 ctx.lineWidth = Math.max(1, Math.round(width * 0.14))

@@ -147,6 +147,8 @@ DevSettingsBox {
                 }
 
                 onPaint: {
+                    if (!context)
+                        return;
                     context.reset();
 
                     context.lineWidth = 2

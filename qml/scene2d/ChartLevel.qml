@@ -141,6 +141,8 @@ Item {
         anchors.fill: parent
 
         onPaint: {
+            if (!context)
+                return;
             context.reset();
             context.fillStyle = parent.borderColor
             context.lineWidth = 1

@@ -50,6 +50,8 @@ CButton {
         }
 
         onPaint: {
+            if (!context)
+                return;
             context.reset();
 
             if(connectionButton.connection) {

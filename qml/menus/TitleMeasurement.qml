@@ -35,6 +35,8 @@ Item {
         opacity: 1
 
         onPaint: {
+            if (!context)
+                return;
             context.reset();
 
             context.moveTo(0, 0);

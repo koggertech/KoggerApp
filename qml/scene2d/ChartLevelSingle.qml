@@ -60,6 +60,8 @@ Slider {
         contextType: "2d"
 
         onPaint: {
+            if (!context)
+                return
             context.reset()
             context.lineWidth = 1
             context.strokeStyle = control.borderColor

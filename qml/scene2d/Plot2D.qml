@@ -548,6 +548,11 @@ WaterFall {
             id: echogramLevelsSlider
             Layout.alignment: Qt.AlignHCenter
             capsuleWidth: plot.controlButtonSize
+            heightCoeff: {
+                var ctrlH = theme ? theme.controlHeight : 26
+                var reserve = 2 * plot.controlButtonSize + 2 * plot.edgeSafetyMargin + Math.round(122 * AppPalette.scale)
+                return Math.max(3, Math.min(5, Math.floor((plot.height - reserve) / ctrlH)))
+            }
 
             onStartValueChanged: plot.plotEchogramSetLevels(startValue, stopValue)
             onStopValueChanged:  plot.plotEchogramSetLevels(startValue, stopValue)

@@ -356,6 +356,8 @@ GridLayout {
 
                 onPaint: {
                     var ctx = getContext("2d")
+                    if (!ctx)
+                        return
                     var w = width
                     var h = height
 

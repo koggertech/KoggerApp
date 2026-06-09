@@ -26,6 +26,8 @@ BackStyle {
         }
 
         onPaint: {
+            if (!context)
+                return;
             context.reset();
             context.moveTo(0, 0);
             context.lineTo(width, 0);

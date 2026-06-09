@@ -55,6 +55,8 @@ Rectangle {
 
         onPaint: {
             var ctx = getContext("2d")
+            if (!ctx)
+                return
             ctx.clearRect(0, 0, width, height)
 
             var gap = Math.max(0, root.splitGap)
