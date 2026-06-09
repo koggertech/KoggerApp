@@ -2364,6 +2364,7 @@ Column {
                 if (typeof Scene3dToolBarController !== "undefined") {
                     Scene3dToolBarController.onUseAngleLocationButtonChanged(root.store.useAngleEnabled)
                     Scene3dToolBarController.onNavigatorLocationButtonChanged(root.store.navigationViewEnabled)
+                    Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(root.store.trackLastDataEnabled)
                     Scene3dToolBarController.onForceSingleZoomCheckedChanged(render3dSettings.forceSingleZoomCheckButton)
                     Scene3dToolBarController.onSyncLoupeVisibleChanged(render3dSettings.syncLoupeCheckButton)
                     Scene3dToolBarController.onSyncLoupeSizeChanged(syncLoupeSizeSpinBox.value)

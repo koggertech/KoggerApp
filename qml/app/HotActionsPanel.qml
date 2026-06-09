@@ -430,12 +430,12 @@ Item {
 
             // Set sonar frequency (transducer kHz) — small number, bottom-right.
             Text {
-                visible: modelData && modelData.isTransducerSupport && modelData.transFreq > 0
+                visible: !!(modelData && modelData.isTransducerSupport && modelData.transFreq > 0)
                 anchors.bottom: parent.bottom
                 anchors.right: parent.right
                 anchors.bottomMargin: Math.round(2 * root._s)
                 anchors.rightMargin: Math.round(4 * root._s)
-                text: modelData ? modelData.transFreq : ""
+                text: (modelData && modelData.transFreq > 0) ? String(modelData.transFreq) : ""
                 color: AppPalette.text
                 font.pixelSize: Math.round(9 * root._s)
                 font.bold: true

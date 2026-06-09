@@ -86,7 +86,7 @@ Item {
 
         KCircleIconButton {
             id: navArrowButton
-            objectName: "navigationViewButton"
+            objectName: "followBoatButton"
             width: root.buttonSize
             height: root.buttonSize
             Layout.preferredWidth: root.buttonSize
@@ -94,21 +94,21 @@ Item {
             iconSource: "qrc:/icons/ui/location.svg"
             iconTintColor: AppPalette.text
             fillHoverColor: AppPalette.cardHover
-            toolTipText: qsTr("Navigator view")
+            toolTipText: qsTr("Follow boat")
 
-            readonly property bool checked: root.store ? root.store.navigationViewEnabled : false
+            readonly property bool checked: root.store ? root.store.trackLastDataEnabled : false
             fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
             borderColor: checked ? AppPalette.accentBorder : AppPalette.border
             borderWidth: checked ? 2 : 1
 
             onClicked: {
                 if (!root.store) return
-                root.store.navigationViewEnabled = !root.store.navigationViewEnabled
-                Scene3dToolBarController.onNavigatorLocationButtonChanged(root.store.navigationViewEnabled)
+                root.store.trackLastDataEnabled = !root.store.trackLastDataEnabled
+                Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(root.store.trackLastDataEnabled)
             }
 
             Component.onCompleted: {
-                Scene3dToolBarController.onNavigatorLocationButtonChanged(checked)
+                Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
             }
         }
 

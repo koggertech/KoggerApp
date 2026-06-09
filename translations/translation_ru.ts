@@ -4135,6 +4135,11 @@
 <context>
     <name>Scene3DRightToolbar</name>
     <message>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml"/>
+        <source>Follow boat</source>
+        <translation>Слежение за лодкой</translation>
+    </message>
+    <message>
         <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="66"/>
         <source>Zoom in</source>
         <translation>Приблизить</translation>

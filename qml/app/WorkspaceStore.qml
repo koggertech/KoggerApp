@@ -174,11 +174,14 @@ signal workspaceSizeCommitRequested()
 
 property Settings scene3dPersistedSettings: Settings {
     id: scene3dPersistedSettings
+    category: "scene3d"
     property bool navigationViewButton: false
     property bool useAngleButton: false
+    property bool trackLastDataButton: false
 }
 property alias navigationViewEnabled: scene3dPersistedSettings.navigationViewButton
 property alias useAngleEnabled: scene3dPersistedSettings.useAngleButton
+property alias trackLastDataEnabled: scene3dPersistedSettings.trackLastDataButton
 
 property Settings scene3dLayerVisibility: Settings {
     id: scene3dLayerVisibility
