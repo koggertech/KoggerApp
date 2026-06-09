@@ -292,6 +292,11 @@ ApplicationWindow {
             workspaceStore.extraInfoVisible = false
             return true
         },
+        function() {  // console drawer — Esc closes it
+            if (!theme || !theme.consoleVisible) return false
+            theme.consoleVisible = false
+            return true
+        },
         function() {  // HotActions favorites popup
             if (!hotActions.layoutsMenuOpen) return false
             hotActions.layoutsMenuOpen = false

@@ -1242,6 +1242,16 @@
 <context>
     <name>ConsolePanelDrawer</name>
     <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml"/>
+        <source>Maximize</source>
+        <translation>Maksymalizuj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml"/>
+        <source>Restore</source>
+        <translation>Przywróć</translation>
+    </message>
+    <message>
         <location filename="../qml/app/ConsolePanelDrawer.qml" line="104"/>
         <source>Console</source>
         <translation>Konsola</translation>
