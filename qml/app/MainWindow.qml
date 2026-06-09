@@ -831,6 +831,12 @@ ApplicationWindow {
             }
         }
 
+        Binding {
+            target: workspaceStore
+            property: "pointerOverSidebar"
+            value: settingsSidebar.pointerInside || modeSettingsPanel.pointerInside || legacySidebar.pointerInside
+        }
+
         Loader {
             id: globalPopupLoader
 

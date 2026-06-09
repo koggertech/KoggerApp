@@ -8,6 +8,7 @@ Item {
     z: 400
 
     property bool open: false
+    readonly property bool pointerInside: panelHoverGuard.hovered
     property bool dimEnabled: true
     property string title: qsTr("Settings")
     property string side: "left"
@@ -103,6 +104,11 @@ Item {
             onPressed: function(mouse) { mouse.accepted = true }
             onClicked: {}
             onWheel: function(wheel) { wheel.accepted = true }
+        }
+
+        HoverHandler {
+            id: panelHoverGuard
+            enabled: panelRoot.progress > 0.01
         }
 
         Rectangle {

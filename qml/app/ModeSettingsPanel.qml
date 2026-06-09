@@ -6,6 +6,7 @@ Item {
     required property var store
 
     readonly property real sidebarProgress: sidebar.progress
+    readonly property bool pointerInside: sidebar.pointerInside
 
     SettingsSidebarBase {
         id: sidebar

@@ -640,6 +640,7 @@ Item {
             HoverHandler {
                 id: zoneHover
                 enabled: workspace.store.modePickerLeafId === -1
+                         && !workspace.store.pointerOverSidebar
                 onHoveredChanged: {
                     if (hovered) {
                         splitDragZone.barRevealed = true

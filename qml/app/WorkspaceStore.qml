@@ -55,6 +55,7 @@ property bool echogramSettingsActive: false
 property var echogramSettingsPlot: null     // the Plot2D whose gear was clicked
 property string echogramSettingsTitle: ""   // header title on the sub-page
 property bool modeSettingsPanelOpen: false
+property bool pointerOverSidebar: false
 property bool settingsPushContent: false
 property bool resizeActive: false
 property bool layoutTransitionSuspended: false
