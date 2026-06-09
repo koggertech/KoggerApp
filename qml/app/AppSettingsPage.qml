@@ -2896,4 +2896,34 @@ Column {
             }
         }
     }
+
+    Item {
+        width: parent.width
+        height: footerCol.implicitHeight + Tokens.spaceXl
+
+        Column {
+            id: footerCol
+            anchors.top: parent.top
+            anchors.topMargin: Tokens.spaceMd
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: Tokens.spaceXs
+
+            Image {
+                anchors.horizontalCenter: parent.horizontalCenter
+                source: "qrc:/kogger_app_logo.png"
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                width: Math.round(150 * AppPalette.scale)
+                sourceSize.width: Math.round(360 * AppPalette.scale)
+                opacity: 0.85
+            }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: Qt.application.displayName
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontSm
+            }
+        }
+    }
 }
