@@ -127,7 +127,7 @@ BasePanePopup {
             Cell { caption: qsTr("Mode");    value: root._mode < 0 ? "—" : String(root._mode) }
             Cell {
                 caption: qsTr("Arm")
-                value: root._arm < 0 ? "—" : (root._arm > 0 ? qsTr("ARMED") : qsTr("DISARMED"))
+                value: root._arm < 0 ? "—" : (root._arm > 0 ? "ARMED" : "DISARMED")
                 valueColor: root._arm > 0 ? "#22C55E" : AppPalette.text
             }
         }
