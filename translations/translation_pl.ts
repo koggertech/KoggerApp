@@ -151,6 +151,21 @@
         <translation>Zapisywanie UI</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2529"/>
+        <source>Export the whole interface (layout, panels, all echogram/3D settings) to a JSON file, or import it from one.</source>
+        <translation>Eksport całego interfejsu (układ, panele, wszystkie ustawienia echogramów/3D) do pliku JSON lub import z niego.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2551"/>
+        <source>Export…</source>
+        <translation>Eksport…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2561"/>
+        <source>Import…</source>
+        <translation>Import…</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="118"/>
         <source>Language, theme, UI scale and panel visibility.</source>
         <translation>Język, motyw, skala interfejsu i widoczność paneli.</translation>

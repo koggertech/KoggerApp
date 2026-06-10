@@ -913,6 +913,18 @@ ApplicationWindow {
             siblingIdList: ["btEdit", "profiles", "autopilot"]
         }
 
+        Connections {
+            target: workspaceStore
+            function onUiStateReapplied() {
+                if (globalPopupLoader.item) globalPopupLoader.item.syncFromStore()
+                fullscreenPanePopup.syncFromStore()
+                btEditPopup.syncFromStore()
+                profilesPopup.syncFromStore()
+                autopilotPopup.syncFromStore()
+                extraInfoPopup.syncFromStore()
+            }
+        }
+
         Component {
             id: legacyMenuComponent
 

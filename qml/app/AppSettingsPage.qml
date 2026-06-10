@@ -2522,164 +2522,81 @@ Column {
     // ── Сохранение UI ─────────────────────────────────────────────────────────
 
     SettingsGroup {
+        id: uiSavingGroup
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("UI Saving")
-        description: qsTr("Save the current workspace layout and settings to a JSON file.")
+        description: qsTr("Export the whole interface (layout, panels, all echogram/3D settings) to a JSON file, or import it from one.")
         stateStore: root.store
         stateKey: "app.uistate"
         collapsedByDefault: true
 
-        // Export row
-        Column {
+        property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+        property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+
+        function safeFolder(folderUrl) {
+            var lp = root.localPath(folderUrl)
+            if (lp.length && uiStateSerializer && uiStateSerializer.pathExists(lp))
+                return folderUrl
+            return StandardPaths.writableLocation(StandardPaths.HomeLocation)
+        }
+
+        Row {
             width: parent.width
-            spacing: Tokens.spaceSm
+            spacing: Tokens.spaceMd
 
-            Text { text: qsTr("Export state:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm }
-
-            Row {
-                id: uiExportRow
-                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-
-                property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
-                property string exportPathSource: ""
-
-                Component.onCompleted: uiExportField.text = root.displayPath(exportPathSource)
-
-                function currentPath() {
-                    var t = uiExportField.text
-                    if (!t.length) return ""
-                    if (exportPathSource.length && t === root.displayPath(exportPathSource))
-                        return root.localPath(exportPathSource)
-                    return t.toLowerCase().endsWith(".json") ? t : t + ".json"
+            KButton {
+                width: (parent.width - Tokens.spaceMd) / 2
+                height: Tokens.controlHMd
+                text: qsTr("Export…")
+                onClicked: {
+                    uiExportDialog.currentFolder = uiSavingGroup.safeFolder(uiSavingGroup.exportFolder)
+                    uiExportDialog.open()
                 }
+            }
 
-                Rectangle {
-                    width: parent.width - Math.round((44 + 80) * AppPalette.scale) - 2 * Tokens.spaceMd
-                    height: Tokens.controlHMd; radius: Tokens.radiusMd; color: AppPalette.bg
-                    border.width: 1; border.color: uiExportField.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                    TextInput {
-                        id: uiExportField
-                        anchors.fill: parent; anchors.margins: Tokens.spaceMd
-                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: uiExportField.selectAll() }
-                        verticalAlignment: TextInput.AlignVCenter
-                        color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
-                        Text { visible: !uiExportField.text.length; text: qsTr("Path..."); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
-                    }
+            KButton {
+                width: (parent.width - Tokens.spaceMd) / 2
+                height: Tokens.controlHMd
+                text: qsTr("Import…")
+                onClicked: {
+                    uiImportDialog.currentFolder = uiSavingGroup.safeFolder(uiSavingGroup.importFolder)
+                    uiImportDialog.open()
                 }
-
-                KButton {
-                    width: Math.round(44 * AppPalette.scale); height: Tokens.controlHMd; text: "..."
-                    onClicked: {
-                        uiExportDialog.currentFolder = uiExportRow.exportFolder
-                        uiExportDialog.open()
-                    }
-                }
-
-                KButton {
-                    width: Math.round(80 * AppPalette.scale); height: Tokens.controlHMd; text: qsTr("Export")
-                    onClicked: {
-                        var path = parent.currentPath()
-                        if (!path.length) return
-                        uiStateSerializer.exportToJsonFile(path)
-                        parent.exportPathSource = path
-                        uiExportField.text = root.displayPath(path)
-                    }
-                }
-
-                FileDialog {
-                    id: uiExportDialog
-                    title: qsTr("Export UI state")
-                    fileMode: FileDialog.SaveFile
-                    nameFilters: ["JSON (*.json)", "All Files (*)"]
-                    onAccepted: {
-                        var p = uiExportDialog.parent
-                        p.exportFolder = uiExportDialog.currentFolder
-                        var src = root.localPath(uiExportDialog.selectedFile)
-                        p.exportPathSource = src.toLowerCase().endsWith(".json") ? src : src + ".json"
-                        uiExportField.text = root.displayPath(p.exportPathSource)
-                    }
-                }
-
-                Settings { property alias uiStateExportFolder:     uiExportRow.exportFolder }
-                Settings { property alias uiStateExportPathSource: uiExportRow.exportPathSource }
             }
         }
 
-        // Import row
-        Column {
-            width: parent.width
-            spacing: Tokens.spaceSm
-
-            Text { text: qsTr("Import state:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm }
-
-            Row {
-                id: uiImportRow
-                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-
-                property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
-                property string importPathSource: ""
-
-                Component.onCompleted: uiImportField.text = root.displayPath(importPathSource)
-
-                function currentPath() {
-                    var t = uiImportField.text
-                    if (!t.length) return ""
-                    if (importPathSource.length && t === root.displayPath(importPathSource))
-                        return root.localPath(importPathSource)
-                    return t
-                }
-
-                Rectangle {
-                    width: parent.width - Math.round((44 + 80) * AppPalette.scale) - 2 * Tokens.spaceMd
-                    height: Tokens.controlHMd; radius: Tokens.radiusMd; color: AppPalette.bg
-                    border.width: 1; border.color: uiImportField.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                    TextInput {
-                        id: uiImportField
-                        anchors.fill: parent; anchors.margins: Tokens.spaceMd
-                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: uiImportField.selectAll() }
-                        verticalAlignment: TextInput.AlignVCenter
-                        color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
-                        Text { visible: !uiImportField.text.length; text: qsTr("Path..."); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
-                    }
-                }
-
-                KButton {
-                    width: Math.round(44 * AppPalette.scale); height: Tokens.controlHMd; text: "..."
-                    onClicked: {
-                        uiImportDialog.currentFolder = uiImportRow.importFolder
-                        uiImportDialog.open()
-                    }
-                }
-
-                KButton {
-                    width: Math.round(80 * AppPalette.scale); height: Tokens.controlHMd; text: qsTr("Import")
-                    onClicked: {
-                        var path = parent.currentPath()
-                        if (!path.length) return
-                        uiStateSerializer.importFromJsonFile(path)
-                        parent.importPathSource = path
-                        uiImportField.text = root.displayPath(path)
-                    }
-                }
-
-                FileDialog {
-                    id: uiImportDialog
-                    title: qsTr("Import UI state")
-                    fileMode: FileDialog.OpenFile
-                    nameFilters: ["JSON (*.json)", "All Files (*)"]
-                    onAccepted: {
-                        var p = uiImportDialog.parent
-                        p.importFolder = uiImportDialog.currentFolder
-                        p.importPathSource = root.localPath(uiImportDialog.selectedFile)
-                        uiImportField.text = root.displayPath(p.importPathSource)
-                    }
-                }
-
-                Settings { property alias uiStateImportFolder:     uiImportRow.importFolder }
-                Settings { property alias uiStateImportPathSource: uiImportRow.importPathSource }
+        FileDialog {
+            id: uiExportDialog
+            title: qsTr("Export UI state")
+            fileMode: FileDialog.SaveFile
+            nameFilters: ["JSON (*.json)", "All Files (*)"]
+            onAccepted: {
+                uiSavingGroup.exportFolder = uiExportDialog.currentFolder
+                var path = root.localPath(uiExportDialog.selectedFile)
+                if (!path.length) return
+                if (!path.toLowerCase().endsWith(".json")) path += ".json"
+                if (root.store) root.store.saveLayoutState()
+                uiStateSerializer.exportToJsonFile(path)
             }
         }
+
+        FileDialog {
+            id: uiImportDialog
+            title: qsTr("Import UI state")
+            fileMode: FileDialog.OpenFile
+            nameFilters: ["JSON (*.json)", "All Files (*)"]
+            onAccepted: {
+                uiSavingGroup.importFolder = uiImportDialog.currentFolder
+                var path = root.localPath(uiImportDialog.selectedFile)
+                if (!path.length) return
+                if (uiStateSerializer.importFromJsonFile(path) && root.store)
+                    root.store.reapplyImportedUiState()
+            }
+        }
+
+        Settings { property alias uiStateExportFolder: uiSavingGroup.exportFolder }
+        Settings { property alias uiStateImportFolder: uiSavingGroup.importFolder }
 
         Text {
             width: parent.width

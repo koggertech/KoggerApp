@@ -668,6 +668,21 @@
         <translation></translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2529"/>
+        <source>Export the whole interface (layout, panels, all echogram/3D settings) to a JSON file, or import it from one.</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2551"/>
+        <source>Export…</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2561"/>
+        <source>Import…</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2194"/>
         <source>Save the current workspace layout and settings to a JSON file.</source>
         <translation>Save the current workspace layout and settings to a JSON file.</translation>

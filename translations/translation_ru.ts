@@ -151,6 +151,21 @@
         <translation>Сохранение UI</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2529"/>
+        <source>Export the whole interface (layout, panels, all echogram/3D settings) to a JSON file, or import it from one.</source>
+        <translation>Экспорт всего интерфейса (раскладка, панели, все настройки эхограмм/3D) в JSON-файл или импорт из него.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2551"/>
+        <source>Export…</source>
+        <translation>Экспорт…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2561"/>
+        <source>Import…</source>
+        <translation>Импорт…</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="118"/>
         <source>Language, theme, UI scale and panel visibility.</source>
         <translation>Язык, тема, масштаб интерфейса и видимость панелей.</translation>

@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -142,6 +143,15 @@ PathSyntax detectPathSyntax(const QString& rawPath)
     return PathSyntax::kRelativeOrEmpty;
 }
 
+QString localPathForExistenceCheck(const QString& rawPath)
+{
+    const QString path = rawPath.trimmed();
+    if (path.startsWith(QStringLiteral("file://"), Qt::CaseInsensitive)) {
+        return QUrl(path).toLocalFile();
+    }
+    return path;
+}
+
 bool isPathStringImportable(const QString& pathValue)
 {
     const PathSyntax syntax = detectPathSyntax(pathValue);
@@ -150,10 +160,16 @@ bool isPathStringImportable(const QString& pathValue)
     }
 
 #if defined(Q_OS_WIN)
-    return syntax == PathSyntax::kWindowsAbsolute;
+    if (syntax != PathSyntax::kWindowsAbsolute) {
+        return false;
+    }
 #else
-    return syntax == PathSyntax::kUnixAbsolute;
+    if (syntax != PathSyntax::kUnixAbsolute) {
+        return false;
+    }
 #endif
+
+    return QFileInfo::exists(localPathForExistenceCheck(pathValue));
 }
 
 bool isPathLikeSettingsKey(const QString& key)
@@ -341,6 +357,11 @@ bool UIStateSerializer::exportToJsonFile(const QString& path)
         settingsObject.insert(key, variantToJsonValue(settings.value(key)));
     }
 
+    const QHash<QString, QVariant> liveValues = collectLiveQmlSettingsValues();
+    for (auto it = liveValues.constBegin(); it != liveValues.constEnd(); ++it) {
+        settingsObject.insert(it.key(), variantToJsonValue(it.value()));
+    }
+
     QJsonObject appObject;
     appObject.insert(QStringLiteral("name"), QCoreApplication::applicationName());
     appObject.insert(QStringLiteral("version"), currentAppVersion());
@@ -377,7 +398,7 @@ bool UIStateSerializer::exportToJsonFile(const QString& path)
         return false;
     }
 
-    setLastStatus(tr("Exported %1 keys.").arg(keys.size()));
+    setLastStatus(tr("Exported %1 keys.").arg(settingsObject.size()));
     return true;
 }
 
@@ -437,7 +458,8 @@ bool UIStateSerializer::importFromJsonFile(const QString& path)
     }
 
     const QString currentVersion = currentAppVersion();
-    if (fileVersion != currentVersion) {
+    const QString fileMajorMinor = majorMinorFromVersion(fileVersion);
+    if (fileMajorMinor.isEmpty() || fileMajorMinor != currentMajorMinorVersion()) {
         setLastError(tr("Import failed: version mismatch (file %1, app %2)")
                          .arg(fileVersion, currentVersion));
         setLastStatus(QString());
@@ -548,6 +570,15 @@ bool UIStateSerializer::importFromJsonFile(const QString& path)
                       .arg(skippedSerialLinks)
                       .arg(linksStatus));
     return true;
+}
+
+bool UIStateSerializer::pathExists(const QString& path) const
+{
+    const QString local = normalizePath(path);
+    if (local.isEmpty()) {
+        return false;
+    }
+    return QFileInfo::exists(local);
 }
 
 void UIStateSerializer::setQmlRootObject(QObject* rootObject)
@@ -665,28 +696,46 @@ QString UIStateSerializer::currentMajorMinorVersion() const
     return QStringLiteral("0.0");
 }
 
-int UIStateSerializer::applyImportedSettingsToQml(const QHash<QString, QVariant>& importedValues) const
+QList<QObject*> UIStateSerializer::liveSettingsObjects() const
 {
+    QList<QObject*> result;
     if (!qmlRootObject_) {
-        return 0;
+        return result;
     }
 
-    int appliedCount = 0;
-
-    QList<QObject*> objects;
-    objects.reserve(1 + qmlRootObject_->children().size());
-    objects.append(qmlRootObject_.data());
+    if (isSettingsObject(qmlRootObject_.data())) {
+        result.append(qmlRootObject_.data());
+    }
 
     const auto allChildren = qmlRootObject_->findChildren<QObject*>();
     for (QObject* child : allChildren) {
-        objects.append(child);
+        if (isSettingsObject(child)) {
+            result.append(child);
+        }
     }
 
-    for (QObject* object : objects) {
-        if (!isSettingsObject(object)) {
-            continue;
-        }
+    return result;
+}
 
+namespace {
+
+bool isReservedSettingsPropertyName(const QString& propertyName)
+{
+    return propertyName.isEmpty() ||
+           propertyName == QStringLiteral("objectName") ||
+           propertyName == QStringLiteral("category") ||
+           propertyName == QStringLiteral("fileName") ||
+           propertyName == QStringLiteral("location");
+}
+
+}
+
+QHash<QString, QVariant> UIStateSerializer::collectLiveQmlSettingsValues() const
+{
+    QHash<QString, QVariant> values;
+
+    const QList<QObject*> objects = liveSettingsObjects();
+    for (QObject* object : objects) {
         const QString category = object->property("category").toString();
         const QMetaObject* metaObject = object->metaObject();
         if (!metaObject) {
@@ -700,11 +749,45 @@ int UIStateSerializer::applyImportedSettingsToQml(const QHash<QString, QVariant>
             }
 
             const QString propertyName = QString::fromUtf8(property.name());
-            if (propertyName.isEmpty() ||
-                propertyName == QStringLiteral("objectName") ||
-                propertyName == QStringLiteral("category") ||
-                propertyName == QStringLiteral("fileName") ||
-                propertyName == QStringLiteral("location")) {
+            if (isReservedSettingsPropertyName(propertyName)) {
+                continue;
+            }
+
+            const QVariant value = property.read(object);
+            if (!value.isValid()) {
+                continue;
+            }
+
+            const QString settingsKey = category.isEmpty()
+                                            ? propertyName
+                                            : category + QStringLiteral("/") + propertyName;
+            values.insert(settingsKey, value);
+        }
+    }
+
+    return values;
+}
+
+int UIStateSerializer::applyImportedSettingsToQml(const QHash<QString, QVariant>& importedValues) const
+{
+    int appliedCount = 0;
+
+    const QList<QObject*> objects = liveSettingsObjects();
+    for (QObject* object : objects) {
+        const QString category = object->property("category").toString();
+        const QMetaObject* metaObject = object->metaObject();
+        if (!metaObject) {
+            continue;
+        }
+
+        for (int i = 0; i < metaObject->propertyCount(); ++i) {
+            const QMetaProperty property = metaObject->property(i);
+            if (!property.isWritable()) {
+                continue;
+            }
+
+            const QString propertyName = QString::fromUtf8(property.name());
+            if (isReservedSettingsPropertyName(propertyName)) {
                 continue;
             }
 

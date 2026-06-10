@@ -183,6 +183,10 @@ property alias navigationViewEnabled: scene3dPersistedSettings.navigationViewBut
 property alias useAngleEnabled: scene3dPersistedSettings.useAngleButton
 property alias trackLastDataEnabled: scene3dPersistedSettings.trackLastDataButton
 
+onNavigationViewEnabledChanged: Scene3dToolBarController.onNavigatorLocationButtonChanged(navigationViewEnabled)
+onUseAngleEnabledChanged: Scene3dToolBarController.onUseAngleLocationButtonChanged(useAngleEnabled)
+onTrackLastDataEnabledChanged: Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(trackLastDataEnabled)
+
 property Settings scene3dLayerVisibility: Settings {
     id: scene3dLayerVisibility
     property bool boatTrackCheckButton: true
@@ -212,10 +216,8 @@ property Settings loggingPersist: Settings {
 function restoreLoggingFromSettings() {
     if (typeof core === "undefined" || !core)
         return
-    if (loggingPersist.loggingCheck)
-        core.setKlfLogging(true)
-    if (loggingPersist.loggingCheck2)
-        core.setCsvLogging(true)
+    core.setKlfLogging(loggingPersist.loggingCheck)
+    core.setCsvLogging(loggingPersist.loggingCheck2)
 }
 
 property Connections loggingSync: Connections {
@@ -3525,7 +3527,9 @@ function finishPaneDrag() {
     dragActive = false
 }
 
-Component.onCompleted: {
+signal uiStateReapplied()
+
+function loadPersistedUiState() {
     restoreLoggingFromSettings()
     loadSettingsGroupsState()
     loadFavoriteLayoutsState()
@@ -3547,7 +3551,18 @@ Component.onCompleted: {
     extraInfoActivePoint = layoutStore.extraInfoActivePointStored
     extraInfoNav         = layoutStore.extraInfoNavStored
     extraInfoBoatStatus  = layoutStore.extraInfoBoatStatusStored
-    if (!restoreLayoutState()) {
+    return restoreLayoutState()
+}
+
+function reapplyImportedUiState() {
+    loadPersistedUiState()
+    sanitizeFullscreenPopupConfig()
+    updateCurrentLayoutFavoriteState()
+    uiStateReapplied()
+}
+
+Component.onCompleted: {
+    if (!loadPersistedUiState()) {
         var paneNumber = nextPaneNumber()
         var firstLeaf = makeLeaf(makePane(paneNumber, "3D"))
         layoutTree = firstLeaf
