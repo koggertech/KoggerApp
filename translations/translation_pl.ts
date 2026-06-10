@@ -429,6 +429,16 @@
         <translation>Lupa</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1738"/>
+        <source>Size</source>
+        <translation>Rozmiar</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1760"/>
+        <source>Zoom</source>
+        <translation>Powiększenie</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1539"/>
         <location filename="../qml/app/AppSettingsPage.qml" line="1646"/>
         <location filename="../qml/app/AppSettingsPage.qml" line="1735"/>

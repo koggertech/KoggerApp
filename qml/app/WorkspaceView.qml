@@ -13,6 +13,7 @@ Item {
     property bool sizeReportPending: false
     property var paneHostStacksByLeafId: ({})
     property var plotItemsByLeafId: ({})
+    readonly property var loupeSourcePlot: globalPopupPlot
     property Item active3DHostItem: null
     property int active3DLeafId: -1
     property var active3DPane: null   // current Pane3DWindow, for ESC routing
@@ -312,6 +313,27 @@ Item {
         nextItems[key] = item
         plotItemsByLeafId = nextItems
         refreshPrimaryPlotItem()
+        applyEchogramLoupeToPlot(item)
+    }
+
+    function applyEchogramLoupeToPlot(item) {
+        if (!item || !item.viewState || !workspace.store)
+            return
+        item.viewState.loupeSize = workspace.store.echogramLoupeSize
+        item.viewState.loupeZoom = workspace.store.echogramLoupeZoom
+        item.viewState.loupeVisible = workspace.store.echogramLoupeVisible
+    }
+
+    function applyEchogramLoupeToAll() {
+        for (var key in plotItemsByLeafId) {
+            if (Object.prototype.hasOwnProperty.call(plotItemsByLeafId, key))
+                applyEchogramLoupeToPlot(plotItemsByLeafId[key])
+        }
+    }
+
+    Connections {
+        target: workspace.store
+        function onEchogramLoupeApplyRequested() { workspace.applyEchogramLoupeToAll() }
     }
 
     function unregisterPlotItem(leafId, item) {
@@ -450,10 +472,21 @@ Item {
             visible: workspace.active3DHostItem !== null
             focus: true
 
+            function _applyLoupeGate() {
+                if (workspace.store)
+                    setSyncLoupeUiAllowed(workspace.store.threeDOccupiesWorkspace)
+            }
+
+            Connections {
+                target: workspace.store
+                function onThreeDOccupiesWorkspaceChanged() { scene3dView._applyLoupeGate() }
+            }
+
             // verticalScale persistence (перенесено с develop, где было в qml/main.qml)
             Component.onCompleted: {
                 if (rendererPersist.verticalScale !== scene3dView.verticalScale)
                     scene3dView.setVerticalScale(rendererPersist.verticalScale)
+                _applyLoupeGate()
             }
 
             onVerticalScaleChanged: rendererPersist.verticalScale = scene3dView.verticalScale

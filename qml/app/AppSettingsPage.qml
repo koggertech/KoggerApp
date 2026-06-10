@@ -1779,6 +1779,55 @@ Column {
                 }
             }
         }
+
+        ParamCardGroup {
+            width: parent.width
+            label: qsTr("Loupe")
+            checked: root.store ? root.store.echogramLoupeVisible : false
+            onToggled: function(v) { if (root.store) root.store.echogramLoupeVisible = v }
+
+            RowLayout {
+                width: parent.width
+                spacing: Tokens.spaceMd
+                Text {
+                    text: qsTr("Size")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontMd
+                    Layout.fillWidth: true
+                    verticalAlignment: Text.AlignVCenter
+                }
+                KSpinBox {
+                    Layout.preferredWidth: Math.round(120 * AppPalette.scale)
+                    from: 1; to: 3; stepSize: 1
+                    value: root.store ? root.store.echogramLoupeSize : 1
+                    onValueModified: function(val) { if (root.store) root.store.echogramLoupeSize = val }
+                }
+            }
+
+            RowLayout {
+                width: parent.width
+                spacing: Tokens.spaceMd
+                Text {
+                    text: qsTr("Zoom")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontMd
+                    verticalAlignment: Text.AlignVCenter
+                }
+                KSlider {
+                    Layout.fillWidth: true
+                    from: 0; to: 300; stepSize: 1
+                    value: root.store ? root.store.echogramLoupeZoom : 100
+                    onValueModified: function(val) { if (root.store) root.store.echogramLoupeZoom = Math.round(val) }
+                }
+                Text {
+                    text: (root.store ? Math.round(root.store.echogramLoupeZoom) : 0) + "%"
+                    color: AppPalette.textMuted
+                    font.pixelSize: Tokens.fontSm
+                    Layout.preferredWidth: Math.round(40 * AppPalette.scale)
+                    horizontalAlignment: Text.AlignRight
+                }
+            }
+        }
     }
 
     SettingsGroup {
@@ -1856,55 +1905,57 @@ Column {
                         Scene3dToolBarController.onSyncLoupeVisibleChanged(v)
                 }
 
-                Row {
+                RowLayout {
                     width: parent.width
-                    height: Tokens.controlHMd
-                    spacing: Tokens.spaceXs
-                    readonly property real sw: (width - Tokens.spaceXs) / 2
-
-                    Row {
-                        width: parent.sw
-                        height: parent.height
-                        spacing: Tokens.spaceSm
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: qsTr("Size:")
-                            color: AppPalette.textSecond
-                            font.pixelSize: Tokens.fontMd
-                        }
-                        KSpinBox {
-                            id: syncLoupeSizeSpinBox
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 56
-                            from: 1; to: 3; stepSize: 1; value: 1
-                            onValueModified: function(v) {
-                                if (typeof Scene3dToolBarController !== "undefined")
-                                    Scene3dToolBarController.onSyncLoupeSizeChanged(v)
-                            }
+                    spacing: Tokens.spaceMd
+                    Text {
+                        text: qsTr("Size")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
+                        Layout.fillWidth: true
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    KSpinBox {
+                        id: syncLoupeSizeSpinBox
+                        Layout.preferredWidth: Math.round(120 * AppPalette.scale)
+                        from: 1; to: 3; stepSize: 1; value: 1
+                        onValueModified: function(v) {
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onSyncLoupeSizeChanged(v)
                         }
                     }
-                    Row {
-                        width: parent.sw
-                        height: parent.height
-                        spacing: Tokens.spaceSm
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: qsTr("Zoom, %:")
-                            color: AppPalette.textSecond
-                            font.pixelSize: Tokens.fontMd
-                        }
-                        KSpinBox {
-                            id: syncLoupeZoomSpinBox
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 80
-                            from: 0; to: 300; stepSize: 10; value: 100
-                            onValueModified: function(v) {
-                                if (typeof Scene3dToolBarController !== "undefined") {
-                                    Scene3dToolBarController.onSyncLoupeZoomChanged(Math.round(v))
-                                    Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(true)
-                                }
+                }
+
+                RowLayout {
+                    width: parent.width
+                    spacing: Tokens.spaceMd
+                    Text {
+                        text: qsTr("Zoom, %:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    KSlider {
+                        id: syncLoupeZoomSlider
+                        Layout.fillWidth: true
+                        from: 0; to: 300; stepSize: 1; value: 100
+                        onValueModified: function(val) {
+                            if (typeof Scene3dToolBarController !== "undefined") {
+                                Scene3dToolBarController.onSyncLoupeZoomChanged(Math.round(val))
+                                Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(true)
                             }
                         }
+                        onPressedChanged: {
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(pressed)
+                        }
+                    }
+                    Text {
+                        text: Math.round(syncLoupeZoomSlider.value) + "%"
+                        color: AppPalette.textMuted
+                        font.pixelSize: Tokens.fontSm
+                        Layout.preferredWidth: Math.round(40 * AppPalette.scale)
+                        horizontalAlignment: Text.AlignRight
                     }
                 }
             }
@@ -2161,7 +2212,7 @@ Column {
                 property bool compassCheckButton: true
             }
             Settings { property alias syncLoupeSize:        syncLoupeSizeSpinBox.value }
-            Settings { property alias syncLoupeZoom:        syncLoupeZoomSpinBox.value }
+            Settings { property alias syncLoupeZoom:        syncLoupeZoomSlider.value }
             Settings { property alias circleGridSize:       circleGridSizeSpinBox.value }
             Settings { property alias circleGridStep:       circleGridStepSpinBox.value }
             Settings { property alias circleGridAngle:      circleGridAngleSpinBox.value }
@@ -2368,7 +2419,7 @@ Column {
                     Scene3dToolBarController.onForceSingleZoomCheckedChanged(render3dSettings.forceSingleZoomCheckButton)
                     Scene3dToolBarController.onSyncLoupeVisibleChanged(render3dSettings.syncLoupeCheckButton)
                     Scene3dToolBarController.onSyncLoupeSizeChanged(syncLoupeSizeSpinBox.value)
-                    Scene3dToolBarController.onSyncLoupeZoomChanged(Math.round(syncLoupeZoomSpinBox.value))
+                    Scene3dToolBarController.onSyncLoupeZoomChanged(Math.round(syncLoupeZoomSlider.value))
                     Scene3dToolBarController.onIsNorthLocationButtonChanged(render3dSettings.isNorthViewButton)
                     Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(render3dSettings.selectionToolButton)
                     Scene3dToolBarController.onGridVisibilityCheckedChanged(render3dSettings.gridCheckButton)

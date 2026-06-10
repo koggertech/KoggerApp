@@ -656,7 +656,6 @@ WaterFall {
             gridVisible, gridFill, gridInvert, gridNumber,
             angleVisible, angleRange, velocityVisible, velocityRange,
             distanceAutoRange, distanceAutoRangeIndex, horizontalMode,
-            loupeVisible, loupeSize, loupeZoom,
             echogramLevelsSlider.startValue, echogramLevelsSlider.stopValue
         ]
         on_ChangeProbeChanged: if (!plot.suspendCapture) echogramCaptureDebounce.restart()
@@ -728,9 +727,6 @@ WaterFall {
                 if (dm >= 0) distanceAutoRangeList.currentIndex = dm
 
                 horisontalVertical.checked = plot.horizontal
-                loupeVisible.checked = plot.getLoupeVisible()
-                loupeSize.value      = plot.getLoupeSize()
-                loupeZoom.value      = plot.getLoupeZoom()
             } finally {
                 plot.suspendCapture = false
             }
@@ -1403,7 +1399,6 @@ WaterFall {
                             text: qsTr("Loupe")
 
                             onCheckedChanged: plotLoupeVisible(checked)
-                            Component.onCompleted: plotLoupeVisible(checked)
                         }
 
                         RowLayout {
@@ -1420,7 +1415,6 @@ WaterFall {
                                 value: 1
 
                                 onValueChanged: plotLoupeSize(value)
-                                Component.onCompleted: plotLoupeSize(value)
                             }
                         }
                         RowLayout {
@@ -1454,8 +1448,6 @@ WaterFall {
                                 onMoved: {
                                     plot.updateLoupeZoomPreview()
                                 }
-
-                                Component.onCompleted: plotLoupeZoom(Math.round(value))
                             }
 
                             CText {
@@ -1501,9 +1493,6 @@ WaterFall {
                         property alias dopplerInstrumentDst: dopplerInstrumentDstVisible.checked
                         property alias dvlLegendVisible: dvlLegendVisible.checked
                         property alias horisontalVertical: horisontalVertical.checked
-                        property alias loupeVisible: loupeVisible.checked
-                        property alias loupeSize: loupeSize.value
-                        property alias loupeZoom: loupeZoom.value
                     }
         }   // ColumnLayout (relocated settings controls)
     }   // echoViewState

@@ -207,6 +207,22 @@ property Settings echogramUiPrefs: Settings {
 }
 property alias hideEmptyEchogramControls: echogramUiPrefs.hideEmptyEchogramControls
 
+property Settings echogramLoupePrefs: Settings {
+    id: echogramLoupePrefs
+    category: "echogram_loupe"
+    property bool visible: false
+    property int size: 1
+    property int zoom: 100
+}
+property alias echogramLoupeVisible: echogramLoupePrefs.visible
+property alias echogramLoupeSize: echogramLoupePrefs.size
+property alias echogramLoupeZoom: echogramLoupePrefs.zoom
+
+signal echogramLoupeApplyRequested()
+onEchogramLoupeVisibleChanged: echogramLoupeApplyRequested()
+onEchogramLoupeSizeChanged: echogramLoupeApplyRequested()
+onEchogramLoupeZoomChanged: echogramLoupeApplyRequested()
+
 property Settings loggingPersist: Settings {
     id: loggingPersist
     property bool loggingCheck: false   // KLF
@@ -786,6 +802,20 @@ function paneCountByMode(mode) {
             n++
     }
     return n
+}
+
+readonly property bool threeDOccupiesWorkspace: {
+    if (!layoutTree)
+        return false
+    if (maximizedLeafId !== -1) {
+        var mp = paneByLeafId(layoutTree, maximizedLeafId)
+        return !!(mp && normalizedPaneMode(mp.mode) === "3D")
+    }
+    var panes = []
+    Tree.allLeafPanes(layoutTree, panes)
+    if (panes.length === 1)
+        return normalizedPaneMode(panes[0].mode) === "3D"
+    return false
 }
 
 // Shared 2D echogram limit: panes + globalPopup + secondary <= 5.

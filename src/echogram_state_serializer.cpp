@@ -80,10 +80,6 @@ QString EchogramStateSerializer::serialize(QObject* echogram) const
     o[QStringLiteral("distMode")] = p->getDistanceAutoRange();
     o[QStringLiteral("horiz")]    = p->isHorizontal();
 
-    o[QStringLiteral("loupeVis")]  = p->getLoupeVisible();
-    o[QStringLiteral("loupeSize")] = p->getLoupeSize();
-    o[QStringLiteral("loupeZoom")] = p->getLoupeZoom();
-
     setLastError(QString());
 
     const QByteArray json = QJsonDocument(o).toJson(QJsonDocument::Compact);
@@ -172,10 +168,6 @@ bool EchogramStateSerializer::deserialize(QObject* echogram, const QString& stat
 
     p->plotDistanceAutoRange(getI("distMode", p->getDistanceAutoRange()));
     p->setHorizontal(getB("horiz", p->isHorizontal()));
-
-    p->plotLoupeVisible(getB("loupeVis", p->getLoupeVisible()));
-    p->plotLoupeSize(getI("loupeSize", p->getLoupeSize()));
-    p->plotLoupeZoom(getI("loupeZoom", p->getLoupeZoom()));
 
     p->plotUpdate();
 

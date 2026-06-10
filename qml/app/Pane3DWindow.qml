@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
+import WaterFall 1.0
 import "../scene3d"
 import "../controls"
 
@@ -44,6 +45,130 @@ Item {
             view: root.scene3dView
             geo: root.scene3dView ? root.scene3dView.geoJsonController : null
             store: root.workspaceRoot ? root.workspaceRoot.store : null
+        }
+    }
+
+    Item {
+        id: syncLoupeOverlay
+        readonly property var renderer: root.scene3dView
+        readonly property var loupeSrc: root.workspaceRoot ? root.workspaceRoot.loupeSourcePlot : null
+        property int previewEpochIndex: (loupeSrc && renderer) ? loupeSrc.getPreferredLoupeEpochIndex(renderer.syncLoupeEpochIndex) : -1
+
+        visible: renderer !== null
+                 && renderer.visible
+                 && root.workspaceRoot && root.workspaceRoot.active3DPane === root
+                 && (renderer.syncLoupeOverlayVisible || (renderer.syncLoupeZoomAdjusting && previewEpochIndex >= 0))
+
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: Math.round(12 * theme.resCoeff)
+        anchors.bottomMargin: Math.round(12 * theme.resCoeff)
+        z: 2
+
+        property real sizeMultiplier: (renderer && renderer.syncLoupeSize === 2) ? 1.5 : ((renderer && renderer.syncLoupeSize === 3) ? 2.25 : 1.0)
+        property int baseSide: Math.round(180 * theme.resCoeff * sizeMultiplier)
+        property int maxSide: renderer ? Math.max(64, Math.min(renderer.width, renderer.height) - 2 * anchors.rightMargin) : 64
+        property int side: Math.max(64, Math.min(baseSide, maxSide))
+        property int sourceDepthReferencePx: 0
+
+        width: side
+        height: side
+
+        function refreshLoupePlot() {
+            const previewEpoch = previewEpochIndex
+            if (!loupeSrc || !renderer || !visible || previewEpoch < 0)
+                return
+
+            const zoomMultiplier = 1.0 + Math.max(0, Math.min(renderer.syncLoupeZoom, 300)) * 0.01
+            const previewSourceBaseSize = Math.max(8, Math.floor(side))
+            const previewSourceSize = Math.max(4, Math.floor(previewSourceBaseSize / zoomMultiplier))
+            const ch1Name = loupeSrc.plotDatasetChannelName()
+            const ch2Name = loupeSrc.plotDatasetChannel2Name()
+            let mainDepthPxCandidate = loupeSrc.horizontal ? Math.floor(loupeSrc.height) : Math.floor(loupeSrc.width)
+            if (mainDepthPxCandidate > 0)
+                sourceDepthReferencePx = mainDepthPxCandidate
+            if (sourceDepthReferencePx <= 0)
+                sourceDepthReferencePx = Math.max(1, Math.floor(syncLoupePlot3D.height))
+
+            const from2D = loupeSrc.cursorFrom()
+            const to2D = loupeSrc.cursorTo()
+            const has2DRange = isFinite(from2D) && isFinite(to2D) && Math.abs(to2D - from2D) > 0.0001
+            const cursorFrom = has2DRange ? from2D : renderer.syncLoupeDepthFrom
+            const cursorTo = has2DRange ? to2D : renderer.syncLoupeDepthTo
+            const centerDepth = loupeSrc.getLoupeDepthForEpoch(previewEpoch)
+
+            syncLoupePlot3D.horizontal = loupeSrc.horizontal
+            syncLoupePlot3D.plotDatasetChannelFromStrings(ch1Name, ch2Name)
+            syncLoupePlot3D.plotEchogramTheme(loupeSrc.getThemeId())
+            syncLoupePlot3D.plotEchogramSetLevels(loupeSrc.getLowEchogramLevel(), loupeSrc.getHighEchogramLevel())
+            syncLoupePlot3D.plotEchogramCompensation(loupeSrc.getEchogramCompensation())
+            syncLoupePlot3D.plotBottomTrackVisible(loupeSrc.getBottomTrackVisible())
+            syncLoupePlot3D.plotBottomTrackTheme(loupeSrc.getBottomTrackThemeId())
+            syncLoupePlot3D.plotRangefinderVisible(loupeSrc.getRangefinderVisible())
+            syncLoupePlot3D.plotRangefinderTheme(loupeSrc.getRangefinderThemeId())
+
+            syncLoupePlot3D.setCursorFromTo(cursorFrom, cursorTo)
+            syncLoupePlot3D.setTimelinePositionByEpochCentered(previewEpoch)
+            syncLoupePlot3D.setZoomPreviewSourceSize(previewSourceSize)
+            syncLoupePlot3D.setZoomPreviewReferenceDepthPixels(sourceDepthReferencePx)
+            syncLoupePlot3D.setZoomPreviewFlipY(renderer.syncLoupeFlipY)
+            syncLoupePlot3D.setZoomPreviewSourceByEpochDepth(previewEpoch, centerDepth)
+            syncLoupePlot3D.update()
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                if (typeof core !== "undefined" && core)
+                    core.registerSyncLoupePlot(syncLoupePlot3D)
+                refreshLoupePlot()
+            }
+        }
+        onWidthChanged: if (visible) refreshLoupePlot()
+
+        Connections {
+            target: syncLoupeOverlay.renderer
+            function onSyncLoupeStateChanged() { syncLoupeOverlay.refreshLoupePlot() }
+        }
+        Connections {
+            target: syncLoupeOverlay.loupeSrc
+            function onTimelinePositionChanged() { syncLoupeOverlay.refreshLoupePlot() }
+            function onEchogramThemeChanged(themeId) { syncLoupeOverlay.refreshLoupePlot() }
+        }
+
+        Rectangle {
+            id: syncLoupeFrame
+            anchors.fill: parent
+            color: "black"
+            border.color: "#545E84"
+            border.width: Math.max(1, Math.round(2 * theme.resCoeff))
+            radius: Math.max(1, Math.round(2 * theme.resCoeff))
+            clip: true
+
+            WaterFall {
+                id: syncLoupePlot3D
+                objectName: "syncLoupe3DPlot"
+                anchors.fill: parent
+                anchors.margins: syncLoupeFrame.border.width
+                horizontal: true
+                enabled: false
+
+                Component.onCompleted: {
+                    setZoomPreviewMode(true)
+                    plotAttitudeVisible(false)
+                    plotTemperatureVisible(false)
+                    plotDopplerBeamVisible(false, 0)
+                    plotDopplerInstrumentVisible(false)
+                    plotGNSSVisible(false, 0)
+                    plotAcousticAngleVisible(false)
+                    plotVelocityVisible(false)
+                    plotAngleVisibility(false)
+                    plotGridVerticalNumber(0)
+                    plotGridFillWidth(false)
+                    plotGridInvert(false)
+                    plotDistanceAutoRange(-1)
+                    plotEchogramCompensation(0)
+                }
+            }
         }
     }
 

@@ -499,6 +499,16 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1738"/>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1760"/>
+        <source>Zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1539"/>
         <location filename="../qml/app/AppSettingsPage.qml" line="1646"/>
         <location filename="../qml/app/AppSettingsPage.qml" line="1735"/>
