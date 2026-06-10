@@ -42,7 +42,6 @@ Item {
 
     Grid {
         anchors.centerIn: parent
-        rows:    root._vertical ? root.dotCount : 1
         columns: root._vertical ? 1 : root.dotCount
         rowSpacing: root._dotSpacing
         columnSpacing: root._dotSpacing

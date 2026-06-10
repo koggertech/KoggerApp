@@ -1962,17 +1962,21 @@ std::tuple<ChannelId, uint8_t, QString>  Dataset::channelIdFromName(const QStrin
 {
     auto retVal = std::make_tuple(ChannelId(), 0x00, QString());
 
-    if (name.isEmpty() || channelsNames_.isEmpty() ||
-        channelsIds_.size() != channelsNames_.size() ||
-        subChannelIds_.size() != channelsNames_.size()) {
-
+    if (name.isEmpty()) {
         return retVal;
     }
 
-    int index = channelsNames_.indexOf(name);
+    const QVector<DatasetChannel> chList = channelsList();
 
-    if (index >= 0 && index < channelsIds_.size()) {
-        return std::make_tuple(channelsIds_[index], subChannelIds_[index], channelsNames_[index]);
+    for (const auto& channel : chList) {
+        const QString chName = QString("%1|%2|%3").arg(
+            channel.portName_,
+            QString::number(channel.channelId_.address),
+            QString::number(channel.subChannelId_));
+
+        if (chName == name) {
+            return std::make_tuple(channel.channelId_, channel.subChannelId_, chName);
+        }
     }
 
     return retVal;
