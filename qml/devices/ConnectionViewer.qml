@@ -637,10 +637,8 @@ Column {
                 if (checked !== core.loggingKlf) checked = core.loggingKlf
             }
             Component.onCompleted: {
-                core.setKlfLogging(checked)
                 if (checked !== core.loggingKlf) checked = core.loggingKlf
             }
-            Settings { property alias loggingCheck: loggingCheck.checked }
         }
 
         KButton {
@@ -653,10 +651,8 @@ Column {
                 if (checked !== core.loggingCsv) checked = core.loggingCsv
             }
             Component.onCompleted: {
-                core.setCsvLogging(checked)
                 if (checked !== core.loggingCsv) checked = core.loggingCsv
             }
-            Settings { property alias loggingCheck2: loggingCheck2.checked }
         }
 
         KButton {

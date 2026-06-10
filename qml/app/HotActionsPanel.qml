@@ -74,6 +74,7 @@ Item {
 
     signal settingsTriggered()
     signal connectionsTriggered()
+    signal loggingIndicatorTriggered()
     signal connectionStatusChanged(bool connected)
     signal openFileTriggered()
     signal closeFileTriggered()
@@ -90,6 +91,8 @@ Item {
     property var devices: []
     // Index into `devices` (= deviceManagerWrapper.devs) — devSN can collide.
     signal deviceTriggered(int devIndex)
+
+    readonly property bool _loggingActive: typeof core !== "undefined" && core && (core.loggingKlf || core.loggingCsv)
 
     function iconForDevice(d) {
         if (!d) return "qrc:/icons/ui/device-unknown.svg"
@@ -396,6 +399,80 @@ Item {
         }
     }
 
+    component LoggingBadge: Item {
+        id: logBadge
+        visible: root._loggingActive
+        width: visible ? root.controlHeight : 0
+        height: root.controlHeight
+
+        readonly property bool _klf: typeof core !== "undefined" && core && core.loggingKlf
+        readonly property bool _csv: typeof core !== "undefined" && core && core.loggingCsv
+
+        Rectangle {
+            anchors.fill: parent
+            radius: width / 2
+            color: root.buttonFillColor
+            border.width: 1
+            border.color: "#EF4444"
+        }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: Math.round(1 * root._s)
+
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: Math.round(8 * root._s)
+                height: width
+                radius: width / 2
+                color: "#EF4444"
+
+                SequentialAnimation on opacity {
+                    running: logBadge.visible
+                    loops: Animation.Infinite
+                    NumberAnimation { to: 0.3; duration: 650; easing.type: Easing.InOutQuad }
+                    NumberAnimation { to: 1.0; duration: 650; easing.type: Easing.InOutQuad }
+                }
+            }
+
+            Column {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 0
+
+                Text {
+                    visible: logBadge._klf
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "KLF"
+                    color: "#EF4444"
+                    font.pixelSize: Math.round(9 * root._s)
+                    font.bold: true
+                    lineHeight: 0.82
+                    lineHeightMode: Text.ProportionalHeight
+                }
+                Text {
+                    visible: logBadge._csv
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "CSV"
+                    color: "#EF4444"
+                    font.pixelSize: Math.round(9 * root._s)
+                    font.bold: true
+                    lineHeight: 0.82
+                    lineHeightMode: Text.ProportionalHeight
+                }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: logBadge.visible
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                root.loggingIndicatorTriggered()
+                root.expanded = false
+            }
+        }
+    }
+
     Component {
         id: deviceShortcutDelegate
 
@@ -521,7 +598,7 @@ Item {
         anchors.leftMargin: root.panelOffsetX
         anchors.verticalCenter: toggleButton.verticalCenter
         spacing: Math.round(8 * root._s)
-        visible: root.showToggleButton && !root.expanded && root.connectionStatusToolVisible
+        visible: root.showToggleButton && !root.expanded && (root.connectionStatusToolVisible || root._loggingActive)
         opacity: visible ? 1 : 0
 
         Behavior on opacity {
@@ -532,6 +609,8 @@ Item {
             model: root.connectionStatusToolVisible ? root.devices : 0
             delegate: deviceShortcutDelegate
         }
+
+        LoggingBadge {}
     }
 
     Rectangle {
@@ -590,6 +669,8 @@ Item {
                 model: (root.connectionStatusToolVisible || _devicesRevealOverride) ? root.devices : 0
                 delegate: deviceShortcutDelegate
             }
+
+            LoggingBadge {}
 
             Item {
                 id: btEditSlot

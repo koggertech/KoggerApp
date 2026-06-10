@@ -621,6 +621,12 @@ ApplicationWindow {
                 refreshConnectionsIndicator()
             }
 
+            onLoggingIndicatorTriggered: {
+                legacyPanelOpen = false
+                workspaceStore.openConnectionsSettings()
+                refreshConnectionsIndicator()
+            }
+
             onOpenFileTriggered: openSelectedFile()
             onCloseFileTriggered: closeSelectedFile()
             onUpdateBottomTrackTriggered: updateBottomTrackForRegisteredPlots()

@@ -203,6 +203,27 @@ property Settings echogramUiPrefs: Settings {
 }
 property alias hideEmptyEchogramControls: echogramUiPrefs.hideEmptyEchogramControls
 
+property Settings loggingPersist: Settings {
+    id: loggingPersist
+    property bool loggingCheck: false   // KLF
+    property bool loggingCheck2: false  // CSV
+}
+
+function restoreLoggingFromSettings() {
+    if (typeof core === "undefined" || !core)
+        return
+    if (loggingPersist.loggingCheck)
+        core.setKlfLogging(true)
+    if (loggingPersist.loggingCheck2)
+        core.setCsvLogging(true)
+}
+
+property Connections loggingSync: Connections {
+    target: (typeof core !== "undefined") ? core : null
+    function onLoggingKlfChanged() { loggingPersist.loggingCheck  = core.loggingKlf }
+    function onLoggingCsvChanged() { loggingPersist.loggingCheck2 = core.loggingCsv }
+}
+
 signal surfaceLayersRefreshRequested()
 
 onBoatTrackVisibleChanged: {
@@ -3505,6 +3526,7 @@ function finishPaneDrag() {
 }
 
 Component.onCompleted: {
+    restoreLoggingFromSettings()
     loadSettingsGroupsState()
     loadFavoriteLayoutsState()
     loadLiveEchogramStates()
