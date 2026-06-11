@@ -79,8 +79,8 @@ Item {
 
             anchors.horizontalCenter: parent.horizontalCenter
             width: Math.min(root.maxCardWidth,
-                            accentBar.width + Tokens.spaceLg + messageText.implicitWidth
-                            + Tokens.spaceMd + closeButton.width + 2 * Tokens.spaceLg)
+                            Tokens.spaceLg + iconBadge.width + Tokens.spaceMd + messageText.implicitWidth
+                            + Tokens.spaceMd + closeButton.width + Tokens.spaceLg)
             height: Math.max(Tokens.controlHLg, messageText.height + 2 * Tokens.spaceLg)
             radius: Tokens.radiusLg
             color: AppPalette.card
@@ -136,20 +136,29 @@ Item {
             }
 
             Rectangle {
-                id: accentBar
+                id: iconBadge
                 anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.margins: Math.round(4 * AppPalette.scale)
-                width: Math.round(3 * AppPalette.scale)
+                anchors.leftMargin: Tokens.spaceLg
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.round(20 * AppPalette.scale)
+                height: width
                 radius: width / 2
-                color: card.isWarning ? AppPalette.dangerText : AppPalette.accentBar
+                // info → green "i", warning → yellow "!"
+                color: card.isWarning ? "#EAB308" : "#22C55E"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: card.isWarning ? "!" : "i"
+                    color: "#10171F"
+                    font.pixelSize: Math.round(13 * AppPalette.scale)
+                    font.bold: true
+                }
             }
 
             Text {
                 id: messageText
-                anchors.left: accentBar.right
-                anchors.leftMargin: Tokens.spaceLg
+                anchors.left: iconBadge.right
+                anchors.leftMargin: Tokens.spaceMd
                 anchors.right: closeButton.left
                 anchors.rightMargin: card.isWarning ? Tokens.spaceMd : Tokens.spaceLg
                 anchors.verticalCenter: parent.verticalCenter
