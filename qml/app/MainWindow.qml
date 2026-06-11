@@ -312,10 +312,10 @@ ApplicationWindow {
             legacyPanelOpen = false
             return true
         },
-        function() {
-            if (!workspaceStore.settingsPanelOpen || !workspaceStore.echogramSettingsActive)
+        function() {  // any settings drill-in (echogram / quick-actions / extra-info / UI saving / TGC)
+            if (!workspaceStore.settingsPanelOpen || !workspaceStore.anySettingsSubPageActive)
                 return false
-            workspaceStore.closeEchogramSettings()
+            workspaceStore.closeActiveSettingsSubPage()
             return true
         },
         function() {  // main app settings (last resort)
@@ -786,18 +786,28 @@ ApplicationWindow {
             panelShadowEnabled: !workspaceStore.editableMode
             title: workspaceStore.echogramSettingsActive
                    ? workspaceStore.echogramSettingsTitle
-                   : qsTr("Settings")
+                   : !workspaceStore.settingsSubPageActive
+                     ? qsTr("Settings")
+                     : workspaceStore.settingsSubPageKind === "quickActions" ? qsTr("Quick action menu")
+                     : workspaceStore.settingsSubPageKind === "extraInfo"    ? qsTr("Extra info panel")
+                     : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
+                     : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
+                     : qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
             panelSizePx: workspaceStore.settingsPanelSizePx
             store: workspaceStore
             onCloseRequested: workspaceStore.settingsPanelOpen = false
 
-            showBack: workspaceStore.echogramSettingsActive
-            onBackRequested: workspaceStore.closeEchogramSettings()
+            showBack: workspaceStore.anySettingsSubPageActive
+            onBackRequested: workspaceStore.closeActiveSettingsSubPage()
 
-            subPage: echogramSettingsTabComponent
-            subPageOpen: workspaceStore.echogramSettingsActive
+            subPage: workspaceStore.settingsSubPageKind === "quickActions" ? quickActionsSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "extraInfo"  ? extraInfoSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "uiSaving"   ? uiSavingSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
+                     : echogramSettingsTabComponent
+            subPageOpen: workspaceStore.anySettingsSubPageActive
 
             Loader {
                 width: parent.width
@@ -958,6 +968,38 @@ ApplicationWindow {
             id: echogramSettingsTabComponent
 
             EchogramSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: quickActionsSettingsTabComponent
+
+            QuickActionSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: extraInfoSettingsTabComponent
+
+            ExtraInfoSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: uiSavingSettingsTabComponent
+
+            UiSavingSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: tgcSettingsTabComponent
+
+            TgcSettingsTab {
                 store: workspaceStore
             }
         }

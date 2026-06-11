@@ -559,7 +559,7 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2068"/>
         <source>Export plot data as XTF, CSV (regular or complex) or USBL.</source>
-        <translation>Экспорт данных графика в XTF, CSV (обычный или комплексный) или USBL.</translation>
+        <translation>Экспорт датасета в XTF, CSV (обычный или комплексный) или USBL.</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2194"/>
@@ -3512,6 +3512,118 @@
         <location filename="../qml/app/MainWindow.qml" line="729"/>
         <source>Settings</source>
         <translation>Настройки</translation>
+    </message>
+    <message>
+        <source>Quick action menu</source>
+        <translation>Меню быстрых действий</translation>
+    </message>
+    <message>
+        <source>Extra info panel</source>
+        <translation>Экстра-инфо панель</translation>
+    </message>
+    <message>
+        <source>UI Saving</source>
+        <translation>Сохранение UI</translation>
+    </message>
+    <message>
+        <source>TGC</source>
+        <translation>TGC</translation>
+    </message>
+</context>
+<context>
+    <name>QuickActionSettingsTab</name>
+    <message>
+        <source>Show connected devices</source>
+        <translation>Показывать подключённые устройства</translation>
+    </message>
+    <message>
+        <source>Show favorite layouts</source>
+        <translation>Показать избранные компоновки</translation>
+    </message>
+    <message>
+        <source>Show bottom track editing</source>
+        <translation>Показывать редактирование трека дна</translation>
+    </message>
+    <message>
+        <source>Show extra info button</source>
+        <translation>Кнопка экстра-инфо</translation>
+    </message>
+    <message>
+        <source>Show profiles button</source>
+        <translation>Показывать кнопку профилей</translation>
+    </message>
+</context>
+<context>
+    <name>ExtraInfoSettingsTab</name>
+    <message>
+        <source>Show extra info panel</source>
+        <translation>Показывать экстра-инфо панель</translation>
+    </message>
+    <message>
+        <source>Fields:</source>
+        <translation>Поля:</translation>
+    </message>
+    <message>
+        <source>Depth</source>
+        <translation>Глубина</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation>Скорость</translation>
+    </message>
+    <message>
+        <source>Coordinates</source>
+        <translation>Координаты</translation>
+    </message>
+    <message>
+        <source>Active point</source>
+        <translation>Активная точка</translation>
+    </message>
+    <message>
+        <source>Navigation info</source>
+        <translation>Навигация</translation>
+    </message>
+    <message>
+        <source>Boat status</source>
+        <translation>Статус борта</translation>
+    </message>
+</context>
+<context>
+    <name>UiSavingSettingsTab</name>
+    <message>
+        <source>Export the whole interface (layout, panels, all echogram/3D settings) to a JSON file, or import it from one.</source>
+        <translation>Экспорт всего интерфейса (раскладка, панели, все настройки эхограмм/3D) в JSON-файл или импорт из него.</translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation>Экспорт…</translation>
+    </message>
+    <message>
+        <source>Import…</source>
+        <translation>Импорт…</translation>
+    </message>
+    <message>
+        <source>Export UI state</source>
+        <translation>Экспортировать состояние UI</translation>
+    </message>
+    <message>
+        <source>Import UI state</source>
+        <translation>Импортировать состояние UI</translation>
+    </message>
+</context>
+<context>
+    <name>TgcSettingsTab</name>
+    <message>
+        <source>Near gain:</source>
+        <translation>Ближний КУ:</translation>
+    </message>
+    <message>
+        <source>Far gain:</source>
+        <translation>Дальний КУ:</translation>
+    </message>
+    <message>
+        <source>Compensate</source>
+        <translation>Компенсация</translation>
     </message>
 </context>
 <context>

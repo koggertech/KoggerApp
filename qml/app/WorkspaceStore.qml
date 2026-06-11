@@ -56,6 +56,15 @@ property var echogramSettingsPlot: null     // the Plot2D whose gear was clicked
 property int echogramSettingsLeafId: -1     // leaf of that plot (for focus dimming)
 property string echogramSettingsTitle: ""   // header title on the sub-page
 
+// True when a settings-internal drill-in (quickActions/extraInfo/uiSaving/tgc)
+// is open. Echogram has its own flag (echogramSettingsActive) because it is
+// pane-scoped — it drives focus dimming and a dynamic title.
+property bool settingsSubPageActive: false
+// Which component the settings sidebar's single drill-in slot shows. Set on
+// open; kept sticky on close so the component doesn't reload mid slide-out.
+property string settingsSubPageKind: "echogram"
+readonly property bool anySettingsSubPageActive: echogramSettingsActive || settingsSubPageActive
+
 // Leaf of the active 3D pane; mirrored from WorkspaceView for focus dimming.
 property int active3DLeafId: -1
 
@@ -266,6 +275,32 @@ property Connections loggingSync: Connections {
     function onLoggingCsvChanged() { loggingPersist.loggingCheck2 = core.loggingCsv }
 }
 
+// TGC lives here (not in the lazy TgcSettingsTab) so persisted values reach
+// core at startup even if the user never opens the drill-in. Keys match the
+// legacy app.tgc group aliases, so existing settings carry over.
+property Settings tgcPersist: Settings {
+    id: tgcPersist
+    property real appTgcGainNear: 50
+    property real appTgcGainFar: 250
+    property bool appTgcCompensate: false
+}
+
+property alias tgcGainNear: tgcPersist.appTgcGainNear
+property alias tgcGainFar: tgcPersist.appTgcGainFar
+property alias tgcCompensate: tgcPersist.appTgcCompensate
+
+function applyTgcToCore() {
+    if (typeof core === "undefined" || !core)
+        return
+    core.setTgcGainNear(tgcGainNear * 0.01)
+    core.setTgcGainFar(tgcGainFar * 0.01)
+    core.setTgcCompensate(tgcCompensate)
+}
+
+onTgcGainNearChanged:   applyTgcToCore()
+onTgcGainFarChanged:    applyTgcToCore()
+onTgcCompensateChanged: applyTgcToCore()
+
 signal surfaceLayersRefreshRequested()
 
 onBoatTrackVisibleChanged: {
@@ -427,6 +462,7 @@ onSettingsPanelOpenChanged: {
             editableMode = false
         echogramSettingsActive = false
         echogramSettingsLeafId = -1
+        settingsSubPageActive = false
     }
 }
 
@@ -546,6 +582,7 @@ function syncRectModel(model, roleName, items, keyName) {
 function openAppLayoutSettings() {
     closeModeSettingsPanel()
     echogramSettingsActive = false
+    settingsSubPageActive = false
     settingsPanelOpen = true
 
     var key = "app.layoutPlacement"
@@ -564,6 +601,8 @@ function openAppLayoutSettings() {
 function openEchogramSettings(plot, title, leafId) {
     closeModeSettingsPanel()
     highlightedLeafId = -1            // drop hover-highlight when drilling in
+    settingsSubPageActive = false
+    settingsSubPageKind = "echogram"
     echogramSettingsPlot = plot
     echogramSettingsLeafId = (typeof leafId === "number") ? leafId : -1
     echogramSettingsTitle = title ? title : qsTr("Echogram")
@@ -575,6 +614,29 @@ function openEchogramSettings(plot, title, leafId) {
 function closeEchogramSettings() {
     echogramSettingsActive = false
     echogramSettingsLeafId = -1
+}
+
+// Open one of the settings-internal drill-ins (no pane scope, static title).
+function _openSettingsSubPage(kind) {
+    closeModeSettingsPanel()
+    highlightedLeafId = -1
+    echogramSettingsActive = false
+    echogramSettingsLeafId = -1
+    settingsSubPageKind = kind
+    settingsSubPageActive = true
+    settingsPanelOpen = true
+}
+
+function openQuickActionsSettings() { _openSettingsSubPage("quickActions") }
+function openExtraInfoSettings()    { _openSettingsSubPage("extraInfo") }
+function openUiSavingSettings()     { _openSettingsSubPage("uiSaving") }
+function openTgcSettings()          { _openSettingsSubPage("tgc") }
+
+function closeActiveSettingsSubPage() {
+    if (settingsSubPageActive)
+        settingsSubPageActive = false
+    else
+        closeEchogramSettings()
 }
 
 function toggleEchogramSettings(plot, title, leafId) {
@@ -592,6 +654,7 @@ property string pendingScrollGroupKey: ""
 function openAppSettingsAtGroup(stateKey) {
     closeModeSettingsPanel()
     echogramSettingsActive = false
+    settingsSubPageActive = false
     settingsPanelOpen = true
 
     var key = normalizedSettingsGroupKey(stateKey)
@@ -626,6 +689,7 @@ function toggleAppSettingsAtGroup(stateKey) {
 function openConnectionsSettings() {
     closeModeSettingsPanel()
     echogramSettingsActive = false
+    settingsSubPageActive = false
     settingsPanelOpen = true
     setSettingsGroupExpanded("app.connections", true)
 }
@@ -652,6 +716,7 @@ function toggleAppLayoutSettings() {
 
     closeModeSettingsPanel()
     echogramSettingsActive = false
+    settingsSubPageActive = false
     settingsPanelOpen = true
 }
 
@@ -3642,6 +3707,7 @@ Component.onCompleted: {
     }
     sanitizeFullscreenPopupConfig()
     updateCurrentLayoutFavoriteState()
+    applyTgcToCore()
 }
 
 }

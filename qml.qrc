@@ -47,6 +47,10 @@
         <file>qml/app/ParamCardGroup.qml</file>
         <file>qml/app/EchogramSettingsPanel.qml</file>
         <file>qml/app/EchogramSettingsTab.qml</file>
+        <file>qml/app/QuickActionSettingsTab.qml</file>
+        <file>qml/app/ExtraInfoSettingsTab.qml</file>
+        <file>qml/app/UiSavingSettingsTab.qml</file>
+        <file>qml/app/TgcSettingsTab.qml</file>
         <file>qml/app/LayoutRules.js</file>
         <file>qml/app/LayoutTree.js</file>
         <file>qml/app/LayoutResize.js</file>

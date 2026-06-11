@@ -559,7 +559,7 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2068"/>
         <source>Export plot data as XTF, CSV (regular or complex) or USBL.</source>
-        <translation>Eksport danych wykresu do XTF, CSV (zwykły lub złożony) lub USBL.</translation>
+        <translation>Eksport zbioru danych do XTF, CSV (zwykły lub złożony) lub USBL.</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2194"/>
@@ -3512,6 +3512,118 @@
         <location filename="../qml/app/MainWindow.qml" line="729"/>
         <source>Settings</source>
         <translation>Ustawienia</translation>
+    </message>
+    <message>
+        <source>Quick action menu</source>
+        <translation>Menu szybkich akcji</translation>
+    </message>
+    <message>
+        <source>Extra info panel</source>
+        <translation>Panel dodatkowych informacji</translation>
+    </message>
+    <message>
+        <source>UI Saving</source>
+        <translation>Zapisywanie UI</translation>
+    </message>
+    <message>
+        <source>TGC</source>
+        <translation>TGC</translation>
+    </message>
+</context>
+<context>
+    <name>QuickActionSettingsTab</name>
+    <message>
+        <source>Show connected devices</source>
+        <translation>Pokaż podłączone urządzenia</translation>
+    </message>
+    <message>
+        <source>Show favorite layouts</source>
+        <translation>Pokaż ulubione układy</translation>
+    </message>
+    <message>
+        <source>Show bottom track editing</source>
+        <translation>Pokaż edycję śladu dna</translation>
+    </message>
+    <message>
+        <source>Show extra info button</source>
+        <translation>Przycisk panelu informacji</translation>
+    </message>
+    <message>
+        <source>Show profiles button</source>
+        <translation>Pokaż przycisk profili</translation>
+    </message>
+</context>
+<context>
+    <name>ExtraInfoSettingsTab</name>
+    <message>
+        <source>Show extra info panel</source>
+        <translation>Pokaż panel informacji</translation>
+    </message>
+    <message>
+        <source>Fields:</source>
+        <translation>Pola:</translation>
+    </message>
+    <message>
+        <source>Depth</source>
+        <translation>Głębokość</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation>Prędkość</translation>
+    </message>
+    <message>
+        <source>Coordinates</source>
+        <translation>Współrzędne</translation>
+    </message>
+    <message>
+        <source>Active point</source>
+        <translation>Aktywny punkt</translation>
+    </message>
+    <message>
+        <source>Navigation info</source>
+        <translation>Informacje nawigacyjne</translation>
+    </message>
+    <message>
+        <source>Boat status</source>
+        <translation>Status łodzi</translation>
+    </message>
+</context>
+<context>
+    <name>UiSavingSettingsTab</name>
+    <message>
+        <source>Export the whole interface (layout, panels, all echogram/3D settings) to a JSON file, or import it from one.</source>
+        <translation>Eksport całego interfejsu (układ, panele, wszystkie ustawienia echogramów/3D) do pliku JSON lub import z niego.</translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation>Eksport…</translation>
+    </message>
+    <message>
+        <source>Import…</source>
+        <translation>Import…</translation>
+    </message>
+    <message>
+        <source>Export UI state</source>
+        <translation>Eksportuj stan UI</translation>
+    </message>
+    <message>
+        <source>Import UI state</source>
+        <translation>Importuj stan UI</translation>
+    </message>
+</context>
+<context>
+    <name>TgcSettingsTab</name>
+    <message>
+        <source>Near gain:</source>
+        <translation>Wzm. bliski:</translation>
+    </message>
+    <message>
+        <source>Far gain:</source>
+        <translation>Wzm. daleki:</translation>
+    </message>
+    <message>
+        <source>Compensate</source>
+        <translation>Kompensacja</translation>
     </message>
 </context>
 <context>

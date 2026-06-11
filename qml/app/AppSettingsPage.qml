@@ -113,6 +113,135 @@ Column {
         store: root.store
     }
 
+    // ── Экспорт ───────────────────────────────────────────────────────────────
+
+    SettingsGroup {
+        id: exportGroup
+        visible: instruments >= 1
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Export")
+        description: qsTr("Export plot data as XTF, CSV (regular or complex) or USBL.")
+        stateStore: root.store
+        stateKey: "app.export"
+        collapsedByDefault: true
+
+        property var exportFolderUrl: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+        property string exportFolderSource: ""
+
+        Component.onCompleted: exportPathField.text = root.displayPath(exportFolderSource)
+
+        function currentExportPath() {
+            var t = exportPathField.text
+            if (!t.length) return ""
+            if (exportFolderSource.length && t === root.displayPath(exportFolderSource))
+                return root.localPath(exportFolderSource)
+            return t
+        }
+
+        // Path row
+        Row {
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+
+            Rectangle {
+                width: parent.width - Math.round(44 * AppPalette.scale) - Tokens.spaceMd
+                height: Tokens.controlHMd
+                radius: Tokens.radiusMd
+                color: AppPalette.bg
+                border.width: 1
+                border.color: exportPathField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+
+                TextInput {
+                    id: exportPathField
+                    anchors.fill: parent
+                    anchors.leftMargin: Tokens.spaceMd
+                    anchors.rightMargin: Tokens.spaceMd
+                    TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: exportPathField.selectAll() }
+                    verticalAlignment: TextInput.AlignVCenter
+                    color: AppPalette.text
+                    font.pixelSize: Tokens.fontSm
+                    clip: true
+
+                    Text {
+                        visible: !exportPathField.text.length
+                        text: qsTr("Export path...")
+                        color: AppPalette.textMuted
+                        font.pixelSize: Tokens.fontSm
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
+
+            KButton {
+                width: Math.round(44 * AppPalette.scale); height: Tokens.controlHMd; text: "..."
+                onClicked: {
+                    exportFolderDialog.currentFolder = exportGroup.exportFolderUrl
+                    exportFolderDialog.open()
+                }
+            }
+
+            FolderDialog {
+                id: exportFolderDialog
+                title: qsTr("Export folder")
+                onAccepted: {
+                    exportGroup.exportFolderUrl = exportFolderDialog.currentFolder
+                    exportGroup.exportFolderSource = root.localPath(exportFolderDialog.selectedFolder)
+                    exportPathField.text = root.displayPath(exportGroup.exportFolderSource)
+                }
+            }
+        }
+
+        Settings { property alias exportFolder:     exportGroup.exportFolderUrl }
+        Settings { property alias exportFolderText: exportGroup.exportFolderSource }
+
+        // Decimation + CSV
+        ParamCard {
+            id: exportDecimation
+            label: qsTr("Decimation, m:")
+            slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
+
+            KSpinBox {
+                id: exportDecimationValue
+                width: Math.round(93 * AppPalette.scale)
+                height: Tokens.controlHMd
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                from: 0; to: 100; stepSize: 1; value: 10
+            }
+
+            KButton {
+                width: Math.round(93 * AppPalette.scale); height: Tokens.controlHMd
+                anchors.left: exportDecimationValue.right
+                anchors.leftMargin: Tokens.spaceXs
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("CSV")
+                onClicked: {
+                    if (root.targetPlot)
+                        core.exportPlotAsCVS(exportGroup.currentExportPath(), root.targetPlot.plotDatasetChannel(),
+                                             exportDecimation.checked ? exportDecimationValue.value : 0)
+                }
+            }
+        }
+
+        Settings { property alias exportDecimation:      exportDecimation.checked }
+        Settings { property alias exportDecimationValue: exportDecimationValue.value }
+
+        KButton {
+            width: parent.width; text: qsTr("Export to XTF")
+            onClicked: core.exportPlotAsXTF(exportGroup.currentExportPath())
+        }
+
+        KButton {
+            width: parent.width; text: qsTr("Complex signal to CSV")
+            onClicked: core.exportComplexToCSV(exportGroup.currentExportPath())
+        }
+
+        KButton {
+            width: parent.width; text: qsTr("USBL to CSV")
+            onClicked: core.exportUSBLToCSV(exportGroup.currentExportPath())
+        }
+    }
+
     // ── Интерфейс ─────────────────────────────────────────────────────────────
 
     SettingsGroup {
@@ -341,6 +470,24 @@ Column {
             source: "qrc:/qml/settings/HotkeysDialog.qml"
             onLoaded: { if (item) item.store = root.store }
         }
+
+        KButton {
+            width: parent.width
+            text: qsTr("Quick action menu")
+            onClicked: if (root.store) root.store.openQuickActionsSettings()
+        }
+
+        KButton {
+            width: parent.width
+            text: qsTr("Extra info panel")
+            onClicked: if (root.store) root.store.openExtraInfoSettings()
+        }
+
+        KButton {
+            width: parent.width
+            text: qsTr("UI Saving")
+            onClicked: if (root.store) root.store.openUiSavingSettings()
+        }
     }
 
     // ── Workspace Layout ──────────────────────────────────────────────────────
@@ -508,61 +655,6 @@ Column {
         }
     }
 
-    // ── Extra info panel ──────────────────────────────────────────────────────
-
-    SettingsGroup {
-        width: root.groupWidth
-        preferredWidth: root.groupWidth
-        title: qsTr("Extra info panel")
-        stateStore: root.store
-        stateKey: "app.extraInfo"
-        collapsedByDefault: true
-
-        KSwitch {
-            width: parent.width
-            text: qsTr("Show extra info panel")
-            checked: root.store ? root.store.extraInfoVisible : false
-            onToggled: if (root.store) root.store.extraInfoVisible = checked
-        }
-
-        Text {
-            text: qsTr("Fields:")
-            color: AppPalette.textMuted
-            font.pixelSize: Tokens.fontXs
-            leftPadding: Tokens.spaceXxs
-        }
-
-        KSwitch {
-            width: parent.width; text: qsTr("Depth")
-            checked: root.store ? root.store.extraInfoDepth : true
-            onToggled: if (root.store) root.store.extraInfoDepth = checked
-        }
-        KSwitch {
-            width: parent.width; text: qsTr("Speed")
-            checked: root.store ? root.store.extraInfoSpeed : true
-            onToggled: if (root.store) root.store.extraInfoSpeed = checked
-        }
-        KSwitch {
-            width: parent.width; text: qsTr("Coordinates")
-            checked: root.store ? root.store.extraInfoCoordinates : true
-            onToggled: if (root.store) root.store.extraInfoCoordinates = checked
-        }
-        KSwitch {
-            width: parent.width; text: qsTr("Active point")
-            checked: root.store ? root.store.extraInfoActivePoint : true
-            onToggled: if (root.store) root.store.extraInfoActivePoint = checked
-        }
-        KSwitch {
-            width: parent.width; text: qsTr("Navigation info")
-            checked: root.store ? root.store.extraInfoNav : false
-            onToggled: if (root.store) root.store.extraInfoNav = checked
-        }
-        KSwitch {
-            width: parent.width; text: qsTr("Boat status")
-            checked: root.store ? root.store.extraInfoBoatStatus : false
-            onToggled: if (root.store) root.store.extraInfoBoatStatus = checked
-        }
-    }
 
     // ── Датасет ───────────────────────────────────────────────────────────────
 
@@ -674,6 +766,13 @@ Column {
             onToggled: function(v) { core.setBottomTrackZeroing(v) }
         }
         Settings { property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
+
+        KButton {
+            visible: instruments >= 1
+            width: parent.width
+            text: qsTr("TGC")
+            onClicked: if (root.store) root.store.openTgcSettings()
+        }
     }
 
     // Boat Track
@@ -1525,187 +1624,6 @@ Column {
         }
     }
 
-    // ── TGC ──────────────────────────────────────────────────────────────────
-
-    SettingsGroup {
-        id: tgcGroup
-        visible: instruments >= 1
-        width: root.groupWidth
-        preferredWidth: root.groupWidth
-        title: qsTr("TGC")
-        description: qsTr("Time-varying gain and depth-based amplification curve.")
-        stateStore: root.store
-        stateKey: "app.tgc"
-        collapsedByDefault: true
-
-        readonly property int valueLabelW: Math.round(60 * AppPalette.scale)
-        readonly property int labelW: Math.round(92 * AppPalette.scale)
-
-        Component.onCompleted: {
-            core.setTgcGainNear(tgcGainNearSlider.value * 0.01)
-            core.setTgcGainFar(tgcGainFarSlider.value * 0.01)
-            core.setTgcCompensate(tgcCompensateSwitch.checked)
-        }
-
-        // Near gain
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-
-            Text {
-                text: qsTr("Near gain:")
-                color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd
-                width: tgcGroup.labelW
-                anchors.verticalCenter: parent.verticalCenter
-                elide: Text.ElideRight
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        tgcGainNearSlider.value = 100
-                        core.setTgcGainNear(1.0)
-                    }
-                }
-            }
-
-            KSlider {
-                id: tgcGainNearSlider
-                width: parent.width - tgcGroup.labelW - tgcGroup.valueLabelW - 2 * Tokens.spaceMd
-                anchors.verticalCenter: parent.verticalCenter
-                from: 0; to: 500; stepSize: 1; value: 50
-                valueSuffix: "%"
-                onValueModified: function(v) { core.setTgcGainNear(v * 0.01) }
-            }
-
-            Text {
-                width: tgcGroup.valueLabelW
-                horizontalAlignment: Text.AlignRight
-                anchors.verticalCenter: parent.verticalCenter
-                text: tgcGainNearSlider.value + "%"
-                color: AppPalette.text; font.pixelSize: Tokens.fontMd
-            }
-        }
-
-        Settings { property alias appTgcGainNear: tgcGainNearSlider.value }
-
-        // Far gain
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-
-            Text {
-                text: qsTr("Far gain:")
-                color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd
-                width: tgcGroup.labelW
-                anchors.verticalCenter: parent.verticalCenter
-                elide: Text.ElideRight
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        tgcGainFarSlider.value = 100
-                        core.setTgcGainFar(1.0)
-                    }
-                }
-            }
-
-            KSlider {
-                id: tgcGainFarSlider
-                width: parent.width - tgcGroup.labelW - tgcGroup.valueLabelW - 2 * Tokens.spaceMd
-                anchors.verticalCenter: parent.verticalCenter
-                from: 0; to: 1000; stepSize: 1; value: 250
-                valueSuffix: "%"
-                onValueModified: function(v) { core.setTgcGainFar(v * 0.01) }
-            }
-
-            Text {
-                width: tgcGroup.valueLabelW
-                horizontalAlignment: Text.AlignRight
-                anchors.verticalCenter: parent.verticalCenter
-                text: tgcGainFarSlider.value + "%"
-                color: AppPalette.text; font.pixelSize: Tokens.fontMd
-            }
-        }
-
-        Settings { property alias appTgcGainFar: tgcGainFarSlider.value }
-
-        // Curve preview
-        Canvas {
-            id: tgcCurveCanvas
-            width: parent.width
-            height: Math.round(100 * AppPalette.scale)
-
-            Connections {
-                target: tgcGainNearSlider
-                function onValueChanged() { tgcCurveCanvas.requestPaint() }
-            }
-            Connections {
-                target: tgcGainFarSlider
-                function onValueChanged() { tgcCurveCanvas.requestPaint() }
-            }
-
-            onPaint: {
-                var ctx = getContext("2d")
-                if (!ctx)
-                    return
-                var w = width
-                var h = height
-
-                ctx.fillStyle = AppPalette.bg
-                ctx.fillRect(0, 0, w, h)
-
-                var gNear = tgcGainNearSlider.value / 100.0
-                var gFar  = tgcGainFarSlider.value / 100.0
-
-                var yMax = Math.max(gNear, gFar, 1.0) * 1.15
-                if (yMax < 0.5) yMax = 0.5
-
-                function yFor(g) { return h - (g / yMax) * h }
-
-                ctx.strokeStyle = AppPalette.border
-                ctx.lineWidth = 1
-                ctx.beginPath()
-                ctx.moveTo(0, h - 0.5)
-                ctx.lineTo(w, h - 0.5)
-                ctx.stroke()
-
-                var y100 = yFor(1.0)
-                ctx.strokeStyle = AppPalette.text
-                ctx.globalAlpha = 0.35
-                if (ctx.setLineDash) ctx.setLineDash([3, 3])
-                ctx.beginPath()
-                ctx.moveTo(0, y100)
-                ctx.lineTo(w, y100)
-                ctx.stroke()
-                if (ctx.setLineDash) ctx.setLineDash([])
-                ctx.globalAlpha = 1.0
-
-                ctx.strokeStyle = "#F07000"
-                ctx.lineWidth = 2
-                ctx.beginPath()
-                ctx.moveTo(0, yFor(gNear))
-                ctx.lineTo(w, yFor(gFar))
-                ctx.stroke()
-
-                ctx.fillStyle = AppPalette.text
-                ctx.globalAlpha = 0.6
-                ctx.font = "10px sans-serif"
-                ctx.fillText("100%", 4, Math.max(y100 - 2, 10))
-                ctx.globalAlpha = 1.0
-            }
-        }
-
-        // Compensate
-        KSwitch {
-            id: tgcCompensateSwitch
-            width: parent.width
-            text: qsTr("Compensate")
-            checked: false
-            onToggled: core.setTgcCompensate(checked)
-        }
-
-        Settings { property alias appTgcCompensate: tgcCompensateSwitch.checked }
-    }
 
     // ── 3D scene (map provider) ──────────────────────────────────────────────
 
@@ -2442,290 +2360,6 @@ Column {
                     NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(render3dSettings.navigationArrowCheckButton)
                     NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(navigationArrowSizeSpinBox.value)
                 }
-            }
-        }
-    }
-
-    // ── Экспорт ───────────────────────────────────────────────────────────────
-
-    SettingsGroup {
-        id: exportGroup
-        visible: instruments >= 1
-        width: root.groupWidth
-        preferredWidth: root.groupWidth
-        title: qsTr("Export")
-        description: qsTr("Export plot data as XTF, CSV (regular or complex) or USBL.")
-        stateStore: root.store
-        stateKey: "app.export"
-        collapsedByDefault: true
-
-        property var exportFolderUrl: StandardPaths.writableLocation(StandardPaths.HomeLocation)
-        property string exportFolderSource: ""
-
-        Component.onCompleted: exportPathField.text = root.displayPath(exportFolderSource)
-
-        function currentExportPath() {
-            var t = exportPathField.text
-            if (!t.length) return ""
-            if (exportFolderSource.length && t === root.displayPath(exportFolderSource))
-                return root.localPath(exportFolderSource)
-            return t
-        }
-
-        // Path row
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-
-            Rectangle {
-                width: parent.width - Math.round(44 * AppPalette.scale) - Tokens.spaceMd
-                height: Tokens.controlHMd
-                radius: Tokens.radiusMd
-                color: AppPalette.bg
-                border.width: 1
-                border.color: exportPathField.activeFocus ? AppPalette.accentBorder : AppPalette.border
-
-                TextInput {
-                    id: exportPathField
-                    anchors.fill: parent
-                    anchors.leftMargin: Tokens.spaceMd
-                    anchors.rightMargin: Tokens.spaceMd
-                    TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: exportPathField.selectAll() }
-                    verticalAlignment: TextInput.AlignVCenter
-                    color: AppPalette.text
-                    font.pixelSize: Tokens.fontSm
-                    clip: true
-
-                    Text {
-                        visible: !exportPathField.text.length
-                        text: qsTr("Export path...")
-                        color: AppPalette.textMuted
-                        font.pixelSize: Tokens.fontSm
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-            }
-
-            KButton {
-                width: Math.round(44 * AppPalette.scale); height: Tokens.controlHMd; text: "..."
-                onClicked: {
-                    exportFolderDialog.currentFolder = exportGroup.exportFolderUrl
-                    exportFolderDialog.open()
-                }
-            }
-
-            FolderDialog {
-                id: exportFolderDialog
-                title: qsTr("Export folder")
-                onAccepted: {
-                    exportGroup.exportFolderUrl = exportFolderDialog.currentFolder
-                    exportGroup.exportFolderSource = root.localPath(exportFolderDialog.selectedFolder)
-                    exportPathField.text = root.displayPath(exportGroup.exportFolderSource)
-                }
-            }
-        }
-
-        Settings { property alias exportFolder:     exportGroup.exportFolderUrl }
-        Settings { property alias exportFolderText: exportGroup.exportFolderSource }
-
-        // Decimation + CSV
-        ParamCard {
-            id: exportDecimation
-            label: qsTr("Decimation, m:")
-            slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
-
-            KSpinBox {
-                id: exportDecimationValue
-                width: Math.round(93 * AppPalette.scale)
-                height: Tokens.controlHMd
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                from: 0; to: 100; stepSize: 1; value: 10
-            }
-
-            KButton {
-                width: Math.round(93 * AppPalette.scale); height: Tokens.controlHMd
-                anchors.left: exportDecimationValue.right
-                anchors.leftMargin: Tokens.spaceXs
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("CSV")
-                onClicked: {
-                    if (root.targetPlot)
-                        core.exportPlotAsCVS(exportGroup.currentExportPath(), root.targetPlot.plotDatasetChannel(),
-                                             exportDecimation.checked ? exportDecimationValue.value : 0)
-                }
-            }
-        }
-
-        Settings { property alias exportDecimation:      exportDecimation.checked }
-        Settings { property alias exportDecimationValue: exportDecimationValue.value }
-
-        KButton {
-            width: parent.width; text: qsTr("Export to XTF")
-            onClicked: core.exportPlotAsXTF(exportGroup.currentExportPath())
-        }
-
-        KButton {
-            width: parent.width; text: qsTr("Complex signal to CSV")
-            onClicked: core.exportComplexToCSV(exportGroup.currentExportPath())
-        }
-
-        KButton {
-            width: parent.width; text: qsTr("USBL to CSV")
-            onClicked: core.exportUSBLToCSV(exportGroup.currentExportPath())
-        }
-    }
-
-    // ── Сохранение UI ─────────────────────────────────────────────────────────
-
-    SettingsGroup {
-        id: uiSavingGroup
-        width: root.groupWidth
-        preferredWidth: root.groupWidth
-        title: qsTr("UI Saving")
-        description: qsTr("Export the whole interface (layout, panels, all echogram/3D settings) to a JSON file, or import it from one.")
-        stateStore: root.store
-        stateKey: "app.uistate"
-        collapsedByDefault: true
-
-        property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
-        property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
-
-        function safeFolder(folderUrl) {
-            var lp = root.localPath(folderUrl)
-            if (lp.length && uiStateSerializer && uiStateSerializer.pathExists(lp))
-                return folderUrl
-            return StandardPaths.writableLocation(StandardPaths.HomeLocation)
-        }
-
-        Row {
-            width: parent.width
-            spacing: Tokens.spaceMd
-
-            KButton {
-                width: (parent.width - Tokens.spaceMd) / 2
-                height: Tokens.controlHMd
-                text: qsTr("Export…")
-                onClicked: {
-                    uiExportDialog.currentFolder = uiSavingGroup.safeFolder(uiSavingGroup.exportFolder)
-                    uiExportDialog.open()
-                }
-            }
-
-            KButton {
-                width: (parent.width - Tokens.spaceMd) / 2
-                height: Tokens.controlHMd
-                text: qsTr("Import…")
-                onClicked: {
-                    uiImportDialog.currentFolder = uiSavingGroup.safeFolder(uiSavingGroup.importFolder)
-                    uiImportDialog.open()
-                }
-            }
-        }
-
-        FileDialog {
-            id: uiExportDialog
-            title: qsTr("Export UI state")
-            fileMode: FileDialog.SaveFile
-            nameFilters: ["JSON (*.json)", "All Files (*)"]
-            onAccepted: {
-                uiSavingGroup.exportFolder = uiExportDialog.currentFolder
-                var path = root.localPath(uiExportDialog.selectedFile)
-                if (!path.length) return
-                if (!path.toLowerCase().endsWith(".json")) path += ".json"
-                if (root.store) root.store.saveLayoutState()
-                uiStateSerializer.exportToJsonFile(path)
-            }
-        }
-
-        FileDialog {
-            id: uiImportDialog
-            title: qsTr("Import UI state")
-            fileMode: FileDialog.OpenFile
-            nameFilters: ["JSON (*.json)", "All Files (*)"]
-            onAccepted: {
-                uiSavingGroup.importFolder = uiImportDialog.currentFolder
-                var path = root.localPath(uiImportDialog.selectedFile)
-                if (!path.length) return
-                if (uiStateSerializer.importFromJsonFile(path) && root.store)
-                    root.store.reapplyImportedUiState()
-            }
-        }
-
-        Settings { property alias uiStateExportFolder: uiSavingGroup.exportFolder }
-        Settings { property alias uiStateImportFolder: uiSavingGroup.importFolder }
-
-        Text {
-            width: parent.width
-            wrapMode: Text.WordWrap
-            visible: text.length > 0
-            text: uiStateSerializer ? (uiStateSerializer.lastError.length ? uiStateSerializer.lastError : uiStateSerializer.lastStatus) : ""
-            color: uiStateSerializer && uiStateSerializer.lastError.length ? "#FF6B6B" : AppPalette.textMuted
-            font.pixelSize: Tokens.fontSm
-        }
-    }
-
-    // ── Quick action menu ─────────────────────────────────────────────────────
-
-    SettingsGroup {
-        width: root.groupWidth
-        preferredWidth: root.groupWidth
-        title: qsTr("Quick action menu")
-        description: qsTr("Quick-action menu contents: favorite layouts and connected device icons.")
-        stateStore: root.store
-        stateKey: "app.hotkeysWindow"
-
-        KSwitch {
-            width: parent.width; text: qsTr("Show favorite layouts")
-            checked: root.store.quickActionFavoritesEnabled
-            onToggled: {
-                root.store.quickActionFavoritesEnabled = checked
-                // Skip the reveal animation if there's nothing to flash.
-                if (root.store.favoriteLayouts && root.store.favoriteLayouts.length > 0)
-                    root.store.requestHotkeysReveal("layouts")
-            }
-        }
-
-        KSwitch {
-            width: parent.width; text: qsTr("Show connected devices")
-            checked: root.store.quickActionConnectionStatusEnabled
-            onToggled: {
-                root.store.quickActionConnectionStatusEnabled = checked
-                if (!deviceManagerWrapper || !deviceManagerWrapper.devs)
-                    return
-                for (var i = 0; i < deviceManagerWrapper.devs.length; ++i) {
-                    var d = deviceManagerWrapper.devs[i]
-                    if (d && d.devType !== 0) {
-                        root.store.requestHotkeysReveal("connections")
-                        break
-                    }
-                }
-            }
-        }
-
-        KSwitch {
-            width: parent.width; text: qsTr("Show bottom track editing")
-            checked: root.store.quickActionBottomTrackEnabled
-            onToggled: {
-                root.store.quickActionBottomTrackEnabled = checked
-                root.store.requestHotkeysReveal("bottomTrack")
-            }
-        }
-
-        KSwitch {
-            width: parent.width; text: qsTr("Show profiles button")
-            checked: root.store.quickActionProfilesEnabled
-            onToggled: {
-                root.store.quickActionProfilesEnabled = checked
-                root.store.requestHotkeysReveal("profiles")
-            }
-        }
-
-        KSwitch {
-            width: parent.width; text: qsTr("Show extra info button")
-            checked: root.store.quickActionExtraInfoEnabled
-            onToggled: {
-                root.store.quickActionExtraInfoEnabled = checked
-                root.store.requestHotkeysReveal("extraInfo")
             }
         }
     }

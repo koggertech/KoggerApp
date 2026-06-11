@@ -44,3 +44,7 @@ ParamCard 1.0 ParamCard.qml
 ParamCardGroup 1.0 ParamCardGroup.qml
 EchogramSettingsPanel 1.0 EchogramSettingsPanel.qml
 EchogramSettingsTab 1.0 EchogramSettingsTab.qml
+QuickActionSettingsTab 1.0 QuickActionSettingsTab.qml
+ExtraInfoSettingsTab 1.0 ExtraInfoSettingsTab.qml
+UiSavingSettingsTab 1.0 UiSavingSettingsTab.qml
+TgcSettingsTab 1.0 TgcSettingsTab.qml

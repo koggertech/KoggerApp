@@ -635,7 +635,7 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2068"/>
         <source>Export plot data as XTF, CSV (regular or complex) or USBL.</source>
-        <translation>Export plot data as XTF, CSV (regular or complex) or USBL.</translation>
+        <translation>Export the dataset as XTF, CSV (regular or complex) or USBL.</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2110"/>
@@ -3497,6 +3497,118 @@
         <location filename="../qml/app/MainWindow.qml" line="729"/>
         <source>Settings</source>
         <translation></translation>
+    </message>
+    <message>
+        <source>Quick action menu</source>
+        <translation>Quick action menu</translation>
+    </message>
+    <message>
+        <source>Extra info panel</source>
+        <translation>Extra info panel</translation>
+    </message>
+    <message>
+        <source>UI Saving</source>
+        <translation>UI Saving</translation>
+    </message>
+    <message>
+        <source>TGC</source>
+        <translation>TGC</translation>
+    </message>
+</context>
+<context>
+    <name>QuickActionSettingsTab</name>
+    <message>
+        <source>Show connected devices</source>
+        <translation>Show connected devices</translation>
+    </message>
+    <message>
+        <source>Show favorite layouts</source>
+        <translation>Show favorite layouts</translation>
+    </message>
+    <message>
+        <source>Show bottom track editing</source>
+        <translation>Show bottom track editing</translation>
+    </message>
+    <message>
+        <source>Show extra info button</source>
+        <translation>Show extra info button</translation>
+    </message>
+    <message>
+        <source>Show profiles button</source>
+        <translation>Show profiles button</translation>
+    </message>
+</context>
+<context>
+    <name>ExtraInfoSettingsTab</name>
+    <message>
+        <source>Show extra info panel</source>
+        <translation>Show extra info panel</translation>
+    </message>
+    <message>
+        <source>Fields:</source>
+        <translation>Fields:</translation>
+    </message>
+    <message>
+        <source>Depth</source>
+        <translation>Depth</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation>Speed</translation>
+    </message>
+    <message>
+        <source>Coordinates</source>
+        <translation>Coordinates</translation>
+    </message>
+    <message>
+        <source>Active point</source>
+        <translation>Active point</translation>
+    </message>
+    <message>
+        <source>Navigation info</source>
+        <translation>Navigation info</translation>
+    </message>
+    <message>
+        <source>Boat status</source>
+        <translation>Boat status</translation>
+    </message>
+</context>
+<context>
+    <name>UiSavingSettingsTab</name>
+    <message>
+        <source>Export the whole interface (layout, panels, all echogram/3D settings) to a JSON file, or import it from one.</source>
+        <translation>Export the whole interface (layout, panels, all echogram/3D settings) to a JSON file, or import it from one.</translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation>Export…</translation>
+    </message>
+    <message>
+        <source>Import…</source>
+        <translation>Import…</translation>
+    </message>
+    <message>
+        <source>Export UI state</source>
+        <translation>Export UI state</translation>
+    </message>
+    <message>
+        <source>Import UI state</source>
+        <translation>Import UI state</translation>
+    </message>
+</context>
+<context>
+    <name>TgcSettingsTab</name>
+    <message>
+        <source>Near gain:</source>
+        <translation>Near gain:</translation>
+    </message>
+    <message>
+        <source>Far gain:</source>
+        <translation>Far gain:</translation>
+    </message>
+    <message>
+        <source>Compensate</source>
+        <translation>Compensate</translation>
     </message>
 </context>
 <context>

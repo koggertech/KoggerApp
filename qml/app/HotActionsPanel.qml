@@ -673,36 +673,40 @@ Item {
             LoggingBadge {}
 
             Item {
-                id: btEditSlot
-                visible: root.showBtEdit
-                width: visible ? root.controlHeight : 0
-                height: root.controlHeight
-            }
-
-            Item {
                 id: layoutsSlot
                 visible: root.hasFavoriteLayouts
                 width: visible ? root.triggerButtonWidth : 0
                 height: root.controlHeight
             }
 
-            KCircleIconButton {
-                visible: Qt.platform.os !== "android" && Qt.platform.os !== "ios"
-                width: root.controlHeight
+            Item {
+                id: btEditSlot
+                visible: root.showBtEdit
+                width: visible ? root.controlHeight : 0
                 height: root.controlHeight
-                iconSource: "qrc:/icons/ui/external-link.svg"
+            }
+
+            KCircleIconButton {
+                readonly property bool _open: root.store && root.store.extraInfoVisible
+                visible: root.showExtraInfo
+                width: visible ? root.controlHeight : 0
+                height: root.controlHeight
+                iconSource: _open ? "qrc:/icons/ui/x.svg" : "qrc:/icons/ui/list-details.svg"
                 iconTintColor: AppPalette.text
-                toolTipText: root.secondWindowOpen
-                             ? qsTr("Close second window")
-                             : qsTr("Open second window")
-                fillColor:        root.secondWindowOpen ? AppPalette.accentBgStrong : root.buttonFillColor
-                fillHoverColor:   root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverColor
+                toolTipText: _open ? qsTr("Hide extra info") : qsTr("Extra info panel")
+                fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
+                fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
                 fillPressedColor: root.buttonPressedColor
-                borderColor:      root.secondWindowOpen ? AppPalette.accentBorder : root.buttonBorderColor
-                borderHoverColor: root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverBorderColor
+                borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
+                borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
+                highlighted: root.highlightedQuickActionKey === "extraInfo"
+                flashToken: root.highlightPulseToken
                 onClicked: {
-                    root.secondWindowToggleRequested()
-                    root.expanded = false
+                    if (!root.store) return
+                    var willOpen = !root.store.extraInfoVisible
+                    root.store.extraInfoVisible = willOpen
+                    if (willOpen)
+                        root.expanded = false
                 }
             }
 
@@ -731,26 +735,22 @@ Item {
             }
 
             KCircleIconButton {
-                readonly property bool _open: root.store && root.store.extraInfoVisible
-                visible: root.showExtraInfo
-                width: visible ? root.controlHeight : 0
+                visible: Qt.platform.os !== "android" && Qt.platform.os !== "ios"
+                width: root.controlHeight
                 height: root.controlHeight
-                iconSource: _open ? "qrc:/icons/ui/x.svg" : "qrc:/icons/ui/list-details.svg"
+                iconSource: "qrc:/icons/ui/external-link.svg"
                 iconTintColor: AppPalette.text
-                toolTipText: _open ? qsTr("Hide extra info") : qsTr("Extra info panel")
-                fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
-                fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
+                toolTipText: root.secondWindowOpen
+                             ? qsTr("Close second window")
+                             : qsTr("Open second window")
+                fillColor:        root.secondWindowOpen ? AppPalette.accentBgStrong : root.buttonFillColor
+                fillHoverColor:   root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverColor
                 fillPressedColor: root.buttonPressedColor
-                borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
-                borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
-                highlighted: root.highlightedQuickActionKey === "extraInfo"
-                flashToken: root.highlightPulseToken
+                borderColor:      root.secondWindowOpen ? AppPalette.accentBorder : root.buttonBorderColor
+                borderHoverColor: root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverBorderColor
                 onClicked: {
-                    if (!root.store) return
-                    var willOpen = !root.store.extraInfoVisible
-                    root.store.extraInfoVisible = willOpen
-                    if (willOpen)
-                        root.expanded = false
+                    root.secondWindowToggleRequested()
+                    root.expanded = false
                 }
             }
 
