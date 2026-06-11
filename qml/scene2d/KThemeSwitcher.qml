@@ -7,6 +7,7 @@ Item {
 
     property int buttonSize: Math.round(40 * (theme ? theme.resCoeff : 1.0))
     property bool menuOpen: false
+    readonly property bool menuHovered: menuOpen && capsuleHover.hovered
     property int themeCount: 10
     property int currentId: 0
     property var stopsFor: null
@@ -99,6 +100,28 @@ Item {
         }
     }
 
+    component ScrollArrow: Item {
+        property bool active: false
+        opacity: active ? 0.6 : 0.0
+        visible: opacity > 0.01
+        Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+        Image {
+            id: arrowImg
+            anchors.fill: parent
+            source: "qrc:/icons/ui/chevron-right.svg"
+            fillMode: Image.PreserveAspectFit
+            sourceSize.width: width
+            sourceSize.height: height
+            visible: false
+        }
+        ColorOverlay {
+            anchors.fill: arrowImg
+            source: arrowImg
+            color: AppPalette.text
+        }
+    }
+
     Rectangle {
         id: backing
         z: -1
@@ -116,6 +139,8 @@ Item {
 
         Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         Behavior on opacity { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
+
+        HoverHandler { id: capsuleHover }
 
         Flickable {
             id: strip
@@ -217,6 +242,27 @@ Item {
                 }
                 Behavior on opacity { NumberAnimation { duration: 120 } }
             }
+        }
+
+        ScrollArrow {
+            id: leftScrollArrow
+            width: Math.round(root.buttonSize * 0.4)
+            height: width
+            x: strip.x + Math.round((root._fadeW - width) / 2)
+            y: strip.y + Math.round((strip.height - height) / 2)
+            z: 2
+            rotation: 180
+            active: root.menuOpen && strip.contentX > 0.5
+        }
+
+        ScrollArrow {
+            id: rightScrollArrow
+            width: Math.round(root.buttonSize * 0.4)
+            height: width
+            x: strip.x + strip.width - root._fadeW + Math.round((root._fadeW - width) / 2)
+            y: strip.y + Math.round((strip.height - height) / 2)
+            z: 2
+            active: root.menuOpen && strip.contentX < (strip.contentWidth - strip.width - 0.5)
         }
     }
 

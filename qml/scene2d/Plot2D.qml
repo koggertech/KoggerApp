@@ -533,7 +533,7 @@ WaterFall {
         opacity: settingsFade.value
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         HoverHandler { id: settingsHover }
-        IdleFade { id: settingsFade; hovered: settingsHover.hovered }
+        IdleFade { id: settingsFade; hovered: settingsHover.hovered || themeSwitcher.menuHovered }
 
         KThemeSwitcher {
             id: themeSwitcher
