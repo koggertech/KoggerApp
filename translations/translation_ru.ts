@@ -652,6 +652,30 @@
         <translation>Шаблоны компоновок</translation>
     </message>
     <message>
+        <source>Single window</source>
+        <translation>Одно окно</translation>
+    </message>
+    <message>
+        <source>One pane</source>
+        <translation>Одна панель</translation>
+    </message>
+    <message>
+        <source>Two windows</source>
+        <translation>Два окна</translation>
+    </message>
+    <message>
+        <source>Side by side</source>
+        <translation>Горизонтально, рядом</translation>
+    </message>
+    <message>
+        <source>Three windows</source>
+        <translation>Три окна</translation>
+    </message>
+    <message>
+        <source>Four windows</source>
+        <translation>Четыре окна</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="481"/>
         <source>Preset:</source>
         <translation>Шаблон:</translation>

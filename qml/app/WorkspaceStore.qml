@@ -2551,12 +2551,14 @@ function buildPresetTree(presetId) {
         return makeSplit("vertical", p2LeftCol, p2RightCol, 0.5)
     }
 
-    if (presetId === 3) {
-        var p3TopWide = makeLeaf(makePane(1))
-        var p3BottomLeft = makeLeaf(makePane(2))
-        var p3BottomRight = makeLeaf(makePane(3))
-        var p3Bottom = makeSplit("vertical", p3BottomLeft, p3BottomRight, 0.5)
-        return makeSplit("horizontal", p3TopWide, p3Bottom, 0.5)
+    if (presetId === 4) {
+        return makeLeaf(makePane(1))
+    }
+
+    if (presetId === 5) {
+        var p5Left = makeLeaf(makePane(1))
+        var p5Right = makeLeaf(makePane(2))
+        return makeSplit("vertical", p5Left, p5Right, 0.5)
     }
 
     return null

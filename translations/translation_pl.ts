@@ -652,6 +652,30 @@
         <translation>Szablony układów</translation>
     </message>
     <message>
+        <source>Single window</source>
+        <translation>Jedno okno</translation>
+    </message>
+    <message>
+        <source>One pane</source>
+        <translation>Jeden panel</translation>
+    </message>
+    <message>
+        <source>Two windows</source>
+        <translation>Dwa okna</translation>
+    </message>
+    <message>
+        <source>Side by side</source>
+        <translation>Obok siebie</translation>
+    </message>
+    <message>
+        <source>Three windows</source>
+        <translation>Trzy okna</translation>
+    </message>
+    <message>
+        <source>Four windows</source>
+        <translation>Cztery okna</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="481"/>
         <source>Preset:</source>
         <translation>Szablon:</translation>

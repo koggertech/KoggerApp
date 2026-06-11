@@ -804,6 +804,30 @@
         <translation></translation>
     </message>
     <message>
+        <source>Single window</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>One pane</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Two windows</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Side by side</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Three windows</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Four windows</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2479"/>
         <source>Preset 1</source>
         <translation></translation>

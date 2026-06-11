@@ -440,9 +440,10 @@ Column {
 
         Repeater {
             model: [
-                { presetId: 1, title: qsTr("Preset 1"), subtitle: qsTr("2 top panes, 1 bottom pane") },
-                { presetId: 2, title: qsTr("Preset 2"), subtitle: qsTr("2 × 2 grid") },
-                { presetId: 3, title: qsTr("Preset 3"), subtitle: qsTr("1 top pane, 2 bottom panes") }
+                { presetId: 4, title: qsTr("Single window"), subtitle: qsTr("One pane") },
+                { presetId: 5, title: qsTr("Two windows"), subtitle: qsTr("Side by side") },
+                { presetId: 1, title: qsTr("Three windows"), subtitle: qsTr("2 top panes, 1 bottom pane") },
+                { presetId: 2, title: qsTr("Four windows"), subtitle: qsTr("2 × 2 grid") }
             ]
             delegate: Rectangle {
                 required property var modelData
@@ -465,15 +466,19 @@ Column {
                                 model: {
                                     var iw = previewArea.width, ih = previewArea.height, g = previewArea.gap
                                     if (iw <= 0 || ih <= 0) return []
-                                    if (preset.presetId === 1) {
+                                    if (preset.presetId === 4) {
+                                        return [ {x:0,y:0,w:iw,h:ih} ]
+                                    } else if (preset.presetId === 5) {
+                                        var lW5 = iw*.5-g/2, rW5 = iw-lW5-g
+                                        return [ {x:0,y:0,w:lW5,h:ih}, {x:lW5+g,y:0,w:rW5,h:ih} ]
+                                    } else if (preset.presetId === 1) {
                                         var tH = ih*.5-g/2, bH = ih-tH-g, lW = iw*.5-g/2, rW = iw-lW-g
                                         return [ {x:0,y:0,w:lW,h:tH}, {x:lW+g,y:0,w:rW,h:tH}, {x:0,y:tH+g,w:iw,h:bH} ]
                                     } else if (preset.presetId === 2) {
                                         var lW2 = iw*.5-g/2, rW2 = iw-lW2-g, tH2 = ih*.5-g/2, bH2 = ih-tH2-g
                                         return [ {x:0,y:0,w:lW2,h:tH2}, {x:lW2+g,y:0,w:rW2,h:tH2}, {x:0,y:tH2+g,w:lW2,h:bH2}, {x:lW2+g,y:tH2+g,w:rW2,h:bH2} ]
                                     }
-                                    var tH3 = ih*.5-g/2, bH3 = ih-tH3-g, lW3 = iw*.5-g/2, rW3 = iw-lW3-g
-                                    return [ {x:0,y:0,w:iw,h:tH3}, {x:0,y:tH3+g,w:lW3,h:bH3}, {x:lW3+g,y:tH3+g,w:rW3,h:bH3} ]
+                                    return []
                                 }
                                 delegate: Rectangle {
                                     required property var modelData
