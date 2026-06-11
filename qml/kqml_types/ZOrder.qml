@@ -27,4 +27,5 @@ QtObject {
 
     readonly property int notificationsOverlay: 4000 // toast notifications (top-center stack)
     readonly property int fileOpeningOverlay: 5000  // modal "file is opening" banner
+    readonly property int splashOverlay:    6000    // startup launch banner (fades out)
 }

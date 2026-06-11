@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
+        <file>icons/app/kogger_app.png</file>
         <file>icons/ui/access_point.svg</file>
         <file>icons/ui/access_point_off.svg</file>
         <file>icons/ui/anchor.svg</file>

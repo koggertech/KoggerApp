@@ -24,6 +24,7 @@
         <file>qml/app/SecondaryWindow.qml</file>
         <file>qml/app/FileOpeningOverlay.qml</file>
         <file>qml/app/NotificationsOverlay.qml</file>
+        <file>qml/app/SplashOverlay.qml</file>
         <file>qml/app/InputDeviceState.qml</file>
         <file>qml/app/PaneInputBridge.qml</file>
         <file>qml/app/SettingsSidebarBase.qml</file>

@@ -1001,5 +1001,7 @@ ApplicationWindow {
         NotificationsOverlay { }
 
         FileOpeningOverlay { }
+
+        SplashOverlay { }
     }
 }
