@@ -25,5 +25,6 @@ QtObject {
     readonly property int modeSettings:     2001    // ModeSettingsPanel
     readonly property int legacySidebar:    2002    // legacy menus sidebar
 
+    readonly property int notificationsOverlay: 4000 // toast notifications (top-center stack)
     readonly property int fileOpeningOverlay: 5000  // modal "file is opening" banner
 }

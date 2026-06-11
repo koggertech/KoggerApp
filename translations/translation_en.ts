@@ -1292,6 +1292,46 @@
         <source>satellite</source>
         <translation></translation>
     </message>
+    <message>
+        <source>Connected</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Connected: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Disconnected: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>KLF logging enabled</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>KLF logging disabled</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>KLF logging not started</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>CSV logging enabled</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>CSV logging disabled</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>CSV logging not started</source>
+        <translation></translation>
+    </message>
 </context>
 <context>
     <name>Dataset</name>
@@ -1391,6 +1431,41 @@
     <message>
         <location filename="../src/device/dev_driver.cpp" line="1273"/>
         <source>Sync config rejected by device</source>
+        <translation></translation>
+    </message>
+</context>
+<context>
+    <name>LinkManager</name>
+    <message>
+        <source>Link not available</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Link not available: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Link available</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Link available: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>No data from link</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>No data from link: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Receiving data from link</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Receiving data from link: %1</source>
         <translation></translation>
     </message>
 </context>

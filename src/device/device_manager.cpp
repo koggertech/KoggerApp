@@ -956,6 +956,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
         };
         connect(link, &Link::connectionStatusChanged, dev, syncStatus);
         connect(link, &Link::isReceivesDataChanged,   dev, syncStatus);
+        connect(link, &Link::isNotAvailableChanged,   dev, syncStatus);
         syncStatus();
     }
 

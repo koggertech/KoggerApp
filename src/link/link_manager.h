@@ -38,6 +38,8 @@ public slots:
     void onUpgradingFirmwareStateChanged(QUuid uuid);
     void onLinkBaudrateChanged(QUuid uuid);
     void onLinkIsReceivesDataChanged(QUuid uuid);
+    void onLinkDataFlowNotify(QUuid uuid);
+    void onLinkAvailabilityNotify(QUuid uuid);
     void createAndStartTimer();
     void stopTimer();
     void onExpiredTimer();

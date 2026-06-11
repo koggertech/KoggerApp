@@ -11,6 +11,9 @@
 #include "bottom_track.h"
 #include "hotkeys_manager.h"
 #include "tile_provider_ids.h"
+#include "notifications.h"
+
+extern Notifications notifications;
 #ifdef Q_OS_WINDOWS
 #include <Windows.h>
 #endif
@@ -960,11 +963,15 @@ void Core::setKlfLogging(bool isLogging)
     bool success = true;
     if (isLogging) {
         success = logger_.startNewKlfLog();
-        if (!success) {
-            consoleWarning("KLF logging not started");
+        if (success) {
+            notifications.info(tr("KLF logging enabled"));
+        }
+        else {
+            notifications.warning(tr("KLF logging not started"));
         }
     } else {
         logger_.stopKlfLogging();
+        notifications.info(tr("KLF logging disabled"));
     }
     isLoggingKlf_ = isLogging && success;
 
@@ -1050,11 +1057,15 @@ void Core::setCsvLogging(bool isLogging)
     bool success = true;
     if (isLogging) {
         success = logger_.startNewCsvLog();
-        if (!success) {
-            consoleWarning("CSV logging not started");
+        if (success) {
+            notifications.info(tr("CSV logging enabled"));
+        }
+        else {
+            notifications.warning(tr("CSV logging not started"));
         }
     } else {
         logger_.stopCsvLogging();
+        notifications.info(tr("CSV logging disabled"));
     }
     isLoggingCsv_ = isLogging && success;
     emit loggingCsvChanged();
@@ -2275,6 +2286,9 @@ void Core::createLinkManagerConnections()
 
                                                                                                                                      if (!openLinkOrder_.contains(uuid)) openLinkOrder_.append(uuid);
                                                                                                                                      emit fileTitleChanged();
+
+                                                                                                                                     const QString linkName = getLinkNames().value(uuid);
+                                                                                                                                     notifications.info(linkName.isEmpty() ? tr("Connected") : tr("Connected: %1").arg(linkName));
                                                                                                                                  }, linkManagerConnection));
 
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkClosed,  this, [this](QUuid uuid) {
@@ -2283,6 +2297,9 @@ void Core::createLinkManagerConnections()
                                                                                                                                      }
 
                                                                                                                                      if (openLinkOrder_.removeOne(uuid)) emit fileTitleChanged();
+
+                                                                                                                                     const QString linkName = getLinkNames().value(uuid);
+                                                                                                                                     notifications.info(linkName.isEmpty() ? tr("Disconnected") : tr("Disconnected: %1").arg(linkName));
                                                                                                                                  }, linkManagerConnection));
 
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkDeleted, this, [this](QUuid uuid) {

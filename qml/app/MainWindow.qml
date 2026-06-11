@@ -998,6 +998,8 @@ ApplicationWindow {
             hotActionsRight: hotActions.x + hotActions.width
         }
 
+        NotificationsOverlay { }
+
         FileOpeningOverlay { }
     }
 }

@@ -1307,6 +1307,46 @@
         <source>satellite</source>
         <translation>satelita</translation>
     </message>
+    <message>
+        <source>Connected</source>
+        <translation>Połączono</translation>
+    </message>
+    <message>
+        <source>Connected: %1</source>
+        <translation>Połączono: %1</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Rozłączono</translation>
+    </message>
+    <message>
+        <source>Disconnected: %1</source>
+        <translation>Rozłączono: %1</translation>
+    </message>
+    <message>
+        <source>KLF logging enabled</source>
+        <translation>Logowanie KLF włączone</translation>
+    </message>
+    <message>
+        <source>KLF logging disabled</source>
+        <translation>Logowanie KLF wyłączone</translation>
+    </message>
+    <message>
+        <source>KLF logging not started</source>
+        <translation>Logowanie KLF nie zostało uruchomione</translation>
+    </message>
+    <message>
+        <source>CSV logging enabled</source>
+        <translation>Logowanie CSV włączone</translation>
+    </message>
+    <message>
+        <source>CSV logging disabled</source>
+        <translation>Logowanie CSV wyłączone</translation>
+    </message>
+    <message>
+        <source>CSV logging not started</source>
+        <translation>Logowanie CSV nie zostało uruchomione</translation>
+    </message>
 </context>
 <context>
     <name>Dataset</name>
@@ -1407,6 +1447,41 @@
         <location filename="../src/device/dev_driver.cpp" line="1273"/>
         <source>Sync config rejected by device</source>
         <translation>Konfiguracja synchronizacji odrzucona przez urządzenie</translation>
+    </message>
+</context>
+<context>
+    <name>LinkManager</name>
+    <message>
+        <source>Link not available</source>
+        <translation>Łącze niedostępne</translation>
+    </message>
+    <message>
+        <source>Link not available: %1</source>
+        <translation>Łącze niedostępne: %1</translation>
+    </message>
+    <message>
+        <source>Link available</source>
+        <translation>Łącze ponownie dostępne</translation>
+    </message>
+    <message>
+        <source>Link available: %1</source>
+        <translation>Łącze ponownie dostępne: %1</translation>
+    </message>
+    <message>
+        <source>No data from link</source>
+        <translation>Brak danych z łącza</translation>
+    </message>
+    <message>
+        <source>No data from link: %1</source>
+        <translation>Brak danych z łącza: %1</translation>
+    </message>
+    <message>
+        <source>Receiving data from link</source>
+        <translation>Odbieranie danych z łącza</translation>
+    </message>
+    <message>
+        <source>Receiving data from link: %1</source>
+        <translation>Odbieranie danych z łącza: %1</translation>
     </message>
 </context>
 <context>

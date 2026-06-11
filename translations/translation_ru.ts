@@ -1307,6 +1307,46 @@
         <source>satellite</source>
         <translation>спутник</translation>
     </message>
+    <message>
+        <source>Connected</source>
+        <translation>Подключено</translation>
+    </message>
+    <message>
+        <source>Connected: %1</source>
+        <translation>Подключено: %1</translation>
+    </message>
+    <message>
+        <source>Disconnected</source>
+        <translation>Отключено</translation>
+    </message>
+    <message>
+        <source>Disconnected: %1</source>
+        <translation>Отключено: %1</translation>
+    </message>
+    <message>
+        <source>KLF logging enabled</source>
+        <translation>Логирование KLF включено</translation>
+    </message>
+    <message>
+        <source>KLF logging disabled</source>
+        <translation>Логирование KLF выключено</translation>
+    </message>
+    <message>
+        <source>KLF logging not started</source>
+        <translation>Логирование KLF не запустилось</translation>
+    </message>
+    <message>
+        <source>CSV logging enabled</source>
+        <translation>Логирование CSV включено</translation>
+    </message>
+    <message>
+        <source>CSV logging disabled</source>
+        <translation>Логирование CSV выключено</translation>
+    </message>
+    <message>
+        <source>CSV logging not started</source>
+        <translation>Логирование CSV не запустилось</translation>
+    </message>
 </context>
 <context>
     <name>Dataset</name>
@@ -1407,6 +1447,41 @@
         <location filename="../src/device/dev_driver.cpp" line="1273"/>
         <source>Sync config rejected by device</source>
         <translation>Конфигурация синхронизации отклонена устройством</translation>
+    </message>
+</context>
+<context>
+    <name>LinkManager</name>
+    <message>
+        <source>Link not available</source>
+        <translation>Линк недоступен</translation>
+    </message>
+    <message>
+        <source>Link not available: %1</source>
+        <translation>Линк недоступен: %1</translation>
+    </message>
+    <message>
+        <source>Link available</source>
+        <translation>Линк снова доступен</translation>
+    </message>
+    <message>
+        <source>Link available: %1</source>
+        <translation>Линк снова доступен: %1</translation>
+    </message>
+    <message>
+        <source>No data from link</source>
+        <translation>Нет данных с линка</translation>
+    </message>
+    <message>
+        <source>No data from link: %1</source>
+        <translation>Нет данных с линка: %1</translation>
+    </message>
+    <message>
+        <source>Receiving data from link</source>
+        <translation>Данные с линка пошли</translation>
+    </message>
+    <message>
+        <source>Receiving data from link: %1</source>
+        <translation>Данные с линка пошли: %1</translation>
     </message>
 </context>
 <context>
