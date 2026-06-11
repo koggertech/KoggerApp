@@ -256,6 +256,9 @@ onEchogramLoupeVisibleChanged: echogramLoupeApplyRequested()
 onEchogramLoupeSizeChanged: echogramLoupeApplyRequested()
 onEchogramLoupeZoomChanged: echogramLoupeApplyRequested()
 
+signal echogramLoupePreviewPhase(string phase)
+function echogramLoupePreview(phase) { echogramLoupePreviewPhase(phase) }
+
 property Settings loggingPersist: Settings {
     id: loggingPersist
     property bool loggingCheck: false   // KLF

@@ -148,13 +148,6 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
     gnss_.draw(this, dataset);
     quadrature_.draw(this, dataset);
 
-    if (canvasPainter != nullptr) {
-        canvasPainter->setCompositionMode(QPainter::CompositionMode_Exclusion);
-        grid_.draw(this, dataset);
-        canvasPainter->setCompositionMode(QPainter::CompositionMode_SourceOver);
-    }
-
-    temperature_.draw(this, dataset);
     return true;
 }
 

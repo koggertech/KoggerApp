@@ -332,9 +332,26 @@ Item {
         }
     }
 
+    function echogramLoupePreviewAll(phase) {
+        for (var key in plotItemsByLeafId) {
+            if (!Object.prototype.hasOwnProperty.call(plotItemsByLeafId, key))
+                continue
+            var p = plotItemsByLeafId[key]
+            if (!p)
+                continue
+            if (phase === "begin" && p.beginLoupeZoomPreview)
+                p.beginLoupeZoomPreview()
+            else if (phase === "update" && p.updateLoupeZoomPreview)
+                p.updateLoupeZoomPreview()
+            else if (phase === "end" && p.endLoupeZoomPreview)
+                p.endLoupeZoomPreview()
+        }
+    }
+
     Connections {
         target: workspace.store
         function onEchogramLoupeApplyRequested() { workspace.applyEchogramLoupeToAll() }
+        function onEchogramLoupePreviewPhase(phase) { workspace.echogramLoupePreviewAll(phase) }
     }
 
     function unregisterPlotItem(leafId, item) {

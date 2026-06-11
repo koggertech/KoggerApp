@@ -1740,7 +1740,14 @@ Column {
                     Layout.fillWidth: true
                     from: 0; to: 300; stepSize: 1
                     value: root.store ? root.store.echogramLoupeZoom : 100
-                    onValueModified: function(val) { if (root.store) root.store.echogramLoupeZoom = Math.round(val) }
+                    onValueModified: function(val) {
+                        if (!root.store) return
+                        root.store.echogramLoupeZoom = Math.round(val)
+                        root.store.echogramLoupePreview("update")
+                    }
+                    onPressedChanged: {
+                        if (root.store) root.store.echogramLoupePreview(pressed ? "begin" : "end")
+                    }
                 }
                 Text {
                     text: (root.store ? Math.round(root.store.echogramLoupeZoom) : 0) + "%"
