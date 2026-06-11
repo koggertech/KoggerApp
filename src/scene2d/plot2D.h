@@ -86,6 +86,7 @@ public:
     bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
     void draw(QPainter* painterPtr);
     bool drawEchogramZoomPreview(QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceSize, QPointF* focusPoint = nullptr);
+    void copyVisualConfigTo(Plot2D& dst) const;
     bool drawEchogramZoomPreview(QPainter* painter, const QRect& targetRect, const QPoint& sourceCenter, int sourceWidth, int sourceHeight, QPointF* focusPoint = nullptr);
 
     float getCursorDistance() const;
@@ -227,6 +228,7 @@ public:
 
     bool render(QPainter* painter,
                 Dataset* dataset,
+                const Plot2D* configSource,
                 const DatasetCursor& parentCursor,
                 int parentCanvasWidth,
                 int sourceLeft,
@@ -238,11 +240,7 @@ public:
                 int themeId,
                 float lowLevel,
                 float highLevel,
-                int compensationId,
-                bool bottomTrackVisible,
-                int bottomTrackThemeId,
-                bool rangefinderVisible,
-                int rangefinderThemeId);
+                int compensationId);
 
 private:
     void updateEchogramSettings(int themeId, float lowLevel, float highLevel, int compensationId);

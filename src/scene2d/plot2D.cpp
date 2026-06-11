@@ -41,6 +41,7 @@ void MiniPreviewPlot2D::updateEchogramSettings(int themeId, float lowLevel, floa
 
 bool MiniPreviewPlot2D::render(QPainter* painter,
                                Dataset* dataset,
+                               const Plot2D* configSource,
                                const DatasetCursor& parentCursor,
                                int parentCanvasWidth,
                                int sourceLeft,
@@ -52,11 +53,7 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
                                int themeId,
                                float lowLevel,
                                float highLevel,
-                               int compensationId,
-                               bool bottomTrackVisible,
-                               int bottomTrackThemeId,
-                               bool rangefinderVisible,
-                               int rangefinderThemeId)
+                               int compensationId)
 {
     if (!painter || !dataset || previewWidth <= 0 || previewHeight <= 0 || parentCanvasWidth <= 0) {
         return false;
@@ -119,17 +116,18 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
     cursor_.numZeroEpoch = zeroEpochCount;
 
     updateEchogramSettings(themeId, lowLevel, highLevel, compensationId);
-    bottomProcessing_.setVisible(bottomTrackVisible);
-    bottomProcessing_.setTheme(bottomTrackThemeId);
-    rangefinder_.setVisible(rangefinderVisible);
-    rangefinder_.setTheme(rangefinderThemeId);
+    if (configSource) {
+        configSource->copyVisualConfigTo(*this);
+    }
 
     const bool rendered = echogram_.draw(this, dataset);
     if (!rendered) {
         return false;
     }
 
-    if (QPainter* canvasPainter = canvas_.painter(); canvasPainter != nullptr) {
+    QPainter* canvasPainter = canvas_.painter();
+
+    if (canvasPainter != nullptr) {
         for (const auto& range : noDataRanges) {
             const int xFrom = range.first;
             const int xTo = range.second;
@@ -139,9 +137,53 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
         }
     }
 
+    attitude_.draw(this, dataset);
+    encoder_.draw(this, dataset);
+    dvlBeamVelocity_.draw(this, dataset);
+    dvlSolution_.draw(this, dataset);
+    usblSolution_.draw(this, dataset);
     bottomProcessing_.draw(this, dataset);
     rangefinder_.draw(this, dataset);
+    depth_.draw(this, dataset);
+    gnss_.draw(this, dataset);
+    quadrature_.draw(this, dataset);
+
+    if (canvasPainter != nullptr) {
+        canvasPainter->setCompositionMode(QPainter::CompositionMode_Exclusion);
+        grid_.draw(this, dataset);
+        canvasPainter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+    }
+
+    temperature_.draw(this, dataset);
     return true;
+}
+
+void Plot2D::copyVisualConfigTo(Plot2D& dst) const
+{
+    dst.setBottomTrackVisible(getBottomTrackVisible());
+    dst.setBottomTrackTheme(getBottomTrackTheme());
+    dst.setBottomTrackDepthTextVisible(false);
+
+    dst.setRangefinderVisible(getRangefinderVisible());
+    dst.setRangefinderTheme(getRangefinderTheme());
+    dst.setRangefinderDepthTextVisible(false);
+
+    dst.setAttitudeVisible(getAttitudeVisible());
+    dst.setTemperatureVisible(getTemperatureVisible());
+
+    dst.setDopplerBeamVisible(getDopplerBeamVisible(), getDopplerBeamFilter());
+    dst.setDopplerInstrumentVisible(getDopplerInstrumentVisible(), getDopplerInstrumentFilter());
+
+    dst.setAcousticAngleVisible(getAcousticAngleVisible());
+    dst.setGNSSVisible(getGNSSVisible(), 0);
+
+    dst.setGridVetricalNumber(getGridVerticalNumber());
+    dst.setGridFillWidth(getGridFillWidth());
+    dst.setGridInvert(getGridInvert());
+    dst.setAngleVisibility(getAngleVisibility());
+    dst.setAngleRange(getAngleRange());
+    dst.setVelocityVisible(getVelocityVisible());
+    dst.setVelocityRange(getVelocityRange());
 }
 
 
