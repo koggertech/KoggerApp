@@ -31,7 +31,12 @@ Item  {
     property var store: null
     property real buttonSize: Math.round(40 * (theme ? theme.resCoeff : 1.0))
 
+    opacity: toolbarFade.value
+    Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+    IdleFade { id: toolbarFade; hovered: toolbarHover.hovered }
+
     HoverHandler {
+        id: toolbarHover
         onHoveredChanged: {
             if (hovered && toolbarRoot.view && toolbarRoot.view.resetScenePointerState) {
                 toolbarRoot.view.resetScenePointerState()

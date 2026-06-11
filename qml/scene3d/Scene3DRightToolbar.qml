@@ -48,6 +48,10 @@ Item {
         spacing: Math.round(6 * AppPalette.scale)
         z: 3
 
+        opacity: buttonColumnFade.value
+        Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+        IdleFade { id: buttonColumnFade; hovered: buttonColumnHoverHandler.hovered }
+
         HoverHandler {
             id: buttonColumnHoverHandler
         }

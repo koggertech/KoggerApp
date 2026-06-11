@@ -66,6 +66,7 @@
         <file>qml/kqml_types/KToolTip.qml</file>
         <file>qml/kqml_types/KCircleIconButton.qml</file>
         <file>qml/kqml_types/KDragBar.qml</file>
+        <file>qml/kqml_types/IdleFade.qml</file>
         <file>qml/kqml_types/ZOrder.qml</file>
         <file>qml/kqml_types/Tokens.qml</file>
         <file>qml/kqml_types/Anim.qml</file>
