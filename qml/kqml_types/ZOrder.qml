@@ -11,11 +11,11 @@ QtObject {
 
     // ── MainWindow level ─────────────────────────────────────────────────────
     readonly property int consolePanel:       10    // bottom console drawer
-    readonly property int hotActions:        220    // HotActionsPanel collapsed
     readonly property int hotActionsActive: 2205    // HotActionsPanel when settings open
 
     readonly property int fullscreenPopup:  1300    // FullscreenPanePopup (per-pane)
     readonly property int globalPopup:      1400    // GlobalPanePopup (floating window)
+    readonly property int hotActions:       1450    // HotActionsPanel — above window popups so its gear stays clickable
     readonly property int bottomTrackEditPopup: 1500 // bottom-track tool palette (always on top)
     readonly property int profilesPopup:        1510 // settings-profile palette (tool level, with bt-edit)
     readonly property int autopilotPopup:       1520 // autopilot telemetry plate (tool level)
