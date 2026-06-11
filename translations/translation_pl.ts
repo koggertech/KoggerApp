@@ -1347,6 +1347,46 @@
         <source>CSV logging not started</source>
         <translation>Logowanie CSV nie zostało uruchomione</translation>
     </message>
+    <message>
+        <source>File opened</source>
+        <translation>Otwarto plik</translation>
+    </message>
+    <message>
+        <source>File opened: %1</source>
+        <translation>Otwarto plik: %1</translation>
+    </message>
+    <message>
+        <source>File closed</source>
+        <translation>Zamknięto plik</translation>
+    </message>
+    <message>
+        <source>File closed: %1</source>
+        <translation>Zamknięto plik: %1</translation>
+    </message>
+    <message>
+        <source>Exported to CSV: %1</source>
+        <translation>Wyeksportowano do CSV: %1</translation>
+    </message>
+    <message>
+        <source>Exported to XTF: %1</source>
+        <translation>Wyeksportowano do XTF: %1</translation>
+    </message>
+    <message>
+        <source>Complex signals exported to CSV: %1</source>
+        <translation>Sygnały zespolone wyeksportowane do CSV: %1</translation>
+    </message>
+    <message>
+        <source>USBL exported to CSV: %1</source>
+        <translation>USBL wyeksportowany do CSV: %1</translation>
+    </message>
+    <message>
+        <source>Export failed</source>
+        <translation>Eksport nie powiódł się</translation>
+    </message>
+    <message>
+        <source>Export failed: %1</source>
+        <translation>Eksport nie powiódł się: %1</translation>
+    </message>
 </context>
 <context>
     <name>Dataset</name>
@@ -4687,6 +4727,14 @@
 </context>
 <context>
     <name>UIStateSerializer</name>
+    <message>
+        <source>UI state exported: %1</source>
+        <translation>Stan UI wyeksportowany: %1</translation>
+    </message>
+    <message>
+        <source>UI state imported: %1</source>
+        <translation>Stan UI zaimportowany: %1</translation>
+    </message>
     <message>
         <location filename="../src/ui_state_serializer.cpp" line="331"/>
         <source>Export failed: file path is empty</source>

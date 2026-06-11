@@ -456,6 +456,7 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
             url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
             if (file.open(QIODevice::ReadOnly)) {
                 openXTF(file.readAll());
+                notifyFileOpened(localfilePath);
             }
             return;
         }
@@ -481,6 +482,7 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
 bool Core::closeLogFile(bool onOpen)
 {
     if (isOpenedFile()) {
+        const QString closedFileName = QFileInfo(openedfilePath_).fileName();
         QMetaObject::invokeMethod(dataProcessor_, "prepareForFileClose", Qt::BlockingQueuedConnection, Q_ARG(int, 1500));
         if (!onOpen) {
             resetDataProcessorConnections();
@@ -495,6 +497,8 @@ bool Core::closeLogFile(bool onOpen)
             createLinkManagerConnections();
             linkManagerWrapperPtr_->openClosedLinks();
             restoreRealtimeProcessingFlags();
+            notifications.info(closedFileName.isEmpty() ? tr("File closed")
+                                                        : tr("File closed: %1").arg(closedFileName));
         }
 
         return true;
@@ -526,6 +530,7 @@ void Core::onFileStartOpening()
 void Core::onFileOpened()
 {
     qDebug() << "file opened!";
+    notifyFileOpened(openedfilePath_);
     QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
     QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
     setTimelinePosition(1.0);
@@ -647,6 +652,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                         emit isAppendModeChanged();
                     }
                     emit fileTitleChanged();
+                    notifyFileOpened(localfilePath);
                 } else {
                     emit fileOpenFailed(localfilePath);
                 }
@@ -680,6 +686,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                 emit isAppendModeChanged();
             }
             emit fileTitleChanged();
+            notifyFileOpened(localfilePath);
         } else {
             emit fileOpenFailed(localfilePath);
         }
@@ -703,6 +710,7 @@ bool Core::closeLogFile()
 {
     // qDebug() << "Core::closeLogFile()";
     const bool wasOpened = isOpenedFile();
+    const QString closedFileName = QFileInfo(openedfilePath_).fileName();
     QMetaObject::invokeMethod(dataProcessor_, "prepareForFileClose", Qt::BlockingQueuedConnection, Q_ARG(int, 1500));
     if (wasOpened) {
         resetDataProcessorConnections();
@@ -747,6 +755,8 @@ bool Core::closeLogFile()
     linkManagerWrapperPtr_->openClosedLinks();
     if (wasOpened) {
         setDataProcessorConnections();
+        notifications.info(closedFileName.isEmpty() ? tr("File closed")
+                                                    : tr("File closed: %1").arg(closedFileName));
     }
     QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
 
@@ -1101,6 +1111,7 @@ bool Core::exportComplexToCSV(QString file_path) {
     const QString export_file_name = buildExportFileStem(openedfilePath_);
     const QString exportPath = resolvedBasePath + "/" + export_file_name + ".csv";
     if (!logger_.creatExportStream(exportPath)) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
     }
 
@@ -1148,7 +1159,11 @@ bool Core::exportComplexToCSV(QString file_path) {
         }
     }
 
-    logger_.endExportStream();
+    if (!logger_.endExportStream()) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
+        return false;
+    }
+    notifications.info(tr("Complex signals exported to CSV: %1").arg(exportPath));
 
     return true;
 }
@@ -1159,6 +1174,7 @@ bool Core::exportUSBLToCSV(QString filePath)
     const QString export_file_name = buildExportFileStem(openedfilePath_);
     const QString exportPath = resolvedBasePath + "/" + export_file_name + ".csv";
     if (!logger_.creatExportStream(exportPath)) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
     }
 
@@ -1187,7 +1203,11 @@ bool Core::exportUSBLToCSV(QString filePath)
         }
     }
 
-    logger_.endExportStream();
+    if (!logger_.endExportStream()) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
+        return false;
+    }
+    notifications.info(tr("USBL exported to CSV: %1").arg(exportPath));
 
     return true;
 }
@@ -1198,6 +1218,7 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     const QString export_file_name = buildExportFileStem(openedfilePath_);
     const QString exportPath = resolvedBasePath + "/" + export_file_name + ".csv";
     if (!logger_.creatExportStream(exportPath)) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
     }
 
@@ -1445,7 +1466,11 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         logger_.dataExport(row_data);
     }
 
-    logger_.endExportStream();
+    if (!logger_.endExportStream()) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
+        return false;
+    }
+    notifications.info(tr("Exported to CSV: %1").arg(exportPath));
 
     return true;
 }
@@ -1453,6 +1478,7 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
 bool Core::exportPlotAsXTF(QString filePath)
 {
     if (plot2dList_.empty()) {
+        notifications.warning(tr("Export failed"));
         return false;
     }
 
@@ -1460,6 +1486,7 @@ bool Core::exportPlotAsXTF(QString filePath)
     const QString export_file_name = buildExportFileStem(openedfilePath_);
     const QString exportPath = resolvedBasePath + "/_" + export_file_name + ".xtf";
     if (!logger_.creatExportStream(exportPath)) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
     }
 
@@ -1470,7 +1497,11 @@ bool Core::exportPlotAsXTF(QString filePath)
 
     QByteArray data_export = converterXtf_.toXTF(getDatasetPtr(), ch1, subCh1, ch2, subCh2);
     logger_.dataByteExport(data_export);
-    logger_.endExportStream();
+    if (!logger_.endExportStream()) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
+        return false;
+    }
+    notifications.info(tr("Exported to XTF: %1").arg(exportPath));
     return true;
 }
 
@@ -2062,6 +2093,13 @@ void Core::onFileStopsOpening()
     emit sendIsFileOpening();
     dataHorizon_->setIsFileOpening(isFileOpening_);
     QMetaObject::invokeMethod(dataProcessor_, "setSuppressResults", Qt::QueuedConnection, Q_ARG(bool, false));
+}
+
+void Core::notifyFileOpened(const QString& filePath)
+{
+    const QString fileName = QFileInfo(filePath).fileName();
+    notifications.info(fileName.isEmpty() ? tr("File opened")
+                                          : tr("File opened: %1").arg(fileName));
 }
 
 void Core::onSendMapTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)

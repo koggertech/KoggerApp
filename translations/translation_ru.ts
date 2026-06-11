@@ -1347,6 +1347,46 @@
         <source>CSV logging not started</source>
         <translation>Логирование CSV не запустилось</translation>
     </message>
+    <message>
+        <source>File opened</source>
+        <translation>Файл открыт</translation>
+    </message>
+    <message>
+        <source>File opened: %1</source>
+        <translation>Файл открыт: %1</translation>
+    </message>
+    <message>
+        <source>File closed</source>
+        <translation>Файл закрыт</translation>
+    </message>
+    <message>
+        <source>File closed: %1</source>
+        <translation>Файл закрыт: %1</translation>
+    </message>
+    <message>
+        <source>Exported to CSV: %1</source>
+        <translation>Экспорт в CSV выполнен: %1</translation>
+    </message>
+    <message>
+        <source>Exported to XTF: %1</source>
+        <translation>Экспорт в XTF выполнен: %1</translation>
+    </message>
+    <message>
+        <source>Complex signals exported to CSV: %1</source>
+        <translation>Комплексные сигналы экспортированы в CSV: %1</translation>
+    </message>
+    <message>
+        <source>USBL exported to CSV: %1</source>
+        <translation>USBL экспортирован в CSV: %1</translation>
+    </message>
+    <message>
+        <source>Export failed</source>
+        <translation>Экспорт не выполнен</translation>
+    </message>
+    <message>
+        <source>Export failed: %1</source>
+        <translation>Экспорт не выполнен: %1</translation>
+    </message>
 </context>
 <context>
     <name>Dataset</name>
@@ -4687,6 +4727,14 @@
 </context>
 <context>
     <name>UIStateSerializer</name>
+    <message>
+        <source>UI state exported: %1</source>
+        <translation>Состояние UI экспортировано: %1</translation>
+    </message>
+    <message>
+        <source>UI state imported: %1</source>
+        <translation>Состояние UI импортировано: %1</translation>
+    </message>
     <message>
         <location filename="../src/ui_state_serializer.cpp" line="331"/>
         <source>Export failed: file path is empty</source>

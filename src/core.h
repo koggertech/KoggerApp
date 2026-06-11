@@ -256,6 +256,7 @@ private:
     QString getFilePath() const;
     QString getOpenedFilePath() const;
     void fixFilePathString(QString& filePath) const;
+    void notifyFileOpened(const QString& filePath);
     void loadLLARefFromSettings();
     void onTgcParamsChanged();
     int loadSavedMapTileProviderId() const;

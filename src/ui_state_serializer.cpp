@@ -1,5 +1,8 @@
 #include "ui_state_serializer.h"
 #include "link_manager_wrapper.h"
+#include "notifications.h"
+
+extern Notifications notifications;
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -399,6 +402,7 @@ bool UIStateSerializer::exportToJsonFile(const QString& path)
     }
 
     setLastStatus(tr("Exported %1 keys.").arg(settingsObject.size()));
+    notifications.info(tr("UI state exported: %1").arg(filePath));
     return true;
 }
 
@@ -569,6 +573,7 @@ bool UIStateSerializer::importFromJsonFile(const QString& path)
                       .arg(skippedPathKeys)
                       .arg(skippedSerialLinks)
                       .arg(linksStatus));
+    notifications.info(tr("UI state imported: %1").arg(filePath));
     return true;
 }
 

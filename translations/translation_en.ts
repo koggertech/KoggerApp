@@ -1332,6 +1332,46 @@
         <source>CSV logging not started</source>
         <translation></translation>
     </message>
+    <message>
+        <source>File opened</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>File opened: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>File closed</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>File closed: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Exported to CSV: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Exported to XTF: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Complex signals exported to CSV: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>USBL exported to CSV: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Export failed</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Export failed: %1</source>
+        <translation></translation>
+    </message>
 </context>
 <context>
     <name>Dataset</name>
@@ -4672,6 +4712,14 @@
 </context>
 <context>
     <name>UIStateSerializer</name>
+    <message>
+        <source>UI state exported: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>UI state imported: %1</source>
+        <translation></translation>
+    </message>
     <message>
         <location filename="../src/ui_state_serializer.cpp" line="331"/>
         <source>Export failed: file path is empty</source>
