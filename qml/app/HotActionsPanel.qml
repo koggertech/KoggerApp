@@ -747,7 +747,10 @@ Item {
                 flashToken: root.highlightPulseToken
                 onClicked: {
                     if (!root.store) return
-                    root.store.extraInfoVisible = !root.store.extraInfoVisible
+                    var willOpen = !root.store.extraInfoVisible
+                    root.store.extraInfoVisible = willOpen
+                    if (willOpen)
+                        root.expanded = false
                 }
             }
 
