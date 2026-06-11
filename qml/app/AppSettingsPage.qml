@@ -1082,10 +1082,10 @@ Column {
 
         // Hotkey API — invoked from WorkspaceStore.applyIsobathsHotkey().
         function prevTheme() {
-            isobathsTheme.currentIndex = Math.max(0, isobathsTheme.currentIndex - 1)
+            if (root.store) root.store.isobathsThemeIndex = Math.max(0, root.store.isobathsThemeIndex - 1)
         }
         function nextTheme() {
-            isobathsTheme.currentIndex = Math.min(isobathsTheme.model.length - 1, isobathsTheme.currentIndex + 1)
+            if (root.store) root.store.isobathsThemeIndex = Math.min(isobathsTheme.model.length - 1, root.store.isobathsThemeIndex + 1)
         }
         function stepDown(step) {
             var d = step === undefined ? 1 : step
@@ -1147,10 +1147,16 @@ Column {
                 id: isobathsTheme
                 Layout.preferredWidth: isobathsGroup.ctrlW
                 model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("Standard"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green")]
-                currentIndex: 0
-                onCurrentIndexChanged: IsobathsViewControlMenuController.onThemeChanged(currentIndex)
-                Component.onCompleted: IsobathsViewControlMenuController.onThemeChanged(currentIndex)
-                Settings { property alias isobathsTheme: isobathsTheme.currentIndex }
+                swatchFor: function(i) { return IsobathsViewControlMenuController.themeStops(i) }
+                currentIndex: root.store ? root.store.isobathsThemeIndex : 0
+                onCurrentIndexChanged: if (root.store && root.store.isobathsThemeIndex !== currentIndex) root.store.isobathsThemeIndex = currentIndex
+                Connections {
+                    target: root.store
+                    function onIsobathsThemeIndexChanged() {
+                        if (isobathsTheme.currentIndex !== root.store.isobathsThemeIndex)
+                            isobathsTheme.currentIndex = root.store.isobathsThemeIndex
+                    }
+                }
             }
         }
 
@@ -1291,10 +1297,10 @@ Column {
 
         // Hotkey API — invoked from WorkspaceStore.applyMosaicHotkey().
         function prevTheme() {
-            mosaicTheme.currentIndex = Math.max(0, mosaicTheme.currentIndex - 1)
+            if (root.store) root.store.mosaicThemeIndex = Math.max(0, root.store.mosaicThemeIndex - 1)
         }
         function nextTheme() {
-            mosaicTheme.currentIndex = Math.min(mosaicTheme.model.length - 1, mosaicTheme.currentIndex + 1)
+            if (root.store) root.store.mosaicThemeIndex = Math.min(mosaicTheme.model.length - 1, root.store.mosaicThemeIndex + 1)
         }
         function lowLevelUp(step) {
             var d = step === undefined ? 1 : step
@@ -1358,10 +1364,16 @@ Column {
                         id: mosaicTheme
                         Layout.preferredWidth: mosaicGroup.ctrlW
                         model: [qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green"), qsTr("Midnight")]
-                        currentIndex: 0
-                        onCurrentIndexChanged: MosaicViewControlMenuController.onThemeChanged(currentIndex)
-                        Component.onCompleted: MosaicViewControlMenuController.onThemeChanged(currentIndex)
-                        Settings { property alias mosaicTheme: mosaicTheme.currentIndex }
+                        swatchFor: function(i) { return MosaicViewControlMenuController.themeStops(i) }
+                        currentIndex: root.store ? root.store.mosaicThemeIndex : 0
+                        onCurrentIndexChanged: if (root.store && root.store.mosaicThemeIndex !== currentIndex) root.store.mosaicThemeIndex = currentIndex
+                        Connections {
+                            target: root.store
+                            function onMosaicThemeIndexChanged() {
+                                if (mosaicTheme.currentIndex !== root.store.mosaicThemeIndex)
+                                    mosaicTheme.currentIndex = root.store.mosaicThemeIndex
+                            }
+                        }
                     }
                 }
 

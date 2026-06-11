@@ -4483,6 +4483,54 @@
         <source>Mosaic</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Midnight</source>
+        <translation>Midnight</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Default</translation>
+    </message>
+    <message>
+        <source>Blue</source>
+        <translation>Blue</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <translation>Sepia</translation>
+    </message>
+    <message>
+        <source>Sepia New</source>
+        <translation>Sepia New</translation>
+    </message>
+    <message>
+        <source>WRGBD</source>
+        <translation>WRGBD</translation>
+    </message>
+    <message>
+        <source>WhiteBlack</source>
+        <translation>WhiteBlack</translation>
+    </message>
+    <message>
+        <source>Standard</source>
+        <translation>Standard</translation>
+    </message>
+    <message>
+        <source>DeepBlue</source>
+        <translation>DeepBlue</translation>
+    </message>
+    <message>
+        <source>Ice</source>
+        <translation>Ice</translation>
+    </message>
+    <message>
+        <source>Green</source>
+        <translation>Green</translation>
+    </message>
+    <message>
+        <source>BlackWhite</source>
+        <translation>BlackWhite</translation>
+    </message>
 </context>
 <context>
     <name>SecondaryWindow</name>
@@ -5082,6 +5130,21 @@
         <location filename="../qml/devices/FilesViewer.qml"/>
         <source>Remove</source>
         <translation>Remove</translation>
+    </message>
+</context>
+<context>
+    <name>Scene3DLayerControl</name>
+    <message>
+        <source>Settings</source>
+        <translation>Settings</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Hide</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Show</translation>
     </message>
 </context>
 </TS>

@@ -150,6 +150,7 @@
         <file>qml/scene3d/Scene3DToolbar.qml</file>
         <file>qml/scene3d/Scene3DRightToolbar.qml</file>
         <file>qml/scene3d/Scene3DGeometryPanel.qml</file>
+        <file>qml/scene3d/Scene3DLayerControl.qml</file>
         <file>qml/scene3d/Scene3DLayerPanel.qml</file>
         <file>qml/scene3d/CalcMethodTINSettings.qml</file>
         <file>qml/scene3d/SmoothMethodUGINSettings.qml</file>

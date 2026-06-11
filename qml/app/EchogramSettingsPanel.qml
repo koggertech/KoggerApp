@@ -32,6 +32,7 @@ Column {
         property var comboModel: []
         property int currentIndex: 0
         property bool enabledRow: true
+        property var swatchFor: null   // function(index)->[{pos,color}] colormap dot
         signal picked(int index)
         width: parent ? parent.width : implicitWidth
         spacing: Tokens.spaceMd
@@ -48,6 +49,7 @@ Column {
             enabled: crow.enabledRow
             model: crow.comboModel
             currentIndex: crow.currentIndex
+            swatchFor: crow.swatchFor
             onActivated: function(index) { crow.picked(index) }
         }
     }
@@ -97,6 +99,7 @@ Column {
             label: qsTr("Theme")
             comboModel: [qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green"), qsTr("Midnight")]
             currentIndex: panel.vs ? panel.vs.echoThemeIndex : 0
+            swatchFor: panel.plot ? function(i) { return panel.plot.echogramThemeStops(i) } : null
             onPicked: function(index) { if (panel.vs) panel.vs.echoThemeIndex = index }
         }
         ComboRow {

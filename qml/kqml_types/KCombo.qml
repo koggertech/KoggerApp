@@ -16,6 +16,10 @@ Item {
     property bool bold: true
     property int maxVisibleItems: 8
     property int radius: Tokens.radiusMd
+    // Optional: function(index) -> [{pos, color}] colormap stops. When set, a
+    // small gradient dot is drawn before each item's text (and in the field).
+    property var swatchFor: null
+    readonly property int swatchSize: Math.round(18 * AppPalette.scale)
 
     readonly property string currentText: combo.currentText
     readonly property alias hovered: combo.hovered
@@ -23,6 +27,30 @@ Item {
     readonly property alias delegateModel: combo.delegateModel
 
     signal activated(int index)
+
+    // Colormap gradient circle (same look as the theme-switcher swatches).
+    component ThemeDot: Canvas {
+        property var stops: []
+        antialiasing: true
+        onStopsChanged: requestPaint()
+        onWidthChanged: requestPaint()
+        Component.onCompleted: requestPaint()
+        onPaint: {
+            var ctx = getContext("2d")
+            if (!ctx) return
+            ctx.reset()
+            if (!stops || stops.length < 2) return
+            var cx = width / 2, cy = height / 2, r = Math.min(cx, cy) - 1
+            if (r <= 0) return
+            var g = ctx.createLinearGradient(0, height, 0, 0)
+            for (var i = 0; i < stops.length; ++i)
+                g.addColorStop(stops[i].pos, stops[i].color)
+            ctx.fillStyle = g
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.fill()
+            ctx.strokeStyle = AppPalette.border; ctx.lineWidth = 1
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.stroke()
+        }
+    }
 
     implicitWidth: Math.round(120 * AppPalette.scale)
     implicitHeight: Tokens.controlHMd
@@ -54,16 +82,31 @@ Item {
 
             background: Rectangle { color: "transparent"; border.width: 0 }
 
-            contentItem: Text {
-                leftPadding: Tokens.spaceSm
-                // Just enough to clear the chevron indicator at the right edge.
-                rightPadding: Math.round(12 * AppPalette.scale) + 2 * Tokens.spaceXs
-                text: root.displayTextOverride !== "" ? root.displayTextOverride : combo.displayText
-                color: AppPalette.text
-                font.pixelSize: root.fontPixelSize
-                font.bold: root.bold
-                verticalAlignment: Text.AlignVCenter
-                elide: Text.ElideRight
+            contentItem: Item {
+                ThemeDot {
+                    id: fieldDot
+                    visible: root.swatchFor !== null
+                    width: visible ? root.swatchSize : 0
+                    height: root.swatchSize
+                    anchors.left: parent.left
+                    anchors.leftMargin: Tokens.spaceSm
+                    anchors.verticalCenter: parent.verticalCenter
+                    stops: (root.swatchFor && combo.currentIndex >= 0) ? root.swatchFor(combo.currentIndex) : []
+                }
+                Text {
+                    anchors.left: fieldDot.visible ? fieldDot.right : parent.left
+                    anchors.leftMargin: fieldDot.visible ? Tokens.spaceXs : Tokens.spaceSm
+                    anchors.right: parent.right
+                    // Just enough to clear the chevron indicator at the right edge.
+                    anchors.rightMargin: Math.round(12 * AppPalette.scale) + 2 * Tokens.spaceXs
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.displayTextOverride !== "" ? root.displayTextOverride : combo.displayText
+                    color: AppPalette.text
+                    font.pixelSize: root.fontPixelSize
+                    font.bold: root.bold
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
             }
 
             indicator: Image {
@@ -80,12 +123,28 @@ Item {
             delegate: ItemDelegate {
                 width: combo.popup.width - 2 * Tokens.spaceXs
                 height: Tokens.controlHMd
-                contentItem: Text {
-                    text: modelData
-                    color: AppPalette.text
-                    font.pixelSize: root.fontPixelSize
-                    verticalAlignment: Text.AlignVCenter
-                    leftPadding: Tokens.spaceMd
+                contentItem: Item {
+                    ThemeDot {
+                        id: itemDot
+                        visible: root.swatchFor !== null
+                        width: visible ? root.swatchSize : 0
+                        height: root.swatchSize
+                        anchors.left: parent.left
+                        anchors.leftMargin: Tokens.spaceMd
+                        anchors.verticalCenter: parent.verticalCenter
+                        stops: root.swatchFor ? root.swatchFor(index) : []
+                    }
+                    Text {
+                        anchors.left: itemDot.visible ? itemDot.right : parent.left
+                        anchors.leftMargin: itemDot.visible ? Tokens.spaceSm : Tokens.spaceMd
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData
+                        color: AppPalette.text
+                        font.pixelSize: root.fontPixelSize
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
                 }
                 // Inset rounded highlight so it doesn't poke into popup corners.
                 background: Rectangle {

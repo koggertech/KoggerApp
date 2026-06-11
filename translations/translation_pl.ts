@@ -4498,6 +4498,54 @@
         <source>Mosaic</source>
         <translation type="unfinished">Mozaika</translation>
     </message>
+    <message>
+        <source>Midnight</source>
+        <translation>Północ</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Normalna</translation>
+    </message>
+    <message>
+        <source>Blue</source>
+        <translation>Niebieski</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <translation>Sepia</translation>
+    </message>
+    <message>
+        <source>Sepia New</source>
+        <translation>Nowa Sepia</translation>
+    </message>
+    <message>
+        <source>WRGBD</source>
+        <translation>WRGBD</translation>
+    </message>
+    <message>
+        <source>WhiteBlack</source>
+        <translation>Biało-Czarny</translation>
+    </message>
+    <message>
+        <source>Standard</source>
+        <translation>Standard</translation>
+    </message>
+    <message>
+        <source>DeepBlue</source>
+        <translation>Modry</translation>
+    </message>
+    <message>
+        <source>Ice</source>
+        <translation>Lód</translation>
+    </message>
+    <message>
+        <source>Green</source>
+        <translation>Zielony</translation>
+    </message>
+    <message>
+        <source>BlackWhite</source>
+        <translation>Czarno-Biały</translation>
+    </message>
 </context>
 <context>
     <name>SecondaryWindow</name>
@@ -5102,6 +5150,21 @@
         <location filename="../qml/devices/FilesViewer.qml"/>
         <source>Remove</source>
         <translation>Usuń</translation>
+    </message>
+</context>
+<context>
+    <name>Scene3DLayerControl</name>
+    <message>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ukryj</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Pokaż</translation>
     </message>
 </context>
 </TS>

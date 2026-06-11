@@ -304,6 +304,28 @@ onTgcGainNearChanged:   applyTgcToCore()
 onTgcGainFarChanged:    applyTgcToCore()
 onTgcCompensateChanged: applyTgcToCore()
 
+// Isobaths/mosaic theme index — single source of truth so both the settings
+// combo and the 3D toolbar swatch picker drive the same value. Keys match the
+// legacy combo Settings aliases. Applied to the C++ controllers on change +
+// at startup (controllers queue if not ready yet).
+property Settings layerThemePersist: Settings {
+    id: layerThemePersist
+    property int isobathsTheme: 0
+    property int mosaicTheme: 0
+}
+property alias isobathsThemeIndex: layerThemePersist.isobathsTheme
+property alias mosaicThemeIndex: layerThemePersist.mosaicTheme
+
+function applyLayerThemesToControllers() {
+    if (typeof IsobathsViewControlMenuController !== "undefined" && IsobathsViewControlMenuController)
+        IsobathsViewControlMenuController.onThemeChanged(isobathsThemeIndex)
+    if (typeof MosaicViewControlMenuController !== "undefined" && MosaicViewControlMenuController)
+        MosaicViewControlMenuController.onThemeChanged(mosaicThemeIndex)
+}
+
+onIsobathsThemeIndexChanged: if (typeof IsobathsViewControlMenuController !== "undefined" && IsobathsViewControlMenuController) IsobathsViewControlMenuController.onThemeChanged(isobathsThemeIndex)
+onMosaicThemeIndexChanged:   if (typeof MosaicViewControlMenuController !== "undefined" && MosaicViewControlMenuController) MosaicViewControlMenuController.onThemeChanged(mosaicThemeIndex)
+
 signal surfaceLayersRefreshRequested()
 
 onBoatTrackVisibleChanged: {
@@ -3711,6 +3733,7 @@ Component.onCompleted: {
     sanitizeFullscreenPopupConfig()
     updateCurrentLayoutFavoriteState()
     applyTgcToCore()
+    applyLayerThemesToControllers()
 }
 
 }

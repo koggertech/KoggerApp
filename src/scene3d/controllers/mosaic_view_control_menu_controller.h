@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QList>
+#include <QVariantList>
 #include "qml_component_controller.h"
 
 
@@ -23,6 +24,8 @@ public:
     Q_INVOKABLE void onClearClicked();
     Q_INVOKABLE void onUpdateStateChanged(bool state);
     Q_INVOKABLE void onThemeChanged(int val);
+    // Colormap gradient stops [{pos, color}] for the theme swatch (QML picker).
+    Q_INVOKABLE QVariantList themeStops(int index) const;
     Q_INVOKABLE void onLevelChanged(float lowLevel, float highLevel);
     Q_INVOKABLE void onUpdateClicked();
     Q_INVOKABLE void onSetLAngleOffset(float val);
