@@ -109,6 +109,8 @@ BasePanePopup {
     }
 
     contentHighlighted: root.store.highlightedLeafId === root.store.globalPopupLeafId
+    contentDimmed: root.store.settingsFocusLeafId !== -1
+                   && root.store.settingsFocusLeafId !== root.store.globalPopupLeafId
 
     PaneContentLoader {
         anchors.fill: parent

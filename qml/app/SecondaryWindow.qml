@@ -54,7 +54,7 @@ Item {
             externalInputRouting: false
             is3dVisible: false
 
-            onSettingsClicked: if (root.store) root.store.toggleEchogramSettings(this, qsTr("Second window"))
+            onSettingsClicked: if (root.store) root.store.toggleEchogramSettings(this, qsTr("Second window"), root.store.secondaryEchogramKey)
 
             Component.onCompleted: {
                 setIndx(6)
@@ -72,6 +72,16 @@ Item {
         visible: opacity > 0
         z: 50
         Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+    }
+
+    Rectangle {
+        anchors.fill: plot2DLoader
+        color: "black"
+        readonly property int _focus: root.store ? root.store.settingsFocusLeafId : -1
+        opacity: (_focus !== -1 && root.store && _focus !== root.store.secondaryEchogramKey) ? 0.55 : 0.0
+        visible: opacity > 0.001
+        z: 51
+        Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
     }
 
     // ── Empty state: shown only when 2D slot is unavailable (5-echogram limit). ──

@@ -53,7 +53,31 @@ property real lastTapTimestamp: 0
 property bool settingsPanelOpen: false
 property bool echogramSettingsActive: false
 property var echogramSettingsPlot: null     // the Plot2D whose gear was clicked
+property int echogramSettingsLeafId: -1     // leaf of that plot (for focus dimming)
 property string echogramSettingsTitle: ""   // header title on the sub-page
+
+// Leaf of the active 3D pane; mirrored from WorkspaceView for focus dimming.
+property int active3DLeafId: -1
+
+// Window/pane currently being configured → everything else dims for focus.
+// -1 when no pane-scoped settings are open. Shared across windows via store.
+readonly property int settingsFocusLeafId: {
+    if (echogramSettingsActive && echogramSettingsLeafId !== -1)
+        return echogramSettingsLeafId
+    if (modeSettingsLeafId !== -1)
+        return modeSettingsLeafId
+    if (settingsPanelOpen) {
+        var em = settingsGroupExpandedMap
+        var expandedCount = 0
+        for (var gk in em) {
+            if (Object.prototype.hasOwnProperty.call(em, gk) && em[gk] === true)
+                ++expandedCount
+        }
+        if (expandedCount === 1 && isSettingsGroupExpanded("app.scene3d"))
+            return active3DLeafId
+    }
+    return -1
+}
 property bool modeSettingsPanelOpen: false
 property bool pointerOverSidebar: false
 property bool settingsPushContent: false
@@ -396,10 +420,14 @@ onEditableModeChanged: {
 }
 
 onSettingsPanelOpenChanged: {
-    if (settingsPanelOpen)
+    if (settingsPanelOpen) {
         closeModeSettingsPanel()
-    else if (editableMode)
-        editableMode = false
+    } else {
+        if (editableMode)
+            editableMode = false
+        echogramSettingsActive = false
+        echogramSettingsLeafId = -1
+    }
 }
 
 onSettingsSideChanged: {
@@ -533,10 +561,11 @@ function openAppLayoutSettings() {
     }
 }
 
-function openEchogramSettings(plot, title) {
+function openEchogramSettings(plot, title, leafId) {
     closeModeSettingsPanel()
     highlightedLeafId = -1            // drop hover-highlight when drilling in
     echogramSettingsPlot = plot
+    echogramSettingsLeafId = (typeof leafId === "number") ? leafId : -1
     echogramSettingsTitle = title ? title : qsTr("Echogram")
     echogramSettingsActive = true
     settingsPanelOpen = true
@@ -545,15 +574,17 @@ function openEchogramSettings(plot, title) {
 
 function closeEchogramSettings() {
     echogramSettingsActive = false
+    echogramSettingsLeafId = -1
 }
 
-function toggleEchogramSettings(plot, title) {
+function toggleEchogramSettings(plot, title, leafId) {
     if (settingsPanelOpen && echogramSettingsActive && echogramSettingsPlot === plot) {
         echogramSettingsActive = false
+        echogramSettingsLeafId = -1
         settingsPanelOpen = false
         return
     }
-    openEchogramSettings(plot, title)
+    openEchogramSettings(plot, title, leafId)
 }
 
 property string pendingScrollGroupKey: ""
@@ -817,6 +848,13 @@ readonly property bool threeDOccupiesWorkspace: {
         return normalizedPaneMode(panes[0].mode) === "3D"
     return false
 }
+
+// 3D loupe overlay shows when 3D fills the workspace (single 3D pane or a 3D
+// pane maximized fullscreen), but NOT while the global popup is drawn over it.
+// A fullscreen popup of a 2D pane is already excluded by threeDOccupiesWorkspace
+// (the maximized pane isn't 3D → false); a fullscreen 3D keeps the loupe.
+readonly property bool threeDLoupeAllowed: threeDOccupiesWorkspace
+                                           && !globalPopupEnabled
 
 // Shared 2D echogram limit: panes + globalPopup + secondary <= 5.
 function canSecondaryWindowChoose2D() {

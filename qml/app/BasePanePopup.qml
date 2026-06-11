@@ -16,6 +16,7 @@ Item {
     property real panelY: 0
     property bool collapsed: false
     property bool contentHighlighted: false
+    property bool contentDimmed: false
     property int popupMargin: 16
     property bool dragEnabled: true
     property bool resizeEnabled: true
@@ -647,6 +648,15 @@ Item {
             visible: opacity > 0
             z: 3
             Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+        }
+
+        Rectangle {
+            anchors.fill: contentHost
+            color: "black"
+            opacity: root.contentDimmed && !root.collapsed ? 0.55 : 0.0
+            visible: opacity > 0.001
+            z: 4
+            Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
         }
 
         Item {

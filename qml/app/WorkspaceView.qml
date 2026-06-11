@@ -16,6 +16,7 @@ Item {
     readonly property var loupeSourcePlot: globalPopupPlot
     property Item active3DHostItem: null
     property int active3DLeafId: -1
+    onActive3DLeafIdChanged: if (store) store.active3DLeafId = active3DLeafId
     property var active3DPane: null   // current Pane3DWindow, for ESC routing
     readonly property alias scene3dViewItem: scene3dView
 
@@ -474,12 +475,12 @@ Item {
 
             function _applyLoupeGate() {
                 if (workspace.store)
-                    setSyncLoupeUiAllowed(workspace.store.threeDOccupiesWorkspace)
+                    setSyncLoupeUiAllowed(workspace.store.threeDLoupeAllowed)
             }
 
             Connections {
                 target: workspace.store
-                function onThreeDOccupiesWorkspaceChanged() { scene3dView._applyLoupeGate() }
+                function onThreeDLoupeAllowedChanged() { scene3dView._applyLoupeGate() }
             }
 
             // verticalScale persistence (перенесено с develop, где было в qml/main.qml)
@@ -553,7 +554,7 @@ Item {
                     if (!workspace.store) return
                     if (slotLeafId > 0)
                         workspace.store.activeLeafId = slotLeafId
-                    workspace.store.toggleEchogramSettings(slotPlot, qsTr("Echogram") + " " + indx)
+                    workspace.store.toggleEchogramSettings(slotPlot, qsTr("Echogram") + " " + indx, slotLeafId)
                 }
 
                 Component.onDestruction: {
@@ -616,7 +617,7 @@ Item {
             onSettingsClicked: {
                 if (!workspace.store) return
                 workspace.store.activeLeafId = workspace.store.globalPopupLeafId
-                workspace.store.toggleEchogramSettings(globalPopupPlot, qsTr("Global pop-up"))
+                workspace.store.toggleEchogramSettings(globalPopupPlot, qsTr("Global pop-up"), workspace.store.globalPopupLeafId)
             }
         }
     }

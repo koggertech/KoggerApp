@@ -238,6 +238,17 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
     }
 
+    Rectangle {
+        id: settingsDimOverlay
+        anchors.fill: parent
+        color: "black"
+        readonly property int _focus: paneItem.store.settingsFocusLeafId
+        opacity: (_focus !== -1 && _focus !== paneItem.leafId) ? 0.55 : 0.0
+        z: 55
+        visible: opacity > 0.001
+        Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+    }
+
     Connections {
         target: paneItem.store
         function onFlashingLeafIdChanged() {

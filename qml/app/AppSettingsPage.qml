@@ -1774,7 +1774,7 @@ Column {
                         cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: if (containsMouse && !root.store.echogramSettingsActive)
                                                     root.store.highlightedLeafId = modelData.key
-                        onClicked: root.store.openEchogramSettings(modelData.plot, modelData.label)
+                        onClicked: root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
                     }
                 }
             }
