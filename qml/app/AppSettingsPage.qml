@@ -2893,6 +2893,13 @@ Column {
                 color: AppPalette.textMuted
                 font.pixelSize: Tokens.fontSm
             }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "KOGGER LLC"
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontSm
+            }
         }
     }
 }
