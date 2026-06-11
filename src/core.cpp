@@ -1109,7 +1109,7 @@ void Core::setNeedForceZooming(bool state)
 bool Core::exportComplexToCSV(QString file_path) {
     const QString resolvedBasePath = this->resolveExportBasePath(file_path);
     const QString export_file_name = buildExportFileStem(openedfilePath_);
-    const QString exportPath = resolvedBasePath + "/" + export_file_name + ".csv";
+    const QString exportPath = resolvedBasePath + "/" + export_file_name + "_export_complex_csv.csv";
     if (!logger_.creatExportStream(exportPath)) {
         notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
@@ -1172,7 +1172,7 @@ bool Core::exportUSBLToCSV(QString filePath)
 {
     const QString resolvedBasePath = this->resolveExportBasePath(filePath);
     const QString export_file_name = buildExportFileStem(openedfilePath_);
-    const QString exportPath = resolvedBasePath + "/" + export_file_name + ".csv";
+    const QString exportPath = resolvedBasePath + "/" + export_file_name + "_export_usbl_csv.csv";
     if (!logger_.creatExportStream(exportPath)) {
         notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
@@ -1215,8 +1215,11 @@ bool Core::exportUSBLToCSV(QString filePath)
 bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation)
 {
     const QString resolvedBasePath = this->resolveExportBasePath(filePath);
-    const QString export_file_name = buildExportFileStem(openedfilePath_);
-    const QString exportPath = resolvedBasePath + "/" + export_file_name + ".csv";
+    QString stem = buildExportFileStem(openedfilePath_);
+    if (decimation > 0) {
+        stem += QStringLiteral("_decimation_") + QString::number(decimation);
+    }
+    const QString exportPath = resolvedBasePath + "/" + stem + "_export_csv.csv";
     if (!logger_.creatExportStream(exportPath)) {
         notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
@@ -1484,7 +1487,7 @@ bool Core::exportPlotAsXTF(QString filePath)
 
     const QString resolvedBasePath = this->resolveExportBasePath(filePath);
     const QString export_file_name = buildExportFileStem(openedfilePath_);
-    const QString exportPath = resolvedBasePath + "/_" + export_file_name + ".xtf";
+    const QString exportPath = resolvedBasePath + "/" + export_file_name + "_export_xtf.xtf";
     if (!logger_.creatExportStream(exportPath)) {
         notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
