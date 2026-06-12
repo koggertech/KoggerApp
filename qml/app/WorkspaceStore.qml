@@ -3791,12 +3791,14 @@ function reapplyImportedUiState() {
 
 Component.onCompleted: {
     if (!loadPersistedUiState()) {
-        var paneNumber = nextPaneNumber()
-        var firstLeaf = makeLeaf(makePane(paneNumber, "3D"))
-        layoutTree = firstLeaf
-        activeLeafId = firstLeaf.leafId
+        var leftLeaf = makeLeaf(makePane(1, "3D"))
+        var rightLeaf = makeLeaf(makePane(2, "2D"))
+        layoutTree = makeSplit("vertical", leftLeaf, rightLeaf, 0.5)
+        activeLeafId = leftLeaf.leafId
         clearModePickerSelection()
         rebuildLayoutCaches()
+        addCurrentLayoutToFavorites()
+        saveLayoutState()
     }
     sanitizeFullscreenPopupConfig()
     updateCurrentLayoutFavoriteState()
