@@ -314,10 +314,6 @@ Column {
                 id: instrumentsGradeHolder
                 width: parent.width
                 height: gradeTabBar.implicitHeight
-                property int selectedIndex: 0
-
-                onSelectedIndexChanged: if (theme) theme.instrumentsGrade = selectedIndex
-                Component.onCompleted: if (theme) theme.instrumentsGrade = selectedIndex
 
                 KTabBar {
                     id: gradeTabBar
@@ -327,11 +323,9 @@ Column {
                         { label: qsTr("Bottom Track"),  value: 1 },
                         { label: qsTr("Maximum"),       value: 2 }
                     ]
-                    currentValue: instrumentsGradeHolder.selectedIndex
-                    onValueSelected: function(v) { instrumentsGradeHolder.selectedIndex = v }
+                    currentValue: theme ? theme.instrumentsGrade : 0
+                    onValueSelected: function(v) { if (theme) theme.instrumentsGrade = v }
                 }
-
-                Settings { property alias instrumentsGradeList: instrumentsGradeHolder.selectedIndex }
             }
         }
 

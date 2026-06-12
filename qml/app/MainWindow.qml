@@ -1077,5 +1077,120 @@ ApplicationWindow {
         FileOpeningOverlay { }
 
         SplashOverlay { }
+
+        Rectangle {
+            id: welcomeOverlay
+            anchors.fill: parent
+            z: ZOrder.welcomeOverlay
+            color: "#000000B0"
+            visible: !welcomeSettings.welcomeShown
+
+            Settings { id: welcomeSettings; property bool welcomeShown: false }
+
+            function finish() {
+                welcomeSettings.welcomeShown = true
+                welcomeOverlay.visible = false
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.AllButtons
+                onWheel: function(wheel) { wheel.accepted = true }
+            }
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: Math.min(Math.round(520 * AppPalette.scale), parent.width - Math.round(40 * AppPalette.scale))
+                implicitHeight: welcomeCol.implicitHeight + 2 * Tokens.spaceXl
+                height: implicitHeight
+                radius: Tokens.radiusLg
+                color: AppPalette.card
+                border.width: 1
+                border.color: AppPalette.border
+
+                Column {
+                    id: welcomeCol
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: Tokens.spaceXl
+                    spacing: Tokens.spaceLg
+
+                    Image {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        source: "qrc:/icons/app/kogger_app.png"
+                        sourceSize.width: Math.round(64 * AppPalette.scale)
+                        sourceSize.height: Math.round(64 * AppPalette.scale)
+                        width: Math.round(64 * AppPalette.scale)
+                        height: width
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                    }
+                    Text {
+                        width: parent.width
+                        text: qsTr("Welcome to KoggerApp!")
+                        color: AppPalette.text
+                        font.pixelSize: Tokens.fontXl
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                    }
+                    Text {
+                        width: parent.width
+                        text: qsTr("Language:")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
+                    }
+                    KTabBar {
+                        width: parent.width
+                        options: [
+                            { label: "English", value: 0 },
+                            { label: "Русский", value: 1 },
+                            { label: "Polski",  value: 2 }
+                        ]
+                        currentValue: langController ? langController.currentIndex : 0
+                        onValueSelected: function(v) { if (langController) langController.apply(v) }
+                    }
+
+                    Text {
+                        width: parent.width
+                        text: qsTr("Choose which settings to show")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontMd
+                    }
+                    KTabBar {
+                        width: parent.width
+                        options: [
+                            { label: qsTr("Fish Finders"), value: 0 },
+                            { label: qsTr("Bottom Track"), value: 1 },
+                            { label: qsTr("Maximum"),      value: 2 }
+                        ]
+                        currentValue: theme ? theme.instrumentsGrade : 0
+                        onValueSelected: function(v) { if (theme) theme.instrumentsGrade = v }
+                    }
+
+                    Text {
+                        width: parent.width
+                        text: qsTr("You can change this later in settings.")
+                        color: AppPalette.textMuted
+                        font.pixelSize: Tokens.fontSm
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                        topPadding: Tokens.spaceXs
+                    }
+
+                    KButton {
+                        width: parent.width
+                        text: qsTr("Continue")
+                        normalBg: AppPalette.accentBgStrong
+                        normalBorder: AppPalette.accentBorder
+                        hoverBg: AppPalette.accentBorder
+                        hoverBorder: AppPalette.accentBorder
+                        onClicked: welcomeOverlay.finish()
+                    }
+                }
+            }
+        }
     }
 }

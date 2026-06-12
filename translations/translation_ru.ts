@@ -3525,6 +3525,38 @@
 <context>
     <name>MainWindow</name>
     <message>
+        <source>Language:</source>
+        <translation>Язык:</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Продолжить</translation>
+    </message>
+    <message>
+        <source>Welcome to KoggerApp!</source>
+        <translation>Добро пожаловать в KoggerApp!</translation>
+    </message>
+    <message>
+        <source>Choose which settings to show</source>
+        <translation>Выберите, какие настройки показывать</translation>
+    </message>
+    <message>
+        <source>Fish Finders</source>
+        <translation>Для Рыболова</translation>
+    </message>
+    <message>
+        <source>Bottom Track</source>
+        <translation>Трек дна</translation>
+    </message>
+    <message>
+        <source>Maximum</source>
+        <translation>Максимум</translation>
+    </message>
+    <message>
+        <source>You can change this later in settings.</source>
+        <translation>Это можно изменить позже в настройках.</translation>
+    </message>
+    <message>
         <location filename="../qml/app/MainWindow.qml"/>
         <source>Apply profile to all devices</source>
         <translation>Применить профиль ко всем устройствам</translation>
