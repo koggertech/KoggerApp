@@ -48,7 +48,8 @@ Item  {
     IdleFade {
         id: toolbarFade
         hovered: toolbarHover.hovered
-                 || bottomTrackCtl.menuHovered || isobathsCtl.menuHovered || mosaicCtl.menuHovered
+                 || boatTrackCtl.menuHovered || bottomTrackCtl.menuHovered
+                 || isobathsCtl.menuHovered || mosaicCtl.menuHovered
     }
 
     HoverHandler {
@@ -121,26 +122,17 @@ Item  {
             }
         }
 
-        KCircleIconButton {
-            id: boatTrackBtn
-            width: toolbarRoot.buttonSize
-            height: toolbarRoot.buttonSize
+        Scene3DLayerControl {
+            id: boatTrackCtl
+            buttonSize: toolbarRoot.buttonSize
             Layout.preferredWidth: toolbarRoot.buttonSize
             Layout.preferredHeight: toolbarRoot.buttonSize
             iconSource: "qrc:/icons/ui/route.svg"
-            iconTintColor: AppPalette.text
-            fillHoverColor: AppPalette.cardHover
-
-            readonly property bool active: toolbarRoot.store ? toolbarRoot.store.boatTrackVisible : false
-            fillColor: active ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: active ? AppPalette.accentBorder : AppPalette.border
-            borderWidth: active ? 2 : 1
-
             toolTipText: qsTr("Boat track")
-            onClicked: {
-                if (toolbarRoot.store)
-                    toolbarRoot.store.toggleAppSettingsAtGroup("app.boattrack")
-            }
+            active: toolbarRoot.store ? toolbarRoot.store.boatTrackVisible : false
+            onToggleRequested: if (toolbarRoot.store) toolbarRoot.store.boatTrackVisible = !toolbarRoot.store.boatTrackVisible
+            onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.boattrack")
+            onMenuOpenChanged: if (menuOpen) { bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false }
         }
 
         Scene3DLayerControl {
@@ -154,7 +146,7 @@ Item  {
             pulse: core.dataProcessorState === 1
             onToggleRequested: if (toolbarRoot.store) toolbarRoot.store.bottomTrackVisible = !toolbarRoot.store.bottomTrackVisible
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.bottomtrack")
-            onMenuOpenChanged: if (menuOpen) { isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false }
+            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false }
         }
 
         Scene3DLayerControl {
@@ -175,7 +167,7 @@ Item  {
             onThemePicked: function(index) { if (toolbarRoot.store) toolbarRoot.store.isobathsThemeIndex = index }
             onToggleRequested: if (toolbarRoot.store) toolbarRoot.store.isobathsVisible = !toolbarRoot.store.isobathsVisible
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.isobaths")
-            onMenuOpenChanged: if (menuOpen) { bottomTrackCtl.menuOpen = false; mosaicCtl.menuOpen = false }
+            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; mosaicCtl.menuOpen = false }
         }
 
         Scene3DLayerControl {
@@ -196,7 +188,7 @@ Item  {
             onThemePicked: function(index) { if (toolbarRoot.store) toolbarRoot.store.mosaicThemeIndex = index }
             onToggleRequested: if (toolbarRoot.store) toolbarRoot.store.mosaicVisible = !toolbarRoot.store.mosaicVisible
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.mosaic")
-            onMenuOpenChanged: if (menuOpen) { bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false }
+            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false }
         }
     }
 }
