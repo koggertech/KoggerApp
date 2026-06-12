@@ -501,6 +501,7 @@ onSettingsPanelOpenChanged: {
         echogramSettingsActive = false
         echogramSettingsLeafId = -1
         settingsSubPageActive = false
+        _settingsNav = []
     }
 }
 
@@ -637,6 +638,7 @@ function openAppLayoutSettings() {
 }
 
 function openEchogramSettings(plot, title, leafId) {
+    _settingsNav = []
     closeModeSettingsPanel()
     highlightedLeafId = -1            // drop hover-highlight when drilling in
     settingsSubPageActive = false
@@ -654,8 +656,52 @@ function closeEchogramSettings() {
     echogramSettingsLeafId = -1
 }
 
+// Return-stack so a cross-link (e.g. the TGC link inside the echogram drill-in)
+// can send "back" to where it was opened from instead of the settings root.
+// Fresh navigations (gear, group) clear it; cross-links push the current page.
+property var _settingsNav: []
+
+function _settingsNavSnapshot() {
+    if (echogramSettingsActive)
+        return { kind: "echogram", plot: echogramSettingsPlot,
+                 leafId: echogramSettingsLeafId, title: echogramSettingsTitle }
+    if (settingsSubPageActive)
+        return { kind: "subpage", subKind: settingsSubPageKind }
+    return null
+}
+
+function _restoreSettingsNav(e) {
+    closeModeSettingsPanel()
+    highlightedLeafId = -1
+    if (e && e.kind === "echogram") {
+        settingsSubPageActive = false
+        settingsSubPageKind = "echogram"
+        echogramSettingsPlot = e.plot
+        echogramSettingsLeafId = e.leafId
+        echogramSettingsTitle = e.title
+        echogramSettingsActive = true
+        settingsPanelOpen = true
+    } else if (e && e.kind === "subpage") {
+        echogramSettingsActive = false
+        echogramSettingsLeafId = -1
+        settingsSubPageKind = e.subKind
+        settingsSubPageActive = true
+        settingsPanelOpen = true
+    } else {
+        echogramSettingsActive = false
+        echogramSettingsLeafId = -1
+        settingsSubPageActive = false
+    }
+}
+
 // Open one of the settings-internal drill-ins (no pane scope, static title).
 function _openSettingsSubPage(kind) {
+    var prev = _settingsNavSnapshot()
+    if (prev) {
+        var st = _settingsNav.slice()
+        st.push(prev)
+        _settingsNav = st
+    }
     closeModeSettingsPanel()
     highlightedLeafId = -1
     echogramSettingsActive = false
@@ -672,6 +718,13 @@ function openTgcSettings()          { _openSettingsSubPage("tgc") }
 function openCsvExportSettings()    { _openSettingsSubPage("csvExport") }
 
 function closeActiveSettingsSubPage() {
+    if (_settingsNav.length > 0) {
+        var st = _settingsNav.slice()
+        var e = st.pop()
+        _settingsNav = st
+        _restoreSettingsNav(e)
+        return
+    }
     if (settingsSubPageActive)
         settingsSubPageActive = false
     else
@@ -691,6 +744,7 @@ function toggleEchogramSettings(plot, title, leafId) {
 property string pendingScrollGroupKey: ""
 
 function openAppSettingsAtGroup(stateKey) {
+    _settingsNav = []
     closeModeSettingsPanel()
     echogramSettingsActive = false
     settingsSubPageActive = false

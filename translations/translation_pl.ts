@@ -12,6 +12,10 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Open TGC settings</source>
+        <translation>Otwórz ustawienia TGC</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml"/>
         <source>Extra info panel</source>
         <translation>Panel dodatkowych informacji</translation>
@@ -2270,6 +2274,10 @@
 </context>
 <context>
     <name>EchogramSettingsPanel</name>
+    <message>
+        <source>Open TGC settings</source>
+        <translation>Otwórz ustawienia TGC</translation>
+    </message>
     <message>
         <location filename="../qml/app/EchogramSettingsPanel.qml" line="66"/>
         <source>Channels</source>

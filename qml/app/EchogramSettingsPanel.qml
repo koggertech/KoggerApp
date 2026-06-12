@@ -14,6 +14,7 @@ Column {
     id: panel
 
     property var plot: null
+    property var store: null
     readonly property var vs: plot ? plot.viewState : null
     readonly property int instruments: theme ? theme.instrumentsGrade : 0
     readonly property var ds: (typeof dataset !== "undefined") ? dataset : null
@@ -33,7 +34,9 @@ Column {
         property int currentIndex: 0
         property bool enabledRow: true
         property var swatchFor: null   // function(index)->[{pos,color}] colormap dot
+        property int tgcLinkAtIndex: -1
         signal picked(int index)
+        signal tgcLinkClicked()
         width: parent ? parent.width : implicitWidth
         spacing: Tokens.spaceMd
         Text {
@@ -43,6 +46,18 @@ Column {
             Layout.fillWidth: true
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
+        }
+        KCircleIconButton {
+            visible: crow.tgcLinkAtIndex >= 0 && crow.currentIndex === crow.tgcLinkAtIndex
+            Layout.preferredWidth: Tokens.controlHMd
+            Layout.preferredHeight: Tokens.controlHMd
+            iconSource: "qrc:/icons/ui/settings.svg"
+            iconTintColor: AppPalette.accentBar
+            fillColor: "transparent"
+            fillHoverColor: AppPalette.cardHover
+            borderColor: "transparent"
+            toolTipText: qsTr("Open TGC settings")
+            onClicked: crow.tgcLinkClicked()
         }
         KCombo {
             Layout.preferredWidth: panel.comboW
@@ -107,6 +122,8 @@ Column {
             comboModel: [qsTr("Raw"), qsTr("Side-Scan"), qsTr("TGC")]
             currentIndex: panel.vs ? panel.vs.compensationIndex : 0
             onPicked: function(index) { if (panel.vs) panel.vs.compensationIndex = index }
+            tgcLinkAtIndex: 2
+            onTgcLinkClicked: if (panel.store) panel.store.openTgcSettings()
         }
     }
 

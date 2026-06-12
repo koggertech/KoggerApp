@@ -1526,6 +1526,18 @@ Column {
                         font.pixelSize: Tokens.fontMd
                         Layout.fillWidth: true
                     }
+                    KCircleIconButton {
+                        visible: mosaicSource.currentIndex === 2
+                        Layout.preferredWidth: Tokens.controlHMd
+                        Layout.preferredHeight: Tokens.controlHMd
+                        iconSource: "qrc:/icons/ui/settings.svg"
+                        iconTintColor: AppPalette.accentBar
+                        fillColor: "transparent"
+                        fillHoverColor: AppPalette.cardHover
+                        borderColor: "transparent"
+                        toolTipText: qsTr("Open TGC settings")
+                        onClicked: if (root.store) root.store.openTgcSettings()
+                    }
                     KCombo {
                         id: mosaicSource
                         Layout.preferredWidth: mosaicGroup.ctrlW
