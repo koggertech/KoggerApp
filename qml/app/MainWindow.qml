@@ -509,9 +509,8 @@ ApplicationWindow {
         if (!event)
             return false
 
-        // Android hardware back.
-        if (event.key === Qt.Key_Back)
-            return closeTransientUi()
+        // Android hardware back is handled window-level in onClosing (focus-
+        // independent) — not here, where mainLayer must hold focus.
         if (event.key === Qt.Key_F10)
             return openSelectedFile()
         if (event.key === Qt.Key_F9)
@@ -525,6 +524,17 @@ ApplicationWindow {
     }
 
     onClosing: function(close) {
+        // On Android the hardware back button / gesture arrives here as a window
+        // close request (focus-independent — unlike Keys.onReleased, which only
+        // fires when mainLayer holds focus). Treat it like Esc: dismiss ONE
+        // transient UI layer and ALWAYS cancel the close so back never minimizes
+        // or exits the app. Home/Recents (real backgrounding) go through the OS,
+        // not here. Desktop close (window X) proceeds normally and saves.
+        if (root.isMobilePlatform) {
+            closeTransientUi()
+            close.accepted = false
+            return
+        }
         workspaceStore.saveLayoutState()
     }
 
@@ -541,6 +551,17 @@ ApplicationWindow {
         if ((!workspaceStore.selectedConnectionFilePath || workspaceStore.selectedConnectionFilePath.length === 0)
                 && core && core.filePath && core.filePath.length > 0) {
             workspaceStore.selectedConnectionFilePath = core.filePath
+        }
+    }
+
+    // Persist when the app leaves the foreground (Home / Recents). Android keeps
+    // the process alive for a fast resume, but may kill it under memory pressure;
+    // saving here means a later cold start restores the work, no data loss.
+    Connections {
+        target: Qt.application
+        function onStateChanged() {
+            if (Qt.application.state !== Qt.ApplicationActive)
+                workspaceStore.saveLayoutState()
         }
     }
 
