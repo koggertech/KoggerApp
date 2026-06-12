@@ -3514,6 +3514,10 @@
         <source>TGC</source>
         <translation>TGC</translation>
     </message>
+    <message>
+        <source>Export to CSV</source>
+        <translation>Export to CSV</translation>
+    </message>
 </context>
 <context>
     <name>QuickActionSettingsTab</name>
@@ -5145,6 +5149,93 @@
     <message>
         <source>Show</source>
         <translation>Show</translation>
+    </message>
+</context>
+<context>
+    <name>CsvExportSettingsTab</name>
+    <message>
+        <source>Export path...</source>
+        <translation>Export path...</translation>
+    </message>
+    <message>
+        <source>Export folder</source>
+        <translation>Export folder</translation>
+    </message>
+    <message>
+        <source>Decimation, m:</source>
+        <translation>Decimation, m:</translation>
+    </message>
+    <message>
+        <source>Export to CSV</source>
+        <translation>Export to CSV</translation>
+    </message>
+    <message>
+        <source>Columns:</source>
+        <translation>Columns:</translation>
+    </message>
+    <message>
+        <source>Columns to export</source>
+        <translation>Columns to export</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Reset</translation>
+    </message>
+    <message>
+        <source>Export the dataset to CSV. Pick which columns to include below — the defaults match the built-in export. The destination folder is set in the Export group.</source>
+        <translation>Export the dataset to CSV. Pick which columns to include below — the defaults match the built-in export. The destination folder is set in the Export group.</translation>
+    </message>
+    <message>
+        <source>Reset to defaults</source>
+        <translation>Reset to defaults</translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation>Number</translation>
+    </message>
+    <message>
+        <source>Event (UNIX / timestamp / ID)</source>
+        <translation>Event (UNIX / timestamp / ID)</translation>
+    </message>
+    <message>
+        <source>Rangefinder</source>
+        <translation>Rangefinder</translation>
+    </message>
+    <message>
+        <source>Beam distance</source>
+        <translation>Beam distance</translation>
+    </message>
+    <message>
+        <source>Position (lat / lon)</source>
+        <translation>Position (lat / lon)</translation>
+    </message>
+    <message>
+        <source>GNSS UTC date / time</source>
+        <translation>GNSS UTC date / time</translation>
+    </message>
+    <message>
+        <source>External position (LLA)</source>
+        <translation>External position (LLA)</translation>
+    </message>
+    <message>
+        <source>External position (NEU)</source>
+        <translation>External position (NEU)</translation>
+    </message>
+    <message>
+        <source>Sonar height</source>
+        <translation>Sonar height</translation>
+    </message>
+    <message>
+        <source>Bottom height</source>
+        <translation>Bottom height</translation>
+    </message>
+    <message>
+        <source>Contact title</source>
+        <translation>Contact title</translation>
+    </message>
+    <message>
+        <source>Contact distance</source>
+        <translation>Contact distance</translation>
     </message>
 </context>
 </TS>

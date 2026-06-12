@@ -48,3 +48,4 @@ QuickActionSettingsTab 1.0 QuickActionSettingsTab.qml
 ExtraInfoSettingsTab 1.0 ExtraInfoSettingsTab.qml
 UiSavingSettingsTab 1.0 UiSavingSettingsTab.qml
 TgcSettingsTab 1.0 TgcSettingsTab.qml
+CsvExportSettingsTab 1.0 CsvExportSettingsTab.qml

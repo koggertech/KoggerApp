@@ -126,17 +126,8 @@ Column {
         stateKey: "app.export"
         collapsedByDefault: true
 
-        property var exportFolderUrl: StandardPaths.writableLocation(StandardPaths.HomeLocation)
-        property string exportFolderSource: ""
-
-        Component.onCompleted: exportPathField.text = root.displayPath(exportFolderSource)
-
         function currentExportPath() {
-            var t = exportPathField.text
-            if (!t.length) return ""
-            if (exportFolderSource.length && t === root.displayPath(exportFolderSource))
-                return root.localPath(exportFolderSource)
-            return t
+            return root.store ? root.store.exportFolderSource : ""
         }
 
         // Path row
@@ -161,6 +152,18 @@ Column {
                     color: AppPalette.text
                     font.pixelSize: Tokens.fontSm
                     clip: true
+                    text: root.store ? root.localPath(root.store.exportFolderSource) : ""
+                    onTextEdited: if (root.store) root.store.exportFolderSource = root.localPath(text)
+
+                    Connections {
+                        target: root.store
+                        ignoreUnknownSignals: true
+                        function onExportFolderSourceChanged() {
+                            var clean = root.localPath(root.store.exportFolderSource)
+                            if (exportPathField.text !== clean)
+                                exportPathField.text = clean
+                        }
+                    }
 
                     Text {
                         visible: !exportPathField.text.length
@@ -175,7 +178,8 @@ Column {
             KButton {
                 width: Math.round(44 * AppPalette.scale); height: Tokens.controlHMd; text: "..."
                 onClicked: {
-                    exportFolderDialog.currentFolder = exportGroup.exportFolderUrl
+                    if (root.store)
+                        exportFolderDialog.currentFolder = root.store.exportFolderUrl
                     exportFolderDialog.open()
                 }
             }
@@ -184,47 +188,18 @@ Column {
                 id: exportFolderDialog
                 title: qsTr("Export folder")
                 onAccepted: {
-                    exportGroup.exportFolderUrl = exportFolderDialog.currentFolder
-                    exportGroup.exportFolderSource = root.localPath(exportFolderDialog.selectedFolder)
-                    exportPathField.text = root.displayPath(exportGroup.exportFolderSource)
+                    if (!root.store) return
+                    root.store.exportFolderUrl = exportFolderDialog.currentFolder
+                    root.store.exportFolderSource = root.localPath(exportFolderDialog.selectedFolder)
                 }
             }
         }
 
-        Settings { property alias exportFolder:     exportGroup.exportFolderUrl }
-        Settings { property alias exportFolderText: exportGroup.exportFolderSource }
-
-        // Decimation + CSV
-        ParamCard {
-            id: exportDecimation
-            label: qsTr("Decimation, m:")
-            slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
-
-            KSpinBox {
-                id: exportDecimationValue
-                width: Math.round(93 * AppPalette.scale)
-                height: Tokens.controlHMd
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                from: 0; to: 100; stepSize: 1; value: 10
-            }
-
-            KButton {
-                width: Math.round(93 * AppPalette.scale); height: Tokens.controlHMd
-                anchors.left: exportDecimationValue.right
-                anchors.leftMargin: Tokens.spaceXs
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("CSV")
-                onClicked: {
-                    if (root.targetPlot)
-                        core.exportPlotAsCVS(exportGroup.currentExportPath(), root.targetPlot.plotDatasetChannel(),
-                                             exportDecimation.checked ? exportDecimationValue.value : 0)
-                }
-            }
+        KButton {
+            width: parent.width
+            text: qsTr("Export to CSV")
+            onClicked: if (root.store) root.store.openCsvExportSettings()
         }
-
-        Settings { property alias exportDecimation:      exportDecimation.checked }
-        Settings { property alias exportDecimationValue: exportDecimationValue.value }
 
         KButton {
             width: parent.width; text: qsTr("Export to XTF")

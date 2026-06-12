@@ -792,6 +792,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "extraInfo"    ? qsTr("Extra info panel")
                      : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
+                     : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
                      : qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
@@ -806,6 +807,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "extraInfo"  ? extraInfoSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "uiSaving"   ? uiSavingSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
                      : echogramSettingsTabComponent
             subPageOpen: workspaceStore.anySettingsSubPageActive
 
@@ -1001,6 +1003,15 @@ ApplicationWindow {
 
             TgcSettingsTab {
                 store: workspaceStore
+            }
+        }
+
+        Component {
+            id: csvExportSettingsTabComponent
+
+            CsvExportSettingsTab {
+                store: workspaceStore
+                targetPlot: workspaceView.primaryPlotItem
             }
         }
 

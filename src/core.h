@@ -7,6 +7,7 @@
 #include <QQmlContext>
 #include <QThread>
 #include <QVariantList>
+#include <QHash>
 #ifdef FLASHER
 #include "flasher/deviceflasher.h"
 #endif
@@ -142,6 +143,9 @@ public slots:
     bool exportUSBLToCSV(QString filePath);
     bool exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation = 0);
     bool exportPlotAsXTF(QString filePath);
+    Q_INVOKABLE bool csvExportFieldEnabled(const QString& key) const;
+    Q_INVOKABLE void setCsvExportField(const QString& key, bool enabled);
+    Q_INVOKABLE void resetCsvExportFields();
     void refreshMosaicProcessing();
     void setPlotStartLevel(int level);
     void setPlotStopLevel(int level);
@@ -195,6 +199,7 @@ public slots:
     Q_INVOKABLE void moveAppToBackground();
 
 signals:
+    void csvExportFieldsReset();   // emitted by resetCsvExportFields() so UI can rebuild
     void connectionChanged(bool duplex = false);
     void filePathChanged();
     void openedFilePathChanged();
@@ -231,6 +236,10 @@ private slots:
 
 private:
     /*methods*/
+    void loadCsvExportFields();
+    void saveCsvExportFields();
+    QHash<QString, bool> csvExportFields_;   // key -> enabled (lazy-loaded from QSettings)
+    bool csvExportFieldsLoaded_ = false;
     void createMapTileManagerConnections();
     void createDatasetConnections();
     void createInternetManager();

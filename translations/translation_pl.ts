@@ -3529,6 +3529,10 @@
         <source>TGC</source>
         <translation>TGC</translation>
     </message>
+    <message>
+        <source>Export to CSV</source>
+        <translation>Eksport do CSV</translation>
+    </message>
 </context>
 <context>
     <name>QuickActionSettingsTab</name>
@@ -5165,6 +5169,93 @@
     <message>
         <source>Show</source>
         <translation>Pokaż</translation>
+    </message>
+</context>
+<context>
+    <name>CsvExportSettingsTab</name>
+    <message>
+        <source>Export path...</source>
+        <translation>Ścieżka eksportu...</translation>
+    </message>
+    <message>
+        <source>Export folder</source>
+        <translation>Folder eksportu</translation>
+    </message>
+    <message>
+        <source>Decimation, m:</source>
+        <translation>Decymacja, m:</translation>
+    </message>
+    <message>
+        <source>Export to CSV</source>
+        <translation>Eksport do CSV</translation>
+    </message>
+    <message>
+        <source>Columns:</source>
+        <translation>Kolumny:</translation>
+    </message>
+    <message>
+        <source>Columns to export</source>
+        <translation>Kolumny do eksportu</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Resetuj</translation>
+    </message>
+    <message>
+        <source>Export the dataset to CSV. Pick which columns to include below — the defaults match the built-in export. The destination folder is set in the Export group.</source>
+        <translation>Eksportuj zbiór danych do CSV. Poniżej wybierz, które kolumny dołączyć — domyślne odpowiadają wbudowanemu eksportowi. Folder docelowy ustawia się w grupie «Eksport».</translation>
+    </message>
+    <message>
+        <source>Reset to defaults</source>
+        <translation>Przywróć domyślne</translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation>Numer</translation>
+    </message>
+    <message>
+        <source>Event (UNIX / timestamp / ID)</source>
+        <translation>Zdarzenie (UNIX / znacznik / ID)</translation>
+    </message>
+    <message>
+        <source>Rangefinder</source>
+        <translation>Głębinomierz</translation>
+    </message>
+    <message>
+        <source>Beam distance</source>
+        <translation>Odległość wiązki</translation>
+    </message>
+    <message>
+        <source>Position (lat / lon)</source>
+        <translation>Pozycja (szer / dług)</translation>
+    </message>
+    <message>
+        <source>GNSS UTC date / time</source>
+        <translation>GNSS UTC data / czas</translation>
+    </message>
+    <message>
+        <source>External position (LLA)</source>
+        <translation>Pozycja zewnętrzna (LLA)</translation>
+    </message>
+    <message>
+        <source>External position (NEU)</source>
+        <translation>Pozycja zewnętrzna (NEU)</translation>
+    </message>
+    <message>
+        <source>Sonar height</source>
+        <translation>Wysokość sonaru</translation>
+    </message>
+    <message>
+        <source>Bottom height</source>
+        <translation>Wysokość dna</translation>
+    </message>
+    <message>
+        <source>Contact title</source>
+        <translation>Nazwa kontaktu</translation>
+    </message>
+    <message>
+        <source>Contact distance</source>
+        <translation>Odległość kontaktu</translation>
     </message>
 </context>
 </TS>

@@ -1212,6 +1212,82 @@ bool Core::exportUSBLToCSV(QString filePath)
     return true;
 }
 
+namespace {
+struct CsvFieldDef { const char* key; bool def; };
+static const CsvFieldDef kCsvFieldDefs[] = {
+    {"meas_nbr",         true},
+    {"event_id",         true},
+    {"rangefinder",      true},
+    {"bottom_depth",     true},
+    {"pos_lat_lon",      true},
+    {"pos_time",         true},
+    {"external_pos_lla", true},
+    {"external_pos_neu", true},
+    {"sonar_height",     true},
+    {"bottom_height",    true},
+    {"contact_info",     true},
+    {"contact_distance", true},
+};
+}
+
+void Core::loadCsvExportFields()
+{
+    if (csvExportFieldsLoaded_) {
+        return;
+    }
+    QSettings settings("KOGGER", "KoggerApp");
+    settings.beginGroup("csv_export_fields");
+    for (const auto& f : kCsvFieldDefs) {
+        const QString key = QString::fromLatin1(f.key);
+        csvExportFields_[key] = settings.value(key, f.def).toBool();
+    }
+    settings.endGroup();
+    csvExportFieldsLoaded_ = true;
+}
+
+void Core::saveCsvExportFields()
+{
+    QSettings settings("KOGGER", "KoggerApp");
+    settings.beginGroup("csv_export_fields");
+    for (auto it = csvExportFields_.constBegin(); it != csvExportFields_.constEnd(); ++it) {
+        settings.setValue(it.key(), it.value());
+    }
+    settings.endGroup();
+}
+
+bool Core::csvExportFieldEnabled(const QString& key) const
+{
+    const_cast<Core*>(this)->loadCsvExportFields();
+    return csvExportFields_.value(key, true);
+}
+
+void Core::setCsvExportField(const QString& key, bool enabled)
+{
+    loadCsvExportFields();
+    if (csvExportFields_.value(key, true) == enabled) {
+        return;
+    }
+    csvExportFields_[key] = enabled;
+    saveCsvExportFields();
+}
+
+void Core::resetCsvExportFields()
+{
+    loadCsvExportFields();
+    bool changed = false;
+    for (const auto& f : kCsvFieldDefs) {
+        const QString key = QString::fromLatin1(f.key);
+        if (csvExportFields_.value(key) != f.def) {
+            csvExportFields_[key] = f.def;
+            changed = true;
+        }
+    }
+    if (changed) {
+        saveCsvExportFields();
+    }
+    emit csvExportFieldsReset();
+}
+
 bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation)
 {
     const QString resolvedBasePath = this->resolveExportBasePath(filePath);
@@ -1225,23 +1301,23 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         return false;
     }
 
-    bool meas_nbr = true;
-    bool event_id = true;
-    bool rangefinder = false;
-    bool bottom_depth = true;
-    bool pos_lat_lon = true;
-    bool pos_time = true;
+    bool meas_nbr        = csvExportFieldEnabled("meas_nbr");
+    bool event_id        = csvExportFieldEnabled("event_id");
+    bool rangefinder     = csvExportFieldEnabled("rangefinder");
+    bool bottom_depth    = csvExportFieldEnabled("bottom_depth");
+    bool pos_lat_lon     = csvExportFieldEnabled("pos_lat_lon");
+    bool pos_time        = csvExportFieldEnabled("pos_time");
 
-    bool external_pos_lla = true;
-    bool external_pos_neu = true;
-    bool sonar_height = true;
-    bool bottom_height = true;
+    bool external_pos_lla = csvExportFieldEnabled("external_pos_lla");
+    bool external_pos_neu = csvExportFieldEnabled("external_pos_neu");
+    bool sonar_height     = csvExportFieldEnabled("sonar_height");
+    bool bottom_height    = csvExportFieldEnabled("bottom_height");
 
     bool ext_pos_lla_find = false;
     bool ext_pos_ned_find = false;
 
-    bool contactInfo = true;
-    bool contactDistance = true;
+    bool contactInfo     = csvExportFieldEnabled("contact_info");
+    bool contactDistance = csvExportFieldEnabled("contact_distance");
 
     int row_cnt = datasetPtr_->size();
 

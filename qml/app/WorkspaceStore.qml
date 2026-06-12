@@ -304,6 +304,19 @@ onTgcGainNearChanged:   applyTgcToCore()
 onTgcGainFarChanged:    applyTgcToCore()
 onTgcCompensateChanged: applyTgcToCore()
 
+property Settings exportPersist: Settings {
+    id: exportPersist
+    property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property string exportFolderText: ""
+    property bool exportDecimation: false
+    property int exportDecimationValue: 10
+}
+
+property alias exportFolderUrl: exportPersist.exportFolder
+property alias exportFolderSource: exportPersist.exportFolderText
+property alias exportDecimationEnabled: exportPersist.exportDecimation
+property alias exportDecimationValue: exportPersist.exportDecimationValue
+
 // Isobaths/mosaic theme index — single source of truth so both the settings
 // combo and the 3D toolbar swatch picker drive the same value. Keys match the
 // legacy combo Settings aliases. Applied to the C++ controllers on change +
@@ -656,6 +669,7 @@ function openQuickActionsSettings() { _openSettingsSubPage("quickActions") }
 function openExtraInfoSettings()    { _openSettingsSubPage("extraInfo") }
 function openUiSavingSettings()     { _openSettingsSubPage("uiSaving") }
 function openTgcSettings()          { _openSettingsSubPage("tgc") }
+function openCsvExportSettings()    { _openSettingsSubPage("csvExport") }
 
 function closeActiveSettingsSubPage() {
     if (settingsSubPageActive)

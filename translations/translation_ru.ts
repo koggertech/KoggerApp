@@ -3529,6 +3529,10 @@
         <source>TGC</source>
         <translation>TGC</translation>
     </message>
+    <message>
+        <source>Export to CSV</source>
+        <translation>Экспорт в CSV</translation>
+    </message>
 </context>
 <context>
     <name>QuickActionSettingsTab</name>
@@ -5165,6 +5169,93 @@
     <message>
         <source>Show</source>
         <translation>Показать</translation>
+    </message>
+</context>
+<context>
+    <name>CsvExportSettingsTab</name>
+    <message>
+        <source>Export path...</source>
+        <translation>Путь экспорта...</translation>
+    </message>
+    <message>
+        <source>Export folder</source>
+        <translation>Папка экспорта</translation>
+    </message>
+    <message>
+        <source>Decimation, m:</source>
+        <translation>Децимация, м:</translation>
+    </message>
+    <message>
+        <source>Export to CSV</source>
+        <translation>Экспорт в CSV</translation>
+    </message>
+    <message>
+        <source>Columns:</source>
+        <translation>Столбцы:</translation>
+    </message>
+    <message>
+        <source>Columns to export</source>
+        <translation>Столбцы для экспорта</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Сбросить</translation>
+    </message>
+    <message>
+        <source>Export the dataset to CSV. Pick which columns to include below — the defaults match the built-in export. The destination folder is set in the Export group.</source>
+        <translation>Экспортируйте датасет в CSV. Ниже выберите, какие столбцы включить — по умолчанию как во встроенном экспорте. Папка назначения задаётся в группе «Экспорт».</translation>
+    </message>
+    <message>
+        <source>Reset to defaults</source>
+        <translation>Сбросить настройки</translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation>Номер</translation>
+    </message>
+    <message>
+        <source>Event (UNIX / timestamp / ID)</source>
+        <translation>Событие (UNIX / метка / ID)</translation>
+    </message>
+    <message>
+        <source>Rangefinder</source>
+        <translation>Глубиномер</translation>
+    </message>
+    <message>
+        <source>Beam distance</source>
+        <translation>Дистанция луча</translation>
+    </message>
+    <message>
+        <source>Position (lat / lon)</source>
+        <translation>Позиция (шир / долг)</translation>
+    </message>
+    <message>
+        <source>GNSS UTC date / time</source>
+        <translation>GNSS UTC дата / время</translation>
+    </message>
+    <message>
+        <source>External position (LLA)</source>
+        <translation>Внешняя позиция (LLA)</translation>
+    </message>
+    <message>
+        <source>External position (NEU)</source>
+        <translation>Внешняя позиция (NEU)</translation>
+    </message>
+    <message>
+        <source>Sonar height</source>
+        <translation>Высота сонара</translation>
+    </message>
+    <message>
+        <source>Bottom height</source>
+        <translation>Высота дна</translation>
+    </message>
+    <message>
+        <source>Contact title</source>
+        <translation>Название контакта</translation>
+    </message>
+    <message>
+        <source>Contact distance</source>
+        <translation>Дистанция контакта</translation>
     </message>
 </context>
 </TS>
