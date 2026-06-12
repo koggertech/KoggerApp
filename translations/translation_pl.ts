@@ -92,8 +92,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="288"/>
-        <source>Hide controls without data</source>
-        <translation>Ukryj elementy bez danych</translation>
+        <source>Hide UI elements for missing data</source>
+        <translation>Ukryj elementy UI dla brakujących danych</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="127"/>

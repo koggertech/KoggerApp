@@ -396,7 +396,7 @@ Column {
 
         KSwitch {
             width: parent.width
-            text: qsTr("Hide controls without data")
+            text: qsTr("Hide UI elements for missing data")
             checked: root.store ? root.store.hideEmptyEchogramControls : true
             onToggled: if (root.store) root.store.hideEmptyEchogramControls = checked
         }
@@ -1204,12 +1204,35 @@ Column {
             width: parent.width
             spacing: Tokens.spaceMd
 
-            CTextField {
-                id: exportSurfacePathText
-                hoverEnabled: true
-                Layout.maximumWidth: isobathsGroup.ctrlW
+            Rectangle {
                 Layout.fillWidth: true
-                placeholderText: qsTr("Enter path")
+                Layout.preferredWidth: isobathsGroup.ctrlW
+                Layout.maximumWidth: isobathsGroup.ctrlW
+                Layout.preferredHeight: Tokens.controlHMd
+                radius: Tokens.radiusMd
+                color: AppPalette.bg
+                border.width: 1
+                border.color: exportSurfacePathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
+
+                TextInput {
+                    id: exportSurfacePathText
+                    anchors.fill: parent
+                    anchors.leftMargin: Tokens.spaceMd
+                    anchors.rightMargin: Tokens.spaceMd
+                    TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: exportSurfacePathText.selectAll() }
+                    verticalAlignment: TextInput.AlignVCenter
+                    color: AppPalette.text
+                    font.pixelSize: Tokens.fontSm
+                    clip: true
+
+                    Text {
+                        visible: !exportSurfacePathText.text.length
+                        text: qsTr("Enter path")
+                        color: AppPalette.textMuted
+                        font.pixelSize: Tokens.fontSm
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
             }
 
             KButton {
@@ -2086,6 +2109,7 @@ Column {
                         height: parent.height
                         spacing: Tokens.spaceSm
                         Text {
+                            id: compassPosLabel
                             anchors.verticalCenter: parent.verticalCenter
                             text: qsTr("Pos:")
                             color: AppPalette.textSecond
@@ -2094,7 +2118,7 @@ Column {
                         KSpinBox {
                             id: compassPosSpinBox
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 56
+                            width: parent.width - compassPosLabel.width - parent.spacing
                             from: 1; to: 3; stepSize: 1; value: 2
                             onValueModified: function(v) {
                                 if (typeof Scene3dToolBarController !== "undefined")
@@ -2107,6 +2131,7 @@ Column {
                         height: parent.height
                         spacing: Tokens.spaceSm
                         Text {
+                            id: compassSizeLabel
                             anchors.verticalCenter: parent.verticalCenter
                             text: qsTr("Size:")
                             color: AppPalette.textSecond
@@ -2115,7 +2140,7 @@ Column {
                         KSpinBox {
                             id: compassSizeSpinBox
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 56
+                            width: parent.width - compassSizeLabel.width - parent.spacing
                             from: 1; to: 5; stepSize: 1; value: 1
                             onValueModified: function(v) {
                                 if (typeof Scene3dToolBarController !== "undefined")
@@ -2148,8 +2173,6 @@ Column {
             Settings { property alias navigationArrowSize:  navigationArrowSizeSpinBox.value }
             Settings { property alias compassPos:           compassPosSpinBox.value }
             Settings { property alias compassSize:          compassSizeSpinBox.value }
-
-            Item { width: parent.width; height: Tokens.spaceMd }
 
             Text {
                 width: parent.width
