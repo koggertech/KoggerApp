@@ -258,7 +258,7 @@ Column {
                 width: parent.width
                 property int selectedIndex: 0
 
-                readonly property var names: ["Dark","S.Dark","Light","S.Light","OneDark","Monokai","Kimbie","Solar","Desert","Steam 2003"]
+                readonly property var names: ["Dark","S.Dark","Light","S.Light","OneDark","Monokai","Kimbie","Solar","Desert","Olive"]
                 readonly property int gap: Tokens.spaceXs
                 readonly property int cellMinW: Math.round(80 * AppPalette.scale)
                 readonly property int cols: Tokens.gridColumns(width, cellMinW, gap, 5)
