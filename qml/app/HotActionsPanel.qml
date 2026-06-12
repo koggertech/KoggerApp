@@ -531,9 +531,9 @@ Item {
         width: visible ? root.panelHeight : 0
         height: visible ? root.panelHeight : 0
         iconSource: root.expanded ? "qrc:/icons/ui/x.svg"
-                                  : "qrc:/icons/ui/menu-2.svg"
-        iconTintColor: AppPalette.text
-        iconPixelSize: Math.round((root.expanded ? 19 : 20) * root._s)
+                                  : "qrc:/icons/app/kogger_app.png"
+        iconTintColor: root.expanded ? AppPalette.text : AppPalette.accentBar
+        iconPixelSize: Math.round((root.expanded ? 19 : 32) * root._s)
         fillColor: root.buttonFillColor
         fillHoverColor: root.buttonHoverColor
         fillPressedColor: root.buttonPressedColor
