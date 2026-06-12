@@ -34,6 +34,10 @@ Item {
     property color highlightBorderColor: AppPalette.accentBorder
     readonly property bool hovered: hitArea.containsMouse
     readonly property bool pressed: hitArea.pressed
+
+    property bool _tipSuppressed: false
+    onPressedChanged: if (pressed) _tipSuppressed = true
+    onHoveredChanged: if (!hovered) _tipSuppressed = false
     readonly property real backgroundScale: !root.enabled ? 1.0 : (root.pressed ? 0.97 : (root.hovered ? 1.035 : 1.0))
     readonly property bool hasIcon: {
         var s = iconSource ? iconSource.toString() : ""
@@ -271,6 +275,6 @@ Item {
     KToolTip {
         text: root.resolvedToolTipText
         targetItem: root
-        shown: root.hovered && root.enabled
+        shown: root.hovered && root.enabled && !root._tipSuppressed
     }
 }

@@ -21,6 +21,10 @@ Button {
     property color textColor: danger ? AppPalette.dangerText : AppPalette.text
     property real hoverWhiteness: 0.08
 
+    property bool _tipSuppressed: false
+    onPressedChanged: if (pressed) _tipSuppressed = true
+    onHoveredChanged: if (!hovered) _tipSuppressed = false
+
     horizontalPadding: Math.round(14 * AppPalette.scale)
     verticalPadding: Math.round(7 * AppPalette.scale)
     implicitWidth: Math.max(Math.round(64 * AppPalette.scale), label.implicitWidth + horizontalPadding * 2)
@@ -105,6 +109,6 @@ Button {
     KToolTip {
         text: control.toolTipText
         targetItem: control
-        shown: control.hovered && control.enabled
+        shown: control.hovered && control.enabled && !control._tipSuppressed
     }
 }
