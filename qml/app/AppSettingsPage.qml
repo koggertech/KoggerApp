@@ -238,9 +238,9 @@ Column {
                 id: langTabBar
                 width: parent.width
                 options: [
-                    { label: qsTr("English"), value: 0 },
-                    { label: qsTr("Russian"), value: 1 },
-                    { label: qsTr("Polish"),  value: 2 }
+                    { label: "English", value: 0 },
+                    { label: "Русский", value: 1 },
+                    { label: "Polski",  value: 2 }
                 ]
                 currentValue: langController ? langController.currentIndex : 0
                 onValueSelected: function(v) { if (langController) langController.apply(v) }
@@ -1521,7 +1521,7 @@ Column {
                 RowLayout {
                     spacing: Tokens.spaceMd
                     Text {
-                        text: qsTr("Source:")
+                        text: qsTr("Data source:")
                         color: AppPalette.textSecond
                         font.pixelSize: Tokens.fontMd
                         Layout.fillWidth: true

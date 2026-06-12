@@ -103,7 +103,7 @@ Column {
             onPicked: function(index) { if (panel.vs) panel.vs.echoThemeIndex = index }
         }
         ComboRow {
-            label: qsTr("Compensation")
+            label: qsTr("Source data")
             comboModel: [qsTr("Raw"), qsTr("Side-Scan"), qsTr("TGC")]
             currentIndex: panel.vs ? panel.vs.compensationIndex : 0
             onPicked: function(index) { if (panel.vs) panel.vs.compensationIndex = index }

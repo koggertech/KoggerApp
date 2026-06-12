@@ -339,8 +339,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1180"/>
-        <source>Source:</source>
-        <translation type="unfinished">Źródło:</translation>
+        <source>Data source:</source>
+        <translation>Źródło danych:</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1188"/>
@@ -2337,8 +2337,8 @@
     </message>
     <message>
         <location filename="../qml/app/EchogramSettingsPanel.qml" line="100"/>
-        <source>Compensation</source>
-        <translation>Kompensacja</translation>
+        <source>Source data</source>
+        <translation>Dane źródłowe</translation>
     </message>
     <message>
         <location filename="../qml/app/EchogramSettingsPanel.qml" line="101"/>
