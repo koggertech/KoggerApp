@@ -75,6 +75,7 @@ signals:
                         LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
                         bool autoSpeedSelection, bool isUpgradingState);
     void deleteModel(QUuid uuid);
+    void linkCreatedInteractively(QUuid uuid);
     void frameReady(QUuid uuid, Link* link, Parsers::FrameParser frame);
     void linkClosed(QUuid uuid, Link* link);
     void linkOpened(QUuid uuid, Link* link);

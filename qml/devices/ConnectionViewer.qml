@@ -976,6 +976,14 @@ Column {
 
     property int _pendingExpandIndex: -1
 
+    Connections {
+        target: linkManagerWrapper
+        function onLinkCreatedInteractively(uuid) {
+            filesList.expandedUuid = String(uuid)
+            connectionViewer._requestExpandScroll(filesList.count - 1)
+        }
+    }
+
     Timer {
         id: expandScrollTimer
         interval: Anim.disclosureMs + 30

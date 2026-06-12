@@ -947,6 +947,7 @@ void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPo
     list_.append(newLinkPtr);
 
     doEmitAppendModifyModel(newLinkPtr);
+    emit linkCreatedInteractively(newLinkPtr->getUuid());
 }
 
 void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPort)
@@ -958,6 +959,7 @@ void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPo
     list_.append(newLinkPtr);
 
     doEmitAppendModifyModel(newLinkPtr);
+    emit linkCreatedInteractively(newLinkPtr->getUuid());
 }
 
 void LinkManager::openFLinks()
