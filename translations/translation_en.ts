@@ -3667,6 +3667,10 @@
 <context>
     <name>TgcSettingsTab</name>
     <message>
+        <source>Time Gain Compensation — image brightness adjustment by depth.</source>
+        <translation>Time Gain Compensation — image brightness adjustment by depth.</translation>
+    </message>
+    <message>
         <source>Near gain:</source>
         <translation>Near gain:</translation>
     </message>

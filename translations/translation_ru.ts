@@ -865,7 +865,7 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="326"/>
         <source>FBS forward / backward:</source>
-        <translation>ФБС вперёд / назад:</translation>
+        <translation>ФЧП вперёд / назад:</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="220"/>
@@ -3681,6 +3681,10 @@
 </context>
 <context>
     <name>TgcSettingsTab</name>
+    <message>
+        <source>Time Gain Compensation — image brightness adjustment by depth.</source>
+        <translation>Time Gain Compensation (компенсация усиления по времени) — регулировка яркости изображения по глубине.</translation>
+    </message>
     <message>
         <source>Near gain:</source>
         <translation>Ближний КУ:</translation>

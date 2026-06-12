@@ -865,7 +865,7 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="326"/>
         <source>FBS forward / backward:</source>
-        <translation>FBS do przodu / do tyłu:</translation>
+        <translation>FCP do przodu / do tyłu:</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="220"/>
@@ -1948,7 +1948,7 @@
     <message>
         <location filename="../qml/settings/DisplaySettings.qml" line="133"/>
         <source>FBS, f/b</source>
-        <translation>FBS, f/b</translation>
+        <translation>FCP, p/t</translation>
     </message>
     <message>
         <location filename="../qml/settings/DisplaySettings.qml" line="178"/>
@@ -3681,6 +3681,10 @@
 </context>
 <context>
     <name>TgcSettingsTab</name>
+    <message>
+        <source>Time Gain Compensation — image brightness adjustment by depth.</source>
+        <translation>Time Gain Compensation — regulacja jasności obrazu w zależności od głębokości.</translation>
+    </message>
     <message>
         <source>Near gain:</source>
         <translation>Wzm. bliski:</translation>

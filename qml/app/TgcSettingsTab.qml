@@ -24,6 +24,15 @@ Column {
         function onTgcCompensateChanged() { tgcCompensateSwitch.checked = page.store.tgcCompensate }
     }
 
+    Text {
+        width: parent.width
+        text: qsTr("Time Gain Compensation — image brightness adjustment by depth.")
+        color: AppPalette.textMuted
+        font.pixelSize: Tokens.fontSm
+        wrapMode: Text.WordWrap
+        bottomPadding: Tokens.spaceXs
+    }
+
     Row {
         width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
 
