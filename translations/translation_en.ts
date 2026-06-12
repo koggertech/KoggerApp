@@ -12,6 +12,14 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Limit downloads on metered networks</source>
+        <translation>Limit downloads on metered networks</translation>
+    </message>
+    <message>
+        <source>Metered network (limited)</source>
+        <translation>Metered network (limited)</translation>
+    </message>
+    <message>
         <source>Clear?</source>
         <translation>Clear?</translation>
     </message>
@@ -1311,6 +1319,18 @@
 </context>
 <context>
     <name>Core</name>
+    <message>
+        <source>Internet connection restored</source>
+        <translation>Internet connection restored</translation>
+    </message>
+    <message>
+        <source>Internet connection lost</source>
+        <translation>Internet connection lost</translation>
+    </message>
+    <message>
+        <source>Metered network detected</source>
+        <translation>Metered network detected</translation>
+    </message>
     <message>
         <location filename="../src/core.cpp" line="1937"/>
         <location filename="../src/core.cpp" line="1961"/>

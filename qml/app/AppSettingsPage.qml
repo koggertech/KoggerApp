@@ -2214,6 +2214,41 @@ Column {
                 }
             }
 
+            Row {
+                width: parent.width
+                spacing: Tokens.spaceMd
+                height: Tokens.controlHSm
+                visible: core.metered
+
+                Rectangle {
+                    width: Math.round(10 * AppPalette.scale)
+                    height: width
+                    radius: width / 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: AppPalette.linkIdleBorder
+                    border.width: 1
+                    border.color: AppPalette.border
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Metered network (limited)")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontMd
+                }
+            }
+
+            Settings { id: meteredSettings; property bool deferTilesOnMetered: true }
+
+            ParamCard {
+                width: parent.width
+                label: qsTr("Limit downloads on metered networks")
+                checked: meteredSettings.deferTilesOnMetered
+                onToggled: function(v) {
+                    meteredSettings.deferTilesOnMetered = v
+                    core.setDeferTilesOnMetered(v)
+                }
+            }
+
             Text {
                 width: parent.width
                 text: qsTr("Providers")
@@ -2378,6 +2413,7 @@ Column {
                 if (typeof MapViewControlMenuController !== "undefined")
                     MapViewControlMenuController.onVisibilityChanged(mapVisibilitySettings.mapViewCheckButton)
                 core.setMapTileLoadingEnabled(mapVisibilitySettings.mapViewCheckButton)
+                core.setDeferTilesOnMetered(meteredSettings.deferTilesOnMetered)
                 if (typeof Scene3dToolBarController !== "undefined") {
                     Scene3dToolBarController.onUseAngleLocationButtonChanged(root.store.useAngleEnabled)
                     Scene3dToolBarController.onNavigatorLocationButtonChanged(root.store.navigationViewEnabled)

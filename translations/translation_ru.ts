@@ -12,6 +12,14 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Limit downloads on metered networks</source>
+        <translation>Ограничить загрузки в лимитированной сети</translation>
+    </message>
+    <message>
+        <source>Metered network (limited)</source>
+        <translation>Лимитированная сеть</translation>
+    </message>
+    <message>
         <source>Clear?</source>
         <translation>Очистить?</translation>
     </message>
@@ -1326,6 +1334,18 @@
 </context>
 <context>
     <name>Core</name>
+    <message>
+        <source>Internet connection restored</source>
+        <translation>Интернет-соединение восстановлено</translation>
+    </message>
+    <message>
+        <source>Internet connection lost</source>
+        <translation>Интернет-соединение потеряно</translation>
+    </message>
+    <message>
+        <source>Metered network detected</source>
+        <translation>Обнаружена лимитированная сеть</translation>
+    </message>
     <message>
         <location filename="../src/core.cpp" line="1937"/>
         <location filename="../src/core.cpp" line="1961"/>

@@ -12,6 +12,14 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Limit downloads on metered networks</source>
+        <translation>Ogranicz pobieranie w sieci taryfowej</translation>
+    </message>
+    <message>
+        <source>Metered network (limited)</source>
+        <translation>Sieć taryfowa (ograniczona)</translation>
+    </message>
+    <message>
         <source>Clear?</source>
         <translation>Wyczyścić?</translation>
     </message>
@@ -1326,6 +1334,18 @@
 </context>
 <context>
     <name>Core</name>
+    <message>
+        <source>Internet connection restored</source>
+        <translation>Połączenie internetowe przywrócone</translation>
+    </message>
+    <message>
+        <source>Internet connection lost</source>
+        <translation>Utracono połączenie internetowe</translation>
+    </message>
+    <message>
+        <source>Metered network detected</source>
+        <translation>Wykryto sieć taryfową</translation>
+    </message>
     <message>
         <location filename="../src/core.cpp" line="1937"/>
         <location filename="../src/core.cpp" line="1961"/>

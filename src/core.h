@@ -72,6 +72,7 @@ public:
     Q_PROPERTY(QString           mapTileProviderName          READ getMapTileProviderName          NOTIFY mapTileProviderChanged)
     Q_PROPERTY(QVariantList      mapTileProviders             READ getMapTileProviders             CONSTANT)
     Q_PROPERTY(bool              internetAvailable            READ getInternetAvailable            NOTIFY internetAvailableChanged)
+    Q_PROPERTY(bool              metered                      READ getMetered                      NOTIFY meteredChanged)
     Q_PROPERTY(bool              mapTileLoadingEnabled        READ getMapTileLoadingEnabled        WRITE setMapTileLoadingEnabled NOTIFY mapTileLoadingEnabledChanged)
     Q_PROPERTY(bool              needForceZooming             READ getNeedForceZooming             WRITE setNeedForceZooming NOTIFY needForceZoomingChanged)
     Q_PROPERTY(bool              posZeroing                   READ getPosZeroing                   NOTIFY posZeroingChanged)
@@ -194,6 +195,8 @@ public slots:
     Q_INVOKABLE QVariantList getMapTileProviders() const;
     Q_INVOKABLE QVariantMap getMapTileDbInfo(int providerId) const;
     Q_INVOKABLE bool getInternetAvailable() const;
+    Q_INVOKABLE bool getMetered() const;
+    Q_INVOKABLE void setDeferTilesOnMetered(bool defer);
     Q_INVOKABLE bool getMapTileLoadingEnabled() const;
     Q_INVOKABLE void setMapTileLoadingEnabled(bool enabled);
     Q_INVOKABLE void moveAppToBackground();
@@ -219,6 +222,7 @@ signals:
     void fixBlackStripesBackwardStepsChanged();
     void mapTileProviderChanged();
     void internetAvailableChanged();
+    void meteredChanged();
     void mapTileLoadingEnabledChanged();
     void posZeroingChanged();
     void bottomTrackEditToolChanged();
@@ -244,6 +248,7 @@ private:
     void createDatasetConnections();
     void createInternetManager();
     void destroyInternetManager();
+    void updateTileDownloadGate();
     void createDataProcessor();
     void destroyDataProcessor();
     void createScene3dConnections();
@@ -336,6 +341,9 @@ private:
     bool isGPSAlive_;
     bool isUseGPS_;
     bool internetAvailable_ = false;
+    bool internetStateKnown_ = false;
+    bool metered_ = false;
+    bool deferTilesOnMetered_ = true;
     bool mapTileLoadingEnabled_ = true;
     bool needForceZooming_ = false; // debug
 

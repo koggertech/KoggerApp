@@ -2133,6 +2133,32 @@ bool Core::getInternetAvailable() const
     return internetAvailable_;
 }
 
+bool Core::getMetered() const
+{
+    return metered_;
+}
+
+void Core::setDeferTilesOnMetered(bool defer)
+{
+    if (deferTilesOnMetered_ == defer) {
+        return;
+    }
+    deferTilesOnMetered_ = defer;
+    updateTileDownloadGate();
+}
+
+// Tile downloads are gated by the EFFECTIVE permission, not by raw reachability:
+// on a metered network (when the user opted to defer) the tile manager is told
+// "offline" so it serves from cache only — yet the UI keeps showing the real
+// internet status (internetAvailable_ stays untouched).
+void Core::updateTileDownloadGate()
+{
+    if (tileManager_) {
+        const bool allow = internetAvailable_ && !(metered_ && deferTilesOnMetered_);
+        tileManager_->setInternetAvailable(allow);
+    }
+}
+
 bool Core::getMapTileLoadingEnabled() const
 {
     return mapTileLoadingEnabled_;
@@ -2607,7 +2633,7 @@ void Core::loadLLARefFromSettings()
 void Core::createMapTileManagerConnections()
 {
     tileManager_ = std::make_unique<map::TileManager>(this);
-    tileManager_->setInternetAvailable(getInternetAvailable());
+    updateTileDownloadGate();
     tileManager_->setMapEnabled(mapTileLoadingEnabled_);
 
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
@@ -2668,10 +2694,29 @@ void Core::createInternetManager()
         QObject::connect(internetManager_, &InternetManager::internetAvailabilityChanged, this,
                          [this](bool available) {
                              internetAvailable_ = available;
-                             if (tileManager_) {
-                                 tileManager_->setInternetAvailable(available);
-                             }
+                             updateTileDownloadGate();
                              emit internetAvailableChanged();
+                             // Skip the very first determination (initial state on
+                             // launch) — only notify on real transitions.
+                             if (internetStateKnown_) {
+                                 notifications.info(available ? tr("Internet connection restored")
+                                                              : tr("Internet connection lost"));
+                             }
+                             internetStateKnown_ = true;
+                         },
+                         Qt::QueuedConnection);
+
+        QObject::connect(internetManager_, &InternetManager::meteredChanged, this,
+                         [this](bool metered) {
+                             metered_ = metered;
+                             updateTileDownloadGate();
+                             emit meteredChanged();
+                             if (metered) {
+                                 notifications.warning(tr("Metered network detected"),
+                                                       QStringLiteral("network-metered"));
+                             } else {
+                                 notifications.dismiss(QStringLiteral("network-metered"));
+                             }
                          },
                          Qt::QueuedConnection);
     }
