@@ -105,15 +105,15 @@ Item {
 
     function linkFillColor(d) {
         if (!d) return buttonFillColor
-        if (d.linkConnected)    return d.linkReceivesData ? "#0D2D1A" : "#2D2200"
-        if (d.linkNotAvailable) return "#2D0D0D"
+        if (d.linkConnected)    return d.linkReceivesData ? AppPalette.linkOkBg : AppPalette.linkIdleBg
+        if (d.linkNotAvailable) return AppPalette.linkDownBg
         return buttonFillColor
     }
 
     function linkBorderColor(d) {
         if (!d) return buttonBorderColor
-        if (d.linkConnected)    return d.linkReceivesData ? "#10B981" : "#F59E0B"
-        if (d.linkNotAvailable) return "#EF4444"
+        if (d.linkConnected)    return d.linkReceivesData ? AppPalette.linkOkBorder : AppPalette.linkIdleBorder
+        if (d.linkNotAvailable) return AppPalette.linkDownBorder
         return buttonBorderColor
     }
 

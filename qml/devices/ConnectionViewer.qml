@@ -288,10 +288,10 @@ Column {
 
             Rectangle {
                 anchors.fill: parent; radius: Tokens.radiusMd; clip: true
-                color: isConnected ? (receivesData ? "#0D2D1A" : "#2D2200") : (notAvailable ? "#2D0D0D" : AppPalette.card)
+                color: isConnected ? (receivesData ? AppPalette.linkOkBg : AppPalette.linkIdleBg) : (notAvailable ? AppPalette.linkDownBg : AppPalette.card)
                 border.width: connRow.editing ? 2 : 1
                 border.color: connRow.editing ? AppPalette.accentBorder
-                       : isConnected ? (receivesData ? "#10B981" : "#F59E0B") : (notAvailable ? "#EF4444" : AppPalette.border)
+                       : isConnected ? (receivesData ? AppPalette.linkOkBorder : AppPalette.linkIdleBorder) : (notAvailable ? AppPalette.linkDownBorder : AppPalette.border)
                 opacity: IsUpgradingState ? 0.55 : 1.0
                 Behavior on color { ColorAnimation { duration: Anim.fadeMs } }
                 Behavior on border.color { ColorAnimation { duration: Anim.fadeMs } }

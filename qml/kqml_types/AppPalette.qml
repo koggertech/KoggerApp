@@ -87,6 +87,14 @@ QtObject {
     readonly property color dangerBorder: isDark ? "#7F1D1D" : "#EF4444"
     readonly property color dangerText:   theme ? theme.textErrorColor : (isDark ? "#FCA5A5" : "#DC2626")
 
+    // ── Link status (device connection dots: bright border on a tinted fill) ──
+    readonly property color linkOkBg:       isDark ? "#0D2D1A" : "#BBF7D0"
+    readonly property color linkOkBorder:   isDark ? "#10B981" : "#16A34A"
+    readonly property color linkIdleBg:     isDark ? "#2D2200" : "#FEF08A"
+    readonly property color linkIdleBorder: isDark ? "#F59E0B" : "#CA8A04"
+    readonly property color linkDownBg:     isDark ? "#2D0D0D" : "#FECACA"
+    readonly property color linkDownBorder: isDark ? "#EF4444" : "#DC2626"
+
     // ── Tooltip ───────────────────────────────────────────────────────────────
     readonly property color tooltipBg:     theme ? theme.tooltipBackColor   : (isDark ? "#0B1220" : "#FFFFFF")
     readonly property color tooltipBorder: theme ? theme.tooltipBorderColor : (isDark ? "#334155" : "#E2E8F0")
