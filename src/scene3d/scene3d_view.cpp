@@ -1072,7 +1072,7 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
         updateAxesRotation = true;
     }
     if (canRotateOrTilt && rotateWeight > 0.08 && absAngle > 0.05) {
-        m_camera->rotate(currCenter, currCenter, angleDelta * rotateWeight, height());
+        m_camera->rotate(currCenter, currCenter, -angleDelta * rotateWeight, height());
         updateAxesRotation = true;
     }
     if (updateAxesRotation) {
