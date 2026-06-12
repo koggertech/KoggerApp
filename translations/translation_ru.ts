@@ -12,6 +12,10 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Clear?</source>
+        <translation>Очистить?</translation>
+    </message>
+    <message>
         <source>Open TGC settings</source>
         <translation>Открыть настройки TGC</translation>
     </message>

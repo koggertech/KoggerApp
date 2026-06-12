@@ -1803,25 +1803,13 @@ Column {
                 topPadding: Tokens.spaceXs
             }
 
-            Row {
+            KButton {
                 width: parent.width
-                spacing: Tokens.spaceMd
-                KButton {
-                    text: qsTr("Reset depth zoom")
-                    width: (parent.width - Tokens.spaceMd) / 2
-                    visible: Qt.platform.os !== "android"
-                    onClicked: {
-                        if (typeof Scene3dToolBarController !== "undefined")
-                            Scene3dToolBarController.onCancelZoomButtonClicked()
-                    }
-                }
-                KButton {
-                    text: qsTr("Reset surface")
-                    width: (parent.width - Tokens.spaceMd) / 2
-                    onClicked: {
-                        if (typeof Scene3dToolBarController !== "undefined")
-                            Scene3dToolBarController.onResetProcessingButtonClicked()
-                    }
+                text: qsTr("Reset depth zoom")
+                visible: Qt.platform.os !== "android"
+                onClicked: {
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onCancelZoomButtonClicked()
                 }
             }
 
@@ -2357,6 +2345,32 @@ Column {
                     root.store.navigationViewEnabled = v
                     if (typeof Scene3dToolBarController !== "undefined")
                         Scene3dToolBarController.onNavigatorLocationButtonChanged(v)
+                }
+            }
+
+            Item { width: parent.width; height: Tokens.spaceMd }
+
+            KButton {
+                id: resetSurfaceBtn
+                width: parent.width
+                property bool confirming: false
+                text: confirming ? qsTr("Clear?") : qsTr("Reset surface")
+                danger: confirming
+                onClicked: {
+                    if (!confirming) {
+                        confirming = true
+                        resetSurfaceConfirmTimer.restart()
+                    } else {
+                        resetSurfaceConfirmTimer.stop()
+                        confirming = false
+                        if (typeof Scene3dToolBarController !== "undefined")
+                            Scene3dToolBarController.onResetProcessingButtonClicked()
+                    }
+                }
+                Timer {
+                    id: resetSurfaceConfirmTimer
+                    interval: 3000
+                    onTriggered: resetSurfaceBtn.confirming = false
                 }
             }
 
