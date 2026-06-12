@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import WaterFall 1.0
 import "../scene3d"
+import "../scene2d"
 import "../controls"
 
 Item {
@@ -45,6 +46,48 @@ Item {
             view: root.scene3dView
             geo: root.scene3dView ? root.scene3dView.geoJsonController : null
             store: root.workspaceRoot ? root.workspaceRoot.store : null
+        }
+    }
+
+    EchogramContactPopup {
+        id: contact3dPopup
+        z: 3
+        visible: false
+
+        onVisibleChanged: {
+            if (!visible) {
+                if (accepted) {
+                    contacts.setContact(indx, inputFieldText)
+                    accepted = false
+                }
+                info = ""
+                inputFieldText = ""
+            }
+        }
+        onDeleteButtonClicked: contacts.deleteContact(indx)
+        onCopyButtonClicked: contacts.update()
+        onSetActiveButtonClicked: contacts.setActiveContact(indx)
+        onInputAccepted: { contact3dPopup.visible = false; contacts.update() }
+        onSetButtonClicked: { contact3dPopup.visible = false; contacts.update() }
+
+        Connections {
+            target: typeof contacts !== "undefined" ? contacts : null
+            ignoreUnknownSignals: true
+            function onContactChanged() {
+                var show = contacts.contactVisible
+                           && root.workspaceRoot && root.workspaceRoot.active3DPane === root
+                if (show) {
+                    contact3dPopup.indx = contacts.contactIndx
+                    contact3dPopup.info = contacts.contactInfo
+                    contact3dPopup.inputFieldText = contacts.contactInfo
+                    contact3dPopup.lat = contacts.contactLat
+                    contact3dPopup.lon = contacts.contactLon
+                    contact3dPopup.depth = contacts.contactDepth
+                    contact3dPopup.x = contacts.contactPositionX
+                    contact3dPopup.y = contacts.contactPositionY
+                }
+                contact3dPopup.visible = show
+            }
         }
     }
 

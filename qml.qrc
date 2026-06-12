@@ -144,7 +144,6 @@
         <file>qml/settings/ExtraInfoPanel.qml</file>
         <file>qml/settings/GeoJsonPanel.qml</file>
         <file>qml/settings/HotkeysDialog.qml</file>
-        <file>qml/settings/CContact.qml</file>
 
         <!-- ======= Scene3D ======= -->
         <file>qml/scene3d/qmldir</file>
@@ -163,6 +162,7 @@
         <!-- ======= Scene2D ======= -->
         <file>qml/scene2d/qmldir</file>
         <file>qml/scene2d/Plot2D.qml</file>
+        <file>qml/scene2d/EchogramContactPopup.qml</file>
         <file>qml/scene2d/ChartBox.qml</file>
         <file>qml/scene2d/ChartLevel.qml</file>
         <file>qml/scene2d/KChartLevelCapsule.qml</file>

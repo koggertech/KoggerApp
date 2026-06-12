@@ -4039,6 +4039,37 @@
         <source>zoom</source>
         <translation>зум</translation>
     </message>
+    <message>
+        <source>Set point of interest</source>
+        <translation>Поставить точку интереса</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+</context>
+<context>
+    <name>EchogramContactPopup</name>
+    <message>
+        <source>Mark as active</source>
+        <translation>Сделать активной</translation>
+    </message>
+    <message>
+        <source>Enter text</source>
+        <translation>Введите текст</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Копировать</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>

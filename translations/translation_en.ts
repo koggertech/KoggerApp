@@ -4024,6 +4024,37 @@
         <source>zoom</source>
         <translation></translation>
     </message>
+    <message>
+        <source>Set point of interest</source>
+        <translation>Set point of interest</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Close</translation>
+    </message>
+</context>
+<context>
+    <name>EchogramContactPopup</name>
+    <message>
+        <source>Mark as active</source>
+        <translation>Mark as active</translation>
+    </message>
+    <message>
+        <source>Enter text</source>
+        <translation>Enter text</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Save</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Copy</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>

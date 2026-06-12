@@ -44,7 +44,6 @@ DisplaySettingsViewer 1.0 settings/DisplaySettingsViewer.qml
 ExtraInfoPanel 1.0 settings/ExtraInfoPanel.qml
 GeoJsonPanel 1.0 settings/GeoJsonPanel.qml
 HotkeysDialog 1.0 settings/HotkeysDialog.qml
-CContact 1.0 settings/CContact.qml
 
 # Devices
 ConnectionViewer 1.0 devices/ConnectionViewer.qml

@@ -8,7 +8,6 @@ import WaterFall 1.0
 import kqml_types 1.0
 import "../controls"
 import "../menus"
-import "../settings"
 
 WaterFall {
     id: plot
@@ -1502,7 +1501,7 @@ WaterFall {
         }   // ColumnLayout (relocated settings controls)
     }   // echoViewState
 
-    CContact {
+    EchogramContactPopup {
         id: contactDialog
 
         onVisibleChanged: {
@@ -1875,59 +1874,76 @@ WaterFall {
         }
     }
 
-    RowLayout {
+    Rectangle {
         id: menuBlock
-        Layout.alignment: Qt.AlignHCenter
-        spacing: 1
         visible: false
-        Layout.margins: 0
+        z: 60
+        width: menuRow.implicitWidth + 2 * Tokens.spaceXs
+        height: menuRow.implicitHeight + 2 * Tokens.spaceXs
+        radius: Tokens.radiusMd
+        color: AppPalette.card
+        border.width: 1
+        border.color: AppPalette.border
 
         function position(mx, my) {
-            var oy = plot.height - (my + implicitHeight)
-            if(oy < 0) {
+            var oy = plot.height - (my + height)
+            if (oy < 0)
                 my = my + oy
-            }
-
-            if(my < 0) {
+            if (my < 0)
                 my = 0
-            }
 
-            var ox = plot.width - (mx - implicitWidth)
-            if(ox < 0) {
+            var ox = plot.width - (mx + width)
+            if (ox < 0)
                 mx = mx + ox
-            }
+            if (mx < 0)
+                mx = 0
 
             x = mx
             y = my
             visible = true
-//            backgrn.focus = true
         }
 
-        CheckButton {
-            icon.source: "qrc:/icons/ui/anchor.svg"
-            backColor: theme.controlBackColor
-            implicitWidth: theme.controlHeight
-            checkable: false
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            acceptedButtons: Qt.AllButtons
+            onPressed: function(mouse) { mouse.accepted = true }
+            onWheel: function(wheel) { wheel.accepted = true }
+        }
 
-            onClicked: {
-                contactDialog.x = plot.pointerContactMouseX
-                contactDialog.y = plot.pointerContactMouseY
-                contactDialog.visible = true;
+        RowLayout {
+            id: menuRow
+            anchors.centerIn: parent
+            spacing: Tokens.spaceXs
 
-                contactDialog.indx = -1
-
-                menuBlock.visible = false
+            KCircleIconButton {
+                Layout.preferredWidth: Tokens.controlHMd
+                Layout.preferredHeight: Tokens.controlHMd
+                iconSource: "qrc:/icons/ui/anchor.svg"
+                iconTintColor: AppPalette.text
+                fillColor: AppPalette.card
+                fillHoverColor: AppPalette.cardHover
+                borderColor: AppPalette.border
+                toolTipText: qsTr("Set point of interest")
+                onClicked: {
+                    contactDialog.x = plot.pointerContactMouseX
+                    contactDialog.y = plot.pointerContactMouseY
+                    contactDialog.indx = -1
+                    contactDialog.visible = true
+                    menuBlock.visible = false
+                }
             }
-        }
 
-        CheckButton {
-            icon.source: "qrc:/icons/ui/x.svg"
-            backColor: theme.controlBackColor
-            checkable: false
-            implicitWidth: theme.controlHeight
-
-            onClicked: {
-                menuBlock.visible = false
+            KCircleIconButton {
+                Layout.preferredWidth: Tokens.controlHMd
+                Layout.preferredHeight: Tokens.controlHMd
+                iconSource: "qrc:/icons/ui/x.svg"
+                iconTintColor: AppPalette.text
+                fillColor: AppPalette.card
+                fillHoverColor: AppPalette.cardHover
+                borderColor: AppPalette.border
+                toolTipText: qsTr("Close")
+                onClicked: menuBlock.visible = false
             }
         }
     }
