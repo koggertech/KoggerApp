@@ -395,8 +395,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1456"/>
-        <source>Map tile provider for the 3D scene background.</source>
-        <translation>Dostawca kafelków mapy dla tła sceny 3D.</translation>
+        <source>3D scene settings, map provider switching.</source>
+        <translation>Ustawienia sceny 3D, zmiana dostawcy map.</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1467"/>
@@ -822,8 +822,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="203"/>
-        <source>Feature level:</source>
-        <translation>Poziom cech:</translation>
+        <source>Toolset:</source>
+        <translation>Zestaw narzędzi:</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="497"/>
@@ -1121,8 +1121,8 @@
     </message>
     <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="563"/>
-        <source>Add connection / logging:</source>
-        <translation>Dodaj połączenie / rejestrowanie:</translation>
+        <source>Add connection, start recording:</source>
+        <translation>Dodaj połączenie, rozpocznij nagrywanie:</translation>
     </message>
     <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="580"/>
@@ -1266,8 +1266,8 @@
     </message>
     <message>
         <location filename="../qml/app/ConnectionsSettingsPage.qml" line="19"/>
-        <source>Links, files, logging, imports and factory tools.</source>
-        <translation>Łącza, pliki, logowanie, importy i narzędzia fabryczne.</translation>
+        <source>Connections, logging and device settings.</source>
+        <translation>Połączenia, rejestrowanie i ustawienia urządzeń.</translation>
     </message>
 </context>
 <context>
@@ -1711,12 +1711,12 @@
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="91"/>
         <source>Rangefinder</source>
-        <translation>Dalmierz</translation>
+        <translation>Głębokościomierz</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="201"/>
         <source>Rangefinder:</source>
-        <translation>Dalmierz:</translation>
+        <translation>Głębokościomierz:</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="118"/>
@@ -1832,7 +1832,7 @@
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="82"/>
         <source>Offset:</source>
-        <translation>Przesunięcie:</translation>
+        <translation>Offset próbek:</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="103"/>

@@ -308,7 +308,7 @@ Column {
             width: parent.width
             spacing: Tokens.spaceMd
 
-            Text { text: qsTr("Feature level:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
+            Text { text: qsTr("Toolset:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
 
             Item {
                 id: instrumentsGradeHolder
@@ -1751,7 +1751,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("3D scene")
-        description: qsTr("Map tile provider for the 3D scene background.")
+        description: qsTr("3D scene settings, map provider switching.")
         stateStore: root.store
         stateKey: "app.scene3d"
         collapsedByDefault: true

@@ -600,7 +600,7 @@ Column {
     // ── Action buttons (4 per row, equal width) ───────────────────────────
 
     Text {
-        text: qsTr("Add connection / logging:")
+        text: qsTr("Add connection, start recording:")
         color: AppPalette.textMuted
         font.pixelSize: Tokens.fontXs
         leftPadding: Tokens.spaceXxs

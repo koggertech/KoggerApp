@@ -17,7 +17,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Connections")
-        description: qsTr("Links, files, logging, imports and factory tools.")
+        description: qsTr("Connections, logging and device settings.")
         stateStore: root.store
         stateKey: "app.connections"
         collapsedByDefault: false

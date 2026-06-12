@@ -395,8 +395,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1456"/>
-        <source>Map tile provider for the 3D scene background.</source>
-        <translation>Провайдер тайлов карты для фона 3D-сцены.</translation>
+        <source>3D scene settings, map provider switching.</source>
+        <translation>Настройки 3D-сцены, смена провайдера карт.</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1467"/>
@@ -822,8 +822,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="203"/>
-        <source>Feature level:</source>
-        <translation>Уровень признаков:</translation>
+        <source>Toolset:</source>
+        <translation>Набор инструментов:</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="497"/>
@@ -1121,8 +1121,8 @@
     </message>
     <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="563"/>
-        <source>Add connection / logging:</source>
-        <translation>Добавить подключение / запись:</translation>
+        <source>Add connection, start recording:</source>
+        <translation>Добавить подключение, сделать запись:</translation>
     </message>
     <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="580"/>
@@ -1266,8 +1266,8 @@
     </message>
     <message>
         <location filename="../qml/app/ConnectionsSettingsPage.qml" line="19"/>
-        <source>Links, files, logging, imports and factory tools.</source>
-        <translation>Подключения, файлы, журналирование, импорт и заводские инструменты.</translation>
+        <source>Connections, logging and device settings.</source>
+        <translation>Подключения, логгирование, настройки устройств.</translation>
     </message>
 </context>
 <context>
@@ -1711,17 +1711,17 @@
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="91"/>
         <source>Rangefinder</source>
-        <translation>Дальномер</translation>
+        <translation>Глубиномер</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="201"/>
         <source>Rangefinder:</source>
-        <translation>Дальномер:</translation>
+        <translation>Глубиномер:</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="118"/>
         <source>Transducer</source>
-        <translation>Преобразователь</translation>
+        <translation>Трансдьюсер</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="54"/>
@@ -1772,7 +1772,7 @@
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="153"/>
         <source>DSP</source>
-        <translation>DSP</translation>
+        <translation>ЦСП</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="221"/>
@@ -1792,7 +1792,7 @@
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="247"/>
         <source>Timestamp</source>
-        <translation>Метка времени</translation>
+        <translation>Временная метка</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="136"/>
@@ -1832,22 +1832,22 @@
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="82"/>
         <source>Offset:</source>
-        <translation>Смещение:</translation>
+        <translation>Оффсет отсчётов:</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="103"/>
         <source>Dead zone, mm:</source>
-        <translation>Мёртвая зона, мм:</translation>
+        <translation>Мертвая зона, мм:</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="97"/>
         <source>Max distance, mm:</source>
-        <translation>Макс. расстояние, мм:</translation>
+        <translation>Макс. дистанция, мм:</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="159"/>
         <source>Horizontal smoothing:</source>
-        <translation>Горизонтальное сглаживание:</translation>
+        <translation>Коэффициент горизонтального сглаживания:</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="109"/>
@@ -1892,7 +1892,7 @@
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="174"/>
         <source>Dataset</source>
-        <translation>Датасет</translation>
+        <translation>Набор данных</translation>
     </message>
 </context>
 <context>

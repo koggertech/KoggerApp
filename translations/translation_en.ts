@@ -120,8 +120,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="203"/>
-        <source>Feature level:</source>
-        <translation></translation>
+        <source>Toolset:</source>
+        <translation>Toolset:</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="218"/>
@@ -465,8 +465,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1456"/>
-        <source>Map tile provider for the 3D scene background.</source>
-        <translation>Map tile provider for the 3D scene background.</translation>
+        <source>3D scene settings, map provider switching.</source>
+        <translation>3D scene settings, map provider switching.</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1467"/>
@@ -1106,8 +1106,8 @@
     </message>
     <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="563"/>
-        <source>Add connection / logging:</source>
-        <translation>Add connection / logging:</translation>
+        <source>Add connection, start recording:</source>
+        <translation>Add connection, start recording:</translation>
     </message>
     <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="580"/>
@@ -1251,8 +1251,8 @@
     </message>
     <message>
         <location filename="../qml/app/ConnectionsSettingsPage.qml" line="19"/>
-        <source>Links, files, logging, imports and factory tools.</source>
-        <translation></translation>
+        <source>Connections, logging and device settings.</source>
+        <translation>Connections, logging and device settings.</translation>
     </message>
 </context>
 <context>
