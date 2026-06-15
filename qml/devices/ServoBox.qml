@@ -102,13 +102,23 @@ DevSettingsBox {
             RowLayout {
                 CText { text: qsTr("Step, °") }
                 SpinBoxCustom {
-                    from: -360
-                    to: 360
+                    from: -3600
+                    to: 3600
                     stepSize: 1
-                    devValue: dev ? Math.round(dev.servoStepDeg) : 5
+                    devValue: dev ? Math.round(dev.servoStepDeg * 10) : 50
+                    textFromValue: function(v, locale) {
+                        return (v / 10).toLocaleString(locale, 'f', 1)
+                    }
+                    valueFromText: function(t, locale) {
+                        var n = Number.fromLocaleString(locale, (t || "").toString())
+                        return isNaN(n) ? value : Math.round(n * 10)
+                    }
                     onValueChanged: {
-                        if (dev && Math.round(dev.servoStepDeg) !== value)
-                            dev.servoStepDeg = value
+                        if (dev) {
+                            var deg = value / 10.0
+                            if (Math.abs(dev.servoStepDeg - deg) > 0.001)
+                                dev.servoStepDeg = deg
+                        }
                     }
                 }
             }
