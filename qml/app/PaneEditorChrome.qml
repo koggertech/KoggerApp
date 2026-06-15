@@ -248,24 +248,24 @@ Item {
 
         Column {
             anchors.centerIn: parent
-            spacing: 12
+            spacing: Math.round(12 * AppPalette.scale)
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: qsTr("Choose pane type")
                 color: AppPalette.text
-                font.pixelSize: 18
+                font.pixelSize: Math.round(18 * AppPalette.scale)
                 font.bold: true
             }
 
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 10
+                spacing: Math.round(10 * AppPalette.scale)
 
                 KButton {
                     text: qsTr("2D")
-                    width: 76
-                    height: 40
+                    width: Math.max(Math.round(76 * AppPalette.scale), implicitWidth)
+                    height: Math.max(Math.round(40 * AppPalette.scale), implicitHeight)
                     onClicked: paneFrame.store.applyPaneModeSelection(paneFrame.leafId, "2D")
                 }
 
@@ -274,8 +274,8 @@ Item {
                     readonly property bool canChoose3D: (existing3DLeaf === -1 || existing3DLeaf === paneFrame.leafId)
                                                          && paneFrame.store.globalPopupMode !== "3D"
                     text: qsTr("3D")
-                    width: 76
-                    height: 40
+                    width: Math.max(Math.round(76 * AppPalette.scale), implicitWidth)
+                    height: Math.max(Math.round(40 * AppPalette.scale), implicitHeight)
                     enabled: canChoose3D
                     opacity: enabled ? 1.0 : 0.45
                     onClicked: paneFrame.store.applyPaneModeSelection(paneFrame.leafId, "3D")
@@ -289,7 +289,7 @@ Item {
                          || paneFrame.store.globalPopupMode === "3D"
                 text: qsTr("3D is already used in another pane")
                 color: "#C7D2FE"
-                font.pixelSize: 12
+                font.pixelSize: Math.round(12 * AppPalette.scale)
             }
         }
     }
