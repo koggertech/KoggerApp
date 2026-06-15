@@ -127,6 +127,17 @@ Column {
 
         Behavior on color { ColorAnimation { duration: 80 } }
 
+        activeFocusOnTab: enabled
+        function _activate() {
+            if (ib.checkable) { ib.checked = !ib.checked; ib.toggled(ib.checked) }
+            ib.clicked()
+        }
+        Keys.onReturnPressed: ib._activate()
+        Keys.onEnterPressed:  ib._activate()
+        Keys.onSpacePressed:  ib._activate()
+
+        KFocusRing { id: focusRing }
+
         Image {
             anchors.centerIn: parent
             // Proportional to outer — scales reliably regardless of consumer's
@@ -144,10 +155,8 @@ Column {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                if (ib.checkable) { ib.checked = !ib.checked; ib.toggled(ib.checked) }
-                ib.clicked()
-            }
+            onPressed: focusRing.suppress()
+            onClicked: { ib.forceActiveFocus(); ib._activate() }
         }
 
         KToolTip { text: ib.toolTipText; targetItem: ib; shown: ibMa.containsMouse && ib.toolTipText.length > 0 }
@@ -165,7 +174,14 @@ Column {
         width: Math.round(44 * AppPalette.scale)
         height: Math.round(24 * AppPalette.scale)
 
+        activeFocusOnTab: true
+        function _toggle() { sc.checked = !sc.checked; sc.toggled(sc.checked) }
+        Keys.onReturnPressed: sc._toggle()
+        Keys.onEnterPressed:  sc._toggle()
+        Keys.onSpacePressed:  sc._toggle()
+
         Rectangle {
+            id: scTrack
             anchors.fill: parent
             radius: height / 2
             color: sc.checked ? AppPalette.accentBg : AppPalette.trackOff
@@ -185,10 +201,14 @@ Column {
                 Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
             }
         }
+
+        KFocusRing { id: focusRing; target: scTrack; focusItem: sc; inset: 3 }
+
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: { sc.checked = !sc.checked; sc.toggled(sc.checked) }
+            onPressed: focusRing.suppress()
+            onClicked: { sc.forceActiveFocus(); sc._toggle() }
         }
     }
 
@@ -199,7 +219,15 @@ Column {
         property int to: 100
 
         width: Math.round(70 * AppPalette.scale); height: Math.round(26 * AppPalette.scale); radius: Tokens.radiusSm
-        color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
+        color: AppPalette.bg
+        border.width: 1
+        border.color: (cs.activeFocus && !cs._ringSuppressed) ? AppPalette.accentBorder : AppPalette.border
+
+        activeFocusOnTab: true
+        property bool _ringSuppressed: false
+        onActiveFocusChanged: if (!activeFocus) _ringSuppressed = false
+        Keys.onUpPressed:   function(e) { if (cs.value < cs.to)   cs.value++; e.accepted = true }
+        Keys.onDownPressed: function(e) { if (cs.value > cs.from) cs.value--; e.accepted = true }
 
         Row {
             anchors.fill: parent
@@ -210,7 +238,8 @@ Column {
                 Text { anchors.centerIn: parent; text: "−"; color: AppPalette.textMuted; font.pixelSize: Tokens.fontMd; font.bold: true }
                 MouseArea {
                     id: dMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                    onClicked: { if (cs.value > cs.from) cs.value-- }
+                    onPressed: cs._ringSuppressed = true
+                    onClicked: { cs.forceActiveFocus(); if (cs.value > cs.from) cs.value-- }
                     onPressAndHold: dTim.start()
                     onReleased: dTim.stop(); onCanceled: dTim.stop()
                 }
@@ -229,7 +258,8 @@ Column {
                 Text { anchors.centerIn: parent; text: "+"; color: AppPalette.textMuted; font.pixelSize: Tokens.fontMd; font.bold: true }
                 MouseArea {
                     id: uMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                    onClicked: { if (cs.value < cs.to) cs.value++ }
+                    onPressed: cs._ringSuppressed = true
+                    onClicked: { cs.forceActiveFocus(); if (cs.value < cs.to) cs.value++ }
                     onPressAndHold: uTim.start()
                     onReleased: uTim.stop(); onCanceled: uTim.stop()
                 }
@@ -241,44 +271,43 @@ Column {
     // ── Link list ─────────────────────────────────────────────────────────
 
     Text {
-        visible: filesList.count > 0
+        visible: linkRepeater.count > 0
         text: qsTr("Connections:")
         color: AppPalette.textMuted
         font.pixelSize: Tokens.fontXs
         leftPadding: Tokens.spaceXxs
     }
 
-    ListView {
-        id: filesList
+    Column {
+        id: linkList
         width: parent.width
-        visible: count > 0
+        visible: linkRepeater.count > 0
+        spacing: Tokens.spaceXxs + 1
         property string expandedUuid: ""
-        readonly property int gap: Tokens.spaceXxs + 1
-        readonly property int collapsedRowH: Tokens.controlHMd + 2 * Tokens.spaceXs
-        readonly property int maxVisibleRows: 7
-        readonly property int sbReserve: Math.round(12 * AppPalette.scale)
-        readonly property bool overflowing: contentHeight > height + 0.5
-        height: Math.min(contentHeight,
-                         maxVisibleRows * collapsedRowH + (maxVisibleRows - 1) * gap)
-        clip: overflowing
-        interactive: overflowing
-        spacing: gap
-        model: linkManagerWrapper.linkListModel
 
-        // ListView caches delegate positions — force relayout when scale changes.
-        Connections {
-            target: theme
-            function onChanged() { Qt.callLater(filesList.forceLayout) }
-        }
+        Repeater {
+            id: linkRepeater
+            model: linkManagerWrapper.linkListModel
 
         delegate: Item {
             id: connRow
-            width: filesList.width - (filesList.overflowing ? filesList.sbReserve : 0)
+            width: linkList.width
+
+            activeFocusOnTab: true
+            Keys.onReturnPressed: connRow._toggleEdit()
+            Keys.onEnterPressed:  connRow._toggleEdit()
+            Keys.onSpacePressed:  connRow._toggleEdit()
+            function _toggleEdit() {
+                var willOpen = !connRow.editing
+                linkList.expandedUuid = willOpen ? String(Uuid) : ""
+                if (willOpen)
+                    connectionViewer._requestExpandScroll(connRow.rowIndex)
+            }
 
             readonly property bool isConnected: ConnectionStatus
             readonly property bool receivesData: ReceivesData
             readonly property bool notAvailable: IsNotAvailable
-            readonly property bool editing: filesList.expandedUuid === String(Uuid)
+            readonly property bool editing: linkList.expandedUuid === String(Uuid)
             readonly property int rowIndex: index
             property int vPad: connRow.editing ? Tokens.spaceSm : Tokens.spaceXs
             Behavior on vPad { NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
@@ -295,6 +324,18 @@ Column {
                 opacity: IsUpgradingState ? 0.55 : 1.0
                 Behavior on color { ColorAnimation { duration: Anim.fadeMs } }
                 Behavior on border.color { ColorAnimation { duration: Anim.fadeMs } }
+
+                MouseArea {
+                    anchors.fill: parent
+                    z: -1
+                    onPressed: function(mouse) {
+                        focusRing.suppress()
+                        connRow.forceActiveFocus()
+                        mouse.accepted = false
+                    }
+                }
+
+                KFocusRing { id: focusRing; focusItem: connRow; z: 15 }
 
                 Column {
                     id: content
@@ -317,12 +358,7 @@ Column {
                             toolTipText: qsTr("Settings")
                             Layout.alignment: Qt.AlignVCenter
                             Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
-                            onClicked: {
-                                var willOpen = !connRow.editing
-                                filesList.expandedUuid = willOpen ? String(Uuid) : ""
-                                if (willOpen)
-                                    connectionViewer._requestExpandScroll(connRow.rowIndex)
-                            }
+                            onClicked: connRow._toggleEdit()
                         }
 
                         Text {
@@ -417,6 +453,7 @@ Column {
                         clip: true
                         height: connRow.editing ? bodyCol.implicitHeight + connRow.vPad : 0
                         opacity: connRow.editing ? 1 : 0
+                        visible: editBody.height > 0.5
                         Behavior on height { NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
                         Behavior on opacity { NumberAnimation { duration: Anim.fadeMs } }
 
@@ -440,6 +477,7 @@ Column {
                                     TextInput {
                                         id: ipField
                                         property int _prevLen: 0
+                                        activeFocusOnTab: true
                                         anchors.fill: parent
                                         anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
                                         anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
@@ -483,6 +521,7 @@ Column {
                                     border.color: srcPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
                                         id: srcPortField
+                                        activeFocusOnTab: true
                                         anchors.fill: parent
                                         anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
                                         anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
@@ -504,6 +543,7 @@ Column {
                                     border.color: dstPortFieldUdp.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
                                         id: dstPortFieldUdp
+                                        activeFocusOnTab: true
                                         anchors.fill: parent
                                         anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
                                         anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
@@ -532,6 +572,7 @@ Column {
                                     border.color: dstPortFieldTcp.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
                                         id: dstPortFieldTcp
+                                        activeFocusOnTab: true
                                         anchors.fill: parent
                                         anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
                                         anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
@@ -589,12 +630,7 @@ Column {
                 }
             }
         }
-
-        ScrollBar.vertical: ScrollBar {
-            policy: filesList.overflowing ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-            width: filesList.sbReserve
         }
-        onCountChanged: Qt.callLater(positionViewAtEnd)
     }
 
     // ── Action buttons (4 per row, equal width) ───────────────────────────
@@ -689,6 +725,7 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
                 ComboBox {
                     id: separatorCombo; anchors.fill: parent; model: ["Comma", "Tab", "Space", "SemiColon"]; font.pixelSize: Tokens.fontXs
+                    focusPolicy: Qt.StrongFocus
                     background: Rectangle { color: "transparent"; border.width: 0 }
                     contentItem: Text { leftPadding: 6; text: separatorCombo.displayText; color: AppPalette.text; font.pixelSize: Tokens.fontXs; verticalAlignment: Text.AlignVCenter }
                     Settings { property alias separatorCombo: separatorCombo.currentIndex }
@@ -711,6 +748,7 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
                 ComboBox {
                     id: utcGpsCombo; anchors.fill: parent; model: ["UTC time", "GPS time"]; font.pixelSize: Tokens.fontXs
+                    focusPolicy: Qt.StrongFocus
                     background: Rectangle { color: "transparent"; border.width: 0 }
                     contentItem: Text { leftPadding: 6; text: utcGpsCombo.displayText; color: AppPalette.text; font.pixelSize: Tokens.fontXs; verticalAlignment: Text.AlignVCenter }
                     Settings { property alias utcGpsCombo: utcGpsCombo.currentIndex }
@@ -751,6 +789,7 @@ Column {
 
                 TextInput {
                     id: importPathText
+                    activeFocusOnTab: true
                     anchors.fill: parent; anchors.margins: 8
                     TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: importPathText.selectAll() }
                     verticalAlignment: TextInput.AlignVCenter
@@ -864,6 +903,7 @@ Column {
             color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
             TextInput {
                 id: flasherDataInput
+                activeFocusOnTab: true
                 anchors.fill: parent; anchors.margins: 8
                 verticalAlignment: TextInput.AlignVCenter; color: AppPalette.text; font.pixelSize: Tokens.fontSm
                 onVisibleChanged: if (visible) focus = true
@@ -892,6 +932,7 @@ Column {
             color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
             TextInput {
                 id: flasherPnText
+                activeFocusOnTab: true
                 anchors.fill: parent; anchors.margins: 8
                 verticalAlignment: TextInput.AlignVCenter; color: AppPalette.text; font.pixelSize: Tokens.fontSm
                 Settings { property alias flasherPartNumber: flasherPnText.text }
@@ -979,8 +1020,8 @@ Column {
     Connections {
         target: linkManagerWrapper
         function onLinkCreatedInteractively(uuid) {
-            filesList.expandedUuid = String(uuid)
-            connectionViewer._requestExpandScroll(filesList.count - 1)
+            linkList.expandedUuid = String(uuid)
+            connectionViewer._requestExpandScroll(linkRepeater.count - 1)
         }
     }
 
@@ -1006,10 +1047,8 @@ Column {
         var idx = _pendingExpandIndex
         if (idx < 0)
             return
-        if (filesList.overflowing)
-            filesList.positionViewAtIndex(idx, ListView.Contain)
 
-        var item = filesList.itemAtIndex(idx)
+        var item = linkRepeater.itemAt(idx)
         var flick = _findAncestorFlickable()
         if (!item || !flick)
             return

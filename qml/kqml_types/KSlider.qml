@@ -28,8 +28,14 @@ Slider {
     verticalPadding: 0
     snapMode: Slider.SnapAlways
     opacity: enabled ? 1.0 : 0.55
+    focusPolicy: Qt.StrongFocus
 
     onMoved: control.valueModified(value)
+
+    Keys.onLeftPressed:  function(e) { control.decrease(); control.valueModified(control.value); e.accepted = true }
+    Keys.onDownPressed:  function(e) { control.decrease(); control.valueModified(control.value); e.accepted = true }
+    Keys.onRightPressed: function(e) { control.increase(); control.valueModified(control.value); e.accepted = true }
+    Keys.onUpPressed:    function(e) { control.increase(); control.valueModified(control.value); e.accepted = true }
 
     background: Rectangle {
         x: control.leftPadding
@@ -61,8 +67,8 @@ Slider {
         height: control.knobSize
         radius: width / 2
         color: control.knobColor
-        border.width: control.pressed || control.hovered ? 2 : 1
-        border.color: control.pressed || control.hovered
+        border.width: control.pressed || control.hovered || control.visualFocus ? 2 : 1
+        border.color: control.pressed || control.hovered || control.visualFocus
                       ? control.knobBorderActiveColor
                       : control.knobBorderColor
 

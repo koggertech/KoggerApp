@@ -251,6 +251,7 @@ Item {
 
         // ── Header bar ────────────────────────────────────────────────────
         Rectangle {
+            id: headerBar
             visible: root.title !== ""
             width: parent.width
             height: Math.round(36 * AppPalette.scale)
@@ -262,6 +263,13 @@ Item {
             border.color: !root.confirmed
                           ? AppPalette.dangerBorder
                           : (root.expanded ? AppPalette.borderFocus : AppPalette.border)
+
+            activeFocusOnTab: root.collapsible
+            Keys.onReturnPressed: if (root.collapsible) root.expanded = !root.expanded
+            Keys.onEnterPressed:  if (root.collapsible) root.expanded = !root.expanded
+            Keys.onSpacePressed:  if (root.collapsible) root.expanded = !root.expanded
+
+            KFocusRing { id: focusRing; radius: parent.radius }
 
             Rectangle {
                 width: Math.round(4 * AppPalette.scale)
@@ -304,9 +312,12 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: root.collapsible ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onPressed: if (root.collapsible) focusRing.suppress()
                 onClicked: {
-                    if (root.collapsible)
+                    if (root.collapsible) {
+                        headerBar.forceActiveFocus()
                         root.expanded = !root.expanded
+                    }
                 }
             }
         }

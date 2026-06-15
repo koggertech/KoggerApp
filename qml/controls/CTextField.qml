@@ -6,6 +6,7 @@ TextField {
     property bool small: false
 
     id: control
+    activeFocusOnTab: true
     implicitHeight: theme.controlHeight
     height: theme.controlHeight
     padding: 0
@@ -21,8 +22,8 @@ TextField {
         id: backRect
         radius: 1
         color: control.down ? theme.controlSolidBackColor : theme.controlBackColor
-        border.color: control.down ? theme.controlSolidBorderColor : theme.controlBorderColor
-        border.width: 0
+        border.color: (control.activeFocus || control.down) ? theme.controlSolidBorderColor : theme.controlBorderColor
+        border.width: control.activeFocus ? 1 : 0
     }
 
     MouseArea {

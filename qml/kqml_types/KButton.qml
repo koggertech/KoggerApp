@@ -31,6 +31,7 @@ Button {
     implicitHeight: Math.max(Tokens.controlHMd, label.implicitHeight + verticalPadding * 2)
     opacity: enabled ? 1.0 : 0.45
     hoverEnabled: true
+    focusPolicy: Qt.StrongFocus
     scale: pressed ? 0.985 : (hovered ? 1.02 : 1.0)
 
     Behavior on scale {
@@ -75,6 +76,15 @@ Button {
             if ((control.checkable && control.checked) || control.hovered)
                 return control.hoverBorder
             return control.normalBorder
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: "transparent"
+            border.width: 2
+            border.color: AppPalette.accentBorder
+            visible: control.visualFocus
         }
 
         Behavior on color {

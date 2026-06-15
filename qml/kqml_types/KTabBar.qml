@@ -118,12 +118,20 @@ Item {
     onOptionsChanged: syncFromCurrentValue()
     Component.onCompleted: syncFromCurrentValue()
 
+    activeFocusOnTab: true
+    property bool _ringSuppressed: false
+    onActiveFocusChanged: if (!activeFocus) _ringSuppressed = false
+    Keys.onLeftPressed:  function(e) { root.applyIndex(Math.max(0, root.selectedIndex - 1)); e.accepted = true }
+    Keys.onUpPressed:    function(e) { root.applyIndex(Math.max(0, root.selectedIndex - 1)); e.accepted = true }
+    Keys.onRightPressed: function(e) { root.applyIndex(Math.min(root.optionCount - 1, root.selectedIndex + 1)); e.accepted = true }
+    Keys.onDownPressed:  function(e) { root.applyIndex(Math.min(root.optionCount - 1, root.selectedIndex + 1)); e.accepted = true }
+
     Rectangle {
         anchors.fill: parent
         radius: root.cornerRadius
         color: AppPalette.bg
-        border.width: 1
-        border.color: AppPalette.border
+        border.width: (root.activeFocus && !root._ringSuppressed) ? 2 : 1
+        border.color: (root.activeFocus && !root._ringSuppressed) ? AppPalette.accentBorder : AppPalette.border
     }
 
     Rectangle {
@@ -215,6 +223,7 @@ Item {
         onPressed: function(mouse) {
             pressX = mouse.x
             dragging = false
+            root._ringSuppressed = true
             if (root.dragSelectEnabled)
                 root.dragPreviewIndex = root.indexFromPosition(mouse.x)
         }
@@ -232,6 +241,7 @@ Item {
             var idx = root.indexFromPosition(mouse.x)
             root.dragPreviewIndex = -1
             dragging = false
+            root.forceActiveFocus()
             root.applyIndex(idx)
         }
 

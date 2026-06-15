@@ -31,6 +31,11 @@ Rectangle {
     Behavior on color       { ColorAnimation { duration: 110 } }
     Behavior on border.color { ColorAnimation { duration: 110 } }
 
+    activeFocusOnTab: true
+    Keys.onReturnPressed: pgroup._flip()
+    Keys.onEnterPressed:  pgroup._flip()
+    Keys.onSpacePressed:  pgroup._flip()
+
     function _flip() {
         pgroup.checked = !pgroup.checked
         pgroup.toggled(pgroup.checked)
@@ -42,6 +47,8 @@ Rectangle {
         width: parent.width
         height: pgroup._headerH
 
+        KFocusRing { id: focusRing; focusItem: pgroup; radius: pgroup.radius }
+
         MouseArea {
             id: pgroupHeaderMouse
             anchors.left: parent.left
@@ -50,7 +57,8 @@ Rectangle {
             anchors.bottom: parent.bottom
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: pgroup._flip()
+            onPressed: focusRing.suppress()
+            onClicked: { pgroup.forceActiveFocus(); pgroup._flip() }
         }
 
         Text {
@@ -99,7 +107,8 @@ Rectangle {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: pgroup._flip()
+                onPressed: focusRing.suppress()
+                onClicked: { pgroup.forceActiveFocus(); pgroup._flip() }
             }
         }
     }
@@ -111,6 +120,7 @@ Rectangle {
         width: parent.width
         clip: true
         height: pgroup.checked ? pgroupBody.implicitHeight + 2 * Tokens.spaceSm : 0
+        visible: bodyContainer.height > 0.5
 
         Behavior on height {
             NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing }

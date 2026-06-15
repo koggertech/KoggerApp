@@ -78,6 +78,7 @@ Item {
             model: root.model
             currentIndex: root.currentIndex
             hoverEnabled: true
+            focusPolicy: Qt.StrongFocus   // Tab-reachable; Space/Enter opens, arrows pick
             font.pixelSize: root.fontPixelSize
 
             background: Rectangle { color: "transparent"; border.width: 0 }
@@ -175,6 +176,8 @@ Item {
                     clip: true
                     implicitHeight: contentHeight
                     model: combo.popup.visible ? combo.delegateModel : null
+                    currentIndex: combo.highlightedIndex
+                    highlightMoveDuration: 0
                     boundsBehavior: Flickable.StopAtBounds
                     ScrollIndicator.vertical: ScrollIndicator {}
                 }

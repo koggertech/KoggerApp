@@ -158,6 +158,7 @@ Item {
         // ── editable value ──
         TextInput {
             id: input
+            activeFocusOnTab: true
             x: root._btnW
             y: 0
             width: parent.width - 2 * root._btnW

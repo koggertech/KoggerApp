@@ -20,6 +20,10 @@ Item {
     property color borderHoverColor: AppPalette.borderHover
     property real borderWidth: 1
     property bool enabled: true
+    activeFocusOnTab: enabled
+    Keys.onReturnPressed: if (root.enabled) root.clicked()
+    Keys.onEnterPressed:  if (root.enabled) root.clicked()
+    Keys.onSpacePressed:  if (root.enabled) root.clicked()
     property bool rounded: true
     property real cornerRadius: rounded ? Math.min(width, height) / 2 : 10
     property int cursorShape: Qt.PointingHandCursor
@@ -36,7 +40,7 @@ Item {
     readonly property bool pressed: hitArea.pressed
 
     property bool _tipSuppressed: false
-    onPressedChanged: if (pressed) _tipSuppressed = true
+    onPressedChanged: if (pressed) { _tipSuppressed = true; focusRing.suppress() }
     onHoveredChanged: if (!hovered) _tipSuppressed = false
     readonly property real backgroundScale: !root.enabled ? 1.0 : (root.pressed ? 0.97 : (root.hovered ? 1.035 : 1.0))
     readonly property bool hasIcon: {
@@ -129,6 +133,13 @@ Item {
                 easing.type: Easing.OutCubic
             }
         }
+    }
+
+    KFocusRing {
+        id: focusRing
+        target: backgroundRect
+        focusItem: root
+        radius: root.cornerRadius
     }
 
     Item {
@@ -269,7 +280,7 @@ Item {
         onPositionChanged: function(mouse) { root.pointerMoved(mouse.x, mouse.y) }
         onReleased: root.pressEnded()
         onCanceled: root.pressCanceled()
-        onClicked: root.clicked()
+        onClicked: { root.forceActiveFocus(); root.clicked() }
     }
 
     KToolTip {

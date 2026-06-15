@@ -22,6 +22,11 @@ Rectangle {
 
     default property alias contentData: pcardSlot.data
 
+    activeFocusOnTab: true
+    Keys.onReturnPressed: pcard._flip()
+    Keys.onEnterPressed:  pcard._flip()
+    Keys.onSpacePressed:  pcard._flip()
+
     readonly property int _knobMargin: Math.max(2, Math.round(2 * AppPalette.scale))
     readonly property bool _hovered: cardMouseLeft.containsMouse || cardMouseRight.containsMouse
 
@@ -53,7 +58,8 @@ Rectangle {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         z: -1
-        onClicked: pcard._flip()
+        onPressed: focusRing.suppress()
+        onClicked: { pcard.forceActiveFocus(); pcard._flip() }
     }
     MouseArea {
         id: cardMouseRight
@@ -64,7 +70,8 @@ Rectangle {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         z: -1
-        onClicked: pcard._flip()
+        onPressed: focusRing.suppress()
+        onClicked: { pcard.forceActiveFocus(); pcard._flip() }
     }
 
     // ── Label on the left ──────────────────────────────────────────────
@@ -120,4 +127,6 @@ Rectangle {
             }
         }
     }
+
+    KFocusRing { id: focusRing }
 }

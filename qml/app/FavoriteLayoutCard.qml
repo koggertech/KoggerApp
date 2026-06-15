@@ -33,6 +33,11 @@ Rectangle {
     border.width: selected ? Math.max(2, Math.round(2 * AppPalette.scale)) : 1
     border.color: selected ? "#FACC15" : (hovered ? AppPalette.borderHover : AppPalette.border)
 
+    activeFocusOnTab: true
+    Keys.onReturnPressed: root.clicked()
+    Keys.onEnterPressed:  root.clicked()
+    Keys.onSpacePressed:  root.clicked()
+
     function leafCount(node) {
         if (!node)
             return 0
@@ -84,8 +89,11 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.clicked()
+        onPressed: focusRing.suppress()
+        onClicked: { root.forceActiveFocus(); root.clicked() }
     }
+
+    KFocusRing { id: focusRing; z: 12 }
 
     // Pulse overlay — fires when flashToken changes while highlighted.
     Rectangle {

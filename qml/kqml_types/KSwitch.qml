@@ -30,6 +30,7 @@ Switch {
     implicitWidth: Math.round(260 * AppPalette.scale)
     implicitHeight: rowHeight
     opacity: enabled ? 1.0 : 0.55
+    focusPolicy: Qt.StrongFocus
 
     indicator: Rectangle {
         width: control.trackWidth
@@ -45,6 +46,16 @@ Switch {
             ColorAnimation {
                 duration: 120
             }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -Math.round(3 * AppPalette.scale)
+            radius: height / 2
+            color: "transparent"
+            border.width: 2
+            border.color: AppPalette.accentBorder
+            visible: control.visualFocus
         }
 
         Rectangle {

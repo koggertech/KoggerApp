@@ -41,6 +41,12 @@ Column {
         width: Math.round(44 * AppPalette.scale)
         height: Math.round(24 * AppPalette.scale)
 
+        activeFocusOnTab: true
+        function _toggle() { sc.checked = !sc.checked; sc.toggled(sc.checked) }
+        Keys.onReturnPressed: sc._toggle()
+        Keys.onEnterPressed:  sc._toggle()
+        Keys.onSpacePressed:  sc._toggle()
+
         Rectangle {
             id: scTrack
             anchors.fill: parent
@@ -67,10 +73,13 @@ Column {
             }
         }
 
+        KFocusRing { id: focusRing; target: scTrack; focusItem: sc; inset: 3 }
+
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: { sc.checked = !sc.checked; sc.toggled(sc.checked) }
+            onPressed: focusRing.suppress()
+            onClicked: { sc.forceActiveFocus(); sc._toggle() }
         }
     }
 
@@ -144,6 +153,7 @@ Column {
 
                 TextInput {
                     id: exportPathField
+                    activeFocusOnTab: true
                     anchors.fill: parent
                     anchors.leftMargin: Tokens.spaceMd
                     anchors.rightMargin: Tokens.spaceMd
@@ -273,6 +283,7 @@ Column {
                 Repeater {
                     model: 10
                     delegate: Rectangle {
+                        id: themeCell
                         required property int index
                         readonly property bool sel: index === appThemeHolder.selectedIndex
                         x: (index % appThemeHolder.cols) * (appThemeHolder.itemW + appThemeHolder.gap)
@@ -284,6 +295,11 @@ Column {
                         border.width: 1
                         border.color: sel ? AppPalette.accentBorder : AppPalette.border
 
+                        activeFocusOnTab: true
+                        Keys.onReturnPressed: appThemeHolder.selectedIndex = index
+                        Keys.onEnterPressed:  appThemeHolder.selectedIndex = index
+                        Keys.onSpacePressed:  appThemeHolder.selectedIndex = index
+
                         Text {
                             anchors.centerIn: parent
                             text: appThemeHolder.names[index]
@@ -292,10 +308,13 @@ Column {
                             elide: Text.ElideRight
                         }
 
+                        KFocusRing { id: focusRing }
+
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: appThemeHolder.selectedIndex = index
+                            onPressed: focusRing.suppress()
+                            onClicked: { themeCell.forceActiveFocus(); appThemeHolder.selectedIndex = index }
                         }
                     }
                 }
@@ -570,12 +589,18 @@ Column {
                 { presetId: 2, title: qsTr("Four windows"), subtitle: qsTr("2 × 2 grid") }
             ]
             delegate: Rectangle {
+                id: presetCard
                 required property var modelData
                 readonly property var preset: modelData
                 readonly property bool hovered: cardMouse.containsMouse
                 width: parent.width; height: Math.round(88 * AppPalette.scale); radius: Tokens.radiusLg
                 color: hovered ? AppPalette.bg : AppPalette.card; border.width: 1
                 border.color: hovered ? AppPalette.borderHover : AppPalette.border
+
+                activeFocusOnTab: true
+                Keys.onReturnPressed: root.store.applyLayoutPreset(preset.presetId)
+                Keys.onEnterPressed:  root.store.applyLayoutPreset(preset.presetId)
+                Keys.onSpacePressed:  root.store.applyLayoutPreset(preset.presetId)
 
                 Row {
                     anchors.fill: parent; anchors.margins: Tokens.spaceMd; spacing: Tokens.spaceLg
@@ -621,7 +646,9 @@ Column {
                         Text { text: preset.subtitle; color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm }
                     }
                 }
-                MouseArea { id: cardMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.store.applyLayoutPreset(preset.presetId) }
+                KFocusRing { id: focusRing }
+
+                MouseArea { id: cardMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onPressed: focusRing.suppress(); onClicked: { presetCard.forceActiveFocus(); root.store.applyLayoutPreset(preset.presetId) } }
             }
         }
 
@@ -1218,6 +1245,7 @@ Column {
 
                 TextInput {
                     id: exportSurfacePathText
+                    activeFocusOnTab: true
                     anchors.fill: parent
                     anchors.leftMargin: Tokens.spaceMd
                     anchors.rightMargin: Tokens.spaceMd
@@ -1680,6 +1708,7 @@ Column {
             Repeater {
                 model: root.echograms
                 delegate: Rectangle {
+                    id: echoRow
                     required property var modelData
                     width: parent.width
                     height: Math.round(38 * AppPalette.scale)
@@ -1689,6 +1718,11 @@ Column {
                     border.color: navMouse.containsMouse ? AppPalette.borderHover : AppPalette.border
                     Behavior on color       { ColorAnimation { duration: 110 } }
                     Behavior on border.color { ColorAnimation { duration: 110 } }
+
+                    activeFocusOnTab: true
+                    Keys.onReturnPressed: root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
+                    Keys.onEnterPressed:  root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
+                    Keys.onSpacePressed:  root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
 
                     Text {
                         anchors.left: parent.left
@@ -1714,6 +1748,8 @@ Column {
                         indicatorColor: AppPalette.textSecond
                     }
 
+                    KFocusRing { id: focusRing }
+
                     MouseArea {
                         id: navMouse
                         anchors.fill: parent
@@ -1721,7 +1757,8 @@ Column {
                         cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: if (containsMouse && !root.store.echogramSettingsActive)
                                                     root.store.highlightedLeafId = modelData.key
-                        onClicked: root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
+                        onPressed: focusRing.suppress()
+                        onClicked: { echoRow.forceActiveFocus(); root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key) }
                     }
                 }
             }
@@ -2263,6 +2300,7 @@ Column {
             Repeater {
                 model: core.mapTileProviders
                 delegate: Rectangle {
+                    id: providerRow
                     width: parent.width
                     implicitHeight: rowCol.implicitHeight + 2 * Tokens.spaceSm
                     height: implicitHeight
@@ -2272,6 +2310,15 @@ Column {
                     // Cached once per delegate (providers list is CONSTANT).
                     // Refreshed on click — see below.
                     property var dbInfo: core.getMapTileDbInfo(modelData.id)
+
+                    activeFocusOnTab: true
+                    function _select() {
+                        core.setMapTileProvider(modelData.id)
+                        dbInfo = core.getMapTileDbInfo(modelData.id)
+                    }
+                    Keys.onReturnPressed: providerRow._select()
+                    Keys.onEnterPressed:  providerRow._select()
+                    Keys.onSpacePressed:  providerRow._select()
 
                     color: isSelected
                            ? AppPalette.accentBg
@@ -2338,17 +2385,15 @@ Column {
                         }
                     }
 
+                    KFocusRing { id: focusRing }
+
                     MouseArea {
                         id: providerMouse
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            core.setMapTileProvider(modelData.id)
-                            // Re-query in case selection just created a new
-                            // empty DB on disk for this provider.
-                            dbInfo = core.getMapTileDbInfo(modelData.id)
-                        }
+                        onPressed: focusRing.suppress()
+                        onClicked: { providerRow.forceActiveFocus(); providerRow._select() }
                     }
                 }
             }

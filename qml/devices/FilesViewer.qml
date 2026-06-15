@@ -118,6 +118,17 @@ Column {
 
         Behavior on color { ColorAnimation { duration: 80 } }
 
+        activeFocusOnTab: enabled
+        function _activate() {
+            if (ib.checkable) { ib.checked = !ib.checked; ib.toggled(ib.checked) }
+            ib.clicked()
+        }
+        Keys.onReturnPressed: ib._activate()
+        Keys.onEnterPressed:  ib._activate()
+        Keys.onSpacePressed:  ib._activate()
+
+        KFocusRing { id: focusRing }
+
         Image {
             anchors.centerIn: parent
             width: Math.round(ib.width * 0.55)
@@ -133,10 +144,8 @@ Column {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                if (ib.checkable) { ib.checked = !ib.checked; ib.toggled(ib.checked) }
-                ib.clicked()
-            }
+            onPressed: focusRing.suppress()
+            onClicked: { ib.forceActiveFocus(); ib._activate() }
         }
 
         KToolTip { text: ib.toolTipText; targetItem: ib; shown: ibMa.containsMouse && ib.toolTipText.length > 0 }
@@ -162,6 +171,7 @@ Column {
 
             TextInput {
                 id: pathText
+                activeFocusOnTab: true
                 anchors.fill: parent; anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
                 TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: pathText.selectAll() }
                 verticalAlignment: TextInput.AlignVCenter
@@ -262,11 +272,17 @@ Column {
                 property string filePath: recentOpenedFiles[index] || ""
 
                 Rectangle {
+                    id: recentCard
                     width: parent.width - removeBtn.width - parent.spacing
                     height: Tokens.controlHMd - Tokens.spaceXxs; radius: Tokens.radiusMd
                     color: recentMa.containsMouse ? AppPalette.cardHover : AppPalette.card
                     border.width: 1; border.color: AppPalette.border
                     Behavior on color { ColorAnimation { duration: 80 } }
+
+                    activeFocusOnTab: true
+                    Keys.onReturnPressed: filesViewer.openRecentFile(parent.filePath)
+                    Keys.onEnterPressed:  filesViewer.openRecentFile(parent.filePath)
+                    Keys.onSpacePressed:  filesViewer.openRecentFile(parent.filePath)
 
                     Text {
                         anchors.fill: parent
@@ -277,12 +293,15 @@ Column {
                         elide: Text.ElideLeft
                     }
 
+                    KFocusRing { id: focusRing }
+
                     MouseArea {
                         id: recentMa
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: filesViewer.openRecentFile(parent.parent.filePath)
+                        onPressed: focusRing.suppress()
+                        onClicked: { recentCard.forceActiveFocus(); filesViewer.openRecentFile(parent.parent.filePath) }
                     }
                 }
 
