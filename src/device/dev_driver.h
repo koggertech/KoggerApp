@@ -166,9 +166,18 @@ public:
     bool getTranscState() { return transcState_; };
     bool getSoundSpeedState() { return soundSpeedState_; };
     bool getUartState() { return uartState_; };
+    bool getServoControlState() { return servoControlState_; };
+    bool getPwmRouteState() { return pwmRouteState_; };
+    bool getDevSyncState() { return devSyncState_; };
     int getAverageChartLosses() const { return averageChartLosses_; };
     QUuid getLinkUuid() const;
     void setFirmware(const QByteArray& data);
+
+    // Link status mirror — pushed by DeviceManager.
+    bool linkConnected()    const { return linkConnected_; }
+    bool linkReceivesData() const { return linkReceivesData_; }
+    bool linkNotAvailable() const { return linkNotAvailable_; }
+    void setLinkStatus(bool connected, bool receivesData, bool notAvailable);
 
 signals:
     void averageChartLossesChanged();
@@ -220,6 +229,12 @@ signals:
     void transChanged();
     void soundChanged();
     void UARTChanged();
+    void servoControlChanged();
+    void pwmRouteChanged();
+    void servoCurrentAngleChanged();
+    void devSyncChanged();
+    void devSyncErrorOccurred(QString reason);
+    void linkStatusChanged();
     void upgradeProgressChanged(int progress_status);
     void upgradeChanged();
     void deviceVersionChanged();
@@ -261,6 +276,11 @@ public slots:
     void setTranscState(bool state);
     void setSoundSpeedState(bool state);
     void setUartState(bool state);
+    void setServoControlState(bool state);
+    void setPwmRouteState(bool state);
+    void setDevSyncState(bool state);
+    void setDevSyncPeriodMs(int ms);
+    void setDevSyncPortSource(int idx, int src);
     void setLinkUuid(QUuid linkUuid);
     void askBeaconPosition() {
         IDBinUsblSolution::USBLRequestBeacon ask;
@@ -315,6 +335,10 @@ protected:
 
     IDBinUsblSolution* idUSBL = nullptr;
     IDBinUsblControl* idUSBLControl = nullptr;
+
+    IDBinServoControl* idServoControl = nullptr;
+    IDBinPwmRoute* idPwmRoute = nullptr;
+    IDBinDevSync* idDevSync = nullptr;
 
 //    QHash<ID, IDBin*> hashIDParsing;
 //    QHash<ID, ParseCallback> hashIDCallback;
@@ -433,6 +457,12 @@ protected slots:
     void receivedUSBL       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
+    void receivedServoControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedPwmRoute    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+
+    void receivedDevSync     (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void onDevSyncDebounceFired();
+
 private:
     bool datasetState_;
     bool distSetupState_;
@@ -441,7 +471,14 @@ private:
     bool transcState_;
     bool soundSpeedState_;
     bool uartState_;
+    bool servoControlState_ = false;
+    bool pwmRouteState_ = false;
+    bool devSyncState_ = false;
+    QTimer m_devSyncDebounceTimer;
     int errorFreezeCnt_;
     int averageChartLosses_;
     QUuid linkUuid_;
+    bool linkConnected_    = false;
+    bool linkReceivesData_ = false;
+    bool linkNotAvailable_ = false;
 };

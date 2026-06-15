@@ -12,12 +12,16 @@ public:
     bool draw(Plot2D* parent, Dataset* dataset) override;
 
     void setAngleVisibility(bool state);
+    bool getAngleVisibility() const { return angleVisibility_; }
     void setVetricalNumber(int grids) { _lines = grids; }
+    int getVetricalNumber() const { return _lines; }
     void setVelocityVisible(bool visible) { _velocityVisible = visible; }
+    bool getVelocityVisible() const { return _velocityVisible; }
     bool isFillWidth() const { return fillWidth_; }
     void setFillWidth(bool state) { fillWidth_ = state; }
     bool isInvert() const { return invert_; }
     void setInvert(bool state) { invert_ = state; }
+    int lastRightTextX() const { return lastRightTextX_; }
 
 protected:
     void drawTextWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text) const;
@@ -29,4 +33,5 @@ protected:
     QColor _lineColor = QColor(255, 255, 255, 255);
     bool fillWidth_ = false;
     bool invert_ = false;
+    int lastRightTextX_ = 0;
 };

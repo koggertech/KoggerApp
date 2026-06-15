@@ -25,13 +25,21 @@
 #include "core.h"
 #include "themes.h"
 #include "ui_state_serializer.h"
+#include "echogram_state_serializer.h"
+#include "notifications.h"
 #include "scene_object.h"
 #include "bottom_track.h"
+#include "input_device_tracker.h"
+#include "language_controller.h"
+#include "app_utils.h"
 
 
 Core core;
+AppUtils appUtils;
 Themes theme;
 UIStateSerializer uiStateSerializer;
+EchogramStateSerializer echogramStateSerializer;
+Notifications notifications;
 QTranslator translator;
 QVector<QString> availableLanguages{"en", "ru", "pl"};
 
@@ -174,8 +182,15 @@ void applyWindowsFullscreenBorderWorkaround(QWindow* window)
 int main(int argc, char *argv[])
 {
 #ifdef Q_OS_ANDROID
-    qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "0");  // TODO: use qt scaling!
-    qputenv("QT_SCALE_FACTOR", "0.5");            //
+    // Disable Qt's automatic per-screen scaling: we drive our own DPI-aware
+    // UI sizing via Themes::resCoeff (see themes.h). QT_SCALE_FACTOR=0.5
+    // halves Qt's internal coordinate system so a high-density tablet
+    // doesn't render at the device's full pixel grid (physical px is what
+    // we then scale up via resCoeff = physicalDPI / logicalDPI). Net effect
+    // on a typical tablet (~2× density): UI sizes match the Desktop 100%
+    // baseline at manualScale=1.0.
+    qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "0");
+    qputenv("QT_SCALE_FACTOR", "0.5");
 #endif
 
 #if defined(Q_OS_LINUX)
@@ -210,6 +225,31 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     QGuiApplication app(argc, argv);
+
+    app.styleHints()->setMouseDoubleClickInterval(320);
+
+    // Themes global was constructed before QGuiApplication + org name — now
+    // safe to read QSettings and primaryScreen() for DPI-aware resCoeff.
+    theme.initSettings();
+
+    // One-shot migration: the "Chart" group (multi-plot + synchronisation) was
+    // removed from the new settings UI. Force any persisted multi-plot OR
+    // sync-on state back to single-plot, no-sync. OR (not AND) — otherwise
+    // users with numPlots=2,sync=false stay stuck in a layout the new UI
+    // can no longer toggle off.
+    {
+        QSettings s;
+        const bool needMigration =
+            s.value("numPlotsSpinBox", 1).toInt() >= 2 ||
+            s.value("plotSyncCheckBox", false).toBool();
+        if (needMigration) {
+            s.setValue("numPlotsSpinBox", 1);
+            s.setValue("plotSyncCheckBox", false);
+        }
+    }
+
+    LanguageController langController;
+    InputDeviceTracker inputDeviceTracker;
     core.initAfterApp();
 
     //qDebug() << "Lib paths:" << QCoreApplication::libraryPaths();
@@ -220,6 +260,7 @@ int main(int argc, char *argv[])
     //qputenv("QT_DEBUG_PLUGINS", "1");
     //qDebug() << "libraryPaths =" << QCoreApplication::libraryPaths();
     loadLanguage(app);
+    langController.setStartupTranslator(&translator);
     core.initStreamList();
 
     QQuickStyle::setStyle("Basic");
@@ -227,6 +268,7 @@ int main(int argc, char *argv[])
     setApplicationDisplayName(app);
     QQmlApplicationEngine engine;
     engine.addImportPath("qrc:/");
+    engine.addImportPath("qrc:/qml");
 
     SceneObject::qmlDeclare();
 
@@ -241,7 +283,30 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
     engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
+    engine.rootContext()->setContextProperty("echogramStateSerializer", &echogramStateSerializer);
+    engine.rootContext()->setContextProperty("notifications", &notifications);
+    engine.rootContext()->setContextProperty("inputDeviceTracker", &inputDeviceTracker);
+    engine.rootContext()->setContextProperty("langController", &langController);
+    engine.rootContext()->setContextProperty("appUtils", &appUtils);
+
+    // Expose compile-time MANUAL_TESTING flag to QML — the Settings panel
+    // shows a "Test" group (with developer-only knobs) only when this is true.
+#ifdef MANUAL_TESTING
+    engine.rootContext()->setContextProperty("manualTesting", true);
+#else
+    engine.rootContext()->setContextProperty("manualTesting", false);
+#endif
+
     uiStateSerializer.setLinkManagerWrapper(core.getLinkManagerWrapperPtr());
+
+    QObject::connect(&langController, &LanguageController::currentIndexChanged, &engine, [&engine, &app, &langController, &inputDeviceTracker]() {
+        emit langController.aboutToRetranslate();
+        engine.retranslate();
+        setApplicationDisplayName(app);
+        emit core.languageChanged();
+        emit inputDeviceTracker.currentModeChanged();
+        emit langController.retranslated();
+    });
 
     QObject::connect(&theme, &Themes::interfaceChanged, &core, []() {
         core.setConsoleOutputEnabled(theme.consoleVisible());
@@ -251,7 +316,7 @@ int main(int argc, char *argv[])
     core.consoleInfo("Run...");
     core.setEngine(&engine);
     //qDebug() << "SQL drivers =" << QSqlDatabase::drivers(); // тут должен появиться QSQLITE
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
+    const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
     QPointer<QQuickWindow> mainWindow;
     QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
                      &app,      [url](QObject *obj, const QUrl &objUrl) {
@@ -267,11 +332,19 @@ int main(int argc, char *argv[])
 
 // file opening on startup
 #ifndef Q_OS_ANDROID
-    if (argc > 1) {
-        QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
-                         &core,     [&argv]() {
-                                        core.openLogFile(argv[1], false, true);
-                                    }, Qt::QueuedConnection);
+    {
+        const QStringList appArgs = app.arguments();
+        if (appArgs.size() > 1) {
+            const QString startupFilePath = appArgs.at(1);
+            auto* startupConn = new QMetaObject::Connection;
+            *startupConn = QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
+                                            &core, [startupFilePath, startupConn, url](QObject* obj, const QUrl& objUrl) {
+                                                if (!obj || url != objUrl) return;
+                                                QObject::disconnect(*startupConn);
+                                                delete startupConn;
+                                                core.openLogFile(startupFilePath, false, true);
+                                            }, Qt::QueuedConnection);
+        }
     }
 #endif
 
@@ -284,6 +357,11 @@ int main(int argc, char *argv[])
         if (auto* window = qobject_cast<QWindow*>(rootObject)) {
             applyWindowsSystemTitleBarTheme(window);
             applyWindowsFullscreenBorderWorkaround(window);
+        }
+        // Same dark titlebar + fullscreen border workaround for the secondary window.
+        if (auto* secondary = rootObject->findChild<QWindow*>(QStringLiteral("secondaryAppWindow"))) {
+            applyWindowsSystemTitleBarTheme(secondary);
+            applyWindowsFullscreenBorderWorkaround(secondary);
         }
 #endif
     }

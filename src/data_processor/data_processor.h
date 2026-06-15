@@ -27,6 +27,7 @@
 class Dataset;
 class BottomTrack;
 class ComputeWorker;
+class BtWorker;
 
 class DataProcessor : public QObject {
     Q_OBJECT
@@ -74,6 +75,7 @@ public slots:
     void onMosaicCanCalc(uint64_t indx);
     // BottomTrackProcessor
     void bottomTrackProcessing(const DatasetChannel& channel1, const DatasetChannel& channel2, const BottomTrackParam& bottomTrackParam, bool manual, bool redrawAll); // CALC BOTTOM TRACK BY BUTTON, qPlot2D
+    void setBottomTrackZeroDepth(bool state);
     // SurfaceProcessor
     void setSurfaceColorTableThemeById(int id);
     void setSurfaceEdgeLimit(int val);
@@ -91,6 +93,11 @@ public slots:
     void setMosaicLevels(float lowLevel, float highLevel);
     void setMosaicLowLevel(float val);
     void setMosaicHighLevel(float val);
+    void setMosaicSource(int source);
+    void setActiveZeroing(bool state);
+    void setMosaicFakeCoordsLastN(int n);
+    void setMosaicFakeCoordsClearOldData(bool state);
+    void restartMosaic();
     void askColorTableForMosaic();
     void onMosaicEpochsProcessed(const QVector<int>& indxs, int zoom);
 
@@ -123,7 +130,7 @@ private slots:
     void onDbAnyTileForZoom(int zoom, bool exists);
 
 signals:
-    void sendTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd);
+    void sendTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd, int epochIndex);
     // db
     void dbCheckAnyTileForZoom(int zoom);
     void dbSaveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tilePx, int hmRatio);
@@ -159,7 +166,7 @@ signals:
     void sendSurfaceTilesIncremental(const TileMap& upserts, const QSet<TileKey>& fullVisibleNow);
 
 private slots:
-    void postTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd);
+    void postTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd, int epochIndex);
 
     void runCoalescedWork();
     void startTimerIfNeeded();
@@ -248,6 +255,9 @@ private:
     QThread computeThread_;
     ComputeWorker* worker_;
 
+    QThread btThread_;
+    BtWorker* btWorker_;
+
     DataProcessorType state_;
     uint64_t chartsCounter_;
     uint64_t bottomTrackCounter_;
@@ -265,6 +275,13 @@ private:
     int bottomTrackWindowCounter_;
     // MosaicProcessor
     int mosaicCounter_;
+    bool activeZeroing_ = false;
+    // 0 disables the cap; otherwise only epochs in [mosaicCounter_-N+1, mosaicCounter_] are scheduled when activeZeroing_ is on
+    int mosaicFakeCoordsLastN_ = 0;
+    // When true (default), entering FAKE_COORDS+N enables full-restart radical repaints in
+    // runCoalescedWork. When false, the gate only filters which epochs reach work — old paint
+    // stays on tiles, new last-N adds incrementally.
+    bool mosaicFakeCoordsClearOldData_ = true;
     mosaic::PlotColorTable mosaicColorTable_;
     // Surface
     float tileResolution_;
@@ -281,6 +298,7 @@ private:
     bool                   surfaceEdgeLimitDirty_;
     QSet<int>              surfaceEdgeLimitUpdatedZooms_;
     bool                   bottomTrackFullRecalcPending_;
+    bool                   mosaicBootstrapPending_ = false;
     QSet<int>              pendingMosaicIndxs_;
     QSet<int>              mosaicInFlightIndxs_;
     bool                   pendingIsobathsWork_;

@@ -28,6 +28,8 @@ Epoch Epoch::deepCopyForMosaic() const
             echogramCopy.type = srcEchogram.type;
             echogramCopy.compensated = srcEchogram.compensated;
             echogramCopy.compensated.detach();
+            echogramCopy.tgc = srcEchogram.tgc;
+            echogramCopy.tgc.detach();
             echogramCopy.bottomProcessing = srcEchogram.bottomProcessing;
             echogramCopy.sensorPosition = srcEchogram.sensorPosition;
             echogramCopy.recordParameters_ = srcEchogram.recordParameters_;

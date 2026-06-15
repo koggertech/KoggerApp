@@ -102,6 +102,12 @@ map::TileInfo TileGoogleProvider::indexToTileInfo(map::TileIndex tileIndx, map::
     info.tileSizeMeters = resolution * tileSizePixels;
 
     info.bounds = bounds;
+    info.corners = {
+        bounds.south, bounds.west,  // SW
+        bounds.north, bounds.west,  // NW
+        bounds.north, bounds.east,  // NE
+        bounds.south, bounds.east,  // SE
+    };
 
     return info;
 }

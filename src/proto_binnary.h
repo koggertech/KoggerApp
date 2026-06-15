@@ -72,6 +72,7 @@ enum ID : uint16_t {
     ID_ACC_SETUP = 0x1C,
     ID_MAG_SETUP = 0x1D,
     ID_BARO_SETUP = 0x1E,
+    ID_DEV_SYNC = 0x1F,
 
     ID_VERSION = 0x20,
     ID_MARK = 0x21,
@@ -79,6 +80,9 @@ enum ID : uint16_t {
     ID_FLASH = 0x23,
     ID_BOOT = 0x24,
     ID_UPDATE = 0x25,
+
+    ID_SERVO_CONTROL = 0x27,
+    ID_PWM_ROUTE     = 0x28,
 
     ID_EVENT = 0x30,
     ID_VOLTAGE = 0x31,

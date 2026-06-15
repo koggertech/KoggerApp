@@ -38,7 +38,7 @@ static const char* hotkeyDescription(const QString& functionName)
         { "decreaseHighLevel",  QT_TRANSLATE_NOOP("HotkeysManager", "Decrease the upper brightness level of the echogram") },
         { "prevTheme",          QT_TRANSLATE_NOOP("HotkeysManager", "Switch the echogram theme to the previous one") },
         { "nextTheme",          QT_TRANSLATE_NOOP("HotkeysManager", "Switch the echogram theme to the next one") },
-        { "toggleEchogramType", QT_TRANSLATE_NOOP("HotkeysManager", "Toggle echogram type raw/side-scan") },
+        { "toggleEchogramType", QT_TRANSLATE_NOOP("HotkeysManager", "Switch echogram data type") },
         // 3D
         { "scene3dZoomIn",        QT_TRANSLATE_NOOP("HotkeysManager", "3D movement along the Z-axis down") },
         { "scene3dZoomOut",       QT_TRANSLATE_NOOP("HotkeysManager", "3D movement along the Z-axis up") },

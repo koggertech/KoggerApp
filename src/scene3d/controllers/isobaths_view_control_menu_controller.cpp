@@ -1,5 +1,8 @@
 #include "isobaths_view_control_menu_controller.h"
 #include "scene3d_view.h"
+#include "isobaths_defs.h"
+#include <QColor>
+#include <QVariantMap>
 
 
 IsobathsViewControlMenuController::IsobathsViewControlMenuController(QObject* parent)
@@ -242,4 +245,19 @@ void IsobathsViewControlMenuController::onSetExtraWidth(int val)
     else {
         tryInitPendingLambda();
     }
+}
+
+QVariantList IsobathsViewControlMenuController::themeStops(int index) const
+{
+    const QVector<QVector3D>& palette = IsobathUtils::colorPalette(index);
+    QVariantList stops;
+    const int count = palette.size();
+    for (int i = 0; i < count; ++i) {
+        const QVector3D& c = palette[i];
+        QVariantMap stop;
+        stop["pos"] = (count > 1) ? static_cast<double>(i) / (count - 1) : 0.0;
+        stop["color"] = QColor::fromRgbF(c.x(), c.y(), c.z()).name();
+        stops.append(stop);
+    }
+    return stops;
 }

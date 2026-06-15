@@ -63,7 +63,8 @@ MosaicProcessor::MosaicProcessor(DataProcessor* parent, ComputeWorker* computeWo
     lastAcceptedEpoch_(0),
     lAngleOffset_(0.0f),
     rAngleOffset_(0.0f),
-    generateGridContour_(false)
+    generateGridContour_(false),
+    lastTraceLineEpoch_(-1)
 {
     qRegisterMetaType<TileMap>("TileMap");
 }
@@ -81,6 +82,7 @@ void MosaicProcessor::clear()
 
     lastCalcEpoch_ = 0;
     lastAcceptedEpoch_ = 0;
+    lastTraceLineEpoch_ = -1;
 }
 
 void MosaicProcessor::setDatasetPtr(Dataset *datasetPtr)
@@ -103,7 +105,7 @@ void MosaicProcessor::setChannels(const ChannelId& firstChId, uint8_t firstSubCh
     segSSubChannelId_ = secondSubChId;
 }
 
-void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
+void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs, bool batchEmit)
 {
     //qDebug() << "";
     //qDebug() << "MosaicProcessor::updateDataWrapper" << indxs;
@@ -113,6 +115,13 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     }
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kMosaic));
+
+    // Batch chunk emissions only when the caller opted in (FAKE_COORDS+N radical repaints).
+    // Default off preserves the original incremental streaming behavior for real-time paint.
+    inBatch_ = batchEmit;
+    if (inBatch_) {
+        batchedTiles_.clear();
+    }
 
     // чанкование задачи
     const int kStep = 10;
@@ -261,6 +270,14 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
                                   Q_ARG(int, zoom));
     }
 
+    // Flush all accumulated chunks as a single tile delta — renderer transitions in one shot.
+    inBatch_ = false;
+    if (!batchedTiles_.isEmpty()) {
+        QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection,
+                                  Q_ARG(TileMap, batchedTiles_), Q_ARG(bool, true));
+        batchedTiles_.clear();
+    }
+
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
 
@@ -287,6 +304,11 @@ void MosaicProcessor::setTileResolution(float tileResolution)
     tileResolution_ = tileResolution;
     pixOnMeters_ = std::pow(tileResolution_, -1);
     aliasWindow_ = 100 / pixOnMeters_;
+}
+
+void MosaicProcessor::setSource(Source source)
+{
+    source_ = source;
 }
 
 void MosaicProcessor::setGenerageGridContour(bool state)
@@ -594,7 +616,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
     QVector<char>       isOdds; // 0 - even, 1 - odd
     QVector<int>        epochIndxs;
     QVector3D           lastLeftBeg, lastLeftEnd, lastRightBeg, lastRightEnd;
-    //bool                haveLastPair = false;
+    bool                haveNewTraceLine = false;
 
     // update matrix
     for (const auto& i : indxs) {
@@ -612,8 +634,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
                 if (auto segFCharts = epoch.chart(segFChannelId_, segFSubChannelId_); segFCharts) {
                     double leftAzRad = azRad - M_PI_2 + qDegreesToRadians(lAngleOffset_);
                     float lDist = segFCharts->range();
-                    lastLeftBeg = QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f);
-                    lastLeftEnd = QVector3D(pos.n, pos.e, 0.0f);
+                    float lDepth = static_cast<float>(segFCharts->bottomProcessing.getDistance());
+                    float lZ = (std::isfinite(lDepth) && lDepth > 0.0f) ? -lDepth : 0.0f;
+                    lastLeftBeg = QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), lZ);
+                    lastLeftEnd = QVector3D(pos.n, pos.e, lZ);
                     measLinesVertices.append(lastLeftBeg);
                     measLinesVertices.append(lastLeftEnd);
                     measLinesEvenIndices.append(currIndxSec_++);
@@ -628,8 +652,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
                 if (auto segSCharts = epoch.chart(segSChannelId_, segSSubChannelId_); segSCharts) {
                     double rightAzRad = azRad + M_PI_2 - qDegreesToRadians(rAngleOffset_);
                     float rDist = segSCharts->range();
-                    lastRightBeg = QVector3D(pos.n, pos.e, 0.0f);
-                    lastRightEnd = QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f);
+                    float rDepth = static_cast<float>(segSCharts->bottomProcessing.getDistance());
+                    float rZ = (std::isfinite(rDepth) && rDepth > 0.0f) ? -rDepth : 0.0f;
+                    lastRightBeg = QVector3D(pos.n, pos.e, rZ);
+                    lastRightEnd = QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), rZ);
                     measLinesVertices.append(lastRightBeg);
                     measLinesVertices.append(lastRightEnd);
                     measLinesOddIndices.append(currIndxSec_++);
@@ -642,16 +668,23 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
 
             if (acceptedEven || acceptedOdd) {
                 lastAcceptedEpoch_ = std::max(lastAcceptedEpoch_, i);
+                haveNewTraceLine = true;
             }
-
-            //if (acceptedEven && acceptedOdd) {
-            //    haveLastPair = true;
-            //}
         }
     }
 
     if (measLinesVertices.empty()) {
         return;
+    }
+
+    bool traceLineUpdated = false;
+    if (haveNewTraceLine && lastAcceptedEpoch_ > lastTraceLineEpoch_) {
+        lastLeftBeg_  = lastLeftBeg;
+        lastLeftEnd_  = lastLeftEnd;
+        lastRightBeg_ = lastRightBeg;
+        lastRightEnd_ = lastRightEnd;
+        lastTraceLineEpoch_ = lastAcceptedEpoch_;
+        traceLineUpdated = true;
     }
 
     const float tileSideMeters = tileSidePixelSize_ * tileResolution_;
@@ -846,11 +879,26 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
             !isfinite(segSCharts->bottomProcessing.getDistance())) {
             continue;
         }
-        if (segFCharts->amplitude.size() != segFCharts->compensated.size()) {
-            segFCharts->updateCompesated();
-        }
-        if (segSCharts->amplitude.size() != segSCharts->compensated.size()) {
-            segSCharts->updateCompesated();
+        switch (source_) {
+        case Source::Amplitude:
+            // ничего готовить не надо — читаем сырое
+            break;
+        case Source::Tgc:
+            if (segFCharts->amplitude.size() != segFCharts->tgc.size()) {
+                segFCharts->updateTgc();
+            }
+            if (segSCharts->amplitude.size() != segSCharts->tgc.size()) {
+                segSCharts->updateTgc();
+            }
+            break;
+        case Source::SideScan:
+            if (segFCharts->amplitude.size() != segFCharts->compensated.size()) {
+                segFCharts->updateCompesated();
+            }
+            if (segSCharts->amplitude.size() != segSCharts->compensated.size()) {
+                segSCharts->updateCompesated();
+            }
+            break;
         }
 
         // Bresenham, first segment
@@ -1090,16 +1138,24 @@ void MosaicProcessor::updateData(const QVector<int>& indxs, QSet<int>& usedEpoch
         qDebug() << "post up time, ms" << et.elapsed();
     }
 
-    // emit data
-    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
-    //if (haveLastPair) {
-    //    QMetaObject::invokeMethod(dataProcessor_, "postTraceLines", Qt::QueuedConnection,
-    //        Q_ARG(QVector3D, lastLeftBeg),
-    //        Q_ARG(QVector3D, lastLeftEnd),
-    //        Q_ARG(QVector3D, lastRightBeg),
-    //        Q_ARG(QVector3D, lastRightEnd)
-    //        );
-    //}
+    // emit data — buffer if we're in a batched run, else push immediately
+    if (inBatch_) {
+        for (auto it = res.cbegin(); it != res.cend(); ++it) {
+            batchedTiles_.insert(it.key(), it.value());
+        }
+    } else {
+        QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
+    }
+
+    if (traceLineUpdated) {
+        QMetaObject::invokeMethod(dataProcessor_, "postTraceLines", Qt::QueuedConnection,
+            Q_ARG(QVector3D, lastLeftBeg_),
+            Q_ARG(QVector3D, lastLeftEnd_),
+            Q_ARG(QVector3D, lastRightBeg_),
+            Q_ARG(QVector3D, lastRightEnd_),
+            Q_ARG(int, lastTraceLineEpoch_)
+        );
+    }
 }
 
 int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
@@ -1110,11 +1166,15 @@ int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
         return retVal;
     }
 
-    const auto ampSize = charts->compensated.size();
+    const QVector<uint8_t>& srcArr =
+        (source_ == Source::Tgc)       ? charts->tgc       :
+        (source_ == Source::Amplitude) ? charts->amplitude :
+                                         charts->compensated;
+    const auto ampSize = srcArr.size();
 
     if (ampSize > ampIndx) {
         if (aliasWindow_ == 1) {
-            int cVal = charts->compensated[ampIndx] ;
+            int cVal = srcArr[ampIndx];
             cVal = std::min(colorTableSize_, cVal);
             retVal = cVal;
         }
@@ -1127,14 +1187,14 @@ int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
                 rIndx > 0 && ampSize > rIndx) {
                 int newColorIndx = 0;
                 for (int i = lIndx; i < rIndx; ++i) {
-                    int cVal = charts->compensated[i] ;
+                    int cVal = srcArr[i];
                     cVal = std::min(colorTableSize_, cVal);
                     newColorIndx += cVal;
                 }
                 retVal = float(newColorIndx) / float(aliasWindow_);
             }
             else {
-                int cVal = charts->compensated[ampIndx] ;
+                int cVal = srcArr[ampIndx];
                 cVal = std::min(colorTableSize_, cVal);
                 retVal = cVal;
             }

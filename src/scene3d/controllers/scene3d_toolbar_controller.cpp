@@ -74,6 +74,7 @@ void Scene3dToolBarController::onBottomTrackVertexEditingModeButtonChecked(bool 
     isVertexEditingMode_ = checked;
 
     if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setEpochSyncEnabled(isVertexEditingMode_);
         if (isVertexEditingMode_) {
             graphicsScene3dViewPtr_->setBottomTrackVertexSelectionMode();
         }
@@ -545,6 +546,7 @@ void Scene3dToolBarController::tryInitPendingLambda()
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateBottomTrack", Qt::QueuedConnection, Q_ARG(bool, updateBottomTrack_));
                 }
 
+                graphicsScene3dViewPtr_->setEpochSyncEnabled(isVertexEditingMode_);
                 if (isVertexEditingMode_) {
                     graphicsScene3dViewPtr_->setBottomTrackVertexSelectionMode();
                 }

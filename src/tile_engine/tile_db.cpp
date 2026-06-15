@@ -143,6 +143,12 @@ QString TileDB::dbNameForProvider(int32_t providerId) const
         return "tiles_google";
     case kOsmProviderId:
         return "tiles_osm";
+    case kBaiduSatProviderId:
+        return "tiles_baidu_sat";
+    case kBaiduSchemaProviderId:
+        return "tiles_baidu_schema";
+    case kBaiduHybridProviderId:
+        return "tiles_baidu_hybrid";
     default:
         return "tiles_undefined";
     }

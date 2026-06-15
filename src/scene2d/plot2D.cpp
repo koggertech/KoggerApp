@@ -41,6 +41,7 @@ void MiniPreviewPlot2D::updateEchogramSettings(int themeId, float lowLevel, floa
 
 bool MiniPreviewPlot2D::render(QPainter* painter,
                                Dataset* dataset,
+                               const Plot2D* configSource,
                                const DatasetCursor& parentCursor,
                                int parentCanvasWidth,
                                int sourceLeft,
@@ -52,11 +53,7 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
                                int themeId,
                                float lowLevel,
                                float highLevel,
-                               int compensationId,
-                               bool bottomTrackVisible,
-                               int bottomTrackThemeId,
-                               bool rangefinderVisible,
-                               int rangefinderThemeId)
+                               int compensationId)
 {
     if (!painter || !dataset || previewWidth <= 0 || previewHeight <= 0 || parentCanvasWidth <= 0) {
         return false;
@@ -119,17 +116,18 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
     cursor_.numZeroEpoch = zeroEpochCount;
 
     updateEchogramSettings(themeId, lowLevel, highLevel, compensationId);
-    bottomProcessing_.setVisible(bottomTrackVisible);
-    bottomProcessing_.setTheme(bottomTrackThemeId);
-    rangefinder_.setVisible(rangefinderVisible);
-    rangefinder_.setTheme(rangefinderThemeId);
+    if (configSource) {
+        configSource->copyVisualConfigTo(*this);
+    }
 
     const bool rendered = echogram_.draw(this, dataset);
     if (!rendered) {
         return false;
     }
 
-    if (QPainter* canvasPainter = canvas_.painter(); canvasPainter != nullptr) {
+    QPainter* canvasPainter = canvas_.painter();
+
+    if (canvasPainter != nullptr) {
         for (const auto& range : noDataRanges) {
             const int xFrom = range.first;
             const int xTo = range.second;
@@ -139,9 +137,46 @@ bool MiniPreviewPlot2D::render(QPainter* painter,
         }
     }
 
+    attitude_.draw(this, dataset);
+    encoder_.draw(this, dataset);
+    dvlBeamVelocity_.draw(this, dataset);
+    dvlSolution_.draw(this, dataset);
+    usblSolution_.draw(this, dataset);
     bottomProcessing_.draw(this, dataset);
     rangefinder_.draw(this, dataset);
+    depth_.draw(this, dataset);
+    gnss_.draw(this, dataset);
+    quadrature_.draw(this, dataset);
+
     return true;
+}
+
+void Plot2D::copyVisualConfigTo(Plot2D& dst) const
+{
+    dst.setBottomTrackVisible(getBottomTrackVisible());
+    dst.setBottomTrackTheme(getBottomTrackTheme());
+    dst.setBottomTrackDepthTextVisible(false);
+
+    dst.setRangefinderVisible(getRangefinderVisible());
+    dst.setRangefinderTheme(getRangefinderTheme());
+    dst.setRangefinderDepthTextVisible(false);
+
+    dst.setAttitudeVisible(getAttitudeVisible());
+    dst.setTemperatureVisible(getTemperatureVisible());
+
+    dst.setDopplerBeamVisible(getDopplerBeamVisible(), getDopplerBeamFilter());
+    dst.setDopplerInstrumentVisible(getDopplerInstrumentVisible(), getDopplerInstrumentFilter());
+
+    dst.setAcousticAngleVisible(getAcousticAngleVisible());
+    dst.setGNSSVisible(getGNSSVisible(), 0);
+
+    dst.setGridVetricalNumber(getGridVerticalNumber());
+    dst.setGridFillWidth(getGridFillWidth());
+    dst.setGridInvert(getGridInvert());
+    dst.setAngleVisibility(getAngleVisibility());
+    dst.setAngleRange(getAngleRange());
+    dst.setVelocityVisible(getVelocityVisible());
+    dst.setVelocityRange(getVelocityRange());
 }
 
 
@@ -272,6 +307,8 @@ QPoint Plot2D::getMousePosByDepthAndEpochIndx(float depth, int epochIndx, bool i
 
 void Plot2D::addReRenderPlotIndxs(const QSet<int> &indxs)
 {
+    if (!plotEnabled())
+        return;
     echogram_.addReRenderPlotIndxs(indxs);
 }
 
@@ -362,6 +399,7 @@ void Plot2D::draw(QPainter *painterPtr)
     encoder_.draw(this, datasetPtr_);
     dvlBeamVelocity_.draw(this, datasetPtr_);
     dvlSolution_.draw(this, datasetPtr_);
+
     usblSolution_.draw(this, datasetPtr_);
     bottomProcessing_.draw(this, datasetPtr_);
     rangefinder_.draw(this, datasetPtr_);
@@ -369,11 +407,40 @@ void Plot2D::draw(QPainter *painterPtr)
     gnss_.draw(this, datasetPtr_);
     quadrature_.draw(this, datasetPtr_);
 
+    // grid draws first — sets lastRightTextX_ so legend uses current-frame value
     painterPtr->setCompositionMode(QPainter::CompositionMode_Exclusion);
     grid_.draw(this, datasetPtr_);
+    painterPtr->setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+    if (dvlLegendVisible_) {
+        const bool beamShow = dvlBeamVelocity_.isVisible() && dvlBeamVelocity_.hasData();
+        const bool solShow  = dvlSolution_.isVisible()     && dvlSolution_.hasData();
+        if (beamShow || solShow) {
+            constexpr int rowH = 22, headerH = 25, padV = 12, margin = 8;
+            const int beamH  = beamShow ? padV + headerH + dvlBeamVelocity_.countLegendItems() * rowH : 0;
+            const int solH   = solShow  ? padV + headerH + dvlSolution_.countLegendItems()     * rowH : 0;
+            const int totalH = beamH + (beamH > 0 && solH > 0 ? 4 : 0) + solH;
+
+            const int gridTextX = grid_.lastRightTextX();
+            const int rightLimit = (grid_.isVisible() && !grid_.isInvert() && gridTextX < canvas_.width())
+                ? gridTextX - margin
+                : canvas_.width() - margin;
+            const int bw  = beamShow ? dvlBeamVelocity_.boxWidth(canvas_) : 0;
+            const int sw  = solShow  ? dvlSolution_.boxWidth(canvas_)     : 0;
+            const int lx  = rightLimit - qMax(bw, sw);
+
+            const int startY = (dvlLegendPosIndex_ == 0) ? margin
+                : (dvlLegendPosIndex_ == 1) ? canvas_.height() / 2 - totalH / 2
+                : canvas_.height() - totalH - 55;
+
+            int y = startY;
+            y = dvlBeamVelocity_.drawLegend(canvas_, lx, y);
+            dvlSolution_.drawLegend(canvas_, lx, y);
+        }
+    }
+
     temperature_.draw(this, datasetPtr_);
     aim_.draw(this, datasetPtr_);
-
     contacts_.draw(this, datasetPtr_);
 }
 
@@ -437,6 +504,11 @@ void Plot2D::setTimelinePositionSec(float position)
 
 void Plot2D::setTimelinePositionByEpoch(int epochIndx)
 {
+    if (!datasetPtr_ || datasetPtr_->size() <= 0) {
+        cursor_.selectEpochIndx = -1;
+        return;
+    }
+
     const int halfWindow = static_cast<int>(cursor_.indexes.size() / 2);
     float pos = epochIndx == -1
         ? cursor_.position
@@ -447,6 +519,10 @@ void Plot2D::setTimelinePositionByEpoch(int epochIndx)
 
 void Plot2D::scrollPosition(int columns)
 {
+    if (!datasetPtr_ || datasetPtr_->size() <= 0) {
+        return;
+    }
+
     float new_position = timelinePosition() + (1.0f / datasetPtr_->size()) * columns;
     setTimelinePosition(new_position);
 }
@@ -677,8 +753,20 @@ void Plot2D::setDopplerBeamVisible(bool visible, int beam_filter) {
     plotUpdate();
 }
 
-void Plot2D::setDopplerInstrumentVisible(bool visible) {
+void Plot2D::setDopplerInstrumentVisible(bool visible, int line_filter) {
     dvlSolution_.setVisible(visible);
+    if (line_filter >= 0)
+        dvlSolution_.setLineFilter(line_filter);
+    plotUpdate();
+}
+
+void Plot2D::setDVLLegendVisible(bool visible) {
+    dvlLegendVisible_ = visible;
+    plotUpdate();
+}
+
+void Plot2D::setDVLLegendPosition(int pos) {
+    dvlLegendPosIndex_ = pos;
     plotUpdate();
 }
 
@@ -819,6 +907,15 @@ void Plot2D::scrollDistance(float ratio)
 }
 
 void Plot2D::setMousePosition(int x, int y, bool isSync) {
+    if (!datasetPtr_ || canvas_.width() <= 0 || canvas_.height() <= 0) {
+        cursor_.selectEpochIndx = -1;
+        cursor_.currentEpochIndx = -1;
+        cursor_.lastEpochIndx = -1;
+        cursor_.setMouse(-1, -1);
+        cursor_.setContactPos(-1, -1);
+        plotUpdate();
+        return;
+    }
 
     const int image_width = canvas_.width();
     const int image_height = canvas_.height();
@@ -932,6 +1029,7 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
         }
 
         if (cursor_.tool() == MouseToolDistance || cursor_.tool() == MouseToolDistanceErase) {
+            emit datasetPtr_->dataUpdate(); // refresh all 2D echograms (other panes)
             emit datasetPtr_->bottomTrackUpdated(cursor_.channel1, cursor_.getIndex(x_start), cursor_.getIndex(x_start + x_length), true, false);
         }
     }
@@ -941,6 +1039,12 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
 
 void Plot2D::simpleSetMousePosition(int x, int y)
 {
+    if (!datasetPtr_ || canvas_.width() <= 0 || canvas_.height() <= 0) {
+        cursor_.currentEpochIndx = -1;
+        cursor_.lastEpochIndx = -1;
+        return;
+    }
+
     const int image_width = canvas_.width();
     const int image_height = canvas_.height();
     int mouseX = -1;

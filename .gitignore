@@ -13,3 +13,16 @@ flasher
 .git
 .qtcreator
 .vscode
+dev-notes/
+CLAUDE.md
+AGENTS.md
+.codex/
+.cursorrules
+.cursor/
+.codex/
+.aider*
+.continue/
+.codeium/
+.claude/
+docs/KoggerApp-Docs/
+*.py

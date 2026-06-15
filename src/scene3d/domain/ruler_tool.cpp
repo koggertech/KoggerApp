@@ -1,6 +1,7 @@
 #include "ruler_tool.h"
 
 #include <cmath>
+#include <QCoreApplication>
 #include <QString>
 
 #include "draw_utils.h"
@@ -16,10 +17,10 @@ static QString formatDistanceMeters(double meters)
     }
 
     if (meters >= 1000.0) {
-        return QString("%1 km").arg(meters / 1000.0, 0, 'f', 3);
+        return QCoreApplication::translate("RulerTool", "%1 km").arg(meters / 1000.0, 0, 'f', 3);
     }
 
-    return QString("%1 m").arg(meters, 0, 'f', 2);
+    return QCoreApplication::translate("RulerTool", "%1 m").arg(meters, 0, 'f', 2);
 }
 
 RulerTool::RulerToolRenderImplementation::RulerToolRenderImplementation()
@@ -224,7 +225,7 @@ void RulerTool::RulerToolRenderImplementation::render(
 
     // Total label (XY only)
     const double totalMeters = totalDistanceXY(/*includePreview*/ true);
-    const QString label = QStringLiteral("Σ %1").arg(formatDistanceMeters(totalMeters));
+    const QString label = QCoreApplication::translate("RulerTool", "Σ %1").arg(formatDistanceMeters(totalMeters));
 
     QVector3D anchor = pts.back();
     QVector2D screen = anchor.project(view * model, projection, viewport.toRect()).toVector2D();

@@ -8,7 +8,6 @@
 #include "surface_tile.h"
 #include "isobaths_processor.h"
 #include "mosaic_processor.h"
-#include "bottom_track_processor.h"
 
 
 struct WorkBundle
@@ -16,6 +15,7 @@ struct WorkBundle
     QVector<QPair<char,int>> surfaceVec;
     QVector<int>             mosaicVec;
     bool                     doIsobaths{false};
+    bool                     batchMosaicEmit{false};
 
     void clear() {
         surfaceVec.clear();
@@ -23,6 +23,7 @@ struct WorkBundle
         mosaicVec.clear();
         mosaicVec.shrink_to_fit();
         doIsobaths = false;
+        batchMosaicEmit = false;
     }
 };
 Q_DECLARE_METATYPE(WorkBundle) // NOLINT(performance-enum-size)
@@ -50,7 +51,6 @@ public slots:
     void clearSurface();
     void clearMosaic();
     void clearIsobaths();
-    void clearBottomTrack();
 
     // settings
     void setDatasetPtr(Dataset* ds);
@@ -65,19 +65,17 @@ public slots:
     void setMosaicLAngleOffset(float val);
     void setMosaicRAngleOffset(float val);
     void setMosaicTileResolution(float res);
+    void setMosaicSource(int source);
     void applySurfaceZoomChange(const TileMap& cached, bool fullCoverage);
     void setMinZ(float v);
     void setMaxZ(float v);
 
     // tasks
-    void bottomTrackProcessing(const DatasetChannel& ch1, const DatasetChannel& ch2, const BottomTrackParam& p, bool manual, bool redrawAll);
     void processBundle(const WorkBundle& wb); // выполнить пачку задач последовательно
     void setVisibleTileKeys(const QSet<TileKey>& val);
 
 signals:
     void jobFinished(); // для dataProcessor (нормально, отмена)
-    void bottomTrackStarted();
-    void bottomTrackFinished();
 
 private:
     inline bool isCanceled() const noexcept;
@@ -90,7 +88,6 @@ private:
     SurfaceProcessor     surface_;
     IsobathsProcessor    isobaths_;
     MosaicProcessor      mosaic_;
-    BottomTrackProcessor bottom_;
 
     QSet<TileKey> visibleTileKeys_;
 };

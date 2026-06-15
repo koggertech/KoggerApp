@@ -9,8 +9,16 @@
 #include <QRegularExpression>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include "notifications.h"
+
+extern Notifications notifications;
 
 namespace {
+
+QString linkNotAvailableTag(const QUuid& uuid)
+{
+    return QStringLiteral("link-not-available:") + uuid.toString();
+}
 
 bool xmlBoolValue(const QString& value)
 {
@@ -561,6 +569,8 @@ Link *LinkManager::createNewLink() const
     QObject::connect(retVal, &Link::opened, this, &LinkManager::linkOpened);
     QObject::connect(retVal, &Link::baudrateChanged, this, &LinkManager::onLinkIsReceivesDataChanged);
     QObject::connect(retVal, &Link::isReceivesDataChanged, this, &LinkManager::onLinkIsReceivesDataChanged);
+    QObject::connect(retVal, &Link::isReceivesDataChanged, this, &LinkManager::onLinkDataFlowNotify);
+    QObject::connect(retVal, &Link::isNotAvailableChanged, this, &LinkManager::onLinkAvailabilityNotify);
     QObject::connect(retVal, &Link::sendDoRequestAll, this, &LinkManager::sendDoRequestAll);
 
     return retVal;
@@ -640,6 +650,45 @@ void LinkManager::onLinkIsReceivesDataChanged(QUuid uuid)
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
+    }
+}
+
+void LinkManager::onLinkDataFlowNotify(QUuid uuid)
+{
+    const auto linkPtr = getLinkPtr(uuid);
+    if (!linkPtr || !linkPtr->getConnectionStatus()) {
+        return;
+    }
+
+    const QString name = linkPtr->getPortName();
+    if (linkPtr->getIsRecievesData()) {
+        notifications.info(name.isEmpty() ? tr("Receiving data from link")
+                                          : tr("Receiving data from link: %1").arg(name));
+    }
+    else {
+        notifications.info(name.isEmpty() ? tr("No data from link")
+                                          : tr("No data from link: %1").arg(name));
+    }
+}
+
+void LinkManager::onLinkAvailabilityNotify(QUuid uuid)
+{
+    const auto linkPtr = getLinkPtr(uuid);
+    if (!linkPtr) {
+        return;
+    }
+
+    const QString name = linkPtr->getPortName();
+    const QString tag = linkNotAvailableTag(uuid);
+    if (linkPtr->getIsNotAvailable()) {
+        notifications.warning(name.isEmpty() ? tr("Link not available")
+                                             : tr("Link not available: %1").arg(name),
+                              tag);
+    }
+    else {
+        notifications.dismiss(tag);
+        notifications.info(name.isEmpty() ? tr("Link available")
+                                          : tr("Link available: %1").arg(name));
     }
 }
 
@@ -746,6 +795,7 @@ void LinkManager::deleteLink(QUuid uuid)
     const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        notifications.dismiss(linkNotAvailableTag(uuid));
         emit linkDeleted(linkPtr->getUuid(), linkPtr);
 
         emit deleteModel(linkPtr->getUuid());
@@ -812,7 +862,7 @@ void LinkManager::updateAddress(QUuid uuid, const QString &address)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAddress(address);
 
-        //doEmitAppendModifyModel(linkPtr); // why not?
+        doEmitAppendModifyModel(linkPtr);
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
@@ -825,7 +875,7 @@ void LinkManager::updateAutoSpeedSelection(QUuid uuid, bool state)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAutoSpeedSelection(state);
 
-        //doEmitAppendModifyModel(linkPtr); // why not?
+        doEmitAppendModifyModel(linkPtr);
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
@@ -838,7 +888,7 @@ void LinkManager::updateSourcePort(QUuid uuid, int sourcePort)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setSourcePort(sourcePort);
 
-        //doEmitAppendModifyModel(linkPtr); //
+        doEmitAppendModifyModel(linkPtr);
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
@@ -851,7 +901,7 @@ void LinkManager::updateDestinationPort(QUuid uuid, int destinationPort)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setDestinationPort(destinationPort);
 
-        //doEmitAppendModifyModel(linkPtr); //
+        doEmitAppendModifyModel(linkPtr);
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
@@ -864,6 +914,7 @@ void LinkManager::updatePinnedState(QUuid uuid, bool state)
     if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setIsPinned(state);
 
+        doEmitAppendModifyModel(linkPtr);
         exportPinnedLinksToXML();
     }
 }
@@ -875,6 +926,7 @@ void LinkManager::updateControlType(QUuid uuid, ControlType controlType)
     if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setControlType(controlType);
 
+        doEmitAppendModifyModel(linkPtr);
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
@@ -895,6 +947,7 @@ void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPo
     list_.append(newLinkPtr);
 
     doEmitAppendModifyModel(newLinkPtr);
+    emit linkCreatedInteractively(newLinkPtr->getUuid());
 }
 
 void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPort)
@@ -906,6 +959,7 @@ void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPo
     list_.append(newLinkPtr);
 
     doEmitAppendModifyModel(newLinkPtr);
+    emit linkCreatedInteractively(newLinkPtr->getUuid());
 }
 
 void LinkManager::openFLinks()

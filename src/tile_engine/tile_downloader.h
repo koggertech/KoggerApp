@@ -41,6 +41,7 @@ private slots:
 
 private:
     void startNextDownload();
+    void applyProviderHeaders(QNetworkRequest& request, int32_t providerId) const;
 
     /*data*/
     QNetworkAccessManager* networkManager_;

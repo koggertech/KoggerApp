@@ -95,6 +95,12 @@ map::TileInfo TileOsmProvider::indexToTileInfo(map::TileIndex tileIndx, map::Til
     info.tileSizeMeters = resolution * tileSizePixels;
 
     info.bounds = bounds;
+    info.corners = {
+        bounds.south, bounds.west,
+        bounds.north, bounds.west,
+        bounds.north, bounds.east,
+        bounds.south, bounds.east,
+    };
 
     return info;
 }

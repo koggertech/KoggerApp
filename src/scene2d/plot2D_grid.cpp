@@ -56,6 +56,8 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
     const int imageHeight{ canvas.height() }, imageWidth{ canvas.width() },
         linesCount{ _lines }, textXOffset{ 30 }, textYOffset{ 10 };
 
+    lastRightTextX_ = imageWidth; // reset to rightmost, updated to min during draw
+
     // линии
     for (int i = 1; i < linesCount; ++i) {
         const int posY = i * imageHeight / linesCount;
@@ -95,6 +97,8 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
 
         if (!lineText.isEmpty()) {
             const int textX = invert_ ? textXOffset : (imageWidth - textW - textXOffset);
+            if (!invert_)
+                lastRightTextX_ = qMin(lastRightTextX_, textX - 8); // 8 = padX from backdrop
             drawTextWithBackdrop(p, textX, posY - textYOffset, lineText);
         }
     }

@@ -1,0 +1,199 @@
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
+import "../controls"
+import "../menus"
+
+Item {
+    id: control
+    implicitWidth: 87
+    implicitHeight: theme.controlHeight * heightCoeff
+
+    property int heightCoeff: 5
+    property int widthSlider: theme.controlHeight
+    property int heightSlider: theme.controlHeight/2
+    property int mouseRange: height - heightSlider*2
+
+    property int from: 0
+    property int to: 120
+
+    property int startValue: 10
+    property int stopValue: 100
+
+    property int startPointY: valueToPosition(startValue)
+    property int stopPointY: valueToPosition(stopValue)
+    property int activeSlider: 1
+
+    property color borderColor: theme.textColor
+    property color backColor: theme.controlBackColor
+
+    function valueToPosition(val) {
+        return Math.round(mouseRange - val / (to - from) * mouseRange + heightSlider)
+    }
+
+    function mouseToVal(mauseCoord) {
+        var val = (mouseRange - mauseCoord) * (to - from) / mouseRange
+        return Math.max(Math.min(val, to), from)
+    }
+
+    function updateValue(mouseX, mouseY, pressed) {
+        var centerMouse = mouseY - heightSlider
+        var startCoord = centerMouse - heightSlider/2
+        var stopCoord = centerMouse + heightSlider/2
+
+        if(pressed) {
+            if(startPointY === stopPointY) {
+                if(mouseY > startPointY) {
+                    activeSlider = 1
+                } else {
+                    activeSlider = 2
+                }
+            } else if(Math.abs(startPointY - mouseY) < Math.abs(stopPointY - mouseY)) {
+                activeSlider = 1
+            } else {
+                activeSlider = 2
+            }
+        }
+
+        if(activeSlider === 1) {
+            startValue = mouseToVal(startCoord)
+            if(startValue > stopValue) {
+                stopValue = startValue
+            }
+        } else if(activeSlider === 2){
+            stopValue = mouseToVal(stopCoord)
+            if(stopValue < startValue) {
+                startValue = stopValue;
+            }
+        }
+
+        startPointY = valueToPosition(startValue)
+        stopPointY = valueToPosition(stopValue)
+
+        canvas.requestPaint()
+    }
+
+    function update() {
+        canvas.requestPaint()
+    }
+
+    property int wheelStep: 1
+
+    onMouseRangeChanged: {
+        startPointY = valueToPosition(startValue)
+        stopPointY  = valueToPosition(stopValue)
+        if (canvas) canvas.requestPaint()
+    }
+
+    onStartValueChanged: {
+        startPointY = valueToPosition(startValue)
+        if (canvas) canvas.requestPaint()
+    }
+    onStopValueChanged: {
+        stopPointY = valueToPosition(stopValue)
+        if (canvas) canvas.requestPaint()
+    }
+
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        preventStealing: true
+
+        onWheel: function(wheel) {
+            var delta = wheel.angleDelta.y > 0 ? control.wheelStep : -control.wheelStep
+            var closeToStart = Math.abs(startPointY - wheel.y) < Math.abs(stopPointY - wheel.y)
+            if (startPointY === stopPointY) {
+                closeToStart = wheel.y > startPointY
+            }
+            if (closeToStart) {
+                startValue = Math.max(from, Math.min(to, startValue + delta))
+                if (startValue > stopValue) stopValue = startValue
+            } else {
+                stopValue = Math.max(from, Math.min(to, stopValue + delta))
+                if (stopValue < startValue) startValue = stopValue
+            }
+            startPointY = valueToPosition(startValue)
+            stopPointY  = valueToPosition(stopValue)
+            canvas.requestPaint()
+            wheel.accepted = true
+        }
+
+        onPressed: {
+            updateValue(mouseX, mouseY, true)
+        }
+
+        onPositionChanged:  {
+            updateValue(mouseX, mouseY, false)
+        }
+    }
+
+    Connections {
+        target: theme
+
+        function onThemeIDChanged() {
+            canvas.requestPaint()
+        }
+    }
+
+    Canvas {
+        id: canvas
+        contextType: "2d"
+        anchors.fill: parent
+
+        onPaint: {
+            if (!context)
+                return;
+            context.reset();
+            context.fillStyle = parent.borderColor
+            context.lineWidth = 1
+            context.strokeStyle = parent.borderColor
+
+            var startPointX = width/2
+            var stopPointX = width/2
+            var startY = Math.round(startPointY)
+            var stopY = Math.round(stopPointY)
+
+            context.beginPath()
+            context.fillStyle =  parent.backColor
+            context.moveTo(startPointX - widthSlider/2, startY);
+            context.lineTo(stopPointX - widthSlider/2, stopY);
+            context.moveTo(startPointX + widthSlider/2, startY);
+            context.lineTo(stopPointX + widthSlider/2, stopY);
+            // context.fillRect(startPointX - widthSlider/2, startY,  widthSlider, stopY - startY);
+            context.stroke()
+
+
+            context.fillStyle =  parent.borderColor
+
+            context.beginPath()
+            context.moveTo(startPointX - widthSlider/2, startY);
+            context.lineTo(startPointX + widthSlider/2, startY);
+            context.lineTo(startPointX + widthSlider/2, startY + heightSlider/2);
+            context.lineTo(startPointX, startY + heightSlider - 2);
+            context.lineTo(startPointX - widthSlider/2, startY + heightSlider/2);
+            context.closePath();
+            context.fill();
+            context.stroke()
+
+            context.beginPath()
+            context.moveTo(stopPointX - widthSlider/2, stopY);
+            context.lineTo(stopPointX + widthSlider/2, stopY);
+            context.lineTo(stopPointX + widthSlider/2, stopY - heightSlider/2);
+            context.lineTo(stopPointX, stopY - heightSlider + 2);
+            context.lineTo(stopPointX - widthSlider/2, stopY - heightSlider/2);
+            context.closePath();
+            context.fill();
+            context.stroke()
+
+
+            context.beginPath()
+            context.moveTo(startPointX, height);
+            context.lineTo(startPointX, startY + heightSlider - 2);
+
+            context.moveTo(stopPointX, 0);
+            context.lineTo(stopPointX, stopY - heightSlider + 2);
+
+            context.stroke()
+        }
+    }
+}

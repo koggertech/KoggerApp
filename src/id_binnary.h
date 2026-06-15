@@ -519,6 +519,183 @@ protected:
 
 
 
+class IDBinServoControl : public IDBin
+{
+    Q_OBJECT
+public:
+    static constexpr int AngleScale = 100;
+
+    enum GeneralBits : U2 { GenEnable = 0x0001 };
+    enum OptionsBits : U2 { OptReverse = 0x0001 };
+
+    explicit IDBinServoControl() : IDBin() {}
+
+    ID id() override { return ID_SERVO_CONTROL; }
+    Resp parsePayload(FrameParser &proto) override;
+    void startColdStartTimer() override;
+
+    void setAll(U2 general, U2 options, U2 pwm_min_us, U2 pwm_max_us,
+                S2 angle_range_deg, S2 step_deg, S2 range_deg, S2 center_deg);
+
+    bool enabled() const { return (m_general & GenEnable) != 0; }
+    void setEnabled(bool on) {
+        U2 g = on ? (m_general | GenEnable) : (m_general & ~GenEnable);
+        setAll(g, m_options, m_pwmMinUs, m_pwmMaxUs, m_angleRangeDeg, m_stepDeg, m_rangeDeg, m_centerDeg);
+    }
+
+    bool reverse() const { return (m_options & OptReverse) != 0; }
+    void setReverse(bool on) {
+        U2 o = on ? (m_options | OptReverse) : (m_options & ~OptReverse);
+        setAll(m_general, o, m_pwmMinUs, m_pwmMaxUs, m_angleRangeDeg, m_stepDeg, m_rangeDeg, m_centerDeg);
+    }
+
+    U2 pwmMinUs() const { return m_pwmMinUs; }
+    void setPwmMinUs(U2 v) {
+        setAll(m_general, m_options, v, m_pwmMaxUs, m_angleRangeDeg, m_stepDeg, m_rangeDeg, m_centerDeg);
+    }
+
+    U2 pwmMaxUs() const { return m_pwmMaxUs; }
+    void setPwmMaxUs(U2 v) {
+        setAll(m_general, m_options, m_pwmMinUs, v, m_angleRangeDeg, m_stepDeg, m_rangeDeg, m_centerDeg);
+    }
+
+    S2 angleRangeDeg() const { return m_angleRangeDeg; }
+    void setAngleRangeDeg(S2 v) {
+        setAll(m_general, m_options, m_pwmMinUs, m_pwmMaxUs, v, m_stepDeg, m_rangeDeg, m_centerDeg);
+    }
+
+    S2 stepDeg() const { return m_stepDeg; }
+    void setStepDeg(S2 v) {
+        setAll(m_general, m_options, m_pwmMinUs, m_pwmMaxUs, m_angleRangeDeg, v, m_rangeDeg, m_centerDeg);
+    }
+
+    S2 rangeDeg() const { return m_rangeDeg; }
+    void setRangeDeg(S2 v) {
+        setAll(m_general, m_options, m_pwmMinUs, m_pwmMaxUs, m_angleRangeDeg, m_stepDeg, v, m_centerDeg);
+    }
+
+    S2 centerDeg() const { return m_centerDeg; }
+    void setCenterDeg(S2 v) {
+        setAll(m_general, m_options, m_pwmMinUs, m_pwmMaxUs, m_angleRangeDeg, m_stepDeg, m_rangeDeg, v);
+    }
+
+    void requestAll() override { simpleRequest(v0); }
+
+protected:
+    U2 m_general       = 0;
+    U2 m_options       = 0;
+    U2 m_pwmMinUs      = 500;
+    U2 m_pwmMaxUs      = 2500;
+    S2 m_angleRangeDeg = 18000;
+    S2 m_stepDeg       = 450;
+    S2 m_rangeDeg      = 18000;
+    S2 m_centerDeg     = 0;
+};
+
+
+
+class IDBinPwmRoute : public IDBin
+{
+    Q_OBJECT
+public:
+    static constexpr int PwmOutCount = 3;
+    enum Target : U1 { TargetOff = 0, TargetServoScan = 1 };
+
+    explicit IDBinPwmRoute() : IDBin() {}
+
+    ID id() override { return ID_PWM_ROUTE; }
+    Resp parsePayload(FrameParser &proto) override;
+    void startColdStartTimer() override;
+
+    void setRoute(U1 out1, U1 out2, U1 out3);
+
+    U1 target(int idx) const {
+        return (idx >= 0 && idx < PwmOutCount) ? m_target[idx] : static_cast<U1>(TargetOff);
+    }
+    void setTarget(int idx, U1 t) {
+        if (idx < 0 || idx >= PwmOutCount) return;
+        U1 t0 = m_target[0], t1 = m_target[1], t2 = m_target[2];
+        if (idx == 0) t0 = t;
+        else if (idx == 1) t1 = t;
+        else t2 = t;
+        setRoute(t0, t1, t2);
+    }
+
+    void requestAll() override { simpleRequest(v0); }
+
+protected:
+    U1 m_target[PwmOutCount] = { TargetServoScan, TargetOff, TargetOff };
+};
+
+
+
+class IDBinDevSync : public IDBin
+{
+    Q_OBJECT
+public:
+    enum SyncSource : U1 { SyncOff = 0, SyncTimer = 1 };
+
+    explicit IDBinDevSync() : IDBin() {}
+
+    ID id() override { return ID_DEV_SYNC; }
+    Resp parsePayload(FrameParser &proto) override;
+    void startColdStartTimer() override;
+    void requestAll() override { simpleRequest(v0); }
+
+    int  portCount() const { return m_portSource.size(); }
+    U1   portSource(int idx) const {
+        return (idx >= 0 && idx < m_portSource.size())
+            ? static_cast<U1>(m_portSource.at(idx))
+            : static_cast<U1>(SyncOff);
+    }
+    U2   periodMs() const { return m_periodMs; }
+    bool synced()  const { return m_synced; }
+
+    void setPortSource(int idx, U1 src) {
+        if (idx < 0 || idx >= m_portSource.size()) return;
+        if (static_cast<U1>(m_portSource.at(idx)) == src) return;
+        m_portSource[idx] = static_cast<char>(src);
+        m_pending = true;
+    }
+    void setPeriodMs(U2 ms) {
+        if (m_periodMs == ms) return;
+        m_periodMs = ms;
+        m_pending = true;
+    }
+
+    void flushPending();
+    void commitFromDisplayed() {
+        m_committedPortSource = m_portSource;
+        m_committedPeriodMs   = m_periodMs;
+        m_pending = false;
+    }
+    void revertToCommitted() {
+        m_portSource = m_committedPortSource;
+        m_periodMs   = m_committedPeriodMs;
+        m_pending = false;
+    }
+    void reset() {
+        m_synced  = false;
+        m_pending = false;
+        m_periodMs = 20;
+        m_portSource.clear();
+        m_committedPeriodMs = 20;
+        m_committedPortSource.clear();
+    }
+
+protected:
+    QByteArray m_portSource;
+    U2         m_periodMs = 20;
+    bool       m_synced   = false;
+
+    QByteArray m_committedPortSource;
+    U2         m_committedPeriodMs = 20;
+
+    bool       m_pending  = false;
+};
+
+
+
 class IDBinChartSetup : public IDBin
 {
     Q_OBJECT

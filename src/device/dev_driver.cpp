@@ -59,6 +59,10 @@ DevDriver::DevDriver(QObject *parent)
 
     regID(idUSBLControl = new IDBinUsblControl(), &DevDriver::receivedUSBLControl);
 
+    regID(idServoControl = new IDBinServoControl(), &DevDriver::receivedServoControl, true);
+    regID(idPwmRoute = new IDBinPwmRoute(), &DevDriver::receivedPwmRoute, true);
+    regID(idDevSync = new IDBinDevSync(), &DevDriver::receivedDevSync, true);
+
 #ifndef SEPARATE_READING
     connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process);
 #endif
@@ -70,6 +74,13 @@ DevDriver::DevDriver(QObject *parent)
     QObject::connect(idTransc, &IDBin::notifyDevDriver, this, &DevDriver::setTranscState);
     QObject::connect(idSoundSpeed, &IDBin::notifyDevDriver, this, &DevDriver::setSoundSpeedState);
     QObject::connect(idUART, &IDBin::notifyDevDriver, this, &DevDriver::setUartState);
+    QObject::connect(idServoControl, &IDBin::notifyDevDriver, this, &DevDriver::setServoControlState);
+    QObject::connect(idPwmRoute, &IDBin::notifyDevDriver, this, &DevDriver::setPwmRouteState);
+    QObject::connect(idDevSync, &IDBin::notifyDevDriver, this, &DevDriver::setDevSyncState);
+
+    m_devSyncDebounceTimer.setSingleShot(true);
+    m_devSyncDebounceTimer.setInterval(300);
+    connect(&m_devSyncDebounceTimer, &QTimer::timeout, this, &DevDriver::onDevSyncDebounceFired);
 }
 
 DevDriver::~DevDriver()
@@ -473,6 +484,45 @@ void DevDriver::setUartState(bool state) {
     }
 }
 
+void DevDriver::setServoControlState(bool state) {
+    if (state != servoControlState_) {
+        servoControlState_ = state;
+        emit servoControlChanged();
+    }
+}
+
+void DevDriver::setPwmRouteState(bool state) {
+    if (state != pwmRouteState_) {
+        pwmRouteState_ = state;
+        emit pwmRouteChanged();
+    }
+}
+
+void DevDriver::setDevSyncState(bool state) {
+    if (state != devSyncState_) {
+        devSyncState_ = state;
+        emit devSyncChanged();
+    }
+}
+
+void DevDriver::setDevSyncPeriodMs(int ms) {
+    if (!idDevSync) return;
+    idDevSync->setPeriodMs(static_cast<U2>(ms));
+    emit devSyncChanged();
+    m_devSyncDebounceTimer.start();
+}
+
+void DevDriver::setDevSyncPortSource(int idx, int src) {
+    if (!idDevSync) return;
+    idDevSync->setPortSource(idx, static_cast<U1>(src));
+    emit devSyncChanged();
+    m_devSyncDebounceTimer.start();
+}
+
+void DevDriver::onDevSyncDebounceFired() {
+    if (idDevSync) idDevSync->flushPending();
+}
+
 void DevDriver::setLinkUuid(QUuid linkUuid)
 {
     linkUuid_ = linkUuid;
@@ -481,6 +531,19 @@ void DevDriver::setLinkUuid(QUuid linkUuid)
 QUuid DevDriver::getLinkUuid() const
 {
     return linkUuid_;
+}
+
+void DevDriver::setLinkStatus(bool connected, bool receivesData, bool notAvailable)
+{
+    if (linkConnected_    == connected    &&
+        linkReceivesData_ == receivesData &&
+        linkNotAvailable_ == notAvailable)
+        return;
+
+    linkConnected_    = connected;
+    linkReceivesData_ = receivesData;
+    linkNotAvailable_ = notAvailable;
+    emit linkStatusChanged();
 }
 
 void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask)
@@ -674,6 +737,12 @@ void DevDriver::stopConnection() {
     m_state.connect = false;
     m_processTimer.stop();
     m_devName = "...";
+    if (idDevSync) {
+        idDevSync->reset();
+        m_devSyncDebounceTimer.stop();
+    }
+    setDevSyncState(false);
+    emit devSyncChanged();
     emit deviceVersionChanged();
 }
 
@@ -1141,6 +1210,8 @@ void DevDriver::receivedAtt(Parsers::Type type, Parsers::Version ver, Parsers::R
     if (!qFuzzyIsNull(yaw) || !qFuzzyIsNull(pitch) || !qFuzzyIsNull(roll)) {
         emit attitudeComplete(yaw, idAtt->pitch(), idAtt->roll());
     }
+
+    emit servoCurrentAngleChanged();
 }
 
 void DevDriver::receivedTemp(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
@@ -1173,6 +1244,36 @@ void DevDriver::receivedDistSetup(Parsers::Type type, Parsers::Version ver, Pars
     Q_UNUSED(ver);
 
     if(resp == respNone) {   emit distSetupChanged();  }
+}
+
+void DevDriver::receivedServoControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
+    if (resp == respNone) { emit servoControlChanged(); }
+}
+
+void DevDriver::receivedPwmRoute(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
+    if (resp == respNone) { emit pwmRouteChanged(); }
+}
+
+void DevDriver::receivedDevSync(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    if (!idDevSync) return;
+
+    if (resp == respNone || resp == respOk) {
+        idDevSync->commitFromDisplayed();
+        emit devSyncChanged();
+    } else if (resp == respErrorPayload) {
+        idDevSync->revertToCommitted();
+        emit devSyncErrorOccurred(tr("Sync config rejected by device"));
+        idDevSync->simpleRequest(v0);
+        emit devSyncChanged();
+    }
 }
 
 void DevDriver::receivedChartSetup(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
