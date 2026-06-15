@@ -1533,7 +1533,7 @@ GridLayout {
         }
 
         ParamGroup {
-            groupName: "KoggerApp 0.14.3"
+            groupName: "KoggerApp " + Qt.application.displayName.trim()
         }
     }
 
