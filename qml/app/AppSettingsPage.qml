@@ -409,6 +409,14 @@ Column {
             onToggled: { root.store.settingsPushContent = checked }
         }
 
+        KSwitch {
+            visible: Qt.platform.os === "android" || Qt.platform.os === "ios"
+            width: parent.width
+            text: qsTr("Rotate layout with device")
+            checked: root.store ? root.store.rotateLayoutEnabled : true
+            onToggled: if (root.store) root.store.rotateLayoutEnabled = checked
+        }
+
         Column {
             width: parent.width
             spacing: Tokens.spaceMd

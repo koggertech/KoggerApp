@@ -12,6 +12,10 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Rotate layout with device</source>
+        <translation>Obracaj układ z urządzeniem</translation>
+    </message>
+    <message>
         <source>Limit downloads on metered networks</source>
         <translation>Ogranicz pobieranie w sieci taryfowej</translation>
     </message>

@@ -12,6 +12,10 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Rotate layout with device</source>
+        <translation>Поворачивать раскладку с устройством</translation>
+    </message>
+    <message>
         <source>Limit downloads on metered networks</source>
         <translation>Ограничить загрузки в лимитированной сети</translation>
     </message>

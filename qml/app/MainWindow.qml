@@ -9,6 +9,8 @@ ApplicationWindow {
 
     readonly property bool isMobilePlatform: Qt.platform.os === "android" || Qt.platform.os === "ios"
 
+    readonly property int deviceOrientation: Screen.orientation
+
     // OS-active window tracker for F11 routing (updated via onActiveChanged of both windows).
     property var lastActiveWindow: root
 
@@ -26,6 +28,7 @@ ApplicationWindow {
 
         windowWidth: root.width
         windowHeight: root.height
+        layoutPortraitCW: root.deviceOrientation !== Qt.InvertedPortraitOrientation
 
         onSurfaceLayersRefreshRequested: updateBottomTrackForRegisteredPlots()
         Component.onCompleted: initLayerVisibilityControllers()

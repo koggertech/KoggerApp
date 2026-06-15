@@ -94,6 +94,7 @@ property bool resizeActive: false
 property bool layoutTransitionSuspended: false
 property string settingsSide: "left"
 property string selectedConnectionFilePath: ""
+property bool rotateLayoutEnabled: true
 property bool quickActionFavoritesEnabled: true
 property bool quickActionConnectionStatusEnabled: true
 property bool quickActionBottomTrackEnabled: true
@@ -442,6 +443,7 @@ property Settings layoutStore: Settings {
     property int activeLeafIdStored: -1
     property bool settingsPushContentStored: false
     property string settingsSideStored: "left"
+    property bool rotateLayoutEnabledStored: true
     property bool quickActionFavoritesEnabledStored: true
     property bool quickActionConnectionStatusEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
@@ -2618,6 +2620,7 @@ function saveLayoutState() {
     layoutStore.activeLeafIdStored = activeLeafId
     layoutStore.settingsPushContentStored = settingsPushContent
     layoutStore.settingsSideStored = settingsSide
+    layoutStore.rotateLayoutEnabledStored = rotateLayoutEnabled
     layoutStore.quickActionFavoritesEnabledStored = quickActionFavoritesEnabled
     layoutStore.quickActionConnectionStatusEnabledStored = quickActionConnectionStatusEnabled
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
@@ -2651,6 +2654,7 @@ function restoreLayoutState() {
     activeLeafId = hasLeafIdInTree(layoutTree, layoutStore.activeLeafIdStored) ? layoutStore.activeLeafIdStored : firstLeafId()
     settingsPushContent = layoutStore.settingsPushContentStored
     settingsSide = normalizedSettingsSide(layoutStore.settingsSideStored)
+    rotateLayoutEnabled = layoutStore.rotateLayoutEnabledStored
     quickActionFavoritesEnabled = layoutStore.quickActionFavoritesEnabledStored
     quickActionConnectionStatusEnabled = layoutStore.quickActionConnectionStatusEnabledStored
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
@@ -3034,6 +3038,34 @@ function ensureContentIds(node) {
     return node
 }
 
+readonly property bool layoutPortrait: rotateLayoutEnabled
+                                       && (Qt.platform.os === "android" || Qt.platform.os === "ios")
+                                       && windowWidth > 0 && windowHeight > windowWidth
+property bool layoutPortraitCW: true
+
+function flipSplits(node, cw) {
+    if (!node || node.type !== "split")
+        return node
+    var toHorizontal = node.orientation === "vertical"
+    var swap = toHorizontal ? !cw : cw
+    var ratio = swap ? (1.0 - node.ratio) : node.ratio
+    return {
+        type: "split",
+        splitId: node.splitId,
+        orientation: toHorizontal ? "horizontal" : "vertical",
+        ratio: ratio,
+        first:  flipSplits(swap ? node.second : node.first,  cw),
+        second: flipSplits(swap ? node.first  : node.second, cw)
+    }
+}
+
+function effectiveLayoutTree() {
+    return layoutPortrait ? flipSplits(layoutTree, layoutPortraitCW) : layoutTree
+}
+
+onLayoutPortraitChanged:   rebuildLayoutCaches()
+onLayoutPortraitCWChanged: if (layoutPortrait) rebuildLayoutCaches()
+
 function rebuildLayoutCaches(updateHandles) {
     if (updateHandles === undefined)
         updateHandles = true
@@ -3049,7 +3081,7 @@ function rebuildLayoutCaches(updateHandles) {
 
     var newRects = []
     var newHandles = []
-    splitRectByHandle(layoutTree, 0, 0, effectiveWorkspaceWidth(), effectiveWorkspaceHeight(), newRects, newHandles)
+    splitRectByHandle(effectiveLayoutTree(), 0, 0, effectiveWorkspaceWidth(), effectiveWorkspaceHeight(), newRects, newHandles)
     leafRects = newRects
     syncRectModel(leafRectModel, "rectData", newRects, "leafId")
     syncSlotContentIds(newRects)
@@ -3451,6 +3483,9 @@ function setSplitRatioById(splitId, ratio, updateHandles) {
 }
 
 function beginEdgeResize(leafId, edge, absX, absY) {
+    if (layoutPortrait)
+        return false
+
     var plan = edgePlanForLeaf(leafId, edge)
     if (!plan || !plan.moving)
         return false
@@ -3508,6 +3543,9 @@ function nearestSplitHandleAtPoint(absX, absY, orientation, maxDistancePx) {
 }
 
 function beginEdgeResizeWithFallback(leafId, edge, absX, absY) {
+    if (layoutPortrait)
+        return false
+
     edgeResizeHighlightLeafId = -1
     edgeResizeHighlightEdge = ""
 
