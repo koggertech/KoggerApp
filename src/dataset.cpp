@@ -467,6 +467,8 @@ void Dataset::addDist(const ChannelId& channelId, int dist)
     setLastRangefinderDepth(distMeters);
     setLastDepth(distMeters);
 
+    if (dist > 0)
+        markDataAvailable(hasRangefinderData_);
     emit dataUpdate();
 }
 
