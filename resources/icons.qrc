@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
+        <file>icons/app/kogger_app.png</file>
         <file>icons/ui/access_point.svg</file>
         <file>icons/ui/access_point_off.svg</file>
         <file>icons/ui/anchor.svg</file>
@@ -110,6 +111,11 @@
         <file>icons/ui/minus.svg</file>
         <file>icons/ui/file-check.svg</file>
         <file>icons/ui/building-broadcast-tower.svg</file>
+        <file>icons/ui/device-transducer.svg</file>
+        <file>icons/ui/device-usbl.svg</file>
+        <file>icons/ui/device-recorder.svg</file>
+        <file>icons/ui/device-doppler.svg</file>
+        <file>icons/ui/device-unknown.svg</file>
         <file>icons/ui/json.svg</file>
         <file>icons/ui/clock-edit.svg</file>
         <file>icons/ui/file-pencil.svg</file>
@@ -136,6 +142,7 @@
         <file>icons/ui/caret-down_.svg</file>
         <file>icons/ui/caret-down_full.svg</file>
         <file>icons/ui/line-off.svg</file>
+        <file>icons/ui/arrows-cross.svg</file>
         <file>icons/ui/map-off.svg</file>
         <file>icons/ui/line-height.svg</file>
         <file>icons/ui/polygon-off.svg</file>
@@ -161,6 +168,14 @@
         <file>icons/ui/current-location-full.svg</file>
         <file>icons/ui/current-location.svg</file>
         <file>icons/ui/navigation-north.svg</file>
+        <file>icons/ui/one-finger.svg</file>
+        <file>icons/ui/settings-outline.svg</file>
+        <file>icons/ui/tool.svg</file>
+        <file>icons/ui/conn.png</file>
+        <file>icons/ui/3dcube.svg</file>
+        <file>icons/ui/code-working.svg</file>
+        <file>icons/ui/combo-selection.svg</file>
+        <file>icons/ui/fit-in-view.svg</file>
         <file>icons/ui/route_crossed_out.svg</file>
         <file>icons/ui/double_route_crossed_out.svg</file>
     </qresource>

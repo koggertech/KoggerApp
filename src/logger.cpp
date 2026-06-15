@@ -400,12 +400,13 @@ bool Logger::creatExportStream(QString name)
 
     exportFile_->setFileName(localFilePath);
     isOpen = exportFile_->open(QIODevice::WriteOnly);
+    exportWriteFailed_ = false;
 
     if (isOpen) {
         core.consoleInfo("Export make file: " + exportFile_->fileName());
     }
     else {
-        core.consoleInfo("Export can't make file: " + exportFile_->fileName());
+        core.consoleWarning("Export can't make file: " + exportFile_->fileName() + " (" + exportFile_->errorString() + ")");
     }
 
     return isOpen;
@@ -413,17 +414,20 @@ bool Logger::creatExportStream(QString name)
 
 bool Logger::dataExport(QString str)
 {
-    if (exportFile_->isOpen()) {
-        exportFile_->write(str.toUtf8());
-    }
-
-    return true;
+    return dataByteExport(str.toUtf8());
 }
 
 bool Logger::dataByteExport(QByteArray data)
 {
-    if (exportFile_->isOpen()) {
-        exportFile_->write(data);
+    if (!exportFile_->isOpen()) {
+        exportWriteFailed_ = true;
+        return false;
+    }
+
+    const qint64 written = exportFile_->write(data);
+    if (written != data.size()) {
+        exportWriteFailed_ = true;
+        return false;
     }
 
     return true;
@@ -431,7 +435,27 @@ bool Logger::dataByteExport(QByteArray data)
 
 bool Logger::endExportStream()
 {
+    if (!exportFile_->isOpen()) {
+        return false;
+    }
+
+    const bool flushed = exportFile_->flush();
+    const bool hadError = exportWriteFailed_ ||
+                          exportFile_->error() != QFileDevice::NoError;
+    const QString path = exportFile_->fileName();
     exportFile_->close();
+
+    const QFileInfo info(path);
+    const bool fileOk = info.exists() && info.size() > 0;
+
+    if (!flushed || hadError || !fileOk) {
+        core.consoleWarning("Export verification failed: " + path);
+        if (info.exists() && info.size() == 0) {
+            QFile::remove(path);
+        }
+        return false;
+    }
+
     return true;
 }
 

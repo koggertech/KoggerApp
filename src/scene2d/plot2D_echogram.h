@@ -35,6 +35,7 @@ public:
     void setColorScheme(QVector<QColor> coloros, QVector<int> levels);
     int getThemeId() const;
     void setThemeId(int theme_id);
+    static void colormapFor(int theme_id, QVector<QColor>& coloros, QVector<int>& levels);
     int getCompensation() const;
     void setCompensation(int compensation_id);
     void setWrapEnabled(bool state);

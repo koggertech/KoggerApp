@@ -7,6 +7,7 @@
 #include <QQmlContext>
 #include <QThread>
 #include <QVariantList>
+#include <QHash>
 #ifdef FLASHER
 #include "flasher/deviceflasher.h"
 #endif
@@ -71,9 +72,11 @@ public:
     Q_PROPERTY(QString           mapTileProviderName          READ getMapTileProviderName          NOTIFY mapTileProviderChanged)
     Q_PROPERTY(QVariantList      mapTileProviders             READ getMapTileProviders             CONSTANT)
     Q_PROPERTY(bool              internetAvailable            READ getInternetAvailable            NOTIFY internetAvailableChanged)
+    Q_PROPERTY(bool              metered                      READ getMetered                      NOTIFY meteredChanged)
     Q_PROPERTY(bool              mapTileLoadingEnabled        READ getMapTileLoadingEnabled        WRITE setMapTileLoadingEnabled NOTIFY mapTileLoadingEnabledChanged)
     Q_PROPERTY(bool              needForceZooming             READ getNeedForceZooming             WRITE setNeedForceZooming NOTIFY needForceZoomingChanged)
     Q_PROPERTY(bool              posZeroing                   READ getPosZeroing                   NOTIFY posZeroingChanged)
+    Q_PROPERTY(int               bottomTrackEditTool          READ getBottomTrackEditTool          WRITE setBottomTrackEditTool          NOTIFY bottomTrackEditToolChanged)
 
     MosaicIndexProvider* getMosaicIndexProviderPtr();
     void setEngine(QQmlApplicationEngine *engine);
@@ -141,6 +144,10 @@ public slots:
     bool exportUSBLToCSV(QString filePath);
     bool exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation = 0);
     bool exportPlotAsXTF(QString filePath);
+    Q_INVOKABLE bool csvExportFieldEnabled(const QString& key) const;
+    Q_INVOKABLE void setCsvExportField(const QString& key, bool enabled);
+    Q_INVOKABLE void resetCsvExportFields();
+    void refreshMosaicProcessing();
     void setPlotStartLevel(int level);
     void setPlotStopLevel(int level);
     void setTimelinePosition(double position);
@@ -167,6 +174,8 @@ public slots:
     Q_INVOKABLE void setMosaicFakeCoordsLastN(int n);
     Q_INVOKABLE void setMosaicFakeCoordsClearOldData(bool state);
     bool getPosZeroing() const { return isActiveZeroing_; }
+    int  getBottomTrackEditTool() const { return bottomTrackEditTool_; }
+    Q_INVOKABLE void setBottomTrackEditTool(int tool);
     Q_INVOKABLE bool getIsFileOpening() const;
     Q_INVOKABLE bool getIsAppendMode() const;
     Q_INVOKABLE QString getFileTitle() const;
@@ -174,6 +183,7 @@ public slots:
     Q_INVOKABLE int getDataProcessorState() const;
     Q_INVOKABLE QString getChannel1Name() const;
     Q_INVOKABLE QString getChannel2Name() const;
+    Q_INVOKABLE void registerPlot2D(QObject* plotObj);
     Q_INVOKABLE void registerSyncLoupePlot(QObject* plotObj);
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
 
@@ -183,12 +193,16 @@ public slots:
     Q_INVOKABLE int getMapTileProviderId() const;
     Q_INVOKABLE QString getMapTileProviderName() const;
     Q_INVOKABLE QVariantList getMapTileProviders() const;
+    Q_INVOKABLE QVariantMap getMapTileDbInfo(int providerId) const;
     Q_INVOKABLE bool getInternetAvailable() const;
+    Q_INVOKABLE bool getMetered() const;
+    Q_INVOKABLE void setDeferTilesOnMetered(bool defer);
     Q_INVOKABLE bool getMapTileLoadingEnabled() const;
     Q_INVOKABLE void setMapTileLoadingEnabled(bool enabled);
     Q_INVOKABLE void moveAppToBackground();
 
 signals:
+    void csvExportFieldsReset();   // emitted by resetCsvExportFields() so UI can rebuild
     void connectionChanged(bool duplex = false);
     void filePathChanged();
     void openedFilePathChanged();
@@ -208,8 +222,11 @@ signals:
     void fixBlackStripesBackwardStepsChanged();
     void mapTileProviderChanged();
     void internetAvailableChanged();
+    void meteredChanged();
     void mapTileLoadingEnabledChanged();
     void posZeroingChanged();
+    void bottomTrackEditToolChanged();
+    void languageChanged();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
@@ -223,13 +240,19 @@ private slots:
 
 private:
     /*methods*/
+    void loadCsvExportFields();
+    void saveCsvExportFields();
+    QHash<QString, bool> csvExportFields_;   // key -> enabled (lazy-loaded from QSettings)
+    bool csvExportFieldsLoaded_ = false;
     void createMapTileManagerConnections();
     void createDatasetConnections();
     void createInternetManager();
     void destroyInternetManager();
+    void updateTileDownloadGate();
     void createDataProcessor();
     void destroyDataProcessor();
     void createScene3dConnections();
+    void bindPlot2D(qPlot2D* plot);
 
     void createDataHorizonConnections();
     void destroyDataHorizonConnections();
@@ -247,6 +270,7 @@ private:
     QString getFilePath() const;
     QString getOpenedFilePath() const;
     void fixFilePathString(QString& filePath) const;
+    void notifyFileOpened(const QString& filePath);
     void loadLLARefFromSettings();
     void onTgcParamsChanged();
     int loadSavedMapTileProviderId() const;
@@ -317,6 +341,9 @@ private:
     bool isGPSAlive_;
     bool isUseGPS_;
     bool internetAvailable_ = false;
+    bool internetStateKnown_ = false;
+    bool metered_ = false;
+    bool deferTilesOnMetered_ = true;
     bool mapTileLoadingEnabled_ = true;
     bool needForceZooming_ = false; // debug
 
@@ -326,6 +353,7 @@ private:
 
     bool isActiveZeroing_;
     bool isBottomTrackZeroing_;
+    int  bottomTrackEditTool_ = 0;
 
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)

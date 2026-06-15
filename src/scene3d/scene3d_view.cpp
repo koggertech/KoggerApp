@@ -153,6 +153,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(rulerTool_.get(), &RulerTool::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(geoJsonLayer_.get(), &GeoJsonLayer::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(&core, &Core::languageChanged, this, &QQuickFramebufferObject::update);
     QObject::connect(geoJsonController_, &GeoJsonController::documentChanged, this, [this]() {
         geoJsonRenderDirty_ = true;
         rebuildGeoJsonLayerIfNeeded();
@@ -639,12 +640,6 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
         }
     }
 
-    if (qmlRootObject_) { // maybe this will be removed
-        if (auto selectionToolButton = qmlRootObject_->findChild<QObject*>("selectionToolButton"); selectionToolButton) {
-            selectionToolButton->property("checked").toBool() ? m_mode = ActiveMode::BottomTrackVertexSelectionMode : m_mode = ActiveMode::Idle;
-        }
-    }
-
     if (mouseButton == Qt::MouseButton::RightButton) {
         switchToBottomTrackVertexComboSelectionMode(x, y);
     }
@@ -1077,7 +1072,7 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
         updateAxesRotation = true;
     }
     if (canRotateOrTilt && rotateWeight > 0.08 && absAngle > 0.05) {
-        m_camera->rotate(currCenter, currCenter, angleDelta * rotateWeight, height());
+        m_camera->rotate(currCenter, currCenter, -angleDelta * rotateWeight, height());
         updateAxesRotation = true;
     }
     if (updateAxesRotation) {
@@ -1176,6 +1171,16 @@ void GraphicsScene3dView::resetCameraAngleTrigger()
     QQuickFramebufferObject::update();
     onCameraMoved();
 }
+
+void GraphicsScene3dView::forceRefresh()
+{
+    forceUpdateDatasetLlaRef();
+    dataZoomIndx_ = -1;
+    updateProjection();
+    onCameraMoved();
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::setRulerEnabled(bool enabled)
 {
     if (rulerEnabled_ == enabled) {
@@ -1648,6 +1653,22 @@ void GraphicsScene3dView::setSyncEpochIndex(int epochIndex)
 
     refreshSyncLoupePreview();
     emit syncLoupeStateChanged();
+}
+
+void GraphicsScene3dView::setEpochSyncEnabled(bool state)
+{
+    if (epochSyncEnabled_ == state) {
+        return;
+    }
+
+    epochSyncEnabled_ = state;
+
+    if (!epochSyncEnabled_) {
+        m_bottomTrack->resetVertexSelection();
+        boatTrack_->clearSelectedEpoch();
+        setSyncEpochIndex(-1);
+        QQuickFramebufferObject::update();
+    }
 }
 
 void GraphicsScene3dView::updateForceSingleZoomAutoState()

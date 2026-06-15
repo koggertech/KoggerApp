@@ -8,7 +8,10 @@
 #include <QQuickWindow>
 #include <cmath>
 #include <limits>
+#include "core.h"
 #include "epoch_event.h"
+
+extern Core core;
 
 
 qPlot2D::qPlot2D(QQuickItem* parent)
@@ -19,8 +22,13 @@ qPlot2D::qPlot2D(QQuickItem* parent)
     qRegisterMetaType<DatasetChannel>("DatasetChannel");
 
 //    setRenderTarget(QQuickPaintedItem::FramebufferObject);
-//    connect(m_updateTimer, &QTimer::timeout, this, [&] { update(); });
+    connect(m_updateTimer, &QTimer::timeout, this, &qPlot2D::timerUpdater);
     m_updateTimer->start(30);
+    connect(this, &QQuickItem::widthChanged, this, &qPlot2D::updater);
+    connect(this, &QQuickItem::heightChanged, this, &qPlot2D::updater);
+    connect(this, &QQuickItem::visibleChanged, this, &qPlot2D::updater);
+    connect(this, &QQuickItem::parentChanged, this, [this](QQuickItem*) { updater(); });
+    connect(&core, &Core::languageChanged, this, &qPlot2D::updater);
     setFlag(ItemHasContents);
     setAcceptedMouseButtons(Qt::AllButtons);
 //    setFillColor(QColor(255, 255, 255));
@@ -186,10 +194,13 @@ void qPlot2D::paint(QPainter *painter)
 //}
 
 void qPlot2D::setPlot(Dataset *dataset) {
-    if(dataset == nullptr) { return; }
+    if (dataset == nullptr || m_plot == dataset) { return; }
+    if (m_plot != nullptr) {
+        QObject::disconnect(m_plot, &Dataset::dataUpdate, this, &qPlot2D::dataUpdate);
+    }
     m_plot = dataset;
     setDataset(dataset);
-    connect(dataset, &Dataset::dataUpdate, this, &qPlot2D::dataUpdate);
+    connect(dataset, &Dataset::dataUpdate, this, &qPlot2D::dataUpdate, Qt::UniqueConnection);
 //    connect(m_plot, &Dataset::updatedImage, this, [&] { updater(); });
 }
 
@@ -305,6 +316,10 @@ bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
 void qPlot2D::sendSyncEvent(int epoch_index, QEvent::Type eventType)
 {
     //qDebug() << "qPlot2D::sendSyncEvent: epoch_index: " << epoch_index;
+    if (!datasetPtr_ || epoch_index < 0) {
+        return;
+    }
+
     if (eventType == EpochSelected2d) {
         cursor_.selectEpochIndx = -1;
     }
@@ -320,6 +335,12 @@ void qPlot2D::horScrollEvent(int delta) {
         scrollPosition(-delta);
     } else {
         scrollPosition(delta);
+    }
+
+    // Don't allow scrolling into empty space — clamp to valid data range
+    const float minPos = viewportRatio();
+    if (cursor_.position < minPos) {
+        Plot2D::setTimelinePosition(minPos);
     }
 }
 
@@ -366,7 +387,12 @@ void qPlot2D::setPlotEnabled(bool state)
     }
     Plot2D::setPlotEnabled(state);
     Q_EMIT plotEnabledChanged();
-    update();
+    if (state) {
+        m_updateTimer->start(30);
+        update();
+    } else {
+        m_updateTimer->stop();
+    }
 }
 
 void qPlot2D::mosaicLOffsetChanged(float val)
@@ -392,6 +418,23 @@ float qPlot2D::getHighEchogramLevel() const
 int qPlot2D::getThemeId() const
 {
     return Plot2D::getThemeId();
+}
+
+QVariantList qPlot2D::echogramThemeStops(int id) const
+{
+    QVector<QColor> coloros;
+    QVector<int> levels;
+    Plot2DEchogram::colormapFor(id, coloros, levels);
+
+    QVariantList out;
+    const int n = qMin(coloros.size(), levels.size());
+    for (int i = 0; i < n; ++i) {
+        QVariantMap stop;
+        stop.insert("pos", levels[i] / 255.0);
+        stop.insert("color", coloros[i]);
+        out.append(stop);
+    }
+    return out;
 }
 
 int qPlot2D::getBottomTrackThemeId() const
@@ -429,6 +472,26 @@ void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, 
         }
     }
     plotUpdate();
+}
+
+void qPlot2D::updateBottomTrackProcessing()
+{
+    if (!datasetPtr_ || !dataProcessorPtr_)
+        return;
+
+    if (auto* btpPtr = datasetPtr_->getBottomTrackParamPtr(); btpPtr) {
+        doDistProcessing(static_cast<int>(btpPtr->preset),
+                         btpPtr->windowSize,
+                         btpPtr->verticalGap,
+                         btpPtr->minDistance,
+                         btpPtr->maxDistance,
+                         btpPtr->gainSlope,
+                         btpPtr->threshold,
+                         btpPtr->offset.x,
+                         btpPtr->offset.y,
+                         btpPtr->offset.z,
+                         true);
+    }
 }
 
 void qPlot2D::refreshDistParams(int preset, int windowSize, float verticalGap, float rangeMin, float rangeMax, float gainSlope, float threshold, float offsetX, float offsetY, float offsetZ)
@@ -586,9 +649,11 @@ void qPlot2D::onCursorMoved(int x, int y)
 }
 
 void qPlot2D::timerUpdater() {
-    if(m_needUpdate) {
+    if (!Plot2D::plotEnabled())
+        return;
+    if (m_needUpdate) {
         m_needUpdate = false;
-       update();
+        update();
     }
 }
 

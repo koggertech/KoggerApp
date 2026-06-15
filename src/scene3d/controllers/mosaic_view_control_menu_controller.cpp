@@ -2,6 +2,9 @@
 
 #include "scene3d_view.h"
 #include "data_processor.h"
+#include "draw_utils.h"
+#include <QColor>
+#include <QVariantMap>
 
 
 MosaicViewControlMenuController::MosaicViewControlMenuController(QObject *parent)
@@ -133,6 +136,28 @@ void MosaicViewControlMenuController::onThemeChanged(int val)
     else {
         tryInitPendingLambda();
     }
+}
+
+QVariantList MosaicViewControlMenuController::themeStops(int index) const
+{
+    mosaic::PlotColorTable table;
+    table.setTheme(index + 1);   // combo index → theme id (matches onThemeChanged)
+    const QVector<QRgb> ramp = table.getColorTable();
+    QVariantList stops;
+    const int rampSize = ramp.size();
+    if (rampSize <= 0)
+        return stops;
+
+    const int samples = 8;
+    for (int s = 0; s < samples; ++s) {
+        const double pos = (samples > 1) ? static_cast<double>(s) / (samples - 1) : 0.0;
+        const int rampIndex = qBound(0, static_cast<int>(pos * (rampSize - 1) + 0.5), rampSize - 1);
+        QVariantMap stop;
+        stop["pos"] = pos;
+        stop["color"] = QColor(ramp[rampIndex]).name();
+        stops.append(stop);
+    }
+    return stops;
 }
 
 void MosaicViewControlMenuController::onLevelChanged(float lowLevel, float highLevel)

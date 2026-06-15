@@ -533,6 +533,19 @@ QUuid DevDriver::getLinkUuid() const
     return linkUuid_;
 }
 
+void DevDriver::setLinkStatus(bool connected, bool receivesData, bool notAvailable)
+{
+    if (linkConnected_    == connected    &&
+        linkReceivesData_ == receivesData &&
+        linkNotAvailable_ == notAvailable)
+        return;
+
+    linkConnected_    = connected;
+    linkReceivesData_ = receivesData;
+    linkNotAvailable_ = notAvailable;
+    emit linkStatusChanged();
+}
+
 void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask)
 {
     Q_UNUSED(ask)

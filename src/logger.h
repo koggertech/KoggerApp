@@ -70,6 +70,7 @@ private:
     std::unique_ptr<QFile> klfLogFile_;
     std::unique_ptr<QFile> csvLogFile_;
     std::unique_ptr<QFile> exportFile_;
+    bool exportWriteFailed_ = false;
     Dataset* datasetPtr_;
     int klfCurrentIteration_;
 };

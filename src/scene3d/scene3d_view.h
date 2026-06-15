@@ -266,6 +266,7 @@ public:
     Q_INVOKABLE void panStepTrigger(qreal dx, qreal dy);
     Q_INVOKABLE void zStepTrigger(qreal delta);
     Q_INVOKABLE void resetCameraAngleTrigger();
+    Q_INVOKABLE void forceRefresh();
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
     Q_INVOKABLE void rulerFinishDrawing();
     Q_INVOKABLE void rulerCancelDrawing();
@@ -308,6 +309,8 @@ public:
     void setSyncLoupeZoom(int val);
     void setSyncLoupeZoomAdjusting(bool adjusting);
     void setSyncEpochIndex(int epochIndex);
+    void setEpochSyncEnabled(bool state);
+    bool isEpochSyncEnabled() const { return epochSyncEnabled_; }
 
     void setActiveZeroing(bool state);
 
@@ -508,6 +511,7 @@ private:
     bool syncLoupeZoomAdjusting_ = false;
     bool syncLoupeUiAllowed_ = true;
     int syncEpochIndex_ = -1;
+    bool epochSyncEnabled_ = true;
     bool syncLoupeOverlayVisible_ = false;
     float syncLoupeDepthFrom_ = 0.0f;
     float syncLoupeDepthTo_ = 0.0f;

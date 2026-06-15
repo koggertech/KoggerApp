@@ -342,7 +342,11 @@ void Link::setIsHided(bool isHided)
 
 void Link::setIsNotAvailable(bool isNotAvailable)
 {
+    if (isNotAvailable_ == isNotAvailable) {
+        return;
+    }
     isNotAvailable_ = isNotAvailable;
+    emit isNotAvailableChanged(uuid_);
 }
 
 void Link::setIsProxy(bool isProxy)
@@ -600,6 +604,7 @@ void Link::setDev(QIODevice *dev)
 {
     deleteDev();
     if (dev != nullptr) {
+        isReceivesData_ = false;
         ioDevice_ = dev;
 
         connect(dev, &QAbstractSocket::readyRead, this, &Link::readyRead);

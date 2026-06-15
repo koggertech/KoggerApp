@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <QThread>
+#include <QVariantList>
 
 #include "qml_component_controller.h"
 #include "data_processor.h"
@@ -30,6 +31,8 @@ public:
     Q_INVOKABLE void onResetIsobathsButtonClicked();
     Q_INVOKABLE void onEdgeLimitChanged(int val);
     Q_INVOKABLE void onSetExtraWidth(int val);
+    // Colormap gradient stops [{pos, color}] for the theme swatch (QML picker).
+    Q_INVOKABLE QVariantList themeStops(int index) const;
 
 protected:
     void findComponent() override;

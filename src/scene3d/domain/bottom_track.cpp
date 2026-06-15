@@ -26,13 +26,12 @@ SceneObject::SceneObjectType BottomTrack::type() const
 bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
 {
     Q_UNUSED(watched);
-    if (m_view->m_mode == GraphicsScene3dView::ActiveMode::Idle) {
+    if (!m_view->isEpochSyncEnabled()) {
         return false;
     }
     auto* epochEvent = dynamic_cast<EpochEvent*>(event);
     if (epochEvent && epochEvent->eventTypeId() == static_cast<int>(EpochSelected2d)) {
         resetVertexSelection();
-        m_view->m_mode = GraphicsScene3dView::ActiveMode::BottomTrackVertexSelectionMode;
         selectEpoch(epochEvent->epochIndex(), epochEvent->channel().channelId_);
     }
     return false;
@@ -241,7 +240,7 @@ void BottomTrack::resetVertexSelection()
 
 void BottomTrack::selectEpoch(int epochIndex, const ChannelId& channelId)
 {
-    if (m_view->m_mode != GraphicsScene3dView::BottomTrackVertexSelectionMode)
+    if (!m_view->isEpochSyncEnabled())
         return;
 
 
@@ -327,7 +326,7 @@ void BottomTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
     if (!m_view)
         return;
 
-    if (m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode) {
+    if (m_view->isEpochSyncEnabled()) {
         if (buttons.testFlag(Qt::LeftButton)) {
             auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
             if (!hits.isEmpty()) {

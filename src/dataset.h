@@ -66,6 +66,15 @@ public:
     Q_PROPERTY(int boatStatusSignalQualityBridgePercent READ boatStatusSignalQualityBridgePercent  NOTIFY boatStatusChanged)
     Q_PROPERTY(bool  spatialPreparing         READ isSpatialPreparing       NOTIFY spatialPreparingChanged)
 
+    Q_PROPERTY(bool hasChartData       READ hasChartData       NOTIFY dataAvailabilityChanged)
+    Q_PROPERTY(bool hasRangefinderData READ hasRangefinderData NOTIFY dataAvailabilityChanged)
+    Q_PROPERTY(bool hasAttitudeData    READ hasAttitudeData    NOTIFY dataAvailabilityChanged)
+    Q_PROPERTY(bool hasTemperatureData READ hasTemperatureData NOTIFY dataAvailabilityChanged)
+    Q_PROPERTY(bool hasDopplerBeamData READ hasDopplerBeamData NOTIFY dataAvailabilityChanged)
+    Q_PROPERTY(bool hasDvlSolutionData READ hasDvlSolutionData NOTIFY dataAvailabilityChanged)
+    Q_PROPERTY(bool hasPositionData    READ hasPositionData    NOTIFY dataAvailabilityChanged)
+    Q_PROPERTY(bool hasUsblData        READ hasUsblData        NOTIFY dataAvailabilityChanged)
+
     /*methods*/
     Dataset();
     ~Dataset() override;
@@ -289,6 +298,15 @@ public:
     float getLastDepth() const             { return lastDepth_;                };
     float getSpeed() const                 { return speed_;                    };
 
+    bool hasChartData() const       { return hasChartData_;       };
+    bool hasRangefinderData() const { return hasRangefinderData_; };
+    bool hasAttitudeData() const    { return hasAttitudeData_;    };
+    bool hasTemperatureData() const { return hasTemperatureData_; };
+    bool hasDopplerBeamData() const { return hasDopplerBeamData_; };
+    bool hasDvlSolutionData() const { return hasDvlSolutionData_; };
+    bool hasPositionData() const    { return hasPositionData_;    };
+    bool hasUsblData() const        { return hasUsblData_;        };
+
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float angle1_deg, float angle2_deg = NAN, float angle3_deg = NAN);
@@ -391,6 +409,7 @@ signals:
     void boatStatusChanged();
     void spatialPreparingChanged();
     void datasetStateChanged(int state);
+    void dataAvailabilityChanged();
 
     void sendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
 
@@ -426,6 +445,22 @@ protected:
     float lastAYaw_ = NAN, lastAPitch_ = NAN, lastARoll_ = NAN;
     float _lastYaw = NAN, _lastPitch = NAN, _lastRoll = NAN;
     float lastTemp_ = NAN;
+
+    bool hasChartData_       = false;
+    bool hasRangefinderData_ = false;
+    bool hasAttitudeData_    = false;
+    bool hasTemperatureData_ = false;
+    bool hasDopplerBeamData_ = false;
+    bool hasDvlSolutionData_ = false;
+    bool hasPositionData_    = false;
+    bool hasUsblData_        = false;
+
+    void markDataAvailable(bool& flag) { if (!flag) { flag = true; emit dataAvailabilityChanged(); } }
+    void resetDataAvailability() {
+        hasChartData_ = hasRangefinderData_ = hasAttitudeData_ = hasTemperatureData_ = false;
+        hasDopplerBeamData_ = hasDvlSolutionData_ = hasPositionData_ = hasUsblData_ = false;
+        emit dataAvailabilityChanged();
+    }
 
     Epoch* addNewEpoch();
 

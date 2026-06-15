@@ -10,6 +10,7 @@ public:
     Plot2DDVLBeamVelocity();
     bool draw(Plot2D* parent, Dataset* dataset) override;
     void setBeamFilter(int filter);
+    int getBeamFilter() const { return _beamFilter; }
     int drawLegend(Canvas& canvas, int x, int y);
     int boxWidth(Canvas& canvas) const;
     bool hasData() const { return _hasData; }

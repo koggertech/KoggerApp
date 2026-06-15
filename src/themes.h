@@ -5,6 +5,8 @@
 #include <QFont>
 #include <QColor>
 #include <QScreen>
+#include <QGuiApplication>
+#include <QSettings>
 #include <QDebug>
 #include <QtGlobal>
 
@@ -41,13 +43,26 @@ public:
         _menuWidth(0),
         _isConsoleVisible(false),
         instrumentsGrade_(-1),
-        resolutionCoeff_(1.0)
+        resolutionCoeff_(1.0),
+        manualScale_(1.0)
     {
+        // QSettings + Screen are not safe here (global static; runs before
+        // QGuiApplication exists). Call initSettings() from main() instead.
         setTheme();
+    }
+
+    // Call from main() after QCoreApplication::setOrganizationName/applicationName
+    // and QGuiApplication is up — loads persisted manualScale and recomputes resCoeff.
+    Q_INVOKABLE void initSettings() {
+        QSettings settings;
+        manualScale_ = qBound(0.5, settings.value("ui/manualScale", 1.0).toReal(), 2.5);
+        updateResCoeff();
+        emit changed();
     }
     ~Themes() override { clearThemeResources(); }
 
     Q_PROPERTY(qreal resCoeff READ getResolutionCoeff NOTIFY changed)
+    Q_PROPERTY(qreal manualScale READ manualScale WRITE setManualScale NOTIFY changed)
 
     Q_PROPERTY(QColor disabledTextColor READ disabledTextColor NOTIFY changed)
     Q_PROPERTY(QColor disabledBackColor READ disabledBackColor NOTIFY changed)
@@ -91,6 +106,18 @@ public:
     };
 
     qreal getResolutionCoeff() const { return resolutionCoeff_; };
+
+    qreal manualScale() const { return manualScale_; }
+    void setManualScale(qreal s) {
+        s = qBound(0.5, s, 2.5);
+        if (qFuzzyCompare(s + 1.0, manualScale_ + 1.0)) return;
+        manualScale_ = s;
+        QSettings settings;
+        settings.setValue("ui/manualScale", s);
+        updateResCoeff();
+        emit changed();
+    }
+
     QColor textColor() { return *_textColor; }
     QColor textErrorColor() { return *_textErrorColor; }
     QColor disabledTextColor() { return *_disabledTextColor; }
@@ -114,8 +141,10 @@ public:
     QColor tooltipBackColor() { return *_tooltipBackColor; }
     QColor tooltipBorderColor() { return *_tooltipBorderColor; }
     QColor tooltipTextColor() { return *_tooltipTextColor; }
-    int controlHeight() { return _controlHeight; }
-    int menuWidth() { return _menuWidth; }
+    // Scaled by manualScale so legacy controls (KButton, KTabBar, KSwitch, etc.
+    // that bind to theme.controlHeight) auto-resize with UI scale slider.
+    int controlHeight() { return qRound(_controlHeight * manualScale_); }
+    int menuWidth() { return qRound(_menuWidth * manualScale_); }
 
     Q_INVOKABLE QColor invertedColor(const QColor& color) const {
         return QColor::fromRgbF(1.0 - color.redF(), 1.0 - color.greenF(), 1.0 - color.blueF(), color.alphaF());
@@ -136,7 +165,7 @@ public:
 
     void setTheme(int theme_id = 0) {
         clearThemeResources();
-        if (theme_id < 0 || theme_id > 7) {
+        if (theme_id < 0 || theme_id > 9) {
             theme_id = 0;
         }
         _id = theme_id;
@@ -311,6 +340,46 @@ public:
             _disabledTextColor = new QColor(101, 123, 131);
             _disabledBackColor = new QColor(5, 38, 48);
             _hoveredBackColor = new QColor(14, 63, 76);
+        } else if(theme_id == 8) {
+            // Desert
+            _textColor = new QColor(36, 24, 6);
+            _textSolidColor = new QColor(36, 24, 6);
+            _menuBackColor = new QColor(196, 172, 112, 255);
+            _controlBackColor = new QColor(178, 154, 96);
+            _controlBorderColor = new QColor(138, 116, 64);
+            _controlSolidBackColor = new QColor(162, 138, 84);
+            _controlSolidBorderColor = new QColor(120, 98, 50);
+            _activeControlBackColor = new QColor(72, 52, 14);
+            _sliderHandleColor = new QColor(130, 108, 60);
+            _sliderHandlePressedColor = new QColor(150, 128, 78);
+            _placeholderTextColor = new QColor(36, 24, 6, 110);
+            _tooltipBackColor = new QColor(34, 24, 8, 242);
+            _tooltipBorderColor = new QColor(160, 134, 76, 90);
+            _tooltipTextColor = new QColor(230, 214, 176);
+
+            _disabledTextColor = new QColor(128, 108, 66);
+            _disabledBackColor = new QColor(188, 166, 108);
+            _hoveredBackColor = new QColor(212, 190, 130);
+        } else if(theme_id == 9) {
+            // Olive
+            _textColor = new QColor(218, 218, 208);
+            _textSolidColor = new QColor(218, 218, 208);
+            _menuBackColor = new QColor(52, 56, 40, 246);
+            _controlBackColor = new QColor(72, 76, 56);
+            _controlBorderColor = new QColor(36, 38, 26);
+            _controlSolidBackColor = new QColor(62, 66, 48);
+            _controlSolidBorderColor = new QColor(48, 52, 36);
+            _activeControlBackColor = new QColor(0, 0, 128);
+            _sliderHandleColor = new QColor(136, 140, 104);
+            _sliderHandlePressedColor = new QColor(156, 160, 122);
+            _placeholderTextColor = new QColor(200, 200, 186, 200);
+            _tooltipBackColor = new QColor(54, 58, 42, 240);
+            _tooltipBorderColor = new QColor(200, 200, 186, 50);
+            _tooltipTextColor = new QColor(218, 218, 208);
+
+            _disabledTextColor = new QColor(126, 128, 98);
+            _disabledBackColor = new QColor(44, 46, 34);
+            _hoveredBackColor = new QColor(86, 90, 66);
         }
 #if defined(Q_OS_ANDROID)
         _controlHeight = 48;
@@ -413,29 +482,41 @@ private:
 
     qreal checkResolutionCoeff() const;
     qreal resolutionCoeff_;
+    qreal manualScale_;
 };
 
 inline qreal Themes::checkResolutionCoeff() const
 {
-    qreal retVal = 1.0;
+    qreal autoCoeff = 1.0;
 
-#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
-    retVal = 2.0;
+#if defined(LINUX_ES)
+    // Embedded Linux build — small high-DPI panel, single hard value.
+    autoCoeff = 2.0;
+#elif defined(Q_OS_ANDROID)
+    // Android: physical/logical ratio reflects screen density (tablets give
+    // 2–4×), not OS scaling. Without compensation the UI ends up roughly
+    // twice as big as Windows at "100%". Halve the ratio and tighten bounds
+    // so a normal-density tablet lands close to the desktop baseline.
+    // Net (with QT_SCALE_FACTOR=0.5 in main.cpp): typical tablet ≈ 1.0×.
+    QScreen* screen = QGuiApplication::primaryScreen();
+    if (screen) {
+        qreal physical = screen->physicalDotsPerInch();
+        qreal logical  = screen->logicalDotsPerInch();
+        if (logical > 0.0)
+            autoCoeff = qBound(0.5, (physical / logical) * 0.5, 1.5);
+    }
+#else
+    // Desktop: physical/logical ratio reflects OS scaling (typically 1.0–1.5).
+    QScreen* screen = QGuiApplication::primaryScreen();
+    if (screen) {
+        qreal physical = screen->physicalDotsPerInch();
+        qreal logical  = screen->logicalDotsPerInch();
+        if (logical > 0.0)
+            autoCoeff = qBound(1.0, physical / logical, 2.5);
+    }
 #endif
 
-    // QScreen *screen = QApplication::primaryScreen();
-    // if (screen) {
-    //     auto physDotsPerInch = screen->physicalDotsPerInch();
-    //     Q_UNUSED(physDotsPerInch)
-
-
-    //     // retVal = 2.0; // test
-    //     // qDebug() << "Logical DPI:" << screen->logicalDotsPerInch();
-    //     // qDebug() << "Physical DPI:" << screen->physicalDotsPerInch();
-    //     // qDebug() << "Device Pixel Ratio:" << screen->devicePixelRatio();
-    // }
-
-    return retVal;
+    return autoCoeff * manualScale_;
 }
 
 #endif // THEME_H

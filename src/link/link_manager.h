@@ -38,6 +38,8 @@ public slots:
     void onUpgradingFirmwareStateChanged(QUuid uuid);
     void onLinkBaudrateChanged(QUuid uuid);
     void onLinkIsReceivesDataChanged(QUuid uuid);
+    void onLinkDataFlowNotify(QUuid uuid);
+    void onLinkAvailabilityNotify(QUuid uuid);
     void createAndStartTimer();
     void stopTimer();
     void onExpiredTimer();
@@ -73,6 +75,7 @@ signals:
                         LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
                         bool autoSpeedSelection, bool isUpgradingState);
     void deleteModel(QUuid uuid);
+    void linkCreatedInteractively(QUuid uuid);
     void frameReady(QUuid uuid, Link* link, Parsers::FrameParser frame);
     void linkClosed(QUuid uuid, Link* link);
     void linkOpened(QUuid uuid, Link* link);

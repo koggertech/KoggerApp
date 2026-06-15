@@ -12,8 +12,11 @@ public:
     bool draw(Plot2D* parent, Dataset* dataset) override;
 
     void setAngleVisibility(bool state);
+    bool getAngleVisibility() const { return angleVisibility_; }
     void setVetricalNumber(int grids) { _lines = grids; }
+    int getVetricalNumber() const { return _lines; }
     void setVelocityVisible(bool visible) { _velocityVisible = visible; }
+    bool getVelocityVisible() const { return _velocityVisible; }
     bool isFillWidth() const { return fillWidth_; }
     void setFillWidth(bool state) { fillWidth_ = state; }
     bool isInvert() const { return invert_; }
