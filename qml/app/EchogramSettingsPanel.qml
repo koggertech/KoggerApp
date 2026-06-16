@@ -336,37 +336,36 @@ Column {
                 onValueModified: function(val) { if (panel.vs) panel.vs.gridNumber = val }
             }
         }
-    }
 
-    ParamCard {
-        width: parent.width
-        label: qsTr("Angle range, °")
-        slotWidth: panel.comboW
-        checked: panel.vs ? panel.vs.angleVisible : false
-        onToggled: function(v) { if (panel.vs) panel.vs.angleVisible = v }
-        KSpinBox {
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            width: panel.comboW
-            from: 1; to: 360; stepSize: 1
-            value: panel.vs ? panel.vs.angleRange : 45
-            onValueModified: function(val) { if (panel.vs) panel.vs.angleRange = val }
+        ParamCard {
+            width: parent.width
+            label: qsTr("Angle range, °")
+            slotWidth: panel.comboW
+            checked: panel.vs ? panel.vs.angleVisible : false
+            onToggled: function(v) { if (panel.vs) panel.vs.angleVisible = v }
+            KSpinBox {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: panel.comboW
+                from: 1; to: 360; stepSize: 1
+                value: panel.vs ? panel.vs.angleRange : 45
+                onValueModified: function(val) { if (panel.vs) panel.vs.angleRange = val }
+            }
         }
-    }
-
-    ParamCard {
-        width: parent.width
-        label: qsTr("Velocity range, m/s")
-        slotWidth: panel.comboW
-        checked: panel.vs ? panel.vs.velocityVisible : false
-        onToggled: function(v) { if (panel.vs) panel.vs.velocityVisible = v }
-        KSpinBox {
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            width: panel.comboW
-            from: 500; to: 8000; stepSize: 500; divisor: 1000; decimals: 1
-            value: panel.vs ? panel.vs.velocityRange : 5000
-            onValueModified: function(val) { if (panel.vs) panel.vs.velocityRange = val }
+        ParamCard {
+            width: parent.width
+            label: qsTr("Velocity range, m/s")
+            slotWidth: panel.comboW
+            checked: panel.vs ? panel.vs.velocityVisible : false
+            onToggled: function(v) { if (panel.vs) panel.vs.velocityVisible = v }
+            KSpinBox {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: panel.comboW
+                from: 500; to: 8000; stepSize: 500; divisor: 1000; decimals: 1
+                value: panel.vs ? panel.vs.velocityRange : 5000
+                onValueModified: function(val) { if (panel.vs) panel.vs.velocityRange = val }
+            }
         }
     }
 
