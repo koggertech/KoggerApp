@@ -121,7 +121,9 @@ Item {
 
             Rectangle {
                 id: titleBadge
-                visible: !paneItem.isModeSelecting
+                // Идентификатор панели нужен только при редактировании раскладки;
+                // в обычном просмотре «Pane N» не показываем (как и остальной chrome).
+                visible: store.editableMode && !paneItem.isModeSelecting
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
                 anchors.leftMargin: 8
