@@ -27,8 +27,13 @@ Item {
         onCloseRequested: root.store.closeModeSettingsPanel()
 
         Loader {
+            id: paneSettingsLoader
             width: parent ? parent.width : implicitWidth
+            active: false
             sourceComponent: root.store.modeSettingsMode === "3D" ? pane3DSettings : pane2DSettings
+            readonly property int targetLeaf: root.store.modeSettingsLeafId
+            onTargetLeafChanged: { active = false; active = true }
+            Component.onCompleted: active = true
         }
 
         Component {

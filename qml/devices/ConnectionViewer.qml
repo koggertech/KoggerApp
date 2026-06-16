@@ -868,6 +868,7 @@ Column {
                     onClicked: {
                         if (store)
                             store.setActiveDeviceIndex(index)
+                        checked = Qt.binding(function() { return !!(store && store.activeDeviceIndex === index) })
                     }
                 }
             }

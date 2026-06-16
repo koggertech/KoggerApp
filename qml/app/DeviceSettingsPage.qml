@@ -137,15 +137,11 @@ Column {
         KSwitch {
             id: boosterSwitch
             width: parent.width; text: qsTr("Booster")
-            checked: dev ? (dev.transBoost === 1) : false
-            onToggled: { if (dev) dev.transBoost = checked ? 1 : 0 }
-            Connections {
-                target: dev; ignoreUnknownSignals: true
-                function onTransBoostChanged() {
-                    var v = dev.transBoost === 1
-                    if (boosterSwitch.checked !== v) boosterSwitch.checked = v
-                }
-            }
+            property bool wantChecked: !!(dev && dev.transBoost === 1)
+            property bool _g: false
+            onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
+            Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
+            onToggled: { if (!_g && dev) dev.transBoost = checked ? 1 : 0 }
         }
     }
 
@@ -192,12 +188,11 @@ Column {
             KTabBar {
                 id: datasetChartTab; width: parent.width
                 options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("8-bit"), value: 1 }]
-                currentValue: dev ? (dev.datasetChart === 1 ? 1 : 0) : 0
-                onValueSelected: function(v) { if (dev) dev.datasetChart = v }
-                Connections {
-                    target: dev; ignoreUnknownSignals: true
-                    function onDatasetChartChanged() { datasetChartTab.currentValue = dev.datasetChart === 1 ? 1 : 0 }
-                }
+                property int chartModel: dev ? (dev.datasetChart === 1 ? 1 : 0) : 0
+                property bool _g: false
+                onChartModelChanged: { if (currentValue !== chartModel) { _g = true; currentValue = chartModel; _g = false } }
+                Component.onCompleted: { _g = true; currentValue = chartModel; _g = false }
+                onValueSelected: function(v) { if (!_g && dev) dev.datasetChart = v }
             }
         }
 
@@ -207,58 +202,44 @@ Column {
             KTabBar {
                 id: datasetDistTab; width: parent.width
                 options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("On"), value: 1 }, { label: qsTr("NMEA"), value: 2 }]
-                currentValue: dev ? (dev.datasetDist === 1 ? 1 : (dev.datasetSDDBT === 1 ? 2 : 0)) : 0
+                property int distModel: dev ? (dev.datasetDist === 1 ? 1 : (dev.datasetSDDBT === 1 ? 2 : 0)) : 0
+                property bool _g: false
+                onDistModelChanged: { if (currentValue !== distModel) { _g = true; currentValue = distModel; _g = false } }
+                Component.onCompleted: { _g = true; currentValue = distModel; _g = false }
                 onValueSelected: function(v) {
-                    if (!dev) return
+                    if (_g || !dev) return
                     if (v === 1)      { dev.datasetDist = 1 }
                     else if (v === 2) { dev.datasetSDDBT = 1 }
                     else              { dev.datasetDist = 0; dev.datasetSDDBT = 0 }
-                }
-                Connections {
-                    target: dev; ignoreUnknownSignals: true
-                    function onDatasetDistChanged()  { datasetDistTab.currentValue = dev.datasetDist === 1 ? 1 : (dev.datasetSDDBT === 1 ? 2 : 0) }
-                    function onDatasetSDDBTChanged() { datasetDistTab.currentValue = dev.datasetDist === 1 ? 1 : (dev.datasetSDDBT === 1 ? 2 : 0) }
                 }
             }
         }
 
         KSwitch {
             id: ahrsSwitch; width: parent.width; text: qsTr("AHRS")
-            checked: dev ? ((dev.datasetEuler & 1) === 1) : false
-            onToggled: { if (dev) dev.datasetEuler = checked ? 1 : 0 }
-            Connections {
-                target: dev; ignoreUnknownSignals: true
-                function onDatasetEulerChanged() {
-                    var v = (dev.datasetEuler & 1) === 1
-                    if (ahrsSwitch.checked !== v) ahrsSwitch.checked = v
-                }
-            }
+            property bool wantChecked: !!(dev && (dev.datasetEuler & 1))
+            property bool _g: false
+            onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
+            Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
+            onToggled: { if (!_g && dev) dev.datasetEuler = checked ? 1 : 0 }
         }
 
         KSwitch {
             id: tempSwitch; width: parent.width; text: qsTr("Temperature")
-            checked: dev ? ((dev.datasetTemp & 1) === 1) : false
-            onToggled: { if (dev) dev.datasetTemp = checked ? 1 : 0 }
-            Connections {
-                target: dev; ignoreUnknownSignals: true
-                function onDatasetTempChanged() {
-                    var v = (dev.datasetTemp & 1) === 1
-                    if (tempSwitch.checked !== v) tempSwitch.checked = v
-                }
-            }
+            property bool wantChecked: !!(dev && (dev.datasetTemp & 1))
+            property bool _g: false
+            onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
+            Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
+            onToggled: { if (!_g && dev) dev.datasetTemp = checked ? 1 : 0 }
         }
 
         KSwitch {
             id: tsSwitch; width: parent.width; text: qsTr("Timestamp")
-            checked: dev ? ((dev.datasetTimestamp & 1) === 1) : false
-            onToggled: { if (dev) dev.datasetTimestamp = checked ? 1 : 0 }
-            Connections {
-                target: dev; ignoreUnknownSignals: true
-                function onDatasetTimestampChanged() {
-                    var v = (dev.datasetTimestamp & 1) === 1
-                    if (tsSwitch.checked !== v) tsSwitch.checked = v
-                }
-            }
+            property bool wantChecked: !!(dev && (dev.datasetTimestamp & 1))
+            property bool _g: false
+            onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
+            Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
+            onToggled: { if (!_g && dev) dev.datasetTimestamp = checked ? 1 : 0 }
         }
     }
 
