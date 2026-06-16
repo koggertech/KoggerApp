@@ -338,10 +338,8 @@ Column {
         }
     }
 
-    // ══ Angle range (instruments > 1) ════════════════════════════════════════════
     ParamCard {
         width: parent.width
-        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasUsblData)
         label: qsTr("Angle range, °")
         slotWidth: panel.comboW
         checked: panel.vs ? panel.vs.angleVisible : false
@@ -356,11 +354,8 @@ Column {
         }
     }
 
-    // ══ Velocity range (instruments > 1) ═════════════════════════════════════════
     ParamCard {
         width: parent.width
-        visible: panel.instruments > 1
-                 && panel.dataGate(panel.ds && (panel.ds.hasDopplerBeamData || panel.ds.hasDvlSolutionData))
         label: qsTr("Velocity range, m/s")
         slotWidth: panel.comboW
         checked: panel.vs ? panel.vs.velocityVisible : false
