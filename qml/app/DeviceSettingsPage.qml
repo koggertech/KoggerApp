@@ -257,8 +257,6 @@ Column {
         }
     }
 
-    // ── Действия ──────────────────────────────────────────────────────────
-
     SettingsGroup {
         id: devActionsGroup
         width: root.groupWidth; preferredWidth: root.groupWidth
@@ -266,14 +264,64 @@ Column {
         stateStore: root.store; stateKey: "dev.actions"; collapsedByDefault: true
         confirmed: !(dev && dev.uartState === false)
 
-        property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
-        property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         readonly property var baudrateOptions: [9600, 19200, 38400, 57600, 115200,
                                                 230400, 460800, 921600, 1200000, 2000000]
 
+        Row {
+            width: parent.width; spacing: Tokens.spaceSm
+            readonly property real bw: (width - 2 * Tokens.spaceSm) / 3
+            KButton {
+                width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                text: qsTr("Flash settings")
+                onClicked: { if (dev) { dev.flashSettings(); notifications.info(qsTr("Settings written to device: %1").arg(dev.devName)) } }
+            }
+            KButton {
+                width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                text: qsTr("Erase settings"); danger: true
+                onClicked: { if (dev) { dev.resetSettings(); notifications.info(qsTr("Settings erased on device: %1").arg(dev.devName)) } }
+            }
+            KButton {
+                width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                text: qsTr("Reboot")
+                onClicked: { if (dev) { dev.reboot(); notifications.info(qsTr("Reboot command sent: %1").arg(dev.devName)) } }
+            }
+        }
+        Row {
+            width: parent.width; spacing: Tokens.spaceSm
+            readonly property real setW: Math.round(120 * AppPalette.scale)
+            KCombo {
+                id: baudrateCombo
+                width: parent.width - parent.setW - Tokens.spaceSm
+                height: Tokens.controlHMd
+                model: devActionsGroup.baudrateOptions
+                currentIndex: devActionsGroup.baudrateOptions.indexOf(115200)
+            }
+            KButton {
+                width: parent.setW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                text: qsTr("Set baudrate")
+                onClicked: {
+                    if (dev) {
+                        var b = devActionsGroup.baudrateOptions[baudrateCombo.currentIndex]
+                        dev.baudrate = b
+                        notifications.info(qsTr("Baudrate set: %1").arg(b))
+                    }
+                }
+            }
+        }
+    }
+
+    SettingsGroup {
+        id: devSettingsGroup
+        width: root.groupWidth; preferredWidth: root.groupWidth
+        title: qsTr("Settings"); titlePixelSize: 13
+        stateStore: root.store; stateKey: "dev.settingsFile"; collapsedByDefault: true
+
+        property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+        property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+
         Settings {
-            property alias devImportFolder: devActionsGroup.importFolder
-            property alias devExportFolder: devActionsGroup.exportFolder
+            property alias devImportFolder: devSettingsGroup.importFolder
+            property alias devExportFolder: devSettingsGroup.exportFolder
         }
 
         function _localPath(u) {
@@ -295,10 +343,10 @@ Column {
             title: qsTr("Open settings file")
             fileMode: FileDialog.OpenFile
             nameFilters: ["XML files (*.xml)"]
-            onCurrentFolderChanged: devActionsGroup.importFolder = currentFolder
+            onCurrentFolderChanged: devSettingsGroup.importFolder = currentFolder
             onAccepted: {
-                devActionsGroup.importFolder = importXmlDialog.currentFolder
-                var lp = devActionsGroup._localPath(importXmlDialog.selectedFile)
+                devSettingsGroup.importFolder = importXmlDialog.currentFolder
+                var lp = devSettingsGroup._localPath(importXmlDialog.selectedFile)
                 if (dev && lp.length) dev.importSettingsFromXML(lp)
             }
         }
@@ -309,86 +357,173 @@ Column {
             fileMode: FileDialog.SaveFile
             nameFilters: ["XML files (*.xml)"]
             defaultSuffix: "xml"
-            onCurrentFolderChanged: devActionsGroup.exportFolder = currentFolder
+            onCurrentFolderChanged: devSettingsGroup.exportFolder = currentFolder
             onAccepted: {
-                devActionsGroup.exportFolder = exportXmlDialog.currentFolder
-                var lp = devActionsGroup._localPath(exportXmlDialog.selectedFile)
+                devSettingsGroup.exportFolder = exportXmlDialog.currentFolder
+                var lp = devSettingsGroup._localPath(exportXmlDialog.selectedFile)
                 if (dev && lp.length) dev.exportSettingsToXML(lp)
             }
         }
 
-        // ── Firmware ─────────────────────────────────────────────────────
-        Text {
-            text: qsTr("Firmware:")
-            color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd
-        }
-        Row {
-            width: parent.width; spacing: Tokens.spaceSm
-            readonly property real bw: (width - 2 * Tokens.spaceSm) / 3
-            KButton {
-                width: parent.bw; height: Tokens.controlHMd
-                fontPixelSize: Tokens.fontMd
-                text: qsTr("Save")
-                onClicked: { if (dev) dev.flashSettings() }
-            }
-            KButton {
-                width: parent.bw; height: Tokens.controlHMd
-                fontPixelSize: Tokens.fontMd
-                text: qsTr("Reset"); danger: true
-                onClicked: { if (dev) dev.resetSettings() }
-            }
-            KButton {
-                width: parent.bw; height: Tokens.controlHMd
-                fontPixelSize: Tokens.fontMd
-                text: qsTr("Reboot")
-                onClicked: { if (dev) dev.reboot() }
-            }
-        }
-
-        // ── Connection ───────────────────────────────────────────────────
-        Text {
-            text: qsTr("Baudrate:")
-            color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd
-        }
-        Row {
-            width: parent.width; spacing: Tokens.spaceSm
-            readonly property real setW: Math.round(72 * AppPalette.scale)
-
-            KCombo {
-                id: baudrateCombo
-                width: parent.width - parent.setW - Tokens.spaceSm
-                height: Tokens.controlHMd
-                model: devActionsGroup.baudrateOptions
-                currentIndex: devActionsGroup.baudrateOptions.indexOf(115200)
-            }
-
-            KButton {
-                width: parent.setW; height: Tokens.controlHMd
-                fontPixelSize: Tokens.fontMd
-                text: qsTr("Set")
-                onClicked: { if (dev) dev.baudrate = devActionsGroup.baudrateOptions[baudrateCombo.currentIndex] }
-            }
-        }
-
-        // ── Settings file ────────────────────────────────────────────────
-        Text {
-            text: qsTr("Settings file:")
-            color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd
-        }
         Row {
             width: parent.width; spacing: Tokens.spaceSm
             readonly property real bw: (width - Tokens.spaceSm) / 2
             KButton {
-                width: parent.bw; height: Tokens.controlHMd
-                fontPixelSize: Tokens.fontMd
+                width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Import XML")
-                onClicked: { importXmlDialog.currentFolder = devActionsGroup.importFolder; importXmlDialog.open() }
+                onClicked: { importXmlDialog.currentFolder = devSettingsGroup.importFolder; importXmlDialog.open() }
             }
             KButton {
-                width: parent.bw; height: Tokens.controlHMd
-                fontPixelSize: Tokens.fontMd
+                width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Export XML")
-                onClicked: { exportXmlDialog.currentFolder = devActionsGroup.exportFolder; exportXmlDialog.open() }
+                onClicked: { exportXmlDialog.currentFolder = devSettingsGroup.exportFolder; exportXmlDialog.open() }
+            }
+        }
+    }
+
+    SettingsGroup {
+        id: devUpgradeGroup
+        visible: !!(dev && dev.isUpgradeSupport)
+        width: root.groupWidth; preferredWidth: root.groupWidth
+        title: qsTr("Upgrade"); titlePixelSize: 13
+        stateStore: root.store; stateKey: "dev.upgrade"; collapsedByDefault: true
+
+        property var upgradeFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+        property string selectedUpgradePathSource: ""
+
+        Settings { property alias devUpgradeFolder: devUpgradeGroup.upgradeFolder }
+
+        function _src(value) {
+            if (!value) return ""
+            if (typeof value === "string") {
+                if (value.startsWith("file:///")) return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
+                if (value.startsWith("file://")) return value.slice(7)
+                return value
+            }
+            var lp = value.toLocalFile ? value.toLocalFile() : ""
+            return lp && lp.length ? lp : value.toString()
+        }
+        function _disp(value) {
+            var s = devUpgradeGroup._src(value)
+            if (!s.length) return ""
+            try { return decodeURIComponent(s) } catch (e) { return s }
+        }
+        function currentUpgradePath() {
+            var d = upgradePathInput.text
+            if (!d || !d.length) return ""
+            if (devUpgradeGroup.selectedUpgradePathSource
+                    && d === devUpgradeGroup._disp(devUpgradeGroup.selectedUpgradePathSource))
+                return devUpgradeGroup.selectedUpgradePathSource
+            return d
+        }
+        function setUpgradePath(path) {
+            devUpgradeGroup.selectedUpgradePathSource = devUpgradeGroup._src(path)
+            upgradePathInput.text = devUpgradeGroup._disp(devUpgradeGroup.selectedUpgradePathSource)
+        }
+
+        readonly property int _fwOk: 101
+        property string _activeTag: ""
+        property string _activeLabel: ""
+        property string _activeFw: ""
+        function _devLabel() {
+            if (!dev) return ""
+            var n = dev.devName ? dev.devName : ""
+            return dev.devSN ? (n + " (SN " + dev.devSN + ")") : n
+        }
+        function _baseName(p) {
+            if (!p) return ""
+            var s = String(p).replace(/\\/g, "/")
+            var i = s.lastIndexOf("/")
+            return i >= 0 ? s.slice(i + 1) : s
+        }
+
+        FileDialog {
+            id: upgradeFileDialog
+            title: qsTr("Please choose a file")
+            currentFolder: devUpgradeGroup.upgradeFolder
+            nameFilters: ["Upgrade files (*.ufw)"]
+            onCurrentFolderChanged: devUpgradeGroup.upgradeFolder = currentFolder
+            onAccepted: {
+                devUpgradeGroup.upgradeFolder = upgradeFileDialog.currentFolder
+                devUpgradeGroup.setUpgradePath(upgradeFileDialog.selectedFile)
+            }
+        }
+
+        // Прогресс прошивки (0..100).
+        Rectangle {
+            width: parent.width; height: Math.round(4 * AppPalette.scale); radius: height / 2
+            color: AppPalette.trackOff
+            readonly property int pct: dev && dev.upgradeFWStatus !== undefined
+                                       ? Math.max(0, Math.min(100, dev.upgradeFWStatus)) : 0
+            visible: pct > 0 && pct < 100
+            Rectangle {
+                height: parent.height; radius: parent.radius; color: AppPalette.accentBar
+                width: parent.width * parent.pct / 100
+            }
+        }
+
+        Row {
+            width: parent.width; spacing: Tokens.spaceSm
+            readonly property real browseW: Math.round(44 * AppPalette.scale)
+            Rectangle {
+                width: parent.width - parent.browseW - Tokens.spaceSm
+                height: Tokens.controlHMd; radius: Tokens.radiusMd
+                color: AppPalette.bg; border.width: 1
+                border.color: upgradePathInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                TextInput {
+                    id: upgradePathInput
+                    activeFocusOnTab: true
+                    anchors.fill: parent; anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
+                    verticalAlignment: TextInput.AlignVCenter
+                    color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
+                    TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: upgradePathInput.selectAll() }
+                    Text {
+                        visible: !upgradePathInput.text.length; text: qsTr("Enter path")
+                        color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
+            KButton {
+                width: parent.browseW; height: Tokens.controlHMd; text: "..."; fontPixelSize: Tokens.fontMd
+                onClicked: { upgradeFileDialog.currentFolder = devUpgradeGroup.upgradeFolder; upgradeFileDialog.open() }
+            }
+        }
+        KButton {
+            width: parent.width; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+            text: qsTr("UPGRADE")
+            visible: upgradePathInput.text !== ""
+            onClicked: {
+                if (!dev) return
+                var path = devUpgradeGroup.currentUpgradePath()
+                var fw = devUpgradeGroup._baseName(path)
+                var label = devUpgradeGroup._devLabel()
+                var tag = "fw-upgrade-" + (dev.devSN || 0)
+                if (core.upgradeFW(path, dev)) {
+                    devUpgradeGroup._activeTag = tag
+                    devUpgradeGroup._activeLabel = label
+                    devUpgradeGroup._activeFw = fw
+                    notifications.warning(qsTr("Flashing device %1 with file %2").arg(label).arg(fw), tag)
+                } else {
+                    notifications.warning(qsTr("Failed to open firmware file: %1").arg(fw))
+                }
+            }
+        }
+
+        Connections {
+            target: dev
+            ignoreUnknownSignals: true
+            function onUpgradingFirmwareDone() {
+                if (!devUpgradeGroup._activeTag.length) return
+                notifications.dismiss(devUpgradeGroup._activeTag)
+                if (dev && dev.upgradeFWStatus === devUpgradeGroup._fwOk)
+                    notifications.info(qsTr("Device %1 successfully flashed with file %2")
+                                       .arg(devUpgradeGroup._activeLabel).arg(devUpgradeGroup._activeFw))
+                else
+                    notifications.warning(qsTr("Failed to flash device %1 with file %2 (error code %3)")
+                                          .arg(devUpgradeGroup._activeLabel).arg(devUpgradeGroup._activeFw)
+                                          .arg(dev ? dev.upgradeFWStatus : -1))
+                devUpgradeGroup._activeTag = ""
             }
         }
     }
