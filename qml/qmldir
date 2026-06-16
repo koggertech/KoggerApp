@@ -14,12 +14,7 @@ CSlider 1.0 controls/CSlider.qml
 CText 1.0 controls/CText.qml
 CTextField 1.0 controls/CTextField.qml
 CheckButton 1.0 controls/CheckButton.qml
-ConnectionButton 1.0 controls/ConnectionButton.qml
-MouseOpacityArea 1.0 controls/MouseOpacityArea.qml
 SpinBoxCustom 1.0 controls/SpinBoxCustom.qml
-CustomGroupBox 1.0 controls/CustomGroupBox.qml
-AdjBox 1.0 controls/AdjBox.qml
-AdjBoxBack 1.0 controls/AdjBoxBack.qml
 BackStyle 1.0 controls/BackStyle.qml
 ComboBackStyle 1.0 controls/ComboBackStyle.qml
 TabBackStyle 1.0 controls/TabBackStyle.qml

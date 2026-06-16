@@ -107,12 +107,7 @@
         <file>qml/controls/CText.qml</file>
         <file>qml/controls/CTextField.qml</file>
         <file>qml/controls/CheckButton.qml</file>
-        <file>qml/controls/ConnectionButton.qml</file>
-        <file>qml/controls/MouseOpacityArea.qml</file>
         <file>qml/controls/SpinBoxCustom.qml</file>
-        <file>qml/controls/CustomGroupBox.qml</file>
-        <file>qml/controls/AdjBox.qml</file>
-        <file>qml/controls/AdjBoxBack.qml</file>
         <file>qml/controls/BackStyle.qml</file>
         <file>qml/controls/ComboBackStyle.qml</file>
         <file>qml/controls/TabBackStyle.qml</file>

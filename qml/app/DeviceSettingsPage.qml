@@ -63,6 +63,7 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Echogram"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.echogram"; collapsedByDefault: true
+        visible: !!(dev && dev.isChartSupport)
         confirmed: !(dev && dev.chartSetupState === false)
 
         Row {
@@ -90,6 +91,7 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Rangefinder"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.rangefinder"; collapsedByDefault: true
+        visible: !!(dev && dev.isDistSupport)
         confirmed: !(dev && dev.distSetupState === false)
 
         Row {
@@ -117,6 +119,7 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Transducer"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.transducer"; collapsedByDefault: true
+        visible: !!(dev && dev.isTransducerSupport)
         confirmed: !(dev && dev.transcState === false)
 
         Row {
@@ -152,6 +155,7 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("DSP"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.dsp"; collapsedByDefault: true
+        visible: !!(dev && dev.isDSPSupport)
         confirmed: !(dev && (dev.dspState === false || dev.soundState === false))
 
         Row {
@@ -173,6 +177,7 @@ Column {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Dataset"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.dataset"; collapsedByDefault: true
+        visible: !!(dev && dev.isDatasetSupport)
         confirmed: !(dev && dev.datasetState === false)
 
         Row {
