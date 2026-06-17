@@ -6,6 +6,18 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTORCC ON)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    file(GLOB _gcc_dirs LIST_DIRECTORIES true /usr/lib/gcc/x86_64-linux-gnu/*)
+    list(SORT _gcc_dirs)
+    list(REVERSE _gcc_dirs)
+    if(_gcc_dirs)
+        list(GET _gcc_dirs 0 _gcc_dir)
+        if(IS_DIRECTORY "${_gcc_dir}")
+            add_compile_options(--gcc-install-dir=${_gcc_dir})
+        endif()
+    endif()
+endif()
+
 list(APPEND QT_SKIP_AUTO_PLUGIN_INCLUSION
     QMYSQLDriverPlugin
     QMimerSQLDriverPlugin
