@@ -3,6 +3,7 @@
 build
 # deploy folder
 out_x64
+out_android
 # Qt Creator
 *.pro.user
 *.user

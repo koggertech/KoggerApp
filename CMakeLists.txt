@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.22)
 
 project(KoggerApp VERSION 1.0.0 LANGUAGES CXX)
 
+if(ANDROID)
+    set(QT_ANDROID_ABIS "armeabi-v7a;arm64-v8a" CACHE STRING "Android target ABIs" FORCE)
+endif()
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTORCC ON)
@@ -119,6 +123,20 @@ target_sources(KoggerApp PRIVATE
 
 # ── Platform branches ────────────────────────────────────────────────────
 if(ANDROID)
+    set_target_properties(KoggerApp PROPERTIES
+        QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/platform/android)
+    target_include_directories(KoggerApp PRIVATE ${CMAKE_SOURCE_DIR})
+    target_link_libraries(KoggerApp PRIVATE
+        "${CMAKE_SOURCE_DIR}/third_party/freetype/lib/${CMAKE_ANDROID_ARCH_ABI}/libfreetype.a"
+        z)
+    target_sources(KoggerApp PRIVATE platform/android/shaders.qrc)
+    if(NOT ANDROID_SDK_ROOT)
+        set(ANDROID_SDK_ROOT "$ENV{ANDROID_SDK_ROOT}")
+    endif()
+    if(EXISTS "${ANDROID_SDK_ROOT}/android_openssl/android_openssl.cmake")
+        include("${ANDROID_SDK_ROOT}/android_openssl/android_openssl.cmake")
+        add_android_openssl_libraries(KoggerApp)
+    endif()
     add_subdirectory(platform/android/src)
 elseif(WIN32)
     set_target_properties(KoggerApp PROPERTIES WIN32_EXECUTABLE ON)
