@@ -45,7 +45,6 @@ ConnectionViewer 1.0 devices/ConnectionViewer.qml
 DeviceItem 1.0 devices/DeviceItem.qml
 DeviceSettingsViewer 1.0 devices/DeviceSettingsViewer.qml
 DevSettingsBox 1.0 devices/DevSettingsBox.qml
-DevAddrBox 1.0 devices/DevAddrBox.qml
 SonarBox 1.0 devices/SonarBox.qml
 DopplerBox 1.0 devices/DopplerBox.qml
 USBLBox 1.0 devices/USBLBox.qml

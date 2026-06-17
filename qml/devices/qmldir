@@ -1,6 +1,5 @@
 ConnectionViewer 1.0 ConnectionViewer.qml
 FilesViewer 1.0 FilesViewer.qml
-DevAddrBox 1.0 DevAddrBox.qml
 DevSettingsBox 1.0 DevSettingsBox.qml
 DeviceItem 1.0 DeviceItem.qml
 DeviceSettingsViewer 1.0 DeviceSettingsViewer.qml

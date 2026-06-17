@@ -119,7 +119,6 @@
         <file>qml/devices/DeviceItem.qml</file>
         <file>qml/devices/DeviceSettingsViewer.qml</file>
         <file>qml/devices/DevSettingsBox.qml</file>
-        <file>qml/devices/DevAddrBox.qml</file>
         <file>qml/devices/SonarBox.qml</file>
         <file>qml/devices/DopplerBox.qml</file>
         <file>qml/devices/USBLBox.qml</file>

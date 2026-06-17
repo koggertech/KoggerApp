@@ -100,12 +100,5 @@ MenuScroll {
                 width: menuWidth
             }
         }
-
-
-//        DevAddrBox {
-//            dev: devConnection.dev
-//            Layout.fillWidth: true
-//            Layout.preferredWidth: parent.width
-//        }
     }
 }
