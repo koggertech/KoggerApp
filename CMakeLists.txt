@@ -6,6 +6,12 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTORCC ON)
 
+list(APPEND QT_SKIP_AUTO_PLUGIN_INCLUSION
+    QMYSQLDriverPlugin
+    QMimerSQLDriverPlugin
+    QODBCDriverPlugin
+    QPSQLDriverPlugin)
+
 find_package(Qt6 REQUIRED COMPONENTS
     Core Gui Qml Quick QuickControls2 Network Sql Concurrent Positioning Svg)
 
