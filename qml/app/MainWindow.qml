@@ -659,11 +659,7 @@ ApplicationWindow {
             onMode2DTriggered: setActivePaneMode("2D")
 
             onLegacyRequested: {
-                workspaceStore.settingsPanelOpen = false
-                if (workspaceStore.modeSettingsPanelOpen) {
-                    workspaceStore.closeModeSettingsPanel()
-                }
-                legacyPanelOpen = !legacyPanelOpen
+                legacyPanelOpen = false
             }
 
             secondWindowOpen: workspaceStore.secondaryWindowOpen
@@ -868,7 +864,7 @@ ApplicationWindow {
 
             Loader {
                 width: parent.width
-                active: legacySidebar.progress > 0.01 || legacyPanelOpen
+                active: false
                 sourceComponent: legacyMenuComponent
             }
         }
