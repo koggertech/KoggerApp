@@ -49,8 +49,6 @@ DevAddrBox 1.0 devices/DevAddrBox.qml
 SonarBox 1.0 devices/SonarBox.qml
 DopplerBox 1.0 devices/DopplerBox.qml
 USBLBox 1.0 devices/USBLBox.qml
-DatasetBox 1.0 devices/DatasetBox.qml
-DatasetCheckBox 1.0 devices/DatasetCheckBox.qml
 RecorderBox 1.0 devices/RecorderBox.qml
 FlashBox 1.0 devices/FlashBox.qml
 FactoryBox 1.0 devices/FactoryBox.qml

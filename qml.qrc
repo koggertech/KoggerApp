@@ -123,8 +123,6 @@
         <file>qml/devices/SonarBox.qml</file>
         <file>qml/devices/DopplerBox.qml</file>
         <file>qml/devices/USBLBox.qml</file>
-        <file>qml/devices/DatasetBox.qml</file>
-        <file>qml/devices/DatasetCheckBox.qml</file>
         <file>qml/devices/RecorderBox.qml</file>
         <file>qml/devices/ServoBox.qml</file>
         <file>qml/devices/FlashBox.qml</file>
