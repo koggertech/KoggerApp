@@ -131,9 +131,25 @@ target_link_libraries(KoggerApp PRIVATE
     Qt6::Network Qt6::Sql Qt6::Concurrent Qt6::Positioning Qt6::Svg)
 
 target_sources(KoggerApp PRIVATE
-    qml.qrc
     resources/icons.qrc
     resources/resources.qrc)
+
+qt_add_resources(KoggerApp "kogger_main_qml"
+    PREFIX "/"
+    FILES qml/main.qml)
+
+# ── QML modules (one CMakeLists per dir, STATIC; RESOURCE_PREFIX /qml → :/qml/<uri>/) ──
+add_subdirectory(qml/kqml_types)
+add_subdirectory(qml/controls)
+add_subdirectory(qml/menus)
+add_subdirectory(qml/settings)
+add_subdirectory(qml/devices)
+add_subdirectory(qml/scene2d)
+add_subdirectory(qml/scene3d)
+add_subdirectory(qml/app)
+
+target_link_libraries(KoggerApp PRIVATE
+    "$<LINK_LIBRARY:WHOLE_ARCHIVE,kogger_kqml_types,kogger_controls,kogger_menus,kogger_settings,kogger_devices,kogger_scene2d,kogger_scene3d,kogger_app>")
 
 qt_add_translations(KoggerApp
     TS_FILES

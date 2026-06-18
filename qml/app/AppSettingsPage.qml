@@ -4,8 +4,8 @@ import QtQuick.Layouts 1.15
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
-import "../controls"
-import "../scene2d"
+import controls
+import scene2d
 
 Column {
     id: root

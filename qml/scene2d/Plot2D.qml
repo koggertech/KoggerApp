@@ -6,8 +6,8 @@ import QtCore
 
 import WaterFall 1.0
 import kqml_types 1.0
-import "../controls"
-import "../menus"
+import controls
+import menus
 
 WaterFall {
     id: plot

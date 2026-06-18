@@ -1,6 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
-import "../controls"
+import controls
 import kqml_types 1.0
 
 // Styled dual-range level slider shared by the echogram (Plot2D) and the Mosaic

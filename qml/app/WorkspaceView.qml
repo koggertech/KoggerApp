@@ -1,7 +1,7 @@
 import QtQuick 2.15
 import SceneGraphRendering 1.0
 import QtCore
-import "qrc:/qml/scene2d/"
+import scene2d
 import kqml_types 1.0
 
 Item {

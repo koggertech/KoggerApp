@@ -3,8 +3,8 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtCore
 import kqml_types 1.0
-import "../controls"
-import "../menus"
+import controls
+import menus
 
 Item {
     id: root

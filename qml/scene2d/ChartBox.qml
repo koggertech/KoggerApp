@@ -2,9 +2,9 @@ import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
 import QtQuick.Dialogs
-import "../controls"
-import "../menus"
-import "../devices"
+import controls
+import menus
+import devices
 
 DevSettingsBox {
     id: control

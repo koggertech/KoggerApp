@@ -4,8 +4,8 @@ import QtQuick.Layouts 1.15
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
-import "../controls"
-import "../menus"
+import controls
+import menus
 
 
 MenuFrame {

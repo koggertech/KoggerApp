@@ -4,8 +4,8 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQml.Models
 import QtCore
-import "../controls"
-import "../menus"
+import controls
+import menus
 
 MenuFrame {
     id: root
