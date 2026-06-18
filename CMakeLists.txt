@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-set(KOGGER_VERSION "1.0.0")
+set(KOGGER_VERSION "0.0.0")
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/resources/version.txt")
     file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/resources/version.txt" _kver LIMIT_COUNT 1)
     string(STRIP "${_kver}" _kver)
