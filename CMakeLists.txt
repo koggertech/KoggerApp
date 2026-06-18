@@ -1,6 +1,20 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(KoggerApp VERSION 1.0.0 LANGUAGES CXX)
+set(KOGGER_VERSION "1.0.0")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/resources/version.txt")
+    file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/resources/version.txt" _kver LIMIT_COUNT 1)
+    string(STRIP "${_kver}" _kver)
+    if(_kver MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+        set(KOGGER_VERSION "${_kver}")
+    endif()
+endif()
+string(REPLACE "." ";" _kvp "${KOGGER_VERSION}")
+list(GET _kvp 0 _kvmaj)
+list(GET _kvp 1 _kvmin)
+list(GET _kvp 2 _kvpat)
+math(EXPR KOGGER_VERSION_CODE "${_kvmaj} * 10000 + ${_kvmin} * 100 + ${_kvpat}")
+
+project(KoggerApp VERSION ${KOGGER_VERSION} LANGUAGES CXX)
 
 if(ANDROID)
     set(QT_ANDROID_ABIS "armeabi-v7a;arm64-v8a" CACHE STRING "Android target ABIs" FORCE)
@@ -29,7 +43,7 @@ list(APPEND QT_SKIP_AUTO_PLUGIN_INCLUSION
     QPSQLDriverPlugin)
 
 find_package(Qt6 REQUIRED COMPONENTS
-    Core Gui Qml Quick QuickControls2 Network Sql Concurrent Positioning Svg)
+    Core Gui Qml Quick QuickControls2 Network Sql Concurrent Positioning Svg LinguistTools)
 
 qt_standard_project_setup(REQUIRES 6.8)
 
@@ -121,10 +135,19 @@ target_sources(KoggerApp PRIVATE
     resources/icons.qrc
     resources/resources.qrc)
 
+qt_add_translations(KoggerApp
+    TS_FILES
+        translations/translation_en.ts
+        translations/translation_ru.ts
+        translations/translation_pl.ts
+    RESOURCE_PREFIX "/translations")
+
 # ── Platform branches ────────────────────────────────────────────────────
 if(ANDROID)
     set_target_properties(KoggerApp PROPERTIES
-        QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/platform/android)
+        QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/platform/android
+        QT_ANDROID_VERSION_NAME "${KOGGER_VERSION}"
+        QT_ANDROID_VERSION_CODE "${KOGGER_VERSION_CODE}")
     target_include_directories(KoggerApp PRIVATE ${CMAKE_SOURCE_DIR})
     target_link_libraries(KoggerApp PRIVATE
         "${CMAKE_SOURCE_DIR}/third_party/freetype/lib/${CMAKE_ANDROID_ARCH_ABI}/libfreetype.a"

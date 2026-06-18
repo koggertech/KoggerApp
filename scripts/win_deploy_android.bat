@@ -9,7 +9,6 @@ cd /d "%~dp0\.."
 
 set "apk=build\Qt_6_8_3_for_Android_Universal-Release\android-build-KoggerApp\build\outputs\apk\release\android-build-KoggerApp-release-signed.apk"
 set "outDir=out_android"
-set "manifest=platform\android\AndroidManifest.xml"
 
 set "sdk=%ANDROID_SDK_ROOT%"
 if not defined sdk set "sdk=C:\Android\Sdk"
@@ -22,11 +21,11 @@ if not exist "%apk%" (
     exit /b 1
 )
 
-REM 3. Read versionName from the manifest
+REM 3. Read version from resources\version.txt (single source)
 set "version="
-for /f tokens^=2^ delims^=^" %%A in ('findstr /i "versionName" "%manifest%"') do set "version=%%A"
+set /p version=<resources\version.txt
 if not defined version (
-    echo [ERROR] Could not read versionName from %manifest%
+    echo [ERROR] Could not read version from resources\version.txt
     exit /b 1
 )
 
