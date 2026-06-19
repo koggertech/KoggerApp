@@ -1,9 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import WaterFall 1.0
-import "../scene3d"
-import "../scene2d"
-import "../controls"
+import scene3d
+import scene2d
+import controls
 
 Item {
     id: root

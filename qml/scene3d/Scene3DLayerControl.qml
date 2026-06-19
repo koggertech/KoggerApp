@@ -1,6 +1,6 @@
 import QtQuick 2.15
 import kqml_types 1.0
-import "../scene2d"
+import scene2d
 
 // 3D toolbar layer button (bottom track / surface / mosaic). Click opens a
 // small capsule UPWARD (styled like the 2D theme switcher) with a visibility

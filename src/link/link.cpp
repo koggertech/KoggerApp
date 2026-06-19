@@ -135,7 +135,7 @@ void Link::openAsTcp()
 
     QPointer<QTcpSocket> safeSock = socketTcp;
 
-    connect(socketTcp, &QTcpSocket::connected, this, [=]() {
+    connect(socketTcp, &QTcpSocket::connected, this, [=, this]() {
         if (!safeSock) {
             return;
         }
@@ -145,7 +145,7 @@ void Link::openAsTcp()
         emit opened(uuid_, this);
     });
 
-    connect(socketTcp, &QTcpSocket::disconnected, this, [=]() {
+    connect(socketTcp, &QTcpSocket::disconnected, this, [=, this]() {
         if (safeSock) {
             safeSock->deleteLater();
         }
@@ -154,7 +154,7 @@ void Link::openAsTcp()
         close();
     });
 
-    connect(socketTcp, &QTcpSocket::errorOccurred, this, [=](QAbstractSocket::SocketError err) {
+    connect(socketTcp, &QTcpSocket::errorOccurred, this, [=, this](QAbstractSocket::SocketError err) {
         Q_UNUSED(err);
         if (safeSock && safeSock->state() != QAbstractSocket::ConnectedState) {
             safeSock->abort();

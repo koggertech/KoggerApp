@@ -991,7 +991,7 @@ void Dataset::mergeGnssTrack(QList<Position> track) {
             if(min_ind > 0) {
                 track_pos_save = min_ind;
                 epoch->setExternalPosition(track[min_ind]);
-                sync_count++;
+                sync_count = sync_count + 1;
             }
         }
     }

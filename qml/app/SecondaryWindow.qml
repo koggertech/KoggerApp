@@ -1,6 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import "../scene2d"
+import scene2d
 import kqml_types 1.0
 
 Item {
