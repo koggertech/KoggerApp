@@ -3302,8 +3302,8 @@ function subtreeMinSize(node, axis) {
 }
 
 function splitCoordLimitsById(splitId) {
-    var geo = splitGeometryById(layoutTree, 0, 0, effectiveWorkspaceWidth(), effectiveWorkspaceHeight(), splitId)
-    var node = splitNodeById(layoutTree, splitId)
+    var geo = splitGeometryById(effectiveLayoutTree(), 0, 0, effectiveWorkspaceWidth(), effectiveWorkspaceHeight(), splitId)
+    var node = splitNodeById(effectiveLayoutTree(), splitId)
     if (!geo || !node)
         return null
 
@@ -3343,8 +3343,8 @@ function clampRatioForSplit(splitId, ratio) {
 }
 
 function splitCoordById(splitId) {
-    var geo = splitGeometryById(layoutTree, 0, 0, effectiveWorkspaceWidth(), effectiveWorkspaceHeight(), splitId)
-    var ratio = splitRatioById(layoutTree, splitId)
+    var geo = splitGeometryById(effectiveLayoutTree(), 0, 0, effectiveWorkspaceWidth(), effectiveWorkspaceHeight(), splitId)
+    var ratio = splitRatioById(effectiveLayoutTree(), splitId)
     if (!geo || ratio < 0)
         return NaN
 
@@ -3360,7 +3360,7 @@ function snappedSplitCoord(splitId, splitCoord) {
     if (!limits)
         return splitCoord
 
-    var splitNode = splitNodeById(layoutTree, splitId)
+    var splitNode = splitNodeById(effectiveLayoutTree(), splitId)
     if (!splitNode)
         return splitCoord
 
@@ -3478,6 +3478,11 @@ function setSplitRatioById(splitId, ratio, updateHandles) {
         updateHandles = true
 
     var boundedRatio = clampRatioForSplit(splitId, ratio)
+    if (layoutPortrait) {
+        var storedNode = splitNodeById(layoutTree, splitId)
+        if (storedNode && (storedNode.orientation === "vertical" ? !layoutPortraitCW : layoutPortraitCW))
+            boundedRatio = 1 - boundedRatio
+    }
     layoutTree = updateSplitRatio(layoutTree, splitId, boundedRatio)
     rebuildLayoutCaches(updateHandles)
 }
@@ -3729,6 +3734,8 @@ function createPaneInLeaf(leafId, edge) {
     }
 
     var splitNode = makeSplit(orientation, firstNode, secondNode, 0.5)
+    if (layoutPortrait)
+        splitNode = flipSplits(splitNode, !layoutPortraitCW)
     layoutTree = replaceLeaf(layoutTree, leafId, splitNode)
     activeLeafId = newLeaf.leafId
     rebuildLayoutCaches()
