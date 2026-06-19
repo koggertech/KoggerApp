@@ -871,6 +871,7 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
                 }
             }
 
+            emit rulerStateChanged();
             QQuickFramebufferObject::update();
         }
 
@@ -1211,6 +1212,7 @@ void GraphicsScene3dView::clearRuler()
     setRulerDrawing(false);
     setRulerSelected(false);
     resetRulerInteraction();
+    emit rulerStateChanged();
     QQuickFramebufferObject::update();
 }
 

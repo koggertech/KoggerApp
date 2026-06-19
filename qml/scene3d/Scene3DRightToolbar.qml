@@ -40,6 +40,20 @@ Item {
         root.view.mouseWheelTrigger(Qt.NoButton, cx, cy, Qt.point(0, steps * 120), 0)
     }
 
+    function cancelRuler() {
+        if (root.view && root.view.rulerEnabled) {
+            root.view.clearRuler()
+            Scene3dToolBarController.onRulerModeChanged(false)
+        }
+    }
+
+    MouseArea {
+        anchors.fill: buttonColumn
+        acceptedButtons: Qt.AllButtons
+        hoverEnabled: true
+        z: 2
+    }
+
     ColumnLayout {
         id: buttonColumn
         anchors.right: parent.right
@@ -50,7 +64,7 @@ Item {
 
         opacity: buttonColumnFade.value
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
-        IdleFade { id: buttonColumnFade; hovered: buttonColumnHoverHandler.hovered }
+        IdleFade { id: buttonColumnFade; hovered: buttonColumnHoverHandler.hovered || rulerControl.menuOpen }
 
         HoverHandler {
             id: buttonColumnHoverHandler
@@ -68,7 +82,7 @@ Item {
             fillHoverColor: AppPalette.cardHover
             borderColor: AppPalette.border
             toolTipText: qsTr("Zoom in")
-            onClicked: root._zoom(+4)
+            onClicked: { root.cancelRuler(); root._zoom(+4) }
         }
 
         KCircleIconButton {
@@ -83,7 +97,7 @@ Item {
             fillHoverColor: AppPalette.cardHover
             borderColor: AppPalette.border
             toolTipText: qsTr("Zoom out")
-            onClicked: root._zoom(-4)
+            onClicked: { root.cancelRuler(); root._zoom(-4) }
         }
 
         Item { Layout.preferredHeight: Tokens.spaceLg; Layout.preferredWidth: 1 }
@@ -106,6 +120,7 @@ Item {
             borderWidth: checked ? 2 : 1
 
             onClicked: {
+                root.cancelRuler()
                 if (!root.store) return
                 root.store.trackLastDataEnabled = !root.store.trackLastDataEnabled
                 Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(root.store.trackLastDataEnabled)
@@ -116,46 +131,101 @@ Item {
             }
         }
 
-        KCircleIconButton {
-            id: rulerToolButton
-            objectName: "rulerToolButton"
+        Item {
+            id: rulerControl
             width: root.buttonSize
             height: root.buttonSize
             Layout.preferredWidth: root.buttonSize
             Layout.preferredHeight: root.buttonSize
-            iconSource: "qrc:/icons/ui/ruler_measure.svg"
-            iconTintColor: AppPalette.text
-            fillHoverColor: AppPalette.cardHover
-            toolTipText: qsTr("Ruler")
 
-            property bool checked: false
-            fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: checked ? AppPalette.accentBorder : AppPalette.border
-            borderWidth: checked ? 2 : 1
+            readonly property bool menuOpen: root.view ? root.view.rulerEnabled : false
+            readonly property real _s: theme ? theme.resCoeff : 1.0
+            readonly property int _pad: Math.round(5 * _s)
+            readonly property int _gap: Math.round(6 * AppPalette.scale)
+            readonly property real _openW: _pad * 2 + root.buttonSize * 2 + _gap
+            readonly property bool hasGeometry: root.view ? root.view.rulerHasGeometry : false
 
-            onClicked: {
-                checked = !checked
-                Scene3dToolBarController.onRulerModeChanged(checked)
+            function _setOpen(open) {
+                Scene3dToolBarController.onRulerModeChanged(open)
             }
 
-            Component.onCompleted: {
-                Scene3dToolBarController.onRulerModeChanged(checked)
-                if (root.view && root.view.rulerEnabled !== checked) {
-                    root.view.rulerEnabled = checked
+            Rectangle {
+                id: rulerBacking
+                z: -1
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.rightMargin: -rulerControl._pad
+                height: root.buttonSize + rulerControl._pad * 2
+                width: rulerControl.menuOpen ? rulerControl._openW : 0
+                radius: height / 2
+                color: AppPalette.bg
+                border.width: 1
+                border.color: AppPalette.border
+                opacity: rulerControl.menuOpen ? 1 : 0
+                visible: opacity > 0.01
+                clip: true
+
+                Behavior on width   { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.AllButtons
+                    hoverEnabled: true
+                }
+
+                Row {
+                    anchors.right: parent.right
+                    anchors.rightMargin: rulerControl._pad
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: rulerControl._gap
+
+                    KCircleIconButton {
+                        width: root.buttonSize
+                        height: root.buttonSize
+                        iconSource: "qrc:/icons/ui/check.svg"
+                        iconTintColor: AppPalette.text
+                        fillColor: AppPalette.card
+                        fillHoverColor: AppPalette.cardHover
+                        borderColor: AppPalette.border
+                        toolTipText: qsTr("Save ruler")
+                        enabled: rulerControl.hasGeometry
+                        onClicked: {
+                            if (root.view) root.view.rulerFinishDrawing()
+                            rulerControl._setOpen(false)
+                        }
+                    }
+
+                    KCircleIconButton {
+                        width: root.buttonSize
+                        height: root.buttonSize
+                        iconSource: "qrc:/icons/ui/x.svg"
+                        iconTintColor: AppPalette.text
+                        fillColor: AppPalette.card
+                        fillHoverColor: AppPalette.cardHover
+                        borderColor: AppPalette.border
+                        toolTipText: qsTr("Delete ruler")
+                        onClicked: {
+                            if (root.view) root.view.clearRuler()
+                            rulerControl._setOpen(false)
+                        }
+                    }
                 }
             }
 
-            Settings {
-                property alias rulerToolButton: rulerToolButton.checked
-            }
-        }
-
-        Connections {
-            target: root.view
-            function onRulerEnabledChanged() {
-                if (root.view && rulerToolButton.checked !== root.view.rulerEnabled) {
-                    rulerToolButton.checked = root.view.rulerEnabled
-                }
+            KCircleIconButton {
+                id: rulerToolButton
+                objectName: "rulerToolButton"
+                anchors.fill: parent
+                visible: !rulerControl.menuOpen
+                iconSource: "qrc:/icons/ui/ruler_measure.svg"
+                iconTintColor: AppPalette.text
+                fillHoverColor: AppPalette.cardHover
+                fillColor:   rulerControl.hasGeometry ? AppPalette.accentBgStrong : AppPalette.card
+                borderColor: rulerControl.hasGeometry ? AppPalette.accentBorder : AppPalette.border
+                borderWidth: rulerControl.hasGeometry ? 2 : 1
+                toolTipText: qsTr("Ruler")
+                onClicked: rulerControl._setOpen(true)
             }
         }
 
@@ -177,6 +247,7 @@ Item {
             visible: root.store !== null
 
             onClicked: {
+                root.cancelRuler()
                 if (root.store && typeof root.store.openAppSettingsAtGroup === "function")
                     root.store.toggleAppSettingsAtGroup("app.scene3d")
             }
@@ -198,7 +269,7 @@ Item {
                 property bool checked: root.geo ? root.geo.tool === 1 : false
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
-                onClicked: if (root.geo) root.geo.tool = (root.geo.tool === 1 ? 0 : 1)
+                onClicked: { root.cancelRuler(); if (root.geo) root.geo.tool = (root.geo.tool === 1 ? 0 : 1) }
             }
 
             KCircleIconButton {
@@ -213,7 +284,7 @@ Item {
                 property bool checked: root.geo ? root.geo.tool === 2 : false
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
-                onClicked: if (root.geo) root.geo.tool = (root.geo.tool === 2 ? 0 : 2)
+                onClicked: { root.cancelRuler(); if (root.geo) root.geo.tool = (root.geo.tool === 2 ? 0 : 2) }
             }
 
             KCircleIconButton {
@@ -228,7 +299,7 @@ Item {
                 property bool checked: root.geo ? root.geo.tool === 3 : false
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
-                onClicked: if (root.geo) root.geo.tool = (root.geo.tool === 3 ? 0 : 3)
+                onClicked: { root.cancelRuler(); if (root.geo) root.geo.tool = (root.geo.tool === 3 ? 0 : 3) }
             }
         }
 
