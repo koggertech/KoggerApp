@@ -37,11 +37,12 @@ Rectangle {
         anchors.bottomMargin: Math.round(10 * AppPalette.scale)
         spacing: 2
 
-        CText {
+        Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             text: chartLevel.stopValue
-            small: true
+            color: AppPalette.text
+            font.pixelSize: Math.round(14 * AppPalette.scale)
         }
 
         ChartLevel {
@@ -53,11 +54,12 @@ Rectangle {
             widthSlider: root.capsuleWidth - Math.round(14 * AppPalette.scale)
         }
 
-        CText {
+        Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             text: chartLevel.startValue
-            small: true
+            color: AppPalette.text
+            font.pixelSize: Math.round(14 * AppPalette.scale)
         }
     }
 }
