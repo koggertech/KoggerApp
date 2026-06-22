@@ -39,10 +39,11 @@ bool Plot2DTemperature::draw(Plot2D* parent, Dataset* dataset)
     }
 
     const double s = renderScale();
+    const bool vertical = !parent->isHorizontal();
     const int imageHeight = canvas.height();
     const QString tempText = formatTemperatureText(temp);
-    const int x = qRound(70 * s);
-    drawValueWithBackdrop(p, x, imageHeight - qRound(15 * s), tempText, QColor(255, 220, 0));
+    const int x = vertical ? qRound(15 * s) : qRound(70 * s);
+    drawValueWithBackdrop(p, x, imageHeight - qRound(15 * s), tempText, QColor(255, 220, 0), vertical);
 
     return true;
 }
@@ -54,7 +55,7 @@ QString Plot2DTemperature::formatTemperatureText(float temp) const
     return QString::number(val, 'f', isInteger ? 0 : 1) + QString(QChar(0x00B0));
 }
 
-void Plot2DTemperature::drawValueWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text, const QColor& textColor) const
+void Plot2DTemperature::drawValueWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text, const QColor& textColor, bool vertical) const
 {
     if (!painter) {
         return;
@@ -66,20 +67,30 @@ void Plot2DTemperature::drawValueWithBackdrop(QPainter* painter, int x, int base
     const int padX = qRound(8 * s);
     const int padY = qRound(4 * s);
     const int radius = qRound(5 * s);
-    const QRect bgRect(x - padX,
-                       baselineY - fm.ascent() - padY,
-                       fm.horizontalAdvance(text) + padX * 2,
-                       fm.height() + padY * 2);
+    const int textW = fm.horizontalAdvance(text);
 
     const auto prevMode = painter->compositionMode();
     painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
 
+    // Vertical mode: canvas globally rotated -90 (Plot2D::getImage); counter-rotate
+    // +90 to keep the value upright, right-aligned so it stays inside the deep edge.
+    painter->save();
+    if (vertical) {
+        painter->translate(x, baselineY);
+        painter->rotate(90);
+    }
+    const int ax = vertical ? -textW : x;
+    const int ay = vertical ? 0 : baselineY;
+    const QRect bgRect(ax - padX,
+                       ay - fm.ascent() - padY,
+                       textW + padX * 2,
+                       fm.height() + padY * 2);
     painter->setPen(Qt::NoPen);
     painter->setBrush(QColor(0, 0, 0, 115));
     painter->drawRoundedRect(bgRect, radius, radius);
-
     painter->setFont(font);
     painter->setPen(QPen(textColor));
-    painter->drawText(x, baselineY, text);
+    painter->drawText(ax, ay, text);
+    painter->restore();
     painter->setCompositionMode(prevMode);
 }

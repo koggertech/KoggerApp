@@ -34,6 +34,7 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
 
         bool isActiveContact = activeContactIndx == indx;
         if (epoch->contact_.isValid()) {
+            const bool vertical = !isHorizontal_;
             float xPos = cursor.numZeroEpoch + indx - cursor.indexes[0];
             const float canvasHeight = canvas.height();
             float valueRange = cursor.distance.to - cursor.distance.from;
@@ -43,11 +44,14 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
 
             auto& epRect = epoch->contact_.rectEcho;
             if (!epRect.isEmpty()) {
-                QRectF locRect = epRect.translated(QPointF(xPos + shiftXY, yPos + shiftXY) - epRect.topLeft());
+                QRectF locRect = vertical
+                    ? QRectF(xPos + shiftXY - 2 * adjPix + qMax(1, qRound(2 * s)) - epRect.height(), yPos + shiftXY, epRect.height(), epRect.width())
+                    : epRect.translated(QPointF(xPos + shiftXY, yPos + shiftXY) - epRect.topLeft());
                 locRect = locRect.adjusted(-adjPix, -adjPix, adjPix, adjPix);
 
                 if (locRect.contains(QPointF(mouseX_, mouseY_))) {
                     indx_ = indx;
+                    isActive_ = isActiveContact;
 
                     if (isHorizontal_) {
                         position_ = QPoint(xPos + shiftXY * 0.75f, yPos + shiftXY * 0.75f);
@@ -89,22 +93,27 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
             else {
                 QColor linesColor = isActiveContact ? QColor(0, 0, 190) : QColor(190, 0, 0);
 
-                // red back
+                // Counter-rotate +90 in vertical so the label stays upright; lower the box
+                // by 2*adjPix so its corner lands on the pointer corner (left unmoved).
+                p->save();
+                if (vertical) {
+                    p->translate(textRect.topLeft() - QPointF(2 * adjPix - qMax(1, qRound(2 * s)), 0));
+                    p->rotate(90);
+                }
+                const QRectF boxRect = vertical ? QRectF(0, 0, textRect.width(), textRect.height()) : textRect;
                 p->setPen(Qt::NoPen);
                 p->setBrush(linesColor);
-                p->drawRect(textRect.adjusted(-adjPix, -adjPix, adjPix, adjPix));
-                // lines
+                p->drawRect(boxRect.adjusted(-adjPix, -adjPix, adjPix, adjPix));
+                p->setBrush(QColor(45, 45, 45));
+                p->drawRect(boxRect.adjusted(-3 * s, -3 * s, 3 * s, 3 * s));
+                p->setPen(QColor(255, 255, 255));
+                p->drawText(boxRect, Qt::AlignLeft | Qt::AlignTop, infoText);
+                p->restore();
+
                 QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
                 p->setPen(QPen(linesColor, qMax(1, qRound(2 * s))));
                 p->drawLine(topLeft, topLeft + QPointF(-30 * s, 0));
                 p->drawLine(topLeft, topLeft + QPointF(0, -30 * s));
-                // gray back
-                p->setPen(Qt::NoPen);
-                p->setBrush(QColor(45,45,45));
-                p->drawRect(textRect.adjusted(-3 * s, -3 * s, 3 * s, 3 * s));
-                // text
-                p->setPen(QColor(255,255,255));
-                p->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, infoText);
             }
         }
     }

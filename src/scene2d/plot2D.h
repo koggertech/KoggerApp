@@ -82,6 +82,7 @@ public:
     double  getContactLat();
     double  getContactLon();
     double  getContactDepth();
+    bool    getContactIsActive();
 
     bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
     void draw(QPainter* painterPtr);

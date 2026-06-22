@@ -439,6 +439,8 @@ void Plot2D::draw(QPainter *painterPtr)
         }
     }
 
+    bottomProcessing_.drawDepthValue(this, datasetPtr_);
+    rangefinder_.drawDepthValue(this, datasetPtr_);
     temperature_.draw(this, datasetPtr_);
     aim_.draw(this, datasetPtr_);
     contacts_.draw(this, datasetPtr_);
@@ -603,6 +605,11 @@ double Plot2D::getContactLon()
 double Plot2D::getContactDepth()
 {
     return contacts_.getDepth();
+}
+
+bool Plot2D::getContactIsActive()
+{
+    return contacts_.getIsActive();
 }
 
 float Plot2D::getEchogramLowLevel() const

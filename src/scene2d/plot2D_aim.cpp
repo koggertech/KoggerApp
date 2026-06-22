@@ -73,6 +73,7 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
     }
 
     QPainter* p = canvas.painter();
+    const bool vertical = !parent->isHorizontal();
 
     QPen pen;
     pen.setWidth(lineWidth_);
@@ -202,24 +203,68 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
         }
     }
 
-    const int textBoxY = layoutY + (layoutHeight - textBoxHeight) / 2;
+    int textBoxY = layoutY + (layoutHeight - textBoxHeight) / 2;
+    int previewY = layoutY + (layoutHeight - previewSize) / 2;
+
+    if (vertical) {
+        // Mirror the horizontal HUD: a screen-row (loupe + params table) that follows
+        // the cursor. Lay it out in screen space, then map to the rotated canvas.
+        const int CW = canvas.width();
+        const int screenW = canvas.height();
+        const int screenH = canvas.width();
+        const int sMargin = previewFrameMargin;
+        const int rowW = textBoxWidth + (hasPreview ? previewGap + previewSize : 0);
+        const int rowH = qMax(textBoxHeight, hasPreview ? previewSize : 0);
+
+        const int curSX = qBound(0, cursor.mouseY, screenW - 1);
+        const int curSY = qBound(0, CW - cursor.mouseX, screenH - 1);
+
+        int rowSX = curSX + xShift;
+        if (rowSX + rowW > screenW - sMargin && curSX - xShift - rowW >= sMargin) {
+            rowSX = curSX - xShift - rowW;
+        }
+        rowSX = qBound(sMargin, rowSX, qMax(sMargin, screenW - sMargin - rowW));
+
+        int rowSY = curSY - yShift - rowH;
+        if (rowSY < sMargin) {
+            rowSY = curSY + yShift;
+        }
+        rowSY = qBound(sMargin, rowSY, qMax(sMargin, screenH - sMargin - rowH));
+
+        const int loupeSCx = rowSX + previewSize / 2;
+        const int textSCx = rowSX + (hasPreview ? previewSize + previewGap : 0) + textBoxWidth / 2;
+        const int rowSCy = rowSY + rowH / 2;
+        previewX = (CW - rowSCy) - previewSize / 2;
+        previewY = loupeSCx - previewSize / 2;
+        textBoxX = (CW - rowSCy) - textBoxWidth / 2;
+        textBoxY = textSCx - textBoxHeight / 2;
+    }
+
     const QRect textBackgroundRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
     textRect = textBackgroundRect.adjusted(textMargin, textMargin, -textMargin, -textMargin);
 
+    p->save();
+    if (vertical) {
+        const QPointF c = textBackgroundRect.center();
+        p->translate(c);
+        p->rotate(90);
+        p->translate(-c);
+    }
     p->setPen(Qt::NoPen);
     p->setBrush(QColor(45, 45, 45));
     p->drawRect(textBackgroundRect);
 
     p->setPen(QColor(255, 255, 255));
     p->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, text);
+    p->restore();
 
     if (hasPreview) {
-        const int previewY = layoutY + (layoutHeight - previewSize) / 2;
         QRect previewRect(previewX, previewY, previewSize, previewSize);
         QRect previewInnerRect = previewRect.adjusted(3, 3, -3, -3);
         QPoint sourceCenter(qBound(0, cursor.mouseX, canvas.width() - 1),
                             qBound(0, cursor.mouseY, canvas.height() - 1));
 
+        p->save();
         p->setPen(Qt::NoPen);
         p->setBrush(QColor(30, 30, 30, 220));
         p->drawRect(previewRect);
@@ -244,6 +289,7 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
         p->setPen(QPen(QColor(255, 255, 255, 220), 2));
         p->drawLine(zoomCenterX - leftArm, zoomCenterY, zoomCenterX + rightArm, zoomCenterY);
         p->drawLine(zoomCenterX, zoomCenterY - topArm, zoomCenterX, zoomCenterY + bottomArm);
+        p->restore();
     }
 
     return true;

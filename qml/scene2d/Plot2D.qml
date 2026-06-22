@@ -1562,6 +1562,7 @@ WaterFall {
         contactDialog.lat = plot.contactLat
         contactDialog.lon = plot.contactLon
         contactDialog.depth = plot.contactDepth
+        contactDialog.isActive = plot.contactIsActive
     }
 
     // Horizontal mode scroll bookmark (bottom edge)
@@ -1931,6 +1932,7 @@ WaterFall {
                     contactDialog.x = plot.pointerContactMouseX
                     contactDialog.y = plot.pointerContactMouseY
                     contactDialog.indx = -1
+                    contactDialog.isActive = false
                     contactDialog.visible = true
                     menuBlock.visible = false
                 }
