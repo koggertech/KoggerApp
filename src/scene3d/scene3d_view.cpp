@@ -5,6 +5,7 @@
 #include <math.h>
 #include <algorithm>
 #include <QOpenGLFramebufferObject>
+#include <QQuickWindow>
 #include <QVector3D>
 #include <QLineF>
 #include <QDebug>
@@ -16,6 +17,7 @@
 #include "data_processor.h"
 
 #include "core.h"
+#include "themes.h"
 extern Core core;
 
 namespace {
@@ -138,6 +140,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
+
+    connect(&theme, &Themes::changed, this, [this]() { QQuickFramebufferObject::update(); });
 
     m_camera->setCameraListener(m_axesThumbnailCamera.get());
 
@@ -646,6 +650,9 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
 
     m_camera->m_lookAtSave = m_camera->m_lookAt;
 
+    if (mouseButton.testFlag(Qt::MouseButton::LeftButton))
+        contacts_->mouseMoveEvent(mouseButton, x, y);
+
     m_startMousePos = { x, y };
     QQuickFramebufferObject::update();
 }
@@ -659,7 +666,8 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         needToResetStartPos_ = false;
     }
 
-    contacts_->mouseMoveEvent(mouseButton, x, y);
+    if (mouseButton == Qt::MouseButton::NoButton)
+        contacts_->mouseMoveEvent(mouseButton, x, y);
 
     // movement threshold for sync
     if (!wasMoved_) {
@@ -668,6 +676,8 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
             wasMoved_ = true;
             if (wasMovedMouseButton_ != mouseButton)
                 wasMovedMouseButton_ = mouseButton;
+            if (mouseButton != Qt::MouseButton::NoButton)
+                contacts_->mouseMoveEvent(Qt::MouseButton::NoButton, -1.0, -1.0);
         }
     }
 
@@ -3257,7 +3267,21 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     //read from renderer
     view->m_model = m_renderer->m_model;
     view->m_projection = m_renderer->m_projection;
-    view->contacts_->contactBounds_ = std::move(m_renderer->contactsRenderImpl_.contactBounds_);
+    {
+        auto bounds = std::move(m_renderer->contactsRenderImpl_.contactBounds_);
+        const qreal k = view->window() ? view->window()->effectiveDevicePixelRatio() : 1.0;
+        if (k > 0.0 && !qFuzzyCompare(k, 1.0)) {
+            QHash<int, QRectF> logical;
+            logical.reserve(bounds.size());
+            for (auto it = bounds.begin(); it != bounds.end(); ++it) {
+                const QRectF& r = it.value();
+                logical.insert(it.key(), QRectF(r.x() / k, r.y() / k, r.width() / k, r.height() / k));
+            }
+            view->contacts_->contactBounds_ = std::move(logical);
+        } else {
+            view->contacts_->contactBounds_ = std::move(bounds);
+        }
+    }
 
     // write to renderer
     m_renderer->compassRenderImpl_       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));

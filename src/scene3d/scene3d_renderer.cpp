@@ -10,10 +10,10 @@
 #include <QOpenGLContext>
 
 #include "text_renderer.h"
+#include "themes.h"
 //#include "ft2build.h"
 
 //#include FT_FREETYPE_H
-
 
 GraphicsScene3dRenderer::GraphicsScene3dRenderer() :
     scaleFactor_(1.0f)
@@ -162,6 +162,8 @@ void GraphicsScene3dRenderer::render()
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // back color
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    TextRenderer::instance().setFontPixelSize(qRound(22 * renderScale()));
 
     drawObjects();
 
@@ -376,6 +378,7 @@ void GraphicsScene3dRenderer::drawObjects()
         case 5: size = 550;  break;
         default: size = 250; break;
         }
+        size = qRound(size * renderScale());
 
         int x = 0;
         int y = 0;

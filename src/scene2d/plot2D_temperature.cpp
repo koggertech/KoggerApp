@@ -1,9 +1,9 @@
 #include "plot2D_temperature.h"
 #include "plot2D.h"
 #include "math_defs.h"
+#include "themes.h"
 #include <cmath>
 #include <QFontMetrics>
-
 
 Plot2DTemperature::Plot2DTemperature()
 {}
@@ -38,10 +38,11 @@ bool Plot2DTemperature::draw(Plot2D* parent, Dataset* dataset)
         return false;
     }
 
+    const double s = renderScale();
     const int imageHeight = canvas.height();
     const QString tempText = formatTemperatureText(temp);
-    const int x = 70;
-    drawValueWithBackdrop(p, x, imageHeight - 15, tempText, QColor(255, 220, 0));
+    const int x = qRound(70 * s);
+    drawValueWithBackdrop(p, x, imageHeight - qRound(15 * s), tempText, QColor(255, 220, 0));
 
     return true;
 }
@@ -59,11 +60,12 @@ void Plot2DTemperature::drawValueWithBackdrop(QPainter* painter, int x, int base
         return;
     }
 
-    const QFont font("Asap", 30, QFont::Normal);
+    const double s = renderScale();
+    const QFont font("Asap", qRound(30 * s), QFont::Normal);
     const QFontMetrics fm(font);
-    const int padX = 8;
-    const int padY = 4;
-    const int radius = 5;
+    const int padX = qRound(8 * s);
+    const int padY = qRound(4 * s);
+    const int radius = qRound(5 * s);
     const QRect bgRect(x - padX,
                        baselineY - fm.ascent() - padY,
                        fm.horizontalAdvance(text) + padX * 2,

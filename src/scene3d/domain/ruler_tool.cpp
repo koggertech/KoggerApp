@@ -8,8 +8,6 @@
 #include "text_renderer.h"
 #include "themes.h"
 
-extern Themes theme;
-
 static QString formatDistanceMeters(double meters)
 {
     if (!std::isfinite(meters)) {
@@ -137,7 +135,7 @@ void RulerTool::RulerToolRenderImplementation::render(
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, pts.constData());
 
-    ctx->glLineWidth(lineWidth_);
+    ctx->glLineWidth(lineWidth_ * static_cast<float>(renderScale()));
     ctx->glDrawArrays(GL_LINE_STRIP, 0, pts.size());
     ctx->glLineWidth(1.0f);
 
@@ -155,8 +153,9 @@ void RulerTool::RulerToolRenderImplementation::render(
                 QVector<QVector2D> markersNdc;
                 markersNdc.reserve((pts.size() * 4) + ((pts.size() - 1) * 4));
 
-                const float vertexPx = 10.0f;
-                const float midPx = 7.0f;
+                const float uiScale = static_cast<float>(renderScale());
+                const float vertexPx = 10.0f * uiScale;
+                const float midPx = 7.0f * uiScale;
                 const float dxV = vertexPx / halfW;
                 const float dyV = vertexPx / halfH;
                 const float dxM = midPx / halfW;
@@ -188,7 +187,7 @@ void RulerTool::RulerToolRenderImplementation::render(
                         sp->enableAttributeArray(0);
                         sp->setAttributeArray(0, markersNdc.constData());
 
-                        ctx->glLineWidth(lineWidth_);
+                        ctx->glLineWidth(lineWidth_ * static_cast<float>(renderScale()));
                         ctx->glDrawArrays(GL_LINES, 0, markersNdc.size());
                         ctx->glLineWidth(1.0f);
 
@@ -218,7 +217,7 @@ void RulerTool::RulerToolRenderImplementation::render(
         QVector2D midScreen = mid.project(view * model, projection, viewport.toRect()).toVector2D();
         midScreen.setY(viewport.height() - midScreen.y());
 
-        midScreen += QVector2D(0.0f, (i % 2 == 0) ? -18.0f : -34.0f);
+        midScreen += QVector2D(0.0f, ((i % 2 == 0) ? -18.0f : -34.0f) * static_cast<float>(renderScale()));
 
         labelItems.append(TextRenderer::Text2DItem{formatDistanceMeters(segMeters), 1.0f, midScreen, true});
     }
@@ -230,7 +229,7 @@ void RulerTool::RulerToolRenderImplementation::render(
     QVector3D anchor = pts.back();
     QVector2D screen = anchor.project(view * model, projection, viewport.toRect()).toVector2D();
     screen.setY(viewport.height() - screen.y());
-    screen += QVector2D(12.0f, -14.0f);
+    screen += QVector2D(12.0f * static_cast<float>(renderScale()), -14.0f * static_cast<float>(renderScale()));
 
     labelItems.append(TextRenderer::Text2DItem{label, 1.5f, screen, true});
 

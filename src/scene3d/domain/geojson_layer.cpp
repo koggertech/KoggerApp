@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "draw_utils.h"
+#include "themes.h"
 
 GeoJsonLayer::GeoJsonLayerRenderImplementation::GeoJsonLayerRenderImplementation()
 {
@@ -227,7 +228,7 @@ void GeoJsonLayer::GeoJsonLayerRenderImplementation::render(
         if (data_.selectedActive) {
             auto& vec = circleByColor[QColor(255, 215, 0, 230).rgba()];
             vec.reserve(vec.size() + kCircleTriVertices);
-            appendCircleNdc(vec, data_.selectedWorld, 14.0f, model, view, projection, viewport);
+            appendCircleNdc(vec, data_.selectedWorld, 14.0f * static_cast<float>(renderScale()), model, view, projection, viewport);
         }
 
         const auto& sp = it2.value();

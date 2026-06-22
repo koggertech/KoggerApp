@@ -1,8 +1,8 @@
 #include "plot2D_grid.h"
 #include "plot2D.h"
 #include "math_defs.h"
+#include "themes.h"
 #include <QFontMetrics>
-
 
 Plot2DGrid::Plot2DGrid() : angleVisibility_(false)
 {}
@@ -14,9 +14,10 @@ void Plot2DGrid::drawTextWithBackdrop(QPainter* painter, int x, int baselineY, c
     }
 
     const QFontMetrics fm(painter->font());
-    const int padX = 8;
-    const int padY = 4;
-    const int radius = 5;
+    const double s = renderScale();
+    const int padX = qRound(8 * s);
+    const int padY = qRound(4 * s);
+    const int radius = qRound(5 * s);
     const QRect bgRect(x - padX,
                        baselineY - fm.ascent() - padY,
                        fm.horizontalAdvance(text) + padX * 2,
@@ -45,16 +46,18 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
     if (!isVisible())
         return false;
 
+    const double s = renderScale();
+
     QPen pen(_lineColor);
-    pen.setWidth(_lineWidth);
+    pen.setWidth(qMax(1, qRound(_lineWidth * s)));
 
     QPainter* p = canvas.painter();
     p->setPen(pen);
-    p->setFont(QFont("Asap", 14, QFont::Normal));
+    p->setFont(QFont("Asap", qRound(14 * s), QFont::Normal));
     QFontMetrics fm(p->font());
 
     const int imageHeight{ canvas.height() }, imageWidth{ canvas.width() },
-        linesCount{ _lines }, textXOffset{ 30 }, textYOffset{ 10 };
+        linesCount{ _lines }, textXOffset{ qRound(30 * s) }, textYOffset{ qRound(10 * s) };
 
     lastRightTextX_ = imageWidth; // reset to rightmost, updated to min during draw
 
@@ -98,21 +101,21 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
         if (!lineText.isEmpty()) {
             const int textX = invert_ ? textXOffset : (imageWidth - textW - textXOffset);
             if (!invert_)
-                lastRightTextX_ = qMin(lastRightTextX_, textX - 8); // 8 = padX from backdrop
+                lastRightTextX_ = qMin(lastRightTextX_, textX - qRound(8 * s)); // 8 = padX from backdrop
             drawTextWithBackdrop(p, textX, posY - textYOffset, lineText);
         }
     }
 
     // глубина графика
     if (cursor.distance.isValid()) {
-        p->setFont(QFont("Asap", 26, QFont::Normal));
+        p->setFont(QFont("Asap", qRound(26 * s), QFont::Normal));
         QFontMetrics fm2(p->font());
         float val{ cursor.distance.to };
         bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
         QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
         const int w = fm2.horizontalAdvance(rangeText);
         const int x = invert_ ? (textXOffset * 2) : (imageWidth - textXOffset / 2 - w);
-        drawTextWithBackdrop(p, x, imageHeight - 10, rangeText);
+        drawTextWithBackdrop(p, x, imageHeight - qRound(10 * s), rangeText);
     }
 
     return true;

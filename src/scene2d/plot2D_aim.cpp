@@ -1,5 +1,6 @@
 #include "plot2D_aim.h"
 #include "plot2D.h"
+#include "themes.h"
 #include <cmath>
 
 
@@ -8,15 +9,12 @@ Plot2DAim::Plot2DAim()
     lineWidth_(1),
     lineColor_(255, 255, 255, 255)
 {
-#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
-    scaleFactor_ = 2;
-#else
-    scaleFactor_ = 1;
-#endif
+    scaleFactor_ = renderScale();
 }
 
 bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
 {
+    scaleFactor_ = renderScale();
     auto& canvas = parent->canvas();
     auto& cursor = parent->cursor();
 
@@ -238,7 +236,7 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
             + qRound(focusX * static_cast<qreal>(qMax(0, previewInnerRect.width() - 1)));
         const int zoomCenterY = previewInnerRect.top()
             + qRound(focusY * static_cast<qreal>(qMax(0, previewInnerRect.height() - 1)));
-        const int crossHalf = qMax(6 * scaleFactor_, previewInnerRect.width() / 10);
+        const int crossHalf = qMax(qRound(6 * scaleFactor_), previewInnerRect.width() / 10);
         const int leftArm = qMin(crossHalf, qMax(0, zoomCenterX - previewInnerRect.left()));
         const int rightArm = qMin(crossHalf, qMax(0, previewInnerRect.right() - zoomCenterX));
         const int topArm = qMin(crossHalf, qMax(0, zoomCenterY - previewInnerRect.top()));

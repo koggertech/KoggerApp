@@ -1,24 +1,26 @@
 #include "plot2D_contact.h"
 #include "plot2D.h"
-
+#include "themes.h"
 
 bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
 {    
     auto& canvas = parent->canvas();
     auto& cursor = parent->cursor();
 
+    const double s = renderScale();
+
     QPen pen;
-    pen.setWidth(lineWidth_);
+    pen.setWidth(qMax(1, qRound(lineWidth_ * s)));
     pen.setColor(lineColor_);
 
     QPainter* p = canvas.painter();
     p->setPen(pen);
     QFont font = QFont("Asap", 14, QFont::Normal);
-    font.setPixelSize(18);
+    font.setPixelSize(qRound(18 * s));
     p->setFont(font);
     p->setCompositionMode(QPainter::CompositionMode_SourceOver);
-    qreal adjPix = 5;
-    qreal shiftXY = 20;
+    qreal adjPix = 5 * s;
+    qreal shiftXY = 20 * s;
 
     setVisibleContact(false);
 
@@ -80,9 +82,9 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
 
             if (intersects) {
                 QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
-                p->setPen(QPen(QColor(0,190,0), 2));
-                p->drawLine(topLeft, topLeft + QPointF(-30, 0));
-                p->drawLine(topLeft, topLeft + QPointF(0, -30));
+                p->setPen(QPen(QColor(0,190,0), qMax(1, qRound(2 * s))));
+                p->drawLine(topLeft, topLeft + QPointF(-30 * s, 0));
+                p->drawLine(topLeft, topLeft + QPointF(0, -30 * s));
             }
             else {
                 QColor linesColor = isActiveContact ? QColor(0, 0, 190) : QColor(190, 0, 0);
@@ -93,13 +95,13 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
                 p->drawRect(textRect.adjusted(-adjPix, -adjPix, adjPix, adjPix));
                 // lines
                 QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
-                p->setPen(QPen(linesColor, 2));
-                p->drawLine(topLeft, topLeft + QPointF(-30, 0));
-                p->drawLine(topLeft, topLeft + QPointF(0, -30));
+                p->setPen(QPen(linesColor, qMax(1, qRound(2 * s))));
+                p->drawLine(topLeft, topLeft + QPointF(-30 * s, 0));
+                p->drawLine(topLeft, topLeft + QPointF(0, -30 * s));
                 // gray back
                 p->setPen(Qt::NoPen);
                 p->setBrush(QColor(45,45,45));
-                p->drawRect(textRect.adjusted(-3, -3, 3, 3));
+                p->drawRect(textRect.adjusted(-3 * s, -3 * s, 3 * s, 3 * s));
                 // text
                 p->setPen(QColor(255,255,255));
                 p->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, infoText);

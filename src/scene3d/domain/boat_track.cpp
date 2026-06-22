@@ -5,6 +5,7 @@
 #include <QHash>
 #include "scene3d_view.h"
 #include "epoch_event.h"
+#include "themes.h"
 
 
 BoatTrack::BoatTrack(GraphicsScene3dView* view, QObject* parent) :
@@ -281,7 +282,7 @@ void BoatTrack::BoatTrackRenderImplementation::render(QOpenGLFunctions *ctx,
 
         shaderProgram->setUniformValue(colorLoc, lineColor);
         shaderProgram->setUniformValue(matrixLoc, projection * view * model);
-        shaderProgram->setUniformValue(widthLoc, 12.0f);
+        shaderProgram->setUniformValue(widthLoc, static_cast<float>(12.0f * renderScale()));
 
         QVector<QVector3D> vertices{ boatTrackVertice_, bottomTrackVertice_ };
 
