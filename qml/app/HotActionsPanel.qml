@@ -689,11 +689,12 @@ Item {
             }
 
             KCircleIconButton {
+                id: extraInfoBtn
                 readonly property bool _open: root.store && root.store.extraInfoVisible
                 visible: root.showExtraInfo
                 width: visible ? root.controlHeight : 0
                 height: root.controlHeight
-                iconSource: _open ? "qrc:/icons/ui/x.svg" : "qrc:/icons/ui/list-details.svg"
+                iconSource: "qrc:/icons/ui/list-details.svg"
                 iconTintColor: AppPalette.text
                 toolTipText: _open ? qsTr("Hide extra info") : qsTr("Extra info panel")
                 fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
@@ -710,14 +711,17 @@ Item {
                     if (willOpen)
                         root.expanded = false
                 }
+
+                KCloseBadge { visible: extraInfoBtn._open }
             }
 
             KCircleIconButton {
+                id: profilesBtn
                 readonly property bool _open: root.store && root.store.profilesPopupOpen
                 visible: root.showProfiles
                 width: visible ? root.controlHeight : 0
                 height: root.controlHeight
-                iconSource: _open ? "qrc:/icons/ui/x.svg" : "qrc:/icons/ui/file_settings.svg"
+                iconSource: "qrc:/icons/ui/file_settings.svg"
                 iconTintColor: AppPalette.text
                 toolTipText: _open ? qsTr("Close profiles") : qsTr("Settings profiles")
                 fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
@@ -734,6 +738,8 @@ Item {
                     if (willOpen)
                         root.expanded = false
                 }
+
+                KCloseBadge { visible: profilesBtn._open }
             }
 
             KCircleIconButton {
@@ -844,7 +850,7 @@ Item {
             height: root.controlHeight
             readonly property bool _open: root.store && root.store.bottomTrackEditorOpen
             readonly property bool _accent: root.btTool !== 0 || _open
-            iconSource: _open ? "qrc:/icons/ui/x.svg" : "qrc:/icons/ui/pencil.svg"
+            iconSource: "qrc:/icons/ui/pencil.svg"
             iconTintColor: AppPalette.text
             toolTipText: _open ? qsTr("Close bottom track editing")
                                : qsTr("Bottom track editing")
@@ -862,6 +868,8 @@ Item {
                 if (willOpen)
                     root.expanded = false
             }
+
+            KCloseBadge { visible: btEditTrigger._open }
         }
     }
 

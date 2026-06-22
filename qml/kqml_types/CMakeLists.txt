@@ -12,6 +12,7 @@ qt_add_qml_module(kogger_kqml_types
         KButton.qml
         KCheckBox.qml
         KCircleIconButton.qml
+        KCloseBadge.qml
         KCombo.qml
         KDragBar.qml
         KFocusRing.qml
