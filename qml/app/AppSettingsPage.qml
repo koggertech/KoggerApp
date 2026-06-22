@@ -1993,26 +1993,20 @@ Column {
                                 Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(v)
                         }
                     }
-                    Row {
-                        width: parent.width
-                        height: Tokens.controlHMd
-                        spacing: Tokens.spaceXs
-                        readonly property real sw: (width - 2 * Tokens.spaceXs) / 3
-
-                        Row {
-                            width: parent.sw
-                            height: parent.height
+                    KParamGrid {
+                        RowLayout {
+                            Layout.fillWidth: true
+                            height: Tokens.controlHMd
                             spacing: Tokens.spaceSm
                             Text {
-                                anchors.verticalCenter: parent.verticalCenter
                                 text: qsTr("Size:")
                                 color: AppPalette.textSecond
                                 font.pixelSize: Tokens.fontMd
                             }
                             KSpinBox {
                                 id: circleGridSizeSpinBox
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - 56
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Tokens.controlHMd
                                 from: 1; to: 3; stepSize: 1; value: 1
                                 onValueModified: function(v) {
                                     if (typeof Scene3dToolBarController !== "undefined")
@@ -2020,20 +2014,19 @@ Column {
                                 }
                             }
                         }
-                        Row {
-                            width: parent.sw
-                            height: parent.height
+                        RowLayout {
+                            Layout.fillWidth: true
+                            height: Tokens.controlHMd
                             spacing: Tokens.spaceSm
                             Text {
-                                anchors.verticalCenter: parent.verticalCenter
                                 text: qsTr("Step:")
                                 color: AppPalette.textSecond
                                 font.pixelSize: Tokens.fontMd
                             }
                             KSpinBox {
                                 id: circleGridStepSpinBox
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - 56
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Tokens.controlHMd
                                 from: 1; to: 20; stepSize: 1; value: 1
                                 onValueModified: function(v) {
                                     if (typeof Scene3dToolBarController !== "undefined")
@@ -2041,20 +2034,19 @@ Column {
                                 }
                             }
                         }
-                        Row {
-                            width: parent.sw
-                            height: parent.height
+                        RowLayout {
+                            Layout.fillWidth: true
+                            height: Tokens.controlHMd
                             spacing: Tokens.spaceSm
                             Text {
-                                anchors.verticalCenter: parent.verticalCenter
                                 text: qsTr("Angle:")
                                 color: AppPalette.textSecond
                                 font.pixelSize: Tokens.fontMd
                             }
                             KSpinBox {
                                 id: circleGridAngleSpinBox
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - 64
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Tokens.controlHMd
                                 from: 1; to: 5; stepSize: 1; value: 1
                                 onValueModified: function(v) {
                                     if (typeof Scene3dToolBarController !== "undefined")
@@ -2088,27 +2080,24 @@ Column {
                         NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(v)
                 }
 
-                Row {
-                    width: parent.width
-                    height: Tokens.controlHMd
-                    spacing: Tokens.spaceSm
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: qsTr("Size:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
-                    }
-                    KSpinBox {
-                        id: navigationArrowSizeSpinBox
-                        anchors.verticalCenter: parent.verticalCenter
-                        // Fixed reasonable width so single-cell rows don't
-                        // stretch the spinbox across the entire body; value
-                        // (1-5) fits comfortably with -/+ buttons + padding.
-                        width: Math.round(140 * AppPalette.scale)
-                        from: 1; to: 5; stepSize: 1; value: 1
-                        onValueModified: function(v) {
-                            if (typeof NavigationArrowControlMenuController !== "undefined")
-                                NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(v)
+                KParamGrid {
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Tokens.spaceSm
+                        Text {
+                            text: qsTr("Size:")
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontMd
+                        }
+                        KSpinBox {
+                            id: navigationArrowSizeSpinBox
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Tokens.controlHMd
+                            from: 1; to: 5; stepSize: 1; value: 1
+                            onValueModified: function(v) {
+                                if (typeof NavigationArrowControlMenuController !== "undefined")
+                                    NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(v)
+                            }
                         }
                     }
                 }
@@ -2125,27 +2114,19 @@ Column {
                         Scene3dToolBarController.onCompassButtonChanged(v)
                 }
 
-                Row {
-                    width: parent.width
-                    height: Tokens.controlHMd
-                    spacing: Tokens.spaceXs
-                    readonly property real sw: (width - Tokens.spaceXs) / 2
-
-                    Row {
-                        width: parent.sw
-                        height: parent.height
+                KParamGrid {
+                    RowLayout {
+                        Layout.fillWidth: true
                         spacing: Tokens.spaceSm
                         Text {
-                            id: compassPosLabel
-                            anchors.verticalCenter: parent.verticalCenter
                             text: qsTr("Pos:")
                             color: AppPalette.textSecond
                             font.pixelSize: Tokens.fontMd
                         }
                         KSpinBox {
                             id: compassPosSpinBox
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - compassPosLabel.width - parent.spacing
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Tokens.controlHMd
                             from: 1; to: 3; stepSize: 1; value: 2
                             onValueModified: function(v) {
                                 if (typeof Scene3dToolBarController !== "undefined")
@@ -2153,21 +2134,18 @@ Column {
                             }
                         }
                     }
-                    Row {
-                        width: parent.sw
-                        height: parent.height
+                    RowLayout {
+                        Layout.fillWidth: true
                         spacing: Tokens.spaceSm
                         Text {
-                            id: compassSizeLabel
-                            anchors.verticalCenter: parent.verticalCenter
                             text: qsTr("Size:")
                             color: AppPalette.textSecond
                             font.pixelSize: Tokens.fontMd
                         }
                         KSpinBox {
                             id: compassSizeSpinBox
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - compassSizeLabel.width - parent.spacing
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Tokens.controlHMd
                             from: 1; to: 5; stepSize: 1; value: 1
                             onValueModified: function(v) {
                                 if (typeof Scene3dToolBarController !== "undefined")
