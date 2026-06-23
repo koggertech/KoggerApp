@@ -2140,6 +2140,11 @@ void GraphicsScene3dView::setVerticalScale(float scale)
     emit verticalScaleChanged();
 }
 
+void GraphicsScene3dView::resetVerticalScale()
+{
+    setVerticalScale(1.0f);
+}
+
 void GraphicsScene3dView::shiftCameraZAxis(float shift)
 {
     m_camera->moveZAxis(shift);

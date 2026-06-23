@@ -4508,6 +4508,10 @@
 <context>
     <name>Scene3DRightToolbar</name>
     <message>
+        <source>Reset zoom</source>
+        <translation>Сбросить зум</translation>
+    </message>
+    <message>
         <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="101"/>
         <source>Follow boat</source>
         <translation>Слежение за лодкой</translation>

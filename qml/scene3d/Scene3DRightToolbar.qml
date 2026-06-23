@@ -71,6 +71,26 @@ Item {
         }
 
         KCircleIconButton {
+            id: resetZoomButton
+            readonly property bool shown: root.view && Math.abs(root.view.verticalScale - 1.0) > 0.001
+            width: root.buttonSize
+            Layout.preferredWidth: root.buttonSize
+            Layout.preferredHeight: shown ? root.buttonSize : 0
+            visible: Layout.preferredHeight > 1
+            opacity: shown ? 1.0 : 0.0
+            clip: true
+            Behavior on Layout.preferredHeight { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+            Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+            iconSource: "qrc:/icons/ui/zoom_cancel.svg"
+            iconTintColor: AppPalette.text
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            borderColor: AppPalette.border
+            toolTipText: qsTr("Reset zoom")
+            onClicked: if (root.view) root.view.resetVerticalScale()
+        }
+
+        KCircleIconButton {
             id: zoomInButton
             width: root.buttonSize
             height: root.buttonSize
