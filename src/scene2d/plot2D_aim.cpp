@@ -90,6 +90,11 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
         p->drawLine(cursor.mouseX, 0,             cursor.mouseX, canvas.height());
     }
 
+    // Synced cursor (from 3D or another echogram): crosshair only — no info plaque/loupe.
+    if (beenEpochEvent_) {
+        return true;
+    }
+
     float canvas_height  = static_cast<float>(canvas.height());
     float value_range    = cursor.distance.to - cursor.distance.from;
     float value_scale    = float(cursor.mouseY) / canvas_height;
