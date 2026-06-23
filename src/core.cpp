@@ -1626,6 +1626,70 @@ void Core::setTimelinePosition(double position)
     }
 }
 
+void Core::setEchogramSyncCursor(bool state)
+{
+    echogramSyncCursor_ = state;
+}
+
+void Core::setEchogramSyncView(bool state)
+{
+    echogramSyncView_ = state;
+}
+
+void Core::setAimFieldsMask(int mask)
+{
+    aimFieldsMask_ = mask;
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr) {
+            plot->setAimFieldsMask(mask);
+            plot->update();
+        }
+    }
+}
+
+void Core::broadcastEpochCursor(qPlot2D* source, int epoch, float depth)
+{
+    if (!echogramSyncCursor_) {
+        return;
+    }
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != source) {
+            plot->setSyncCursor(epoch, depth);
+        }
+    }
+}
+
+void Core::broadcastCursorClear(qPlot2D* source)
+{
+    if (!echogramSyncCursor_) {
+        return;
+    }
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != source) {
+            plot->clearSyncCursor();
+        }
+    }
+}
+
+void Core::broadcastEchogramView(QObject* source, double timelinePos, double from, double to)
+{
+    if (!echogramSyncView_) {
+        return;
+    }
+    auto* src = qobject_cast<qPlot2D*>(source);
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != src && plot->getPlotEnabled()) {
+            plot->setCursorFromTo(static_cast<float>(from), static_cast<float>(to));
+            plot->setTimelinePosition(static_cast<float>(timelinePos));
+            plot->update();
+        }
+    }
+}
+
 void Core::resetAim()
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
@@ -1752,6 +1816,7 @@ void Core::registerPlot2D(QObject* plotObj)
     }
 
     bindPlot2D(plot);
+    plot->setAimFieldsMask(aimFieldsMask_);
 
     if (!alreadyRegistered && datasetPtr_ && !datasetPtr_->channelsList().isEmpty()) {
         onChannelsUpdated();

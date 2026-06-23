@@ -64,6 +64,13 @@ public:
 
     void setTimelinePositionSec(float position);
     void setTimelinePositionByEpoch(int epochIndx);
+    void setSyncCursor(int epoch, float depth);
+    void clearSyncCursor();
+    virtual void syncClearAim() {}
+    bool hasSyncDepth() const { return syncDepthValid_; }
+    float getSyncDepth() const { return syncDepth_; }
+    void setAimFieldsMask(int mask) { aimFieldsMask_ = mask; }
+    int getAimFieldsMask() const { return aimFieldsMask_; }
 
     float timelinePosition();
     void scrollPosition(int columns);
@@ -212,6 +219,9 @@ protected:
     bool isHorizontal_;
     bool dvlLegendVisible_ = true;
     int  dvlLegendPosIndex_ = 0;
+    bool syncDepthValid_ = false;
+    float syncDepth_ = 0.0f;
+    int aimFieldsMask_ = 0xFF;
 
 private:
     bool isEnabled_;

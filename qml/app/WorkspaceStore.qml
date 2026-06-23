@@ -260,6 +260,69 @@ onEchogramLoupeZoomChanged: echogramLoupeApplyRequested()
 signal echogramLoupePreviewPhase(string phase)
 function echogramLoupePreview(phase) { echogramLoupePreviewPhase(phase) }
 
+property Settings echogramSyncPrefs: Settings {
+    id: echogramSyncPrefs
+    category: "echogram_sync"
+    property bool cursor: false
+    property bool view: false
+}
+property alias echogramSyncCursor: echogramSyncPrefs.cursor
+property alias echogramSyncView: echogramSyncPrefs.view
+
+function applyEchogramSyncToCore() {
+    if (typeof core === "undefined" || !core)
+        return
+    core.setEchogramSyncCursor(echogramSyncPrefs.cursor)
+    core.setEchogramSyncView(echogramSyncPrefs.view)
+}
+onEchogramSyncCursorChanged: applyEchogramSyncToCore()
+onEchogramSyncViewChanged: applyEchogramSyncToCore()
+
+property Settings echogramAimPrefs: Settings {
+    id: echogramAimPrefs
+    category: "echogram_aim"
+    property bool visible: true
+    property bool channel: true
+    property bool epoch: true
+    property bool resolution: true
+    property bool frequency: true
+    property bool pulseCount: true
+    property bool booster: true
+    property bool soundSpeed: true
+}
+property alias aimPanelVisible: echogramAimPrefs.visible
+property alias aimChannel: echogramAimPrefs.channel
+property alias aimEpoch: echogramAimPrefs.epoch
+property alias aimResolution: echogramAimPrefs.resolution
+property alias aimFrequency: echogramAimPrefs.frequency
+property alias aimPulseCount: echogramAimPrefs.pulseCount
+property alias aimBooster: echogramAimPrefs.booster
+property alias aimSoundSpeed: echogramAimPrefs.soundSpeed
+
+function applyAimFieldsToCore() {
+    if (typeof core === "undefined" || !core)
+        return
+    var mask = echogramAimPrefs.visible ? (
+                 (1 << 0)
+               | (echogramAimPrefs.channel    ? (1 << 1) : 0)
+               | (echogramAimPrefs.epoch      ? (1 << 2) : 0)
+               | (echogramAimPrefs.resolution ? (1 << 3) : 0)
+               | (echogramAimPrefs.frequency  ? (1 << 4) : 0)
+               | (echogramAimPrefs.pulseCount ? (1 << 5) : 0)
+               | (echogramAimPrefs.booster    ? (1 << 6) : 0)
+               | (echogramAimPrefs.soundSpeed ? (1 << 7) : 0)
+               ) : 0
+    core.setAimFieldsMask(mask)
+}
+onAimPanelVisibleChanged: applyAimFieldsToCore()
+onAimChannelChanged: applyAimFieldsToCore()
+onAimEpochChanged: applyAimFieldsToCore()
+onAimResolutionChanged: applyAimFieldsToCore()
+onAimFrequencyChanged: applyAimFieldsToCore()
+onAimPulseCountChanged: applyAimFieldsToCore()
+onAimBoosterChanged: applyAimFieldsToCore()
+onAimSoundSpeedChanged: applyAimFieldsToCore()
+
 property Settings loggingPersist: Settings {
     id: loggingPersist
     property bool loggingCheck: false   // KLF
@@ -715,6 +778,7 @@ function _openSettingsSubPage(kind) {
 
 function openQuickActionsSettings() { _openSettingsSubPage("quickActions") }
 function openExtraInfoSettings()    { _openSettingsSubPage("extraInfo") }
+function openAimPanelSettings()     { _openSettingsSubPage("aimPanel") }
 function openUiSavingSettings()     { _openSettingsSubPage("uiSaving") }
 function openTgcSettings()          { _openSettingsSubPage("tgc") }
 function openCsvExportSettings()    { _openSettingsSubPage("csvExport") }
@@ -3804,6 +3868,8 @@ signal uiStateReapplied()
 
 function loadPersistedUiState() {
     restoreLoggingFromSettings()
+    applyEchogramSyncToCore()
+    applyAimFieldsToCore()
     loadSettingsGroupsState()
     loadFavoriteLayoutsState()
     loadLiveEchogramStates()

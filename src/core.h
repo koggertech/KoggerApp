@@ -184,6 +184,14 @@ public slots:
     Q_INVOKABLE QString getChannel1Name() const;
     Q_INVOKABLE QString getChannel2Name() const;
     Q_INVOKABLE void registerPlot2D(QObject* plotObj);
+    Q_INVOKABLE void setEchogramSyncCursor(bool state);
+    Q_INVOKABLE void setEchogramSyncView(bool state);
+    Q_INVOKABLE void setAimFieldsMask(int mask);
+    bool echogramSyncCursor() const { return echogramSyncCursor_; }
+    bool echogramSyncView() const { return echogramSyncView_; }
+    void broadcastEpochCursor(qPlot2D* source, int epoch, float depth);
+    void broadcastCursorClear(qPlot2D* source);
+    Q_INVOKABLE void broadcastEchogramView(QObject* source, double timelinePos, double from, double to);
     Q_INVOKABLE void registerSyncLoupePlot(QObject* plotObj);
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
 
@@ -323,6 +331,9 @@ private:
     ConverterXTF converterXtf_;
     Logger logger_;
     QList<qPlot2D*> plot2dList_;
+    bool echogramSyncCursor_ = false;
+    bool echogramSyncView_ = false;
+    int aimFieldsMask_ = 0xFF;
     QPointer<qPlot2D> syncLoupePlot3dPtr_;
     QList<QMetaObject::Connection> linkManagerWrapperConnections_;
     QString openedfilePath_;

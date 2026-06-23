@@ -7,6 +7,7 @@ qt_add_qml_module(kogger_app
         AutopilotPopup.qml
         BasePanePopup.qml
         BottomTrackEditPopup.qml
+        AimPanelSettingsTab.qml
         ConnectionsSettingsPage.qml
         ConsolePanelDrawer.qml
         CsvExportSettingsTab.qml

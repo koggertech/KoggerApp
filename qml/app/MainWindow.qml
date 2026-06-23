@@ -813,6 +813,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
+                     : workspaceStore.settingsSubPageKind === "aimPanel"     ? qsTr("Information panel")
                      : qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
@@ -828,6 +829,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "uiSaving"   ? uiSavingSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "aimPanel"   ? aimPanelSettingsTabComponent
                      : echogramSettingsTabComponent
             subPageOpen: workspaceStore.anySettingsSubPageActive
 
@@ -1032,6 +1034,14 @@ ApplicationWindow {
             CsvExportSettingsTab {
                 store: workspaceStore
                 targetPlot: workspaceView.primaryPlotItem
+            }
+        }
+
+        Component {
+            id: aimPanelSettingsTabComponent
+
+            AimPanelSettingsTab {
+                store: workspaceStore
             }
         }
 

@@ -519,6 +519,23 @@ void Plot2D::setTimelinePositionByEpoch(int epochIndx)
     setTimelinePositionSec(pos);
 }
 
+void Plot2D::setSyncCursor(int epoch, float depth)
+{
+    syncDepthValid_ = true;
+    syncDepth_ = depth;
+    setAimEpochEventState(true);
+    setTimelinePositionByEpoch(epoch);
+}
+
+void Plot2D::clearSyncCursor()
+{
+    syncDepthValid_ = false;
+    setAimEpochEventState(false);
+    cursor_.selectEpochIndx = -1;
+    cursor_.setMouse(-1, -1);
+    plotUpdate();
+}
+
 void Plot2D::scrollPosition(int columns)
 {
     if (!datasetPtr_ || datasetPtr_->size() <= 0) {
@@ -914,6 +931,7 @@ void Plot2D::scrollDistance(float ratio)
 }
 
 void Plot2D::setMousePosition(int x, int y, bool isSync) {
+    syncDepthValid_ = false;
     if (!datasetPtr_ || canvas_.width() <= 0 || canvas_.height() <= 0) {
         cursor_.selectEpochIndx = -1;
         cursor_.currentEpochIndx = -1;
@@ -953,6 +971,7 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
         cursor_.selectEpochIndx = -1;
         cursor_.currentEpochIndx = -1;
         //_cursor.lastEpochIndx = -1; // ?
+        syncClearAim();
         plotUpdate();
         return;
     }

@@ -2,6 +2,45 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="pl_PL">
 <context>
+    <name>AimPanelSettingsTab</name>
+    <message>
+        <source>Show information panel</source>
+        <translation>Pokaż panel informacyjny</translation>
+    </message>
+    <message>
+        <source>Fields:</source>
+        <translation>Pola:</translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation>Kanał</translation>
+    </message>
+    <message>
+        <source>Epoch</source>
+        <translation>Epoka</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>Rozdzielczość</translation>
+    </message>
+    <message>
+        <source>Frequency</source>
+        <translation>Częstotliwość</translation>
+    </message>
+    <message>
+        <source>Pulse count</source>
+        <translation>Liczba impulsów</translation>
+    </message>
+    <message>
+        <source>Booster</source>
+        <translation>Wzmacniacz</translation>
+    </message>
+    <message>
+        <source>Speed of sound</source>
+        <translation>Prędkość dźwięku</translation>
+    </message>
+</context>
+<context>
     <name>AdjBox</name>
     <message>
         <location filename="../qml/controls/AdjBox.qml" line="9"/>
@@ -11,6 +50,20 @@
 </context>
 <context>
     <name>AppSettingsPage</name>
+    <message>
+        <source>Information panel</source>
+        <translation>Panel informacyjny</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1827"/>
+        <source>Sync echograms</source>
+        <translation>Synchronizacja echogramów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1835"/>
+        <source>Sync view</source>
+        <translation>Synchronizacja widoku</translation>
+    </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="434"/>
         <source>Rotate layout with device</source>
@@ -3513,6 +3566,10 @@
 </context>
 <context>
     <name>MainWindow</name>
+    <message>
+        <source>Information panel</source>
+        <translation>Panel informacyjny</translation>
+    </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="1144"/>
         <source>Language:</source>

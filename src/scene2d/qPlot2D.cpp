@@ -331,6 +331,16 @@ void qPlot2D::sendSyncEvent(int epoch_index, QEvent::Type eventType)
 
     auto epochEvent = new EpochEvent(eventType, datasetPtr_->fromIndex(epoch_index), epoch_index, DatasetChannel(cursor_.channel1, cursor_.subChannel1));
     QCoreApplication::postEvent(this, epochEvent);
+
+    if (eventType == EpochSelected2d && epoch_index >= 0) {
+        const float depth = getDepthByMousePos(cursor_.mouseX, cursor_.mouseY, true);
+        core.broadcastEpochCursor(this, epoch_index, depth);
+    }
+}
+
+void qPlot2D::syncClearAim()
+{
+    core.broadcastCursorClear(this);
 }
 
 void qPlot2D::horScrollEvent(int delta) {

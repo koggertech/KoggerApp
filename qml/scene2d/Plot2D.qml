@@ -348,6 +348,12 @@ WaterFall {
             plot.horScrollEvent(val)
             updateOtherPlot(indx)
         }
+        syncViewToOthers()
+    }
+
+    function syncViewToOthers() {
+        if (typeof core !== "undefined" && core)
+            core.broadcastEchogramView(plot, plot.timelinePosition, cursorFrom(), cursorTo())
     }
 
     function handlePinchStarted(centerX, centerY) {
@@ -387,6 +393,7 @@ WaterFall {
                 pinchZoomY = true
             }
         }
+        syncViewToOthers()
     }
 
     function handlePinchFinished() {
@@ -1716,6 +1723,7 @@ WaterFall {
                 const prog = Math.max(0, Math.min(1, (mouse.x - echoScrollBarH.grabOffsetX) / trackPx))
                 plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
                 updateOtherPlot(indx)
+                syncViewToOthers()
             }
         }
     }
@@ -1873,6 +1881,7 @@ WaterFall {
                 const prog = 1.0 - visualProg
                 plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
                 updateOtherPlot(indx)
+                syncViewToOthers()
             }
         }
     }

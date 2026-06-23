@@ -2,6 +2,45 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="ru_RU">
 <context>
+    <name>AimPanelSettingsTab</name>
+    <message>
+        <source>Show information panel</source>
+        <translation>Показывать информационную плашку</translation>
+    </message>
+    <message>
+        <source>Fields:</source>
+        <translation>Поля:</translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation>Канал</translation>
+    </message>
+    <message>
+        <source>Epoch</source>
+        <translation>Эпоха</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>Разрешение</translation>
+    </message>
+    <message>
+        <source>Frequency</source>
+        <translation>Частота</translation>
+    </message>
+    <message>
+        <source>Pulse count</source>
+        <translation>Количество импульсов</translation>
+    </message>
+    <message>
+        <source>Booster</source>
+        <translation>Усилитель</translation>
+    </message>
+    <message>
+        <source>Speed of sound</source>
+        <translation>Скорость звука</translation>
+    </message>
+</context>
+<context>
     <name>AdjBox</name>
     <message>
         <location filename="../qml/controls/AdjBox.qml" line="9"/>
@@ -11,6 +50,20 @@
 </context>
 <context>
     <name>AppSettingsPage</name>
+    <message>
+        <source>Information panel</source>
+        <translation>Информационная плашка</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1827"/>
+        <source>Sync echograms</source>
+        <translation>Синхронизация эхограмм</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1835"/>
+        <source>Sync view</source>
+        <translation>Синхронизация отображения</translation>
+    </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="434"/>
         <source>Rotate layout with device</source>
@@ -3513,6 +3566,10 @@
 </context>
 <context>
     <name>MainWindow</name>
+    <message>
+        <source>Information panel</source>
+        <translation>Информационная плашка</translation>
+    </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="1144"/>
         <source>Language:</source>

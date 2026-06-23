@@ -1819,6 +1819,27 @@ Column {
                 }
             }
         }
+
+        ParamCardGroup {
+            width: parent.width
+            label: qsTr("Sync echograms")
+            checked: root.store ? root.store.echogramSyncCursor : false
+            onToggled: function(v) { if (root.store) root.store.echogramSyncCursor = v }
+
+            KSwitch {
+                width: parent.width
+                text: qsTr("Sync view")
+                enabled: root.store ? root.store.echogramSyncCursor : false
+                checked: root.store ? root.store.echogramSyncView : false
+                onToggled: if (root.store) root.store.echogramSyncView = checked
+            }
+        }
+
+        KButton {
+            width: parent.width
+            text: qsTr("Information panel")
+            onClicked: if (root.store) root.store.openAimPanelSettings()
+        }
     }
 
     SettingsGroup {

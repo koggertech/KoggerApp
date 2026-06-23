@@ -51,7 +51,7 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
 
             if (chartPtr) {
                 const int x = canvas.width() / 2 + offsetX;
-                float bottomDistance = chartPtr->bottomProcessing.distance;
+                float bottomDistance = parent->hasSyncDepth() ? parent->getSyncDepth() : chartPtr->bottomProcessing.distance;
                 if (!std::isfinite(bottomDistance)) {
                     bottomDistance = 0.0f;
                 }
@@ -96,34 +96,38 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
 
     p->setCompositionMode(QPainter::CompositionMode_SourceOver);
 
-    QString distanceText = QString(QObject::tr("%1 m")).arg(cursor_distance, 0, 'g', 4);
-    QString text = distanceText;
+    const int aimMask = parent->getAimFieldsMask();
+    QString text;
+    auto addLine = [&text](const QString& s) {
+        if (!text.isEmpty())
+            text += "\n";
+        text += s;
+    };
+
+    if (aimMask & (1 << 0)) {
+        addLine(QString(QObject::tr("%1 m")).arg(cursor_distance, 0, 'g', 4));
+    }
 
     auto [channelId, subIndx, name] = parent->getSelectedChannelId();
 
-    if (channelId != channelNone()) {
-        text += "\n" + QObject::tr("Channel: ") + QString("%1").arg(name);
+    if ((aimMask & (1 << 1)) && channelId != channelNone()) {
+        addLine(QObject::tr("Channel: ") + QString("%1").arg(name));
     }
 
     if (cursor.currentEpochIndx != -1) {
-        text += "\n" + QObject::tr("Epoch: ")   + QString::number(cursor.currentEpochIndx);
+        if (aimMask & (1 << 2)) {
+            addLine(QObject::tr("Epoch: ") + QString::number(cursor.currentEpochIndx));
+        }
 
         if (auto* ep = dataset->fromIndex(cursor.currentEpochIndx); ep) {
             if (auto* echogram = ep->chart(channelId, subIndx); echogram) {
-                //qDebug() << "errs[" << cursor.currentEpochIndx << "]:"<< echogram->chartParameters_.errList;
-                //qDebug() << "size[" << cursor.currentEpochIndx << "]:"<< echogram->amplitude.size();
-                //qDebug() << "RES[" << cursor.currentEpochIndx << "]:" << echogram->resolution;
-
                 if (!echogram->recordParameters_.isNull()) {
                     auto& recParams = echogram->recordParameters_;
-                    QString boostStr = recParams.boost ? QObject::tr("ON") : QObject::tr("OFF");
-                    text += "\n" + QObject::tr("Resolution, mm: ")      + QString::number(recParams.resol);
-                    //text += "\n" + QObject::tr("Number of Samples: ") + QString::number(recParams.count);
-                    //text += "\n" + QObject::tr("Offset of samples: ")     + QString::number(recParams.offset);
-                    text += "\n" + QObject::tr("Frequency, kHz: ")      + QString::number(recParams.freq);
-                    text += "\n" + QObject::tr("Pulse count: ")         + QString::number(recParams.pulse);
-                    text += "\n" + QObject::tr("Booster: ")             + boostStr;
-                    text += "\n" + QObject::tr("Speed of sound, m/s: ") + QString::number(recParams.soundSpeed / 1000);
+                    if (aimMask & (1 << 3)) addLine(QObject::tr("Resolution, mm: ")      + QString::number(recParams.resol));
+                    if (aimMask & (1 << 4)) addLine(QObject::tr("Frequency, kHz: ")      + QString::number(recParams.freq));
+                    if (aimMask & (1 << 5)) addLine(QObject::tr("Pulse count: ")         + QString::number(recParams.pulse));
+                    if (aimMask & (1 << 6)) addLine(QObject::tr("Booster: ")             + (recParams.boost ? QObject::tr("ON") : QObject::tr("OFF")));
+                    if (aimMask & (1 << 7)) addLine(QObject::tr("Speed of sound, m/s: ") + QString::number(recParams.soundSpeed / 1000));
                 }
             }
         }
@@ -135,8 +139,8 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
     const int yShift = 40 * scaleFactor_;
     const int textMargin = 5 * scaleFactor_;
     const QRect textBackgroundLocal = textRect.adjusted(-textMargin, -textMargin, textMargin, textMargin);
-    const int textBoxWidth = textBackgroundLocal.width();
-    const int textBoxHeight = textBackgroundLocal.height();
+    const int textBoxWidth = text.isEmpty() ? 0 : textBackgroundLocal.width();
+    const int textBoxHeight = text.isEmpty() ? 0 : textBackgroundLocal.height();
 
     const bool loupeEnabled = parent->getLoupeVisible();
     const int loupeSize = qBound(1, parent->getLoupeSize(), 3);
@@ -243,20 +247,22 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
     const QRect textBackgroundRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
     textRect = textBackgroundRect.adjusted(textMargin, textMargin, -textMargin, -textMargin);
 
-    p->save();
-    if (vertical) {
-        const QPointF c = textBackgroundRect.center();
-        p->translate(c);
-        p->rotate(90);
-        p->translate(-c);
-    }
-    p->setPen(Qt::NoPen);
-    p->setBrush(QColor(45, 45, 45));
-    p->drawRect(textBackgroundRect);
+    if (!text.isEmpty()) {
+        p->save();
+        if (vertical) {
+            const QPointF c = textBackgroundRect.center();
+            p->translate(c);
+            p->rotate(90);
+            p->translate(-c);
+        }
+        p->setPen(Qt::NoPen);
+        p->setBrush(QColor(45, 45, 45));
+        p->drawRect(textBackgroundRect);
 
-    p->setPen(QColor(255, 255, 255));
-    p->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, text);
-    p->restore();
+        p->setPen(QColor(255, 255, 255));
+        p->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, text);
+        p->restore();
+    }
 
     if (hasPreview) {
         QRect previewRect(previewX, previewY, previewSize, previewSize);

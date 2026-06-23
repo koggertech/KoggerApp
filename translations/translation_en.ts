@@ -2,6 +2,45 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
+    <name>AimPanelSettingsTab</name>
+    <message>
+        <source>Show information panel</source>
+        <translation>Show information panel</translation>
+    </message>
+    <message>
+        <source>Fields:</source>
+        <translation>Fields:</translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation>Channel</translation>
+    </message>
+    <message>
+        <source>Epoch</source>
+        <translation>Epoch</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>Resolution</translation>
+    </message>
+    <message>
+        <source>Frequency</source>
+        <translation>Frequency</translation>
+    </message>
+    <message>
+        <source>Pulse count</source>
+        <translation>Pulse count</translation>
+    </message>
+    <message>
+        <source>Booster</source>
+        <translation>Booster</translation>
+    </message>
+    <message>
+        <source>Speed of sound</source>
+        <translation>Speed of sound</translation>
+    </message>
+</context>
+<context>
     <name>AdjBox</name>
     <message>
         <location filename="../qml/controls/AdjBox.qml" line="9"/>
@@ -11,6 +50,20 @@
 </context>
 <context>
     <name>AppSettingsPage</name>
+    <message>
+        <source>Information panel</source>
+        <translation>Information panel</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1827"/>
+        <source>Sync echograms</source>
+        <translation>Sync echograms</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1835"/>
+        <source>Sync view</source>
+        <translation>Sync view</translation>
+    </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="434"/>
         <source>Rotate layout with device</source>
@@ -3516,6 +3569,10 @@
 </context>
 <context>
     <name>MainWindow</name>
+    <message>
+        <source>Information panel</source>
+        <translation>Information panel</translation>
+    </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="1144"/>
         <source>Language:</source>
