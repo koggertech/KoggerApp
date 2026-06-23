@@ -59,10 +59,11 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
                 const float distanceRange = cursor.distance.range();
                 int y = (cursor.channel2 != channelNone()) ? canvas.height() / 2 : 0;
                 if (std::isfinite(distanceRange) && std::abs(distanceRange) > 1e-6f) {
+                    const float depthNorm = (bottomDistance - cursor.distance.from) / distanceRange;
                     const float yFloat = (cursor.channel2 != channelNone())
                         ? static_cast<float>(canvas.height()) * 0.5f
-                            - static_cast<float>(canvas.height()) * (bottomDistance / distanceRange)
-                        : static_cast<float>(canvas.height()) * (bottomDistance / distanceRange);
+                            - static_cast<float>(canvas.height()) * depthNorm
+                        : static_cast<float>(canvas.height()) * depthNorm;
                     y = qRound(yFloat);
                 }
 
