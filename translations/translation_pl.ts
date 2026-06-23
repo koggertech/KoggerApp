@@ -461,9 +461,24 @@
         <translation>Cienie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2083"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2096"/>
         <source>Boat</source>
         <translation type="unfinished">Łódź</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2083"/>
+        <source>Navigation arrow</source>
+        <translation>Strzałka nawigacyjna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2109"/>
+        <source>Shape:</source>
+        <translation>Kształt:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2096"/>
+        <source>Arrow</source>
+        <translation>Strzałka</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2120"/>

@@ -461,9 +461,24 @@
         <translation>Тени</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2083"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2096"/>
         <source>Boat</source>
         <translation type="unfinished">Лодка</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2083"/>
+        <source>Navigation arrow</source>
+        <translation>Стрелка навигации</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2109"/>
+        <source>Shape:</source>
+        <translation>Форма:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2096"/>
+        <source>Arrow</source>
+        <translation>Стрелка</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2120"/>

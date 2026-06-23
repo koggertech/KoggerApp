@@ -9,7 +9,8 @@ NavigationArrowControlMenuController::NavigationArrowControlMenuController(QObje
     graphicsSceneView_(nullptr),
     pendingLambda_(nullptr),
     isVisible_(false),
-    size_(1)
+    size_(1),
+    shape_(0)
 {
 
 }
@@ -47,6 +48,20 @@ void NavigationArrowControlMenuController::onSizeSpinBoxValueChanged(int size)
     }
 }
 
+void NavigationArrowControlMenuController::onRepresentationChanged(int shape)
+{
+    shape_ = shape;
+
+    if (graphicsSceneView_) {
+        if (auto nAPtr = graphicsSceneView_->getNavigationArrowPtr(); nAPtr) {
+            nAPtr->setShape(shape_);
+        }
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
 void NavigationArrowControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     graphicsSceneView_ = sceneView;
@@ -72,6 +87,7 @@ void NavigationArrowControlMenuController::tryInitPendingLambda()
                 if (auto nAPtr = graphicsSceneView_->getNavigationArrowPtr(); nAPtr) {
                     nAPtr->setVisible(isVisible_);
                     nAPtr->setSize(size_);
+                    nAPtr->setShape(shape_);
                 }
             }
         };

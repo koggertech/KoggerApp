@@ -2090,10 +2090,10 @@ Column {
                 }
             }
 
-            // Boat (NavigationArrow) — toggle + animated Size row in same card.
+            // Navigation arrow — toggle + Shape/Size rows in same card.
             ParamCardGroup {
                 id: boatCard
-                label: qsTr("Boat")
+                label: qsTr("Navigation arrow")
                 checked: render3dSettings.navigationArrowCheckButton
                 onToggled: function(v) {
                     render3dSettings.navigationArrowCheckButton = v
@@ -2102,6 +2102,26 @@ Column {
                 }
 
                 KParamGrid {
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Tokens.spaceSm
+                        Text {
+                            text: qsTr("Shape:")
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontMd
+                        }
+                        KCombo {
+                            id: navigationArrowShapeCombo
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Tokens.controlHMd
+                            model: [qsTr("Arrow"), qsTr("Boat")]
+                            currentIndex: 0
+                            onActivated: function(idx) {
+                                if (typeof NavigationArrowControlMenuController !== "undefined")
+                                    NavigationArrowControlMenuController.onRepresentationChanged(idx)
+                            }
+                        }
+                    }
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: Tokens.spaceSm
@@ -2197,6 +2217,7 @@ Column {
             Settings { property alias circleGridStep:       circleGridStepSpinBox.value }
             Settings { property alias circleGridAngle:      circleGridAngleSpinBox.value }
             Settings { property alias navigationArrowSize:  navigationArrowSizeSpinBox.value }
+            Settings { property alias navigationArrowShape: navigationArrowShapeCombo.currentIndex }
             Settings { property alias compassPos:           compassPosSpinBox.value }
             Settings { property alias compassSize:          compassSizeSpinBox.value }
 
@@ -2484,6 +2505,7 @@ Column {
                 if (typeof NavigationArrowControlMenuController !== "undefined") {
                     NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(render3dSettings.navigationArrowCheckButton)
                     NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(navigationArrowSizeSpinBox.value)
+                    NavigationArrowControlMenuController.onRepresentationChanged(navigationArrowShapeCombo.currentIndex)
                 }
             }
         }
