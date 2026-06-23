@@ -18,6 +18,8 @@
 
 #include "core.h"
 #include "themes.h"
+#include <QVariantAnimation>
+#include <QEasingCurve>
 extern Core core;
 
 namespace {
@@ -141,7 +143,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
 
-    connect(&theme, &Themes::changed, this, [this]() { QQuickFramebufferObject::update(); });
+    connect(&theme, &Themes::changed, this, [this]() { recomputeCompassRect(); QQuickFramebufferObject::update(); });
 
     m_camera->setCameraListener(m_axesThumbnailCamera.get());
 
@@ -562,6 +564,16 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     wasMoved_ = false;
     clearComboSelectionRect();
 
+    compassPressed_ = false;
+    if (compass_ && mouseButton.testFlag(Qt::MouseButton::LeftButton) && !compassRect_.isEmpty()) {
+        constexpr qreal kCompassHitFactor = 0.75;
+        const QPointF c = compassRect_.center();
+        const qreal radius = compassRect_.width() * 0.5 * kCompassHitFactor;
+        const qreal dx = x - c.x();
+        const qreal dy = y - c.y();
+        compassPressed_ = (radius > 0.0 && (dx * dx + dy * dy) <= radius * radius);
+    }
+
     if (geoJsonEnabled_) {
         if (mouseButton == Qt::MouseButton::RightButton) {
             // right-click menu is handled in QML
@@ -767,6 +779,15 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
 void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
     Q_UNUSED(keyboardKey);
+
+    if (compassPressed_) {
+        compassPressed_ = false;
+        if (!wasMoved_ && mouseButton.testFlag(Qt::LeftButton)) {
+            resetHeadingToNorth();
+            QQuickFramebufferObject::update();
+            return;
+        }
+    }
 
     clearComboSelectionRect();
 
@@ -1410,6 +1431,7 @@ void GraphicsScene3dView::setCompassState(bool state)
 void GraphicsScene3dView::setCompassPos(int val)
 {
     compassPos_ = val;
+    recomputeCompassRect();
 
     QQuickFramebufferObject::update();
 }
@@ -1417,8 +1439,106 @@ void GraphicsScene3dView::setCompassPos(int val)
 void GraphicsScene3dView::setCompassSize(int val)
 {
     compassSize_ = val;
+    recomputeCompassRect();
 
     QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::resetHeadingToNorth()
+{
+    if (!m_camera) {
+        return;
+    }
+
+    if (northAnim_) {
+        northAnim_->stop();
+        northAnim_->deleteLater();
+        northAnim_ = nullptr;
+    }
+
+    const QVector2D startMain = m_camera->getRotAngle();
+    const float startMainX = startMain.x();
+    const float startMainY = startMain.y();
+    const float twoPi      = 2.0f * static_cast<float>(M_PI);
+    const float targetMainX = twoPi * std::round(startMainX / twoPi); // nearest north, shortest-path heading
+
+    float startThumbX = startMainX;
+    float startThumbY = startMainY;
+    if (m_axesThumbnailCamera) {
+        const QVector2D s = m_axesThumbnailCamera->getRotAngle();
+        startThumbX = s.x();
+        startThumbY = s.y();
+    }
+    const float targetThumbX = twoPi * std::round(startThumbX / twoPi);
+
+    if (std::fabs(targetMainX - startMainX) < 1e-4f && std::fabs(startMainY) < 1e-4f) {
+        return; // already north + perpendicular to ground
+    }
+
+    northAnim_ = new QVariantAnimation(this);
+    northAnim_->setStartValue(0.0);
+    northAnim_->setEndValue(1.0);
+    northAnim_->setDuration(350);
+    northAnim_->setEasingCurve(QEasingCurve::OutCubic);
+
+    QObject::connect(northAnim_, &QVariantAnimation::valueChanged, this,
+                     [this, startMainX, targetMainX, startMainY, startThumbX, targetThumbX, startThumbY](const QVariant& value) -> void {
+        const float t = value.toFloat();
+        if (m_camera) {
+            m_camera->setRotAngle(QVector2D(startMainX + (targetMainX - startMainX) * t,
+                                            startMainY * (1.0f - t)));
+        }
+        if (m_axesThumbnailCamera) {
+            m_axesThumbnailCamera->setRotAngle(QVector2D(startThumbX + (targetThumbX - startThumbX) * t,
+                                                         startThumbY * (1.0f - t)));
+        }
+        QQuickFramebufferObject::update();
+    });
+
+    QObject::connect(northAnim_, &QVariantAnimation::finished, this,
+                     [this]() -> void {
+        if (m_camera) {
+            m_camera->setRotAngle(QVector2D(0.0f, 0.0f));
+        }
+        if (m_axesThumbnailCamera) {
+            m_axesThumbnailCamera->setRotAngle(QVector2D(0.0f, 0.0f));
+        }
+        QQuickFramebufferObject::update();
+        onCameraMoved();
+    });
+
+    northAnim_->start();
+}
+
+void GraphicsScene3dView::recomputeCompassRect()
+{
+    int base = 250;
+    switch (compassSize_) {
+    case 1: base = 150; break;
+    case 2: base = 250; break;
+    case 3: base = 350; break;
+    case 4: base = 450; break;
+    case 5: base = 550; break;
+    default: base = 250; break;
+    }
+
+    constexpr qreal kCompassSizeFactor = 0.7;
+    const qreal dpr = window() ? window()->effectiveDevicePixelRatio() : 1.0;
+    const qreal side = static_cast<qreal>(base) * static_cast<qreal>(renderScale()) * kCompassSizeFactor / (dpr > 0.0 ? dpr : 1.0);
+
+    const qreal w = width();
+    const qreal h = height();
+
+    qreal x = 0.0;
+    qreal y = h - side;
+    switch (compassPos_) {
+    case 1: x = w - side; y = h - side; break; // bottom-right
+    case 2: x = 0.0;      y = h - side; break; // bottom-left
+    case 3: x = w - side; y = 0.0;      break; // top-right
+    default: x = 0.0;     y = h - side; break;
+    }
+
+    compassRect_ = QRectF(x, y, side, side);
 }
 
 void GraphicsScene3dView::applyShadowSettingsToSceneRenderObjects()
@@ -1934,6 +2054,7 @@ void GraphicsScene3dView::geometryChange(const QRectF &newGeometry, const QRectF
     QQuickFramebufferObject::geometryChange(newGeometry, oldGeometry);
 
     if (newGeometry.size() != oldGeometry.size()) {
+        recomputeCompassRect();
         QMetaObject::invokeMethod(this, [this]() {
             updateProjection();
             onCameraMoved();

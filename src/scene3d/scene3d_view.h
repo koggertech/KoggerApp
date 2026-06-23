@@ -7,6 +7,7 @@
 #include <QQuickFramebufferObject>
 #include <QtMath>
 #include <QElapsedTimer>
+#include <QRectF>
 #include "coordinate_axes.h"
 #include "plane_grid.h"
 #include "ray_caster.h"
@@ -30,6 +31,7 @@
 
 class Dataset;
 class GraphicsScene3dRenderer;
+class QVariantAnimation;
 class GraphicsScene3dView : public QQuickFramebufferObject
 {
     Q_OBJECT
@@ -390,6 +392,8 @@ private:
     void refreshSyncLoupePreview();
     bool tryProjectScreenToPlane(qreal x, qreal y, float planeZ, QVector3D& outPoint) const;
     void zoomAroundScreenAnchor(qreal delta, const QPointF& anchorPos);
+    void recomputeCompassRect();
+    void resetHeadingToNorth();
 
 private:
     friend class BottomTrack;
@@ -459,6 +463,9 @@ private:
     bool compass_;
     int compassPos_;
     int compassSize_;
+    QRectF compassRect_;
+    bool compassPressed_ = false;
+    QVariantAnimation* northAnim_ = nullptr;
     bool shadowsEnabled_;
     QVector3D shadowVector_;
     float shadowIntensity_;

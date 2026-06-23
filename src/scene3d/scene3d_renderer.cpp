@@ -378,7 +378,8 @@ void GraphicsScene3dRenderer::drawObjects()
         case 5: size = 550;  break;
         default: size = 250; break;
         }
-        size = qRound(size * renderScale());
+        constexpr float kCompassSizeFactor = 0.7f;
+        size = qRound(size * renderScale() * kCompassSizeFactor);
 
         int x = 0;
         int y = 0;
