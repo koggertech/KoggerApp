@@ -2210,6 +2210,13 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
 
                      }, Qt::DirectConnection);
 
+    QObject::connect(datasetPtr_, &Dataset::sonarPositionsUpdated,
+                     this,      [this](int from, int to) -> void {
+                         if (m_bottomTrack) {
+                             m_bottomTrack->isEpochsChanged(from, to, false, false);
+                         }
+                     }, Qt::QueuedConnection);
+
     QObject::connect(datasetPtr_, &Dataset::updatedLlaRef,
                      this,      [this]() -> void {
                          surfaceView_->setLlaRef(datasetPtr_->getLlaRef());

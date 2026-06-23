@@ -394,6 +394,7 @@ signals:
     void attitudeAdded(uint64_t indx);
     void artificalAttitudeAdded(uint64_t indx);
     void bottomTrackAdded(uint64_t indx);
+    void sonarPositionsUpdated(int from, int to);
     //void interpYaw(int epIndx);
     //void interpPos(int epIndx);
     void dataUpdate();

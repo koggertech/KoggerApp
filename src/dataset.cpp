@@ -2124,6 +2124,8 @@ void Dataset::onSonarPosCanCalc(uint64_t indx)
         chunkTarget = std::min(calcTarget, sonarPosIndx_ + kSonarChunk);
     }
 
+    const uint64_t prevSonarPosIndx = sonarPosIndx_;
+
     for (uint64_t i = sonarPosIndx_ + 1; i <= chunkTarget; ++i) {
         if (auto* ep = fromIndex(i); ep) {
             if (sonarOffset_.isNull()) {
@@ -2145,6 +2147,15 @@ void Dataset::onSonarPosCanCalc(uint64_t indx)
 
     sonarPosIndx_ = chunkTarget;
     pendingSonarPosIndx_ = sonarPosIndx_;
+
+    {
+        const int btEnd = static_cast<int>(getLastBottomTrackEpoch());
+        const int reFrom = static_cast<int>(prevSonarPosIndx) + 1;
+        const int reTo   = std::min<int>(static_cast<int>(chunkTarget), btEnd);
+        if (btEnd > 0 && reFrom <= reTo) {
+            emit sonarPositionsUpdated(reFrom, reTo);
+        }
+    }
 
     if (chunkedSpatialCatchup_ && calcTarget > sonarPosIndx_) {
         pendingSonarPosIndx_ = calcTarget;
