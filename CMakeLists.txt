@@ -50,7 +50,7 @@ qt_standard_project_setup(REQUIRES 6.8)
 set(CMAKE_AUTOUIC OFF)
 
 option(KOGGER_FLASHER          "Build device flasher"                OFF)
-option(KOGGER_SEPARATE_READING "Data reception in a separate thread" ON)
+option(KOGGER_SEPARATE_READING "Data reception in a separate thread" OFF)
 option(KOGGER_SCENE_TESTING    "3D scene testing"                    OFF)
 option(KOGGER_MANUAL_TESTING   "Manual testing hooks"                OFF)
 

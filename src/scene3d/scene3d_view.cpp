@@ -1598,8 +1598,7 @@ void GraphicsScene3dView::beginFollowReturn()
 
     animator_.cancel(ChFollow);
 
-    auto* epoch = (m_camera && datasetPtr_) ? datasetPtr_->last() : nullptr;
-    if (!epoch) {
+    if (!m_camera || !datasetPtr_ || !datasetPtr_->isValidBoatCoordinate()) { // no valid boat fix — nothing to fly to
         followSuspended_ = false;
         emit followReturnStateChanged();
         return;
@@ -1633,18 +1632,15 @@ void GraphicsScene3dView::beginFollowReturn()
 
     animator_.start(ChFollow, anim::Follow,
                     [this, startRot, targetRotX, targetRotY, startDist, targetDist](qreal value) -> void {
-        if (!m_camera || !datasetPtr_) {
+        if (!m_camera || !datasetPtr_ || !datasetPtr_->isValidBoatCoordinate()) {
             return;
         }
-        auto* ep = datasetPtr_->last();
-        if (!ep) {
+        const LLA boatLla(datasetPtr_->getBoatLatitude(), datasetPtr_->getBoatLongitude(), 0.0);
+        const NED ned(&boatLla, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+        if (!ned.isCoordinatesValid()) {
             return;
         }
-        const NED ned = ep->getPositionGNSS().ned;
         QVector3D target(ned.n, ned.e, 1.0f);
-        if (target == QVector3D(0.0f, 0.0f, 1.0f)) {
-            return;
-        }
 
         if (navigatorViewLocation_) {
             const float yawRadForDir = -m_camera->m_rotAngle.x();
@@ -1677,6 +1673,10 @@ void GraphicsScene3dView::beginFollowReturn()
     },
                     [this]() -> void {
         followSuspended_ = false;
+        if (m_camera) {
+            m_camera->yawSmoother_.reset();
+            m_camera->pitchSmoother_.reset();
+        }
         emit followReturnStateChanged();
     });
 }
@@ -2388,43 +2388,8 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
         const float yawDeg = datasetPtr_->tryRetLastValidYaw();
         if (std::isfinite(yawDeg)) {
             const float targetYaw = -yawDeg * static_cast<float>(M_PI) / 180.0f;
-
-            if (!m_camera->navYawInited_) {
-                m_camera->navYawFilteredRad_ = targetYaw;
-                m_camera->navYawInited_ = true;
-                m_camera->navYawTmr_.restart();
-            }
-
-            double dt = m_camera->navYawTmr_.restart() / 1000.0;
-            if (dt <= 0.0 || dt > 0.5) {
-                dt = 0.016; // 60hz
-            }
-
-            float diff = shortestDiff(m_camera->navYawFilteredRad_, targetYaw); // разница по кратчайшей дуге + deadband
-            if (std::fabs(diff) < m_camera->navYawDeadbandRad_) {
-                diff = 0.f;
-            }
-
-
-            if (std::fabs(diff) > m_camera->navYawSnapRad_) {
-                m_camera->navYawFilteredRad_ = targetYaw;
-            }
-            else {
-                const float alpha = 1.0f - std::exp(-float(dt) / m_camera->navYawTauSec_); // time-based EMA
-                float step = diff * alpha;
-
-                const float maxStep = m_camera->navYawMaxRateRadPerSec_ * float(dt); // ограничение скорости поворота
-                if (step >  maxStep) {
-                    step =  maxStep;
-                }
-                if (step < -maxStep) {
-                    step = -maxStep;
-                }
-
-                m_camera->navYawFilteredRad_ = wrapPi(m_camera->navYawFilteredRad_ + step);
-            }
-
-            m_camera->m_rotAngle.setX(m_camera->navYawFilteredRad_);
+            const float smoothedYaw = m_camera->yawSmoother_.stepAngle(m_camera->m_rotAngle.x(), targetYaw, smooth::FollowYaw);
+            m_camera->m_rotAngle.setX(smoothedYaw);
         }
     }
 
@@ -2455,15 +2420,8 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
 
         // тангаж
         const float targetPitchRad = isNorth_ ? 0.0f : qDegreesToRadians(30.0f);
-        const float alpha = 0.3f;
-        const float curr = m_camera->m_rotAngle.y();
-        float next = curr + (targetPitchRad - curr) * alpha;
-        if (next < 0.0f) {
-            next = 0.0f;
-        }
-        if (next > float(M_PI_2)) {
-            next = float(M_PI_2);
-        }
+        float next = m_camera->pitchSmoother_.step(m_camera->m_rotAngle.y(), targetPitchRad, smooth::FollowPitch);
+        next = std::clamp(next, 0.0f, float(M_PI_2));
         m_camera->m_rotAngle.setY(next);
     }
 
@@ -3963,10 +3921,6 @@ GraphicsScene3dView::Camera::Camera(GraphicsScene3dView* viewPtr) :
     viewPtr_(viewPtr)
 {
     setMapView();
-
-    if (viewPtr) { // for main cam
-        navYawTmr_.start();
-    }
 }
 
 GraphicsScene3dView::Camera::Camera(qreal pitch,

@@ -28,6 +28,7 @@
 #include "geojson_controller.h"
 #include "data_processor.h"
 #include "animator.h"
+#include "smoother.h"
 
 
 class Dataset;
@@ -152,14 +153,9 @@ public:
         LLA yerevanLla = LLA(40.1852f, 44.5149f, 0.0f);
         LLARef viewLlaRef_ = LLARef(yerevanLla);
 
-        // yaw фильтр
-        float navYawFilteredRad_        = 0.f;
-        bool  navYawInited_             = false;
-        QElapsedTimer navYawTmr_;
-        float navYawTauSec_             = 1.2;
-        float navYawDeadbandRad_        = qDegreesToRadians(2.0f);
-        float navYawMaxRateRadPerSec_   = qDegreesToRadians(90.0f);
-        float navYawSnapRad_            = qDegreesToRadians(120.0f);
+        // follow smoothing (continuous, critically-damped — см. smoother.h)
+        Smoother yawSmoother_;
+        Smoother pitchSmoother_;
     };
 
     //Renderer
