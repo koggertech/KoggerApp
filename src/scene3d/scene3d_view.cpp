@@ -143,7 +143,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
 
-    connect(&theme, &Themes::changed, this, [this]() { recomputeCompassRect(); QQuickFramebufferObject::update(); });
+    connect(&theme, &Themes::changed, this, [this]() { QQuickFramebufferObject::update(); });
 
     m_camera->setCameraListener(m_axesThumbnailCamera.get());
 
@@ -1431,7 +1431,6 @@ void GraphicsScene3dView::setCompassState(bool state)
 void GraphicsScene3dView::setCompassPos(int val)
 {
     compassPos_ = val;
-    recomputeCompassRect();
 
     QQuickFramebufferObject::update();
 }
@@ -1439,7 +1438,6 @@ void GraphicsScene3dView::setCompassPos(int val)
 void GraphicsScene3dView::setCompassSize(int val)
 {
     compassSize_ = val;
-    recomputeCompassRect();
 
     QQuickFramebufferObject::update();
 }
@@ -1515,37 +1513,6 @@ void GraphicsScene3dView::resetHeadingToNorth()
     });
 
     northAnim_->start();
-}
-
-void GraphicsScene3dView::recomputeCompassRect()
-{
-    int base = 250;
-    switch (compassSize_) {
-    case 1: base = 150; break;
-    case 2: base = 250; break;
-    case 3: base = 350; break;
-    case 4: base = 450; break;
-    case 5: base = 550; break;
-    default: base = 250; break;
-    }
-
-    constexpr qreal kCompassSizeFactor = 0.7;
-    const qreal dpr = window() ? window()->effectiveDevicePixelRatio() : 1.0;
-    const qreal side = static_cast<qreal>(base) * static_cast<qreal>(renderScale()) * kCompassSizeFactor / (dpr > 0.0 ? dpr : 1.0);
-
-    const qreal w = width();
-    const qreal h = height();
-
-    qreal x = 0.0;
-    qreal y = h - side;
-    switch (compassPos_) {
-    case 1: x = w - side; y = h - side; break; // bottom-right
-    case 2: x = 0.0;      y = h - side; break; // bottom-left
-    case 3: x = w - side; y = 0.0;      break; // top-right
-    default: x = 0.0;     y = h - side; break;
-    }
-
-    compassRect_ = QRectF(x, y, side, side);
 }
 
 void GraphicsScene3dView::applyShadowSettingsToSceneRenderObjects()
@@ -2061,7 +2028,6 @@ void GraphicsScene3dView::geometryChange(const QRectF &newGeometry, const QRectF
     QQuickFramebufferObject::geometryChange(newGeometry, oldGeometry);
 
     if (newGeometry.size() != oldGeometry.size()) {
-        recomputeCompassRect();
         QMetaObject::invokeMethod(this, [this]() {
             updateProjection();
             onCameraMoved();
@@ -3420,6 +3386,15 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
             view->contacts_->contactBounds_ = std::move(logical);
         } else {
             view->contacts_->contactBounds_ = std::move(bounds);
+        }
+    }
+    {
+        const QRectF r = m_renderer->compassRectPx_;
+        const qreal k = view->window() ? view->window()->effectiveDevicePixelRatio() : 1.0;
+        if (r.isEmpty() || !(k > 0.0)) {
+            view->compassRect_ = r;
+        } else {
+            view->compassRect_ = QRectF(r.x() / k, r.y() / k, r.width() / k, r.height() / k);
         }
     }
 

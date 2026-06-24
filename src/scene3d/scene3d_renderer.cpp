@@ -367,6 +367,7 @@ void GraphicsScene3dRenderer::drawObjects()
     const bool scaleBarVisible = scaleBar_ && m_camera.getIsPerspective();
 
     //-----------Compass-------------
+    compassRectPx_ = QRectF();
     if (compass_) {
         int compassBase = 250;
         switch (compassSize_) {
@@ -394,6 +395,10 @@ void GraphicsScene3dRenderer::drawObjects()
             const float charH = static_cast<float>(TextRenderer::instance().getCharPixelHeight());
             compassY += static_cast<int>(16.0f + 6.0f + 3.0f + charH + 4.0f);
         }
+
+        compassRectPx_ = QRectF(compassX - viewport[0],
+                                viewport[3] - (compassY - viewport[1]) - compassSizePx,
+                                compassSizePx, compassSizePx);
 
         drawCompass(compassX, compassY, compassSizePx);
     }

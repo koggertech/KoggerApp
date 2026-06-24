@@ -95,5 +95,6 @@ private:
     int compassPos_ = 1;
     int compassSize_ = 1;
     bool scaleBar_ = false;
+    QRectF compassRectPx_;   // drawn compass rect (physical px, top-left) for QML/hit-test
     bool planeGridType_ = true;
 };

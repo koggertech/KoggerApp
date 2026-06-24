@@ -395,7 +395,6 @@ private:
     void refreshSyncLoupePreview();
     bool tryProjectScreenToPlane(qreal x, qreal y, float planeZ, QVector3D& outPoint) const;
     void zoomAroundScreenAnchor(qreal delta, const QPointF& anchorPos);
-    void recomputeCompassRect();
     void resetHeadingToNorth();
 
 private:
