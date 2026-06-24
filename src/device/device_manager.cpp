@@ -509,7 +509,7 @@ void DeviceManager::openFile(QString filePath)
                 file.close();
                 return;
             }
-            if (sleepCnt > 50) {
+            if (sleepCnt > 10) {
                 QThread::msleep(1);
                 sleepCnt = 0;
             }

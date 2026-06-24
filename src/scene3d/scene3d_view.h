@@ -27,11 +27,13 @@
 #include "geojson_layer.h"
 #include "geojson_controller.h"
 #include "data_processor.h"
+#include "animator.h"
 
 
 class Dataset;
 class GraphicsScene3dRenderer;
 class QVariantAnimation;
+class QTimer;
 class GraphicsScene3dView : public QQuickFramebufferObject
 {
     Q_OBJECT
@@ -45,6 +47,8 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(bool cameraPerspective READ cameraPerspective NOTIFY cameraPerspectiveChanged)
     Q_PROPERTY(bool updateSurface READ updateSurface NOTIFY updateSurfaceChanged)
     Q_PROPERTY(int dataZoom READ dataZoom NOTIFY sendDataZoom)
+    Q_PROPERTY(bool followReturnPending READ followReturnPending NOTIFY followReturnStateChanged)
+    Q_PROPERTY(int followReturnSeconds READ followReturnSeconds NOTIFY followReturnStateChanged)
     Q_PROPERTY(bool syncLoupeOverlayVisible READ syncLoupeOverlayVisible NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(int syncLoupeEpochIndex READ syncLoupeEpochIndex NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(float syncLoupeDepthFrom READ syncLoupeDepthFrom NOTIFY syncLoupeStateChanged)
@@ -234,6 +238,8 @@ public:
     bool cameraPerspective() const;
     bool updateSurface() const;
     int dataZoom() const { return dataZoomIndx_; }
+    bool followReturnPending() const;
+    int followReturnSeconds() const;
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
     void clearSurfaceViewRender();
@@ -283,6 +289,9 @@ public:
     Q_INVOKABLE void geojsonDeleteSelectedFeature();
     Q_INVOKABLE void geojsonFitInView();
     Q_INVOKABLE void setSyncLoupeUiAllowed(bool allowed);
+    Q_INVOKABLE void returnToBoatNow();
+    Q_INVOKABLE void flyToLastPosition();
+    Q_INVOKABLE void zoomButtonAnimated(qreal steps);
 
     void setTrackLastData(bool state);
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
@@ -329,6 +338,7 @@ public Q_SLOTS:
     void setIsometricView();
     void setCancelZoomView();
     void setMapView();
+    void setMapViewAnimated();
     void setLastEpochFocusView(bool useAngle, bool useNavigatorView);
     void setIdleMode();
     void setVerticalScale(float scale);
@@ -373,6 +383,7 @@ signals:
     void forceSingleZoomAutoStateChanged(bool active);
     void syncLoupeStateChanged();
     void verticalScaleChanged();
+    void followReturnStateChanged();
 
 private:
     void updateBounds();
@@ -396,6 +407,11 @@ private:
     bool tryProjectScreenToPlane(qreal x, qreal y, float planeZ, QVector3D& outPoint) const;
     void zoomAroundScreenAnchor(qreal delta, const QPointF& anchorPos);
     void resetHeadingToNorth();
+    void notifyManualCameraInteraction();
+    void beginFollowReturn();
+    void cancelFollowReturn();
+    void cancelCameraPoseAnim();
+    void cancelVScaleAnim();
 
 private:
     friend class BottomTrack;
@@ -468,7 +484,15 @@ private:
     bool scaleBar_ = true;
     QRectF compassRect_;
     bool compassPressed_ = false;
-    QVariantAnimation* northAnim_ = nullptr;
+
+    enum AnimCh { ChHeading, ChFollow, ChPose, ChVScale };
+    Animator animator_;
+    bool followSuspended_ = false;
+    bool positionsLive_ = false;
+    QTimer* followResumeTimer_ = nullptr;
+    QTimer* followTickTimer_ = nullptr;
+    QTimer* positionsLiveTimer_ = nullptr;
+    QVector3D followReturnStartLookAt_;
     bool shadowsEnabled_;
     QVector3D shadowVector_;
     float shadowIntensity_;

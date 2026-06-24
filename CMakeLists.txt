@@ -50,7 +50,7 @@ qt_standard_project_setup(REQUIRES 6.8)
 set(CMAKE_AUTOUIC OFF)
 
 option(KOGGER_FLASHER          "Build device flasher"                OFF)
-option(KOGGER_SEPARATE_READING "Data reception in a separate thread" OFF)
+option(KOGGER_SEPARATE_READING "Data reception in a separate thread" ON)
 option(KOGGER_SCENE_TESTING    "3D scene testing"                    OFF)
 option(KOGGER_MANUAL_TESTING   "Manual testing hooks"                OFF)
 
@@ -102,6 +102,7 @@ target_include_directories(KoggerApp PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/freetype/include)
 
 # C++ modules (each appends target_sources + include dirs to KoggerApp)
+add_subdirectory(src/animation)
 add_subdirectory(src/data_processor)
 add_subdirectory(src/scene2d)
 add_subdirectory(src/scene3d)

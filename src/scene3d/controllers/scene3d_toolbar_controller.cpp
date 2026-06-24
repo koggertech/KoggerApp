@@ -66,7 +66,7 @@ void Scene3dToolBarController::onSetCameraIsometricViewButtonClicked()
 void Scene3dToolBarController::onSetCameraMapViewButtonClicked()
 {
     if (graphicsScene3dViewPtr_) {
-        graphicsScene3dViewPtr_->setMapView();
+        graphicsScene3dViewPtr_->setMapViewAnimated();
     }
 }
 

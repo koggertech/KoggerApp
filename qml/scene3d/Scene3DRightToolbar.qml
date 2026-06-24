@@ -33,7 +33,13 @@ Item {
     }
 
     function _zoom(steps) {
-        if (!root.view || typeof root.view.mouseWheelTrigger !== "function")
+        if (!root.view)
+            return
+        if (root.view.zoomButtonAnimated) {
+            root.view.zoomButtonAnimated(steps)
+            return
+        }
+        if (typeof root.view.mouseWheelTrigger !== "function")
             return
         var cx = root.view.width  / 2
         var cy = root.view.height / 2
@@ -64,7 +70,7 @@ Item {
 
         opacity: buttonColumnFade.value
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
-        IdleFade { id: buttonColumnFade; hovered: buttonColumnHoverHandler.hovered || rulerControl.menuOpen }
+        IdleFade { id: buttonColumnFade; hovered: buttonColumnHoverHandler.hovered || rulerControl.menuOpen || (root.view && root.view.followReturnPending) }
 
         HoverHandler {
             id: buttonColumnHoverHandler
@@ -122,32 +128,97 @@ Item {
 
         Item { Layout.preferredHeight: Tokens.spaceLg; Layout.preferredWidth: 1 }
 
-        KCircleIconButton {
-            id: navArrowButton
-            objectName: "followBoatButton"
+        Item {
+            id: navArrowControl
             width: root.buttonSize
             height: root.buttonSize
             Layout.preferredWidth: root.buttonSize
             Layout.preferredHeight: root.buttonSize
-            iconSource: "qrc:/icons/ui/location.svg"
-            iconTintColor: AppPalette.text
-            fillHoverColor: AppPalette.cardHover
-            toolTipText: qsTr("Follow boat")
 
-            readonly property bool checked: root.store ? root.store.trackLastDataEnabled : false
-            fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: checked ? AppPalette.accentBorder : AppPalette.border
-            borderWidth: checked ? 2 : 1
+            readonly property real _s: theme ? theme.resCoeff : 1.0
+            readonly property int _pad: Math.round(5 * _s)
+            readonly property int _gap: Math.round(6 * AppPalette.scale)
+            readonly property bool pending: navArrowButton.checked && root.view && root.view.followReturnPending
+            readonly property real _openW: _pad * 2 + root.buttonSize * 2 + _gap
 
-            onClicked: {
-                root.cancelRuler()
-                if (!root.store) return
-                root.store.trackLastDataEnabled = !root.store.trackLastDataEnabled
-                Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(root.store.trackLastDataEnabled)
+            Rectangle {
+                id: followBacking
+                z: -1
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.rightMargin: -navArrowControl._pad
+                height: root.buttonSize + navArrowControl._pad * 2
+                width: navArrowControl.pending ? navArrowControl._openW : 0
+                radius: height / 2
+                color: AppPalette.bg
+                border.width: 1
+                border.color: AppPalette.border
+                opacity: navArrowControl.pending ? 1 : 0
+                visible: opacity > 0.01
+                clip: true
+
+                Behavior on width   { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.AllButtons
+                    hoverEnabled: true
+                }
+
+                Rectangle {
+                    id: frDigit
+                    anchors.right: parent.right
+                    anchors.rightMargin: navArrowControl._pad + root.buttonSize + navArrowControl._gap
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: root.buttonSize
+                    height: root.buttonSize
+                    radius: height / 2
+                    color: AppPalette.card
+                    border.color: AppPalette.accentBorder
+                    border.width: 2
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.view ? root.view.followReturnSeconds : 0
+                        color: AppPalette.text
+                        font: theme.textFont
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: if (root.view) root.view.returnToBoatNow()
+                    }
+                }
             }
 
-            Component.onCompleted: {
-                Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
+            KCircleIconButton {
+                id: navArrowButton
+                objectName: "followBoatButton"
+                anchors.fill: parent
+                iconSource: "qrc:/icons/ui/location.svg"
+                iconTintColor: AppPalette.text
+                fillHoverColor: AppPalette.cardHover
+                toolTipText: qsTr("Follow boat")
+
+                readonly property bool checked: root.store ? root.store.trackLastDataEnabled : false
+                fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
+                borderColor: checked ? AppPalette.accentBorder : AppPalette.border
+                borderWidth: checked ? 2 : 1
+
+                onClicked: {
+                    root.cancelRuler()
+                    if (!root.store) return
+                    root.store.trackLastDataEnabled = !root.store.trackLastDataEnabled
+                    Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(root.store.trackLastDataEnabled)
+                    if (root.store.trackLastDataEnabled && root.view && root.view.flyToLastPosition)
+                        root.view.flyToLastPosition()
+                }
+
+                Component.onCompleted: {
+                    Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
+                }
             }
         }
 
