@@ -47,6 +47,55 @@ Item {
             geo: root.scene3dView ? root.scene3dView.geoJsonController : null
             store: root.workspaceRoot ? root.workspaceRoot.store : null
         }
+
+        // Surface-quality label: right of the dataset toolbar, left of the scale bar.
+        Item {
+            id: surfaceQualityBadge
+            readonly property var v: root.scene3dView
+            readonly property var store: root.workspaceRoot ? root.workspaceRoot.store : null
+            readonly property int currentZoom: v ? v.dataZoom : -1
+            readonly property bool mosaicOn: store ? store.mosaicVisible : false
+            readonly property bool surfaceOn: v ? v.updateSurface : false
+            // height matrix is shared by surface mesh and mosaic; picture = mosaic
+            readonly property bool heightMatrixOn: surfaceOn || mosaicOn
+            readonly property int mosaicCmPerPix: currentZoom > 0 ? Math.pow(2, currentZoom - 1) : 0
+            readonly property int surfaceCmPerCell: mosaicCmPerPix > 0 ? Math.round(mosaicCmPerPix * 256 / 8) : 0
+
+            visible: v !== null && v.visible && v.cameraPerspective && currentZoom > 0
+                     && store && store.showSurfaceQuality && heightMatrixOn
+                     && root.workspaceRoot.active3DPane === root
+
+            anchors.left: scene3dToolbar.right
+            anchors.leftMargin: Math.round(12 * theme.resCoeff)
+            anchors.verticalCenter: scene3dToolbar.verticalCenter
+
+            width: qualityRect.width
+            height: qualityRect.height
+
+            Rectangle {
+                id: qualityRect
+                color: "#00000080"
+                radius: Math.round(4 * theme.resCoeff)
+                width: qualityText.implicitWidth + Math.round(16 * theme.resCoeff)
+                height: qualityText.implicitHeight + Math.round(8 * theme.resCoeff)
+
+                Text {
+                    id: qualityText
+                    anchors.centerIn: parent
+                    text: {
+                        var parts = []
+                        if (surfaceQualityBadge.heightMatrixOn)
+                            parts.push(qsTr("Surface: ") + surfaceQualityBadge.surfaceCmPerCell + qsTr(" cm/cell"))
+                        if (surfaceQualityBadge.mosaicOn)
+                            parts.push(qsTr("Mosaic: ") + surfaceQualityBadge.mosaicCmPerPix + qsTr(" cm/pix"))
+                        return parts.join("\n")
+                    }
+                    color: "#ffffff"
+                    font: theme.textFont
+                    horizontalAlignment: Text.AlignLeft
+                }
+            }
+        }
     }
 
     EchogramContactPopup {

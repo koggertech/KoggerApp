@@ -1876,9 +1876,10 @@ Column {
             ParamCard {
                 width: parent.width
                 label: qsTr("Show surface quality")
-                checked: render3dSettings.showQualityLabelCheck
+                checked: root.store ? root.store.showSurfaceQuality : false
                 onToggled: function(v) {
-                    render3dSettings.showQualityLabelCheck = v
+                    if (root.store)
+                        root.store.showSurfaceQuality = v
                 }
             }
 
@@ -2210,7 +2211,6 @@ Column {
 
             Settings {
                 id: render3dSettings
-                property bool showQualityLabelCheck: false
                 property bool forceSingleZoomCheckButton: false
                 property bool syncLoupeCheckButton: false
                 property bool isNorthViewButton: false

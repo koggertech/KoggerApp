@@ -3703,6 +3703,26 @@
 <context>
     <name>Pane3DWindow</name>
     <message>
+        <location filename="../qml/app/Pane3DWindow.qml" line="146"/>
+        <source>Surface: </source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/Pane3DWindow.qml" line="146"/>
+        <source> cm/cell</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/Pane3DWindow.qml" line="146"/>
+        <source>Mosaic: </source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/Pane3DWindow.qml" line="146"/>
+        <source> cm/pix</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../qml/app/Pane3DWindow.qml" line="272"/>
         <source>Finish ruler</source>
         <translation></translation>

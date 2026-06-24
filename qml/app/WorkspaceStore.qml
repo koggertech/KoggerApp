@@ -241,6 +241,14 @@ property Settings echogramUiPrefs: Settings {
 }
 property alias hideEmptyEchogramControls: echogramUiPrefs.hideEmptyEchogramControls
 
+// Interface pref: show the surface-quality (cm/cell) label in the 3D scene (default off).
+property Settings scene3dUiPrefs: Settings {
+    id: scene3dUiPrefs
+    category: "scene3d_ui"
+    property bool showSurfaceQuality: false
+}
+property alias showSurfaceQuality: scene3dUiPrefs.showSurfaceQuality
+
 property Settings echogramLoupePrefs: Settings {
     id: echogramLoupePrefs
     category: "echogram_loupe"

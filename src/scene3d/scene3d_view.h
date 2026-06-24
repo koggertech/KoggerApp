@@ -44,6 +44,7 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(QObject* geoJsonController READ geoJsonController CONSTANT)
     Q_PROPERTY(bool cameraPerspective READ cameraPerspective NOTIFY cameraPerspectiveChanged)
     Q_PROPERTY(bool updateSurface READ updateSurface NOTIFY updateSurfaceChanged)
+    Q_PROPERTY(int dataZoom READ dataZoom NOTIFY sendDataZoom)
     Q_PROPERTY(bool syncLoupeOverlayVisible READ syncLoupeOverlayVisible NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(int syncLoupeEpochIndex READ syncLoupeEpochIndex NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(float syncLoupeDepthFrom READ syncLoupeDepthFrom NOTIFY syncLoupeStateChanged)
@@ -232,6 +233,7 @@ public:
     bool sceneBoundingBoxVisible() const;
     bool cameraPerspective() const;
     bool updateSurface() const;
+    int dataZoom() const { return dataZoomIndx_; }
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
     void clearSurfaceViewRender();

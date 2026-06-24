@@ -3700,6 +3700,26 @@
 <context>
     <name>Pane3DWindow</name>
     <message>
+        <location filename="../qml/app/Pane3DWindow.qml" line="146"/>
+        <source>Surface: </source>
+        <translation>Powierzchnia: </translation>
+    </message>
+    <message>
+        <location filename="../qml/app/Pane3DWindow.qml" line="146"/>
+        <source> cm/cell</source>
+        <translation> cm/komórka</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/Pane3DWindow.qml" line="146"/>
+        <source>Mosaic: </source>
+        <translation>Mozaika: </translation>
+    </message>
+    <message>
+        <location filename="../qml/app/Pane3DWindow.qml" line="146"/>
+        <source> cm/pix</source>
+        <translation> cm/piks</translation>
+    </message>
+    <message>
         <location filename="../qml/app/Pane3DWindow.qml" line="282"/>
         <source>Cancel ruler</source>
         <translation>Anuluj linijkę</translation>
