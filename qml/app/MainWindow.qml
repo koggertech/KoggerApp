@@ -539,6 +539,8 @@ ApplicationWindow {
             return
         }
         workspaceStore.saveLayoutState()
+        if (typeof core !== "undefined" && core)
+            core.saveCameraViewToSettings()
     }
 
     Component.onDestruction: workspaceStore.saveLayoutState()

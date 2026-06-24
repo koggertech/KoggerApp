@@ -2131,6 +2131,46 @@ void GraphicsScene3dView::forceUpdateDatasetLlaRef()
     QQuickFramebufferObject::update();
 }
 
+bool GraphicsScene3dView::getMapViewState(LLARef& viewRef, double& lookAtN, double& lookAtE, double& distance, double& yawRad, double& pitchRad) const
+{
+    if (!m_camera || !m_camera->viewLlaRef_.isInit) {
+        return false;
+    }
+
+    viewRef = m_camera->viewLlaRef_;
+    lookAtN = static_cast<double>(m_camera->m_lookAt.x());
+    lookAtE = static_cast<double>(m_camera->m_lookAt.y());
+    distance = static_cast<double>(m_camera->m_distToFocusPoint);
+    const QVector2D rot = m_camera->getRotAngle();
+    yawRad = rot.x();
+    pitchRad = rot.y();
+    return true;
+}
+
+void GraphicsScene3dView::restoreMapViewState(const LLARef& viewRef, double lookAtN, double lookAtE, double distance, double yawRad, double pitchRad)
+{
+    if (!m_camera || !viewRef.isInit || !std::isfinite(lookAtN) || !std::isfinite(lookAtE)) {
+        return;
+    }
+
+    m_camera->viewLlaRef_ = viewRef; // view frame restored verbatim; datasetLlaRef_ left intact
+    m_camera->focusOnPosition(QVector3D(static_cast<float>(lookAtN), static_cast<float>(lookAtE), 0.0f));
+    if (std::isfinite(distance) && distance > 0.0) {
+        m_camera->setDistance(distance);
+    }
+    if (std::isfinite(yawRad) && std::isfinite(pitchRad)) {
+        m_camera->setRotAngle(QVector2D(static_cast<float>(yawRad), static_cast<float>(pitchRad)));
+        if (m_axesThumbnailCamera) {
+            m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
+        }
+    }
+
+    updateProjection();
+    updatePlaneGrid();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
+
 bool GraphicsScene3dView::geoJsonEnabled() const
 {
     return geoJsonEnabled_;

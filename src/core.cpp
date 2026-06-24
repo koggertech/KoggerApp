@@ -1801,6 +1801,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     QMetaObject::invokeMethod(dataProcessor_, "setBottomTrackPtr", Qt::QueuedConnection, Q_ARG(BottomTrack*, scene3dViewPtr_->bottomTrack().get()));
     QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "createLocationReader", Qt::QueuedConnection);
+
+    loadCameraViewFromSettings(); // restore last map view (after forceRefresh, which resets viewLlaRef_)
 }
 
 void Core::registerPlot2D(QObject* plotObj)
@@ -2703,6 +2705,89 @@ void Core::loadLLARefFromSettings()
     }
     catch (...) {
         qCritical() << "Core::loadLLARefFromSettings throw unknown exception";
+    }
+}
+
+void Core::saveCameraViewToSettings()
+{
+    if (!scene3dViewPtr_) {
+        return;
+    }
+
+    try {
+        LLARef ref;
+        double lookAtN = NAN, lookAtE = NAN, distance = NAN, yaw = NAN, pitch = NAN;
+        if (!scene3dViewPtr_->getMapViewState(ref, lookAtN, lookAtE, distance, yaw, pitch)) {
+            return;
+        }
+
+        QSettings settings("KOGGER", "KoggerApp");
+        settings.beginGroup("CameraView");
+        settings.setValue("refLatSin", ref.refLatSin);
+        settings.setValue("refLatCos", ref.refLatCos);
+        settings.setValue("refLatRad", ref.refLatRad);
+        settings.setValue("refLonRad", ref.refLonRad);
+        settings.setValue("refLlaLatitude", ref.refLla.latitude);
+        settings.setValue("refLlaLongitude", ref.refLla.longitude);
+        settings.setValue("refLlaAltitude", ref.refLla.altitude);
+        settings.setValue("isInit", ref.isInit);
+        settings.setValue("lookAtN", lookAtN);
+        settings.setValue("lookAtE", lookAtE);
+        settings.setValue("distance", distance);
+        settings.setValue("yaw", yaw);
+        settings.setValue("pitch", pitch);
+        settings.endGroup();
+        settings.sync();
+    }
+    catch (const std::exception& e) {
+        qCritical() << "Core::saveCameraViewToSettings throw exception:" << e.what();
+    }
+    catch (...) {
+        qCritical() << "Core::saveCameraViewToSettings throw unknown exception";
+    }
+}
+
+void Core::loadCameraViewFromSettings()
+{
+    if (!scene3dViewPtr_) {
+        return;
+    }
+
+    try {
+        QSettings settings("KOGGER", "KoggerApp");
+        settings.beginGroup("CameraView");
+        const bool has = settings.contains("isInit");
+        LLARef ref;
+        ref.refLatSin = settings.value("refLatSin", NAN).toDouble();
+        ref.refLatCos = settings.value("refLatCos", NAN).toDouble();
+        ref.refLatRad = settings.value("refLatRad", NAN).toDouble();
+        ref.refLonRad = settings.value("refLonRad", NAN).toDouble();
+        ref.refLla.latitude = settings.value("refLlaLatitude", NAN).toDouble();
+        ref.refLla.longitude = settings.value("refLlaLongitude", NAN).toDouble();
+        ref.refLla.altitude = settings.value("refLlaAltitude", 0.0).toDouble();
+        ref.isInit = settings.value("isInit", false).toBool();
+        const double lookAtN = settings.value("lookAtN", 0.0).toDouble();
+        const double lookAtE = settings.value("lookAtE", 0.0).toDouble();
+        const double distance = settings.value("distance", NAN).toDouble();
+        const double yaw = settings.value("yaw", 0.0).toDouble();
+        const double pitch = settings.value("pitch", 0.0).toDouble();
+        settings.endGroup();
+
+        if (!std::isfinite(ref.refLla.altitude)) {
+            ref.refLla.altitude = 0.0;
+        }
+        if (!has || !ref.isInit ||
+            !std::isfinite(ref.refLla.latitude) || !std::isfinite(ref.refLla.longitude)) {
+            return;
+        }
+
+        scene3dViewPtr_->restoreMapViewState(ref, lookAtN, lookAtE, distance, yaw, pitch);
+    }
+    catch (const std::exception& e) {
+        qCritical() << "Core::loadCameraViewFromSettings throw exception:" << e.what();
+    }
+    catch (...) {
+        qCritical() << "Core::loadCameraViewFromSettings throw unknown exception";
     }
 }
 

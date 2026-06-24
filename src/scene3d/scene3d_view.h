@@ -244,6 +244,10 @@ public:
     void setNeedToResetStartPos(bool state);
     void forceUpdateDatasetLlaRef();
 
+    // Map-view persistence: raw view frame (viewLlaRef_) + lookAt offset + zoom + orientation.
+    bool getMapViewState(LLARef& viewRef, double& lookAtN, double& lookAtE, double& distance, double& yawRad, double& pitchRad) const;
+    void restoreMapViewState(const LLARef& viewRef, double lookAtN, double lookAtE, double distance, double yawRad, double pitchRad);
+
     bool geoJsonEnabled() const;
     bool rulerEnabled() const;
     bool rulerDrawing() const;

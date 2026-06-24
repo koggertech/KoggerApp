@@ -95,6 +95,7 @@ public:
     void consoleWarning(QString msg);
     void consoleProto(FrameParser& parser, bool isIn = true);
     void saveLLARefToSettings();
+    Q_INVOKABLE void saveCameraViewToSettings();
     void removeLinkManagerConnections();
 #ifdef SEPARATE_READING
     void removeDeviceManagerConnections();
@@ -280,6 +281,7 @@ private:
     void fixFilePathString(QString& filePath) const;
     void notifyFileOpened(const QString& filePath);
     void loadLLARefFromSettings();
+    void loadCameraViewFromSettings();
     void onTgcParamsChanged();
     int loadSavedMapTileProviderId() const;
     void resetRealtimeSessionState();
