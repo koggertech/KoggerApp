@@ -38,6 +38,15 @@ Item  {
     property var store: null
     property real buttonSize: Math.round(40 * (theme ? theme.resCoeff : 1.0))
 
+    readonly property bool anyLayerMenuOpen: boatTrackCtl.menuOpen || bottomTrackCtl.menuOpen
+                                             || isobathsCtl.menuOpen || mosaicCtl.menuOpen
+    function closeLayerMenus() {
+        boatTrackCtl.menuOpen = false
+        bottomTrackCtl.menuOpen = false
+        isobathsCtl.menuOpen = false
+        mosaicCtl.menuOpen = false
+    }
+
     // Width cap for a layer theme-swatch strip (opens RIGHT from the control at
     // ctlX within the row): space from THAT control to the pane edge minus the
     // right toolbar, but never below ~2 swatches (may then slightly overlap).

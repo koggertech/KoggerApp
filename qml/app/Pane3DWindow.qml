@@ -32,6 +32,16 @@ Item {
         clip: true
         z: 1
 
+        MouseArea {
+            anchors.fill: parent
+            enabled: scene3dToolbar.anyLayerMenuOpen
+            acceptedButtons: Qt.LeftButton
+            onPressed: function(mouse) {
+                scene3dToolbar.closeLayerMenus()
+                mouse.accepted = true
+            }
+        }
+
         Scene3DToolbar {
             id: scene3dToolbar
             view: root.scene3dView
