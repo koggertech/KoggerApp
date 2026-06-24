@@ -291,6 +291,7 @@ public:
     void setCompassState(bool state);
     void setCompassPos(int val);
     void setCompassSize(int val);
+    void setScaleBarState(bool state);
     void setShadowsEnabled(bool state);
     void setShadowVectorX(float value);
     void setShadowVectorY(float value);
@@ -463,6 +464,7 @@ private:
     bool compass_;
     int compassPos_;
     int compassSize_;
+    bool scaleBar_ = true;
     QRectF compassRect_;
     bool compassPressed_ = false;
     QVariantAnimation* northAnim_ = nullptr;

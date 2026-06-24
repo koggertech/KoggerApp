@@ -1444,6 +1444,13 @@ void GraphicsScene3dView::setCompassSize(int val)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setScaleBarState(bool state)
+{
+    scaleBar_ = state;
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::resetHeadingToNorth()
 {
     if (!m_camera) {
@@ -3442,6 +3449,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->compass_                    = view->compass_;
     m_renderer->compassPos_                 = view->compassPos_;
     m_renderer->compassSize_                = view->compassSize_;
+    m_renderer->scaleBar_                   = view->scaleBar_;
     m_renderer->planeGridType_              = view->planeGridType_;
 
     m_renderer->compassRenderImpl_.setShadowSettings(view->shadowsEnabled_, view->shadowVector_, view->shadowAmbient_, view->shadowIntensity_, view->shadowHighlight_);

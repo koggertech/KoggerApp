@@ -2197,6 +2197,17 @@ Column {
                 }
             }
 
+            ParamCard {
+                width: parent.width
+                label: qsTr("Scale bar")
+                checked: render3dSettings.scaleBarCheckButton
+                onToggled: function(v) {
+                    render3dSettings.scaleBarCheckButton = v
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onScaleBarButtonChanged(v)
+                }
+            }
+
             Settings {
                 id: render3dSettings
                 property bool showQualityLabelCheck: false
@@ -2210,6 +2221,7 @@ Column {
                 property bool shadowEnabledCheckButton: true
                 property bool navigationArrowCheckButton: true
                 property bool compassCheckButton: true
+                property bool scaleBarCheckButton: true
             }
             Settings { property alias syncLoupeSize:        syncLoupeSizeSpinBox.value }
             Settings { property alias syncLoupeZoom:        syncLoupeZoomSlider.value }
@@ -2501,6 +2513,7 @@ Column {
                     Scene3dToolBarController.onCompassButtonChanged(render3dSettings.compassCheckButton)
                     Scene3dToolBarController.onCompassPosChanged(compassPosSpinBox.value)
                     Scene3dToolBarController.onCompassSizeChanged(compassSizeSpinBox.value)
+                    Scene3dToolBarController.onScaleBarButtonChanged(render3dSettings.scaleBarCheckButton)
                 }
                 if (typeof NavigationArrowControlMenuController !== "undefined") {
                     NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(render3dSettings.navigationArrowCheckButton)

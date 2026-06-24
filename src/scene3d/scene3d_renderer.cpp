@@ -8,6 +8,7 @@
 #include <QThread>
 #include <QDebug>
 #include <QOpenGLContext>
+#include <QCoreApplication>
 
 #include "text_renderer.h"
 #include "themes.h"
@@ -363,70 +364,178 @@ void GraphicsScene3dRenderer::drawObjects()
         glDisable(GL_BLEND);
     }
 
+    const bool scaleBarVisible = scaleBar_ && m_camera.getIsPerspective();
+
     //-----------Compass-------------
     if (compass_) {
-        GLint oldVP[4]; glGetIntegerv(GL_VIEWPORT, oldVP);
-        GLboolean oldScissor = glIsEnabled(GL_SCISSOR_TEST);
-        GLint oldScBox[4]; glGetIntegerv(GL_SCISSOR_BOX, oldScBox);
-
-        int size = 0;
+        int compassBase = 250;
         switch (compassSize_) {
-        case 1: size = 150;  break;
-        case 2: size = 250;  break;
-        case 3: size = 350;  break;
-        case 4: size = 450;  break;
-        case 5: size = 550;  break;
-        default: size = 250; break;
+        case 1: compassBase = 150; break;
+        case 2: compassBase = 250; break;
+        case 3: compassBase = 350; break;
+        case 4: compassBase = 450; break;
+        case 5: compassBase = 550; break;
+        default: compassBase = 250; break;
         }
         constexpr float kCompassSizeFactor = 0.7f;
-        size = qRound(size * renderScale() * kCompassSizeFactor);
+        const int compassSizePx = qRound(compassBase * renderScale() * kCompassSizeFactor);
 
-        int x = 0;
-        int y = 0;
+        int compassX = viewport[0];
+        int compassY = viewport[1];
         switch (compassPos_) {
-        case 1: {
-            x = viewport[0] + viewport[2] - size;
-            y = viewport[1];
+        case 1: compassX = viewport[0] + viewport[2] - compassSizePx; compassY = viewport[1];                              break;
+        case 2: compassX = viewport[0];                               compassY = viewport[1];                              break;
+        case 3: compassX = viewport[0] + viewport[2] - compassSizePx; compassY = viewport[1] + viewport[3] - compassSizePx; break;
+        default: compassX = viewport[0];                              compassY = viewport[1];                              break;
+        }
+
+        // bottom-right compass shares the corner with the scale bar — lift it just above
+        if (scaleBarVisible && compassPos_ == 1) {
+            const float charH = static_cast<float>(TextRenderer::instance().getCharPixelHeight());
+            compassY += static_cast<int>(16.0f + 6.0f + 3.0f + charH + 4.0f);
+        }
+
+        drawCompass(compassX, compassY, compassSizePx);
+    }
+
+    //-----------Scale bar-------------
+    if (scaleBarVisible) {
+        const QRect vportRect(viewport[0], viewport[1], viewport[2], viewport[3]);
+        drawScaleBar(vportRect, view);
+    }
+}
+
+void GraphicsScene3dRenderer::drawCompass(int x, int y, int sizePx)
+{
+    GLint oldVP[4]; glGetIntegerv(GL_VIEWPORT, oldVP);
+    GLboolean oldScissor = glIsEnabled(GL_SCISSOR_TEST);
+    GLint oldScBox[4]; glGetIntegerv(GL_SCISSOR_BOX, oldScBox);
+
+    glViewport(x, y, sizePx, sizePx);
+
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(x, y, sizePx, sizePx);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LEQUAL);
+
+    QMatrix4x4 axesView, axesProjection, axesModel;
+    m_axesThumbnailCamera.setDistance(55);
+    axesView = m_axesThumbnailCamera.m_view;
+    axesProjection.perspective(m_camera.fov(), 1.0f, 1.0f, 11000.0f);
+
+    compassRenderImpl_.render(this, axesModel, axesView, axesProjection, m_shaderProgramMap);
+
+    glViewport(oldVP[0], oldVP[1], oldVP[2], oldVP[3]);
+    glScissor(oldScBox[0], oldScBox[1], oldScBox[2], oldScBox[3]);
+    if (!oldScissor) {
+        glDisable(GL_SCISSOR_TEST);
+    }
+}
+
+void GraphicsScene3dRenderer::drawScaleBar(const QRect& vportRect, const QMatrix4x4& view)
+{
+    // fixed bottom-right map scale bar (independent of UI scale / DPI)
+    const float sideMargin   = 16.0f;
+    const float bottomMargin = 16.0f;
+    const float tickH        = 6.0f;
+    const float labelGap     = 3.0f;
+    const float maxBarPx     = 120.0f;
+
+    const float centerX = vportRect.x() + vportRect.width() - sideMargin - maxBarPx * 0.5f; // shifted center
+    const float barY    = vportRect.y() + bottomMargin; // line; ticks point up
+
+    // ground (Z=0) meters per horizontal screen pixel at the bar — valid under tilt
+    const QMatrix4x4 mv = view * m_model;
+    const float probePx = 100.0f;
+
+    auto groundAt = [&](float sx, float sy, QVector3D& out) -> bool {
+        const QVector3D nearP = QVector3D(sx, sy, 0.0f).unproject(mv, m_projection, vportRect);
+        const QVector3D farP  = QVector3D(sx, sy, 1.0f).unproject(mv, m_projection, vportRect);
+        const QVector3D d = farP - nearP;
+        if (std::fabs(d.z()) < 1e-9f) {
+            return false;
+        }
+        const float t = -nearP.z() / d.z();
+        if (t < 0.0f) {
+            return false;
+        }
+        out = nearP + d * t;
+        return true;
+    };
+
+    QVector3D w0, w1;
+    if (!groundAt(centerX, barY, w0) || !groundAt(centerX + probePx, barY, w1)) {
+        return;
+    }
+    const float metersPerPixel = (w1 - w0).length() / probePx;
+    if (!(metersPerPixel > 1e-9f)) {
+        return;
+    }
+    const float pxPerMeter = 1.0f / metersPerPixel;
+
+    static const float kSteps[] = { 0.1f, 0.25f, 0.5f, 1.f, 5.f, 10.f, 25.f, 50.f, 100.f, 200.f, 500.f,
+                                    1000.f, 2000.f, 5000.f, 10000.f, 20000.f, 50000.f,
+                                    100000.f, 200000.f, 500000.f, 1000000.f };
+    const int stepCount = static_cast<int>(sizeof(kSteps) / sizeof(kSteps[0]));
+
+    const float maxMeters = maxBarPx * metersPerPixel;
+
+    float value = kSteps[0];
+    for (int i = 0; i < stepCount; ++i) {
+        if (kSteps[i] <= maxMeters) {
+            value = kSteps[i];
+        } else {
             break;
-        }
-        case 2: {
-            x = viewport[0];
-            y = viewport[1];
-            break;
-        }
-        case 3: {
-            x = viewport[0] + viewport[2] - size;
-            y = viewport[1] + viewport[3] - size;
-            break;
-        }
-        default: {
-            x = viewport[0];
-            y = viewport[1];
-            break;
-        }
-        }
-
-        glViewport(x, y, size, size);
-
-        glEnable(GL_SCISSOR_TEST);
-        glScissor(x, y, size, size);
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);
-        glDepthFunc(GL_LEQUAL);
-
-        QMatrix4x4 axesView, axesProjection, axesModel;
-        m_axesThumbnailCamera.setDistance(55);
-        axesView = m_axesThumbnailCamera.m_view;
-        axesProjection.perspective(m_camera.fov(), 1.0f, 1.0f, 11000.0f);
-
-        compassRenderImpl_.render(this, axesModel, axesView, axesProjection, m_shaderProgramMap);
-
-        glViewport(oldVP[0], oldVP[1], oldVP[2], oldVP[3]);
-        glScissor(oldScBox[0], oldScBox[1], oldScBox[2], oldScBox[3]);
-        if (!oldScissor) {
-            glDisable(GL_SCISSOR_TEST);
         }
     }
+
+    const float barPx  = value * pxPerMeter;
+    const float leftX  = centerX - barPx * 0.5f;
+    const float rightX = centerX + barPx * 0.5f;
+
+    if (auto sp = m_shaderProgramMap.value("static_sec", nullptr); sp && sp->bind()) {
+        glDisable(GL_DEPTH_TEST);
+        const float halfW = vportRect.width() / 2.0f;
+        const float halfH = vportRect.height() / 2.0f;
+        auto ndc = [&](float px, float py) -> QVector2D {
+            return QVector2D(px / halfW - 1.0f, py / halfH - 1.0f);
+        };
+        QVector<QVector2D> lines = {
+            ndc(leftX,  barY),  ndc(rightX, barY),
+            ndc(leftX,  barY),  ndc(leftX,  barY + tickH),
+            ndc(rightX, barY),  ndc(rightX, barY + tickH)
+        };
+        const int colorLoc = sp->uniformLocation("color");
+        sp->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(255, 255, 255)));
+        sp->enableAttributeArray(0);
+        sp->setAttributeArray(0, lines.constData());
+        glLineWidth(2.0f);
+        glDrawArrays(GL_LINES, 0, lines.size());
+        glLineWidth(1.0f);
+        sp->disableAttributeArray(0);
+        sp->release();
+    }
+
+    QString label;
+    if (value < 1.0f) {
+        label = QString::number(qRound(value * 100.0f)) + " " + QCoreApplication::translate("ScaleBar", "cm");
+    } else if (value < 1000.0f) {
+        label = QString::number(static_cast<int>(value)) + " " + QCoreApplication::translate("ScaleBar", "m");
+    } else {
+        label = QString::number(value / 1000.0) + " " + QCoreApplication::translate("ScaleBar", "km");
+    }
+
+    const float charH = static_cast<float>(TextRenderer::instance().getCharPixelHeight());
+    const float approxW = label.size() * charH * 0.55f;
+    const float barTopLeftY = vportRect.height() - barY;
+    const float labelX = centerX - approxW * 0.5f;
+    const float labelY = barTopLeftY - tickH - labelGap; // baseline above the up-ticks
+
+    QMatrix4x4 textProjection;
+    textProjection.ortho(vportRect);
+    TextRenderer::instance().setColor(QColor(255, 255, 255));
+    TextRenderer::instance().render(label, 1.0f, QVector2D(labelX, labelY), false, this, textProjection, m_shaderProgramMap);
 }

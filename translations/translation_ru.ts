@@ -486,6 +486,11 @@
         <translation type="unfinished">Компас</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2202"/>
+        <source>Scale bar</source>
+        <translation>Масштаб</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2141"/>
         <source>Pos:</source>
         <translation type="unfinished">Поз:</translation>
@@ -5281,6 +5286,24 @@
         <location filename="../qml/app/WorkspaceView.qml" line="46"/>
         <source>Second window</source>
         <translation>Второе окно</translation>
+    </message>
+</context>
+<context>
+    <name>ScaleBar</name>
+    <message>
+        <location filename="../src/scene3d/scene3d_renderer.cpp" line="488"/>
+        <source>cm</source>
+        <translation>см</translation>
+    </message>
+    <message>
+        <location filename="../src/scene3d/scene3d_renderer.cpp" line="490"/>
+        <source>m</source>
+        <translation>м</translation>
+    </message>
+    <message>
+        <location filename="../src/scene3d/scene3d_renderer.cpp" line="492"/>
+        <source>km</source>
+        <translation>км</translation>
     </message>
 </context>
 </TS>

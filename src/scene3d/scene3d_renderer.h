@@ -48,6 +48,8 @@ public:
 private:
     void initialize();
     void drawObjects();
+    void drawCompass(int x, int y, int sizePx);
+    void drawScaleBar(const QRect& vportRect, const QMatrix4x4& view);
     QMatrix4x4 model() const;
     QMatrix4x4 view() const;
     QMatrix4x4 projection() const;
@@ -92,5 +94,6 @@ private:
     bool compass_ = false;
     int compassPos_ = 1;
     int compassSize_ = 1;
+    bool scaleBar_ = false;
     bool planeGridType_ = true;
 };

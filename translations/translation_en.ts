@@ -592,6 +592,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2202"/>
+        <source>Scale bar</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2141"/>
         <source>Pos:</source>
         <translation type="unfinished"></translation>
@@ -5284,6 +5289,24 @@
         <location filename="../qml/app/WorkspaceView.qml" line="637"/>
         <source>Global pop-up</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ScaleBar</name>
+    <message>
+        <location filename="../src/scene3d/scene3d_renderer.cpp" line="488"/>
+        <source>cm</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/scene3d/scene3d_renderer.cpp" line="490"/>
+        <source>m</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/scene3d/scene3d_renderer.cpp" line="492"/>
+        <source>km</source>
+        <translation></translation>
     </message>
 </context>
 </TS>
