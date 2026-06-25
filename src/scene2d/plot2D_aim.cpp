@@ -51,20 +51,18 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
 
             if (chartPtr) {
                 const int x = canvas.width() / 2 + offsetX;
-                float bottomDistance = parent->hasSyncDepth() ? parent->getSyncDepth() : chartPtr->bottomProcessing.distance;
-                if (!std::isfinite(bottomDistance)) {
-                    bottomDistance = 0.0f;
+                float depthVal = parent->hasSyncDepth() ? parent->getSyncDepth() : chartPtr->bottomProcessing.distance;
+                if (!std::isfinite(depthVal)) {
+                    depthVal = 0.0f;
                 }
 
                 const float distanceRange = cursor.distance.range();
-                int y = (cursor.channel2 != channelNone()) ? canvas.height() / 2 : 0;
+                int y = 0;
                 if (std::isfinite(distanceRange) && std::abs(distanceRange) > 1e-6f) {
-                    const float depthNorm = (bottomDistance - cursor.distance.from) / distanceRange;
-                    const float yFloat = (cursor.channel2 != channelNone())
-                        ? static_cast<float>(canvas.height()) * 0.5f
-                            - static_cast<float>(canvas.height()) * depthNorm
-                        : static_cast<float>(canvas.height()) * depthNorm;
-                    y = qRound(yFloat);
+                    const int channel = parent->hasSyncDepth() ? parent->getSyncChannel() : 1;
+                    const float coord = (cursor.channel2 != channelNone() && channel == 1) ? -depthVal : depthVal;
+                    const float depthNorm = (coord - cursor.distance.from) / distanceRange;
+                    y = qRound(static_cast<float>(canvas.height()) * depthNorm);
                 }
 
                 y = qBound(0, y, qMax(0, canvas.height() - 1));

@@ -1652,7 +1652,7 @@ void Core::setAimFieldsMask(int mask)
     }
 }
 
-void Core::broadcastEpochCursor(qPlot2D* source, int epoch, float depth)
+void Core::broadcastEpochCursor(qPlot2D* source, int epoch, float depth, int channel)
 {
     if (!echogramSyncCursor_) {
         return;
@@ -1660,7 +1660,7 @@ void Core::broadcastEpochCursor(qPlot2D* source, int epoch, float depth)
     for (int i = 0; i < plot2dList_.size(); i++) {
         auto* plot = plot2dList_.at(i);
         if (plot != nullptr && plot != source) {
-            plot->setSyncCursor(epoch, depth);
+            plot->setSyncCursor(epoch, depth, channel);
         }
     }
 }

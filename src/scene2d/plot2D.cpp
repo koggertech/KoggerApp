@@ -256,6 +256,22 @@ float Plot2D::getDepthByMousePos(int mouseX, int mouseY, bool isHorizontal) cons
     return valueScale * valueRange + cursor_.distance.from;
 }
 
+float Plot2D::getSyncDepthByMousePos(int mouseX, int mouseY, bool isHorizontal, int* channelOut) const
+{
+    const float coord = getDepthByMousePos(mouseX, mouseY, isHorizontal);
+
+    int channel = 1;
+    float depth = coord;
+    if (cursor_.channel2 != channelNone()) {
+        channel = (coord < 0.0f) ? 1 : 2;
+        depth = std::fabs(coord);
+    }
+    if (channelOut) {
+        *channelOut = channel;
+    }
+    return depth; // absolute physical depth (>=0)
+}
+
 int Plot2D::getEpochIndxByMousePos(int mouseX, int mouseY, bool isHorizontal) const
 {
     const int width = canvas_.width();
@@ -519,10 +535,11 @@ void Plot2D::setTimelinePositionByEpoch(int epochIndx)
     setTimelinePositionSec(pos);
 }
 
-void Plot2D::setSyncCursor(int epoch, float depth)
+void Plot2D::setSyncCursor(int epoch, float depth, int channel)
 {
     syncDepthValid_ = true;
-    syncDepth_ = depth;
+    syncDepth_ = depth;       // absolute physical depth (>=0)
+    syncChannel_ = channel;   // 1/2 — used to pick the half on a dual-channel slave
     setAimEpochEventState(true);
     setTimelinePositionByEpoch(epoch);
 }

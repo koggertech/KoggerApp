@@ -39,6 +39,7 @@ public:
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
 
     float getDepthByMousePos(int mouseX, int mouseY, bool isHorizontal) const;
+    float getSyncDepthByMousePos(int mouseX, int mouseY, bool isHorizontal, int* channelOut) const;
     int getEpochIndxByMousePos(int mouseX, int mouseY, bool isHorizontal) const;
     QPoint getMousePosByDepthAndEpochIndx(float depth, int epochIndx, bool isHorizontal) const;
 
@@ -64,11 +65,12 @@ public:
 
     void setTimelinePositionSec(float position);
     void setTimelinePositionByEpoch(int epochIndx);
-    void setSyncCursor(int epoch, float depth);
+    void setSyncCursor(int epoch, float depth, int channel);
     void clearSyncCursor();
     virtual void syncClearAim() {}
     bool hasSyncDepth() const { return syncDepthValid_; }
     float getSyncDepth() const { return syncDepth_; }
+    int getSyncChannel() const { return syncChannel_; }
     void setAimFieldsMask(int mask) { aimFieldsMask_ = mask; }
     int getAimFieldsMask() const { return aimFieldsMask_; }
 
@@ -220,7 +222,8 @@ protected:
     bool dvlLegendVisible_ = true;
     int  dvlLegendPosIndex_ = 0;
     bool syncDepthValid_ = false;
-    float syncDepth_ = 0.0f;
+    float syncDepth_ = 0.0f;          // absolute physical depth (>=0 from surface)
+    int syncChannel_ = 1;             // which channel the synced depth belongs to (1/2)
     int aimFieldsMask_ = 0xFF;
 
 private:

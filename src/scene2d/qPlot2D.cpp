@@ -333,8 +333,9 @@ void qPlot2D::sendSyncEvent(int epoch_index, QEvent::Type eventType)
     QCoreApplication::postEvent(this, epochEvent);
 
     if (eventType == EpochSelected2d && epoch_index >= 0) {
-        const float depth = getDepthByMousePos(cursor_.mouseX, cursor_.mouseY, true);
-        core.broadcastEpochCursor(this, epoch_index, depth);
+        int channel = 1;
+        const float depth = getSyncDepthByMousePos(cursor_.mouseX, cursor_.mouseY, true, &channel);
+        core.broadcastEpochCursor(this, epoch_index, depth, channel);
     }
 }
 
