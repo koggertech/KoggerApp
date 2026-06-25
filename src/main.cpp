@@ -176,6 +176,54 @@ void applyWindowsFullscreenBorderWorkaround(QWindow* window)
 
     applyBorder();
 }
+
+void bringWindowToFront(QWindow* window)
+{
+    if (!window) {
+        return;
+    }
+
+    window->raise();
+    window->requestActivate();
+
+    const HWND handle = reinterpret_cast<HWND>(window->winId());
+    if (!handle) {
+        return;
+    }
+
+    if (IsIconic(handle)) {
+        ShowWindow(handle, SW_RESTORE);
+    }
+
+    const HWND foreground = GetForegroundWindow();
+    const DWORD foregroundThread = foreground ? GetWindowThreadProcessId(foreground, nullptr) : 0;
+    const DWORD thisThread = GetCurrentThreadId();
+    const bool attach = foregroundThread && foregroundThread != thisThread;
+
+    DWORD savedLockTimeout = 0;
+    SystemParametersInfoW(SPI_GETFOREGROUNDLOCKTIMEOUT, 0, &savedLockTimeout, 0);
+    SystemParametersInfoW(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, reinterpret_cast<PVOID>(static_cast<UINT_PTR>(0)), SPIF_SENDCHANGE);
+
+    if (attach) {
+        AttachThreadInput(foregroundThread, thisThread, TRUE);
+    }
+    AllowSetForegroundWindow(ASFW_ANY);
+    SetForegroundWindow(handle);
+    BringWindowToTop(handle);
+    if (attach) {
+        AttachThreadInput(foregroundThread, thisThread, FALSE);
+    }
+
+    SystemParametersInfoW(SPI_SETFOREGROUNDLOCKTIMEOUT, 0,
+                          reinterpret_cast<PVOID>(static_cast<UINT_PTR>(savedLockTimeout)), SPIF_SENDCHANGE);
+
+    // flash taskbar button
+    FLASHWINFO flash = {};
+    flash.cbSize = sizeof(flash);
+    flash.hwnd = handle;
+    flash.dwFlags = FLASHW_TRAY | FLASHW_TIMERNOFG;
+    FlashWindowEx(&flash);
+}
 #endif
 
 
@@ -357,7 +405,13 @@ int main(int argc, char *argv[])
         if (auto* window = qobject_cast<QWindow*>(rootObject)) {
             applyWindowsSystemTitleBarTheme(window);
             applyWindowsFullscreenBorderWorkaround(window);
+            bringWindowToFront(window);
         }
+        QObject::connect(&core, &Core::bringWindowToFrontRequested, &app, [mainWindow]() { // runtime requests, next event-loop tick
+            if (mainWindow) {
+                bringWindowToFront(mainWindow);
+            }
+        }, Qt::QueuedConnection);
         // Same dark titlebar + fullscreen border workaround for the secondary window.
         if (auto* secondary = rootObject->findChild<QWindow*>(QStringLiteral("secondaryAppWindow"))) {
             applyWindowsSystemTitleBarTheme(secondary);

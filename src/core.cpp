@@ -544,6 +544,8 @@ void Core::onFileOpened()
     if (scene3dViewPtr_) {
         scene3dViewPtr_->forceUpdateDatasetLlaRef();
     };
+
+    bringWindowToFront();
 }
 
 void Core::onFileReadEnough()
@@ -773,6 +775,7 @@ void Core::onFileOpened()
     if (scene3dViewPtr_) {
         scene3dViewPtr_->setIsOpeningFile(false);
     }
+    bringWindowToFront();
 }
 #endif
 
@@ -958,6 +961,7 @@ void Core::upgradeChanged(int progressStatus)
 {
     if(progressStatus == DevDriver::successUpgrade) {
         //        restoreBaudrate();
+        bringWindowToFront();
     }
 }
 
@@ -2264,6 +2268,11 @@ void Core::moveAppToBackground()
 #endif
 }
 
+void Core::bringWindowToFront()
+{
+    emit bringWindowToFrontRequested();
+}
+
 int Core::loadSavedMapTileProviderId() const
 {
     QSettings settings("KOGGER", "KoggerApp");
@@ -2522,6 +2531,20 @@ void Core::createLinkManagerConnections()
                                                                                                                                      const QString linkName = getLinkNames().value(uuid);
                                                                                                                                      notifications.info(linkName.isEmpty() ? tr("Disconnected") : tr("Disconnected: %1").arg(linkName));
                                                                                                                                  }, linkManagerConnection));
+
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::appendModifyModel, this,
+                                          [this](QUuid uuid, bool connectionStatus, bool receivesData) {
+        // global trigger: when data starts flowing from ANY link
+        if (connectionStatus && receivesData) {
+            const bool wasAnyReceiving = !receivingLinks_.isEmpty();
+            receivingLinks_.insert(uuid);
+            if (!wasAnyReceiving) {
+                bringWindowToFront();
+            }
+        } else {
+            receivingLinks_.remove(uuid);
+        }
+    }, linkManagerConnection));
 
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkDeleted, this, [this](QUuid uuid) {
                                                                                                                                      if (openLinkOrder_.removeOne(uuid)) emit fileTitleChanged();

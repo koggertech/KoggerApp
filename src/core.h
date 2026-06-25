@@ -209,8 +209,10 @@ public slots:
     Q_INVOKABLE bool getMapTileLoadingEnabled() const;
     Q_INVOKABLE void setMapTileLoadingEnabled(bool enabled);
     Q_INVOKABLE void moveAppToBackground();
+    Q_INVOKABLE void bringWindowToFront(); // raise+activate main window (wired to the OS-level raise in main.cpp)
 
 signals:
+    void bringWindowToFrontRequested();
     void csvExportFieldsReset();   // emitted by resetCsvExportFields() so UI can rebuild
     void connectionChanged(bool duplex = false);
     void filePathChanged();
@@ -350,6 +352,7 @@ private:
     bool isAppendMode_ = false;
     QStringList appendedFiles_;
     QList<QUuid> openLinkOrder_;
+    QSet<QUuid> receivingLinks_; // links currently receiving data; window is raised on the empty→non-empty edge
 
     bool isGPSAlive_;
     bool isUseGPS_;
