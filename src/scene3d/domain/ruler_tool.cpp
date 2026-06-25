@@ -40,7 +40,6 @@ void RulerTool::RulerToolRenderImplementation::clear()
 {
     points_.clear();
     previewActive_ = false;
-    selected_ = false;
 }
 
 void RulerTool::RulerToolRenderImplementation::addPoint(const QVector3D& p)

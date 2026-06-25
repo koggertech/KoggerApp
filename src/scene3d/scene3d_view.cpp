@@ -668,14 +668,6 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
             QQuickFramebufferObject::update();
             return;
         }
-        if (rulerHasGeometry()) {
-            const bool hitRuler = pickRuler(x, y);
-            setRulerSelected(hitRuler);
-            if (hitRuler) {
-                QQuickFramebufferObject::update();
-                return;
-            }
-        }
     }
 
     if (mouseButton == Qt::MouseButton::RightButton) {
@@ -877,51 +869,39 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
         return;
     }
 
-    const bool hasRulerGeometry = rulerHasGeometry();
     if (rulerEnabled_) {
         if (!wasMoved_ && mouseButton.testFlag(Qt::LeftButton)) {
-            const bool hitCurrentRuler = hasRulerGeometry && pickRuler(x, y);
+            auto fromOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromEnd = QVector3D(x, height() - y, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromDir = (fromEnd - fromOrig).normalized();
+            auto p = calculateIntersectionPoint(fromOrig, fromDir, 0);
 
-            if (!rulerEnabled_) {
-                setRulerSelected(hitCurrentRuler);
-                QQuickFramebufferObject::update();
-            } else if (!rulerDrawing_ && hitCurrentRuler) {
-                setRulerSelected(true);
-                QQuickFramebufferObject::update();
+            if (!rulerDrawing_) {
+                rulerTool_->clear();
+                resetRulerInteraction();
+                setRulerDrawing(true);
+                rulerTool_->addPoint(p);
+                rulerTool_->clearPreview();
+                rulerLastLeftClickPos_ = QPointF(x, y);
+                rulerHasLastLeftClick_ = true;
+                rulerLastLeftClickTimer_.restart();
             } else {
-                auto fromOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-                auto fromEnd = QVector3D(x, height() - y, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-                auto fromDir = (fromEnd - fromOrig).normalized();
-                auto p = calculateIntersectionPoint(fromOrig, fromDir, 0);
+                const QPointF clickPos(x, y);
+                const bool isDoubleClick = rulerHasLastLeftClick_ &&
+                                           rulerLastLeftClickTimer_.isValid() &&
+                                           rulerLastLeftClickTimer_.elapsed() < 350 &&
+                                           (QLineF(clickPos, rulerLastLeftClickPos_).length() < 6.0);
 
-                if (!rulerDrawing_) {
-                    rulerTool_->clear();
-                    resetRulerInteraction();
-                    setRulerSelected(false);
-                    setRulerDrawing(true);
+                rulerLastLeftClickPos_ = clickPos;
+                rulerHasLastLeftClick_ = true;
+                rulerLastLeftClickTimer_.restart();
+
+                if (isDoubleClick && rulerTool_->pointsCount() >= 2) {
+                    rulerFinishDrawing();
+                    rulerHasLastLeftClick_ = false;
+                } else {
                     rulerTool_->addPoint(p);
                     rulerTool_->clearPreview();
-                    rulerLastLeftClickPos_ = QPointF(x, y);
-                    rulerHasLastLeftClick_ = true;
-                    rulerLastLeftClickTimer_.restart();
-                } else {
-                    const QPointF clickPos(x, y);
-                    const bool isDoubleClick = rulerHasLastLeftClick_ &&
-                                               rulerLastLeftClickTimer_.isValid() &&
-                                               rulerLastLeftClickTimer_.elapsed() < 350 &&
-                                               (QLineF(clickPos, rulerLastLeftClickPos_).length() < 6.0);
-
-                    rulerLastLeftClickPos_ = clickPos;
-                    rulerHasLastLeftClick_ = true;
-                    rulerLastLeftClickTimer_.restart();
-
-                    if (isDoubleClick && rulerTool_->pointsCount() >= 2) {
-                        rulerFinishDrawing();
-                        rulerHasLastLeftClick_ = false;
-                    } else {
-                        rulerTool_->addPoint(p);
-                        rulerTool_->clearPreview();
-                    }
                 }
             }
 
@@ -933,20 +913,6 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
         wasMoved_ = false;
         wasMovedMouseButton_ = Qt::MouseButton::NoButton;
         return;
-    }
-
-    if (hasRulerGeometry && !wasMoved_ && mouseButton.testFlag(Qt::LeftButton)) {
-        const bool hitCurrentRuler = pickRuler(x, y);
-        if (hitCurrentRuler || rulerSelected_) {
-            setRulerSelected(hitCurrentRuler);
-            QQuickFramebufferObject::update();
-        }
-        if (hitCurrentRuler) {
-            switchedToBottomTrackVertexComboSelectionMode_ = false;
-            wasMoved_ = false;
-            wasMovedMouseButton_ = Qt::MouseButton::NoButton;
-            return;
-        }
     }
 
     if (switchedToBottomTrackVertexComboSelectionMode_) {
@@ -1250,6 +1216,7 @@ void GraphicsScene3dView::setRulerEnabled(bool enabled)
     }
 
     rulerEnabled_ = enabled;
+    rulerTool_->setSelected(enabled); // orange while the tool/pill is active, normal once closed
     if (rulerEnabled_) {
         // Drawing mode can be disabled, but finished ruler geometry should remain visible.
         rulerTool_->setEnabled(true);
@@ -2793,14 +2760,15 @@ void GraphicsScene3dView::setRulerDrawing(bool drawing)
     emit rulerStateChanged();
 }
 
-void GraphicsScene3dView::setRulerSelected(bool selected)
+void GraphicsScene3dView::setRulerSelected(bool /*selected*/)
 {
-    const bool changed = (rulerSelected_ != selected);
-    rulerSelected_ = selected;
-    rulerTool_->setSelected(selected);
-    if (changed) {
-        emit rulerStateChanged();
+    // Ruler is not selectable (no orange highlight, no context menu).
+    if (!rulerSelected_) {
+        return;
     }
+    rulerSelected_ = false;
+    rulerTool_->setSelected(false);
+    emit rulerStateChanged();
 }
 
 void GraphicsScene3dView::resetRulerInteraction()

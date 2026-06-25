@@ -321,39 +321,8 @@ Item {
             visible = true
         }
 
-        // Ruler: finish
-        CheckButton {
-            checkable: false; iconSource: "qrc:/icons/ui/file-check.svg"
-            backColor: theme.controlBackColor; borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            implicitHeight: theme.controlHeight * 1.3; implicitWidth: theme.controlHeight * 1.3
-            visible: root.scene3dView ? (root.scene3dView.rulerEnabled && root.scene3dView.rulerDrawing) : false
-            CMouseOpacityArea { toolTipText: qsTr("Finish ruler"); popupPosition: "topRight" }
-            onClicked: { if (root.scene3dView) root.scene3dView.rulerFinishDrawing(); contextMenu3D.visible = false }
-        }
-        // Ruler: cancel
-        CheckButton {
-            checkable: false; iconSource: "qrc:/icons/ui/x.svg"
-            backColor: theme.controlBackColor; borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            implicitHeight: theme.controlHeight * 1.3; implicitWidth: theme.controlHeight * 1.3
-            visible: root.scene3dView ? (root.scene3dView.rulerEnabled || root.scene3dView.rulerSelected) : false
-            CMouseOpacityArea { toolTipText: qsTr("Cancel ruler"); popupPosition: "topRight" }
-            onClicked: {
-                if (root.scene3dView && root.scene3dView.rulerDrawing) root.scene3dView.rulerCancelDrawing()
-                contextMenu3D.visible = false
-            }
-        }
-        // Ruler: delete selected
-        CheckButton {
-            checkable: false; iconSource: "qrc:/icons/ui/timeline_event_x.svg"
-            backColor: theme.controlBackColor; borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            implicitHeight: theme.controlHeight * 1.3; implicitWidth: theme.controlHeight * 1.3
-            visible: root.scene3dView ? (!root.scene3dView.rulerDrawing && root.scene3dView.rulerSelected) : false
-            CMouseOpacityArea { toolTipText: qsTr("Delete ruler"); popupPosition: "topRight" }
-            onClicked: { if (root.scene3dView) root.scene3dView.rulerDeleteSelected(); contextMenu3D.visible = false }
-        }
+        // Ruler finish/cancel/delete moved to the right-toolbar pill; this menu is
+        // now vestigial (only the legacy GeoJSON path opens it).
     }
 
     PaneInputBridge {
@@ -370,9 +339,12 @@ Item {
 
         onScene3dRightReleased: function(x, y, wasDrag) {
             var v = root.scene3dView
-            // Ruler / GeoJSON keep their own context menu.
-            if (v && (v.rulerEnabled || v.rulerSelected || v.geoJsonEnabled)) {
+            if (v && v.geoJsonEnabled) {
                 contextMenu3D.position(x, y)
+                return
+            }
+            // Ruler uses the slide-out pill (✓/✗) — RMB/long-tap shows no menu.
+            if (v && (v.rulerEnabled || v.rulerDrawing)) {
                 return
             }
             // Box-selection finished → apply active tool to selected vertices.
