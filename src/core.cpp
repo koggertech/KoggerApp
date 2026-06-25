@@ -1678,7 +1678,22 @@ void Core::broadcastCursorClear(qPlot2D* source)
     }
 }
 
-void Core::broadcastEchogramView(QObject* source, double timelinePos, double from, double to)
+void Core::broadcastEchogramTime(QObject* source, double timelinePos)
+{
+    if (!echogramSyncCursor_) {
+        return;
+    }
+    auto* src = qobject_cast<qPlot2D*>(source);
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != src && plot->getPlotEnabled()) {
+            plot->setTimelinePosition(static_cast<float>(timelinePos));
+            plot->update();
+        }
+    }
+}
+
+void Core::broadcastEchogramVertical(QObject* source, double from, double to)
 {
     if (!echogramSyncView_) {
         return;
@@ -1688,7 +1703,6 @@ void Core::broadcastEchogramView(QObject* source, double timelinePos, double fro
         auto* plot = plot2dList_.at(i);
         if (plot != nullptr && plot != src && plot->getPlotEnabled()) {
             plot->setCursorFromTo(static_cast<float>(from), static_cast<float>(to));
-            plot->setTimelinePosition(static_cast<float>(timelinePos));
             plot->update();
         }
     }

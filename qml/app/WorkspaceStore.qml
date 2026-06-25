@@ -271,7 +271,7 @@ function echogramLoupePreview(phase) { echogramLoupePreviewPhase(phase) }
 property Settings echogramSyncPrefs: Settings {
     id: echogramSyncPrefs
     category: "echogram_sync"
-    property bool cursor: false
+    property bool cursor: true
     property bool view: false
 }
 property alias echogramSyncCursor: echogramSyncPrefs.cursor

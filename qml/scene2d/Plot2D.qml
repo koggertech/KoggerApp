@@ -337,23 +337,30 @@ WaterFall {
             let val = -angleDelta.y
             plot.verZoomEvent(val)
             plotCursorChanged(indx, cursorFrom(), cursorTo())
+            syncVerticalToOthers()
         }
         else if (modifiers & Qt.ShiftModifier) {
             let val = -angleDelta.y
             plot.verScrollEvent(val)
             plotCursorChanged(indx, cursorFrom(), cursorTo())
+            syncVerticalToOthers()
         }
         else {
             let val = angleDelta.y
             plot.horScrollEvent(val)
             updateOtherPlot(indx)
+            syncTimeToOthers()
         }
-        syncViewToOthers()
     }
 
-    function syncViewToOthers() {
+    function syncTimeToOthers() {
         if (typeof core !== "undefined" && core)
-            core.broadcastEchogramView(plot, plot.timelinePosition, cursorFrom(), cursorTo())
+            core.broadcastEchogramTime(plot, plot.timelinePosition)
+    }
+
+    function syncVerticalToOthers() {
+        if (typeof core !== "undefined" && core)
+            core.broadcastEchogramVertical(plot, cursorFrom(), cursorTo())
     }
 
     function handlePinchStarted(centerX, centerY) {
@@ -371,16 +378,19 @@ WaterFall {
             let val = -(prevCenterX - currCenterX)
             plot.horScrollEvent(val)
             updateOtherPlot(indx)
+            syncTimeToOthers()
         }
         else if (pinchMovementY) {
             let val = prevCenterY - currCenterY
             plot.verScrollEvent(val)
             plotCursorChanged(indx, cursorFrom(), cursorTo())
+            syncVerticalToOthers()
         }
         else if (pinchZoomY) {
             let val = (prevScale - scale) * 500.0
             plot.verZoomEvent(val)
             plotCursorChanged(indx, cursorFrom(), cursorTo())
+            syncVerticalToOthers()
         }
         else {
             if (Math.abs(pinchStartPos.x - currCenterX) > pinchThresholdXAxis) {
@@ -393,7 +403,6 @@ WaterFall {
                 pinchZoomY = true
             }
         }
-        syncViewToOthers()
     }
 
     function handlePinchFinished() {
@@ -1723,7 +1732,7 @@ WaterFall {
                 const prog = Math.max(0, Math.min(1, (mouse.x - echoScrollBarH.grabOffsetX) / trackPx))
                 plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
                 updateOtherPlot(indx)
-                syncViewToOthers()
+                syncTimeToOthers()
             }
         }
     }
@@ -1881,7 +1890,7 @@ WaterFall {
                 const prog = 1.0 - visualProg
                 plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
                 updateOtherPlot(indx)
-                syncViewToOthers()
+                syncTimeToOthers()
             }
         }
     }

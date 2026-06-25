@@ -192,7 +192,8 @@ public slots:
     bool echogramSyncView() const { return echogramSyncView_; }
     void broadcastEpochCursor(qPlot2D* source, int epoch, float depth);
     void broadcastCursorClear(qPlot2D* source);
-    Q_INVOKABLE void broadcastEchogramView(QObject* source, double timelinePos, double from, double to);
+    Q_INVOKABLE void broadcastEchogramTime(QObject* source, double timelinePos);        // time/scroll → gated by echogramSyncCursor_
+    Q_INVOKABLE void broadcastEchogramVertical(QObject* source, double from, double to); // vertical zoom+offset → gated by echogramSyncView_
     Q_INVOKABLE void registerSyncLoupePlot(QObject* plotObj);
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
 
@@ -335,8 +336,8 @@ private:
     ConverterXTF converterXtf_;
     Logger logger_;
     QList<qPlot2D*> plot2dList_;
-    bool echogramSyncCursor_ = false;
-    bool echogramSyncView_ = false;
+    bool echogramSyncCursor_ = true;  // default ON  (cursor/click + time/scroll sync)
+    bool echogramSyncView_ = false;   // default OFF (vertical zoom + offset sync)
     int aimFieldsMask_ = 0xFF;
     QPointer<qPlot2D> syncLoupePlot3dPtr_;
     QList<QMetaObject::Connection> linkManagerWrapperConnections_;
