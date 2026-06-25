@@ -546,6 +546,7 @@ Item {
         onClicked: {
             if (!root.showToggleButton)
                 return
+            if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
             root.expanded = !root.expanded
         }
     }
@@ -641,6 +642,19 @@ Item {
                 duration: 170
                 easing.type: Easing.OutCubic
             }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            z: 1000
+            enabled: root.expanded
+            acceptedButtons: Qt.AllButtons
+            hoverEnabled: false
+            onPressed: function(mouse) {
+                if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
+                mouse.accepted = false
+            }
+            onWheel: function(wheel) { wheel.accepted = false }
         }
 
         Row {

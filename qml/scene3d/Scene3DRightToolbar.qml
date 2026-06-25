@@ -22,6 +22,18 @@ Item {
     function toggleLayers() { layersOpen = false }
     function toggleGeometry() { geometryOpen = !geometryOpen }
 
+    function dismissRuler() {
+        if (!rulerControl.menuOpen) return
+        if (rulerControl.hasGeometry) { if (root.view) root.view.rulerFinishDrawing() }
+        else                         { if (root.view) root.view.clearRuler() }
+        rulerControl._setOpen(false)
+    }
+
+    Connections {
+        target: core
+        function onActiveTransientUiChanged(who) { if (who !== root) root.dismissRuler() }
+    }
+
     width: buttonColumn.width + 8
 
     HoverHandler {
@@ -239,6 +251,8 @@ Item {
             function _setOpen(open) {
                 Scene3dToolBarController.onRulerModeChanged(open)
             }
+
+            onMenuOpenChanged: if (menuOpen && typeof core !== "undefined" && core) core.setActiveTransientUi(root)
 
             Rectangle {
                 id: rulerBacking

@@ -597,13 +597,18 @@ ApplicationWindow {
                 if (workspaceStore.settingsPanelOpen) {
                     hotActions.expanded = false
                     hotActions.layoutsMenuOpen = false
+                    if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
                 }
             }
             function onModeSettingsPanelOpenChanged() {
                 if (workspaceStore.modeSettingsPanelOpen) {
                     hotActions.expanded = false
                     hotActions.layoutsMenuOpen = false
+                    if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
                 }
+            }
+            function onActiveLeafIdChanged() {
+                if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
             }
         }
 

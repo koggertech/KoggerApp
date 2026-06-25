@@ -47,6 +47,12 @@ Item  {
         mosaicCtl.menuOpen = false
     }
 
+    onAnyLayerMenuOpenChanged: if (anyLayerMenuOpen && typeof core !== "undefined" && core) core.setActiveTransientUi(toolbarRoot)
+    Connections {
+        target: core
+        function onActiveTransientUiChanged(who) { if (who !== toolbarRoot) toolbarRoot.closeLayerMenus() }
+    }
+
     // Width cap for a layer theme-swatch strip (opens RIGHT from the control at
     // ctlX within the row): space from THAT control to the pane edge minus the
     // right toolbar, but never below ~2 swatches (may then slightly overlap).
@@ -148,7 +154,7 @@ Item  {
             active: toolbarRoot.store ? toolbarRoot.store.boatTrackVisible : false
             onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.boatTrackVisible = !toolbarRoot.store.boatTrackVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.boattrack")
-            onMenuOpenChanged: if (menuOpen) { toolbarRoot.cancelRuler(); bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false }
+            onMenuOpenChanged: if (menuOpen) { bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false }
         }
 
         Scene3DLayerControl {
@@ -162,7 +168,7 @@ Item  {
             pulse: core.dataProcessorState === 1
             onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.bottomTrackVisible = !toolbarRoot.store.bottomTrackVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.bottomtrack")
-            onMenuOpenChanged: if (menuOpen) { toolbarRoot.cancelRuler(); boatTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false }
+            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false }
         }
 
         Scene3DLayerControl {
@@ -183,7 +189,7 @@ Item  {
             onThemePicked: function(index) { if (toolbarRoot.store) toolbarRoot.store.isobathsThemeIndex = index }
             onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.isobathsVisible = !toolbarRoot.store.isobathsVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.isobaths")
-            onMenuOpenChanged: if (menuOpen) { toolbarRoot.cancelRuler(); boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; mosaicCtl.menuOpen = false }
+            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; mosaicCtl.menuOpen = false }
         }
 
         Scene3DLayerControl {
@@ -204,7 +210,7 @@ Item  {
             onThemePicked: function(index) { if (toolbarRoot.store) toolbarRoot.store.mosaicThemeIndex = index }
             onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.mosaicVisible = !toolbarRoot.store.mosaicVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.mosaic")
-            onMenuOpenChanged: if (menuOpen) { toolbarRoot.cancelRuler(); boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false }
+            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false }
         }
     }
 }

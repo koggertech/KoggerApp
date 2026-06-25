@@ -2287,6 +2287,16 @@ void Core::bringWindowToFront()
     emit bringWindowToFrontRequested();
 }
 
+void Core::requestDismissTransientUi()
+{
+    emit activeTransientUiChanged(nullptr);
+}
+
+void Core::setActiveTransientUi(QObject* who)
+{
+    emit activeTransientUiChanged(who);
+}
+
 int Core::loadSavedMapTileProviderId() const
 {
     QSettings settings("KOGGER", "KoggerApp");

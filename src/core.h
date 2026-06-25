@@ -211,9 +211,12 @@ public slots:
     Q_INVOKABLE void setMapTileLoadingEnabled(bool enabled);
     Q_INVOKABLE void moveAppToBackground();
     Q_INVOKABLE void bringWindowToFront(); // raise+activate main window (wired to the OS-level raise in main.cpp)
+    Q_INVOKABLE void requestDismissTransientUi();
+    Q_INVOKABLE void setActiveTransientUi(QObject* who);
 
 signals:
     void bringWindowToFrontRequested();
+    void activeTransientUiChanged(QObject* who);
     void csvExportFieldsReset();   // emitted by resetCsvExportFields() so UI can rebuild
     void connectionChanged(bool duplex = false);
     void filePathChanged();

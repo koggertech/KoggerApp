@@ -106,6 +106,19 @@ Item {
             onWheel: function(wheel) { wheel.accepted = true }
         }
 
+        MouseArea {
+            anchors.fill: parent
+            z: 1000
+            enabled: panelRoot.progress > 0.01
+            acceptedButtons: Qt.AllButtons
+            hoverEnabled: false
+            onPressed: function(mouse) {
+                if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
+                mouse.accepted = false
+            }
+            onWheel: function(wheel) { wheel.accepted = false }
+        }
+
         HoverHandler {
             id: panelHoverGuard
             enabled: panelRoot.progress > 0.01
