@@ -4133,29 +4133,34 @@
 <context>
     <name>QuickActionSettingsTab</name>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="13"/>
-        <source>Show connected devices</source>
-        <translation>Показывать подключённые устройства</translation>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="62"/>
+        <source>Toggle which items appear and drag to reorder them.</source>
+        <translation>Включайте отображение элементов и меняйте их порядок перетаскиванием.</translation>
     </message>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="31"/>
-        <source>Show favorite layouts</source>
-        <translation>Показать избранные компоновки</translation>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="18"/>
+        <source>Connected devices</source>
+        <translation>Подключённые устройства</translation>
     </message>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="42"/>
-        <source>Show bottom track editing</source>
-        <translation>Показывать редактирование трека дна</translation>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="19"/>
+        <source>Favorite layouts</source>
+        <translation>Избранные компоновки</translation>
     </message>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="52"/>
-        <source>Show extra info button</source>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="20"/>
+        <source>Bottom track editing</source>
+        <translation>Редактирование трека дна</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="21"/>
+        <source>Extra info button</source>
         <translation>Кнопка экстра-инфо</translation>
     </message>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="62"/>
-        <source>Show profiles button</source>
-        <translation>Показывать кнопку профилей</translation>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="22"/>
+        <source>Profiles button</source>
+        <translation>Кнопка профилей</translation>
     </message>
 </context>
 <context>

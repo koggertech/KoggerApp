@@ -4133,29 +4133,34 @@
 <context>
     <name>QuickActionSettingsTab</name>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="13"/>
-        <source>Show connected devices</source>
-        <translation>Show connected devices</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="31"/>
-        <source>Show favorite layouts</source>
-        <translation>Show favorite layouts</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="42"/>
-        <source>Show bottom track editing</source>
-        <translation>Show bottom track editing</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="52"/>
-        <source>Show extra info button</source>
-        <translation>Show extra info button</translation>
-    </message>
-    <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="62"/>
-        <source>Show profiles button</source>
-        <translation>Show profiles button</translation>
+        <source>Toggle which items appear and drag to reorder them.</source>
+        <translation>Toggle which items appear and drag to reorder them.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="18"/>
+        <source>Connected devices</source>
+        <translation>Connected devices</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="19"/>
+        <source>Favorite layouts</source>
+        <translation>Favorite layouts</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="20"/>
+        <source>Bottom track editing</source>
+        <translation>Bottom track editing</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="21"/>
+        <source>Extra info button</source>
+        <translation>Extra info button</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="22"/>
+        <source>Profiles button</source>
+        <translation>Profiles button</translation>
     </message>
 </context>
 <context>

@@ -129,9 +129,24 @@ ApplicationWindow {
     property var legacyTargetPlot: null
     readonly property bool hotkeysPreviewPinned: workspaceStore.settingsPanelOpen
                                                 && (workspaceStore.hotkeysRevealKey !== ""
-                                                    || hotkeysRevealHideTimer.running
                                                     || hotkeysRevealCloseTimer.running
                                                     || hotkeysPreviewClosing)
+    readonly property bool hotkeysPreviewSticky: workspaceStore.settingsPanelOpen
+                                                && workspaceStore.settingsSubPageActive
+                                                && workspaceStore.settingsSubPageKind === "quickActions"
+    onHotkeysPreviewStickyChanged: {
+        if (!hotActions)
+            return
+        if (hotkeysPreviewSticky) {
+            hotkeysRevealCloseTimer.stop()
+            hotkeysRevealUnpinTimer.stop()
+            hotkeysPreviewClosing = false
+            hotActions.layoutsMenuOpen = false   // no open dropdown escaping the preview input-blocker
+            hotActions.expanded = true
+        } else {
+            hotActions.expanded = false
+        }
+    }
     readonly property int hotkeysPreviewGap: 10
 
     readonly property rect fullscreenPopupEffectiveBounds: {
@@ -612,6 +627,20 @@ ApplicationWindow {
             }
         }
 
+        MouseArea {
+            anchors.fill: parent
+            z: hotActions.z - 1
+            visible: hotActions.expanded && hotActions.showToggleButton
+            enabled: hotActions.expanded && hotActions.showToggleButton
+            acceptedButtons: Qt.AllButtons
+            hoverEnabled: false
+            onPressed: function(mouse) {
+                hotActions.expanded = false
+                hotActions.layoutsMenuOpen = false
+                mouse.accepted = false
+            }
+        }
+
         HotActionsPanel {
             id: hotActions
 
@@ -619,14 +648,15 @@ ApplicationWindow {
                      && !workspaceStore.modeSettingsPanelOpen
                      || hotkeysPreviewMode
                      || hotkeysPreviewPinned
+                     || hotkeysPreviewSticky
 
             anchors.left: parent.left
             anchors.top: parent.top
-            anchors.leftMargin: (hotkeysPreviewPinned && workspaceStore.settingsSide === "left")
+            anchors.leftMargin: ((hotkeysPreviewPinned || hotkeysPreviewSticky) && workspaceStore.settingsSide === "left")
                                 ? Math.round(workspaceStore.settingsPanelSizePx * settingsSidebar.progress) + root.hotkeysPreviewGap
-                                : 12
-            anchors.topMargin: 12
-            z: hotkeysPreviewMode || (workspaceStore.settingsPanelOpen && hotActions.expanded)
+                                : 8
+            anchors.topMargin: 8
+            z: hotkeysPreviewMode || hotkeysPreviewSticky || (workspaceStore.settingsPanelOpen && hotActions.expanded)
                ? ZOrder.hotActionsActive
                : ZOrder.hotActions
 
@@ -685,26 +715,14 @@ ApplicationWindow {
         }
 
         Timer {
-            // Pulse runs 90+180+280 = 550ms — keep the highlight a bit longer
-            // so the icons sit visibly after the flash before fading out.
-            id: hotkeysRevealHideTimer
-            interval: 800
+            id: hotkeysRevealCloseTimer
+            interval: 1600
             repeat: false
             onTriggered: {
                 workspaceStore.hotkeysRevealKey = ""
                 hotActions.clearQuickActionReveal()
-                hotkeysRevealCloseTimer.restart()
-            }
-        }
-
-        Timer {
-            // Pause after icons vanish (hide-timer cleared the override) and
-            // before the panel itself collapses. Gives the user a clear beat
-            // to see "the things I just toggled are gone" — then menu closes.
-            id: hotkeysRevealCloseTimer
-            interval: 450
-            repeat: false
-            onTriggered: {
+                if (root.hotkeysPreviewSticky)
+                    return
                 hotkeysPreviewClosing = true
                 hotActions.expanded = false
                 hotkeysRevealUnpinTimer.restart()
@@ -775,21 +793,12 @@ ApplicationWindow {
             target: workspaceStore
             ignoreUnknownSignals: true
 
-            // Reveal sequence:
-            //   t=0      → panel starts expanding + icons rendered (revealQuickAction)
-            //   t=300ms  → icons start pulsing (pulseRevealedAction)
-            //   t=300+800=1100ms → highlight + override cleared (revealHideTimer):
-            //                       disabled icons VANISH while panel is still open
-            //   t=1100+450=1550ms → panel collapses (revealCloseTimer)
-            //                        — gives the user a clear beat to see
-            //                        "the toggled items are gone" before close.
             function onHotkeysRevealNonceChanged() {
                 hotActions.revealQuickAction(workspaceStore.hotkeysRevealKey)
                 hotkeysPreviewClosing = false
                 hotkeysRevealUnpinTimer.stop()
-                hotkeysRevealCloseTimer.stop()
-                hotkeysRevealHideTimer.stop()
                 hotkeysRevealActivateTimer.restart()
+                hotkeysRevealCloseTimer.restart()
             }
         }
 
@@ -797,10 +806,7 @@ ApplicationWindow {
             id: hotkeysRevealActivateTimer
             interval: 300
             repeat: false
-            onTriggered: {
-                hotActions.pulseRevealedAction()
-                hotkeysRevealHideTimer.restart()
-            }
+            onTriggered: hotActions.pulseRevealedAction()
         }
 
         SettingsSidebarBase {

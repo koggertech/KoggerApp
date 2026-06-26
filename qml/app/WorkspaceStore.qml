@@ -100,6 +100,57 @@ property bool quickActionConnectionStatusEnabled: true
 property bool quickActionBottomTrackEnabled: true
 property bool quickActionProfilesEnabled: true
 property bool quickActionExtraInfoEnabled: true
+
+property string quickActionDraggingKey: ""
+
+readonly property var quickActionKeys: ["connections", "favorites", "bottomTrack", "extraInfo", "profiles"]
+
+property var quickActionOrderModel: ListModel {
+    ListElement { key: "connections" }
+    ListElement { key: "favorites" }
+    ListElement { key: "bottomTrack" }
+    ListElement { key: "extraInfo" }
+    ListElement { key: "profiles" }
+}
+
+function normalizeQuickActionOrder(list) {
+    var out = []
+    if (Array.isArray(list)) {
+        for (var i = 0; i < list.length; ++i)
+            if (quickActionKeys.indexOf(list[i]) !== -1 && out.indexOf(list[i]) === -1)
+                out.push(list[i])
+    }
+    for (var j = 0; j < quickActionKeys.length; ++j)   // append any missing keys (new in this version)
+        if (out.indexOf(quickActionKeys[j]) === -1)
+            out.push(quickActionKeys[j])
+    return out
+}
+
+function quickActionOrderCsv() {
+    var a = []
+    for (var i = 0; i < quickActionOrderModel.count; ++i)
+        a.push(quickActionOrderModel.get(i).key)
+    return a.join(",")
+}
+
+function applyQuickActionOrder(list) {
+    var arr = normalizeQuickActionOrder(list)
+    quickActionOrderModel.clear()
+    for (var i = 0; i < arr.length; ++i)
+        quickActionOrderModel.append({ key: arr[i] })
+}
+
+function moveQuickAction(from, to) {
+    var n = quickActionOrderModel.count
+    if (from < 0 || from >= n || to < 0 || to >= n || from === to)
+        return
+    quickActionOrderModel.move(from, to, 1)
+}
+
+function persistQuickActionOrder() {
+    if (typeof layoutStore !== "undefined")
+        layoutStore.quickActionOrderStored = quickActionOrderCsv()
+}
 property string hotkeysRevealKey: ""
 property int hotkeysRevealNonce: 0
 // Live reference to the HotkeysDialog while it's open (set by the dialog
@@ -519,6 +570,7 @@ property Settings layoutStore: Settings {
     property bool quickActionConnectionStatusEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
+    property string quickActionOrderStored: "connections,favorites,bottomTrack,extraInfo,profiles"
     property string selectedConnectionFilePathStored: ""
     property string favoriteLayoutsJson: "[]"
     property string settingsGroupExpandedJson: "{}"
@@ -2698,6 +2750,7 @@ function saveLayoutState() {
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
     layoutStore.quickActionExtraInfoEnabledStored = quickActionExtraInfoEnabled
+    layoutStore.quickActionOrderStored = quickActionOrderCsv()
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
     layoutStore.secondaryWindowOpenStored = secondaryWindowOpen
     layoutStore.secondaryWindowModeStored = secondaryWindowMode
@@ -2732,6 +2785,7 @@ function restoreLayoutState() {
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
     quickActionExtraInfoEnabled = layoutStore.quickActionExtraInfoEnabledStored
+    applyQuickActionOrder((layoutStore.quickActionOrderStored || "").split(","))
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored
     secondaryWindowMode = (storedSecondaryMode === "2D" || storedSecondaryMode === "3D") ? storedSecondaryMode : ""
