@@ -1291,6 +1291,30 @@
         <translation></translation>
     </message>
     <message>
+        <location filename="../src/core.cpp" line="982"/>
+        <source>KLF logging started:
+%1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/core.cpp" line="991"/>
+        <source>KLF log saved:
+%1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/core.cpp" line="1080"/>
+        <source>CSV logging started:
+%1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/core.cpp" line="1089"/>
+        <source>CSV log saved:
+%1</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../src/core.cpp" line="2307"/>
         <source>File opened</source>
         <translation></translation>

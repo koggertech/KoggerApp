@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cstring>
 #include <QDebug>
+#include <QDir>
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QDateTime>
@@ -978,14 +979,18 @@ void Core::setKlfLogging(bool isLogging)
     if (isLogging) {
         success = logger_.startNewKlfLog();
         if (success) {
-            notifications.info(tr("KLF logging enabled"));
+            notifications.info(tr("KLF logging started:\n%1").arg(QDir::toNativeSeparators(logger_.klfLogFilePath())));
         }
         else {
             notifications.warning(tr("KLF logging not started"));
         }
     } else {
+        const QString path = QDir::toNativeSeparators(logger_.klfLogFilePath());
         logger_.stopKlfLogging();
-        notifications.info(tr("KLF logging disabled"));
+        if (!path.isEmpty())
+            notifications.info(tr("KLF log saved:\n%1").arg(path));
+        else
+            notifications.info(tr("KLF logging disabled"));
     }
     isLoggingKlf_ = isLogging && success;
 
@@ -1072,14 +1077,18 @@ void Core::setCsvLogging(bool isLogging)
     if (isLogging) {
         success = logger_.startNewCsvLog();
         if (success) {
-            notifications.info(tr("CSV logging enabled"));
+            notifications.info(tr("CSV logging started:\n%1").arg(QDir::toNativeSeparators(logger_.csvLogFilePath())));
         }
         else {
             notifications.warning(tr("CSV logging not started"));
         }
     } else {
+        const QString path = QDir::toNativeSeparators(logger_.csvLogFilePath());
         logger_.stopCsvLogging();
-        notifications.info(tr("CSV logging disabled"));
+        if (!path.isEmpty())
+            notifications.info(tr("CSV log saved:\n%1").arg(path));
+        else
+            notifications.info(tr("CSV logging disabled"));
     }
     isLoggingCsv_ = isLogging && success;
     emit loggingCsvChanged();

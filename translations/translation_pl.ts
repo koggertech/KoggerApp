@@ -1291,6 +1291,34 @@
         <translation>Logowanie CSV nie zostało uruchomione</translation>
     </message>
     <message>
+        <location filename="../src/core.cpp" line="982"/>
+        <source>KLF logging started:
+%1</source>
+        <translation>Rozpoczęto logowanie KLF:
+%1</translation>
+    </message>
+    <message>
+        <location filename="../src/core.cpp" line="991"/>
+        <source>KLF log saved:
+%1</source>
+        <translation>Zapisano log KLF:
+%1</translation>
+    </message>
+    <message>
+        <location filename="../src/core.cpp" line="1080"/>
+        <source>CSV logging started:
+%1</source>
+        <translation>Rozpoczęto logowanie CSV:
+%1</translation>
+    </message>
+    <message>
+        <location filename="../src/core.cpp" line="1089"/>
+        <source>CSV log saved:
+%1</source>
+        <translation>Zapisano log CSV:
+%1</translation>
+    </message>
+    <message>
         <location filename="../src/core.cpp" line="2307"/>
         <source>File opened</source>
         <translation>Otwarto plik</translation>
