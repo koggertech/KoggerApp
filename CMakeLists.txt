@@ -165,6 +165,7 @@ if(ANDROID)
         QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/platform/android
         QT_ANDROID_VERSION_NAME "${KOGGER_VERSION}"
         QT_ANDROID_VERSION_CODE "${KOGGER_VERSION_CODE}")
+    target_link_options(KoggerApp PRIVATE $<$<CONFIG:Release>:-s>)
     target_include_directories(KoggerApp PRIVATE ${CMAKE_SOURCE_DIR})
     target_link_libraries(KoggerApp PRIVATE
         "${CMAKE_SOURCE_DIR}/third_party/freetype/lib/${CMAKE_ANDROID_ARCH_ABI}/libfreetype.a"
