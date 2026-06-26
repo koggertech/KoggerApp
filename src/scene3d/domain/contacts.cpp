@@ -5,7 +5,6 @@
 #include "text_renderer.h"
 
 #include "themes.h"
-extern Themes theme;
 
 
 Contacts::Contacts(QObject *parent) :
@@ -358,7 +357,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
 
     shaderProgram->bind();
 
-    float pointSize = 50.0f * theme.getResolutionCoeff();
+    float pointSize = 80.0f * renderScale();
     int posLoc        = shaderProgram->attributeLocation ("position");
     int matrixLoc     = shaderProgram->uniformLocation   ("matrix");
     int colorLoc      = shaderProgram->uniformLocation   ("color");
@@ -387,7 +386,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
         QVector3D p = { it.value().nedPos };
         QVector2D pScreen = p.project(view * model, projection, vport.toRect()).toVector2D();
         float correctedY = vport.height() - pScreen.y();
-        QRectF markerRect( pScreen.x() - pointSize * 0.125f, correctedY - pointSize * 0.5f, pointSize / 4.0f, pointSize / 2.0f);        
+        QRectF markerRect( pScreen.x() - pointSize * 0.25f, correctedY - pointSize * 0.5f, pointSize * 0.5f, pointSize * 0.5f);        
         const_cast<ContactsRenderImplementation*>(this)->contactBounds_.insert(it.key(), markerRect);
 
         bool isIntersects = it.key() == intersectedEpochIndx_;
@@ -418,12 +417,12 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
         QVector3D p = it.value().nedPos;
         QVector2D pScreen = p.project(view * model, projection, vport.toRect()).toVector2D();
 
-        pScreen.setX(pScreen.x() + 15.0f);
+        pScreen.setX(pScreen.x() + 15.0f * static_cast<float>(renderScale()));
 
         if (!isIntersects) {
-            pScreen.setY(vport.height() - pScreen.y() - 5);
+            pScreen.setY(vport.height() - pScreen.y() - 5.0f * static_cast<float>(renderScale()));
 
-            labelItems.append(TextRenderer::Text2DItem{it.value().info, 0.9f, pScreen, true});
+            labelItems.append(TextRenderer::Text2DItem{it.value().info, 1.2f, pScreen, true});
         }
     }
 

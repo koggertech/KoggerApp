@@ -675,6 +675,12 @@ Column {
             Component.onCompleted: {
                 if (checked !== core.loggingKlf) checked = core.loggingKlf
             }
+            Connections {
+                target: core
+                function onLoggingKlfChanged() {
+                    if (loggingCheck.checked !== core.loggingKlf) loggingCheck.checked = core.loggingKlf
+                }
+            }
         }
 
         KButton {
@@ -688,6 +694,12 @@ Column {
             }
             Component.onCompleted: {
                 if (checked !== core.loggingCsv) checked = core.loggingCsv
+            }
+            Connections {
+                target: core
+                function onLoggingCsvChanged() {
+                    if (loggingCheck2.checked !== core.loggingCsv) loggingCheck2.checked = core.loggingCsv
+                }
             }
         }
 

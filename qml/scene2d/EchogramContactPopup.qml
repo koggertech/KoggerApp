@@ -23,6 +23,7 @@ Rectangle {
     property double lat: 0.0
     property double lon: 0.0
     property double depth: 0.0
+    property bool isActive: false
 
     readonly property int btnSize: Tokens.controlHMd
 
@@ -94,12 +95,17 @@ Rectangle {
             IconBtn {
                 iconSource: "qrc:/icons/ui/tag.svg"
                 toolTipText: qsTr("Mark as active")
+                enabled: root.indx >= 0
+                opacity: enabled ? 1.0 : 0.4
+                fillColor: root.isActive ? AppPalette.accentBgStrong : AppPalette.card
+                fillHoverColor: root.isActive ? AppPalette.accentBgStrong : AppPalette.cardHover
+                borderColor: root.isActive ? AppPalette.accentBorder : AppPalette.border
                 onClicked: { root.visible = false; root.setActiveButtonClicked() }
             }
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredWidth: Math.round(180 * AppPalette.scale)
+                Layout.preferredWidth: Math.round(120 * AppPalette.scale)
                 Layout.preferredHeight: root.btnSize
                 radius: Tokens.radiusMd
                 color: AppPalette.bg

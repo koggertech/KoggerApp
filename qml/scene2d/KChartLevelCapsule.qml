@@ -1,6 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
-import "../controls"
+import controls
 import kqml_types 1.0
 
 // Styled dual-range level slider shared by the echogram (Plot2D) and the Mosaic
@@ -37,11 +37,12 @@ Rectangle {
         anchors.bottomMargin: Math.round(10 * AppPalette.scale)
         spacing: 2
 
-        CText {
+        Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             text: chartLevel.stopValue
-            small: true
+            color: AppPalette.text
+            font.pixelSize: Math.round(14 * AppPalette.scale)
         }
 
         ChartLevel {
@@ -53,11 +54,12 @@ Rectangle {
             widthSlider: root.capsuleWidth - Math.round(14 * AppPalette.scale)
         }
 
-        CText {
+        Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             text: chartLevel.startValue
-            small: true
+            color: AppPalette.text
+            font.pixelSize: Math.round(14 * AppPalette.scale)
         }
     }
 }

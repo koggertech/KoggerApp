@@ -129,9 +129,24 @@ ApplicationWindow {
     property var legacyTargetPlot: null
     readonly property bool hotkeysPreviewPinned: workspaceStore.settingsPanelOpen
                                                 && (workspaceStore.hotkeysRevealKey !== ""
-                                                    || hotkeysRevealHideTimer.running
                                                     || hotkeysRevealCloseTimer.running
                                                     || hotkeysPreviewClosing)
+    readonly property bool hotkeysPreviewSticky: workspaceStore.settingsPanelOpen
+                                                && workspaceStore.settingsSubPageActive
+                                                && workspaceStore.settingsSubPageKind === "quickActions"
+    onHotkeysPreviewStickyChanged: {
+        if (!hotActions)
+            return
+        if (hotkeysPreviewSticky) {
+            hotkeysRevealCloseTimer.stop()
+            hotkeysRevealUnpinTimer.stop()
+            hotkeysPreviewClosing = false
+            hotActions.layoutsMenuOpen = false   // no open dropdown escaping the preview input-blocker
+            hotActions.expanded = true
+        } else {
+            hotActions.expanded = false
+        }
+    }
     readonly property int hotkeysPreviewGap: 10
 
     readonly property rect fullscreenPopupEffectiveBounds: {
@@ -539,6 +554,8 @@ ApplicationWindow {
             return
         }
         workspaceStore.saveLayoutState()
+        if (typeof core !== "undefined" && core)
+            core.saveCameraViewToSettings()
     }
 
     Component.onDestruction: workspaceStore.saveLayoutState()
@@ -595,13 +612,32 @@ ApplicationWindow {
                 if (workspaceStore.settingsPanelOpen) {
                     hotActions.expanded = false
                     hotActions.layoutsMenuOpen = false
+                    if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
                 }
             }
             function onModeSettingsPanelOpenChanged() {
                 if (workspaceStore.modeSettingsPanelOpen) {
                     hotActions.expanded = false
                     hotActions.layoutsMenuOpen = false
+                    if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
                 }
+            }
+            function onActiveLeafIdChanged() {
+                if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            z: hotActions.z - 1
+            visible: hotActions.expanded && hotActions.showToggleButton
+            enabled: hotActions.expanded && hotActions.showToggleButton
+            acceptedButtons: Qt.AllButtons
+            hoverEnabled: false
+            onPressed: function(mouse) {
+                hotActions.expanded = false
+                hotActions.layoutsMenuOpen = false
+                mouse.accepted = false
             }
         }
 
@@ -612,14 +648,15 @@ ApplicationWindow {
                      && !workspaceStore.modeSettingsPanelOpen
                      || hotkeysPreviewMode
                      || hotkeysPreviewPinned
+                     || hotkeysPreviewSticky
 
             anchors.left: parent.left
             anchors.top: parent.top
-            anchors.leftMargin: (hotkeysPreviewPinned && workspaceStore.settingsSide === "left")
+            anchors.leftMargin: ((hotkeysPreviewPinned || hotkeysPreviewSticky) && workspaceStore.settingsSide === "left")
                                 ? Math.round(workspaceStore.settingsPanelSizePx * settingsSidebar.progress) + root.hotkeysPreviewGap
-                                : 12
-            anchors.topMargin: 12
-            z: hotkeysPreviewMode || (workspaceStore.settingsPanelOpen && hotActions.expanded)
+                                : 8
+            anchors.topMargin: 8
+            z: hotkeysPreviewMode || hotkeysPreviewSticky || (workspaceStore.settingsPanelOpen && hotActions.expanded)
                ? ZOrder.hotActionsActive
                : ZOrder.hotActions
 
@@ -659,11 +696,7 @@ ApplicationWindow {
             onMode2DTriggered: setActivePaneMode("2D")
 
             onLegacyRequested: {
-                workspaceStore.settingsPanelOpen = false
-                if (workspaceStore.modeSettingsPanelOpen) {
-                    workspaceStore.closeModeSettingsPanel()
-                }
-                legacyPanelOpen = !legacyPanelOpen
+                legacyPanelOpen = false
             }
 
             secondWindowOpen: workspaceStore.secondaryWindowOpen
@@ -682,26 +715,14 @@ ApplicationWindow {
         }
 
         Timer {
-            // Pulse runs 90+180+280 = 550ms — keep the highlight a bit longer
-            // so the icons sit visibly after the flash before fading out.
-            id: hotkeysRevealHideTimer
-            interval: 800
+            id: hotkeysRevealCloseTimer
+            interval: 1600
             repeat: false
             onTriggered: {
                 workspaceStore.hotkeysRevealKey = ""
                 hotActions.clearQuickActionReveal()
-                hotkeysRevealCloseTimer.restart()
-            }
-        }
-
-        Timer {
-            // Pause after icons vanish (hide-timer cleared the override) and
-            // before the panel itself collapses. Gives the user a clear beat
-            // to see "the things I just toggled are gone" — then menu closes.
-            id: hotkeysRevealCloseTimer
-            interval: 450
-            repeat: false
-            onTriggered: {
+                if (root.hotkeysPreviewSticky)
+                    return
                 hotkeysPreviewClosing = true
                 hotActions.expanded = false
                 hotkeysRevealUnpinTimer.restart()
@@ -772,21 +793,12 @@ ApplicationWindow {
             target: workspaceStore
             ignoreUnknownSignals: true
 
-            // Reveal sequence:
-            //   t=0      → panel starts expanding + icons rendered (revealQuickAction)
-            //   t=300ms  → icons start pulsing (pulseRevealedAction)
-            //   t=300+800=1100ms → highlight + override cleared (revealHideTimer):
-            //                       disabled icons VANISH while panel is still open
-            //   t=1100+450=1550ms → panel collapses (revealCloseTimer)
-            //                        — gives the user a clear beat to see
-            //                        "the toggled items are gone" before close.
             function onHotkeysRevealNonceChanged() {
                 hotActions.revealQuickAction(workspaceStore.hotkeysRevealKey)
                 hotkeysPreviewClosing = false
                 hotkeysRevealUnpinTimer.stop()
-                hotkeysRevealCloseTimer.stop()
-                hotkeysRevealHideTimer.stop()
                 hotkeysRevealActivateTimer.restart()
+                hotkeysRevealCloseTimer.restart()
             }
         }
 
@@ -794,10 +806,7 @@ ApplicationWindow {
             id: hotkeysRevealActivateTimer
             interval: 300
             repeat: false
-            onTriggered: {
-                hotActions.pulseRevealedAction()
-                hotkeysRevealHideTimer.restart()
-            }
+            onTriggered: hotActions.pulseRevealedAction()
         }
 
         SettingsSidebarBase {
@@ -817,6 +826,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
+                     : workspaceStore.settingsSubPageKind === "aimPanel"     ? qsTr("Information panel")
                      : qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
@@ -832,6 +842,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "uiSaving"   ? uiSavingSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "aimPanel"   ? aimPanelSettingsTabComponent
                      : echogramSettingsTabComponent
             subPageOpen: workspaceStore.anySettingsSubPageActive
 
@@ -868,7 +879,7 @@ ApplicationWindow {
 
             Loader {
                 width: parent.width
-                active: legacySidebar.progress > 0.01 || legacyPanelOpen
+                active: false
                 sourceComponent: legacyMenuComponent
             }
         }
@@ -1040,6 +1051,14 @@ ApplicationWindow {
         }
 
         Component {
+            id: aimPanelSettingsTabComponent
+
+            AimPanelSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
             id: appSettingsPageComponent
 
             AppSettingsPage {
@@ -1072,7 +1091,7 @@ ApplicationWindow {
             z: ZOrder.consolePanel
             consoleOpen: theme ? theme.consoleVisible : false
             maxHeight: parent.height
-            hotActionsRight: hotActions.x + hotActions.width
+            hotActionsRight: hotActions.visible ? hotActions.x + hotActions.width : 0
         }
 
         NotificationsOverlay { }

@@ -52,8 +52,6 @@ void DataHorizon::setEmitChanges(bool state)
 
 void DataHorizon::setIsFileOpening(bool state)
 {
-    //qDebug() << "DataHorizon::setIsFileOpening" << state;
-
     if (state) {
         pendingBottomTrack3DPairs_.clear();
         pendingBottomTrack3DManual_ = false;
@@ -208,8 +206,6 @@ void DataHorizon::onAddedBottomTrack(uint64_t indx)
 
 void DataHorizon::onAddedBottomTrack3D(const QVector<int>& epIndxs, const QVector<int>& vertIndx, bool isManual)
 {
-    //qDebug() << "DataHorizon::onAddedBottomTrack3D" << epIndxs;
-
     if (epIndxs.isEmpty() || vertIndx.isEmpty()) {
         return;
     }

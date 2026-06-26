@@ -5,6 +5,7 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLExtraFunctions>
 #include <QHash>
+#include "themes.h"
 
 BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent) :
     SceneObject(new BottomTrackRenderImplementation, view, parent),
@@ -600,7 +601,7 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
         shaderProgram->enableAttributeArray(posLoc);
         shaderProgram->setAttributeArray(posLoc, m_data.constData());
 
-        ctx->glLineWidth(4.0);
+        ctx->glLineWidth(static_cast<float>(4.0 * renderScale()));
         ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
         ctx->glLineWidth(1.0);
 

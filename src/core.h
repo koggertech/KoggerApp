@@ -95,6 +95,7 @@ public:
     void consoleWarning(QString msg);
     void consoleProto(FrameParser& parser, bool isIn = true);
     void saveLLARefToSettings();
+    Q_INVOKABLE void saveCameraViewToSettings();
     void removeLinkManagerConnections();
 #ifdef SEPARATE_READING
     void removeDeviceManagerConnections();
@@ -184,6 +185,15 @@ public slots:
     Q_INVOKABLE QString getChannel1Name() const;
     Q_INVOKABLE QString getChannel2Name() const;
     Q_INVOKABLE void registerPlot2D(QObject* plotObj);
+    Q_INVOKABLE void setEchogramSyncCursor(bool state);
+    Q_INVOKABLE void setEchogramSyncView(bool state);
+    Q_INVOKABLE void setAimFieldsMask(int mask);
+    bool echogramSyncCursor() const { return echogramSyncCursor_; }
+    bool echogramSyncView() const { return echogramSyncView_; }
+    void broadcastEpochCursor(qPlot2D* source, int epoch, float depth, int channel);
+    void broadcastCursorClear(qPlot2D* source);
+    Q_INVOKABLE void broadcastEchogramTime(QObject* source, double timelinePos);        // time/scroll → gated by echogramSyncCursor_
+    Q_INVOKABLE void broadcastEchogramVertical(QObject* source, double from, double to); // vertical zoom+offset → gated by echogramSyncView_
     Q_INVOKABLE void registerSyncLoupePlot(QObject* plotObj);
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
 
@@ -200,8 +210,13 @@ public slots:
     Q_INVOKABLE bool getMapTileLoadingEnabled() const;
     Q_INVOKABLE void setMapTileLoadingEnabled(bool enabled);
     Q_INVOKABLE void moveAppToBackground();
+    Q_INVOKABLE void bringWindowToFront(); // raise+activate main window (wired to the OS-level raise in main.cpp)
+    Q_INVOKABLE void requestDismissTransientUi();
+    Q_INVOKABLE void setActiveTransientUi(QObject* who);
 
 signals:
+    void bringWindowToFrontRequested();
+    void activeTransientUiChanged(QObject* who);
     void csvExportFieldsReset();   // emitted by resetCsvExportFields() so UI can rebuild
     void connectionChanged(bool duplex = false);
     void filePathChanged();
@@ -272,6 +287,7 @@ private:
     void fixFilePathString(QString& filePath) const;
     void notifyFileOpened(const QString& filePath);
     void loadLLARefFromSettings();
+    void loadCameraViewFromSettings();
     void onTgcParamsChanged();
     int loadSavedMapTileProviderId() const;
     void resetRealtimeSessionState();
@@ -323,6 +339,9 @@ private:
     ConverterXTF converterXtf_;
     Logger logger_;
     QList<qPlot2D*> plot2dList_;
+    bool echogramSyncCursor_ = true;  // default ON  (cursor/click + time/scroll sync)
+    bool echogramSyncView_ = false;   // default OFF (vertical zoom + offset sync)
+    int aimFieldsMask_ = 0xFF;
     QPointer<qPlot2D> syncLoupePlot3dPtr_;
     QList<QMetaObject::Connection> linkManagerWrapperConnections_;
     QString openedfilePath_;
@@ -337,6 +356,7 @@ private:
     bool isAppendMode_ = false;
     QStringList appendedFiles_;
     QList<QUuid> openLinkOrder_;
+    QSet<QUuid> receivingLinks_; // links currently receiving data; window is raised on the empty→non-empty edge
 
     bool isGPSAlive_;
     bool isUseGPS_;

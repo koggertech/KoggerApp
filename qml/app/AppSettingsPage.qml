@@ -4,8 +4,8 @@ import QtQuick.Layouts 1.15
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
-import "../controls"
-import "../scene2d"
+import controls
+import scene2d
 
 Column {
     id: root
@@ -232,10 +232,23 @@ Column {
     SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
+        id: interfaceGroup
         title: qsTr("Interface")
         description: qsTr("Language, theme, UI scale and panel visibility.")
         stateStore: root.store
         stateKey: "app.preference"
+        headerActions: KCircleIconButton {
+            readonly property bool _on: (typeof theme !== "undefined" && theme) ? theme.consoleVisible : false
+            width: interfaceGroup.headerActionSize
+            height: interfaceGroup.headerActionSize
+            iconSource: "qrc:/icons/ui/terminal.svg"
+            iconPixelSize: Math.round(width * 0.58)
+            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
+            toolTipText: qsTr("Console")
+            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
+            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+            onClicked: if (typeof theme !== "undefined" && theme) theme.consoleVisible = !theme.consoleVisible
+        }
         collapsedByDefault: false
 
         Column {
@@ -789,13 +802,25 @@ Column {
         description: qsTr("Vessel track displayed in the 3D scene.")
         stateStore: root.store
         stateKey: "app.boattrack"
+        headerActions: KCircleIconButton {
+            readonly property bool _on: root.store ? root.store.boatTrackVisible : false
+            width: boatTrackGroup.headerActionSize
+            height: boatTrackGroup.headerActionSize
+            iconSource: "qrc:/icons/ui/3dcube.svg"
+            iconPixelSize: Math.round(width * 0.58)
+            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
+            toolTipText: qsTr("Show in 3D")
+            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
+            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+            onClicked: if (root.store) root.store.boatTrackVisible = !root.store.boatTrackVisible
+        }
         collapsedByDefault: true
 
         ParamCard {
             id: boatTrackVisible3d
             label: qsTr("Show in 3D")
-            checked: root.store ? root.store.boatTrackVisible : true
             onToggled: function(v) { if (root.store) root.store.boatTrackVisible = v }
+            Binding { target: boatTrackVisible3d; property: "checked"; value: root.store ? root.store.boatTrackVisible : true }
         }
     }
 
@@ -809,6 +834,18 @@ Column {
         description: qsTr("Bottom detection presets, thresholds and search window.")
         stateStore: root.store
         stateKey: "app.bottomtrack"
+        headerActions: KCircleIconButton {
+            readonly property bool _on: root.store ? root.store.bottomTrackVisible : false
+            width: btGroup.headerActionSize
+            height: btGroup.headerActionSize
+            iconSource: "qrc:/icons/ui/3dcube.svg"
+            iconPixelSize: Math.round(width * 0.58)
+            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
+            toolTipText: qsTr("Show in 3D")
+            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
+            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+            onClicked: if (root.store) root.store.bottomTrackVisible = !root.store.bottomTrackVisible
+        }
         collapsedByDefault: false
 
         readonly property int spinW: Math.round(115 * AppPalette.scale)
@@ -851,8 +888,8 @@ Column {
         ParamCard {
             id: bottomTrackVisible3d
             label: qsTr("Show in 3D")
-            checked: root.store ? root.store.bottomTrackVisible : false
             onToggled: function(v) { if (root.store) root.store.bottomTrackVisible = v }
+            Binding { target: bottomTrackVisible3d; property: "checked"; value: root.store ? root.store.bottomTrackVisible : false }
         }
 
         // Preset
@@ -1078,6 +1115,18 @@ Column {
         description: qsTr("Equal-depth contour lines on the surface.")
         stateStore: root.store
         stateKey: "app.isobaths"
+        headerActions: KCircleIconButton {
+            readonly property bool _on: root.store ? root.store.isobathsVisible : false
+            width: isobathsGroup.headerActionSize
+            height: isobathsGroup.headerActionSize
+            iconSource: "qrc:/icons/ui/3dcube.svg"
+            iconPixelSize: Math.round(width * 0.58)
+            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
+            toolTipText: qsTr("Show in 3D")
+            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
+            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+            onClicked: if (root.store) root.store.isobathsVisible = !root.store.isobathsVisible
+        }
         collapsedByDefault: true
 
         readonly property int ctrlW: Math.round(200 * AppPalette.scale)
@@ -1133,8 +1182,8 @@ Column {
         ParamCard {
             id: isobathsVisible3d
             label: qsTr("Show in 3D")
-            checked: root.store ? root.store.isobathsVisible : false
             onToggled: function(v) { if (root.store) root.store.isobathsVisible = v }
+            Binding { target: isobathsVisible3d; property: "checked"; value: root.store ? root.store.isobathsVisible : false }
         }
 
         RowLayout {
@@ -1314,6 +1363,18 @@ Column {
         description: qsTr("Side-scan mosaic visualisation.")
         stateStore: root.store
         stateKey: "app.mosaic"
+        headerActions: KCircleIconButton {
+            readonly property bool _on: root.store ? root.store.mosaicVisible : false
+            width: mosaicGroup.headerActionSize
+            height: mosaicGroup.headerActionSize
+            iconSource: "qrc:/icons/ui/3dcube.svg"
+            iconPixelSize: Math.round(width * 0.58)
+            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
+            toolTipText: qsTr("Show in 3D")
+            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
+            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+            onClicked: if (root.store) root.store.mosaicVisible = !root.store.mosaicVisible
+        }
         collapsedByDefault: true
 
         readonly property int labelW: Math.round(140 * AppPalette.scale)
@@ -1356,8 +1417,8 @@ Column {
         ParamCard {
             id: mosaicVisible3d
             label: qsTr("Show in 3D")
-            checked: root.store ? root.store.mosaicVisible : false
             onToggled: function(v) { if (root.store) root.store.mosaicVisible = v }
+            Binding { target: mosaicVisible3d; property: "checked"; value: root.store ? root.store.mosaicVisible : false }
         }
 
         RowLayout {
@@ -1819,6 +1880,27 @@ Column {
                 }
             }
         }
+
+        ParamCardGroup {
+            width: parent.width
+            label: qsTr("Sync echograms")
+            checked: root.store ? root.store.echogramSyncCursor : false
+            onToggled: function(v) { if (root.store) root.store.echogramSyncCursor = v }
+
+            KSwitch {
+                width: parent.width
+                text: qsTr("Sync view")
+                enabled: root.store ? root.store.echogramSyncCursor : false
+                checked: root.store ? root.store.echogramSyncView : false
+                onToggled: if (root.store) root.store.echogramSyncView = checked
+            }
+        }
+
+        KButton {
+            width: parent.width
+            text: qsTr("Information panel")
+            onClicked: if (root.store) root.store.openAimPanelSettings()
+        }
     }
 
     SettingsGroup {
@@ -1855,9 +1937,10 @@ Column {
             ParamCard {
                 width: parent.width
                 label: qsTr("Show surface quality")
-                checked: render3dSettings.showQualityLabelCheck
+                checked: root.store ? root.store.showSurfaceQuality : false
                 onToggled: function(v) {
-                    render3dSettings.showQualityLabelCheck = v
+                    if (root.store)
+                        root.store.showSurfaceQuality = v
                 }
             }
 
@@ -1993,26 +2076,20 @@ Column {
                                 Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(v)
                         }
                     }
-                    Row {
-                        width: parent.width
-                        height: Tokens.controlHMd
-                        spacing: Tokens.spaceXs
-                        readonly property real sw: (width - 2 * Tokens.spaceXs) / 3
-
-                        Row {
-                            width: parent.sw
-                            height: parent.height
+                    KParamGrid {
+                        RowLayout {
+                            Layout.fillWidth: true
+                            height: Tokens.controlHMd
                             spacing: Tokens.spaceSm
                             Text {
-                                anchors.verticalCenter: parent.verticalCenter
                                 text: qsTr("Size:")
                                 color: AppPalette.textSecond
                                 font.pixelSize: Tokens.fontMd
                             }
                             KSpinBox {
                                 id: circleGridSizeSpinBox
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - 56
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Tokens.controlHMd
                                 from: 1; to: 3; stepSize: 1; value: 1
                                 onValueModified: function(v) {
                                     if (typeof Scene3dToolBarController !== "undefined")
@@ -2020,20 +2097,19 @@ Column {
                                 }
                             }
                         }
-                        Row {
-                            width: parent.sw
-                            height: parent.height
+                        RowLayout {
+                            Layout.fillWidth: true
+                            height: Tokens.controlHMd
                             spacing: Tokens.spaceSm
                             Text {
-                                anchors.verticalCenter: parent.verticalCenter
                                 text: qsTr("Step:")
                                 color: AppPalette.textSecond
                                 font.pixelSize: Tokens.fontMd
                             }
                             KSpinBox {
                                 id: circleGridStepSpinBox
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - 56
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Tokens.controlHMd
                                 from: 1; to: 20; stepSize: 1; value: 1
                                 onValueModified: function(v) {
                                     if (typeof Scene3dToolBarController !== "undefined")
@@ -2041,20 +2117,19 @@ Column {
                                 }
                             }
                         }
-                        Row {
-                            width: parent.sw
-                            height: parent.height
+                        RowLayout {
+                            Layout.fillWidth: true
+                            height: Tokens.controlHMd
                             spacing: Tokens.spaceSm
                             Text {
-                                anchors.verticalCenter: parent.verticalCenter
                                 text: qsTr("Angle:")
                                 color: AppPalette.textSecond
                                 font.pixelSize: Tokens.fontMd
                             }
                             KSpinBox {
                                 id: circleGridAngleSpinBox
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - 64
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Tokens.controlHMd
                                 from: 1; to: 5; stepSize: 1; value: 1
                                 onValueModified: function(v) {
                                     if (typeof Scene3dToolBarController !== "undefined")
@@ -2077,10 +2152,10 @@ Column {
                 }
             }
 
-            // Boat (NavigationArrow) — toggle + animated Size row in same card.
+            // Navigation arrow — toggle + Shape/Size rows in same card.
             ParamCardGroup {
                 id: boatCard
-                label: qsTr("Boat")
+                label: qsTr("Navigation arrow")
                 checked: render3dSettings.navigationArrowCheckButton
                 onToggled: function(v) {
                     render3dSettings.navigationArrowCheckButton = v
@@ -2088,27 +2163,44 @@ Column {
                         NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(v)
                 }
 
-                Row {
-                    width: parent.width
-                    height: Tokens.controlHMd
-                    spacing: Tokens.spaceSm
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: qsTr("Size:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                KParamGrid {
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Tokens.spaceSm
+                        Text {
+                            text: qsTr("Shape:")
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontMd
+                        }
+                        KCombo {
+                            id: navigationArrowShapeCombo
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Tokens.controlHMd
+                            model: [qsTr("Arrow"), qsTr("Boat")]
+                            currentIndex: 0
+                            onActivated: function(idx) {
+                                if (typeof NavigationArrowControlMenuController !== "undefined")
+                                    NavigationArrowControlMenuController.onRepresentationChanged(idx)
+                            }
+                        }
                     }
-                    KSpinBox {
-                        id: navigationArrowSizeSpinBox
-                        anchors.verticalCenter: parent.verticalCenter
-                        // Fixed reasonable width so single-cell rows don't
-                        // stretch the spinbox across the entire body; value
-                        // (1-5) fits comfortably with -/+ buttons + padding.
-                        width: Math.round(140 * AppPalette.scale)
-                        from: 1; to: 5; stepSize: 1; value: 1
-                        onValueModified: function(v) {
-                            if (typeof NavigationArrowControlMenuController !== "undefined")
-                                NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(v)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Tokens.spaceSm
+                        Text {
+                            text: qsTr("Size:")
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontMd
+                        }
+                        KSpinBox {
+                            id: navigationArrowSizeSpinBox
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Tokens.controlHMd
+                            from: 1; to: 5; stepSize: 1; value: 1
+                            onValueModified: function(v) {
+                                if (typeof NavigationArrowControlMenuController !== "undefined")
+                                    NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(v)
+                            }
                         }
                     }
                 }
@@ -2125,27 +2217,19 @@ Column {
                         Scene3dToolBarController.onCompassButtonChanged(v)
                 }
 
-                Row {
-                    width: parent.width
-                    height: Tokens.controlHMd
-                    spacing: Tokens.spaceXs
-                    readonly property real sw: (width - Tokens.spaceXs) / 2
-
-                    Row {
-                        width: parent.sw
-                        height: parent.height
+                KParamGrid {
+                    RowLayout {
+                        Layout.fillWidth: true
                         spacing: Tokens.spaceSm
                         Text {
-                            id: compassPosLabel
-                            anchors.verticalCenter: parent.verticalCenter
                             text: qsTr("Pos:")
                             color: AppPalette.textSecond
                             font.pixelSize: Tokens.fontMd
                         }
                         KSpinBox {
                             id: compassPosSpinBox
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - compassPosLabel.width - parent.spacing
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Tokens.controlHMd
                             from: 1; to: 3; stepSize: 1; value: 2
                             onValueModified: function(v) {
                                 if (typeof Scene3dToolBarController !== "undefined")
@@ -2153,21 +2237,18 @@ Column {
                             }
                         }
                     }
-                    Row {
-                        width: parent.sw
-                        height: parent.height
+                    RowLayout {
+                        Layout.fillWidth: true
                         spacing: Tokens.spaceSm
                         Text {
-                            id: compassSizeLabel
-                            anchors.verticalCenter: parent.verticalCenter
                             text: qsTr("Size:")
                             color: AppPalette.textSecond
                             font.pixelSize: Tokens.fontMd
                         }
                         KSpinBox {
                             id: compassSizeSpinBox
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - compassSizeLabel.width - parent.spacing
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Tokens.controlHMd
                             from: 1; to: 5; stepSize: 1; value: 1
                             onValueModified: function(v) {
                                 if (typeof Scene3dToolBarController !== "undefined")
@@ -2178,9 +2259,19 @@ Column {
                 }
             }
 
+            ParamCard {
+                width: parent.width
+                label: qsTr("Scale bar")
+                checked: render3dSettings.scaleBarCheckButton
+                onToggled: function(v) {
+                    render3dSettings.scaleBarCheckButton = v
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onScaleBarButtonChanged(v)
+                }
+            }
+
             Settings {
                 id: render3dSettings
-                property bool showQualityLabelCheck: false
                 property bool forceSingleZoomCheckButton: false
                 property bool syncLoupeCheckButton: false
                 property bool isNorthViewButton: false
@@ -2191,6 +2282,7 @@ Column {
                 property bool shadowEnabledCheckButton: true
                 property bool navigationArrowCheckButton: true
                 property bool compassCheckButton: true
+                property bool scaleBarCheckButton: true
             }
             Settings { property alias syncLoupeSize:        syncLoupeSizeSpinBox.value }
             Settings { property alias syncLoupeZoom:        syncLoupeZoomSlider.value }
@@ -2198,6 +2290,7 @@ Column {
             Settings { property alias circleGridStep:       circleGridStepSpinBox.value }
             Settings { property alias circleGridAngle:      circleGridAngleSpinBox.value }
             Settings { property alias navigationArrowSize:  navigationArrowSizeSpinBox.value }
+            Settings { property alias navigationArrowShape: navigationArrowShapeCombo.currentIndex }
             Settings { property alias compassPos:           compassPosSpinBox.value }
             Settings { property alias compassSize:          compassSizeSpinBox.value }
 
@@ -2481,10 +2574,12 @@ Column {
                     Scene3dToolBarController.onCompassButtonChanged(render3dSettings.compassCheckButton)
                     Scene3dToolBarController.onCompassPosChanged(compassPosSpinBox.value)
                     Scene3dToolBarController.onCompassSizeChanged(compassSizeSpinBox.value)
+                    Scene3dToolBarController.onScaleBarButtonChanged(render3dSettings.scaleBarCheckButton)
                 }
                 if (typeof NavigationArrowControlMenuController !== "undefined") {
                     NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(render3dSettings.navigationArrowCheckButton)
                     NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(navigationArrowSizeSpinBox.value)
+                    NavigationArrowControlMenuController.onRepresentationChanged(navigationArrowShapeCombo.currentIndex)
                 }
             }
         }

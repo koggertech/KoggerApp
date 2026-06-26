@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <QFile>
 #include "math_defs.h"
-
+#include "themes.h"
 
 QVector2D SurfaceView::SurfaceViewRenderImplementation::projectToScreen(const QVector3D& p,
                                                                          const QMatrix4x4& mvp,
@@ -1195,7 +1195,7 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         const float baseScale = (std::isfinite(cameraDist_) && cameraDist_ > 0.0f)
                                 ? cameraDist_ * 0.0015f
                                 : surfaceStep_ * 0.20f;
-        const float scale = qBound(0.12f, baseScale, 0.45f);
+        const float scale = qBound(0.12f, baseScale, 0.45f) / static_cast<float>(renderScale());
 
         QVector<TextRenderer::Text3DItem> labelBatch;
         labelBatch.reserve(isoLabels_.size());
@@ -1280,9 +1280,10 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         QMatrix4x4 textProjection;
         textProjection.ortho(vport.toRect());
 
-        const float padX     = 4.0f;
-        const float padY     = 4.0f;
-        const float keyDY    = 14.0f;
+        const float uiScale  = static_cast<float>(renderScale());
+        const float padX     = 4.0f * uiScale;
+        const float padY     = 4.0f * uiScale;
+        const float keyDY    = 14.0f * uiScale;
         const float scaleStr = 0.5f;
 
         for (auto it = tiles_.cbegin(); it != tiles_.cend(); ++it) {

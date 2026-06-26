@@ -11,6 +11,7 @@ class Plot2DBottomProcessing : public Plot2DLine {
 public:
     Plot2DBottomProcessing();
     bool draw(Plot2D* parent, Dataset* dataset) override;
+    bool drawDepthValue(Plot2D* parent, Dataset* dataset);
     void setTheme(int theme_id);
     int getThemeId() const { return themeId_; }
     void setDepthTextVisible(bool state) { drawDepthText_ = state; }
@@ -24,6 +25,6 @@ protected:
 
 private:
     QString formatDepthText(float distance) const;
-    void drawValueWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text, const QColor& textColor) const;
+    void drawValueWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text, const QColor& textColor, bool vertical = false) const;
 };
 

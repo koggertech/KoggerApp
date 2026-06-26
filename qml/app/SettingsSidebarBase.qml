@@ -36,6 +36,7 @@ Item {
     default property alias contentData: contentColumn.data
 
     property var store: null
+    property bool _restoringScroll: false
 
     function _toggleAllGroups() {
         if (subPageOpen)
@@ -64,6 +65,44 @@ Item {
         to: 0
         duration: 220
         easing.type: Easing.OutCubic
+    }
+
+    onOpenChanged: {
+        if (open) {
+            restoreScrollTimer.restart()
+        } else if (store && !subPageOpen) {
+            scrollSaveTimer.stop()
+            store.settingsScrollY = contentFlick.contentY
+        }
+    }
+
+    Timer {
+        id: restoreScrollTimer
+        interval: 60
+        repeat: false
+        onTriggered: {
+            if (!store) return
+            panelRoot._restoringScroll = true
+            var maxY = Math.max(0, contentFlick.contentHeight - contentFlick.height)
+            contentFlick.contentY = Math.max(0, Math.min(store.settingsScrollY, maxY))
+            panelRoot._restoringScroll = false
+        }
+    }
+
+    Timer {
+        id: scrollSaveTimer
+        interval: 300
+        repeat: false
+        onTriggered: if (store && !panelRoot.subPageOpen) store.settingsScrollY = contentFlick.contentY
+    }
+
+    Connections {
+        target: contentFlick
+        function onContentYChanged() {
+            if (panelRoot._restoringScroll || !panelRoot.open || panelRoot.subPageOpen || !store)
+                return
+            scrollSaveTimer.restart()
+        }
     }
 
     visible: progress > 0.01
@@ -104,6 +143,19 @@ Item {
             onPressed: function(mouse) { mouse.accepted = true }
             onClicked: {}
             onWheel: function(wheel) { wheel.accepted = true }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            z: 1000
+            enabled: panelRoot.progress > 0.01
+            acceptedButtons: Qt.AllButtons
+            hoverEnabled: false
+            onPressed: function(mouse) {
+                if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
+                mouse.accepted = false
+            }
+            onWheel: function(wheel) { wheel.accepted = false }
         }
 
         HoverHandler {

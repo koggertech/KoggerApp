@@ -6,8 +6,8 @@ import QtCore
 
 import WaterFall 1.0
 import kqml_types 1.0
-import "../controls"
-import "../menus"
+import controls
+import menus
 
 WaterFall {
     id: plot
@@ -253,6 +253,7 @@ WaterFall {
             menuBlock.visible = false
             plot.plotMousePosition(x, y)
             plotPressed(indx, x, y)
+            if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
         }
 
         if (mouseButton === Qt.RightButton) {
@@ -337,17 +338,30 @@ WaterFall {
             let val = -angleDelta.y
             plot.verZoomEvent(val)
             plotCursorChanged(indx, cursorFrom(), cursorTo())
+            syncVerticalToOthers()
         }
         else if (modifiers & Qt.ShiftModifier) {
             let val = -angleDelta.y
             plot.verScrollEvent(val)
             plotCursorChanged(indx, cursorFrom(), cursorTo())
+            syncVerticalToOthers()
         }
         else {
             let val = angleDelta.y
             plot.horScrollEvent(val)
             updateOtherPlot(indx)
+            syncTimeToOthers()
         }
+    }
+
+    function syncTimeToOthers() {
+        if (typeof core !== "undefined" && core)
+            core.broadcastEchogramTime(plot, plot.timelinePosition)
+    }
+
+    function syncVerticalToOthers() {
+        if (typeof core !== "undefined" && core)
+            core.broadcastEchogramVertical(plot, cursorFrom(), cursorTo())
     }
 
     function handlePinchStarted(centerX, centerY) {
@@ -365,16 +379,19 @@ WaterFall {
             let val = -(prevCenterX - currCenterX)
             plot.horScrollEvent(val)
             updateOtherPlot(indx)
+            syncTimeToOthers()
         }
         else if (pinchMovementY) {
             let val = prevCenterY - currCenterY
             plot.verScrollEvent(val)
             plotCursorChanged(indx, cursorFrom(), cursorTo())
+            syncVerticalToOthers()
         }
         else if (pinchZoomY) {
             let val = (prevScale - scale) * 500.0
             plot.verZoomEvent(val)
             plotCursorChanged(indx, cursorFrom(), cursorTo())
+            syncVerticalToOthers()
         }
         else {
             if (Math.abs(pinchStartPos.x - currCenterX) > pinchThresholdXAxis) {
@@ -430,6 +447,11 @@ WaterFall {
     signal plotReleased(int indx)
     signal settingsClicked()
     signal echogramThemeChanged(int themeId)
+
+    Connections {
+        target: core
+        function onActiveTransientUiChanged(who) { if (who !== themeSwitcher) themeSwitcher.menuOpen = false }
+    }
 
     PinchArea {
         id: pinch2D
@@ -546,6 +568,7 @@ WaterFall {
                                     plot.width - Math.round(20 * AppPalette.scale) - plot.edgeSafetyMargin * 2)
             stopsFor: function(id) { return plot.echogramThemeStops(id) }
             onPicked: function(index) { echoTheme.currentIndex = index }
+            onMenuOpenChanged: if (menuOpen && typeof core !== "undefined" && core) core.setActiveTransientUi(themeSwitcher)
         }
 
         KChartLevelCapsule {
@@ -560,8 +583,8 @@ WaterFall {
                 return Math.max(3, Math.min(5, Math.floor((plot.height - reserve) / ctrlH)))
             }
 
-            onStartValueChanged: plot.plotEchogramSetLevels(startValue, stopValue)
-            onStopValueChanged:  plot.plotEchogramSetLevels(startValue, stopValue)
+            onStartValueChanged: { plot.plotEchogramSetLevels(startValue, stopValue); themeSwitcher.menuOpen = false }
+            onStopValueChanged:  { plot.plotEchogramSetLevels(startValue, stopValue); themeSwitcher.menuOpen = false }
             Component.onCompleted: plot.plotEchogramSetLevels(startValue, stopValue)
 
             Settings {
@@ -586,7 +609,7 @@ WaterFall {
             fillHoverColor: AppPalette.cardHover
             borderColor: AppPalette.border
             toolTipText: qsTr("Echogram settings")
-            onClicked: settingsClicked()
+            onClicked: { if (typeof core !== "undefined" && core) core.requestDismissTransientUi(); settingsClicked() }
         }
     }
     Item {
@@ -1562,6 +1585,7 @@ WaterFall {
         contactDialog.lat = plot.contactLat
         contactDialog.lon = plot.contactLon
         contactDialog.depth = plot.contactDepth
+        contactDialog.isActive = plot.contactIsActive
     }
 
     // Horizontal mode scroll bookmark (bottom edge)
@@ -1715,6 +1739,7 @@ WaterFall {
                 const prog = Math.max(0, Math.min(1, (mouse.x - echoScrollBarH.grabOffsetX) / trackPx))
                 plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
                 updateOtherPlot(indx)
+                syncTimeToOthers()
             }
         }
     }
@@ -1872,6 +1897,7 @@ WaterFall {
                 const prog = 1.0 - visualProg
                 plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
                 updateOtherPlot(indx)
+                syncTimeToOthers()
             }
         }
     }
@@ -1931,6 +1957,7 @@ WaterFall {
                     contactDialog.x = plot.pointerContactMouseX
                     contactDialog.y = plot.pointerContactMouseY
                     contactDialog.indx = -1
+                    contactDialog.isActive = false
                     contactDialog.visible = true
                     menuBlock.visible = false
                 }

@@ -7,6 +7,7 @@
 #include <QQuickFramebufferObject>
 #include <QtMath>
 #include <QElapsedTimer>
+#include <QRectF>
 #include "coordinate_axes.h"
 #include "plane_grid.h"
 #include "ray_caster.h"
@@ -26,10 +27,14 @@
 #include "geojson_layer.h"
 #include "geojson_controller.h"
 #include "data_processor.h"
+#include "animator.h"
+#include "smoother.h"
 
 
 class Dataset;
 class GraphicsScene3dRenderer;
+class QVariantAnimation;
+class QTimer;
 class GraphicsScene3dView : public QQuickFramebufferObject
 {
     Q_OBJECT
@@ -42,6 +47,9 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(QObject* geoJsonController READ geoJsonController CONSTANT)
     Q_PROPERTY(bool cameraPerspective READ cameraPerspective NOTIFY cameraPerspectiveChanged)
     Q_PROPERTY(bool updateSurface READ updateSurface NOTIFY updateSurfaceChanged)
+    Q_PROPERTY(int dataZoom READ dataZoom NOTIFY sendDataZoom)
+    Q_PROPERTY(bool followReturnPending READ followReturnPending NOTIFY followReturnStateChanged)
+    Q_PROPERTY(int followReturnSeconds READ followReturnSeconds NOTIFY followReturnStateChanged)
     Q_PROPERTY(bool syncLoupeOverlayVisible READ syncLoupeOverlayVisible NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(int syncLoupeEpochIndex READ syncLoupeEpochIndex NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(float syncLoupeDepthFrom READ syncLoupeDepthFrom NOTIFY syncLoupeStateChanged)
@@ -145,14 +153,9 @@ public:
         LLA yerevanLla = LLA(40.1852f, 44.5149f, 0.0f);
         LLARef viewLlaRef_ = LLARef(yerevanLla);
 
-        // yaw фильтр
-        float navYawFilteredRad_        = 0.f;
-        bool  navYawInited_             = false;
-        QElapsedTimer navYawTmr_;
-        float navYawTauSec_             = 1.2;
-        float navYawDeadbandRad_        = qDegreesToRadians(2.0f);
-        float navYawMaxRateRadPerSec_   = qDegreesToRadians(90.0f);
-        float navYawSnapRad_            = qDegreesToRadians(120.0f);
+        // follow smoothing (continuous, critically-damped — см. smoother.h)
+        Smoother yawSmoother_;
+        Smoother pitchSmoother_;
     };
 
     //Renderer
@@ -230,6 +233,9 @@ public:
     bool sceneBoundingBoxVisible() const;
     bool cameraPerspective() const;
     bool updateSurface() const;
+    int dataZoom() const { return dataZoomIndx_; }
+    bool followReturnPending() const;
+    int followReturnSeconds() const;
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
     void clearSurfaceViewRender();
@@ -237,6 +243,10 @@ public:
     void updateProjection();
     void setNeedToResetStartPos(bool state);
     void forceUpdateDatasetLlaRef();
+
+    // Map-view persistence: raw view frame (viewLlaRef_) + lookAt offset + zoom + orientation.
+    bool getMapViewState(LLARef& viewRef, double& lookAtN, double& lookAtE, double& distance, double& yawRad, double& pitchRad) const;
+    void restoreMapViewState(const LLARef& viewRef, double lookAtN, double lookAtE, double distance, double yawRad, double pitchRad);
 
     bool geoJsonEnabled() const;
     bool rulerEnabled() const;
@@ -266,6 +276,7 @@ public:
     Q_INVOKABLE void panStepTrigger(qreal dx, qreal dy);
     Q_INVOKABLE void zStepTrigger(qreal delta);
     Q_INVOKABLE void resetCameraAngleTrigger();
+    Q_INVOKABLE void resetVerticalScale();
     Q_INVOKABLE void forceRefresh();
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
     Q_INVOKABLE void rulerFinishDrawing();
@@ -278,6 +289,9 @@ public:
     Q_INVOKABLE void geojsonDeleteSelectedFeature();
     Q_INVOKABLE void geojsonFitInView();
     Q_INVOKABLE void setSyncLoupeUiAllowed(bool allowed);
+    Q_INVOKABLE void returnToBoatNow();
+    Q_INVOKABLE void flyToLastPosition();
+    Q_INVOKABLE void zoomButtonAnimated(qreal steps);
 
     void setTrackLastData(bool state);
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
@@ -288,6 +302,7 @@ public:
     void setCompassState(bool state);
     void setCompassPos(int val);
     void setCompassSize(int val);
+    void setScaleBarState(bool state);
     void setShadowsEnabled(bool state);
     void setShadowVectorX(float value);
     void setShadowVectorY(float value);
@@ -323,6 +338,7 @@ public Q_SLOTS:
     void setIsometricView();
     void setCancelZoomView();
     void setMapView();
+    void setMapViewAnimated();
     void setLastEpochFocusView(bool useAngle, bool useNavigatorView);
     void setIdleMode();
     void setVerticalScale(float scale);
@@ -367,6 +383,7 @@ signals:
     void forceSingleZoomAutoStateChanged(bool active);
     void syncLoupeStateChanged();
     void verticalScaleChanged();
+    void followReturnStateChanged();
 
 private:
     void updateBounds();
@@ -389,6 +406,12 @@ private:
     void refreshSyncLoupePreview();
     bool tryProjectScreenToPlane(qreal x, qreal y, float planeZ, QVector3D& outPoint) const;
     void zoomAroundScreenAnchor(qreal delta, const QPointF& anchorPos);
+    void resetHeadingToNorth();
+    void notifyManualCameraInteraction();
+    void beginFollowReturn();
+    void cancelFollowReturn();
+    void cancelCameraPoseAnim();
+    void cancelVScaleAnim();
 
 private:
     friend class BottomTrack;
@@ -458,6 +481,18 @@ private:
     bool compass_;
     int compassPos_;
     int compassSize_;
+    bool scaleBar_ = true;
+    QRectF compassRect_;
+    bool compassPressed_ = false;
+
+    enum AnimCh { ChHeading, ChFollow, ChPose, ChVScale };
+    Animator animator_;
+    bool followSuspended_ = false;
+    bool positionsLive_ = false;
+    QTimer* followResumeTimer_ = nullptr;
+    QTimer* followTickTimer_ = nullptr;
+    QTimer* positionsLiveTimer_ = nullptr;
+    QVector3D followReturnStartLookAt_;
     bool shadowsEnabled_;
     QVector3D shadowVector_;
     float shadowIntensity_;

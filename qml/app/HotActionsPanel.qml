@@ -16,9 +16,9 @@ Item {
                                              Math.min(620 * root._s,
                                                       _windowW - 32 * root._s))
     property int controlHeight: Math.round(36 * root._s) - 2
-    property int panelPaddingX: Math.round(8 * root._s)
-    property int panelPaddingY: Math.round(6 * root._s)
+    property int panelPaddingX: Math.round(3 * root._s)
     property int triggerButtonWidth: Math.round(92 * root._s)
+    readonly property int toggleButtonSize: root.controlHeight
     readonly property color hotkeysLayerColor: AppPalette.bg
     readonly property color hotkeysPopupLayerColor: AppPalette.bg
     readonly property color buttonFillColor: AppPalette.card
@@ -26,7 +26,8 @@ Item {
     readonly property color buttonPressedColor: AppPalette.bgDeep
     readonly property color buttonBorderColor: AppPalette.border
     readonly property color buttonHoverBorderColor: AppPalette.borderHover
-    readonly property int panelHeight: Math.max(controlHeight + panelPaddingY * 2, Math.round(48 * root._s))
+    readonly property int panelHeight: controlHeight + panelPaddingX * 2
+    readonly property int _arrowSlotW: showToggleButton ? toggleButtonSize + Math.round(8 * root._s) : 0
     // While the "layouts" reveal sequence is active we keep showing the icons
     // even if the user just disabled them — so they're visible during the
     // whole open → pulse → close cycle instead of disappearing instantly.
@@ -53,6 +54,7 @@ Item {
     property bool connectionStatusToolVisible: true
     property string highlightedQuickActionKey: ""
     property int highlightPulseToken: 0
+    readonly property string draggingKey: store ? store.quickActionDraggingKey : ""
     // Tracks the active reveal for the whole sequence — set when reveal fires,
     // cleared only when the panel actually collapses. Used to keep the
     // about-to-disappear icons visible until the very end of the close.
@@ -91,6 +93,16 @@ Item {
     property var devices: []
     // Index into `devices` (= deviceManagerWrapper.devs) — devSN can collide.
     signal deviceTriggered(int devIndex)
+
+    readonly property bool _hasConnectedDevice: {
+        var ds = root.devices
+        if (!ds) return false
+        for (var i = 0; i < ds.length; ++i)
+            if (ds[i] && ds[i].devType !== 0) return true
+        return false
+    }
+    property var _favSlot: null
+    property var _btSlot: null
 
     readonly property bool _loggingActive: typeof core !== "undefined" && core && (core.loggingKlf || core.loggingCsv)
 
@@ -255,11 +267,13 @@ Item {
                                                 ? toggleButton.height
                                                   + (inputDeviceBadgeVisible ? inputDeviceStackSpacing + inputDeviceBadge.height : 0)
                                                 : 0
-    readonly property int panelOffsetX: (root.showToggleButton ? toggleButton.width + Math.round(8 * root._s) : 0) + root.revealShiftX
+    readonly property int panelOffsetX: (root.showToggleButton ? root.toggleButtonSize + Math.round(8 * root._s) : 0) + root.revealShiftX
 
     width: Math.max(leadingClusterWidth,
-                    root.expanded ? panelOffsetX + panel.width
-                                  : panelOffsetX + (collapsedDeviceRow.visible ? collapsedDeviceRow.width : 0))
+                    root.expanded
+                    ? panelOffsetX + panel.width
+                    : root.panelPaddingX + 2 * root.toggleButtonSize + Math.round(8 * root._s)
+                      + (collapsedDeviceRow.visible ? Math.round(8 * root._s) + collapsedDeviceRow.width : 0))
     height: Math.max(leadingClusterHeight, panel.height, layoutsCombo.y + backing.height, btEditCombo.y + btEditCombo.height)
 
     component LayoutsTriggerButton: Rectangle {
@@ -269,6 +283,7 @@ Item {
         property bool dropped: false       // dropdown open/animating → merge into container
         property bool highlighted: false   // "look here" reveal hint (layouts hotkey)
         property int flashToken: 0
+        property bool highlightHold: false
         signal clicked()
 
         readonly property var currentEntry: root.store && root.store.favoriteLayoutEntryFromCurrent
@@ -280,9 +295,14 @@ Item {
         implicitWidth: root.triggerButtonWidth
         implicitHeight: root.controlHeight
         radius: height / 2
-        color: button.dropped ? "transparent" : (buttonMouse.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
+        color: button.dropped ? "transparent"
+               : button.highlightHold ? AppPalette.accentBgStrong
+               : (buttonMouse.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
         border.width: button.dropped ? 0 : 1
-        border.color: buttonMouse.containsMouse ? root.buttonHoverBorderColor : root.buttonBorderColor
+        border.color: button.highlightHold ? AppPalette.accentBorder
+                      : (buttonMouse.containsMouse ? root.buttonHoverBorderColor : root.buttonBorderColor)
+
+        Behavior on color { ColorAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
         // Hover whiteness — same feel as KCircleIconButton (the pencil trigger).
         Rectangle {
@@ -292,6 +312,14 @@ Item {
             opacity: buttonMouse.containsMouse ? 0.12 : 0.0
             visible: opacity > 0.001
             Behavior on opacity { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: AppPalette.accentBgStrong
+            opacity: revealPulse.opacity
+            visible: button.highlighted
         }
 
         LayoutSnapshotPreview {
@@ -383,7 +411,7 @@ Item {
         SequentialAnimation {
             id: pulseAnim
             running: false
-            NumberAnimation { target: pulseRing; property: "opacity"; to: 0.95; duration: 90; easing.type: Easing.OutCubic }
+            NumberAnimation { target: pulseRing; property: "opacity"; to: 0.95; duration: 90;  easing.type: Easing.OutCubic }
             NumberAnimation { target: pulseRing; property: "opacity"; to: 0.32; duration: 180; easing.type: Easing.OutCubic }
             NumberAnimation { target: pulseRing; property: "opacity"; to: 0.0; duration: 280; easing.type: Easing.OutCubic }
         }
@@ -498,6 +526,7 @@ Item {
 
             highlighted: root.highlightedQuickActionKey === "connections"
             flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "connections"
 
             onClicked: {
                 if (!modelData) return
@@ -522,20 +551,139 @@ Item {
         }
     }
 
+    Component {
+        id: qaConnectionsComp
+        Row {
+            spacing: Math.round(8 * root._s)
+            height: root.controlHeight
+            Repeater {
+                model: root.devices
+                delegate: deviceShortcutDelegate
+            }
+        }
+    }
+
+    Component {
+        id: qaFavoritesComp
+        Item {
+            id: favSlotItem
+            width: root.triggerButtonWidth
+            height: root.controlHeight
+            Component.onCompleted: root._favSlot = favSlotItem
+            Component.onDestruction: if (root._favSlot === favSlotItem) root._favSlot = null
+        }
+    }
+
+    Component {
+        id: qaBottomTrackComp
+        Item {
+            id: btSlotItem
+            width: root.controlHeight
+            height: root.controlHeight
+            Component.onCompleted: root._btSlot = btSlotItem
+            Component.onDestruction: if (root._btSlot === btSlotItem) root._btSlot = null
+        }
+    }
+
+    Component {
+        id: qaExtraInfoComp
+        KCircleIconButton {
+            id: extraInfoBtn
+            readonly property bool _open: root.store && root.store.extraInfoVisible
+            width: root.controlHeight
+            height: root.controlHeight
+            iconSource: "qrc:/icons/ui/list-details.svg"
+            iconTintColor: AppPalette.text
+            toolTipText: _open ? qsTr("Hide extra info") : qsTr("Extra info panel")
+            fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
+            fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
+            borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
+            highlighted: root.highlightedQuickActionKey === "extraInfo"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "extraInfo"
+            onClicked: if (root.store) root.store.extraInfoVisible = !root.store.extraInfoVisible
+
+            KCloseBadge { visible: extraInfoBtn._open }
+        }
+    }
+
+    Component {
+        id: qaProfilesComp
+        KCircleIconButton {
+            id: profilesBtn
+            readonly property bool _open: root.store && root.store.profilesPopupOpen
+            width: root.controlHeight
+            height: root.controlHeight
+            iconSource: "qrc:/icons/ui/file_settings.svg"
+            iconTintColor: AppPalette.text
+            toolTipText: _open ? qsTr("Close profiles") : qsTr("Settings profiles")
+            fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
+            fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
+            borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
+            highlighted: root.highlightedQuickActionKey === "profiles"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "profiles"
+            onClicked: if (root.store) root.store.profilesPopupOpen = !root.store.profilesPopupOpen
+
+            KCloseBadge { visible: profilesBtn._open }
+        }
+    }
+
+    Connections {
+        target: core
+        function onActiveTransientUiChanged(who) {
+            if (who !== root && root.showToggleButton) {
+                root.expanded = false
+                root.layoutsMenuOpen = false
+            }
+        }
+    }
+
+    // "K" — opens app settings.
     KCircleIconButton {
         id: toggleButton
         anchors.left: parent.left
-        anchors.top: parent.top
+        anchors.leftMargin: root.panelPaddingX  // equal top/left inset: matches the centered y-offset (== panelPaddingX)
         visible: root.showToggleButton
-        // Match panel height so toggle and expanded panel are flush vertically.
-        width: visible ? root.panelHeight : 0
-        height: visible ? root.panelHeight : 0
-        iconSource: root.expanded ? "" : "qrc:/icons/app/kogger_app.png"
-        glyph: root.expanded ? "×" : ""
-        glyphColor: AppPalette.text
-        glyphPixelSize: Math.round(20 * root._s)
+        // Icon-sized (matches the row's icon buttons), vertically centered in the panel band.
+        width: visible ? root.toggleButtonSize : 0
+        height: visible ? root.toggleButtonSize : 0
+        y: Math.round((root.panelHeight - height) / 2)
+        iconSource: "qrc:/icons/app/kogger_app.png"
         iconTintColor: AppPalette.accentBar
-        iconPixelSize: Math.round(32 * root._s)
+        iconPixelSize: Math.round(root.toggleButtonSize * 0.7)
+        fillColor: root.buttonFillColor
+        fillHoverColor: root.buttonHoverColor
+        fillPressedColor: root.buttonPressedColor
+        borderColor: root.buttonBorderColor
+        borderHoverColor: root.buttonHoverBorderColor
+        toolTipText: qsTr("Settings")
+
+        onClicked: {
+            if (!root.showToggleButton)
+                return
+            if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
+            root.settingsTriggered()
+        }
+    }
+
+    KCircleIconButton {
+        id: expandButton
+        anchors.left: toggleButton.right
+        anchors.leftMargin: Math.round(8 * root._s)
+        y: toggleButton.y
+        z: 2   // above the panel background so it sits inside the wrap when expanded
+        visible: root.showToggleButton
+        width: visible ? root.toggleButtonSize : 0
+        height: visible ? root.toggleButtonSize : 0
+        iconSource: "qrc:/icons/ui/chevron-right.svg"
+        iconTintColor: AppPalette.text
+        iconPixelSize: Math.round(root.toggleButtonSize * 0.55)
+        iconRotation: root.expanded ? 0 : 90   // collapsed → down, expanded → toward the menu (right)
         fillColor: root.buttonFillColor
         fillHoverColor: root.buttonHoverColor
         fillPressedColor: root.buttonPressedColor
@@ -546,7 +694,12 @@ Item {
         onClicked: {
             if (!root.showToggleButton)
                 return
-            root.expanded = !root.expanded
+            if (root.expanded) {
+                root.expanded = false
+            } else {
+                if (typeof core !== "undefined" && core) core.setActiveTransientUi(root)
+                root.expanded = true
+            }
         }
     }
 
@@ -597,7 +750,7 @@ Item {
     Row {
         id: collapsedDeviceRow
         anchors.left: parent.left
-        anchors.leftMargin: root.panelOffsetX
+        anchors.leftMargin: root.panelPaddingX + 2 * root.toggleButtonSize + 2 * Math.round(8 * root._s)
         anchors.verticalCenter: toggleButton.verticalCenter
         spacing: Math.round(8 * root._s)
         visible: root.showToggleButton && !root.expanded && (root.connectionStatusToolVisible || root._loggingActive)
@@ -620,7 +773,9 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: panelOffsetX
         anchors.top: parent.top
-        width: root.expanded ? Math.min(root.maxExpandedWidth, topRow.implicitWidth + root.panelPaddingX * 2) : 0
+        width: root.expanded ? Math.min(root.maxExpandedWidth,
+                                        2 * root.panelPaddingX + root._arrowSlotW + topRow.implicitWidth)
+                             : 0
         height: root.panelHeight
         radius: height / 2
         clip: true
@@ -643,96 +798,50 @@ Item {
             }
         }
 
+        MouseArea {
+            anchors.fill: parent
+            enabled: root.expanded
+            acceptedButtons: Qt.AllButtons
+            hoverEnabled: false
+            onPressed: function(mouse) {
+                if (typeof core !== "undefined" && core) core.setActiveTransientUi(root)
+                mouse.accepted = true
+            }
+            onWheel: function(wheel) { wheel.accepted = true }
+        }
+
         Row {
             id: topRow
             anchors.left: parent.left
-            anchors.leftMargin: root.panelPaddingX
+            anchors.leftMargin: root.panelPaddingX + root._arrowSlotW
             anchors.verticalCenter: parent.verticalCenter
             spacing: Math.round(8 * root._s)
             height: root.controlHeight
 
-            SettingsGearButton {
-                width: root.controlHeight
-                height: root.controlHeight
-                modeTag: "app"
-                fillColor: root.buttonFillColor
-                fillHoverColor: root.buttonHoverColor
-                fillPressedColor: root.buttonPressedColor
-                borderColor: root.buttonBorderColor
-                borderHoverColor: root.buttonHoverBorderColor
-                onClicked: {
-                    root.settingsTriggered()
-                    root.expanded = false
-                }
-            }
-
-            Repeater {
-                readonly property bool _devicesRevealOverride: root._revealActiveKey === "connections"
-                model: (root.connectionStatusToolVisible || _devicesRevealOverride) ? root.devices : 0
-                delegate: deviceShortcutDelegate
+            move: Transition {
+                NumberAnimation { properties: "x"; duration: 220; easing.type: Easing.OutCubic }
             }
 
             LoggingBadge {}
 
-            Item {
-                id: layoutsSlot
-                visible: root.hasFavoriteLayouts
-                width: visible ? root.triggerButtonWidth : 0
-                height: root.controlHeight
-            }
-
-            Item {
-                id: btEditSlot
-                visible: root.showBtEdit
-                width: visible ? root.controlHeight : 0
-                height: root.controlHeight
-            }
-
-            KCircleIconButton {
-                readonly property bool _open: root.store && root.store.extraInfoVisible
-                visible: root.showExtraInfo
-                width: visible ? root.controlHeight : 0
-                height: root.controlHeight
-                iconSource: _open ? "qrc:/icons/ui/x.svg" : "qrc:/icons/ui/list-details.svg"
-                iconTintColor: AppPalette.text
-                toolTipText: _open ? qsTr("Hide extra info") : qsTr("Extra info panel")
-                fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
-                fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
-                fillPressedColor: root.buttonPressedColor
-                borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
-                borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
-                highlighted: root.highlightedQuickActionKey === "extraInfo"
-                flashToken: root.highlightPulseToken
-                onClicked: {
-                    if (!root.store) return
-                    var willOpen = !root.store.extraInfoVisible
-                    root.store.extraInfoVisible = willOpen
-                    if (willOpen)
-                        root.expanded = false
-                }
-            }
-
-            KCircleIconButton {
-                readonly property bool _open: root.store && root.store.profilesPopupOpen
-                visible: root.showProfiles
-                width: visible ? root.controlHeight : 0
-                height: root.controlHeight
-                iconSource: _open ? "qrc:/icons/ui/x.svg" : "qrc:/icons/ui/file_settings.svg"
-                iconTintColor: AppPalette.text
-                toolTipText: _open ? qsTr("Close profiles") : qsTr("Settings profiles")
-                fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
-                fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
-                fillPressedColor: root.buttonPressedColor
-                borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
-                borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
-                highlighted: root.highlightedQuickActionKey === "profiles"
-                flashToken: root.highlightPulseToken
-                onClicked: {
-                    if (!root.store) return
-                    var willOpen = !root.store.profilesPopupOpen
-                    root.store.profilesPopupOpen = willOpen
-                    if (willOpen)
-                        root.expanded = false
+            Repeater {
+                model: root.store ? root.store.quickActionOrderModel : 0
+                delegate: Loader {
+                    required property string key
+                    height: root.controlHeight
+                    visible: key === "connections" ? ((root.connectionStatusToolVisible || root._revealActiveKey === "connections") && root._hasConnectedDevice)
+                           : key === "favorites"   ? root.hasFavoriteLayouts
+                           : key === "bottomTrack" ? root.showBtEdit
+                           : key === "extraInfo"   ? root.showExtraInfo
+                           : key === "profiles"    ? root.showProfiles
+                           : false
+                    active: visible
+                    sourceComponent: key === "connections" ? qaConnectionsComp
+                                   : key === "favorites"   ? qaFavoritesComp
+                                   : key === "bottomTrack" ? qaBottomTrackComp
+                                   : key === "extraInfo"   ? qaExtraInfoComp
+                                   : key === "profiles"    ? qaProfilesComp
+                                   : null
                 }
             }
 
@@ -770,7 +879,7 @@ Item {
                                         || backing.height > root.controlHeight + layoutsCombo.sidePad * 2 + 1
         visible: root.hasFavoriteLayouts && panel.opacity > 0.01
         opacity: panel.opacity         // fade in/out together with the pill
-        x: panel.x + topRow.x + layoutsSlot.x - layoutsCombo.sidePad
+        x: panel.x + topRow.x + (root._favSlot && root._favSlot.parent ? root._favSlot.parent.x : 0) - layoutsCombo.sidePad
         y: panel.y + topRow.y - layoutsCombo.sidePad
         width: comboW + layoutsCombo.sidePad * 2
         z: panel.z + 1                 // above the toolbar; the button is the head
@@ -822,6 +931,7 @@ Item {
             dropped: layoutsCombo.dropped
             highlighted: root.highlightedQuickActionKey === "layouts"
             flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "favorites"
             onClicked: root.layoutsMenuOpen = !root.layoutsMenuOpen
         }
     }
@@ -831,7 +941,7 @@ Item {
         readonly property int sidePad: Math.round(3 * root._s)
         visible: root.showBtEdit && panel.opacity > 0.01
         opacity: panel.opacity
-        x: panel.x + topRow.x + btEditSlot.x - btEditCombo.sidePad
+        x: panel.x + topRow.x + (root._btSlot && root._btSlot.parent ? root._btSlot.parent.x : 0) - btEditCombo.sidePad
         y: panel.y + topRow.y - btEditCombo.sidePad
         width: root.controlHeight + btEditCombo.sidePad * 2
         height: root.controlHeight + btEditCombo.sidePad * 2
@@ -844,7 +954,7 @@ Item {
             height: root.controlHeight
             readonly property bool _open: root.store && root.store.bottomTrackEditorOpen
             readonly property bool _accent: root.btTool !== 0 || _open
-            iconSource: _open ? "qrc:/icons/ui/x.svg" : "qrc:/icons/ui/pencil.svg"
+            iconSource: "qrc:/icons/ui/pencil.svg"
             iconTintColor: AppPalette.text
             toolTipText: _open ? qsTr("Close bottom track editing")
                                : qsTr("Bottom track editing")
@@ -855,14 +965,30 @@ Item {
             borderHoverColor: _accent ? AppPalette.accentBorder : root.buttonHoverBorderColor
             highlighted: root.highlightedQuickActionKey === "bottomTrack"
             flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "bottomTrack"
             onClicked: {
                 if (!root.store) return
-                var willOpen = !root.store.bottomTrackEditorOpen
-                root.store.bottomTrackEditorOpen = willOpen
-                if (willOpen)
-                    root.expanded = false
+                root.store.bottomTrackEditorOpen = !root.store.bottomTrackEditorOpen   // keep the menu open
             }
+
+            KCloseBadge { visible: btEditTrigger._open }
         }
+    }
+
+    MouseArea {
+        anchors.fill: panel
+        z: panel.z + 2
+        visible: !root.showToggleButton && panel.opacity > 0.01
+        enabled: visible
+        hoverEnabled: true
+        acceptedButtons: Qt.AllButtons
+        cursorShape: Qt.ArrowCursor
+        preventStealing: true
+        onPressed: function(mouse) { mouse.accepted = true }
+        onReleased: function(mouse) { mouse.accepted = true }
+        onClicked: function(mouse) { mouse.accepted = true }
+        onDoubleClicked: function(mouse) { mouse.accepted = true }
+        onWheel: function(wheel) { wheel.accepted = true }
     }
 
 }

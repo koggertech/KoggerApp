@@ -2,8 +2,8 @@ import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
 import QtQuick.Dialogs
-import "../controls"
-import "../menus"
+import controls
+import menus
 
 MenuScroll {
     id: scrollBar
@@ -100,12 +100,5 @@ MenuScroll {
                 width: menuWidth
             }
         }
-
-
-//        DevAddrBox {
-//            dev: devConnection.dev
-//            Layout.fillWidth: true
-//            Layout.preferredWidth: parent.width
-//        }
     }
 }

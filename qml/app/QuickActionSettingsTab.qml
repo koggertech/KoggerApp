@@ -9,62 +9,157 @@ Column {
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceMd
 
-    KSwitch {
-        width: parent.width; text: qsTr("Show connected devices")
-        checked: page.store ? page.store.quickActionConnectionStatusEnabled : true
-        onToggled: {
-            if (!page.store) return
-            page.store.quickActionConnectionStatusEnabled = checked
-            if (!deviceManagerWrapper || !deviceManagerWrapper.devs)
-                return
-            for (var i = 0; i < deviceManagerWrapper.devs.length; ++i) {
-                var d = deviceManagerWrapper.devs[i]
-                if (d && d.devType !== 0) {
-                    page.store.requestHotkeysReveal("connections")
-                    break
+    Component.onDestruction: if (store) store.quickActionDraggingKey = ""
+
+    readonly property int rowH: Math.round(38 * AppPalette.scale)   // == KSwitch.rowHeight: aligns burger/switch/highlight
+    readonly property int handleW: Math.round(28 * AppPalette.scale)
+
+    function _label(key) {
+        return key === "connections" ? qsTr("Connected devices")
+             : key === "favorites"   ? qsTr("Favorite layouts")
+             : key === "bottomTrack" ? qsTr("Bottom track editing")
+             : key === "extraInfo"   ? qsTr("Extra info button")
+             : key === "profiles"    ? qsTr("Profiles button")
+             : key
+    }
+    function _checked(key) {
+        if (!store) return false
+        return key === "connections" ? store.quickActionConnectionStatusEnabled
+             : key === "favorites"   ? store.quickActionFavoritesEnabled
+             : key === "bottomTrack" ? store.quickActionBottomTrackEnabled
+             : key === "extraInfo"   ? store.quickActionExtraInfoEnabled
+             : key === "profiles"    ? store.quickActionProfilesEnabled
+             : false
+    }
+    function _toggle(key, v) {
+        if (!store) return
+        if (key === "connections") {
+            store.quickActionConnectionStatusEnabled = v
+            if (deviceManagerWrapper && deviceManagerWrapper.devs) {
+                for (var i = 0; i < deviceManagerWrapper.devs.length; ++i) {
+                    var d = deviceManagerWrapper.devs[i]
+                    if (d && d.devType !== 0) { store.requestHotkeysReveal("connections"); break }
                 }
             }
+        } else if (key === "favorites") {
+            store.quickActionFavoritesEnabled = v
+            if (store.favoriteLayouts && store.favoriteLayouts.length > 0)
+                store.requestHotkeysReveal("layouts")
+        } else if (key === "bottomTrack") {
+            store.quickActionBottomTrackEnabled = v
+            store.requestHotkeysReveal("bottomTrack")
+        } else if (key === "extraInfo") {
+            store.quickActionExtraInfoEnabled = v
+            store.requestHotkeysReveal("extraInfo")
+        } else if (key === "profiles") {
+            store.quickActionProfilesEnabled = v
+            store.requestHotkeysReveal("profiles")
         }
     }
 
-    KSwitch {
-        width: parent.width; text: qsTr("Show favorite layouts")
-        checked: page.store ? page.store.quickActionFavoritesEnabled : true
-        onToggled: {
-            if (!page.store) return
-            page.store.quickActionFavoritesEnabled = checked
-            if (page.store.favoriteLayouts && page.store.favoriteLayouts.length > 0)
-                page.store.requestHotkeysReveal("layouts")
-        }
+    Text {
+        width: parent.width
+        text: qsTr("Toggle which items appear and drag to reorder them.")
+        color: AppPalette.textMuted
+        font.pixelSize: Tokens.fontSm
+        wrapMode: Text.WordWrap
+        bottomPadding: Tokens.spaceXs
     }
 
-    KSwitch {
-        width: parent.width; text: qsTr("Show bottom track editing")
-        checked: page.store ? page.store.quickActionBottomTrackEnabled : true
-        onToggled: {
-            if (!page.store) return
-            page.store.quickActionBottomTrackEnabled = checked
-            page.store.requestHotkeysReveal("bottomTrack")
-        }
-    }
+    // Dragged row reparents into dragLayer (no positioner) to float above the list.
+    Item {
+        id: dragLayer
+        readonly property int rowCount: page.store ? page.store.quickActionOrderModel.count : 0
+        width: parent.width
+        height: rowCount * page.rowH + Math.max(0, rowCount - 1) * list.spacing
 
-    KSwitch {
-        width: parent.width; text: qsTr("Show extra info button")
-        checked: page.store ? page.store.quickActionExtraInfoEnabled : true
-        onToggled: {
-            if (!page.store) return
-            page.store.quickActionExtraInfoEnabled = checked
-            page.store.requestHotkeysReveal("extraInfo")
-        }
-    }
+        ListView {
+            id: list
+            anchors.fill: parent
+            interactive: false
+            spacing: Tokens.spaceMd
+            model: page.store ? page.store.quickActionOrderModel : 0
+            cacheBuffer: 10000
 
-    KSwitch {
-        width: parent.width; text: qsTr("Show profiles button")
-        checked: page.store ? page.store.quickActionProfilesEnabled : true
-        onToggled: {
-            if (!page.store) return
-            page.store.quickActionProfilesEnabled = checked
-            page.store.requestHotkeysReveal("profiles")
+            moveDisplaced: Transition { NumberAnimation { properties: "y"; duration: 160; easing.type: Easing.OutCubic } }
+
+            delegate: DropArea {
+                id: dropArea
+                required property string key
+                required property int index
+                width: list.width
+                height: page.rowH
+                property int visualIndex: index
+
+                onEntered: function(drag) {
+                    var from = drag.source.visualIndex
+                    if (from !== dropArea.visualIndex && page.store)
+                        page.store.moveQuickAction(from, dropArea.visualIndex)
+                }
+
+                Rectangle {
+                    id: rowContent
+                    width: dropArea.width
+                    height: page.rowH
+                    radius: Tokens.radiusLg
+                    color: dragArea.drag.active ? AppPalette.bgHover : "transparent"
+                    border.width: dragArea.drag.active ? 1 : 0
+                    border.color: AppPalette.border
+                    property int visualIndex: dropArea.visualIndex
+
+                    readonly property bool dragActive: dragArea.drag.active
+                    onDragActiveChanged: if (page.store) page.store.quickActionDraggingKey = dragActive ? key : ""
+
+                    Drag.active: dragArea.drag.active
+                    Drag.source: rowContent
+                    Drag.hotSpot.x: width / 2
+                    Drag.hotSpot.y: height / 2
+
+                    states: State {
+                        when: dragArea.drag.active
+                        ParentChange { target: rowContent; parent: dragLayer }
+                    }
+
+                    Row {
+                        anchors.fill: parent
+                        spacing: Tokens.spaceSm
+
+                        Item {
+                            width: page.handleW
+                            height: parent.height
+                            Column {
+                                anchors.centerIn: parent
+                                spacing: Math.round(3 * AppPalette.scale)
+                                Repeater {
+                                    model: 3
+                                    Rectangle {
+                                        width: Math.round(14 * AppPalette.scale)
+                                        height: Math.max(2, Math.round(2 * AppPalette.scale))
+                                        radius: height / 2
+                                        color: dragArea.drag.active ? AppPalette.accentBar : AppPalette.textMuted
+                                        Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+                                    }
+                                }
+                            }
+                            MouseArea {
+                                id: dragArea
+                                anchors.fill: parent
+                                cursorShape: Qt.SizeVerCursor
+                                drag.target: rowContent
+                                drag.axis: Drag.YAxis
+                                onReleased: if (page.store) page.store.persistQuickActionOrder()
+                            }
+                        }
+
+                        KSwitch {
+                            width: parent.width - page.handleW - parent.spacing
+                            text: page._label(key)
+                            checked: page._checked(key)
+                            onToggled: page._toggle(key, checked)
+                        }
+                    }
+                }
+            }
         }
     }
 }
