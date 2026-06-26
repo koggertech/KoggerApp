@@ -819,8 +819,8 @@ Column {
         ParamCard {
             id: boatTrackVisible3d
             label: qsTr("Show in 3D")
-            checked: root.store ? root.store.boatTrackVisible : true
             onToggled: function(v) { if (root.store) root.store.boatTrackVisible = v }
+            Binding { target: boatTrackVisible3d; property: "checked"; value: root.store ? root.store.boatTrackVisible : true }
         }
     }
 
@@ -888,8 +888,8 @@ Column {
         ParamCard {
             id: bottomTrackVisible3d
             label: qsTr("Show in 3D")
-            checked: root.store ? root.store.bottomTrackVisible : false
             onToggled: function(v) { if (root.store) root.store.bottomTrackVisible = v }
+            Binding { target: bottomTrackVisible3d; property: "checked"; value: root.store ? root.store.bottomTrackVisible : false }
         }
 
         // Preset
@@ -1182,8 +1182,8 @@ Column {
         ParamCard {
             id: isobathsVisible3d
             label: qsTr("Show in 3D")
-            checked: root.store ? root.store.isobathsVisible : false
             onToggled: function(v) { if (root.store) root.store.isobathsVisible = v }
+            Binding { target: isobathsVisible3d; property: "checked"; value: root.store ? root.store.isobathsVisible : false }
         }
 
         RowLayout {
@@ -1417,8 +1417,8 @@ Column {
         ParamCard {
             id: mosaicVisible3d
             label: qsTr("Show in 3D")
-            checked: root.store ? root.store.mosaicVisible : false
             onToggled: function(v) { if (root.store) root.store.mosaicVisible = v }
+            Binding { target: mosaicVisible3d; property: "checked"; value: root.store ? root.store.mosaicVisible : false }
         }
 
         RowLayout {

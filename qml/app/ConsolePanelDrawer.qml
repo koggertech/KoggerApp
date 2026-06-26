@@ -9,10 +9,15 @@ Item {
     id: root
 
     property bool consoleOpen: false
-    property real openHeight: 200
     property real maxHeight: 800
     property bool maximized: false
     property real hotActionsRight: 0
+
+    property real openRatio: 0.3
+    readonly property real openHeight: {
+        var mh = maxHeight > 0 ? maxHeight : 800
+        return Math.max(mh * 0.2, Math.min(mh * 0.8, mh * openRatio))
+    }
 
     readonly property real _s: AppPalette.scale
     readonly property int _pad: Tokens.spaceLg
@@ -27,7 +32,7 @@ Item {
     }
 
     Settings {
-        property alias consoleOpenHeight: root.openHeight
+        property alias consoleOpenRatio: root.openRatio
     }
 
     component Toggle: MouseArea {
@@ -229,10 +234,10 @@ Item {
         }
 
         onPositionChanged: function(mouse) {
-            if (!pressed) return
+            if (!pressed || root.maxHeight <= 0) return
             var curGlobalY = mapToGlobal(mouse.x, mouse.y).y
             var delta = _startGlobalY - curGlobalY
-            root.openHeight = Math.max(root.maxHeight / 5, Math.min(root.maxHeight * 4 / 5, _startH + delta))
+            root.openRatio = Math.max(0.2, Math.min(0.8, (_startH + delta) / root.maxHeight))
         }
 
         Rectangle {

@@ -1091,7 +1091,7 @@ ApplicationWindow {
             z: ZOrder.consolePanel
             consoleOpen: theme ? theme.consoleVisible : false
             maxHeight: parent.height
-            hotActionsRight: hotActions.x + hotActions.width
+            hotActionsRight: hotActions.visible ? hotActions.x + hotActions.width : 0
         }
 
         NotificationsOverlay { }
