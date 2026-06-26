@@ -22,6 +22,8 @@ Item {
     // the group has been changed locally but the device hasn't acked yet.
     property bool confirmed: true
     default property alias contentData: contentColumn.data
+    property alias headerActions: headerActionsRow.data
+    readonly property int headerActionSize: Math.round(28 * AppPalette.scale)
 
     property bool _stateReady: false
 
@@ -284,9 +286,12 @@ Item {
             }
 
             Row {
+                id: headerTitleRow
                 anchors.fill: parent
                 anchors.leftMargin: Tokens.spaceXl
+                // Reserve room on the right for the header action buttons so the title never runs under them.
                 anchors.rightMargin: Tokens.spaceLg
+                                     + (headerActionsRow.width > 0 ? headerActionsRow.width + Tokens.spaceMd : 0)
                 spacing: Tokens.spaceMd
 
                 DisclosureIndicator {
@@ -300,10 +305,12 @@ Item {
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
+                    width: Math.max(0, parent.width - (root.collapsible ? Math.round(10 * AppPalette.scale) + parent.spacing : 0))
                     text: root.title
                     color: root.titleColor
                     font.pixelSize: Math.max(Math.round(16 * AppPalette.scale), root.titlePixelSize)
                     font.bold: true
+                    elide: Text.ElideRight
                 }
             }
 
@@ -319,6 +326,15 @@ Item {
                         root.expanded = !root.expanded
                     }
                 }
+            }
+
+            Row {
+                id: headerActionsRow
+                z: 1
+                anchors.right: parent.right
+                anchors.rightMargin: Tokens.spaceMd
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Tokens.spaceSm
             }
         }
 

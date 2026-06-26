@@ -1163,6 +1163,16 @@
         <source>Connections, logging and device settings.</source>
         <translation>Połączenia, rejestrowanie i ustawienia urządzeń.</translation>
     </message>
+    <message>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="34"/>
+        <source>Stop KLF logging</source>
+        <translation>Zatrzymaj zapis KLF</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="34"/>
+        <source>Start KLF logging</source>
+        <translation>Rozpocznij zapis KLF</translation>
+    </message>
 </context>
 <context>
     <name>Console</name>
@@ -2916,6 +2926,11 @@
         <location filename="../qml/app/FilesSettingsPage.qml" line="20"/>
         <source>Open log files and reopen recent ones.</source>
         <translation>Otwieranie plików logów i ponowne otwieranie ostatnich.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FilesSettingsPage.qml" line="35"/>
+        <source>Open last file</source>
+        <translation>Otwórz ostatni plik</translation>
     </message>
 </context>
 <context>
