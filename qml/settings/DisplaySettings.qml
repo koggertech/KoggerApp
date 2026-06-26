@@ -3,8 +3,8 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Dialogs
 import QtCore
-import "../controls"
-import "../menus"
+import controls
+import menus
 
 
 GridLayout {

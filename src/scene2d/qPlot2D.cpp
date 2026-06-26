@@ -10,6 +10,7 @@
 #include <limits>
 #include "core.h"
 #include "epoch_event.h"
+#include "themes.h"
 
 extern Core core;
 
@@ -29,6 +30,7 @@ qPlot2D::qPlot2D(QQuickItem* parent)
     connect(this, &QQuickItem::visibleChanged, this, &qPlot2D::updater);
     connect(this, &QQuickItem::parentChanged, this, [this](QQuickItem*) { updater(); });
     connect(&core, &Core::languageChanged, this, &qPlot2D::updater);
+    connect(&theme, &Themes::changed, this, &qPlot2D::updater);
     setFlag(ItemHasContents);
     setAcceptedMouseButtons(Qt::AllButtons);
 //    setFillColor(QColor(255, 255, 255));
@@ -316,7 +318,10 @@ bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
 void qPlot2D::sendSyncEvent(int epoch_index, QEvent::Type eventType)
 {
     //qDebug() << "qPlot2D::sendSyncEvent: epoch_index: " << epoch_index;
-    if (!datasetPtr_ || epoch_index < 0) {
+    if (!datasetPtr_) {
+        return;
+    }
+    if (epoch_index < 0 && eventType != ContactActiveChanged) {
         return;
     }
 
@@ -326,6 +331,17 @@ void qPlot2D::sendSyncEvent(int epoch_index, QEvent::Type eventType)
 
     auto epochEvent = new EpochEvent(eventType, datasetPtr_->fromIndex(epoch_index), epoch_index, DatasetChannel(cursor_.channel1, cursor_.subChannel1));
     QCoreApplication::postEvent(this, epochEvent);
+
+    if (eventType == EpochSelected2d && epoch_index >= 0) {
+        int channel = 1;
+        const float depth = getSyncDepthByMousePos(cursor_.mouseX, cursor_.mouseY, true, &channel);
+        core.broadcastEpochCursor(this, epoch_index, depth, channel);
+    }
+}
+
+void qPlot2D::syncClearAim()
+{
+    core.broadcastCursorClear(this);
 }
 
 void qPlot2D::horScrollEvent(int delta) {

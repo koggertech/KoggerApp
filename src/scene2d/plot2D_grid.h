@@ -24,7 +24,7 @@ public:
     int lastRightTextX() const { return lastRightTextX_; }
 
 protected:
-    void drawTextWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text) const;
+    void drawTextWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text, bool vertical = false, bool rightAlign = false) const;
 
     bool angleVisibility_;
     bool _velocityVisible = true;

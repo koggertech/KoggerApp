@@ -5,7 +5,7 @@
 #include <utility>
 #include "draw_utils.h"
 #include <text_renderer.h>
-
+#include "themes.h"
 
 PlaneGrid::PlaneGrid(QObject *parent)
     : SceneObject(new PlaneGridRenderImplementation, parent)
@@ -307,7 +307,7 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
         vertReferenceLines[1].setX(vertReferenceLines[1].x() - static_cast<float>(m_cellSize));
         vertReferenceLines[3].setX(vertReferenceLines[3].x() - static_cast<float>(m_cellSize));
 
-        ctx->glLineWidth(1.5f);
+        ctx->glLineWidth(1.5f * static_cast<float>(renderScale()));
 
         /*----------------------------grid----------------------------*/
         shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(100.0f, 100.0f, 100.0f, 200.0f)));
@@ -409,7 +409,7 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
 
         const int circleSegments = 128;
 
-        ctx->glLineWidth(1.5f);
+        ctx->glLineWidth(1.5f * static_cast<float>(renderScale()));
 
         shaderProgram->setUniformValue(
             colorLoc,
@@ -441,7 +441,7 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
             ctx->glDrawArrays(GL_LINE_STRIP, 0, circleVertices.size());
         }
 
-        ctx->glLineWidth(2.0f);
+        ctx->glLineWidth(2.0f * static_cast<float>(renderScale()));
 
         int parts = 0;
         switch (circleAngle_) {
@@ -506,7 +506,7 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
 
                 QVector3D pWin = pWorld.project(modelView, projection, vport.toRect());
                 QVector2D pScreen(pWin.x(), vport.height() - pWin.y());
-                pScreen.setY(pScreen.y() + 8.0f);
+                pScreen.setY(pScreen.y() + 8.0f * static_cast<float>(renderScale()));
 
                 QString text = QString::number(static_cast<int>(qRound(r))) + QCoreApplication::translate("PlaneGrid", " m");
                 labelItems.append(TextRenderer::Text2DItem{std::move(text), 0.7f, pScreen, true});
@@ -525,7 +525,7 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
                 QVector3D pWin = pWorld.project(modelView, projection, vport.toRect());
                 QVector2D pScreen(pWin.x(), vport.height() - pWin.y());
 
-                pScreen.setY(pScreen.y() + 4.0f);
+                pScreen.setY(pScreen.y() + 4.0f * static_cast<float>(renderScale()));
 
                 QString text = QString::number(static_cast<int>(qRound(angleDeg))) + QChar(0x00B0);
                 labelItems.append(TextRenderer::Text2DItem{std::move(text), 0.8f, pScreen, true});

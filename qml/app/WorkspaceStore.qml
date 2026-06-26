@@ -100,6 +100,57 @@ property bool quickActionConnectionStatusEnabled: true
 property bool quickActionBottomTrackEnabled: true
 property bool quickActionProfilesEnabled: true
 property bool quickActionExtraInfoEnabled: true
+
+property string quickActionDraggingKey: ""
+
+readonly property var quickActionKeys: ["connections", "favorites", "bottomTrack", "extraInfo", "profiles"]
+
+property var quickActionOrderModel: ListModel {
+    ListElement { key: "connections" }
+    ListElement { key: "favorites" }
+    ListElement { key: "bottomTrack" }
+    ListElement { key: "extraInfo" }
+    ListElement { key: "profiles" }
+}
+
+function normalizeQuickActionOrder(list) {
+    var out = []
+    if (Array.isArray(list)) {
+        for (var i = 0; i < list.length; ++i)
+            if (quickActionKeys.indexOf(list[i]) !== -1 && out.indexOf(list[i]) === -1)
+                out.push(list[i])
+    }
+    for (var j = 0; j < quickActionKeys.length; ++j)   // append any missing keys (new in this version)
+        if (out.indexOf(quickActionKeys[j]) === -1)
+            out.push(quickActionKeys[j])
+    return out
+}
+
+function quickActionOrderCsv() {
+    var a = []
+    for (var i = 0; i < quickActionOrderModel.count; ++i)
+        a.push(quickActionOrderModel.get(i).key)
+    return a.join(",")
+}
+
+function applyQuickActionOrder(list) {
+    var arr = normalizeQuickActionOrder(list)
+    quickActionOrderModel.clear()
+    for (var i = 0; i < arr.length; ++i)
+        quickActionOrderModel.append({ key: arr[i] })
+}
+
+function moveQuickAction(from, to) {
+    var n = quickActionOrderModel.count
+    if (from < 0 || from >= n || to < 0 || to >= n || from === to)
+        return
+    quickActionOrderModel.move(from, to, 1)
+}
+
+function persistQuickActionOrder() {
+    if (typeof layoutStore !== "undefined")
+        layoutStore.quickActionOrderStored = quickActionOrderCsv()
+}
 property string hotkeysRevealKey: ""
 property int hotkeysRevealNonce: 0
 // Live reference to the HotkeysDialog while it's open (set by the dialog
@@ -133,6 +184,8 @@ property var favoriteLayouts: []
 property bool currentLayoutIsFavorite: false
 property string currentLayoutFavoriteSignature: ""
 property var settingsGroupExpandedMap: ({})
+property real settingsScrollY: 0
+onSettingsScrollYChanged: if (typeof layoutStore !== "undefined") layoutStore.settingsScrollYStored = settingsScrollY
 property var fullscreenPopupSourceByHost: ({})
 property var fullscreenPopupStateByHost: ({})
 property bool globalPopupEnabled: false
@@ -241,6 +294,14 @@ property Settings echogramUiPrefs: Settings {
 }
 property alias hideEmptyEchogramControls: echogramUiPrefs.hideEmptyEchogramControls
 
+// Interface pref: show the surface-quality (cm/cell) label in the 3D scene (default off).
+property Settings scene3dUiPrefs: Settings {
+    id: scene3dUiPrefs
+    category: "scene3d_ui"
+    property bool showSurfaceQuality: false
+}
+property alias showSurfaceQuality: scene3dUiPrefs.showSurfaceQuality
+
 property Settings echogramLoupePrefs: Settings {
     id: echogramLoupePrefs
     category: "echogram_loupe"
@@ -259,6 +320,69 @@ onEchogramLoupeZoomChanged: echogramLoupeApplyRequested()
 
 signal echogramLoupePreviewPhase(string phase)
 function echogramLoupePreview(phase) { echogramLoupePreviewPhase(phase) }
+
+property Settings echogramSyncPrefs: Settings {
+    id: echogramSyncPrefs
+    category: "echogram_sync"
+    property bool cursor: true
+    property bool view: false
+}
+property alias echogramSyncCursor: echogramSyncPrefs.cursor
+property alias echogramSyncView: echogramSyncPrefs.view
+
+function applyEchogramSyncToCore() {
+    if (typeof core === "undefined" || !core)
+        return
+    core.setEchogramSyncCursor(echogramSyncPrefs.cursor)
+    core.setEchogramSyncView(echogramSyncPrefs.view)
+}
+onEchogramSyncCursorChanged: applyEchogramSyncToCore()
+onEchogramSyncViewChanged: applyEchogramSyncToCore()
+
+property Settings echogramAimPrefs: Settings {
+    id: echogramAimPrefs
+    category: "echogram_aim"
+    property bool visible: true
+    property bool channel: true
+    property bool epoch: true
+    property bool resolution: true
+    property bool frequency: true
+    property bool pulseCount: true
+    property bool booster: true
+    property bool soundSpeed: true
+}
+property alias aimPanelVisible: echogramAimPrefs.visible
+property alias aimChannel: echogramAimPrefs.channel
+property alias aimEpoch: echogramAimPrefs.epoch
+property alias aimResolution: echogramAimPrefs.resolution
+property alias aimFrequency: echogramAimPrefs.frequency
+property alias aimPulseCount: echogramAimPrefs.pulseCount
+property alias aimBooster: echogramAimPrefs.booster
+property alias aimSoundSpeed: echogramAimPrefs.soundSpeed
+
+function applyAimFieldsToCore() {
+    if (typeof core === "undefined" || !core)
+        return
+    var mask = echogramAimPrefs.visible ? (
+                 (1 << 0)
+               | (echogramAimPrefs.channel    ? (1 << 1) : 0)
+               | (echogramAimPrefs.epoch      ? (1 << 2) : 0)
+               | (echogramAimPrefs.resolution ? (1 << 3) : 0)
+               | (echogramAimPrefs.frequency  ? (1 << 4) : 0)
+               | (echogramAimPrefs.pulseCount ? (1 << 5) : 0)
+               | (echogramAimPrefs.booster    ? (1 << 6) : 0)
+               | (echogramAimPrefs.soundSpeed ? (1 << 7) : 0)
+               ) : 0
+    core.setAimFieldsMask(mask)
+}
+onAimPanelVisibleChanged: applyAimFieldsToCore()
+onAimChannelChanged: applyAimFieldsToCore()
+onAimEpochChanged: applyAimFieldsToCore()
+onAimResolutionChanged: applyAimFieldsToCore()
+onAimFrequencyChanged: applyAimFieldsToCore()
+onAimPulseCountChanged: applyAimFieldsToCore()
+onAimBoosterChanged: applyAimFieldsToCore()
+onAimSoundSpeedChanged: applyAimFieldsToCore()
 
 property Settings loggingPersist: Settings {
     id: loggingPersist
@@ -448,9 +572,11 @@ property Settings layoutStore: Settings {
     property bool quickActionConnectionStatusEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
+    property string quickActionOrderStored: "connections,favorites,bottomTrack,extraInfo,profiles"
     property string selectedConnectionFilePathStored: ""
     property string favoriteLayoutsJson: "[]"
     property string settingsGroupExpandedJson: "{}"
+    property real settingsScrollYStored: 0
     property string fullscreenPopupSourceJson: "{}"
     property string fullscreenPopupStateJson: "{}"
     property bool globalPopupEnabledStored: false
@@ -715,6 +841,7 @@ function _openSettingsSubPage(kind) {
 
 function openQuickActionsSettings() { _openSettingsSubPage("quickActions") }
 function openExtraInfoSettings()    { _openSettingsSubPage("extraInfo") }
+function openAimPanelSettings()     { _openSettingsSubPage("aimPanel") }
 function openUiSavingSettings()     { _openSettingsSubPage("uiSaving") }
 function openTgcSettings()          { _openSettingsSubPage("tgc") }
 function openCsvExportSettings()    { _openSettingsSubPage("csvExport") }
@@ -2626,6 +2753,7 @@ function saveLayoutState() {
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
     layoutStore.quickActionExtraInfoEnabledStored = quickActionExtraInfoEnabled
+    layoutStore.quickActionOrderStored = quickActionOrderCsv()
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
     layoutStore.secondaryWindowOpenStored = secondaryWindowOpen
     layoutStore.secondaryWindowModeStored = secondaryWindowMode
@@ -2660,6 +2788,7 @@ function restoreLayoutState() {
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
     quickActionExtraInfoEnabled = layoutStore.quickActionExtraInfoEnabledStored
+    applyQuickActionOrder((layoutStore.quickActionOrderStored || "").split(","))
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored
     secondaryWindowMode = (storedSecondaryMode === "2D" || storedSecondaryMode === "3D") ? storedSecondaryMode : ""
@@ -3302,8 +3431,8 @@ function subtreeMinSize(node, axis) {
 }
 
 function splitCoordLimitsById(splitId) {
-    var geo = splitGeometryById(layoutTree, 0, 0, effectiveWorkspaceWidth(), effectiveWorkspaceHeight(), splitId)
-    var node = splitNodeById(layoutTree, splitId)
+    var geo = splitGeometryById(effectiveLayoutTree(), 0, 0, effectiveWorkspaceWidth(), effectiveWorkspaceHeight(), splitId)
+    var node = splitNodeById(effectiveLayoutTree(), splitId)
     if (!geo || !node)
         return null
 
@@ -3343,8 +3472,8 @@ function clampRatioForSplit(splitId, ratio) {
 }
 
 function splitCoordById(splitId) {
-    var geo = splitGeometryById(layoutTree, 0, 0, effectiveWorkspaceWidth(), effectiveWorkspaceHeight(), splitId)
-    var ratio = splitRatioById(layoutTree, splitId)
+    var geo = splitGeometryById(effectiveLayoutTree(), 0, 0, effectiveWorkspaceWidth(), effectiveWorkspaceHeight(), splitId)
+    var ratio = splitRatioById(effectiveLayoutTree(), splitId)
     if (!geo || ratio < 0)
         return NaN
 
@@ -3360,7 +3489,7 @@ function snappedSplitCoord(splitId, splitCoord) {
     if (!limits)
         return splitCoord
 
-    var splitNode = splitNodeById(layoutTree, splitId)
+    var splitNode = splitNodeById(effectiveLayoutTree(), splitId)
     if (!splitNode)
         return splitCoord
 
@@ -3478,6 +3607,11 @@ function setSplitRatioById(splitId, ratio, updateHandles) {
         updateHandles = true
 
     var boundedRatio = clampRatioForSplit(splitId, ratio)
+    if (layoutPortrait) {
+        var storedNode = splitNodeById(layoutTree, splitId)
+        if (storedNode && (storedNode.orientation === "vertical" ? !layoutPortraitCW : layoutPortraitCW))
+            boundedRatio = 1 - boundedRatio
+    }
     layoutTree = updateSplitRatio(layoutTree, splitId, boundedRatio)
     rebuildLayoutCaches(updateHandles)
 }
@@ -3729,6 +3863,8 @@ function createPaneInLeaf(leafId, edge) {
     }
 
     var splitNode = makeSplit(orientation, firstNode, secondNode, 0.5)
+    if (layoutPortrait)
+        splitNode = flipSplits(splitNode, !layoutPortraitCW)
     layoutTree = replaceLeaf(layoutTree, leafId, splitNode)
     activeLeafId = newLeaf.leafId
     rebuildLayoutCaches()
@@ -3797,7 +3933,10 @@ signal uiStateReapplied()
 
 function loadPersistedUiState() {
     restoreLoggingFromSettings()
+    applyEchogramSyncToCore()
+    applyAimFieldsToCore()
     loadSettingsGroupsState()
+    settingsScrollY = layoutStore.settingsScrollYStored
     loadFavoriteLayoutsState()
     loadLiveEchogramStates()
     loadFullscreenPopupState()

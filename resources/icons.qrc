@@ -94,6 +94,7 @@
         <file>icons/ui/xbox-x.svg</file>
         <file>icons/ui/square-check_solid.svg</file>
         <file>icons/ui/square-check.svg</file>
+        <file>icons/ui/check.svg</file>
         <file>icons/ui/folder_full.svg</file>
         <file>icons/ui/folder.svg</file>
         <file>icons/ui/external-link.svg</file>
@@ -175,6 +176,7 @@
         <file>icons/ui/3dcube.svg</file>
         <file>icons/ui/code-working.svg</file>
         <file>icons/ui/combo-selection.svg</file>
+        <file>icons/ui/terminal.svg</file>
         <file>icons/ui/fit-in-view.svg</file>
         <file>icons/ui/route_crossed_out.svg</file>
         <file>icons/ui/double_route_crossed_out.svg</file>

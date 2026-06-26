@@ -1,5 +1,6 @@
 #include "plot2D_aim.h"
 #include "plot2D.h"
+#include "themes.h"
 #include <cmath>
 
 
@@ -8,15 +9,12 @@ Plot2DAim::Plot2DAim()
     lineWidth_(1),
     lineColor_(255, 255, 255, 255)
 {
-#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
-    scaleFactor_ = 2;
-#else
-    scaleFactor_ = 1;
-#endif
+    scaleFactor_ = renderScale();
 }
 
 bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
 {
+    scaleFactor_ = renderScale();
     auto& canvas = parent->canvas();
     auto& cursor = parent->cursor();
 
@@ -53,19 +51,18 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
 
             if (chartPtr) {
                 const int x = canvas.width() / 2 + offsetX;
-                float bottomDistance = chartPtr->bottomProcessing.distance;
-                if (!std::isfinite(bottomDistance)) {
-                    bottomDistance = 0.0f;
+                float depthVal = parent->hasSyncDepth() ? parent->getSyncDepth() : chartPtr->bottomProcessing.distance;
+                if (!std::isfinite(depthVal)) {
+                    depthVal = 0.0f;
                 }
 
                 const float distanceRange = cursor.distance.range();
-                int y = (cursor.channel2 != channelNone()) ? canvas.height() / 2 : 0;
+                int y = 0;
                 if (std::isfinite(distanceRange) && std::abs(distanceRange) > 1e-6f) {
-                    const float yFloat = (cursor.channel2 != channelNone())
-                        ? static_cast<float>(canvas.height()) * 0.5f
-                            - static_cast<float>(canvas.height()) * (bottomDistance / distanceRange)
-                        : static_cast<float>(canvas.height()) * (bottomDistance / distanceRange);
-                    y = qRound(yFloat);
+                    const int channel = parent->hasSyncDepth() ? parent->getSyncChannel() : 1;
+                    const float coord = (cursor.channel2 != channelNone() && channel == 1) ? -depthVal : depthVal;
+                    const float depthNorm = (coord - cursor.distance.from) / distanceRange;
+                    y = qRound(static_cast<float>(canvas.height()) * depthNorm);
                 }
 
                 y = qBound(0, y, qMax(0, canvas.height() - 1));
@@ -75,6 +72,7 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
     }
 
     QPainter* p = canvas.painter();
+    const bool vertical = !parent->isHorizontal();
 
     QPen pen;
     pen.setWidth(lineWidth_);
@@ -90,6 +88,11 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
         p->drawLine(cursor.mouseX, 0,             cursor.mouseX, canvas.height());
     }
 
+    // Synced cursor (from 3D or another echogram): crosshair only — no info plaque/loupe.
+    if (beenEpochEvent_) {
+        return true;
+    }
+
     float canvas_height  = static_cast<float>(canvas.height());
     float value_range    = cursor.distance.to - cursor.distance.from;
     float value_scale    = float(cursor.mouseY) / canvas_height;
@@ -97,34 +100,38 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
 
     p->setCompositionMode(QPainter::CompositionMode_SourceOver);
 
-    QString distanceText = QString(QObject::tr("%1 m")).arg(cursor_distance, 0, 'g', 4);
-    QString text = distanceText;
+    const int aimMask = parent->getAimFieldsMask();
+    QString text;
+    auto addLine = [&text](const QString& s) {
+        if (!text.isEmpty())
+            text += "\n";
+        text += s;
+    };
+
+    if (aimMask & (1 << 0)) {
+        addLine(QString(QObject::tr("%1 m")).arg(cursor_distance, 0, 'g', 4));
+    }
 
     auto [channelId, subIndx, name] = parent->getSelectedChannelId();
 
-    if (channelId != channelNone()) {
-        text += "\n" + QObject::tr("Channel: ") + QString("%1").arg(name);
+    if ((aimMask & (1 << 1)) && channelId != channelNone()) {
+        addLine(QObject::tr("Channel: ") + QString("%1").arg(name));
     }
 
     if (cursor.currentEpochIndx != -1) {
-        text += "\n" + QObject::tr("Epoch: ")   + QString::number(cursor.currentEpochIndx);
+        if (aimMask & (1 << 2)) {
+            addLine(QObject::tr("Epoch: ") + QString::number(cursor.currentEpochIndx));
+        }
 
         if (auto* ep = dataset->fromIndex(cursor.currentEpochIndx); ep) {
             if (auto* echogram = ep->chart(channelId, subIndx); echogram) {
-                //qDebug() << "errs[" << cursor.currentEpochIndx << "]:"<< echogram->chartParameters_.errList;
-                //qDebug() << "size[" << cursor.currentEpochIndx << "]:"<< echogram->amplitude.size();
-                //qDebug() << "RES[" << cursor.currentEpochIndx << "]:" << echogram->resolution;
-
                 if (!echogram->recordParameters_.isNull()) {
                     auto& recParams = echogram->recordParameters_;
-                    QString boostStr = recParams.boost ? QObject::tr("ON") : QObject::tr("OFF");
-                    text += "\n" + QObject::tr("Resolution, mm: ")      + QString::number(recParams.resol);
-                    //text += "\n" + QObject::tr("Number of Samples: ") + QString::number(recParams.count);
-                    //text += "\n" + QObject::tr("Offset of samples: ")     + QString::number(recParams.offset);
-                    text += "\n" + QObject::tr("Frequency, kHz: ")      + QString::number(recParams.freq);
-                    text += "\n" + QObject::tr("Pulse count: ")         + QString::number(recParams.pulse);
-                    text += "\n" + QObject::tr("Booster: ")             + boostStr;
-                    text += "\n" + QObject::tr("Speed of sound, m/s: ") + QString::number(recParams.soundSpeed / 1000);
+                    if (aimMask & (1 << 3)) addLine(QObject::tr("Resolution, mm: ")      + QString::number(recParams.resol));
+                    if (aimMask & (1 << 4)) addLine(QObject::tr("Frequency, kHz: ")      + QString::number(recParams.freq));
+                    if (aimMask & (1 << 5)) addLine(QObject::tr("Pulse count: ")         + QString::number(recParams.pulse));
+                    if (aimMask & (1 << 6)) addLine(QObject::tr("Booster: ")             + (recParams.boost ? QObject::tr("ON") : QObject::tr("OFF")));
+                    if (aimMask & (1 << 7)) addLine(QObject::tr("Speed of sound, m/s: ") + QString::number(recParams.soundSpeed / 1000));
                 }
             }
         }
@@ -136,8 +143,8 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
     const int yShift = 40 * scaleFactor_;
     const int textMargin = 5 * scaleFactor_;
     const QRect textBackgroundLocal = textRect.adjusted(-textMargin, -textMargin, textMargin, textMargin);
-    const int textBoxWidth = textBackgroundLocal.width();
-    const int textBoxHeight = textBackgroundLocal.height();
+    const int textBoxWidth = text.isEmpty() ? 0 : textBackgroundLocal.width();
+    const int textBoxHeight = text.isEmpty() ? 0 : textBackgroundLocal.height();
 
     const bool loupeEnabled = parent->getLoupeVisible();
     const int loupeSize = qBound(1, parent->getLoupeSize(), 3);
@@ -204,24 +211,70 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
         }
     }
 
-    const int textBoxY = layoutY + (layoutHeight - textBoxHeight) / 2;
+    int textBoxY = layoutY + (layoutHeight - textBoxHeight) / 2;
+    int previewY = layoutY + (layoutHeight - previewSize) / 2;
+
+    if (vertical) {
+        // Mirror the horizontal HUD: a screen-row (loupe + params table) that follows
+        // the cursor. Lay it out in screen space, then map to the rotated canvas.
+        const int CW = canvas.width();
+        const int screenW = canvas.height();
+        const int screenH = canvas.width();
+        const int sMargin = previewFrameMargin;
+        const int rowW = textBoxWidth + (hasPreview ? previewGap + previewSize : 0);
+        const int rowH = qMax(textBoxHeight, hasPreview ? previewSize : 0);
+
+        const int curSX = qBound(0, cursor.mouseY, screenW - 1);
+        const int curSY = qBound(0, CW - cursor.mouseX, screenH - 1);
+
+        int rowSX = curSX + xShift;
+        if (rowSX + rowW > screenW - sMargin && curSX - xShift - rowW >= sMargin) {
+            rowSX = curSX - xShift - rowW;
+        }
+        rowSX = qBound(sMargin, rowSX, qMax(sMargin, screenW - sMargin - rowW));
+
+        int rowSY = curSY - yShift - rowH;
+        if (rowSY < sMargin) {
+            rowSY = curSY + yShift;
+        }
+        rowSY = qBound(sMargin, rowSY, qMax(sMargin, screenH - sMargin - rowH));
+
+        const int loupeSCx = rowSX + previewSize / 2;
+        const int textSCx = rowSX + (hasPreview ? previewSize + previewGap : 0) + textBoxWidth / 2;
+        const int rowSCy = rowSY + rowH / 2;
+        previewX = (CW - rowSCy) - previewSize / 2;
+        previewY = loupeSCx - previewSize / 2;
+        textBoxX = (CW - rowSCy) - textBoxWidth / 2;
+        textBoxY = textSCx - textBoxHeight / 2;
+    }
+
     const QRect textBackgroundRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
     textRect = textBackgroundRect.adjusted(textMargin, textMargin, -textMargin, -textMargin);
 
-    p->setPen(Qt::NoPen);
-    p->setBrush(QColor(45, 45, 45));
-    p->drawRect(textBackgroundRect);
+    if (!text.isEmpty()) {
+        p->save();
+        if (vertical) {
+            const QPointF c = textBackgroundRect.center();
+            p->translate(c);
+            p->rotate(90);
+            p->translate(-c);
+        }
+        p->setPen(Qt::NoPen);
+        p->setBrush(QColor(45, 45, 45));
+        p->drawRect(textBackgroundRect);
 
-    p->setPen(QColor(255, 255, 255));
-    p->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, text);
+        p->setPen(QColor(255, 255, 255));
+        p->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, text);
+        p->restore();
+    }
 
     if (hasPreview) {
-        const int previewY = layoutY + (layoutHeight - previewSize) / 2;
         QRect previewRect(previewX, previewY, previewSize, previewSize);
         QRect previewInnerRect = previewRect.adjusted(3, 3, -3, -3);
         QPoint sourceCenter(qBound(0, cursor.mouseX, canvas.width() - 1),
                             qBound(0, cursor.mouseY, canvas.height() - 1));
 
+        p->save();
         p->setPen(Qt::NoPen);
         p->setBrush(QColor(30, 30, 30, 220));
         p->drawRect(previewRect);
@@ -238,7 +291,7 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
             + qRound(focusX * static_cast<qreal>(qMax(0, previewInnerRect.width() - 1)));
         const int zoomCenterY = previewInnerRect.top()
             + qRound(focusY * static_cast<qreal>(qMax(0, previewInnerRect.height() - 1)));
-        const int crossHalf = qMax(6 * scaleFactor_, previewInnerRect.width() / 10);
+        const int crossHalf = qMax(qRound(6 * scaleFactor_), previewInnerRect.width() / 10);
         const int leftArm = qMin(crossHalf, qMax(0, zoomCenterX - previewInnerRect.left()));
         const int rightArm = qMin(crossHalf, qMax(0, previewInnerRect.right() - zoomCenterX));
         const int topArm = qMin(crossHalf, qMax(0, zoomCenterY - previewInnerRect.top()));
@@ -246,6 +299,7 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
         p->setPen(QPen(QColor(255, 255, 255, 220), 2));
         p->drawLine(zoomCenterX - leftArm, zoomCenterY, zoomCenterX + rightArm, zoomCenterY);
         p->drawLine(zoomCenterX, zoomCenterY - topArm, zoomCenterX, zoomCenterY + bottomArm);
+        p->restore();
     }
 
     return true;

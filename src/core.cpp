@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cstring>
 #include <QDebug>
+#include <QDir>
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QDateTime>
@@ -544,6 +545,8 @@ void Core::onFileOpened()
     if (scene3dViewPtr_) {
         scene3dViewPtr_->forceUpdateDatasetLlaRef();
     };
+
+    bringWindowToFront();
 }
 
 void Core::onFileReadEnough()
@@ -773,6 +776,7 @@ void Core::onFileOpened()
     if (scene3dViewPtr_) {
         scene3dViewPtr_->setIsOpeningFile(false);
     }
+    bringWindowToFront();
 }
 #endif
 
@@ -958,6 +962,7 @@ void Core::upgradeChanged(int progressStatus)
 {
     if(progressStatus == DevDriver::successUpgrade) {
         //        restoreBaudrate();
+        bringWindowToFront();
     }
 }
 
@@ -974,14 +979,18 @@ void Core::setKlfLogging(bool isLogging)
     if (isLogging) {
         success = logger_.startNewKlfLog();
         if (success) {
-            notifications.info(tr("KLF logging enabled"));
+            notifications.info(tr("KLF logging started:\n%1").arg(QDir::toNativeSeparators(logger_.klfLogFilePath())));
         }
         else {
             notifications.warning(tr("KLF logging not started"));
         }
     } else {
+        const QString path = QDir::toNativeSeparators(logger_.klfLogFilePath());
         logger_.stopKlfLogging();
-        notifications.info(tr("KLF logging disabled"));
+        if (!path.isEmpty())
+            notifications.info(tr("KLF log saved:\n%1").arg(path));
+        else
+            notifications.info(tr("KLF logging disabled"));
     }
     isLoggingKlf_ = isLogging && success;
 
@@ -1068,14 +1077,18 @@ void Core::setCsvLogging(bool isLogging)
     if (isLogging) {
         success = logger_.startNewCsvLog();
         if (success) {
-            notifications.info(tr("CSV logging enabled"));
+            notifications.info(tr("CSV logging started:\n%1").arg(QDir::toNativeSeparators(logger_.csvLogFilePath())));
         }
         else {
             notifications.warning(tr("CSV logging not started"));
         }
     } else {
+        const QString path = QDir::toNativeSeparators(logger_.csvLogFilePath());
         logger_.stopCsvLogging();
-        notifications.info(tr("CSV logging disabled"));
+        if (!path.isEmpty())
+            notifications.info(tr("CSV log saved:\n%1").arg(path));
+        else
+            notifications.info(tr("CSV logging disabled"));
     }
     isLoggingCsv_ = isLogging && success;
     emit loggingCsvChanged();
@@ -1626,6 +1639,84 @@ void Core::setTimelinePosition(double position)
     }
 }
 
+void Core::setEchogramSyncCursor(bool state)
+{
+    echogramSyncCursor_ = state;
+}
+
+void Core::setEchogramSyncView(bool state)
+{
+    echogramSyncView_ = state;
+}
+
+void Core::setAimFieldsMask(int mask)
+{
+    aimFieldsMask_ = mask;
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr) {
+            plot->setAimFieldsMask(mask);
+            plot->update();
+        }
+    }
+}
+
+void Core::broadcastEpochCursor(qPlot2D* source, int epoch, float depth, int channel)
+{
+    if (!echogramSyncCursor_) {
+        return;
+    }
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != source) {
+            plot->setSyncCursor(epoch, depth, channel);
+        }
+    }
+}
+
+void Core::broadcastCursorClear(qPlot2D* source)
+{
+    if (!echogramSyncCursor_) {
+        return;
+    }
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != source) {
+            plot->clearSyncCursor();
+        }
+    }
+}
+
+void Core::broadcastEchogramTime(QObject* source, double timelinePos)
+{
+    if (!echogramSyncCursor_) {
+        return;
+    }
+    auto* src = qobject_cast<qPlot2D*>(source);
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != src && plot->getPlotEnabled()) {
+            plot->setTimelinePosition(static_cast<float>(timelinePos));
+            plot->update();
+        }
+    }
+}
+
+void Core::broadcastEchogramVertical(QObject* source, double from, double to)
+{
+    if (!echogramSyncView_) {
+        return;
+    }
+    auto* src = qobject_cast<qPlot2D*>(source);
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != src && plot->getPlotEnabled()) {
+            plot->setCursorFromTo(static_cast<float>(from), static_cast<float>(to));
+            plot->update();
+        }
+    }
+}
+
 void Core::resetAim()
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
@@ -1737,6 +1828,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     QMetaObject::invokeMethod(dataProcessor_, "setBottomTrackPtr", Qt::QueuedConnection, Q_ARG(BottomTrack*, scene3dViewPtr_->bottomTrack().get()));
     QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "createLocationReader", Qt::QueuedConnection);
+
+    loadCameraViewFromSettings(); // restore last map view (after forceRefresh, which resets viewLlaRef_)
 }
 
 void Core::registerPlot2D(QObject* plotObj)
@@ -1752,6 +1845,7 @@ void Core::registerPlot2D(QObject* plotObj)
     }
 
     bindPlot2D(plot);
+    plot->setAimFieldsMask(aimFieldsMask_);
 
     if (!alreadyRegistered && datasetPtr_ && !datasetPtr_->channelsList().isEmpty()) {
         onChannelsUpdated();
@@ -2197,6 +2291,21 @@ void Core::moveAppToBackground()
 #endif
 }
 
+void Core::bringWindowToFront()
+{
+    emit bringWindowToFrontRequested();
+}
+
+void Core::requestDismissTransientUi()
+{
+    emit activeTransientUiChanged(nullptr);
+}
+
+void Core::setActiveTransientUi(QObject* who)
+{
+    emit activeTransientUiChanged(who);
+}
+
 int Core::loadSavedMapTileProviderId() const
 {
     QSettings settings("KOGGER", "KoggerApp");
@@ -2456,6 +2565,20 @@ void Core::createLinkManagerConnections()
                                                                                                                                      notifications.info(linkName.isEmpty() ? tr("Disconnected") : tr("Disconnected: %1").arg(linkName));
                                                                                                                                  }, linkManagerConnection));
 
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::appendModifyModel, this,
+                                          [this](QUuid uuid, bool connectionStatus, bool receivesData) {
+        // global trigger: when data starts flowing from ANY link
+        if (connectionStatus && receivesData) {
+            const bool wasAnyReceiving = !receivingLinks_.isEmpty();
+            receivingLinks_.insert(uuid);
+            if (!wasAnyReceiving) {
+                bringWindowToFront();
+            }
+        } else {
+            receivingLinks_.remove(uuid);
+        }
+    }, linkManagerConnection));
+
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkDeleted, this, [this](QUuid uuid) {
                                                                                                                                      if (openLinkOrder_.removeOne(uuid)) emit fileTitleChanged();
                                                                                                                                  }, linkManagerConnection));
@@ -2638,6 +2761,89 @@ void Core::loadLLARefFromSettings()
     }
     catch (...) {
         qCritical() << "Core::loadLLARefFromSettings throw unknown exception";
+    }
+}
+
+void Core::saveCameraViewToSettings()
+{
+    if (!scene3dViewPtr_) {
+        return;
+    }
+
+    try {
+        LLARef ref;
+        double lookAtN = NAN, lookAtE = NAN, distance = NAN, yaw = NAN, pitch = NAN;
+        if (!scene3dViewPtr_->getMapViewState(ref, lookAtN, lookAtE, distance, yaw, pitch)) {
+            return;
+        }
+
+        QSettings settings("KOGGER", "KoggerApp");
+        settings.beginGroup("CameraView");
+        settings.setValue("refLatSin", ref.refLatSin);
+        settings.setValue("refLatCos", ref.refLatCos);
+        settings.setValue("refLatRad", ref.refLatRad);
+        settings.setValue("refLonRad", ref.refLonRad);
+        settings.setValue("refLlaLatitude", ref.refLla.latitude);
+        settings.setValue("refLlaLongitude", ref.refLla.longitude);
+        settings.setValue("refLlaAltitude", ref.refLla.altitude);
+        settings.setValue("isInit", ref.isInit);
+        settings.setValue("lookAtN", lookAtN);
+        settings.setValue("lookAtE", lookAtE);
+        settings.setValue("distance", distance);
+        settings.setValue("yaw", yaw);
+        settings.setValue("pitch", pitch);
+        settings.endGroup();
+        settings.sync();
+    }
+    catch (const std::exception& e) {
+        qCritical() << "Core::saveCameraViewToSettings throw exception:" << e.what();
+    }
+    catch (...) {
+        qCritical() << "Core::saveCameraViewToSettings throw unknown exception";
+    }
+}
+
+void Core::loadCameraViewFromSettings()
+{
+    if (!scene3dViewPtr_) {
+        return;
+    }
+
+    try {
+        QSettings settings("KOGGER", "KoggerApp");
+        settings.beginGroup("CameraView");
+        const bool has = settings.contains("isInit");
+        LLARef ref;
+        ref.refLatSin = settings.value("refLatSin", NAN).toDouble();
+        ref.refLatCos = settings.value("refLatCos", NAN).toDouble();
+        ref.refLatRad = settings.value("refLatRad", NAN).toDouble();
+        ref.refLonRad = settings.value("refLonRad", NAN).toDouble();
+        ref.refLla.latitude = settings.value("refLlaLatitude", NAN).toDouble();
+        ref.refLla.longitude = settings.value("refLlaLongitude", NAN).toDouble();
+        ref.refLla.altitude = settings.value("refLlaAltitude", 0.0).toDouble();
+        ref.isInit = settings.value("isInit", false).toBool();
+        const double lookAtN = settings.value("lookAtN", 0.0).toDouble();
+        const double lookAtE = settings.value("lookAtE", 0.0).toDouble();
+        const double distance = settings.value("distance", NAN).toDouble();
+        const double yaw = settings.value("yaw", 0.0).toDouble();
+        const double pitch = settings.value("pitch", 0.0).toDouble();
+        settings.endGroup();
+
+        if (!std::isfinite(ref.refLla.altitude)) {
+            ref.refLla.altitude = 0.0;
+        }
+        if (!has || !ref.isInit ||
+            !std::isfinite(ref.refLla.latitude) || !std::isfinite(ref.refLla.longitude)) {
+            return;
+        }
+
+        scene3dViewPtr_->restoreMapViewState(ref, lookAtN, lookAtE, distance, yaw, pitch);
+    }
+    catch (const std::exception& e) {
+        qCritical() << "Core::loadCameraViewFromSettings throw exception:" << e.what();
+    }
+    catch (...) {
+        qCritical() << "Core::loadCameraViewFromSettings throw unknown exception";
     }
 }
 

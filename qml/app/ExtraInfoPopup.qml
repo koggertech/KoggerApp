@@ -10,6 +10,9 @@ BasePanePopup {
     readonly property real _s: 1.5 * (theme ? theme.resCoeff : 1.0)
     readonly property int _pad: Math.round(8 * _s)
     readonly property int _rowGap: Math.round(3 * _s)
+    readonly property int _controlH: Math.round(36 * _s) - 2
+    readonly property int _sidePad: Math.round(3 * _s)
+    readonly property int _panelRadius: Math.round((_controlH + _sidePad * 2) / 2)
 
     readonly property var _ds: (typeof dataset !== "undefined") ? dataset : null
 
@@ -40,7 +43,7 @@ BasePanePopup {
     snapEdgeCenters: true
 
     readonly property real _cardW: Math.round(infoCol.implicitWidth + _pad * 2)
-    readonly property real _cardH: Math.round(infoCol.implicitHeight + _pad * 2)
+    readonly property real _cardH: Math.round(Math.max(infoCol.implicitHeight + _pad * 2, _controlH + _sidePad * 2))
     readonly property real _wantW: _cardW + contentPadding * 2
     readonly property real _wantH: headerHeight + _cardH + contentPadding
 
@@ -122,23 +125,40 @@ BasePanePopup {
 
     Rectangle {
         anchors.fill: parent
-        radius: Math.round(10 * root._s)
+        radius: root._panelRadius
         color: AppPalette.bg
         border.width: 1
         border.color: AppPalette.border
 
+        KCircleIconButton {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: root._sidePad
+            width: root._controlH
+            height: root._controlH
+            iconSource: "qrc:/icons/ui/x.svg"
+            iconTintColor: AppPalette.text
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            fillPressedColor: AppPalette.bgDeep
+            borderColor: AppPalette.border
+            borderHoverColor: AppPalette.borderHover
+            toolTipText: qsTr("Close")
+            onClicked: if (root.store) root.store.extraInfoVisible = false
+        }
+
         GridLayout {
             id: infoCol
             x: root._pad
-            y: root._pad
+            anchors.verticalCenter: parent.verticalCenter
             columns: 2
             rowSpacing: root._rowGap
             columnSpacing: Math.round(18 * root._s)
 
             Cap { visible: root._depthVis; text: qsTr("Depth") }
-            Val { visible: root._depthVis; text: root._ds ? (root._ds.depth.toFixed(2) + " " + qsTr("m")) : "" }
+            Val { visible: root._depthVis; Layout.rightMargin: root._controlH + root._sidePad; text: root._ds ? (root._ds.depth.toFixed(2) + " " + qsTr("m")) : "" }
             Cap { visible: root._speedVis; text: qsTr("Speed") }
-            Val { visible: root._speedVis; text: root._ds ? (root._ds.speed.toFixed(1) + " " + qsTr("km/h")) : "" }
+            Val { visible: root._speedVis; Layout.rightMargin: root._controlH + root._sidePad; text: root._ds ? (root._ds.speed.toFixed(1) + " " + qsTr("km/h")) : "" }
 
             Hdr { visible: root._coordVis; text: qsTr("Boat position") }
             Cap { visible: root._coordVis; text: qsTr("Lat") }

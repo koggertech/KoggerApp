@@ -67,8 +67,11 @@ void main()
     float inRange = step(0.0, stepIdx) * step(stepIdx, float(levelCount - 1));
     float frac = fract(levelIdx);
     float edgeDist = min(frac, 1.0 - frac);
-    float width = max(fwidth(levelIdx) * lineWidth, 1e-6);
-    float lineMask = (1.0 - smoothstep(0.0, width, edgeDist)) * inRange;
+    float grad = fwidth(levelIdx);
+    float pixDist = edgeDist / max(grad, 1e-6);
+    vec3 nrm = safeNormalize(vertNormal, vec3(0.0, 0.0, 1.0));
+    float flatFade = smoothstep(0.03, 0.10, length(nrm.xy));
+    float lineMask = (1.0 - smoothstep(0.0, lineWidth, pixDist)) * inRange * flatFade;
 
     vec3 outColor = mix(color, lineColor, lineMask);
     outColor = applyDirectionalShade(outColor);

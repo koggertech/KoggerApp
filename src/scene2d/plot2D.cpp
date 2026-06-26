@@ -256,6 +256,22 @@ float Plot2D::getDepthByMousePos(int mouseX, int mouseY, bool isHorizontal) cons
     return valueScale * valueRange + cursor_.distance.from;
 }
 
+float Plot2D::getSyncDepthByMousePos(int mouseX, int mouseY, bool isHorizontal, int* channelOut) const
+{
+    const float coord = getDepthByMousePos(mouseX, mouseY, isHorizontal);
+
+    int channel = 1;
+    float depth = coord;
+    if (cursor_.channel2 != channelNone()) {
+        channel = (coord < 0.0f) ? 1 : 2;
+        depth = std::fabs(coord);
+    }
+    if (channelOut) {
+        *channelOut = channel;
+    }
+    return depth; // absolute physical depth (>=0)
+}
+
 int Plot2D::getEpochIndxByMousePos(int mouseX, int mouseY, bool isHorizontal) const
 {
     const int width = canvas_.width();
@@ -439,6 +455,8 @@ void Plot2D::draw(QPainter *painterPtr)
         }
     }
 
+    bottomProcessing_.drawDepthValue(this, datasetPtr_);
+    rangefinder_.drawDepthValue(this, datasetPtr_);
     temperature_.draw(this, datasetPtr_);
     aim_.draw(this, datasetPtr_);
     contacts_.draw(this, datasetPtr_);
@@ -515,6 +533,24 @@ void Plot2D::setTimelinePositionByEpoch(int epochIndx)
         : static_cast<float>(epochIndx + halfWindow) / static_cast<float>(datasetPtr_->size());
     cursor_.selectEpochIndx = epochIndx;
     setTimelinePositionSec(pos);
+}
+
+void Plot2D::setSyncCursor(int epoch, float depth, int channel)
+{
+    syncDepthValid_ = true;
+    syncDepth_ = depth;       // absolute physical depth (>=0)
+    syncChannel_ = channel;   // 1/2 — used to pick the half on a dual-channel slave
+    setAimEpochEventState(true);
+    setTimelinePositionByEpoch(epoch);
+}
+
+void Plot2D::clearSyncCursor()
+{
+    syncDepthValid_ = false;
+    setAimEpochEventState(false);
+    cursor_.selectEpochIndx = -1;
+    cursor_.setMouse(-1, -1);
+    plotUpdate();
 }
 
 void Plot2D::scrollPosition(int columns)
@@ -603,6 +639,11 @@ double Plot2D::getContactLon()
 double Plot2D::getContactDepth()
 {
     return contacts_.getDepth();
+}
+
+bool Plot2D::getContactIsActive()
+{
+    return contacts_.getIsActive();
 }
 
 float Plot2D::getEchogramLowLevel() const
@@ -907,6 +948,7 @@ void Plot2D::scrollDistance(float ratio)
 }
 
 void Plot2D::setMousePosition(int x, int y, bool isSync) {
+    syncDepthValid_ = false;
     if (!datasetPtr_ || canvas_.width() <= 0 || canvas_.height() <= 0) {
         cursor_.selectEpochIndx = -1;
         cursor_.currentEpochIndx = -1;
@@ -946,6 +988,7 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
         cursor_.selectEpochIndx = -1;
         cursor_.currentEpochIndx = -1;
         //_cursor.lastEpochIndx = -1; // ?
+        syncClearAim();
         plotUpdate();
         return;
     }

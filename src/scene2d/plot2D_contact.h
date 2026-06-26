@@ -20,6 +20,7 @@ public:
     double getLat();
     double getLon();
     double getDepth();
+    bool getIsActive() const { return isActive_; }
     void setIsHorizontal(bool state) { isHorizontal_ = state; };
 
 private:
@@ -37,6 +38,7 @@ private:
     double lon_ = 0.0;
     double depth_ = 0.0;
     bool isHorizontal_ = true;
+    bool isActive_ = false;
 
     void setVisibleContact(bool val);
 };

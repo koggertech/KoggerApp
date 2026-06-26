@@ -28,6 +28,7 @@ public:
     Q_PROPERTY(double  contactLat       READ getContactLat /*WRITE setContactLat*/ NOTIFY contactChanged)
     Q_PROPERTY(double  contactLon       READ getContactLon /*WRITE setContactLon*/ NOTIFY contactChanged)
     Q_PROPERTY(double  contactDepth     READ getContactDepth /*WRITE setContactLon*/ NOTIFY contactChanged)
+    Q_PROPERTY(bool    contactIsActive  READ getContactIsActive NOTIFY contactChanged)
 
     qPlot2D(QQuickItem* parent = nullptr);
     void paint(QPainter *painter) override;
@@ -67,6 +68,7 @@ public:
 
     bool eventFilter(QObject *watched, QEvent *event) final;
     void sendSyncEvent(int epoch_index, QEvent::Type eventType) final;
+    void syncClearAim() final;
 
     Q_INVOKABLE float cursorFrom() const { return Plot2D::cursor_.distance.from; }
     Q_INVOKABLE float cursorTo() const { return Plot2D::cursor_.distance.to; }

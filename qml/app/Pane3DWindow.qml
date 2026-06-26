@@ -1,9 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import WaterFall 1.0
-import "../scene3d"
-import "../scene2d"
-import "../controls"
+import scene3d
+import scene2d
+import controls
 
 Item {
     id: root
@@ -32,6 +32,16 @@ Item {
         clip: true
         z: 1
 
+        MouseArea {
+            anchors.fill: parent
+            enabled: scene3dToolbar.anyLayerMenuOpen
+            acceptedButtons: Qt.LeftButton
+            onPressed: function(mouse) {
+                scene3dToolbar.closeLayerMenus()
+                mouse.accepted = true
+            }
+        }
+
         Scene3DToolbar {
             id: scene3dToolbar
             view: root.scene3dView
@@ -46,6 +56,55 @@ Item {
             view: root.scene3dView
             geo: root.scene3dView ? root.scene3dView.geoJsonController : null
             store: root.workspaceRoot ? root.workspaceRoot.store : null
+        }
+
+        // Surface-quality label: right of the dataset toolbar, left of the scale bar.
+        Item {
+            id: surfaceQualityBadge
+            readonly property var v: root.scene3dView
+            readonly property var store: root.workspaceRoot ? root.workspaceRoot.store : null
+            readonly property int currentZoom: v ? v.dataZoom : -1
+            readonly property bool mosaicOn: store ? store.mosaicVisible : false
+            readonly property bool surfaceOn: v ? v.updateSurface : false
+            // height matrix is shared by surface mesh and mosaic; picture = mosaic
+            readonly property bool heightMatrixOn: surfaceOn || mosaicOn
+            readonly property int mosaicCmPerPix: currentZoom > 0 ? Math.pow(2, currentZoom - 1) : 0
+            readonly property int surfaceCmPerCell: mosaicCmPerPix > 0 ? Math.round(mosaicCmPerPix * 256 / 8) : 0
+
+            visible: v !== null && v.visible && v.cameraPerspective && currentZoom > 0
+                     && store && store.showSurfaceQuality && heightMatrixOn
+                     && root.workspaceRoot.active3DPane === root
+
+            anchors.left: scene3dToolbar.right
+            anchors.leftMargin: Math.round(12 * theme.resCoeff)
+            anchors.verticalCenter: scene3dToolbar.verticalCenter
+
+            width: qualityRect.width
+            height: qualityRect.height
+
+            Rectangle {
+                id: qualityRect
+                color: "#00000080"
+                radius: Math.round(4 * theme.resCoeff)
+                width: qualityText.implicitWidth + Math.round(16 * theme.resCoeff)
+                height: qualityText.implicitHeight + Math.round(8 * theme.resCoeff)
+
+                Text {
+                    id: qualityText
+                    anchors.centerIn: parent
+                    text: {
+                        var parts = []
+                        if (surfaceQualityBadge.heightMatrixOn)
+                            parts.push(qsTr("Surface: ") + surfaceQualityBadge.surfaceCmPerCell + qsTr(" cm/cell"))
+                        if (surfaceQualityBadge.mosaicOn)
+                            parts.push(qsTr("Mosaic: ") + surfaceQualityBadge.mosaicCmPerPix + qsTr(" cm/pix"))
+                        return parts.join("\n")
+                    }
+                    color: "#ffffff"
+                    font: theme.textFont
+                    horizontalAlignment: Text.AlignLeft
+                }
+            }
         }
     }
 
@@ -262,39 +321,8 @@ Item {
             visible = true
         }
 
-        // Ruler: finish
-        CheckButton {
-            checkable: false; iconSource: "qrc:/icons/ui/file-check.svg"
-            backColor: theme.controlBackColor; borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            implicitHeight: theme.controlHeight * 1.3; implicitWidth: theme.controlHeight * 1.3
-            visible: root.scene3dView ? (root.scene3dView.rulerEnabled && root.scene3dView.rulerDrawing) : false
-            CMouseOpacityArea { toolTipText: qsTr("Finish ruler"); popupPosition: "topRight" }
-            onClicked: { if (root.scene3dView) root.scene3dView.rulerFinishDrawing(); contextMenu3D.visible = false }
-        }
-        // Ruler: cancel
-        CheckButton {
-            checkable: false; iconSource: "qrc:/icons/ui/x.svg"
-            backColor: theme.controlBackColor; borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            implicitHeight: theme.controlHeight * 1.3; implicitWidth: theme.controlHeight * 1.3
-            visible: root.scene3dView ? (root.scene3dView.rulerEnabled || root.scene3dView.rulerSelected) : false
-            CMouseOpacityArea { toolTipText: qsTr("Cancel ruler"); popupPosition: "topRight" }
-            onClicked: {
-                if (root.scene3dView && root.scene3dView.rulerDrawing) root.scene3dView.rulerCancelDrawing()
-                contextMenu3D.visible = false
-            }
-        }
-        // Ruler: delete selected
-        CheckButton {
-            checkable: false; iconSource: "qrc:/icons/ui/timeline_event_x.svg"
-            backColor: theme.controlBackColor; borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            implicitHeight: theme.controlHeight * 1.3; implicitWidth: theme.controlHeight * 1.3
-            visible: root.scene3dView ? (!root.scene3dView.rulerDrawing && root.scene3dView.rulerSelected) : false
-            CMouseOpacityArea { toolTipText: qsTr("Delete ruler"); popupPosition: "topRight" }
-            onClicked: { if (root.scene3dView) root.scene3dView.rulerDeleteSelected(); contextMenu3D.visible = false }
-        }
+        // Ruler finish/cancel/delete moved to the right-toolbar pill; this menu is
+        // now vestigial (only the legacy GeoJSON path opens it).
     }
 
     PaneInputBridge {
@@ -311,9 +339,12 @@ Item {
 
         onScene3dRightReleased: function(x, y, wasDrag) {
             var v = root.scene3dView
-            // Ruler / GeoJSON keep their own context menu.
-            if (v && (v.rulerEnabled || v.rulerSelected || v.geoJsonEnabled)) {
+            if (v && v.geoJsonEnabled) {
                 contextMenu3D.position(x, y)
+                return
+            }
+            // Ruler uses the slide-out pill (✓/✗) — RMB/long-tap shows no menu.
+            if (v && (v.rulerEnabled || v.rulerDrawing)) {
                 return
             }
             // Box-selection finished → apply active tool to selected vertices.

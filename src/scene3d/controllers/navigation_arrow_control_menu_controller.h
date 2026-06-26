@@ -14,6 +14,7 @@ public:
 
     Q_INVOKABLE void onVisibilityCheckBoxCheckedChanged(bool checked);
     Q_INVOKABLE void onSizeSpinBoxValueChanged(int size);
+    Q_INVOKABLE void onRepresentationChanged(int shape);
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
 protected:
@@ -28,4 +29,5 @@ private:
     std::function<void()> pendingLambda_;
     bool isVisible_;
     int size_;
+    int shape_;
 };

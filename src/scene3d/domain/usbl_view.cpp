@@ -1,4 +1,5 @@
 #include "usbl_view.h"
+#include "themes.h"
 
 
 UsblView::UsblView(QObject* parent) :
@@ -142,11 +143,11 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
         // point halo + point color (always)
         shaderProgram->setUniformValue(isPointLoc, isUsbl);
         shaderProgram->setUniformValue(colorLoc, subPointColor);
-        shaderProgram->setUniformValue(widthLoc, itm.pointRadius_ * pointScale + 3.0f);
+        shaderProgram->setUniformValue(widthLoc, static_cast<float>((itm.pointRadius_ * pointScale + 3.0f) * renderScale()));
         shaderProgram->setAttributeArray(posLoc, point.constData());
         ctx->glDrawArrays(GL_POINTS, 0, point.size());
         shaderProgram->setUniformValue(colorLoc, lineColor);
-        shaderProgram->setUniformValue(widthLoc, itm.pointRadius_ * pointScale);
+        shaderProgram->setUniformValue(widthLoc, static_cast<float>(itm.pointRadius_ * pointScale * renderScale()));
         shaderProgram->setAttributeArray(posLoc, point.constData());
         ctx->glDrawArrays(GL_POINTS, 0, point.size());
         shaderProgram->setUniformValue(isPointLoc, false);

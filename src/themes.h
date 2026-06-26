@@ -519,4 +519,7 @@ inline qreal Themes::checkResolutionCoeff() const
     return autoCoeff * manualScale_;
 }
 
+extern Themes theme;
+inline qreal renderScale() { return theme.getResolutionCoeff(); }
+
 #endif // THEME_H

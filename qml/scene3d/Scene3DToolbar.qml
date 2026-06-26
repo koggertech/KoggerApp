@@ -4,8 +4,8 @@ import QtQuick.Layouts 1.12
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
-import "../controls"
-import "../menus"
+import controls
+import menus
 
 
 Item  {
@@ -27,9 +27,31 @@ Item  {
     function toggleIsobaths()         { if (store) store.isobathsVisible   = !store.isobathsVisible   }
     function toggleMosaic()           { if (store) store.mosaicVisible     = !store.mosaicVisible     }
 
+    function cancelRuler() {
+        if (view && view.rulerEnabled) {
+            view.clearRuler()
+            Scene3dToolBarController.onRulerModeChanged(false)
+        }
+    }
+
     property var view: null
     property var store: null
     property real buttonSize: Math.round(40 * (theme ? theme.resCoeff : 1.0))
+
+    readonly property bool anyLayerMenuOpen: boatTrackCtl.menuOpen || bottomTrackCtl.menuOpen
+                                             || isobathsCtl.menuOpen || mosaicCtl.menuOpen
+    function closeLayerMenus() {
+        boatTrackCtl.menuOpen = false
+        bottomTrackCtl.menuOpen = false
+        isobathsCtl.menuOpen = false
+        mosaicCtl.menuOpen = false
+    }
+
+    onAnyLayerMenuOpenChanged: if (anyLayerMenuOpen && typeof core !== "undefined" && core) core.setActiveTransientUi(toolbarRoot)
+    Connections {
+        target: core
+        function onActiveTransientUiChanged(who) { if (who !== toolbarRoot) toolbarRoot.closeLayerMenus() }
+    }
 
     // Width cap for a layer theme-swatch strip (opens RIGHT from the control at
     // ctlX within the row): space from THAT control to the pane edge minus the
@@ -78,7 +100,7 @@ Item  {
             fillHoverColor: AppPalette.cardHover
             borderColor: AppPalette.border
             toolTipText: qsTr("Reset camera")
-            onClicked: Scene3dToolBarController.onSetCameraMapViewButtonClicked()
+            onClicked: { toolbarRoot.cancelRuler(); Scene3dToolBarController.onSetCameraMapViewButtonClicked() }
         }
 
         // Hidden, kept solely for QSettings persistence of the legacy GeoJSON
@@ -130,7 +152,7 @@ Item  {
             iconSource: "qrc:/icons/ui/route.svg"
             toolTipText: qsTr("Boat track")
             active: toolbarRoot.store ? toolbarRoot.store.boatTrackVisible : false
-            onToggleRequested: if (toolbarRoot.store) toolbarRoot.store.boatTrackVisible = !toolbarRoot.store.boatTrackVisible
+            onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.boatTrackVisible = !toolbarRoot.store.boatTrackVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.boattrack")
             onMenuOpenChanged: if (menuOpen) { bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false }
         }
@@ -144,7 +166,7 @@ Item  {
             toolTipText: qsTr("Bottom track")
             active: toolbarRoot.store ? toolbarRoot.store.bottomTrackVisible : false
             pulse: core.dataProcessorState === 1
-            onToggleRequested: if (toolbarRoot.store) toolbarRoot.store.bottomTrackVisible = !toolbarRoot.store.bottomTrackVisible
+            onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.bottomTrackVisible = !toolbarRoot.store.bottomTrackVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.bottomtrack")
             onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false }
         }
@@ -165,7 +187,7 @@ Item  {
             themeStopsFn: function(id) { return IsobathsViewControlMenuController.themeStops(id) }
             themeStripMaxWidth: toolbarRoot.themeStripMaxWidthFor(isobathsCtl.x)
             onThemePicked: function(index) { if (toolbarRoot.store) toolbarRoot.store.isobathsThemeIndex = index }
-            onToggleRequested: if (toolbarRoot.store) toolbarRoot.store.isobathsVisible = !toolbarRoot.store.isobathsVisible
+            onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.isobathsVisible = !toolbarRoot.store.isobathsVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.isobaths")
             onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; mosaicCtl.menuOpen = false }
         }
@@ -186,7 +208,7 @@ Item  {
             themeStopsFn: function(id) { return MosaicViewControlMenuController.themeStops(id) }
             themeStripMaxWidth: toolbarRoot.themeStripMaxWidthFor(mosaicCtl.x)
             onThemePicked: function(index) { if (toolbarRoot.store) toolbarRoot.store.mosaicThemeIndex = index }
-            onToggleRequested: if (toolbarRoot.store) toolbarRoot.store.mosaicVisible = !toolbarRoot.store.mosaicVisible
+            onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.mosaicVisible = !toolbarRoot.store.mosaicVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.mosaic")
             onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false }
         }

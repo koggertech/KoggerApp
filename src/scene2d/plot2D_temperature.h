@@ -15,5 +15,5 @@ public:
 
 private:
     QString formatTemperatureText(float temp) const;
-    void drawValueWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text, const QColor& textColor) const;
+    void drawValueWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text, const QColor& textColor, bool vertical = false) const;
 };

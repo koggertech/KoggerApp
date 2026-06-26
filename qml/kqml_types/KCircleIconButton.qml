@@ -9,6 +9,7 @@ Item {
     property string glyph: ""
     property url iconSource: ""
     property int iconPixelSize: Math.round(Math.min(width, height) * 0.56)
+    property real iconRotation: 0   // rotates only the icon (not the button/tooltip)
     property bool showGlyphWithIcon: false
     property int glyphPixelSize: 18
     property color glyphColor: AppPalette.text
@@ -36,6 +37,7 @@ Item {
     property bool highlighted: false
     property int flashToken: 0
     property color highlightBorderColor: AppPalette.accentBorder
+    property bool highlightHold: false
     readonly property bool hovered: hitArea.containsMouse
     readonly property bool pressed: hitArea.pressed
 
@@ -83,13 +85,17 @@ Item {
         scale: root.backgroundScale
         color: !root.enabled
                ? "#0F172A55"
-               : (root.pressed
-                  ? root.fillPressedColor
-                  : (root.hovered ? root.fillHoverColor : root.fillColor))
+               : root.highlightHold
+                 ? AppPalette.accentBgStrong
+                 : (root.pressed
+                    ? root.fillPressedColor
+                    : (root.hovered ? root.fillHoverColor : root.fillColor))
         border.width: root.borderWidth
         border.color: !root.enabled
                       ? "#47556966"
-                      : (root.hovered ? root.borderHoverColor : root.borderColor)
+                      : root.highlightHold
+                        ? root.highlightBorderColor
+                        : (root.hovered ? root.borderHoverColor : root.borderColor)
 
         Behavior on color {
             ColorAnimation {
@@ -135,6 +141,14 @@ Item {
         }
     }
 
+    Rectangle {
+        anchors.fill: backgroundRect
+        radius: root.cornerRadius
+        color: AppPalette.accentBgStrong
+        opacity: highlightOverlay.opacity
+        visible: root.highlighted
+    }
+
     KFocusRing {
         id: focusRing
         target: backgroundRect
@@ -148,6 +162,8 @@ Item {
         visible: root.hasIcon
         width: root.iconPixelSize
         height: root.iconPixelSize
+        rotation: root.iconRotation
+        Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
 
         readonly property bool tintActive: root.iconTintColor.a > 0
 

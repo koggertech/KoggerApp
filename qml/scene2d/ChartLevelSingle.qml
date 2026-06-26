@@ -1,7 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import "../controls"
-import "../menus"
+import controls
+import menus
 
 Slider {
     id: control

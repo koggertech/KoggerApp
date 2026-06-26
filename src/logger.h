@@ -18,6 +18,8 @@ class Logger : public QObject
 public:
     Logger();
     void setDatasetPtr(Dataset* datasetPtr);
+    QString klfLogFilePath() const { return klfLogFile_ ? klfLogFile_->fileName() : QString(); }
+    QString csvLogFilePath() const { return csvLogFile_ ? csvLogFile_->fileName() : QString(); }
 
 signals:
     void loggingKlfStarted(bool started);

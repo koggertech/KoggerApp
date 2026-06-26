@@ -5,6 +5,7 @@
 #include <math.h>
 #include <algorithm>
 #include <QOpenGLFramebufferObject>
+#include <QQuickWindow>
 #include <QVector3D>
 #include <QLineF>
 #include <QDebug>
@@ -16,6 +17,11 @@
 #include "data_processor.h"
 
 #include "core.h"
+#include "themes.h"
+#include <QVariantAnimation>
+#include <QTimer>
+#include "animation_specs.h"
+#include <QEasingCurve>
 extern Core core;
 
 namespace {
@@ -139,6 +145,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
 
+    connect(&theme, &Themes::changed, this, [this]() { QQuickFramebufferObject::update(); });
+
     m_camera->setCameraListener(m_axesThumbnailCamera.get());
 
     boatTrack_->setColor({80,0,180});
@@ -224,6 +232,25 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     applyShadowSettingsToSceneRenderObjects();
     updatePlaneGrid();
+
+    followResumeTimer_ = new QTimer(this);
+    followResumeTimer_->setSingleShot(true);
+    followResumeTimer_->setInterval(5000);
+    QObject::connect(followResumeTimer_, &QTimer::timeout, this, &GraphicsScene3dView::beginFollowReturn);
+
+    followTickTimer_ = new QTimer(this);
+    followTickTimer_->setInterval(250);
+    QObject::connect(followTickTimer_, &QTimer::timeout, this, [this]() { emit followReturnStateChanged(); });
+
+    positionsLiveTimer_ = new QTimer(this);
+    positionsLiveTimer_->setSingleShot(true);
+    positionsLiveTimer_->setInterval(3000);
+    QObject::connect(positionsLiveTimer_, &QTimer::timeout, this, [this]() {
+        positionsLive_ = false;
+        if (followSuspended_) {
+            cancelFollowReturn();
+        }
+    });
 
 #ifdef SCENE_TESTING
     initAutoDistTimer();
@@ -557,6 +584,17 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
 
     wasMoved_ = false;
     clearComboSelectionRect();
+    cancelCameraPoseAnim();
+
+    compassPressed_ = false;
+    if (compass_ && mouseButton.testFlag(Qt::MouseButton::LeftButton) && !compassRect_.isEmpty()) {
+        constexpr qreal kCompassHitFactor = 0.75;
+        const QPointF c = compassRect_.center();
+        const qreal radius = compassRect_.width() * 0.5 * kCompassHitFactor;
+        const qreal dx = x - c.x();
+        const qreal dy = y - c.y();
+        compassPressed_ = (radius > 0.0 && (dx * dx + dy * dy) <= radius * radius);
+    }
 
     if (geoJsonEnabled_) {
         if (mouseButton == Qt::MouseButton::RightButton) {
@@ -630,14 +668,6 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
             QQuickFramebufferObject::update();
             return;
         }
-        if (rulerHasGeometry()) {
-            const bool hitRuler = pickRuler(x, y);
-            setRulerSelected(hitRuler);
-            if (hitRuler) {
-                QQuickFramebufferObject::update();
-                return;
-            }
-        }
     }
 
     if (mouseButton == Qt::MouseButton::RightButton) {
@@ -645,6 +675,9 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     }
 
     m_camera->m_lookAtSave = m_camera->m_lookAt;
+
+    if (mouseButton.testFlag(Qt::MouseButton::LeftButton))
+        contacts_->mouseMoveEvent(mouseButton, x, y);
 
     m_startMousePos = { x, y };
     QQuickFramebufferObject::update();
@@ -659,7 +692,8 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         needToResetStartPos_ = false;
     }
 
-    contacts_->mouseMoveEvent(mouseButton, x, y);
+    if (mouseButton == Qt::MouseButton::NoButton)
+        contacts_->mouseMoveEvent(mouseButton, x, y);
 
     // movement threshold for sync
     if (!wasMoved_) {
@@ -668,6 +702,8 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
             wasMoved_ = true;
             if (wasMovedMouseButton_ != mouseButton)
                 wasMovedMouseButton_ = mouseButton;
+            if (mouseButton != Qt::MouseButton::NoButton)
+                contacts_->mouseMoveEvent(Qt::MouseButton::NoButton, -1.0, -1.0);
         }
     }
 
@@ -750,6 +786,7 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     QQuickFramebufferObject::update();
 
     if (cameraWasMoved) {
+        notifyManualCameraInteraction();
         onCameraMoved();
     }
 }
@@ -757,6 +794,15 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
 void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
     Q_UNUSED(keyboardKey);
+
+    if (compassPressed_) {
+        compassPressed_ = false;
+        if (!wasMoved_ && mouseButton.testFlag(Qt::LeftButton)) {
+            resetHeadingToNorth();
+            QQuickFramebufferObject::update();
+            return;
+        }
+    }
 
     clearComboSelectionRect();
 
@@ -823,54 +869,43 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
         return;
     }
 
-    const bool hasRulerGeometry = rulerHasGeometry();
     if (rulerEnabled_) {
         if (!wasMoved_ && mouseButton.testFlag(Qt::LeftButton)) {
-            const bool hitCurrentRuler = hasRulerGeometry && pickRuler(x, y);
+            auto fromOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromEnd = QVector3D(x, height() - y, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromDir = (fromEnd - fromOrig).normalized();
+            auto p = calculateIntersectionPoint(fromOrig, fromDir, 0);
 
-            if (!rulerEnabled_) {
-                setRulerSelected(hitCurrentRuler);
-                QQuickFramebufferObject::update();
-            } else if (!rulerDrawing_ && hitCurrentRuler) {
-                setRulerSelected(true);
-                QQuickFramebufferObject::update();
+            if (!rulerDrawing_) {
+                rulerTool_->clear();
+                resetRulerInteraction();
+                setRulerDrawing(true);
+                rulerTool_->addPoint(p);
+                rulerTool_->clearPreview();
+                rulerLastLeftClickPos_ = QPointF(x, y);
+                rulerHasLastLeftClick_ = true;
+                rulerLastLeftClickTimer_.restart();
             } else {
-                auto fromOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-                auto fromEnd = QVector3D(x, height() - y, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-                auto fromDir = (fromEnd - fromOrig).normalized();
-                auto p = calculateIntersectionPoint(fromOrig, fromDir, 0);
+                const QPointF clickPos(x, y);
+                const bool isDoubleClick = rulerHasLastLeftClick_ &&
+                                           rulerLastLeftClickTimer_.isValid() &&
+                                           rulerLastLeftClickTimer_.elapsed() < 350 &&
+                                           (QLineF(clickPos, rulerLastLeftClickPos_).length() < 6.0);
 
-                if (!rulerDrawing_) {
-                    rulerTool_->clear();
-                    resetRulerInteraction();
-                    setRulerSelected(false);
-                    setRulerDrawing(true);
+                rulerLastLeftClickPos_ = clickPos;
+                rulerHasLastLeftClick_ = true;
+                rulerLastLeftClickTimer_.restart();
+
+                if (isDoubleClick && rulerTool_->pointsCount() >= 2) {
+                    rulerFinishDrawing();
+                    rulerHasLastLeftClick_ = false;
+                } else {
                     rulerTool_->addPoint(p);
                     rulerTool_->clearPreview();
-                    rulerLastLeftClickPos_ = QPointF(x, y);
-                    rulerHasLastLeftClick_ = true;
-                    rulerLastLeftClickTimer_.restart();
-                } else {
-                    const QPointF clickPos(x, y);
-                    const bool isDoubleClick = rulerHasLastLeftClick_ &&
-                                               rulerLastLeftClickTimer_.isValid() &&
-                                               rulerLastLeftClickTimer_.elapsed() < 350 &&
-                                               (QLineF(clickPos, rulerLastLeftClickPos_).length() < 6.0);
-
-                    rulerLastLeftClickPos_ = clickPos;
-                    rulerHasLastLeftClick_ = true;
-                    rulerLastLeftClickTimer_.restart();
-
-                    if (isDoubleClick && rulerTool_->pointsCount() >= 2) {
-                        rulerFinishDrawing();
-                        rulerHasLastLeftClick_ = false;
-                    } else {
-                        rulerTool_->addPoint(p);
-                        rulerTool_->clearPreview();
-                    }
                 }
             }
 
+            emit rulerStateChanged();
             QQuickFramebufferObject::update();
         }
 
@@ -878,20 +913,6 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
         wasMoved_ = false;
         wasMovedMouseButton_ = Qt::MouseButton::NoButton;
         return;
-    }
-
-    if (hasRulerGeometry && !wasMoved_ && mouseButton.testFlag(Qt::LeftButton)) {
-        const bool hitCurrentRuler = pickRuler(x, y);
-        if (hitCurrentRuler || rulerSelected_) {
-            setRulerSelected(hitCurrentRuler);
-            QQuickFramebufferObject::update();
-        }
-        if (hitCurrentRuler) {
-            switchedToBottomTrackVertexComboSelectionMode_ = false;
-            wasMoved_ = false;
-            wasMovedMouseButton_ = Qt::MouseButton::NoButton;
-            return;
-        }
     }
 
     if (switchedToBottomTrackVertexComboSelectionMode_) {
@@ -946,6 +967,8 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
     bool cameraWasMoved{ false };
     Q_UNUSED(mouseButton)
 
+    cancelCameraPoseAnim();
+
     if (needToResetStartPos_) {
         m_camera->m_lookAtSave = m_camera->m_lookAt;
         m_startMousePos = QPointF(x, y);
@@ -953,6 +976,7 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
     }
 
     if (keyboardKey == Qt::Key_Control) {
+        cancelVScaleAnim();
         float tempVerticalScale = m_verticalScale;
         angleDelta.y() > 0.0f ? tempVerticalScale += 0.3f : tempVerticalScale -= 0.3f;
         setVerticalScale(tempVerticalScale);
@@ -982,6 +1006,8 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
 
 void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta)
 {
+    cancelCameraPoseAnim();
+
     const qreal dx = currCenter.x() - prevCenter.x();
     const qreal dy = currCenter.y() - prevCenter.y();
     const qreal centerShiftLen = QLineF(prevCenter, currCenter).length();
@@ -1147,6 +1173,7 @@ void GraphicsScene3dView::panStepTrigger(qreal dx, qreal dy)
     m_camera->m_lookAt.setY(m_camera->m_lookAt.y() + static_cast<float>(dy * 0.2f) * step);
     m_camera->updateViewMatrix();
 
+    notifyManualCameraInteraction();
     updatePlaneGrid();
     QQuickFramebufferObject::update();
     onCameraMoved();
@@ -1157,6 +1184,7 @@ void GraphicsScene3dView::zStepTrigger(qreal delta)
         return;
     }
 
+    cancelVScaleAnim();
     setVerticalScale(m_verticalScale + static_cast<float>(delta * 0.3f));
 }
 void GraphicsScene3dView::resetCameraAngleTrigger()
@@ -1188,6 +1216,7 @@ void GraphicsScene3dView::setRulerEnabled(bool enabled)
     }
 
     rulerEnabled_ = enabled;
+    rulerTool_->setSelected(enabled); // orange while the tool/pill is active, normal once closed
     if (rulerEnabled_) {
         // Drawing mode can be disabled, but finished ruler geometry should remain visible.
         rulerTool_->setEnabled(true);
@@ -1200,6 +1229,7 @@ void GraphicsScene3dView::setRulerEnabled(bool enabled)
     } else {
         setRulerDrawing(false);
         setRulerSelected(false);
+        notifyManualCameraInteraction();
     }
     emit rulerEnabledChanged();
     QQuickFramebufferObject::update();
@@ -1211,6 +1241,7 @@ void GraphicsScene3dView::clearRuler()
     setRulerDrawing(false);
     setRulerSelected(false);
     resetRulerInteraction();
+    emit rulerStateChanged();
     QQuickFramebufferObject::update();
 }
 
@@ -1362,6 +1393,20 @@ void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent action
 void GraphicsScene3dView::setTrackLastData(bool state)
 {
     trackLastData_ = state;
+
+    if (!state) {
+        cancelFollowReturn();
+    }
+}
+
+void GraphicsScene3dView::flyToLastPosition()
+{
+    if (!trackLastData_) {
+        return;
+    }
+
+    followSuspended_ = true;
+    beginFollowReturn();
 }
 
 void GraphicsScene3dView::setTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)
@@ -1407,6 +1452,217 @@ void GraphicsScene3dView::setCompassSize(int val)
     compassSize_ = val;
 
     QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setScaleBarState(bool state)
+{
+    scaleBar_ = state;
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::resetHeadingToNorth()
+{
+    if (!m_camera) {
+        return;
+    }
+
+    const QVector2D startMain = m_camera->getRotAngle();
+    const float startMainX = startMain.x();
+    const float startMainY = startMain.y();
+    const float twoPi      = 2.0f * static_cast<float>(M_PI);
+    const float targetMainX = twoPi * std::round(startMainX / twoPi); // nearest north, shortest-path heading
+
+    float startThumbX = startMainX;
+    float startThumbY = startMainY;
+    if (m_axesThumbnailCamera) {
+        const QVector2D s = m_axesThumbnailCamera->getRotAngle();
+        startThumbX = s.x();
+        startThumbY = s.y();
+    }
+    const float targetThumbX = twoPi * std::round(startThumbX / twoPi);
+
+    if (std::fabs(targetMainX - startMainX) < 1e-4f && std::fabs(startMainY) < 1e-4f) {
+        animator_.cancel(ChHeading);
+        return; // already north + perpendicular to ground
+    }
+
+    animator_.start(ChHeading, anim::Heading,
+                    [this, startMainX, targetMainX, startMainY, startThumbX, targetThumbX, startThumbY](qreal value) -> void {
+        const float t = static_cast<float>(value);
+        if (m_camera) {
+            m_camera->setRotAngle(QVector2D(startMainX + (targetMainX - startMainX) * t,
+                                            startMainY * (1.0f - t)));
+        }
+        if (m_axesThumbnailCamera) {
+            m_axesThumbnailCamera->setRotAngle(QVector2D(startThumbX + (targetThumbX - startThumbX) * t,
+                                                         startThumbY * (1.0f - t)));
+        }
+        QQuickFramebufferObject::update();
+    },
+                    [this]() -> void {
+        if (m_camera) {
+            m_camera->setRotAngle(QVector2D(0.0f, 0.0f));
+        }
+        if (m_axesThumbnailCamera) {
+            m_axesThumbnailCamera->setRotAngle(QVector2D(0.0f, 0.0f));
+        }
+        QQuickFramebufferObject::update();
+        onCameraMoved();
+    });
+}
+
+bool GraphicsScene3dView::followReturnPending() const
+{
+    return followSuspended_ && positionsLive_ && followResumeTimer_ && followResumeTimer_->isActive();
+}
+
+int GraphicsScene3dView::followReturnSeconds() const
+{
+    if (!followReturnPending()) {
+        return 0;
+    }
+    return static_cast<int>(std::ceil(followResumeTimer_->remainingTime() / 1000.0));
+}
+
+void GraphicsScene3dView::returnToBoatNow()
+{
+    if (!followSuspended_) {
+        return;
+    }
+    followResumeTimer_->stop();
+    beginFollowReturn();
+}
+
+void GraphicsScene3dView::notifyManualCameraInteraction()
+{
+    if (!trackLastData_ || !positionsLive_) {
+        return;
+    }
+
+    const bool wasPending = followReturnPending();
+
+    animator_.cancel(ChFollow);
+
+    followSuspended_ = true;
+    followResumeTimer_->start();
+    if (!followTickTimer_->isActive()) {
+        followTickTimer_->start();
+    }
+
+    if (!wasPending) {
+        emit followReturnStateChanged();
+    }
+}
+
+void GraphicsScene3dView::beginFollowReturn()
+{
+    if (!followSuspended_ || !trackLastData_) {
+        return;
+    }
+
+    followTickTimer_->stop();
+
+    animator_.cancel(ChFollow);
+
+    if (!m_camera || !datasetPtr_ || !datasetPtr_->isValidBoatCoordinate()) { // no valid boat fix — nothing to fly to
+        followSuspended_ = false;
+        emit followReturnStateChanged();
+        return;
+    }
+
+    // Roamed far -> view frame diverged from the dataset frame; realign so the
+    // boat coordinates are reachable (otherwise the camera never reaches data).
+    if (m_camera->viewLlaRef_ != m_camera->datasetLlaRef_) {
+        forceUpdateDatasetLlaRef();
+    }
+
+    followReturnStartLookAt_ = m_camera->m_lookAt;
+    const float startDist = static_cast<float>(m_camera->m_distToFocusPoint);
+    const QVector2D startRot = m_camera->getRotAngle();
+
+    // Keep the user's zoom, but descend when zoomed out past the dataset, and
+    // stay inside the perspective range so per-position follow can run (handles
+    // returning from the ortho map view too).
+    const float maxSize = std::max(m_bounds.width(), std::max(m_bounds.height(), m_bounds.length()));
+    const float fitDist = (maxSize / 2.0f) / std::tan(m_camera->fov() / 2.0f) * 2.0f;
+    float targetDist = startDist;
+    if (fitDist > 0.0f && targetDist > fitDist) {
+        targetDist = fitDist;
+    }
+    targetDist = std::min(targetDist, perspectiveEdge_ * 0.9f);
+
+    const float targetRotX = startRot.x();
+    const float targetRotY = navigatorViewLocation_ ? qDegreesToRadians(30.0f) : startRot.y();
+
+    emit followReturnStateChanged();
+
+    animator_.start(ChFollow, anim::Follow,
+                    [this, startRot, targetRotX, targetRotY, startDist, targetDist](qreal value) -> void {
+        if (!m_camera || !datasetPtr_ || !datasetPtr_->isValidBoatCoordinate()) {
+            return;
+        }
+        const LLA boatLla(datasetPtr_->getBoatLatitude(), datasetPtr_->getBoatLongitude(), 0.0);
+        const NED ned(&boatLla, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+        if (!ned.isCoordinatesValid()) {
+            return;
+        }
+        QVector3D target(ned.n, ned.e, 1.0f);
+
+        if (navigatorViewLocation_) {
+            const float yawRadForDir = -m_camera->m_rotAngle.x();
+            QVector3D forwardXY(std::cos(yawRadForDir), std::sin(yawRadForDir), 0.0f);
+            if (!forwardXY.isNull()) {
+                forwardXY.normalize();
+            }
+            const float dist = std::max(1.0f, static_cast<float>(m_camera->distForMapView())) * 0.7f;
+            float offset = std::max(10.0f, dist * 0.30f);
+            offset = std::min(offset, dist * 0.85f);
+            target += forwardXY * offset;
+        }
+
+        const float t = static_cast<float>(value);
+        const float dist = startDist + (targetDist - startDist) * t;
+        const float rotX = startRot.x() + (targetRotX - startRot.x()) * t;
+        const float rotY = startRot.y() + (targetRotY - startRot.y()) * t;
+        const QVector3D blended = followReturnStartLookAt_ * (1.0f - t) + target * t;
+
+        m_camera->setDistance(dist);
+        m_camera->setRotAngle(QVector2D(rotX, rotY));
+        m_camera->focusOnPosition(blended);
+        if (m_axesThumbnailCamera) {
+            m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
+        }
+        updateProjection();
+        updatePlaneGrid();
+        QQuickFramebufferObject::update();
+        onCameraMoved();
+    },
+                    [this]() -> void {
+        followSuspended_ = false;
+        if (m_camera) {
+            m_camera->yawSmoother_.reset();
+            m_camera->pitchSmoother_.reset();
+        }
+        emit followReturnStateChanged();
+    });
+}
+
+void GraphicsScene3dView::cancelFollowReturn()
+{
+    if (followResumeTimer_) {
+        followResumeTimer_->stop();
+    }
+    if (followTickTimer_) {
+        followTickTimer_->stop();
+    }
+    animator_.cancel(ChFollow);
+
+    const bool wasSuspended = followSuspended_;
+    followSuspended_ = false;
+    if (wasSuspended) {
+        emit followReturnStateChanged();
+    }
 }
 
 void GraphicsScene3dView::applyShadowSettingsToSceneRenderObjects()
@@ -1842,6 +2098,46 @@ void GraphicsScene3dView::forceUpdateDatasetLlaRef()
     QQuickFramebufferObject::update();
 }
 
+bool GraphicsScene3dView::getMapViewState(LLARef& viewRef, double& lookAtN, double& lookAtE, double& distance, double& yawRad, double& pitchRad) const
+{
+    if (!m_camera || !m_camera->viewLlaRef_.isInit) {
+        return false;
+    }
+
+    viewRef = m_camera->viewLlaRef_;
+    lookAtN = static_cast<double>(m_camera->m_lookAt.x());
+    lookAtE = static_cast<double>(m_camera->m_lookAt.y());
+    distance = static_cast<double>(m_camera->m_distToFocusPoint);
+    const QVector2D rot = m_camera->getRotAngle();
+    yawRad = rot.x();
+    pitchRad = rot.y();
+    return true;
+}
+
+void GraphicsScene3dView::restoreMapViewState(const LLARef& viewRef, double lookAtN, double lookAtE, double distance, double yawRad, double pitchRad)
+{
+    if (!m_camera || !viewRef.isInit || !std::isfinite(lookAtN) || !std::isfinite(lookAtE)) {
+        return;
+    }
+
+    m_camera->viewLlaRef_ = viewRef; // view frame restored verbatim; datasetLlaRef_ left intact
+    m_camera->focusOnPosition(QVector3D(static_cast<float>(lookAtN), static_cast<float>(lookAtE), 0.0f));
+    if (std::isfinite(distance) && distance > 0.0) {
+        m_camera->setDistance(distance);
+    }
+    if (std::isfinite(yawRad) && std::isfinite(pitchRad)) {
+        m_camera->setRotAngle(QVector2D(static_cast<float>(yawRad), static_cast<float>(pitchRad)));
+        if (m_axesThumbnailCamera) {
+            m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
+        }
+    }
+
+    updateProjection();
+    updatePlaneGrid();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
+
 bool GraphicsScene3dView::geoJsonEnabled() const
 {
     return geoJsonEnabled_;
@@ -1994,6 +2290,96 @@ void GraphicsScene3dView::setMapView() {
     onCameraMoved();
 }
 
+void GraphicsScene3dView::setMapViewAnimated()
+{
+    cancelCameraPoseAnim();
+
+    if (!m_camera || !datasetPtr_) {
+        return;
+    }
+
+    notifyManualCameraInteraction();
+
+    auto datasetLlaRef = datasetPtr_->getLlaRef();
+    if (datasetLlaRef.isInit) {
+        m_camera->viewLlaRef_ = datasetLlaRef;
+    }
+    else {
+        m_camera->viewLlaRef_ = m_camera->yerevanLla;
+    }
+
+    const float maxSize = std::max(m_bounds.width(), std::max(m_bounds.height(), m_bounds.length()));
+    const float fitDist = (maxSize / 2.0f) / std::tan(m_camera->fov() / 2.0f) * 2.0f;
+
+    const QVector2D startRot = m_camera->getRotAngle();
+    const float startDist = static_cast<float>(m_camera->m_distToFocusPoint);
+    const QVector3D startLookAt = m_camera->m_lookAt;
+
+    const float twoPi = 2.0f * static_cast<float>(M_PI);
+    const float targetRotX = twoPi * std::round(startRot.x() / twoPi);
+    const float targetDist = (fitDist > 0.0f) ? fitDist : startDist;
+    const QVector3D targetLookAt = m_bounds.center();
+
+    animator_.start(ChPose, anim::MapReset,
+                    [this, startRot, targetRotX, startDist, targetDist, startLookAt, targetLookAt](qreal value) -> void {
+        if (!m_camera) {
+            return;
+        }
+        const float t = static_cast<float>(value);
+        const float rotX = startRot.x() + (targetRotX - startRot.x()) * t;
+        const float rotY = startRot.y() * (1.0f - t);
+        const float dist = startDist + (targetDist - startDist) * t;
+        const QVector3D lookAt = startLookAt * (1.0f - t) + targetLookAt * t;
+
+        m_camera->setDistance(dist);
+        m_camera->setRotAngle(QVector2D(rotX, rotY));
+        m_camera->focusOnPosition(lookAt);
+        if (m_axesThumbnailCamera) {
+            m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
+        }
+        updateProjection();
+        updatePlaneGrid();
+        QQuickFramebufferObject::update();
+        onCameraMoved();
+    },
+                    [this]() -> void {
+        setMapView();
+    });
+}
+
+void GraphicsScene3dView::cancelCameraPoseAnim()
+{
+    animator_.cancel(ChPose);
+}
+
+void GraphicsScene3dView::zoomButtonAnimated(qreal steps)
+{
+    if (!m_camera || !std::isfinite(steps) || std::fabs(steps) < 1e-6) {
+        return;
+    }
+
+    cancelCameraPoseAnim();
+
+    const QPointF anchor(width() * 0.5, height() * 0.5);
+    auto prev = std::make_shared<double>(0.0);
+
+    animator_.start(ChPose, anim::Zoom,
+                    [this, anchor, steps, prev](qreal value) -> void {
+        if (!m_camera) {
+            return;
+        }
+        const double t = static_cast<double>(value);
+        const double d = (t - *prev) * steps;
+        *prev = t;
+        if (std::fabs(d) > 1e-9) {
+            zoomAroundScreenAnchor(d, anchor);
+            updatePlaneGrid();
+            QQuickFramebufferObject::update();
+            onCameraMoved();
+        }
+    });
+}
+
 void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigatorView)
 {
     if (!m_camera->isPerspective_ || !datasetPtr_) {
@@ -2009,43 +2395,8 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
         const float yawDeg = datasetPtr_->tryRetLastValidYaw();
         if (std::isfinite(yawDeg)) {
             const float targetYaw = -yawDeg * static_cast<float>(M_PI) / 180.0f;
-
-            if (!m_camera->navYawInited_) {
-                m_camera->navYawFilteredRad_ = targetYaw;
-                m_camera->navYawInited_ = true;
-                m_camera->navYawTmr_.restart();
-            }
-
-            double dt = m_camera->navYawTmr_.restart() / 1000.0;
-            if (dt <= 0.0 || dt > 0.5) {
-                dt = 0.016; // 60hz
-            }
-
-            float diff = shortestDiff(m_camera->navYawFilteredRad_, targetYaw); // разница по кратчайшей дуге + deadband
-            if (std::fabs(diff) < m_camera->navYawDeadbandRad_) {
-                diff = 0.f;
-            }
-
-
-            if (std::fabs(diff) > m_camera->navYawSnapRad_) {
-                m_camera->navYawFilteredRad_ = targetYaw;
-            }
-            else {
-                const float alpha = 1.0f - std::exp(-float(dt) / m_camera->navYawTauSec_); // time-based EMA
-                float step = diff * alpha;
-
-                const float maxStep = m_camera->navYawMaxRateRadPerSec_ * float(dt); // ограничение скорости поворота
-                if (step >  maxStep) {
-                    step =  maxStep;
-                }
-                if (step < -maxStep) {
-                    step = -maxStep;
-                }
-
-                m_camera->navYawFilteredRad_ = wrapPi(m_camera->navYawFilteredRad_ + step);
-            }
-
-            m_camera->m_rotAngle.setX(m_camera->navYawFilteredRad_);
+            const float smoothedYaw = m_camera->yawSmoother_.stepAngle(m_camera->m_rotAngle.x(), targetYaw, smooth::FollowYaw);
+            m_camera->m_rotAngle.setX(smoothedYaw);
         }
     }
 
@@ -2076,15 +2427,8 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
 
         // тангаж
         const float targetPitchRad = isNorth_ ? 0.0f : qDegreesToRadians(30.0f);
-        const float alpha = 0.3f;
-        const float curr = m_camera->m_rotAngle.y();
-        float next = curr + (targetPitchRad - curr) * alpha;
-        if (next < 0.0f) {
-            next = 0.0f;
-        }
-        if (next > float(M_PI_2)) {
-            next = float(M_PI_2);
-        }
+        float next = m_camera->pitchSmoother_.step(m_camera->m_rotAngle.y(), targetPitchRad, smooth::FollowPitch);
+        next = std::clamp(next, 0.0f, float(M_PI_2));
         m_camera->m_rotAngle.setY(next);
     }
 
@@ -2126,6 +2470,31 @@ void GraphicsScene3dView::setVerticalScale(float scale)
 
     QQuickFramebufferObject::update();
     emit verticalScaleChanged();
+}
+
+void GraphicsScene3dView::resetVerticalScale()
+{
+    cancelVScaleAnim();
+
+    const float start = m_verticalScale;
+    if (std::fabs(start - 1.0f) < 1e-4f) {
+        setVerticalScale(1.0f);
+        return;
+    }
+
+    animator_.start(ChVScale, anim::VScale,
+                    [this, start](qreal value) -> void {
+        const float t = static_cast<float>(value);
+        setVerticalScale(start + (1.0f - start) * t);
+    },
+                    [this]() -> void {
+        setVerticalScale(1.0f);
+    });
+}
+
+void GraphicsScene3dView::cancelVScaleAnim()
+{
+    animator_.cancel(ChVScale);
 }
 
 void GraphicsScene3dView::shiftCameraZAxis(float shift)
@@ -2192,6 +2561,13 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                          m_bottomTrack->isEpochsChanged(lEpoch, rEpoch, manual, redrawAll);
 
                      }, Qt::DirectConnection);
+
+    QObject::connect(datasetPtr_, &Dataset::sonarPositionsUpdated,
+                     this,      [this](int from, int to) -> void {
+                         if (m_bottomTrack) {
+                             m_bottomTrack->isEpochsChanged(from, to, false, false);
+                         }
+                     }, Qt::QueuedConnection);
 
     QObject::connect(datasetPtr_, &Dataset::updatedLlaRef,
                      this,      [this]() -> void {
@@ -2384,14 +2760,15 @@ void GraphicsScene3dView::setRulerDrawing(bool drawing)
     emit rulerStateChanged();
 }
 
-void GraphicsScene3dView::setRulerSelected(bool selected)
+void GraphicsScene3dView::setRulerSelected(bool /*selected*/)
 {
-    const bool changed = (rulerSelected_ != selected);
-    rulerSelected_ = selected;
-    rulerTool_->setSelected(selected);
-    if (changed) {
-        emit rulerStateChanged();
+    // Ruler is not selectable (no orange highlight, no context menu).
+    if (!rulerSelected_) {
+        return;
     }
+    rulerSelected_ = false;
+    rulerTool_->setSelected(false);
+    emit rulerStateChanged();
 }
 
 void GraphicsScene3dView::resetRulerInteraction()
@@ -3138,6 +3515,9 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
         return;
     }
 
+    positionsLive_ = true;
+    positionsLiveTimer_->start();
+
     boatTrack_->onPositionAdded(indx); // сюда лодка
 
     // Yaw
@@ -3155,7 +3535,7 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
         m_planeGrid->setCirclePosition(boatPosVec3D);
     }
 
-    if (trackLastData_) {
+    if (trackLastData_ && !followSuspended_) {
         setLastEpochFocusView(useAngleLocation_, navigatorViewLocation_); // сюда лодка
     }
 }
@@ -3255,7 +3635,30 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     //read from renderer
     view->m_model = m_renderer->m_model;
     view->m_projection = m_renderer->m_projection;
-    view->contacts_->contactBounds_ = std::move(m_renderer->contactsRenderImpl_.contactBounds_);
+    {
+        auto bounds = std::move(m_renderer->contactsRenderImpl_.contactBounds_);
+        const qreal k = view->window() ? view->window()->effectiveDevicePixelRatio() : 1.0;
+        if (k > 0.0 && !qFuzzyCompare(k, 1.0)) {
+            QHash<int, QRectF> logical;
+            logical.reserve(bounds.size());
+            for (auto it = bounds.begin(); it != bounds.end(); ++it) {
+                const QRectF& r = it.value();
+                logical.insert(it.key(), QRectF(r.x() / k, r.y() / k, r.width() / k, r.height() / k));
+            }
+            view->contacts_->contactBounds_ = std::move(logical);
+        } else {
+            view->contacts_->contactBounds_ = std::move(bounds);
+        }
+    }
+    {
+        const QRectF r = m_renderer->compassRectPx_;
+        const qreal k = view->window() ? view->window()->effectiveDevicePixelRatio() : 1.0;
+        if (r.isEmpty() || !(k > 0.0)) {
+            view->compassRect_ = r;
+        } else {
+            view->compassRect_ = QRectF(r.x() / k, r.y() / k, r.width() / k, r.height() / k);
+        }
+    }
 
     // write to renderer
     m_renderer->compassRenderImpl_       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
@@ -3283,6 +3686,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->compass_                    = view->compass_;
     m_renderer->compassPos_                 = view->compassPos_;
     m_renderer->compassSize_                = view->compassSize_;
+    m_renderer->scaleBar_                   = view->scaleBar_;
     m_renderer->planeGridType_              = view->planeGridType_;
 
     m_renderer->compassRenderImpl_.setShadowSettings(view->shadowsEnabled_, view->shadowVector_, view->shadowAmbient_, view->shadowIntensity_, view->shadowHighlight_);
@@ -3525,10 +3929,6 @@ GraphicsScene3dView::Camera::Camera(GraphicsScene3dView* viewPtr) :
     viewPtr_(viewPtr)
 {
     setMapView();
-
-    if (viewPtr) { // for main cam
-        navYawTmr_.start();
-    }
 }
 
 GraphicsScene3dView::Camera::Camera(qreal pitch,

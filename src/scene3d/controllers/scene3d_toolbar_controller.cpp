@@ -18,6 +18,7 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       compass_(true),
       compassPos_(1),
       compassSize_(1),
+      scaleBar_(true),
       shadowsEnabled_(true),
       shadowVectorX_(0.40f),
       shadowVectorY_(0.40f),
@@ -65,7 +66,7 @@ void Scene3dToolBarController::onSetCameraIsometricViewButtonClicked()
 void Scene3dToolBarController::onSetCameraMapViewButtonClicked()
 {
     if (graphicsScene3dViewPtr_) {
-        graphicsScene3dViewPtr_->setMapView();
+        graphicsScene3dViewPtr_->setMapViewAnimated();
     }
 }
 
@@ -209,6 +210,18 @@ void Scene3dToolBarController::onCompassSizeChanged(int size)
 
     if (graphicsScene3dViewPtr_) {
         graphicsScene3dViewPtr_->setCompassSize(compassSize_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onScaleBarButtonChanged(bool state)
+{
+    scaleBar_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setScaleBarState(scaleBar_);
     }
     else {
         tryInitPendingLambda();
@@ -521,6 +534,7 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setCompassState(compass_);
                 graphicsScene3dViewPtr_->setCompassPos(compassPos_);
                 graphicsScene3dViewPtr_->setCompassSize(compassSize_);
+                graphicsScene3dViewPtr_->setScaleBarState(scaleBar_);
                 graphicsScene3dViewPtr_->setShadowsEnabled(shadowsEnabled_);
                 graphicsScene3dViewPtr_->setShadowVectorX(shadowVectorX_);
                 graphicsScene3dViewPtr_->setShadowVectorY(shadowVectorY_);

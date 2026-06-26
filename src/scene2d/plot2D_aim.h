@@ -13,6 +13,6 @@ protected:
     bool beenEpochEvent_;
     int lineWidth_;
     QColor lineColor_;
-    int scaleFactor_;
+    qreal scaleFactor_;
 };
 
