@@ -352,8 +352,8 @@ Item {
                     : 0
             visible: height > 0.5
             radius: Tokens.radiusLg
-            color: AppPalette.bgDeep
-            border.color: AppPalette.border
+            color: !root.confirmed ? AppPalette.dangerBg : AppPalette.bgDeep
+            border.color: !root.confirmed ? AppPalette.dangerBorder : AppPalette.border
             border.width: 1
 
             Behavior on height {
