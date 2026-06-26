@@ -184,6 +184,8 @@ property var favoriteLayouts: []
 property bool currentLayoutIsFavorite: false
 property string currentLayoutFavoriteSignature: ""
 property var settingsGroupExpandedMap: ({})
+property real settingsScrollY: 0
+onSettingsScrollYChanged: if (typeof layoutStore !== "undefined") layoutStore.settingsScrollYStored = settingsScrollY
 property var fullscreenPopupSourceByHost: ({})
 property var fullscreenPopupStateByHost: ({})
 property bool globalPopupEnabled: false
@@ -574,6 +576,7 @@ property Settings layoutStore: Settings {
     property string selectedConnectionFilePathStored: ""
     property string favoriteLayoutsJson: "[]"
     property string settingsGroupExpandedJson: "{}"
+    property real settingsScrollYStored: 0
     property string fullscreenPopupSourceJson: "{}"
     property string fullscreenPopupStateJson: "{}"
     property bool globalPopupEnabledStored: false
@@ -3933,6 +3936,7 @@ function loadPersistedUiState() {
     applyEchogramSyncToCore()
     applyAimFieldsToCore()
     loadSettingsGroupsState()
+    settingsScrollY = layoutStore.settingsScrollYStored
     loadFavoriteLayoutsState()
     loadLiveEchogramStates()
     loadFullscreenPopupState()
