@@ -4,6 +4,7 @@
 #include "stdint.h"
 #include "stddef.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <cmath>
 #include "mav_link_conf.h"
 
@@ -1012,12 +1013,6 @@ public:
         _readPosition++;
     }
 
-    char readChar() {
-        char c = _frame[_readPosition++];
-        _readPosition++;
-        return c;
-    }
-
     double readDouble() {
         uint32_t i = 0;
         char data[20] = {};
@@ -1029,7 +1024,11 @@ public:
 
         double res = NAN;
         if(i > 0) {
-            sscanf(data, "%lf", &res);
+            char* end = nullptr;
+            const double parsed = strtod(data, &end);
+            if (end != data) {
+                res = parsed;
+            }
         }
 
         _readPosition++;
