@@ -483,6 +483,13 @@ onBottomTrackVisibleChanged: {
     Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(bottomTrackVisible)
     BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(bottomTrackVisible)
     if (bottomTrackVisible) surfaceLayersRefreshRequested()
+    applyBottomTrackRealtimeToCore()
+}
+
+function applyBottomTrackRealtimeToCore() {
+    if (typeof core === "undefined" || !core)
+        return
+    core.setBottomTrackRealtimeFromSettings(bottomTrackVisible)
 }
 onIsobathsVisibleChanged: {
     if (isobathsVisible) surfaceLayersRefreshRequested()
@@ -3991,6 +3998,7 @@ Component.onCompleted: {
     updateCurrentLayoutFavoriteState()
     applyTgcToCore()
     applyLayerThemesToControllers()
+    applyBottomTrackRealtimeToCore()
 }
 
 }

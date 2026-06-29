@@ -1083,25 +1083,10 @@ Column {
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueZ: btOffZ.value }
 
         // Action buttons
-        Row {
-            width: parent.width; spacing: Tokens.spaceMd
-            readonly property real bw: (width - Tokens.spaceMd) / 2
-
-            KButton {
-                width: parent.bw
-                text: qsTr("Processing")
-                onClicked: btGroup.doDistProcessing()
-            }
-
-            KButton {
-                id: btRealtimeBtn
-                width: parent.bw
-                text: qsTr("Realtime")
-                checkable: true
-                checked: false
-                onToggled: core.setBottomTrackRealtimeFromSettings(checked)
-                Component.onCompleted: core.setBottomTrackRealtimeFromSettings(false)
-            }
+        KButton {
+            width: parent.width
+            text: qsTr("Processing")
+            onClicked: btGroup.doDistProcessing()
         }
     }
 
