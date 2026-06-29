@@ -150,6 +150,14 @@ void gcj02ToWgs84(double gcjLat, double gcjLon, double& wgsLat, double& wgsLon)
 // GCJ-02 -> BD-09
 void gcj02ToBd09(double gcjLat, double gcjLon, double& bdLat, double& bdLon)
 {
+    // BD-09 is Baidu's extra encryption layered on GCJ-02 — China-specific, like
+    // GCJ itself. Outside China (where GCJ == WGS) Baidu data carries no BD-09
+    // offset, so applying it would shift tiles ~765 m. Gate it like wgs84ToGcj02.
+    if (outOfChina(gcjLat, gcjLon)) {
+        bdLat = gcjLat;
+        bdLon = gcjLon;
+        return;
+    }
     double x = gcjLon;
     double y = gcjLat;
     double z = std::sqrt(x * x + y * y) + 0.00002 * std::sin(y * X_PI);
@@ -161,6 +169,12 @@ void gcj02ToBd09(double gcjLat, double gcjLon, double& bdLat, double& bdLon)
 // BD-09 -> GCJ-02
 void bd09ToGcj02(double bdLat, double bdLon, double& gcjLat, double& gcjLon)
 {
+    // Symmetric with gcj02ToBd09: no BD-09 offset outside China.
+    if (outOfChina(bdLat, bdLon)) {
+        gcjLat = bdLat;
+        gcjLon = bdLon;
+        return;
+    }
     double x = bdLon - 0.0065;
     double y = bdLat - 0.006;
     double z = std::sqrt(x * x + y * y) - 0.00002 * std::sin(y * X_PI);
@@ -342,6 +356,7 @@ map::TileIndex TileBaiduProviderBase::llaToTileIndex(LLA lla, int32_t z)
         qWarning() << "Baidu: invalid zoom level:" << z;
         return map::TileIndex(-1, -1, z, providerId_);
     }
+
     const double clampedLat = std::max(-74.0, std::min(74.0, lla.latitude));
     double mcX, mcY;
     wgs84ToMercator(clampedLat, lla.longitude, mcX, mcY);
