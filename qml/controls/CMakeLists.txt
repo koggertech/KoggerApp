@@ -10,12 +10,9 @@ qt_add_qml_module(kogger_controls
         CPopup.qml
         CProgress.qml
         CRButton.qml
-        CRadioDel.qml
         CSlider.qml
         CText.qml
         CTextField.qml
         CheckButton.qml
-        ComboBackStyle.qml
         SpinBoxCustom.qml
-        StyleSet.qml
-        TabBackStyle.qml)
+        StyleSet.qml)

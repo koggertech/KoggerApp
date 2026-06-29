@@ -867,32 +867,10 @@ ApplicationWindow {
             store: workspaceStore
         }
 
-        SettingsSidebarBase {
-            id: legacySidebar
-            z: ZOrder.legacySidebar
-
-            anchors.fill: parent
-            open: legacyPanelOpen
-            dimEnabled: true
-            panelShadowEnabled: !workspaceStore.editableMode
-            title: "Legacy menus"
-            side: workspaceStore.settingsSide
-            gearMode: "app"
-            panelSizePx: 560
-            store: workspaceStore
-            onCloseRequested: legacyPanelOpen = false
-
-            Loader {
-                width: parent.width
-                active: false
-                sourceComponent: legacyMenuComponent
-            }
-        }
-
         Binding {
             target: workspaceStore
             property: "pointerOverSidebar"
-            value: settingsSidebar.pointerInside || modeSettingsPanel.pointerInside || legacySidebar.pointerInside
+            value: settingsSidebar.pointerInside || modeSettingsPanel.pointerInside
         }
 
         Loader {
@@ -974,35 +952,6 @@ ApplicationWindow {
                 profilesPopup.syncFromStore()
                 autopilotPopup.syncFromStore()
                 extraInfoPopup.syncFromStore()
-            }
-        }
-
-        Component {
-            id: legacyMenuComponent
-
-            Item {
-                anchors.fill: parent
-
-                Loader {
-                    id: legacyMenuLoader
-                    anchors.fill: parent
-                    source: "qrc:/qml/menus/MainMenuBar.qml"
-
-                    onLoaded: {
-                        if (item)
-                            item.targetPlot = workspaceView.primaryPlotItem
-                    }
-                }
-
-                Connections {
-                    target: workspaceView
-                    ignoreUnknownSignals: true
-
-                    function onPrimaryPlotItemChanged() {
-                        if (legacyMenuLoader.item)
-                            legacyMenuLoader.item.targetPlot = workspaceView.primaryPlotItem
-                    }
-                }
             }
         }
 
