@@ -34,7 +34,7 @@ public:
     float x() const;
     float y() const;
     float z() const;
-    QVector3D position() const;
+    QVector3D position() const override;
 
 public Q_SLOTS:
     void setData(const QVector <QVector3D>& data, int primitiveType = GL_POINTS) override;

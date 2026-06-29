@@ -3,13 +3,14 @@
 #include "scene_object.h"
 
 #include <QColor>
+#include <cstdint>
 
 
 class NavigationArrow : public SceneObject
 {
     Q_OBJECT
 public:
-    enum class Shape {
+    enum class Shape : std::uint8_t {
         Arrow = 0,
         Boat  = 1
     };

@@ -485,7 +485,7 @@ private:
     QRectF compassRect_;
     bool compassPressed_ = false;
 
-    enum AnimCh { ChHeading, ChFollow, ChPose, ChVScale };
+    enum AnimCh : std::uint8_t { ChHeading, ChFollow, ChPose, ChVScale };
     Animator animator_;
     bool followSuspended_ = false;
     bool positionsLive_ = false;
