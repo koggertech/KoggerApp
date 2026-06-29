@@ -4,13 +4,13 @@
 #include <cmath>
 #include <ctime>
 #include <cstring>
+#include <utility>
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QDateTime>
 #include "bottom_track.h"
-#include "hotkeys_manager.h"
 #include "tile_provider_ids.h"
 #include "notifications.h"
 
@@ -1750,7 +1750,7 @@ void Core::UILoad(QObject* object, const QUrl& url)
     }
     // Re-bind plots registered before scene3dViewPtr_ existed (findChildren misses
     // reparented slot delegates). See docs scene2d.md "2D↔3D синхронизация эпох".
-    for (auto* plot : plot2dList_) {
+    for (auto* plot : std::as_const(plot2dList_)) {
         bindPlot2D(plot);
     }
     scene3dViewPtr_->setDataset(datasetPtr_);
