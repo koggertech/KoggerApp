@@ -34,6 +34,7 @@
 #include "app_utils.h"
 
 
+// NOLINTBEGIN(bugprone-throwing-static-initialization): application-lifetime singletons; a throw here is a fatal startup failure with nothing to catch
 Core core;
 AppUtils appUtils;
 Themes theme;
@@ -42,6 +43,7 @@ EchogramStateSerializer echogramStateSerializer;
 Notifications notifications;
 QTranslator translator;
 QVector<QString> availableLanguages{"en", "ru", "pl"};
+// NOLINTEND(bugprone-throwing-static-initialization)
 
 
 void loadLanguage(QGuiApplication &app)
@@ -116,7 +118,7 @@ void applyWindowsSystemTitleBarTheme(QWindow* window)
         return;
     }
 
-    const HWND handle = reinterpret_cast<HWND>(window->winId());
+    const HWND handle = reinterpret_cast<HWND>(window->winId()); // NOLINT(performance-no-int-to-ptr): WId is integer, HWND is a pointer; Win32 interop requires the cast
     if (!handle) {
         return;
     }
@@ -155,7 +157,7 @@ void applyWindowsFullscreenBorderWorkaround(QWindow* window)
     }
 
     auto applyBorder = [window]() {
-        HWND handle = reinterpret_cast<HWND>(window->winId());
+        HWND handle = reinterpret_cast<HWND>(window->winId()); // NOLINT(performance-no-int-to-ptr): WId is integer, HWND is a pointer; Win32 interop requires the cast
         if (!handle) {
             return;
         }
@@ -186,7 +188,7 @@ void bringWindowToFront(QWindow* window)
     window->raise();
     window->requestActivate();
 
-    const HWND handle = reinterpret_cast<HWND>(window->winId());
+    const HWND handle = reinterpret_cast<HWND>(window->winId()); // NOLINT(performance-no-int-to-ptr): WId is integer, HWND is a pointer; Win32 interop requires the cast
     if (!handle) {
         return;
     }
@@ -202,7 +204,7 @@ void bringWindowToFront(QWindow* window)
 
     DWORD savedLockTimeout = 0;
     SystemParametersInfoW(SPI_GETFOREGROUNDLOCKTIMEOUT, 0, &savedLockTimeout, 0);
-    SystemParametersInfoW(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, reinterpret_cast<PVOID>(static_cast<UINT_PTR>(0)), SPIF_SENDCHANGE);
+    SystemParametersInfoW(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, reinterpret_cast<PVOID>(static_cast<UINT_PTR>(0)), SPIF_SENDCHANGE); // NOLINT(performance-no-int-to-ptr): Win32 passes an integer value through the pvParam pointer
 
     if (attach) {
         AttachThreadInput(foregroundThread, thisThread, TRUE);
@@ -215,7 +217,7 @@ void bringWindowToFront(QWindow* window)
     }
 
     SystemParametersInfoW(SPI_SETFOREGROUNDLOCKTIMEOUT, 0,
-                          reinterpret_cast<PVOID>(static_cast<UINT_PTR>(savedLockTimeout)), SPIF_SENDCHANGE);
+                          reinterpret_cast<PVOID>(static_cast<UINT_PTR>(savedLockTimeout)), SPIF_SENDCHANGE); // NOLINT(performance-no-int-to-ptr): Win32 passes an integer value through the pvParam pointer
 
     // flash taskbar button
     FLASHWINFO flash = {};
@@ -383,7 +385,7 @@ int main(int argc, char *argv[])
     {
         const QStringList appArgs = app.arguments();
         if (appArgs.size() > 1) {
-            const QString startupFilePath = appArgs.at(1);
+            const QString& startupFilePath = appArgs.at(1);
             auto* startupConn = new QMetaObject::Connection;
             *startupConn = QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                                             &core, [startupFilePath, startupConn, url](QObject* obj, const QUrl& objUrl) {
