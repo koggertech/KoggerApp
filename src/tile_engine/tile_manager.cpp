@@ -140,7 +140,8 @@ void TileManager::toggleProvider()
     case kOsmProviderId:          nextProvider = kBaiduSatProviderId;       break;
     case kBaiduSatProviderId:     nextProvider = kBaiduSchemaProviderId;    break;
     case kBaiduSchemaProviderId:  nextProvider = kBaiduHybridProviderId;    break;
-    case kBaiduHybridProviderId:  nextProvider = kGoogleProviderId;         break;
+    case kBaiduHybridProviderId:
+    default:                      nextProvider = kGoogleProviderId;         break;
     }
     setProvider(nextProvider);
 }
