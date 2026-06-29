@@ -9,6 +9,7 @@
 #include <QRegularExpression>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <utility>
 #include "notifications.h"
 
 extern Notifications notifications;
@@ -503,7 +504,7 @@ bool LinkManager::reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
         filteredRecords.reserve(records.size());
         int skippedCount = 0;
 
-        for (const PinnedLinkRecord& record : records) {
+        for (const PinnedLinkRecord& record : std::as_const(records)) {
             const bool isSerialByType = record.linkType == LinkType::kLinkSerial;
             const bool isSerialByPortName = looksLikeSerialPortName(record.portName);
             if (isSerialByType || isSerialByPortName) {
@@ -521,7 +522,7 @@ bool LinkManager::reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
     }
 
     // Stop all currently active links before replacing pinned set.
-    for (Link* link : list_) {
+    for (Link* link : std::as_const(list_)) {
         if (!link) {
             continue;
         }

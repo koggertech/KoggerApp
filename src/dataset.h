@@ -377,8 +377,11 @@ public slots:
     void setRefPosition(Epoch* ref_epoch);
     void setRefPosition(Position position);
     void setRefPositionByFirstValid();
+
+public:
     Epoch* getFirstEpochByValidPosition();
 
+public slots:
     QStringList channelsNameList();
 
     void onDistCompleted(int epIndx, const ChannelId& channelId, float dist);

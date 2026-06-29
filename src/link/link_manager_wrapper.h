@@ -56,6 +56,8 @@ public slots:
                                bool autoSpeedSelection, bool isUpgradingState);
     void deleteModelData(QUuid uuid);
     QUuid getFirstOpened() { return getWorker()->getFirstOpend(); }
+
+public:
     Link* getLinkPtr(QUuid uuid) { return getWorker()->getLinkPtr(uuid); }
 
 signals:
