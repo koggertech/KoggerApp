@@ -20,6 +20,7 @@ Item {
     property var saveKgtFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
     Settings {
+        category: "scene3d/geometry"
         property alias openKgtFolder: root.openKgtFolder
         property alias saveKgtFolder: root.saveKgtFolder
     }

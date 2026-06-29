@@ -306,6 +306,7 @@ Column {
         property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
         Settings {
+            category: "main/devices"
             property alias devImportFolder: devSettingsGroup.importFolder
             property alias devExportFolder: devSettingsGroup.exportFolder
         }
@@ -377,7 +378,7 @@ Column {
         property var upgradeFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property string selectedUpgradePathSource: ""
 
-        Settings { property alias devUpgradeFolder: devUpgradeGroup.upgradeFolder }
+        Settings { category: "main/devices"; property alias devUpgradeFolder: devUpgradeGroup.upgradeFolder }
 
         function _src(value) {
             if (!value) return ""

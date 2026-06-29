@@ -140,6 +140,7 @@ Item  {
             }
 
             Settings {
+                category: "scene3d/view"
                 property alias geoJsonToolButton: geoJsonToolButton.checked
             }
         }

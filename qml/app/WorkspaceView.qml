@@ -511,6 +511,7 @@ Item {
 
             Settings {
                 id: rendererPersist
+                category: "scene3d/view"
                 property real verticalScale: 1.0
             }
         }

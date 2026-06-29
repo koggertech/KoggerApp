@@ -19,6 +19,7 @@ Column {
     spacing: Tokens.spaceSm
 
     Settings {
+        category: "main/files"
         property alias logFolder:         filesViewer.lastLogFolder
         property alias recentOpenedFiles: filesViewer.recentOpenedFiles
         property alias pathText:          filesViewer.selectedLogPathSource

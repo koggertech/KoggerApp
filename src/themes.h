@@ -55,7 +55,7 @@ public:
     // and QGuiApplication is up — loads persisted manualScale and recomputes resCoeff.
     Q_INVOKABLE void initSettings() {
         QSettings settings;
-        manualScale_ = qBound(0.5, settings.value("ui/manualScale", 1.0).toReal(), 2.5);
+        manualScale_ = qBound(0.5, settings.value("main/ui/manualScale", 1.0).toReal(), 2.5);
         updateResCoeff();
         emit changed();
     }
@@ -113,7 +113,7 @@ public:
         if (qFuzzyCompare(s + 1.0, manualScale_ + 1.0)) return;
         manualScale_ = s;
         QSettings settings;
-        settings.setValue("ui/manualScale", s);
+        settings.setValue("main/ui/manualScale", s);
         updateResCoeff();
         emit changed();
     }

@@ -32,6 +32,7 @@ Item {
     }
 
     Settings {
+        category: "main/console"
         property alias consoleOpenRatio: root.openRatio
     }
 
@@ -151,7 +152,7 @@ Item {
                     id: consScrollEnable
                     checked: true
                     label: qsTr("Auto scroll")
-                    Settings { property alias consScrollEnable: consScrollEnable.checked }
+                    Settings { category: "main/console"; property alias consScrollEnable: consScrollEnable.checked }
                 }
 
                 Toggle {
@@ -160,7 +161,7 @@ Item {
                     label: qsTr("Binary")
                     onToggled: deviceManagerWrapper.setProtoBinConsoled(protoBinConsoled.checked)
                     Component.onCompleted: deviceManagerWrapper.setProtoBinConsoled(protoBinConsoled.checked)
-                    Settings { property alias protoBinConsoled: protoBinConsoled.checked }
+                    Settings { category: "main/console"; property alias protoBinConsoled: protoBinConsoled.checked }
                 }
 
                 Item { Layout.fillWidth: true }

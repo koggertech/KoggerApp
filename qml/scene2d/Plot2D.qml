@@ -588,7 +588,7 @@ WaterFall {
             Component.onCompleted: plot.plotEchogramSetLevels(startValue, stopValue)
 
             Settings {
-                category: "Plot2D_" + plot.indx
+                category: "scene2d/plot2d/" + plot.indx
 
                 property alias echogramLevelsStart: echogramLevelsSlider.startValue
                 property alias echogramLevelsStop: echogramLevelsSlider.stopValue
@@ -918,7 +918,7 @@ WaterFall {
                             }
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
 
                                 property alias waterfallThemeId: echoTheme.currentIndex
                             }
@@ -935,7 +935,7 @@ WaterFall {
                             Component.onCompleted: plotEchogramCompensation(currentIndex) // TODO
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
 
                                 property alias echogramTypesList: echogramTypesList.currentIndex
                             }
@@ -976,7 +976,7 @@ WaterFall {
                             Component.onCompleted: plot.updateBottomTrackPresentation()
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
 
                                 property alias bottomTrackThemeList: bottomTrackThemeList.currentIndex
                             }
@@ -1016,7 +1016,7 @@ WaterFall {
                             Component.onCompleted: plot.updateRangefinderPresentation()
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
 
                                 property alias rangefinderThemeList: rangefinderThemeList.currentIndex
                             }
@@ -1161,7 +1161,7 @@ WaterFall {
                             Component.onCompleted: plotDVLLegendPosition(currentIndex)
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
                                 property alias dvlLegendPosition: dvlLegendPosition.currentIndex
                             }
                         }
@@ -1203,7 +1203,7 @@ WaterFall {
                             Component.onCompleted: plotGNSSVisible(checked, 1)
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
 
                                 property alias gnssVisible: gnssVisible.checked
                             }
@@ -1230,7 +1230,7 @@ WaterFall {
                                     plotGridFillWidth(checked)
                                 }
                                 Settings {
-                                    category: "Plot2D_" + plot.indx
+                                    category: "scene2d/plot2d/" + plot.indx
 
                                     property alias fillWidthGrid: fillWidthGrid.checked
                                 }
@@ -1246,7 +1246,7 @@ WaterFall {
                                     plotGridInvert(checked)
                                 }
                                 Settings {
-                                    category: "Plot2D_" + plot.indx
+                                    category: "scene2d/plot2d/" + plot.indx
                                     property alias invertGrid: invertGrid.checked
                                 }
                             }
@@ -1263,7 +1263,7 @@ WaterFall {
                             Component.onCompleted: plotGridVerticalNumber(gridNumber.value*gridVisible.checked)
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
 
                                 property alias gridNumber: gridNumber.value
                             }
@@ -1281,7 +1281,7 @@ WaterFall {
                             Component.onCompleted: plotAngleVisibility(checked)
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
 
                                 property alias angleVisible: angleVisible.checked
                             }
@@ -1315,7 +1315,7 @@ WaterFall {
                             onCurrValueChanged: plotAngleRange(currValue)
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
 
                                 property alias angleRange: angleRange.value
                             }
@@ -1333,7 +1333,7 @@ WaterFall {
                             Component.onCompleted: plotVelocityVisible(checked)
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
 
                                 property alias velocityVisible: velocityVisible.checked
                             }
@@ -1368,7 +1368,7 @@ WaterFall {
                             onRealValueChanged: plotVelocityRange(realValue)
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
 
                                 property alias velocityRange: velocityRange.value
                             }
@@ -1393,7 +1393,7 @@ WaterFall {
                             Component.onCompleted: distanceAutoRangeRow.distanceAutorangeMode()
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
 
                                 property alias distanceAutoRange: distanceAutoRange.checked
                             }
@@ -1407,7 +1407,7 @@ WaterFall {
                             Component.onCompleted: distanceAutoRangeRow.distanceAutorangeMode()
 
                             Settings {
-                                category: "Plot2D_" + plot.indx
+                                category: "scene2d/plot2d/" + plot.indx
 
                                 property alias distanceAutoRangeList: distanceAutoRangeList.currentIndex
                             }
@@ -1489,7 +1489,7 @@ WaterFall {
                     }
 
                     Settings {
-                        category: "Plot2D_" + plot.indx
+                        category: "scene2d/plot2d/" + plot.indx
 
                         property alias echogramVisible: echogramVisible.checked
                         property alias rangefinderVisible: rangefinderGraphicsVisible.checked

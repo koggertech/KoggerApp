@@ -32,6 +32,7 @@
 #include "input_device_tracker.h"
 #include "language_controller.h"
 #include "app_utils.h"
+#include "settings_migration.h"
 
 
 // NOLINTBEGIN(bugprone-throwing-static-initialization): application-lifetime singletons; a throw here is a fatal startup failure with nothing to catch
@@ -51,7 +52,7 @@ void loadLanguage(QGuiApplication &app)
     QSettings settings;
     QString currentLanguage;
 
-    int savedLanguageIndex = settings.value("appLanguage", -1).toInt();
+    int savedLanguageIndex = settings.value("main/appLanguage", -1).toInt();
 
     if (savedLanguageIndex == -1) {
         currentLanguage = QLocale::system().name().split('_').first();
@@ -59,7 +60,7 @@ void loadLanguage(QGuiApplication &app)
             currentLanguage = availableLanguages.front();
         }
         else {
-            settings.setValue("appLanguage", indx);
+            settings.setValue("main/appLanguage", indx);
         }
     }
     else {
@@ -256,6 +257,8 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("KoggerApp");
     QCoreApplication::setApplicationVersion("1-1-1");
 
+    migrateSettingsSchema();
+
 #if defined(Q_OS_WIN)
     //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
@@ -281,22 +284,6 @@ int main(int argc, char *argv[])
     // Themes global was constructed before QGuiApplication + org name — now
     // safe to read QSettings and primaryScreen() for DPI-aware resCoeff.
     theme.initSettings();
-
-    // One-shot migration: the "Chart" group (multi-plot + synchronisation) was
-    // removed from the new settings UI. Force any persisted multi-plot OR
-    // sync-on state back to single-plot, no-sync. OR (not AND) — otherwise
-    // users with numPlots=2,sync=false stay stuck in a layout the new UI
-    // can no longer toggle off.
-    {
-        QSettings s;
-        const bool needMigration =
-            s.value("numPlotsSpinBox", 1).toInt() >= 2 ||
-            s.value("plotSyncCheckBox", false).toBool();
-        if (needMigration) {
-            s.setValue("numPlotsSpinBox", 1);
-            s.setValue("plotSyncCheckBox", false);
-        }
-    }
 
     LanguageController langController;
     InputDeviceTracker inputDeviceTracker;

@@ -40,7 +40,7 @@ BasePanePopup {
     snapEdgeCenters: true
 
     property var _profileFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
-    Settings { property alias profilesImportFolder: root._profileFolder }
+    Settings { category: "main/profiles"; property alias profilesImportFolder: root._profileFolder }
 
     function _applySize() {
         expandedWidth = _wantW

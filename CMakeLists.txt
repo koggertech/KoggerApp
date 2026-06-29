@@ -56,6 +56,7 @@ option(KOGGER_MANUAL_TESTING   "Manual testing hooks"                OFF)
 
 qt_add_executable(KoggerApp
     src/main.cpp
+    src/settings_migration.h       src/settings_migration.cpp
 
     src/black_stripes_processor.h  src/black_stripes_processor.cpp
     src/console.h                  src/console.cpp

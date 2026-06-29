@@ -332,7 +332,7 @@ Column {
                     }
                 }
 
-                Settings { property alias appTheme: appThemeHolder.selectedIndex }
+                Settings { category: "main/ui"; property alias appTheme: appThemeHolder.selectedIndex }
             }
         }
 
@@ -418,7 +418,7 @@ Column {
             }
         }
 
-        Settings { property alias consoleVisible: consoleVisible.checked }
+        Settings { category: "main/console"; property alias consoleVisible: consoleVisible.checked }
 
         KSwitch {
             width: parent.width
@@ -723,9 +723,9 @@ Column {
             }
         }
 
-        Settings { property alias fixBlackStripesCheckButton: fixBlackStripesCheckButton.checked }
-        Settings { property alias fixBlackStripesForwardStepsSpinBox: fixBlackStripesForwardStepsSpinBox.value }
-        Settings { property alias fixBlackStripesBackwardStepsSpinBox: fixBlackStripesBackwardStepsSpinBox.value }
+        Settings { category: "main/blackStripes"; property alias fixBlackStripesCheckButton: fixBlackStripesCheckButton.checked }
+        Settings { category: "main/blackStripes"; property alias fixBlackStripesForwardStepsSpinBox: fixBlackStripesForwardStepsSpinBox.value }
+        Settings { category: "main/blackStripes"; property alias fixBlackStripesBackwardStepsSpinBox: fixBlackStripesBackwardStepsSpinBox.value }
 
         // Sonar offset row
         ParamCard {
@@ -766,23 +766,23 @@ Column {
             }
         }
 
-        Settings { property alias sonarOffsetCheckButton: sonarOffsetCheckButton.checked }
-        Settings { property alias sonarOffsetValueX: sonarOffsetValueX.value }
-        Settings { property alias sonarOffsetValueY: sonarOffsetValueY.value }
+        Settings { category: "main/sonarOffset"; property alias sonarOffsetCheckButton: sonarOffsetCheckButton.checked }
+        Settings { category: "main/sonarOffset"; property alias sonarOffsetValueX: sonarOffsetValueX.value }
+        Settings { category: "main/sonarOffset"; property alias sonarOffsetValueY: sonarOffsetValueY.value }
 
         ParamCard {
             id: zeroingPosButton
             label: qsTr("Pos zeroing")
             onToggled: function(v) { core.setPosZeroing(v) }
         }
-        Settings { property alias zeroingPosButtonCheched: zeroingPosButton.checked }
+        Settings { category: "main/dataset"; property alias zeroingPosButtonCheched: zeroingPosButton.checked }
 
         ParamCard {
             id: zeroingBottomTrackButton
             label: qsTr("Bottom track zeroing")
             onToggled: function(v) { core.setBottomTrackZeroing(v) }
         }
-        Settings { property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
+        Settings { category: "main/dataset"; property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
 
         KButton {
             visible: instruments >= 1
@@ -919,7 +919,7 @@ Column {
                     onValueSelected: function(v) { btPresetHolder.selectedIndex = v }
                 }
 
-                Settings { property alias bottomTrackList: btPresetHolder.selectedIndex }
+                Settings { category: "scene2d/bottomTrack"; property alias bottomTrackList: btPresetHolder.selectedIndex }
             }
         }
 
@@ -941,8 +941,8 @@ Column {
                 onValueModified: function(v) { if (bottomTrackGainSlope.checked && root.targetPlot) root.targetPlot.setGainSlope(v / 100) }
             }
         }
-        Settings { property alias bottomTrackGainSlope: bottomTrackGainSlope.checked }
-        Settings { property alias bottomTrackGainSlopeValue: bottomTrackGainSlopeValue.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackGainSlope: bottomTrackGainSlope.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackGainSlopeValue: bottomTrackGainSlopeValue.value }
 
         // Threshold
         ParamCard {
@@ -961,8 +961,8 @@ Column {
                 onValueModified: function(v) { if (bottomTrackThreshold.checked && root.targetPlot) root.targetPlot.setThreshold(v / 100) }
             }
         }
-        Settings { property alias bottomTrackThreshold: bottomTrackThreshold.checked }
-        Settings { property alias bottomTrackThresholdValue: bottomTrackThresholdValue.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackThreshold: bottomTrackThreshold.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackThresholdValue: bottomTrackThresholdValue.value }
 
         // Horizontal window
         ParamCard {
@@ -981,8 +981,8 @@ Column {
                 onValueModified: function(v) { if (bottomTrackWindow.checked && root.targetPlot) root.targetPlot.setWindowSize(v) }
             }
         }
-        Settings { property alias bottomTrackWindow: bottomTrackWindow.checked }
-        Settings { property alias bottomTrackWindowValue: bottomTrackWindowValue.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackWindow: bottomTrackWindow.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackWindowValue: bottomTrackWindowValue.value }
 
         // Vertical gap
         ParamCard {
@@ -1001,8 +1001,8 @@ Column {
                 onValueModified: function(v) { if (bottomTrackVerticalGap.checked && root.targetPlot) root.targetPlot.setVerticalGap(v * 0.01) }
             }
         }
-        Settings { property alias bottomTrackVerticalGap: bottomTrackVerticalGap.checked }
-        Settings { property alias bottomTrackVerticalGapValue: bottomTrackVerticalGapValue.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackVerticalGap: bottomTrackVerticalGap.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackVerticalGapValue: bottomTrackVerticalGapValue.value }
 
         // Min range
         ParamCard {
@@ -1021,8 +1021,8 @@ Column {
                 onValueModified: function(v) { if (bottomTrackMinRange.checked && root.targetPlot) root.targetPlot.setRangeMin(v / 1000) }
             }
         }
-        Settings { property alias bottomTrackMinRange: bottomTrackMinRange.checked }
-        Settings { property alias bottomTrackMinRangeValue: bottomTrackMinRangeValue.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMinRange: bottomTrackMinRange.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMinRangeValue: bottomTrackMinRangeValue.value }
 
         // Max range
         ParamCard {
@@ -1041,8 +1041,8 @@ Column {
                 onValueModified: function(v) { if (bottomTrackMaxRange.checked && root.targetPlot) root.targetPlot.setRangeMax(v / 1000) }
             }
         }
-        Settings { property alias bottomTrackMaxRange: bottomTrackMaxRange.checked }
-        Settings { property alias bottomTrackMaxRangeValue: bottomTrackMaxRangeValue.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMaxRange: bottomTrackMaxRange.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMaxRangeValue: bottomTrackMaxRangeValue.value }
 
         // Sensor offset (label row + values row)
         ParamCard {
@@ -1077,10 +1077,10 @@ Column {
                 onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetZ(v * 0.001) }
             }
         }
-        Settings { property alias bottomTrackSensorOffset: bottomTrackSensorOffset.checked }
-        Settings { property alias bottomTrackSensorOffsetValueX: btOffX.value }
-        Settings { property alias bottomTrackSensorOffsetValueY: btOffY.value }
-        Settings { property alias bottomTrackSensorOffsetValueZ: btOffZ.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffset: bottomTrackSensorOffset.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueX: btOffX.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueY: btOffY.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueZ: btOffZ.value }
 
         // Action buttons
         Row {
@@ -1230,7 +1230,7 @@ Column {
                 editable: false
                 onValueModified: function(v) { IsobathsViewControlMenuController.onEdgeLimitChanged(v) }
                 Component.onCompleted: IsobathsViewControlMenuController.onEdgeLimitChanged(value)
-                Settings { property alias isobathsEdgeLimitSpinBox: isobathsEdgeLimitSpinBox.value }
+                Settings { category: "scene3d/isobaths"; property alias isobathsEdgeLimitSpinBox: isobathsEdgeLimitSpinBox.value }
             }
         }
 
@@ -1253,7 +1253,7 @@ Column {
                 readonly property real realValue: value / 10
                 onValueModified: function(v) { IsobathsViewControlMenuController.onSetSurfaceLineStepSize(v / 10) }
                 Component.onCompleted: IsobathsViewControlMenuController.onSetSurfaceLineStepSize(realValue)
-                Settings { property alias isobathsSurfaceLineStepSizeSpinBox: isobathsSurfaceLineStepSizeSpinBox.value }
+                Settings { category: "scene3d/isobaths"; property alias isobathsSurfaceLineStepSizeSpinBox: isobathsSurfaceLineStepSizeSpinBox.value }
             }
         }
 
@@ -1274,7 +1274,7 @@ Column {
                 editable: false
                 onValueModified: function(v) { IsobathsViewControlMenuController.onSetExtraWidth(v) }
                 Component.onCompleted: IsobathsViewControlMenuController.onSetExtraWidth(value)
-                Settings { property alias extraWidthSpinBox: extraWidthSpinBox.value }
+                Settings { category: "scene3d/isobaths"; property alias extraWidthSpinBox: extraWidthSpinBox.value }
             }
         }
 
@@ -1348,8 +1348,8 @@ Column {
                 onClicked: Scene3DControlMenuController.onExportToCSVButtonClicked(isobathsGroup.currentExportSurfacePath())
             }
 
-            Settings { property alias exportSurfaceFolder:     isobathsGroup.exportSurfaceFolder }
-            Settings { property alias exportSurfaceFolderText: isobathsGroup.exportSurfacePathSource }
+            Settings { category: "main/export"; property alias exportSurfaceFolder:     isobathsGroup.exportSurfaceFolder }
+            Settings { category: "main/export"; property alias exportSurfaceFolderText: isobathsGroup.exportSurfacePathSource }
         }
     }
 
@@ -1432,6 +1432,7 @@ Column {
                 onStopValueChanged:  MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
                 Component.onCompleted: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
                 Settings {
+                    category: "scene3d/mosaic"
                     property alias mosaicLevelsStart: mosaicLevelsSlider.startValue
                     property alias mosaicLevelsStop:  mosaicLevelsSlider.stopValue
                 }
@@ -1602,7 +1603,7 @@ Column {
                                 MosaicViewControlMenuController.onSetLAngleOffset(value)
                                 dataset.onSetLAngleOffset(value)
                             }
-                            Settings { property alias mosaicLAngleOffset: mosaicLAngleOffset.value }
+                            Settings { category: "scene3d/mosaic"; property alias mosaicLAngleOffset: mosaicLAngleOffset.value }
                         }
 
                         KSpinBox {
@@ -1617,7 +1618,7 @@ Column {
                                 MosaicViewControlMenuController.onSetRAngleOffset(value)
                                 dataset.onSetRAngleOffset(value)
                             }
-                            Settings { property alias mosaicRAngleOffset: mosaicRAngleOffset.value }
+                            Settings { category: "scene3d/mosaic"; property alias mosaicRAngleOffset: mosaicRAngleOffset.value }
                         }
                     }
                 }
@@ -1629,7 +1630,7 @@ Column {
                     Layout.fillWidth: true
                     onToggled: MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
                     Component.onCompleted: MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
-                    Settings { property alias mosaicTraceLine: mosaicTraceLine.checked }
+                    Settings { category: "scene3d/mosaic"; property alias mosaicTraceLine: mosaicTraceLine.checked }
                 }
 
                 RowLayout {
@@ -1659,7 +1660,7 @@ Column {
                         currentIndex: 1
                         onCurrentIndexChanged: core.setMosaicSource(currentIndex)
                         Component.onCompleted: core.setMosaicSource(currentIndex)
-                        Settings { property alias mosaicSource: mosaicSource.currentIndex }
+                        Settings { category: "scene3d/mosaic"; property alias mosaicSource: mosaicSource.currentIndex }
                     }
                 }
 
@@ -1709,7 +1710,7 @@ Column {
                                 readonly property int effectiveN: (core.posZeroing && value < to) ? value : 0
                                 onEffectiveNChanged: core.setMosaicFakeCoordsLastN(effectiveN)
                                 Component.onCompleted: core.setMosaicFakeCoordsLastN(effectiveN)
-                                Settings { property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value }
+                                Settings { category: "main/dataset"; property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value }
                             }
                             Text {
                                 Layout.preferredWidth: Math.round(50 * AppPalette.scale)
@@ -1729,7 +1730,7 @@ Column {
                             readonly property bool effectiveClearOldData: checked && core.posZeroing
                             onEffectiveClearOldDataChanged: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
                             Component.onCompleted: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
-                            Settings { property alias fakeCoordsClearOldDataCheck: fakeCoordsClearOldDataCheck.checked }
+                            Settings { category: "main/dataset"; property alias fakeCoordsClearOldDataCheck: fakeCoordsClearOldDataCheck.checked }
                         }
                     }
                 }
@@ -2272,6 +2273,7 @@ Column {
 
             Settings {
                 id: render3dSettings
+                category: "scene3d/view"
                 property bool forceSingleZoomCheckButton: false
                 property bool syncLoupeCheckButton: false
                 property bool isNorthViewButton: false
@@ -2284,15 +2286,15 @@ Column {
                 property bool compassCheckButton: true
                 property bool scaleBarCheckButton: true
             }
-            Settings { property alias syncLoupeSize:        syncLoupeSizeSpinBox.value }
-            Settings { property alias syncLoupeZoom:        syncLoupeZoomSlider.value }
-            Settings { property alias circleGridSize:       circleGridSizeSpinBox.value }
-            Settings { property alias circleGridStep:       circleGridStepSpinBox.value }
-            Settings { property alias circleGridAngle:      circleGridAngleSpinBox.value }
-            Settings { property alias navigationArrowSize:  navigationArrowSizeSpinBox.value }
-            Settings { property alias navigationArrowShape: navigationArrowShapeCombo.currentIndex }
-            Settings { property alias compassPos:           compassPosSpinBox.value }
-            Settings { property alias compassSize:          compassSizeSpinBox.value }
+            Settings { category: "scene2d/echogramLoupe"; property alias syncLoupeSize:        syncLoupeSizeSpinBox.value }
+            Settings { category: "scene2d/echogramLoupe"; property alias syncLoupeZoom:        syncLoupeZoomSlider.value }
+            Settings { category: "scene3d/grid";            property alias circleGridSize:       circleGridSizeSpinBox.value }
+            Settings { category: "scene3d/grid";            property alias circleGridStep:       circleGridStepSpinBox.value }
+            Settings { category: "scene3d/grid";            property alias circleGridAngle:      circleGridAngleSpinBox.value }
+            Settings { category: "scene3d/navigationArrow"; property alias navigationArrowSize:  navigationArrowSizeSpinBox.value }
+            Settings { category: "scene3d/navigationArrow"; property alias navigationArrowShape: navigationArrowShapeCombo.currentIndex }
+            Settings { category: "scene3d/compass";         property alias compassPos:           compassPosSpinBox.value }
+            Settings { category: "scene3d/compass";         property alias compassSize:          compassSizeSpinBox.value }
 
             Text {
                 width: parent.width
@@ -2319,6 +2321,7 @@ Column {
             // preferences carry over from the old in-3D-toolbar UI.
             Settings {
                 id: mapVisibilitySettings
+                category: "scene3d/map"
                 property bool mapViewCheckButton: true
             }
 
@@ -2369,7 +2372,7 @@ Column {
                 }
             }
 
-            Settings { id: meteredSettings; property bool deferTilesOnMetered: true }
+            Settings { id: meteredSettings; category: "scene3d/map"; property bool deferTilesOnMetered: true }
 
             ParamCard {
                 width: parent.width
@@ -2628,7 +2631,7 @@ Column {
             }
 
             // Persists the chosen value across launches.
-            Settings { property alias appDoubleTapDistancePx: tapTolerSlider.value }
+            Settings { category: "main/ui"; property alias appDoubleTapDistancePx: tapTolerSlider.value }
 
             // ── Pane split grab thickness ────────────────────────────────
             Row {
@@ -2657,7 +2660,7 @@ Column {
                 onValueModified: function(v) { AppPalette.splitHitSizePx = v }
             }
 
-            Settings { property alias appSplitHitSizePx: splitHitSlider.value }
+            Settings { category: "main/ui"; property alias appSplitHitSizePx: splitHitSlider.value }
 
             // ── Sidebar slide animation duration ─────────────────────────
             Row {
@@ -2686,7 +2689,7 @@ Column {
                 onValueModified: function(v) { AppPalette.sidebarAnimMs = v }
             }
 
-            Settings { property alias appSidebarAnimMs: sidebarAnimSlider.value }
+            Settings { category: "main/ui"; property alias appSidebarAnimMs: sidebarAnimSlider.value }
 
             // ── Workspace rubber-band adjustment duration ────────────────
             Row {
@@ -2715,7 +2718,7 @@ Column {
                 onValueModified: function(v) { AppPalette.workspaceAnimMs = v }
             }
 
-            Settings { property alias appWorkspaceAnimMs: workspaceAnimSlider.value }
+            Settings { category: "main/ui"; property alias appWorkspaceAnimMs: workspaceAnimSlider.value }
 
             Component.onCompleted: {
                 AppPalette.doubleTapDistancePx = tapTolerSlider.value

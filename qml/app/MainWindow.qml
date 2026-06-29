@@ -37,8 +37,13 @@ ApplicationWindow {
     // Читаем глобальные настройки при запуске (те же ключи, что сохраняет AppSettingsPage)
     Settings {
         id: startupSettings
+        category: "main/ui"
         property int appTheme: 0
         property int instrumentsGradeList: 0
+    }
+    Settings {
+        id: consoleVisibilitySettings
+        category: "main/console"
         property bool consoleVisible: false
     }
 
@@ -78,7 +83,7 @@ ApplicationWindow {
         ignoreUnknownSignals: true
         function onThemeIDChanged()          { startupSettings.appTheme          = theme.themeID }
         function onInstrumentsGradeChanged() { startupSettings.instrumentsGradeList = theme.instrumentsGrade }
-        function onInterfaceChanged()        { startupSettings.consoleVisible     = theme.consoleVisible }
+        function onInterfaceChanged()        { consoleVisibilitySettings.consoleVisible = theme.consoleVisible }
     }
 
     // Sidebar moves first, workspace waits, then catches up.
@@ -564,7 +569,7 @@ ApplicationWindow {
         if (theme) {
             theme.themeID          = startupSettings.appTheme
             theme.instrumentsGrade = startupSettings.instrumentsGradeList
-            theme.consoleVisible   = startupSettings.consoleVisible
+            theme.consoleVisible   = consoleVisibilitySettings.consoleVisible
         }
 
         refreshConnectionsIndicator()
@@ -1107,7 +1112,7 @@ ApplicationWindow {
             color: "#000000B0"
             visible: !welcomeSettings.welcomeShown
 
-            Settings { id: welcomeSettings; property bool welcomeShown: false }
+            Settings { id: welcomeSettings; category: "main/ui"; property bool welcomeShown: false }
 
             function finish() {
                 welcomeSettings.welcomeShown = true

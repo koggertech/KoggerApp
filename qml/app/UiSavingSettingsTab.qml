@@ -96,8 +96,8 @@ Column {
         }
     }
 
-    Settings { property alias uiStateExportFolder: page.exportFolder }
-    Settings { property alias uiStateImportFolder: page.importFolder }
+    Settings { category: "main/uiState"; property alias uiStateExportFolder: page.exportFolder }
+    Settings { category: "main/uiState"; property alias uiStateImportFolder: page.importFolder }
 
     Text {
         width: parent.width

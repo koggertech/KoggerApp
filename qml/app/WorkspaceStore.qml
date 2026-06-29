@@ -261,7 +261,7 @@ signal workspaceSizeCommitRequested()
 
 property Settings scene3dPersistedSettings: Settings {
     id: scene3dPersistedSettings
-    category: "scene3d"
+    category: "scene3d/view"
     property bool navigationViewButton: false
     property bool useAngleButton: false
     property bool trackLastDataButton: false
@@ -276,6 +276,7 @@ onTrackLastDataEnabledChanged: Scene3dToolBarController.onTrackLastDataCheckButt
 
 property Settings scene3dLayerVisibility: Settings {
     id: scene3dLayerVisibility
+    category: "scene3d/view"
     property bool boatTrackCheckButton: true
     property bool bottomTrackCheckButton: false
     property bool isobathsCheckButton: false
@@ -290,6 +291,7 @@ property alias mosaicVisible:      scene3dLayerVisibility.mosaicViewCheckButton
 // dataset (default on). Toggled from the Interface settings group.
 property Settings echogramUiPrefs: Settings {
     id: echogramUiPrefs
+    category: "scene2d/ui"
     property bool hideEmptyEchogramControls: true
 }
 property alias hideEmptyEchogramControls: echogramUiPrefs.hideEmptyEchogramControls
@@ -297,14 +299,14 @@ property alias hideEmptyEchogramControls: echogramUiPrefs.hideEmptyEchogramContr
 // Interface pref: show the surface-quality (cm/cell) label in the 3D scene (default off).
 property Settings scene3dUiPrefs: Settings {
     id: scene3dUiPrefs
-    category: "scene3d_ui"
+    category: "scene3d/ui"
     property bool showSurfaceQuality: false
 }
 property alias showSurfaceQuality: scene3dUiPrefs.showSurfaceQuality
 
 property Settings echogramLoupePrefs: Settings {
     id: echogramLoupePrefs
-    category: "echogram_loupe"
+    category: "scene2d/echogramLoupe"
     property bool visible: false
     property int size: 1
     property int zoom: 100
@@ -323,7 +325,7 @@ function echogramLoupePreview(phase) { echogramLoupePreviewPhase(phase) }
 
 property Settings echogramSyncPrefs: Settings {
     id: echogramSyncPrefs
-    category: "echogram_sync"
+    category: "scene2d/echogramSync"
     property bool cursor: true
     property bool view: false
 }
@@ -341,7 +343,7 @@ onEchogramSyncViewChanged: applyEchogramSyncToCore()
 
 property Settings echogramAimPrefs: Settings {
     id: echogramAimPrefs
-    category: "echogram_aim"
+    category: "scene2d/echogramAim"
     property bool visible: true
     property bool channel: true
     property bool epoch: true
@@ -386,6 +388,7 @@ onAimSoundSpeedChanged: applyAimFieldsToCore()
 
 property Settings loggingPersist: Settings {
     id: loggingPersist
+    category: "main/logging"
     property bool loggingCheck: false   // KLF
     property bool loggingCheck2: false  // CSV
 }
@@ -408,6 +411,7 @@ property Connections loggingSync: Connections {
 // legacy app.tgc group aliases, so existing settings carry over.
 property Settings tgcPersist: Settings {
     id: tgcPersist
+    category: "main/tgc"
     property real appTgcGainNear: 50
     property real appTgcGainFar: 250
     property bool appTgcCompensate: false
@@ -431,6 +435,7 @@ onTgcCompensateChanged: applyTgcToCore()
 
 property Settings exportPersist: Settings {
     id: exportPersist
+    category: "main/export"
     property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     property string exportFolderText: ""
     property bool exportDecimation: false
@@ -446,13 +451,18 @@ property alias exportDecimationValue: exportPersist.exportDecimationValue
 // combo and the 3D toolbar swatch picker drive the same value. Keys match the
 // legacy combo Settings aliases. Applied to the C++ controllers on change +
 // at startup (controllers queue if not ready yet).
-property Settings layerThemePersist: Settings {
-    id: layerThemePersist
+property Settings isobathsThemePersist: Settings {
+    id: isobathsThemePersist
+    category: "scene3d/isobaths"
     property int isobathsTheme: 0
+}
+property Settings mosaicThemePersist: Settings {
+    id: mosaicThemePersist
+    category: "scene3d/mosaic"
     property int mosaicTheme: 0
 }
-property alias isobathsThemeIndex: layerThemePersist.isobathsTheme
-property alias mosaicThemeIndex: layerThemePersist.mosaicTheme
+property alias isobathsThemeIndex: isobathsThemePersist.isobathsTheme
+property alias mosaicThemeIndex: mosaicThemePersist.mosaicTheme
 
 function applyLayerThemesToControllers() {
     if (typeof IsobathsViewControlMenuController !== "undefined" && IsobathsViewControlMenuController)
@@ -559,7 +569,7 @@ property Connections _coreChannelConn: Connections {
 }
 
 property Settings layoutStore: Settings {
-    category: "workspace"
+    category: "main/workspace"
 
     property string layoutJson: ""
     property int nextLeafSerialStored: 0

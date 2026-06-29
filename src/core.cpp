@@ -1249,7 +1249,7 @@ void Core::loadCsvExportFields()
         return;
     }
     QSettings settings("KOGGER", "KoggerApp");
-    settings.beginGroup("csv_export_fields");
+    settings.beginGroup("main/csvExportFields");
     for (const auto& f : kCsvFieldDefs) {
         const QString key = QString::fromLatin1(f.key);
         csvExportFields_[key] = settings.value(key, f.def).toBool();
@@ -1261,7 +1261,7 @@ void Core::loadCsvExportFields()
 void Core::saveCsvExportFields()
 {
     QSettings settings("KOGGER", "KoggerApp");
-    settings.beginGroup("csv_export_fields");
+    settings.beginGroup("main/csvExportFields");
     for (auto it = csvExportFields_.constBegin(); it != csvExportFields_.constEnd(); ++it) {
         settings.setValue(it.key(), it.value());
     }
@@ -2104,7 +2104,7 @@ void Core::setMapTileProvider(int providerId)
     }
 
     QSettings settings("KOGGER", "KoggerApp");
-    settings.setValue("Map/TileProviderId", providerId);
+    settings.setValue("scene3d/map/TileProviderId", providerId);
 }
 
 void Core::toggleMapTileProvider()
@@ -2120,7 +2120,7 @@ void Core::toggleMapTileProvider()
     }
 
     QSettings settings("KOGGER", "KoggerApp");
-    settings.setValue("Map/TileProviderId", tileManager_->currentProviderId());
+    settings.setValue("scene3d/map/TileProviderId", tileManager_->currentProviderId());
 }
 
 int Core::getMapTileProviderId() const
@@ -2309,7 +2309,7 @@ void Core::setActiveTransientUi(QObject* who)
 int Core::loadSavedMapTileProviderId() const
 {
     QSettings settings("KOGGER", "KoggerApp");
-    return settings.value("Map/TileProviderId", map::kGoogleProviderId).toInt();
+    return settings.value("scene3d/map/TileProviderId", map::kGoogleProviderId).toInt();
 }
 
 void Core::onFileStopsOpening()
@@ -2694,7 +2694,7 @@ void Core::saveLLARefToSettings()
         auto ref = datasetPtr_->getLlaRef();
 
         QSettings settings("KOGGER", "KoggerApp");
-        QString group{"LLARef"};
+        QString group{"scene3d/llaRef"};
 
         settings.beginGroup(group);
         settings.setValue("refLatSin", ref.refLatSin);
@@ -2727,7 +2727,7 @@ void Core::loadLLARefFromSettings()
 
     try {
         QSettings settings("KOGGER", "KoggerApp");
-        QString group{"LLARef"};
+        QString group{"scene3d/llaRef"};
 
         settings.beginGroup(group);
         LLARef ref;
@@ -2778,7 +2778,7 @@ void Core::saveCameraViewToSettings()
         }
 
         QSettings settings("KOGGER", "KoggerApp");
-        settings.beginGroup("CameraView");
+        settings.beginGroup("scene3d/cameraView");
         settings.setValue("refLatSin", ref.refLatSin);
         settings.setValue("refLatCos", ref.refLatCos);
         settings.setValue("refLatRad", ref.refLatRad);
@@ -2811,7 +2811,7 @@ void Core::loadCameraViewFromSettings()
 
     try {
         QSettings settings("KOGGER", "KoggerApp");
-        settings.beginGroup("CameraView");
+        settings.beginGroup("scene3d/cameraView");
         const bool has = settings.contains("isInit");
         LLARef ref;
         ref.refLatSin = settings.value("refLatSin", NAN).toDouble();

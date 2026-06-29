@@ -26,6 +26,7 @@ Column {
     property string importTrackPathSource: ""
 
     Settings {
+        category: "main/csvImport"
         property alias importTrackFolder:   connectionViewer.lastImportTrackFolder
         property alias importPathText:      connectionViewer.importTrackPathSource
     }
@@ -740,21 +741,21 @@ Column {
                     focusPolicy: Qt.StrongFocus
                     background: Rectangle { color: "transparent"; border.width: 0 }
                     contentItem: Text { leftPadding: 6; text: separatorCombo.displayText; color: AppPalette.text; font.pixelSize: Tokens.fontXs; verticalAlignment: Text.AlignVCenter }
-                    Settings { property alias separatorCombo: separatorCombo.currentIndex }
+                    Settings { category: "main/csvImport"; property alias separatorCombo: separatorCombo.currentIndex }
                 }
             }
             Text { text: qsTr("Row:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
-            CsvSpin { id: firstRow; value: 1; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVfirstRow: firstRow.value } }
+            CsvSpin { id: firstRow; value: 1; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVfirstRow: firstRow.value } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd - Tokens.spaceXxs; spacing: Tokens.spaceMd
             SmallCheck {
                 id: timeEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
-                Settings { property alias importCSVtimeEnable: timeEnable.checked }
+                Settings { category: "main/csvImport"; property alias importCSVtimeEnable: timeEnable.checked }
             }
             Text { text: qsTr("Time col:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
-            CsvSpin { id: timeColumn; value: 6; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVtimeColumn: timeColumn.value } }
+            CsvSpin { id: timeColumn; value: 6; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVtimeColumn: timeColumn.value } }
             Rectangle {
                 width: Math.round(100 * AppPalette.scale); height: Math.round(26 * AppPalette.scale); radius: Tokens.radiusSm; color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
                 anchors.verticalCenter: parent.verticalCenter
@@ -763,7 +764,7 @@ Column {
                     focusPolicy: Qt.StrongFocus
                     background: Rectangle { color: "transparent"; border.width: 0 }
                     contentItem: Text { leftPadding: 6; text: utcGpsCombo.displayText; color: AppPalette.text; font.pixelSize: Tokens.fontXs; verticalAlignment: Text.AlignVCenter }
-                    Settings { property alias utcGpsCombo: utcGpsCombo.currentIndex }
+                    Settings { category: "main/csvImport"; property alias utcGpsCombo: utcGpsCombo.currentIndex }
                 }
             }
         }
@@ -772,24 +773,24 @@ Column {
             width: parent.width; height: Tokens.controlHMd - Tokens.spaceXxs; spacing: Tokens.spaceMd
             SmallCheck {
                 id: latLonEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
-                Settings { property alias importCSVlatLonEnable: latLonEnable.checked }
+                Settings { category: "main/csvImport"; property alias importCSVlatLonEnable: latLonEnable.checked }
             }
             Text { text: qsTr("Lat/Lon/Alt:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
-            CsvSpin { id: latColumn;  value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVlatColumn:  latColumn.value  } }
-            CsvSpin { id: lonColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVlonColumn:  lonColumn.value  } }
-            CsvSpin { id: altColumn;  value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSValtColumn:  altColumn.value  } }
+            CsvSpin { id: latColumn;  value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVlatColumn:  latColumn.value  } }
+            CsvSpin { id: lonColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVlonColumn:  lonColumn.value  } }
+            CsvSpin { id: altColumn;  value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSValtColumn:  altColumn.value  } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd - Tokens.spaceXxs; spacing: Tokens.spaceMd
             SmallCheck {
                 id: xyzEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
-                Settings { property alias importCSVxyzEnable: xyzEnable.checked }
+                Settings { category: "main/csvImport"; property alias importCSVxyzEnable: xyzEnable.checked }
             }
             Text { text: qsTr("NEU:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
-            CsvSpin { id: northColumn; value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVnorthColumn: northColumn.value } }
-            CsvSpin { id: eastColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVeastColumn:  eastColumn.value  } }
-            CsvSpin { id: upColumn;    value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVupColumn:    upColumn.value    } }
+            CsvSpin { id: northColumn; value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVnorthColumn: northColumn.value } }
+            CsvSpin { id: eastColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVeastColumn:  eastColumn.value  } }
+            CsvSpin { id: upColumn;    value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVupColumn:    upColumn.value    } }
         }
 
         Row {
@@ -948,7 +949,7 @@ Column {
                 activeFocusOnTab: true
                 anchors.fill: parent; anchors.margins: 8
                 verticalAlignment: TextInput.AlignVCenter; color: AppPalette.text; font.pixelSize: Tokens.fontSm
-                Settings { property alias flasherPartNumber: flasherPnText.text }
+                Settings { category: "main/csvImport"; property alias flasherPartNumber: flasherPnText.text }
             }
         }
     }
