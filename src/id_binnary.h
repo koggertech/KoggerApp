@@ -525,8 +525,8 @@ class IDBinServoControl : public IDBin
 public:
     static constexpr int AngleScale = 100;
 
-    enum GeneralBits : U2 { GenEnable = 0x0001 };
-    enum OptionsBits : U2 { OptReverse = 0x0001 };
+    enum GeneralBits : U1 { GenEnable = 0x0001 };
+    enum OptionsBits : U1 { OptReverse = 0x0001 };
 
     explicit IDBinServoControl() : IDBin() {}
 
