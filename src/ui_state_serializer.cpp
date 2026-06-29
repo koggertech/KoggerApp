@@ -18,17 +18,18 @@ extern Notifications notifications;
 #include <QSettings>
 #include <QStandardPaths>
 #include <QUrl>
+#include <cstdint>
 
 namespace {
 
-const QString kDumpType = QStringLiteral("KoggerUiStateDump");
+constexpr QLatin1StringView kDumpType("KoggerUiStateDump");
 const int kSchemaVersion = 1;
-const QString kLinksObjectKey = QStringLiteral("links");
-const QString kLinksFormatKey = QStringLiteral("format");
-const QString kLinksPayloadKey = QStringLiteral("pinnedLinksXmlBase64");
-const QString kLinksFormatPinnedXmlBase64 = QStringLiteral("pinned_links_xml_base64_v1");
+constexpr QLatin1StringView kLinksObjectKey("links");
+constexpr QLatin1StringView kLinksFormatKey("format");
+constexpr QLatin1StringView kLinksPayloadKey("pinnedLinksXmlBase64");
+constexpr QLatin1StringView kLinksFormatPinnedXmlBase64("pinned_links_xml_base64_v1");
 
-enum class PathSyntax {
+enum class PathSyntax : std::uint8_t {
     kRelativeOrEmpty,
     kWindowsAbsolute,
     kUnixAbsolute
@@ -148,7 +149,7 @@ PathSyntax detectPathSyntax(const QString& rawPath)
 
 QString localPathForExistenceCheck(const QString& rawPath)
 {
-    const QString path = rawPath.trimmed();
+    QString path = rawPath.trimmed();
     if (path.startsWith(QStringLiteral("file://"), Qt::CaseInsensitive)) {
         return QUrl(path).toLocalFile();
     }
@@ -269,7 +270,7 @@ void collectPathSyntaxStats(const QJsonValue& value, int* windowsCount, int* uni
 
     if (value.isArray()) {
         const QJsonArray array = value.toArray();
-        for (const QJsonValue& item : array) {
+        for (const auto& item : array) {
             collectPathSyntaxStats(item, windowsCount, unixCount);
         }
     }
@@ -302,7 +303,7 @@ QString detectDumpOsFamily(const QJsonObject& appObject,
                            const QJsonObject& settingsObject,
                            const QByteArray& pinnedLinksXmlData)
 {
-    const QString explicitOsFamily = normalizeOsFamilyName(appObject.value(QStringLiteral("osFamily")).toString());
+    QString explicitOsFamily = normalizeOsFamilyName(appObject.value(QStringLiteral("osFamily")).toString());
     if (!explicitOsFamily.isEmpty()) {
         return explicitOsFamily;
     }
@@ -611,7 +612,7 @@ void UIStateSerializer::setLinkManagerWrapper(LinkManagerWrapper* linkManagerWra
 
 QString UIStateSerializer::normalizePath(const QString& path)
 {
-    const QString trimmedPath = path.trimmed();
+    QString trimmedPath = path.trimmed();
     if (trimmedPath.isEmpty()) {
         return QString();
     }
@@ -694,7 +695,7 @@ QString UIStateSerializer::currentAppVersion() const
 
 QString UIStateSerializer::currentMajorMinorVersion() const
 {
-    const QString majorMinorVersion = majorMinorFromVersion(currentAppVersion());
+    QString majorMinorVersion = majorMinorFromVersion(currentAppVersion());
     if (!majorMinorVersion.isEmpty()) {
         return majorMinorVersion;
     }
@@ -855,7 +856,7 @@ QByteArray UIStateSerializer::loadPinnedLinksXmlDataForExport() const
         return QByteArray();
     }
 
-    const QByteArray fileXmlData = pinnedLinksFile.readAll();
+    QByteArray fileXmlData = pinnedLinksFile.readAll();
     if (!looksLikePinnedLinksXmlPayload(fileXmlData)) {
         return QByteArray();
     }
