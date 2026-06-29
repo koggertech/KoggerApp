@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <functional>
 #include <QDebug>
@@ -32,14 +33,14 @@ static inline float shortestDiff(float from, float to)
 namespace map {
 
 /*data*/
-inline const QVector<QVector2D> kTextureCoords = {
+inline constexpr std::array<QVector2D, 4> kTextureCoords = {{
     {0.0f, 0.0f},
     {1.0f, 0.0f},
     {1.0f, 1.0f},
     {0.0f, 1.0f}
-};
+}};
 
-inline const QVector<int> kIndices = {
+inline constexpr std::array<int, 6> kIndices = {
     0, 1, 2,
     0, 2, 3
 };

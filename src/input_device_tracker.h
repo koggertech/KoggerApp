@@ -3,6 +3,8 @@
 #include <QObject>
 #include <QColor>
 
+#include <cstdint>
+
 class QEvent;
 
 class InputDeviceTracker : public QObject
@@ -32,7 +34,7 @@ protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
-    enum class Mode {
+    enum class Mode : std::uint8_t {
         MouseKeyboard,
         TouchScreen,
     };
