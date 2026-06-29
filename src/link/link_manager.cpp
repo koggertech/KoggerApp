@@ -359,7 +359,7 @@ bool LinkManager::parsePinnedLinksXmlData(const QByteArray& xmlData, QList<Pinne
         }
 
         PinnedLinkRecord record;
-        while (!(xmlReader.tokenType() == QXmlStreamReader::EndElement && xmlReader.name() == QStringLiteral("link"))) {
+        while (xmlReader.tokenType() != QXmlStreamReader::EndElement || xmlReader.name() != QStringLiteral("link")) {
             xmlReader.readNext();
             if (xmlReader.atEnd()) {
                 break;
