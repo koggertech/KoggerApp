@@ -2,6 +2,8 @@
 
 #include "plot2D_line.h"
 
+#include <cstdint>
+
 class QColor;
 class QPainter;
 class Plot2D;
@@ -18,7 +20,7 @@ public:
 
 
     // Bit flags for setLineFilter
-    enum LineFlag {
+    enum LineFlag : std::uint8_t {
         LineX   = 1 << 0,
         LineY   = 1 << 1,
         LineZ   = 1 << 2,

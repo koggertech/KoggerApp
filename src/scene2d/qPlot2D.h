@@ -15,6 +15,7 @@ class qPlot2D : public QQuickPaintedItem, public Plot2D
 {
     Q_OBJECT
 public:
+    // NOLINTBEGIN(bugprone-derived-method-shadowing-base-method): QML bridge intentionally re-exposes Plot2D methods as Q_INVOKABLE
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal NOTIFY plotHorizontalChanged)
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
     Q_PROPERTY(float viewportRatio READ viewportRatio NOTIFY timelinePositionChanged)
@@ -290,4 +291,5 @@ private:
     int zoomPreviewEpochIndx_ = -1;
     float zoomPreviewDepth_ = 0.0f;
     bool zoomPreviewFlipY_ = false;
+    // NOLINTEND(bugprone-derived-method-shadowing-base-method)
 };
