@@ -24,16 +24,16 @@ Column {
         contentSpacing: Tokens.spaceMd
 
         headerActions: KCircleIconButton {
-            readonly property bool _rec: typeof core !== "undefined" && core && core.loggingKlf
+            readonly property bool _rec: typeof core !== "undefined" && core && (core.loggingKlf || core.loggingCsv)
             width: connGroup.headerActionSize
             height: connGroup.headerActionSize
-            glyph: "KLF"
-            glyphPixelSize: Math.round(width * 0.34)
+            glyph: "REC"
+            glyphPixelSize: Math.round(width * 0.30)
             glyphColor:  _rec ? "#FCA5A5" : AppPalette.textSecond
-            toolTipText: _rec ? qsTr("Stop KLF logging") : qsTr("Start KLF logging")
+            toolTipText: _rec ? qsTr("Stop recording") : qsTr("Start recording")
             fillColor:   _rec ? "#7F1D1D" : AppPalette.card
             borderColor: _rec ? "#EF4444" : AppPalette.border
-            onClicked: if (typeof core !== "undefined" && core) core.setKlfLogging(!core.loggingKlf)
+            onClicked: if (root.store) root.store.setRecording(!root.store.isRecording)
         }
 
         Loader {

@@ -20,6 +20,10 @@ public:
     void setDatasetPtr(Dataset* datasetPtr);
     QString klfLogFilePath() const { return klfLogFile_ ? klfLogFile_->fileName() : QString(); }
     QString csvLogFilePath() const { return csvLogFile_ ? csvLogFile_->fileName() : QString(); }
+    void setLogDirectory(const QString& dir) { logDirectory_ = dir; }
+    QString logDirectory() const;
+    qint64 activeLogSizeBytes() const;
+    int activeLogDurationSecs() const;
 
 signals:
     void loggingKlfStarted(bool started);
@@ -75,4 +79,6 @@ private:
     bool exportWriteFailed_ = false;
     Dataset* datasetPtr_;
     int klfCurrentIteration_;
+    qint64 recordStartMs_ = 0;
+    QString logDirectory_;
 };

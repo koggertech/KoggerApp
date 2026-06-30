@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
+#include <QUrl>
 #include <QStandardPaths>
 #include <QDateTime>
 #include "bottom_track.h"
@@ -995,6 +996,47 @@ void Core::setKlfLogging(bool isLogging)
     isLoggingKlf_ = isLogging && success;
 
     emit loggingKlfChanged();
+}
+
+QString Core::klfLogFilePath() const
+{
+    return logger_.klfLogFilePath();
+}
+
+QString Core::csvLogFilePath() const
+{
+    return logger_.csvLogFilePath();
+}
+
+qint64 Core::activeLogSizeBytes() const
+{
+    return logger_.activeLogSizeBytes();
+}
+
+int Core::activeLogDurationSecs() const
+{
+    return logger_.activeLogDurationSecs();
+}
+
+void Core::setLogDirectory(const QString& dir)
+{
+    QString clean = dir;
+    if (clean.startsWith(QStringLiteral("file:"))) {
+        clean = QUrl(clean).toLocalFile();   // accept a URL too; Logger needs a local path
+    }
+    logger_.setLogDirectory(clean);
+}
+
+QString Core::logDirectory() const
+{
+    return logger_.logDirectory();
+}
+
+QString Core::logDirectoryUrl() const
+{
+    const QString dir = logger_.logDirectory();
+    QDir().mkpath(dir);                       // ensure it exists so the dialog opens there
+    return QUrl::fromLocalFile(dir).toString();
 }
 
 bool Core::getFixBlackStripesState() const

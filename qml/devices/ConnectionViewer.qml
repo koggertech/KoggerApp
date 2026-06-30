@@ -637,7 +637,7 @@ Column {
     // ── Action buttons (4 per row, equal width) ───────────────────────────
 
     Text {
-        text: qsTr("Add connection, start recording:")
+        text: qsTr("Add connection:")
         color: AppPalette.textMuted
         font.pixelSize: Tokens.fontXs
         leftPadding: Tokens.spaceXxs
@@ -665,46 +665,6 @@ Column {
         }
 
         KButton {
-            id: loggingCheck
-            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
-            text: qsTr("● KLF")
-            checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
-            onCheckedChanged: {
-                core.setKlfLogging(checked)
-                if (checked !== core.loggingKlf) checked = core.loggingKlf
-            }
-            Component.onCompleted: {
-                if (checked !== core.loggingKlf) checked = core.loggingKlf
-            }
-            Connections {
-                target: core
-                function onLoggingKlfChanged() {
-                    if (loggingCheck.checked !== core.loggingKlf) loggingCheck.checked = core.loggingKlf
-                }
-            }
-        }
-
-        KButton {
-            id: loggingCheck2
-            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
-            text: qsTr("● CSV")
-            checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
-            onCheckedChanged: {
-                core.setCsvLogging(checked)
-                if (checked !== core.loggingCsv) checked = core.loggingCsv
-            }
-            Component.onCompleted: {
-                if (checked !== core.loggingCsv) checked = core.loggingCsv
-            }
-            Connections {
-                target: core
-                function onLoggingCsvChanged() {
-                    if (loggingCheck2.checked !== core.loggingCsv) loggingCheck2.checked = core.loggingCsv
-                }
-            }
-        }
-
-        KButton {
             id: mavlinkProxy
             width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
             text: qsTr("MAVProxy")
@@ -719,6 +679,237 @@ Column {
             visible: false
             width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
             text: qsTr("Import")
+        }
+    }
+
+    // ── Recording row (gear + status marquee + size/time + REC) ───────────
+
+    Text {
+        text: qsTr("Recording:")
+        color: AppPalette.textMuted
+        font.pixelSize: Tokens.fontXs
+        leftPadding: Tokens.spaceXxs
+    }
+
+    Rectangle {
+        id: recRow
+        width: parent.width
+        radius: Tokens.radiusMd
+        readonly property bool active: !!(core.loggingKlf || core.loggingCsv)
+        color: active ? "#7F1D1D" : AppPalette.card
+        border.width: 1
+        border.color: active ? "#EF4444" : AppPalette.border
+        implicitHeight: recCol.implicitHeight + 2 * Tokens.spaceXs
+        Behavior on color { ColorAnimation { duration: Anim.fadeMs } }
+        Behavior on border.color { ColorAnimation { duration: Anim.fadeMs } }
+
+        property int recSeconds: 0
+        property int recBytes: 0
+        function _refresh() {
+            recSeconds = core.activeLogDurationSecs()
+            recBytes = core.activeLogSizeBytes()
+        }
+        onActiveChanged: { _refresh(); if (active) recGear.checked = false }   // collapse + lock settings during recording
+        Component.onCompleted: _refresh()
+        Timer {
+            interval: 1000; repeat: true; running: recRow.active
+            onTriggered: recRow._refresh()
+        }
+
+        function _fmtDur(s) {
+            var m = Math.floor(s / 60), ss = s % 60
+            return (m < 10 ? "0" : "") + m + ":" + (ss < 10 ? "0" : "") + ss
+        }
+        function _fmtSize(b) {
+            if (b < 1024) return b + " B"
+            if (b < 1048576) return (b / 1024).toFixed(1) + " KB"
+            return (b / 1048576).toFixed(1) + " MB"
+        }
+        function _activePath() {
+            if (core.loggingKlf) return core.klfLogFilePath()
+            if (core.loggingCsv) return core.csvLogFilePath()
+            return ""
+        }
+
+        Column {
+            id: recCol
+            anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
+            anchors.leftMargin: Tokens.spaceXs; anchors.rightMargin: Tokens.spaceXs; anchors.topMargin: Tokens.spaceXs
+            spacing: Tokens.spaceXs
+
+            RowLayout {
+                width: parent.width
+                height: Tokens.controlHMd
+                spacing: Tokens.spaceXs
+
+                IconBtn {
+                    id: recGear
+                    checkable: true
+                    visible: !recRow.active                 // hidden while recording
+                    iconSource: "qrc:/icons/ui/settings.svg"
+                    toolTipText: qsTr("Recording settings")
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                }
+
+                Item {
+                    id: marqueeClip
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    readonly property int pad: Tokens.spaceMd
+
+                    Text {
+                        id: recStatus
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: recRow.active ? recRow._activePath()
+                              : (store.recordKlf && store.recordCsv ? qsTr("Press REC to record KLF and CSV logs")
+                                 : store.recordCsv ? qsTr("Press REC to record CSV log")
+                                 : qsTr("Press REC to record KLF log"))
+                        color: recRow.active ? "#FFFFFF" : AppPalette.textMuted
+                        font.pixelSize: Tokens.fontSm
+                        readonly property bool overflow: (width + 2 * marqueeClip.pad) > marqueeClip.width
+                        readonly property real leftEnd: marqueeClip.width - width - marqueeClip.pad   // symmetric right gap; fade is off at this end so the tail stays readable
+                        x: marqueeClip.pad
+                        onOverflowChanged: if (!overflow) x = marqueeClip.pad
+                        // ping-pong: pause right → glide left → pause left → glide back (same speed)
+                        SequentialAnimation on x {
+                            running: recStatus.overflow
+                            loops: Animation.Infinite
+                            PauseAnimation { duration: 1500 }
+                            NumberAnimation { to: recStatus.leftEnd; duration: Math.max(1500, recStatus.width * 6); easing.type: Easing.InOutSine }
+                            PauseAnimation { duration: 1500 }
+                            NumberAnimation { to: marqueeClip.pad; duration: Math.max(1500, recStatus.width * 6); easing.type: Easing.InOutSine }
+                        }
+                    }
+
+                    // edge fade-out — only on the side where text is still hidden
+                    Rectangle {
+                        anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+                        width: marqueeClip.pad * 2
+                        visible: recStatus.overflow && recStatus.x < marqueeClip.pad - 1   // start scrolled past left edge
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: recRow.color }
+                            GradientStop { position: 1.0; color: "transparent" }
+                        }
+                    }
+                    Rectangle {
+                        anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
+                        width: marqueeClip.pad * 2
+                        visible: recStatus.overflow && recStatus.x > recStatus.leftEnd + 1   // tail still past right edge
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: "transparent" }
+                            GradientStop { position: 1.0; color: recRow.color }
+                        }
+                    }
+                }
+
+                Text {
+                    visible: recRow.active
+                    text: recRow._fmtSize(recRow.recBytes) + "  •  " + recRow._fmtDur(recRow.recSeconds)
+                    color: "#FFFFFF"
+                    font.pixelSize: Tokens.fontBase
+                    font.bold: true
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.rightMargin: Tokens.spaceXxs
+                }
+
+                KButton {
+                    id: recBtn
+                    checkable: true
+                    checked: recRow.active                  // follows real recording state (no race)
+                    text: recRow.active ? qsTr("■ STOP") : qsTr("● REC")
+                    fontPixelSize: Tokens.fontSm
+                    checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
+                    Layout.preferredWidth: recBtn.implicitWidth
+                    Layout.preferredHeight: Tokens.controlHMd
+                    Layout.alignment: Qt.AlignVCenter
+                    onClicked: {
+                        store.setRecording(!recRow.active)
+                        checked = Qt.binding(function() { return recRow.active })   // click toggled it; rebind to truth
+                    }
+                }
+            }
+
+            Column {
+                visible: recGear.checked
+                width: parent.width
+                spacing: Tokens.spaceXs
+                topPadding: Tokens.spaceXxs
+
+                Text {
+                    text: qsTr("Log folder:")
+                    color: AppPalette.textMuted
+                    font.pixelSize: Tokens.fontXs
+                }
+
+                Row {
+                    width: parent.width
+                    spacing: Tokens.spaceSm
+
+                    Rectangle {
+                        width: logBrowseBtn.visible ? parent.width - logBrowseBtn.width - parent.spacing : parent.width
+                        height: Tokens.controlHMd
+                        radius: Tokens.radiusSm
+                        color: AppPalette.card
+                        border.width: 1; border.color: AppPalette.border
+                        Text {
+                            anchors.fill: parent
+                            anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceSm
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideMiddle
+                            text: store.recordFolder.length ? store.recordFolder : core.logDirectory()
+                            color: AppPalette.textMuted
+                            font.pixelSize: Tokens.fontSm
+                        }
+                    }
+
+                    KButton {
+                        id: logBrowseBtn
+                        visible: Qt.platform.os !== "android"   // Android: fixed default dir, no folder picker
+                        text: qsTr("Browse…")
+                        fontPixelSize: Tokens.fontSm
+                        height: Tokens.controlHMd
+                        width: Math.round(96 * AppPalette.scale)
+                        onClicked: {
+                            core.setLogDirectory(store.recordFolder)            // sync selection (empty = default)
+                            logFolderDialog.currentFolder = core.logDirectoryUrl()  // existing dir as start location
+                            logFolderDialog.open()
+                        }
+                    }
+                }
+
+                FolderDialog {
+                    id: logFolderDialog
+                    title: qsTr("Select log folder")
+                    onAccepted: {
+                        var p = connectionViewer.urlSource("" + selectedFolder)   // url → local path (strips file://)
+                        store.recordFolder = p
+                        core.setLogDirectory(p)
+                    }
+                }
+
+                KSwitch {
+                    width: parent.width
+                    text: qsTr("KLF")
+                    checked: store.recordKlf
+                    onToggled: {
+                        if (!checked && !store.recordCsv) { checked = Qt.binding(function() { return store.recordKlf }); return }   // keep at least one type
+                        store.recordKlf = checked
+                    }
+                }
+                KSwitch {
+                    width: parent.width
+                    text: qsTr("CSV")
+                    checked: store.recordCsv
+                    onToggled: {
+                        if (!checked && !store.recordKlf) { checked = Qt.binding(function() { return store.recordCsv }); return }
+                        store.recordCsv = checked
+                    }
+                }
+            }
         }
     }
 

@@ -108,6 +108,13 @@ public:
     int  getFixBlackStripesForwardSteps() const;
     int  getFixBlackStripesBackwardSteps() const;
     bool getCsvLogging() const;
+    Q_INVOKABLE QString klfLogFilePath() const;
+    Q_INVOKABLE QString csvLogFilePath() const;
+    Q_INVOKABLE qint64  activeLogSizeBytes() const;
+    Q_INVOKABLE int     activeLogDurationSecs() const;
+    Q_INVOKABLE void    setLogDirectory(const QString& dir);
+    Q_INVOKABLE QString logDirectory() const;
+    Q_INVOKABLE QString logDirectoryUrl() const;
     bool getUseGPS() const;
     bool getNeedForceZooming() const { return needForceZooming_; }
 

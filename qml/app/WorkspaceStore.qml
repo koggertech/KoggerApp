@@ -389,13 +389,33 @@ onAimSoundSpeedChanged: applyAimFieldsToCore()
 property Settings loggingPersist: Settings {
     id: loggingPersist
     category: "main/logging"
-    property bool loggingCheck: false   // KLF
-    property bool loggingCheck2: false  // CSV
+    property bool loggingCheck: false   // KLF active state (for restore)
+    property bool loggingCheck2: false  // CSV active state (for restore)
+    property bool recordKlf: true       // selected record type (REC starts these)
+    property bool recordCsv: false
+    property string recordFolder: ""    // log output dir (empty = default Documents/KoggerApp/logs)
+}
+
+property alias recordKlf: loggingPersist.recordKlf
+property alias recordCsv: loggingPersist.recordCsv
+property alias recordFolder: loggingPersist.recordFolder
+
+readonly property bool isRecording: (typeof core !== "undefined" && core) ? (core.loggingKlf || core.loggingCsv) : false
+
+function setRecording(on) {
+    if (typeof core === "undefined" || !core)
+        return
+    if (on)
+        core.setLogDirectory(recordFolder)
+    core.setKlfLogging(on && recordKlf)
+    core.setCsvLogging(on && recordCsv)
 }
 
 function restoreLoggingFromSettings() {
     if (typeof core === "undefined" || !core)
         return
+    if (loggingPersist.loggingCheck || loggingPersist.loggingCheck2)
+        core.setLogDirectory(recordFolder)
     core.setKlfLogging(loggingPersist.loggingCheck)
     core.setCsvLogging(loggingPersist.loggingCheck2)
 }
