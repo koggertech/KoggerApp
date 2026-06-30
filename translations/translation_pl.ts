@@ -2444,6 +2444,18 @@
 <context>
     <name>HotActionsPanel</name>
     <message>
+        <source>Recording</source>
+        <translation>Nagrywanie</translation>
+    </message>
+    <message>
+        <source>Stop recording</source>
+        <translation>Zatrzymaj nagrywanie</translation>
+    </message>
+    <message>
+        <source>Recording settings</source>
+        <translation>Ustawienia nagrywania</translation>
+    </message>
+    <message>
         <source>Hide extra info</source>
         <translation>Ukryj informacje</translation>
     </message>

@@ -2428,6 +2428,18 @@
 <context>
     <name>HotActionsPanel</name>
     <message>
+        <source>Recording</source>
+        <translation>Recording</translation>
+    </message>
+    <message>
+        <source>Stop recording</source>
+        <translation>Stop recording</translation>
+    </message>
+    <message>
+        <source>Recording settings</source>
+        <translation>Recording settings</translation>
+    </message>
+    <message>
         <source>Hide extra info</source>
         <translation>Hide extra info</translation>
     </message>

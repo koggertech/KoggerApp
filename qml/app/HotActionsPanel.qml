@@ -435,18 +435,27 @@ Item {
 
         readonly property bool _klf: typeof core !== "undefined" && core && core.loggingKlf
         readonly property bool _csv: typeof core !== "undefined" && core && core.loggingCsv
+        readonly property real _hoverScale: badgeMa.pressed ? 0.97 : (badgeMa.containsMouse ? 1.035 : 1.0)
+
+        onVisibleChanged: if (!visible && pill.opened) pill.close()
 
         Rectangle {
             anchors.fill: parent
             radius: width / 2
-            color: root.buttonFillColor
+            scale: logBadge._hoverScale
+            color: badgeMa.containsMouse ? root.buttonHoverColor : root.buttonFillColor
             border.width: 1
-            border.color: "#EF4444"
+            border.color: badgeMa.containsMouse ? Qt.lighter("#EF4444", 1.15) : "#EF4444"
+            Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+            Behavior on border.color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         }
 
         Column {
             anchors.centerIn: parent
+            scale: logBadge._hoverScale
             spacing: Math.round(1 * root._s)
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
             Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -491,12 +500,188 @@ Item {
         }
 
         MouseArea {
+            id: badgeMa
             anchors.fill: parent
             enabled: logBadge.visible
+            hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                root.loggingIndicatorTriggered()
-                root.expanded = false
+            onClicked: pill.opened ? pill.close() : pill.open()
+        }
+
+        KToolTip { text: qsTr("Recording"); shown: badgeMa.containsMouse && !pill.opened }
+
+        Timer {
+            running: pill.visible
+            interval: 1000
+            repeat: true
+            onTriggered: pill.refresh()
+        }
+
+        Popup {
+            id: pill
+            readonly property int pad: Math.round(4 * root._s)
+            x: -pad
+            y: -pad
+            width: logBadge.width + 2 * pad
+            padding: pad
+            closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+
+            property int sizeB: 0
+            property int secs: 0
+            function refresh() {
+                if (typeof core === "undefined" || !core) return
+                pill.sizeB = core.activeLogSizeBytes()
+                pill.secs  = core.activeLogDurationSecs()
+            }
+            function fmtSize(b) {
+                if (b < 1024) return b + " B"
+                var kb = b / 1024
+                if (kb < 1024) return (kb < 10 ? kb.toFixed(1) : Math.round(kb)) + " KB"
+                var mb = kb / 1024
+                if (mb < 1024) return (mb < 10 ? mb.toFixed(1) : Math.round(mb)) + " MB"
+                var gb = mb / 1024
+                return (gb < 10 ? gb.toFixed(1) : Math.round(gb)) + " GB"
+            }
+            function fmtTime(s) {
+                var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60
+                function p(n) { return (n < 10 ? "0" : "") + n }
+                return h > 0 ? (h + ":" + p(m) + ":" + p(ss)) : (p(m) + ":" + p(ss))
+            }
+            onOpened: refresh()
+
+            background: Rectangle {
+                color: AppPalette.bg
+                radius: width / 2
+                border.width: 1
+                border.color: "#EF4444"
+            }
+
+            contentItem: Column {
+                spacing: Math.round(5 * root._s)
+
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: logBadge.width; height: width
+                    radius: width / 2
+                    color: root.buttonFillColor
+                    border.width: 1
+                    border.color: "#EF4444"
+
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: Math.round(1 * root._s)
+
+                        Rectangle {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: Math.round(8 * root._s); height: width
+                            radius: width / 2
+                            color: "#EF4444"
+                            SequentialAnimation on opacity {
+                                running: pill.visible
+                                loops: Animation.Infinite
+                                NumberAnimation { to: 0.3; duration: 650; easing.type: Easing.InOutQuad }
+                                NumberAnimation { to: 1.0; duration: 650; easing.type: Easing.InOutQuad }
+                            }
+                        }
+                        Column {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            spacing: 0
+                            Text {
+                                visible: logBadge._klf
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "KLF"; color: "#EF4444"
+                                font.pixelSize: Math.round(9 * root._s); font.bold: true
+                                lineHeight: 0.82; lineHeightMode: Text.ProportionalHeight
+                            }
+                            Text {
+                                visible: logBadge._csv
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "CSV"; color: "#EF4444"
+                                font.pixelSize: Math.round(9 * root._s); font.bold: true
+                                lineHeight: 0.82; lineHeightMode: Text.ProportionalHeight
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: pill.close()
+                    }
+                }
+
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: logBadge.width; height: width
+                    radius: width / 2
+                    color: stopMa.containsMouse ? "#991B1B" : "#7F1D1D"
+                    border.width: 1
+                    border.color: "#EF4444"
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: Math.round(logBadge.width * 0.3); height: width
+                        radius: Math.round(2 * root._s)
+                        color: "#FFFFFF"
+                    }
+                    MouseArea {
+                        id: stopMa
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (root.store) root.store.setRecording(false)
+                            pill.close()
+                        }
+                    }
+                    KToolTip { text: qsTr("Stop recording"); shown: stopMa.containsMouse }
+                }
+
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: logBadge.width; height: width
+                    radius: width / 2
+                    color: gearMa.containsMouse ? AppPalette.cardHover : AppPalette.card
+                    border.width: 1
+                    border.color: AppPalette.border
+                    Image {
+                        anchors.centerIn: parent
+                        width: Math.round(logBadge.width * 0.5); height: width
+                        source: "qrc:/icons/ui/settings.svg"
+                        fillMode: Image.PreserveAspectFit
+                        opacity: 0.85
+                    }
+                    MouseArea {
+                        id: gearMa
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.loggingIndicatorTriggered()
+                            pill.close()
+                            root.expanded = false
+                        }
+                    }
+                    KToolTip { text: qsTr("Recording settings"); shown: gearMa.containsMouse }
+                }
+
+                Column {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 0
+                    bottomPadding: Math.round(3 * root._s)
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: pill.fmtSize(pill.sizeB)
+                        color: AppPalette.text
+                        font.pixelSize: Math.round(9 * root._s)
+                        font.bold: true
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: pill.fmtTime(pill.secs)
+                        color: AppPalette.textMuted
+                        font.pixelSize: Math.round(9 * root._s)
+                    }
+                }
             }
         }
     }
