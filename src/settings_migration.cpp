@@ -7,7 +7,7 @@
 
 namespace {
 
-constexpr int kCurrentSchemaVersion = 6;
+constexpr int kCurrentSchemaVersion = 8;
 
 void migrateSettingsGroup(QSettings& settings, const QString& from, const QString& to)
 {
@@ -209,6 +209,79 @@ void migrateToV5(QSettings& settings)
     }
 }
 
+void mergeGroupIntoDomain(QSettings& settings, const QString& from, const QString& to)
+{
+    settings.beginGroup(from);
+    const QStringList keys = settings.childKeys();
+    settings.endGroup();
+    for (const QString& key : keys) {
+        const QString dst = to + QLatin1Char('/') + key;
+        if (!settings.contains(dst)) {
+            settings.setValue(dst, settings.value(from + QLatin1Char('/') + key));
+        }
+        settings.remove(from + QLatin1Char('/') + key);
+    }
+}
+
+void migrateToV7(QSettings& settings)
+{
+    mergeGroupIntoDomain(settings, QStringLiteral("workspace"),         QStringLiteral("main/workspace"));
+    mergeGroupIntoDomain(settings, QStringLiteral("ui"),                QStringLiteral("main/ui"));
+    mergeGroupIntoDomain(settings, QStringLiteral("csv_export_fields"), QStringLiteral("main/csvExportFields"));
+    mergeGroupIntoDomain(settings, QStringLiteral("scene3d"),           QStringLiteral("scene3d/view"));
+    mergeGroupIntoDomain(settings, QStringLiteral("scene3d_ui"),        QStringLiteral("scene3d/ui"));
+    mergeGroupIntoDomain(settings, QStringLiteral("CameraView"),        QStringLiteral("scene3d/cameraView"));
+    mergeGroupIntoDomain(settings, QStringLiteral("LLARef"),            QStringLiteral("scene3d/llaRef"));
+    mergeGroupIntoDomain(settings, QStringLiteral("Map"),               QStringLiteral("scene3d/map"));
+    mergeGroupIntoDomain(settings, QStringLiteral("echogram_aim"),      QStringLiteral("scene2d/echogramAim"));
+    mergeGroupIntoDomain(settings, QStringLiteral("echogram_loupe"),    QStringLiteral("scene2d/echogramLoupe"));
+    mergeGroupIntoDomain(settings, QStringLiteral("echogram_sync"),     QStringLiteral("scene2d/echogramSync"));
+    for (int i = 1; i <= 6; ++i) {
+        const QString suffix = QString::number(i);
+        mergeGroupIntoDomain(settings, QStringLiteral("Plot2D_") + suffix, QStringLiteral("scene2d/plot2d/") + suffix);
+    }
+}
+
+void mergeGroupAndDropFolder(QSettings& settings, const QString& from, const QString& to)
+{
+    settings.beginGroup(from);
+    const QStringList keys = settings.childKeys();
+    settings.endGroup();
+    for (const QString& key : keys) {
+        const QString dst = to + QLatin1Char('/') + key;
+        if (!settings.contains(dst)) {
+            settings.setValue(dst, settings.value(from + QLatin1Char('/') + key));
+        }
+    }
+    if ((to + QLatin1Char('/')).startsWith(from + QLatin1Char('/'))) {
+        for (const QString& key : keys) {                 // self-nest: keep parent, drop direct keys
+            settings.remove(from + QLatin1Char('/') + key);
+        }
+    }
+    else {
+        settings.remove(from);                            // drop whole group incl. empty folder
+    }
+}
+
+void migrateToV8(QSettings& settings)
+{
+    mergeGroupAndDropFolder(settings, QStringLiteral("workspace"),         QStringLiteral("main/workspace"));
+    mergeGroupAndDropFolder(settings, QStringLiteral("ui"),                QStringLiteral("main/ui"));
+    mergeGroupAndDropFolder(settings, QStringLiteral("csv_export_fields"), QStringLiteral("main/csvExportFields"));
+    mergeGroupAndDropFolder(settings, QStringLiteral("scene3d"),           QStringLiteral("scene3d/view"));
+    mergeGroupAndDropFolder(settings, QStringLiteral("scene3d_ui"),        QStringLiteral("scene3d/ui"));
+    mergeGroupAndDropFolder(settings, QStringLiteral("CameraView"),        QStringLiteral("scene3d/cameraView"));
+    mergeGroupAndDropFolder(settings, QStringLiteral("LLARef"),            QStringLiteral("scene3d/llaRef"));
+    mergeGroupAndDropFolder(settings, QStringLiteral("Map"),               QStringLiteral("scene3d/map"));
+    mergeGroupAndDropFolder(settings, QStringLiteral("echogram_aim"),      QStringLiteral("scene2d/echogramAim"));
+    mergeGroupAndDropFolder(settings, QStringLiteral("echogram_loupe"),    QStringLiteral("scene2d/echogramLoupe"));
+    mergeGroupAndDropFolder(settings, QStringLiteral("echogram_sync"),     QStringLiteral("scene2d/echogramSync"));
+    for (int i = 1; i <= 6; ++i) {
+        const QString suffix = QString::number(i);
+        mergeGroupAndDropFolder(settings, QStringLiteral("Plot2D_") + suffix, QStringLiteral("scene2d/plot2d/") + suffix);
+    }
+}
+
 }
 
 void migrateSettingsSchema()
@@ -236,6 +309,12 @@ void migrateSettingsSchema()
     }
     if (version < 6) {
         migrateToV6(settings);
+    }
+    if (version < 7) {
+        migrateToV7(settings);
+    }
+    if (version < 8) {
+        migrateToV8(settings);
     }
 
     settings.setValue(QStringLiteral("schemaVersion"), kCurrentSchemaVersion);
