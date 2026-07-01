@@ -25,12 +25,14 @@ Item {
     default property alias contentData: contentColumn.data
     property alias headerActions: headerActionsRow.data
     readonly property int headerActionSize: Math.round(28 * AppPalette.scale)
+    readonly property int _headerH: Math.round(36 * AppPalette.scale)
+    readonly property bool _bodyShown: expandable && (!collapsible || expanded)
 
     property bool _stateReady: false
 
     width: preferredWidth
     implicitWidth: preferredWidth
-    implicitHeight: contentWrapper.implicitHeight
+    implicitHeight: island.height
 
     function loadExpandedState() {
         if (!stateStore || typeof stateStore.isSettingsGroupExpanded !== "function") {
@@ -144,38 +146,12 @@ Item {
         return null
     }
 
-    // Predict the height the group will have once expanded — the binding on
-    // contentCard.height animates over 200ms, so reading root.height at the
-    // moment of expand would give the intermediate value.
+    // Predict the height the group will have once expanded — island.height
+    // animates, so reading root.height mid-expand gives an intermediate value.
+    // bodyCol is always laid out (clipped when collapsed), so its implicitHeight
+    // already reflects the expanded state.
     function _predictedFullHeight() {
-        // Predict height in the EXPANDED state, even if some children are
-        // currently invisible because of the opacity-fade (descriptionLabel)
-        // or zero-height collapse (contentCard). Sum the implicit heights they
-        // will have once the expand animation completes.
-        var h = 0
-        var countedKids = 0
-        for (var i = 0; i < contentWrapper.children.length; ++i) {
-            var c = contentWrapper.children[i]
-            if (!c) continue
-            var ch = 0
-            if (c === contentCard) {
-                ch = contentColumn.implicitHeight + 2 * root.contentPadding
-            } else if (c === descriptionLabel) {
-                // Description label fades via opacity 0/1; its visible flag
-                // is false while collapsed, but implicitHeight is still the
-                // text content height — include it iff there IS a description.
-                ch = root.description.length > 0 ? c.implicitHeight : 0
-            } else if (c.visible) {
-                ch = c.implicitHeight > 0 ? c.implicitHeight : c.height
-            }
-            if (ch > 0) {
-                h += ch
-                countedKids++
-            }
-        }
-        if (countedKids > 1)
-            h += (countedKids - 1) * contentWrapper.spacing
-        return h
+        return root._headerH + Tokens.spaceSm + bodyCol.implicitHeight + root.contentPadding
     }
 
     function _scrollToTop() {
@@ -235,44 +211,58 @@ Item {
         easing.type: Easing.OutCubic
     }
 
-    // Danger underlay — tints the whole group (header + content) when unconfirmed.
     Rectangle {
-        anchors.fill: parent
-        visible: !root.confirmed
-        color: AppPalette.dangerBg
-        border.color: AppPalette.dangerBorder
-        border.width: 1
-        radius: Tokens.radiusLg
-        z: -1
-    }
-
-    Column {
-        id: contentWrapper
-
+        id: island
         width: root.width
-        spacing: Tokens.spaceSm
+        clip: true
+        radius: Tokens.radiusLg
 
-        // ── Header bar ────────────────────────────────────────────────────
-        Rectangle {
-            id: headerBar
-            visible: root.title !== ""
-            width: parent.width
-            height: Math.round(36 * AppPalette.scale)
-            radius: Tokens.radiusLg
-            color: !root.confirmed
-                   ? AppPalette.dangerBg
-                   : (headerMouse.containsMouse ? AppPalette.bgDeep : AppPalette.card)
-            border.width: 1
-            border.color: !root.confirmed
-                          ? AppPalette.dangerBorder
-                          : (root.expanded ? AppPalette.borderFocus : AppPalette.border)
+        // Header colour flows down into the content background — one island.
+        readonly property color _headerColor: !root.confirmed
+                ? AppPalette.dangerBg
+                : (headerMouse.containsMouse ? AppPalette.cardHover : AppPalette.card)
+        readonly property color _bottomColor: !root.confirmed
+                ? AppPalette.dangerBg
+                : (root._bodyShown ? AppPalette.bgDeep : island._headerColor)
+
+        height: root._bodyShown
+                ? headerRow.height + Tokens.spaceSm + bodyCol.implicitHeight + root.contentPadding
+                : headerRow.height
+
+        Behavior on height {
+            NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing }
+        }
+
+        // Gradient blends flush from the header's bottom edge down over one row
+        // (header colour → content bg), not spread over the whole group.
+        readonly property real _seamStart: Math.min(1, headerRow.height / Math.max(1, height))
+        readonly property real _seamEnd: Math.min(1, (headerRow.height * 2) / Math.max(1, height))
+
+        gradient: Gradient {
+            GradientStop { position: 0.0;               color: island._headerColor
+                Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } } }
+            GradientStop { position: island._seamStart; color: island._headerColor
+                Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } } }
+            GradientStop { position: island._seamEnd;   color: island._bottomColor
+                Behavior on color { ColorAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } } }
+            GradientStop { position: 1.0;               color: island._bottomColor
+                Behavior on color { ColorAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } } }
+        }
+
+        // ── Header row ────────────────────────────────────────────────────
+        Item {
+            id: headerRow
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: root._headerH
 
             activeFocusOnTab: root.collapsible
             Keys.onReturnPressed: if (root.collapsible && root.expandable) root.expanded = !root.expanded
             Keys.onEnterPressed:  if (root.collapsible && root.expandable) root.expanded = !root.expanded
             Keys.onSpacePressed:  if (root.collapsible && root.expandable) root.expanded = !root.expanded
 
-            KFocusRing { id: focusRing; radius: parent.radius }
+            KFocusRing { id: focusRing; radius: Tokens.radiusLg }
 
             Rectangle {
                 width: Math.round(4 * AppPalette.scale)
@@ -324,7 +314,7 @@ Item {
                 onPressed: if (root.collapsible && root.expandable) focusRing.suppress()
                 onClicked: {
                     if (root.collapsible && root.expandable) {
-                        headerBar.forceActiveFocus()
+                        headerRow.forceActiveFocus()
                         root.expanded = !root.expanded
                     }
                 }
@@ -340,54 +330,47 @@ Item {
             }
         }
 
-        // ── Optional subtitle / description ──────────────────────────────
-        // Opacity-fades together with the card for a smooth expand/collapse.
-        Text {
-            id: descriptionLabel
-            visible: root.description.length > 0 && opacity > 0.01
-            text: root.description
-            color: AppPalette.textMuted
-            font.pixelSize: Tokens.fontSm
-            wrapMode: Text.WordWrap
-            width: parent.width
-            leftPadding: Tokens.spaceXxs
-            opacity: (root.expandable && (!root.collapsible || root.expanded)) ? 1.0 : 0.0
-            Behavior on opacity {
-                NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
-            }
-        }
+        // ── Body: description + content (clipped while collapsed) ─────────
+        // Kept laid out (not visible:false) while collapsed so its implicitHeight
+        // stays valid for the expand animation and scroll prediction; `enabled`
+        // instead of `visible` keeps the clipped controls out of the Tab chain
+        // and input without zeroing that implicitHeight.
+        Column {
+            id: bodyCol
+            anchors.top: headerRow.bottom
+            anchors.topMargin: Tokens.spaceSm
+            x: root.contentPadding
+            width: island.width - 2 * root.contentPadding
+            spacing: Tokens.spaceSm
+            enabled: root._bodyShown
 
-        // ── Dark rounded card containing all group content ───────────────
-        // Animates its height between 0 (collapsed) and full content height
-        // (expanded). `clip: true` hides content during the shrink phase so
-        // children don't peek above/below the card border.
-        Rectangle {
-            id: contentCard
-            clip: true
-            width: parent.width
-            height: (root.expandable && (!root.collapsible || root.expanded))
-                    ? contentColumn.implicitHeight + 2 * root.contentPadding
-                    : 0
-            visible: height > 0.5
-            radius: Tokens.radiusLg
-            color: !root.confirmed ? AppPalette.dangerBg : AppPalette.bgDeep
-            border.color: !root.confirmed ? AppPalette.dangerBorder : AppPalette.border
-            border.width: 1
-
-            Behavior on height {
-                NumberAnimation {
-                    duration: Anim.disclosureMs
-                    easing.type: Anim.disclosureEasing
-                }
+            Text {
+                id: descriptionLabel
+                visible: root.description.length > 0
+                text: root.description
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontSm
+                wrapMode: Text.WordWrap
+                width: parent.width
             }
 
             Column {
                 id: contentColumn
-                x: root.contentPadding
-                y: root.contentPadding
-                width: parent.width - 2 * root.contentPadding
+                width: parent.width
                 spacing: root.contentSpacing
             }
         }
+    }
+
+    // Border drawn on a separate, non-clipped overlay — a bordered Rectangle
+    // with clip:true (the island) loses ~1px of its own border to the clip.
+    Rectangle {
+        anchors.fill: island
+        color: "transparent"
+        radius: island.radius
+        border.width: 1
+        border.color: !root.confirmed
+                ? AppPalette.dangerBorder
+                : (root.expanded ? AppPalette.borderFocus : AppPalette.border)
     }
 }
