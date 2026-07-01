@@ -231,7 +231,7 @@ Column {
             }
         }
 
-        KButton {
+        NavButton {
             width: parent.width
             text: qsTr("Export to CSV")
             onClicked: if (root.store) root.store.openCsvExportSettings()
@@ -453,7 +453,7 @@ Column {
             }
         }
 
-        KButton {
+        NavButton {
             visible: Qt.platform.os !== "android"
             width: parent.width
             text: qsTr("Hotkeys")
@@ -467,19 +467,19 @@ Column {
             onLoaded: { if (item) item.store = root.store }
         }
 
-        KButton {
+        NavButton {
             width: parent.width
             text: qsTr("Quick action menu")
             onClicked: if (root.store) root.store.openQuickActionsSettings()
         }
 
-        KButton {
+        NavButton {
             width: parent.width
             text: qsTr("Extra info panel")
             onClicked: if (root.store) root.store.openExtraInfoSettings()
         }
 
-        KButton {
+        NavButton {
             width: parent.width
             text: qsTr("UI Saving")
             onClicked: if (root.store) root.store.openUiSavingSettings()
@@ -771,7 +771,7 @@ Column {
         }
         Settings { category: "main/dataset"; property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
 
-        KButton {
+        NavButton {
             visible: instruments >= 1
             width: parent.width
             text: qsTr("TGC")
@@ -1811,7 +1811,7 @@ Column {
             }
         }
 
-        KButton {
+        NavButton {
             width: parent.width
             text: qsTr("Information panel")
             onClicked: if (root.store) root.store.openAimPanelSettings()

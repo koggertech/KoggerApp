@@ -27,6 +27,7 @@ qt_add_qml_module(kogger_app
         LayoutSnapshotPreview.qml
         MainWindow.qml
         ModeSettingsPanel.qml
+        NavButton.qml
         NotificationsOverlay.qml
         Pane2DSettingsPage.qml
         Pane2DWindow.qml
