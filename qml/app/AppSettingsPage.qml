@@ -20,6 +20,32 @@ Column {
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
 
+    component ShowIn3DAction: KCircleIconButton {
+        property bool active: false
+        readonly property int _sz: Math.round(28 * AppPalette.scale)
+        width: _sz
+        height: _sz
+        iconSource: active ? "qrc:/icons/ui/eye.svg" : "qrc:/icons/ui/eye-off.svg"
+        iconPixelSize: Math.round(width * 0.64)
+        iconTintColor: active ? AppPalette.text : AppPalette.textSecond
+        toolTipText: qsTr("Show in 3D")
+        fillColor:   active ? AppPalette.accentBgStrong : AppPalette.card
+        borderColor: active ? AppPalette.accentBorder : AppPalette.border
+
+        Text {
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottomMargin: Math.round(1 * AppPalette.scale)
+            text: "3D"
+            color: AppPalette.textMuted
+            opacity: 0.7
+            font.pixelSize: Math.round(parent.width * 0.24)
+            font.bold: true
+            style: Text.Outline
+            styleColor: parent.fillColor
+        }
+    }
+
     // Parameter row card — matches KSwitch's full-width pattern.
     //
     //   [ label                  (interactive area)              [TOGGLE] ]
@@ -795,16 +821,8 @@ Column {
         description: qsTr("Vessel track displayed in the 3D scene.")
         stateStore: root.store
         stateKey: "app.boattrack"
-        headerActions: KCircleIconButton {
-            readonly property bool _on: root.store ? root.store.boatTrackVisible : false
-            width: boatTrackGroup.headerActionSize
-            height: boatTrackGroup.headerActionSize
-            iconSource: "qrc:/icons/ui/3dcube.svg"
-            iconPixelSize: Math.round(width * 0.58)
-            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
-            toolTipText: qsTr("Show in 3D")
-            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+        headerActions: ShowIn3DAction {
+            active: root.store ? root.store.boatTrackVisible : false
             onClicked: if (root.store) root.store.boatTrackVisible = !root.store.boatTrackVisible
         }
         collapsedByDefault: true
@@ -827,16 +845,8 @@ Column {
         description: qsTr("Bottom detection presets, thresholds and search window.")
         stateStore: root.store
         stateKey: "app.bottomtrack"
-        headerActions: KCircleIconButton {
-            readonly property bool _on: root.store ? root.store.bottomTrackVisible : false
-            width: btGroup.headerActionSize
-            height: btGroup.headerActionSize
-            iconSource: "qrc:/icons/ui/3dcube.svg"
-            iconPixelSize: Math.round(width * 0.58)
-            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
-            toolTipText: qsTr("Show in 3D")
-            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+        headerActions: ShowIn3DAction {
+            active: root.store ? root.store.bottomTrackVisible : false
             onClicked: if (root.store) root.store.bottomTrackVisible = !root.store.bottomTrackVisible
         }
         collapsedByDefault: false
@@ -1093,16 +1103,8 @@ Column {
         description: qsTr("Equal-depth contour lines on the surface.")
         stateStore: root.store
         stateKey: "app.isobaths"
-        headerActions: KCircleIconButton {
-            readonly property bool _on: root.store ? root.store.isobathsVisible : false
-            width: isobathsGroup.headerActionSize
-            height: isobathsGroup.headerActionSize
-            iconSource: "qrc:/icons/ui/3dcube.svg"
-            iconPixelSize: Math.round(width * 0.58)
-            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
-            toolTipText: qsTr("Show in 3D")
-            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+        headerActions: ShowIn3DAction {
+            active: root.store ? root.store.isobathsVisible : false
             onClicked: if (root.store) root.store.isobathsVisible = !root.store.isobathsVisible
         }
         collapsedByDefault: true
@@ -1341,16 +1343,8 @@ Column {
         description: qsTr("Side-scan mosaic visualisation.")
         stateStore: root.store
         stateKey: "app.mosaic"
-        headerActions: KCircleIconButton {
-            readonly property bool _on: root.store ? root.store.mosaicVisible : false
-            width: mosaicGroup.headerActionSize
-            height: mosaicGroup.headerActionSize
-            iconSource: "qrc:/icons/ui/3dcube.svg"
-            iconPixelSize: Math.round(width * 0.58)
-            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
-            toolTipText: qsTr("Show in 3D")
-            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+        headerActions: ShowIn3DAction {
+            active: root.store ? root.store.mosaicVisible : false
             onClicked: if (root.store) root.store.mosaicVisible = !root.store.mosaicVisible
         }
         collapsedByDefault: true
