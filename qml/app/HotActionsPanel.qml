@@ -95,7 +95,7 @@ Item {
     signal deviceTriggered(int devIndex)
 
     readonly property bool _hasConnectedDevice: {
-        var ds = root.devices
+        var ds = root.effectiveDevices
         if (!ds) return false
         for (var i = 0; i < ds.length; ++i)
             if (ds[i] && ds[i].devType !== 0) return true
@@ -105,6 +105,30 @@ Item {
     property var _btSlot: null
 
     readonly property bool _loggingActive: typeof core !== "undefined" && core && (core.loggingKlf || core.loggingCsv)
+
+    readonly property bool _manualTesting: typeof manualTesting !== "undefined" && manualTesting === true
+
+    QtObject {
+        id: fakeDevice
+        property int devType: 1
+        property string devName: "Echosounder"
+        property string fwVersion: "0.0"
+        property int devSN: 0
+        property bool isSonar: true
+        property bool isDoppler: false
+        property bool isUSBL: false
+        property bool isUSBLBeacon: false
+        property bool isRecorder: false
+        property bool isTransducerSupport: true
+        property int transFreq: 700
+        property bool linkConnected: true
+        property bool linkReceivesData: true
+        property bool linkNotAvailable: false
+    }
+
+    readonly property var effectiveDevices: (devices && devices.length > 0)
+                                            ? devices
+                                            : (_manualTesting ? [fakeDevice] : [])
 
     function iconForDevice(d) {
         if (!d) return "qrc:/icons/ui/device-unknown.svg"
@@ -689,49 +713,145 @@ Item {
     Component {
         id: deviceShortcutDelegate
 
-        KCircleIconButton {
+        Item {
+            id: devBadge
             required property var modelData
             required property int index
             readonly property color _fill:   root.linkFillColor(modelData)
             readonly property color _border: root.linkBorderColor(modelData)
+            readonly property bool _transducer: !!(modelData && modelData.isTransducerSupport)
+            readonly property string _tip: modelData
+                         ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]")
+                         : ""
 
             visible: modelData ? (modelData.devType !== 0) : false
             width: visible ? root.controlHeight : 0
             height: root.controlHeight
-            iconSource: root.iconForDevice(modelData)
-            iconTintColor: AppPalette.text
-            toolTipText: modelData
-                         ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]")
-                         : ""
-            fillColor:        _fill
-            fillHoverColor:   _fill
-            fillPressedColor: root.buttonPressedColor
-            borderColor:      _border
-            borderHoverColor: _border
 
-            highlighted: root.highlightedQuickActionKey === "connections"
-            flashToken: root.highlightPulseToken
-            highlightHold: root.draggingKey === "connections"
+            KCircleIconButton {
+                anchors.fill: parent
+                iconSource: root.iconForDevice(devBadge.modelData)
+                iconTintColor: AppPalette.text
+                toolTipText: devBadge._tip
+                fillColor:        devBadge._fill
+                fillHoverColor:   devBadge._fill
+                fillPressedColor: root.buttonPressedColor
+                borderColor:      devBadge._border
+                borderHoverColor: devBadge._border
 
-            onClicked: {
-                if (!modelData) return
-                root.deviceTriggered(index)
-                root.expanded = false
+                highlighted: root.highlightedQuickActionKey === "connections"
+                flashToken: root.highlightPulseToken
+                highlightHold: root.draggingKey === "connections"
+
+                onClicked: devPill.opened ? devPill.close() : devPill.open()
+
+                Text {
+                    visible: !!(devBadge.modelData && devBadge.modelData.isTransducerSupport && devBadge.modelData.transFreq > 0)
+                    anchors.bottom: parent.bottom
+                    anchors.right: parent.right
+                    anchors.bottomMargin: Math.round(2 * root._s)
+                    anchors.rightMargin: Math.round(4 * root._s)
+                    text: (devBadge.modelData && devBadge.modelData.transFreq > 0) ? String(devBadge.modelData.transFreq) : ""
+                    color: AppPalette.text
+                    font.pixelSize: Math.round(9 * root._s)
+                    font.bold: true
+                    style: Text.Outline
+                    styleColor: "#000000B0"
+                }
             }
 
-            // Set sonar frequency (transducer kHz) — small number, bottom-right.
-            Text {
-                visible: !!(modelData && modelData.isTransducerSupport && modelData.transFreq > 0)
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                anchors.bottomMargin: Math.round(2 * root._s)
-                anchors.rightMargin: Math.round(4 * root._s)
-                text: (modelData && modelData.transFreq > 0) ? String(modelData.transFreq) : ""
-                color: AppPalette.text
-                font.pixelSize: Math.round(9 * root._s)
-                font.bold: true
-                style: Text.Outline
-                styleColor: "#000000B0"
+            Popup {
+                id: devPill
+                readonly property int pad: Math.round(4 * root._s)
+                x: -pad
+                y: -pad
+                width: devBadge.width + 2 * pad
+                padding: pad
+                closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+
+                background: Rectangle {
+                    color: AppPalette.bg
+                    radius: width / 2
+                    border.width: 1
+                    border.color: AppPalette.border
+                }
+
+                contentItem: Column {
+                    spacing: Math.round(5 * root._s)
+
+                    KCircleIconButton {
+                        width: devBadge.width; height: width
+                        iconSource: root.iconForDevice(devBadge.modelData)
+                        iconTintColor: AppPalette.text
+                        toolTipText: devBadge._tip
+                        fillColor:        devBadge._fill
+                        fillHoverColor:   devBadge._fill
+                        borderColor:      devBadge._border
+                        borderHoverColor: devBadge._border
+                        onClicked: devPill.close()
+
+                        Text {
+                            visible: !!(devBadge.modelData && devBadge.modelData.isTransducerSupport && devBadge.modelData.transFreq > 0)
+                            anchors.bottom: parent.bottom
+                            anchors.right: parent.right
+                            anchors.bottomMargin: Math.round(2 * root._s)
+                            anchors.rightMargin: Math.round(4 * root._s)
+                            text: (devBadge.modelData && devBadge.modelData.transFreq > 0) ? String(devBadge.modelData.transFreq) : ""
+                            color: AppPalette.text
+                            font.pixelSize: Math.round(9 * root._s)
+                            font.bold: true
+                            style: Text.Outline
+                            styleColor: "#000000B0"
+                        }
+                    }
+
+                    KCircleIconButton {
+                        visible: devBadge._transducer
+                        width: devBadge.width; height: width
+                        glyph: "700"
+                        glyphPixelSize: Math.round(11 * root._s)
+                        readonly property bool _active: devBadge.modelData && devBadge.modelData.transFreq === 700
+                        fillColor:      _active ? AppPalette.accentBgStrong : AppPalette.card
+                        fillHoverColor: AppPalette.cardHover
+                        borderColor:    _active ? AppPalette.accentBorder : AppPalette.border
+                        toolTipText: qsTr("Set 700 kHz")
+                        onClicked: {
+                            if (devBadge.modelData) devBadge.modelData.transFreq = 700
+                            devPill.close()
+                        }
+                    }
+
+                    KCircleIconButton {
+                        visible: devBadge._transducer
+                        width: devBadge.width; height: width
+                        glyph: "450"
+                        glyphPixelSize: Math.round(11 * root._s)
+                        readonly property bool _active: devBadge.modelData && devBadge.modelData.transFreq === 450
+                        fillColor:      _active ? AppPalette.accentBgStrong : AppPalette.card
+                        fillHoverColor: AppPalette.cardHover
+                        borderColor:    _active ? AppPalette.accentBorder : AppPalette.border
+                        toolTipText: qsTr("Set 450 kHz")
+                        onClicked: {
+                            if (devBadge.modelData) devBadge.modelData.transFreq = 450
+                            devPill.close()
+                        }
+                    }
+
+                    KCircleIconButton {
+                        width: devBadge.width; height: width
+                        iconSource: "qrc:/icons/ui/settings.svg"
+                        iconTintColor: AppPalette.text
+                        fillColor: AppPalette.card
+                        fillHoverColor: AppPalette.cardHover
+                        borderColor: AppPalette.border
+                        toolTipText: qsTr("Device settings")
+                        onClicked: {
+                            root.deviceTriggered(devBadge.index)
+                            devPill.close()
+                            root.expanded = false
+                        }
+                    }
+                }
             }
         }
     }
@@ -742,7 +862,7 @@ Item {
             spacing: Math.round(8 * root._s)
             height: root.controlHeight
             Repeater {
-                model: root.devices
+                model: root.effectiveDevices
                 delegate: deviceShortcutDelegate
             }
         }
@@ -946,7 +1066,7 @@ Item {
         }
 
         Repeater {
-            model: root.connectionStatusToolVisible ? root.devices : 0
+            model: root.connectionStatusToolVisible ? root.effectiveDevices : 0
             delegate: deviceShortcutDelegate
         }
 

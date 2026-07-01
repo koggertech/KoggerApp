@@ -2428,6 +2428,18 @@
 <context>
     <name>HotActionsPanel</name>
     <message>
+        <source>Set 700 kHz</source>
+        <translation>Set 700 kHz</translation>
+    </message>
+    <message>
+        <source>Set 450 kHz</source>
+        <translation>Set 450 kHz</translation>
+    </message>
+    <message>
+        <source>Device settings</source>
+        <translation>Device settings</translation>
+    </message>
+    <message>
         <source>Recording</source>
         <translation>Recording</translation>
     </message>

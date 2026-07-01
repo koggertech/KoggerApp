@@ -2444,6 +2444,18 @@
 <context>
     <name>HotActionsPanel</name>
     <message>
+        <source>Set 700 kHz</source>
+        <translation>Установить 700 кГц</translation>
+    </message>
+    <message>
+        <source>Set 450 kHz</source>
+        <translation>Установить 450 кГц</translation>
+    </message>
+    <message>
+        <source>Device settings</source>
+        <translation>Настройки устройства</translation>
+    </message>
+    <message>
         <source>Recording</source>
         <translation>Запись</translation>
     </message>
