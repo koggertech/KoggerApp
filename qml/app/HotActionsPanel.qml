@@ -48,6 +48,9 @@ Item {
     property bool extraInfoEnabled: true
     readonly property bool _extraInfoRevealOverride: _revealActiveKey === "extraInfo"
     readonly property bool showExtraInfo: extraInfoEnabled || _extraInfoRevealOverride
+    property bool autopilotButtonEnabled: true
+    readonly property bool _autopilotRevealOverride: _revealActiveKey === "autopilot"
+    readonly property bool showAutopilot: autopilotButtonEnabled || _autopilotRevealOverride
     property int favoriteItemSpacing: Math.round(6 * root._s)
     property int favoriteListMaxHeight: Math.round(244 * root._s)
     property bool connectionsOnline: true
@@ -1003,6 +1006,30 @@ Item {
     }
 
     Component {
+        id: qaAutopilotComp
+        KCircleIconButton {
+            id: autopilotBtn
+            readonly property bool _open: root.store && root.store.autopilotEnabled
+            width: root.controlHeight
+            height: root.controlHeight
+            iconSource: "qrc:/icons/ui/autopilot.svg"
+            iconTintColor: AppPalette.text
+            toolTipText: _open ? qsTr("Hide autopilot panel") : qsTr("Autopilot panel")
+            fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
+            fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
+            borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
+            highlighted: root.highlightedQuickActionKey === "autopilot"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "autopilot"
+            onClicked: if (root.store) root.store.autopilotEnabled = !root.store.autopilotEnabled
+
+            KCloseBadge { visible: autopilotBtn._open }
+        }
+    }
+
+    Component {
         id: qaProfilesComp
         KCircleIconButton {
             id: profilesBtn
@@ -1225,6 +1252,7 @@ Item {
                            : key === "favorites"   ? root.hasFavoriteLayouts
                            : key === "bottomTrack" ? root.showBtEdit
                            : key === "extraInfo"   ? root.showExtraInfo
+                           : key === "autopilot"    ? root.showAutopilot
                            : key === "profiles"     ? root.showProfiles
                            : key === "secondWindow" ? root._showSecondWindow
                            : false
@@ -1234,6 +1262,7 @@ Item {
                                    : key === "favorites"    ? qaFavoritesComp
                                    : key === "bottomTrack"  ? qaBottomTrackComp
                                    : key === "extraInfo"    ? qaExtraInfoComp
+                                   : key === "autopilot"    ? qaAutopilotComp
                                    : key === "profiles"     ? qaProfilesComp
                                    : key === "secondWindow" ? qaSecondWindowComp
                                    : null

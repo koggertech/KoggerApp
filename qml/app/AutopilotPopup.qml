@@ -10,8 +10,6 @@ BasePanePopup {
     readonly property int _pad: Math.round(6 * _s)
     readonly property int _cellGap: Math.round(11 * _s)
 
-    readonly property bool _manualTesting: typeof manualTesting !== "undefined" && manualTesting === true
-
     readonly property var _dmw: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
     readonly property real _voltage: _dmw ? _dmw.vruVoltage : NaN
     readonly property real _current: _dmw ? _dmw.vruCurrent : NaN
@@ -19,14 +17,15 @@ BasePanePopup {
     readonly property int  _arm:     _dmw ? _dmw.pilotArmState : -1
     readonly property int  _mode:    _dmw ? _dmw.pilotModeState : -1
 
-    readonly property bool _hasData: !isNaN(_voltage) || !isNaN(_current) || !isNaN(_speed) || _arm >= 0 || _mode >= 0
+    readonly property int _controlH: Math.round(36 * _s) - 2
+    readonly property int _sidePad: Math.round(3 * _s)
+    readonly property int _panelRadius: Math.round((_controlH + _sidePad * 2) / 2)
+    readonly property real _cardW: Math.round(_pad + infoRow.implicitWidth + _cellGap + _controlH + _sidePad)
+    readonly property real _cardH: Math.round(_controlH + _sidePad * 2)
+    readonly property real _wantW: _cardW + contentPadding * 2
+    readonly property real _wantH: headerHeight + _cardH + contentPadding
 
-    readonly property real _pillW: Math.round(infoRow.implicitWidth + _pad * 2)
-    readonly property real _pillH: Math.round(infoRow.implicitHeight + _pad * 2)
-    readonly property real _wantW: _pillW + contentPadding * 2
-    readonly property real _wantH: headerHeight + _pillH + contentPadding
-
-    popupVisible: store.autopilotEnabled && (_hasData || _manualTesting)
+    popupVisible: store.autopilotEnabled
     dragEnabled: true
     resizeEnabled: false
     collapseButtonVisible: false
@@ -111,14 +110,15 @@ BasePanePopup {
 
     Rectangle {
         anchors.fill: parent
-        radius: height / 2
+        radius: root._panelRadius
         color: AppPalette.bg
         border.width: 1
         border.color: AppPalette.border
 
         Row {
             id: infoRow
-            anchors.centerIn: parent
+            x: root._pad
+            anchors.verticalCenter: parent.verticalCenter
             spacing: root._cellGap
 
             Cell { caption: qsTr("Battery"); value: root._fmt(root._voltage, "V") }
@@ -130,6 +130,23 @@ BasePanePopup {
                 value: root._arm < 0 ? "—" : (root._arm > 0 ? "ARMED" : "DISARMED")
                 valueColor: root._arm > 0 ? "#22C55E" : AppPalette.text
             }
+        }
+
+        KCircleIconButton {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: root._sidePad
+            width: root._controlH
+            height: root._controlH
+            iconSource: "qrc:/icons/ui/x.svg"
+            iconTintColor: AppPalette.text
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            fillPressedColor: AppPalette.bgDeep
+            borderColor: AppPalette.border
+            borderHoverColor: AppPalette.borderHover
+            toolTipText: qsTr("Close")
+            onClicked: if (root.store) root.store.autopilotEnabled = false
         }
     }
 }

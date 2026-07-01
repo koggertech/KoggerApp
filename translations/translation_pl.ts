@@ -685,6 +685,10 @@
         <source>Arm</source>
         <translation>Stan</translation>
     </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>
@@ -2448,6 +2452,14 @@
         <translation>Urządzenie</translation>
     </message>
     <message>
+        <source>Autopilot panel</source>
+        <translation>Panel autopilota</translation>
+    </message>
+    <message>
+        <source>Hide autopilot panel</source>
+        <translation>Ukryj panel autopilota</translation>
+    </message>
+    <message>
         <source>Set 700 kHz</source>
         <translation>Ustaw 700 kHz</translation>
     </message>
@@ -3391,8 +3403,8 @@
         <translation>Podłączone urządzenia</translation>
     </message>
     <message>
-        <source>Logging button</source>
-        <translation>Przycisk nagrywania</translation>
+        <source>Logging</source>
+        <translation>Nagrywanie</translation>
     </message>
     <message>
         <source>Favorite layouts</source>
@@ -3403,16 +3415,20 @@
         <translation>Edycja śladu dna</translation>
     </message>
     <message>
-        <source>Extra info button</source>
-        <translation>Przycisk panelu informacji</translation>
+        <source>Extra info</source>
+        <translation>Dodatkowe informacje</translation>
     </message>
     <message>
-        <source>Profiles button</source>
-        <translation>Przycisk profili</translation>
+        <source>Profiles</source>
+        <translation>Profile</translation>
     </message>
     <message>
-        <source>Second window button</source>
-        <translation>Przycisk drugiego okna</translation>
+        <source>Second window</source>
+        <translation>Drugie okno</translation>
+    </message>
+    <message>
+        <source>Autopilot</source>
+        <translation>Autopilot</translation>
     </message>
 </context>
 <context>

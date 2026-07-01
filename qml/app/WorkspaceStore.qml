@@ -101,12 +101,13 @@ property bool quickActionLoggingEnabled: true
 property bool quickActionBottomTrackEnabled: true
 property bool quickActionProfilesEnabled: true
 property bool quickActionExtraInfoEnabled: true
+property bool quickActionAutopilotEnabled: true
 property bool quickActionSecondWindowEnabled: true
 
 property string quickActionDraggingKey: ""
 
 readonly property var quickActionKeys: {
-    var base = ["connections", "logging", "favorites", "bottomTrack", "extraInfo", "profiles"]
+    var base = ["connections", "logging", "favorites", "bottomTrack", "extraInfo", "autopilot", "profiles"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
     return base
@@ -118,6 +119,7 @@ property var quickActionOrderModel: ListModel {
     ListElement { key: "favorites" }
     ListElement { key: "bottomTrack" }
     ListElement { key: "extraInfo" }
+    ListElement { key: "autopilot" }
     ListElement { key: "profiles" }
     ListElement { key: "secondWindow" }
 }
@@ -133,6 +135,8 @@ function normalizeQuickActionOrder(list) {
         if (out.indexOf(quickActionKeys[j]) === -1) {
             if (quickActionKeys[j] === "logging" && out.indexOf("connections") !== -1)
                 out.splice(out.indexOf("connections") + 1, 0, "logging")   // keep logging right after devices
+            else if (quickActionKeys[j] === "autopilot" && out.indexOf("extraInfo") !== -1)
+                out.splice(out.indexOf("extraInfo") + 1, 0, "autopilot")   // keep autopilot right after extra-info
             else
                 out.push(quickActionKeys[j])
         }
@@ -239,7 +243,7 @@ property var settingsProfiles: []
 property var profilesPopupState: ({ x: -1, y: -1 })
 
 property var autopilotPopupState: ({ x: -1, y: -1 })
-property bool autopilotEnabled: true
+property bool autopilotEnabled: true   // panel shown; toggled by the hot-actions autopilot button
 
 property var extraInfoPopupState: ({ x: -1, y: -1 })
 property bool extraInfoVisible: false
@@ -252,6 +256,7 @@ property bool extraInfoActivePoint: true
 property bool extraInfoNav: false
 property bool extraInfoBoatStatus: false
 
+onBottomTrackEditorOpenChanged: layoutStore.bottomTrackEditorOpenStored = bottomTrackEditorOpen
 onProfilesPopupOpenChanged: layoutStore.profilesPopupOpenStored = profilesPopupOpen
 onAutopilotEnabledChanged: layoutStore.autopilotEnabledStored = autopilotEnabled
 onExtraInfoVisibleChanged:     layoutStore.extraInfoVisibleStored = extraInfoVisible
@@ -623,7 +628,7 @@ property Settings layoutStore: Settings {
     property bool quickActionLoggingEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
-    property string quickActionOrderStored: "connections,logging,favorites,bottomTrack,extraInfo,profiles,secondWindow"
+    property string quickActionOrderStored: "connections,logging,favorites,bottomTrack,extraInfo,autopilot,profiles,secondWindow"
     property string selectedConnectionFilePathStored: ""
     property string favoriteLayoutsJson: "[]"
     property string settingsGroupExpandedJson: "{}"
@@ -638,6 +643,7 @@ property Settings layoutStore: Settings {
     property string settingsProfilesJson: "[]"
     property string profilesPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool profilesPopupOpenStored: false
+    property bool bottomTrackEditorOpenStored: false
     property string autopilotPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool autopilotEnabledStored: true
     property string extraInfoPopupStateJson: "{\"x\":-1,\"y\":-1}"
@@ -649,6 +655,7 @@ property Settings layoutStore: Settings {
     property bool extraInfoNavStored: false
     property bool extraInfoBoatStatusStored: false
     property bool quickActionExtraInfoEnabledStored: true
+    property bool quickActionAutopilotEnabledStored: true
     property bool quickActionSecondWindowEnabledStored: true
     property bool secondaryWindowOpenStored: false
     property string secondaryWindowModeStored: ""
@@ -2806,6 +2813,7 @@ function saveLayoutState() {
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
     layoutStore.quickActionExtraInfoEnabledStored = quickActionExtraInfoEnabled
+    layoutStore.quickActionAutopilotEnabledStored = quickActionAutopilotEnabled
     layoutStore.quickActionSecondWindowEnabledStored = quickActionSecondWindowEnabled
     layoutStore.quickActionOrderStored = quickActionOrderCsv()
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
@@ -2843,6 +2851,7 @@ function restoreLayoutState() {
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
     quickActionExtraInfoEnabled = layoutStore.quickActionExtraInfoEnabledStored
+    quickActionAutopilotEnabled = layoutStore.quickActionAutopilotEnabledStored
     quickActionSecondWindowEnabled = layoutStore.quickActionSecondWindowEnabledStored
     applyQuickActionOrder((layoutStore.quickActionOrderStored || "").split(","))
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
@@ -4001,6 +4010,7 @@ function loadPersistedUiState() {
     loadSettingsProfiles()
     loadProfilesPopupPreferences()
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
+    bottomTrackEditorOpen = layoutStore.bottomTrackEditorOpenStored
     loadAutopilotPopupPreferences()
     autopilotEnabled = layoutStore.autopilotEnabledStored
     loadExtraInfoPopupPreferences()

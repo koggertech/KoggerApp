@@ -685,6 +685,10 @@
         <source>Arm</source>
         <translation>Статус</translation>
     </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>
@@ -2448,6 +2452,14 @@
         <translation>Устройство</translation>
     </message>
     <message>
+        <source>Autopilot panel</source>
+        <translation>Панель автопилота</translation>
+    </message>
+    <message>
+        <source>Hide autopilot panel</source>
+        <translation>Скрыть панель автопилота</translation>
+    </message>
+    <message>
         <source>Set 700 kHz</source>
         <translation>Установить 700 кГц</translation>
     </message>
@@ -3391,8 +3403,8 @@
         <translation>Подключённые устройства</translation>
     </message>
     <message>
-        <source>Logging button</source>
-        <translation>Кнопка логирования</translation>
+        <source>Logging</source>
+        <translation>Логирование</translation>
     </message>
     <message>
         <source>Favorite layouts</source>
@@ -3403,16 +3415,20 @@
         <translation>Редактирование трека дна</translation>
     </message>
     <message>
-        <source>Extra info button</source>
-        <translation>Кнопка экстра-инфо</translation>
+        <source>Extra info</source>
+        <translation>Экстра-инфо</translation>
     </message>
     <message>
-        <source>Profiles button</source>
-        <translation>Кнопка профилей</translation>
+        <source>Profiles</source>
+        <translation>Профили</translation>
     </message>
     <message>
-        <source>Second window button</source>
-        <translation>Кнопка второго окна</translation>
+        <source>Second window</source>
+        <translation>Второе окно</translation>
+    </message>
+    <message>
+        <source>Autopilot</source>
+        <translation>Автопилот</translation>
     </message>
 </context>
 <context>

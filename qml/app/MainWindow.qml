@@ -674,6 +674,7 @@ ApplicationWindow {
             bottomTrackEditorEnabled: workspaceStore.quickActionBottomTrackEnabled
             profilesEnabled: workspaceStore.quickActionProfilesEnabled
             extraInfoEnabled: workspaceStore.quickActionExtraInfoEnabled
+            autopilotButtonEnabled: workspaceStore.quickActionAutopilotEnabled
             inputDeviceLabel: workspaceView.inputDeviceLabel
             inputDeviceColor: workspaceView.inputDeviceColor
             showToggleButton: !workspaceStore.settingsPanelOpen && !workspaceStore.modeSettingsPanelOpen

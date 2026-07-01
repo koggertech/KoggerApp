@@ -16,12 +16,13 @@ Column {
 
     function _label(key) {
         return key === "connections" ? qsTr("Connected devices")
-             : key === "logging"     ? qsTr("Logging button")
+             : key === "logging"     ? qsTr("Logging")
              : key === "favorites"   ? qsTr("Favorite layouts")
              : key === "bottomTrack" ? qsTr("Bottom track editing")
-             : key === "extraInfo"   ? qsTr("Extra info button")
-             : key === "profiles"    ? qsTr("Profiles button")
-             : key === "secondWindow" ? qsTr("Second window button")
+             : key === "extraInfo"   ? qsTr("Extra info")
+             : key === "autopilot"   ? qsTr("Autopilot")
+             : key === "profiles"    ? qsTr("Profiles")
+             : key === "secondWindow" ? qsTr("Second window")
              : key
     }
     function _checked(key) {
@@ -31,6 +32,7 @@ Column {
              : key === "favorites"   ? store.quickActionFavoritesEnabled
              : key === "bottomTrack" ? store.quickActionBottomTrackEnabled
              : key === "extraInfo"   ? store.quickActionExtraInfoEnabled
+             : key === "autopilot"   ? store.quickActionAutopilotEnabled
              : key === "profiles"    ? store.quickActionProfilesEnabled
              : key === "secondWindow" ? store.quickActionSecondWindowEnabled
              : false
@@ -53,6 +55,9 @@ Column {
         } else if (key === "extraInfo") {
             store.quickActionExtraInfoEnabled = v
             store.requestHotkeysReveal("extraInfo")
+        } else if (key === "autopilot") {
+            store.quickActionAutopilotEnabled = v
+            store.requestHotkeysReveal("autopilot")
         } else if (key === "profiles") {
             store.quickActionProfilesEnabled = v
             store.requestHotkeysReveal("profiles")
