@@ -12,12 +12,14 @@ Item {
     property int revealShiftX: 0
     readonly property real _s: 1.5 * (theme ? theme.resCoeff : 1.0)
     readonly property int _windowW: store ? store.windowWidth : 1440
+    readonly property int _leadOffset: showToggleButton ? toggleButtonSize + Math.round(8 * root._s) : 0
     property real maxExpandedWidth: Math.max(240,
                                              Math.min(620 * root._s,
-                                                      _windowW - 32 * root._s))
+                                                      _windowW - root.x - _leadOffset - Math.round(16 * root._s)))
     property int controlHeight: Math.round(36 * root._s) - 2
     property int panelPaddingX: Math.round(3 * root._s)
-    property int triggerButtonWidth: Math.round(92 * root._s)
+    readonly property int quickActionSpacing: Math.round(8 * root._s)
+    property int triggerButtonWidth: 2 * controlHeight + quickActionSpacing
     readonly property int toggleButtonSize: root.controlHeight
     readonly property color hotkeysLayerColor: AppPalette.bg
     readonly property color hotkeysPopupLayerColor: AppPalette.bg
@@ -28,6 +30,9 @@ Item {
     readonly property color buttonHoverBorderColor: AppPalette.borderHover
     readonly property int panelHeight: controlHeight + panelPaddingX * 2
     readonly property int _arrowSlotW: showToggleButton ? toggleButtonSize + Math.round(8 * root._s) : 0
+    readonly property int _flowContentW: Math.max(root.controlHeight,
+                                                  root.maxExpandedWidth - 2 * root.panelPaddingX - root._arrowSlotW)
+    readonly property int _bgAdjustMs: 190
     // While the "layouts" reveal sequence is active we keep showing the icons
     // even if the user just disabled them — so they're visible during the
     // whole open → pulse → close cycle instead of disappearing instantly.
@@ -70,7 +75,10 @@ Item {
     property color inputDeviceColor: "#2563EB"
     readonly property int inputDeviceStackSpacing: Math.round(8 * root._s)
 
-    readonly property int favoriteItemHeight: Math.round(62 * root._s)
+    readonly property int favoriteCardMargin: Math.round(7 * root._s)
+    readonly property int favoritePreviewWidth: Math.round(root.triggerButtonWidth * 0.66)
+    readonly property int favoritePreviewHeight: Math.round(root.favoritePreviewWidth * 16 / 21)
+    readonly property int favoriteItemHeight: favoritePreviewHeight + 2 * favoriteCardMargin
     readonly property int favoriteListContentHeight: favoriteCount > 0
                                                      ? favoriteCount * favoriteItemHeight + (favoriteCount - 1) * favoriteItemSpacing
                                                      : 0
@@ -240,9 +248,9 @@ Item {
 
                             width: favoritesList.width
                             height: root.favoriteItemHeight
-                            contentMargin: Math.round(6 * root._s)
-                            previewWidth:  Math.round(60 * root._s)
-                            previewHeight: Math.round(46 * root._s)
+                            contentMargin: root.favoriteCardMargin
+                            previewWidth:  root.favoritePreviewWidth
+                            previewHeight: root.favoritePreviewHeight
                             snapshot: snapshotData
                             popupLinks: popupLinksData
                             favoriteIndex: favoriteEntryIndex
@@ -329,7 +337,7 @@ Item {
                                                 ? toggleButton.height
                                                   + (inputDeviceBadgeVisible ? inputDeviceStackSpacing + inputDeviceBadge.height : 0)
                                                 : 0
-    readonly property int panelOffsetX: (root.showToggleButton ? root.toggleButtonSize + Math.round(8 * root._s) : 0) + root.revealShiftX
+    readonly property int panelOffsetX: root._leadOffset + root.revealShiftX
 
     width: Math.max(leadingClusterWidth,
                     root.expanded
@@ -499,6 +507,7 @@ Item {
         readonly property bool _klf: _placeholder || (typeof core !== "undefined" && core && core.loggingKlf)
         readonly property bool _csv: !_placeholder && (typeof core !== "undefined" && core && core.loggingCsv)
         readonly property real _hoverScale: badgeMa.pressed ? 0.97 : (badgeMa.containsMouse ? 1.035 : 1.0)
+        readonly property bool _dragHold: root.draggingKey === "logging"
 
         onVisibleChanged: if (!visible && pill.opened) pill.close()
 
@@ -506,9 +515,11 @@ Item {
             anchors.fill: parent
             radius: width / 2
             scale: logBadge._hoverScale
-            color: badgeMa.containsMouse ? root.buttonHoverColor : root.buttonFillColor
+            color: logBadge._dragHold ? AppPalette.accentBgStrong
+                   : (badgeMa.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
             border.width: 1
-            border.color: badgeMa.containsMouse ? Qt.lighter("#EF4444", 1.15) : "#EF4444"
+            border.color: logBadge._dragHold ? AppPalette.accentBorder
+                          : (badgeMa.containsMouse ? Qt.lighter("#EF4444", 1.15) : "#EF4444")
             Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
             Behavior on border.color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
             Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -924,7 +935,7 @@ Item {
     Component {
         id: qaConnectionsComp
         Row {
-            spacing: Math.round(8 * root._s)
+            spacing: root.quickActionSpacing
             height: root.controlHeight
             Repeater {
                 model: root._connSlotDevices
@@ -955,6 +966,7 @@ Item {
             borderHoverColor: root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverBorderColor
             highlighted: root.highlightedQuickActionKey === "secondWindow"
             flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "secondWindow"
             onClicked: {
                 root.secondWindowToggleRequested()
                 root.expanded = false
@@ -1223,8 +1235,10 @@ Item {
         width: root.expanded ? Math.min(root.maxExpandedWidth,
                                         2 * root.panelPaddingX + root._arrowSlotW + topRow.implicitWidth)
                              : 0
-        height: root.panelHeight
-        radius: height / 2
+        height: root.expanded
+                ? Math.max(root.panelHeight, 2 * root.panelPaddingX + topRow.implicitHeight)
+                : root.panelHeight
+        radius: Math.min(height, root.panelHeight) / 2
         clip: true
         color: root.hotkeysLayerColor
         border.width: root.expanded ? 1 : 0
@@ -1233,7 +1247,14 @@ Item {
 
         Behavior on width {
             NumberAnimation {
-                duration: 220
+                duration: root._bgAdjustMs
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        Behavior on height {
+            NumberAnimation {
+                duration: root._bgAdjustMs
                 easing.type: Easing.OutCubic
             }
         }
@@ -1257,16 +1278,20 @@ Item {
             onWheel: function(wheel) { wheel.accepted = true }
         }
 
-        Row {
+        Flow {
             id: topRow
             anchors.left: parent.left
             anchors.leftMargin: root.panelPaddingX + root._arrowSlotW
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Math.round(8 * root._s)
-            height: root.controlHeight
+            anchors.top: parent.top
+            anchors.topMargin: root.panelPaddingX
+            width: root._flowContentW
+            spacing: root.quickActionSpacing   // Flow applies this to BOTH axes → equal H/V gaps
 
             move: Transition {
-                NumberAnimation { properties: "x"; duration: 220; easing.type: Easing.OutCubic }
+                SequentialAnimation {
+                    PauseAnimation { duration: root._bgAdjustMs }
+                    NumberAnimation { properties: "x,y"; duration: 200; easing.type: Easing.OutCubic }
+                }
             }
 
             Repeater {
@@ -1313,7 +1338,7 @@ Item {
         visible: root.hasFavoriteLayouts && panel.opacity > 0.01
         opacity: panel.opacity         // fade in/out together with the pill
         x: panel.x + topRow.x + (root._favSlot && root._favSlot.parent ? root._favSlot.parent.x : 0) - layoutsCombo.sidePad
-        y: panel.y + topRow.y - layoutsCombo.sidePad
+        y: panel.y + topRow.y + (root._favSlot && root._favSlot.parent ? root._favSlot.parent.y : 0) - layoutsCombo.sidePad
         width: comboW + layoutsCombo.sidePad * 2
         z: panel.z + 1                 // above the toolbar; the button is the head
         height: backing.height
@@ -1375,7 +1400,7 @@ Item {
         visible: root.showBtEdit && panel.opacity > 0.01
         opacity: panel.opacity
         x: panel.x + topRow.x + (root._btSlot && root._btSlot.parent ? root._btSlot.parent.x : 0) - btEditCombo.sidePad
-        y: panel.y + topRow.y - btEditCombo.sidePad
+        y: panel.y + topRow.y + (root._btSlot && root._btSlot.parent ? root._btSlot.parent.y : 0) - btEditCombo.sidePad
         width: root.controlHeight + btEditCombo.sidePad * 2
         height: root.controlHeight + btEditCombo.sidePad * 2
         z: panel.z + 1
