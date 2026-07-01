@@ -97,20 +97,29 @@ property string selectedConnectionFilePath: ""
 property bool rotateLayoutEnabled: true
 property bool quickActionFavoritesEnabled: true
 property bool quickActionConnectionStatusEnabled: true
+property bool quickActionLoggingEnabled: true
 property bool quickActionBottomTrackEnabled: true
 property bool quickActionProfilesEnabled: true
 property bool quickActionExtraInfoEnabled: true
+property bool quickActionSecondWindowEnabled: true
 
 property string quickActionDraggingKey: ""
 
-readonly property var quickActionKeys: ["connections", "favorites", "bottomTrack", "extraInfo", "profiles"]
+readonly property var quickActionKeys: {
+    var base = ["connections", "logging", "favorites", "bottomTrack", "extraInfo", "profiles"]
+    if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
+        base.push("secondWindow")   // desktop-only; mobile drops it on normalize
+    return base
+}
 
 property var quickActionOrderModel: ListModel {
     ListElement { key: "connections" }
+    ListElement { key: "logging" }
     ListElement { key: "favorites" }
     ListElement { key: "bottomTrack" }
     ListElement { key: "extraInfo" }
     ListElement { key: "profiles" }
+    ListElement { key: "secondWindow" }
 }
 
 function normalizeQuickActionOrder(list) {
@@ -121,8 +130,12 @@ function normalizeQuickActionOrder(list) {
                 out.push(list[i])
     }
     for (var j = 0; j < quickActionKeys.length; ++j)   // append any missing keys (new in this version)
-        if (out.indexOf(quickActionKeys[j]) === -1)
-            out.push(quickActionKeys[j])
+        if (out.indexOf(quickActionKeys[j]) === -1) {
+            if (quickActionKeys[j] === "logging" && out.indexOf("connections") !== -1)
+                out.splice(out.indexOf("connections") + 1, 0, "logging")   // keep logging right after devices
+            else
+                out.push(quickActionKeys[j])
+        }
     return out
 }
 
@@ -607,9 +620,10 @@ property Settings layoutStore: Settings {
     property bool rotateLayoutEnabledStored: true
     property bool quickActionFavoritesEnabledStored: true
     property bool quickActionConnectionStatusEnabledStored: true
+    property bool quickActionLoggingEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
-    property string quickActionOrderStored: "connections,favorites,bottomTrack,extraInfo,profiles"
+    property string quickActionOrderStored: "connections,logging,favorites,bottomTrack,extraInfo,profiles,secondWindow"
     property string selectedConnectionFilePathStored: ""
     property string favoriteLayoutsJson: "[]"
     property string settingsGroupExpandedJson: "{}"
@@ -635,6 +649,7 @@ property Settings layoutStore: Settings {
     property bool extraInfoNavStored: false
     property bool extraInfoBoatStatusStored: false
     property bool quickActionExtraInfoEnabledStored: true
+    property bool quickActionSecondWindowEnabledStored: true
     property bool secondaryWindowOpenStored: false
     property string secondaryWindowModeStored: ""
     property string liveEchogramStatesJson: "{}"
@@ -2787,9 +2802,11 @@ function saveLayoutState() {
     layoutStore.rotateLayoutEnabledStored = rotateLayoutEnabled
     layoutStore.quickActionFavoritesEnabledStored = quickActionFavoritesEnabled
     layoutStore.quickActionConnectionStatusEnabledStored = quickActionConnectionStatusEnabled
+    layoutStore.quickActionLoggingEnabledStored = quickActionLoggingEnabled
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
     layoutStore.quickActionExtraInfoEnabledStored = quickActionExtraInfoEnabled
+    layoutStore.quickActionSecondWindowEnabledStored = quickActionSecondWindowEnabled
     layoutStore.quickActionOrderStored = quickActionOrderCsv()
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
     layoutStore.secondaryWindowOpenStored = secondaryWindowOpen
@@ -2822,9 +2839,11 @@ function restoreLayoutState() {
     rotateLayoutEnabled = layoutStore.rotateLayoutEnabledStored
     quickActionFavoritesEnabled = layoutStore.quickActionFavoritesEnabledStored
     quickActionConnectionStatusEnabled = layoutStore.quickActionConnectionStatusEnabledStored
+    quickActionLoggingEnabled = layoutStore.quickActionLoggingEnabledStored
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
     quickActionExtraInfoEnabled = layoutStore.quickActionExtraInfoEnabledStored
+    quickActionSecondWindowEnabled = layoutStore.quickActionSecondWindowEnabledStored
     applyQuickActionOrder((layoutStore.quickActionOrderStored || "").split(","))
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored

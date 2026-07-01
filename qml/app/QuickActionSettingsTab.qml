@@ -16,31 +16,33 @@ Column {
 
     function _label(key) {
         return key === "connections" ? qsTr("Connected devices")
+             : key === "logging"     ? qsTr("Logging button")
              : key === "favorites"   ? qsTr("Favorite layouts")
              : key === "bottomTrack" ? qsTr("Bottom track editing")
              : key === "extraInfo"   ? qsTr("Extra info button")
              : key === "profiles"    ? qsTr("Profiles button")
+             : key === "secondWindow" ? qsTr("Second window button")
              : key
     }
     function _checked(key) {
         if (!store) return false
         return key === "connections" ? store.quickActionConnectionStatusEnabled
+             : key === "logging"     ? store.quickActionLoggingEnabled
              : key === "favorites"   ? store.quickActionFavoritesEnabled
              : key === "bottomTrack" ? store.quickActionBottomTrackEnabled
              : key === "extraInfo"   ? store.quickActionExtraInfoEnabled
              : key === "profiles"    ? store.quickActionProfilesEnabled
+             : key === "secondWindow" ? store.quickActionSecondWindowEnabled
              : false
     }
     function _toggle(key, v) {
         if (!store) return
         if (key === "connections") {
             store.quickActionConnectionStatusEnabled = v
-            if (deviceManagerWrapper && deviceManagerWrapper.devs) {
-                for (var i = 0; i < deviceManagerWrapper.devs.length; ++i) {
-                    var d = deviceManagerWrapper.devs[i]
-                    if (d && d.devType !== 0) { store.requestHotkeysReveal("connections"); break }
-                }
-            }
+            store.requestHotkeysReveal("connections")
+        } else if (key === "logging") {
+            store.quickActionLoggingEnabled = v
+            store.requestHotkeysReveal("logging")
         } else if (key === "favorites") {
             store.quickActionFavoritesEnabled = v
             if (store.favoriteLayouts && store.favoriteLayouts.length > 0)
@@ -54,6 +56,9 @@ Column {
         } else if (key === "profiles") {
             store.quickActionProfilesEnabled = v
             store.requestHotkeysReveal("profiles")
+        } else if (key === "secondWindow") {
+            store.quickActionSecondWindowEnabled = v
+            store.requestHotkeysReveal("secondWindow")
         }
     }
 

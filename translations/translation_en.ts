@@ -2428,6 +2428,10 @@
 <context>
     <name>HotActionsPanel</name>
     <message>
+        <source>Device</source>
+        <translation>Device</translation>
+    </message>
+    <message>
         <source>Set 700 kHz</source>
         <translation>Set 700 kHz</translation>
     </message>
@@ -3371,6 +3375,10 @@
         <translation>Connected devices</translation>
     </message>
     <message>
+        <source>Logging button</source>
+        <translation>Logging button</translation>
+    </message>
+    <message>
         <source>Favorite layouts</source>
         <translation>Favorite layouts</translation>
     </message>
@@ -3385,6 +3393,10 @@
     <message>
         <source>Profiles button</source>
         <translation>Profiles button</translation>
+    </message>
+    <message>
+        <source>Second window button</source>
+        <translation>Second window button</translation>
     </message>
 </context>
 <context>

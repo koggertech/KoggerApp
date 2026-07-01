@@ -2444,6 +2444,10 @@
 <context>
     <name>HotActionsPanel</name>
     <message>
+        <source>Device</source>
+        <translation>Устройство</translation>
+    </message>
+    <message>
         <source>Set 700 kHz</source>
         <translation>Установить 700 кГц</translation>
     </message>
@@ -3387,6 +3391,10 @@
         <translation>Подключённые устройства</translation>
     </message>
     <message>
+        <source>Logging button</source>
+        <translation>Кнопка логирования</translation>
+    </message>
+    <message>
         <source>Favorite layouts</source>
         <translation>Избранные компоновки</translation>
     </message>
@@ -3401,6 +3409,10 @@
     <message>
         <source>Profiles button</source>
         <translation>Кнопка профилей</translation>
+    </message>
+    <message>
+        <source>Second window button</source>
+        <translation>Кнопка второго окна</translation>
     </message>
 </context>
 <context>

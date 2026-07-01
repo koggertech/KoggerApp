@@ -668,6 +668,9 @@ ApplicationWindow {
             store: workspaceStore
             favoritesEnabled: workspaceStore.quickActionFavoritesEnabled
             connectionStatusToolVisible: workspaceStore.quickActionConnectionStatusEnabled
+            loggingButtonEnabled: workspaceStore.quickActionLoggingEnabled
+            secondWindowButtonEnabled: workspaceStore.quickActionSecondWindowEnabled
+            layoutEditing: root.hotkeysPreviewSticky
             bottomTrackEditorEnabled: workspaceStore.quickActionBottomTrackEnabled
             profilesEnabled: workspaceStore.quickActionProfilesEnabled
             extraInfoEnabled: workspaceStore.quickActionExtraInfoEnabled

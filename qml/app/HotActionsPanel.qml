@@ -52,6 +52,7 @@ Item {
     property int favoriteListMaxHeight: Math.round(244 * root._s)
     property bool connectionsOnline: true
     property bool connectionStatusToolVisible: true
+    property bool layoutEditing: false
     property string highlightedQuickActionKey: ""
     property int highlightPulseToken: 0
     readonly property string draggingKey: store ? store.quickActionDraggingKey : ""
@@ -87,6 +88,10 @@ Item {
     signal legacyRequested()
     signal secondWindowToggleRequested()
     property bool secondWindowOpen: false
+    property bool secondWindowButtonEnabled: true
+    readonly property bool _secondWindowAvailable: Qt.platform.os !== "android" && Qt.platform.os !== "ios"
+    readonly property bool _secondWindowRevealOverride: _revealActiveKey === "secondWindow"
+    readonly property bool _showSecondWindow: _secondWindowAvailable && (secondWindowButtonEnabled || _secondWindowRevealOverride)
 
     // Devices bound from MainWindow (deviceManagerWrapper.devs).
     // Status colors mirror ConnectionViewer link-row palette.
@@ -105,6 +110,9 @@ Item {
     property var _btSlot: null
 
     readonly property bool _loggingActive: typeof core !== "undefined" && core && (core.loggingKlf || core.loggingCsv)
+    property bool loggingButtonEnabled: true
+    readonly property bool _loggingRevealOverride: _revealActiveKey === "logging"
+    readonly property bool _loggingBadgeVisible: (loggingButtonEnabled && (_loggingActive || layoutEditing)) || _loggingRevealOverride
 
     readonly property bool _manualTesting: typeof manualTesting !== "undefined" && manualTesting === true
 
@@ -129,6 +137,30 @@ Item {
     readonly property var effectiveDevices: (devices && devices.length > 0)
                                             ? devices
                                             : (_manualTesting ? [fakeDevice] : [])
+
+    QtObject {
+        id: placeholderDevice
+        property int devType: 1
+        property string devName: qsTr("Device")
+        property string fwVersion: ""
+        property int devSN: 0
+        property bool isSonar: true
+        property bool isDoppler: false
+        property bool isUSBL: false
+        property bool isUSBLBeacon: false
+        property bool isRecorder: false
+        property bool isTransducerSupport: true
+        property int transFreq: 700
+        property bool linkConnected: true
+        property bool linkReceivesData: true
+        property bool linkNotAvailable: false
+    }
+
+    // While editing the layout: show a single device slot (first real device, or
+    // a neutral placeholder if none). Otherwise the full device list.
+    readonly property var _connSlotDevices: layoutEditing
+        ? (effectiveDevices.length > 0 ? [effectiveDevices[0]] : [placeholderDevice])
+        : effectiveDevices
 
     function iconForDevice(d) {
         if (!d) return "qrc:/icons/ui/device-unknown.svg"
@@ -453,12 +485,13 @@ Item {
 
     component LoggingBadge: Item {
         id: logBadge
-        visible: root._loggingActive
+        visible: root._loggingBadgeVisible
         width: visible ? root.controlHeight : 0
         height: root.controlHeight
 
-        readonly property bool _klf: typeof core !== "undefined" && core && core.loggingKlf
-        readonly property bool _csv: typeof core !== "undefined" && core && core.loggingCsv
+        readonly property bool _placeholder: !root._loggingActive
+        readonly property bool _klf: _placeholder || (typeof core !== "undefined" && core && core.loggingKlf)
+        readonly property bool _csv: !_placeholder && (typeof core !== "undefined" && core && core.loggingCsv)
         readonly property real _hoverScale: badgeMa.pressed ? 0.97 : (badgeMa.containsMouse ? 1.035 : 1.0)
 
         onVisibleChanged: if (!visible && pill.opened) pill.close()
@@ -533,6 +566,32 @@ Item {
         }
 
         KToolTip { text: qsTr("Recording"); shown: badgeMa.containsMouse && !pill.opened }
+
+        readonly property bool _highlighted: root.highlightedQuickActionKey === "logging"
+
+        Rectangle {
+            id: logPulse
+            anchors.fill: parent
+            radius: width / 2
+            color: "transparent"
+            border.width: Math.max(2, Math.round(2 * root._s))
+            border.color: AppPalette.accentBorder
+            opacity: 0
+            visible: logBadge._highlighted
+            z: 10
+        }
+
+        SequentialAnimation {
+            id: logPulseAnim
+            NumberAnimation { target: logPulse; property: "opacity"; to: 0.95; duration: 90;  easing.type: Easing.OutCubic }
+            NumberAnimation { target: logPulse; property: "opacity"; to: 0.30; duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { target: logPulse; property: "opacity"; to: 0.0;  duration: 280; easing.type: Easing.OutCubic }
+        }
+
+        Connections {
+            target: root
+            function onHighlightPulseTokenChanged() { if (logBadge._highlighted) logPulseAnim.restart() }
+        }
 
         Timer {
             running: pill.visible
@@ -862,8 +921,37 @@ Item {
             spacing: Math.round(8 * root._s)
             height: root.controlHeight
             Repeater {
-                model: root.effectiveDevices
+                model: root._connSlotDevices
                 delegate: deviceShortcutDelegate
+            }
+        }
+    }
+
+    Component {
+        id: qaLoggingComp
+        LoggingBadge {}
+    }
+
+    Component {
+        id: qaSecondWindowComp
+        KCircleIconButton {
+            width: root.controlHeight
+            height: root.controlHeight
+            iconSource: "qrc:/icons/ui/external-link.svg"
+            iconTintColor: AppPalette.text
+            toolTipText: root.secondWindowOpen
+                         ? qsTr("Close second window")
+                         : qsTr("Open second window")
+            fillColor:        root.secondWindowOpen ? AppPalette.accentBgStrong : root.buttonFillColor
+            fillHoverColor:   root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      root.secondWindowOpen ? AppPalette.accentBorder : root.buttonBorderColor
+            borderHoverColor: root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverBorderColor
+            highlighted: root.highlightedQuickActionKey === "secondWindow"
+            flashToken: root.highlightPulseToken
+            onClicked: {
+                root.secondWindowToggleRequested()
+                root.expanded = false
             }
         }
     }
@@ -1058,7 +1146,7 @@ Item {
         anchors.leftMargin: root.panelPaddingX + 2 * root.toggleButtonSize + 2 * Math.round(8 * root._s)
         anchors.verticalCenter: toggleButton.verticalCenter
         spacing: Math.round(8 * root._s)
-        visible: root.showToggleButton && !root.expanded && (root.connectionStatusToolVisible || root._loggingActive)
+        visible: root.showToggleButton && !root.expanded && (root.connectionStatusToolVisible || root._loggingBadgeVisible)
         opacity: visible ? 1 : 0
 
         Behavior on opacity {
@@ -1127,46 +1215,28 @@ Item {
                 NumberAnimation { properties: "x"; duration: 220; easing.type: Easing.OutCubic }
             }
 
-            LoggingBadge {}
-
             Repeater {
                 model: root.store ? root.store.quickActionOrderModel : 0
                 delegate: Loader {
                     required property string key
                     height: root.controlHeight
-                    visible: key === "connections" ? ((root.connectionStatusToolVisible || root._revealActiveKey === "connections") && root._hasConnectedDevice)
+                    visible: key === "connections" ? ((root.connectionStatusToolVisible || root._revealActiveKey === "connections") && (root._hasConnectedDevice || root.layoutEditing))
+                           : key === "logging"     ? root._loggingBadgeVisible
                            : key === "favorites"   ? root.hasFavoriteLayouts
                            : key === "bottomTrack" ? root.showBtEdit
                            : key === "extraInfo"   ? root.showExtraInfo
-                           : key === "profiles"    ? root.showProfiles
+                           : key === "profiles"     ? root.showProfiles
+                           : key === "secondWindow" ? root._showSecondWindow
                            : false
                     active: visible
                     sourceComponent: key === "connections" ? qaConnectionsComp
-                                   : key === "favorites"   ? qaFavoritesComp
-                                   : key === "bottomTrack" ? qaBottomTrackComp
-                                   : key === "extraInfo"   ? qaExtraInfoComp
-                                   : key === "profiles"    ? qaProfilesComp
+                                   : key === "logging"      ? qaLoggingComp
+                                   : key === "favorites"    ? qaFavoritesComp
+                                   : key === "bottomTrack"  ? qaBottomTrackComp
+                                   : key === "extraInfo"    ? qaExtraInfoComp
+                                   : key === "profiles"     ? qaProfilesComp
+                                   : key === "secondWindow" ? qaSecondWindowComp
                                    : null
-                }
-            }
-
-            KCircleIconButton {
-                visible: Qt.platform.os !== "android" && Qt.platform.os !== "ios"
-                width: root.controlHeight
-                height: root.controlHeight
-                iconSource: "qrc:/icons/ui/external-link.svg"
-                iconTintColor: AppPalette.text
-                toolTipText: root.secondWindowOpen
-                             ? qsTr("Close second window")
-                             : qsTr("Open second window")
-                fillColor:        root.secondWindowOpen ? AppPalette.accentBgStrong : root.buttonFillColor
-                fillHoverColor:   root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverColor
-                fillPressedColor: root.buttonPressedColor
-                borderColor:      root.secondWindowOpen ? AppPalette.accentBorder : root.buttonBorderColor
-                borderHoverColor: root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverBorderColor
-                onClicked: {
-                    root.secondWindowToggleRequested()
-                    root.expanded = false
                 }
             }
 
