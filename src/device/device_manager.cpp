@@ -14,6 +14,7 @@ DeviceManager::DeviceManager()
       lastAddress_(-1),
       progress_(0),
       isConsoled_(false),
+      nmeaConsoled_(true),
       break_(false),
       upgradeUuid_(QUuid()),
       upgradeAddr_(0)
@@ -189,7 +190,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
             ProtoNMEA& prot_nmea = (ProtoNMEA&)frame;
             QString str_data = QByteArray((char*)prot_nmea.frame(), prot_nmea.frameLen() - 2);
 #ifndef SEPARATE_READING
-            core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
+            if (nmeaConsoled_) {
+                core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
+            }
 #endif
             if (prot_nmea.isEqualId("DBT")) {
                 prot_nmea.skip();
@@ -620,6 +623,11 @@ bool DeviceManager::isCreatedId(int id)
 void DeviceManager::setProtoBinConsoled(bool isConsoled)
 {
     isConsoled_ = isConsoled;
+}
+
+void DeviceManager::setNmeaConsoled(bool isConsoled)
+{
+    nmeaConsoled_ = isConsoled;
 }
 
 void DeviceManager::upgradeLastDev(QByteArray data)
