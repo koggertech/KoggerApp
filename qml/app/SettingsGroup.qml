@@ -8,6 +8,7 @@ Item {
     // Optional short subtitle rendered between header bar and content card.
     property string description: ""
     property bool collapsible: true
+    property bool expandable: true   // false → header-only: no chevron/expand/body (description still shown)
     property bool collapsedByDefault: true
     property bool expanded: !collapsedByDefault
     property var stateStore: null
@@ -267,9 +268,9 @@ Item {
                           : (root.expanded ? AppPalette.borderFocus : AppPalette.border)
 
             activeFocusOnTab: root.collapsible
-            Keys.onReturnPressed: if (root.collapsible) root.expanded = !root.expanded
-            Keys.onEnterPressed:  if (root.collapsible) root.expanded = !root.expanded
-            Keys.onSpacePressed:  if (root.collapsible) root.expanded = !root.expanded
+            Keys.onReturnPressed: if (root.collapsible && root.expandable) root.expanded = !root.expanded
+            Keys.onEnterPressed:  if (root.collapsible && root.expandable) root.expanded = !root.expanded
+            Keys.onSpacePressed:  if (root.collapsible && root.expandable) root.expanded = !root.expanded
 
             KFocusRing { id: focusRing; radius: parent.radius }
 
@@ -301,6 +302,7 @@ Item {
                     expanded: root.expanded
                     indicatorColor: AppPalette.textSecond
                     visible: root.collapsible
+                    opacity: root.expandable ? 1.0 : 0.0   // keep the slot (title stays put), just hide the arrow
                 }
 
                 Text {
@@ -318,10 +320,10 @@ Item {
                 id: headerMouse
                 anchors.fill: parent
                 hoverEnabled: true
-                cursorShape: root.collapsible ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onPressed: if (root.collapsible) focusRing.suppress()
+                cursorShape: (root.collapsible && root.expandable) ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onPressed: if (root.collapsible && root.expandable) focusRing.suppress()
                 onClicked: {
-                    if (root.collapsible) {
+                    if (root.collapsible && root.expandable) {
                         headerBar.forceActiveFocus()
                         root.expanded = !root.expanded
                     }
@@ -349,7 +351,7 @@ Item {
             wrapMode: Text.WordWrap
             width: parent.width
             leftPadding: Tokens.spaceXxs
-            opacity: (!root.collapsible || root.expanded) ? 1.0 : 0.0
+            opacity: (root.expandable && (!root.collapsible || root.expanded)) ? 1.0 : 0.0
             Behavior on opacity {
                 NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
             }
@@ -363,7 +365,7 @@ Item {
             id: contentCard
             clip: true
             width: parent.width
-            height: (!root.collapsible || root.expanded)
+            height: (root.expandable && (!root.collapsible || root.expanded))
                     ? contentColumn.implicitHeight + 2 * root.contentPadding
                     : 0
             visible: height > 0.5

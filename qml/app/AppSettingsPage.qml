@@ -793,14 +793,9 @@ Column {
             active: root.store ? root.store.boatTrackVisible : false
             onClicked: if (root.store) root.store.boatTrackVisible = !root.store.boatTrackVisible
         }
+        expandable: false   // no body controls — header + description only
         collapsedByDefault: true
 
-        ParamCard {
-            id: boatTrackVisible3d
-            label: qsTr("Show in 3D")
-            onToggled: function(v) { if (root.store) root.store.boatTrackVisible = v }
-            Binding { target: boatTrackVisible3d; property: "checked"; value: root.store ? root.store.boatTrackVisible : true }
-        }
     }
 
     // Bottom Track
@@ -855,13 +850,6 @@ Column {
         }
 
         Component.onCompleted: refreshParams()
-
-        ParamCard {
-            id: bottomTrackVisible3d
-            label: qsTr("Show in 3D")
-            onToggled: function(v) { if (root.store) root.store.bottomTrackVisible = v }
-            Binding { target: bottomTrackVisible3d; property: "checked"; value: root.store ? root.store.bottomTrackVisible : false }
-        }
 
         // Preset
         Column {
@@ -1127,13 +1115,6 @@ Column {
             exportSurfacePathText.text = isoDisplayUrl(exportSurfacePathSource)
         }
 
-        ParamCard {
-            id: isobathsVisible3d
-            label: qsTr("Show in 3D")
-            onToggled: function(v) { if (root.store) root.store.isobathsVisible = v }
-            Binding { target: isobathsVisible3d; property: "checked"; value: root.store ? root.store.isobathsVisible : false }
-        }
-
         RowLayout {
             width: parent.width
             spacing: Tokens.spaceMd
@@ -1352,13 +1333,6 @@ Column {
             mosaicLevelsSlider.stopValue = v
             if (mosaicLevelsSlider.stopValue < mosaicLevelsSlider.startValue)
                 mosaicLevelsSlider.startValue = mosaicLevelsSlider.stopValue
-        }
-
-        ParamCard {
-            id: mosaicVisible3d
-            label: qsTr("Show in 3D")
-            onToggled: function(v) { if (root.store) root.store.mosaicVisible = v }
-            Binding { target: mosaicVisible3d; property: "checked"; value: root.store ? root.store.mosaicVisible : false }
         }
 
         RowLayout {
