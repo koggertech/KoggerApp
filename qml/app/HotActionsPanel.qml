@@ -503,6 +503,11 @@ Item {
         width: visible ? root.controlHeight : 0
         height: root.controlHeight
 
+        activeFocusOnTab: visible
+        Keys.onReturnPressed: pill.opened ? pill.close() : pill.open()
+        Keys.onEnterPressed:  pill.opened ? pill.close() : pill.open()
+        Keys.onSpacePressed:  pill.opened ? pill.close() : pill.open()
+
         readonly property bool _placeholder: !root._loggingActive
         readonly property bool _klf: _placeholder || (typeof core !== "undefined" && core && core.loggingKlf)
         readonly property bool _csv: !_placeholder && (typeof core !== "undefined" && core && core.loggingCsv)
@@ -512,6 +517,7 @@ Item {
         onVisibleChanged: if (!visible && pill.opened) pill.close()
 
         Rectangle {
+            id: badgeCircle
             anchors.fill: parent
             radius: width / 2
             scale: logBadge._hoverScale
@@ -579,8 +585,11 @@ Item {
             enabled: logBadge.visible
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: pill.opened ? pill.close() : pill.open()
+            onPressed: logFocusRing.suppress()
+            onClicked: { logBadge.forceActiveFocus(); pill.opened ? pill.close() : pill.open() }
         }
+
+        KFocusRing { id: logFocusRing; target: badgeCircle; focusItem: logBadge }
 
         KToolTip { text: qsTr("Recording"); shown: badgeMa.containsMouse && !pill.opened }
 
@@ -976,23 +985,39 @@ Item {
 
     Component {
         id: qaFavoritesComp
-        Item {
+        Rectangle {
             id: favSlotItem
             width: root.triggerButtonWidth
             height: root.controlHeight
+            color: "transparent"
+            radius: height / 2
+            activeFocusOnTab: true
+            function _grab() { favSlotItem.forceActiveFocus(); favRing.suppress() }
+            Keys.onReturnPressed: root.layoutsMenuOpen = !root.layoutsMenuOpen
+            Keys.onEnterPressed:  root.layoutsMenuOpen = !root.layoutsMenuOpen
+            Keys.onSpacePressed:  root.layoutsMenuOpen = !root.layoutsMenuOpen
             Component.onCompleted: root._favSlot = favSlotItem
             Component.onDestruction: if (root._favSlot === favSlotItem) root._favSlot = null
+            KFocusRing { id: favRing; inset: 3 }
         }
     }
 
     Component {
         id: qaBottomTrackComp
-        Item {
+        Rectangle {
             id: btSlotItem
             width: root.controlHeight
             height: root.controlHeight
+            color: "transparent"
+            radius: height / 2
+            activeFocusOnTab: true
+            function _grab() { btSlotItem.forceActiveFocus(); btRing.suppress() }
+            Keys.onReturnPressed: if (root.store) root.store.bottomTrackEditorOpen = !root.store.bottomTrackEditorOpen
+            Keys.onEnterPressed:  if (root.store) root.store.bottomTrackEditorOpen = !root.store.bottomTrackEditorOpen
+            Keys.onSpacePressed:  if (root.store) root.store.bottomTrackEditorOpen = !root.store.bottomTrackEditorOpen
             Component.onCompleted: root._btSlot = btSlotItem
             Component.onDestruction: if (root._btSlot === btSlotItem) root._btSlot = null
+            KFocusRing { id: btRing; inset: 3 }
         }
     }
 
@@ -1286,6 +1311,7 @@ Item {
             anchors.topMargin: root.panelPaddingX
             width: root._flowContentW
             spacing: root.quickActionSpacing   // Flow applies this to BOTH axes → equal H/V gaps
+            enabled: root.expanded
 
             move: Transition {
                 SequentialAnimation {
@@ -1390,7 +1416,10 @@ Item {
             highlighted: root.highlightedQuickActionKey === "layouts"
             flashToken: root.highlightPulseToken
             highlightHold: root.draggingKey === "favorites"
-            onClicked: root.layoutsMenuOpen = !root.layoutsMenuOpen
+            onClicked: {
+                if (root._favSlot && root._favSlot._grab) root._favSlot._grab()
+                root.layoutsMenuOpen = !root.layoutsMenuOpen
+            }
         }
     }
 
@@ -1410,6 +1439,7 @@ Item {
             anchors.centerIn: parent
             width: root.controlHeight
             height: root.controlHeight
+            activeFocusOnTab: false
             readonly property bool _open: root.store && root.store.bottomTrackEditorOpen
             readonly property bool _accent: root.btTool !== 0 || _open
             iconSource: "qrc:/icons/ui/pencil.svg"
@@ -1425,6 +1455,7 @@ Item {
             flashToken: root.highlightPulseToken
             highlightHold: root.draggingKey === "bottomTrack"
             onClicked: {
+                if (root._btSlot && root._btSlot._grab) root._btSlot._grab()
                 if (!root.store) return
                 root.store.bottomTrackEditorOpen = !root.store.bottomTrackEditorOpen   // keep the menu open
             }
