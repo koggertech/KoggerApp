@@ -102,12 +102,13 @@ property bool quickActionBottomTrackEnabled: true
 property bool quickActionProfilesEnabled: true
 property bool quickActionExtraInfoEnabled: true
 property bool quickActionAutopilotEnabled: true
+property bool quickActionConsoleEnabled: true
 property bool quickActionSecondWindowEnabled: true
 
 property string quickActionDraggingKey: ""
 
 readonly property var quickActionKeys: {
-    var base = ["connections", "logging", "favorites", "bottomTrack", "extraInfo", "autopilot", "profiles"]
+    var base = ["connections", "logging", "favorites", "bottomTrack", "extraInfo", "autopilot", "console", "profiles"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
     return base
@@ -120,6 +121,7 @@ property var quickActionOrderModel: ListModel {
     ListElement { key: "bottomTrack" }
     ListElement { key: "extraInfo" }
     ListElement { key: "autopilot" }
+    ListElement { key: "console" }
     ListElement { key: "profiles" }
     ListElement { key: "secondWindow" }
 }
@@ -137,6 +139,8 @@ function normalizeQuickActionOrder(list) {
                 out.splice(out.indexOf("connections") + 1, 0, "logging")   // keep logging right after devices
             else if (quickActionKeys[j] === "autopilot" && out.indexOf("extraInfo") !== -1)
                 out.splice(out.indexOf("extraInfo") + 1, 0, "autopilot")   // keep autopilot right after extra-info
+            else if (quickActionKeys[j] === "console" && out.indexOf("autopilot") !== -1)
+                out.splice(out.indexOf("autopilot") + 1, 0, "console")   // keep console right after autopilot
             else
                 out.push(quickActionKeys[j])
         }
@@ -628,7 +632,7 @@ property Settings layoutStore: Settings {
     property bool quickActionLoggingEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
-    property string quickActionOrderStored: "connections,logging,favorites,bottomTrack,extraInfo,autopilot,profiles,secondWindow"
+    property string quickActionOrderStored: "connections,logging,favorites,bottomTrack,extraInfo,autopilot,console,profiles,secondWindow"
     property string selectedConnectionFilePathStored: ""
     property string favoriteLayoutsJson: "[]"
     property string settingsGroupExpandedJson: "{}"
@@ -656,6 +660,7 @@ property Settings layoutStore: Settings {
     property bool extraInfoBoatStatusStored: false
     property bool quickActionExtraInfoEnabledStored: true
     property bool quickActionAutopilotEnabledStored: true
+    property bool quickActionConsoleEnabledStored: true
     property bool quickActionSecondWindowEnabledStored: true
     property bool secondaryWindowOpenStored: false
     property string secondaryWindowModeStored: ""
@@ -2814,6 +2819,7 @@ function saveLayoutState() {
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
     layoutStore.quickActionExtraInfoEnabledStored = quickActionExtraInfoEnabled
     layoutStore.quickActionAutopilotEnabledStored = quickActionAutopilotEnabled
+    layoutStore.quickActionConsoleEnabledStored = quickActionConsoleEnabled
     layoutStore.quickActionSecondWindowEnabledStored = quickActionSecondWindowEnabled
     layoutStore.quickActionOrderStored = quickActionOrderCsv()
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
@@ -2852,6 +2858,7 @@ function restoreLayoutState() {
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
     quickActionExtraInfoEnabled = layoutStore.quickActionExtraInfoEnabledStored
     quickActionAutopilotEnabled = layoutStore.quickActionAutopilotEnabledStored
+    quickActionConsoleEnabled = layoutStore.quickActionConsoleEnabledStored
     quickActionSecondWindowEnabled = layoutStore.quickActionSecondWindowEnabledStored
     applyQuickActionOrder((layoutStore.quickActionOrderStored || "").split(","))
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored

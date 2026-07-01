@@ -263,18 +263,6 @@ Column {
         description: qsTr("Language, theme, UI scale and panel visibility.")
         stateStore: root.store
         stateKey: "app.preference"
-        headerActions: KCircleIconButton {
-            readonly property bool _on: (typeof theme !== "undefined" && theme) ? theme.consoleVisible : false
-            width: interfaceGroup.headerActionSize
-            height: interfaceGroup.headerActionSize
-            iconSource: "qrc:/icons/ui/terminal.svg"
-            iconPixelSize: Math.round(width * 0.58)
-            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
-            toolTipText: qsTr("Console")
-            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
-            onClicked: if (typeof theme !== "undefined" && theme) theme.consoleVisible = !theme.consoleVisible
-        }
         collapsedByDefault: false
 
         Column {
@@ -425,26 +413,6 @@ Column {
         }
 
         // ── Merged from former "Interface" group ──────────────────────────
-
-        KSwitch {
-            id: consoleVisible
-            visible: instruments >= 2
-            width: parent.width
-            text: qsTr("Console")
-            checked: theme ? theme.consoleVisible : false
-            onToggled: if (theme) theme.consoleVisible = checked
-
-            Connections {
-                target: theme
-                ignoreUnknownSignals: true
-                function onInterfaceChanged() {
-                    if (consoleVisible.checked !== theme.consoleVisible)
-                        consoleVisible.checked = theme.consoleVisible
-                }
-            }
-        }
-
-        Settings { category: "main/console"; property alias consoleVisible: consoleVisible.checked }
 
         KSwitch {
             width: parent.width

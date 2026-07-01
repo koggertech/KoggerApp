@@ -21,6 +21,7 @@ Column {
              : key === "bottomTrack" ? qsTr("Bottom track editing")
              : key === "extraInfo"   ? qsTr("Extra info")
              : key === "autopilot"   ? qsTr("Autopilot")
+             : key === "console"     ? qsTr("Console")
              : key === "profiles"    ? qsTr("Profiles")
              : key === "secondWindow" ? qsTr("Second window")
              : key
@@ -33,6 +34,7 @@ Column {
              : key === "bottomTrack" ? store.quickActionBottomTrackEnabled
              : key === "extraInfo"   ? store.quickActionExtraInfoEnabled
              : key === "autopilot"   ? store.quickActionAutopilotEnabled
+             : key === "console"     ? store.quickActionConsoleEnabled
              : key === "profiles"    ? store.quickActionProfilesEnabled
              : key === "secondWindow" ? store.quickActionSecondWindowEnabled
              : false
@@ -58,6 +60,9 @@ Column {
         } else if (key === "autopilot") {
             store.quickActionAutopilotEnabled = v
             store.requestHotkeysReveal("autopilot")
+        } else if (key === "console") {
+            store.quickActionConsoleEnabled = v
+            store.requestHotkeysReveal("console")
         } else if (key === "profiles") {
             store.quickActionProfilesEnabled = v
             store.requestHotkeysReveal("profiles")

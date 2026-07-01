@@ -2460,6 +2460,14 @@
         <translation>Скрыть панель автопилота</translation>
     </message>
     <message>
+        <source>Console</source>
+        <translation>Консоль</translation>
+    </message>
+    <message>
+        <source>Hide console</source>
+        <translation>Скрыть консоль</translation>
+    </message>
+    <message>
         <source>Set 700 kHz</source>
         <translation>Установить 700 кГц</translation>
     </message>
@@ -3429,6 +3437,10 @@
     <message>
         <source>Autopilot</source>
         <translation>Автопилот</translation>
+    </message>
+    <message>
+        <source>Console</source>
+        <translation>Консоль</translation>
     </message>
 </context>
 <context>

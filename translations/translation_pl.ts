@@ -2460,6 +2460,14 @@
         <translation>Ukryj panel autopilota</translation>
     </message>
     <message>
+        <source>Console</source>
+        <translation>Konsola</translation>
+    </message>
+    <message>
+        <source>Hide console</source>
+        <translation>Ukryj konsolę</translation>
+    </message>
+    <message>
         <source>Set 700 kHz</source>
         <translation>Ustaw 700 kHz</translation>
     </message>
@@ -3429,6 +3437,10 @@
     <message>
         <source>Autopilot</source>
         <translation>Autopilot</translation>
+    </message>
+    <message>
+        <source>Console</source>
+        <translation>Konsola</translation>
     </message>
 </context>
 <context>

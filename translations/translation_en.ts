@@ -2444,6 +2444,14 @@
         <translation>Hide autopilot panel</translation>
     </message>
     <message>
+        <source>Console</source>
+        <translation>Console</translation>
+    </message>
+    <message>
+        <source>Hide console</source>
+        <translation>Hide console</translation>
+    </message>
+    <message>
         <source>Set 700 kHz</source>
         <translation>Set 700 kHz</translation>
     </message>
@@ -3413,6 +3421,10 @@
     <message>
         <source>Autopilot</source>
         <translation>Autopilot</translation>
+    </message>
+    <message>
+        <source>Console</source>
+        <translation>Console</translation>
     </message>
 </context>
 <context>

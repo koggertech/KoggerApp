@@ -51,6 +51,9 @@ Item {
     property bool autopilotButtonEnabled: true
     readonly property bool _autopilotRevealOverride: _revealActiveKey === "autopilot"
     readonly property bool showAutopilot: autopilotButtonEnabled || _autopilotRevealOverride
+    property bool consoleButtonEnabled: true
+    readonly property bool _consoleRevealOverride: _revealActiveKey === "console"
+    readonly property bool showConsole: consoleButtonEnabled || _consoleRevealOverride
     property int favoriteItemSpacing: Math.round(6 * root._s)
     property int favoriteListMaxHeight: Math.round(244 * root._s)
     property bool connectionsOnline: true
@@ -1030,6 +1033,30 @@ Item {
     }
 
     Component {
+        id: qaConsoleComp
+        KCircleIconButton {
+            id: consoleBtn
+            readonly property bool _open: typeof theme !== "undefined" && theme && theme.consoleVisible
+            width: root.controlHeight
+            height: root.controlHeight
+            iconSource: "qrc:/icons/ui/terminal.svg"
+            iconTintColor: AppPalette.text
+            toolTipText: _open ? qsTr("Hide console") : qsTr("Console")
+            fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
+            fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
+            borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
+            highlighted: root.highlightedQuickActionKey === "console"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "console"
+            onClicked: if (typeof theme !== "undefined" && theme) theme.consoleVisible = !theme.consoleVisible
+
+            KCloseBadge { visible: consoleBtn._open }
+        }
+    }
+
+    Component {
         id: qaProfilesComp
         KCircleIconButton {
             id: profilesBtn
@@ -1253,6 +1280,7 @@ Item {
                            : key === "bottomTrack" ? root.showBtEdit
                            : key === "extraInfo"   ? root.showExtraInfo
                            : key === "autopilot"    ? root.showAutopilot
+                           : key === "console"      ? root.showConsole
                            : key === "profiles"     ? root.showProfiles
                            : key === "secondWindow" ? root._showSecondWindow
                            : false
@@ -1263,6 +1291,7 @@ Item {
                                    : key === "bottomTrack"  ? qaBottomTrackComp
                                    : key === "extraInfo"    ? qaExtraInfoComp
                                    : key === "autopilot"    ? qaAutopilotComp
+                                   : key === "console"      ? qaConsoleComp
                                    : key === "profiles"     ? qaProfilesComp
                                    : key === "secondWindow" ? qaSecondWindowComp
                                    : null

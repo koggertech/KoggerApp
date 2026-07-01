@@ -675,6 +675,7 @@ ApplicationWindow {
             profilesEnabled: workspaceStore.quickActionProfilesEnabled
             extraInfoEnabled: workspaceStore.quickActionExtraInfoEnabled
             autopilotButtonEnabled: workspaceStore.quickActionAutopilotEnabled
+            consoleButtonEnabled: workspaceStore.quickActionConsoleEnabled
             inputDeviceLabel: workspaceView.inputDeviceLabel
             inputDeviceColor: workspaceView.inputDeviceColor
             showToggleButton: !workspaceStore.settingsPanelOpen && !workspaceStore.modeSettingsPanelOpen
