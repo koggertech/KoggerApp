@@ -170,7 +170,7 @@ Item {
             anchors.right: parent.right
             anchors.top: parent.top
             color: panelRoot.headerColor
-            height: topSectionContent.y + topSectionContent.implicitHeight + Tokens.spaceXl
+            height: topSectionContent.y + topSectionContent.implicitHeight + Tokens.spaceLg
             z: 1
 
             Column {
@@ -180,13 +180,13 @@ Item {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.leftMargin: Tokens.spaceXl
-                anchors.rightMargin: Tokens.spaceXl
-                anchors.topMargin: Tokens.spaceXl
+                anchors.rightMargin: Tokens.spaceLg
+                anchors.topMargin: Tokens.spaceLg
                 spacing: Tokens.spaceLg
 
                 RowLayout {
                     width: parent.width
-                    height: Tokens.controlHXl - Tokens.spaceXs
+                    height: Tokens.controlHLg
                     spacing: Tokens.spaceMd
 
                     KButton {
