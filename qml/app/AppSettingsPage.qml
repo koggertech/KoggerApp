@@ -22,15 +22,18 @@ Column {
 
     component ShowIn3DAction: KCircleIconButton {
         property bool active: false
-        readonly property int _sz: Math.round(28 * AppPalette.scale)
+        readonly property int _sz: Math.round(36 * AppPalette.scale)   // = SettingsGroup._headerH
         width: _sz
         height: _sz
+        cornerRadius: Tokens.radiusLg   // uniform rounded chip, full header height
+        borderWidth: 0
+        scaleOnHover: false
         iconSource: active ? "qrc:/icons/ui/eye.svg" : "qrc:/icons/ui/eye-off.svg"
-        iconPixelSize: Math.round(width * 0.64)
+        iconPixelSize: Math.round(width * 0.60)
         iconTintColor: active ? AppPalette.text : AppPalette.textSecond
         toolTipText: qsTr("Show in 3D")
-        fillColor:   active ? AppPalette.accentBgStrong : AppPalette.card
-        borderColor: active ? AppPalette.accentBorder : AppPalette.border
+        fillColor:      active ? AppPalette.accentBgStrong : AppPalette.controlRaised
+        fillHoverColor: active ? AppPalette.accentBgStrong : Qt.lighter(AppPalette.controlRaised, 1.2)
 
         Text {
             anchors.bottom: parent.bottom

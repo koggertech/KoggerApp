@@ -27,12 +27,15 @@ Column {
             readonly property bool _rec: typeof core !== "undefined" && core && (core.loggingKlf || core.loggingCsv)
             width: connGroup.headerActionSize
             height: connGroup.headerActionSize
+            cornerRadius: Tokens.radiusLg   // uniform rounded chip, full header height
+            borderWidth: 0
+            scaleOnHover: false
             glyph: "REC"
-            glyphPixelSize: Math.round(width * 0.30)
+            glyphPixelSize: Math.round(width * 0.32)
             glyphColor:  _rec ? "#FCA5A5" : AppPalette.textSecond
             toolTipText: _rec ? qsTr("Stop recording") : qsTr("Start recording")
-            fillColor:   _rec ? "#7F1D1D" : AppPalette.card
-            borderColor: _rec ? "#EF4444" : AppPalette.border
+            fillColor:      _rec ? "#7F1D1D" : AppPalette.controlRaised
+            fillHoverColor: _rec ? "#991B1B" : Qt.lighter(AppPalette.controlRaised, 1.2)
             onClicked: if (root.store) root.store.setRecording(!root.store.isRecording)
         }
 

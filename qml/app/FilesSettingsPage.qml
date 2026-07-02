@@ -27,10 +27,15 @@ Column {
             readonly property string _last: root.store ? root.store.selectedConnectionFilePath : ""
             width: filesGroup.headerActionSize
             height: filesGroup.headerActionSize
+            cornerRadius: Tokens.radiusLg   // uniform rounded chip, full header height
+            borderWidth: 0
+            scaleOnHover: false
             enabled: _last.length > 0
             iconSource: "qrc:/icons/ui/folder-open.svg"
-            iconPixelSize: Math.round(width * 0.56)
+            iconPixelSize: Math.round(width * 0.64)
             iconTintColor: AppPalette.textSecond
+            fillColor:      AppPalette.controlRaised
+            fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
             toolTipText: qsTr("Open last file")
             onClicked: if (typeof core !== "undefined" && core && _last.length > 0)
                            core.openLogFile(_last, false, false)

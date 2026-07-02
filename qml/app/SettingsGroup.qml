@@ -24,8 +24,8 @@ Item {
     property bool confirmed: true
     default property alias contentData: contentColumn.data
     property alias headerActions: headerActionsRow.data
-    readonly property int headerActionSize: Math.round(28 * AppPalette.scale)
     readonly property int _headerH: Math.round(36 * AppPalette.scale)
+    readonly property int headerActionSize: _headerH
     readonly property bool _bodyShown: expandable && (!collapsible || expanded)
 
     property bool _stateReady: false
@@ -235,14 +235,33 @@ Item {
 
         // Gradient blends flush from the header's bottom edge down over one row
         // (header colour → content bg), not spread over the whole group.
+        // Non-linear: two curved mid-stops make the header colour decay FAST near
+        // the top, then ease into the content bg (ease-out, not a straight blend).
         readonly property real _seamStart: Math.min(1, headerRow.height / Math.max(1, height))
         readonly property real _seamEnd: Math.min(1, (headerRow.height * 2) / Math.max(1, height))
+        readonly property real _seamSpan: _seamEnd - _seamStart
+        function _mix(a, b, t) {
+            return Qt.rgba(a.r + (b.r - a.r) * t,
+                           a.g + (b.g - a.g) * t,
+                           a.b + (b.b - a.b) * t,
+                           a.a + (b.a - a.a) * t)
+        }
 
         gradient: Gradient {
             GradientStop { position: 0.0;               color: island._headerColor
                 Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } } }
             GradientStop { position: island._seamStart; color: island._headerColor
                 Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } } }
+            GradientStop {
+                position: island._seamStart + island._seamSpan * 0.25
+                color: island._mix(island._headerColor, island._bottomColor, 0.58)
+                Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+            }
+            GradientStop {
+                position: island._seamStart + island._seamSpan * 0.55
+                color: island._mix(island._headerColor, island._bottomColor, 0.91)
+                Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+            }
             GradientStop { position: island._seamEnd;   color: island._bottomColor
                 Behavior on color { ColorAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } } }
             GradientStop { position: 1.0;               color: island._bottomColor
@@ -324,7 +343,7 @@ Item {
                 id: headerActionsRow
                 z: 1
                 anchors.right: parent.right
-                anchors.rightMargin: Tokens.spaceMd
+                anchors.rightMargin: 0                    // flush right — rounded chips
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Tokens.spaceSm
             }
