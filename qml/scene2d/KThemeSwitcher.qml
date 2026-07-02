@@ -80,9 +80,10 @@ Item {
             anchors.fill: parent
             radius: width / 2
             color: "transparent"
-            border.width: sw.selected ? Math.max(2, Math.round(2 * root._s)) : 1
-            border.color: sw.selected ? AppPalette.accentBar
-                                      : (sw.hovered ? AppPalette.borderHover : AppPalette.border)
+            // Ring only on the selected swatch (selection cue); others borderless.
+            border.width: sw.selected ? Math.max(2, Math.round(2 * root._s))
+                                      : (sw.hovered ? 1 : 0)
+            border.color: sw.selected ? AppPalette.accentBar : AppPalette.borderHover
         }
 
         MouseArea {
@@ -132,8 +133,7 @@ Item {
         height: root.buttonSize + root._pad * 2
         radius: height / 2
         color: AppPalette.bg
-        border.width: 1
-        border.color: AppPalette.border
+        border.width: 0
         opacity: root.menuOpen ? 1 : 0
         visible: opacity > 0.01
 

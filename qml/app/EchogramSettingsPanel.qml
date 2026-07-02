@@ -62,6 +62,7 @@ Column {
                 Layout.preferredHeight: Tokens.controlHMd
                 iconSource: "qrc:/icons/ui/settings.svg"
                 iconTintColor: AppPalette.accentBar
+                cornerRadius: Tokens.radiusSm   // square, not a circle
                 fillColor: AppPalette.controlRaised
                 fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
                 borderWidth: 0

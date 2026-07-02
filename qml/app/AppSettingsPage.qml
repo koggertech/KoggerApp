@@ -1353,6 +1353,7 @@ Column {
             KChartLevelCapsule {
                 id: mosaicLevelsSlider
                 Layout.fillHeight: true
+                cornerRadius: Tokens.radiusLg   // settings: rounded rectangle (2D overlay stays a pill)
                 onStartValueChanged: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
                 onStopValueChanged:  MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
                 Component.onCompleted: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
@@ -1572,6 +1573,7 @@ Column {
                         Layout.preferredHeight: Tokens.controlHMd
                         iconSource: "qrc:/icons/ui/settings.svg"
                         iconTintColor: AppPalette.accentBar
+                        cornerRadius: Tokens.radiusSm   // square, not a circle
                         fillColor: AppPalette.controlRaised
                         fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
                         borderWidth: 0

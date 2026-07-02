@@ -607,7 +607,7 @@ WaterFall {
             iconTintColor: AppPalette.text
             fillColor: AppPalette.card
             fillHoverColor: AppPalette.cardHover
-            borderColor: AppPalette.border
+            borderWidth: 0
             toolTipText: qsTr("Echogram settings")
             onClicked: { if (typeof core !== "undefined" && core) core.requestDismissTransientUi(); settingsClicked() }
         }
