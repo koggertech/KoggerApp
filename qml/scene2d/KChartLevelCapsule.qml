@@ -24,7 +24,7 @@ Rectangle {
     implicitHeight: col.implicitHeight + Math.round(20 * AppPalette.scale)
     radius: width / 2
     color: AppPalette.card
-    border.width: 1
+    border.width: Tokens.cardBorderWidth
     border.color: AppPalette.border
 
     ColumnLayout {

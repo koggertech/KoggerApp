@@ -44,7 +44,7 @@ Slider {
         height: control.trackHeight
         radius: height / 2
         color: control.trackOffColor
-        border.width: 1
+        border.width: Tokens.cardBorderWidth
         border.color: control.trackOffBorderColor
 
         Rectangle {

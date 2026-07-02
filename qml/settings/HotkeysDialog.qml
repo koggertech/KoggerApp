@@ -184,7 +184,7 @@ Popup {
                 radius: Tokens.radiusMd
                 color: AppPalette.headerBg
                 border.color: AppPalette.border
-                border.width: 1
+                border.width: Tokens.cardBorderWidth
 
                 Row {
                     anchors.fill: parent
@@ -291,7 +291,7 @@ Popup {
                         clip: true
                         color: row.listening ? AppPalette.accentBg : AppPalette.card
                         border.color: row.listening ? AppPalette.accentBorder : AppPalette.border
-                        border.width: 1
+                        border.width: row.listening ? 1 : Tokens.cardBorderWidth
 
                         Text {
                             anchors.centerIn: parent
@@ -324,7 +324,7 @@ Popup {
                         clip: true
                         color: AppPalette.card
                         border.color: paramInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                        border.width: 1
+                        border.width: paramInput.activeFocus ? 1 : Tokens.cardBorderWidth
 
                         TextInput {
                             id: paramInput

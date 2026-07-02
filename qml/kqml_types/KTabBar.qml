@@ -130,8 +130,19 @@ Item {
         anchors.fill: parent
         radius: root.cornerRadius
         color: AppPalette.bg
-        border.width: (root.activeFocus && !root._ringSuppressed) ? 2 : 1
+        border.width: (root.activeFocus && !root._ringSuppressed) ? 2 : Tokens.cardBorderWidth
         border.color: (root.activeFocus && !root._ringSuppressed) ? AppPalette.accentBorder : AppPalette.border
+    }
+
+    Rectangle {
+        visible: tabMouseArea.hoverIndex >= 0 && tabMouseArea.hoverIndex !== root.visualIndex
+        x: root.horizontalPadding + tabMouseArea.hoverIndex * (root.segmentWidth + root.buttonSpacing)
+        y: root.verticalPadding
+        width: root.segmentWidth
+        height: root.buttonHeight
+        radius: Math.round(6 * AppPalette.scale)
+        color: AppPalette.bgHover
+        z: 0
     }
 
     Rectangle {
@@ -202,7 +213,7 @@ Item {
                         id: label
                         anchors.centerIn: parent
                         text: tabButton.text
-                        color: selected ? AppPalette.text : AppPalette.textSecond
+                        color: (selected || tabButton.optionIndex === tabMouseArea.hoverIndex) ? AppPalette.text : AppPalette.textSecond
                         font.pixelSize: root.fontPixelSize
                         font.bold: true
                         elide: Text.ElideRight
@@ -215,10 +226,12 @@ Item {
     MouseArea {
         id: tabMouseArea
         anchors.fill: parent
+        hoverEnabled: true
         z: 3
 
         property real pressX: 0
         property bool dragging: false
+        property int hoverIndex: -1
 
         onPressed: function(mouse) {
             pressX = mouse.x
@@ -229,13 +242,16 @@ Item {
         }
 
         onPositionChanged: function(mouse) {
-            if (!root.dragSelectEnabled)
+            tabMouseArea.hoverIndex = root.indexFromPosition(mouse.x)
+            if (!pressed || !root.dragSelectEnabled)
                 return
             if (!dragging && Math.abs(mouse.x - pressX) > Math.round(6 * AppPalette.scale))
                 dragging = true
             if (dragging)
                 root.dragPreviewIndex = root.indexFromPosition(mouse.x)
         }
+
+        onExited: tabMouseArea.hoverIndex = -1
 
         onReleased: function(mouse) {
             var idx = root.indexFromPosition(mouse.x)

@@ -1102,6 +1102,16 @@
         <translation></translation>
     </message>
     <message>
+        <source>Invalid log folder:
+%1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Log folder is not writable:
+%1</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>File opened</source>
         <translation></translation>
     </message>

@@ -77,23 +77,35 @@ Core::~Core()
     shutdownBackgroundWorkers();
 }
 
+QString Core::defaultExportDirectory() const
+{
+    return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+           + QStringLiteral("/Kogger/exports");
+}
+
 QString Core::resolveExportBasePath(const QString& basePath) const
 {
+    QString result;
     const QUrl url(basePath);
     if (url.isLocalFile()) {
-        return url.toLocalFile();
-    }
-
+        result = url.toLocalFile();
+    } else {
 #ifdef Q_OS_ANDROID
-    if (url.scheme() == "content") {
-        const QString resolvedPath = resolveAndroidUriToPath(basePath);
-        if (!resolvedPath.isEmpty()) {
-            return resolvedPath;
+        if (url.scheme() == "content") {
+            const QString resolvedPath = resolveAndroidUriToPath(basePath);
+            if (!resolvedPath.isEmpty()) {
+                return resolvedPath;   // Android content URI — used as-is
+            }
         }
-    }
 #endif
+        result = basePath;             // already a plain local path
+    }
 
-    return basePath;
+    if (result.trimmed().isEmpty()) {
+        result = defaultExportDirectory();   // no folder chosen → default
+    }
+    QDir().mkpath(result);                    // create it if missing
+    return result;
 }
 
 QString Core::buildExportFileStem(const QString& openedFilePath) const
@@ -1037,6 +1049,35 @@ QString Core::logDirectoryUrl() const
     const QString dir = logger_.logDirectory();
     QDir().mkpath(dir);                       // ensure it exists so the dialog opens there
     return QUrl::fromLocalFile(dir).toString();
+}
+
+bool Core::prepareLogDirectory(const QString& dir)
+{
+    QString clean = dir;
+    if (clean.startsWith(QStringLiteral("file:"))) {
+        clean = QUrl(clean).toLocalFile();
+    }
+    clean = clean.trimmed();
+
+    if (clean.isEmpty()) {
+        logger_.setLogDirectory(QString());   // empty → default Documents/KoggerApp/logs
+        return true;
+    }
+
+    QDir d;
+    if (!d.mkpath(clean)) {
+        notifications.warning(tr("Invalid log folder:\n%1").arg(QDir::toNativeSeparators(clean)));
+        return false;
+    }
+
+    const QFileInfo info(clean);
+    if (!info.isDir() || !info.isWritable()) {
+        notifications.warning(tr("Log folder is not writable:\n%1").arg(QDir::toNativeSeparators(clean)));
+        return false;
+    }
+
+    logger_.setLogDirectory(clean);
+    return true;
 }
 
 bool Core::getFixBlackStripesState() const

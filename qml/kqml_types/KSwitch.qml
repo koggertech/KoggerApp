@@ -9,7 +9,7 @@ Switch {
     property int switchHorizontalPadding: Math.round(10 * AppPalette.scale)
     property int cornerRadius: Tokens.radiusLg
     property color textColor: AppPalette.textSecond
-    property color backgroundColor: AppPalette.bg
+    property color backgroundColor: AppPalette.rowRaised
     property color borderColor: AppPalette.border
     property color accentColor: AppPalette.accentBg
     property color accentBorderColor: AppPalette.accentBorder
@@ -96,7 +96,7 @@ Switch {
         id: bg
         radius: control.cornerRadius
         color: control.hovered ? AppPalette.bgHover : control.backgroundColor
-        border.width: 1
+        border.width: Tokens.cardBorderWidth
         border.color: control.borderColor
 
         Rectangle {

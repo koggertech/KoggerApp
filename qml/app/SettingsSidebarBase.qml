@@ -133,8 +133,6 @@ Item {
         width: panelRoot.panelWidth
         height: panelRoot.height
         color: panelRoot.panelColor
-        border.width: 1
-        border.color: AppPalette.border
         z: 2
 
         MouseArea {

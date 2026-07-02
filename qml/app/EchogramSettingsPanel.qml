@@ -26,8 +26,8 @@ Column {
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceMd
 
-    // ── Reusable label + combo row ────────────────────────────────────────────
-    component ComboRow: RowLayout {
+    // ── Reusable label + combo row (card, matches toggle rows) ─────────────────
+    component ComboRow: Rectangle {
         id: crow
         property string label: ""
         property var comboModel: []
@@ -35,37 +35,49 @@ Column {
         property bool enabledRow: true
         property var swatchFor: null   // function(index)->[{pos,color}] colormap dot
         property int tgcLinkAtIndex: -1
+        property bool recessed: false   // nested in a card group: dark row + lighter combo
         signal picked(int index)
         signal tgcLinkClicked()
         width: parent ? parent.width : implicitWidth
-        spacing: Tokens.spaceMd
-        Text {
-            text: crow.label
-            color: AppPalette.textSecond
-            font.pixelSize: Tokens.fontMd
-            Layout.fillWidth: true
-            verticalAlignment: Text.AlignVCenter
-            elide: Text.ElideRight
-        }
-        KCircleIconButton {
-            visible: crow.tgcLinkAtIndex >= 0 && crow.currentIndex === crow.tgcLinkAtIndex
-            Layout.preferredWidth: Tokens.controlHMd
-            Layout.preferredHeight: Tokens.controlHMd
-            iconSource: "qrc:/icons/ui/settings.svg"
-            iconTintColor: AppPalette.accentBar
-            fillColor: "transparent"
-            fillHoverColor: AppPalette.cardHover
-            borderColor: "transparent"
-            toolTipText: qsTr("Open TGC settings")
-            onClicked: crow.tgcLinkClicked()
-        }
-        KCombo {
-            Layout.preferredWidth: panel.comboW
-            enabled: crow.enabledRow
-            model: crow.comboModel
-            currentIndex: crow.currentIndex
-            swatchFor: crow.swatchFor
-            onActivated: function(index) { crow.picked(index) }
+        implicitHeight: Math.round(38 * AppPalette.scale)
+        radius: Tokens.radiusLg
+        color: crow.recessed ? AppPalette.bg : AppPalette.rowRaised
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Tokens.spaceMd
+            anchors.rightMargin: Tokens.spaceMd
+            spacing: Tokens.spaceMd
+            Text {
+                text: crow.label
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
+                Layout.fillWidth: true
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+            }
+            KCircleIconButton {
+                visible: crow.tgcLinkAtIndex >= 0 && crow.currentIndex === crow.tgcLinkAtIndex
+                Layout.preferredWidth: Tokens.controlHMd
+                Layout.preferredHeight: Tokens.controlHMd
+                iconSource: "qrc:/icons/ui/settings.svg"
+                iconTintColor: AppPalette.accentBar
+                fillColor: AppPalette.controlRaised
+                fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
+                borderWidth: 0
+                borderColor: "transparent"
+                toolTipText: qsTr("Open TGC settings")
+                onClicked: crow.tgcLinkClicked()
+            }
+            KCombo {
+                Layout.preferredWidth: panel.comboW
+                enabled: crow.enabledRow
+                model: crow.comboModel
+                currentIndex: crow.currentIndex
+                swatchFor: crow.swatchFor
+                fillColor: crow.recessed ? AppPalette.rowRaised : AppPalette.bg
+                onActivated: function(index) { crow.picked(index) }
+            }
         }
     }
 
@@ -85,20 +97,29 @@ Column {
 
         SectionLabel { text: qsTr("Channels") }
 
-        RowLayout {
+        Rectangle {
             width: parent.width
-            spacing: Tokens.spaceMd
-            KCombo {
-                Layout.fillWidth: true
-                model: panel.vs ? panel.vs.channelModel : []
-                currentIndex: panel.vs ? panel.vs.ch1Index : 0
-                onActivated: function(index) { if (panel.vs) panel.vs.ch1Index = index }
-            }
-            KCombo {
-                Layout.fillWidth: true
-                model: panel.vs ? panel.vs.channelModel : []
-                currentIndex: panel.vs ? panel.vs.ch2Index : 0
-                onActivated: function(index) { if (panel.vs) panel.vs.ch2Index = index }
+            implicitHeight: Math.round(38 * AppPalette.scale)
+            radius: Tokens.radiusLg
+            color: AppPalette.rowRaised
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Tokens.spaceMd
+                anchors.rightMargin: Tokens.spaceMd
+                spacing: Tokens.spaceMd
+                KCombo {
+                    Layout.fillWidth: true
+                    model: panel.vs ? panel.vs.channelModel : []
+                    currentIndex: panel.vs ? panel.vs.ch1Index : 0
+                    onActivated: function(index) { if (panel.vs) panel.vs.ch1Index = index }
+                }
+                KCombo {
+                    Layout.fillWidth: true
+                    model: panel.vs ? panel.vs.channelModel : []
+                    currentIndex: panel.vs ? panel.vs.ch2Index : 0
+                    onActivated: function(index) { if (panel.vs) panel.vs.ch2Index = index }
+                }
             }
         }
     }
@@ -112,6 +133,7 @@ Column {
 
         ComboRow {
             label: qsTr("Theme")
+            recessed: true
             comboModel: [qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green"), qsTr("Midnight")]
             currentIndex: panel.vs ? panel.vs.echoThemeIndex : 0
             swatchFor: panel.plot ? function(i) { return panel.plot.echogramThemeStops(i) } : null
@@ -119,6 +141,7 @@ Column {
         }
         ComboRow {
             label: qsTr("Source data")
+            recessed: true
             comboModel: [qsTr("Raw"), qsTr("Side-Scan"), qsTr("TGC")]
             currentIndex: panel.vs ? panel.vs.compensationIndex : 0
             onPicked: function(index) { if (panel.vs) panel.vs.compensationIndex = index }
@@ -229,6 +252,7 @@ Column {
             delegate: KSwitch {
                 required property var modelData
                 width: parent ? parent.width : implicitWidth
+                backgroundColor: AppPalette.bg
                 text: modelData.lbl
                 checked: panel.vs ? panel.vs[modelData.key] : false
                 onToggled: if (panel.vs) panel.vs[modelData.key] = checked
@@ -255,6 +279,7 @@ Column {
             delegate: KSwitch {
                 required property var modelData
                 width: parent ? parent.width : implicitWidth
+                backgroundColor: AppPalette.bg
                 text: modelData.lbl
                 checked: panel.vs ? panel.vs[modelData.key] : false
                 onToggled: if (panel.vs) panel.vs[modelData.key] = checked
@@ -272,6 +297,7 @@ Column {
 
         ComboRow {
             label: qsTr("Position")
+            recessed: true
             comboModel: [qsTr("Top"), qsTr("Center"), qsTr("Bottom")]
             currentIndex: panel.vs ? panel.vs.dvlLegendPosition : 0
             onPicked: function(index) { if (panel.vs) panel.vs.dvlLegendPosition = index }
@@ -309,31 +335,41 @@ Column {
 
         KSwitch {
             width: parent.width
+            backgroundColor: AppPalette.bg
             text: qsTr("Fill width")
             checked: panel.vs ? panel.vs.gridFill : false
             onToggled: if (panel.vs) panel.vs.gridFill = checked
         }
         KSwitch {
             width: parent.width
+            backgroundColor: AppPalette.bg
             text: qsTr("Invert")
             checked: panel.vs ? panel.vs.gridInvert : false
             onToggled: if (panel.vs) panel.vs.gridInvert = checked
         }
-        RowLayout {
+        Rectangle {
             width: parent.width
-            spacing: Tokens.spaceMd
-            Text {
-                text: qsTr("Vertical lines")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontMd
-                Layout.fillWidth: true
-                verticalAlignment: Text.AlignVCenter
-            }
-            KSpinBox {
-                Layout.preferredWidth: panel.comboW
-                from: 1; to: 24; stepSize: 1
-                value: panel.vs ? panel.vs.gridNumber : 5
-                onValueModified: function(val) { if (panel.vs) panel.vs.gridNumber = val }
+            implicitHeight: Math.round(38 * AppPalette.scale)
+            radius: Tokens.radiusLg
+            color: AppPalette.bg
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Tokens.spaceMd
+                anchors.rightMargin: Tokens.spaceMd
+                spacing: Tokens.spaceMd
+                Text {
+                    text: qsTr("Vertical lines")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontMd
+                    Layout.fillWidth: true
+                    verticalAlignment: Text.AlignVCenter
+                }
+                KSpinBox {
+                    Layout.preferredWidth: panel.comboW
+                    from: 1; to: 24; stepSize: 1
+                    value: panel.vs ? panel.vs.gridNumber : 5
+                    onValueModified: function(val) { if (panel.vs) panel.vs.gridNumber = val }
+                }
             }
         }
 
@@ -341,6 +377,7 @@ Column {
             width: parent.width
             label: qsTr("Angle range, °")
             slotWidth: panel.comboW
+            fillColor: AppPalette.bg
             checked: panel.vs ? panel.vs.angleVisible : false
             onToggled: function(v) { if (panel.vs) panel.vs.angleVisible = v }
             KSpinBox {
@@ -356,6 +393,7 @@ Column {
             width: parent.width
             label: qsTr("Velocity range, m/s")
             slotWidth: panel.comboW
+            fillColor: AppPalette.bg
             checked: panel.vs ? panel.vs.velocityVisible : false
             onToggled: function(v) { if (panel.vs) panel.vs.velocityVisible = v }
             KSpinBox {
@@ -378,6 +416,7 @@ Column {
 
         ComboRow {
             label: qsTr("Mode")
+            recessed: true
             comboModel: [qsTr("Last data"), qsTr("Last on screen"), qsTr("Max on screen")]
             currentIndex: panel.vs ? panel.vs.distanceAutoRangeIndex : 0
             onPicked: function(index) { if (panel.vs) panel.vs.distanceAutoRangeIndex = index }

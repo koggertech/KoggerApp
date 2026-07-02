@@ -1118,6 +1118,18 @@
 %1</translation>
     </message>
     <message>
+        <source>Invalid log folder:
+%1</source>
+        <translation>Nieprawidłowa ścieżka folderu logów:
+%1</translation>
+    </message>
+    <message>
+        <source>Log folder is not writable:
+%1</source>
+        <translation>Brak uprawnień do zapisu w folderze logów:
+%1</translation>
+    </message>
+    <message>
         <source>File opened</source>
         <translation>Otwarto plik</translation>
     </message>

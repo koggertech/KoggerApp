@@ -368,9 +368,7 @@ Item {
         anchors.fill: island
         color: "transparent"
         radius: island.radius
-        border.width: 1
-        border.color: !root.confirmed
-                ? AppPalette.dangerBorder
-                : (root.expanded ? AppPalette.borderFocus : AppPalette.border)
+        border.width: root.confirmed ? 0 : 1
+        border.color: AppPalette.dangerBorder
     }
 }

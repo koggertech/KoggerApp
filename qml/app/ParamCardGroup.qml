@@ -12,6 +12,7 @@ Rectangle {
 
     property string label: ""
     property bool checked: false
+    property color fillColor: AppPalette.rowRaised   // bg when nested inside another card group
     signal toggled(bool val)
 
     default property alias bodyData: pgroupBody.data
@@ -23,8 +24,8 @@ Rectangle {
     width: parent ? parent.width : implicitWidth
     height: _headerH + bodyContainer.height
     radius: Tokens.radiusLg
-    color: pgroup._hovered ? AppPalette.bgHover : AppPalette.bg
-    border.width: 1
+    color: pgroup._hovered ? AppPalette.cardHover : pgroup.fillColor
+    border.width: Tokens.cardBorderWidth
     border.color: pgroup._hovered ? AppPalette.borderHover : AppPalette.border
     clip: true
 

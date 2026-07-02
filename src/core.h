@@ -115,6 +115,7 @@ public:
     Q_INVOKABLE void    setLogDirectory(const QString& dir);
     Q_INVOKABLE QString logDirectory() const;
     Q_INVOKABLE QString logDirectoryUrl() const;
+    Q_INVOKABLE bool    prepareLogDirectory(const QString& dir);
     bool getUseGPS() const;
     bool getNeedForceZooming() const { return needForceZooming_; }
 
@@ -155,6 +156,7 @@ public slots:
     Q_INVOKABLE bool csvExportFieldEnabled(const QString& key) const;
     Q_INVOKABLE void setCsvExportField(const QString& key, bool enabled);
     Q_INVOKABLE void resetCsvExportFields();
+    Q_INVOKABLE QString defaultExportDirectory() const;
     void refreshMosaicProcessing();
     void setPlotStartLevel(int level);
     void setPlotStopLevel(int level);

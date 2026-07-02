@@ -88,8 +88,8 @@ Item {
         id: frame
         anchors.fill: parent
         radius: Tokens.radiusMd
-        color: AppPalette.bg
-        border.width: 1
+        color: AppPalette.controlRaised
+        border.width: input.activeFocus ? 1 : Tokens.cardBorderWidth
         border.color: input.activeFocus
                       ? AppPalette.accentBorder
                       : ((minusMouse.containsMouse || plusMouse.containsMouse) ? AppPalette.borderHover : AppPalette.border)

@@ -18,6 +18,7 @@ Rectangle {
     property string label: ""
     property bool checked: false
     property int slotWidth: 0
+    property color fillColor: AppPalette.rowRaised   // bg when nested inside a card group
     signal toggled(bool val)
 
     default property alias contentData: pcardSlot.data
@@ -33,11 +34,11 @@ Rectangle {
     width: parent ? parent.width : implicitWidth
     height: Math.round(38 * AppPalette.scale)
     radius: Tokens.radiusLg
-    color: pcard._hovered ? AppPalette.bgHover : AppPalette.bg
-    border.width: 1
+    color: pcard._hovered ? AppPalette.cardHover : pcard.fillColor
+    border.width: Tokens.cardBorderWidth
     border.color: pcard._hovered ? AppPalette.borderHover : AppPalette.border
 
-    Behavior on color       { ColorAnimation { duration: 110 } }
+    Behavior on color        { ColorAnimation { duration: 110 } }
     Behavior on border.color { ColorAnimation { duration: 110 } }
 
     function _flip() {

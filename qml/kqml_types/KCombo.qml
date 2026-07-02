@@ -16,6 +16,7 @@ Item {
     property bool bold: true
     property int maxVisibleItems: 8
     property int radius: Tokens.radiusMd
+    property color fillColor: AppPalette.bg   // field fill; set lighter when the row is recessed
     // Optional: function(index) -> [{pos, color}] colormap stops. When set, a
     // small gradient dot is drawn before each item's text (and in the field).
     property var swatchFor: null
@@ -66,8 +67,8 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: root.radius
-        color: AppPalette.bg
-        border.width: 1
+        color: root.fillColor
+        border.width: combo.activeFocus ? 1 : Tokens.cardBorderWidth
         border.color: combo.activeFocus
                       ? AppPalette.accentBorder
                       : (combo.hovered ? AppPalette.borderHover : AppPalette.border)

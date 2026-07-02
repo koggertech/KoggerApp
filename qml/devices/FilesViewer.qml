@@ -114,7 +114,7 @@ Column {
 
         width: Math.round(28 * AppPalette.scale); height: Math.round(28 * AppPalette.scale); radius: Tokens.radiusSm + 1
         color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? AppPalette.cardHover : AppPalette.card))
-        border.width: 1
+        border.width: Tokens.cardBorderWidth
         border.color: (checked || ibMa.containsMouse) ? AppPalette.borderHover : AppPalette.border
 
         Behavior on color { ColorAnimation { duration: 80 } }
@@ -167,7 +167,8 @@ Column {
         Rectangle {
             // path + 3 IconBtn-а (open/append/close) = 4 элемента, 3 spacing-а.
             width: parent.width - 3 * Tokens.controlHMd - 3 * Tokens.spaceSm
-            height: Tokens.controlHMd; radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+            height: Tokens.controlHMd; radius: Tokens.radiusMd; color: AppPalette.bg
+            border.width: pathText.activeFocus ? 1 : Tokens.cardBorderWidth
             border.color: pathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
 
             TextInput {
@@ -277,7 +278,7 @@ Column {
                     width: parent.width - removeBtn.width - parent.spacing
                     height: Tokens.controlHMd - Tokens.spaceXxs; radius: Tokens.radiusMd
                     color: recentMa.containsMouse ? AppPalette.cardHover : AppPalette.card
-                    border.width: 1; border.color: AppPalette.border
+                    border.width: Tokens.cardBorderWidth; border.color: AppPalette.border
                     Behavior on color { ColorAnimation { duration: 80 } }
 
                     activeFocusOnTab: true
@@ -289,7 +290,7 @@ Column {
                         anchors.fill: parent
                         anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
                         text: filesViewer.urlDisplay(parent.parent.filePath)
-                        color: AppPalette.text; font.pixelSize: Tokens.fontXs
+                        color: AppPalette.text; font.pixelSize: Tokens.fontMd
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideLeft
                     }

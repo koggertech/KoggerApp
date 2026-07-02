@@ -43,17 +43,39 @@ QtObject {
     // ── Backgrounds ───────────────────────────────────────────────────────────
     // menuBackColor has per-theme alpha (semi-transparent menus in old UI);
     // strip it here so new opaque panels get a solid background.
-    readonly property color bg: theme
+    // Raw theme base (deepest-recess anchor, opaque).
+    readonly property color _rawBg: theme
         ? Qt.rgba(theme.menuBackColor.r, theme.menuBackColor.g, theme.menuBackColor.b, 1.0)
         : (isDark ? "#0F172A" : "#F8FAFC")
 
-    readonly property color bgDeep:  theme ? Qt.darker(bg, isDark ? 1.25 : 1.04) : (isDark ? "#0B1220" : "#F1F5F9")
+    // Perceived lightness (0..1) of a colour — WCAG-ish luma.
+    function luminance(c) { return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b }
+
+    // Panel / base fill. Near-black themes (e.g. "S.Dark" = pure #000) are lifted
+    // off black so the elevation ladder (card/controlRaised above, bgDeep below)
+    // stays legible — otherwise every recessed fill collapses onto the panel and
+    // becomes invisible. Non-near-black themes are returned unchanged.
+    readonly property color bg: luminance(_rawBg) < 0.06
+        ? Qt.tint(_rawBg, Qt.rgba(1, 1, 1, 0.14))
+        : _rawBg
+
+    // Deepest recess (expanded group bodies, pressed states). Derived from the
+    // RAW base so a near-black theme keeps a genuinely dark body beneath the
+    // lifted bg; identical to the old value for every other theme.
+    readonly property color bgDeep:  theme ? Qt.darker(_rawBg, isDark ? 1.25 : 1.04) : (isDark ? "#0B1220" : "#F1F5F9")
     readonly property color bgHover: theme ? theme.hoveredBackColor              : (isDark ? "#111B2E" : "#EFF6FF")
 
     // ── Cards / controls ──────────────────────────────────────────────────────
     readonly property color card:      theme ? theme.controlBackColor            : (isDark ? "#1E293B" : "#FFFFFF")
     readonly property color cardHover: theme ? theme.hoveredBackColor            : (isDark ? "#172133" : "#F8FAFC")
     readonly property color headerBg:  theme ? Qt.darker(card, 1.08)            : (isDark ? "#1F2937" : "#F1F5F9")
+    // Raised control surface for buttons that sit ON a card (they'd blend at
+    // `card`); a solid, distinctly lighter/prominent fill in place of an outline.
+    readonly property color controlRaised: theme ? theme.controlSolidBackColor  : (isDark ? "#475569" : "#CBD5E1")
+    // Softer raised fill for setting ROWS (toggles / param rows / combo rows):
+    // 60% of the way from bg toward card — reads as raised without the full
+    // brightness of `card`. Tune the 0.6 to dial how much rows stand out.
+    readonly property color rowRaised: theme ? Qt.tint(bg, Qt.rgba(card.r, card.g, card.b, 0.6)) : (isDark ? "#18212F" : "#FBFCFE")
 
     // ── Borders ───────────────────────────────────────────────────────────────
     readonly property color border:      theme ? theme.controlBorderColor       : (isDark ? "#334155" : "#E2E8F0")

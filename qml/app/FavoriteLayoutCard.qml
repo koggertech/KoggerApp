@@ -30,7 +30,7 @@ Rectangle {
                              : Math.round(76 * AppPalette.scale)
     radius: Tokens.radiusLg
     color: hovered ? AppPalette.bg : AppPalette.card
-    border.width: selected ? Math.max(2, Math.round(2 * AppPalette.scale)) : 1
+    border.width: selected ? Math.max(2, Math.round(2 * AppPalette.scale)) : Tokens.cardBorderWidth
     border.color: selected ? "#FACC15" : (hovered ? AppPalette.borderHover : AppPalette.border)
 
     activeFocusOnTab: true

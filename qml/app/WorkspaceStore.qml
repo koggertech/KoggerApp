@@ -427,8 +427,8 @@ readonly property bool isRecording: (typeof core !== "undefined" && core) ? (cor
 function setRecording(on) {
     if (typeof core === "undefined" || !core)
         return
-    if (on)
-        core.setLogDirectory(recordFolder)
+    if (on && !core.prepareLogDirectory(recordFolder))
+        return   // invalid path → core warned; do not start recording
     core.setKlfLogging(on && recordKlf)
     core.setCsvLogging(on && recordCsv)
 }
@@ -436,8 +436,10 @@ function setRecording(on) {
 function restoreLoggingFromSettings() {
     if (typeof core === "undefined" || !core)
         return
-    if (loggingPersist.loggingCheck || loggingPersist.loggingCheck2)
-        core.setLogDirectory(recordFolder)
+    if (loggingPersist.loggingCheck || loggingPersist.loggingCheck2) {
+        if (!core.prepareLogDirectory(recordFolder))
+            return   // saved path no longer usable → do not auto-resume
+    }
     core.setKlfLogging(loggingPersist.loggingCheck)
     core.setCsvLogging(loggingPersist.loggingCheck2)
 }
@@ -478,7 +480,7 @@ onTgcCompensateChanged: applyTgcToCore()
 property Settings exportPersist: Settings {
     id: exportPersist
     category: "main/export"
-    property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    property var exportFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/Kogger/exports"
     property string exportFolderText: ""
     property bool exportDecimation: false
     property int exportDecimationValue: 10

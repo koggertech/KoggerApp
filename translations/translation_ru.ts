@@ -1118,6 +1118,18 @@
 %1</translation>
     </message>
     <message>
+        <source>Invalid log folder:
+%1</source>
+        <translation>Неверный путь папки логов:
+%1</translation>
+    </message>
+    <message>
+        <source>Log folder is not writable:
+%1</source>
+        <translation>Нет доступа на запись в папку логов:
+%1</translation>
+    </message>
+    <message>
         <source>File opened</source>
         <translation>Файл открыт</translation>
     </message>

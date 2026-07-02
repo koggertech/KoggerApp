@@ -122,8 +122,8 @@ Column {
         signal toggled(bool val)
 
         width: Math.round(28 * AppPalette.scale); height: Math.round(28 * AppPalette.scale); radius: Tokens.radiusSm + 1
-        color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? AppPalette.cardHover : AppPalette.card))
-        border.width: 1
+        color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? Qt.lighter(AppPalette.controlRaised, 1.2) : AppPalette.controlRaised))
+        border.width: Tokens.cardBorderWidth
         border.color: (checked || ibMa.containsMouse) ? AppPalette.borderHover : AppPalette.border
 
         Behavior on color { ColorAnimation { duration: 80 } }
@@ -310,8 +310,7 @@ Column {
             readonly property bool notAvailable: IsNotAvailable
             readonly property bool editing: linkList.expandedUuid === String(Uuid)
             readonly property int rowIndex: index
-            property int vPad: connRow.editing ? Tokens.spaceSm : Tokens.spaceXs
-            Behavior on vPad { NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
+            readonly property int vPad: Tokens.spaceXs   // fixed — no inward shift on expand (matches recRow)
             readonly property string typeLabel: LinkType === 1 ? PortName : (LinkType === 2 ? "UDP" : "TCP")
 
             height: content.implicitHeight + 2 * vPad
@@ -319,7 +318,7 @@ Column {
             Rectangle {
                 anchors.fill: parent; radius: Tokens.radiusMd; clip: true
                 color: isConnected ? (receivesData ? AppPalette.linkOkBg : AppPalette.linkIdleBg) : (notAvailable ? AppPalette.linkDownBg : AppPalette.card)
-                border.width: connRow.editing ? 2 : 1
+                border.width: connRow.editing ? 2 : Tokens.cardBorderWidth
                 border.color: connRow.editing ? AppPalette.accentBorder
                        : isConnected ? (receivesData ? AppPalette.linkOkBorder : AppPalette.linkIdleBorder) : (notAvailable ? AppPalette.linkDownBorder : AppPalette.border)
                 opacity: IsUpgradingState ? 0.55 : 1.0
@@ -431,7 +430,8 @@ Column {
                             Layout.preferredHeight: Tokens.controlHMd
                             text: isConnected ? qsTr("Close") : qsTr("Open")
                             fontPixelSize: Tokens.fontSm; bold: false
-                            normalBg: AppPalette.card
+                            normalBg: AppPalette.controlRaised
+                            hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
                             checkedBg: "#134E2E"; checkedBorder: "#10B981"
                             onClicked: {
                                 if (isConnected) {
@@ -473,7 +473,8 @@ Column {
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+                                    radius: Tokens.radiusMd; color: AppPalette.bg
+                                    border.width: ipField.activeFocus ? 1 : Tokens.cardBorderWidth
                                     border.color: ipField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
                                         id: ipField
@@ -518,7 +519,8 @@ Column {
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+                                    radius: Tokens.radiusMd; color: AppPalette.bg
+                                    border.width: srcPortField.activeFocus ? 1 : Tokens.cardBorderWidth
                                     border.color: srcPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
                                         id: srcPortField
@@ -540,7 +542,8 @@ Column {
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+                                    radius: Tokens.radiusMd; color: AppPalette.bg
+                                    border.width: dstPortFieldUdp.activeFocus ? 1 : Tokens.cardBorderWidth
                                     border.color: dstPortFieldUdp.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
                                         id: dstPortFieldUdp
@@ -569,7 +572,8 @@ Column {
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+                                    radius: Tokens.radiusMd; color: AppPalette.bg
+                                    border.width: dstPortFieldTcp.activeFocus ? 1 : Tokens.cardBorderWidth
                                     border.color: dstPortFieldTcp.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
                                         id: dstPortFieldTcp
@@ -697,8 +701,8 @@ Column {
         radius: Tokens.radiusMd
         readonly property bool active: !!(core.loggingKlf || core.loggingCsv)
         color: active ? "#7F1D1D" : AppPalette.card
-        border.width: 1
-        border.color: active ? "#EF4444" : AppPalette.border
+        border.width: recGear.checked ? 2 : Tokens.cardBorderWidth
+        border.color: recGear.checked ? AppPalette.accentBorder : (active ? "#EF4444" : AppPalette.border)
         implicitHeight: recCol.implicitHeight + 2 * Tokens.spaceXs
         Behavior on color { ColorAnimation { duration: Anim.fadeMs } }
         Behavior on border.color { ColorAnimation { duration: Anim.fadeMs } }
@@ -822,7 +826,9 @@ Column {
                     checked: recRow.active                  // follows real recording state (no race)
                     text: recRow.active ? qsTr("■ STOP") : qsTr("● REC")
                     fontPixelSize: Tokens.fontSm
-                    checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
+                    normalBg: AppPalette.controlRaised
+                    hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
+                    checkedBg: "#B91C1C"; checkedBorder: "#EF4444"
                     Layout.preferredWidth: recBtn.implicitWidth
                     Layout.preferredHeight: Tokens.controlHMd
                     Layout.alignment: Qt.AlignVCenter
@@ -835,6 +841,7 @@ Column {
 
             Column {
                 visible: recGear.checked
+                onVisibleChanged: if (visible) logPathInput.syncFromStore()
                 width: parent.width
                 spacing: Tokens.spaceXs
                 topPadding: Tokens.spaceXxs
@@ -853,16 +860,34 @@ Column {
                         width: logBrowseBtn.visible ? parent.width - logBrowseBtn.width - parent.spacing : parent.width
                         height: Tokens.controlHMd
                         radius: Tokens.radiusSm
-                        color: AppPalette.card
-                        border.width: 1; border.color: AppPalette.border
-                        Text {
+                        color: AppPalette.bg
+                        border.width: logPathInput.activeFocus ? 1 : Tokens.cardBorderWidth
+                        border.color: logPathInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                        TextInput {
+                            id: logPathInput
                             anchors.fill: parent
                             anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceSm
-                            verticalAlignment: Text.AlignVCenter
-                            elide: Text.ElideMiddle
-                            text: store.recordFolder.length ? store.recordFolder : core.logDirectory()
-                            color: AppPalette.textMuted
+                            verticalAlignment: TextInput.AlignVCenter
+                            clip: true
+                            readOnly: Qt.platform.os === "android"   // Android: fixed default dir, no manual path
+                            activeFocusOnTab: !readOnly
+                            selectByMouse: !readOnly
+                            color: AppPalette.text
                             font.pixelSize: Tokens.fontSm
+                            // Show the effective save location — the custom path, or the
+                            // default (Documents/KoggerApp/logs) when none is set.
+                            function syncFromStore() {
+                                if (activeFocus) return
+                                var def = (typeof core !== "undefined" && core) ? core.logDirectory() : ""
+                                text = (store && store.recordFolder && store.recordFolder.length) ? store.recordFolder : def
+                            }
+                            Component.onCompleted: syncFromStore()
+                            onEditingFinished: if (store) store.recordFolder = text.trim()
+                            TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: logPathInput.selectAll() }
+                            Connections {
+                                target: store
+                                function onRecordFolderChanged() { logPathInput.syncFromStore() }
+                            }
                         }
                     }
 
@@ -870,6 +895,8 @@ Column {
                         id: logBrowseBtn
                         visible: Qt.platform.os !== "android"   // Android: fixed default dir, no folder picker
                         text: qsTr("Browse…")
+                        normalBg: AppPalette.controlRaised
+                        hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
                         fontPixelSize: Tokens.fontSm
                         height: Tokens.controlHMd
                         width: Math.round(96 * AppPalette.scale)
@@ -894,6 +921,7 @@ Column {
                 KSwitch {
                     width: parent.width
                     text: qsTr("KLF")
+                    backgroundColor: AppPalette.bg   // recessed on the card recording strip
                     checked: store.recordKlf
                     onToggled: {
                         if (!checked && !store.recordCsv) { checked = Qt.binding(function() { return store.recordKlf }); return }   // keep at least one type
@@ -903,6 +931,7 @@ Column {
                 KSwitch {
                     width: parent.width
                     text: qsTr("CSV")
+                    backgroundColor: AppPalette.bg   // recessed on the card recording strip
                     checked: store.recordCsv
                     onToggled: {
                         if (!checked && !store.recordKlf) { checked = Qt.binding(function() { return store.recordCsv }); return }

@@ -117,7 +117,7 @@ Column {
                     width: dropArea.width
                     height: page.rowH
                     radius: Tokens.radiusLg
-                    color: dragArea.drag.active ? AppPalette.bgHover : "transparent"
+                    color: dragArea.drag.active ? AppPalette.cardHover : AppPalette.card
                     border.width: dragArea.drag.active ? 1 : 0
                     border.color: AppPalette.border
                     property int visualIndex: dropArea.visualIndex
@@ -169,6 +169,7 @@ Column {
                         KSwitch {
                             width: parent.width - page.handleW - parent.spacing
                             text: page._label(key)
+                            backgroundColor: "transparent"   // row card provides the fill
                             checked: page._checked(key)
                             onToggled: page._toggle(key, checked)
                         }

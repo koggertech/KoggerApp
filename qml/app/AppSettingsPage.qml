@@ -174,7 +174,7 @@ Column {
                 height: Tokens.controlHMd
                 radius: Tokens.radiusMd
                 color: AppPalette.bg
-                border.width: 1
+                border.width: exportPathField.activeFocus ? 1 : Tokens.cardBorderWidth
                 border.color: exportPathField.activeFocus ? AppPalette.accentBorder : AppPalette.border
 
                 TextInput {
@@ -188,14 +188,14 @@ Column {
                     color: AppPalette.text
                     font.pixelSize: Tokens.fontSm
                     clip: true
-                    text: root.store ? root.localPath(root.store.exportFolderSource) : ""
+                    text: root.store ? (root.store.exportFolderSource.length ? root.localPath(root.store.exportFolderSource) : core.defaultExportDirectory()) : ""
                     onTextEdited: if (root.store) root.store.exportFolderSource = root.localPath(text)
 
                     Connections {
                         target: root.store
                         ignoreUnknownSignals: true
                         function onExportFolderSourceChanged() {
-                            var clean = root.localPath(root.store.exportFolderSource)
+                            var clean = root.store.exportFolderSource.length ? root.localPath(root.store.exportFolderSource) : core.defaultExportDirectory()
                             if (exportPathField.text !== clean)
                                 exportPathField.text = clean
                         }
@@ -318,9 +318,13 @@ Column {
                         width: appThemeHolder.itemW
                         height: appThemeHolder.itemH
                         radius: Tokens.radiusMd
-                        color: sel ? AppPalette.accentBg : AppPalette.bg
-                        border.width: 1
+                        color: sel ? AppPalette.accentBg
+                               : (themeMa.pressed ? AppPalette.bgDeep : (themeMa.containsMouse ? AppPalette.cardHover : AppPalette.bg))
+                        border.width: Tokens.cardBorderWidth
                         border.color: sel ? AppPalette.accentBorder : AppPalette.border
+                        scale: themeMa.pressed ? 0.97 : (themeMa.containsMouse ? 1.03 : 1.0)
+                        Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
 
                         activeFocusOnTab: true
                         Keys.onReturnPressed: appThemeHolder.selectedIndex = index
@@ -338,7 +342,9 @@ Column {
                         KFocusRing { id: focusRing }
 
                         MouseArea {
+                            id: themeMa
                             anchors.fill: parent
+                            hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onPressed: focusRing.suppress()
                             onClicked: { themeCell.forceActiveFocus(); appThemeHolder.selectedIndex = index }
@@ -594,7 +600,7 @@ Column {
                 readonly property var preset: modelData
                 readonly property bool hovered: cardMouse.containsMouse
                 width: parent.width; height: Math.round(88 * AppPalette.scale); radius: Tokens.radiusLg
-                color: hovered ? AppPalette.bg : AppPalette.card; border.width: 1
+                color: hovered ? AppPalette.bg : AppPalette.card; border.width: Tokens.cardBorderWidth
                 border.color: hovered ? AppPalette.borderHover : AppPalette.border
 
                 activeFocusOnTab: true
@@ -1218,7 +1224,7 @@ Column {
                 Layout.preferredHeight: Tokens.controlHMd
                 radius: Tokens.radiusMd
                 color: AppPalette.bg
-                border.width: 1
+                border.width: exportSurfacePathText.activeFocus ? 1 : Tokens.cardBorderWidth
                 border.color: exportSurfacePathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
 
                 TextInput {
@@ -1246,6 +1252,7 @@ Column {
             KButton {
                 text: "..."
                 Layout.fillWidth: false
+                Layout.preferredHeight: Tokens.controlHMd
                 implicitWidth: Math.round(40 * AppPalette.scale)
                 onClicked: {
                     exportSurfaceFileDialog.currentFolder = isobathsGroup.exportSurfaceFolder
@@ -1274,6 +1281,7 @@ Column {
             KButton {
                 text: qsTr("Export to CSV")
                 Layout.fillWidth: true
+                Layout.preferredHeight: Tokens.controlHMd
                 onClicked: Scene3DControlMenuController.onExportToCSVButtonClicked(isobathsGroup.currentExportSurfacePath())
             }
 
@@ -1561,8 +1569,9 @@ Column {
                         Layout.preferredHeight: Tokens.controlHMd
                         iconSource: "qrc:/icons/ui/settings.svg"
                         iconTintColor: AppPalette.accentBar
-                        fillColor: "transparent"
-                        fillHoverColor: AppPalette.cardHover
+                        fillColor: AppPalette.controlRaised
+                        fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
+                        borderWidth: 0
                         borderColor: "transparent"
                         toolTipText: qsTr("Open TGC settings")
                         onClicked: if (root.store) root.store.openTgcSettings()
@@ -1690,7 +1699,7 @@ Column {
                     height: Math.round(38 * AppPalette.scale)
                     radius: Tokens.radiusLg
                     color: navMouse.containsMouse ? AppPalette.bgHover : AppPalette.bg
-                    border.width: 1
+                    border.width: Tokens.cardBorderWidth
                     border.color: navMouse.containsMouse ? AppPalette.borderHover : AppPalette.border
                     Behavior on color       { ColorAnimation { duration: 110 } }
                     Behavior on border.color { ColorAnimation { duration: 110 } }
@@ -1970,10 +1979,10 @@ Column {
                         Scene3dToolBarController.onGridVisibilityCheckedChanged(v)
                 }
 
-                // Nested: Circle sub-group with its own animated body.
                 ParamCardGroup {
                     id: gridTypeCard
                     label: qsTr("Circle")
+                    fillColor: AppPalette.bg
                     checked: render3dSettings.gridTypeCheckButton
                     onToggled: function(v) {
                         render3dSettings.gridTypeCheckButton = v
@@ -1992,63 +2001,84 @@ Column {
                         }
                     }
                     KParamGrid {
-                        RowLayout {
+                        Rectangle {
                             Layout.fillWidth: true
-                            height: Tokens.controlHMd
-                            spacing: Tokens.spaceSm
-                            Text {
-                                text: qsTr("Size:")
-                                color: AppPalette.textSecond
-                                font.pixelSize: Tokens.fontMd
-                            }
-                            KSpinBox {
-                                id: circleGridSizeSpinBox
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: Tokens.controlHMd
-                                from: 1; to: 3; stepSize: 1; value: 1
-                                onValueModified: function(v) {
-                                    if (typeof Scene3dToolBarController !== "undefined")
-                                        Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(v)
+                            Layout.preferredHeight: Tokens.controlHMd + 2 * Tokens.spaceXs
+                            radius: Tokens.radiusMd
+                            color: AppPalette.rowRaised
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: Tokens.spaceMd
+                                anchors.rightMargin: Tokens.spaceSm
+                                spacing: Tokens.spaceSm
+                                Text {
+                                    text: qsTr("Size:")
+                                    color: AppPalette.textSecond
+                                    font.pixelSize: Tokens.fontMd
+                                }
+                                KSpinBox {
+                                    id: circleGridSizeSpinBox
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    from: 1; to: 3; stepSize: 1; value: 1
+                                    onValueModified: function(v) {
+                                        if (typeof Scene3dToolBarController !== "undefined")
+                                            Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(v)
+                                    }
                                 }
                             }
                         }
-                        RowLayout {
+                        Rectangle {
                             Layout.fillWidth: true
-                            height: Tokens.controlHMd
-                            spacing: Tokens.spaceSm
-                            Text {
-                                text: qsTr("Step:")
-                                color: AppPalette.textSecond
-                                font.pixelSize: Tokens.fontMd
-                            }
-                            KSpinBox {
-                                id: circleGridStepSpinBox
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: Tokens.controlHMd
-                                from: 1; to: 20; stepSize: 1; value: 1
-                                onValueModified: function(v) {
-                                    if (typeof Scene3dToolBarController !== "undefined")
-                                        Scene3dToolBarController.onPlaneGridCircleGridStepChanged(v)
+                            Layout.preferredHeight: Tokens.controlHMd + 2 * Tokens.spaceXs
+                            radius: Tokens.radiusMd
+                            color: AppPalette.rowRaised
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: Tokens.spaceMd
+                                anchors.rightMargin: Tokens.spaceSm
+                                spacing: Tokens.spaceSm
+                                Text {
+                                    text: qsTr("Step:")
+                                    color: AppPalette.textSecond
+                                    font.pixelSize: Tokens.fontMd
+                                }
+                                KSpinBox {
+                                    id: circleGridStepSpinBox
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    from: 1; to: 20; stepSize: 1; value: 1
+                                    onValueModified: function(v) {
+                                        if (typeof Scene3dToolBarController !== "undefined")
+                                            Scene3dToolBarController.onPlaneGridCircleGridStepChanged(v)
+                                    }
                                 }
                             }
                         }
-                        RowLayout {
+                        Rectangle {
                             Layout.fillWidth: true
-                            height: Tokens.controlHMd
-                            spacing: Tokens.spaceSm
-                            Text {
-                                text: qsTr("Angle:")
-                                color: AppPalette.textSecond
-                                font.pixelSize: Tokens.fontMd
-                            }
-                            KSpinBox {
-                                id: circleGridAngleSpinBox
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: Tokens.controlHMd
-                                from: 1; to: 5; stepSize: 1; value: 1
-                                onValueModified: function(v) {
-                                    if (typeof Scene3dToolBarController !== "undefined")
-                                        Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(v)
+                            Layout.preferredHeight: Tokens.controlHMd + 2 * Tokens.spaceXs
+                            radius: Tokens.radiusMd
+                            color: AppPalette.rowRaised
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: Tokens.spaceMd
+                                anchors.rightMargin: Tokens.spaceSm
+                                spacing: Tokens.spaceSm
+                                Text {
+                                    text: qsTr("Angle:")
+                                    color: AppPalette.textSecond
+                                    font.pixelSize: Tokens.fontMd
+                                }
+                                KSpinBox {
+                                    id: circleGridAngleSpinBox
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    from: 1; to: 5; stepSize: 1; value: 1
+                                    onValueModified: function(v) {
+                                        if (typeof Scene3dToolBarController !== "undefined")
+                                            Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(v)
+                                    }
                                 }
                             }
                         }
@@ -2333,7 +2363,7 @@ Column {
                     color: isSelected
                            ? AppPalette.accentBg
                            : (providerMouse.containsMouse ? AppPalette.bgHover : AppPalette.bg)
-                    border.width: 1
+                    border.width: Tokens.cardBorderWidth
                     border.color: isSelected
                                   ? AppPalette.accentBorder
                                   : (providerMouse.containsMouse ? AppPalette.borderHover : AppPalette.border)

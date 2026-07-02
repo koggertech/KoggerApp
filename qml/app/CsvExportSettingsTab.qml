@@ -106,7 +106,7 @@ Column {
         radius: Tokens.radiusLg
         color: AppPalette.bgDeep
         border.color: AppPalette.border
-        border.width: 1
+        border.width: Tokens.cardBorderWidth
 
         Loader {
             id: fieldsLoader
