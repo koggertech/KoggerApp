@@ -28,6 +28,31 @@ Item {
     readonly property int headerActionSize: _headerH
     readonly property bool _bodyShown: expandable && (!collapsible || expanded)
 
+    // ── Sticky header ─────────────────────────────────────────────────────
+    // When an expanded group is taller than the viewport, its header floats down
+    // within the (clipped) island to stay pinned at the top of the scroll area,
+    // then scrolls away once the group's bottom passes. `_flick` is the enclosing
+    // Flickable; the binding re-evaluates on scroll (contentY/contentHeight) and
+    // on the group's own height change.
+    property var _flick: null
+    readonly property real _stickyHeaderY: {
+        if (!_flick || !root._bodyShown)
+            return 0
+        var _dep = _flick.contentY + _flick.contentHeight   // re-eval on scroll / layout
+        var vpY = root.mapToItem(_flick, 0, 0).y            // group top in the viewport
+        var maxY = Math.max(0, island.height - root._headerH)
+        return Math.max(0, Math.min(maxY, -vpY))
+    }
+    // Fade the (sticky) header out over the last header-height of the group, so it
+    // dissolves as the group's content scrolls past the top instead of jumping off.
+    readonly property real _headerFade: {
+        if (!_flick || !root._bodyShown)
+            return 1
+        var _dep = _flick.contentY + _flick.contentHeight
+        var bottomVp = root.mapToItem(_flick, 0, island.height).y   // group bottom in viewport
+        return Math.max(0, Math.min(1, bottomVp / Math.max(1, root._headerH)))
+    }
+
     property bool _stateReady: false
 
     width: preferredWidth
@@ -61,15 +86,24 @@ Item {
     }
 
     onExpandedChanged: {
+        // Capture the collapsing height ABOVE this group BEFORE the store collapses
+        // siblings (accordion) — so the parallel scroll can aim at the final layout.
+        var deltaAbove = expanded ? _collapsingBodyHeightAbove() : 0
         if (_stateReady && stateStore && typeof stateStore.setSettingsGroupExpanded === "function") {
             var key = typeof stateKey === "string" ? stateKey.trim() : ""
             if (key !== "")
                 stateStore.setSettingsGroupExpanded(key, expanded)
         }
-        if (expanded)
-            scrollIntoViewTimer.restart()
-        else
+        if (expanded) {
+            _animateExpandScroll(deltaAbove)   // one pass: expand + scroll animate together
+            scrollIntoViewTimer.restart()      // safety net: correct any residual after settle
+        } else {
             scrollIntoViewTimer.stop()
+            // Collapsing while scrolled into the group (header was floating):
+            // pin its header at the top so it doesn't jump off-screen.
+            if (_flick && root.mapToItem(_flick, 0, 0).y < -1)
+                _scrollToTop()
+        }
     }
 
     Connections {
@@ -83,6 +117,7 @@ Item {
 
     Component.onCompleted: {
         loadExpandedState()
+        _flick = _findAncestorFlickable()
         if (stateStore && typeof stateStore.registerSettingsGroup === "function")
             stateStore.registerSettingsGroup(root)
         if (stateStore
@@ -156,6 +191,49 @@ Item {
     // already reflects the expanded state.
     function _predictedFullHeight() {
         return root._headerH + Tokens.spaceSm + bodyCol.implicitHeight + root.contentPadding
+    }
+
+    // Total body height of OTHER expanded groups sitting ABOVE this one. Accordion
+    // collapses them when this group opens, so this group shifts up by that amount;
+    // accounted for so the parallel scroll aims at the final (settled) layout.
+    function _collapsingBodyHeightAbove() {
+        if (!_flick || !stateStore || !stateStore._settingsGroupInstances)
+            return 0
+        var arr = stateStore._settingsGroupInstances
+        var myTop = root.mapToItem(_flick.contentItem, 0, 0).y
+        var sum = 0
+        for (var i = 0; i < arr.length; ++i) {
+            var g = arr[i]
+            if (!g || g === root || !g.expanded || !g.collapsible)
+                continue
+            if (g.mapToItem(_flick.contentItem, 0, 0).y < myTop)
+                sum += Math.max(0, g.height - g._headerH)
+        }
+        return sum
+    }
+
+    // Scroll toward where the group WILL sit once it has expanded and the accordion
+    // has collapsed the siblings — started in parallel with those animations so
+    // expand + scroll play as one pass. `deltaAbove` = collapsing height above.
+    function _animateExpandScroll(deltaAbove) {
+        if (!_flick) return
+        var topInContent = root.mapToItem(_flick.contentItem, 0, 0).y - deltaAbove
+        var fullH = _predictedFullHeight()
+        var bottomInContent = topInContent + fullH
+        var vpH = _flick.height
+        var cy = _flick.contentY
+        // Already fully visible where it will land → don't scroll.
+        if (topInContent >= cy - 0.5 && bottomInContent <= cy + vpH + 0.5)
+            return
+        var target = bottomInContent - vpH + Tokens.spaceLg
+        target = Math.min(target, topInContent)   // never past the header
+        var finalContentH = _flick.contentHeight + (fullH - root._headerH) - deltaAbove
+        target = Math.max(0, Math.min(target, finalContentH - vpH))
+        if (Math.abs(target - cy) < 0.5) return
+        scrollIntoViewAnim.target = _flick
+        scrollIntoViewAnim.from = cy
+        scrollIntoViewAnim.to = target
+        scrollIntoViewAnim.restart()
     }
 
     function _scrollToTop() {
@@ -237,12 +315,12 @@ Item {
             NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing }
         }
 
-        // Gradient blends flush from the header's bottom edge down over one row
+        // Gradient blends flush from the header's bottom edge down over half a row
         // (header colour → content bg), not spread over the whole group.
         // Non-linear: two curved mid-stops make the header colour decay FAST near
         // the top, then ease into the content bg (ease-out, not a straight blend).
         readonly property real _seamStart: Math.min(1, headerRow.height / Math.max(1, height))
-        readonly property real _seamEnd: Math.min(1, (headerRow.height * 2) / Math.max(1, height))
+        readonly property real _seamEnd: Math.min(1, (headerRow.height * 1.5) / Math.max(1, height))
         readonly property real _seamSpan: _seamEnd - _seamStart
         function _mix(a, b, t) {
             return Qt.rgba(a.r + (b.r - a.r) * t,
@@ -272,18 +350,46 @@ Item {
                 Behavior on color { ColorAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } } }
         }
 
-        // ── Header row ────────────────────────────────────────────────────
+        // ── Header row (sticky — floats to stay at the viewport top) ────────
         Item {
             id: headerRow
-            anchors.top: parent.top
+            y: root._stickyHeaderY
             anchors.left: parent.left
             anchors.right: parent.right
             height: root._headerH
+            z: 2   // above the body so it hides content scrolling behind it
+            opacity: root._headerFade   // fade out as the group scrolls past the top
 
             activeFocusOnTab: root.collapsible
             Keys.onReturnPressed: if (root.collapsible && root.expandable) root.expanded = !root.expanded
             Keys.onEnterPressed:  if (root.collapsible && root.expandable) root.expanded = !root.expanded
             Keys.onSpacePressed:  if (root.collapsible && root.expandable) root.expanded = !root.expanded
+
+            // Opaque backing (matches the header colour) so the floating header
+            // occludes body rows scrolling underneath it. Only while floating —
+            // at rest the island's rounded gradient shows through (round corners).
+            Rectangle {
+                anchors.fill: parent
+                color: island._headerColor
+                visible: root._stickyHeaderY > 0
+            }
+
+            // Seam under the floating header — mirrors the group's own header→body
+            // gradient (same fast decay, half-row tall) so the sticky header blends
+            // into the content scrolling beneath it.
+            Rectangle {
+                visible: root._stickyHeaderY > 0
+                anchors.top: parent.bottom
+                anchors.left: parent.left
+                anchors.right: parent.right
+                height: Math.round(root._headerH * 0.5)
+                gradient: Gradient {
+                    GradientStop { position: 0.0;  color: island._headerColor }
+                    GradientStop { position: 0.25; color: Qt.rgba(island._headerColor.r, island._headerColor.g, island._headerColor.b, 0.42) }
+                    GradientStop { position: 0.55; color: Qt.rgba(island._headerColor.r, island._headerColor.g, island._headerColor.b, 0.09) }
+                    GradientStop { position: 1.0;  color: Qt.rgba(island._headerColor.r, island._headerColor.g, island._headerColor.b, 0.0) }
+                }
+            }
 
             KFocusRing { id: focusRing; radius: Tokens.radiusLg }
 
@@ -360,8 +466,9 @@ Item {
         // and input without zeroing that implicitHeight.
         Column {
             id: bodyCol
-            anchors.top: headerRow.bottom
-            anchors.topMargin: Tokens.spaceSm
+            // Fixed offset (not anchored to the header, which now floats).
+            anchors.top: parent.top
+            anchors.topMargin: root._headerH + Tokens.spaceSm
             x: root.contentPadding
             width: island.width - 2 * root.contentPadding
             spacing: Tokens.spaceSm
