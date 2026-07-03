@@ -2420,20 +2420,11 @@ function unregisterSettingsGroup(group) {
     _settingsGroupInstances = arr
 }
 
-function toggleAllSettingsGroups() {
-    var anyOpen = false
-    var i, g
-    for (i = 0; i < _settingsGroupInstances.length; ++i) {
-        g = _settingsGroupInstances[i]
-        if (g && g.collapsible && g.expanded === true) {
-            anyOpen = true
-            break
-        }
-    }
-    for (i = 0; i < _settingsGroupInstances.length; ++i) {
-        g = _settingsGroupInstances[i]
+function collapseAllSettingsGroups() {
+    for (var i = 0; i < _settingsGroupInstances.length; ++i) {
+        var g = _settingsGroupInstances[i]
         if (g && g.collapsible)
-            g.expanded = !anyOpen
+            g.expanded = false
     }
 }
 

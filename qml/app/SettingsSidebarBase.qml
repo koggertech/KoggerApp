@@ -38,11 +38,11 @@ Item {
     property var store: null
     property bool _restoringScroll: false
 
-    function _toggleAllGroups() {
+    function _collapseAllGroups() {
         if (subPageOpen)
             return
-        if (store && typeof store.toggleAllSettingsGroups === "function")
-            store.toggleAllSettingsGroups()
+        if (store && typeof store.collapseAllSettingsGroups === "function")
+            store.collapseAllSettingsGroups()
         scrollToTopTimer.restart()
     }
 
@@ -220,9 +220,9 @@ Item {
                         Layout.alignment: Qt.AlignVCenter
                         elide: Text.ElideRight
 
-                        // Double-tap toggles all SettingsGroup descendants.
+                        // Double-tap collapses all SettingsGroup descendants.
                         KTapArea {
-                            onDoubleTapped: panelRoot._toggleAllGroups()
+                            onDoubleTapped: panelRoot._collapseAllGroups()
                         }
                     }
 
@@ -346,6 +346,22 @@ Item {
                                                   panelRoot.panelColor.b, 0)
         readonly property int _fadeHeight: Math.round(24 * AppPalette.scale)
 
+        readonly property bool _stickyHeaderAtTop: {
+            var _dep = contentFlick.contentY
+            if (!panelRoot.store || !panelRoot.store._settingsGroupInstances)
+                return false
+            var arr = panelRoot.store._settingsGroupInstances
+            for (var i = 0; i < arr.length; ++i) {
+                var g = arr[i]
+                if (!g || !g._bodyShown)
+                    continue
+                // Already pinned & visible, OR mid-expand scroll toward the top.
+                if ((g._stickyHeaderY > 0 && g._headerFade > 0.01) || g._pinningToTop)
+                    return true
+            }
+            return false
+        }
+
         Rectangle {
             id: topFade
             x: contentFlick.x
@@ -353,9 +369,12 @@ Item {
             width: contentFlick.width - panelRoot.scrollBarReservePx
             height: panel._fadeHeight
             z: 3
-            opacity: contentFlick.atYBeginning ? 0.0 : 1.0
+            opacity: (contentFlick.atYBeginning || panel._stickyHeaderAtTop) ? 0.0 : 1.0
             visible: opacity > 0.01
-            Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+            Behavior on opacity {
+                enabled: !panel._stickyHeaderAtTop
+                NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+            }
 
             gradient: Gradient {
                 GradientStop { position: 0.0; color: panel._fadeStart }

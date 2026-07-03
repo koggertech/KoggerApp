@@ -52,6 +52,7 @@ Item {
         var bottomVp = root.mapToItem(_flick, 0, island.height).y   // group bottom in viewport
         return Math.max(0, Math.min(1, bottomVp / Math.max(1, root._headerH)))
     }
+    readonly property bool _pinningToTop: scrollIntoViewAnim.running
 
     property bool _stateReady: false
 
@@ -379,13 +380,23 @@ Item {
             Keys.onEnterPressed:  if (root.collapsible && root.expandable) root.expanded = !root.expanded
             Keys.onSpacePressed:  if (root.collapsible && root.expandable) root.expanded = !root.expanded
 
-            // Opaque backing (matches the header colour) so the floating header
-            // occludes body rows scrolling underneath it. Only while floating —
-            // at rest the island's rounded gradient shows through (round corners).
             Rectangle {
                 anchors.fill: parent
-                color: island._headerColor
                 visible: root._stickyHeaderY > 0
+                color: AppPalette.bg
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: island._headerColor
+                    radius: island.radius
+                }
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: island.radius
+                    color: island._headerColor
+                }
             }
 
             // Seam under the floating header — mirrors the group's own header→body
