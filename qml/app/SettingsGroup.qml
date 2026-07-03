@@ -101,9 +101,13 @@ Item {
     // When the user opens a group at the bottom of the panel, scroll the
     // enclosing Flickable so the whole group ends up visible. Uses a small
     // Timer so the scroll animation runs in parallel with the card expand.
+    // Accordion: expanding a group collapses the others, so the layout shifts
+    // while animating. Wait for it to settle, THEN scroll just enough to reveal
+    // the group: nothing if it already fits, enough to show its bottom otherwise,
+    // and only pin the header to the top when the group is taller than the viewport.
     Timer {
         id: scrollIntoViewTimer
-        interval: 60
+        interval: Anim.disclosureMs + 40
         repeat: false
         onTriggered: root._scrollIntoView()
     }

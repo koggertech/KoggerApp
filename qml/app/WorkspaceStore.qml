@@ -2380,8 +2380,10 @@ function loadSettingsGroupsState() {
         for (var key in parsed) {
             if (!Object.prototype.hasOwnProperty.call(parsed, key))
                 continue
-            if (parsed[key] === true)
-                nextMap[key] = true
+            if (parsed[key] === true) {
+                nextMap[key] = true   // accordion: restore at most one open group
+                break
+            }
         }
     }
 
@@ -2445,14 +2447,8 @@ function setSettingsGroupExpanded(groupKey, expanded) {
     if (currentlyExpanded === nextValue)
         return
 
+    // Accordion: at most one group open — expanding one collapses the rest.
     var nextMap = {}
-    for (var existingKey in settingsGroupExpandedMap) {
-        if (!Object.prototype.hasOwnProperty.call(settingsGroupExpandedMap, existingKey))
-            continue
-        if (existingKey !== key && settingsGroupExpandedMap[existingKey] === true)
-            nextMap[existingKey] = true
-    }
-
     if (nextValue)
         nextMap[key] = true
 
