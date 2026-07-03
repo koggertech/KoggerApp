@@ -126,7 +126,8 @@ Item {
     readonly property bool _loggingActive: typeof core !== "undefined" && core && (core.loggingKlf || core.loggingCsv)
     property bool loggingButtonEnabled: true
     readonly property bool _loggingRevealOverride: _revealActiveKey === "logging"
-    readonly property bool _loggingBadgeVisible: (loggingButtonEnabled && (_loggingActive || layoutEditing)) || _loggingRevealOverride
+    readonly property bool _loggingBadgeVisibleCollapsed: (loggingButtonEnabled && _loggingActive) || _loggingRevealOverride
+    readonly property bool _loggingBadgeVisibleExpanded: loggingButtonEnabled || _loggingRevealOverride
 
     readonly property bool _manualTesting: typeof manualTesting !== "undefined" && manualTesting === true
 
@@ -499,8 +500,7 @@ Item {
 
     component LoggingBadge: Item {
         id: logBadge
-        visible: root._loggingBadgeVisible
-        width: visible ? root.controlHeight : 0
+        width: root.controlHeight
         height: root.controlHeight
 
         activeFocusOnTab: visible
@@ -508,9 +508,9 @@ Item {
         Keys.onEnterPressed:  pill.opened ? pill.close() : pill.open()
         Keys.onSpacePressed:  pill.opened ? pill.close() : pill.open()
 
-        readonly property bool _placeholder: !root._loggingActive
-        readonly property bool _klf: _placeholder || (typeof core !== "undefined" && core && core.loggingKlf)
-        readonly property bool _csv: !_placeholder && (typeof core !== "undefined" && core && core.loggingCsv)
+        readonly property bool _active: root._loggingActive
+        readonly property bool _klf: typeof core !== "undefined" && core && core.loggingKlf
+        readonly property bool _csv: typeof core !== "undefined" && core && core.loggingCsv
         readonly property real _hoverScale: badgeMa.pressed ? 0.97 : (badgeMa.containsMouse ? 1.035 : 1.0)
         readonly property bool _dragHold: root.draggingKey === "logging"
 
@@ -527,9 +527,10 @@ Item {
             scale: logBadge._hoverScale
             color: logBadge._dragHold ? AppPalette.accentBgStrong
                    : (badgeMa.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
-            border.width: 1
+            border.width: (logBadge._active || logBadge._dragHold) ? 1 : 0
             border.color: logBadge._dragHold ? AppPalette.accentBorder
-                          : (badgeMa.containsMouse ? Qt.lighter("#EF4444", 1.15) : "#EF4444")
+                          : logBadge._active ? (badgeMa.containsMouse ? Qt.lighter("#EF4444", 1.15) : "#EF4444")
+                          : "transparent"
             Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
             Behavior on border.color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
             Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -537,6 +538,7 @@ Item {
 
         Column {
             anchors.centerIn: parent
+            visible: logBadge._active
             scale: logBadge._hoverScale
             spacing: Math.round(1 * root._s)
             Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -549,7 +551,7 @@ Item {
                 color: "#EF4444"
 
                 SequentialAnimation on opacity {
-                    running: logBadge.visible
+                    running: logBadge.visible && logBadge._active
                     loops: Animation.Infinite
                     NumberAnimation { to: 0.3; duration: 650; easing.type: Easing.InOutQuad }
                     NumberAnimation { to: 1.0; duration: 650; easing.type: Easing.InOutQuad }
@@ -583,6 +585,17 @@ Item {
             }
         }
 
+        Text {
+            anchors.centerIn: parent
+            visible: !logBadge._active
+            scale: logBadge._hoverScale
+            text: "REC"
+            color: AppPalette.textSecond
+            font.pixelSize: Math.round(10 * root._s)
+            font.bold: true
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        }
+
         MouseArea {
             id: badgeMa
             anchors.fill: parent
@@ -595,7 +608,7 @@ Item {
 
         KFocusRing { id: logFocusRing; target: badgeCircle; focusItem: logBadge }
 
-        KToolTip { text: qsTr("Recording"); shown: badgeMa.containsMouse && !pill.opened }
+        KToolTip { text: logBadge._active ? qsTr("Recording") : qsTr("Start recording"); shown: badgeMa.containsMouse && !pill.opened }
 
         readonly property bool _highlighted: root.highlightedQuickActionKey === "logging"
 
@@ -624,7 +637,7 @@ Item {
         }
 
         Timer {
-            running: pill.visible
+            running: pill.visible && logBadge._active
             interval: 1000
             repeat: true
             onTriggered: pill.refresh()
@@ -666,7 +679,7 @@ Item {
                 color: AppPalette.bg
                 radius: width / 2
                 border.width: 1
-                border.color: "#EF4444"
+                border.color: logBadge._active ? "#EF4444" : AppPalette.border
             }
 
             contentItem: Column {
@@ -681,6 +694,7 @@ Item {
 
                     Column {
                         anchors.centerIn: parent
+                        visible: logBadge._active
                         spacing: Math.round(1 * root._s)
 
                         Rectangle {
@@ -689,7 +703,7 @@ Item {
                             radius: width / 2
                             color: "#EF4444"
                             SequentialAnimation on opacity {
-                                running: pill.visible
+                                running: pill.visible && logBadge._active
                                 loops: Animation.Infinite
                                 NumberAnimation { to: 0.3; duration: 650; easing.type: Easing.InOutQuad }
                                 NumberAnimation { to: 1.0; duration: 650; easing.type: Easing.InOutQuad }
@@ -715,6 +729,14 @@ Item {
                         }
                     }
 
+                    Text {
+                        anchors.centerIn: parent
+                        visible: !logBadge._active
+                        text: "REC"
+                        color: AppPalette.textSecond
+                        font.pixelSize: Math.round(10 * root._s); font.bold: true
+                    }
+
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
@@ -722,29 +744,57 @@ Item {
                     }
                 }
 
+                Column {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible: logBadge._active
+                    spacing: 0
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: pill.fmtSize(pill.sizeB)
+                        color: AppPalette.text
+                        font.pixelSize: Math.round(9 * root._s)
+                        font.bold: true
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: pill.fmtTime(pill.secs)
+                        color: AppPalette.textMuted
+                        font.pixelSize: Math.round(9 * root._s)
+                    }
+                }
+
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: logBadge.width; height: width
                     radius: width / 2
-                    color: stopMa.containsMouse ? "#991B1B" : "#7F1D1D"
+                    color: logBadge._active ? (actionMa.containsMouse ? "#991B1B" : "#7F1D1D")
+                                            : (actionMa.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
                     border.width: 0
                     Rectangle {
+                        visible: logBadge._active
                         anchors.centerIn: parent
                         width: Math.round(logBadge.width * 0.3); height: width
                         radius: Math.round(2 * root._s)
                         color: "#FFFFFF"
                     }
+                    Rectangle {
+                        visible: !logBadge._active
+                        anchors.centerIn: parent
+                        width: Math.round(logBadge.width * 0.34); height: width
+                        radius: width / 2
+                        color: "#EF4444"
+                    }
                     MouseArea {
-                        id: stopMa
+                        id: actionMa
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            if (root.store) root.store.setRecording(false)
+                            if (root.store) root.store.setRecording(!logBadge._active)
                             pill.close()
                         }
                     }
-                    KToolTip { text: qsTr("Stop recording"); shown: stopMa.containsMouse }
+                    KToolTip { text: logBadge._active ? qsTr("Stop recording") : qsTr("Start recording"); shown: actionMa.containsMouse }
                 }
 
                 Rectangle {
@@ -772,25 +822,6 @@ Item {
                         }
                     }
                     KToolTip { text: qsTr("Recording settings"); shown: gearMa.containsMouse }
-                }
-
-                Column {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 0
-                    bottomPadding: Math.round(3 * root._s)
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: pill.fmtSize(pill.sizeB)
-                        color: AppPalette.text
-                        font.pixelSize: Math.round(9 * root._s)
-                        font.bold: true
-                    }
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: pill.fmtTime(pill.secs)
-                        color: AppPalette.textMuted
-                        font.pixelSize: Math.round(9 * root._s)
-                    }
                 }
             }
         }
@@ -1254,7 +1285,7 @@ Item {
         anchors.leftMargin: root.panelPaddingX + 2 * root.toggleButtonSize + 2 * Math.round(8 * root._s)
         anchors.verticalCenter: toggleButton.verticalCenter
         spacing: root.quickActionSpacing
-        visible: root.showToggleButton && !root.expanded && (root.connectionStatusToolVisible || root._loggingBadgeVisible)
+        visible: root.showToggleButton && !root.expanded && (root.connectionStatusToolVisible || root._loggingBadgeVisibleCollapsed)
         opacity: visible ? 1 : 0
 
         Behavior on opacity {
@@ -1267,7 +1298,7 @@ Item {
                 required property string key
                 height: root.controlHeight
                 visible: key === "connections" ? (root.connectionStatusToolVisible && root._hasConnectedDevice)
-                       : key === "logging"     ? root._loggingBadgeVisible
+                       : key === "logging"     ? root._loggingBadgeVisibleCollapsed
                        : false
                 active: visible
                 sourceComponent: key === "connections" ? qaConnectionsComp
@@ -1350,7 +1381,7 @@ Item {
                     required property string key
                     height: root.controlHeight
                     visible: key === "connections" ? ((root.connectionStatusToolVisible || root._revealActiveKey === "connections") && (root._hasConnectedDevice || root.layoutEditing))
-                           : key === "logging"     ? root._loggingBadgeVisible
+                           : key === "logging"     ? root._loggingBadgeVisibleExpanded
                            : key === "favorites"   ? root.hasFavoriteLayouts
                            : key === "bottomTrack" ? root.showBtEdit
                            : key === "extraInfo"   ? root.showExtraInfo
