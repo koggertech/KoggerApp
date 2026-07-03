@@ -64,6 +64,7 @@ QtObject {
     // lifted bg; identical to the old value for every other theme.
     readonly property color bgDeep:  theme ? Qt.darker(_rawBg, isDark ? 1.25 : 1.04) : (isDark ? "#0B1220" : "#F1F5F9")
     readonly property color bgHover: theme ? theme.hoveredBackColor              : (isDark ? "#111B2E" : "#EFF6FF")
+    readonly property color groupBorder: Qt.darker(bgDeep, isDark ? 1.45 : 1.12)
 
     // ── Cards / controls ──────────────────────────────────────────────────────
     readonly property color card:      theme ? theme.controlBackColor            : (isDark ? "#1E293B" : "#FFFFFF")

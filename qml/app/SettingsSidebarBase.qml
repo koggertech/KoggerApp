@@ -355,8 +355,9 @@ Item {
                 var g = arr[i]
                 if (!g || !g._bodyShown)
                     continue
-                // Already pinned & visible, OR mid-expand scroll toward the top.
-                if ((g._stickyHeaderY > 0 && g._headerFade > 0.01) || g._pinningToTop)
+                if (g._pinningToTop)
+                    return true
+                if (g._headerFade > 0.01 && g._headerTopInFlick <= panel._fadeHeight + 0.5)
                     return true
             }
             return false

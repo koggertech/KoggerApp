@@ -53,6 +53,13 @@ Item {
         return Math.max(0, Math.min(1, bottomVp / Math.max(1, root._headerH)))
     }
     readonly property bool _pinningToTop: scrollIntoViewAnim.running
+    readonly property real _headerTopInFlick: {
+        if (!_flick || !root._bodyShown)
+            return 1e6
+        var _dep = _flick.contentY + _flick.contentHeight
+        var vpY = root.mapToItem(_flick, 0, 0).y
+        return vpY + root._stickyHeaderY
+    }
 
     property bool _stateReady: false
 
@@ -517,13 +524,14 @@ Item {
         }
     }
 
-    // Border drawn on a separate, non-clipped overlay — a bordered Rectangle
-    // with clip:true (the island) loses ~1px of its own border to the clip.
     Rectangle {
-        anchors.fill: island
+        x: 0
+        y: root._stickyHeaderY
+        width: island.width
+        height: island.height - root._stickyHeaderY
         color: "transparent"
         radius: island.radius
-        border.width: root.confirmed ? 0 : 1
-        border.color: AppPalette.dangerBorder
+        border.width: (!root.confirmed || root._bodyShown) ? 1 : 0
+        border.color: root.confirmed ? AppPalette.groupBorder : AppPalette.dangerBorder
     }
 }
