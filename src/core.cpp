@@ -80,7 +80,7 @@ Core::~Core()
 QString Core::defaultExportDirectory() const
 {
     return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
-           + QStringLiteral("/Kogger/exports");
+           + QStringLiteral("/KoggerApp/exports");
 }
 
 QString Core::resolveExportBasePath(const QString& basePath) const

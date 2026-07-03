@@ -480,7 +480,7 @@ onTgcCompensateChanged: applyTgcToCore()
 property Settings exportPersist: Settings {
     id: exportPersist
     category: "main/export"
-    property var exportFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/Kogger/exports"
+    property var exportFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/KoggerApp/exports"
     property string exportFolderText: ""
     property bool exportDecimation: false
     property int exportDecimationValue: 10
