@@ -805,7 +805,15 @@ Item {
             required property int index
             readonly property color _fill:   root.linkFillColor(modelData)
             readonly property color _border: root.linkBorderColor(modelData)
-            readonly property bool _transducer: !!(modelData && modelData.isTransducerSupport)
+            // Frequency (700/450) is settable only on a duplex down-view sonar or
+            // side-scan — NOT on a logger, DVL, USBL or unknown board.
+            readonly property bool _transducer: !!(modelData
+                                                   && modelData.isSonar
+                                                   && modelData.isTransducerSupport
+                                                   && !modelData.isDoppler
+                                                   && !modelData.isRecorder
+                                                   && !modelData.isUSBL
+                                                   && !modelData.isUSBLBeacon)
             readonly property string _tip: modelData
                          ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]")
                          : ""
