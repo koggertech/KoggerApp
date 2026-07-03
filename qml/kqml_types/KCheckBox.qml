@@ -10,8 +10,8 @@ CheckBox {
     property color textColor: AppPalette.textSecond
     property color backgroundColor: AppPalette.bg
     property color borderColor: AppPalette.border
-    property color accentColor: AppPalette.accentBg
-    property color accentBorderColor: AppPalette.accentBorder
+    property color accentColor: AppPalette.toggleOn
+    property color accentBorderColor: AppPalette.toggleOnBorder
     property color trackOffColor: AppPalette.trackOff
     property color trackOffBorderColor: AppPalette.trackOffBorder
     property color knobColor: AppPalette.knob

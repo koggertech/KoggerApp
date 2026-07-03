@@ -110,9 +110,9 @@ Rectangle {
         Rectangle {
             anchors.fill: parent
             radius: height / 2
-            color: pcard.checked ? AppPalette.accentBg : AppPalette.trackOff
+            color: pcard.checked ? AppPalette.toggleOn : AppPalette.trackOff
             border.width: 1
-            border.color: pcard.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
+            border.color: pcard.checked ? AppPalette.toggleOnBorder : AppPalette.trackOffBorder
             Behavior on color { ColorAnimation { duration: 120 } }
 
             Rectangle {

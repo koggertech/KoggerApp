@@ -87,9 +87,9 @@ Rectangle {
             Rectangle {
                 anchors.fill: parent
                 radius: height / 2
-                color: pgroup.checked ? AppPalette.accentBgStrong : AppPalette.trackOff
+                color: pgroup.checked ? AppPalette.toggleOn : AppPalette.trackOff
                 border.width: 1
-                border.color: pgroup.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
+                border.color: pgroup.checked ? AppPalette.toggleOnBorder : AppPalette.trackOffBorder
                 Behavior on color       { ColorAnimation { duration: 120 } }
                 Behavior on border.color { ColorAnimation { duration: 120 } }
             }

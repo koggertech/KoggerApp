@@ -185,9 +185,9 @@ Column {
             id: scTrack
             anchors.fill: parent
             radius: height / 2
-            color: sc.checked ? AppPalette.accentBg : AppPalette.trackOff
+            color: sc.checked ? AppPalette.toggleOn : AppPalette.trackOff
             border.width: 1
-            border.color: sc.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
+            border.color: sc.checked ? AppPalette.toggleOnBorder : AppPalette.trackOffBorder
             Behavior on color { ColorAnimation { duration: 120 } }
 
             Rectangle {

@@ -64,9 +64,9 @@ Item {
                 height: Math.round(20 * root._s)
                 radius: height / 2
                 anchors.verticalCenter: parent.verticalCenter
-                color: tgRoot.checked ? AppPalette.accentBg : AppPalette.trackOff
+                color: tgRoot.checked ? AppPalette.toggleOn : AppPalette.trackOff
                 border.width: 1
-                border.color: tgRoot.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
+                border.color: tgRoot.checked ? AppPalette.toggleOnBorder : AppPalette.trackOffBorder
                 Behavior on color { ColorAnimation { duration: 120 } }
 
                 Rectangle {

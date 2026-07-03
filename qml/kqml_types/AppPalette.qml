@@ -104,6 +104,9 @@ QtObject {
     readonly property color accentBorder:   isDark ? "#93C5FD" : "#60A5FA"
     readonly property color accentBar:      isDark ? "#60A5FA" : "#3B82F6"
 
+    readonly property color toggleOn:       "#4E82C9"
+    readonly property color toggleOnBorder: "#6FA0DC"
+
     // ── Danger ────────────────────────────────────────────────────────────────
     readonly property color dangerBg:     isDark ? "#2A1313" : "#FEF2F2"
     readonly property color dangerHover:  isDark ? "#1F0F0F" : "#FEE2E2"
