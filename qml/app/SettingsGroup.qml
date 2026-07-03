@@ -99,10 +99,7 @@ Item {
             scrollIntoViewTimer.restart()      // safety net: correct any residual after settle
         } else {
             scrollIntoViewTimer.stop()
-            // Collapsing while scrolled into the group (header was floating):
-            // pin its header at the top so it doesn't jump off-screen.
-            if (_flick && root.mapToItem(_flick, 0, 0).y < -1)
-                _scrollToTop()
+            _animateCollapseScroll()
         }
     }
 
@@ -229,6 +226,23 @@ Item {
         target = Math.min(target, topInContent)   // never past the header
         var finalContentH = _flick.contentHeight + (fullH - root._headerH) - deltaAbove
         target = Math.max(0, Math.min(target, finalContentH - vpH))
+        if (Math.abs(target - cy) < 0.5) return
+        scrollIntoViewAnim.target = _flick
+        scrollIntoViewAnim.from = cy
+        scrollIntoViewAnim.to = target
+        scrollIntoViewAnim.restart()
+    }
+
+    function _animateCollapseScroll() {
+        if (!_flick) return
+        var fullH = _predictedFullHeight()
+        var finalContentH = _flick.contentHeight - (fullH - root._headerH)   // after this group shrinks
+        var maxCY = Math.max(0, finalContentH - _flick.height)
+        var cy = _flick.contentY
+        var target = cy
+        if (root.mapToItem(_flick, 0, 0).y < -1)
+            target = Math.max(0, root.mapToItem(_flick.contentItem, 0, 0).y - Tokens.spaceLg)
+        target = Math.min(target, maxCY)   // clamp to the shrunken content — no over-scroll
         if (Math.abs(target - cy) < 0.5) return
         scrollIntoViewAnim.target = _flick
         scrollIntoViewAnim.from = cy
