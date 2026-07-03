@@ -455,7 +455,8 @@ Column {
             Rectangle {
                 width: parent.width - parent.browseW - Tokens.spaceSm
                 height: Tokens.controlHMd; radius: Tokens.radiusMd
-                color: AppPalette.bg; border.width: 1
+                color: AppPalette.bg
+                border.width: upgradePathInput.activeFocus ? 1 : Tokens.cardBorderWidth
                 border.color: upgradePathInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
                 TextInput {
                     id: upgradePathInput

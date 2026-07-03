@@ -59,8 +59,7 @@ Item {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         color: theme.menuBackColor
-        border.color: theme.controlBorderColor
-        border.width: 1
+        border.width: 0
         radius: 4
         clip: true
         enabled: root.expanded

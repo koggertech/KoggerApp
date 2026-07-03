@@ -368,7 +368,7 @@ Item {
         color: button.dropped ? "transparent"
                : button.highlightHold ? AppPalette.accentBgStrong
                : (buttonMouse.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
-        border.width: button.dropped ? 0 : 1
+        border.width: 0
         border.color: button.highlightHold ? AppPalette.accentBorder
                       : (buttonMouse.containsMouse ? root.buttonHoverBorderColor : root.buttonBorderColor)
 
@@ -424,7 +424,7 @@ Item {
         KToolTip {
             text: qsTr("Layouts")
             targetItem: button
-            shown: buttonMouse.containsMouse
+            shown: buttonMouse.containsMouse && !button.open
         }
 
         Rectangle {
@@ -515,6 +515,10 @@ Item {
         readonly property bool _dragHold: root.draggingKey === "logging"
 
         onVisibleChanged: if (!visible && pill.opened) pill.close()
+        Connections {
+            target: root
+            function onExpandedChanged() { if (pill.opened) pill.close() }   // collapse menu → close record pill
+        }
 
         Rectangle {
             id: badgeCircle
@@ -628,12 +632,12 @@ Item {
 
         Popup {
             id: pill
-            readonly property int pad: Math.round(4 * root._s)
+            readonly property int pad: Math.round(2 * root._s)
             x: -pad
             y: -pad
             width: logBadge.width + 2 * pad
             padding: pad
-            closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+            closePolicy: Popup.CloseOnEscape   // stays open independently of other pills
 
             property int sizeB: 0
             property int secs: 0
@@ -673,8 +677,7 @@ Item {
                     width: logBadge.width; height: width
                     radius: width / 2
                     color: root.buttonFillColor
-                    border.width: 1
-                    border.color: "#EF4444"
+                    border.width: 0
 
                     Column {
                         anchors.centerIn: parent
@@ -724,8 +727,7 @@ Item {
                     width: logBadge.width; height: width
                     radius: width / 2
                     color: stopMa.containsMouse ? "#991B1B" : "#7F1D1D"
-                    border.width: 1
-                    border.color: "#EF4444"
+                    border.width: 0
                     Rectangle {
                         anchors.centerIn: parent
                         width: Math.round(logBadge.width * 0.3); height: width
@@ -750,8 +752,7 @@ Item {
                     width: logBadge.width; height: width
                     radius: width / 2
                     color: gearMa.containsMouse ? AppPalette.cardHover : AppPalette.card
-                    border.width: 1
-                    border.color: AppPalette.border
+                    border.width: 0
                     Image {
                         anchors.centerIn: parent
                         width: Math.round(logBadge.width * 0.5); height: width
@@ -813,16 +814,24 @@ Item {
             width: visible ? root.controlHeight : 0
             height: root.controlHeight
 
+            onVisibleChanged: if (!visible && devPill.opened) devPill.close()
+            Connections {
+                target: root
+                function onExpandedChanged() { if (devPill.opened) devPill.close() }
+            }
+
             KCircleIconButton {
                 anchors.fill: parent
                 iconSource: root.iconForDevice(devBadge.modelData)
                 iconTintColor: AppPalette.text
                 toolTipText: devBadge._tip
+                toolTipSuppressed: devPill.opened   // no tooltip while the pill is open
                 fillColor:        devBadge._fill
                 fillHoverColor:   devBadge._fill
                 fillPressedColor: root.buttonPressedColor
                 borderColor:      devBadge._border
                 borderHoverColor: devBadge._border
+                borderWidth:      1   // thin status-coloured ring (like the record pill)
 
                 highlighted: root.highlightedQuickActionKey === "connections"
                 flashToken: root.highlightPulseToken
@@ -847,18 +856,18 @@ Item {
 
             Popup {
                 id: devPill
-                readonly property int pad: Math.round(4 * root._s)
+                readonly property int pad: Math.round(2 * root._s)
                 x: -pad
                 y: -pad
                 width: devBadge.width + 2 * pad
                 padding: pad
-                closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+                closePolicy: Popup.CloseOnEscape   // stays open independently of other pills
 
                 background: Rectangle {
                     color: AppPalette.bg
                     radius: width / 2
                     border.width: 1
-                    border.color: AppPalette.border
+                    border.color: devBadge._border   // thin status-coloured ring on the pill
                 }
 
                 contentItem: Column {
@@ -868,7 +877,7 @@ Item {
                         width: devBadge.width; height: width
                         iconSource: root.iconForDevice(devBadge.modelData)
                         iconTintColor: AppPalette.text
-                        toolTipText: devBadge._tip
+                        toolTipSuppressed: true   // top button of the open pill — no tooltip
                         fillColor:        devBadge._fill
                         fillHoverColor:   devBadge._fill
                         borderColor:      devBadge._border
@@ -1236,7 +1245,7 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: root.panelPaddingX + 2 * root.toggleButtonSize + 2 * Math.round(8 * root._s)
         anchors.verticalCenter: toggleButton.verticalCenter
-        spacing: Math.round(8 * root._s)
+        spacing: root.quickActionSpacing
         visible: root.showToggleButton && !root.expanded && (root.connectionStatusToolVisible || root._loggingBadgeVisible)
         opacity: visible ? 1 : 0
 
@@ -1245,11 +1254,19 @@ Item {
         }
 
         Repeater {
-            model: root.connectionStatusToolVisible ? root.effectiveDevices : 0
-            delegate: deviceShortcutDelegate
+            model: root.store ? root.store.quickActionOrderModel : 0
+            delegate: Loader {
+                required property string key
+                height: root.controlHeight
+                visible: key === "connections" ? (root.connectionStatusToolVisible && root._hasConnectedDevice)
+                       : key === "logging"     ? root._loggingBadgeVisible
+                       : false
+                active: visible
+                sourceComponent: key === "connections" ? qaConnectionsComp
+                               : key === "logging"      ? qaLoggingComp
+                               : null
+            }
         }
-
-        LoggingBadge {}
     }
 
     Rectangle {
@@ -1266,8 +1283,7 @@ Item {
         radius: Math.min(height, root.panelHeight) / 2
         clip: true
         color: root.hotkeysLayerColor
-        border.width: root.expanded ? 1 : 0
-        border.color: AppPalette.border
+        border.width: 0
         opacity: root.expanded ? 1 : 0
 
         Behavior on width {

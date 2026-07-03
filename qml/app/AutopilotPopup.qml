@@ -112,8 +112,7 @@ BasePanePopup {
         anchors.fill: parent
         radius: root._panelRadius
         color: AppPalette.bg
-        border.width: 1
-        border.color: AppPalette.border
+        border.width: 0
 
         Row {
             id: infoRow

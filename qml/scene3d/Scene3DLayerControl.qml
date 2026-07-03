@@ -52,8 +52,7 @@ Item {
         height: root.menuOpen ? root._openH : 0
         radius: width / 2
         color: AppPalette.bg
-        border.width: 1
-        border.color: AppPalette.border
+        border.width: 0
         opacity: root.menuOpen ? 1 : 0
         visible: opacity > 0.01
         clip: true
@@ -103,7 +102,7 @@ Item {
                 fillColor:      root.active ? AppPalette.accentBgStrong : AppPalette.card
                 fillHoverColor: root.active ? AppPalette.accentBorder : AppPalette.cardHover
                 borderColor:    root.active ? AppPalette.accentBorder : AppPalette.border
-                borderWidth:    root.active ? 2 : 1
+                borderWidth:    root.active ? 2 : 0
                 toolTipText: root.active ? qsTr("Hide") : qsTr("Show")
                 onClicked: root.toggleRequested()
             }
@@ -150,7 +149,7 @@ Item {
         fillHoverColor: AppPalette.cardHover
         fillColor:   root.menuOpen ? "transparent" : (root.active ? AppPalette.accentBgStrong : AppPalette.card)
         borderColor: root.active ? AppPalette.accentBorder : AppPalette.border
-        borderWidth: root.menuOpen ? 0 : (root.active ? 2 : 1)
+        borderWidth: root.menuOpen ? 0 : (root.active ? 2 : 0)
         toolTipText: root.toolTipText
         onClicked: root.menuOpen = !root.menuOpen
 

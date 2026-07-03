@@ -400,8 +400,7 @@ Item {
         height: root.popupHeight
         radius: 10
         color: root.collapsed ? "transparent" : root.panelColor
-        border.width: root.collapsed || root.fullscreenMode ? 0 : 1
-        border.color: root.panelBorderColor
+        border.width: 0
         z: 1
         layer.enabled: true
         layer.smooth: true

@@ -19,7 +19,7 @@ Item {
     property color fillPressedColor: AppPalette.bgDeep
     property color borderColor: AppPalette.border
     property color borderHoverColor: AppPalette.borderHover
-    property real borderWidth: 1
+    property real borderWidth: Tokens.cardBorderWidth   // borderless by default; set per-instance for active/accent state
     property bool enabled: true
     activeFocusOnTab: enabled
     Keys.onReturnPressed: if (root.enabled) root.clicked()
@@ -36,6 +36,7 @@ Item {
     property real padding: 0
     property string toolTipText: ""
     property bool autoToolTip: true
+    property bool toolTipSuppressed: false   // external gate (e.g. hide while a pill/popup is open)
     property real hoverWhiteness: 0.12
     // External "look here" pulse — bumped via flashToken when highlighted.
     property bool highlighted: false
@@ -319,6 +320,6 @@ Item {
     KToolTip {
         text: root.resolvedToolTipText
         targetItem: root
-        shown: root.hovered && root.enabled && !root._tipSuppressed
+        shown: root.hovered && root.enabled && !root._tipSuppressed && !root.toolTipSuppressed
     }
 }

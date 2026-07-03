@@ -97,8 +97,7 @@ BasePanePopup {
         anchors.fill: parent
         radius: width / 2
         color: AppPalette.bg
-        border.width: 1
-        border.color: AppPalette.border
+        border.width: 0
 
         Column {
             anchors.horizontalCenter: parent.horizontalCenter
