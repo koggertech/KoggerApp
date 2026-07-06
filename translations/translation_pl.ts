@@ -52,47 +52,47 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1756"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1769"/>
         <source>Information panel</source>
         <translation>Panel informacyjny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1741"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1754"/>
         <source>Sync echograms</source>
         <translation>Synchronizacja echogramów</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1747"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1760"/>
         <source>Sync view</source>
         <translation>Synchronizacja widoku</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="474"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="487"/>
         <source>Rotate layout with device</source>
         <translation>Obracaj układ z urządzeniem</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2254"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2267"/>
         <source>Limit downloads on metered networks</source>
         <translation>Ogranicz pobieranie w sieci taryfowej</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2244"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2257"/>
         <source>Metered network (limited)</source>
         <translation>Sieć taryfowa (ograniczona)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2410"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2423"/>
         <source>Clear?</source>
         <translation>Wyczyścić?</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1507"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1520"/>
         <source>Open TGC settings</source>
         <translation>Otwórz ustawienia TGC</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="518"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="531"/>
         <source>Extra info panel</source>
         <translation>Panel dodatkowych informacji</translation>
     </message>
@@ -101,475 +101,475 @@
         <translation type="vanished">Panel autopilota</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="697"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="710"/>
         <source>Pos zeroing</source>
         <translation>Zerowanie pozycji</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="704"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="717"/>
         <source>Bottom track zeroing</source>
         <translation>Zerowanie śledzenia dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="459"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="472"/>
         <source>Hide UI elements for missing data</source>
         <translation>Ukryj elementy UI dla brakujących danych</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="306"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="319"/>
         <source>Language:</source>
         <translation>Język:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="325"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1058"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1300"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="338"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1071"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1313"/>
         <source>Theme:</source>
         <translation>Motyw:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="296"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="309"/>
         <source>Interface</source>
         <translation>Interfejs</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="604"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="617"/>
         <source>Dataset</source>
         <translation>Zbiór danych</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="409"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="742"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="422"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="755"/>
         <source>Bottom Track</source>
         <translation>Ślad dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="192"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="205"/>
         <source>Export</source>
         <translation>Eksport</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="524"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="537"/>
         <source>UI Saving</source>
         <translation>Zapisywanie UI</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="297"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="310"/>
         <source>Language, theme, UI scale and panel visibility.</source>
         <translation>Język, motyw, skala interfejsu i widoczność paneli.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="427"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="440"/>
         <source>UI scale:</source>
         <translation>Skala interfejsu:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="605"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="618"/>
         <source>Black-stripe smoothing and sonar mount-point offset.</source>
         <translation>Wygładzanie czarnych pasów i przesunięcie punktu montażu sonaru.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="723"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="736"/>
         <source>Boat track</source>
         <translation>Ślad łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="724"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="737"/>
         <source>Vessel track displayed in the 3D scene.</source>
         <translation>Trasa łodzi w scenie 3D.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="65"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="78"/>
         <source>Show in 3D</source>
         <translation>Pokaż w 3D</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="534"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="547"/>
         <source>Workspace</source>
         <translation>Obszar roboczy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="535"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="548"/>
         <source>Workspace layouts and pane editing.</source>
         <translation>Układy obszaru roboczego i edycja paneli.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="584"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="597"/>
         <source>Delete layout</source>
         <translation>Usuń układ</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="592"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="605"/>
         <source>Create layout</source>
         <translation>Utwórz układ</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="743"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="756"/>
         <source>Bottom detection presets, thresholds and search window.</source>
         <translation>Presety wykrywania dna, progi i okno wyszukiwania.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="993"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1006"/>
         <source>Isobaths</source>
         <translation>Izobaty</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="994"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1007"/>
         <source>Equal-depth contour lines on the surface.</source>
         <translation>Linie jednakowej głębokości na powierzchni.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1308"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
         <source>Midnight</source>
         <translation>Północ</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
         <source>Default</source>
         <translation>Normalna</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1308"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
         <source>Blue</source>
         <translation>Niebieski</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1308"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
         <source>Sepia</source>
         <translation>Sepia</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1308"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
         <source>Sepia New</source>
         <translation>Nowa Sepia</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1308"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
         <source>WRGBD</source>
         <translation>WRGBD</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1308"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
         <source>WhiteBlack</source>
         <translation>Biało-Czarny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
         <source>Standard</source>
         <translation>Standard</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1308"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
         <source>DeepBlue</source>
         <translation>Modry</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1308"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
         <source>Ice</source>
         <translation>Lód</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1308"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
         <source>Green</source>
         <translation>Zielony</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1085"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1098"/>
         <source>Edge limit, m:</source>
         <translation>Limit krawędzi, m:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1106"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1119"/>
         <source>Step, m:</source>
         <translation>Krok, m:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1129"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1142"/>
         <source>Extra width, m:</source>
         <translation>Dodatkowa szerokość, m:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1173"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1186"/>
         <source>Enter path</source>
         <translation>Wprowadź ścieżkę</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1194"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1207"/>
         <source>Select folder and set .csv file name</source>
         <translation>Wybierz folder i ustaw nazwę pliku .csv</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2653"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2666"/>
         <source>Scroll to top</source>
         <translation>Do góry</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="270"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1211"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="283"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1224"/>
         <source>Export to CSV</source>
         <translation>Eksport do CSV</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1228"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1241"/>
         <source>Mosaic</source>
         <translation>Mozaika</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1229"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1242"/>
         <source>Side-scan mosaic visualisation.</source>
         <translation>Wizualizacja mozaiki sonaru bocznego.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1308"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
         <source>BlackWhite</source>
         <translation>Czarno-Biały</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1325"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1338"/>
         <source>Channels:</source>
         <translation>Kanały:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1436"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1449"/>
         <source>Angle, °:</source>
         <translation>Kąt, °:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1480"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1493"/>
         <source>Trace line</source>
         <translation>Linia trasy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1491"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1504"/>
         <source>Data source:</source>
         <translation>Źródło danych:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="712"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1513"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="725"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1526"/>
         <source>TGC</source>
         <translation>TGC</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1513"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1526"/>
         <source>Raw</source>
         <translation>Raw</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1555"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1568"/>
         <source>Calc last N epochs:</source>
         <translation>Oblicz N ost. epok:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1575"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1588"/>
         <source>All</source>
         <translation>Wszystkie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1581"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1594"/>
         <source>Clear old data (*)</source>
         <translation>Wyczyść stare dane (*)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1764"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1777"/>
         <source>3D scene</source>
         <translation>Scena 3D</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1765"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1778"/>
         <source>3D scene settings, map provider switching.</source>
         <translation>Ustawienia sceny 3D, zmiana dostawcy map.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1776"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1789"/>
         <source>Rendering</source>
         <translation>Renderowanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1784"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1797"/>
         <source>Reset depth zoom</source>
         <translation>Zresetuj powiększenie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2410"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2423"/>
         <source>Reset surface</source>
         <translation>Zresetuj powierzchnię</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1794"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1807"/>
         <source>Show surface quality</source>
         <translation>Pokaż jakość powierzchni</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1804"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1817"/>
         <source>Force zoom</source>
         <translation>Stały zoom</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1685"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1817"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1698"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1830"/>
         <source>Loupe</source>
         <translation>Lupa</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1693"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1829"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1706"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1842"/>
         <source>Size</source>
         <translation>Rozmiar</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1711"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1724"/>
         <source>Zoom</source>
         <translation>Powiększenie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1946"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2067"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2120"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1959"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2080"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2133"/>
         <source>Size:</source>
         <translation>Rozmiar:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1850"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1863"/>
         <source>Zoom, %:</source>
         <translation>Powiększenie, %:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1882"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1895"/>
         <source>North mode</source>
         <translation>Tryb północny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1893"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1906"/>
         <source>Sync echogram</source>
         <translation>Synchr. echogramu</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1905"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1918"/>
         <source>Grid</source>
         <translation>Siatka</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1915"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1928"/>
         <source>Circle</source>
         <translation>Kołowa</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1926"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1939"/>
         <source>Labels</source>
         <translation>Etykiety</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1973"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1986"/>
         <source>Step:</source>
         <translation>Krok:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2000"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2013"/>
         <source>Angle:</source>
         <translation>Kąt:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2022"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2035"/>
         <source>Shadows</source>
         <translation>Cienie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2055"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2068"/>
         <source>Boat</source>
         <translation>Łódź</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2034"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2047"/>
         <source>Navigation arrow</source>
         <translation>Strzałka nawigacyjna</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2047"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2060"/>
         <source>Shape:</source>
         <translation>Kształt:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2055"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2068"/>
         <source>Arrow</source>
         <translation>Strzałka</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2088"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2101"/>
         <source>Compass</source>
         <translation>Kompas</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2140"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2153"/>
         <source>Scale bar</source>
         <translation>Podziałka</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2101"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2114"/>
         <source>Pos:</source>
         <translation>Pozycja:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2176"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2189"/>
         <source>Map</source>
         <translation>Mapa</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2185"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2198"/>
         <source>Show map tiles</source>
         <translation>Pokaż kafelki mapy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2220"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2233"/>
         <source>Internet available</source>
         <translation>Internet dostępny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2221"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2234"/>
         <source>Internet unavailable</source>
         <translation>Internet niedostępny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2264"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2277"/>
         <source>Providers</source>
         <translation>Dostawcy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2344"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2357"/>
         <source>Cache: empty</source>
         <translation>Pamięć podręczna: pusta</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2351"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2364"/>
         <source>Cache since %1  •  %2 MB</source>
         <translation>Pamięć podręczna od %1  •  %2 MB</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2376"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2389"/>
         <source>Navigator</source>
         <translation>Nawigator</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2384"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2397"/>
         <source>Use angle</source>
         <translation>Użyj orientacji</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2395"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2408"/>
         <source>Navigator view</source>
         <translation>Widok nawigatora</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="193"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="206"/>
         <source>Export plot data as XTF, CSV (regular or complex) or USBL.</source>
         <translation>Eksport zbioru danych do XTF, CSV (zwykły lub złożony) lub USBL.</translation>
     </message>
@@ -582,57 +582,57 @@
         <translation type="vanished">Edycja paneli, ulubione i gotowe presety układów.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="541"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="554"/>
         <source>Edit</source>
         <translation>Edytuj</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="483"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="496"/>
         <source>Sidebar position:</source>
         <translation>Pozycja paska bocznego:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="488"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="501"/>
         <source>Left</source>
         <translation>Lewo</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="489"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="502"/>
         <source>Right</source>
         <translation>Prawo</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="512"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="525"/>
         <source>Quick action menu</source>
         <translation>Menu szybkich akcji</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2472"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2485"/>
         <source>Test</source>
         <translation>Test</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2473"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2486"/>
         <source>Developer knobs — visible only in MANUAL_TESTING builds.</source>
         <translation>Parametry dla programistów — widoczne tylko w kompilacjach MANUAL_TESTING.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2487"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2500"/>
         <source>Double-tap tolerance, px:</source>
         <translation>Tolerancja podwójnego dotknięcia, px:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2517"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2530"/>
         <source>Split grab thickness, px:</source>
         <translation>Grubość chwytu krawędzi, px:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2546"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2559"/>
         <source>Sidebar slide, ms:</source>
         <translation>Animacja panelu bocznego, ms:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2575"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2588"/>
         <source>Workspace adjust, ms:</source>
         <translation>Dostosowanie obszaru roboczego, ms:</translation>
     </message>
@@ -665,17 +665,17 @@
         <translation type="vanished">Cztery okna</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="794"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="807"/>
         <source>Preset:</source>
         <translation>Szablon:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="808"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="821"/>
         <source>Normal 2D</source>
         <translation>Normalny 2D</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="809"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="822"/>
         <source>Narrow 2D</source>
         <translation>Wąski 2D</translation>
     </message>
@@ -716,17 +716,17 @@
         <translation type="vanished">Resetuj obszar roboczy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="466"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="479"/>
         <source>Workspace shift</source>
         <translation>Przesunięcie obszaru roboczego</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="548"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="561"/>
         <source>Global pop-up</source>
         <translation>Globalne okno podręczne</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="499"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="512"/>
         <source>Hotkeys</source>
         <translation>Skróty klawiszowe</translation>
     </message>
@@ -735,7 +735,7 @@
         <translation type="vanished">Konsola</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="982"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="995"/>
         <source>Processing</source>
         <translation>Przetwarzanie</translation>
     </message>
@@ -744,108 +744,108 @@
         <translation type="vanished">W czasie rzeczywistym</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="864"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="877"/>
         <source>Horizontal window:</source>
         <translation>Okno poziome:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="884"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="897"/>
         <source>Vertical gap, %:</source>
         <translation>Szczelina pionowa, %:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="924"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="937"/>
         <source>Max range, m:</source>
         <translation>Maks. zasięg, m:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="904"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="917"/>
         <source>Min range, m:</source>
         <translation>Min. zasięg, m:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="823"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="836"/>
         <source>Gain slope:</source>
         <translation>Pochylenie wzmocnienia:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="844"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="857"/>
         <source>Threshold:</source>
         <translation>Próg:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="397"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="410"/>
         <source>Toolset:</source>
         <translation>Zestaw narzędzi:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="810"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1513"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="823"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1526"/>
         <source>Side-Scan</source>
         <translation>Skan boczny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="655"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="668"/>
         <source>S.offset XY, mm:</source>
         <translation>Przesunięcie boczne XY, mm:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="944"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="957"/>
         <source>Sonar offset XYZ, mm:</source>
         <translation>Przesunięcie sonaru XYZ, mm:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="408"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="421"/>
         <source>Fish Finders</source>
         <translation>Echosondery</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="622"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="635"/>
         <source>FBS forward / backward:</source>
         <translation>FCP do przodu / do tyłu:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="410"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="423"/>
         <source>Maximum</source>
         <translation>Maksimum</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="285"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="298"/>
         <source>USBL to CSV</source>
         <translation>USBL do CSV</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="280"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="293"/>
         <source>Complex signal to CSV</source>
         <translation>Sygnał złożony do CSV</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="240"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="253"/>
         <source>Export path...</source>
         <translation>Ścieżka eksportu...</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="259"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="272"/>
         <source>Export folder</source>
         <translation>Folder eksportu</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="275"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="288"/>
         <source>Export to XTF</source>
         <translation>Eksport do XTF</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1601"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1614"/>
         <source>Echograms</source>
         <translation>Echogramy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1602"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1615"/>
         <source>Per-echogram display settings.</source>
         <translation>Ustawienia wyświetlania poszczególnych echogramów.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1618"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1631"/>
         <source>No echograms displayed</source>
         <translation>Brak wyświetlanych echogramów</translation>
     </message>
@@ -1288,50 +1288,50 @@
 <context>
     <name>Core</name>
     <message>
-        <location filename="../src/core.cpp" line="3002"/>
+        <location filename="../src/core.cpp" line="3012"/>
         <source>Internet connection restored</source>
         <translation>Połączenie internetowe przywrócone</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3003"/>
+        <location filename="../src/core.cpp" line="3013"/>
         <source>Internet connection lost</source>
         <translation>Utracono połączenie internetowe</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3015"/>
+        <location filename="../src/core.cpp" line="3025"/>
         <source>Metered network detected</source>
         <translation>Wykryto sieć taryfową</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2251"/>
-        <location filename="../src/core.cpp" line="2275"/>
+        <location filename="../src/core.cpp" line="2261"/>
+        <location filename="../src/core.cpp" line="2285"/>
         <source>street</source>
         <translation>schemat</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2257"/>
-        <location filename="../src/core.cpp" line="2263"/>
-        <location filename="../src/core.cpp" line="2269"/>
+        <location filename="../src/core.cpp" line="2267"/>
+        <location filename="../src/core.cpp" line="2273"/>
+        <location filename="../src/core.cpp" line="2279"/>
         <source>satellite</source>
         <translation>satelita</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2637"/>
+        <location filename="../src/core.cpp" line="2647"/>
         <source>Connected</source>
         <translation>Połączono</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2637"/>
+        <location filename="../src/core.cpp" line="2647"/>
         <source>Connected: %1</source>
         <translation>Połączono: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2648"/>
+        <location filename="../src/core.cpp" line="2658"/>
         <source>Disconnected</source>
         <translation>Rozłączono</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2648"/>
+        <location filename="../src/core.cpp" line="2658"/>
         <source>Disconnected: %1</source>
         <translation>Rozłączono: %1</translation>
     </message>
@@ -1340,12 +1340,12 @@
         <translation type="vanished">Logowanie KLF włączone</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1006"/>
+        <location filename="../src/core.cpp" line="1007"/>
         <source>KLF logging disabled</source>
         <translation>Logowanie KLF wyłączone</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="998"/>
+        <location filename="../src/core.cpp" line="999"/>
         <source>KLF logging not started</source>
         <translation>Logowanie KLF nie zostało uruchomione</translation>
     </message>
@@ -1354,113 +1354,113 @@
         <translation type="vanished">Logowanie CSV włączone</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1174"/>
+        <location filename="../src/core.cpp" line="1184"/>
         <source>CSV logging disabled</source>
         <translation>Logowanie CSV wyłączone</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1166"/>
+        <location filename="../src/core.cpp" line="1176"/>
         <source>CSV logging not started</source>
         <translation>Logowanie CSV nie zostało uruchomione</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="995"/>
+        <location filename="../src/core.cpp" line="996"/>
         <source>KLF logging started:
 %1</source>
         <translation>Rozpoczęto logowanie KLF:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1004"/>
+        <location filename="../src/core.cpp" line="1005"/>
         <source>KLF log saved:
 %1</source>
         <translation>Zapisano log KLF:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1163"/>
+        <location filename="../src/core.cpp" line="1173"/>
         <source>CSV logging started:
 %1</source>
         <translation>Rozpoczęto logowanie CSV:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1172"/>
+        <location filename="../src/core.cpp" line="1182"/>
         <source>CSV log saved:
 %1</source>
         <translation>Zapisano log CSV:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1069"/>
+        <location filename="../src/core.cpp" line="1070"/>
         <source>Invalid log folder:
 %1</source>
         <translation>Nieprawidłowa ścieżka folderu logów:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1075"/>
+        <location filename="../src/core.cpp" line="1076"/>
         <source>Log folder is not writable:
 %1</source>
         <translation>Brak uprawnień do zapisu w folderze logów:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2409"/>
+        <location filename="../src/core.cpp" line="2419"/>
         <source>File opened</source>
         <translation>Otwarto plik</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2410"/>
+        <location filename="../src/core.cpp" line="2420"/>
         <source>File opened: %1</source>
         <translation>Otwarto plik: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="514"/>
-        <location filename="../src/core.cpp" line="774"/>
+        <location filename="../src/core.cpp" line="515"/>
+        <location filename="../src/core.cpp" line="775"/>
         <source>File closed</source>
         <translation>Zamknięto plik</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="515"/>
-        <location filename="../src/core.cpp" line="775"/>
+        <location filename="../src/core.cpp" line="516"/>
+        <location filename="../src/core.cpp" line="776"/>
         <source>File closed: %1</source>
         <translation>Zamknięto plik: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1659"/>
+        <location filename="../src/core.cpp" line="1669"/>
         <source>Exported to CSV: %1</source>
         <translation>Wyeksportowano do CSV: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1690"/>
+        <location filename="../src/core.cpp" line="1700"/>
         <source>Exported to XTF: %1</source>
         <translation>Wyeksportowano do XTF: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1262"/>
+        <location filename="../src/core.cpp" line="1272"/>
         <source>Complex signals exported to CSV: %1</source>
         <translation>Sygnały zespolone wyeksportowane do CSV: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1306"/>
+        <location filename="../src/core.cpp" line="1316"/>
         <source>USBL exported to CSV: %1</source>
         <translation>USBL wyeksportowany do CSV: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1667"/>
+        <location filename="../src/core.cpp" line="1677"/>
         <source>Export failed</source>
         <translation>Eksport nie powiódł się</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1210"/>
-        <location filename="../src/core.cpp" line="1259"/>
-        <location filename="../src/core.cpp" line="1273"/>
-        <location filename="../src/core.cpp" line="1303"/>
-        <location filename="../src/core.cpp" line="1396"/>
-        <location filename="../src/core.cpp" line="1656"/>
-        <location filename="../src/core.cpp" line="1675"/>
-        <location filename="../src/core.cpp" line="1687"/>
+        <location filename="../src/core.cpp" line="1220"/>
+        <location filename="../src/core.cpp" line="1269"/>
+        <location filename="../src/core.cpp" line="1283"/>
+        <location filename="../src/core.cpp" line="1313"/>
+        <location filename="../src/core.cpp" line="1406"/>
+        <location filename="../src/core.cpp" line="1666"/>
+        <location filename="../src/core.cpp" line="1685"/>
+        <location filename="../src/core.cpp" line="1697"/>
         <source>Export failed: %1</source>
         <translation>Eksport nie powiódł się: %1</translation>
     </message>
@@ -2932,128 +2932,133 @@
 <context>
     <name>HotActionsPanel</name>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="159"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="164"/>
         <source>Device</source>
         <translation>Urządzenie</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1103"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1131"/>
         <source>Autopilot panel</source>
         <translation>Panel autopilota</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1103"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1131"/>
         <source>Hide autopilot panel</source>
         <translation>Ukryj panel autopilota</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1127"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1155"/>
         <source>Console</source>
         <translation>Konsola</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1127"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1155"/>
         <source>Hide console</source>
         <translation>Ukryj konsolę</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="948"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="953"/>
         <source>Set 700 kHz</source>
         <translation>Ustaw 700 kHz</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="964"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="969"/>
         <source>Set 450 kHz</source>
         <translation>Ustaw 450 kHz</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="978"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="983"/>
         <source>Device settings</source>
         <translation>Ustawienia urządzenia</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="609"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="614"/>
         <source>Recording</source>
         <translation>Nagrywanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="609"/>
-        <location filename="../qml/app/HotActionsPanel.qml" line="795"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="614"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="800"/>
         <source>Start recording</source>
         <translation>Rozpocznij nagrywanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="795"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="800"/>
         <source>Stop recording</source>
         <translation>Zatrzymaj nagrywanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="822"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="827"/>
         <source>Recording settings</source>
         <translation>Ustawienia nagrywania</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1079"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1044"/>
+        <source>Power off</source>
+        <translation>Wyłącz zasilanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1107"/>
         <source>Hide extra info</source>
         <translation>Ukryj informacje</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1079"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1107"/>
         <source>Extra info panel</source>
         <translation>Panel dodatkowych informacji</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1151"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1179"/>
         <source>Settings profiles</source>
         <translation>Profile ustawień</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1151"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1179"/>
         <source>Close profiles</source>
         <translation>Zamknij profile</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1501"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1531"/>
         <source>Bottom track editing</source>
         <translation>Edycja śladu dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="281"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="286"/>
         <source>Open layout settings</source>
         <translation>Otwórz ustawienia układu</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="424"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="429"/>
         <source>Layouts</source>
         <translation>Układy</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1015"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1020"/>
         <source>Close second window</source>
         <translation>Zamknij drugie okno</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1016"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1021"/>
         <source>Open second window</source>
         <translation>Otwórz drugie okno</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1222"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1250"/>
         <source>Collapse hotkeys</source>
         <translation>Zwiń menu szybkich akcji</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1222"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1250"/>
         <source>Open hotkeys</source>
         <translation>Otwórz menu szybkich akcji</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1500"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1530"/>
         <source>Close bottom track editing</source>
         <translation>Zamknij edytor śladu dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1194"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1222"/>
         <source>Settings</source>
         <translation>Ustawienia</translation>
     </message>
@@ -3573,52 +3578,52 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="839"/>
+        <location filename="../qml/app/MainWindow.qml" line="841"/>
         <source>Information panel</source>
         <translation>Panel informacyjny</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1132"/>
+        <location filename="../qml/app/MainWindow.qml" line="1139"/>
         <source>Language:</source>
         <translation>Język:</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1176"/>
+        <location filename="../qml/app/MainWindow.qml" line="1183"/>
         <source>Continue</source>
         <translation>Kontynuuj</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1123"/>
+        <location filename="../qml/app/MainWindow.qml" line="1130"/>
         <source>Welcome to KoggerApp!</source>
         <translation>Witamy w KoggerApp!</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="840"/>
+        <location filename="../qml/app/MainWindow.qml" line="842"/>
         <source>Create layout</source>
         <translation>Utwórz układ</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1149"/>
+        <location filename="../qml/app/MainWindow.qml" line="1156"/>
         <source>Choose which settings to show</source>
         <translation>Wybierz, które ustawienia pokazywać</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1156"/>
+        <location filename="../qml/app/MainWindow.qml" line="1163"/>
         <source>Fish Finders</source>
         <translation>Echosondery</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1157"/>
+        <location filename="../qml/app/MainWindow.qml" line="1164"/>
         <source>Bottom Track</source>
         <translation>Ślad dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1158"/>
+        <location filename="../qml/app/MainWindow.qml" line="1165"/>
         <source>Maximum</source>
         <translation>Maksimum</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1166"/>
+        <location filename="../qml/app/MainWindow.qml" line="1173"/>
         <source>You can change this later in settings.</source>
         <translation>Można to zmienić później w ustawieniach.</translation>
     </message>
@@ -3634,33 +3639,33 @@
         <translation> — Drugie okno</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="833"/>
-        <location filename="../qml/app/MainWindow.qml" line="841"/>
+        <location filename="../qml/app/MainWindow.qml" line="835"/>
+        <location filename="../qml/app/MainWindow.qml" line="843"/>
         <source>Settings</source>
         <translation>Ustawienia</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="834"/>
+        <location filename="../qml/app/MainWindow.qml" line="836"/>
         <source>Quick action menu</source>
         <translation>Menu szybkich akcji</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="835"/>
+        <location filename="../qml/app/MainWindow.qml" line="837"/>
         <source>Extra info panel</source>
         <translation>Panel dodatkowych informacji</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="836"/>
+        <location filename="../qml/app/MainWindow.qml" line="838"/>
         <source>UI Saving</source>
         <translation>Zapisywanie UI</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="837"/>
+        <location filename="../qml/app/MainWindow.qml" line="839"/>
         <source>TGC</source>
         <translation>TGC</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="838"/>
+        <location filename="../qml/app/MainWindow.qml" line="840"/>
         <source>Export to CSV</source>
         <translation>Eksport do CSV</translation>
     </message>
@@ -4079,6 +4084,14 @@
     </message>
 </context>
 <context>
+    <name>PowerOffConfirmOverlay</name>
+    <message>
+        <location filename="../qml/app/PowerOffConfirmOverlay.qml" line="37"/>
+        <source>Slide to power off</source>
+        <translation>Przesuń, aby wyłączyć</translation>
+    </message>
+</context>
+<context>
     <name>ProfilesPopup</name>
     <message>
         <location filename="../qml/app/ProfilesPopup.qml" line="171"/>
@@ -4163,7 +4176,7 @@
         <translation>Prędkość dźwięku, m/s: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2684"/>
+        <location filename="../src/core.cpp" line="2694"/>
         <source>File</source>
         <translation>Plik</translation>
     </message>
@@ -4214,7 +4227,7 @@
 <context>
     <name>QuickActionSettingsTab</name>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="77"/>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="82"/>
         <source>Toggle which items appear and drag to reorder them.</source>
         <translation>Włączaj wyświetlanie elementów i zmieniaj ich kolejność przeciąganiem.</translation>
     </message>
@@ -4251,6 +4264,11 @@
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="26"/>
         <source>Second window</source>
         <translation>Drugie okno</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="27"/>
+        <source>Power off</source>
+        <translation>Wyłącz zasilanie</translation>
     </message>
     <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="23"/>
@@ -4981,7 +4999,7 @@
 <context>
     <name>WorkspaceStore</name>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="861"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="866"/>
         <source>Echogram</source>
         <translation>Echogram</translation>
     </message>

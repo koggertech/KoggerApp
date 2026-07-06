@@ -676,6 +676,8 @@ ApplicationWindow {
             extraInfoEnabled: workspaceStore.quickActionExtraInfoEnabled
             autopilotButtonEnabled: workspaceStore.quickActionAutopilotEnabled
             consoleButtonEnabled: workspaceStore.quickActionConsoleEnabled
+            powerOffEnabled: workspaceStore.quickActionPowerOffEnabled
+            onPowerOffTriggered: powerOffOverlay.active = true
             inputDeviceLabel: workspaceView.inputDeviceLabel
             inputDeviceColor: workspaceView.inputDeviceColor
             showToggleButton: !workspaceStore.settingsPanelOpen && !workspaceStore.modeSettingsPanelOpen
@@ -1068,6 +1070,11 @@ ApplicationWindow {
         FileOpeningOverlay { }
 
         SplashOverlay { }
+
+        PowerOffConfirmOverlay {
+            id: powerOffOverlay
+            onConfirmed: if (typeof core !== "undefined" && core) core.powerOffSystem()
+        }
 
         Rectangle {
             id: welcomeOverlay

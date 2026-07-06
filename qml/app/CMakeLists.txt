@@ -39,6 +39,7 @@ qt_add_qml_module(kogger_app
         PaneEditorChrome.qml
         PaneFrame.qml
         PaneInputBridge.qml
+        PowerOffConfirmOverlay.qml
         ParamCard.qml
         ParamCardGroup.qml
         ProfilesPopup.qml

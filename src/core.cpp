@@ -11,6 +11,7 @@
 #include <QUrl>
 #include <QStandardPaths>
 #include <QDateTime>
+#include <QProcess>
 #include "bottom_track.h"
 #include "tile_provider_ids.h"
 #include "notifications.h"
@@ -1078,6 +1079,15 @@ bool Core::prepareLogDirectory(const QString& dir)
 
     logger_.setLogDirectory(clean);
     return true;
+}
+
+void Core::powerOffSystem()
+{
+#ifdef Q_OS_LINUX
+    if (QProcess::startDetached(QStringLiteral("systemctl"), QStringList{ QStringLiteral("poweroff") }))
+        return;
+    QProcess::startDetached(QStringLiteral("poweroff"), QStringList{});
+#endif
 }
 
 bool Core::getFixBlackStripesState() const

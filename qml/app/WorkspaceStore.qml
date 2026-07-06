@@ -103,6 +103,7 @@ property bool quickActionExtraInfoEnabled: true
 property bool quickActionAutopilotEnabled: true
 property bool quickActionConsoleEnabled: true
 property bool quickActionSecondWindowEnabled: true
+property bool quickActionPowerOffEnabled: false
 
 property string quickActionDraggingKey: ""
 
@@ -110,6 +111,8 @@ readonly property var quickActionKeys: {
     var base = ["connections", "logging", "layouts", "bottomTrack", "extraInfo", "autopilot", "console", "profiles"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
+    if (Qt.platform.os === "linux" || (typeof manualTesting !== "undefined" && manualTesting === true))
+        base.push("powerOff")       // Ubuntu build (or any platform under MANUAL_TESTING)
     return base
 }
 
@@ -123,6 +126,7 @@ property var quickActionOrderModel: ListModel {
     ListElement { key: "console" }
     ListElement { key: "profiles" }
     ListElement { key: "secondWindow" }
+    ListElement { key: "powerOff" }
 }
 
 function normalizeQuickActionOrder(list) {
@@ -635,7 +639,7 @@ property Settings layoutStore: Settings {
     property bool quickActionLoggingEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
-    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,extraInfo,autopilot,console,profiles,secondWindow"
+    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,extraInfo,autopilot,console,profiles,secondWindow,powerOff"
     property string selectedConnectionFilePathStored: ""
     property string layoutsJson: "[]"
     property string favoriteLayoutsJson: ""
@@ -667,6 +671,7 @@ property Settings layoutStore: Settings {
     property bool quickActionAutopilotEnabledStored: true
     property bool quickActionConsoleEnabledStored: true
     property bool quickActionSecondWindowEnabledStored: true
+    property bool quickActionPowerOffEnabledStored: false
     property bool secondaryWindowOpenStored: false
     property string secondaryWindowModeStored: ""
     property string liveEchogramStatesJson: "{}"
@@ -2661,6 +2666,7 @@ function saveLayoutState() {
     layoutStore.quickActionAutopilotEnabledStored = quickActionAutopilotEnabled
     layoutStore.quickActionConsoleEnabledStored = quickActionConsoleEnabled
     layoutStore.quickActionSecondWindowEnabledStored = quickActionSecondWindowEnabled
+    layoutStore.quickActionPowerOffEnabledStored = quickActionPowerOffEnabled
     layoutStore.quickActionOrderStored = quickActionOrderCsv()
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
     layoutStore.secondaryWindowOpenStored = secondaryWindowOpen
@@ -2680,6 +2686,7 @@ function restoreLayoutState() {
     quickActionAutopilotEnabled = layoutStore.quickActionAutopilotEnabledStored
     quickActionConsoleEnabled = layoutStore.quickActionConsoleEnabledStored
     quickActionSecondWindowEnabled = layoutStore.quickActionSecondWindowEnabledStored
+    quickActionPowerOffEnabled = layoutStore.quickActionPowerOffEnabledStored
     applyQuickActionOrder((layoutStore.quickActionOrderStored || "").split(","))
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored

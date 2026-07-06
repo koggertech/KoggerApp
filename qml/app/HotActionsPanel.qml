@@ -107,6 +107,11 @@ Item {
     readonly property bool _secondWindowRevealOverride: _revealActiveKey === "secondWindow"
     readonly property bool _showSecondWindow: _secondWindowAvailable && (secondWindowButtonEnabled || _secondWindowRevealOverride)
 
+    property bool powerOffEnabled: false
+    signal powerOffTriggered()
+    readonly property bool _powerOffRevealOverride: _revealActiveKey === "powerOff"
+    readonly property bool _showPowerOff: (Qt.platform.os === "linux" || _manualTesting) && (powerOffEnabled || _powerOffRevealOverride)
+
     // Devices bound from MainWindow (deviceManagerWrapper.devs).
     // Status colors mirror ConnectionViewer link-row palette.
     property var devices: []
@@ -1030,6 +1035,29 @@ Item {
     }
 
     Component {
+        id: qaPowerOffComp
+        KCircleIconButton {
+            width: root.controlHeight
+            height: root.controlHeight
+            iconSource: "qrc:/icons/ui/plug_off.svg"
+            iconTintColor: AppPalette.dangerText
+            toolTipText: qsTr("Power off")
+            fillColor:        root.buttonFillColor
+            fillHoverColor:   root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      root.buttonBorderColor
+            borderHoverColor: root.buttonHoverBorderColor
+            highlighted: root.highlightedQuickActionKey === "powerOff"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "powerOff"
+            onClicked: {
+                root.powerOffTriggered()
+                root.expanded = false
+            }
+        }
+    }
+
+    Component {
         id: qaFavoritesComp
         Rectangle {
             id: favSlotItem
@@ -1387,6 +1415,7 @@ Item {
                            : key === "console"      ? root.showConsole
                            : key === "profiles"     ? root.showProfiles
                            : key === "secondWindow" ? root._showSecondWindow
+                           : key === "powerOff"     ? root._showPowerOff
                            : false
                     active: visible
                     sourceComponent: key === "connections" ? qaConnectionsComp
@@ -1398,6 +1427,7 @@ Item {
                                    : key === "console"      ? qaConsoleComp
                                    : key === "profiles"     ? qaProfilesComp
                                    : key === "secondWindow" ? qaSecondWindowComp
+                                   : key === "powerOff"     ? qaPowerOffComp
                                    : null
                 }
             }

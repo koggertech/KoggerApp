@@ -24,6 +24,7 @@ Column {
              : key === "console"     ? qsTr("Console")
              : key === "profiles"    ? qsTr("Profiles")
              : key === "secondWindow" ? qsTr("Second window")
+             : key === "powerOff"    ? qsTr("Power off")
              : key
     }
     function _checked(key) {
@@ -37,6 +38,7 @@ Column {
              : key === "console"     ? store.quickActionConsoleEnabled
              : key === "profiles"    ? store.quickActionProfilesEnabled
              : key === "secondWindow" ? store.quickActionSecondWindowEnabled
+             : key === "powerOff"    ? store.quickActionPowerOffEnabled
              : false
     }
     function _toggle(key, v) {
@@ -69,6 +71,9 @@ Column {
         } else if (key === "secondWindow") {
             store.quickActionSecondWindowEnabled = v
             store.requestHotkeysReveal("secondWindow")
+        } else if (key === "powerOff") {
+            store.quickActionPowerOffEnabled = v
+            store.requestHotkeysReveal("powerOff")
         }
     }
 

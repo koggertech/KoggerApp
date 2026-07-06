@@ -116,6 +116,7 @@ public:
     Q_INVOKABLE QString logDirectory() const;
     Q_INVOKABLE QString logDirectoryUrl() const;
     Q_INVOKABLE bool    prepareLogDirectory(const QString& dir);
+    Q_INVOKABLE void    powerOffSystem();
     bool getUseGPS() const;
     bool getNeedForceZooming() const { return needForceZooming_; }
 
