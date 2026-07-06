@@ -407,7 +407,10 @@ typedef struct DateTime {
     }
 
     tm getDateTime() {
-        return *GMTIME(&sec);
+        tm *ptr = GMTIME(&sec);
+        if (ptr)
+            return *ptr;
+        return tm{};
     }
 
     int32_t get_us_frac() {
