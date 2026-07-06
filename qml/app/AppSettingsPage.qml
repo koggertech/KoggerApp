@@ -20,6 +20,50 @@ Column {
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
 
+    property var _flick: null
+    Component.onCompleted: _flick = _settingsFlickable()
+    function _settingsFlickable() {
+        var it = root.parent
+        while (it) {
+            if (it.contentY !== undefined && it.contentHeight !== undefined && it.flickableDirection !== undefined)
+                return it
+            it = it.parent
+        }
+        return null
+    }
+    function _expandedGroupInFlick() {
+        if (!store || !store._settingsGroupInstances)
+            return null
+        var f = _flick || _settingsFlickable()
+        var arr = store._settingsGroupInstances
+        for (var i = 0; i < arr.length; ++i) {
+            var g = arr[i]
+            if (g && g.expanded && g.collapsible && g._flick === f)
+                return g
+        }
+        return null
+    }
+    function _scrollToTop() {
+        var f = _flick || _settingsFlickable()
+        if (!f)
+            return
+        var g = _expandedGroupInFlick()
+        var target = g ? g.mapToItem(f.contentItem, 0, 0).y : 0
+        target = Math.max(0, Math.min(target, Math.max(0, f.contentHeight - f.height)))
+        if (Math.abs(target - f.contentY) < 0.5)
+            return
+        scrollTopAnim.target = f
+        scrollTopAnim.from = f.contentY
+        scrollTopAnim.to = target
+        scrollTopAnim.restart()
+    }
+    NumberAnimation {
+        id: scrollTopAnim
+        property: "contentY"
+        duration: 220
+        easing.type: Easing.OutCubic
+    }
+
     component ShowIn3DAction: KCircleIconButton {
         property bool active: false
         readonly property int _sz: Math.round(36 * AppPalette.scale)   // = SettingsGroup._headerH
@@ -2606,6 +2650,29 @@ Column {
                 text: "KOGGER LLC"
                 color: AppPalette.textMuted
                 font.pixelSize: Tokens.fontSm
+            }
+        }
+
+        KCircleIconButton {
+            visible: !!root._flick && root._flick.interactive
+            anchors.right: parent.right
+            anchors.rightMargin: Tokens.spaceLg
+            anchors.verticalCenter: footerCol.verticalCenter
+            width: Math.round(36 * AppPalette.scale)
+            height: width
+            borderWidth: 0
+            fillColor: AppPalette.controlRaised
+            fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
+            toolTipText: qsTr("Scroll to top")
+            onClicked: root._scrollToTop()
+
+            DisclosureIndicator {
+                anchors.centerIn: parent
+                width: Math.round(12 * AppPalette.scale)
+                height: width
+                expanded: true
+                rotation: 180
+                indicatorColor: AppPalette.text
             }
         }
     }
