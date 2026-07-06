@@ -1908,10 +1908,9 @@ WaterFall {
         z: 60
         width: menuRow.implicitWidth + 2 * Tokens.spaceXs
         height: menuRow.implicitHeight + 2 * Tokens.spaceXs
-        radius: Tokens.radiusMd
-        color: AppPalette.card
-        border.width: 1
-        border.color: AppPalette.border
+        radius: height / 2
+        color: AppPalette.bg
+        border.width: 0
 
         function position(mx, my) {
             var oy = plot.height - (my + height)

@@ -33,8 +33,7 @@ Rectangle {
     height: layout.implicitHeight + 2 * Tokens.spaceMd
     radius: Tokens.radiusLg
     color: AppPalette.card
-    border.width: 1
-    border.color: AppPalette.border
+    border.width: 0
 
     function formatNumber(value, decimals) { return value.toFixed(decimals) }
 
@@ -69,8 +68,7 @@ Rectangle {
         Layout.preferredHeight: root.btnSize
         radius: Tokens.radiusMd
         color: AppPalette.bg
-        border.width: 1
-        border.color: AppPalette.border
+        border.width: 0
         Text {
             id: readout
             anchors.fill: parent
@@ -109,8 +107,8 @@ Rectangle {
                 Layout.preferredHeight: root.btnSize
                 radius: Tokens.radiusMd
                 color: AppPalette.bg
-                border.width: 1
-                border.color: inputField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                border.width: inputField.activeFocus ? 1 : 0
+                border.color: AppPalette.accentBorder
 
                 TextField {
                     id: inputField
