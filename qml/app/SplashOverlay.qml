@@ -19,7 +19,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: AppPalette.bg
+        color: AppPalette.headerBg
     }
 
     Image {
