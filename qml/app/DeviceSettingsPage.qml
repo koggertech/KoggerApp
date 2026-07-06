@@ -49,6 +49,11 @@ Column {
         }
     }
 
+    component DevButton: KButton {
+        normalBg: AppPalette.controlRaised
+        hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
+    }
+
     // Section heading above the per-area device settings groups.
     Text {
         text: qsTr("Settings:")
@@ -59,7 +64,7 @@ Column {
 
     // ── Эхограмма ─────────────────────────────────────────────────────────
 
-    SettingsGroup {
+    DeviceSettingsGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Echogram"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.echogram"; collapsedByDefault: true
@@ -87,7 +92,7 @@ Column {
 
     // ── Дальномер ─────────────────────────────────────────────────────────
 
-    SettingsGroup {
+    DeviceSettingsGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Rangefinder"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.rangefinder"; collapsedByDefault: true
@@ -115,7 +120,7 @@ Column {
 
     // ── Преобразователь ───────────────────────────────────────────────────
 
-    SettingsGroup {
+    DeviceSettingsGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Transducer"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.transducer"; collapsedByDefault: true
@@ -147,7 +152,7 @@ Column {
 
     // ── DSP ───────────────────────────────────────────────────────────────
 
-    SettingsGroup {
+    DeviceSettingsGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("DSP"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.dsp"; collapsedByDefault: true
@@ -169,7 +174,7 @@ Column {
 
     // ── Датасет ───────────────────────────────────────────────────────────
 
-    SettingsGroup {
+    DeviceSettingsGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Dataset"); titlePixelSize: 13
         stateStore: root.store; stateKey: "dev.dataset"; collapsedByDefault: true
@@ -243,7 +248,7 @@ Column {
         }
     }
 
-    SettingsGroup {
+    DeviceSettingsGroup {
         id: devActionsGroup
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Actions"); titlePixelSize: 13
@@ -256,17 +261,17 @@ Column {
         Row {
             width: parent.width; spacing: Tokens.spaceSm
             readonly property real bw: (width - 2 * Tokens.spaceSm) / 3
-            KButton {
+            DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Flash settings")
                 onClicked: { if (dev) { dev.flashSettings(); notifications.info(qsTr("Settings written to device: %1").arg(dev.devName)) } }
             }
-            KButton {
+            DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Erase settings"); danger: true
                 onClicked: { if (dev) { dev.resetSettings(); notifications.info(qsTr("Settings erased on device: %1").arg(dev.devName)) } }
             }
-            KButton {
+            DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Reboot")
                 onClicked: { if (dev) { dev.reboot(); notifications.info(qsTr("Reboot command sent: %1").arg(dev.devName)) } }
@@ -282,7 +287,7 @@ Column {
                 model: devActionsGroup.baudrateOptions
                 currentIndex: devActionsGroup.baudrateOptions.indexOf(115200)
             }
-            KButton {
+            DevButton {
                 width: parent.setW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Set baudrate")
                 onClicked: {
@@ -296,7 +301,7 @@ Column {
         }
     }
 
-    SettingsGroup {
+    DeviceSettingsGroup {
         id: devSettingsGroup
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Settings"); titlePixelSize: 13
@@ -355,12 +360,12 @@ Column {
         Row {
             width: parent.width; spacing: Tokens.spaceSm
             readonly property real bw: (width - Tokens.spaceSm) / 2
-            KButton {
+            DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Import XML")
                 onClicked: { importXmlDialog.currentFolder = devSettingsGroup.importFolder; importXmlDialog.open() }
             }
-            KButton {
+            DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Export XML")
                 onClicked: { exportXmlDialog.currentFolder = devSettingsGroup.exportFolder; exportXmlDialog.open() }
@@ -368,7 +373,7 @@ Column {
         }
     }
 
-    SettingsGroup {
+    DeviceSettingsGroup {
         id: devUpgradeGroup
         visible: !!(dev && dev.isUpgradeSupport)
         width: root.groupWidth; preferredWidth: root.groupWidth
@@ -472,12 +477,12 @@ Column {
                     }
                 }
             }
-            KButton {
+            DevButton {
                 width: parent.browseW; height: Tokens.controlHMd; text: "..."; fontPixelSize: Tokens.fontMd
                 onClicked: { upgradeFileDialog.currentFolder = devUpgradeGroup.upgradeFolder; upgradeFileDialog.open() }
             }
         }
-        KButton {
+        DevButton {
             width: parent.width; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
             text: qsTr("UPGRADE")
             visible: upgradePathInput.text !== ""

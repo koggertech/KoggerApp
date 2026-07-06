@@ -11,6 +11,7 @@ qt_add_qml_module(kogger_app
         ConnectionsSettingsPage.qml
         ConsolePanelDrawer.qml
         CsvExportSettingsTab.qml
+        DeviceSettingsGroup.qml
         DeviceSettingsPage.qml
         DisclosureIndicator.qml
         EchogramSettingsPanel.qml
@@ -43,6 +44,7 @@ qt_add_qml_module(kogger_app
         QuickActionSettingsTab.qml
         SecondaryWindow.qml
         SettingsGearButton.qml
+        SettingsGroupBase.qml
         SettingsGroup.qml
         SettingsSidebarBase.qml
         SplashOverlay.qml
