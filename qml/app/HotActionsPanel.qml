@@ -10,13 +10,13 @@ Item {
     property bool expanded: false
     property bool showToggleButton: true
     property int revealShiftX: 0
-    readonly property real _s: 1.5 * (theme ? theme.resCoeff : 1.0)
+    readonly property real _s: AppPalette.appScale
     readonly property int _windowW: store ? store.windowWidth : 1440
     readonly property int _leadOffset: showToggleButton ? toggleButtonSize + Math.round(8 * root._s) : 0
     property real maxExpandedWidth: Math.max(240,
                                              Math.min(620 * root._s,
                                                       _windowW - root.x - _leadOffset - Math.round(16 * root._s)))
-    property int controlHeight: Math.round(36 * root._s) - 2
+    property int controlHeight: Math.round(36 * root._s)
     property int panelPaddingX: Math.round(3 * root._s)
     readonly property int quickActionSpacing: Math.round(8 * root._s)
     property int triggerButtonWidth: 2 * controlHeight + quickActionSpacing

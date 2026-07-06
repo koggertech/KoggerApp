@@ -10,6 +10,8 @@ QtObject {
     // Multiply hardcoded pixel values by scale to adapt to DPI / user preference.
     // E.g. `font.pixelSize: AppPalette.px(14)` / `height: AppPalette.px(30)`.
     readonly property real scale: theme ? theme.resCoeff : 1.0
+    property real appScaleBoost: 40 / 36
+    readonly property real appScale: scale * appScaleBoost
     function px(base) { return base * scale }
 
     // ── Tap recognition tolerance (runtime-tunable) ───────────────────────────

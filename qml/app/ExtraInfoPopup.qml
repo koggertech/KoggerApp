@@ -7,10 +7,10 @@ BasePanePopup {
 
     required property var store
 
-    readonly property real _s: 1.5 * (theme ? theme.resCoeff : 1.0)
+    readonly property real _s: AppPalette.appScale
     readonly property int _pad: Math.round(8 * _s)
     readonly property int _rowGap: Math.round(3 * _s)
-    readonly property int _controlH: Math.round(36 * _s) - 2
+    readonly property int _controlH: Math.round(36 * _s)
     readonly property int _sidePad: Math.round(3 * _s)
     readonly property int _panelRadius: Math.round((_controlH + _sidePad * 2) / 2)
 

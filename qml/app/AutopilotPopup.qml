@@ -6,7 +6,7 @@ BasePanePopup {
 
     required property var store
 
-    readonly property real _s: 1.5 * (theme ? theme.resCoeff : 1.0)
+    readonly property real _s: AppPalette.appScale
     readonly property int _pad: Math.round(6 * _s)
     readonly property int _cellGap: Math.round(11 * _s)
 
@@ -17,7 +17,7 @@ BasePanePopup {
     readonly property int  _arm:     _dmw ? _dmw.pilotArmState : -1
     readonly property int  _mode:    _dmw ? _dmw.pilotModeState : -1
 
-    readonly property int _controlH: Math.round(36 * _s) - 2
+    readonly property int _controlH: Math.round(36 * _s)
     readonly property int _sidePad: Math.round(3 * _s)
     readonly property int _panelRadius: Math.round((_controlH + _sidePad * 2) / 2)
     readonly property real _cardW: Math.round(_pad + infoRow.implicitWidth + _cellGap + _controlH + _sidePad)
