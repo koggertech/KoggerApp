@@ -20,7 +20,8 @@ Rectangle {
     property int flashToken: 0
     property color highlightBorderColor: AppPalette.accentBorder
 
-    readonly property bool hovered: hitArea.containsMouse
+    property bool extraHovered: false
+    readonly property bool hovered: hitArea.containsMouse || extraHovered
 
     signal clicked()
 
@@ -29,7 +30,7 @@ Rectangle {
     implicitHeight: showText ? Math.round(88 * AppPalette.scale)
                              : Math.round(76 * AppPalette.scale)
     radius: Tokens.radiusLg
-    color: hovered ? AppPalette.bg : AppPalette.card
+    color: hovered ? AppPalette.cardHover : AppPalette.card
     border.width: selected ? Math.max(2, Math.round(2 * AppPalette.scale)) : Tokens.cardBorderWidth
     border.color: selected ? "#FACC15" : (hovered ? AppPalette.borderHover : AppPalette.border)
 
@@ -37,14 +38,6 @@ Rectangle {
     Keys.onReturnPressed: root.clicked()
     Keys.onEnterPressed:  root.clicked()
     Keys.onSpacePressed:  root.clicked()
-
-    function leafCount(node) {
-        if (!node)
-            return 0
-        if (node.type === "leaf")
-            return 1
-        return leafCount(node.first) + leafCount(node.second)
-    }
 
     LayoutSnapshotPreview {
         id: previewItem
@@ -65,7 +58,7 @@ Rectangle {
         spacing: Tokens.spaceXs
 
         Text {
-            text: qsTr("Favorite %1").arg(root.favoriteIndex + 1)
+            text: qsTr("Layout %1").arg(root.favoriteIndex + 1)
             color: root.selected ? "#FDE68A" : AppPalette.text
             font.pixelSize: Tokens.fontBase
             font.bold: true
@@ -74,9 +67,8 @@ Rectangle {
         }
 
         Text {
-            text: root.selected
-                  ? qsTr("%1 panes (active)").arg(root.leafCount(root.snapshot))
-                  : qsTr("%1 panes").arg(root.leafCount(root.snapshot))
+            visible: root.selected
+            text: qsTr("Active")
             color: AppPalette.textMuted
             font.pixelSize: Tokens.fontSm
             elide: Text.ElideRight
@@ -133,48 +125,4 @@ Rectangle {
             highlightPulse.restart()
     }
 
-    // Selected-state ✓ indicator. Settings-panel mode (showText) reserves
-    // room on the right for the external "remove" X button and sits on the
-    // same vertical line as that X button. Inline mode (HotActions) shows
-    // a smaller corner badge that fits inside the pill button.
-    Rectangle {
-        readonly property int _size: Math.round(24 * AppPalette.scale)
-
-        visible: root.selected
-        width: _size
-        height: _size
-        radius: _size / 2
-        anchors.right: parent.right
-        anchors.rightMargin: root.showText
-                             ? Tokens.iconLg + 2 * Tokens.spaceSm
-                             : Tokens.spaceXxs
-        // Settings: vertically centered (paired with X-button); inline: top-right corner.
-        anchors.verticalCenter: root.showText ? parent.verticalCenter : undefined
-        anchors.top: root.showText ? undefined : parent.top
-        anchors.topMargin: root.showText ? 0 : Tokens.spaceXxs
-        color: AppPalette.bg
-        border.width: 1
-        border.color: "#FACC15"
-
-        Canvas {
-            anchors.centerIn: parent
-            width:  Math.round(parent._size * 0.58)
-            height: width
-            onPaint: {
-                var ctx = getContext("2d")
-                if (!ctx)
-                    return
-                ctx.clearRect(0, 0, width, height)
-                ctx.strokeStyle = "#FDE68A"
-                ctx.lineWidth = Math.max(1, Math.round(width * 0.14))
-                ctx.lineCap = "round"
-                ctx.lineJoin = "round"
-                ctx.beginPath()
-                ctx.moveTo(width * 0.16, height * 0.55)
-                ctx.lineTo(width * 0.42, height * 0.8)
-                ctx.lineTo(width * 0.86, height * 0.24)
-                ctx.stroke()
-            }
-        }
-    }
 }

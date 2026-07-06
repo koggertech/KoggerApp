@@ -6,7 +6,7 @@ Item {
     id: root
 
     required property var store
-    property bool favoritesEnabled: true
+    property bool layoutsEnabled: true
     property bool expanded: false
     property bool showToggleButton: true
     property int revealShiftX: 0
@@ -37,11 +37,11 @@ Item {
     // even if the user just disabled them — so they're visible during the
     // whole open → pulse → close cycle instead of disappearing instantly.
     readonly property bool _favoritesRevealOverride: _revealActiveKey === "layouts"
-    readonly property bool hasFavoriteLayouts: (favoritesEnabled || _favoritesRevealOverride)
+    readonly property bool hasFavoriteLayouts: (layoutsEnabled || _favoritesRevealOverride)
                                               && store
-                                              && store.favoriteLayouts
-                                              && store.favoriteLayouts.length > 0
-    readonly property int favoriteCount: hasFavoriteLayouts ? store.favoriteLayouts.length : 0
+                                              && store.layouts
+                                              && store.layouts.length > 0
+    readonly property int favoriteCount: hasFavoriteLayouts ? store.layouts.length : 0
     property bool layoutsMenuOpen: false
     property bool bottomTrackEditorEnabled: true
     readonly property bool _btEditRevealOverride: _revealActiveKey === "bottomTrack"
@@ -240,9 +240,9 @@ Item {
                             required property int index
                             readonly property int favoriteEntryIndex: index
                             readonly property var favoriteEntry: (root.store
-                                                                 && root.store.favoriteLayouts
-                                                                 && favoriteEntryIndex < root.store.favoriteLayouts.length)
-                                                             ? root.store.favoriteLayouts[favoriteEntryIndex]
+                                                                 && root.store.layouts
+                                                                 && favoriteEntryIndex < root.store.layouts.length)
+                                                             ? root.store.layouts[favoriteEntryIndex]
                                                              : null
                             readonly property var snapshotData: favoriteEntry && favoriteEntry.layout ? favoriteEntry.layout : favoriteEntry
                             readonly property var popupLinksData: favoriteEntry && favoriteEntry.popupLinks ? favoriteEntry.popupLinks : []
@@ -255,14 +255,12 @@ Item {
                             snapshot: snapshotData
                             popupLinks: popupLinksData
                             favoriteIndex: favoriteEntryIndex
-                            selected: root.store && root.store.favoriteLayoutIsCurrent
-                                      ? root.store.favoriteLayoutIsCurrent(favoriteEntryIndex)
-                                      : false
+                            selected: !!root.store && favoriteEntryIndex === root.store.activeLayoutIndex
                             showText: false
 
                             onClicked: {
-                                if (root.store && root.store.applyFavoriteLayout)
-                                    root.store.applyFavoriteLayout(favoriteEntryIndex)
+                                if (root.store && root.store.applyLayout)
+                                    root.store.applyLayout(favoriteEntryIndex)
                                 root.layoutsMenuOpen = false
                                 root.expanded = false
                             }
@@ -1382,7 +1380,7 @@ Item {
                     height: root.controlHeight
                     visible: key === "connections" ? ((root.connectionStatusToolVisible || root._revealActiveKey === "connections") && (root._hasConnectedDevice || root.layoutEditing))
                            : key === "logging"     ? root._loggingBadgeVisibleExpanded
-                           : key === "favorites"   ? root.hasFavoriteLayouts
+                           : key === "layouts"   ? root.hasFavoriteLayouts
                            : key === "bottomTrack" ? root.showBtEdit
                            : key === "extraInfo"   ? root.showExtraInfo
                            : key === "autopilot"    ? root.showAutopilot
@@ -1393,7 +1391,7 @@ Item {
                     active: visible
                     sourceComponent: key === "connections" ? qaConnectionsComp
                                    : key === "logging"      ? qaLoggingComp
-                                   : key === "favorites"    ? qaFavoritesComp
+                                   : key === "layouts"    ? qaFavoritesComp
                                    : key === "bottomTrack"  ? qaBottomTrackComp
                                    : key === "extraInfo"    ? qaExtraInfoComp
                                    : key === "autopilot"    ? qaAutopilotComp
@@ -1470,7 +1468,7 @@ Item {
             dropped: layoutsCombo.dropped
             highlighted: root.highlightedQuickActionKey === "layouts"
             flashToken: root.highlightPulseToken
-            highlightHold: root.draggingKey === "favorites"
+            highlightHold: root.draggingKey === "layouts"
             onClicked: {
                 if (root._favSlot && root._favSlot._grab) root._favSlot._grab()
                 root.layoutsMenuOpen = !root.layoutsMenuOpen

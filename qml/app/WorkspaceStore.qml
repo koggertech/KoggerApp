@@ -42,7 +42,6 @@ property string edgeResizeHighlightEdge: ""
 property real edgeResizePointerStart: 0
 property real edgeResizeMovingCoordStart: 0
 property real edgeResizeFixedCoord: 0
-property string edgeResizeFavoriteSignatureBefore: ""
 property bool edgeResizeGhostActive: false
 property real edgeResizeGhostCoord: 0       // workspace-axis coord of ghost split line (render)
 property real edgeResizeGhostSplitCoord: 0  // split-coord to apply on commit
@@ -95,7 +94,7 @@ property bool layoutTransitionSuspended: false
 property string settingsSide: "left"
 property string selectedConnectionFilePath: ""
 property bool rotateLayoutEnabled: true
-property bool quickActionFavoritesEnabled: true
+property bool quickActionLayoutsEnabled: true
 property bool quickActionConnectionStatusEnabled: true
 property bool quickActionLoggingEnabled: true
 property bool quickActionBottomTrackEnabled: true
@@ -108,7 +107,7 @@ property bool quickActionSecondWindowEnabled: true
 property string quickActionDraggingKey: ""
 
 readonly property var quickActionKeys: {
-    var base = ["connections", "logging", "favorites", "bottomTrack", "extraInfo", "autopilot", "console", "profiles"]
+    var base = ["connections", "logging", "layouts", "bottomTrack", "extraInfo", "autopilot", "console", "profiles"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
     return base
@@ -117,7 +116,7 @@ readonly property var quickActionKeys: {
 property var quickActionOrderModel: ListModel {
     ListElement { key: "connections" }
     ListElement { key: "logging" }
-    ListElement { key: "favorites" }
+    ListElement { key: "layouts" }
     ListElement { key: "bottomTrack" }
     ListElement { key: "extraInfo" }
     ListElement { key: "autopilot" }
@@ -129,9 +128,11 @@ property var quickActionOrderModel: ListModel {
 function normalizeQuickActionOrder(list) {
     var out = []
     if (Array.isArray(list)) {
-        for (var i = 0; i < list.length; ++i)
-            if (quickActionKeys.indexOf(list[i]) !== -1 && out.indexOf(list[i]) === -1)
-                out.push(list[i])
+        for (var i = 0; i < list.length; ++i) {
+            var k = list[i] === "favorites" ? "layouts" : list[i]
+            if (quickActionKeys.indexOf(k) !== -1 && out.indexOf(k) === -1)
+                out.push(k)
+        }
     }
     for (var j = 0; j < quickActionKeys.length; ++j)   // append any missing keys (new in this version)
         if (out.indexOf(quickActionKeys[j]) === -1) {
@@ -191,7 +192,7 @@ readonly property bool _compactMode: Tokens.isCompact(windowWidth)
 // Effective push behaviour: user preference, OR forced by compact-mode. Read
 // this instead of `settingsPushContent` for layout decisions — keeps the user
 // preference value intact across compact↔wide window transitions.
-readonly property bool effectivePushContent: settingsPushContent || _compactMode
+readonly property bool effectivePushContent: settingsPushContent || _compactMode || editableMode
 property int modePickerLeafId: -1
 property var modePickerLeafIds: []
 property int pendingCreatedLeafId: -1
@@ -201,9 +202,9 @@ property int highlightedLeafId: -1
 readonly property int globalPopupLeafId: 9999
 readonly property int secondaryEchogramKey: 10000
 property bool globalPopupFullscreen: false
-property var favoriteLayouts: []
-property bool currentLayoutIsFavorite: false
-property string currentLayoutFavoriteSignature: ""
+property var layouts: []
+readonly property bool hasLayouts: layouts.length > 0
+property int activeLayoutIndex: 0
 property var settingsGroupExpandedMap: ({})
 property real settingsScrollY: 0
 onSettingsScrollYChanged: if (typeof layoutStore !== "undefined") layoutStore.settingsScrollYStored = settingsScrollY
@@ -629,14 +630,16 @@ property Settings layoutStore: Settings {
     property bool settingsPushContentStored: false
     property string settingsSideStored: "left"
     property bool rotateLayoutEnabledStored: true
-    property bool quickActionFavoritesEnabledStored: true
+    property bool quickActionLayoutsEnabledStored: true
     property bool quickActionConnectionStatusEnabledStored: true
     property bool quickActionLoggingEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
-    property string quickActionOrderStored: "connections,logging,favorites,bottomTrack,extraInfo,autopilot,console,profiles,secondWindow"
+    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,extraInfo,autopilot,console,profiles,secondWindow"
     property string selectedConnectionFilePathStored: ""
-    property string favoriteLayoutsJson: "[]"
+    property string layoutsJson: "[]"
+    property string favoriteLayoutsJson: ""
+    property int activeLayoutIndexStored: 0
     property string settingsGroupExpandedJson: "{}"
     property real settingsScrollYStored: 0
     property string fullscreenPopupSourceJson: "{}"
@@ -682,8 +685,24 @@ property Timer favoriteStateSaveTimer: Timer {
 }
 
 onEditableModeChanged: {
-    if (editableMode && maximizedLeafId !== -1)
-        maximizedLeafId = -1
+    if (editableMode) {
+        if (maximizedLeafId !== -1)
+            maximizedLeafId = -1
+    } else if (modePickerLeafIds.length > 0) {
+        layoutTree = normalizeAndFixPaneModes(layoutTree, true)
+        clearModePickerSelection()
+        rebuildLayoutCaches()
+    }
+}
+
+onSettingsGroupExpandedMapChanged: {
+    if (editableMode && !isSettingsGroupExpanded("app.layoutPlacement"))
+        editableMode = false
+}
+
+onSettingsSubPageActiveChanged: {
+    if (settingsSubPageActive && editableMode)
+        editableMode = false
 }
 
 onSettingsPanelOpenChanged: {
@@ -712,7 +731,7 @@ onModeSettingsPanelOpenChanged: {
 
 onLayoutTreeChanged: {
     sanitizeFullscreenPopupConfig()
-    updateCurrentLayoutFavoriteState()
+    syncActiveLayout()
 }
 
 onGlobalPopupEnabledChanged: {
@@ -1683,7 +1702,7 @@ function sanitizeFullscreenPopupConfig() {
     if (sourceChanged || stateChanged)
         saveFullscreenPopupState()
     if (sourceChanged)
-        updateCurrentLayoutFavoriteState()
+        syncActiveLayout()
 }
 
 function popupSourceLeafIdForHost(hostLeafId) {
@@ -1759,7 +1778,7 @@ function setPopupSourceForHost(hostLeafId, sourceLeafId) {
     fullscreenPopupStateByHost = nextState
     sanitizeFullscreenPopupConfig()
     saveFullscreenPopupState()
-    updateCurrentLayoutFavoriteState()
+    syncActiveLayout()
 }
 
 function popupStateForHost(hostLeafId) {
@@ -2126,47 +2145,6 @@ function favoriteLayoutEntryFromCurrent() {
     }
 }
 
-// Strip ratio from layout snapshot so signatures compare structure only
-// (which panes, how they're split, orientations, modes). Ratios are still
-// kept on the original snapshot for restoration via applyFavoriteLayout.
-function stripRatiosFromSnapshot(node) {
-    if (!node || typeof node !== "object")
-        return node
-    if (node.type === "split") {
-        return {
-            type: "split",
-            orientation: node.orientation,
-            first: stripRatiosFromSnapshot(node.first),
-            second: stripRatiosFromSnapshot(node.second)
-        }
-    }
-    return node
-}
-
-function favoriteLayoutSignatureFromEntry(entry) {
-    if (!entry || !entry.layout)
-        return ""
-    return JSON.stringify({
-        layout: stripRatiosFromSnapshot(entry.layout),
-        popupLinks: Array.isArray(entry.popupLinks) ? entry.popupLinks : []
-    })
-}
-
-function currentFavoriteLayoutSignature() {
-    return favoriteLayoutSignatureFromEntry(favoriteLayoutEntryFromCurrent())
-}
-
-function favoriteLayoutIndexBySignature(signature) {
-    if (typeof signature !== "string" || signature === "")
-        return -1
-
-    for (var i = 0; i < favoriteLayouts.length; ++i) {
-        if (favoriteLayoutSignatureFromEntry(favoriteLayouts[i]) === signature)
-            return i
-    }
-    return -1
-}
-
 function persistLiveEchogramStatesSoon() {
     liveEchogramPersistTimer.restart()
 }
@@ -2194,21 +2172,17 @@ function echogramStatesForCurrentTree(leafIdToPaneId) {
     return out
 }
 
-function activeFavoriteIndex() {
-    return favoriteLayoutIndexBySignature(currentLayoutFavoriteSignature)
-}
-
 function writeActiveFavoriteEchogramState(paneId, s) {
-    var idx = activeFavoriteIndex()
-    if (idx < 0)
+    var idx = activeLayoutIndex
+    if (idx < 0 || idx >= layouts.length)
         return
-    var next = favoriteLayouts.slice(0)
+    var next = layouts.slice(0)
     var entry = next[idx]
     var states = (entry.echogramStates && typeof entry.echogramStates === "object")
         ? Object.assign({}, entry.echogramStates) : ({})
     states[String(paneId)] = s
     next[idx] = { layout: entry.layout, popupLinks: entry.popupLinks, echogramStates: states }
-    favoriteLayouts = next
+    layouts = next
     favoriteStateSaveTimer.restart()
 }
 
@@ -2227,7 +2201,7 @@ function captureEchogramState(plot, leafId, includeFavorite) {
     next[pane.contentId] = s
     liveEchogramStates = next
     persistLiveEchogramStatesSoon()
-    if (includeFavorite && currentLayoutIsFavorite)
+    if (includeFavorite && activeLayoutIndex >= 0 && activeLayoutIndex < layouts.length)
         writeActiveFavoriteEchogramState(pane.paneId, s)
 }
 
@@ -2296,65 +2270,8 @@ function pruneLiveEchogramStates() {
     }
 }
 
-function captureEdgeResizeFavoriteSignature() {
-    edgeResizeFavoriteSignatureBefore = ""
-    if (!layoutTree || favoriteLayouts.length === 0)
-        return
-
-    var currentSignature = currentFavoriteLayoutSignature()
-    if (favoriteLayoutIndexBySignature(currentSignature) === -1)
-        return
-
-    edgeResizeFavoriteSignatureBefore = currentSignature
-}
-
-function replaceFavoriteLayoutBySignature(previousSignature) {
-    if (typeof previousSignature !== "string" || previousSignature === "")
-        return false
-
-    var index = favoriteLayoutIndexBySignature(previousSignature)
-    if (index === -1)
-        return false
-
-    var replacement = favoriteLayoutEntryFromCurrent()
-    if (!replacement)
-        return false
-
-    var replacementSignature = favoriteLayoutSignatureFromEntry(replacement)
-    if (replacementSignature === "")
-        return false
-
-    var nextFavorites = []
-    var seen = {}
-    var replaced = false
-    for (var i = 0; i < favoriteLayouts.length; ++i) {
-        var entry = favoriteLayouts[i]
-        var signature = favoriteLayoutSignatureFromEntry(entry)
-
-        if (i === index) {
-            entry = replacement
-            signature = replacementSignature
-            replaced = true
-        }
-
-        if (signature === "" || seen[signature] === true)
-            continue
-
-        seen[signature] = true
-        nextFavorites.push(entry)
-    }
-
-    if (!replaced)
-        return false
-
-    favoriteLayouts = nextFavorites
-    saveFavoriteLayoutsState()
-    updateCurrentLayoutFavoriteState()
-    return true
-}
-
 function saveFavoriteLayoutsState() {
-    layoutStore.favoriteLayoutsJson = JSON.stringify(favoriteLayouts)
+    layoutStore.layoutsJson = JSON.stringify(layouts)
 }
 
 function normalizedSettingsGroupKey(key) {
@@ -2448,10 +2365,14 @@ function setSettingsGroupExpanded(groupKey, expanded) {
 }
 
 function loadFavoriteLayoutsState() {
+    var raw = layoutStore.layoutsJson
+    if ((!raw || raw === "" || raw === "[]") && layoutStore.favoriteLayoutsJson && layoutStore.favoriteLayoutsJson !== "")
+        raw = layoutStore.favoriteLayoutsJson
+
     var parsed = []
-    if (layoutStore.favoriteLayoutsJson && layoutStore.favoriteLayoutsJson !== "") {
+    if (raw && raw !== "") {
         try {
-            parsed = JSON.parse(layoutStore.favoriteLayoutsJson)
+            parsed = JSON.parse(raw)
         } catch (error) {
             parsed = []
         }
@@ -2466,96 +2387,25 @@ function loadFavoriteLayoutsState() {
         }
     }
 
-    favoriteLayouts = nextFavorites
+    layouts = nextFavorites
     saveFavoriteLayoutsState()
-    updateCurrentLayoutFavoriteState()
+    syncActiveLayout()
 }
 
-function updateCurrentLayoutFavoriteState() {
-    if (!layoutTree || favoriteLayouts.length === 0) {
-        currentLayoutFavoriteSignature = ""
-        currentLayoutIsFavorite = false
+function syncActiveLayout() {
+    if (!layoutTree)
         return
-    }
+    if (activeLayoutIndex < 0 || activeLayoutIndex >= layouts.length)
+        return
 
-    var currentEntry = favoriteLayoutEntryFromCurrent()
-    var currentSignature = favoriteLayoutSignatureFromEntry(currentEntry)
-    currentLayoutFavoriteSignature = currentSignature
-    var matchedIndex = -1
-    for (var i = 0; i < favoriteLayouts.length; ++i) {
-        if (favoriteLayoutSignatureFromEntry(favoriteLayouts[i]) === currentSignature) {
-            matchedIndex = i
-            break
-        }
-    }
-    currentLayoutIsFavorite = matchedIndex !== -1
-
-    // When current layout matches an existing favourite by structure, keep that
-    // favourite's stored ratios in sync with the current arrangement so a later
-    // applyFavoriteLayout() restores the splits the way the user last left them.
-    if (matchedIndex !== -1 && currentEntry) {
-        var stored = favoriteLayouts[matchedIndex]
-        if (JSON.stringify(stored.layout) !== JSON.stringify(currentEntry.layout)) {
-            var next = favoriteLayouts.slice(0)
-            next[matchedIndex] = {
-                layout: currentEntry.layout,
-                popupLinks: stored.popupLinks,
-                echogramStates: stored.echogramStates || {}
-            }
-            favoriteLayouts = next
-            saveFavoriteLayoutsState()
-        }
-    }
-}
-
-function favoriteLayoutIsCurrent(favoriteIndex) {
-    if (favoriteIndex < 0 || favoriteIndex >= favoriteLayouts.length)
-        return false
-    if (currentLayoutFavoriteSignature === "")
-        return false
-
-    return favoriteLayoutSignatureFromEntry(favoriteLayouts[favoriteIndex]) === currentLayoutFavoriteSignature
-}
-
-function addCurrentLayoutToFavorites() {
     var entry = favoriteLayoutEntryFromCurrent()
     if (!entry)
         return
 
-    var currentSignature = favoriteLayoutSignatureFromEntry(entry)
-    for (var i = 0; i < favoriteLayouts.length; ++i) {
-        if (favoriteLayoutSignatureFromEntry(favoriteLayouts[i]) === currentSignature) {
-            currentLayoutIsFavorite = true
-            return
-        }
-    }
-
-    favoriteLayouts = favoriteLayouts.concat([entry])
-    saveFavoriteLayoutsState()
-    updateCurrentLayoutFavoriteState()
-}
-
-function removeCurrentLayoutFromFavorites() {
-    if (!layoutTree || favoriteLayouts.length === 0)
-        return
-
-    var currentSignature = currentFavoriteLayoutSignature()
-    var nextFavorites = []
-    for (var i = 0; i < favoriteLayouts.length; ++i) {
-        if (favoriteLayoutSignatureFromEntry(favoriteLayouts[i]) !== currentSignature)
-            nextFavorites.push(favoriteLayouts[i])
-    }
-
-    favoriteLayouts = nextFavorites
-    saveFavoriteLayoutsState()
-    updateCurrentLayoutFavoriteState()
-}
-
-function toggleCurrentLayoutFavorite() {
-    if (currentLayoutIsFavorite)
-        removeCurrentLayoutFromFavorites()
-    else
-        addCurrentLayoutToFavorites()
+    var next = layouts.slice(0)
+    next[activeLayoutIndex] = entry
+    layouts = next
+    favoriteStateSaveTimer.restart()
 }
 
 function openModeSettingsForLeaf(leafId) {
@@ -2798,10 +2648,11 @@ function saveLayoutState() {
     layoutStore.nextLeafSerialStored = Math.max(nextLeafSerial, maxLeafIdInTree(layoutTree))
     layoutStore.nextSplitSerialStored = Math.max(nextSplitSerial, maxSplitIdInTree(layoutTree))
     layoutStore.activeLeafIdStored = activeLeafId
+    layoutStore.activeLayoutIndexStored = activeLayoutIndex
     layoutStore.settingsPushContentStored = settingsPushContent
     layoutStore.settingsSideStored = settingsSide
     layoutStore.rotateLayoutEnabledStored = rotateLayoutEnabled
-    layoutStore.quickActionFavoritesEnabledStored = quickActionFavoritesEnabled
+    layoutStore.quickActionLayoutsEnabledStored = quickActionLayoutsEnabled
     layoutStore.quickActionConnectionStatusEnabledStored = quickActionConnectionStatusEnabled
     layoutStore.quickActionLoggingEnabledStored = quickActionLoggingEnabled
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
@@ -2817,30 +2668,10 @@ function saveLayoutState() {
 }
 
 function restoreLayoutState() {
-    if (!layoutStore.layoutJson || layoutStore.layoutJson === "")
-        return false
-
-    var parsed
-    try {
-        parsed = JSON.parse(layoutStore.layoutJson)
-    } catch (error) {
-        return false
-    }
-
-    if (!isValidLayoutNode(parsed))
-        return false
-
-    var hadModeField = layoutHasAnyModeField(parsed)
-    layoutTree = normalizeAndFixPaneModes(parsed, !hadModeField)
-    layoutTree = renumberPanes(layoutTree)
-    layoutTree = ensureContentIds(layoutTree)
-    nextLeafSerial = Math.max(layoutStore.nextLeafSerialStored, maxLeafIdInTree(layoutTree))
-    nextSplitSerial = Math.max(layoutStore.nextSplitSerialStored, maxSplitIdInTree(layoutTree))
-    activeLeafId = hasLeafIdInTree(layoutTree, layoutStore.activeLeafIdStored) ? layoutStore.activeLeafIdStored : firstLeafId()
     settingsPushContent = layoutStore.settingsPushContentStored
     settingsSide = normalizedSettingsSide(layoutStore.settingsSideStored)
     rotateLayoutEnabled = layoutStore.rotateLayoutEnabledStored
-    quickActionFavoritesEnabled = layoutStore.quickActionFavoritesEnabledStored
+    quickActionLayoutsEnabled = layoutStore.quickActionLayoutsEnabledStored
     quickActionConnectionStatusEnabled = layoutStore.quickActionConnectionStatusEnabledStored
     quickActionLoggingEnabled = layoutStore.quickActionLoggingEnabledStored
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
@@ -2854,34 +2685,15 @@ function restoreLayoutState() {
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored
     secondaryWindowMode = (storedSecondaryMode === "2D" || storedSecondaryMode === "3D") ? storedSecondaryMode : ""
     secondaryWindowOpen = layoutStore.secondaryWindowOpenStored
-    sanitizeFullscreenPopupConfig()
-    maximizedLeafId = -1
-    clearModePickerSelection()
-    closeModeSettingsPanel()
-    rebuildLayoutCaches()
-    return true
-}
 
-function resetWindowConfiguration() {
-    dragActive = false
-    draggedLeafId = -1
-    dropTargetLeafId = -1
-    maximizedLeafId = -1
-    clearModePickerSelection()
-    closeModeSettingsPanel()
-    clearEdgeResizeState()
+    if (layouts.length === 0)
+        return false
 
-    nextLeafSerial = 0
-    nextSplitSerial = 0
-    fullscreenPopupSourceByHost = ({})
-    fullscreenPopupStateByHost = ({})
-    saveFullscreenPopupState()
-    var firstLeaf = makeLeaf(makePane(1, "3D"))
-    layoutTree = firstLeaf
-    activeLeafId = firstLeaf.leafId
-
-    rebuildLayoutCaches()
-    saveLayoutState()
+    var idx = Math.round(layoutStore.activeLayoutIndexStored)
+    if (isNaN(idx) || idx < 0 || idx >= layouts.length)
+        idx = 0
+    applyLayout(idx)
+    return !!layoutTree
 }
 
 function buildPresetTree(presetId) {
@@ -2914,36 +2726,6 @@ function buildPresetTree(presetId) {
     }
 
     return null
-}
-
-function applyLayoutPreset(presetId) {
-    dragActive = false
-    draggedLeafId = -1
-    dropTargetLeafId = -1
-    maximizedLeafId = -1
-    clearModePickerSelection()
-    clearEdgeResizeState()
-    closeModeSettingsPanel()
-
-    nextLeafSerial = 0
-    nextSplitSerial = 0
-    fullscreenPopupSourceByHost = ({})
-    fullscreenPopupStateByHost = ({})
-    saveFullscreenPopupState()
-
-    var tree = buildPresetTree(presetId)
-    if (!tree)
-        return
-
-    layoutTree = renumberPanes(tree)
-    activeLeafId = firstLeafId()
-
-    var ids = []
-    allLeafIds(layoutTree, ids)
-    setModePickerLeafIds(ids)
-
-    rebuildLayoutCaches()
-    saveLayoutState()
 }
 
 function buildTreeFromFavoriteSnapshot(snapshot, state) {
@@ -3005,14 +2787,17 @@ function popupSourceMapFromFavoriteEntry(entry, targetTree) {
     return nextSource
 }
 
-function applyFavoriteLayout(favoriteIndex) {
-    if (favoriteIndex < 0 || favoriteIndex >= favoriteLayouts.length)
+function applyLayout(favoriteIndex) {
+    if (favoriteIndex < 0 || favoriteIndex >= layouts.length)
         return
 
-    var entry = favoriteLayouts[favoriteIndex]
+    var entry = layouts[favoriteIndex]
     var snapshot = favoriteLayoutSnapshotFromEntry(entry)
     if (!snapshot)
         return
+
+    activeLayoutIndex = favoriteIndex
+    layoutStore.activeLayoutIndexStored = favoriteIndex
 
     dragActive = false
     draggedLeafId = -1
@@ -3040,22 +2825,110 @@ function applyFavoriteLayout(favoriteIndex) {
     activeLeafId = firstLeafId()
     rebuildLayoutCaches()
     saveLayoutState()
-    updateCurrentLayoutFavoriteState()
+    syncActiveLayout()
 }
 
-function removeFavoriteLayoutAt(favoriteIndex) {
-    if (favoriteIndex < 0 || favoriteIndex >= favoriteLayouts.length)
+function deleteLayoutAt(favoriteIndex) {
+    if (favoriteIndex < 0 || favoriteIndex >= layouts.length)
+        return
+    if (layouts.length <= 1)
         return
 
     var nextFavorites = []
-    for (var i = 0; i < favoriteLayouts.length; ++i) {
+    for (var i = 0; i < layouts.length; ++i) {
         if (i !== favoriteIndex)
-            nextFavorites.push(favoriteLayouts[i])
+            nextFavorites.push(layouts[i])
     }
 
-    favoriteLayouts = nextFavorites
+    layouts = nextFavorites
     saveFavoriteLayoutsState()
-    updateCurrentLayoutFavoriteState()
+
+    if (favoriteIndex === activeLayoutIndex) {
+        applyLayout(Math.min(favoriteIndex, layouts.length - 1))
+    } else {
+        if (favoriteIndex < activeLayoutIndex)
+            activeLayoutIndex -= 1
+        layoutStore.activeLayoutIndexStored = activeLayoutIndex
+    }
+}
+
+function createLayoutFromCurrent() {
+    var entry = favoriteLayoutEntryFromCurrent()
+    if (entry)
+        _appendLayoutAndEdit(entry)
+}
+
+function createLayoutFromLayout(index) {
+    if (index < 0 || index >= layouts.length)
+        return
+    var entry
+    try {
+        entry = JSON.parse(JSON.stringify(layouts[index]))
+    } catch (e) {
+        return
+    }
+    _appendLayoutAndEdit(entry)
+}
+
+function createLayoutFromPreset(presetId) {
+    var tree = buildPresetTree(presetId)
+    if (!tree)
+        return
+    var snapState = { nextPaneId: 0, leafIdToPaneId: {} }
+    var snapshot = favoriteLayoutSnapshotFromNode(tree, snapState)
+    if (!snapshot)
+        return
+    _appendLayoutAndEdit({ layout: snapshot, popupLinks: [], echogramStates: {} })
+}
+
+function _appendLayoutAndEdit(entry) {
+    var next = layouts.slice(0)
+    next.push(entry)
+    layouts = next
+    saveFavoriteLayoutsState()
+
+    var newIndex = layouts.length - 1
+    applyLayout(newIndex)
+
+    settingsSubPageActive = false
+    settingsSubPageKind = "echogram"
+    setSettingsGroupExpanded("app.layoutPlacement", true)
+    pendingScrollGroupKey = "app.layoutPlacement"
+    editableMode = true
+
+    var ids = []
+    allLeafIds(layoutTree, ids)
+    setModePickerLeafIds(ids)
+}
+
+function openCreateLayoutSettings() { _openSettingsSubPage("createLayout") }
+
+function seedDefaultLayouts() {
+    var l1 = {
+        layout: {
+            type: "split", orientation: "vertical", ratio: 0.5,
+            first:  { type: "leaf", mode: "3D", paneId: 1 },
+            second: { type: "leaf", mode: "2D", paneId: 2 }
+        },
+        popupLinks: [], echogramStates: {}
+    }
+    var l2 = {
+        layout: {
+            type: "split", orientation: "horizontal", ratio: 0.5,
+            first: {
+                type: "split", orientation: "vertical", ratio: 0.5,
+                first:  { type: "leaf", mode: "3D", paneId: 1 },
+                second: { type: "leaf", mode: "2D", paneId: 2 }
+            },
+            second: { type: "leaf", mode: "2D", paneId: 3 }
+        },
+        popupLinks: [], echogramStates: {}
+    }
+    layouts = [l1, l2]
+    saveFavoriteLayoutsState()
+    activeLayoutIndex = 0
+    layoutStore.activeLayoutIndexStored = 0
+    applyLayout(0)
 }
 
 function leafCount() {
@@ -3398,7 +3271,6 @@ function beginResizeForSplitHandle(splitId, orientation, absX, absY) {
         if (edgeResizeMovingSplitId !== splitId)
             continue
 
-        captureEdgeResizeFavoriteSignature()
         edgeResizeHighlightLeafId = candidate.leafId
         edgeResizeHighlightEdge = candidate.edge
         return true
@@ -3417,7 +3289,6 @@ function beginResizeForSplitHandle(splitId, orientation, absX, absY) {
     edgeResizePointerStart = orientation === "vertical" ? absX : absY
     edgeResizeMovingCoordStart = splitCoord
     edgeResizeFixedCoord = 0
-    captureEdgeResizeFavoriteSignature()
     return true
 }
 function edgePlanForLeaf(leafId, edge) {
@@ -3753,7 +3624,6 @@ function beginEdgeResizeWithFallback(leafId, edge, absX, absY) {
     }
 
     if (started) {
-        captureEdgeResizeFavoriteSignature()
         if (edgeResizeHighlightLeafId === -1 || edgeResizeHighlightEdge === "") {
             edgeResizeHighlightLeafId = leafId
             edgeResizeHighlightEdge = edge
@@ -3819,7 +3689,6 @@ function clearEdgeResizeState() {
     edgeResizeAxis = ""
     edgeResizeHighlightLeafId = -1
     edgeResizeHighlightEdge = ""
-    edgeResizeFavoriteSignatureBefore = ""
     edgeResizeGhostActive = false
 }
 
@@ -3851,7 +3720,7 @@ function commitEdgeResize() {
     }
 
     rebuildLayoutCaches(true)
-    updateCurrentLayoutFavoriteState()
+    syncActiveLayout()
 }
 
 function cancelEdgeResizePreview() {
@@ -4022,25 +3891,16 @@ function loadPersistedUiState() {
 }
 
 function reapplyImportedUiState() {
-    loadPersistedUiState()
+    if (!loadPersistedUiState())
+        seedDefaultLayouts()
     sanitizeFullscreenPopupConfig()
-    updateCurrentLayoutFavoriteState()
     uiStateReapplied()
 }
 
 Component.onCompleted: {
-    if (!loadPersistedUiState()) {
-        var leftLeaf = makeLeaf(makePane(1, "3D"))
-        var rightLeaf = makeLeaf(makePane(2, "2D"))
-        layoutTree = makeSplit("vertical", leftLeaf, rightLeaf, 0.5)
-        activeLeafId = leftLeaf.leafId
-        clearModePickerSelection()
-        rebuildLayoutCaches()
-        addCurrentLayoutToFavorites()
-        saveLayoutState()
-    }
+    if (!loadPersistedUiState())
+        seedDefaultLayouts()
     sanitizeFullscreenPopupConfig()
-    updateCurrentLayoutFavoriteState()
     applyTgcToCore()
     applyLayerThemesToControllers()
     applyBottomTrackRealtimeToCore()

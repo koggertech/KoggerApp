@@ -666,7 +666,7 @@ ApplicationWindow {
                : ZOrder.hotActions
 
             store: workspaceStore
-            favoritesEnabled: workspaceStore.quickActionFavoritesEnabled
+            layoutsEnabled: workspaceStore.quickActionLayoutsEnabled
             connectionStatusToolVisible: workspaceStore.quickActionConnectionStatusEnabled
             loggingButtonEnabled: workspaceStore.quickActionLoggingEnabled
             secondWindowButtonEnabled: workspaceStore.quickActionSecondWindowEnabled
@@ -837,6 +837,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
                      : workspaceStore.settingsSubPageKind === "aimPanel"     ? qsTr("Information panel")
+                     : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
                      : qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
@@ -853,6 +854,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "aimPanel"   ? aimPanelSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
                      : echogramSettingsTabComponent
             subPageOpen: workspaceStore.anySettingsSubPageActive
 
@@ -1013,6 +1015,14 @@ ApplicationWindow {
             id: aimPanelSettingsTabComponent
 
             AimPanelSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: layoutCreateTabComponent
+
+            LayoutCreatePage {
                 store: workspaceStore
             }
         }

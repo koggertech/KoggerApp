@@ -17,7 +17,7 @@ Column {
     function _label(key) {
         return key === "connections" ? qsTr("Connected devices")
              : key === "logging"     ? qsTr("Logging")
-             : key === "favorites"   ? qsTr("Favorite layouts")
+             : key === "layouts"   ? qsTr("Layouts")
              : key === "bottomTrack" ? qsTr("Bottom track editing")
              : key === "extraInfo"   ? qsTr("Extra info")
              : key === "autopilot"   ? qsTr("Autopilot")
@@ -30,7 +30,7 @@ Column {
         if (!store) return false
         return key === "connections" ? store.quickActionConnectionStatusEnabled
              : key === "logging"     ? store.quickActionLoggingEnabled
-             : key === "favorites"   ? store.quickActionFavoritesEnabled
+             : key === "layouts"   ? store.quickActionLayoutsEnabled
              : key === "bottomTrack" ? store.quickActionBottomTrackEnabled
              : key === "extraInfo"   ? store.quickActionExtraInfoEnabled
              : key === "autopilot"   ? store.quickActionAutopilotEnabled
@@ -47,9 +47,9 @@ Column {
         } else if (key === "logging") {
             store.quickActionLoggingEnabled = v
             store.requestHotkeysReveal("logging")
-        } else if (key === "favorites") {
-            store.quickActionFavoritesEnabled = v
-            if (store.favoriteLayouts && store.favoriteLayouts.length > 0)
+        } else if (key === "layouts") {
+            store.quickActionLayoutsEnabled = v
+            if (store.layouts && store.layouts.length > 0)
                 store.requestHotkeysReveal("layouts")
         } else if (key === "bottomTrack") {
             store.quickActionBottomTrackEnabled = v
