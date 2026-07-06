@@ -112,6 +112,8 @@ void registerQmlMetaTypes()
 #if defined(Q_OS_WIN)
 constexpr DWORD kDwmwaUseImmersiveDarkMode = 20;
 constexpr DWORD kDwmwaUseImmersiveDarkModeLegacy = 19;
+constexpr DWORD kDwmwaCaptionColor = 35;
+constexpr DWORD kDwmwaTextColor = 36;
 
 void applyWindowsSystemTitleBarTheme(QWindow* window)
 {
@@ -136,7 +138,11 @@ void applyWindowsSystemTitleBarTheme(QWindow* window)
         return;
     }
 
-    const BOOL useDarkCaption = QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark ? TRUE : FALSE;
+    const QColor captionColor = theme.controlBackColor().darker(108);
+    const QColor captionTextColor = theme.textColor();
+    const qreal captionLuminance = captionColor.redF() * 0.299 + captionColor.greenF() * 0.587 + captionColor.blueF() * 0.114;
+
+    const BOOL useDarkCaption = captionLuminance < 0.5 ? TRUE : FALSE;
     HRESULT hr = setWindowAttribute(handle,
                                     kDwmwaUseImmersiveDarkMode,
                                     &useDarkCaption,
@@ -147,6 +153,12 @@ void applyWindowsSystemTitleBarTheme(QWindow* window)
                            &useDarkCaption,
                            sizeof(useDarkCaption));
     }
+
+    const COLORREF captionRef = RGB(captionColor.red(), captionColor.green(), captionColor.blue());
+    setWindowAttribute(handle, kDwmwaCaptionColor, &captionRef, sizeof(captionRef));
+
+    const COLORREF captionTextRef = RGB(captionTextColor.red(), captionTextColor.green(), captionTextColor.blue());
+    setWindowAttribute(handle, kDwmwaTextColor, &captionTextRef, sizeof(captionTextRef));
 
     FreeLibrary(dwmApi);
 }
@@ -406,6 +418,15 @@ int main(int argc, char *argv[])
             applyWindowsSystemTitleBarTheme(secondary);
             applyWindowsFullscreenBorderWorkaround(secondary);
         }
+        QObject::connect(&theme, &Themes::changed, &app, [mainWindow]() {
+            if (!mainWindow) {
+                return;
+            }
+            applyWindowsSystemTitleBarTheme(mainWindow);
+            if (auto* secondary = mainWindow->findChild<QWindow*>(QStringLiteral("secondaryAppWindow"))) {
+                applyWindowsSystemTitleBarTheme(secondary);
+            }
+        });
 #endif
     }
     qInfo() << "App is created";
