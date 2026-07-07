@@ -1,6 +1,8 @@
 import QtQuick 2.15
+import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import Qt5Compat.GraphicalEffects
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
@@ -109,6 +111,8 @@ Column {
         property bool checkable: false
         property string iconSource: ""
         property string toolTipText: ""
+        property real iconFillRatio: 0.55
+        property color iconColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
         signal clicked()
         signal toggled(bool val)
 
@@ -130,14 +134,34 @@ Column {
 
         KFocusRing { id: focusRing }
 
-        Image {
+        Item {
+            id: iconWrap
             anchors.centerIn: parent
-            width: Math.round(ib.width * 0.55)
-            height: Math.round(ib.height * 0.55)
-            source: ib.iconSource
-            fillMode: Image.PreserveAspectFit
-            opacity: ib.checked ? 1.0 : 0.7
-            smooth: true
+            width: Math.round(ib.width * ib.iconFillRatio)
+            height: Math.round(ib.height * ib.iconFillRatio)
+            opacity: 1.0
+
+            Image {
+                id: ibImg
+                anchors.fill: parent
+                source: ib.iconSource
+                sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                visible: false
+                layer.enabled: true
+                layer.smooth: true
+                layer.textureSize: Qt.size(sourceSize.width, sourceSize.height)
+            }
+
+            ColorOverlay {
+                anchors.fill: ibImg
+                source: ibImg
+                color: ib.iconColor
+                smooth: true
+                cached: true
+            }
         }
 
         MouseArea {
@@ -162,11 +186,11 @@ Column {
     }
 
     Row {
-        width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
+        width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceXs
 
         Rectangle {
             // path + 3 IconBtn-а (open/append/close) = 4 элемента, 3 spacing-а.
-            width: parent.width - 3 * Tokens.controlHMd - 3 * Tokens.spaceSm
+            width: parent.width - 3 * Tokens.controlHMd - 3 * Tokens.spaceXs
             height: Tokens.controlHMd; radius: Tokens.radiusMd; color: AppPalette.bg
             border.width: pathText.activeFocus ? 1 : Tokens.cardBorderWidth
             border.color: pathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
@@ -177,10 +201,10 @@ Column {
                 anchors.fill: parent; anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
                 TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: pathText.selectAll() }
                 verticalAlignment: TextInput.AlignVCenter
-                color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
+                color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
                 Text {
                     visible: !pathText.text.length; text: qsTr("File path...")
-                    color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter
+                    color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; anchors.verticalCenter: parent.verticalCenter
                 }
                 Keys.onPressed: function(event) {
                     if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -194,7 +218,7 @@ Column {
         }
 
         IconBtn {
-            iconSource: "qrc:/icons/ui/file.svg"; toolTipText: qsTr("Open file")
+            iconSource: "qrc:/icons/ui/file.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Open file")
             width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
             onClicked: filesViewer.openNewFileDialog()
 
@@ -217,7 +241,7 @@ Column {
         }
 
         IconBtn {
-            iconSource: "qrc:/icons/ui/file_plus.svg"; toolTipText: qsTr("Append file")
+            iconSource: "qrc:/icons/ui/file_plus.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Append file")
             width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
             onClicked: { appendFileDialog.currentFolder = filesViewer.lastLogFolder; appendFileDialog.open() }
 
@@ -238,7 +262,7 @@ Column {
         }
 
         IconBtn {
-            iconSource: "qrc:/icons/ui/file_off.svg"; toolTipText: qsTr("Close file")
+            iconSource: "qrc:/icons/ui/file_off.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Close file")
             width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
             onClicked: {
                 if (core.openedFilePath.length > 0) {
@@ -255,7 +279,7 @@ Column {
     Column {
         visible: recentOpenedFiles.length > 0
         width: parent.width
-        spacing: Tokens.spaceXxs + 1
+        spacing: Tokens.spaceXs
 
         Text {
             text: qsTr("Recently opened:")
@@ -276,7 +300,7 @@ Column {
                 Rectangle {
                     id: recentCard
                     width: parent.width - removeBtn.width - parent.spacing
-                    height: Tokens.controlHMd - Tokens.spaceXxs; radius: Tokens.radiusMd
+                    height: Tokens.controlHMd; radius: Tokens.radiusMd
                     color: recentMa.containsMouse ? AppPalette.cardHover : AppPalette.card
                     border.width: Tokens.cardBorderWidth; border.color: AppPalette.border
                     Behavior on color { ColorAnimation { duration: 80 } }
@@ -290,7 +314,7 @@ Column {
                         anchors.fill: parent
                         anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
                         text: filesViewer.urlDisplay(parent.parent.filePath)
-                        color: AppPalette.text; font.pixelSize: Tokens.fontMd
+                        color: AppPalette.text; font.pixelSize: Tokens.fontLg
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideLeft
                     }
@@ -310,8 +334,9 @@ Column {
                 IconBtn {
                     id: removeBtn
                     iconSource: "qrc:/icons/ui/x.svg"
-                    width: Tokens.controlHMd - Tokens.spaceXxs
-                    height: Tokens.controlHMd - Tokens.spaceXxs
+                    iconFillRatio: 0.8
+                    width: Tokens.controlHMd
+                    height: Tokens.controlHMd
                     toolTipText: qsTr("Remove")
                     onClicked: filesViewer.removeRecentFile(parent.filePath)
                 }

@@ -121,7 +121,7 @@ Column {
         property string iconSource: ""
         property string toolTipText: ""
         property real iconFillRatio: 0.55
-        property color iconColor: AppPalette.text
+        property color iconColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
         signal clicked()
         signal toggled(bool val)
 
@@ -148,7 +148,7 @@ Column {
             anchors.centerIn: parent
             width: Math.round(ib.width * ib.iconFillRatio)
             height: Math.round(ib.height * ib.iconFillRatio)
-            opacity: ib.checked ? 1.0 : 0.7
+            opacity: 1.0
 
             Image {
                 id: ibImg
@@ -377,7 +377,7 @@ Column {
                             id: gearBtn
                             checked: connRow.editing
                             iconSource: "qrc:/icons/ui/settings.svg"
-                            iconFillRatio: 0.72
+                            iconFillRatio: 0.8
                             toolTipText: qsTr("Settings")
                             Layout.alignment: Qt.AlignVCenter
                             Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
@@ -422,7 +422,7 @@ Column {
                             visible: connRow.editing
                             checked: IsPinned; checkable: true
                             iconSource: "qrc:/icons/ui/pin.svg"
-                            iconFillRatio: 0.72
+                            iconFillRatio: 0.8
                             toolTipText: checked ? qsTr("Unpin") : qsTr("Pin")
                             Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onToggled: function(v) { linkManagerWrapper.sendUpdatePinnedState(Uuid, v) }
@@ -431,14 +431,14 @@ Column {
                             visible: connRow.editing
                             checked: ControlType; checkable: true
                             iconSource: "qrc:/icons/ui/repeat.svg"
-                            iconFillRatio: 0.72
+                            iconFillRatio: 0.8
                             toolTipText: qsTr("Auto reconnect")
                             Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onToggled: function(v) { linkManagerWrapper.sendUpdateControlType(Uuid, Number(v)) }
                         }
                         IconBtn {
                             visible: connRow.editing && (LinkType === 2 || LinkType === 3)
-                            iconSource: "qrc:/icons/ui/x.svg"; iconFillRatio: 0.72; toolTipText: qsTr("Delete")
+                            iconSource: "qrc:/icons/ui/x.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Delete")
                             Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onClicked: linkManagerWrapper.deleteLink(Uuid)
                         }
@@ -645,7 +645,7 @@ Column {
                                 IconBtn {
                                     id: autoSpeedBtn
                                     checked: AutoSpeedSelection; checkable: true
-                                    iconSource: "qrc:/icons/ui/refresh.svg"; iconFillRatio: 0.72; toolTipText: qsTr("Auto search baudrate")
+                                    iconSource: "qrc:/icons/ui/refresh.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Auto search baudrate")
                                     Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                                     onToggled: function(v) { linkManagerWrapper.sendAutoSpeedSelection(Uuid, v) }
                                     onCheckedChanged: { if (!checked) linkManagerWrapper.sendAutoSpeedSelection(Uuid, false) }
@@ -778,7 +778,7 @@ Column {
                     checkable: true
                     visible: !recRow.active                 // hidden while recording
                     iconSource: "qrc:/icons/ui/settings.svg"
-                    iconFillRatio: 0.72
+                    iconFillRatio: 0.8
                     toolTipText: qsTr("Recording settings")
                     Layout.alignment: Qt.AlignVCenter
                     Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
@@ -903,7 +903,7 @@ Column {
                             activeFocusOnTab: !readOnly
                             selectByMouse: !readOnly
                             color: AppPalette.text
-                            font.pixelSize: Tokens.fontSm
+                            font.pixelSize: Tokens.fontBase
                             // Show the effective save location — the custom path, or the
                             // default (Documents/KoggerApp/logs) when none is set.
                             function syncFromStore() {
