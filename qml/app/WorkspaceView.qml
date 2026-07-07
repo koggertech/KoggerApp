@@ -158,6 +158,11 @@ Item {
                 handled = true
                 action(item)
             })
+            var sec = workspace.secondaryPlotItem
+            if (sec && workspace.store && workspace.store.effectiveSecondaryMode === "2D") {
+                handled = true
+                action(sec)
+            }
         }
 
         switch (fn) {

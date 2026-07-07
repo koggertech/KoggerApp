@@ -17,10 +17,7 @@ static const char* hotkeyDescription(const QString& functionName)
     static const QHash<QString, const char*> map = {
         // Application
         { "closeSettings",      QT_TRANSLATE_NOOP("HotkeysManager", "Close menu") },
-        { "clickConnections",   QT_TRANSLATE_NOOP("HotkeysManager", "Connection button") },
         { "clickSettings",      QT_TRANSLATE_NOOP("HotkeysManager", "Settings button") },
-        { "click3D",            QT_TRANSLATE_NOOP("HotkeysManager", "3D button") },
-        { "click2D",            QT_TRANSLATE_NOOP("HotkeysManager", "2D button") },
         { "toggleFullScreen",   QT_TRANSLATE_NOOP("HotkeysManager", "Toggle fullscreen") },
         { "openFile",           QT_TRANSLATE_NOOP("HotkeysManager", "Open last file") },
         { "openFileDialog",     QT_TRANSLATE_NOOP("HotkeysManager", "Open file dialog") },
@@ -77,10 +74,7 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
 <Hotkeys>
     <!-- Application -->
     <Hotkey functionName="closeSettings"     scanCode="9"  group="Application"/>
-    <Hotkey functionName="clickConnections"  scanCode="56" group="Application"/>
     <Hotkey functionName="clickSettings"     scanCode="57" group="Application"/>
-    <Hotkey functionName="click3D"           scanCode="52" group="Application"/>
-    <Hotkey functionName="click2D"           scanCode="53" group="Application"/>
     <Hotkey functionName="toggleFullScreen"  scanCode="95" group="Application"/>
     <Hotkey functionName="openFile"          scanCode="76" group="Application"/>
     <Hotkey functionName="openFileDialog"    scanCode="96" group="Application"/>
@@ -132,10 +126,7 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
 <Hotkeys>
     <!-- Application -->
     <Hotkey functionName="closeSettings"     scanCode="1"  group="Application"/>
-    <Hotkey functionName="clickConnections"  scanCode="48" group="Application"/>
     <Hotkey functionName="clickSettings"     scanCode="49" group="Application"/>
-    <Hotkey functionName="click3D"           scanCode="44" group="Application"/>
-    <Hotkey functionName="click2D"           scanCode="45" group="Application"/>
     <Hotkey functionName="toggleFullScreen"  scanCode="87" group="Application"/>
     <Hotkey functionName="openFile"          scanCode="68" group="Application"/>
     <Hotkey functionName="openFileDialog"    scanCode="88" group="Application"/>

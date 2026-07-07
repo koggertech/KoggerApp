@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
+import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
 
@@ -45,6 +46,33 @@ ApplicationWindow {
         id: consoleVisibilitySettings
         category: "main/console"
         property bool consoleVisible: false
+    }
+
+    Settings {
+        id: openFileDialogSettings
+        category: "main/ui"
+        property string lastLogFolder: ""
+    }
+
+    FileDialog {
+        id: openLogFileDialog
+        title: qsTr("Please choose a file")
+        fileMode: FileDialog.OpenFile
+        nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
+        onAccepted: {
+            openFileDialogSettings.lastLogFolder = currentFolder
+            if (!selectedFile)
+                return
+            var path = selectedFile.toString()
+            if (path.startsWith("file:///"))
+                path = Qt.platform.os === "windows" ? path.slice(8) : path.slice(7)
+            else if (path.startsWith("file://"))
+                path = path.slice(7)
+            if (path.length && core && typeof core.openLogFile === "function") {
+                workspaceStore.selectedConnectionFilePath = path
+                core.openLogFile(path, false, false)
+            }
+        }
     }
 
     ApplicationWindow {
@@ -474,6 +502,12 @@ ApplicationWindow {
         // F11 handled by Shortcut above (lastActiveWindow routing).
         if (fn === "openFile")
             return openSelectedFile()
+        if (fn === "openFileDialog") {
+            if (openFileDialogSettings.lastLogFolder.length)
+                openLogFileDialog.currentFolder = openFileDialogSettings.lastLogFolder
+            openLogFileDialog.open()
+            return true
+        }
         if (fn === "closeFile")
             return closeSelectedFile()
         if (fn === "updateBottomTrack")
@@ -495,20 +529,11 @@ ApplicationWindow {
         if (workspaceStore.applyIsobathsHotkey(fn, parameter))
             return true
 
-        if (fn === "clickConnections") {
-            legacyPanelOpen = false
-            workspaceStore.toggleConnectionsSettings()
-            return true
-        }
         if (fn === "clickSettings") {
             legacyPanelOpen = false
             workspaceStore.toggleAppLayoutSettings()
             return true
         }
-        if (fn === "click3D")
-            return setActivePaneMode("3D")
-        if (fn === "click2D")
-            return setActivePaneMode("2D")
 
         return false
     }

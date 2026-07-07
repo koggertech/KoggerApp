@@ -3578,6 +3578,11 @@
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../qml/app/MainWindow.qml" line="59"/>
+        <source>Please choose a file</source>
+        <translation>Proszę wybrać plik</translation>
+    </message>
+    <message>
         <location filename="../qml/app/MainWindow.qml" line="841"/>
         <source>Information panel</source>
         <translation>Panel informacyjny</translation>

@@ -3574,6 +3574,11 @@
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../qml/app/MainWindow.qml" line="59"/>
+        <source>Please choose a file</source>
+        <translation>Выберите файл</translation>
+    </message>
+    <message>
         <location filename="../qml/app/MainWindow.qml" line="841"/>
         <source>Information panel</source>
         <translation>Информационная плашка</translation>
