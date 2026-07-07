@@ -151,8 +151,6 @@ Column {
                 smooth: true
                 visible: false
                 layer.enabled: true
-                layer.smooth: true
-                layer.textureSize: Qt.size(sourceSize.width, sourceSize.height)
             }
 
             ColorOverlay {

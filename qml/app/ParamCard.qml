@@ -19,6 +19,8 @@ Rectangle {
     property bool checked: false
     property int slotWidth: 0
     property color fillColor: AppPalette.rowRaised   // bg when nested inside a card group
+    property color labelColor: AppPalette.textSecond
+    property int labelPixelSize: Tokens.fontMd
     signal toggled(bool val)
 
     default property alias contentData: pcardSlot.data
@@ -83,8 +85,8 @@ Rectangle {
         anchors.rightMargin: Tokens.spaceMd
         anchors.verticalCenter: parent.verticalCenter
         text: pcard.label
-        color: AppPalette.textSecond
-        font.pixelSize: Tokens.fontMd
+        color: pcard.labelColor
+        font.pixelSize: pcard.labelPixelSize
         elide: Text.ElideRight
         verticalAlignment: Text.AlignVCenter
     }

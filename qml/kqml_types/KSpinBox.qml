@@ -12,6 +12,8 @@ Item {
     property real divisor: 1.0
     property int decimals: 0
     property bool editable: true
+    property int fontPixelSize: Tokens.fontSm
+    property color textColor: AppPalette.text
 
     signal valueModified(int val)
 
@@ -165,8 +167,8 @@ Item {
             height: parent.height
             horizontalAlignment: TextInput.AlignHCenter
             verticalAlignment: TextInput.AlignVCenter
-            color: AppPalette.text
-            font.pixelSize: Tokens.fontSm
+            color: root.textColor
+            font.pixelSize: root.fontPixelSize
             selectByMouse: true
             selectionColor: AppPalette.accentBg
             readOnly: !root.editable

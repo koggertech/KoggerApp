@@ -207,6 +207,7 @@ Column {
         stateStore: root.store
         stateKey: "app.export"
         collapsedByDefault: true
+        contentSpacing: Tokens.spaceSm
 
         function currentExportPath() {
             return root.store ? root.store.exportFolderSource : ""
@@ -214,10 +215,10 @@ Column {
 
         // Path row
         Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
 
             Rectangle {
-                width: parent.width - Math.round(44 * AppPalette.scale) - Tokens.spaceMd
+                width: parent.width - Tokens.controlHMd - Tokens.spaceSm
                 height: Tokens.controlHMd
                 radius: Tokens.radiusMd
                 color: AppPalette.bg
@@ -233,7 +234,7 @@ Column {
                     TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: exportPathField.selectAll() }
                     verticalAlignment: TextInput.AlignVCenter
                     color: AppPalette.text
-                    font.pixelSize: Tokens.fontSm
+                    font.pixelSize: Tokens.fontBase
                     clip: true
                     text: root.store ? (root.store.exportFolderSource.length ? root.localPath(root.store.exportFolderSource) : core.defaultExportDirectory()) : ""
                     onTextEdited: if (root.store) root.store.exportFolderSource = root.localPath(text)
@@ -252,14 +253,15 @@ Column {
                         visible: !exportPathField.text.length
                         text: qsTr("Export path...")
                         color: AppPalette.textMuted
-                        font.pixelSize: Tokens.fontSm
+                        font.pixelSize: Tokens.fontBase
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
             }
 
             KButton {
-                width: Math.round(44 * AppPalette.scale); height: Tokens.controlHMd; text: "..."
+                width: Tokens.controlHMd; height: Tokens.controlHMd; text: "..."
+                horizontalPadding: 0; verticalPadding: 0
                 onClicked: {
                     if (root.store)
                         exportFolderDialog.currentFolder = root.store.exportFolderUrl

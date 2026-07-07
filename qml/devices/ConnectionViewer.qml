@@ -160,8 +160,6 @@ Column {
                 smooth: true
                 visible: false
                 layer.enabled: true
-                layer.smooth: true
-                layer.textureSize: Qt.size(sourceSize.width, sourceSize.height)
             }
 
             ColorOverlay {
@@ -874,7 +872,6 @@ Column {
                 onVisibleChanged: if (visible) logPathInput.syncFromStore()
                 width: parent.width
                 spacing: Tokens.spaceXs
-                topPadding: Tokens.spaceXxs
 
                 Text {
                     text: qsTr("Log folder:")
@@ -884,7 +881,7 @@ Column {
 
                 Row {
                     width: parent.width
-                    spacing: Tokens.spaceSm
+                    spacing: Tokens.spaceXs
 
                     Rectangle {
                         width: logBrowseBtn.visible ? parent.width - logBrowseBtn.width - parent.spacing : parent.width
@@ -924,14 +921,13 @@ Column {
                     KButton {
                         id: logBrowseBtn
                         visible: Qt.platform.os !== "android"   // Android: fixed default dir, no folder picker
-                        text: qsTr("Browse…")
+                        text: "..."
                         normalBg: AppPalette.controlRaised
                         hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
                         fontPixelSize: Tokens.fontLg; bold: false
-                        horizontalPadding: Math.round(8 * AppPalette.scale)
-                        verticalPadding: Math.round(2 * AppPalette.scale)
+                        horizontalPadding: 0; verticalPadding: 0
                         height: Tokens.controlHMd
-                        width: Math.round(80 * AppPalette.scale)
+                        width: Tokens.controlHMd
                         onClicked: {
                             core.setLogDirectory(store.recordFolder)            // sync selection (empty = default)
                             logFolderDialog.currentFolder = core.logDirectoryUrl()  // existing dir as start location

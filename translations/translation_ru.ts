@@ -1485,7 +1485,7 @@
     <message>
         <location filename="../qml/app/CsvExportSettingsTab.qml" line="97"/>
         <source>Reset</source>
-        <translation>Сбросить</translation>
+        <translation>По умолчанию</translation>
     </message>
     <message>
         <location filename="../qml/app/CsvExportSettingsTab.qml" line="45"/>

@@ -11,6 +11,8 @@ Column {
     required property var store
     property var targetPlot: null
 
+    readonly property color _bright: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
 
@@ -52,6 +54,8 @@ Column {
         id: decimationCard
         width: parent.width
         label: qsTr("Decimation, m:")
+        labelColor: page._bright
+        labelPixelSize: Tokens.fontLg
         slotWidth: Math.round(120 * AppPalette.scale)
         checked: page.store ? page.store.exportDecimationEnabled : false
         onToggled: function(v) { if (page.store) page.store.exportDecimationEnabled = v }
@@ -59,6 +63,8 @@ Column {
         KSpinBox {
             width: Math.round(120 * AppPalette.scale)
             height: Tokens.controlHMd
+            fontPixelSize: Tokens.fontLg
+            textColor: page._bright
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             from: 0; to: 100; stepSize: 1
@@ -138,6 +144,8 @@ Column {
                     required property var modelData
                     width: parent.width
                     text: modelData.label
+                    textColor: page._bright
+                    fontPixelSize: Tokens.fontLg
                     checked: core.csvExportFieldEnabled(modelData.key)
                     onToggled: core.setCsvExportField(modelData.key, checked)
                 }
