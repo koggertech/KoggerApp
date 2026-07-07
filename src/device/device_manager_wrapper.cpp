@@ -6,6 +6,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject(parent),
     averageChartLosses_(0),
     protoBinConsoledState_(false),
+    nmeaConsoledState_(true),
     USBLBeaconDirectAskState_(false)
 {
     workerObject_ = std::make_unique<DeviceManager>();

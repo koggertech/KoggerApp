@@ -18,6 +18,7 @@ public:
 
     Q_PROPERTY(QList<DevQProperty*> devs READ getDevList NOTIFY devChanged)
     Q_PROPERTY(bool protoBinConsoled READ getProtoBinConsoled WRITE setProtoBinConsoled NOTIFY protoBinConsoledChanged)
+    Q_PROPERTY(bool nmeaConsoled READ getNmeaConsoled WRITE setNmeaConsoled NOTIFY nmeaConsoledChanged)
     Q_PROPERTY(StreamListModel* streamsList READ streamsList NOTIFY streamChanged)
     Q_PROPERTY(float vruVoltage READ vruVoltage NOTIFY vruChanged)
     Q_PROPERTY(float vruCurrent READ vruCurrent NOTIFY vruChanged)
@@ -43,6 +44,7 @@ public:
     void initStreamList();
 
     bool getProtoBinConsoled() const { return protoBinConsoledState_; };
+    bool getNmeaConsoled() const { return nmeaConsoledState_; };
     bool getUSBLBeaconDirectAsk() const { return USBLBeaconDirectAskState_; };
     int getAverageChartLosses() const {
         return averageChartLosses_;
@@ -58,6 +60,15 @@ public slots:
         getWorker()->setProtoBinConsoled(protoBinConsoledState_);
         if (changed) {
             emit protoBinConsoledChanged();
+        }
+    }
+
+    void setNmeaConsoled(bool state) {
+        const bool changed = (nmeaConsoledState_ != state);
+        nmeaConsoledState_ = state;
+        getWorker()->setNmeaConsoled(nmeaConsoledState_);
+        if (changed) {
+            emit nmeaConsoledChanged();
         }
     }
 
@@ -83,6 +94,7 @@ signals:
     void vruChanged();
     void chartLossesChanged();
     void protoBinConsoledChanged();
+    void nmeaConsoledChanged();
     void USBLBeaconDirectAskChanged();
 
 private:
@@ -94,5 +106,6 @@ private:
 
     int averageChartLosses_;
     bool protoBinConsoledState_;
+    bool nmeaConsoledState_;
     bool USBLBeaconDirectAskState_;
 }; // class DeviceWrapper

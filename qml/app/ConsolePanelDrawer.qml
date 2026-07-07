@@ -164,6 +164,15 @@ Item {
                     Settings { category: "main/console"; property alias protoBinConsoled: protoBinConsoled.checked }
                 }
 
+                Toggle {
+                    id: nmeaConsoled
+                    checked: true
+                    label: qsTr("NMEA")
+                    onToggled: deviceManagerWrapper.setNmeaConsoled(nmeaConsoled.checked)
+                    Component.onCompleted: deviceManagerWrapper.setNmeaConsoled(nmeaConsoled.checked)
+                    Settings { category: "main/console"; property alias nmeaConsoled: nmeaConsoled.checked }
+                }
+
                 Item { Layout.fillWidth: true }
 
                 KCircleIconButton {
