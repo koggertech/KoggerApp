@@ -528,7 +528,7 @@ ApplicationWindow {
             return true
         if (workspaceStore.applyIsobathsHotkey(fn, parameter))
             return true
-        if (workspaceView.apply3DHotkey(fn))
+        if (workspaceView.apply3DHotkey(fn, parameter))
             return true
 
         if (fn === "clickSettings") {

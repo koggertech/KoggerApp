@@ -10,7 +10,7 @@
 #include <QXmlStreamWriter>
 
 
-static constexpr int kHotkeysSchemaVersion = 1;
+static constexpr int kHotkeysSchemaVersion = 3;
 
 
 static const char* hotkeyDescription(const QString& functionName)
@@ -98,20 +98,25 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="nextTheme"         scanCode="55" group="Echogram"/>
     <Hotkey functionName="toggleEchogramType" scanCode="61" group="Echogram"/>
     <!-- 3D -->
-    <Hotkey functionName="scene3dZoomIn"       scanCode="29" group="3D"/>
-    <Hotkey functionName="scene3dZoomOut"      scanCode="43" group="3D"/>
+    <Hotkey functionName="scene3dZoomIn"       scanCode="29" parameter="4" group="3D"/>
+    <Hotkey functionName="scene3dZoomOut"      scanCode="43" parameter="4" group="3D"/>
     <Hotkey functionName="resetDepthZoom3D"    scanCode="17" group="3D"/>
     <Hotkey functionName="resetCameraTop3D"    scanCode="14" group="3D"/>
-    <Hotkey functionName="cameraShiftXMinus3D" scanCode="10" group="3D"/>
-    <Hotkey functionName="cameraShiftXPlus3D"  scanCode="11" group="3D"/>
-    <Hotkey functionName="cameraShiftYMinus3D" scanCode="12" group="3D"/>
-    <Hotkey functionName="cameraShiftYPlus3D"  scanCode="13" group="3D"/>
-    <Hotkey functionName="cameraShiftZMinus3D" scanCode="15" group="3D"/>
-    <Hotkey functionName="cameraShiftZPlus3D"  scanCode="16" group="3D"/>
+    <Hotkey functionName="cameraShiftXMinus3D" scanCode="10" parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftXPlus3D"  scanCode="11" parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftYMinus3D" scanCode="12" parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftYPlus3D"  scanCode="13" parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftZMinus3D" scanCode="15" parameter="1" group="3D"/>
+    <Hotkey functionName="cameraShiftZPlus3D"  scanCode="16" parameter="1" group="3D"/>
     <Hotkey functionName="toggleBoatTrack3D"   scanCode="57" group="3D"/>
     <Hotkey functionName="toggleBottomTrack3D" scanCode="58" group="3D"/>
     <Hotkey functionName="toggleIsobaths3D"    scanCode="59" group="3D"/>
     <Hotkey functionName="toggleMosaic3D"      scanCode="60" group="3D"/>
+    <!-- Surface -->
+    <Hotkey functionName="surfacePrevTheme" scanCode="33" group="Surface"/>
+    <Hotkey functionName="surfaceNextTheme" scanCode="47" group="Surface"/>
+    <Hotkey functionName="surfaceStepDown"  scanCode="34" parameter="1" group="Surface"/>
+    <Hotkey functionName="surfaceStepUp"    scanCode="48" parameter="1" group="Surface"/>
     <!-- Mosaic -->
     <Hotkey functionName="mosaicPrevTheme"     scanCode="30" group="Mosaic"/>
     <Hotkey functionName="mosaicNextTheme"     scanCode="44" group="Mosaic"/>
@@ -119,11 +124,6 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="mosaicLowLevelDown"  scanCode="45" parameter="1" group="Mosaic"/>
     <Hotkey functionName="mosaicHighLevelUp"   scanCode="32" parameter="1" group="Mosaic"/>
     <Hotkey functionName="mosaicHighLevelDown" scanCode="46" parameter="1" group="Mosaic"/>
-    <!-- Surface -->
-    <Hotkey functionName="surfacePrevTheme" scanCode="33" group="Surface"/>
-    <Hotkey functionName="surfaceNextTheme" scanCode="47" group="Surface"/>
-    <Hotkey functionName="surfaceStepDown"  scanCode="34" parameter="1" group="Surface"/>
-    <Hotkey functionName="surfaceStepUp"    scanCode="48" parameter="1" group="Surface"/>
 </Hotkeys>
 )";
 #else
@@ -151,20 +151,25 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="nextTheme"         scanCode="47" group="Echogram"/>
     <Hotkey functionName="toggleEchogramType" scanCode="53" group="Echogram"/>
     <!-- 3D -->
-    <Hotkey functionName="scene3dZoomIn"       scanCode="21" group="3D"/>
-    <Hotkey functionName="scene3dZoomOut"      scanCode="35" group="3D"/>
+    <Hotkey functionName="scene3dZoomIn"       scanCode="21" parameter="4" group="3D"/>
+    <Hotkey functionName="scene3dZoomOut"      scanCode="35" parameter="4" group="3D"/>
     <Hotkey functionName="resetDepthZoom3D"    scanCode="9"  group="3D"/>
     <Hotkey functionName="resetCameraTop3D"    scanCode="6"  group="3D"/>
-    <Hotkey functionName="cameraShiftXMinus3D" scanCode="2"  group="3D"/>
-    <Hotkey functionName="cameraShiftXPlus3D"  scanCode="3"  group="3D"/>
-    <Hotkey functionName="cameraShiftYMinus3D" scanCode="4"  group="3D"/>
-    <Hotkey functionName="cameraShiftYPlus3D"  scanCode="5"  group="3D"/>
-    <Hotkey functionName="cameraShiftZMinus3D" scanCode="7"  group="3D"/>
-    <Hotkey functionName="cameraShiftZPlus3D"  scanCode="8"  group="3D"/>
+    <Hotkey functionName="cameraShiftXMinus3D" scanCode="2"  parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftXPlus3D"  scanCode="3"  parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftYMinus3D" scanCode="4"  parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftYPlus3D"  scanCode="5"  parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftZMinus3D" scanCode="7"  parameter="1" group="3D"/>
+    <Hotkey functionName="cameraShiftZPlus3D"  scanCode="8"  parameter="1" group="3D"/>
     <Hotkey functionName="toggleBoatTrack3D"   scanCode="49" group="3D"/>
     <Hotkey functionName="toggleBottomTrack3D" scanCode="50" group="3D"/>
     <Hotkey functionName="toggleIsobaths3D"    scanCode="51" group="3D"/>
     <Hotkey functionName="toggleMosaic3D"      scanCode="52" group="3D"/>
+    <!-- Surface -->
+    <Hotkey functionName="surfacePrevTheme" scanCode="25" group="Surface"/>
+    <Hotkey functionName="surfaceNextTheme" scanCode="39" group="Surface"/>
+    <Hotkey functionName="surfaceStepDown"  scanCode="26" parameter="1" group="Surface"/>
+    <Hotkey functionName="surfaceStepUp"    scanCode="40" parameter="1" group="Surface"/>
     <!-- Mosaic -->
     <Hotkey functionName="mosaicPrevTheme"     scanCode="22" group="Mosaic"/>
     <Hotkey functionName="mosaicNextTheme"     scanCode="36" group="Mosaic"/>
@@ -172,11 +177,6 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="mosaicLowLevelDown"  scanCode="37" parameter="1" group="Mosaic"/>
     <Hotkey functionName="mosaicHighLevelUp"   scanCode="24" parameter="1" group="Mosaic"/>
     <Hotkey functionName="mosaicHighLevelDown" scanCode="38" parameter="1" group="Mosaic"/>
-    <!-- Surface -->
-    <Hotkey functionName="surfacePrevTheme" scanCode="25" group="Surface"/>
-    <Hotkey functionName="surfaceNextTheme" scanCode="39" group="Surface"/>
-    <Hotkey functionName="surfaceStepDown"  scanCode="26" parameter="1" group="Surface"/>
-    <Hotkey functionName="surfaceStepUp"    scanCode="40" parameter="1" group="Surface"/>
 </Hotkeys>
 )";
 #endif

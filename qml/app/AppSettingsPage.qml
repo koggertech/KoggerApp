@@ -509,7 +509,7 @@ Column {
         NavButton {
             visible: Qt.platform.os !== "android"
             width: parent.width
-            text: qsTr("Hotkeys")
+            text: qsTr("Key bindings")
             onClicked: { hotkeysLoader.active = true; hotkeysLoader.item.open() }
         }
 

@@ -165,7 +165,7 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="512"/>
-        <source>Hotkeys</source>
+        <source>Key bindings</source>
         <translation></translation>
     </message>
     <message>
@@ -2441,13 +2441,18 @@
 <context>
     <name>HotkeysDialog</name>
     <message>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="410"/>
+        <source>Scroll to top</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="43"/>
         <source>Application</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="44"/>
-        <source>Echogram</source>
+        <source>Echograms</source>
         <translation></translation>
     </message>
     <message>
@@ -2462,7 +2467,7 @@
     </message>
     <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="47"/>
-        <source>Surface</source>
+        <source>Isobaths</source>
         <translation></translation>
     </message>
     <message>
@@ -2472,7 +2477,7 @@
     </message>
     <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="174"/>
-        <source>Keyboard Shortcuts</source>
+        <source>Key bindings</source>
         <translation></translation>
     </message>
     <message>

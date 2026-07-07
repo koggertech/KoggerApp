@@ -236,19 +236,23 @@ Item {
         return handled
     }
 
-    function apply3DHotkey(functionName) {
+    function apply3DHotkey(functionName, parameter) {
         var fn = typeof functionName === "string" ? functionName : ""
         if (fn === "")
             return false
         if (active3DHostItem === null || !scene3dView)
             return false
 
+        var step = Number(parameter)
+        if (!isFinite(step) || step <= 0)
+            step = 1
+
         switch (fn) {
         case "scene3dZoomIn":
-            scene3dView.zoomStepTrigger(4)
+            scene3dView.zoomStepTrigger(step)
             return true
         case "scene3dZoomOut":
-            scene3dView.zoomStepTrigger(-4)
+            scene3dView.zoomStepTrigger(-step)
             return true
         case "resetDepthZoom3D":
             scene3dView.resetVerticalScale()
@@ -257,22 +261,22 @@ Item {
             scene3dView.resetCameraAngleTrigger()
             return true
         case "cameraShiftXMinus3D":
-            scene3dView.panStepTrigger(0, -4)
+            scene3dView.panStepTrigger(0, -step)
             return true
         case "cameraShiftXPlus3D":
-            scene3dView.panStepTrigger(0, 4)
+            scene3dView.panStepTrigger(0, step)
             return true
         case "cameraShiftYMinus3D":
-            scene3dView.panStepTrigger(-4, 0)
+            scene3dView.panStepTrigger(-step, 0)
             return true
         case "cameraShiftYPlus3D":
-            scene3dView.panStepTrigger(4, 0)
+            scene3dView.panStepTrigger(step, 0)
             return true
         case "cameraShiftZMinus3D":
-            scene3dView.zStepTrigger(-1)
+            scene3dView.zStepTrigger(-step)
             return true
         case "cameraShiftZPlus3D":
-            scene3dView.zStepTrigger(1)
+            scene3dView.zStepTrigger(step)
             return true
         case "toggleBoatTrack3D":
             if (workspace.store)

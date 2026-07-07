@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtCore
 import kqml_types 1.0
 
 Popup {
@@ -41,10 +42,10 @@ Popup {
     function groupName(g) {
         switch (g) {
             case "Application": return qsTr("Application")
-            case "Echogram":    return qsTr("Echogram")
+            case "Echogram":    return qsTr("Echograms")
             case "3D":          return qsTr("3D")
             case "Mosaic":      return qsTr("Mosaic")
-            case "Surface":     return qsTr("Surface")
+            case "Surface":     return qsTr("Isobaths")
             default:            return g
         }
     }
@@ -77,13 +78,20 @@ Popup {
     }
 
     onOpened: {
-        rebuildModel()
+        if (listModel.count === 0) {
+            rebuildModel()
+            _pendingRestore = true
+            Qt.callLater(_tryRestore)
+        } else {
+            refreshModel()
+        }
         keyCapture.forceActiveFocus()
         if (store)
             store.activeHotkeysDialog = hotkeysDialog
     }
 
     onClosed: {
+        _saveScroll()
         if (paramSaveTimer.running) {
             paramSaveTimer.stop()
             if (hotkeysController && _pendingFn !== "")
@@ -98,8 +106,37 @@ Popup {
     // store.activeHotkeysDialog would keep a dangling reference and the next
     // Esc would invoke .close() on a deleted object.
     Component.onDestruction: {
+        _saveScroll()
         if (store && store.activeHotkeysDialog === hotkeysDialog)
             store.activeHotkeysDialog = null
+    }
+
+    property bool _pendingRestore: false
+
+    Settings {
+        id: hkSettings
+        category: "main/ui"
+        property real hotkeysScrollY: 0
+    }
+
+    NumberAnimation {
+        id: scrollTopAnim
+        target: listView
+        property: "contentY"
+        duration: 220
+        easing.type: Easing.OutCubic
+    }
+
+    function _saveScroll() {
+        if (!_pendingRestore)
+            hkSettings.hotkeysScrollY = listView.contentY
+    }
+    function _tryRestore() {
+        if (!_pendingRestore || listView.contentHeight <= 0)
+            return
+        var maxY = Math.max(0, listView.contentHeight - listView.height)
+        listView.contentY = Math.max(0, Math.min(hkSettings.hotkeysScrollY, maxY))
+        _pendingRestore = false
     }
 
     Connections {
@@ -171,7 +208,7 @@ Popup {
             Text {
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
-                text: qsTr("Keyboard Shortcuts")
+                text: qsTr("Key bindings")
                 color: AppPalette.text
                 font.pixelSize: Math.round(16 * AppPalette.scale)
                 font.bold: true
@@ -227,7 +264,12 @@ Popup {
                 clip: true
                 model: listModel
                 spacing: 2
-                ScrollBar.vertical: ScrollBar {}
+                ScrollBar.vertical: ScrollBar {
+                    active: listView.moving || hovered || pressed || scrollTopAnim.running
+                }
+
+                onContentHeightChanged: hotkeysDialog._tryRestore()
+                onMovementStarted: hotkeysDialog._pendingRestore = false
 
                 section.property: "group"
                 section.delegate: Item {
@@ -267,6 +309,8 @@ Popup {
                     readonly property bool listening: hotkeysDialog.listeningIndex === index
                     readonly property int  cellH: hotkeysDialog._rowH - 6
                     readonly property real cellY: Math.floor((height - cellH) / 2)
+                    readonly property bool param3D: model.group === "3D"
+                    readonly property int  paramMax: param3D ? 50 : 99999
 
                     // hover background
                     Rectangle {
@@ -336,15 +380,21 @@ Popup {
                             selectionColor: AppPalette.accentBg
                             text: model.parameter > 0 ? model.parameter.toString() : ""
                             inputMethodHints: Qt.ImhDigitsOnly
-                            validator: IntValidator { bottom: 1; top: 99999 }
+                            validator: RegularExpressionValidator {
+                                regularExpression: row.param3D ? /^([1-9]|[1-4][0-9]|50)$/ : /^[1-9][0-9]{0,4}$/
+                            }
                             onTextChanged: {
                                 if (!acceptableInput) return
                                 var val = parseInt(text)
-                                if (val < 1 || val > 99999) return
+                                if (val < 1 || val > row.paramMax) return
                                 hotkeysDialog._pendingFn    = model.functionName
                                 hotkeysDialog._pendingSc    = model.scanCode
                                 hotkeysDialog._pendingParam = val
                                 paramSaveTimer.restart()
+                            }
+                            onActiveFocusChanged: {
+                                if (!activeFocus && (text.length === 0 || !acceptableInput))
+                                    text = model.parameter > 0 ? model.parameter.toString() : ""
                             }
                         }
                     }
@@ -385,6 +435,28 @@ Popup {
                              ? AppPalette.accentBorder
                              : AppPalette.textSecond
                     elide: Text.ElideRight
+                }
+
+                KCircleIconButton {
+                    Layout.preferredWidth: Math.round(Tokens.controlHMd * 1.4)
+                    Layout.preferredHeight: Tokens.controlHMd
+                    visible: listView.contentY > 1
+                    rounded: false
+                    cornerRadius: Tokens.radiusMd
+                    fillColor: AppPalette.card
+                    fillHoverColor: AppPalette.cardHover
+                    borderColor: AppPalette.border
+                    borderWidth: Tokens.cardBorderWidth
+                    iconSource: "qrc:/icons/ui/chevron-up.svg"
+                    iconTintColor: AppPalette.text
+                    toolTipText: qsTr("Scroll to top")
+                    onClicked: {
+                        hotkeysDialog._pendingRestore = false
+                        scrollTopAnim.stop()
+                        scrollTopAnim.from = listView.contentY
+                        scrollTopAnim.to = listView.originY
+                        scrollTopAnim.restart()
+                    }
                 }
 
                 KButton {

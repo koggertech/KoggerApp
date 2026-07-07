@@ -727,8 +727,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="512"/>
-        <source>Hotkeys</source>
-        <translation>Горячие клавиши</translation>
+        <source>Key bindings</source>
+        <translation>Привязка клавиш</translation>
     </message>
     <message>
         <source>Console</source>
@@ -3062,14 +3062,19 @@
 <context>
     <name>HotkeysDialog</name>
     <message>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="410"/>
+        <source>Scroll to top</source>
+        <translation>Наверх</translation>
+    </message>
+    <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="43"/>
         <source>Application</source>
         <translation>Приложение</translation>
     </message>
     <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="44"/>
-        <source>Echogram</source>
-        <translation>Эхограмма</translation>
+        <source>Echograms</source>
+        <translation>Эхограммы</translation>
     </message>
     <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="45"/>
@@ -3083,8 +3088,8 @@
     </message>
     <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="47"/>
-        <source>Surface</source>
-        <translation>Поверхность</translation>
+        <source>Isobaths</source>
+        <translation>Изобаты</translation>
     </message>
     <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="153"/>
@@ -3093,8 +3098,8 @@
     </message>
     <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="174"/>
-        <source>Keyboard Shortcuts</source>
-        <translation>Горячие клавиши</translation>
+        <source>Key bindings</source>
+        <translation>Привязка клавиш</translation>
     </message>
     <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="194"/>
