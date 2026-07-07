@@ -221,18 +221,13 @@ Item {
             })
             break
         case "prevTheme":
-            applyToVisiblePlots(function(item) {
-                var themeId = item.getThemeId()
-                if (themeId > 0)
-                    item.plotEchogramTheme(themeId - 1)
-            })
+            applyToVisiblePlots(function(item) { item.stepEchogramTheme(-1) })
             break
         case "nextTheme":
-            applyToVisiblePlots(function(item) {
-                var themeId = item.getThemeId()
-                if (themeId < 9)
-                    item.plotEchogramTheme(themeId + 1)
-            })
+            applyToVisiblePlots(function(item) { item.stepEchogramTheme(1) })
+            break
+        case "toggleEchogramType":
+            applyToVisiblePlots(function(item) { item.toggleEchogramType() })
             break
         default:
             return false

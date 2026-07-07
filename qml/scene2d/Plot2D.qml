@@ -173,6 +173,20 @@ WaterFall {
         echogramTypesList.currentIndex = (echogramTypesList.currentIndex + 1) % echogramTypesList.count
     }
 
+    function stepEchogramTheme(delta) {
+        if (echoTheme.count <= 0) {
+            return
+        }
+
+        var next = echoTheme.currentIndex + delta
+        if (next < 0) {
+            next = 0
+        } else if (next > echoTheme.count - 1) {
+            next = echoTheme.count - 1
+        }
+        echoTheme.currentIndex = next
+    }
+
     function closeTransientUi() {
         let handled = false
 
