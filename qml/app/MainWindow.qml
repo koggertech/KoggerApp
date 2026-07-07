@@ -528,6 +528,8 @@ ApplicationWindow {
             return true
         if (workspaceStore.applyIsobathsHotkey(fn, parameter))
             return true
+        if (workspaceView.apply3DHotkey(fn))
+            return true
 
         if (fn === "clickSettings") {
             legacyPanelOpen = false

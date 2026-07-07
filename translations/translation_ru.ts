@@ -3251,68 +3251,68 @@
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="43"/>
-        <source>3D movement along the Z-axis down</source>
-        <translation>3D перемещение по Z оси вниз</translation>
+        <source>Movement along the Z-axis down</source>
+        <translation>Перемещение по Z оси вниз</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="44"/>
-        <source>3D movement along the Z-axis up</source>
-        <translation>3D перемещение по Z оси вверх</translation>
+        <source>Movement along the Z-axis up</source>
+        <translation>Перемещение по Z оси вверх</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="45"/>
-        <source>Z-axis scaling in 3D: reset</source>
-        <translation>Масштабирование по Z координате в 3D: сброс</translation>
+        <source>Z-axis scaling: reset</source>
+        <translation>Масштабирование по Z координате: сброс</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="46"/>
-        <source>3D Camera: Reset Rotation</source>
-        <translation>Камера 3D: сброс поворота</translation>
+        <source>Camera: reset rotation</source>
+        <translation>Камера: сброс поворота</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="47"/>
-        <source>3D camera: Y-axis shift downward</source>
-        <translation>Камера 3D: сдвиг по Y координате вниз</translation>
+        <source>Camera: Y-axis shift downward</source>
+        <translation>Камера: сдвиг по Y координате вниз</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="48"/>
-        <source>3D camera: Y-axis shift upward</source>
-        <translation>Камера 3D: сдвиг по Y координате вверх</translation>
+        <source>Camera: Y-axis shift upward</source>
+        <translation>Камера: сдвиг по Y координате вверх</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="49"/>
-        <source>3D camera: shift to the right along the X-axis</source>
-        <translation>Камера 3D: сдвиг по X координате вправо</translation>
+        <source>Camera: shift to the right along the X-axis</source>
+        <translation>Камера: сдвиг по X координате вправо</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="50"/>
-        <source>3D camera: shift left along the X-axis</source>
-        <translation>Камера 3D: сдвиг по X координате влево</translation>
+        <source>Camera: shift left along the X-axis</source>
+        <translation>Камера: сдвиг по X координате влево</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="51"/>
-        <source>Scaling along the Z-axis in 3D: decrease</source>
-        <translation>Масштабирование по Z координате в 3D: уменьшить</translation>
+        <source>Z-axis scaling: decrease</source>
+        <translation>Масштабирование по Z координате: уменьшить</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="52"/>
-        <source>Scaling along the Z-axis in 3D: increase</source>
-        <translation>Масштабирование по Z координате в 3D: увеличить</translation>
+        <source>Z-axis scaling: increase</source>
+        <translation>Масштабирование по Z координате: увеличить</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="53"/>
-        <source>Toggle 3D bottom track</source>
-        <translation>Переключить 3D трек дна</translation>
+        <source>Toggle bottom track</source>
+        <translation>Переключить трек дна</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="54"/>
-        <source>Toggle 3D isobaths</source>
-        <translation>Переключить 3D изобаты</translation>
+        <source>Toggle isobaths</source>
+        <translation>Переключить изобаты</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="55"/>
-        <source>Toggle 3D mosaic</source>
-        <translation>Переключить 3D мозаику</translation>
+        <source>Toggle mosaic</source>
+        <translation>Переключить мозаику</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="57"/>

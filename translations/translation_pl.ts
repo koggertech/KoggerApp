@@ -3255,68 +3255,68 @@
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="43"/>
-        <source>3D movement along the Z-axis down</source>
-        <translation>Ruch 3D wzdłuż osi Z w dół</translation>
+        <source>Movement along the Z-axis down</source>
+        <translation>Ruch wzdłuż osi Z w dół</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="44"/>
-        <source>3D movement along the Z-axis up</source>
-        <translation>Ruch 3D wzdłuż osi Z w górę</translation>
+        <source>Movement along the Z-axis up</source>
+        <translation>Ruch wzdłuż osi Z w górę</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="45"/>
-        <source>Z-axis scaling in 3D: reset</source>
-        <translation>Skalowanie współrzędnych Z w 3D: reset</translation>
+        <source>Z-axis scaling: reset</source>
+        <translation>Skalowanie współrzędnych Z: reset</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="46"/>
-        <source>3D Camera: Reset Rotation</source>
-        <translation>Kamera 3D: Resetuj obrót</translation>
+        <source>Camera: reset rotation</source>
+        <translation>Kamera: Resetuj obrót</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="47"/>
-        <source>3D camera: Y-axis shift downward</source>
-        <translation>Kamera 3D: przesunięcie Y w dół</translation>
+        <source>Camera: Y-axis shift downward</source>
+        <translation>Kamera: przesunięcie Y w dół</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="48"/>
-        <source>3D camera: Y-axis shift upward</source>
-        <translation>Kamera 3D: przesunięcie Y w górę</translation>
+        <source>Camera: Y-axis shift upward</source>
+        <translation>Kamera: przesunięcie Y w górę</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="49"/>
-        <source>3D camera: shift to the right along the X-axis</source>
-        <translation>Kamera 3D: przesunięcie współrzędnej X w prawo</translation>
+        <source>Camera: shift to the right along the X-axis</source>
+        <translation>Kamera: przesunięcie współrzędnej X w prawo</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="50"/>
-        <source>3D camera: shift left along the X-axis</source>
-        <translation>Kamera 3D: Przesunięcie współrzędnej X w lewo</translation>
+        <source>Camera: shift left along the X-axis</source>
+        <translation>Kamera: Przesunięcie współrzędnej X w lewo</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="51"/>
-        <source>Scaling along the Z-axis in 3D: decrease</source>
-        <translation>Skalowanie współrzędnych Z w 3D: pomniejsz</translation>
+        <source>Z-axis scaling: decrease</source>
+        <translation>Skalowanie współrzędnych Z: pomniejsz</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="52"/>
-        <source>Scaling along the Z-axis in 3D: increase</source>
-        <translation>Skalowanie współrzędnych Z w 3D: powiększ</translation>
+        <source>Z-axis scaling: increase</source>
+        <translation>Skalowanie współrzędnych Z: powiększ</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="53"/>
-        <source>Toggle 3D bottom track</source>
-        <translation>Przełącz Śledzenie dna 3D</translation>
+        <source>Toggle bottom track</source>
+        <translation>Przełącz Śledzenie dna</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="54"/>
-        <source>Toggle 3D isobaths</source>
-        <translation>Przełącz izobaty 3D</translation>
+        <source>Toggle isobaths</source>
+        <translation>Przełącz izobaty</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="55"/>
-        <source>Toggle 3D mosaic</source>
-        <translation>Przełącz mozaikę 3D</translation>
+        <source>Toggle mosaic</source>
+        <translation>Przełącz mozaikę</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="57"/>

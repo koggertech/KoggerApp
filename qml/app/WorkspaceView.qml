@@ -236,6 +236,61 @@ Item {
         return handled
     }
 
+    function apply3DHotkey(functionName) {
+        var fn = typeof functionName === "string" ? functionName : ""
+        if (fn === "")
+            return false
+        if (active3DHostItem === null || !scene3dView)
+            return false
+
+        switch (fn) {
+        case "scene3dZoomIn":
+            scene3dView.zoomStepTrigger(4)
+            return true
+        case "scene3dZoomOut":
+            scene3dView.zoomStepTrigger(-4)
+            return true
+        case "resetDepthZoom3D":
+            scene3dView.resetVerticalScale()
+            return true
+        case "resetCameraTop3D":
+            scene3dView.resetCameraAngleTrigger()
+            return true
+        case "cameraShiftXMinus3D":
+            scene3dView.panStepTrigger(0, -4)
+            return true
+        case "cameraShiftXPlus3D":
+            scene3dView.panStepTrigger(0, 4)
+            return true
+        case "cameraShiftYMinus3D":
+            scene3dView.panStepTrigger(-4, 0)
+            return true
+        case "cameraShiftYPlus3D":
+            scene3dView.panStepTrigger(4, 0)
+            return true
+        case "cameraShiftZMinus3D":
+            scene3dView.zStepTrigger(-1)
+            return true
+        case "cameraShiftZPlus3D":
+            scene3dView.zStepTrigger(1)
+            return true
+        case "toggleBottomTrack3D":
+            if (workspace.store)
+                workspace.store.bottomTrackVisible = !workspace.store.bottomTrackVisible
+            return true
+        case "toggleIsobaths3D":
+            if (workspace.store)
+                workspace.store.isobathsVisible = !workspace.store.isobathsVisible
+            return true
+        case "toggleMosaic3D":
+            if (workspace.store)
+                workspace.store.mosaicVisible = !workspace.store.mosaicVisible
+            return true
+        default:
+            return false
+        }
+    }
+
     function leafRectForId(leafId) {
         if (!leafRects)
             return null

@@ -2630,67 +2630,67 @@
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="43"/>
-        <source>3D movement along the Z-axis down</source>
+        <source>Movement along the Z-axis down</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="44"/>
-        <source>3D movement along the Z-axis up</source>
+        <source>Movement along the Z-axis up</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="45"/>
-        <source>Z-axis scaling in 3D: reset</source>
+        <source>Z-axis scaling: reset</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="46"/>
-        <source>3D Camera: Reset Rotation</source>
+        <source>Camera: reset rotation</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="47"/>
-        <source>3D camera: Y-axis shift downward</source>
+        <source>Camera: Y-axis shift downward</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="48"/>
-        <source>3D camera: Y-axis shift upward</source>
+        <source>Camera: Y-axis shift upward</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="49"/>
-        <source>3D camera: shift to the right along the X-axis</source>
+        <source>Camera: shift to the right along the X-axis</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="50"/>
-        <source>3D camera: shift left along the X-axis</source>
+        <source>Camera: shift left along the X-axis</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="51"/>
-        <source>Scaling along the Z-axis in 3D: decrease</source>
+        <source>Z-axis scaling: decrease</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="52"/>
-        <source>Scaling along the Z-axis in 3D: increase</source>
+        <source>Z-axis scaling: increase</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="53"/>
-        <source>Toggle 3D bottom track</source>
+        <source>Toggle bottom track</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="54"/>
-        <source>Toggle 3D isobaths</source>
+        <source>Toggle isobaths</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="55"/>
-        <source>Toggle 3D mosaic</source>
+        <source>Toggle mosaic</source>
         <translation></translation>
     </message>
     <message>
