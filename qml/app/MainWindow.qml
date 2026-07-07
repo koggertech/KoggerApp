@@ -638,6 +638,54 @@ ApplicationWindow {
             color: "#0B1220"
         }
 
+        DropArea {
+            id: fileDropArea
+            anchors.fill: parent
+            z: ZOrder.hotActionsActive + 1
+
+            property string droppedFilePath: ""
+
+            function _extractLogPath(urlList) {
+                for (var i = 0; i < urlList.length; ++i) {
+                    var path = String(urlList[i])
+                    if (path.startsWith("file:///"))
+                        path = Qt.platform.os === "windows" ? path.slice(8) : path.slice(7)
+                    else if (path.startsWith("file://"))
+                        path = path.slice(7)
+                    var lower = path.toLowerCase()
+                    if (lower.endsWith(".klf") || lower.endsWith(".xtf") || lower.endsWith(".ubx"))
+                        return path
+                }
+                return ""
+            }
+
+            onEntered: function(drag) {
+                droppedFilePath = drag.hasUrls ? _extractLogPath(drag.urls) : ""
+                drag.accepted = droppedFilePath !== ""
+            }
+
+            onExited: droppedFilePath = ""
+
+            onDropped: function(drop) {
+                if (droppedFilePath !== "" && core && typeof core.openLogFile === "function") {
+                    workspaceStore.selectedConnectionFilePath = droppedFilePath
+                    core.openLogFile(droppedFilePath, false, true)
+                    drop.accept()
+                }
+                droppedFilePath = ""
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: AppPalette.accentBar
+                opacity: fileDropArea.containsDrag && fileDropArea.droppedFilePath !== "" ? 0.18 : 0.0
+                visible: opacity > 0.001
+                border.width: Math.max(1, Math.round(2 * AppPalette.scale))
+                border.color: AppPalette.accentBar
+                Behavior on opacity { NumberAnimation { duration: 200 } }
+            }
+        }
+
         Connections {
             target: workspaceStore
             function onSettingsPanelOpenChanged() {
