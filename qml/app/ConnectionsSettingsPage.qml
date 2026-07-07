@@ -31,8 +31,8 @@ Column {
             borderWidth: 0
             scaleOnHover: false
             glyph: "REC"
-            glyphPixelSize: Math.round(width * 0.32)
-            glyphColor:  _rec ? "#FCA5A5" : AppPalette.textSecond
+            glyphPixelSize: Math.round(width * 0.42)
+            glyphColor: "#FFFFFF"
             toolTipText: _rec ? qsTr("Stop recording") : qsTr("Start recording")
             fillColor:      _rec ? "#7F1D1D" : AppPalette.controlRaised
             fillHoverColor: _rec ? "#991B1B" : Qt.lighter(AppPalette.controlRaised, 1.2)

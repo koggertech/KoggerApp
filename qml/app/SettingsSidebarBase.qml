@@ -231,6 +231,8 @@ Item {
                         width: Tokens.controlHLg
                         height: Tokens.controlHLg
                         fontPixelSize: Tokens.fontXxl
+                        normalBg: AppPalette.controlRaised
+                        hoverBg:  Qt.lighter(AppPalette.controlRaised, 1.2)
                         Layout.preferredWidth: width
                         Layout.preferredHeight: height
                         Layout.minimumWidth: width

@@ -1,6 +1,8 @@
 import QtQuick 2.15
+import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import Qt5Compat.GraphicalEffects
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
@@ -118,6 +120,8 @@ Column {
         property bool checkable: false
         property string iconSource: ""
         property string toolTipText: ""
+        property real iconFillRatio: 0.55
+        property color iconColor: AppPalette.text
         signal clicked()
         signal toggled(bool val)
 
@@ -139,16 +143,34 @@ Column {
 
         KFocusRing { id: focusRing }
 
-        Image {
+        Item {
+            id: iconWrap
             anchors.centerIn: parent
-            // Proportional to outer — scales reliably regardless of consumer's
-            // width/height override (gear, autoSpeed, etc. set their own size).
-            width: Math.round(ib.width * 0.55)
-            height: Math.round(ib.height * 0.55)
-            source: ib.iconSource
-            fillMode: Image.PreserveAspectFit
+            width: Math.round(ib.width * ib.iconFillRatio)
+            height: Math.round(ib.height * ib.iconFillRatio)
             opacity: ib.checked ? 1.0 : 0.7
-            smooth: true
+
+            Image {
+                id: ibImg
+                anchors.fill: parent
+                source: ib.iconSource
+                sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                visible: false
+                layer.enabled: true
+                layer.smooth: true
+                layer.textureSize: Qt.size(sourceSize.width, sourceSize.height)
+            }
+
+            ColorOverlay {
+                anchors.fill: ibImg
+                source: ibImg
+                color: ib.iconColor
+                smooth: true
+                cached: true
+            }
         }
 
         MouseArea {
@@ -355,6 +377,7 @@ Column {
                             id: gearBtn
                             checked: connRow.editing
                             iconSource: "qrc:/icons/ui/settings.svg"
+                            iconFillRatio: 0.72
                             toolTipText: qsTr("Settings")
                             Layout.alignment: Qt.AlignVCenter
                             Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
@@ -399,6 +422,7 @@ Column {
                             visible: connRow.editing
                             checked: IsPinned; checkable: true
                             iconSource: "qrc:/icons/ui/pin.svg"
+                            iconFillRatio: 0.72
                             toolTipText: checked ? qsTr("Unpin") : qsTr("Pin")
                             Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onToggled: function(v) { linkManagerWrapper.sendUpdatePinnedState(Uuid, v) }
@@ -407,13 +431,14 @@ Column {
                             visible: connRow.editing
                             checked: ControlType; checkable: true
                             iconSource: "qrc:/icons/ui/repeat.svg"
+                            iconFillRatio: 0.72
                             toolTipText: qsTr("Auto reconnect")
                             Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onToggled: function(v) { linkManagerWrapper.sendUpdateControlType(Uuid, Number(v)) }
                         }
                         IconBtn {
                             visible: connRow.editing && (LinkType === 2 || LinkType === 3)
-                            iconSource: "qrc:/icons/ui/x.svg"; toolTipText: qsTr("Delete")
+                            iconSource: "qrc:/icons/ui/x.svg"; iconFillRatio: 0.72; toolTipText: qsTr("Delete")
                             Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onClicked: linkManagerWrapper.deleteLink(Uuid)
                         }
@@ -429,7 +454,9 @@ Column {
                             Layout.maximumWidth: openCloseW
                             Layout.preferredHeight: Tokens.controlHMd
                             text: isConnected ? qsTr("Close") : qsTr("Open")
-                            fontPixelSize: Tokens.fontSm; bold: false
+                            fontPixelSize: Tokens.fontLg; bold: false
+                            horizontalPadding: Math.round(6 * AppPalette.scale)
+                            verticalPadding: Math.round(2 * AppPalette.scale)
                             normalBg: AppPalette.controlRaised
                             hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
                             checkedBg: "#134E2E"; checkedBorder: "#10B981"
@@ -618,7 +645,7 @@ Column {
                                 IconBtn {
                                     id: autoSpeedBtn
                                     checked: AutoSpeedSelection; checkable: true
-                                    iconSource: "qrc:/icons/ui/refresh.svg"; toolTipText: qsTr("Auto search baudrate")
+                                    iconSource: "qrc:/icons/ui/refresh.svg"; iconFillRatio: 0.72; toolTipText: qsTr("Auto search baudrate")
                                     Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                                     onToggled: function(v) { linkManagerWrapper.sendAutoSpeedSelection(Uuid, v) }
                                     onCheckedChanged: { if (!checked) linkManagerWrapper.sendAutoSpeedSelection(Uuid, false) }
@@ -657,20 +684,20 @@ Column {
         readonly property real cellW: Math.max(0, (width - columnSpacing * (columns - 1)) / columns)
 
         KButton {
-            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontBase; horizontalPadding: Math.round(8 * AppPalette.scale)
             text: qsTr("+UDP")
             onClicked: linkManagerWrapper.createAsUdp("", 0, 0)
         }
 
         KButton {
-            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontBase; horizontalPadding: Math.round(8 * AppPalette.scale)
             text: qsTr("+TCP")
             onClicked: linkManagerWrapper.createAsTcp("", 0, 0)
         }
 
         KButton {
             id: mavlinkProxy
-            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontBase; horizontalPadding: Math.round(8 * AppPalette.scale); checkable: true
             text: qsTr("MAVProxy")
             onToggled: {
                 if (checked) linkManagerWrapper.sendCreateAndOpenAsUdpProxy("127.0.0.1", 14551, 14550)
@@ -751,6 +778,7 @@ Column {
                     checkable: true
                     visible: !recRow.active                 // hidden while recording
                     iconSource: "qrc:/icons/ui/settings.svg"
+                    iconFillRatio: 0.72
                     toolTipText: qsTr("Recording settings")
                     Layout.alignment: Qt.AlignVCenter
                     Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
@@ -825,7 +853,9 @@ Column {
                     checkable: true
                     checked: recRow.active                  // follows real recording state (no race)
                     text: recRow.active ? qsTr("■ STOP") : qsTr("● REC")
-                    fontPixelSize: Tokens.fontSm
+                    fontPixelSize: Tokens.fontLg
+                    horizontalPadding: Math.round(8 * AppPalette.scale)
+                    verticalPadding: Math.round(2 * AppPalette.scale)
                     normalBg: AppPalette.controlRaised
                     hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
                     checkedBg: "#B91C1C"; checkedBorder: "#EF4444"
@@ -897,9 +927,11 @@ Column {
                         text: qsTr("Browse…")
                         normalBg: AppPalette.controlRaised
                         hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
-                        fontPixelSize: Tokens.fontSm
+                        fontPixelSize: Tokens.fontLg; bold: false
+                        horizontalPadding: Math.round(8 * AppPalette.scale)
+                        verticalPadding: Math.round(2 * AppPalette.scale)
                         height: Tokens.controlHMd
-                        width: Math.round(96 * AppPalette.scale)
+                        width: Math.round(80 * AppPalette.scale)
                         onClicked: {
                             core.setLogDirectory(store.recordFolder)            // sync selection (empty = default)
                             logFolderDialog.currentFolder = core.logDirectoryUrl()  // existing dir as start location

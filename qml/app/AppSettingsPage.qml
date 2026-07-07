@@ -73,8 +73,8 @@ Column {
         borderWidth: 0
         scaleOnHover: false
         iconSource: active ? "qrc:/icons/ui/eye.svg" : "qrc:/icons/ui/eye-off.svg"
-        iconPixelSize: Math.round(width * 0.60)
-        iconTintColor: active ? AppPalette.text : AppPalette.textSecond
+        iconPixelSize: Math.round(width * 0.70)
+        iconTintColor: "#FFFFFF"
         toolTipText: qsTr("Show in 3D")
         fillColor:      active ? AppPalette.accentBgStrong : AppPalette.controlRaised
         fillHoverColor: active ? AppPalette.accentBgStrong : Qt.lighter(AppPalette.controlRaised, 1.2)
@@ -84,9 +84,9 @@ Column {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottomMargin: Math.round(1 * AppPalette.scale)
             text: "3D"
-            color: AppPalette.textMuted
-            opacity: 0.7
-            font.pixelSize: Math.round(parent.width * 0.24)
+            color: "#FFFFFF"
+            opacity: 0.9
+            font.pixelSize: Math.round(parent.width * 0.26)
             font.bold: true
             style: Text.Outline
             styleColor: parent.fillColor

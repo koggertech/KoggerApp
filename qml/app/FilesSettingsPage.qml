@@ -32,8 +32,8 @@ Column {
             scaleOnHover: false
             enabled: _last.length > 0
             iconSource: "qrc:/icons/ui/folder-open.svg"
-            iconPixelSize: Math.round(width * 0.64)
-            iconTintColor: AppPalette.textSecond
+            iconPixelSize: Math.round(width * 0.80)
+            iconTintColor: "#FFFFFF"
             fillColor:      AppPalette.controlRaised
             fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
             toolTipText: qsTr("Open last file")

@@ -199,6 +199,8 @@ Item {
             opacity: root.enabled ? 1.0 : 0.7
             visible: !iconWrap.tintActive
             layer.enabled: iconWrap.tintActive
+            layer.smooth: true
+            layer.textureSize: Qt.size(iconImage.sourceSize.width, iconImage.sourceSize.height)
         }
 
         ColorOverlay {
@@ -206,6 +208,7 @@ Item {
             source: iconImage
             visible: iconWrap.tintActive
             color: root.iconTintColor
+            smooth: true
             cached: true
         }
     }
