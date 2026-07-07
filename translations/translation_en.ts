@@ -2680,6 +2680,11 @@
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="53"/>
+        <source>Toggle boat track</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/hotkeys_manager.cpp" line="54"/>
         <source>Toggle bottom track</source>
         <translation></translation>
     </message>

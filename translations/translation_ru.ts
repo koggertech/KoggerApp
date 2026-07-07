@@ -3301,6 +3301,11 @@
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="53"/>
+        <source>Toggle boat track</source>
+        <translation>Переключить трек лодки</translation>
+    </message>
+    <message>
+        <location filename="../src/hotkeys_manager.cpp" line="54"/>
         <source>Toggle bottom track</source>
         <translation>Переключить трек дна</translation>
     </message>

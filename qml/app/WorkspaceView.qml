@@ -274,6 +274,10 @@ Item {
         case "cameraShiftZPlus3D":
             scene3dView.zStepTrigger(1)
             return true
+        case "toggleBoatTrack3D":
+            if (workspace.store)
+                workspace.store.boatTrackVisible = !workspace.store.boatTrackVisible
+            return true
         case "toggleBottomTrack3D":
             if (workspace.store)
                 workspace.store.bottomTrackVisible = !workspace.store.bottomTrackVisible
