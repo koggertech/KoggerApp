@@ -8,7 +8,7 @@ Switch {
     property string toolTipText: text
     property int switchHorizontalPadding: Math.round(10 * AppPalette.scale)
     property int cornerRadius: Tokens.radiusLg
-    property color textColor: AppPalette.textSecond
+    property color textColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
     property color backgroundColor: AppPalette.rowRaised
     property color borderColor: AppPalette.border
     property color accentColor: AppPalette.toggleOn
@@ -22,7 +22,7 @@ Switch {
     property bool highlighted: false
     property int flashToken: 0
     property color highlightBorderColor: AppPalette.accentBorder
-    property int fontPixelSize: Tokens.fontBase
+    property int fontPixelSize: Tokens.fontLg
 
     readonly property int _knobMargin: Math.max(2, Math.round(2 * AppPalette.scale))
     readonly property int _knobSize: Math.max(8, trackHeight - 2 * _knobMargin)

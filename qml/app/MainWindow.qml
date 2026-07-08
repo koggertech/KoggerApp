@@ -353,8 +353,9 @@ ApplicationWindow {
             hotActions.layoutsMenuOpen = false
             return true
         },
-        function() {  // HotActions expanded
+        function() {  // HotActions expanded — skip when it's a settings preview (Esc closes the tab instead)
             if (!hotActions.expanded) return false
+            if (root.hotkeysPreviewPinned || root.hotkeysPreviewSticky) return false
             hotActions.expanded = false
             return true
         },

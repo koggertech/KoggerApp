@@ -343,7 +343,7 @@ Popup {
                             horizontalAlignment: Text.AlignHCenter
                             text: row.listening ? qsTr("…") : (model.keyName || "")
                             color: AppPalette.text
-                            font.pixelSize: Math.round(13 * AppPalette.scale)
+                            font.pixelSize: Math.round(16 * AppPalette.scale)
                         }
 
                         MouseArea {
@@ -376,7 +376,7 @@ Popup {
                             width: parent.width - 8
                             horizontalAlignment: TextInput.AlignHCenter
                             color: AppPalette.text
-                            font.pixelSize: Math.round(13 * AppPalette.scale)
+                            font.pixelSize: Math.round(16 * AppPalette.scale)
                             selectionColor: AppPalette.accentBg
                             text: model.parameter > 0 ? model.parameter.toString() : ""
                             inputMethodHints: Qt.ImhDigitsOnly

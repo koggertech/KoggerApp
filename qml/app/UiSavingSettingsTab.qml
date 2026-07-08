@@ -49,6 +49,7 @@ Column {
         KButton {
             width: (parent.width - Tokens.spaceMd) / 2
             height: Tokens.controlHMd
+            fontPixelSize: Tokens.fontLg
             text: qsTr("Export…")
             onClicked: {
                 uiExportDialog.currentFolder = page.safeFolder(page.exportFolder)
@@ -59,6 +60,7 @@ Column {
         KButton {
             width: (parent.width - Tokens.spaceMd) / 2
             height: Tokens.controlHMd
+            fontPixelSize: Tokens.fontLg
             text: qsTr("Import…")
             onClicked: {
                 uiImportDialog.currentFolder = page.safeFolder(page.importFolder)

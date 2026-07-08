@@ -323,6 +323,7 @@ Column {
             KTabBar {
                 id: langTabBar
                 width: parent.width
+                fontPixelSize: Tokens.fontLg
                 options: [
                     { label: "English", value: 0 },
                     { label: "Русский", value: 1 },
@@ -384,7 +385,7 @@ Column {
                             anchors.centerIn: parent
                             text: appThemeHolder.names[index]
                             color: AppPalette.text
-                            font.pixelSize: Tokens.fontXs
+                            font.pixelSize: Tokens.fontBase; font.bold: true
                             elide: Text.ElideRight
                         }
 
@@ -419,6 +420,7 @@ Column {
                 KTabBar {
                     id: gradeTabBar
                     width: parent.width
+                    fontPixelSize: Tokens.fontLg
                     options: [
                         { label: qsTr("Fish Finders"),  value: 0 },
                         { label: qsTr("Bottom Track"),  value: 1 },
@@ -435,26 +437,16 @@ Column {
             width: parent.width
             spacing: Tokens.spaceMd
 
-            Row {
-                width: parent.width
-                spacing: Tokens.spaceMd
-                Text {
-                    text: qsTr("UI scale:")
-                    color: AppPalette.textSecond
-                    font.pixelSize: Tokens.fontBase
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-                Text {
-                    text: theme ? Math.round(theme.manualScale * 100) + "%" : "100%"
-                    color: AppPalette.text
-                    font.pixelSize: Tokens.fontBase; font.bold: true
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+            Text {
+                text: qsTr("UI scale:")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
             }
 
             KTabBar {
                 id: uiScaleTabBar
                 width: parent.width
+                fontPixelSize: Tokens.fontLg
                 options: [
                     { label: "75%",  value: 0.75 },
                     { label: "100%", value: 1.00 },
@@ -499,6 +491,7 @@ Column {
 
             KTabBar {
                 width: parent.width
+                fontPixelSize: Tokens.fontLg
                 options: [
                     { label: qsTr("Left"),  value: "left"  },
                     { label: qsTr("Right"), value: "right" }

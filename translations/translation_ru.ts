@@ -113,7 +113,7 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="472"/>
         <source>Hide UI elements for missing data</source>
-        <translation>Скрывать элементы UI для отсутствующих данных</translation>
+        <translation>Скрывать неиспользуемые UI элементы</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="319"/>
