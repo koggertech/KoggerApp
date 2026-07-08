@@ -51,6 +51,7 @@ property int lastTappedLeafId: -1
 property real lastTapTimestamp: 0
 property bool settingsPanelOpen: false
 property bool filePathFocusRequested: false
+property bool recordingFocusRequested: false
 property bool echogramSettingsActive: false
 property var echogramSettingsPlot: null     // the Plot2D whose gear was clicked
 property int echogramSettingsLeafId: -1     // leaf of that plot (for focus dimming)
@@ -1005,6 +1006,12 @@ function openConnectionsSettings() {
     settingsSubPageActive = false
     settingsPanelOpen = true
     setSettingsGroupExpanded("app.connections", true)
+}
+
+function openRecordingSettings() {
+    recordingFocusRequested = false
+    openConnectionsSettings()
+    recordingFocusRequested = true
 }
 
 function setActiveDeviceIndex(i) {

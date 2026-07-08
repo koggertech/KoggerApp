@@ -52,6 +52,14 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Data</source>
+        <translation>Data</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
         <source>Surface exported to %1</source>
         <translation>Surface exported to %1</translation>
     </message>
@@ -279,37 +287,37 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="836"/>
-        <source>Gain slope:</source>
+        <source>Gain slope</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="857"/>
-        <source>Threshold:</source>
+        <source>Threshold</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="877"/>
-        <source>Horizontal window:</source>
+        <source>Horizontal window</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="897"/>
-        <source>Vertical gap, %:</source>
+        <source>Vertical gap, %</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="917"/>
-        <source>Min range, m:</source>
+        <source>Min range, m</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="937"/>
-        <source>Max range, m:</source>
+        <source>Max range, m</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="957"/>
-        <source>Sonar offset XYZ, mm:</source>
+        <source>Sonar offset XYZ, mm</source>
         <translation></translation>
     </message>
     <message>
@@ -594,13 +602,13 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1986"/>
-        <source>Step:</source>
-        <translation>Step:</translation>
+        <source>Step</source>
+        <translation>Step</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2013"/>
-        <source>Angle:</source>
-        <translation>Angle:</translation>
+        <source>Angle</source>
+        <translation>Angle</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2035"/>
@@ -619,7 +627,7 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2060"/>
-        <source>Shape:</source>
+        <source>Shape</source>
         <translation></translation>
     </message>
     <message>
@@ -639,8 +647,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2114"/>
-        <source>Pos:</source>
-        <translation>Pos:</translation>
+        <source>Pos</source>
+        <translation>Pos</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2189"/>
@@ -3726,8 +3734,8 @@
     <name>Scene3DRightToolbar</name>
     <message>
         <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="107"/>
-        <source>Reset zoom</source>
-        <translation>Reset zoom</translation>
+        <source>Reset scaling coefficient</source>
+        <translation>Reset scaling coefficient</translation>
     </message>
     <message>
         <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="214"/>

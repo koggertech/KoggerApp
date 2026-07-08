@@ -773,7 +773,7 @@ ApplicationWindow {
 
             onLoggingIndicatorTriggered: {
                 legacyPanelOpen = false
-                workspaceStore.openConnectionsSettings()
+                workspaceStore.openRecordingSettings()
                 refreshConnectionsIndicator()
             }
 

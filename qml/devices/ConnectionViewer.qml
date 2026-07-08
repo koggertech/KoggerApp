@@ -103,6 +103,7 @@ Column {
     onStoreChanged: {
         syncActiveDevice()
         _maybeScrollToDevice()
+        _maybeFocusRecording()
     }
 
     Connections {
@@ -294,8 +295,8 @@ Column {
     Text {
         visible: linkRepeater.count > 0
         text: qsTr("Connections:")
-        color: AppPalette.textMuted
-        font.pixelSize: Tokens.fontXs
+        color: AppPalette.textSecond
+        font.pixelSize: Tokens.fontBase
         leftPadding: Tokens.spaceXxs
     }
 
@@ -667,8 +668,8 @@ Column {
 
     Text {
         text: qsTr("Add connection:")
-        color: AppPalette.textMuted
-        font.pixelSize: Tokens.fontXs
+        color: AppPalette.textSecond
+        font.pixelSize: Tokens.fontBase
         leftPadding: Tokens.spaceXxs
     }
 
@@ -714,9 +715,10 @@ Column {
     // ── Recording row (gear + status marquee + size/time + REC) ───────────
 
     Text {
+        id: recordingHeader
         text: qsTr("Recording:")
-        color: AppPalette.textMuted
-        font.pixelSize: Tokens.fontXs
+        color: AppPalette.textSecond
+        font.pixelSize: Tokens.fontBase
         leftPadding: Tokens.spaceXxs
     }
 
@@ -1239,6 +1241,51 @@ Column {
         function onDeviceSettingsScrollPendingChanged() {
             connectionViewer._maybeScrollToDevice()
         }
+        function onRecordingFocusRequestedChanged() {
+            connectionViewer._maybeFocusRecording()
+        }
+    }
+
+    Timer {
+        id: recordingFocusTimer
+        interval: 240
+        repeat: false
+        onTriggered: {
+            connectionViewer._scrollToRecording()
+            if (connectionViewer.store)
+                connectionViewer.store.recordingFocusRequested = false
+        }
+    }
+
+    function _maybeFocusRecording() {
+        if (!(connectionViewer.store && connectionViewer.store.recordingFocusRequested === true))
+            return
+        if (!recRow.active)
+            recGear.checked = true
+        recordingFocusTimer.restart()
+    }
+
+    function _scrollToRecording() {
+        if (!recordingHeader) return
+        var flick = _findAncestorFlickable()
+        if (!flick) return
+
+        var topInContent = recordingHeader.mapToItem(flick.contentItem, 0, 0).y
+        var target = Math.max(0, topInContent - Tokens.spaceXl * 3)
+        target = Math.min(target, Math.max(0, flick.contentHeight - flick.height))
+        if (Math.abs(target - flick.contentY) < 0.5) return
+
+        scrollToRecordingAnim.target = flick
+        scrollToRecordingAnim.from = flick.contentY
+        scrollToRecordingAnim.to = target
+        scrollToRecordingAnim.restart()
+    }
+
+    NumberAnimation {
+        id: scrollToRecordingAnim
+        property: "contentY"
+        duration: 240
+        easing.type: Easing.OutCubic
     }
 
     function _findAncestorFlickable() {

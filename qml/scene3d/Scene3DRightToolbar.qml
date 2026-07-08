@@ -104,7 +104,7 @@ Item {
             fillColor: AppPalette.card
             fillHoverColor: AppPalette.cardHover
             borderColor: AppPalette.border
-            toolTipText: qsTr("Reset zoom")
+            toolTipText: qsTr("Reset scaling coefficient")
             onClicked: if (root.view) root.view.resetVerticalScale()
         }
 

@@ -850,7 +850,7 @@ Column {
         // Gain slope
         ParamCard {
             id: bottomTrackGainSlope
-            label: qsTr("Gain slope:")
+            label: qsTr("Gain slope")
             checked: true
             slotWidth: btGroup.spinW
             onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setGainSlope(bottomTrackGainSlopeValue.value / 100) }
@@ -871,7 +871,7 @@ Column {
         // Threshold
         ParamCard {
             id: bottomTrackThreshold
-            label: qsTr("Threshold:")
+            label: qsTr("Threshold")
             slotWidth: btGroup.spinW
             onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setThreshold(bottomTrackThresholdValue.value / 100) }
 
@@ -891,7 +891,7 @@ Column {
         // Horizontal window
         ParamCard {
             id: bottomTrackWindow
-            label: qsTr("Horizontal window:")
+            label: qsTr("Horizontal window")
             slotWidth: btGroup.spinW
             onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setWindowSize(bottomTrackWindowValue.value) }
 
@@ -911,7 +911,7 @@ Column {
         // Vertical gap
         ParamCard {
             id: bottomTrackVerticalGap
-            label: qsTr("Vertical gap, %:")
+            label: qsTr("Vertical gap, %")
             slotWidth: btGroup.spinW
             onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01) }
 
@@ -931,7 +931,7 @@ Column {
         // Min range
         ParamCard {
             id: bottomTrackMinRange
-            label: qsTr("Min range, m:")
+            label: qsTr("Min range, m")
             slotWidth: btGroup.spinW
             onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMin(bottomTrackMinRangeValue.value / 1000) }
 
@@ -951,7 +951,7 @@ Column {
         // Max range
         ParamCard {
             id: bottomTrackMaxRange
-            label: qsTr("Max range, m:")
+            label: qsTr("Max range, m")
             slotWidth: btGroup.spinW
             onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMax(bottomTrackMaxRangeValue.value / 1000) }
 
@@ -971,7 +971,7 @@ Column {
         // Sensor offset (label row + values row)
         ParamCard {
             id: bottomTrackSensorOffset
-            label: qsTr("Sonar offset XYZ, mm:")
+            label: qsTr("Sonar offset XYZ, mm")
             onToggled: function(v) {
                 if (v && root.targetPlot) {
                     root.targetPlot.setOffsetX(btOffX.value *  0.001)
@@ -1749,8 +1749,8 @@ Column {
                 spacing: Tokens.spaceMd
                 Text {
                     text: qsTr("Size")
-                    color: AppPalette.textSecond
-                    font.pixelSize: Tokens.fontBase
+                    color: root._bright
+                    font.pixelSize: Tokens.fontLg
                     Layout.fillWidth: true
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -1767,8 +1767,8 @@ Column {
                 spacing: Tokens.spaceMd
                 Text {
                     text: qsTr("Zoom")
-                    color: AppPalette.textSecond
-                    font.pixelSize: Tokens.fontBase
+                    color: root._bright
+                    font.pixelSize: Tokens.fontLg
                     verticalAlignment: Text.AlignVCenter
                 }
                 KSlider {
@@ -1832,20 +1832,10 @@ Column {
 
             Text {
                 width: parent.width
-                text: qsTr("Rendering")
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
+                text: qsTr("Rendering") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
                 topPadding: Tokens.spaceXs
-            }
-
-            KButton {
-                width: parent.width
-                text: qsTr("Reset depth zoom")
-                visible: Qt.platform.os !== "android"
-                onClicked: {
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onCancelZoomButtonClicked()
-                }
             }
 
             ParamCard {
@@ -1886,8 +1876,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Size")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
                         Layout.fillWidth: true
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -1907,8 +1897,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Zoom, %:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
                         verticalAlignment: Text.AlignVCenter
                     }
                     KSlider {
@@ -1928,9 +1918,9 @@ Column {
                     }
                     Text {
                         text: Math.round(syncLoupeZoomSlider.value) + "%"
-                        color: AppPalette.textMuted
-                        font.pixelSize: Tokens.fontSm
-                        Layout.preferredWidth: Math.round(40 * AppPalette.scale)
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
+                        Layout.preferredWidth: Math.round(52 * AppPalette.scale)
                         horizontalAlignment: Text.AlignRight
                     }
                 }
@@ -2002,9 +1992,9 @@ Column {
                                 anchors.rightMargin: Tokens.spaceSm
                                 spacing: Tokens.spaceSm
                                 Text {
-                                    text: qsTr("Size:")
-                                    color: AppPalette.textSecond
-                                    font.pixelSize: Tokens.fontMd
+                                    text: qsTr("Size")
+                                    color: root._bright
+                                    font.pixelSize: Tokens.fontLg
                                 }
                                 KSpinBox {
                                     id: circleGridSizeSpinBox
@@ -2029,9 +2019,9 @@ Column {
                                 anchors.rightMargin: Tokens.spaceSm
                                 spacing: Tokens.spaceSm
                                 Text {
-                                    text: qsTr("Step:")
-                                    color: AppPalette.textSecond
-                                    font.pixelSize: Tokens.fontMd
+                                    text: qsTr("Step")
+                                    color: root._bright
+                                    font.pixelSize: Tokens.fontLg
                                 }
                                 KSpinBox {
                                     id: circleGridStepSpinBox
@@ -2056,9 +2046,9 @@ Column {
                                 anchors.rightMargin: Tokens.spaceSm
                                 spacing: Tokens.spaceSm
                                 Text {
-                                    text: qsTr("Angle:")
-                                    color: AppPalette.textSecond
-                                    font.pixelSize: Tokens.fontMd
+                                    text: qsTr("Angle")
+                                    color: root._bright
+                                    font.pixelSize: Tokens.fontLg
                                 }
                                 KSpinBox {
                                     id: circleGridAngleSpinBox
@@ -2103,9 +2093,9 @@ Column {
                         Layout.fillWidth: true
                         spacing: Tokens.spaceSm
                         Text {
-                            text: qsTr("Shape:")
-                            color: AppPalette.textSecond
-                            font.pixelSize: Tokens.fontMd
+                            text: qsTr("Shape")
+                            color: root._bright
+                            font.pixelSize: Tokens.fontLg
                         }
                         KCombo {
                             id: navigationArrowShapeCombo
@@ -2123,9 +2113,9 @@ Column {
                         Layout.fillWidth: true
                         spacing: Tokens.spaceSm
                         Text {
-                            text: qsTr("Size:")
-                            color: AppPalette.textSecond
-                            font.pixelSize: Tokens.fontMd
+                            text: qsTr("Size")
+                            color: root._bright
+                            font.pixelSize: Tokens.fontLg
                         }
                         KSpinBox {
                             id: navigationArrowSizeSpinBox
@@ -2157,9 +2147,9 @@ Column {
                         Layout.fillWidth: true
                         spacing: Tokens.spaceSm
                         Text {
-                            text: qsTr("Pos:")
-                            color: AppPalette.textSecond
-                            font.pixelSize: Tokens.fontMd
+                            text: qsTr("Pos")
+                            color: root._bright
+                            font.pixelSize: Tokens.fontLg
                         }
                         KSpinBox {
                             id: compassPosSpinBox
@@ -2176,9 +2166,9 @@ Column {
                         Layout.fillWidth: true
                         spacing: Tokens.spaceSm
                         Text {
-                            text: qsTr("Size:")
-                            color: AppPalette.textSecond
-                            font.pixelSize: Tokens.fontMd
+                            text: qsTr("Size")
+                            color: root._bright
+                            font.pixelSize: Tokens.fontLg
                         }
                         KSpinBox {
                             id: compassSizeSpinBox
@@ -2232,9 +2222,9 @@ Column {
 
             Text {
                 width: parent.width
-                text: qsTr("Map")
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
+                text: qsTr("Map") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
                 topPadding: Tokens.spaceXs
             }
 
@@ -2257,30 +2247,6 @@ Column {
                 id: mapVisibilitySettings
                 category: "scene3d/map"
                 property bool mapViewCheckButton: true
-            }
-
-            // ── Internet status row ──────────────────────────────────────
-            Row {
-                width: parent.width
-                spacing: Tokens.spaceMd
-                height: Tokens.controlHSm
-
-                Rectangle {
-                    width: Math.round(10 * AppPalette.scale)
-                    height: width
-                    radius: width / 2
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: core.internetAvailable ? "#35c759" : "#ff3b30"
-                    border.width: 1
-                    border.color: AppPalette.border
-                }
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: core.internetAvailable ? qsTr("Internet available")
-                                                 : qsTr("Internet unavailable")
-                    color: AppPalette.textSecond
-                    font.pixelSize: Tokens.fontMd
-                }
             }
 
             Row {
@@ -2318,11 +2284,35 @@ Column {
                 }
             }
 
+            // ── Internet status row ──────────────────────────────────────
+            Row {
+                width: parent.width
+                spacing: Tokens.spaceMd
+                height: Tokens.controlHSm
+
+                Rectangle {
+                    width: Math.round(10 * AppPalette.scale)
+                    height: width
+                    radius: width / 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: core.internetAvailable ? "#35c759" : "#ff3b30"
+                    border.width: 1
+                    border.color: AppPalette.border
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: core.internetAvailable ? qsTr("Internet available")
+                                                 : qsTr("Internet unavailable")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontMd
+                }
+            }
+
             Text {
                 width: parent.width
-                text: qsTr("Providers")
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
+                text: qsTr("Providers") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
                 topPadding: Tokens.spaceXs
             }
 
@@ -2428,13 +2418,11 @@ Column {
                 }
             }
 
-            Item { width: parent.width; height: Tokens.spaceMd }
-
             Text {
                 width: parent.width
-                text: qsTr("Navigator")
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
+                text: qsTr("Navigator") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
                 topPadding: Tokens.spaceXs
             }
 
@@ -2460,29 +2448,63 @@ Column {
                 }
             }
 
-            Item { width: parent.width; height: Tokens.spaceMd }
-
-            KButton {
-                id: resetSurfaceBtn
+            Text {
                 width: parent.width
+                text: qsTr("Data") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                topPadding: Tokens.spaceXs
+            }
+
+            Item {
+                id: resetSurfaceRow
+                width: parent.width
+                implicitHeight: Tokens.controlHMd
+                height: implicitHeight
                 property bool confirming: false
-                text: confirming ? qsTr("Clear?") : qsTr("Reset surface")
-                danger: confirming
-                onClicked: {
-                    if (!confirming) {
-                        confirming = true
+
+                KButton {
+                    anchors.fill: parent
+                    visible: !resetSurfaceRow.confirming
+                    text: qsTr("Reset surface")
+                    onClicked: {
+                        resetSurfaceRow.confirming = true
                         resetSurfaceConfirmTimer.restart()
-                    } else {
-                        resetSurfaceConfirmTimer.stop()
-                        confirming = false
-                        if (typeof Scene3dToolBarController !== "undefined")
-                            Scene3dToolBarController.onResetProcessingButtonClicked()
                     }
                 }
+
+                RowLayout {
+                    anchors.fill: parent
+                    visible: resetSurfaceRow.confirming
+                    spacing: Tokens.spaceMd
+
+                    KButton {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        danger: true
+                        text: qsTr("Clear?")
+                        onClicked: {
+                            resetSurfaceConfirmTimer.stop()
+                            resetSurfaceRow.confirming = false
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onResetProcessingButtonClicked()
+                        }
+                    }
+                    KButton {
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: Math.round(110 * AppPalette.scale)
+                        text: qsTr("Cancel")
+                        onClicked: {
+                            resetSurfaceConfirmTimer.stop()
+                            resetSurfaceRow.confirming = false
+                        }
+                    }
+                }
+
                 Timer {
                     id: resetSurfaceConfirmTimer
                     interval: 3000
-                    onTriggered: resetSurfaceBtn.confirming = false
+                    onTriggered: resetSurfaceRow.confirming = false
                 }
             }
 

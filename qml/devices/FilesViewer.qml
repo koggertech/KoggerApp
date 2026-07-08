@@ -196,8 +196,8 @@ Column {
 
     Text {
         text: qsTr("Open file:")
-        color: AppPalette.textMuted
-        font.pixelSize: Tokens.fontXs
+        color: AppPalette.textSecond
+        font.pixelSize: Tokens.fontBase
         leftPadding: Tokens.spaceXxs
     }
 
@@ -299,8 +299,8 @@ Column {
 
         Text {
             text: qsTr("Recently opened:")
-            color: AppPalette.textMuted
-            font.pixelSize: Tokens.fontXs
+            color: AppPalette.textSecond
+            font.pixelSize: Tokens.fontBase
             leftPadding: Tokens.spaceXxs
         }
 
