@@ -79,37 +79,39 @@ and run:
 ---
 
 ### 🧱 *Build Instructions*
-*KoggerApp* is a cross-platform C++ Qt QML project, built using a .pro file. You can build it on Windows, Linux, and Android using the appropriate Qt kits and compilers.
+*KoggerApp* is a cross-platform C++ Qt QML project, built with **CMake** (CMake ≥ 3.22, Qt 6.8.3, C++23). You can build it on Windows, Linux, and Android using the appropriate Qt kits and compilers. The easiest way is to open the top-level `CMakeLists.txt` in Qt Creator, select a kit, and build; a command-line example is given for Linux below.
 
 🪟 Windows (x86_64):  
 Compiler: LLVM-MinGW 17.0.6  
 Qt version: Qt 6.8.3 (llvm-mingw_64)  
 Steps:
-- Open the .pro file in Qt Creator
+- Open `CMakeLists.txt` in Qt Creator (File > Open File or Project)
 - Select the LLVM-MinGW 64-bit kit
-- Click Build > Run qmake, then Build > Build Project
-- Run the application from Qt Creator or find the built binary in build/
+- Build > Build Project (Qt Creator runs CMake configure automatically)
+- Run from Qt Creator or find `KoggerApp.exe` under `build/`
 
 🤖 Android (armeabi-v7a, arm64-v8a)  
 Compiler: Clang from NDK 27.3.13750724  
-Qt version: Qt 6.8.3 (android_armv7 or android_arm64_v8a)  
-Set up Android SDK/NDK in Qt Creator (via Tools > Options > Devices > Android)  
+Qt version: Qt 6.8.3 (android_arm64_v8a)  
+Set up the Android SDK/NDK in Qt Creator (Tools > Options > Devices > Android)  
 Steps:
-- Open the .pro file in Qt Creator
-- Select Android kit
-- Click Build > Run qmake, then Build > Build Project
-- Use the .apk file generated in android-build/ to install on a device
+- Open `CMakeLists.txt` in Qt Creator
+- Select the Android (arm64-v8a) kit — a single kit produces a **universal APK** with both ABIs; keep the `android_armeabi_v7a` Qt installation present for the second-ABI sub-build
+- Build > Build Project
+- Install the generated `.apk` on a device
 
 🐧 Linux (Ubuntu x86_64)  
 Compiler: Clang 18.1.3  
-Qt version: Qt 6.8.3 (gcc)  
-Clone and build:
+Qt version: Qt 6.8.3 (gcc_64)  
+Clone and build (set `CMAKE_PREFIX_PATH` to your Qt installation):
 ```bash
 git clone https://github.com/koggertech/KoggerApp.git
 cd KoggerApp
-qmake
-make -j$(nproc)
-./KoggerApp
+cmake -S . -B build -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_PREFIX_PATH="$HOME/Qt/6.8.3/gcc_64"
+cmake --build build -j"$(nproc)"
+./build/KoggerApp
 ```
 
 ---
