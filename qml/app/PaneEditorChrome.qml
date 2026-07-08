@@ -146,6 +146,7 @@ Item {
 
             KCircleIconButton {
                 id: movePaneButton
+                visible: paneFrame.store.leafCount() > 1
                 width: paneFrame.centerQuickIconSize
                 height: paneFrame.centerQuickIconSize
                 Layout.preferredWidth: paneFrame.centerQuickIconSize
@@ -186,6 +187,7 @@ Item {
 
             KCircleIconButton {
                 id: deletePaneButton
+                visible: paneFrame.store.leafCount() > 1
                 width: paneFrame.centerQuickIconSize
                 height: paneFrame.centerQuickIconSize
                 Layout.preferredWidth: paneFrame.centerQuickIconSize

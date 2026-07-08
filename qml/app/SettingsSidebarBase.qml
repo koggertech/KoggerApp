@@ -191,6 +191,8 @@ Item {
                         id: backButton
                         visible: panelRoot.showBack
                         text: ""
+                        normalBg: AppPalette.controlRaised
+                        hoverBg:  Qt.lighter(AppPalette.controlRaised, 1.2)
                         Layout.preferredWidth:  visible ? Tokens.controlHLg : 0
                         Layout.maximumWidth:    visible ? Tokens.controlHLg : 0
                         Layout.preferredHeight: Tokens.controlHLg

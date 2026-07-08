@@ -102,7 +102,7 @@ Column {
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.max(0, parent.width - Math.round(84 * AppPalette.scale) - Tokens.spaceLg); spacing: Tokens.spaceXs
-                    Text { text: preset.title; color: AppPalette.text; font.pixelSize: Tokens.fontBase; font.bold: true }
+                    Text { text: preset.title; color: AppPalette.text; font.pixelSize: Tokens.fontLg; font.bold: true }
                     Text { text: preset.subtitle; color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm }
                 }
             }

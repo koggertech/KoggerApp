@@ -60,7 +60,7 @@ Rectangle {
         Text {
             text: qsTr("Layout %1").arg(root.favoriteIndex + 1)
             color: root.selected ? "#FDE68A" : AppPalette.text
-            font.pixelSize: Tokens.fontBase
+            font.pixelSize: Tokens.fontLg
             font.bold: true
             elide: Text.ElideRight
             width: parent.width

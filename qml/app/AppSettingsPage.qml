@@ -585,7 +585,7 @@ Column {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: Tokens.spaceSm
-                    width: Tokens.iconLg; height: Tokens.iconLg; iconSource: ""; glyph: "×"
+                    width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd; iconSource: ""; glyph: "×"
                     glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
                     fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
                     borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
@@ -2653,8 +2653,10 @@ Column {
             anchors.right: parent.right
             anchors.rightMargin: Tokens.spaceLg
             anchors.verticalCenter: footerCol.verticalCenter
-            width: Math.round(36 * AppPalette.scale)
+            width: Tokens.controlHLg
             height: width
+            rounded: false
+            cornerRadius: Tokens.radiusMd
             borderWidth: 0
             fillColor: AppPalette.controlRaised
             fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
