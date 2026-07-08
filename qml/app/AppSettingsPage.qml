@@ -821,7 +821,7 @@ Column {
             width: parent.width
             spacing: Tokens.spaceMd
 
-            Text { text: qsTr("Preset:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
+            Text { text: qsTr("Preset:"); color: root._bright; font.pixelSize: Tokens.fontLg }
 
             Item {
                 id: btPresetHolder
@@ -1009,6 +1009,7 @@ Column {
         // Action buttons
         KButton {
             width: parent.width
+            fontPixelSize: Tokens.fontLg
             text: qsTr("Processing")
             onClicked: btGroup.doDistProcessing()
         }
@@ -1030,9 +1031,9 @@ Column {
         }
         collapsedByDefault: true
 
-        readonly property int ctrlW: Math.round(200 * AppPalette.scale)
-        property var exportSurfaceFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
-        property string exportSurfacePathSource: ""
+        readonly property int ctrlW: Math.round(170 * AppPalette.scale)
+        property var exportSurfaceFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/KoggerApp/exports"
+        property string exportSurfacePathSource: core.defaultExportDirectory() + "/surface.csv"
 
         // Hotkey API — invoked from WorkspaceStore.applyIsobathsHotkey().
         function prevTheme() {
@@ -1073,10 +1074,20 @@ Column {
             return displayText
         }
         function currentExportSurfacePath() {
-            return isoEffectiveSource(exportSurfacePathText.text, exportSurfacePathSource)
+            var p = isoSourceUrl(isoEffectiveSource(exportSurfacePathText.text, exportSurfacePathSource))
+            if (!p || p.length === 0)
+                p = core.defaultExportDirectory() + "/surface.csv"
+            return p
+        }
+        function hasInvalidFileName(p) {
+            var name = p.replace(/^.*[\\/]/, "")
+            if (name.length === 0) return true
+            return /[<>:"|?*\x00-\x1F]/.test(name)
         }
 
         Component.onCompleted: {
+            if (!exportSurfacePathSource || exportSurfacePathSource.length === 0)
+                exportSurfacePathSource = core.defaultExportDirectory() + "/surface.csv"
             exportSurfacePathText.text = isoDisplayUrl(exportSurfacePathSource)
         }
 
@@ -1086,8 +1097,8 @@ Column {
 
             Text {
                 text: qsTr("Theme:")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontMd
+                color: root._bright
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
             }
             KCombo {
@@ -1113,8 +1124,8 @@ Column {
 
             Text {
                 text: qsTr("Edge limit, m:")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontMd
+                color: root._bright
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
             }
             KSpinBox {
@@ -1134,8 +1145,8 @@ Column {
 
             Text {
                 text: qsTr("Step, m:")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontMd
+                color: root._bright
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
             }
             KSpinBox {
@@ -1157,8 +1168,8 @@ Column {
 
             Text {
                 text: qsTr("Extra width, m:")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontMd
+                color: root._bright
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
             }
             KSpinBox {
@@ -1178,8 +1189,6 @@ Column {
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredWidth: isobathsGroup.ctrlW
-                Layout.maximumWidth: isobathsGroup.ctrlW
                 Layout.preferredHeight: Tokens.controlHMd
                 radius: Tokens.radiusMd
                 color: AppPalette.bg
@@ -1195,14 +1204,14 @@ Column {
                     TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: exportSurfacePathText.selectAll() }
                     verticalAlignment: TextInput.AlignVCenter
                     color: AppPalette.text
-                    font.pixelSize: Tokens.fontSm
+                    font.pixelSize: Tokens.fontBase
                     clip: true
 
                     Text {
                         visible: !exportSurfacePathText.text.length
                         text: qsTr("Enter path")
                         color: AppPalette.textMuted
-                        font.pixelSize: Tokens.fontSm
+                        font.pixelSize: Tokens.fontBase
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
@@ -1211,8 +1220,11 @@ Column {
             KButton {
                 text: "..."
                 Layout.fillWidth: false
+                Layout.preferredWidth: Tokens.controlHMd
+                Layout.maximumWidth: Tokens.controlHMd
                 Layout.preferredHeight: Tokens.controlHMd
-                implicitWidth: Math.round(40 * AppPalette.scale)
+                horizontalPadding: 0
+                verticalPadding: 0
                 onClicked: {
                     exportSurfaceFileDialog.currentFolder = isobathsGroup.exportSurfaceFolder
                     exportSurfaceFileDialog.open()
@@ -1239,9 +1251,24 @@ Column {
 
             KButton {
                 text: qsTr("Export to CSV")
-                Layout.fillWidth: true
+                fontPixelSize: Tokens.fontLg
+                Layout.fillWidth: false
+                Layout.preferredWidth: isobathsGroup.ctrlW
+                Layout.maximumWidth: isobathsGroup.ctrlW
                 Layout.preferredHeight: Tokens.controlHMd
-                onClicked: Scene3DControlMenuController.onExportToCSVButtonClicked(isobathsGroup.currentExportSurfacePath())
+                onClicked: {
+                    var p = isobathsGroup.currentExportSurfacePath()
+                    var hasN = typeof notifications !== "undefined" && notifications
+                    if (isobathsGroup.hasInvalidFileName(p)) {
+                        if (hasN) notifications.warning(qsTr("Invalid characters in file name"))
+                        return
+                    }
+                    var ok = Scene3DControlMenuController.onExportToCSVButtonClicked(p)
+                    if (hasN) {
+                        if (ok) notifications.info(qsTr("Surface exported to %1").arg(p))
+                        else    notifications.warning(qsTr("Surface export failed"))
+                    }
+                }
             }
 
             Settings { category: "main/export"; property alias exportSurfaceFolder:     isobathsGroup.exportSurfaceFolder }
@@ -1266,7 +1293,7 @@ Column {
         collapsedByDefault: true
 
         readonly property int labelW: Math.round(140 * AppPalette.scale)
-        readonly property int ctrlW:  Math.round(220 * AppPalette.scale)
+        readonly property int ctrlW:  Math.round(170 * AppPalette.scale)
 
         function setChannelNamesToBackend() {
             core.setMosaicChannels(channel1Combo.currentText, channel2Combo.currentText)
@@ -1328,8 +1355,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Theme:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
                         Layout.fillWidth: true
                     }
                     KCombo {
@@ -1353,13 +1380,13 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Channels:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignTop
                     }
                     ColumnLayout {
-                        spacing: Tokens.spaceXs
+                        spacing: Tokens.spaceMd
                         Layout.preferredWidth: mosaicGroup.ctrlW
 
                         KCombo {
@@ -1464,13 +1491,13 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Angle, °:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignTop
                     }
                     ColumnLayout {
-                        spacing: Tokens.spaceXs
+                        spacing: Tokens.spaceMd
                         Layout.preferredWidth: mosaicGroup.ctrlW
 
                         KSpinBox {
@@ -1519,8 +1546,9 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Data source:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
+                        elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
                     KCircleIconButton {

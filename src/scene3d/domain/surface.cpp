@@ -1,6 +1,9 @@
 #include "surface.h"
 
 #include <QFile>
+#include <QDir>
+#include <QFileInfo>
+#include <QUrl>
 
 #include "boundary_detector.h"
 #include "triangle.h"
@@ -67,7 +70,16 @@ void Surface::saveVerticesToFile(const QString& path)
     QString filePath = path;
 #else
     QString filePath = QUrl(path).toLocalFile();
+    if (filePath.isEmpty())
+        filePath = path;
 #endif
+
+    if (filePath.isEmpty()) {
+        qWarning() << "Surface::saveVerticesToFile: empty path";
+        return;
+    }
+
+    QDir().mkpath(QFileInfo(filePath).absolutePath());
 
     auto* r = RENDER_IMPL(Surface);
     QSet<QVector3D> uniqueVertices(r->m_data.begin(), r->m_data.end());

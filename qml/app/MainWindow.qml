@@ -442,7 +442,8 @@ ApplicationWindow {
             return true
         }
 
-        workspaceStore.openConnectionsSettings()
+        workspaceStore.filePathFocusRequested = true
+        workspaceStore.openAppSettingsAtGroup("app.files")
         return true
     }
 

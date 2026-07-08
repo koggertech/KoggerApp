@@ -12,7 +12,7 @@ Item {
     property var model
     property int currentIndex: 0
     property string displayTextOverride: ""
-    property int fontPixelSize: Tokens.fontMd
+    property int fontPixelSize: Tokens.fontLg
     property bool bold: true
     property int maxVisibleItems: 8
     property int radius: Tokens.radiusMd

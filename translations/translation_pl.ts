@@ -52,6 +52,18 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Surface exported to %1</source>
+        <translation>Powierzchnia wyeksportowana do %1</translation>
+    </message>
+    <message>
+        <source>Surface export failed</source>
+        <translation>Nie udało się wyeksportować powierzchni</translation>
+    </message>
+    <message>
+        <source>Invalid characters in file name</source>
+        <translation>Niedozwolone znaki w nazwie pliku</translation>
+    </message>
+    <message>
         <source>Fills black stripes in the echogram by interpolating the given number of steps forward / backward.</source>
         <translation>Wypełnia czarne pasy na echogramie, interpolując zadaną liczbę kroków w przód / w tył.</translation>
     </message>

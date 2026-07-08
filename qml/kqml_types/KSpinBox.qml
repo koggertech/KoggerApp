@@ -12,8 +12,8 @@ Item {
     property real divisor: 1.0
     property int decimals: 0
     property bool editable: true
-    property int fontPixelSize: Tokens.fontSm
-    property color textColor: AppPalette.text
+    property int fontPixelSize: Tokens.fontLg
+    property color textColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
 
     signal valueModified(int val)
 

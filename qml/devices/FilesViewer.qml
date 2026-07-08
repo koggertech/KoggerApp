@@ -33,6 +33,21 @@ Column {
         function onFilePathChanged() { filesViewer.setLogPath(core.filePath) }
     }
 
+    onStoreChanged: _consumeFilePathFocus()
+
+    Connections {
+        target: filesViewer.store
+        ignoreUnknownSignals: true
+        function onFilePathFocusRequestedChanged() { filesViewer._consumeFilePathFocus() }
+    }
+
+    function _consumeFilePathFocus() {
+        if (store && store.filePathFocusRequested) {
+            store.filePathFocusRequested = false
+            Qt.callLater(function() { if (pathText) pathText.forceActiveFocus() })
+        }
+    }
+
     function urlSource(value) {
         if (!value) return ""
         if (typeof value === "string") {
@@ -103,7 +118,10 @@ Column {
         recentOpenedFiles = updated
     }
 
-    Component.onCompleted: setLogPath(selectedLogPathSource.length ? selectedLogPathSource : core.filePath)
+    Component.onCompleted: {
+        setLogPath(selectedLogPathSource.length ? selectedLogPathSource : core.filePath)
+        _consumeFilePathFocus()
+    }
 
     component IconBtn: Rectangle {
         id: ib

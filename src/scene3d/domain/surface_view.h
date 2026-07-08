@@ -96,7 +96,7 @@ public:
     GLuint                                            takeSurfaceColorTableToDelete();
 
     void setLlaRef(LLARef llaRef);
-    void saveVerticesToFile(const QString& path);
+    bool saveVerticesToFile(const QString& path);
 
     bool trySetMosaicTextureId(const TileKey& key, GLuint texId);
     bool hasTile(const TileKey& key) const;

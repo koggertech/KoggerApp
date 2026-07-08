@@ -11,7 +11,7 @@ Item {
     property int horizontalPadding: Math.round(4 * AppPalette.scale)
     property int verticalPadding: Math.round(4 * AppPalette.scale)
     property int cornerRadius: Math.round(8 * AppPalette.scale)
-    property int fontPixelSize: Math.round(13 * AppPalette.scale)
+    property int fontPixelSize: Tokens.fontLg
     property bool dragSelectEnabled: true
     signal valueSelected(var value)
 

@@ -52,6 +52,18 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Surface exported to %1</source>
+        <translation>Surface exported to %1</translation>
+    </message>
+    <message>
+        <source>Surface export failed</source>
+        <translation>Surface export failed</translation>
+    </message>
+    <message>
+        <source>Invalid characters in file name</source>
+        <translation>Invalid characters in file name</translation>
+    </message>
+    <message>
         <source>Fills black stripes in the echogram by interpolating the given number of steps forward / backward.</source>
         <translation>Fills black stripes in the echogram by interpolating the given number of steps forward / backward.</translation>
     </message>

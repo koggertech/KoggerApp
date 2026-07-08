@@ -19,8 +19,8 @@ Rectangle {
     property bool checked: false
     property int slotWidth: 0
     property color fillColor: AppPalette.rowRaised   // bg when nested inside a card group
-    property color labelColor: AppPalette.textSecond
-    property int labelPixelSize: Tokens.fontMd
+    property color labelColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+    property int labelPixelSize: Tokens.fontLg
     property string toolTipText: ""
     signal toggled(bool val)
 

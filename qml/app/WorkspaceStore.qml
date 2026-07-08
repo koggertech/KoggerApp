@@ -50,6 +50,7 @@ property int maximizedLeafId: -1
 property int lastTappedLeafId: -1
 property real lastTapTimestamp: 0
 property bool settingsPanelOpen: false
+property bool filePathFocusRequested: false
 property bool echogramSettingsActive: false
 property var echogramSettingsPlot: null     // the Plot2D whose gear was clicked
 property int echogramSettingsLeafId: -1     // leaf of that plot (for focus dimming)
@@ -252,7 +253,7 @@ property var settingsProfiles: []
 property var profilesPopupState: ({ x: -1, y: -1 })
 
 property var autopilotPopupState: ({ x: -1, y: -1 })
-property bool autopilotEnabled: true   // panel shown; toggled by the hot-actions autopilot button
+property bool autopilotEnabled: false   // panel shown; toggled by the hot-actions autopilot button
 
 property var extraInfoPopupState: ({ x: -1, y: -1 })
 property bool extraInfoVisible: false
@@ -658,7 +659,7 @@ property Settings layoutStore: Settings {
     property bool profilesPopupOpenStored: false
     property bool bottomTrackEditorOpenStored: false
     property string autopilotPopupStateJson: "{\"x\":-1,\"y\":-1}"
-    property bool autopilotEnabledStored: true
+    property bool autopilotEnabledStored: false
     property string extraInfoPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool extraInfoVisibleStored: false
     property bool extraInfoDepthStored: true

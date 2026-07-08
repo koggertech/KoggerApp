@@ -52,6 +52,18 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Surface exported to %1</source>
+        <translation>Поверхность экспортирована в %1</translation>
+    </message>
+    <message>
+        <source>Surface export failed</source>
+        <translation>Не удалось экспортировать поверхность</translation>
+    </message>
+    <message>
+        <source>Invalid characters in file name</source>
+        <translation>Недопустимые символы в имени файла</translation>
+    </message>
+    <message>
         <source>Fills black stripes in the echogram by interpolating the given number of steps forward / backward.</source>
         <translation>Заполняет чёрные полосы на эхограмме, интерполируя заданное число шагов вперёд / назад.</translation>
     </message>
