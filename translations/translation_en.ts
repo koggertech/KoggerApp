@@ -1739,6 +1739,18 @@
 <context>
     <name>EchogramSettingsPanel</name>
     <message>
+        <source>Data</source>
+        <translation>Data</translation>
+    </message>
+    <message>
+        <source>Display parameters</source>
+        <translation>Display parameters</translation>
+    </message>
+    <message>
+        <source>Visibility</source>
+        <translation>Visibility</translation>
+    </message>
+    <message>
         <location filename="../qml/app/EchogramSettingsPanel.qml" line="70"/>
         <source>Open TGC settings</source>
         <translation>Open TGC settings</translation>

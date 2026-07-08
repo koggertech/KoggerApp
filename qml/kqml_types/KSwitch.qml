@@ -29,6 +29,8 @@ Switch {
 
     implicitWidth: Math.round(260 * AppPalette.scale)
     implicitHeight: rowHeight
+    padding: 0
+    spacing: 0
     opacity: enabled ? 1.0 : 0.55
     focusPolicy: Qt.StrongFocus
 

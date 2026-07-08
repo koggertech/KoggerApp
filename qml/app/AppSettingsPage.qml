@@ -821,7 +821,7 @@ Column {
             width: parent.width
             spacing: Tokens.spaceMd
 
-            Text { text: qsTr("Preset:"); color: root._bright; font.pixelSize: Tokens.fontLg }
+            Text { text: qsTr("Preset:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
 
             Item {
                 id: btPresetHolder
@@ -1097,8 +1097,8 @@ Column {
 
             Text {
                 text: qsTr("Theme:")
-                color: root._bright
-                font.pixelSize: Tokens.fontLg
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
                 Layout.fillWidth: true
             }
             KCombo {
@@ -1124,8 +1124,8 @@ Column {
 
             Text {
                 text: qsTr("Edge limit, m:")
-                color: root._bright
-                font.pixelSize: Tokens.fontLg
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
                 Layout.fillWidth: true
             }
             KSpinBox {
@@ -1145,8 +1145,8 @@ Column {
 
             Text {
                 text: qsTr("Step, m:")
-                color: root._bright
-                font.pixelSize: Tokens.fontLg
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
                 Layout.fillWidth: true
             }
             KSpinBox {
@@ -1168,8 +1168,8 @@ Column {
 
             Text {
                 text: qsTr("Extra width, m:")
-                color: root._bright
-                font.pixelSize: Tokens.fontLg
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
                 Layout.fillWidth: true
             }
             KSpinBox {
@@ -1355,8 +1355,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Theme:")
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontBase
                         Layout.fillWidth: true
                     }
                     KCombo {
@@ -1380,8 +1380,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Channels:")
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontBase
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignTop
                     }
@@ -1491,8 +1491,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Angle, °:")
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontBase
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignTop
                     }
@@ -1546,8 +1546,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Data source:")
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontBase
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
@@ -1664,7 +1664,7 @@ Column {
 
         Column {
             width: parent.width
-            spacing: Tokens.spaceXs
+            spacing: Tokens.spaceMd
 
             HoverHandler {
                 onHoveredChanged: if (!hovered) root.store.highlightedLeafId = -1
@@ -1705,8 +1705,8 @@ Column {
                         anchors.rightMargin: Tokens.spaceMd
                         anchors.verticalCenter: parent.verticalCenter
                         text: modelData.label
-                        color: AppPalette.text
-                        font.pixelSize: Tokens.fontMd
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
                         elide: Text.ElideRight
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -1750,7 +1750,7 @@ Column {
                 Text {
                     text: qsTr("Size")
                     color: AppPalette.textSecond
-                    font.pixelSize: Tokens.fontMd
+                    font.pixelSize: Tokens.fontBase
                     Layout.fillWidth: true
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -1768,7 +1768,7 @@ Column {
                 Text {
                     text: qsTr("Zoom")
                     color: AppPalette.textSecond
-                    font.pixelSize: Tokens.fontMd
+                    font.pixelSize: Tokens.fontBase
                     verticalAlignment: Text.AlignVCenter
                 }
                 KSlider {
@@ -1786,9 +1786,9 @@ Column {
                 }
                 Text {
                     text: (root.store ? Math.round(root.store.echogramLoupeZoom) : 0) + "%"
-                    color: AppPalette.textMuted
-                    font.pixelSize: Tokens.fontSm
-                    Layout.preferredWidth: Math.round(40 * AppPalette.scale)
+                    color: root._bright
+                    font.pixelSize: Tokens.fontLg
+                    Layout.preferredWidth: Math.round(52 * AppPalette.scale)
                     horizontalAlignment: Text.AlignRight
                 }
             }
@@ -1811,6 +1811,7 @@ Column {
 
         NavButton {
             width: parent.width
+            fontPixelSize: Tokens.fontLg
             text: qsTr("Information panel")
             onClicked: if (root.store) root.store.openAimPanelSettings()
         }

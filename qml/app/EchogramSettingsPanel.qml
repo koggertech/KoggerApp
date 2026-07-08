@@ -24,7 +24,7 @@ Column {
     readonly property int comboW: Math.round(150 * AppPalette.scale)
 
     width: parent ? parent.width : implicitWidth
-    spacing: Tokens.spaceMd
+    spacing: Tokens.spaceXs
 
     // ── Reusable label + combo row (card, matches toggle rows) ─────────────────
     component ComboRow: Rectangle {
@@ -45,13 +45,13 @@ Column {
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: Tokens.spaceMd
-            anchors.rightMargin: Tokens.spaceMd
-            spacing: Tokens.spaceMd
+            anchors.leftMargin: Math.round(10 * AppPalette.scale)
+            anchors.rightMargin: Math.round(10 * AppPalette.scale)
+            spacing: Tokens.spaceXs
             Text {
                 text: crow.label
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontMd
+                color: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
@@ -71,7 +71,7 @@ Column {
                 onClicked: crow.tgcLinkClicked()
             }
             KCombo {
-                Layout.preferredWidth: panel.comboW
+                Layout.preferredWidth: Math.max(Math.round(150 * AppPalette.scale), _popupContentWidth)
                 enabled: crow.enabledRow
                 model: crow.comboModel
                 currentIndex: crow.currentIndex
@@ -84,9 +84,8 @@ Column {
 
     // ── Section header label ──────────────────────────────────────────────────
     component SectionLabel: Text {
-        color: AppPalette.textMuted
-        font.pixelSize: Tokens.fontSm
-        font.bold: true
+        color: AppPalette.textSecond
+        font.pixelSize: Tokens.fontBase
         topPadding: Tokens.spaceXs
     }
 
@@ -96,7 +95,7 @@ Column {
         spacing: Tokens.spaceXs
         visible: panel.instruments > 1
 
-        SectionLabel { text: qsTr("Channels") }
+        SectionLabel { text: qsTr("Channels") + ":" }
 
         Rectangle {
             width: parent.width
@@ -125,10 +124,13 @@ Column {
         }
     }
 
+    SectionLabel { text: qsTr("Echogram") + ":" }
+
     // ══ Echogram + theme + compensation ════════════════════════════════════════
     ParamCardGroup {
         width: parent.width
-        label: qsTr("Echogram")
+        bodySpacing: Tokens.spaceXs
+        label: qsTr("Visibility")
         checked: panel.vs ? panel.vs.echogramVisible : false
         onToggled: function(v) { if (panel.vs) panel.vs.echogramVisible = v }
 
@@ -157,7 +159,7 @@ Column {
         spacing: Tokens.spaceXs
         visible: panel.instruments > 0 && panel.dataGate(panel.ds && panel.ds.hasChartData)
 
-        SectionLabel { text: qsTr("Bottom-Track") }
+        SectionLabel { text: qsTr("Bottom-Track") + ":" }
 
         KSwitch {
             width: parent.width
@@ -188,7 +190,7 @@ Column {
         spacing: Tokens.spaceXs
         visible: panel.dataGate(panel.ds && panel.ds.hasRangefinderData)
 
-        SectionLabel { text: qsTr("Rangefinder") }
+        SectionLabel { text: qsTr("Rangefinder") + ":" }
 
         KSwitch {
             width: parent.width
@@ -211,6 +213,17 @@ Column {
         }
     }
 
+    SectionLabel {
+        text: qsTr("Data") + ":"
+        visible: panel.instruments > 1 && (
+                     panel.dataGate(panel.ds && panel.ds.hasAttitudeData)
+                  || panel.dataGate(panel.ds && panel.ds.hasTemperatureData)
+                  || panel.dataGate(panel.ds && panel.ds.hasDopplerBeamData)
+                  || panel.dataGate(panel.ds && panel.ds.hasDvlSolutionData)
+                  || panel.dataGate(panel.ds && panel.ds.hasUsblData)
+                  || panel.dataGate(panel.ds && panel.ds.hasPositionData))
+    }
+
     // ══ Attitude / Temperature (instruments > 1) ════════════════════════════════
     KSwitch {
         width: parent.width
@@ -230,6 +243,7 @@ Column {
     // ══ Doppler Beams (instruments > 1) ══════════════════════════════════════════
     ParamCardGroup {
         width: parent.width
+        bodySpacing: Tokens.spaceXs
         visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasDopplerBeamData)
         label: qsTr("Doppler Beams")
         checked: panel.vs ? panel.vs.dopplerBeamVisible : false
@@ -264,6 +278,7 @@ Column {
     // ══ Doppler Instrument (instruments > 1) ═════════════════════════════════════
     ParamCardGroup {
         width: parent.width
+        bodySpacing: Tokens.spaceXs
         visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasDvlSolutionData)
         label: qsTr("Doppler Instrument")
         checked: panel.vs ? panel.vs.dopplerInstrumentVisible : false
@@ -291,6 +306,7 @@ Column {
     // ══ DVL Legend (instruments > 1) ═════════════════════════════════════════════
     ParamCardGroup {
         width: parent.width
+        bodySpacing: Tokens.spaceXs
         visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasDvlSolutionData)
         label: qsTr("DVL Legend")
         checked: panel.vs ? panel.vs.dvlLegendVisible : false
@@ -315,7 +331,7 @@ Column {
     }
     KSwitch {
         width: parent.width
-        visible: panel.instruments > 1
+        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasDopplerBeamData)
         enabled: false
         text: qsTr("Doppler Profiler")
     }
@@ -327,9 +343,12 @@ Column {
         onToggled: if (panel.vs) panel.vs.gnssVisible = checked
     }
 
+    SectionLabel { text: qsTr("Display parameters") + ":" }
+
     // ══ Grid + fill/invert/number ════════════════════════════════════════════════
     ParamCardGroup {
         width: parent.width
+        bodySpacing: Tokens.spaceXs
         label: qsTr("Grid")
         checked: panel.vs ? panel.vs.gridVisible : false
         onToggled: function(v) { if (panel.vs) panel.vs.gridVisible = v }
@@ -360,8 +379,8 @@ Column {
                 spacing: Tokens.spaceMd
                 Text {
                     text: qsTr("Vertical lines")
-                    color: AppPalette.textSecond
-                    font.pixelSize: Tokens.fontMd
+                    color: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+                    font.pixelSize: Tokens.fontLg
                     Layout.fillWidth: true
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -411,6 +430,7 @@ Column {
     // ══ Distance auto range + mode ════════════════════════════════════════════════
     ParamCardGroup {
         width: parent.width
+        bodySpacing: Tokens.spaceXs
         label: qsTr("Distance auto range")
         checked: panel.vs ? panel.vs.distanceAutoRange : false
         onToggled: function(v) { if (panel.vs) panel.vs.distanceAutoRange = v }

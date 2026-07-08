@@ -22,6 +22,30 @@ Item {
     property var swatchFor: null
     readonly property int swatchSize: Math.round(18 * AppPalette.scale)
 
+    Item {
+        id: _sizer
+        visible: false
+        Repeater {
+            id: _sizerRep
+            model: root.model
+            Text {
+                text: modelData !== undefined ? String(modelData) : ""
+                font.pixelSize: root.fontPixelSize
+                font.bold: root.bold
+            }
+        }
+    }
+    readonly property int _popupContentWidth: {
+        var mw = 0
+        for (var i = 0; i < _sizerRep.count; ++i) {
+            var it = _sizerRep.itemAt(i)
+            if (it && it.implicitWidth > mw) mw = it.implicitWidth
+        }
+        var leftInset = root.swatchFor ? (Tokens.spaceSm + root.swatchSize + Tokens.spaceXs) : Tokens.spaceSm
+        var rightReserve = Math.round(12 * AppPalette.scale) + 2 * Tokens.spaceXs
+        return Math.ceil(mw) + leftInset + rightReserve + Tokens.spaceSm
+    }
+
     readonly property string currentText: combo.currentText
     readonly property alias hovered: combo.hovered
     readonly property alias popup: combo.popup
@@ -160,7 +184,7 @@ Item {
                 readonly property int itemHeight: Tokens.controlHMd
 
                 y: combo.height + Tokens.spaceXxs
-                width: combo.width
+                width: Math.max(combo.width, root._popupContentWidth)
                 implicitHeight: Math.min(contentItem.implicitHeight,
                                          itemHeight * root.maxVisibleItems)
                                 + 2 * Tokens.spaceXs

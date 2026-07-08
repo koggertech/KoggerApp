@@ -13,6 +13,7 @@ Rectangle {
     property string label: ""
     property bool checked: false
     property color fillColor: AppPalette.rowRaised   // bg when nested inside another card group
+    property int bodySpacing: Tokens.spaceMd
     signal toggled(bool val)
 
     default property alias bodyData: pgroupBody.data
@@ -69,8 +70,8 @@ Rectangle {
             anchors.rightMargin: Tokens.spaceMd
             anchors.verticalCenter: parent.verticalCenter
             text: pgroup.label
-            color: AppPalette.textSecond
-            font.pixelSize: Tokens.fontMd
+            color: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+            font.pixelSize: Tokens.fontLg
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
         }
@@ -120,7 +121,7 @@ Rectangle {
         anchors.top: pgroupHeader.bottom
         width: parent.width
         clip: true
-        height: pgroup.checked ? pgroupBody.implicitHeight + 2 * Tokens.spaceSm : 0
+        height: pgroup.checked ? pgroupBody.implicitHeight + 2 * pgroup.bodySpacing : 0
         visible: bodyContainer.height > 0.5
 
         Behavior on height {
@@ -134,8 +135,8 @@ Rectangle {
             anchors.leftMargin: Tokens.spaceMd
             anchors.rightMargin: Tokens.spaceMd
             anchors.top: parent.top
-            anchors.topMargin: Tokens.spaceSm
-            spacing: Tokens.spaceXs
+            anchors.topMargin: pgroup.bodySpacing
+            spacing: pgroup.bodySpacing
         }
     }
 }

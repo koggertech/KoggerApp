@@ -2263,6 +2263,18 @@
 <context>
     <name>EchogramSettingsPanel</name>
     <message>
+        <source>Data</source>
+        <translation>Dane</translation>
+    </message>
+    <message>
+        <source>Display parameters</source>
+        <translation>Parametry wyświetlania</translation>
+    </message>
+    <message>
+        <source>Visibility</source>
+        <translation>Widoczność</translation>
+    </message>
+    <message>
         <location filename="../qml/app/EchogramSettingsPanel.qml" line="70"/>
         <source>Open TGC settings</source>
         <translation>Otwórz ustawienia TGC</translation>
