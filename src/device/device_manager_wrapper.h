@@ -53,6 +53,9 @@ public:
 
 public slots:
     Q_INVOKABLE bool isCreatedId(int id) { return getWorker()->isCreatedId(id); };
+    Q_INVOKABLE void startStreamDownload(int id);
+    Q_INVOKABLE void cancelStreamDownload(int id);
+    Q_INVOKABLE void refreshStreamList();
     void calcAverageChartLosses();
     void setProtoBinConsoled(bool state) {
         const bool changed = (protoBinConsoledState_ != state);

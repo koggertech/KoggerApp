@@ -479,6 +479,24 @@ Resp IDBinBoatStatus::parsePayload(FrameParser& proto)
     return respOk;
 }
 
+static_assert(sizeof(IDBinRecorderStatus::RecorderStatus) == 21,
+              "RecorderStatusV0 wire layout must stay 21 bytes");
+
+Resp IDBinRecorderStatus::parsePayload(FrameParser& proto)
+{
+    if (proto.ver() != RecorderStatus::getVer()) {
+        return respErrorVersion;
+    }
+
+    if (proto.readAvailable() < static_cast<int16_t>(sizeof(RecorderStatus))) {
+        return respErrorPayload;
+    }
+
+    data_ = proto.read<RecorderStatus>();
+    valid_ = true;
+    return respOk;
+}
+
 Resp IDBinDVL::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
          vel_x = proto.read<F4>();

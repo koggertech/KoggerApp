@@ -62,6 +62,224 @@ Column {
         leftPadding: Tokens.spaceXxs
     }
 
+    // ── Recorder ──────────────────────────────────────────────────────────
+    // Status snapshot + log archive with per-log batched download. Data comes from
+    // dev.recorder* (ID_RECORDER_STATUS) and deviceManagerWrapper.streamsList; download
+    // is driven by deviceManagerWrapper.startStreamDownload(id). See
+    // RecorderN/docs/Recorder-Host-Integration-Guide.md.
+    DeviceSettingsGroup {
+        id: recorderGroup
+        width: root.groupWidth; preferredWidth: root.groupWidth
+        title: qsTr("Recorder"); titlePixelSize: 13
+        stateStore: root.store; stateKey: "dev.recorder"; collapsedByDefault: false
+        visible: !!(dev && dev.isRecorder)
+
+        readonly property int recordedBytes: dev ? (dev.recorderRecordedSize64k || 0) * 65536 : 0
+        readonly property int freeBytes:     dev ? (dev.recorderFreeSpace1m || 0) * 1048576 : 0
+
+        function _cond(v)  { return [qsTr("Fine"), qsTr("Warning"), qsTr("Degraded"), qsTr("Critical")][v] || qsTr("Unknown") }
+        function _condColor(v) { return v >= 3 ? AppPalette.dangerBorder : v === 2 ? "#E0803A" : v === 1 ? "#E0A83A" : AppPalette.accentBar }
+        function _recState(v) { return [qsTr("Initializing"), qsTr("Idle"), qsTr("Recording"), qsTr("Critical"), qsTr("Critical (disabled)")][v] || qsTr("Unknown") }
+        function _degr(v) { var a = []; if (v & 1) a.push(qsTr("LogDrop")); return a.length ? a.join(", ") : qsTr("none") }
+        function _crit(v) { var a = []; if (v & 1) a.push(qsTr("StorageUnavailable")); if (v & 2) a.push(qsTr("RecordingBackendError")); return a.length ? a.join(", ") : qsTr("none") }
+        function _fmtSize(b) {
+            if (!b || b <= 0) return "0 B"
+            if (b < 1024) return b + " B"
+            if (b < 1048576) return (b / 1024).toFixed(1) + " KB"
+            if (b < 1073741824) return (b / 1048576).toFixed(1) + " MB"
+            return (b / 1073741824).toFixed(2) + " GB"
+        }
+        function _dur(s) {
+            if (!s || s <= 0) return "0s"
+            var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60
+            return (h > 0 ? h + "h " : "") + (m > 0 || h > 0 ? m + "m " : "") + sec + "s"
+        }
+
+        component StatRow: Row {
+            property string label: ""
+            property string value: ""
+            property color valueColor: AppPalette.text
+            property bool dot: false
+            width: parent ? parent.width : 0
+            height: Tokens.controlHSm ? Tokens.controlHSm : Math.round(22 * AppPalette.scale)
+            spacing: Tokens.spaceSm
+            Text {
+                text: label; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
+                width: Math.round(150 * AppPalette.scale); elide: Text.ElideRight
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            Rectangle {
+                visible: dot; width: Math.round(8 * AppPalette.scale); height: width; radius: width / 2
+                color: valueColor; anchors.verticalCenter: parent.verticalCenter
+            }
+            Text {
+                text: value; color: dot ? AppPalette.text : valueColor; font.pixelSize: Tokens.fontSm
+                font.bold: true; anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - Math.round(150 * AppPalette.scale) - parent.spacing - (dot ? Math.round(8 * AppPalette.scale) + parent.spacing : 0)
+                elide: Text.ElideRight
+            }
+        }
+
+        // Status snapshot
+        Column {
+            width: parent.width; spacing: Tokens.spaceXxs
+
+            Text {
+                visible: !(dev && dev.recorderStatusValid)
+                text: qsTr("Waiting for recorder status…")
+                color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
+            }
+
+            StatRow { label: qsTr("Condition:"); dot: true
+                      valueColor: recorderGroup._condColor(dev ? dev.recorderDeviceCondition : 0)
+                      value: recorderGroup._cond(dev ? dev.recorderDeviceCondition : 0)
+                      visible: !!(dev && dev.recorderStatusValid) }
+            StatRow { label: qsTr("State:"); value: recorderGroup._recState(dev ? dev.recorderRecordingState : 0)
+                      visible: !!(dev && dev.recorderStatusValid) }
+            StatRow { label: qsTr("Current log:"); value: dev && dev.recorderCurrentLogId ? ("#" + dev.recorderCurrentLogId) : "—"
+                      visible: !!(dev && dev.recorderStatusValid) }
+            StatRow { label: qsTr("Recorded:"); value: recorderGroup._fmtSize(recorderGroup.recordedBytes)
+                      visible: !!(dev && dev.recorderStatusValid) }
+            StatRow { label: qsTr("Free space:"); value: recorderGroup._fmtSize(recorderGroup.freeBytes)
+                      visible: !!(dev && dev.recorderStatusValid) }
+            StatRow { label: qsTr("Rec. duration:"); value: recorderGroup._dur(dev ? dev.recorderDurationSeconds : 0)
+                      visible: !!(dev && dev.recorderStatusValid) }
+            StatRow { label: qsTr("Last write:"); value: dev ? (dev.recorderSecondsSinceLastWrite + qsTr(" s ago")) : "—"
+                      visible: !!(dev && dev.recorderStatusValid) }
+            StatRow { label: qsTr("Degraded:"); value: recorderGroup._degr(dev ? dev.recorderDegradedFlags : 0)
+                      valueColor: (dev && dev.recorderDegradedFlags) ? "#E0A83A" : AppPalette.textMuted
+                      visible: !!(dev && dev.recorderStatusValid && dev.recorderDegradedFlags) }
+            StatRow { label: qsTr("Critical:"); value: recorderGroup._crit(dev ? dev.recorderCriticalFlags : 0)
+                      valueColor: AppPalette.dangerBorder
+                      visible: !!(dev && dev.recorderStatusValid && dev.recorderCriticalFlags) }
+        }
+
+        // Logs header: count + refresh
+        Row {
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
+            Text {
+                text: qsTr("Logs (%1)").arg(logList.count)
+                color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; font.bold: true
+                width: parent.width - refreshBtn.width - parent.spacing
+                anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+            }
+            DevButton {
+                id: refreshBtn
+                width: Math.round(96 * AppPalette.scale); height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                text: qsTr("Refresh")
+                onClicked: if (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) deviceManagerWrapper.refreshStreamList()
+            }
+        }
+
+        Text {
+            visible: logList.count === 0
+            width: parent.width
+            text: qsTr("No logs listed yet — tap Refresh to enumerate the recorder's archive.")
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; wrapMode: Text.WordWrap
+        }
+
+        // Log archive — bounded, scrolls internally
+        Rectangle {
+            width: parent.width
+            visible: logList.count > 0
+            readonly property int rowH: Math.round(52 * AppPalette.scale)
+            height: Math.min(logList.count * rowH, Math.round(360 * AppPalette.scale)) + 2
+            color: AppPalette.bg; radius: Tokens.radiusMd
+            border.width: Tokens.cardBorderWidth; border.color: AppPalette.border
+            clip: true
+
+            ListView {
+                id: logList
+                anchors.fill: parent; anchors.margins: 1
+                clip: true
+                model: (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) ? deviceManagerWrapper.streamsList : null
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+                delegate: Item {
+                    width: ListView.view ? ListView.view.width : 0
+                    height: Math.round(52 * AppPalette.scale)
+
+                    readonly property bool _uploading: uploadState === 3
+                    readonly property bool _done: uploadState === 1 && doneSize > 0
+                    readonly property real _pct: size > 0 ? Math.max(0, Math.min(1, doneSize / size)) : 0
+
+                    Row {
+                        id: infoRow
+                        anchors.left: parent.left; anchors.right: parent.right
+                        anchors.top: parent.top; anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
+                        anchors.topMargin: Tokens.spaceXs
+                        height: Tokens.controlHSm ? Tokens.controlHSm : Math.round(24 * AppPalette.scale)
+                        spacing: Tokens.spaceSm
+
+                        Text {
+                            text: "#" + id; color: AppPalette.text; font.pixelSize: Tokens.fontMd; font.bold: true
+                            width: Math.round(52 * AppPalette.scale); anchors.verticalCenter: parent.verticalCenter
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            text: recorderGroup._fmtSize(size); color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
+                            width: Math.round(84 * AppPalette.scale); anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Text {
+                            text: _uploading ? qsTr("Downloading… %1%").arg(Math.round(_pct * 100))
+                                             : (_done ? qsTr("Saved") : (recordState === 3 ? qsTr("Recording") : ""))
+                            color: _done ? AppPalette.accentBar : AppPalette.textMuted
+                            font.pixelSize: Tokens.fontSm
+                            width: parent.width - Math.round(52 * AppPalette.scale) - Math.round(84 * AppPalette.scale)
+                                   - dlBtn.width - 3 * parent.spacing
+                            anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+                        }
+                        DevButton {
+                            id: dlBtn
+                            width: Math.round(104 * AppPalette.scale); height: Math.round(26 * AppPalette.scale)
+                            fontPixelSize: Tokens.fontSm
+                            danger: _uploading
+                            text: _uploading ? qsTr("Cancel") : (_done ? qsTr("Re-download") : qsTr("Download"))
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: {
+                                if (typeof deviceManagerWrapper === "undefined" || !deviceManagerWrapper)
+                                    return
+                                if (_uploading)
+                                    deviceManagerWrapper.cancelStreamDownload(id)
+                                else
+                                    deviceManagerWrapper.startStreamDownload(id)
+                            }
+                        }
+                    }
+
+                    // Per-log progress bar
+                    Rectangle {
+                        anchors.left: parent.left; anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
+                        anchors.bottomMargin: Tokens.spaceXs
+                        height: Math.round(4 * AppPalette.scale); radius: height / 2
+                        color: AppPalette.trackOff
+                        visible: _uploading || _done
+                        Rectangle {
+                            height: parent.height; radius: parent.radius
+                            width: parent.width * _pct
+                            color: AppPalette.accentBar
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+                        height: 1; color: AppPalette.border; opacity: 0.5
+                        visible: index < logList.count - 1
+                    }
+                }
+            }
+        }
+
+        Text {
+            width: parent.width
+            text: qsTr("Downloads are saved to Documents/KoggerApp/recorder/.")
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs; wrapMode: Text.WordWrap
+        }
+    }
+
     // ── Эхограмма ─────────────────────────────────────────────────────────
 
     DeviceSettingsGroup {

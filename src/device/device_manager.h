@@ -36,6 +36,9 @@ public:
 public slots:
     Q_INVOKABLE bool isCreatedId(int id);
     Q_INVOKABLE StreamListModel* streamsList();
+    Q_INVOKABLE void startStreamDownload(int id);
+    Q_INVOKABLE void cancelStreamDownload(int id);
+    Q_INVOKABLE void refreshStreamList();
 
     void initStreamList();
     void frameInput(QUuid uuid, Link* link, Parsers::FrameParser frame);
@@ -193,6 +196,7 @@ private:
     uint8_t upgradeAddr_;
     QByteArray upgradeData_;
     bool loggingStarted_ = false;
+    bool autoDownloadStarted_ = false;
     LocationReader* locReader_{ nullptr };
     bool useGPS_{ false };
 

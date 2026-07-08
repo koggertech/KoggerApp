@@ -217,8 +217,20 @@ void LinkManager::openAutoConnections()
         }
     }
 
+    // Headless test hook: force-auto-connect a named serial port so an agent can
+    // drive the app against real hardware with no click. Off unless KOGGER_AUTOTEST
+    // names a port (e.g. KOGGER_AUTOTEST=COM17). Normal runs are unaffected.
+    static const QString kAutotestPort = qEnvironmentVariable("KOGGER_AUTOTEST");
+
     for (int i = 0; i < list_.size(); ++i) {
         Link* link = list_.at(i);
+
+        if (!kAutotestPort.isEmpty() &&
+            link->getLinkType() == LinkType::kLinkSerial &&
+            link->getPortName() == kAutotestPort &&
+            link->getControlType() != ControlType::kAuto) {
+            link->setControlType(ControlType::kAuto);
+        }
 
         if (!link->getConnectionStatus()) {
             bool autoConnOnce = link->getAutoConnOnce();

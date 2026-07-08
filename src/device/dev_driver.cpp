@@ -52,6 +52,7 @@ DevDriver::DevDriver(QObject *parent)
 
     regID(idNav = new IDBinNav(), &DevDriver::receivedNav);
     regID(idBoatStatus = new IDBinBoatStatus(), &DevDriver::receivedBoatStatus);
+    regID(idRecorderStatus = new IDBinRecorderStatus(), &DevDriver::receivedRecorderStatus);
     regID(idDVL = new IDBinDVL(), &DevDriver::receivedDVL);
     regID(idDVLMode = new IDBinDVLMode(), &DevDriver::receivedDVLMode);
 
@@ -783,6 +784,60 @@ void DevDriver::requestStream(int stream_id) {
     id_out.write<U4>(0xFFFFFFF);
     id_out.end();
     emit binFrameOut(id_out);
+}
+
+void DevDriver::requestStreamRange(int stream_id, quint32 start, quint32 end) {
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v1, ID_STREAM, getDevAddress());
+    id_out.write<U2>(stream_id);
+    id_out.write<U2>(0); // FLAGS
+    id_out.write<U4>(start);
+    id_out.write<U4>(end);
+    id_out.end();
+    emit binFrameOut(id_out);
+}
+
+void DevDriver::requestStreamRanges(int stream_id, QVector<quint32> ranges) {
+    if(ranges.isEmpty() || (ranges.size() % 2) != 0) { return; }
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v1, ID_STREAM, getDevAddress());
+    id_out.write<U2>(stream_id);
+    id_out.write<U2>(0); // FLAGS
+    for(int i = 0; i + 1 < ranges.size(); i += 2) {
+        id_out.write<U4>(ranges[i]);
+        id_out.write<U4>(ranges[i + 1]);
+    }
+    id_out.end();
+    emit binFrameOut(id_out);
+}
+
+void DevDriver::requestRecorderStatus() {
+    ProtoBinOut id_out;
+    id_out.create(GETTING, v0, ID_RECORDER_STATUS, getDevAddress());
+    id_out.end();
+    emit binFrameOut(id_out);
+}
+
+void DevDriver::receivedRecorderStatus(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
+    Q_UNUSED(type);
+    if (resp == respNone && ver == v0 && idRecorderStatus->isValid()) {
+        const QString s = QString("Recorder status: cond=%1 mode=%2 state=%3 log=%4 rec64k=%5 free1m=%6 dur=%7 sinceWrite=%8 degr=0x%9 crit=0x%10")
+                          .arg(idRecorderStatus->deviceCondition())
+                          .arg(idRecorderStatus->recordingMode())
+                          .arg(idRecorderStatus->recordingState())
+                          .arg(idRecorderStatus->currentLogId())
+                          .arg(idRecorderStatus->recordedSize64k())
+                          .arg(idRecorderStatus->freeSpace1m())
+                          .arg(idRecorderStatus->recordingDurationSeconds())
+                          .arg(idRecorderStatus->secondsSinceLastWrite())
+                          .arg(idRecorderStatus->degradedFlags(), 0, 16)
+                          .arg(idRecorderStatus->criticalFlags(), 0, 16);
+        qInfo("%s", qUtf8Printable(s));
+#ifndef SEPARATE_READING
+        core.consoleInfo(s);
+#endif
+        emit recorderStatusChanged();
+    }
 }
 
 void DevDriver::sendUpdateFW(QByteArray update_data) {
@@ -1670,6 +1725,16 @@ void DevDriver::process() {
                     m_state.connect = true;
                 }
 
+                if(isRecorder() && (curr_time - lastRecorderStatusReq_) >= 3000) {
+                    lastRecorderStatusReq_ = curr_time;
+                    requestRecorderStatus();
+                }
+
+                if(isRecorder() && !streamListRequested_) {
+                    streamListRequested_ = true;
+                    requestStreamList();
+                }
+
                 if(m_state.in_boot) {
                     m_state.in_boot = false;
                     m_state.in_update = true;
@@ -1700,6 +1765,7 @@ void DevDriver::process() {
             }
         } else {
             restartState();
+            streamListRequested_ = false;
             idMark->setMark();
             idVersion->requestAll();
             //qDebug() << "Reset state";

@@ -83,6 +83,33 @@ void DeviceManagerWrapper::initStreamList()
 #endif
 }
 
+void DeviceManagerWrapper::startStreamDownload(int id)
+{
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(workerObject_.get(), "startStreamDownload", Qt::QueuedConnection, Q_ARG(int, id));
+#else
+    workerObject_->startStreamDownload(id);
+#endif
+}
+
+void DeviceManagerWrapper::cancelStreamDownload(int id)
+{
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(workerObject_.get(), "cancelStreamDownload", Qt::QueuedConnection, Q_ARG(int, id));
+#else
+    workerObject_->cancelStreamDownload(id);
+#endif
+}
+
+void DeviceManagerWrapper::refreshStreamList()
+{
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(workerObject_.get(), "refreshStreamList", Qt::QueuedConnection);
+#else
+    workerObject_->refreshStreamList();
+#endif
+}
+
 void DeviceManagerWrapper::calcAverageChartLosses()
 {
     averageChartLosses_ = std::max(0, std::min(100, 100 - getWorker()->calcAverageChartLosses()));

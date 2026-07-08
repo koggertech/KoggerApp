@@ -9,6 +9,8 @@
 #include "stream_list_model.h"
 #include "QTime"
 #include "QTimer"
+#include <QString>
+#include <QVector>
 
 
 using namespace Parsers;
@@ -64,33 +66,33 @@ public:
             uint32_t _fillFragments = 0;
         } _counter;
         int modelIndex = -1;
+
+        // download: contiguous-frontier reassembly (see Recorder-Host-Integration-Guide.md)
+        QMap<uint32_t, QByteArray> recvFrames; // stored KP2 frames keyed by stream offset
+        uint32_t frontier = 0;                 // next byte not yet received (a frame boundary)
+        uint32_t actualFileSize = 0;           // completion target from the retrieval diagnostic
+        bool     eof = false;
+        bool     requestInFlight = false;
+        uint64_t lastReqAt = 0;
+        int      noProgressRounds = 0;
+        bool     roundDone = false;            // set when ALL requested ranges have terminated
+        int      expectedDiags = 0;            // diagnostics expected this round (= ranges requested)
+        int      diagsThisRound = 0;           // diagnostics received since the last request
+        int      lastRecvCount = -1;           // recvFrames.size() at last request (progress metric)
+        QString  savedFilePath;
     };
 
     void append(FrameParser* frame) {
         if(frame->isStream()) {
-            uint16_t current_id = frame->streamId();
-
-            if(_lastStreamId != current_id) {
-                if(_streams.contains(current_id)) {
-                    _lastStreamId = current_id;
-                    _lastStream = &_streams[current_id];
-                }
-
-                if(_lastStreamId != current_id) {
-                    updateStream(current_id);
-                    _lastStream = getStream(current_id);
-                    _lastStreamId = current_id;
-                }
-            }
-
-            insert(_lastStream, frame->frame(), frame->streamOffset(), frame->frameLen());
-        } else {
-             _streams[0].data.append((char*)frame->frame(), frame->frameLen());
+            downloadFrame(frame->streamId(), frame->streamOffset(),
+                          frame->frame(), frame->frameLen());
         }
     }
 
     void parse(FrameParser* frame) {
-        if(frame->id() == ID_STREAM && frame->type() == CONTENT && frame->ver() == v0 && !frame->resp()) {
+        if(frame->id() != ID_STREAM || frame->type() != CONTENT) { return; }
+
+        if(frame->ver() == v0 && !frame->resp()) {
             int item_cnt = frame->payloadLen()/12;
             while(item_cnt--) {
                 int id = frame->read<U2>();
@@ -103,19 +105,19 @@ public:
 
                 if(stream->size < size) { stream->size = size; }
                 stream->unixt = unixt;
-
                 stream->recordingState = (RecordingState)(flags & 0x3);
 
                 updateStream(id);
-
                 _isListChenged = true;
             }
+        } else if(frame->ver() == v1) {
+            handleDiagnostic(frame);
         }
     }
 
     void updateStream(int id) {
         _streams[id].id = id;
-        Q_EMIT _modelList.appendEvent(_streams[id].id, _streams[id].size, _streams[id].data.size(), "", _streams[id].recordingState, _streams[id].uploadingState);
+        Q_EMIT _modelList.appendEvent(_streams[id].id, _streams[id].size, _streams[id].frontier, "", _streams[id].recordingState, _streams[id].uploadingState);
     }
 
     Stream* getStream(int id) {
@@ -142,6 +144,13 @@ public:
         return false;
     }
 
+    void startDownload(int id);
+    void cancelDownload(int id);
+
+signals:
+    void requestRange(int id, quint32 start, quint32 end);
+    void requestRanges(int id, QVector<quint32> ranges);   // flat [s0,e0,s1,e1,...], <=16 pairs
+
 protected:
     QMap<int, Stream> _streams;
     uint16_t _lastStreamId = 0xFFFF;
@@ -152,6 +161,7 @@ protected:
     uint64_t _timeLastGapsUpdate = 0;
     uint64_t _timeLastGapsInsert = 0;
     bool _isInserting = false;
+    int _activeDownloadId = -1;
 
 
 
@@ -232,6 +242,16 @@ protected:
 
     void debugAddGap(uint32_t start, uint32_t size);
     void debugSearchGap(uint32_t start, uint32_t size);
+
+    void downloadFrame(uint16_t id, uint32_t offset, uint8_t* bytes, uint16_t len);
+    void handleDiagnostic(FrameParser* frame);
+    void completeDownload(Stream* stream, bool ok);
+    void saveStream(Stream* stream);
+    QVector<quint32> computeGaps(Stream* stream) const;   // flat [s0,e0,...] missing ranges, tail last
+
+    static constexpr uint64_t kRequestIdleMs = 1500;
+    static constexpr int kMaxNoProgressRounds = 3;
+    static constexpr int kMaxRangesPerRequest = 16;       // device FRAGMENTS_NBR
 
 protected slots:
     void process();

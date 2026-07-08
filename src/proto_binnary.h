@@ -81,6 +81,7 @@ enum ID : uint16_t {
     ID_FLASH = 0x23,
     ID_BOOT = 0x24,
     ID_UPDATE = 0x25,
+    ID_RECORDER_STATUS = 0x26,
 
     ID_SERVO_CONTROL = 0x27,
     ID_PWM_ROUTE     = 0x28,

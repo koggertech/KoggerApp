@@ -129,14 +129,21 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
     if (frame.isComplete()) {
 
-// #if !defined(Q_OS_ANDROID)
-//         if (frame.isStream())
-//             streamList_.append(&frame);
-//         if (frame.id() == ID_STREAM)
-//             streamList_.parse(&frame);
-//         if (streamList_.isListChenged())
-//             emit streamChanged();
-// #endif
+#if !defined(Q_OS_ANDROID)
+        if (frame.isStream())
+            streamList_.append(&frame);
+        if (frame.id() == ID_STREAM)
+            streamList_.parse(&frame);
+        if (streamList_.isListChenged()) {
+            emit streamChanged();
+            qInfo("stream-list: %d logs", streamList_.streamsList()->size());
+            static const QString kAutoDl = qEnvironmentVariable("KOGGER_AUTODOWNLOAD");
+            if (!kAutoDl.isEmpty() && !autoDownloadStarted_) {
+                autoDownloadStarted_ = true;
+                startStreamDownload(kAutoDl.toInt());
+            }
+        }
+#endif
 
         if (link != nullptr) {
             if (frame.isProxy() || frame.completeAsKBP()) {
@@ -697,6 +704,32 @@ void DeviceManager::onSendRequestAll(QUuid uuid)
 StreamListModel* DeviceManager::streamsList()
 {
     return streamList_.streamsList();
+}
+
+void DeviceManager::startStreamDownload(int id)
+{
+    QList<DevQProperty*> recs = getDevList(BoardRecorderMini);
+    if (recs.isEmpty()) {
+        qInfo("startStreamDownload: no recorder device connected");
+        return;
+    }
+    DevQProperty* rec = recs.first();
+    qRegisterMetaType<QVector<quint32>>("QVector<quint32>");
+    connect(&streamList_, &StreamList::requestRanges, rec, &DevDriver::requestStreamRanges, Qt::UniqueConnection);
+    streamList_.startDownload(id);
+}
+
+void DeviceManager::cancelStreamDownload(int id)
+{
+    streamList_.cancelDownload(id);
+}
+
+void DeviceManager::refreshStreamList()
+{
+    QList<DevQProperty*> recs = getDevList(BoardRecorderMini);
+    if (!recs.isEmpty()) {
+        recs.first()->requestStreamList();
+    }
 }
 
 void DeviceManager::readyReadProxy(Link* link)
