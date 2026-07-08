@@ -4,7 +4,8 @@ import QtQuick 2.15
 QtObject {
     id: palette
 
-    readonly property bool isDark: !theme || theme.themeID < 2 || theme.themeID > 3
+    readonly property bool isDark: !theme
+        || (0.299 * theme.menuBackColor.r + 0.587 * theme.menuBackColor.g + 0.114 * theme.menuBackColor.b) < 0.5
 
     // ── Scaling ───────────────────────────────────────────────────────────────
     // Multiply hardcoded pixel values by scale to adapt to DPI / user preference.
@@ -100,14 +101,14 @@ QtObject {
     readonly property color knob:           theme ? theme.sliderHandleColor       : (isDark ? "#E2E8F0" : "#FFFFFF")
     readonly property color knobBorder:     "#00000022"
 
-    // ── Accent (design constant – blue; shifts light/dark only) ───────────────
-    readonly property color accentBg:       isDark ? "#1E3A8A" : "#EFF6FF"
-    readonly property color accentBgStrong: isDark ? "#1E3A8A" : "#93C5FD"
-    readonly property color accentBorder:   isDark ? "#93C5FD" : "#60A5FA"
-    readonly property color accentBar:      isDark ? "#60A5FA" : "#3B82F6"
-
+    // ── Accent (single blue, shared with toggle "on" — same on light/dark) ────
     readonly property color toggleOn:       "#4E82C9"
     readonly property color toggleOnBorder: "#6FA0DC"
+
+    readonly property color accentBg:       toggleOn
+    readonly property color accentBgStrong: toggleOn
+    readonly property color accentBorder:   toggleOnBorder
+    readonly property color accentBar:      isDark ? "#60A5FA" : "#3B82F6"
 
     // ── Danger ────────────────────────────────────────────────────────────────
     readonly property color dangerBg:     isDark ? "#2A1313" : "#FEF2F2"
