@@ -16,6 +16,7 @@ Column {
 
     readonly property int instruments: theme ? theme.instrumentsGrade : 0
     readonly property real groupWidth: Math.max(0, width)
+    readonly property color _bright: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
 
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
@@ -610,7 +611,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Dataset")
-        description: qsTr("Black-stripe smoothing and sonar mount-point offset.")
+        description: qsTr("Black-stripe filtering and sonar mount-point offset.")
         stateStore: root.store
         stateKey: "app.dataset"
         collapsedByDefault: true
@@ -628,11 +629,16 @@ Column {
         ParamCard {
             id: fixBlackStripesCheckButton
             label: qsTr("FBS forward / backward:")
+            labelColor: root._bright
+            labelPixelSize: Tokens.fontLg
+            toolTipText: qsTr("Fills black stripes in the echogram by interpolating the given number of steps forward / backward.")
             slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
             onToggled: function(v) { core.setFixBlackStripesState(v) }
 
             KSpinBox {
                 id: fixBlackStripesForwardStepsSpinBox
+                fontPixelSize: Tokens.fontLg
+                textColor: root._bright
                 width: Math.round(93 * AppPalette.scale)
                 height: Tokens.controlHMd
                 anchors.left: parent.left
@@ -643,6 +649,8 @@ Column {
 
             KSpinBox {
                 id: fixBlackStripesBackwardStepsSpinBox
+                fontPixelSize: Tokens.fontLg
+                textColor: root._bright
                 width: Math.round(93 * AppPalette.scale)
                 height: Tokens.controlHMd
                 anchors.left: fixBlackStripesForwardStepsSpinBox.right
@@ -661,6 +669,9 @@ Column {
         ParamCard {
             id: sonarOffsetCheckButton
             label: qsTr("S.offset XY, mm:")
+            labelColor: root._bright
+            labelPixelSize: Tokens.fontLg
+            toolTipText: qsTr("Sonar mount-point offset along the X / Y axes, in millimeters.")
             slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
             onToggled: function(v) {
                 if (v) dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, 0)
@@ -670,6 +681,8 @@ Column {
 
             KSpinBox {
                 id: sonarOffsetValueX
+                fontPixelSize: Tokens.fontLg
+                textColor: root._bright
                 width: Math.round(93 * AppPalette.scale)
                 height: Tokens.controlHMd
                 anchors.left: parent.left
@@ -683,6 +696,8 @@ Column {
 
             KSpinBox {
                 id: sonarOffsetValueY
+                fontPixelSize: Tokens.fontLg
+                textColor: root._bright
                 width: Math.round(93 * AppPalette.scale)
                 height: Tokens.controlHMd
                 anchors.left: sonarOffsetValueX.right
@@ -703,6 +718,9 @@ Column {
         ParamCard {
             id: zeroingPosButton
             label: qsTr("Pos zeroing")
+            labelColor: root._bright
+            labelPixelSize: Tokens.fontLg
+            toolTipText: qsTr("Zeroes position coordinates relative to the start point.")
             onToggled: function(v) { core.setPosZeroing(v) }
         }
         Settings { category: "main/dataset"; property alias zeroingPosButtonCheched: zeroingPosButton.checked }
@@ -710,6 +728,9 @@ Column {
         ParamCard {
             id: zeroingBottomTrackButton
             label: qsTr("Bottom track zeroing")
+            labelColor: root._bright
+            labelPixelSize: Tokens.fontLg
+            toolTipText: qsTr("Zeroes the bottom-track depth reference.")
             onToggled: function(v) { core.setBottomTrackZeroing(v) }
         }
         Settings { category: "main/dataset"; property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
@@ -717,6 +738,7 @@ Column {
         NavButton {
             visible: instruments >= 1
             width: parent.width
+            height: Math.round(38 * AppPalette.scale)
             text: qsTr("TGC")
             onClicked: if (root.store) root.store.openTgcSettings()
         }

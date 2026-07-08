@@ -52,6 +52,22 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Fills black stripes in the echogram by interpolating the given number of steps forward / backward.</source>
+        <translation>Wypełnia czarne pasy na echogramie, interpolując zadaną liczbę kroków w przód / w tył.</translation>
+    </message>
+    <message>
+        <source>Sonar mount-point offset along the X / Y axes, in millimeters.</source>
+        <translation>Przesunięcie punktu montażu sonaru wzdłuż osi X / Y, w milimetrach.</translation>
+    </message>
+    <message>
+        <source>Zeroes position coordinates relative to the start point.</source>
+        <translation>Zeruje współrzędne pozycji względem punktu początkowego.</translation>
+    </message>
+    <message>
+        <source>Zeroes the bottom-track depth reference.</source>
+        <translation>Zeruje odniesienie głębokości toru dna.</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1769"/>
         <source>Information panel</source>
         <translation>Panel informacyjny</translation>
@@ -165,8 +181,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="618"/>
-        <source>Black-stripe smoothing and sonar mount-point offset.</source>
-        <translation>Wygładzanie czarnych pasów i przesunięcie punktu montażu sonaru.</translation>
+        <source>Black-stripe filtering and sonar mount-point offset.</source>
+        <translation>Filtrowanie czarnych pasów i przesunięcie punktu montażu sonaru.</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="736"/>
@@ -4771,6 +4787,14 @@
 <context>
     <name>TgcSettingsTab</name>
     <message>
+        <source>Gain</source>
+        <translation>Wzmocnienie</translation>
+    </message>
+    <message>
+        <source>Defaults</source>
+        <translation>Domyślne</translation>
+    </message>
+    <message>
         <location filename="../qml/app/TgcSettingsTab.qml" line="29"/>
         <source>Time Gain Compensation — image brightness adjustment by depth.</source>
         <translation>Time Gain Compensation — regulacja jasności obrazu w zależności od głębokości.</translation>
@@ -4778,12 +4802,12 @@
     <message>
         <location filename="../qml/app/TgcSettingsTab.qml" line="40"/>
         <source>Near gain:</source>
-        <translation>Wzm. bliski:</translation>
+        <translation>Bliski:</translation>
     </message>
     <message>
         <location filename="../qml/app/TgcSettingsTab.qml" line="76"/>
         <source>Far gain:</source>
-        <translation>Wzm. daleki:</translation>
+        <translation>Daleki:</translation>
     </message>
     <message>
         <location filename="../qml/app/TgcSettingsTab.qml" line="174"/>

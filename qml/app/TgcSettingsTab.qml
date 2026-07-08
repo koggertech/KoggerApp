@@ -34,11 +34,38 @@ Column {
     }
 
     Row {
+        width: parent.width
+        spacing: Tokens.spaceMd
+
+        Text {
+            id: gainHeader
+            text: qsTr("Gain")
+            color: AppPalette.text
+            font.pixelSize: Tokens.fontLg
+            font.bold: true
+            width: parent.width - gainResetBtn.width - Tokens.spaceMd
+            elide: Text.ElideRight
+            verticalAlignment: Text.AlignVCenter
+            height: gainResetBtn.height
+        }
+
+        KButton {
+            id: gainResetBtn
+            text: qsTr("Defaults")
+            onClicked: {
+                if (!page.store) return
+                page.store.tgcGainNear = 100
+                page.store.tgcGainFar = 100
+            }
+        }
+    }
+
+    Row {
         width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
 
         Text {
             text: qsTr("Near gain:")
-            color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd
+            color: AppPalette.textSecond; font.pixelSize: Tokens.fontLg
             width: page.labelW
             anchors.verticalCenter: parent.verticalCenter
             elide: Text.ElideRight
@@ -65,7 +92,7 @@ Column {
             horizontalAlignment: Text.AlignRight
             anchors.verticalCenter: parent.verticalCenter
             text: Math.round(page.gainNear) + "%"
-            color: AppPalette.text; font.pixelSize: Tokens.fontMd
+            color: AppPalette.text; font.pixelSize: Tokens.fontLg
         }
     }
 
@@ -74,7 +101,7 @@ Column {
 
         Text {
             text: qsTr("Far gain:")
-            color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd
+            color: AppPalette.textSecond; font.pixelSize: Tokens.fontLg
             width: page.labelW
             anchors.verticalCenter: parent.verticalCenter
             elide: Text.ElideRight
@@ -101,7 +128,7 @@ Column {
             horizontalAlignment: Text.AlignRight
             anchors.verticalCenter: parent.verticalCenter
             text: Math.round(page.gainFar) + "%"
-            color: AppPalette.text; font.pixelSize: Tokens.fontMd
+            color: AppPalette.text; font.pixelSize: Tokens.fontLg
         }
     }
 
@@ -162,8 +189,8 @@ Column {
 
             ctx.fillStyle = AppPalette.text
             ctx.globalAlpha = 0.6
-            ctx.font = "10px sans-serif"
-            ctx.fillText("100%", 4, Math.max(y100 - 2, 10))
+            ctx.font = Math.round(14 * AppPalette.scale) + "px sans-serif"
+            ctx.fillText("100%", 4, Math.max(y100 - 2, 14))
             ctx.globalAlpha = 1.0
         }
     }

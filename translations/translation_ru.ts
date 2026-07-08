@@ -52,6 +52,22 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Fills black stripes in the echogram by interpolating the given number of steps forward / backward.</source>
+        <translation>Заполняет чёрные полосы на эхограмме, интерполируя заданное число шагов вперёд / назад.</translation>
+    </message>
+    <message>
+        <source>Sonar mount-point offset along the X / Y axes, in millimeters.</source>
+        <translation>Смещение точки крепления сонара по осям X / Y, в миллиметрах.</translation>
+    </message>
+    <message>
+        <source>Zeroes position coordinates relative to the start point.</source>
+        <translation>Обнуляет координаты позиции относительно начальной точки.</translation>
+    </message>
+    <message>
+        <source>Zeroes the bottom-track depth reference.</source>
+        <translation>Обнуляет отсчёт глубины трека дна.</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1769"/>
         <source>Information panel</source>
         <translation>Информационная плашка</translation>
@@ -165,8 +181,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="618"/>
-        <source>Black-stripe smoothing and sonar mount-point offset.</source>
-        <translation>Сглаживание чёрных полос и смещение точки крепления сонара.</translation>
+        <source>Black-stripe filtering and sonar mount-point offset.</source>
+        <translation>Фильтр чёрных полос и смещение точки крепления сонара.</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="736"/>
@@ -787,7 +803,7 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="668"/>
         <source>S.offset XY, mm:</source>
-        <translation>Смещение сонара XY, мм:</translation>
+        <translation>Смещение XY, мм:</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="957"/>
@@ -4774,12 +4790,20 @@
     <message>
         <location filename="../qml/app/TgcSettingsTab.qml" line="40"/>
         <source>Near gain:</source>
-        <translation>Ближний КУ:</translation>
+        <translation>Ближний:</translation>
     </message>
     <message>
         <location filename="../qml/app/TgcSettingsTab.qml" line="76"/>
         <source>Far gain:</source>
-        <translation>Дальний КУ:</translation>
+        <translation>Дальний:</translation>
+    </message>
+    <message>
+        <source>Gain</source>
+        <translation>Коэффициент усиления</translation>
+    </message>
+    <message>
+        <source>Defaults</source>
+        <translation>По умолчанию</translation>
     </message>
     <message>
         <location filename="../qml/app/TgcSettingsTab.qml" line="174"/>

@@ -21,6 +21,7 @@ Rectangle {
     property color fillColor: AppPalette.rowRaised   // bg when nested inside a card group
     property color labelColor: AppPalette.textSecond
     property int labelPixelSize: Tokens.fontMd
+    property string toolTipText: ""
     signal toggled(bool val)
 
     default property alias contentData: pcardSlot.data
@@ -87,6 +88,8 @@ Rectangle {
         text: pcard.label
         color: pcard.labelColor
         font.pixelSize: pcard.labelPixelSize
+        fontSizeMode: Text.HorizontalFit
+        minimumPixelSize: Tokens.fontSm
         elide: Text.ElideRight
         verticalAlignment: Text.AlignVCenter
     }
@@ -132,4 +135,10 @@ Rectangle {
     }
 
     KFocusRing { id: focusRing }
+
+    KToolTip {
+        text: pcard.toolTipText
+        targetItem: pcard
+        shown: pcard._hovered && pcard.toolTipText.length > 0
+    }
 }
