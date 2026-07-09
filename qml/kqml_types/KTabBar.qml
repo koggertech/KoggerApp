@@ -214,7 +214,9 @@ Item {
                         anchors.centerIn: parent
                         text: tabButton.text
                         color: selected ? AppPalette.accentText
-                               : (tabButton.optionIndex === tabMouseArea.hoverIndex ? AppPalette.text : AppPalette.textSecond)
+                               : (tabButton.optionIndex === tabMouseArea.hoverIndex
+                                  ? AppPalette.textStrong
+                                  : Qt.rgba(AppPalette.textStrong.r, AppPalette.textStrong.g, AppPalette.textStrong.b, 0.78))
                         font.pixelSize: root.fontPixelSize
                         font.bold: true
                         elide: Text.ElideRight

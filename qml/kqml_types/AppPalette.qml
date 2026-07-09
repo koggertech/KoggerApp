@@ -91,6 +91,7 @@ QtObject {
 
     // ── Text ──────────────────────────────────────────────────────────────────
     readonly property color text:       theme ? theme.textColor : (isDark ? "#E2E8F0" : "#0F172A")
+    readonly property color textStrong: isDark ? "#FFFFFF" : text
     readonly property color textSecond: theme
         ? Qt.rgba(theme.textColor.r, theme.textColor.g, theme.textColor.b, 0.72)
         : (isDark ? "#CBD5E1" : "#334155")

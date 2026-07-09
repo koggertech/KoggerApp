@@ -19,7 +19,7 @@ Button {
     property color dangerBg: AppPalette.dangerBg
     property color dangerHoverBg: AppPalette.dangerHover
     property color dangerBorder: AppPalette.dangerBorder
-    property color textColor: danger ? AppPalette.dangerText : AppPalette.text
+    property color textColor: danger ? AppPalette.dangerText : AppPalette.textStrong
     property real hoverWhiteness: 0.08
 
     property bool _tipSuppressed: false

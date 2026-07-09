@@ -322,8 +322,8 @@ public:
             _disabledBackColor = new QColor(38, 30, 20);
             _hoveredBackColor = new QColor(74, 59, 39);
         } else if(theme_id == 7) {
-            _textColor = new QColor(147, 161, 161);
-            _textSolidColor = new QColor(147, 161, 161);
+            _textColor = new QColor(219, 228, 228);
+            _textSolidColor = new QColor(219, 228, 228);
             _menuBackColor = new QColor(0, 43, 54, 246);
             _controlBackColor = new QColor(7, 54, 66);
             _controlBorderColor = new QColor(88, 110, 117);

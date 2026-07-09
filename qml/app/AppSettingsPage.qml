@@ -386,7 +386,7 @@ Column {
                         Text {
                             anchors.centerIn: parent
                             text: appThemeHolder.names[index]
-                            color: themeCell.sel ? AppPalette.accentText : AppPalette.text
+                            color: themeCell.sel ? AppPalette.accentText : AppPalette.textStrong
                             font.pixelSize: Tokens.fontBase; font.bold: true
                             elide: Text.ElideRight
                         }
@@ -2372,7 +2372,7 @@ Column {
                                 anchors.rightMargin: Tokens.spaceMd
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: modelData.name
-                                color: AppPalette.text
+                                color: providerRow.isSelected ? AppPalette.accentText : AppPalette.textStrong
                                 font.pixelSize: Tokens.fontMd
                                 elide: Text.ElideRight
                             }
@@ -2381,7 +2381,9 @@ Column {
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: modelData.layer_type
-                                color: AppPalette.textMuted
+                                color: providerRow.isSelected
+                                       ? Qt.rgba(AppPalette.accentText.r, AppPalette.accentText.g, AppPalette.accentText.b, 0.82)
+                                       : AppPalette.textSecond
                                 font.pixelSize: Tokens.fontSm
                             }
                         }
@@ -2400,7 +2402,9 @@ Column {
                                               : d.toLocaleDateString(Qt.locale(), Locale.ShortFormat)
                                 return qsTr("Cache since %1  •  %2 MB").arg(dateStr).arg(mb)
                             }
-                            color: AppPalette.textMuted
+                            color: providerRow.isSelected
+                                   ? Qt.rgba(AppPalette.accentText.r, AppPalette.accentText.g, AppPalette.accentText.b, 0.82)
+                                   : AppPalette.textMuted
                             font.pixelSize: Tokens.fontXs
                             elide: Text.ElideRight
                         }
