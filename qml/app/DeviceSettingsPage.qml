@@ -74,8 +74,10 @@ Column {
         stateStore: root.store; stateKey: "dev.recorder"; collapsedByDefault: false
         visible: !!(dev && dev.isRecorder)
 
-        readonly property int recordedBytes: dev ? (dev.recorderRecordedSize64k || 0) * 65536 : 0
-        readonly property int freeBytes:     dev ? (dev.recorderFreeSpace1m || 0) * 1048576 : 0
+        // real, not int: free/recorded bytes exceed 2^31 (QML int is 32-bit) — e.g.
+        // free1m 62642 * 1 MiB ≈ 61 GB would overflow and wrap to ~1.2 GB.
+        readonly property real recordedBytes: dev ? (dev.recorderRecordedSize64k || 0) * 65536.0 : 0
+        readonly property real freeBytes:     dev ? (dev.recorderFreeSpace1m || 0) * 1048576.0 : 0
 
         function _cond(v)  { return [qsTr("Fine"), qsTr("Warning"), qsTr("Degraded"), qsTr("Critical")][v] || qsTr("Unknown") }
         function _condColor(v) { return v >= 3 ? AppPalette.dangerBorder : v === 2 ? "#E0803A" : v === 1 ? "#E0A83A" : AppPalette.accentBar }
@@ -144,7 +146,11 @@ Column {
                       visible: !!(dev && dev.recorderStatusValid) }
             StatRow { label: qsTr("Rec. duration:"); value: recorderGroup._dur(dev ? dev.recorderDurationSeconds : 0)
                       visible: !!(dev && dev.recorderStatusValid) }
-            StatRow { label: qsTr("Last write:"); value: dev ? (dev.recorderSecondsSinceLastWrite + qsTr(" s ago")) : "—"
+            StatRow { label: qsTr("Last write:")
+                      // seconds_since_last_write reads 0 before any write; show "—" until
+                      // the current log has actually recorded something.
+                      value: (dev && (dev.recorderRecordedSize64k > 0 || dev.recorderDurationSeconds > 0))
+                             ? (dev.recorderSecondsSinceLastWrite + qsTr(" s ago")) : "—"
                       visible: !!(dev && dev.recorderStatusValid) }
             StatRow { label: qsTr("Degraded:"); value: recorderGroup._degr(dev ? dev.recorderDegradedFlags : 0)
                       valueColor: (dev && dev.recorderDegradedFlags) ? "#E0A83A" : AppPalette.textMuted
