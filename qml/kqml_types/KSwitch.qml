@@ -135,5 +135,6 @@ Switch {
         text: control.toolTipText
         targetItem: control
         shown: control.hovered && control.enabled
+               && control.toolTipText.length > 0 && control.toolTipText !== control.text
     }
 }

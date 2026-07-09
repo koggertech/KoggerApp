@@ -1219,7 +1219,7 @@ Item {
         fillPressedColor: root.buttonPressedColor
         borderColor: root.buttonBorderColor
         borderHoverColor: root.buttonHoverBorderColor
-        toolTipText: qsTr("Settings")
+        toolTipText: qsTr("Open settings")
 
         onClicked: {
             if (!root.showToggleButton)

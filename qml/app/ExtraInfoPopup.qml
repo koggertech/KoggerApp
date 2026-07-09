@@ -102,21 +102,21 @@ BasePanePopup {
     }
 
     component Cap: Text {
-        color: AppPalette.textMuted
-        font.pixelSize: Math.round(11 * root._s)
+        color: AppPalette.textStrong
+        font.pixelSize: Math.round(13 * root._s)
         Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
     }
 
     component Val: Text {
-        color: AppPalette.text
-        font.pixelSize: Math.round(11 * root._s)
+        color: AppPalette.textStrong
+        font.pixelSize: Math.round(13 * root._s)
         font.bold: true
         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
     }
 
     component Hdr: Text {
-        color: AppPalette.textSecond
-        font.pixelSize: Math.round(10 * root._s)
+        color: AppPalette.textStrong
+        font.pixelSize: Math.round(12 * root._s)
         font.bold: true
         Layout.columnSpan: 2
         Layout.fillWidth: true
@@ -142,7 +142,6 @@ BasePanePopup {
             fillPressedColor: AppPalette.bgDeep
             borderColor: AppPalette.border
             borderHoverColor: AppPalette.borderHover
-            toolTipText: qsTr("Close")
             onClicked: if (root.store) root.store.extraInfoVisible = false
         }
 

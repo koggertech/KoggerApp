@@ -109,7 +109,6 @@ BasePanePopup {
                 height: root._controlH
                 iconSource: "qrc:/icons/ui/x.svg"
                 iconTintColor: AppPalette.text
-                toolTipText: qsTr("Close")
                 fillColor:        AppPalette.card
                 fillHoverColor:   AppPalette.cardHover
                 fillPressedColor: AppPalette.bgDeep

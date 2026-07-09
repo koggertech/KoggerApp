@@ -14,6 +14,7 @@ Rectangle {
     property bool checked: false
     property color fillColor: AppPalette.rowRaised   // bg when nested inside another card group
     property int bodySpacing: Tokens.spaceMd
+    property string toolTipText: ""
     signal toggled(bool val)
 
     default property alias bodyData: pgroupBody.data
@@ -138,5 +139,11 @@ Rectangle {
             anchors.topMargin: pgroup.bodySpacing
             spacing: pgroup.bodySpacing
         }
+    }
+
+    KToolTip {
+        text: pgroup.toolTipText
+        targetItem: pgroup
+        shown: pgroup._hovered && pgroup.toolTipText.length > 0
     }
 }

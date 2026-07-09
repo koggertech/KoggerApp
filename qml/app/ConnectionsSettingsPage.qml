@@ -21,6 +21,7 @@ Column {
         stateStore: root.store
         stateKey: "app.connections"
         collapsedByDefault: false
+        scrollIntoViewOnExpand: false
         contentSpacing: Tokens.spaceMd
 
         headerActions: KCircleIconButton {

@@ -24,6 +24,7 @@ Item {
     property bool confirmed: true
     property bool showAccentBar: true
     property bool uniformBody: false
+    property bool scrollIntoViewOnExpand: true
     default property alias contentData: contentColumn.data
     property alias headerActions: headerActionsRow.data
     readonly property int _headerH: Math.round(36 * AppPalette.scale)
@@ -64,6 +65,14 @@ Item {
     }
 
     property bool _stateReady: false
+    property bool _userExpandToggle: false
+
+    function _userToggleExpanded() {
+        if (!root.collapsible || !root.expandable)
+            return
+        root._userExpandToggle = true
+        root.expanded = !root.expanded
+    }
 
     width: preferredWidth
     implicitWidth: preferredWidth
@@ -105,12 +114,16 @@ Item {
                 stateStore.setSettingsGroupExpanded(key, expanded)
         }
         if (expanded) {
-            _animateExpandScroll(deltaAbove)   // one pass: expand + scroll animate together
-            scrollIntoViewTimer.restart()      // safety net: correct any residual after settle
+            if (root._userExpandToggle && root.scrollIntoViewOnExpand) {
+                _animateExpandScroll(deltaAbove)
+                scrollIntoViewTimer.restart()
+            }
         } else {
             scrollIntoViewTimer.stop()
-            _animateCollapseScroll()
+            if (root._userExpandToggle)
+                _animateCollapseScroll()
         }
+        root._userExpandToggle = false
     }
 
     Connections {
@@ -386,9 +399,9 @@ Item {
             opacity: root._headerFade   // fade out as the group scrolls past the top
 
             activeFocusOnTab: root.collapsible
-            Keys.onReturnPressed: if (root.collapsible && root.expandable) root.expanded = !root.expanded
-            Keys.onEnterPressed:  if (root.collapsible && root.expandable) root.expanded = !root.expanded
-            Keys.onSpacePressed:  if (root.collapsible && root.expandable) root.expanded = !root.expanded
+            Keys.onReturnPressed: root._userToggleExpanded()
+            Keys.onEnterPressed:  root._userToggleExpanded()
+            Keys.onSpacePressed:  root._userToggleExpanded()
 
             Rectangle {
                 anchors.fill: parent
@@ -444,11 +457,11 @@ Item {
             Row {
                 id: headerTitleRow
                 anchors.fill: parent
-                anchors.leftMargin: Tokens.spaceXl
+                anchors.leftMargin: root.showAccentBar ? Tokens.spaceXl : Tokens.spaceMd
                 // Reserve room on the right for the header action buttons so the title never runs under them.
                 anchors.rightMargin: Tokens.spaceLg
                                      + (headerActionsRow.width > 0 ? headerActionsRow.width + Tokens.spaceMd : 0)
-                spacing: Tokens.spaceMd
+                spacing: root.showAccentBar ? Tokens.spaceMd : Tokens.spaceSm
 
                 DisclosureIndicator {
                     anchors.verticalCenter: parent.verticalCenter
@@ -480,7 +493,7 @@ Item {
                 onClicked: {
                     if (root.collapsible && root.expandable) {
                         headerRow.forceActiveFocus()
-                        root.expanded = !root.expanded
+                        root._userToggleExpanded()
                     }
                 }
             }

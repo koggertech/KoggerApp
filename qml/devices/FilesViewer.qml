@@ -308,10 +308,16 @@ Column {
             model: Math.min(recentOpenedFiles.length, 3)
 
             Row {
+                id: recentRow
                 width: parent.width
                 spacing: Tokens.spaceXs
 
                 property string filePath: recentOpenedFiles[index] || ""
+                readonly property string fileName: {
+                    var d = filesViewer.urlDisplay(filePath)
+                    var i = Math.max(d.lastIndexOf("/"), d.lastIndexOf("\\"))
+                    return i >= 0 ? d.substring(i + 1) : d
+                }
 
                 Rectangle {
                     id: recentCard
@@ -345,6 +351,12 @@ Column {
                         onPressed: focusRing.suppress()
                         onClicked: { recentCard.forceActiveFocus(); filesViewer.openRecentFile(parent.parent.filePath) }
                     }
+
+                    KToolTip {
+                        text: qsTr("Open %1").arg(recentRow.fileName)
+                        targetItem: recentCard
+                        shown: recentMa.containsMouse
+                    }
                 }
 
                 IconBtn {
@@ -353,7 +365,6 @@ Column {
                     iconFillRatio: 0.8
                     width: Tokens.controlHMd
                     height: Tokens.controlHMd
-                    toolTipText: qsTr("Remove")
                     onClicked: filesViewer.removeRecentFile(parent.filePath)
                 }
             }

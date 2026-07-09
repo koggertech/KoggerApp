@@ -212,8 +212,6 @@ property var layouts: []
 readonly property bool hasLayouts: layouts.length > 0
 property int activeLayoutIndex: 0
 property var settingsGroupExpandedMap: ({})
-property real settingsScrollY: 0
-onSettingsScrollYChanged: if (typeof layoutStore !== "undefined") layoutStore.settingsScrollYStored = settingsScrollY
 property var fullscreenPopupSourceByHost: ({})
 property var fullscreenPopupStateByHost: ({})
 property bool globalPopupEnabled: false
@@ -647,7 +645,6 @@ property Settings layoutStore: Settings {
     property string favoriteLayoutsJson: ""
     property int activeLayoutIndexStored: 0
     property string settingsGroupExpandedJson: "{}"
-    property real settingsScrollYStored: 0
     property string fullscreenPopupSourceJson: "{}"
     property string fullscreenPopupStateJson: "{}"
     property bool globalPopupEnabledStored: false
@@ -3881,7 +3878,6 @@ function loadPersistedUiState() {
     applyEchogramSyncToCore()
     applyAimFieldsToCore()
     loadSettingsGroupsState()
-    settingsScrollY = layoutStore.settingsScrollYStored
     loadFavoriteLayoutsState()
     loadLiveEchogramStates()
     loadFullscreenPopupState()

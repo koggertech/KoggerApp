@@ -21,6 +21,7 @@ Item {
     // small gradient dot is drawn before each item's text (and in the field).
     property var swatchFor: null
     readonly property int swatchSize: Math.round(18 * AppPalette.scale)
+    property string toolTipText: ""
 
     Item {
         id: _sizer
@@ -215,5 +216,11 @@ Item {
                 root.activated(idx)
             }
         }
+    }
+
+    KToolTip {
+        text: root.toolTipText
+        targetItem: root
+        shown: root.hovered && root.toolTipText.length > 0
     }
 }

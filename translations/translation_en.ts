@@ -52,6 +52,94 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Show the scale bar in the 3D scene</source>
+        <translation>Show the scale bar in the 3D scene</translation>
+    </message>
+    <message>
+        <source>Show the surface quality label in the 3D scene</source>
+        <translation>Show the surface quality label in the 3D scene</translation>
+    </message>
+    <message>
+        <source>Orient the 3D view to north (north stays up)</source>
+        <translation>Orient the 3D view to north (north stays up)</translation>
+    </message>
+    <message>
+        <source>Sync the cursor between the 2D echogram and the 3D scene</source>
+        <translation>Sync the cursor between the 2D echogram and the 3D scene</translation>
+    </message>
+    <message>
+        <source>Left-side beam angle offset for the mosaic, °</source>
+        <translation>Left-side beam angle offset for the mosaic, °</translation>
+    </message>
+    <message>
+        <source>Right-side beam angle offset for the mosaic, °</source>
+        <translation>Right-side beam angle offset for the mosaic, °</translation>
+    </message>
+    <message>
+        <source>Show the current mosaic trace line</source>
+        <translation>Show the current mosaic trace line</translation>
+    </message>
+    <message>
+        <source>Sync the cursor position across all echograms</source>
+        <translation>Sync the cursor position across all echograms</translation>
+    </message>
+    <message>
+        <source>Sync scroll and zoom across echograms</source>
+        <translation>Sync scroll and zoom across echograms</translation>
+    </message>
+    <message>
+        <source>Configure the information panel</source>
+        <translation>Configure the information panel</translation>
+    </message>
+    <message>
+        <source>Colour theme for isobaths (palette by depth)</source>
+        <translation>Colour theme for isobaths (palette by depth)</translation>
+    </message>
+    <message>
+        <source>Max triangulation edge length</source>
+        <translation>Max triangulation edge length</translation>
+    </message>
+    <message>
+        <source>Isobath interval — spacing between depth lines</source>
+        <translation>Isobath interval — spacing between depth lines</translation>
+    </message>
+    <message>
+        <source>Surface extrapolation radius around the track</source>
+        <translation>Surface extrapolation radius around the track</translation>
+    </message>
+    <message>
+        <source>Choose the surface .csv file</source>
+        <translation>Choose the surface .csv file</translation>
+    </message>
+    <message>
+        <source>Export the surface to CSV</source>
+        <translation>Export the surface to CSV</translation>
+    </message>
+    <message>
+        <source>Edit workspace panes</source>
+        <translation>Edit workspace panes</translation>
+    </message>
+    <message>
+        <source>Floating window over the workspace, independent of the layout</source>
+        <translation>Floating window over the workspace, independent of the layout</translation>
+    </message>
+    <message>
+        <source>Hide echogram controls when there is no matching data; off shows everything</source>
+        <translation>Hide echogram controls when there is no matching data; off shows everything</translation>
+    </message>
+    <message>
+        <source>Shift the workspace aside when the settings panel opens, instead of overlaying on top</source>
+        <translation>Shift the workspace aside when the settings panel opens, instead of overlaying on top</translation>
+    </message>
+    <message>
+        <source>Choose export folder</source>
+        <translation>Choose export folder</translation>
+    </message>
+    <message>
+        <source>Open the CSV export tab</source>
+        <translation>Open the CSV export tab</translation>
+    </message>
+    <message>
         <source>Data</source>
         <translation>Data</translation>
     </message>
@@ -911,6 +999,18 @@
 <context>
     <name>ConnectionViewer</name>
     <message>
+        <source>Choose recording folder</source>
+        <translation>Choose recording folder</translation>
+    </message>
+    <message>
+        <source>Proxy MAVLink telemetry to 127.0.0.1:14550</source>
+        <translation>Proxy MAVLink telemetry to 127.0.0.1:14550</translation>
+    </message>
+    <message>
+        <source>Connection settings</source>
+        <translation>Connection settings</translation>
+    </message>
+    <message>
         <source></source>
         <translation></translation>
     </message>
@@ -1365,6 +1465,66 @@
 <context>
     <name>CsvExportSettingsTab</name>
     <message>
+        <source>Thin out points: keep one per given distance interval (m); off exports every point</source>
+        <translation>Thin out points: keep one per given distance interval (m); off exports every point</translation>
+    </message>
+    <message>
+        <source>Export the dataset to CSV with the selected columns (folder from the Export group)</source>
+        <translation>Export the dataset to CSV with the selected columns (folder from the Export group)</translation>
+    </message>
+    <message>
+        <source>Restore the default column selection</source>
+        <translation>Restore the default column selection</translation>
+    </message>
+    <message>
+        <source>Sequential measurement number (epoch)</source>
+        <translation>Sequential measurement number (epoch)</translation>
+    </message>
+    <message>
+        <source>Event columns: UNIX time, timestamp and ID</source>
+        <translation>Event columns: UNIX time, timestamp and ID</translation>
+    </message>
+    <message>
+        <source>Rangefinder distance (red line)</source>
+        <translation>Rangefinder distance (red line)</translation>
+    </message>
+    <message>
+        <source>Post-processing distance (green line)</source>
+        <translation>Post-processing distance (green line)</translation>
+    </message>
+    <message>
+        <source>Coordinates: latitude and longitude</source>
+        <translation>Coordinates: latitude and longitude</translation>
+    </message>
+    <message>
+        <source>UTC date and time from GNSS</source>
+        <translation>UTC date and time from GNSS</translation>
+    </message>
+    <message>
+        <source>External position: latitude / longitude / altitude</source>
+        <translation>External position: latitude / longitude / altitude</translation>
+    </message>
+    <message>
+        <source>External position in local NEU (north / east / up)</source>
+        <translation>External position in local NEU (north / east / up)</translation>
+    </message>
+    <message>
+        <source>Absolute height of the sonar</source>
+        <translation>Absolute height of the sonar</translation>
+    </message>
+    <message>
+        <source>Absolute height of the bottom</source>
+        <translation>Absolute height of the bottom</translation>
+    </message>
+    <message>
+        <source>Title of the marked contact</source>
+        <translation>Title of the marked contact</translation>
+    </message>
+    <message>
+        <source>Distance to the marked contact</source>
+        <translation>Distance to the marked contact</translation>
+    </message>
+    <message>
         <location filename="../qml/app/CsvExportSettingsTab.qml" line="54"/>
         <source>Decimation, m:</source>
         <translation>Decimation, m:</translation>
@@ -1470,6 +1630,34 @@
 <context>
     <name>DeviceSettingsPage</name>
     <message>
+        <source>Write current settings to device memory</source>
+        <translation>Write current settings to device memory</translation>
+    </message>
+    <message>
+        <source>Erase device settings (reset)</source>
+        <translation>Erase device settings (reset)</translation>
+    </message>
+    <message>
+        <source>Reboot the device</source>
+        <translation>Reboot the device</translation>
+    </message>
+    <message>
+        <source>Apply the selected baud rate</source>
+        <translation>Apply the selected baud rate</translation>
+    </message>
+    <message>
+        <source>Load all sonar settings from an XML file</source>
+        <translation>Load all sonar settings from an XML file</translation>
+    </message>
+    <message>
+        <source>Save all sonar settings to an XML file</source>
+        <translation>Save all sonar settings to an XML file</translation>
+    </message>
+    <message>
+        <source>Choose firmware</source>
+        <translation>Choose firmware</translation>
+    </message>
+    <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="59"/>
         <source>Settings:</source>
         <translation>Settings:</translation>
@@ -1481,17 +1669,17 @@
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="76"/>
-        <source>Resolution, mm:</source>
+        <source>Resolution, mm</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="82"/>
-        <source>Sample count:</source>
+        <source>Sample count</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="88"/>
-        <source>Offset:</source>
+        <source>Offset</source>
         <translation></translation>
     </message>
     <message>
@@ -1501,17 +1689,17 @@
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="104"/>
-        <source>Max distance, mm:</source>
+        <source>Max distance, mm</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="110"/>
-        <source>Dead zone, mm:</source>
+        <source>Dead zone, mm</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="116"/>
-        <source>Confidence threshold, %:</source>
+        <source>Confidence threshold, %</source>
         <translation></translation>
     </message>
     <message>
@@ -1521,12 +1709,12 @@
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="132"/>
-        <source>Pulse count:</source>
+        <source>Pulse count</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="138"/>
-        <source>Frequency, kHz:</source>
+        <source>Frequency, kHz</source>
         <translation></translation>
     </message>
     <message>
@@ -1541,12 +1729,12 @@
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="164"/>
-        <source>Horizontal smoothing:</source>
+        <source>Horizontal smoothing</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="170"/>
-        <source>Sound speed, m/s:</source>
+        <source>Sound speed, m/s</source>
         <translation></translation>
     </message>
     <message>
@@ -1556,12 +1744,12 @@
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="186"/>
-        <source>Period, ms:</source>
+        <source>Period, ms</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="192"/>
-        <source>Echogram:</source>
+        <source>Echogram</source>
         <translation></translation>
     </message>
     <message>
@@ -1577,7 +1765,7 @@
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="206"/>
-        <source>Rangefinder:</source>
+        <source>Rangefinder</source>
         <translation></translation>
     </message>
     <message>
@@ -2283,6 +2471,10 @@
 <context>
     <name>FilesViewer</name>
     <message>
+        <source>Open %1</source>
+        <translation>Open %1</translation>
+    </message>
+    <message>
         <location filename="../qml/devices/FilesViewer.qml" line="158"/>
         <source>Open file:</source>
         <translation>Open file:</translation>
@@ -2354,6 +2546,10 @@
 </context>
 <context>
     <name>HotActionsPanel</name>
+    <message>
+        <source>Open settings</source>
+        <translation>Open settings</translation>
+    </message>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="164"/>
         <source>Device</source>
@@ -3715,6 +3911,10 @@
 <context>
     <name>Scene3DLayerControl</name>
     <message>
+        <source>Layer settings</source>
+        <translation>Layer settings</translation>
+    </message>
+    <message>
         <location filename="../qml/scene3d/Scene3DLayerControl.qml" line="82"/>
         <source>Settings</source>
         <translation>Settings</translation>
@@ -3941,6 +4141,10 @@
 </context>
 <context>
     <name>TgcSettingsTab</name>
+    <message>
+        <source>Run the side-scan compensation algorithm over the data</source>
+        <translation>Run the side-scan compensation algorithm over the data</translation>
+    </message>
     <message>
         <source>Gain</source>
         <translation>Gain</translation>

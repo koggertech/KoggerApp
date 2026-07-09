@@ -121,5 +121,6 @@ Button {
         text: control.toolTipText
         targetItem: control
         shown: control.hovered && control.enabled && !control._tipSuppressed
+               && control.toolTipText.length > 0 && control.toolTipText !== control.text
     }
 }

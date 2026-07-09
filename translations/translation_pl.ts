@@ -52,6 +52,94 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Show the scale bar in the 3D scene</source>
+        <translation>Pokaż podziałkę skali w scenie 3D</translation>
+    </message>
+    <message>
+        <source>Show the surface quality label in the 3D scene</source>
+        <translation>Pokaż etykietę jakości powierzchni w scenie 3D</translation>
+    </message>
+    <message>
+        <source>Orient the 3D view to north (north stays up)</source>
+        <translation>Zorientuj widok 3D na północ (północ u góry)</translation>
+    </message>
+    <message>
+        <source>Sync the cursor between the 2D echogram and the 3D scene</source>
+        <translation>Synchronizuj kursor między echogramem 2D a sceną 3D</translation>
+    </message>
+    <message>
+        <source>Left-side beam angle offset for the mosaic, °</source>
+        <translation>Przesunięcie kąta wiązki lewej dla mozaiki, °</translation>
+    </message>
+    <message>
+        <source>Right-side beam angle offset for the mosaic, °</source>
+        <translation>Przesunięcie kąta wiązki prawej dla mozaiki, °</translation>
+    </message>
+    <message>
+        <source>Show the current mosaic trace line</source>
+        <translation>Pokaż bieżącą linię trasy mozaiki</translation>
+    </message>
+    <message>
+        <source>Sync the cursor position across all echograms</source>
+        <translation>Synchronizuj pozycję kursora między wszystkimi echogramami</translation>
+    </message>
+    <message>
+        <source>Sync scroll and zoom across echograms</source>
+        <translation>Synchronizuj przewijanie i powiększenie między echogramami</translation>
+    </message>
+    <message>
+        <source>Configure the information panel</source>
+        <translation>Skonfiguruj panel informacyjny</translation>
+    </message>
+    <message>
+        <source>Colour theme for isobaths (palette by depth)</source>
+        <translation>Motyw kolorów izobat (paleta wg głębokości)</translation>
+    </message>
+    <message>
+        <source>Max triangulation edge length</source>
+        <translation>Maks. długość krawędzi triangulacji</translation>
+    </message>
+    <message>
+        <source>Isobath interval — spacing between depth lines</source>
+        <translation>Odstęp izobat — odległość między liniami głębokości</translation>
+    </message>
+    <message>
+        <source>Surface extrapolation radius around the track</source>
+        <translation>Promień ekstrapolacji powierzchni wokół trasy</translation>
+    </message>
+    <message>
+        <source>Choose the surface .csv file</source>
+        <translation>Wybierz plik .csv powierzchni</translation>
+    </message>
+    <message>
+        <source>Export the surface to CSV</source>
+        <translation>Eksportuj powierzchnię do CSV</translation>
+    </message>
+    <message>
+        <source>Edit workspace panes</source>
+        <translation>Edycja paneli obszaru roboczego</translation>
+    </message>
+    <message>
+        <source>Floating window over the workspace, independent of the layout</source>
+        <translation>Pływające okno nad obszarem roboczym, niezależne od układu</translation>
+    </message>
+    <message>
+        <source>Hide echogram controls when there is no matching data; off shows everything</source>
+        <translation>Ukryj elementy echogramu bez odpowiadających danych; wył. — pokaż wszystko</translation>
+    </message>
+    <message>
+        <source>Shift the workspace aside when the settings panel opens, instead of overlaying on top</source>
+        <translation>Przesuwaj obszar roboczy przy otwarciu panelu ustawień zamiast nakładać na wierzch</translation>
+    </message>
+    <message>
+        <source>Choose export folder</source>
+        <translation>Wybierz folder eksportu</translation>
+    </message>
+    <message>
+        <source>Open the CSV export tab</source>
+        <translation>Otwórz kartę eksportu CSV</translation>
+    </message>
+    <message>
         <source>Data</source>
         <translation>Dane</translation>
     </message>
@@ -1021,6 +1109,18 @@
 <context>
     <name>ConnectionViewer</name>
     <message>
+        <source>Choose recording folder</source>
+        <translation>Wybór folderu nagrywania</translation>
+    </message>
+    <message>
+        <source>Proxy MAVLink telemetry to 127.0.0.1:14550</source>
+        <translation>Proxy telemetrii MAVLink na 127.0.0.1:14550</translation>
+    </message>
+    <message>
+        <source>Connection settings</source>
+        <translation>Ustawienia połączenia</translation>
+    </message>
+    <message>
         <source></source>
         <translation></translation>
     </message>
@@ -1504,6 +1604,66 @@
 <context>
     <name>CsvExportSettingsTab</name>
     <message>
+        <source>Thin out points: keep one per given distance interval (m); off exports every point</source>
+        <translation>Przerzedzanie: jeden punkt na zadany odstęp (m); wył. — wszystkie punkty</translation>
+    </message>
+    <message>
+        <source>Export the dataset to CSV with the selected columns (folder from the Export group)</source>
+        <translation>Eksportuj zbiór do CSV z wybranymi kolumnami (folder z grupy Eksport)</translation>
+    </message>
+    <message>
+        <source>Restore the default column selection</source>
+        <translation>Przywróć domyślny wybór kolumn</translation>
+    </message>
+    <message>
+        <source>Sequential measurement number (epoch)</source>
+        <translation>Kolejny numer pomiaru (epoka)</translation>
+    </message>
+    <message>
+        <source>Event columns: UNIX time, timestamp and ID</source>
+        <translation>Kolumny zdarzenia: czas UNIX, znacznik czasu i ID</translation>
+    </message>
+    <message>
+        <source>Rangefinder distance (red line)</source>
+        <translation>Odległość z głębokościomierza (czerwona linia)</translation>
+    </message>
+    <message>
+        <source>Post-processing distance (green line)</source>
+        <translation>Odległość z postprzetwarzania (zielona linia)</translation>
+    </message>
+    <message>
+        <source>Coordinates: latitude and longitude</source>
+        <translation>Współrzędne: szerokość i długość</translation>
+    </message>
+    <message>
+        <source>UTC date and time from GNSS</source>
+        <translation>Data i czas UTC z GNSS</translation>
+    </message>
+    <message>
+        <source>External position: latitude / longitude / altitude</source>
+        <translation>Pozycja zewnętrzna: szerokość / długość / wysokość</translation>
+    </message>
+    <message>
+        <source>External position in local NEU (north / east / up)</source>
+        <translation>Pozycja zewnętrzna w lokalnym NEU (północ / wschód / góra)</translation>
+    </message>
+    <message>
+        <source>Absolute height of the sonar</source>
+        <translation>Bezwzględna wysokość sonaru</translation>
+    </message>
+    <message>
+        <source>Absolute height of the bottom</source>
+        <translation>Bezwzględna wysokość dna</translation>
+    </message>
+    <message>
+        <source>Title of the marked contact</source>
+        <translation>Nazwa oznaczonego kontaktu</translation>
+    </message>
+    <message>
+        <source>Distance to the marked contact</source>
+        <translation>Odległość do oznaczonego kontaktu</translation>
+    </message>
+    <message>
         <location filename="../qml/app/CsvExportSettingsTab.qml" line="54"/>
         <source>Decimation, m:</source>
         <translation>Decymacja, m:</translation>
@@ -1720,14 +1880,42 @@
 <context>
     <name>DeviceSettingsPage</name>
     <message>
+        <source>Write current settings to device memory</source>
+        <translation>Zapisz bieżące ustawienia do pamięci urządzenia</translation>
+    </message>
+    <message>
+        <source>Erase device settings (reset)</source>
+        <translation>Wymaż ustawienia urządzenia (reset)</translation>
+    </message>
+    <message>
+        <source>Reboot the device</source>
+        <translation>Uruchom ponownie urządzenie</translation>
+    </message>
+    <message>
+        <source>Apply the selected baud rate</source>
+        <translation>Ustaw wybraną prędkość transmisji</translation>
+    </message>
+    <message>
+        <source>Load all sonar settings from an XML file</source>
+        <translation>Wczytaj wszystkie ustawienia sonaru z pliku XML</translation>
+    </message>
+    <message>
+        <source>Save all sonar settings to an XML file</source>
+        <translation>Zapisz wszystkie ustawienia sonaru do pliku XML</translation>
+    </message>
+    <message>
+        <source>Choose firmware</source>
+        <translation>Wybierz oprogramowanie układowe</translation>
+    </message>
+    <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="69"/>
         <source>Echogram</source>
         <translation>Echogram</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="192"/>
-        <source>Echogram:</source>
-        <translation>Echogram:</translation>
+        <source>Echogram</source>
+        <translation>Echogram</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="97"/>
@@ -1736,8 +1924,8 @@
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="206"/>
-        <source>Rangefinder:</source>
-        <translation>Głębokościomierz:</translation>
+        <source>Rangefinder</source>
+        <translation>Głębokościomierz</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="125"/>
@@ -1757,22 +1945,22 @@
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="266"/>
         <source>Flash settings</source>
-        <translation>Ustawienia flashowania</translation>
+        <translation>Zapisz</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="271"/>
         <source>Erase settings</source>
-        <translation>Wyczyść ustawienia</translation>
+        <translation>Wymaż</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="276"/>
         <source>Reboot</source>
-        <translation>Uruchom ponownie</translation>
+        <translation>Restart</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="292"/>
         <source>Set baudrate</source>
-        <translation>Ustaw prędkość transmisji</translation>
+        <translation>Ustaw</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="307"/>
@@ -1887,58 +2075,58 @@
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="138"/>
-        <source>Frequency, kHz:</source>
-        <translation>Częstotliwość, kHz:</translation>
+        <source>Frequency, kHz</source>
+        <translation>Częstotliwość, kHz</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="132"/>
-        <source>Pulse count:</source>
-        <translation>Liczba impulsów:</translation>
+        <source>Pulse count</source>
+        <translation>Liczba impulsów</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="82"/>
-        <source>Sample count:</source>
-        <translation>Liczba próbek:</translation>
+        <source>Sample count</source>
+        <translation>Liczba próbek</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="76"/>
-        <source>Resolution, mm:</source>
-        <translation>Rozdzielczość, mm:</translation>
+        <source>Resolution, mm</source>
+        <translation>Rozdzielczość, mm</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="88"/>
-        <source>Offset:</source>
-        <translation>Offset próbek:</translation>
+        <source>Offset</source>
+        <translation>Offset próbek</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="110"/>
-        <source>Dead zone, mm:</source>
-        <translation>Strefa martwa, mm:</translation>
+        <source>Dead zone, mm</source>
+        <translation>Strefa martwa, mm</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="104"/>
-        <source>Max distance, mm:</source>
-        <translation>Maks. odległość, mm:</translation>
+        <source>Max distance, mm</source>
+        <translation>Maks. odległość, mm</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="164"/>
-        <source>Horizontal smoothing:</source>
-        <translation>Wygładzanie poziome:</translation>
+        <source>Horizontal smoothing</source>
+        <translation>Wygładzanie poziome</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="116"/>
-        <source>Confidence threshold, %:</source>
-        <translation>Próg pewności, %:</translation>
+        <source>Confidence threshold, %</source>
+        <translation>Próg pewności, %</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="170"/>
-        <source>Sound speed, m/s:</source>
-        <translation>Prędkość dźwięku, m/s:</translation>
+        <source>Sound speed, m/s</source>
+        <translation>Prędkość dźwięku, m/s</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="186"/>
-        <source>Period, ms:</source>
-        <translation>Okres, ms:</translation>
+        <source>Period, ms</source>
+        <translation>Okres, ms</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="370"/>
@@ -2893,6 +3081,10 @@
 <context>
     <name>FilesViewer</name>
     <message>
+        <source>Open %1</source>
+        <translation>Otwórz %1</translation>
+    </message>
+    <message>
         <location filename="../qml/devices/FilesViewer.qml" line="158"/>
         <source>Open file:</source>
         <translation>Otwórz plik:</translation>
@@ -2979,6 +3171,10 @@
 </context>
 <context>
     <name>HotActionsPanel</name>
+    <message>
+        <source>Open settings</source>
+        <translation>Otwórz ustawienia</translation>
+    </message>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="164"/>
         <source>Device</source>
@@ -4451,6 +4647,10 @@
 <context>
     <name>Scene3DLayerControl</name>
     <message>
+        <source>Layer settings</source>
+        <translation>Ustawienia warstwy</translation>
+    </message>
+    <message>
         <location filename="../qml/scene3d/Scene3DLayerControl.qml" line="82"/>
         <source>Settings</source>
         <translation>Ustawienia</translation>
@@ -4818,6 +5018,10 @@
 </context>
 <context>
     <name>TgcSettingsTab</name>
+    <message>
+        <source>Run the side-scan compensation algorithm over the data</source>
+        <translation>Zastosuj algorytm kompensacji sonaru bocznego (side scan) na danych</translation>
+    </message>
     <message>
         <source>Gain</source>
         <translation>Wzmocnienie</translation>

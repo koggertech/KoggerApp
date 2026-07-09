@@ -264,6 +264,7 @@ Column {
             KButton {
                 width: Tokens.controlHMd; height: Tokens.controlHMd; text: "..."
                 horizontalPadding: 0; verticalPadding: 0
+                toolTipText: qsTr("Choose export folder")
                 onClicked: {
                     if (root.store)
                         exportFolderDialog.currentFolder = root.store.exportFolderUrl
@@ -285,6 +286,7 @@ Column {
         NavButton {
             width: parent.width
             text: qsTr("Export to CSV")
+            toolTipText: qsTr("Open the CSV export tab")
             onClicked: if (root.store) root.store.openCsvExportSettings()
         }
 
@@ -466,6 +468,7 @@ Column {
         KSwitch {
             width: parent.width
             text: qsTr("Hide UI elements for missing data")
+            toolTipText: qsTr("Hide echogram controls when there is no matching data; off shows everything")
             checked: root.store ? root.store.hideEmptyEchogramControls : true
             onToggled: if (root.store) root.store.hideEmptyEchogramControls = checked
         }
@@ -473,6 +476,7 @@ Column {
         KSwitch {
             width: parent.width
             text: qsTr("Workspace shift")
+            toolTipText: qsTr("Shift the workspace aside when the settings panel opens, instead of overlaying on top")
             checked: root.store.settingsPushContent
             onToggled: { root.store.settingsPushContent = checked }
         }
@@ -549,6 +553,7 @@ Column {
         KSwitch {
             width: parent.width
             text: qsTr("Edit")
+            toolTipText: qsTr("Edit workspace panes")
             checked: root.store.editableMode
             onToggled: { root.store.editableMode = checked }
         }
@@ -556,6 +561,7 @@ Column {
         KSwitch {
             width: parent.width
             text: qsTr("Global pop-up")
+            toolTipText: qsTr("Floating window over the workspace, independent of the layout")
             checked: root.store.globalPopupEnabled
             onToggled: { root.store.globalPopupEnabled = checked }
         }
@@ -741,6 +747,7 @@ Column {
             width: parent.width
             height: Math.round(38 * AppPalette.scale)
             text: qsTr("TGC")
+            toolTipText: qsTr("Open TGC settings")
             onClicked: if (root.store) root.store.openTgcSettings()
         }
     }
@@ -1098,12 +1105,13 @@ Column {
 
             Text {
                 text: qsTr("Theme:")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontBase
+                color: AppPalette.textStrong
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
             }
             KCombo {
                 id: isobathsTheme
+                toolTipText: qsTr("Colour theme for isobaths (palette by depth)")
                 Layout.preferredWidth: isobathsGroup.ctrlW
                 model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("Standard"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green")]
                 swatchFor: function(i) { return IsobathsViewControlMenuController.themeStops(i) }
@@ -1125,12 +1133,13 @@ Column {
 
             Text {
                 text: qsTr("Edge limit, m:")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontBase
+                color: AppPalette.textStrong
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
             }
             KSpinBox {
                 id: isobathsEdgeLimitSpinBox
+                toolTipText: qsTr("Max triangulation edge length")
                 Layout.preferredWidth: isobathsGroup.ctrlW
                 from: 10; to: 1000; stepSize: 5; value: 100
                 editable: false
@@ -1146,12 +1155,13 @@ Column {
 
             Text {
                 text: qsTr("Step, m:")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontBase
+                color: AppPalette.textStrong
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
             }
             KSpinBox {
                 id: isobathsSurfaceLineStepSizeSpinBox
+                toolTipText: qsTr("Isobath interval — spacing between depth lines")
                 Layout.preferredWidth: isobathsGroup.ctrlW
                 from: 1; to: 200; stepSize: 1; value: 10
                 divisor: 10; decimals: 1
@@ -1169,12 +1179,13 @@ Column {
 
             Text {
                 text: qsTr("Extra width, m:")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontBase
+                color: AppPalette.textStrong
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
             }
             KSpinBox {
                 id: extraWidthSpinBox
+                toolTipText: qsTr("Surface extrapolation radius around the track")
                 Layout.preferredWidth: isobathsGroup.ctrlW
                 from: 5; to: 100; stepSize: 5; value: 10
                 editable: false
@@ -1220,6 +1231,7 @@ Column {
 
             KButton {
                 text: "..."
+                toolTipText: qsTr("Choose the surface .csv file")
                 Layout.fillWidth: false
                 Layout.preferredWidth: Tokens.controlHMd
                 Layout.maximumWidth: Tokens.controlHMd
@@ -1252,6 +1264,7 @@ Column {
 
             KButton {
                 text: qsTr("Export to CSV")
+                toolTipText: qsTr("Export the surface to CSV")
                 fontPixelSize: Tokens.fontLg
                 Layout.fillWidth: false
                 Layout.preferredWidth: isobathsGroup.ctrlW
@@ -1356,8 +1369,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Theme:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontBase
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
                         Layout.fillWidth: true
                     }
                     KCombo {
@@ -1381,8 +1394,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Channels:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontBase
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignTop
                     }
@@ -1492,8 +1505,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Angle, °:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontBase
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignTop
                     }
@@ -1503,6 +1516,7 @@ Column {
 
                         KSpinBox {
                             id: mosaicLAngleOffset
+                            toolTipText: qsTr("Left-side beam angle offset for the mosaic, °")
                             Layout.preferredWidth: mosaicGroup.ctrlW
                             from: -90; to: 90; stepSize: 1; value: 0
                             onValueModified: function(v) {
@@ -1518,6 +1532,7 @@ Column {
 
                         KSpinBox {
                             id: mosaicRAngleOffset
+                            toolTipText: qsTr("Right-side beam angle offset for the mosaic, °")
                             Layout.preferredWidth: mosaicGroup.ctrlW
                             from: -90; to: 90; stepSize: 1; value: 0
                             onValueModified: function(v) {
@@ -1536,6 +1551,7 @@ Column {
                 KSwitch {
                     id: mosaicTraceLine
                     text: qsTr("Trace line")
+                    toolTipText: qsTr("Show the current mosaic trace line")
                     checked: true
                     Layout.fillWidth: true
                     onToggled: MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
@@ -1547,8 +1563,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Data source:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontBase
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
@@ -1798,12 +1814,14 @@ Column {
         ParamCardGroup {
             width: parent.width
             label: qsTr("Sync echograms")
+            toolTipText: qsTr("Sync the cursor position across all echograms")
             checked: root.store ? root.store.echogramSyncCursor : false
             onToggled: function(v) { if (root.store) root.store.echogramSyncCursor = v }
 
             KSwitch {
                 width: parent.width
                 text: qsTr("Sync view")
+                toolTipText: qsTr("Sync scroll and zoom across echograms")
                 enabled: root.store ? root.store.echogramSyncCursor : false
                 checked: root.store ? root.store.echogramSyncView : false
                 onToggled: if (root.store) root.store.echogramSyncView = checked
@@ -1814,6 +1832,7 @@ Column {
             width: parent.width
             fontPixelSize: Tokens.fontLg
             text: qsTr("Information panel")
+            toolTipText: qsTr("Configure the information panel")
             onClicked: if (root.store) root.store.openAimPanelSettings()
         }
     }
@@ -1842,6 +1861,7 @@ Column {
             ParamCard {
                 width: parent.width
                 label: qsTr("Show surface quality")
+                toolTipText: qsTr("Show the surface quality label in the 3D scene")
                 checked: root.store ? root.store.showSurfaceQuality : false
                 onToggled: function(v) {
                     if (root.store)
@@ -1930,6 +1950,7 @@ Column {
             ParamCard {
                 width: parent.width
                 label: qsTr("North mode")
+                toolTipText: qsTr("Orient the 3D view to north (north stays up)")
                 checked: render3dSettings.isNorthViewButton
                 onToggled: function(v) {
                     render3dSettings.isNorthViewButton = v
@@ -1941,6 +1962,7 @@ Column {
             ParamCard {
                 width: parent.width
                 label: qsTr("Sync echogram")
+                toolTipText: qsTr("Sync the cursor between the 2D echogram and the 3D scene")
                 checked: render3dSettings.selectionToolButton
                 onToggled: function(v) {
                     render3dSettings.selectionToolButton = v
@@ -2188,6 +2210,7 @@ Column {
             ParamCard {
                 width: parent.width
                 label: qsTr("Scale bar")
+                toolTipText: qsTr("Show the scale bar in the 3D scene")
                 checked: render3dSettings.scaleBarCheckButton
                 onToggled: function(v) {
                     render3dSettings.scaleBarCheckButton = v
@@ -2727,7 +2750,7 @@ Column {
         }
 
         KCircleIconButton {
-            visible: !!root._flick && root._flick.interactive
+            visible: !!root._flick && root._flick.contentHeight > root._flick.height + 0.5
             anchors.right: parent.right
             anchors.rightMargin: Tokens.spaceLg
             anchors.verticalCenter: footerCol.verticalCenter

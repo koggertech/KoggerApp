@@ -1984,7 +1984,6 @@ WaterFall {
                 fillColor: AppPalette.card
                 fillHoverColor: AppPalette.cardHover
                 borderColor: AppPalette.border
-                toolTipText: qsTr("Close")
                 onClicked: menuBlock.visible = false
             }
         }

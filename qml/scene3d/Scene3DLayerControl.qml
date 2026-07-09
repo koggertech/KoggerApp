@@ -79,7 +79,7 @@ Item {
                 fillColor: AppPalette.card
                 fillHoverColor: AppPalette.cardHover
                 borderColor: AppPalette.border
-                toolTipText: qsTr("Settings")
+                toolTipText: qsTr("Layer settings")
                 onClicked: {
                     root.menuOpen = false
                     root.settingsRequested()

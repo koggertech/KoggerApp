@@ -14,6 +14,7 @@ Item {
     property bool editable: true
     property int fontPixelSize: Tokens.fontLg
     property color textColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+    property string toolTipText: ""
 
     signal valueModified(int val)
 
@@ -230,5 +231,12 @@ Item {
             onCanceled: holdInc.stop()
         }
         Timer { id: holdInc; interval: 80; repeat: true; onTriggered: root.increment() }
+    }
+
+    HoverHandler { id: _spinHover }
+    KToolTip {
+        text: root.toolTipText
+        targetItem: root
+        shown: _spinHover.hovered && root.enabled && root.toolTipText.length > 0
     }
 }

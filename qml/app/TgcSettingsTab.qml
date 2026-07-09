@@ -79,6 +79,7 @@ Column {
 
         KSlider {
             id: tgcGainNearSlider
+            showValueTip: false
             width: parent.width - page.labelW - page.valueLabelW - 2 * Tokens.spaceMd
             anchors.verticalCenter: parent.verticalCenter
             from: 0; to: 500; stepSize: 1
@@ -115,6 +116,7 @@ Column {
 
         KSlider {
             id: tgcGainFarSlider
+            showValueTip: false
             width: parent.width - page.labelW - page.valueLabelW - 2 * Tokens.spaceMd
             anchors.verticalCenter: parent.verticalCenter
             from: 0; to: 1000; stepSize: 1
@@ -199,6 +201,7 @@ Column {
         id: tgcCompensateSwitch
         width: parent.width
         text: qsTr("Compensate")
+        toolTipText: qsTr("Run the side-scan compensation algorithm over the data")
         checked: page.store ? page.store.tgcCompensate : false
         onToggled: if (page.store) page.store.tgcCompensate = checked
     }

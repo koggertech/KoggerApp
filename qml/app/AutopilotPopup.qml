@@ -90,20 +90,20 @@ BasePanePopup {
     component Cell: Row {
         property string caption: ""
         property string value: ""
-        property color valueColor: AppPalette.text
+        property color valueColor: AppPalette.textStrong
         spacing: Math.round(3 * root._s)
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: parent.caption
-            color: AppPalette.textMuted
-            font.pixelSize: Math.round(9 * root._s)
+            color: AppPalette.textStrong
+            font.pixelSize: Math.round(12 * root._s)
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: parent.value
             color: parent.valueColor
-            font.pixelSize: Math.round(11 * root._s)
+            font.pixelSize: Math.round(13 * root._s)
             font.bold: true
         }
     }
@@ -127,7 +127,7 @@ BasePanePopup {
             Cell {
                 caption: qsTr("Arm")
                 value: root._arm < 0 ? "—" : (root._arm > 0 ? "ARMED" : "DISARMED")
-                valueColor: root._arm > 0 ? "#22C55E" : AppPalette.text
+                valueColor: root._arm > 0 ? "#22C55E" : AppPalette.textStrong
             }
         }
 
@@ -144,7 +144,6 @@ BasePanePopup {
             fillPressedColor: AppPalette.bgDeep
             borderColor: AppPalette.border
             borderHoverColor: AppPalette.borderHover
-            toolTipText: qsTr("Close")
             onClicked: if (root.store) root.store.autopilotEnabled = false
         }
     }

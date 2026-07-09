@@ -36,7 +36,6 @@ Item {
     default property alias contentData: contentColumn.data
 
     property var store: null
-    property bool _restoringScroll: false
 
     function _collapseAllGroups() {
         if (subPageOpen)
@@ -68,41 +67,8 @@ Item {
     }
 
     onOpenChanged: {
-        if (open) {
-            restoreScrollTimer.restart()
-        } else if (store && !subPageOpen) {
-            scrollSaveTimer.stop()
-            store.settingsScrollY = contentFlick.contentY
-        }
-    }
-
-    Timer {
-        id: restoreScrollTimer
-        interval: 60
-        repeat: false
-        onTriggered: {
-            if (!store) return
-            panelRoot._restoringScroll = true
-            var maxY = Math.max(0, contentFlick.contentHeight - contentFlick.height)
-            contentFlick.contentY = Math.max(0, Math.min(store.settingsScrollY, maxY))
-            panelRoot._restoringScroll = false
-        }
-    }
-
-    Timer {
-        id: scrollSaveTimer
-        interval: 300
-        repeat: false
-        onTriggered: if (store && !panelRoot.subPageOpen) store.settingsScrollY = contentFlick.contentY
-    }
-
-    Connections {
-        target: contentFlick
-        function onContentYChanged() {
-            if (panelRoot._restoringScroll || !panelRoot.open || panelRoot.subPageOpen || !store)
-                return
-            scrollSaveTimer.restart()
-        }
+        if (open)
+            contentFlick.contentY = 0
     }
 
     visible: progress > 0.01

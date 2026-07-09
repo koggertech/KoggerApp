@@ -86,6 +86,13 @@ Column {
         setImportTrackPath(importTrackPathSource)
     }
 
+    Component.onDestruction: {
+        if (store) {
+            store.deviceSettingsScrollPending = false
+            store.recordingFocusRequested = false
+        }
+    }
+
     onDevListChanged: syncActiveDevice()
 
     function syncActiveDevice() {
@@ -377,7 +384,7 @@ Column {
                             checked: connRow.editing
                             iconSource: "qrc:/icons/ui/settings.svg"
                             iconFillRatio: 0.8
-                            toolTipText: qsTr("Settings")
+                            toolTipText: qsTr("Connection settings")
                             Layout.alignment: Qt.AlignVCenter
                             Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onClicked: connRow._toggleEdit()
@@ -698,6 +705,7 @@ Column {
             id: mavlinkProxy
             width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontBase; horizontalPadding: Math.round(8 * AppPalette.scale); checkable: true
             text: qsTr("MAVProxy")
+            toolTipText: qsTr("Proxy MAVLink telemetry to 127.0.0.1:14550")
             onToggled: {
                 if (checked) linkManagerWrapper.sendCreateAndOpenAsUdpProxy("127.0.0.1", 14551, 14550)
                 else         linkManagerWrapper.sendCloseUdpProxy()
@@ -924,6 +932,7 @@ Column {
                         id: logBrowseBtn
                         visible: Qt.platform.os !== "android"   // Android: fixed default dir, no folder picker
                         text: "..."
+                        toolTipText: qsTr("Choose recording folder")
                         normalBg: AppPalette.controlRaised
                         hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
                         fontPixelSize: Tokens.fontLg; bold: false
