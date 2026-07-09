@@ -15,6 +15,8 @@ public:
     Q_INVOKABLE bool updateHotkey(const QString& functionName, quint32 newScanCode, quint32 parameter);
     Q_INVOKABLE bool resetToDefaults();
 
+    void retranslate();
+
 signals:
     void hotkeysUpdated();
 

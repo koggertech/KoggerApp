@@ -247,6 +247,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     }
     hotkeysController_ = std::make_unique<HotkeysController>(qmlAppEnginePtr_, this);
     qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysController", hotkeysController_.get());
+    connect(this, &Core::languageChanged, hotkeysController_.get(), &HotkeysController::retranslate);
 #else
     qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysDisplayList", QVariantList());
     qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysController", nullptr);
