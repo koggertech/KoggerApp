@@ -104,14 +104,35 @@ QtObject {
     readonly property color knob:           theme ? theme.sliderHandleColor       : (isDark ? "#E2E8F0" : "#FFFFFF")
     readonly property color knobBorder:     "#00000022"
 
-    // ── Accent (single blue, shared with toggle "on" — same on light/dark) ────
-    readonly property color toggleOn:       "#4E82C9"
-    readonly property color toggleOnBorder: "#6FA0DC"
+    // ── Accent (per-theme, harmonised with each palette) ──────────────────────
+    readonly property color accent: {
+        if (!theme)
+            return "#51A3D9"
+        switch (theme.themeID) {
+        case 0:  return "#3E8FD6"
+        case 1:  return "#3E8FD6"
+        case 2:  return "#2F80D8"
+        case 3:  return "#2F80D8"
+        case 4:  return "#4C8CD4"
+        case 5:  return "#F97316"
+        case 6:  return "#C56A2C"
+        case 7:  return "#268BD2"
+        case 8:  return "#45749B"
+        case 9:  return "#51A3D9"
+        default: return "#51A3D9"
+        }
+    }
+    readonly property color accentText:   luminance(accent) < 0.55 ? "#FFFFFF" : "#15202B"
 
-    readonly property color accentBg:       toggleOn
-    readonly property color accentBgStrong: toggleOn
-    readonly property color accentBorder:   toggleOnBorder
-    readonly property color accentBar:      isDark ? "#60A5FA" : "#3B82F6"
+    readonly property color brandK:        "#51A3D9"
+
+    readonly property color toggleOn:       accent
+    readonly property color toggleOnBorder: Qt.lighter(accent, 1.25)
+
+    readonly property color accentBg:       accent
+    readonly property color accentBgStrong: accent
+    readonly property color accentBorder:   Qt.lighter(accent, 1.25)
+    readonly property color accentBar:      accent
 
     // ── Danger ────────────────────────────────────────────────────────────────
     readonly property color dangerBg:     isDark ? "#2A1313" : "#FEF2F2"

@@ -213,7 +213,8 @@ Item {
                         id: label
                         anchors.centerIn: parent
                         text: tabButton.text
-                        color: (selected || tabButton.optionIndex === tabMouseArea.hoverIndex) ? AppPalette.text : AppPalette.textSecond
+                        color: selected ? AppPalette.accentText
+                               : (tabButton.optionIndex === tabMouseArea.hoverIndex ? AppPalette.text : AppPalette.textSecond)
                         font.pixelSize: root.fontPixelSize
                         font.bold: true
                         elide: Text.ElideRight

@@ -1212,7 +1212,7 @@ Item {
         height: visible ? root.toggleButtonSize : 0
         y: Math.round((root.panelHeight - height) / 2)
         iconSource: "qrc:/icons/app/kogger_app.png"
-        iconTintColor: AppPalette.accentBar
+        iconTintColor: AppPalette.brandK
         iconPixelSize: Math.round(root.toggleButtonSize * 0.7)
         fillColor: root.buttonFillColor
         fillHoverColor: root.buttonHoverColor

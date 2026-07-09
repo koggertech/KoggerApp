@@ -67,7 +67,7 @@ Column {
 
     component ShowIn3DAction: KCircleIconButton {
         property bool active: false
-        readonly property color _fg: active ? "#FFFFFF" : AppPalette.text
+        readonly property color _fg: active ? AppPalette.accentText : AppPalette.text
         readonly property int _sz: Math.round(36 * AppPalette.scale)   // = SettingsGroup._headerH
         width: _sz
         height: _sz
@@ -386,7 +386,7 @@ Column {
                         Text {
                             anchors.centerIn: parent
                             text: appThemeHolder.names[index]
-                            color: AppPalette.text
+                            color: themeCell.sel ? AppPalette.accentText : AppPalette.text
                             font.pixelSize: Tokens.fontBase; font.bold: true
                             elide: Text.ElideRight
                         }
