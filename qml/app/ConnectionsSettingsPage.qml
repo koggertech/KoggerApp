@@ -32,10 +32,10 @@ Column {
             scaleOnHover: false
             glyph: "REC"
             glyphPixelSize: Math.round(width * 0.42)
-            glyphColor: "#FFFFFF"
+            glyphColor: _rec ? "#FFFFFF" : AppPalette.text
             toolTipText: _rec ? qsTr("Stop recording") : qsTr("Start recording")
-            fillColor:      _rec ? "#7F1D1D" : AppPalette.controlRaised
-            fillHoverColor: _rec ? "#991B1B" : Qt.lighter(AppPalette.controlRaised, 1.2)
+            fillColor:      _rec ? "#7F1D1D" : AppPalette.chipRaised
+            fillHoverColor: _rec ? "#991B1B" : AppPalette.chipRaisedHover
             onClicked: if (root.store) root.store.setRecording(!root.store.isRecording)
         }
 

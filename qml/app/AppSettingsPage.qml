@@ -67,6 +67,7 @@ Column {
 
     component ShowIn3DAction: KCircleIconButton {
         property bool active: false
+        readonly property color _fg: active ? "#FFFFFF" : AppPalette.text
         readonly property int _sz: Math.round(36 * AppPalette.scale)   // = SettingsGroup._headerH
         width: _sz
         height: _sz
@@ -75,17 +76,17 @@ Column {
         scaleOnHover: false
         iconSource: active ? "qrc:/icons/ui/eye.svg" : "qrc:/icons/ui/eye-off.svg"
         iconPixelSize: Math.round(width * 0.70)
-        iconTintColor: "#FFFFFF"
+        iconTintColor: _fg
         toolTipText: qsTr("Show in 3D")
-        fillColor:      active ? AppPalette.accentBgStrong : AppPalette.controlRaised
-        fillHoverColor: active ? AppPalette.accentBgStrong : Qt.lighter(AppPalette.controlRaised, 1.2)
+        fillColor:      active ? AppPalette.accentBgStrong : AppPalette.chipRaised
+        fillHoverColor: active ? AppPalette.accentBgStrong : AppPalette.chipRaisedHover
 
         Text {
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottomMargin: Math.round(1 * AppPalette.scale)
             text: "3D"
-            color: "#FFFFFF"
+            color: parent._fg
             opacity: 0.9
             font.pixelSize: Math.round(parent.width * 0.26)
             font.bold: true

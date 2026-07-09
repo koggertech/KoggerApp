@@ -81,6 +81,9 @@ QtObject {
     // brightness of `card`. Tune the 0.6 to dial how much rows stand out.
     readonly property color rowRaised: theme ? Qt.tint(bg, Qt.rgba(card.r, card.g, card.b, 0.6)) : (isDark ? "#18212F" : "#FBFCFE")
 
+    readonly property color chipRaised:      isDark ? controlRaised : Qt.darker(card, 1.12)
+    readonly property color chipRaisedHover: isDark ? Qt.lighter(controlRaised, 1.2) : Qt.darker(card, 1.20)
+
     // ── Borders ───────────────────────────────────────────────────────────────
     readonly property color border:      theme ? theme.controlBorderColor       : (isDark ? "#334155" : "#E2E8F0")
     readonly property color borderHover: theme ? theme.controlSolidBorderColor  : (isDark ? "#475569" : "#CBD5E1")

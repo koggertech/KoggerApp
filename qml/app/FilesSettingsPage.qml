@@ -33,9 +33,9 @@ Column {
             enabled: _last.length > 0
             iconSource: "qrc:/icons/ui/folder-open.svg"
             iconPixelSize: Math.round(width * 0.80)
-            iconTintColor: "#FFFFFF"
-            fillColor:      AppPalette.controlRaised
-            fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
+            iconTintColor: AppPalette.text
+            fillColor:      AppPalette.chipRaised
+            fillHoverColor: AppPalette.chipRaisedHover
             toolTipText: qsTr("Open last file")
             onClicked: if (typeof core !== "undefined" && core && _last.length > 0)
                            core.openLogFile(_last, false, false)
