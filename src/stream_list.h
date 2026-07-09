@@ -78,7 +78,9 @@ public:
         bool     roundDone = false;            // set when ALL requested ranges have terminated
         int      expectedDiags = 0;            // diagnostics expected this round (= ranges requested)
         int      diagsThisRound = 0;           // diagnostics received since the last request
-        int      lastRecvCount = -1;           // recvFrames.size() at last request (progress metric)
+        int      lastRecvCount = -1;           // recvFrames.size() at last request (per-round progress)
+        int      lastLiveCount = -1;           // recvFrames.size() at last liveness check
+        uint64_t lastProgressAt = 0;           // ms a NEW frame last arrived (silence/stall detection)
         QString  savedFilePath;
     };
 
@@ -249,7 +251,7 @@ protected:
     void saveStream(Stream* stream);
     QVector<quint32> computeGaps(Stream* stream) const;   // flat [s0,e0,...] missing ranges, tail last
 
-    static constexpr uint64_t kRequestIdleMs = 1500;
+    static constexpr uint64_t kStallTimeoutMs = 1500;     // silence before the stream is treated as stalled
     static constexpr int kMaxNoProgressRounds = 3;
     static constexpr int kMaxRangesPerRequest = 16;       // device FRAGMENTS_NBR
 
