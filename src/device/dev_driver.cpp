@@ -821,7 +821,7 @@ void DevDriver::requestRecorderStatus() {
 void DevDriver::receivedRecorderStatus(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
     Q_UNUSED(type);
     if (resp == respNone && ver == v0 && idRecorderStatus->isValid()) {
-        const QString s = QString("Recorder status: cond=%1 mode=%2 state=%3 log=%4 rec64k=%5 free1m=%6 dur=%7 sinceWrite=%8 degr=0x%9 crit=0x%10")
+        const QString s = QString("Recorder status: cond=%1 mode=%2 state=%3 log=%4 rec64k=%5 free1m=%6 dur=%7 sinceWrite=%8 stat=0x%9 warn=0x%10 degr=0x%11 crit=0x%12")
                           .arg(idRecorderStatus->deviceCondition())
                           .arg(idRecorderStatus->recordingMode())
                           .arg(idRecorderStatus->recordingState())
@@ -830,6 +830,8 @@ void DevDriver::receivedRecorderStatus(Parsers::Type type, Parsers::Version ver,
                           .arg(idRecorderStatus->freeSpace1m())
                           .arg(idRecorderStatus->recordingDurationSeconds())
                           .arg(idRecorderStatus->secondsSinceLastWrite())
+                          .arg(idRecorderStatus->statusFlags(), 0, 16)
+                          .arg(idRecorderStatus->warningFlags(), 0, 16)
                           .arg(idRecorderStatus->degradedFlags(), 0, 16)
                           .arg(idRecorderStatus->criticalFlags(), 0, 16);
         qInfo("%s", qUtf8Printable(s));
