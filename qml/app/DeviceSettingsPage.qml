@@ -74,16 +74,46 @@ Column {
         stateStore: root.store; stateKey: "dev.recorder"; collapsedByDefault: false
         visible: !!(dev && dev.isRecorder)
 
-        // real, not int: free/recorded bytes exceed 2^31 (QML int is 32-bit) — e.g.
-        // free1m 62642 * 1 MiB ≈ 61 GB would overflow and wrap to ~1.2 GB.
-        readonly property real recordedBytes: dev ? (dev.recorderRecordedSize64k || 0) * 65536.0 : 0
-        readonly property real freeBytes:     dev ? (dev.recorderFreeSpace1m || 0) * 1048576.0 : 0
+        // Input ports live in the HEADER — visible even when the group is collapsed.
+        // Compact: dot + short label (S1/S2/Nav). gray=never · green=live · red=lost.
+        headerActions: Row {
+            spacing: Math.round(5 * AppPalette.scale)
+            visible: !!(dev && dev.recorderStatusValid)
+            Repeater {
+                model: recorderGroup._sourceChips()
+                delegate: Rectangle {
+                    readonly property color accent: modelData.state === "live" ? AppPalette.linkOkBorder
+                                                  : modelData.state === "lost" ? AppPalette.linkDownBorder
+                                                  : AppPalette.textMuted
+                    readonly property bool off: modelData.state === "off"
+                    height: Math.round(22 * AppPalette.scale); radius: height / 2
+                    implicitWidth: hpRow.width + Tokens.spaceSm * 2; width: implicitWidth
+                    anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+                    color: "transparent"; border.width: 1
+                    border.color: off ? AppPalette.border : accent
+                    Row {
+                        id: hpRow
+                        anchors.centerIn: parent; spacing: Math.round(5 * AppPalette.scale)
+                        Rectangle {
+                            width: Math.round(7 * AppPalette.scale); height: width; radius: width / 2
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: off ? "transparent" : accent
+                            border.width: off ? Math.max(1, Math.round(1.5 * AppPalette.scale)) : 0
+                            border.color: AppPalette.textMuted
+                        }
+                        Text { text: modelData.short; color: off ? AppPalette.textMuted : AppPalette.text
+                               font.pixelSize: Tokens.fontXs; anchors.verticalCenter: parent.verticalCenter }
+                    }
+                }
+            }
+        }
 
-        function _cond(v)  { return [qsTr("Fine"), qsTr("Warning"), qsTr("Degraded"), qsTr("Critical")][v] || qsTr("Unknown") }
-        function _condColor(v) { return v >= 3 ? AppPalette.dangerBorder : v === 2 ? "#E0803A" : v === 1 ? "#E0A83A" : AppPalette.accentBar }
-        function _recState(v) { return [qsTr("Initializing"), qsTr("Idle"), qsTr("Recording"), qsTr("Critical"), qsTr("Critical (disabled)")][v] || qsTr("Unknown") }
-        function _degr(v) { var a = []; if (v & 1) a.push(qsTr("LogDrop")); return a.length ? a.join(", ") : qsTr("none") }
-        function _crit(v) { var a = []; if (v & 1) a.push(qsTr("StorageUnavailable")); if (v & 2) a.push(qsTr("RecordingBackendError")); return a.length ? a.join(", ") : qsTr("none") }
+        // real, not int: free/recorded bytes exceed 2^31 (QML int is 32-bit) and would wrap.
+        // recorded_size is 64 KiB units (2^16); free_space is 1 MB = 10^6-byte units (matches
+        // the firmware's freeSpaceBytes()/1000000).
+        readonly property real recordedBytes: dev ? (dev.recorderRecordedSize64k || 0) * 65536.0 : 0
+        readonly property real freeBytes:     dev ? (dev.recorderFreeSpace1m || 0) * 1000000.0 : 0
+
         function _fmtSize(b) {
             if (!b || b <= 0) return "0 B"
             if (b < 1024) return b + " B"
@@ -91,73 +121,247 @@ Column {
             if (b < 1073741824) return (b / 1048576).toFixed(1) + " MB"
             return (b / 1073741824).toFixed(2) + " GB"
         }
-        function _dur(s) {
+        // Coarse single-unit elapsed: <60s -> "Ns", <1h -> "Nm", else "Nh" (floored).
+        function _elapsed(s) {
             if (!s || s <= 0) return "0s"
-            var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60
-            return (h > 0 ? h + "h " : "") + (m > 0 || h > 0 ? m + "m " : "") + sec + "s"
+            if (s < 60) return s + "s"
+            if (s < 3600) return Math.floor(s / 60) + "m"
+            return Math.floor(s / 3600) + "h"
         }
 
-        component StatRow: Row {
-            property string label: ""
-            property string value: ""
-            property color valueColor: AppPalette.text
-            property bool dot: false
-            width: parent ? parent.width : 0
-            height: Tokens.controlHSm ? Tokens.controlHSm : Math.round(22 * AppPalette.scale)
-            spacing: Tokens.spaceSm
-            Text {
-                text: label; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
-                width: Math.round(150 * AppPalette.scale); elide: Text.ElideRight
+        readonly property int kStallS: 10
+
+        // Join source names for flag-word bits 0/1/2 (Sonar1=1, Sonar2=2, Nav=4).
+        function _sources(v) {
+            var a = []
+            if (v & 1) a.push(qsTr("Sonar 1"))
+            if (v & 2) a.push(qsTr("Sonar 2"))
+            if (v & 4) a.push(qsTr("Nav"))
+            if (!a.length) return ""
+            return a.length === 1 ? a[0] : a.slice(0, -1).join(", ") + qsTr(" & ") + a[a.length - 1]
+        }
+
+        // Semantic severity accent (from the app palette; distinct from the blue accent).
+        function _sevColor(s) {
+            if (s === "good")  return AppPalette.linkOkBorder
+            if (s === "warn")  return AppPalette.linkIdleBorder
+            if (s === "crit")  return AppPalette.linkDownBorder
+            if (s === "stale") return AppPalette.textMuted
+            return AppPalette.accentBar
+        }
+
+        // Worst-state-wins hero: { sev, word, sub, pulse }. Mirrors the UX concept: the one
+        // line that answers "is my data being saved right now, and if not, what broke?".
+        readonly property var hero: _hero()
+        function _hero() {
+            if (!dev || !dev.recorderStatusValid)
+                return { sev: "idle", word: qsTr("Connecting…"), sub: qsTr("Waiting for the recorder."), pulse: false }
+            if (stale)
+                return { sev: "stale", word: qsTr("No response"),
+                         sub: qsTr("No update for %1 — showing last known.").arg(_elapsed(staleAgeS)), pulse: false }
+            var st = dev.recorderRecordingState
+            if (st === 3 || dev.recorderCriticalFlags)
+                return { sev: "crit",
+                         word: (dev.recorderCriticalFlags & 1) ? qsTr("Storage lost") : qsTr("Recording failed"),
+                         sub: qsTr("Recording stopped — check the recorder."), pulse: false }
+            if (st === 4)
+                return { sev: "crit", word: qsTr("Recording off"), sub: qsTr("Recording is disabled."), pulse: false }
+            if (st === 2) {
+                var active = dev.recorderStatusFlags || 0
+                var silentBits = (dev.recorderDegradedFlags || 0) & 0x7
+                // Not writing: no data landed for a while, OR every seen source has gone
+                // silent. Still green if another source is feeding (that rides as an alert).
+                if (dev.recorderSecondsSinceLastWrite > kStallS || (silentBits && !active)) {
+                    var sil = _sources(dev.recorderDegradedFlags || 0)
+                    var gap = _elapsed(dev.recorderSecondsSinceLastWrite)
+                    return { sev: "warn", word: qsTr("Not writing"),
+                             sub: sil.length ? qsTr("No data from %1 · nothing recorded for %2").arg(sil).arg(gap)
+                                             : qsTr("Nothing recorded for %1 — source silent.").arg(gap),
+                             pulse: false }
+                }
+                var live = _sources(active)
+                return { sev: "good", word: qsTr("Recording"),
+                         sub: live.length ? qsTr("Saving — %1 live.").arg(live) : qsTr("Saving."), pulse: true }
+            }
+            if (st === 1)
+                return { sev: "idle", word: qsTr("Idle"), sub: qsTr("Armed — waiting for data."), pulse: false }
+            return { sev: "idle", word: qsTr("Starting…"), sub: qsTr("Recorder is coming up."), pulse: false }
+        }
+
+        // Input ports — ALL THREE always shown. Per-port state: "live" (status_flags,
+        // green), "lost" (degraded_flags, red), "off" (neither seen, gray hollow).
+        function _sourceChips() {
+            if (!dev || !dev.recorderStatusValid) return []
+            var sf = dev.recorderStatusFlags || 0, df = dev.recorderDegradedFlags || 0
+            var defs = [{ b: 1, n: qsTr("Sonar 1"), s: qsTr("S1") },
+                        { b: 2, n: qsTr("Sonar 2"), s: qsTr("S2") },
+                        { b: 4, n: qsTr("Nav"), s: qsTr("Nav") }]
+            var out = []
+            for (var i = 0; i < defs.length; i++)
+                out.push({ name: defs[i].n, short: defs[i].s,
+                           state: (sf & defs[i].b) ? "live" : ((df & defs[i].b) ? "lost" : "off") })
+            return out
+        }
+
+        // Severity tint for the banner background (low-alpha sev colour; idle = none).
+        function _sevBg(s) {
+            if (s === "idle") return "transparent"
+            var c = _sevColor(s)
+            return Qt.rgba(c.r, c.g, c.b, 0.12)
+        }
+        // Free-space "error" (blink): storage fault, or free space critically low (<2 GB).
+        function _freeError() {
+            if (!dev || !dev.recorderStatusValid) return false
+            if (dev.recorderCriticalFlags) return true
+            return recorderGroup.freeBytes > 0 && recorderGroup.freeBytes < 2000000000
+        }
+
+        // A vital-number tile for the banner: label + value. keyBox = green (good), errorBox
+        // = red border + blink, alertBox = red static (e.g. dropping frames).
+        component StatBox: Rectangle {
+            property string blabel: ""
+            property string bvalue: ""
+            property bool keyBox: false
+            property bool errorBox: false
+            property bool alertBox: false
+            height: Math.round(42 * AppPalette.scale); radius: Tokens.radiusMd
+            implicitWidth: sbCol.implicitWidth + Tokens.spaceMd * 2; width: implicitWidth
+            color: AppPalette.card
+            border.width: 1
+            border.color: (errorBox || alertBox) ? AppPalette.linkDownBorder
+                        : keyBox ? Qt.rgba(AppPalette.linkOkBorder.r, AppPalette.linkOkBorder.g, AppPalette.linkOkBorder.b, 0.45)
+                        : AppPalette.border
+            Column {
+                id: sbCol
+                anchors.centerIn: parent; spacing: Math.round(1 * AppPalette.scale)
+                Text { visible: blabel.length > 0; text: blabel; color: AppPalette.textMuted
+                       font.pixelSize: Tokens.fontXs }
+                Text { text: bvalue; font.pixelSize: Tokens.fontSm; font.bold: true
+                       color: (errorBox || alertBox) ? AppPalette.linkDownBorder
+                            : keyBox ? AppPalette.linkOkBorder : AppPalette.text }
+            }
+            Rectangle {   // blink glow when errorBox
+                anchors.fill: parent; radius: parent.radius; color: "transparent"
+                border.width: Math.round(2 * AppPalette.scale); border.color: AppPalette.linkDownBorder
+                visible: errorBox
+                SequentialAnimation on opacity {
+                    running: errorBox; loops: Animation.Infinite
+                    NumberAnimation { from: 1.0; to: 0.12; duration: 560; easing.type: Easing.InOutSine }
+                    NumberAnimation { from: 0.12; to: 1.0; duration: 560; easing.type: Easing.InOutSine }
+                }
+            }
+        }
+
+        // Freshness: recorderStatusChanged fires every poll (~3s). If it stops (e.g. the
+        // telem link is pulled — the serial port stays "open", so link state won't notice)
+        // the last snapshot is stale and the device's real state is unknown. Track the age
+        // of the last status and flag it, so the readout isn't mistaken for live truth.
+        property double _lastStatusMs: 0
+        property double _nowMs: 0
+        readonly property bool stale: _lastStatusMs > 0 && (_nowMs - _lastStatusMs) > 7000
+        readonly property int staleAgeS: _lastStatusMs > 0 ? Math.floor((_nowMs - _lastStatusMs) / 1000) : 0
+
+        Timer { interval: 1000; repeat: true; running: true; onTriggered: recorderGroup._nowMs = Date.now() }
+        Connections {
+            target: dev
+            ignoreUnknownSignals: true
+            function onRecorderStatusChanged() { recorderGroup._lastStatusMs = Date.now(); recorderGroup._nowMs = Date.now() }
+        }
+
+        // ── Banner: severity-tinted; hero + vital boxes. Ports are in the header. ──
+        Rectangle {
+            id: banner
+            width: parent.width; radius: Tokens.radiusMd
+            color: recorderGroup._sevBg(recorderGroup.hero.sev)
+            border.width: recorderGroup.hero.sev === "idle" ? 1 : 0
+            border.color: AppPalette.border
+            implicitHeight: bannerCol.implicitHeight + Tokens.spaceMd * 2; height: implicitHeight
+            opacity: recorderGroup.stale ? 0.6 : 1.0
+
+            Rectangle {   // left severity stripe
+                anchors.left: parent.left; anchors.leftMargin: Math.round(2 * AppPalette.scale)
+                anchors.top: parent.top; anchors.bottom: parent.bottom
+                anchors.topMargin: parent.radius; anchors.bottomMargin: parent.radius
+                width: Math.round(3 * AppPalette.scale); radius: width / 2
+                color: recorderGroup._sevColor(recorderGroup.hero.sev)
+                visible: recorderGroup.hero.sev !== "idle"
+            }
+
+            Column {
+                id: bannerCol
+                anchors.left: parent.left; anchors.right: parent.right
+                anchors.leftMargin: Tokens.spaceMd + Math.round(4 * AppPalette.scale)
+                anchors.rightMargin: Tokens.spaceMd
                 anchors.verticalCenter: parent.verticalCenter
+                spacing: Tokens.spaceMd
+
+                // hero: disc + word + sub
+                Row {
+                    width: parent.width; spacing: Tokens.spaceMd
+
+                    Item {
+                        id: heroDisc
+                width: Math.round(16 * AppPalette.scale); height: width
+                anchors.verticalCenter: heroText.verticalCenter
+                Rectangle {   // pulse ring while actively writing
+                    id: pulseRing
+                    anchors.centerIn: parent; width: parent.width; height: parent.height; radius: width / 2
+                    color: "transparent"; border.width: Math.max(1, Math.round(1.5 * AppPalette.scale))
+                    border.color: recorderGroup._sevColor(recorderGroup.hero.sev)
+                    visible: recorderGroup.hero.pulse
+                    ParallelAnimation {
+                        running: recorderGroup.hero.pulse; loops: Animation.Infinite
+                        NumberAnimation { target: pulseRing; property: "scale"; from: 1.0; to: 2.4; duration: 1500; easing.type: Easing.OutQuad }
+                        NumberAnimation { target: pulseRing; property: "opacity"; from: 0.5; to: 0.0; duration: 1500; easing.type: Easing.OutQuad }
+                    }
+                }
+                Rectangle {   // the severity disc
+                    anchors.centerIn: parent; width: parent.width; height: parent.height; radius: width / 2
+                    color: recorderGroup._sevColor(recorderGroup.hero.sev)
+                }
             }
-            Rectangle {
-                visible: dot; width: Math.round(8 * AppPalette.scale); height: width; radius: width / 2
-                color: valueColor; anchors.verticalCenter: parent.verticalCenter
-            }
-            Text {
-                text: value; color: dot ? AppPalette.text : valueColor; font.pixelSize: Tokens.fontSm
-                font.bold: true; anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - Math.round(150 * AppPalette.scale) - parent.spacing - (dot ? Math.round(8 * AppPalette.scale) + parent.spacing : 0)
-                elide: Text.ElideRight
+            Column {
+                id: heroText
+                width: parent.width - heroDisc.width - parent.spacing
+                spacing: Math.round(2 * AppPalette.scale)
+                Text { text: recorderGroup.hero.word; color: recorderGroup._sevColor(recorderGroup.hero.sev)
+                       font.pixelSize: Math.round(21 * AppPalette.scale); font.bold: true
+                       width: parent.width; elide: Text.ElideRight }
+                Text { text: recorderGroup.hero.sub; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
+                       width: parent.width; wrapMode: Text.WordWrap }
             }
         }
 
-        // Status snapshot
-        Column {
-            width: parent.width; spacing: Tokens.spaceXxs
-
-            Text {
-                visible: !(dev && dev.recorderStatusValid)
-                text: qsTr("Waiting for recorder status…")
-                color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
+                // vital boxes: free space (blinks on error), current log · bytes, dropping frames
+                Flow {
+                    width: parent.width; spacing: Tokens.spaceSm
+                    StatBox {
+                        blabel: qsTr("Free space")
+                        bvalue: (dev && (dev.recorderCriticalFlags & 1)) ? "—" : recorderGroup._fmtSize(recorderGroup.freeBytes)
+                        errorBox: recorderGroup._freeError()
+                        keyBox: !recorderGroup._freeError() && (recorderGroup.hero.sev === "good" || recorderGroup.hero.sev === "idle")
+                    }
+                    StatBox {
+                        blabel: qsTr("Current log")
+                        bvalue: (dev && dev.recorderCurrentLogId)
+                                ? ("#" + dev.recorderCurrentLogId + " · " + recorderGroup._fmtSize(recorderGroup.recordedBytes))
+                                : qsTr("No log yet")
+                    }
+                    StatBox {
+                        visible: !!(dev && dev.recorderStatusValid && (dev.recorderDegradedFlags & 0x8))
+                        alertBox: true
+                        bvalue: qsTr("⚠ Dropping frames")
+                    }
+                }
             }
+        }
 
-            StatRow { label: qsTr("Condition:"); dot: true
-                      valueColor: recorderGroup._condColor(dev ? dev.recorderDeviceCondition : 0)
-                      value: recorderGroup._cond(dev ? dev.recorderDeviceCondition : 0)
-                      visible: !!(dev && dev.recorderStatusValid) }
-            StatRow { label: qsTr("State:"); value: recorderGroup._recState(dev ? dev.recorderRecordingState : 0)
-                      visible: !!(dev && dev.recorderStatusValid) }
-            StatRow { label: qsTr("Current log:"); value: dev && dev.recorderCurrentLogId ? ("#" + dev.recorderCurrentLogId) : "—"
-                      visible: !!(dev && dev.recorderStatusValid) }
-            StatRow { label: qsTr("Recorded:"); value: recorderGroup._fmtSize(recorderGroup.recordedBytes)
-                      visible: !!(dev && dev.recorderStatusValid) }
-            StatRow { label: qsTr("Free space:"); value: recorderGroup._fmtSize(recorderGroup.freeBytes)
-                      visible: !!(dev && dev.recorderStatusValid) }
-            StatRow { label: qsTr("Rec. duration:"); value: recorderGroup._dur(dev ? dev.recorderDurationSeconds : 0)
-                      visible: !!(dev && dev.recorderStatusValid) }
-            StatRow { label: qsTr("Last write:")
-                      // seconds_since_last_write reads 0 before any write; show "—" until
-                      // the current log has actually recorded something.
-                      value: (dev && (dev.recorderRecordedSize64k > 0 || dev.recorderDurationSeconds > 0))
-                             ? (dev.recorderSecondsSinceLastWrite + qsTr(" s ago")) : "—"
-                      visible: !!(dev && dev.recorderStatusValid) }
-            StatRow { label: qsTr("Degraded:"); value: recorderGroup._degr(dev ? dev.recorderDegradedFlags : 0)
-                      valueColor: (dev && dev.recorderDegradedFlags) ? "#E0A83A" : AppPalette.textMuted
-                      visible: !!(dev && dev.recorderStatusValid && dev.recorderDegradedFlags) }
-            StatRow { label: qsTr("Critical:"); value: recorderGroup._crit(dev ? dev.recorderCriticalFlags : 0)
-                      valueColor: AppPalette.dangerBorder
-                      visible: !!(dev && dev.recorderStatusValid && dev.recorderCriticalFlags) }
+        // Stale note — the banner already shows "No response"; this labels the frozen values.
+        Text {
+            visible: recorderGroup.stale
+            width: parent.width
+            text: qsTr("Values may be outdated.")
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
         }
 
         // Logs header: count + refresh

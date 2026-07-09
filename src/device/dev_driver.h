@@ -125,6 +125,8 @@ public:
     int  recorderDeviceCondition()       { return idRecorderStatus ? idRecorderStatus->deviceCondition() : 0; }
     int  recorderRecordingMode()         { return idRecorderStatus ? idRecorderStatus->recordingMode() : 0; }
     int  recorderRecordingState()        { return idRecorderStatus ? idRecorderStatus->recordingState() : 0; }
+    int  recorderStatusFlags()           { return idRecorderStatus ? idRecorderStatus->statusFlags() : 0; }
+    int  recorderWarningFlags()          { return idRecorderStatus ? idRecorderStatus->warningFlags() : 0; }
     int  recorderDegradedFlags()         { return idRecorderStatus ? idRecorderStatus->degradedFlags() : 0; }
     int  recorderCriticalFlags()         { return idRecorderStatus ? idRecorderStatus->criticalFlags() : 0; }
     int  recorderCurrentLogId()          { return idRecorderStatus ? idRecorderStatus->currentLogId() : 0; }

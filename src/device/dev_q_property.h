@@ -101,6 +101,8 @@ public:
     Q_PROPERTY(int  recorderDeviceCondition       READ recorderDeviceCondition       NOTIFY recorderStatusChanged)
     Q_PROPERTY(int  recorderRecordingMode         READ recorderRecordingMode         NOTIFY recorderStatusChanged)
     Q_PROPERTY(int  recorderRecordingState        READ recorderRecordingState        NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderStatusFlags           READ recorderStatusFlags           NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderWarningFlags          READ recorderWarningFlags          NOTIFY recorderStatusChanged)
     Q_PROPERTY(int  recorderDegradedFlags         READ recorderDegradedFlags         NOTIFY recorderStatusChanged)
     Q_PROPERTY(int  recorderCriticalFlags         READ recorderCriticalFlags         NOTIFY recorderStatusChanged)
     Q_PROPERTY(int  recorderCurrentLogId          READ recorderCurrentLogId          NOTIFY recorderStatusChanged)
