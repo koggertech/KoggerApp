@@ -88,8 +88,8 @@ WaterFall {
     horizontal: horisontalVertical.checked
 
     function setLevels(low, high) {
-        echogramLevelsSlider.startValue = low
-        echogramLevelsSlider.stopValue = high
+        settingsRow.levelStart = low
+        settingsRow.levelStop = high
     }
 
     function updateBottomTrackPresentation() {
@@ -464,7 +464,10 @@ WaterFall {
 
     Connections {
         target: core
-        function onActiveTransientUiChanged(who) { if (who !== themeSwitcher) themeSwitcher.menuOpen = false }
+        function onActiveTransientUiChanged(who) {
+            if (who !== themeSwitcher) themeSwitcher.menuOpen = false
+            if (who !== levelPill) levelPill.close()
+        }
     }
 
     PinchArea {
@@ -556,19 +559,45 @@ WaterFall {
                                             && height > plot.height - 170 * theme.resCoeff
         readonly property int _scrollClearance: Math.round(44 * AppPalette.scale)
 
+        property int levelStart: 10
+        property int levelStop: 100
+        readonly property int  _levelReserve: 2 * plot.controlButtonSize + 2 * plot.edgeSafetyMargin
+                                              + Math.round(122 * AppPalette.scale)
+        readonly property real _levelCtrlH: theme ? theme.controlHeight : 26
+        readonly property int  _rawCoeff: Math.floor((plot.height - _levelReserve) / _levelCtrlH)
+        readonly property bool sliderFits: _rawCoeff >= 3
+
+        function _syncLevelEditors() {
+            if (echogramLevelsSlider.startValue !== levelStart) echogramLevelsSlider.startValue = levelStart
+            if (echogramLevelsSlider.stopValue  !== levelStop)  echogramLevelsSlider.stopValue  = levelStop
+            if (levelPill.hStartValue !== levelStart) levelPill.hStartValue = levelStart
+            if (levelPill.hStopValue  !== levelStop)  levelPill.hStopValue  = levelStop
+        }
+
+        onLevelStartChanged: { plot.plotEchogramSetLevels(levelStart, levelStop); themeSwitcher.menuOpen = false; _syncLevelEditors() }
+        onLevelStopChanged:  { plot.plotEchogramSetLevels(levelStart, levelStop); themeSwitcher.menuOpen = false; _syncLevelEditors() }
+        Component.onCompleted: { plot.plotEchogramSetLevels(levelStart, levelStop); _syncLevelEditors() }
+        onSliderFitsChanged: if (sliderFits) levelPill.close()
+
+        Settings {
+            category: "scene2d/plot2d/" + plot.indx
+            property alias echogramLevelsStart: settingsRow.levelStart
+            property alias echogramLevelsStop:  settingsRow.levelStop
+        }
+
+        z: 20
+
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.leftMargin: Math.round(10 * AppPalette.scale) + plot.edgeSafetyMargin
                             + (_shiftRight ? width + Math.round(12 * AppPalette.scale) : 0)
-        anchors.bottomMargin: plot.edgeSafetyMargin
-                              + (plot.horizontal ? _scrollClearance
-                                                 : plot.settingsMenuSpacer)
+        anchors.bottomMargin: plot.edgeSafetyMargin + _scrollClearance
         spacing: Math.round(6 * AppPalette.scale)
 
         opacity: settingsFade.value
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         HoverHandler { id: settingsHover }
-        IdleFade { id: settingsFade; hovered: settingsHover.hovered || themeSwitcher.menuHovered }
+        IdleFade { id: settingsFade; hovered: settingsHover.hovered || themeSwitcher.menuHovered || levelPill.open }
 
         KThemeSwitcher {
             id: themeSwitcher
@@ -585,27 +614,126 @@ WaterFall {
             onMenuOpenChanged: if (menuOpen && typeof core !== "undefined" && core) core.setActiveTransientUi(themeSwitcher)
         }
 
-        KChartLevelCapsule {
-            id: echogramLevelsSlider
+        Item {
+            id: levelSlot
             Layout.alignment: Qt.AlignHCenter
-            capsuleWidth: plot.controlButtonSize
-            heightCoeff: {
-                var ctrlH = theme ? theme.controlHeight : 26
-                var appHotActionsClearance = Math.round(96 * AppPalette.scale)
-                var reserve = 2 * plot.controlButtonSize + 2 * plot.edgeSafetyMargin
-                              + Math.round(122 * AppPalette.scale) + appHotActionsClearance
-                return Math.max(3, Math.min(5, Math.floor((plot.height - reserve) / ctrlH)))
+            Layout.preferredWidth: plot.controlButtonSize
+            Layout.preferredHeight: settingsRow.sliderFits ? echogramLevelsSlider.implicitHeight
+                                                           : plot.controlButtonSize
+            Behavior on Layout.preferredHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+
+            KChartLevelCapsule {
+                id: echogramLevelsSlider
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: plot.controlButtonSize
+                capsuleWidth: plot.controlButtonSize
+                heightCoeff: Math.max(3, Math.min(5, settingsRow._rawCoeff))
+                opacity: settingsRow.sliderFits ? 1 : 0
+                scale:   settingsRow.sliderFits ? 1 : 0.85
+                visible: opacity > 0.01
+                enabled: settingsRow.sliderFits
+                Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                Behavior on scale   { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                onStartValueChanged: if (startValue !== settingsRow.levelStart) settingsRow.levelStart = startValue
+                onStopValueChanged:  if (stopValue  !== settingsRow.levelStop)  settingsRow.levelStop  = stopValue
             }
 
-            onStartValueChanged: { plot.plotEchogramSetLevels(startValue, stopValue); themeSwitcher.menuOpen = false }
-            onStopValueChanged:  { plot.plotEchogramSetLevels(startValue, stopValue); themeSwitcher.menuOpen = false }
-            Component.onCompleted: plot.plotEchogramSetLevels(startValue, stopValue)
+            KCircleIconButton {
+                id: levelCollapsedBtn
+                anchors.centerIn: parent
+                width: plot.controlButtonSize
+                height: plot.controlButtonSize
+                iconSource: "qrc:/icons/ui/adjustments_horizontal.svg"
+                iconTintColor: AppPalette.text
+                fillColor: AppPalette.card
+                fillHoverColor: AppPalette.cardHover
+                borderWidth: 0
+                z: 16
+                toolTipText: qsTr("Echogram levels")
+                toolTipSuppressed: levelPill.open
+                opacity: settingsRow.sliderFits ? 0 : 1
+                scale:   settingsRow.sliderFits ? 0.85 : 1
+                visible: opacity > 0.01
+                enabled: !settingsRow.sliderFits
+                Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                Behavior on scale   { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                onClicked: levelPill.open ? levelPill.close() : levelPill.openPill()
+            }
 
-            Settings {
-                category: "scene2d/plot2d/" + plot.indx
+            Rectangle {
+                id: levelPill
+                property bool open: false
+                property alias hStartValue: hLevel.startValue
+                property alias hStopValue:  hLevel.stopValue
+                readonly property int pad: Math.round(5 * AppPalette.scale)
+                readonly property real _minPillW: 2 * pad + plot.controlButtonSize
+                                                  + Math.round(14 * AppPalette.scale)
+                                                  + 2 * Math.round(8 * AppPalette.scale)
+                                                  + 2 * lvlLabelMetrics.width
+                                                  + Math.round(56 * AppPalette.scale)
+                readonly property real fullW: Math.max(_minPillW, themeSwitcher.openWidth)
 
-                property alias echogramLevelsStart: echogramLevelsSlider.startValue
-                property alias echogramLevelsStop: echogramLevelsSlider.stopValue
+                anchors.left: levelCollapsedBtn.left
+                anchors.leftMargin: -pad
+                anchors.verticalCenter: levelCollapsedBtn.verticalCenter
+                height: plot.controlButtonSize + 2 * pad
+                width: open ? fullW : 0
+                radius: height / 2
+                clip: true
+                color: AppPalette.bg
+                border.width: 0
+                opacity: open ? 1 : 0
+                z: 15
+
+                Behavior on width   { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
+
+                function openPill() { open = true; if (typeof core !== "undefined" && core) core.setActiveTransientUi(levelPill) }
+                function close() { open = false }
+
+                TextMetrics { id: lvlLabelMetrics; font.pixelSize: Math.round(14 * AppPalette.scale); text: "120" }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: levelPill.open
+                    acceptedButtons: Qt.AllButtons
+                    onPressed: function(m) { m.accepted = true }
+                    onWheel: function(w) { w.accepted = true }
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: levelPill.pad + plot.controlButtonSize + Math.round(4 * AppPalette.scale)
+                    anchors.rightMargin: levelPill.pad + Math.round(10 * AppPalette.scale)
+                    anchors.topMargin: levelPill.pad
+                    anchors.bottomMargin: levelPill.pad
+                    spacing: Math.round(8 * AppPalette.scale)
+
+                    Text {
+                        text: settingsRow.levelStart
+                        color: AppPalette.text
+                        font.pixelSize: Math.round(14 * AppPalette.scale)
+                        horizontalAlignment: Text.AlignRight
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: lvlLabelMetrics.width
+                    }
+                    ChartLevel {
+                        id: hLevel
+                        orientation: Qt.Horizontal
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        onStartValueChanged: if (startValue !== settingsRow.levelStart) settingsRow.levelStart = startValue
+                        onStopValueChanged:  if (stopValue  !== settingsRow.levelStop)  settingsRow.levelStop  = stopValue
+                    }
+                    Text {
+                        text: settingsRow.levelStop
+                        color: AppPalette.text
+                        font.pixelSize: Math.round(14 * AppPalette.scale)
+                        horizontalAlignment: Text.AlignLeft
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: lvlLabelMetrics.width
+                    }
+                }
             }
         }
 
@@ -699,7 +827,7 @@ WaterFall {
             gridVisible, gridFill, gridInvert, gridNumber,
             angleVisible, angleRange, velocityVisible, velocityRange,
             distanceAutoRange, distanceAutoRangeIndex, horizontalMode,
-            echogramLevelsSlider.startValue, echogramLevelsSlider.stopValue
+            settingsRow.levelStart, settingsRow.levelStop
         ]
         on_ChangeProbeChanged: if (!plot.suspendCapture) echogramCaptureDebounce.restart()
 

@@ -3452,6 +3452,11 @@
         <translation></translation>
     </message>
     <message>
+        <location filename="../qml/scene2d/Plot2D.qml" line="649"/>
+        <source>Echogram levels</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../qml/scene2d/Plot2D.qml" line="784"/>
         <source>Channels:</source>
         <translation></translation>

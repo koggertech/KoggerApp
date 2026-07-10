@@ -9,10 +9,13 @@ Item {
     implicitWidth: 87
     implicitHeight: theme.controlHeight * heightCoeff
 
+    property int orientation: Qt.Vertical
+    readonly property bool _horiz: orientation === Qt.Horizontal
+
     property int heightCoeff: 5
     property int widthSlider: theme.controlHeight
     property int heightSlider: theme.controlHeight/2
-    property int mouseRange: height - heightSlider*2
+    property int mouseRange: (_horiz ? width : height) - heightSlider*2
 
     property int from: 0
     property int to: 120
@@ -28,27 +31,27 @@ Item {
     property color backColor: theme.controlBackColor
 
     function valueToPosition(val) {
-        return Math.round(mouseRange - val / (to - from) * mouseRange + heightSlider)
+        var span = val / (to - from) * mouseRange
+        return Math.round(_horiz ? (span + heightSlider)
+                                 : (mouseRange - span + heightSlider))
     }
 
     function mouseToVal(mauseCoord) {
-        var val = (mouseRange - mauseCoord) * (to - from) / mouseRange
+        var val = (_horiz ? mauseCoord : (mouseRange - mauseCoord)) * (to - from) / mouseRange
         return Math.max(Math.min(val, to), from)
     }
 
     function updateValue(mouseX, mouseY, pressed) {
-        var centerMouse = mouseY - heightSlider
+        var mainMouse = _horiz ? mouseX : mouseY
+        var centerMouse = mainMouse - heightSlider
         var startCoord = centerMouse - heightSlider/2
         var stopCoord = centerMouse + heightSlider/2
 
         if(pressed) {
             if(startPointY === stopPointY) {
-                if(mouseY > startPointY) {
-                    activeSlider = 1
-                } else {
-                    activeSlider = 2
-                }
-            } else if(Math.abs(startPointY - mouseY) < Math.abs(stopPointY - mouseY)) {
+                var grabStart = _horiz ? (mainMouse < startPointY) : (mainMouse > startPointY)
+                activeSlider = grabStart ? 1 : 2
+            } else if(Math.abs(startPointY - mainMouse) < Math.abs(stopPointY - mainMouse)) {
                 activeSlider = 1
             } else {
                 activeSlider = 2
@@ -56,12 +59,12 @@ Item {
         }
 
         if(activeSlider === 1) {
-            startValue = mouseToVal(startCoord)
+            startValue = mouseToVal(_horiz ? centerMouse : startCoord)
             if(startValue > stopValue) {
                 stopValue = startValue
             }
         } else if(activeSlider === 2){
-            stopValue = mouseToVal(stopCoord)
+            stopValue = mouseToVal(_horiz ? centerMouse : stopCoord)
             if(stopValue < startValue) {
                 startValue = stopValue;
             }
@@ -101,9 +104,10 @@ Item {
 
         onWheel: function(wheel) {
             var delta = wheel.angleDelta.y > 0 ? control.wheelStep : -control.wheelStep
-            var closeToStart = Math.abs(startPointY - wheel.y) < Math.abs(stopPointY - wheel.y)
+            var mainW = control._horiz ? wheel.x : wheel.y
+            var closeToStart = Math.abs(startPointY - mainW) < Math.abs(stopPointY - mainW)
             if (startPointY === stopPointY) {
-                closeToStart = wheel.y > startPointY
+                closeToStart = control._horiz ? (mainW < startPointY) : (mainW > startPointY)
             }
             if (closeToStart) {
                 startValue = Math.max(from, Math.min(to, startValue + delta))
@@ -147,6 +151,50 @@ Item {
             context.fillStyle = parent.borderColor
             context.lineWidth = 1
             context.strokeStyle = parent.borderColor
+
+            if (control._horiz) {
+                var cy = height/2
+                var startX = Math.round(startPointY)
+                var stopX = Math.round(stopPointY)
+
+                context.beginPath()
+                context.fillStyle = parent.backColor
+                context.moveTo(startX, cy - widthSlider/2);
+                context.lineTo(stopX, cy - widthSlider/2);
+                context.moveTo(startX, cy + widthSlider/2);
+                context.lineTo(stopX, cy + widthSlider/2);
+                context.stroke()
+
+                context.fillStyle = parent.borderColor
+
+                context.beginPath()
+                context.moveTo(startX, cy - widthSlider/2);
+                context.lineTo(startX, cy + widthSlider/2);
+                context.lineTo(startX - heightSlider/2, cy + widthSlider/2);
+                context.lineTo(startX - heightSlider + 2, cy);
+                context.lineTo(startX - heightSlider/2, cy - widthSlider/2);
+                context.closePath();
+                context.fill();
+                context.stroke()
+
+                context.beginPath()
+                context.moveTo(stopX, cy - widthSlider/2);
+                context.lineTo(stopX, cy + widthSlider/2);
+                context.lineTo(stopX + heightSlider/2, cy + widthSlider/2);
+                context.lineTo(stopX + heightSlider - 2, cy);
+                context.lineTo(stopX + heightSlider/2, cy - widthSlider/2);
+                context.closePath();
+                context.fill();
+                context.stroke()
+
+                context.beginPath()
+                context.moveTo(0, cy);
+                context.lineTo(startX - heightSlider + 2, cy);
+                context.moveTo(width, cy);
+                context.lineTo(stopX + heightSlider - 2, cy);
+                context.stroke()
+                return
+            }
 
             var startPointX = width/2
             var stopPointX = width/2
