@@ -71,6 +71,8 @@ void StreamList::startDownload(int id) {
     s->expectedDiags = 0;
     s->diagsThisRound = 0;
     s->lastRecvCount = -1;
+    s->lastLiveCount = -1;
+    s->lastProgressAt = 0;
     s->savedFilePath.clear();
     s->uploadingState = Uploading;
     _activeDownloadId = id;
@@ -242,16 +244,22 @@ void StreamList::process() {
     const uint64_t now = timestamp();
     updateStream(_activeDownloadId);              // ~10 Hz progress refresh
 
-    const bool idle = (now - s->lastReqAt) >= kRequestIdleMs;
-    // Wait for all requested ranges' terminating diagnostics before re-requesting; the
-    // idle timeout is the fallback when a real link drops the frames + the diagnostic.
-    if(s->requestInFlight && !s->roundDone && !idle) { return; }
+    const int cnt = s->recvFrames.size();
+    // Liveness = NEW frames still arriving. downloadFrame() dedupes by offset, so re-sent
+    // duplicates never grow cnt — only genuine forward progress does. A frame dropped
+    // mid-stream halts the CONTIGUOUS frontier but NOT the flow: the [0,EOF] stream keeps
+    // delivering later frames. So key liveness on cnt, not frontier — re-requesting while
+    // data still arrives would rewind the recorder and re-send its in-flight window
+    // (= echogram offset jitter + request flood). Re-request ONLY when the stream truly
+    // falls silent, or once the recorder signals end-of-range (roundDone) with holes open.
+    if(cnt != s->lastLiveCount) { s->lastLiveCount = cnt; s->lastProgressAt = now; }
+    const bool alive = (now - s->lastProgressAt) < kStallTimeoutMs;
+    if(s->requestInFlight && !s->roundDone && alive) { return; }
 
     const uint32_t maxEnd = s->recvFrames.isEmpty()
         ? 0u
         : (s->recvFrames.lastKey() + static_cast<uint32_t>(s->recvFrames[s->recvFrames.lastKey()].size()));
     const bool contiguous = (s->frontier == maxEnd);          // no internal holes
-    const int cnt = s->recvFrames.size();
     const bool progressed = (!s->requestInFlight) || (cnt > s->lastRecvCount);
 
     // Completion: EOF confirmed, all received data contiguous, and the last round (a
@@ -272,6 +280,19 @@ void StreamList::process() {
     // the high-latency win. See kpclient::download_stream_batched.
     QVector<quint32> gaps = computeGaps(s);
     if(gaps.isEmpty()) { completeDownload(s, contiguous); return; }
+    // Validation hook (env-gated): one line per request round exposing how many INTERNAL
+    // (non-tail) gaps this round fills — the "no gap-filling in the middle" metric. On a
+    // clean link a 0->EOF download shows only bulk + a tail probe, internalGaps=0 throughout.
+    static const bool kTraceGaps = qEnvironmentVariableIsSet("KOGGER_TRACE_GAPS");
+    if(kTraceGaps) {
+        int internal = 0;
+        for(int i = 0; i + 1 < gaps.size(); i += 2) {
+            if(gaps[i + 1] != 0x0FFFFFFFu) { ++internal; }
+        }
+        const bool tail = (gaps.last() == 0x0FFFFFFFu);
+        qInfo("Recorder download round: log=%d frontier=%u recv=%d internalGaps=%d tail=%d actualSize=%u",
+              _activeDownloadId, s->frontier, cnt, internal, tail ? 1 : 0, s->actualFileSize);
+    }
     if(gaps.size() > 2 * kMaxRangesPerRequest) {
         gaps.resize(2 * kMaxRangesPerRequest);    // remaining gaps fill on later rounds
     }
@@ -281,6 +302,8 @@ void StreamList::process() {
     s->expectedDiags = gaps.size() / 2;
     s->roundDone = false;
     s->lastReqAt = now;
+    s->lastLiveCount = cnt;                        // reset the silence clock for this request
+    s->lastProgressAt = now;
     s->requestInFlight = true;
     emit requestRanges(_activeDownloadId, gaps);
 }
