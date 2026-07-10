@@ -855,8 +855,14 @@
         <translation>Привязка клавиш</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="544"/>
         <source>Console</source>
-        <translation type="vanished">Консоль</translation>
+        <translation>Консоль</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="545"/>
+        <source>Colour marking and log buffer size</source>
+        <translation>Маркировка цветом и размер буфера лога</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="995"/>
@@ -1419,6 +1425,39 @@
         <location filename="../qml/app/ConsolePanelDrawer.qml" line="161"/>
         <source>Binary</source>
         <translation>Бинарный</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="291"/>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+</context>
+<context>
+    <name>ConsoleSettingsTab</name>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="14"/>
+        <source>Show console</source>
+        <translation>Показать консоль</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="20"/>
+        <source>Colour marking</source>
+        <translation>Маркировка цветом</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="15"/>
+        <source>Highlight log syntax with the app theme's colours</source>
+        <translation>Подсветка синтаксиса лога цветами темы приложения</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="29"/>
+        <source>Keep last lines:</source>
+        <translation>Хранить последние строки:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="53"/>
+        <source>Ring buffer — the console keeps only the newest lines; older ones are dropped.</source>
+        <translation>Кольцевой буфер — консоль хранит только последние строки; старые отбрасываются.</translation>
     </message>
 </context>
 <context>
@@ -3918,6 +3957,11 @@
         <location filename="../qml/app/MainWindow.qml" line="839"/>
         <source>TGC</source>
         <translation>TGC</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="920"/>
+        <source>Console</source>
+        <translation>Консоль</translation>
     </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="840"/>

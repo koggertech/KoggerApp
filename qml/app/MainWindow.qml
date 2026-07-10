@@ -916,6 +916,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
                      : workspaceStore.settingsSubPageKind === "aimPanel"     ? qsTr("Information panel")
+                     : workspaceStore.settingsSubPageKind === "console"      ? qsTr("Console")
                      : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
                      : qsTr("Settings")
             side: workspaceStore.settingsSide
@@ -933,6 +934,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "aimPanel"   ? aimPanelSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "console"    ? consoleSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
                      : echogramSettingsTabComponent
             subPageOpen: workspaceStore.anySettingsSubPageActive
@@ -1091,6 +1093,14 @@ ApplicationWindow {
         }
 
         Component {
+            id: consoleSettingsTabComponent
+
+            ConsoleSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
             id: aimPanelSettingsTabComponent
 
             AimPanelSettingsTab {
@@ -1131,6 +1141,7 @@ ApplicationWindow {
 
         ConsolePanelDrawer {
             id: consoleDrawer
+            store: workspaceStore
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom

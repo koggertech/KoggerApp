@@ -349,20 +349,20 @@ Column {
                 width: parent.width
                 property int selectedIndex: 0
 
-                readonly property var names: ["Dark","S.Dark","Light","S.Light","OneDark","Monokai","Kimbie","Solar","Desert","Olive"]
+                readonly property var names: ["Dark","S.Dark","Light","S.Light","OneDark","Monokai","Kimbie","Solarized","Desert","Olive","Dracula","Nord"]
                 readonly property int gap: Tokens.spaceXs
                 readonly property int cellMinW: Math.round(80 * AppPalette.scale)
-                readonly property int cols: Tokens.gridColumns(width, cellMinW, gap, 5)
+                readonly property int cols: Tokens.gridColumns(width, cellMinW, gap, 4)
                 readonly property int itemH: Tokens.controlHMd
                 readonly property real itemW: (width - (cols - 1) * gap) / cols
-                readonly property int rows: Math.ceil(10 / cols)
+                readonly property int rows: Math.ceil(names.length / cols)
                 height: rows * itemH + (rows - 1) * gap
 
                 onSelectedIndexChanged: if (theme) theme.themeID = selectedIndex
                 Component.onCompleted: if (theme) theme.themeID = selectedIndex
 
                 Repeater {
-                    model: 10
+                    model: appThemeHolder.names.length
                     delegate: Rectangle {
                         id: themeCell
                         required property int index
@@ -537,6 +537,13 @@ Column {
             width: parent.width
             text: qsTr("UI Saving")
             onClicked: if (root.store) root.store.openUiSavingSettings()
+        }
+
+        NavButton {
+            width: parent.width
+            text: qsTr("Console")
+            toolTipText: qsTr("Colour marking and log buffer size")
+            onClicked: if (root.store) root.store.openConsoleSettings()
         }
     }
 

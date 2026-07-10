@@ -10,6 +10,7 @@ qt_add_qml_module(kogger_app
         AimPanelSettingsTab.qml
         ConnectionsSettingsPage.qml
         ConsolePanelDrawer.qml
+        ConsoleSettingsTab.qml
         CsvExportSettingsTab.qml
         DeviceSettingsGroup.qml
         DeviceSettingsPage.qml

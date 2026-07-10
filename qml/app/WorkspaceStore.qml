@@ -482,6 +482,23 @@ onTgcGainNearChanged:   applyTgcToCore()
 onTgcGainFarChanged:    applyTgcToCore()
 onTgcCompensateChanged: applyTgcToCore()
 
+property Settings consolePersist: Settings {
+    id: consolePersist
+    category: "main/console"
+    property bool consColorize: true
+    property int consMaxRows: 500
+}
+
+property alias consoleColorize: consolePersist.consColorize
+property alias consoleMaxRows: consolePersist.consMaxRows
+
+function applyConsoleMaxRows() {
+    if (typeof core !== "undefined" && core && core.consoleList)
+        core.consoleList.setMaxRows(consoleMaxRows)
+}
+
+onConsoleMaxRowsChanged: applyConsoleMaxRows()
+
 property Settings exportPersist: Settings {
     id: exportPersist
     category: "main/export"
@@ -934,6 +951,7 @@ function openAimPanelSettings()     { _openSettingsSubPage("aimPanel") }
 function openUiSavingSettings()     { _openSettingsSubPage("uiSaving") }
 function openTgcSettings()          { _openSettingsSubPage("tgc") }
 function openCsvExportSettings()    { _openSettingsSubPage("csvExport") }
+function openConsoleSettings()      { _openSettingsSubPage("console") }
 
 function closeActiveSettingsSubPage() {
     if (_settingsNav.length > 0) {

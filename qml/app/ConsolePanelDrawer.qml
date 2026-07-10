@@ -8,6 +8,7 @@ import kqml_types 1.0
 Item {
     id: root
 
+    property var store: null
     property bool consoleOpen: false
     property real maxHeight: 800
     property bool maximized: false
@@ -22,6 +23,87 @@ Item {
     readonly property real _s: AppPalette.scale
     readonly property int _pad: Tokens.spaceLg
     readonly property int _btnSize: Math.round(34 * _s)
+    readonly property bool _colorize: !!store && store.consoleColorize
+
+    function _logEsc(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/ /g, "&nbsp;")
+    }
+    function _logSpan(color, text) {
+        return "<span style=\"color:" + color + "\">" + _logEsc(text) + "</span>"
+    }
+    function buildLogHtml(time, payload, category) {
+        var c = AppPalette.consoleSyntax
+        var html = _logSpan(c.time, String(time) + "  ")
+        var m = /^(-->>|<<--) (.*)$/.exec(payload)
+        if (m) {
+            var dir = m[1]
+            var rest = m[2]
+            html += _logSpan(dir === "-->>" ? c.dirIn : c.dirOut, dir + " ")
+            var hexAt = rest.indexOf(" [ ")
+            var head = hexAt >= 0 ? rest.substring(0, hexAt) : rest
+            var hex = hexAt >= 0 ? rest.substring(hexAt) : ""
+            var hm = /^(KG\[\d+\]: id \d+ v\d+, )([A-Za-z]+)(, len )(\d+)(;)(.*)$/.exec(head)
+            if (hm) {
+                html += _logSpan(c.info, hm[1]) + _logSpan(c.mode, hm[2]) + _logSpan(c.info, hm[3]) + _logSpan(c.num, hm[4]) + _logSpan(c.info, hm[5])
+                var cm = hm[6]
+                if (cm.trim().length)
+                    html += _logSpan(cm.indexOf("Error") !== -1 ? c.error : c.comment, cm)
+                else if (cm.length)
+                    html += _logSpan(c.info, cm)
+            } else {
+                html += _logSpan(c.info, head)
+            }
+            if (hex.length)
+                html += _logSpan(c.payload, hex)
+            return html
+        }
+
+        var g = /^>> (.*)$/.exec(payload)
+        if (g) {
+            var body = g[1]
+            html += _logSpan(c.dirIn, ">> ")
+            var nm = /^NMEA: (.*)$/.exec(body)
+            if (nm) {
+                html += _logSpan(c.mode, "NMEA: ")
+                var sent = nm[1]
+                var csm = /^(.*?)(\*[0-9A-Fa-f]{2})$/.exec(sent)
+                var sentCore = csm ? csm[1] : sent
+                var idm = /^(\$[A-Za-z0-9]+)(.*)$/.exec(sentCore)
+                if (idm)
+                    html += _logSpan(c.num, idm[1]) + _logSpan(c.info, idm[2])
+                else
+                    html += _logSpan(c.info, sentCore)
+                if (csm)
+                    html += _logSpan(c.comment, csm[2])
+                return html
+            }
+            var mav = /^(MAVLink v\d+: )(ID )(\d+)(, comp\. id )(\d+)(, seq numb )(\d+)(, len )(\d+)$/.exec(body)
+            if (mav) {
+                html += _logSpan(c.mode, mav[1]) + _logSpan(c.info, mav[2]) + _logSpan(c.num, mav[3])
+                     + _logSpan(c.info, mav[4]) + _logSpan(c.num, mav[5])
+                     + _logSpan(c.info, mav[6]) + _logSpan(c.num, mav[7])
+                     + _logSpan(c.info, mav[8]) + _logSpan(c.num, mav[9])
+                return html
+            }
+            html += _logSpan(c.info, body)
+            return html
+        }
+
+        var col = category === 1 ? c.warn : ((category === 2 || category === 3) ? c.error : c.plain)
+        var pm = /(^|\s)((?:[A-Za-z]:[\\\/]|\\\\|\/(?:[^\s\/]+\/)+)[^\s]*)/.exec(payload)
+        if (pm) {
+            var pStart = pm.index + pm[1].length
+            var pEnd = pStart + pm[2].length
+            if (pStart > 0)
+                html += _logSpan(col, payload.substring(0, pStart))
+            html += _logSpan(c.dirOut, payload.substring(pStart, pEnd))
+            if (pEnd < payload.length)
+                html += _logSpan(col, payload.substring(pEnd))
+        } else {
+            html += _logSpan(col, payload)
+        }
+        return html
+    }
 
     clip: true
 
@@ -35,6 +117,8 @@ Item {
         category: "main/console"
         property alias consoleOpenRatio: root.openRatio
     }
+
+    Component.onCompleted: if (root.store) root.store.applyConsoleMaxRows()
 
     component Toggle: MouseArea {
         id: tgRoot
@@ -85,7 +169,7 @@ Item {
 
             Text {
                 text: tgRoot.label
-                color: tgRoot.containsMouse ? AppPalette.text : AppPalette.textSecond
+                color: AppPalette.textStrong
                 font.pixelSize: Tokens.fontBase
                 anchors.verticalCenter: parent.verticalCenter
                 Behavior on color { ColorAnimation { duration: 110 } }
@@ -102,7 +186,9 @@ Item {
 
             TextEdit {
                 Layout.fillWidth: true
-                text: time + "  " + payload
+                textFormat: root._colorize ? TextEdit.RichText : TextEdit.PlainText
+                text: root._colorize ? root.buildLogHtml(time, payload, category)
+                                     : (time + "  " + payload)
                 font.pixelSize: Math.round(13 * root._s)
                 font.family: "Consolas"
                 color: AppPalette.text
@@ -142,7 +228,7 @@ Item {
 
                 Text {
                     text: qsTr("Console")
-                    color: AppPalette.textSecond
+                    color: AppPalette.textStrong
                     font.pixelSize: Tokens.fontBase
                     font.bold: true
                     Layout.alignment: Qt.AlignVCenter
@@ -181,9 +267,12 @@ Item {
                     rounded: false
                     cornerRadius: Tokens.radiusMd
                     iconSource: root.maximized
-                                ? "qrc:/icons/ui/square-chevron-down.svg"
-                                : "qrc:/icons/ui/square-chevron-up.svg"
-                    iconTintColor: AppPalette.textSecond
+                                ? "qrc:/icons/ui/chevron-down.svg"
+                                : "qrc:/icons/ui/chevron-up.svg"
+                    iconTintColor: AppPalette.textStrong
+                    fillColor: AppPalette.bgDeep
+                    fillHoverColor: AppPalette.bgHover
+                    borderWidth: 0
                     toolTipText: root.maximized ? qsTr("Restore") : qsTr("Maximize")
                     Layout.alignment: Qt.AlignVCenter
                     onClicked: root.maximized = !root.maximized
@@ -194,9 +283,27 @@ Item {
                     implicitHeight: root._btnSize
                     rounded: false
                     cornerRadius: Tokens.radiusMd
+                    iconSource: "qrc:/icons/ui/settings.svg"
+                    iconTintColor: AppPalette.textStrong
+                    fillColor: AppPalette.bgDeep
+                    fillHoverColor: AppPalette.bgHover
+                    borderWidth: 0
+                    toolTipText: qsTr("Settings")
+                    Layout.alignment: Qt.AlignVCenter
+                    onClicked: if (root.store) root.store.openConsoleSettings()
+                }
+
+                KCircleIconButton {
+                    implicitWidth: root._btnSize
+                    implicitHeight: root._btnSize
+                    rounded: false
+                    cornerRadius: Tokens.radiusMd
                     glyph: "×"
                     glyphPixelSize: Math.round(18 * root._s)
-                    glyphColor: AppPalette.textSecond
+                    glyphColor: AppPalette.textStrong
+                    fillColor: AppPalette.bgDeep
+                    fillHoverColor: AppPalette.bgHover
+                    borderWidth: 0
                     Layout.alignment: Qt.AlignVCenter
                     onClicked: if (theme) theme.consoleVisible = false
                 }
@@ -227,9 +334,9 @@ Item {
     MouseArea {
         id: resizeHandle
         anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: Math.round(8 * root._s)
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: Math.round(AppPalette.dragBarLengthPx * root._s) + Tokens.spaceXl
+        height: Math.round(12 * root._s)
         hoverEnabled: true
         cursorShape: root.maximized ? Qt.ArrowCursor : Qt.SizeVerCursor
         enabled: !root.maximized
@@ -254,11 +361,11 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
             width: Math.round(AppPalette.dragBarLengthPx * root._s)
-            height: Math.max(2, Math.round(3 * root._s))
+            height: Math.max(4, Math.round(5 * root._s))
             radius: height / 2
             color: resizeHandle.containsMouse ? AppPalette.borderHover : AppPalette.border
             visible: !root.maximized
-            opacity: resizeHandle.containsMouse || resizeHandle.pressed ? 1.0 : 0.6
+            opacity: resizeHandle.containsMouse || resizeHandle.pressed ? 1.0 : 0.8
             Behavior on opacity { NumberAnimation { duration: 140 } }
             Behavior on color { ColorAnimation { duration: 140 } }
         }
