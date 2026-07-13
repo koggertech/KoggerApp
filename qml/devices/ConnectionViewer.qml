@@ -16,13 +16,16 @@ Column {
 
     property var devList: deviceManagerWrapper.devs
 
-    // Resolved via store.activeDeviceIndex (devSN not unique), falls back to devList[0].
+    // Resolved via store.activeDeviceIndex (devSN not unique); skips unidentified (BoardNone) devices.
     readonly property var dev: {
         if (!devList || devList.length === 0) return null
         var idx = store ? store.activeDeviceIndex : -1
-        if (idx >= 0 && idx < devList.length)
+        if (idx >= 0 && idx < devList.length && devList[idx] && devList[idx].isBoardInited)
             return devList[idx]
-        return devList[0]
+        for (var i = 0; i < devList.length; ++i)
+            if (devList[i] && devList[i].isBoardInited)
+                return devList[i]
+        return null
     }
     property var lastImportTrackFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     property string importTrackPathSource: ""
@@ -1136,7 +1139,7 @@ Column {
                     checkable: true
                     checked: store && store.activeDeviceIndex === index
                     checkedBorder: AppPalette.accentBorder
-                    visible: modelData ? (modelData.devType !== 0) : false
+                    visible: !!(modelData && modelData.isBoardInited)
                     onClicked: {
                         if (store)
                             store.setActiveDeviceIndex(index)

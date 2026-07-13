@@ -98,7 +98,7 @@ BasePanePopup {
             return
         for (var i = 0; i < deviceManagerWrapper.devs.length; ++i) {
             var d = deviceManagerWrapper.devs[i]
-            if (d && d.devType !== 0 && d.importSettingsFromXML)
+            if (d && d.isBoardInited && d.importSettingsFromXML)
                 d.importSettingsFromXML(path)
         }
     }

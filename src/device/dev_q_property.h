@@ -59,6 +59,7 @@ public:
     Q_PROPERTY(int devSN READ devSerialNumber NOTIFY deviceVersionChanged)
     Q_PROPERTY(QString fwVersion READ fwVersion NOTIFY deviceVersionChanged)
 
+    Q_PROPERTY(bool isBoardInited READ isBoardInited NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isSonar READ isSonar NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isRecorder READ isRecorder NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isDoppler READ isDoppler NOTIFY deviceVersionChanged)

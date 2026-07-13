@@ -122,7 +122,7 @@ Item {
         var ds = root.effectiveDevices
         if (!ds) return false
         for (var i = 0; i < ds.length; ++i)
-            if (ds[i] && ds[i].devType !== 0) return true
+            if (ds[i] && ds[i].isBoardInited) return true
         return false
     }
     property var _favSlot: null
@@ -139,6 +139,7 @@ Item {
     QtObject {
         id: fakeDevice
         property int devType: 1
+        property bool isBoardInited: true
         property string devName: "Echosounder"
         property string fwVersion: "0.0"
         property int devSN: 0
@@ -161,6 +162,7 @@ Item {
     QtObject {
         id: placeholderDevice
         property int devType: 1
+        property bool isBoardInited: true
         property string devName: qsTr("Device")
         property string fwVersion: ""
         property int devSN: 0
@@ -852,7 +854,7 @@ Item {
                          ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]")
                          : ""
 
-            visible: modelData ? (modelData.devType !== 0) : false
+            visible: !!(modelData && modelData.isBoardInited)
             width: visible ? root.controlHeight : 0
             height: root.controlHeight
 
