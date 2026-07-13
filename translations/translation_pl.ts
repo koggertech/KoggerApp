@@ -2202,6 +2202,174 @@
         <source>Dataset</source>
         <translation>Zbiór danych</translation>
     </message>
+    <message>
+        <source> &amp; </source>
+        <translation> i </translation>
+    </message>
+    <message>
+        <source>Armed — waiting for data.</source>
+        <translation>Gotowy — oczekiwanie na dane.</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Connecting…</source>
+        <translation>Łączenie…</translation>
+    </message>
+    <message>
+        <source>Current log</source>
+        <translation>Bieżący log</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Pobierz</translation>
+    </message>
+    <message>
+        <source>Downloading… %1%</source>
+        <translation>Pobieranie… %1%</translation>
+    </message>
+    <message>
+        <source>Downloads are saved to "%1"</source>
+        <translation>Pobrane pliki zapisywane są w „%1”</translation>
+    </message>
+    <message>
+        <source>Saved "%1" to "%2"</source>
+        <translation>Plik „%1” zapisano w „%2”</translation>
+    </message>
+    <message>
+        <source>Free space</source>
+        <translation>Wolne miejsce</translation>
+    </message>
+    <message>
+        <source>Idle</source>
+        <translation>Bezczynny</translation>
+    </message>
+    <message>
+        <source>Logs (%1)</source>
+        <translation>Logi (%1)</translation>
+    </message>
+    <message>
+        <source>Nav</source>
+        <translation>Nav</translation>
+    </message>
+    <message>
+        <source>No data from %1 · nothing recorded for %2</source>
+        <translation>Brak danych z %1 · nic nie nagrano od %2</translation>
+    </message>
+    <message>
+        <source>No log yet</source>
+        <translation>Brak logów</translation>
+    </message>
+    <message>
+        <source>No logs listed yet — tap Refresh to enumerate the recorder's archive.</source>
+        <translation>Brak listy logów — naciśnij Odśwież, aby pobrać archiwum rejestratora.</translation>
+    </message>
+    <message>
+        <source>No response</source>
+        <translation>Brak odpowiedzi</translation>
+    </message>
+    <message>
+        <source>No update for %1 — showing last known.</source>
+        <translation>Brak aktualizacji przez %1 — pokazano ostatnie znane.</translation>
+    </message>
+    <message>
+        <source>Not writing</source>
+        <translation>Nie zapisuje</translation>
+    </message>
+    <message>
+        <source>Nothing recorded for %1 — source silent.</source>
+        <translation>Nic nie nagrano od %1 — źródło milczy.</translation>
+    </message>
+    <message>
+        <source>Re-download</source>
+        <translation>Pobierz ponownie</translation>
+    </message>
+    <message>
+        <source>Recorder</source>
+        <translation>Rejestrator</translation>
+    </message>
+    <message>
+        <source>Recorder is coming up.</source>
+        <translation>Rejestrator uruchamia się.</translation>
+    </message>
+    <message>
+        <source>Recording</source>
+        <translation>Nagrywanie</translation>
+    </message>
+    <message>
+        <source>Recording failed</source>
+        <translation>Błąd nagrywania</translation>
+    </message>
+    <message>
+        <source>Recording is disabled.</source>
+        <translation>Nagrywanie wyłączone.</translation>
+    </message>
+    <message>
+        <source>Recording off</source>
+        <translation>Nagrywanie wył.</translation>
+    </message>
+    <message>
+        <source>Recording stopped — check the recorder.</source>
+        <translation>Nagrywanie zatrzymane — sprawdź rejestrator.</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Odśwież</translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation>Zapisano</translation>
+    </message>
+    <message>
+        <source>Saving — %1 connected.</source>
+        <translation>Zapisywanie — %1 podłączony.</translation>
+    </message>
+    <message>
+        <source>Saving — %1 are connected.</source>
+        <translation>Zapisywanie — %1 podłączone.</translation>
+    </message>
+    <message>
+        <source>Saving.</source>
+        <translation>Zapisywanie.</translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation>Uruchamianie…</translation>
+    </message>
+    <message>
+        <source>Storage lost</source>
+        <translation>Utracono nośnik</translation>
+    </message>
+    <message>
+        <source>Values may be outdated.</source>
+        <translation>Dane mogą być nieaktualne.</translation>
+    </message>
+    <message>
+        <source>Waiting for the recorder.</source>
+        <translation>Oczekiwanie na rejestrator.</translation>
+    </message>
+    <message>
+        <source>⚠ Dropping frames</source>
+        <translation>⚠ Gubienie ramek</translation>
+    </message>
+    <message>
+        <source>S1</source>
+        <translation>S1</translation>
+    </message>
+    <message>
+        <source>S2</source>
+        <translation>S2</translation>
+    </message>
+    <message>
+        <source>Sonar 1</source>
+        <translation>Sonar 1</translation>
+    </message>
+    <message>
+        <source>Sonar 2</source>
+        <translation>Sonar 2</translation>
+    </message>
 </context>
 <context>
     <name>DisplaySettings</name>

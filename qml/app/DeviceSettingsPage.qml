@@ -77,8 +77,13 @@ Column {
         // Input ports live in the HEADER — visible even when the group is collapsed.
         // Compact: dot + short label (S1/S2/Nav). gray=never · green=live · red=lost.
         headerActions: Row {
-            spacing: Math.round(5 * AppPalette.scale)
+            id: portsRow
+            readonly property int gap: Tokens.spaceSm
+            spacing: gap
+            rightPadding: gap
             visible: !!(dev && dev.recorderStatusValid)
+            readonly property int dotSize: Math.round(8 * AppPalette.scale)
+            readonly property int innerGap: Math.round(6 * AppPalette.scale)
             Repeater {
                 model: recorderGroup._sourceChips()
                 delegate: Rectangle {
@@ -86,23 +91,26 @@ Column {
                                                   : modelData.state === "lost" ? AppPalette.linkDownBorder
                                                   : AppPalette.textMuted
                     readonly property bool off: modelData.state === "off"
-                    height: Math.round(22 * AppPalette.scale); radius: height / 2
-                    implicitWidth: hpRow.width + Tokens.spaceSm * 2; width: implicitWidth
+                    implicitWidth: chipContent.implicitWidth + Tokens.spaceLg * 2
+                    width: implicitWidth
+                    height: recorderGroup.headerActionSize - portsRow.gap * 2; radius: height / 2
                     anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-                    color: "transparent"; border.width: 1
+                    color: "transparent"
+                    border.width: Math.max(1, Math.round(1.5 * AppPalette.scale))
                     border.color: off ? AppPalette.border : accent
                     Row {
-                        id: hpRow
-                        anchors.centerIn: parent; spacing: Math.round(5 * AppPalette.scale)
+                        id: chipContent
+                        anchors.centerIn: parent; spacing: portsRow.innerGap
                         Rectangle {
-                            width: Math.round(7 * AppPalette.scale); height: width; radius: width / 2
+                            width: portsRow.dotSize; height: width; radius: width / 2
                             anchors.verticalCenter: parent.verticalCenter
                             color: off ? "transparent" : accent
                             border.width: off ? Math.max(1, Math.round(1.5 * AppPalette.scale)) : 0
                             border.color: AppPalette.textMuted
                         }
-                        Text { text: modelData.short; color: off ? AppPalette.textMuted : AppPalette.text
-                               font.pixelSize: Tokens.fontXs; anchors.verticalCenter: parent.verticalCenter }
+                        Text { text: modelData.short; color: AppPalette.textStrong
+                               font.pixelSize: Tokens.fontBase; font.bold: true
+                               anchors.verticalCenter: parent.verticalCenter }
                     }
                 }
             }
@@ -180,8 +188,11 @@ Column {
                              pulse: false }
                 }
                 var live = _sources(active)
+                var liveN = (active & 1 ? 1 : 0) + (active & 2 ? 1 : 0) + (active & 4 ? 1 : 0)
                 return { sev: "good", word: qsTr("Recording"),
-                         sub: live.length ? qsTr("Saving — %1 live.").arg(live) : qsTr("Saving."), pulse: true }
+                         sub: live.length ? (liveN > 1 ? qsTr("Saving — %1 are connected.").arg(live)
+                                                        : qsTr("Saving — %1 connected.").arg(live))
+                                          : qsTr("Saving."), pulse: true }
             }
             if (st === 1)
                 return { sev: "idle", word: qsTr("Idle"), sub: qsTr("Armed — waiting for data."), pulse: false }
@@ -325,7 +336,7 @@ Column {
                 width: parent.width - heroDisc.width - parent.spacing
                 spacing: Math.round(2 * AppPalette.scale)
                 Text { text: recorderGroup.hero.word; color: recorderGroup._sevColor(recorderGroup.hero.sev)
-                       font.pixelSize: Math.round(21 * AppPalette.scale); font.bold: true
+                       font.pixelSize: Tokens.fontXxl; font.bold: true
                        width: parent.width; elide: Text.ElideRight }
                 Text { text: recorderGroup.hero.sub; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
                        width: parent.width; wrapMode: Text.WordWrap }
@@ -375,7 +386,7 @@ Column {
             }
             DevButton {
                 id: refreshBtn
-                width: Math.round(96 * AppPalette.scale); height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                width: Math.round(112 * AppPalette.scale); height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Refresh")
                 onClicked: if (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) deviceManagerWrapper.refreshStreamList()
             }
@@ -392,7 +403,7 @@ Column {
         Rectangle {
             width: parent.width
             visible: logList.count > 0
-            readonly property int rowH: Math.round(52 * AppPalette.scale)
+            readonly property int rowH: Tokens.controlHMd + Tokens.spaceMd * 2
             height: Math.min(logList.count * rowH, Math.round(360 * AppPalette.scale)) + 2
             color: AppPalette.bg; radius: Tokens.radiusMd
             border.width: Tokens.cardBorderWidth; border.color: AppPalette.border
@@ -407,19 +418,60 @@ Column {
                 ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
                 delegate: Item {
+                    id: rowItem
                     width: ListView.view ? ListView.view.width : 0
-                    height: Math.round(52 * AppPalette.scale)
+                    height: Tokens.controlHMd + Tokens.spaceMd * 2
 
                     readonly property bool _uploading: uploadState === 3
                     readonly property bool _done: uploadState === 1 && doneSize > 0
                     readonly property real _pct: size > 0 ? Math.max(0, Math.min(1, doneSize / size)) : 0
+                    // active = downloading, or the brief reveal after a user-initiated download
+                    // finishes; drives the progress bar + text-lift, then auto-reverts.
+                    property bool _initiated: false
+                    property bool _revealDone: false
+                    readonly property bool _active: _uploading || _revealDone
+                    readonly property int _shift: Math.round(7 * AppPalette.scale)
+
+                    on_DoneChanged: {
+                        if (_done && _initiated) {
+                            _initiated = false
+                            _revealDone = true
+                            hideTimer.restart()
+                            if (typeof notifications !== "undefined" && notifications)
+                                notifications.info(qsTr("Saved \"%1\" to \"%2\"").arg("recorder_log_" + id + ".kp2").arg(recorderGroup._downloadDir))
+                        }
+                    }
+                    on_UploadingChanged: if (_uploading) { _revealDone = false; hideTimer.stop() }
+
+                    Timer { id: hideTimer; interval: 4000; onTriggered: rowItem._revealDone = false }
+
+                    DevButton {
+                        id: dlBtn
+                        anchors.right: parent.right; anchors.rightMargin: Tokens.spaceMd
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.round(112 * AppPalette.scale); height: Tokens.controlHMd
+                        fontPixelSize: Tokens.fontMd
+                        danger: rowItem._uploading
+                        text: rowItem._uploading ? qsTr("Cancel") : (rowItem._revealDone ? qsTr("Re-download") : qsTr("Download"))
+                        onClicked: {
+                            if (typeof deviceManagerWrapper === "undefined" || !deviceManagerWrapper)
+                                return
+                            if (rowItem._uploading)
+                                deviceManagerWrapper.cancelStreamDownload(id)
+                            else {
+                                rowItem._initiated = true
+                                deviceManagerWrapper.startStreamDownload(id)
+                            }
+                        }
+                    }
 
                     Row {
-                        id: infoRow
-                        anchors.left: parent.left; anchors.right: parent.right
-                        anchors.top: parent.top; anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
-                        anchors.topMargin: Tokens.spaceXs
-                        height: Tokens.controlHSm ? Tokens.controlHSm : Math.round(24 * AppPalette.scale)
+                        id: textRow
+                        anchors.left: parent.left; anchors.leftMargin: Tokens.spaceMd
+                        anchors.right: dlBtn.left; anchors.rightMargin: Tokens.spaceMd
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: rowItem._active ? -rowItem._shift : 0
+                        Behavior on anchors.verticalCenterOffset { NumberAnimation { duration: Anim.fadeMs; easing.type: Easing.OutCubic } }
                         spacing: Tokens.spaceSm
 
                         Text {
@@ -432,45 +484,31 @@ Column {
                             width: Math.round(84 * AppPalette.scale); anchors.verticalCenter: parent.verticalCenter
                         }
                         Text {
-                            text: _uploading ? qsTr("Downloading… %1%").arg(Math.round(_pct * 100))
-                                             : (_done ? qsTr("Saved") : (recordState === 3 ? qsTr("Recording") : ""))
-                            color: _done ? AppPalette.accentBar : AppPalette.textMuted
+                            text: rowItem._uploading ? qsTr("Downloading… %1%").arg(Math.round(rowItem._pct * 100))
+                                             : (rowItem._revealDone ? qsTr("Saved") : (recordState === 3 ? qsTr("Recording") : ""))
+                            color: rowItem._revealDone ? AppPalette.accentBar : AppPalette.textMuted
                             font.pixelSize: Tokens.fontSm
-                            width: parent.width - Math.round(52 * AppPalette.scale) - Math.round(84 * AppPalette.scale)
-                                   - dlBtn.width - 3 * parent.spacing
+                            width: textRow.width - Math.round(52 * AppPalette.scale) - Math.round(84 * AppPalette.scale) - 2 * textRow.spacing
                             anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-                        }
-                        DevButton {
-                            id: dlBtn
-                            width: Math.round(104 * AppPalette.scale); height: Math.round(26 * AppPalette.scale)
-                            fontPixelSize: Tokens.fontSm
-                            danger: _uploading
-                            text: _uploading ? qsTr("Cancel") : (_done ? qsTr("Re-download") : qsTr("Download"))
-                            anchors.verticalCenter: parent.verticalCenter
-                            onClicked: {
-                                if (typeof deviceManagerWrapper === "undefined" || !deviceManagerWrapper)
-                                    return
-                                if (_uploading)
-                                    deviceManagerWrapper.cancelStreamDownload(id)
-                                else
-                                    deviceManagerWrapper.startStreamDownload(id)
-                            }
                         }
                     }
 
-                    // Per-log progress bar
                     Rectangle {
-                        anchors.left: parent.left; anchors.right: parent.right
-                        anchors.bottom: parent.bottom
-                        anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
-                        anchors.bottomMargin: Tokens.spaceXs
+                        id: progress
+                        anchors.left: parent.left; anchors.leftMargin: Tokens.spaceMd
+                        anchors.right: dlBtn.left; anchors.rightMargin: Tokens.spaceMd
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: Math.round(9 * AppPalette.scale)
                         height: Math.round(4 * AppPalette.scale); radius: height / 2
                         color: AppPalette.trackOff
-                        visible: _uploading || _done
+                        opacity: rowItem._active ? 1 : 0
+                        visible: opacity > 0.01
+                        Behavior on opacity { NumberAnimation { duration: Anim.fadeMs } }
                         Rectangle {
                             height: parent.height; radius: parent.radius
-                            width: parent.width * _pct
+                            width: parent.width * rowItem._pct
                             color: AppPalette.accentBar
+                            Behavior on width { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
                         }
                     }
 
@@ -483,10 +521,19 @@ Column {
             }
         }
 
+        // Mirrors stream_list.cpp: QStandardPaths::DocumentsLocation + "/KoggerApp/recorder".
+        readonly property string _downloadDir: {
+            var s = String(StandardPaths.writableLocation(StandardPaths.DocumentsLocation))
+            if (s.indexOf("file:///") === 0)      s = (Qt.platform.os === "windows" ? s.slice(8) : s.slice(7))
+            else if (s.indexOf("file://") === 0)  s = s.slice(7)
+            try { s = decodeURIComponent(s) } catch (e) {}
+            return s + "/KoggerApp/recorder"
+        }
+
         Text {
             width: parent.width
-            text: qsTr("Downloads are saved to Documents/KoggerApp/recorder/.")
-            color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs; wrapMode: Text.WordWrap
+            text: qsTr("Downloads are saved to \"%1\"").arg(recorderGroup._downloadDir)
+            color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm; wrapMode: Text.WordWrap
         }
     }
 

@@ -2202,6 +2202,174 @@
         <source>Dataset</source>
         <translation>Набор данных</translation>
     </message>
+    <message>
+        <source> &amp; </source>
+        <translation> и </translation>
+    </message>
+    <message>
+        <source>Armed — waiting for data.</source>
+        <translation>Готов — ожидание данных.</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Connecting…</source>
+        <translation>Подключение…</translation>
+    </message>
+    <message>
+        <source>Current log</source>
+        <translation>Текущий лог</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Скачать</translation>
+    </message>
+    <message>
+        <source>Downloading… %1%</source>
+        <translation>Скачивание… %1%</translation>
+    </message>
+    <message>
+        <source>Downloads are saved to "%1"</source>
+        <translation>Загрузки сохраняются в «%1»</translation>
+    </message>
+    <message>
+        <source>Saved "%1" to "%2"</source>
+        <translation>Файл «%1» сохранён в «%2»</translation>
+    </message>
+    <message>
+        <source>Free space</source>
+        <translation>Свободно</translation>
+    </message>
+    <message>
+        <source>Idle</source>
+        <translation>Ожидание</translation>
+    </message>
+    <message>
+        <source>Logs (%1)</source>
+        <translation>Логи (%1)</translation>
+    </message>
+    <message>
+        <source>Nav</source>
+        <translation>Nav</translation>
+    </message>
+    <message>
+        <source>No data from %1 · nothing recorded for %2</source>
+        <translation>Нет данных от %1 · ничего не записано %2</translation>
+    </message>
+    <message>
+        <source>No log yet</source>
+        <translation>Логов пока нет</translation>
+    </message>
+    <message>
+        <source>No logs listed yet — tap Refresh to enumerate the recorder's archive.</source>
+        <translation>Список логов пуст — нажмите «Обновить», чтобы получить архив рекордера.</translation>
+    </message>
+    <message>
+        <source>No response</source>
+        <translation>Нет ответа</translation>
+    </message>
+    <message>
+        <source>No update for %1 — showing last known.</source>
+        <translation>Нет обновлений %1 — показаны последние данные.</translation>
+    </message>
+    <message>
+        <source>Not writing</source>
+        <translation>Не пишет</translation>
+    </message>
+    <message>
+        <source>Nothing recorded for %1 — source silent.</source>
+        <translation>Ничего не записано %1 — источник молчит.</translation>
+    </message>
+    <message>
+        <source>Re-download</source>
+        <translation>Скачать снова</translation>
+    </message>
+    <message>
+        <source>Recorder</source>
+        <translation>Рекордер</translation>
+    </message>
+    <message>
+        <source>Recorder is coming up.</source>
+        <translation>Рекордер запускается.</translation>
+    </message>
+    <message>
+        <source>Recording</source>
+        <translation>Запись</translation>
+    </message>
+    <message>
+        <source>Recording failed</source>
+        <translation>Сбой записи</translation>
+    </message>
+    <message>
+        <source>Recording is disabled.</source>
+        <translation>Запись отключена.</translation>
+    </message>
+    <message>
+        <source>Recording off</source>
+        <translation>Запись выключена</translation>
+    </message>
+    <message>
+        <source>Recording stopped — check the recorder.</source>
+        <translation>Запись остановлена — проверьте рекордер.</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Обновить</translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation>Сохранено</translation>
+    </message>
+    <message>
+        <source>Saving — %1 connected.</source>
+        <translation>Идёт запись — %1 подключен.</translation>
+    </message>
+    <message>
+        <source>Saving — %1 are connected.</source>
+        <translation>Идёт запись — %1 подключены.</translation>
+    </message>
+    <message>
+        <source>Saving.</source>
+        <translation>Идёт запись.</translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation>Запуск…</translation>
+    </message>
+    <message>
+        <source>Storage lost</source>
+        <translation>Накопитель потерян</translation>
+    </message>
+    <message>
+        <source>Values may be outdated.</source>
+        <translation>Данные могут быть устаревшими.</translation>
+    </message>
+    <message>
+        <source>Waiting for the recorder.</source>
+        <translation>Ожидание рекордера.</translation>
+    </message>
+    <message>
+        <source>⚠ Dropping frames</source>
+        <translation>⚠ Потеря кадров</translation>
+    </message>
+    <message>
+        <source>S1</source>
+        <translation>S1</translation>
+    </message>
+    <message>
+        <source>S2</source>
+        <translation>S2</translation>
+    </message>
+    <message>
+        <source>Sonar 1</source>
+        <translation>Сонар 1</translation>
+    </message>
+    <message>
+        <source>Sonar 2</source>
+        <translation>Сонар 2</translation>
+    </message>
 </context>
 <context>
     <name>DisplaySettings</name>
