@@ -2279,6 +2279,22 @@
         <translation>Nie zapisuje</translation>
     </message>
     <message>
+        <source>%1 connected</source>
+        <translation>%1 podłączony</translation>
+    </message>
+    <message>
+        <source>%1 disconnected</source>
+        <translation>%1 odłączony</translation>
+    </message>
+    <message>
+        <source>Saving to log #%1 — %2</source>
+        <translation>Zapisywanie do logu #%1 — %2</translation>
+    </message>
+    <message>
+        <source>Saving — %1</source>
+        <translation>Zapisywanie — %1</translation>
+    </message>
+    <message>
         <source>Nothing recorded for %1 — source silent.</source>
         <translation>Nic nie nagrano od %1 — źródło milczy.</translation>
     </message>
@@ -2321,6 +2337,18 @@
     <message>
         <source>Saved</source>
         <translation>Zapisano</translation>
+    </message>
+    <message>
+        <source>Saving to log #%1 — %2 connected.</source>
+        <translation>Zapisywanie do logu #%1 — %2 podłączony.</translation>
+    </message>
+    <message>
+        <source>Saving to log #%1 — %2 are connected.</source>
+        <translation>Zapisywanie do logu #%1 — %2 podłączone.</translation>
+    </message>
+    <message>
+        <source>Saving to log #%1.</source>
+        <translation>Zapisywanie do logu #%1.</translation>
     </message>
     <message>
         <source>Saving — %1 connected.</source>

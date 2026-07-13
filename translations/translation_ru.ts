@@ -2279,6 +2279,22 @@
         <translation>Не пишет</translation>
     </message>
     <message>
+        <source>%1 connected</source>
+        <translation>%1 подключен</translation>
+    </message>
+    <message>
+        <source>%1 disconnected</source>
+        <translation>%1 отключился</translation>
+    </message>
+    <message>
+        <source>Saving to log #%1 — %2</source>
+        <translation>Идёт запись в лог #%1 — %2</translation>
+    </message>
+    <message>
+        <source>Saving — %1</source>
+        <translation>Идёт запись — %1</translation>
+    </message>
+    <message>
         <source>Nothing recorded for %1 — source silent.</source>
         <translation>Ничего не записано %1 — источник молчит.</translation>
     </message>
@@ -2321,6 +2337,18 @@
     <message>
         <source>Saved</source>
         <translation>Сохранено</translation>
+    </message>
+    <message>
+        <source>Saving to log #%1 — %2 connected.</source>
+        <translation>Идёт запись в лог #%1 — %2 подключен.</translation>
+    </message>
+    <message>
+        <source>Saving to log #%1 — %2 are connected.</source>
+        <translation>Идёт запись в лог #%1 — %2 подключены.</translation>
+    </message>
+    <message>
+        <source>Saving to log #%1.</source>
+        <translation>Идёт запись в лог #%1.</translation>
     </message>
     <message>
         <source>Saving — %1 connected.</source>

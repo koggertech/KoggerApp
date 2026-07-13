@@ -187,12 +187,34 @@ Column {
                                              : qsTr("Nothing recorded for %1 — source silent.").arg(gap),
                              pulse: false }
                 }
+                var lostBits = silentBits & ~active
+                if (lostBits) {
+                    var seen = active | lostBits
+                    var defs = [{ b: 1, n: qsTr("Sonar 1") }, { b: 2, n: qsTr("Sonar 2") }, { b: 4, n: qsTr("Nav") }]
+                    var parts = []
+                    for (var i = 0; i < defs.length; i++)
+                        if (seen & defs[i].b)
+                            parts.push((active & defs[i].b ? qsTr("%1 connected") : qsTr("%1 disconnected")).arg(defs[i].n))
+                    var detail = parts.join(", ")
+                    var logId2 = dev.recorderCurrentLogId || 0
+                    return { sev: "warn", word: qsTr("Recording"),
+                             sub: logId2 > 0 ? qsTr("Saving to log #%1 — %2").arg(logId2).arg(detail)
+                                             : qsTr("Saving — %1").arg(detail),
+                             pulse: true }
+                }
                 var live = _sources(active)
                 var liveN = (active & 1 ? 1 : 0) + (active & 2 ? 1 : 0) + (active & 4 ? 1 : 0)
-                return { sev: "good", word: qsTr("Recording"),
-                         sub: live.length ? (liveN > 1 ? qsTr("Saving — %1 are connected.").arg(live)
-                                                        : qsTr("Saving — %1 connected.").arg(live))
-                                          : qsTr("Saving."), pulse: true }
+                var logId = dev.recorderCurrentLogId || 0
+                var sub
+                if (logId > 0)
+                    sub = live.length ? (liveN > 1 ? qsTr("Saving to log #%1 — %2 are connected.").arg(logId).arg(live)
+                                                   : qsTr("Saving to log #%1 — %2 connected.").arg(logId).arg(live))
+                                      : qsTr("Saving to log #%1.").arg(logId)
+                else
+                    sub = live.length ? (liveN > 1 ? qsTr("Saving — %1 are connected.").arg(live)
+                                                   : qsTr("Saving — %1 connected.").arg(live))
+                                      : qsTr("Saving.")
+                return { sev: "good", word: qsTr("Recording"), sub: sub, pulse: true }
             }
             if (st === 1)
                 return { sev: "idle", word: qsTr("Idle"), sub: qsTr("Armed — waiting for data."), pulse: false }
