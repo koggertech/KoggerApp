@@ -42,6 +42,9 @@ public:
     QList<QPair<QUuid, ::LinkType>> getOpenedUuids() const;
     QHash<QUuid, QString> getLinkNames() const;
 
+    bool containsUuid(const QUuid& uuid) const;
+    QVariant valueForUuid(const QUuid& uuid, Roles role) const;
+
 private:
     Q_DISABLE_COPY(LinkListModel)
 

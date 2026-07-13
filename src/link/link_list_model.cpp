@@ -89,6 +89,25 @@ QList<QPair<QUuid, LinkType>> LinkListModel::getOpenedUuids() const
     return retVal;
 }
 
+bool LinkListModel::containsUuid(const QUuid& uuid) const
+{
+    return index_.contains(uuid);
+}
+
+QVariant LinkListModel::valueForUuid(const QUuid& uuid, Roles role) const
+{
+    const auto it = index_.constFind(uuid);
+    if (it == index_.constEnd())
+        return {};
+
+    const int line = it.value();
+    const auto vecIt = vectors_.constFind(static_cast<int>(role));
+    if (vecIt == vectors_.constEnd() || line < 0 || line >= vecIt.value().size())
+        return {};
+
+    return vecIt.value().at(line);
+}
+
 int LinkListModel::getSize() const
 {
     return size_;

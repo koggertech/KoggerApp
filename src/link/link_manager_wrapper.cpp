@@ -13,6 +13,14 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     QObject::connect(workerObject_.get(), &LinkManager::appendModifyModel,                  this,                &LinkManagerWrapper::appendModifyModelData, connectionType);
     QObject::connect(workerObject_.get(), &LinkManager::deleteModel,                        this,                &LinkManagerWrapper::deleteModelData,       connectionType);
     QObject::connect(workerObject_.get(), &LinkManager::linkCreatedInteractively,           this,                &LinkManagerWrapper::linkCreatedInteractively, connectionType);
+    QObject::connect(workerObject_.get(), &LinkManager::linkOpened, this, [this](QUuid uuid, Link* link) {
+        if (link && (link->getIsProxy() || link->attribute() == LinkAttribute::kLinkAttributeBoot))
+            return;
+        emit linkOpened(uuid.toString());
+    }, connectionType);
+    QObject::connect(workerObject_.get(), &LinkManager::linkRemoved, this, [this](QUuid uuid) {
+        emit linkRemoved(uuid.toString());
+    }, connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsSerial,            workerObject_.get(), &LinkManager::openAsSerial,                 connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendCreateAsUdp,             workerObject_.get(), &LinkManager::createAsUdp,                  connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsUdp,               workerObject_.get(), &LinkManager::openAsUdp,                    connectionType);
@@ -270,4 +278,45 @@ void LinkManagerWrapper::appendModifyModelData(QUuid uuid, bool connectionStatus
 void LinkManagerWrapper::deleteModelData(QUuid uuid)
 {
     emit model_.removeEvent(uuid);
+}
+
+int LinkManagerWrapper::linkState(const QString& uuidStr) const
+{
+    const QUuid uuid(uuidStr);
+    if (!model_.containsUuid(uuid))
+        return -1;
+    if (model_.valueForUuid(uuid, LinkListModel::Roles::IsNotAvailable).toBool())
+        return 3;
+    if (!model_.valueForUuid(uuid, LinkListModel::Roles::ConnectionStatus).toBool())
+        return 0;
+    return model_.valueForUuid(uuid, LinkListModel::Roles::ReceivesData).toBool() ? 1 : 2;
+}
+
+void LinkManagerWrapper::reopenLink(const QString& uuidStr)
+{
+    const QUuid uuid(uuidStr);
+    if (!model_.containsUuid(uuid))
+        return;
+
+    const auto linkType = static_cast<LinkType>(model_.valueForUuid(uuid, LinkListModel::Roles::LinkType).toInt());
+    switch (linkType) {
+    case LinkType::kLinkSerial:
+        emit sendOpenAsSerial(uuid, LinkAttribute::kLinkAttributeNone);
+        break;
+    case LinkType::kLinkIPUDP: {
+        const QString address = model_.valueForUuid(uuid, LinkListModel::Roles::Address).toString();
+        const int src = model_.valueForUuid(uuid, LinkListModel::Roles::SourcePort).toInt();
+        const int dst = model_.valueForUuid(uuid, LinkListModel::Roles::DestinationPort).toInt();
+        emit sendOpenAsUdp(uuid, address, src, dst, LinkAttribute::kLinkAttributeNone);
+        break;
+    }
+    case LinkType::kLinkIPTCP: {
+        const QString address = model_.valueForUuid(uuid, LinkListModel::Roles::Address).toString();
+        const int dst = model_.valueForUuid(uuid, LinkListModel::Roles::DestinationPort).toInt();
+        emit sendOpenAsTcp(uuid, address, 0, dst, LinkAttribute::kLinkAttributeNone);
+        break;
+    }
+    default:
+        break;
+    }
 }

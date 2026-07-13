@@ -179,6 +179,82 @@ function persistQuickActionOrder() {
     if (typeof layoutStore !== "undefined")
         layoutStore.quickActionOrderStored = quickActionOrderCsv()
 }
+
+property var rememberedLinks: []
+property int _linkStateRev: 0
+
+readonly property var reconnectInfo: {
+    var rev = _linkStateRev
+    var arr = rememberedLinks || []
+    var count = 0, open = 0, worst = 0
+    if (typeof linkManagerWrapper !== "undefined" && linkManagerWrapper) {
+        for (var i = 0; i < arr.length; ++i) {
+            var s = linkManagerWrapper.linkState(arr[i])
+            if (s < 0 || s === 3) continue
+            ++count
+            if (s === 1 || s === 2) { ++open; if (s > worst) worst = s }
+        }
+    }
+    return { count: count, open: open, worst: worst, allOpen: count > 0 && open === count }
+}
+
+property Connections _reconnectLinkConn: Connections {
+    target: (typeof linkManagerWrapper !== "undefined") ? linkManagerWrapper : null
+    ignoreUnknownSignals: true
+    function onLinkOpened(uuid) { store.addRememberedLink(uuid) }
+    function onLinkRemoved(uuid) { store.removeRememberedLink(uuid) }
+}
+
+property Connections _reconnectModelConn: Connections {
+    target: (typeof linkManagerWrapper !== "undefined" && linkManagerWrapper) ? linkManagerWrapper.linkListModel : null
+    ignoreUnknownSignals: true
+    function onDataChanged() { store._linkStateRev++ }
+    function onRowsInserted() { store._linkStateRev++ }
+    function onRowsRemoved() { store._linkStateRev++ }
+    function onModelReset() { store._linkStateRev++ }
+}
+
+function addRememberedLink(uuid) {
+    var s = uuid ? String(uuid) : ""
+    if (!s.length) return
+    var arr = (rememberedLinks || []).slice(0)
+    if (arr.indexOf(s) !== -1) return
+    arr.push(s)
+    rememberedLinks = arr
+}
+
+function removeRememberedLink(uuid) {
+    var s = uuid ? String(uuid) : ""
+    if (!s.length) return
+    var arr = (rememberedLinks || []).slice(0)
+    var i = arr.indexOf(s)
+    if (i === -1) return
+    arr.splice(i, 1)
+    rememberedLinks = arr
+}
+
+function toggleRememberedLinks() {
+    if (typeof linkManagerWrapper === "undefined" || !linkManagerWrapper) return
+    var arr = rememberedLinks || []
+
+    var closed = [], open = []
+    for (var i = 0; i < arr.length; ++i) {
+        var s = linkManagerWrapper.linkState(arr[i])
+        if (s === 0) closed.push(arr[i])
+        else if (s === 1 || s === 2) open.push(arr[i])
+    }
+    if (!closed.length && !open.length) return
+
+    if (closed.length) {
+        if (!open.length && typeof core !== "undefined" && core && typeof core.closeLogFile === "function")
+            core.closeLogFile()
+        for (var j = 0; j < closed.length; ++j)
+            linkManagerWrapper.reopenLink(closed[j])
+    } else {
+        for (var k = 0; k < open.length; ++k)
+            linkManagerWrapper.closeLink(open[k])
+    }
+}
 property string hotkeysRevealKey: ""
 property int hotkeysRevealNonce: 0
 // Live reference to the HotkeysDialog while it's open (set by the dialog

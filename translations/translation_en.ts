@@ -1277,6 +1277,16 @@
         <source>Start recording</source>
         <translation>Start recording</translation>
     </message>
+    <message>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="68"/>
+        <source>Disconnect</source>
+        <translation>Disconnect</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="68"/>
+        <source>Open last link</source>
+        <translation>Open last link</translation>
+    </message>
 </context>
 <context>
     <name>ConsolePanelDrawer</name>

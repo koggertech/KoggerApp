@@ -1383,6 +1383,16 @@
         <source>Start recording</source>
         <translation>Rozpocznij nagrywanie</translation>
     </message>
+    <message>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="68"/>
+        <source>Disconnect</source>
+        <translation>Rozłącz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="68"/>
+        <source>Open last link</source>
+        <translation>Otwórz ostatnie połączenie</translation>
+    </message>
 </context>
 <context>
     <name>Console</name>

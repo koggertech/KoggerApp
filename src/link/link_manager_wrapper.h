@@ -57,12 +57,17 @@ public slots:
     void deleteModelData(QUuid uuid);
     QUuid getFirstOpened() { return getWorker()->getFirstOpend(); }
 
+    Q_INVOKABLE int  linkState(const QString& uuidStr) const; // -1 absent, 0 closed, 1 ok, 2 idle, 3 unavailable
+    Q_INVOKABLE void reopenLink(const QString& uuidStr);
+
 public:
     Link* getLinkPtr(QUuid uuid) { return getWorker()->getLinkPtr(uuid); }
 
 signals:
     void modelChanged(); // Q_PROPERTY in .h
     void linkCreatedInteractively(QUuid uuid);
+    void linkOpened(QString uuid);
+    void linkRemoved(QString uuid);
     void sendOpenAsSerial(QUuid uuid, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
     void sendCreateAsUdp(QString address, int sourcePort, int destinationPort);
     void sendOpenAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);

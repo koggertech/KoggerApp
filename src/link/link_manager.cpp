@@ -810,6 +810,7 @@ void LinkManager::deleteLink(QUuid uuid)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         notifications.dismiss(linkNotAvailableTag(uuid));
         emit linkDeleted(linkPtr->getUuid(), linkPtr);
+        emit linkRemoved(uuid);
 
         emit deleteModel(linkPtr->getUuid());
         linkPtr->disconnect();
