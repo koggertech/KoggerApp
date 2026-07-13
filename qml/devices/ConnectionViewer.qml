@@ -16,17 +16,17 @@ Column {
 
     property var devList: deviceManagerWrapper.devs
 
-    // Resolved via store.activeDeviceIndex (devSN not unique); skips unidentified (BoardNone) devices.
-    readonly property var dev: {
-        if (!devList || devList.length === 0) return null
+    readonly property int activeDevIndex: {
+        if (!devList || devList.length === 0) return -1
         var idx = store ? store.activeDeviceIndex : -1
         if (idx >= 0 && idx < devList.length && devList[idx] && devList[idx].isBoardInited)
-            return devList[idx]
+            return idx
         for (var i = 0; i < devList.length; ++i)
             if (devList[i] && devList[i].isBoardInited)
-                return devList[i]
-        return null
+                return i
+        return -1
     }
+    readonly property var dev: (activeDevIndex >= 0 && activeDevIndex < devList.length) ? devList[activeDevIndex] : null
     property var lastImportTrackFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     property string importTrackPathSource: ""
 
@@ -1137,13 +1137,13 @@ Column {
                     text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : qsTr("Undefined")
                     height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
                     checkable: true
-                    checked: store && store.activeDeviceIndex === index
+                    checked: connectionViewer.activeDevIndex === index
                     checkedBorder: AppPalette.accentBorder
                     visible: !!(modelData && modelData.isBoardInited)
                     onClicked: {
                         if (store)
                             store.setActiveDeviceIndex(index)
-                        checked = Qt.binding(function() { return !!(store && store.activeDeviceIndex === index) })
+                        checked = Qt.binding(function() { return connectionViewer.activeDevIndex === index })
                     }
                 }
             }
