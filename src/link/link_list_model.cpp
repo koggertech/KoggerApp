@@ -94,6 +94,17 @@ bool LinkListModel::containsUuid(const QUuid& uuid) const
     return index_.contains(uuid);
 }
 
+QList<QUuid> LinkListModel::pinnedUuids() const
+{
+    QList<QUuid> retVal;
+    for (auto it = index_.cbegin(); it != index_.cend(); ++it) {
+        const int line = it.value();
+        if (vectors_[static_cast<int>(LinkListModel::Roles::IsPinned)][line].toBool())
+            retVal.append(it.key());
+    }
+    return retVal;
+}
+
 QVariant LinkListModel::valueForUuid(const QUuid& uuid, Roles role) const
 {
     const auto it = index_.constFind(uuid);

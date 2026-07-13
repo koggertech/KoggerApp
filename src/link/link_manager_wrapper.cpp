@@ -280,6 +280,15 @@ void LinkManagerWrapper::deleteModelData(QUuid uuid)
     emit model_.removeEvent(uuid);
 }
 
+QStringList LinkManagerWrapper::pinnedUuids() const
+{
+    QStringList retVal;
+    const auto uuids = model_.pinnedUuids();
+    for (const auto& u : uuids)
+        retVal.append(u.toString());
+    return retVal;
+}
+
 int LinkManagerWrapper::linkState(const QString& uuidStr) const
 {
     const QUuid uuid(uuidStr);

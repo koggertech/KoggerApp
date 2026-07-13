@@ -185,9 +185,9 @@ property int _linkStateRev: 0
 
 readonly property var reconnectInfo: {
     var rev = _linkStateRev
-    var arr = rememberedLinks || []
     var count = 0, open = 0, worst = 0
     if (typeof linkManagerWrapper !== "undefined" && linkManagerWrapper) {
+        var arr = rememberedLinks || []
         for (var i = 0; i < arr.length; ++i) {
             var s = linkManagerWrapper.linkState(arr[i])
             if (s < 0 || s === 3) continue
@@ -208,10 +208,10 @@ property Connections _reconnectLinkConn: Connections {
 property Connections _reconnectModelConn: Connections {
     target: (typeof linkManagerWrapper !== "undefined" && linkManagerWrapper) ? linkManagerWrapper.linkListModel : null
     ignoreUnknownSignals: true
-    function onDataChanged() { store._linkStateRev++ }
-    function onRowsInserted() { store._linkStateRev++ }
-    function onRowsRemoved() { store._linkStateRev++ }
-    function onModelReset() { store._linkStateRev++ }
+    function onDataChanged() { store._linkStateRev++; store.saveRememberedLinks() }
+    function onRowsInserted() { store._linkStateRev++; store.saveRememberedLinks() }
+    function onRowsRemoved() { store._linkStateRev++; store.saveRememberedLinks() }
+    function onModelReset() { store._linkStateRev++; store.saveRememberedLinks() }
 }
 
 function addRememberedLink(uuid) {
@@ -221,6 +221,7 @@ function addRememberedLink(uuid) {
     if (arr.indexOf(s) !== -1) return
     arr.push(s)
     rememberedLinks = arr
+    saveRememberedLinks()
 }
 
 function removeRememberedLink(uuid) {
@@ -231,6 +232,29 @@ function removeRememberedLink(uuid) {
     if (i === -1) return
     arr.splice(i, 1)
     rememberedLinks = arr
+    saveRememberedLinks()
+}
+
+function saveRememberedLinks() {
+    if (typeof layoutStore === "undefined") return
+    var arr = rememberedLinks || []
+    var pinnedSet = {}
+    if (typeof linkManagerWrapper !== "undefined" && linkManagerWrapper) {
+        var pinned = linkManagerWrapper.pinnedUuids()
+        for (var i = 0; i < pinned.length; ++i) pinnedSet[pinned[i]] = true
+    }
+    var keep = []
+    for (var j = 0; j < arr.length; ++j)
+        if (pinnedSet[arr[j]]) keep.push(arr[j])
+    layoutStore.rememberedLinksJson = JSON.stringify(keep)
+}
+
+function loadRememberedLinks() {
+    var parsed = []
+    if (layoutStore.rememberedLinksJson && layoutStore.rememberedLinksJson !== "") {
+        try { parsed = JSON.parse(layoutStore.rememberedLinksJson) } catch (e) { parsed = [] }
+    }
+    rememberedLinks = Array.isArray(parsed) ? parsed : []
 }
 
 function toggleRememberedLinks() {
@@ -246,10 +270,12 @@ function toggleRememberedLinks() {
     if (!closed.length && !open.length) return
 
     if (closed.length) {
+        var hadFile = typeof core !== "undefined" && core && core.openedFilePath && core.openedFilePath.length > 0
         if (!open.length && typeof core !== "undefined" && core && typeof core.closeLogFile === "function")
             core.closeLogFile()
-        for (var j = 0; j < closed.length; ++j)
-            linkManagerWrapper.reopenLink(closed[j])
+        if (!hadFile)
+            for (var j = 0; j < closed.length; ++j)
+                linkManagerWrapper.reopenLink(closed[j])
     } else {
         for (var k = 0; k < open.length; ++k)
             linkManagerWrapper.closeLink(open[k])
@@ -733,6 +759,7 @@ property Settings layoutStore: Settings {
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
     property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,extraInfo,autopilot,console,profiles,secondWindow,powerOff"
+    property string rememberedLinksJson: "[]"
     property string selectedConnectionFilePathStored: ""
     property string layoutsJson: "[]"
     property string favoriteLayoutsJson: ""
@@ -3978,6 +4005,7 @@ function loadPersistedUiState() {
     loadGlobalPopupPreferences()
     loadBtEditPopupPreferences()
     loadSettingsProfiles()
+    loadRememberedLinks()
     loadProfilesPopupPreferences()
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
     bottomTrackEditorOpen = layoutStore.bottomTrackEditorOpenStored

@@ -44,6 +44,7 @@ public:
 
     bool containsUuid(const QUuid& uuid) const;
     QVariant valueForUuid(const QUuid& uuid, Roles role) const;
+    QList<QUuid> pinnedUuids() const;
 
 private:
     Q_DISABLE_COPY(LinkListModel)
