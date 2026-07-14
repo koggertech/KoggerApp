@@ -14,6 +14,8 @@ qt_add_qml_module(kogger_app
         CsvExportSettingsTab.qml
         DeviceSettingsGroup.qml
         DeviceSettingsPage.qml
+        DeviceSettingsTab.qml
+        DeviceTopologyView.qml
         DisclosureIndicator.qml
         EchogramSettingsPanel.qml
         EchogramSettingsTab.qml

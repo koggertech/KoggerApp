@@ -338,6 +338,41 @@ readonly property bool secondary2DAvailable: effectiveSecondaryMode === "2D" || 
 // reliable selector. Session-only.
 property int activeDeviceIndex: -1
 
+readonly property var activeDeviceList: (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) ? deviceManagerWrapper.devs : []
+
+readonly property int resolvedDeviceIndex: {
+    var ds = activeDeviceList
+    if (!ds || ds.length === 0) return -1
+    var idx = activeDeviceIndex
+    if (idx >= 0 && idx < ds.length && ds[idx] && ds[idx].isBoardInited) return idx
+    var firstInited = -1
+    for (var i = 0; i < ds.length; ++i) {
+        if (ds[i] && ds[i].isBoardInited) {
+            if (firstInited < 0) firstInited = i
+            if (ds[i].isRecorder) return i
+        }
+    }
+    return firstInited
+}
+
+readonly property var activeDevice: (resolvedDeviceIndex >= 0 && resolvedDeviceIndex < activeDeviceList.length) ? activeDeviceList[resolvedDeviceIndex] : null
+
+onActiveDeviceListChanged: {
+    if (!activeDeviceList || activeDeviceList.length === 0) {
+        if (activeDeviceIndex !== -1) setActiveDeviceIndex(-1)
+    } else if (activeDeviceIndex >= activeDeviceList.length) {
+        setActiveDeviceIndex(-1)
+    }
+}
+
+function selectDevice(dev) {
+    var ds = activeDeviceList
+    if (!dev || !ds) return
+    for (var i = 0; i < ds.length; ++i) {
+        if (ds[i] === dev) { setActiveDeviceIndex(i); return }
+    }
+}
+
 property var globalPopupState: ({
     x: -1,
     y: -1,
@@ -1138,12 +1173,11 @@ function setActiveDeviceIndex(i) {
     activeDeviceIndex = i
 }
 
-property bool deviceSettingsScrollPending: false   // one-shot; survives lazy ConnectionViewer load (see qml-devices.md)
+function openDeviceSettings() { _openSettingsSubPage("devices") }
 
-function openConnectionsWithDeviceIndex(idx) {
+function openDeviceSettingsForIndex(idx) {
     setActiveDeviceIndex(idx)
-    openConnectionsSettings()
-    deviceSettingsScrollPending = true
+    openDeviceSettings()
 }
 
 function toggleAppLayoutSettings() {

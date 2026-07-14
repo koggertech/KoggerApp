@@ -100,7 +100,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: pill.device ? pill.device.devName : ""
                 color: AppPalette.textStrong
-                font.pixelSize: Tokens.fontSm
+                font.pixelSize: Tokens.fontBase
                 font.bold: true
             }
             Text {

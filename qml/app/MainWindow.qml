@@ -798,7 +798,7 @@ ApplicationWindow {
 
             devices: deviceManagerWrapper ? deviceManagerWrapper.devs : []
             onDeviceTriggered: function(devIndex) {
-                workspaceStore.openConnectionsWithDeviceIndex(devIndex)
+                workspaceStore.openDeviceSettingsForIndex(devIndex)
                 refreshConnectionsIndicator()
             }
         }
@@ -918,6 +918,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "aimPanel"     ? qsTr("Information panel")
                      : workspaceStore.settingsSubPageKind === "console"      ? qsTr("Console")
                      : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
+                     : workspaceStore.settingsSubPageKind === "devices"      ? qsTr("Devices")
                      : qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
@@ -936,6 +937,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "aimPanel"   ? aimPanelSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "console"    ? consoleSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
+                     : workspaceStore.settingsSubPageKind === "devices"      ? deviceSettingsTabComponent
                      : echogramSettingsTabComponent
             subPageOpen: workspaceStore.anySettingsSubPageActive
 
@@ -1112,6 +1114,14 @@ ApplicationWindow {
             id: layoutCreateTabComponent
 
             LayoutCreatePage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: deviceSettingsTabComponent
+
+            DeviceSettingsTab {
                 store: workspaceStore
             }
         }

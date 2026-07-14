@@ -1269,8 +1269,8 @@
     </message>
     <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="1082"/>
-        <source>Devices</source>
-        <translation>Urządzenia</translation>
+        <source>Devices:</source>
+        <translation>Urządzenia:</translation>
     </message>
     <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="1095"/>
@@ -1927,9 +1927,22 @@
     </message>
 </context>
 <context>
+    <name>DeviceSettingsTab</name>
+    <message>
+        <location filename="../qml/app/DeviceSettingsTab.qml" line="13"/>
+        <source>Devices:</source>
+        <translation>Urządzenia:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsTab.qml" line="27"/>
+        <source>Settings:</source>
+        <translation>Ustawienia:</translation>
+    </message>
+</context>
+<context>
     <name>DeviceTopologyView</name>
     <message>
-        <location filename="../qml/devices/DeviceTopologyView.qml" line="87"/>
+        <location filename="../qml/app/DeviceTopologyView.qml" line="87"/>
         <source>Port %1</source>
         <translation>Port %1</translation>
     </message>
@@ -2021,8 +2034,8 @@
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="307"/>
-        <source>Settings</source>
-        <translation>Ustawienia</translation>
+        <source>Settings file</source>
+        <translation>Plik ustawień</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="380"/>
@@ -4089,6 +4102,11 @@
 </context>
 <context>
     <name>MainWindow</name>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="920"/>
+        <source>Devices</source>
+        <translation>Urządzenia</translation>
+    </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="59"/>
         <source>Please choose a file</source>

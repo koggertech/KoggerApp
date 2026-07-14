@@ -16,21 +16,6 @@ Column {
 
     property var devList: deviceManagerWrapper.devs
 
-    readonly property int activeDevIndex: {
-        if (!devList || devList.length === 0) return -1
-        var idx = store ? store.activeDeviceIndex : -1
-        if (idx >= 0 && idx < devList.length && devList[idx] && devList[idx].isBoardInited)
-            return idx
-        var firstInited = -1
-        for (var i = 0; i < devList.length; ++i) {
-            if (devList[i] && devList[i].isBoardInited) {
-                if (firstInited < 0) firstInited = i
-                if (devList[i].isRecorder) return i
-            }
-        }
-        return firstInited
-    }
-    readonly property var dev: (activeDevIndex >= 0 && activeDevIndex < devList.length) ? devList[activeDevIndex] : null
     property var lastImportTrackFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     property string importTrackPathSource: ""
 
@@ -94,39 +79,11 @@ Column {
     }
 
     Component.onDestruction: {
-        if (store) {
-            store.deviceSettingsScrollPending = false
+        if (store)
             store.recordingFocusRequested = false
-        }
-    }
-
-    onDevListChanged: syncActiveDevice()
-
-    function syncActiveDevice() {
-        if (!store) return
-        if (!devList || devList.length === 0) {
-            store.setActiveDeviceIndex(-1)
-            return
-        }
-        var idx = store.activeDeviceIndex
-        if (idx >= 0 && idx < devList.length)
-            return
-        store.setActiveDeviceIndex(-1)
-    }
-
-    function selectDevice(dev) {
-        if (!store || !dev) return
-        for (var i = 0; i < devList.length; ++i) {
-            if (devList[i] === dev) {
-                store.setActiveDeviceIndex(i)
-                return
-            }
-        }
     }
 
     onStoreChanged: {
-        syncActiveDevice()
-        _maybeScrollToDevice()
         _maybeFocusRecording()
     }
 
@@ -310,6 +267,33 @@ Column {
                     onReleased: uTim.stop(); onCanceled: uTim.stop()
                 }
                 Timer { id: uTim; interval: 80; repeat: true; onTriggered: { if (cs.value < cs.to) cs.value++ } }
+            }
+        }
+    }
+
+    // ── Devices (buttons only; settings live in the Devices tab) ──────────
+
+    Column {
+        visible: deviceTopology.groups.length > 0
+        width: parent.width
+        spacing: Tokens.spaceSm
+
+        Text {
+            text: qsTr("Devices:")
+            color: AppPalette.textSecond
+            font.pixelSize: Tokens.fontBase
+            leftPadding: Tokens.spaceXxs
+        }
+
+        DeviceTopologyView {
+            width: parent.width
+            groups: deviceTopology.groups
+            activeDevice: null
+            onDeviceClicked: function(device) {
+                if (connectionViewer.store) {
+                    connectionViewer.store.selectDevice(device)
+                    connectionViewer.store.openDeviceSettings()
+                }
             }
         }
     }
@@ -1127,30 +1111,6 @@ Column {
         }
     }
 
-    // ── Device tabs (grouped by link: master(Recorder) + nested children) ──
-
-    Column {
-        visible: deviceTopology.groups.length > 0
-        width: parent.width
-        spacing: Tokens.spaceSm
-
-        Text {
-            text: qsTr("Devices")
-            color: AppPalette.textSecond
-            font.pixelSize: Tokens.fontSm; font.bold: true
-        }
-
-        DeviceTopologyView {
-            width: parent.width
-            groups: deviceTopology.groups
-            activeDevice: connectionViewer.dev
-            onDeviceClicked: function(device) { connectionViewer.selectDevice(device) }
-        }
-
-        // Visual breathing room between device tabs and the settings card below.
-        Item { width: 1; height: Tokens.spaceSm }
-    }
-
     // ── Factory mode ──────────────────────────────────────────────────────
 
     Row {
@@ -1220,37 +1180,9 @@ Column {
         color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; width: parent.width; wrapMode: Text.WordWrap
     }
 
-    // ── Device settings ───────────────────────────────────────────────────
-
-    DeviceSettingsPage {
-        id: deviceSettingsAnchor
-        visible: connectionViewer.dev !== null
-        width: parent.width
-        dev: connectionViewer.dev
-    }
-
-    Timer {
-        id: scrollToDeviceSettingsTimer
-        interval: 240
-        repeat: false
-        onTriggered: {
-            connectionViewer._scrollToDeviceSettings()
-            if (connectionViewer.store)
-                connectionViewer.store.deviceSettingsScrollPending = false
-        }
-    }
-
-    function _maybeScrollToDevice() {
-        if (connectionViewer.store && connectionViewer.store.deviceSettingsScrollPending === true)
-            scrollToDeviceSettingsTimer.restart()
-    }
-
     Connections {
         target: connectionViewer.store
         ignoreUnknownSignals: true
-        function onDeviceSettingsScrollPendingChanged() {
-            connectionViewer._maybeScrollToDevice()
-        }
         function onRecordingFocusRequestedChanged() {
             connectionViewer._maybeFocusRecording()
         }
@@ -1308,30 +1240,6 @@ Column {
             item = item.parent
         }
         return null
-    }
-
-    function _scrollToDeviceSettings() {
-        if (!deviceSettingsAnchor || !deviceSettingsAnchor.visible)
-            return
-        var flick = _findAncestorFlickable()
-        if (!flick) return
-
-        var topInContent = deviceSettingsAnchor.mapToItem(flick.contentItem, 0, 0).y
-        var target = Math.max(0, topInContent - Tokens.spaceLg)
-        target = Math.min(target, Math.max(0, flick.contentHeight - flick.height))
-        if (Math.abs(target - flick.contentY) < 0.5) return
-
-        scrollToDeviceAnim.target = flick
-        scrollToDeviceAnim.from = flick.contentY
-        scrollToDeviceAnim.to = target
-        scrollToDeviceAnim.restart()
-    }
-
-    NumberAnimation {
-        id: scrollToDeviceAnim
-        property: "contentY"
-        duration: 240
-        easing.type: Easing.OutCubic
     }
 
     property int _pendingExpandIndex: -1

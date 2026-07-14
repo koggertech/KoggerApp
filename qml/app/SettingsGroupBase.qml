@@ -11,6 +11,7 @@ Item {
     property bool expandable: true   // false → header-only: no chevron/expand/body (description still shown)
     property bool collapsedByDefault: true
     property bool expanded: !collapsedByDefault
+    property bool bodyAnimated: true   // false → expand/collapse snaps (programmatic, no flicker)
     property var stateStore: null
     property string stateKey: ""
     property real preferredWidth: 250
@@ -350,6 +351,7 @@ Item {
                 : headerRow.height
 
         Behavior on height {
+            enabled: root.bodyAnimated
             NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing }
         }
 

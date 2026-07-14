@@ -10,6 +10,80 @@ Column {
     property var dev: null
     property var store: null
 
+    // Per-device expand memory. This page is one instance whose `dev` changes on switch,
+    // so state is kept per device: on switch, snapshot the leaving device's groups and
+    // restore the entering device's (all collapsed if unseen). Entries for disconnected
+    // devices are pruned — a reconnect is a new object → fresh defaults.
+    property var _groupStates: []   // [{ dev, map: { stateKey: bool } }]
+    property var _prevDev: null
+
+    onDevChanged: {
+        if (_prevDev) {
+            var prev = _groupStateFor(_prevDev)
+            if (prev) prev.map = _snapshotGroups()
+            else _groupStates.push({ dev: _prevDev, map: _snapshotGroups() })
+        }
+        _pruneGroupStates()
+        _applyForCurrentDev()
+        _prevDev = dev
+    }
+
+    Component.onCompleted: _applyForCurrentDev()
+
+    function _applyForCurrentDev() {
+        var cur = dev ? _groupStateFor(dev) : null
+        _applyGroups(cur ? cur.map : null)
+    }
+
+    function _groupStateFor(d) {
+        for (var i = 0; i < _groupStates.length; ++i)
+            if (_groupStates[i].dev === d) return _groupStates[i]
+        return null
+    }
+
+    function _snapshotGroups() {
+        var m = {}
+        for (var i = 0; i < children.length; ++i) {
+            var g = children[i]
+            if (g && g.stateKey !== undefined && typeof g.expanded === "boolean")
+                m[g.stateKey] = g.expanded
+        }
+        return m
+    }
+
+    function _applyGroups(map) {
+        for (var i = 0; i < children.length; ++i) {
+            var g = children[i]
+            if (!g || g.stateKey === undefined || typeof g.expanded !== "boolean")
+                continue
+            if (g.bodyAnimated !== undefined)
+                g.bodyAnimated = false   // programmatic: snap, no expand/collapse flicker
+            g.expanded = (map && map[g.stateKey] !== undefined) ? map[g.stateKey] : true
+        }
+        Qt.callLater(_reenableGroupAnim)
+    }
+
+    function _reenableGroupAnim() {
+        for (var i = 0; i < children.length; ++i) {
+            var g = children[i]
+            if (g && g.bodyAnimated !== undefined)
+                g.bodyAnimated = true
+        }
+    }
+
+    function _pruneGroupStates() {
+        var ds = (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) ? deviceManagerWrapper.devs : []
+        var kept = []
+        for (var i = 0; i < _groupStates.length; ++i) {
+            var e = _groupStates[i], present = false
+            for (var j = 0; j < ds.length; ++j)
+                if (ds[j] === e.dev) { present = true; break }
+            if (present)
+                kept.push(e)
+        }
+        _groupStates = kept
+    }
+
     readonly property real groupWidth: Math.max(0, width)
     readonly property real spinW: Math.round(115 * AppPalette.scale)
     // Spinbox label width — account for SettingsGroup's content card padding
@@ -54,14 +128,6 @@ Column {
         hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
     }
 
-    // Section heading above the per-area device settings groups.
-    Text {
-        text: qsTr("Settings:")
-        color: AppPalette.textMuted
-        font.pixelSize: Tokens.fontXs
-        leftPadding: Tokens.spaceXxs
-    }
-
     // ── Recorder ──────────────────────────────────────────────────────────
     // Status snapshot + log archive with per-log batched download. Data comes from
     // dev.recorder* (ID_RECORDER_STATUS) and deviceManagerWrapper.streamsList; download
@@ -71,7 +137,7 @@ Column {
         id: recorderGroup
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Recorder"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.recorder"; collapsedByDefault: false
+        stateKey: "dev.recorder"; collapsedByDefault: false
         visible: !!(dev && dev.isRecorder)
 
         // Input ports live in the HEADER — visible even when the group is collapsed.
@@ -564,7 +630,7 @@ Column {
     DeviceSettingsGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Echogram"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.echogram"; collapsedByDefault: true
+        stateKey: "dev.echogram"; collapsedByDefault: false
         visible: !!(dev && dev.isChartSupport)
         confirmed: !(dev && dev.chartSetupState === false)
 
@@ -592,7 +658,7 @@ Column {
     DeviceSettingsGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Rangefinder"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.rangefinder"; collapsedByDefault: true
+        stateKey: "dev.rangefinder"; collapsedByDefault: false
         visible: !!(dev && dev.isDistSupport)
         confirmed: !(dev && dev.distSetupState === false)
 
@@ -620,7 +686,7 @@ Column {
     DeviceSettingsGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Transducer"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.transducer"; collapsedByDefault: true
+        stateKey: "dev.transducer"; collapsedByDefault: false
         visible: !!(dev && dev.isTransducerSupport)
         confirmed: !(dev && dev.transcState === false)
 
@@ -652,7 +718,7 @@ Column {
     DeviceSettingsGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("DSP"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.dsp"; collapsedByDefault: true
+        stateKey: "dev.dsp"; collapsedByDefault: false
         visible: !!(dev && dev.isDSPSupport)
         confirmed: !(dev && (dev.dspState === false || dev.soundState === false))
 
@@ -674,7 +740,7 @@ Column {
     DeviceSettingsGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Dataset"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.dataset"; collapsedByDefault: true
+        stateKey: "dev.dataset"; collapsedByDefault: false
         visible: !!(dev && dev.isDatasetSupport)
         confirmed: !(dev && dev.datasetState === false)
 
@@ -749,7 +815,7 @@ Column {
         id: devActionsGroup
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Actions"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.actions"; collapsedByDefault: true
+        stateKey: "dev.actions"; collapsedByDefault: false
         confirmed: !(dev && dev.uartState === false)
 
         readonly property var baudrateOptions: [9600, 19200, 38400, 57600, 115200,
@@ -805,8 +871,8 @@ Column {
     DeviceSettingsGroup {
         id: devSettingsGroup
         width: root.groupWidth; preferredWidth: root.groupWidth
-        title: qsTr("Settings"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.settingsFile"; collapsedByDefault: true
+        title: qsTr("Settings file"); titlePixelSize: 13
+        stateKey: "dev.settingsFile"; collapsedByDefault: false
 
         property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
@@ -881,7 +947,7 @@ Column {
         visible: !!(dev && dev.isUpgradeSupport)
         width: root.groupWidth; preferredWidth: root.groupWidth
         title: qsTr("Upgrade"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.upgrade"; collapsedByDefault: true
+        stateKey: "dev.upgrade"; collapsedByDefault: false
 
         property var upgradeFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property string selectedUpgradePathSource: ""
