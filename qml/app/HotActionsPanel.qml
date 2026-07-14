@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import kqml_types 1.0
+import "RecorderStatus.js" as RecorderStatus
 
 Item {
     id: root
@@ -246,6 +247,24 @@ Item {
         if (!d) return buttonBorderColor
         if (d.linkConnected)    return d.linkReceivesData ? AppPalette.linkOkBorder : AppPalette.linkIdleBorder
         if (d.linkNotAvailable) return AppPalette.linkDownBorder
+        return buttonBorderColor
+    }
+
+    function recorderSeverity(d) {
+        return (d && d.isRecorder && d.recorderStatusValid) ? RecorderStatus.severity(d) : ""
+    }
+
+    function severityFillColor(sev) {
+        if (sev === "good") return AppPalette.linkOkBg
+        if (sev === "warn") return AppPalette.linkIdleBg
+        if (sev === "crit") return AppPalette.linkDownBg
+        return buttonFillColor
+    }
+
+    function severityBorderColor(sev) {
+        if (sev === "good") return AppPalette.linkOkBorder
+        if (sev === "warn") return AppPalette.linkIdleBorder
+        if (sev === "crit") return AppPalette.linkDownBorder
         return buttonBorderColor
     }
 
@@ -903,8 +922,9 @@ Item {
             Item {
                 id: devBadge
                 readonly property var _dev: devCell._dev
-                readonly property color _fill:   root.linkFillColor(_dev)
-                readonly property color _border: root.linkBorderColor(_dev)
+                readonly property string _sev: root.recorderSeverity(_dev)
+                readonly property color _fill:   _sev !== "" ? root.severityFillColor(_sev)   : root.linkFillColor(_dev)
+                readonly property color _border: _sev !== "" ? root.severityBorderColor(_sev) : root.linkBorderColor(_dev)
                 readonly property bool _transducer: !!(_dev
                                                        && _dev.isSonar
                                                        && _dev.isTransducerSupport
@@ -973,6 +993,7 @@ Item {
                 Popup {
                     id: devPill
                     readonly property int pad: Math.round(2 * root._s)
+                    readonly property bool _isRec: devBadge._sev !== ""
                     x: -pad
                     y: -pad
                     width: devBadge.width + 2 * pad
@@ -1012,6 +1033,35 @@ Item {
                                 font.bold: true
                                 style: Text.Outline
                                 styleColor: "#000000B0"
+                            }
+                        }
+
+                        Column {
+                            visible: devPill._isRec
+                            width: devBadge.width
+                            spacing: Math.round(1 * root._s)
+                            readonly property var d: devBadge._dev
+
+                            Text {
+                                width: parent.width; horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
+                                text: (parent.d && parent.d.recorderCurrentLogId > 0) ? "#" + parent.d.recorderCurrentLogId : "—"
+                                color: AppPalette.text; font.pixelSize: Math.round(12 * root._s); font.bold: true
+                            }
+                            Text {
+                                width: parent.width; horizontalAlignment: Text.AlignHCenter
+                                text: RecorderStatus.elapsed(parent.d ? parent.d.recorderDurationSeconds : 0)
+                                color: AppPalette.textSecond; font.pixelSize: Math.round(11 * root._s)
+                            }
+                            Text {
+                                width: parent.width; horizontalAlignment: Text.AlignHCenter
+                                text: RecorderStatus.fmtSizeShort(parent.d ? (parent.d.recorderRecordedSize64k || 0) * 65536 : 0)
+                                color: AppPalette.textSecond; font.pixelSize: Math.round(11 * root._s)
+                            }
+                            Text {
+                                width: parent.width; horizontalAlignment: Text.AlignHCenter
+                                text: RecorderStatus.fmtSizeShort(parent.d ? (parent.d.recorderFreeSpace1m || 0) * 1000000 : 0)
+                                color: AppPalette.textMuted; font.pixelSize: Math.round(11 * root._s)
                             }
                         }
 

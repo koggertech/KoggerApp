@@ -59,4 +59,5 @@ qt_add_qml_module(kogger_app
         WorkspaceView.qml
         LayoutResize.js
         LayoutRules.js
-        LayoutTree.js)
+        LayoutTree.js
+        RecorderStatus.js)

@@ -3,6 +3,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
+import "RecorderStatus.js" as RecorderStatus
 
 Column {
     id: root
@@ -188,20 +189,8 @@ Column {
         readonly property real recordedBytes: dev ? (dev.recorderRecordedSize64k || 0) * 65536.0 : 0
         readonly property real freeBytes:     dev ? (dev.recorderFreeSpace1m || 0) * 1000000.0 : 0
 
-        function _fmtSize(b) {
-            if (!b || b <= 0) return "0 B"
-            if (b < 1024) return b + " B"
-            if (b < 1048576) return (b / 1024).toFixed(1) + " KB"
-            if (b < 1073741824) return (b / 1048576).toFixed(1) + " MB"
-            return (b / 1073741824).toFixed(2) + " GB"
-        }
-        // Coarse single-unit elapsed: <60s -> "Ns", <1h -> "Nm", else "Nh" (floored).
-        function _elapsed(s) {
-            if (!s || s <= 0) return "0s"
-            if (s < 60) return s + "s"
-            if (s < 3600) return Math.floor(s / 60) + "m"
-            return Math.floor(s / 3600) + "h"
-        }
+        function _fmtSize(b) { return RecorderStatus.fmtSize(b) }
+        function _elapsed(s) { return RecorderStatus.elapsed(s) }
 
         readonly property int kStallS: 10
 
@@ -228,18 +217,21 @@ Column {
         // line that answers "is my data being saved right now, and if not, what broke?".
         readonly property var hero: _hero()
         function _hero() {
+            var sev = (!dev || !dev.recorderStatusValid) ? "idle"
+                    : stale ? "stale"
+                    : RecorderStatus.severity(dev)
             if (!dev || !dev.recorderStatusValid)
-                return { sev: "idle", word: qsTr("Connecting…"), sub: qsTr("Waiting for the recorder."), pulse: false }
+                return { sev: sev, word: qsTr("Connecting…"), sub: qsTr("Waiting for the recorder."), pulse: false }
             if (stale)
-                return { sev: "stale", word: qsTr("No response"),
+                return { sev: sev, word: qsTr("No response"),
                          sub: qsTr("No update for %1 — showing last known.").arg(_elapsed(staleAgeS)), pulse: false }
             var st = dev.recorderRecordingState
             if (st === 3 || dev.recorderCriticalFlags)
-                return { sev: "crit",
+                return { sev: sev,
                          word: (dev.recorderCriticalFlags & 1) ? qsTr("Storage lost") : qsTr("Recording failed"),
                          sub: qsTr("Recording stopped — check the recorder."), pulse: false }
             if (st === 4)
-                return { sev: "crit", word: qsTr("Recording off"), sub: qsTr("Recording is disabled."), pulse: false }
+                return { sev: sev, word: qsTr("Recording off"), sub: qsTr("Recording is disabled."), pulse: false }
             if (st === 2) {
                 var active = dev.recorderStatusFlags || 0
                 var silentBits = (dev.recorderDegradedFlags || 0) & 0x7
@@ -248,7 +240,7 @@ Column {
                 if (dev.recorderSecondsSinceLastWrite > kStallS || (silentBits && !active)) {
                     var sil = _sources(dev.recorderDegradedFlags || 0)
                     var gap = _elapsed(dev.recorderSecondsSinceLastWrite)
-                    return { sev: "warn", word: qsTr("Not writing"),
+                    return { sev: sev, word: qsTr("Not writing"),
                              sub: sil.length ? qsTr("No data from %1 · nothing recorded for %2").arg(sil).arg(gap)
                                              : qsTr("Nothing recorded for %1 — source silent.").arg(gap),
                              pulse: false }
@@ -263,7 +255,7 @@ Column {
                             parts.push((active & defs[i].b ? qsTr("%1 connected") : qsTr("%1 disconnected")).arg(defs[i].n))
                     var detail = parts.join(", ")
                     var logId2 = dev.recorderCurrentLogId || 0
-                    return { sev: "warn", word: qsTr("Recording"),
+                    return { sev: sev, word: qsTr("Recording"),
                              sub: logId2 > 0 ? qsTr("Saving to log #%1 — %2").arg(logId2).arg(detail)
                                              : qsTr("Saving — %1").arg(detail),
                              pulse: true }
@@ -280,11 +272,11 @@ Column {
                     sub = live.length ? (liveN > 1 ? qsTr("Saving — %1 are connected.").arg(live)
                                                    : qsTr("Saving — %1 connected.").arg(live))
                                       : qsTr("Saving.")
-                return { sev: "good", word: qsTr("Recording"), sub: sub, pulse: true }
+                return { sev: sev, word: qsTr("Recording"), sub: sub, pulse: true }
             }
             if (st === 1)
-                return { sev: "idle", word: qsTr("Idle"), sub: qsTr("Armed — waiting for data."), pulse: false }
-            return { sev: "idle", word: qsTr("Starting…"), sub: qsTr("Recorder is coming up."), pulse: false }
+                return { sev: sev, word: qsTr("Idle"), sub: qsTr("Armed — waiting for data."), pulse: false }
+            return { sev: sev, word: qsTr("Starting…"), sub: qsTr("Recorder is coming up."), pulse: false }
         }
 
         // Input ports — ALL THREE always shown. Per-port state: "live" (status_flags,
