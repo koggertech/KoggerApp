@@ -1,11 +1,40 @@
 #include "device_topology_model.h"
 
+#include <algorithm>
+#include <limits>
 #include <QAbstractItemModel>
 
 #include "device_manager_wrapper.h"
 #include "link_manager_wrapper.h"
 #include "link_list_model.h"
 #include "dev_q_property.h"
+
+namespace {
+
+QVariantMap nodeFor(DevQProperty* dev, DevQProperty* master, bool hasMaster)
+{
+    QVariantMap node;
+    node["device"] = QVariant::fromValue(dev);
+
+    int role = 2;
+    if (dev == master)
+        role = 0;
+    else if (hasMaster)
+        role = 1;
+    node["role"] = role;
+
+    int port = -1;
+    if (hasMaster && dev != master) {
+        const int addr = dev->getBusAddress();
+        if (addr >= 1 && addr <= 8)
+            port = addr;
+    }
+    node["port"] = port;
+
+    return node;
+}
+
+}
 
 DeviceTopologyModel::DeviceTopologyModel(DeviceManagerWrapper* deviceWrapper,
                                          LinkManagerWrapper* linkWrapper,
@@ -65,6 +94,16 @@ void DeviceTopologyModel::rebuild()
         byLink[u].append(d);
     }
 
+    if (LinkListModel* lm = linkWrapper_ ? linkWrapper_->getModelPtr() : nullptr) {
+        std::stable_sort(order.begin(), order.end(), [lm](const QUuid& a, const QUuid& b) {
+            int ra = lm->rowForUuid(a);
+            int rb = lm->rowForUuid(b);
+            if (ra < 0) ra = std::numeric_limits<int>::max();
+            if (rb < 0) rb = std::numeric_limits<int>::max();
+            return ra < rb;
+        });
+    }
+
     QVariantList out;
     for (const QUuid& u : order) {
         const QList<DevQProperty*>& members = byLink[u];
@@ -77,23 +116,31 @@ void DeviceTopologyModel::rebuild()
             }
         }
 
-        QVariantList children;
-        QVariantList orderedMembers;
+        const bool hasMaster = (master != nullptr);
+
+        QList<DevQProperty*> childDevs;
+        for (DevQProperty* d : members)
+            if (d != master)
+                childDevs.append(d);
+        std::sort(childDevs.begin(), childDevs.end(), [](DevQProperty* a, DevQProperty* b) {
+            return a->getBusAddress() < b->getBusAddress();
+        });
+
+        QVariantList childNodes;
+        QVariantList memberNodes;
         if (master)
-            orderedMembers.append(QVariant::fromValue(master));
-        for (DevQProperty* d : members) {
-            if (d == master)
-                continue;
-            const QVariant v = QVariant::fromValue(d);
-            children.append(v);
-            orderedMembers.append(v);
+            memberNodes.append(nodeFor(master, master, hasMaster));
+        for (DevQProperty* d : childDevs) {
+            const QVariant node = nodeFor(d, master, hasMaster);
+            childNodes.append(node);
+            memberNodes.append(node);
         }
 
         QVariantMap group = buildLinkMeta(u);
-        group["hasMaster"] = (master != nullptr);
-        group["master"]    = master ? QVariant::fromValue(master) : QVariant();
-        group["children"]  = children;
-        group["members"]   = orderedMembers;
+        group["hasMaster"] = hasMaster;
+        group["master"]    = master ? nodeFor(master, master, hasMaster) : QVariant();
+        group["children"]  = childNodes;
+        group["members"]   = memberNodes;
         out.append(group);
     }
 

@@ -1927,6 +1927,14 @@
     </message>
 </context>
 <context>
+    <name>DeviceTopologyView</name>
+    <message>
+        <location filename="../qml/devices/DeviceTopologyView.qml" line="87"/>
+        <source>Port %1</source>
+        <translation>Порт %1</translation>
+    </message>
+</context>
+<context>
     <name>DeviceSettingsPage</name>
     <message>
         <source>Write current settings to device memory</source>

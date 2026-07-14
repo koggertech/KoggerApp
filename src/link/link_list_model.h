@@ -43,6 +43,7 @@ public:
     QHash<QUuid, QString> getLinkNames() const;
 
     bool containsUuid(const QUuid& uuid) const;
+    int rowForUuid(const QUuid& uuid) const;
     QVariant valueForUuid(const QUuid& uuid, Roles role) const;
     QList<QUuid> pinnedUuids() const;
 

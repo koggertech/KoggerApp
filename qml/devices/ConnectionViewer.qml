@@ -21,10 +21,14 @@ Column {
         var idx = store ? store.activeDeviceIndex : -1
         if (idx >= 0 && idx < devList.length && devList[idx] && devList[idx].isBoardInited)
             return idx
-        for (var i = 0; i < devList.length; ++i)
-            if (devList[i] && devList[i].isBoardInited)
-                return i
-        return -1
+        var firstInited = -1
+        for (var i = 0; i < devList.length; ++i) {
+            if (devList[i] && devList[i].isBoardInited) {
+                if (firstInited < 0) firstInited = i
+                if (devList[i].isRecorder) return i
+            }
+        }
+        return firstInited
     }
     readonly property var dev: (activeDevIndex >= 0 && activeDevIndex < devList.length) ? devList[activeDevIndex] : null
     property var lastImportTrackFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
@@ -107,7 +111,17 @@ Column {
         var idx = store.activeDeviceIndex
         if (idx >= 0 && idx < devList.length)
             return
-        store.setActiveDeviceIndex(0)
+        store.setActiveDeviceIndex(-1)
+    }
+
+    function selectDevice(dev) {
+        if (!store || !dev) return
+        for (var i = 0; i < devList.length; ++i) {
+            if (devList[i] === dev) {
+                store.setActiveDeviceIndex(i)
+                return
+            }
+        }
     }
 
     onStoreChanged: {
@@ -1113,10 +1127,10 @@ Column {
         }
     }
 
-    // ── Device tabs ───────────────────────────────────────────────────────
+    // ── Device tabs (grouped by link: master(Recorder) + nested children) ──
 
     Column {
-        visible: devList.length > 0
+        visible: deviceTopology.groups.length > 0
         width: parent.width
         spacing: Tokens.spaceSm
 
@@ -1126,27 +1140,11 @@ Column {
             font.pixelSize: Tokens.fontSm; font.bold: true
         }
 
-        Flow {
-            width: parent.width; spacing: Tokens.spaceSm
-
-            Repeater {
-                model: devList
-                delegate: KButton {
-                    required property var modelData
-                    required property int index
-                    text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : qsTr("Undefined")
-                    height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
-                    checkable: true
-                    checked: connectionViewer.activeDevIndex === index
-                    checkedBorder: AppPalette.accentBorder
-                    visible: !!(modelData && modelData.isBoardInited)
-                    onClicked: {
-                        if (store)
-                            store.setActiveDeviceIndex(index)
-                        checked = Qt.binding(function() { return connectionViewer.activeDevIndex === index })
-                    }
-                }
-            }
+        DeviceTopologyView {
+            width: parent.width
+            groups: deviceTopology.groups
+            activeDevice: connectionViewer.dev
+            onDeviceClicked: function(device) { connectionViewer.selectDevice(device) }
         }
 
         // Visual breathing room between device tabs and the settings card below.

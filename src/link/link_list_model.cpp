@@ -94,6 +94,12 @@ bool LinkListModel::containsUuid(const QUuid& uuid) const
     return index_.contains(uuid);
 }
 
+int LinkListModel::rowForUuid(const QUuid& uuid) const
+{
+    const auto it = index_.constFind(uuid);
+    return it == index_.constEnd() ? -1 : it.value();
+}
+
 QList<QUuid> LinkListModel::pinnedUuids() const
 {
     QList<QUuid> retVal;
