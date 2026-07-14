@@ -36,6 +36,7 @@ Core::Core() :
     consolePtr_(new Console),
     deviceManagerWrapperPtr_(std::make_unique<DeviceManagerWrapper>(this)),
     linkManagerWrapperPtr_(std::make_unique<LinkManagerWrapper>(this)),
+    deviceTopologyModelPtr_(std::make_unique<DeviceTopologyModel>(deviceManagerWrapperPtr_.get(), linkManagerWrapperPtr_.get(), this)),
     internetManager_(nullptr),
     internetThread_(nullptr),
     dataProcessor_(nullptr),
@@ -277,6 +278,11 @@ DeviceManagerWrapper* Core::getDeviceManagerWrapperPtr() const
 LinkManagerWrapper* Core::getLinkManagerWrapperPtr() const
 {
     return linkManagerWrapperPtr_.get();
+}
+
+DeviceTopologyModel* Core::getDeviceTopologyModelPtr() const
+{
+    return deviceTopologyModelPtr_.get();
 }
 
 void Core::setConsoleOutputEnabled(bool enabled)

@@ -34,6 +34,7 @@
 #include "hotkeys_controller.h"
 #include "device_manager_wrapper.h"
 #include "link_manager_wrapper.h"
+#include "device_topology_model.h"
 #include "tile_manager.h"
 #include "internet_manager.h"
 #include "data_horizon.h"
@@ -85,6 +86,7 @@ public:
     DataProcessor* getDataProcessorPtr() const;
     DeviceManagerWrapper* getDeviceManagerWrapperPtr() const;
     LinkManagerWrapper* getLinkManagerWrapperPtr() const;
+    DeviceTopologyModel* getDeviceTopologyModelPtr() const;
 #ifdef SEPARATE_READING
     QString getTryOpenedfilePath() const;
     void stopDeviceManagerThread() const;
@@ -329,6 +331,7 @@ private:
     std::unique_ptr<HotkeysController> hotkeysController_;
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
+    std::unique_ptr<DeviceTopologyModel> deviceTopologyModelPtr_;
     InternetManager* internetManager_;
     QThread* internetThread_;
     std::unique_ptr<map::TileManager> tileManager_;

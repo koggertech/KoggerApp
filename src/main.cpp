@@ -330,6 +330,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("theme", &theme);
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
+    engine.rootContext()->setContextProperty("deviceTopology", core.getDeviceTopologyModelPtr());
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
     engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
     engine.rootContext()->setContextProperty("echogramStateSerializer", &echogramStateSerializer);
