@@ -3425,6 +3425,11 @@
 <context>
     <name>HotActionsPanel</name>
     <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="881"/>
+        <source>Port %1</source>
+        <translation>Port %1</translation>
+    </message>
+    <message>
         <source>Open settings</source>
         <translation>Otwórz ustawienia</translation>
     </message>
