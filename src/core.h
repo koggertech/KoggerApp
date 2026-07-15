@@ -57,6 +57,7 @@ public:
     Q_PROPERTY(bool              isKlfLogging                 READ getKlfLogging                   NOTIFY loggingKlfChanged)
     Q_PROPERTY(bool              loggingCsv                   READ getCsvLogging                   WRITE setCsvLogging                   NOTIFY loggingCsvChanged)
     Q_PROPERTY(bool              useGPS                       READ getUseGPS                       WRITE setUseGPS                       NOTIFY useGPSChanged)
+    Q_PROPERTY(bool              bringWindowToFrontEnabled    READ getBringWindowToFrontEnabled    WRITE setBringWindowToFrontEnabled    NOTIFY bringWindowToFrontEnabledChanged)
     Q_PROPERTY(bool              fixBlackStripesState         READ getFixBlackStripesState         WRITE setFixBlackStripesState         NOTIFY fixBlackStripesStateChanged)
     Q_PROPERTY(int               fixBlackStripesForwardSteps  READ getFixBlackStripesForwardSteps  WRITE setFixBlackStripesForwardSteps  NOTIFY fixBlackStripesForwardStepsChanged)
     Q_PROPERTY(int               fixBlackStripesBackwardSteps READ getFixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps NOTIFY fixBlackStripesBackwardStepsChanged)
@@ -221,13 +222,16 @@ public slots:
     Q_INVOKABLE void setDeferTilesOnMetered(bool defer);
     Q_INVOKABLE bool getMapTileLoadingEnabled() const;
     Q_INVOKABLE void setMapTileLoadingEnabled(bool enabled);
+    Q_INVOKABLE bool getBringWindowToFrontEnabled() const;
+    Q_INVOKABLE void setBringWindowToFrontEnabled(bool enabled);
     Q_INVOKABLE void moveAppToBackground();
-    Q_INVOKABLE void bringWindowToFront(); // raise+activate main window (wired to the OS-level raise in main.cpp)
+    Q_INVOKABLE void bringWindowToFront(); // raise+activate main window (wired to the OS-level raise in main.cpp), gated by bringWindowToFrontEnabled_
     Q_INVOKABLE void requestDismissTransientUi();
     Q_INVOKABLE void setActiveTransientUi(QObject* who);
 
 signals:
     void bringWindowToFrontRequested();
+    void bringWindowToFrontEnabledChanged();
     void activeTransientUiChanged(QObject* who);
     void csvExportFieldsReset();   // emitted by resetCsvExportFields() so UI can rebuild
     void connectionChanged(bool duplex = false);
@@ -378,6 +382,7 @@ private:
     bool metered_ = false;
     bool deferTilesOnMetered_ = true;
     bool mapTileLoadingEnabled_ = true;
+    bool bringWindowToFrontEnabled_ = true;
     bool needForceZooming_ = false; // debug
 
     bool fixBlackStripesState_;

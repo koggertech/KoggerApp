@@ -482,6 +482,15 @@ Column {
         }
 
         KSwitch {
+            visible: Qt.platform.os === "windows"
+            width: parent.width
+            text: qsTr("Bring window to front")
+            toolTipText: qsTr("Raise and focus the app window on key events")
+            checked: core.bringWindowToFrontEnabled
+            onToggled: core.bringWindowToFrontEnabled = checked
+        }
+
+        KSwitch {
             visible: Qt.platform.os === "android" || Qt.platform.os === "ios"
             width: parent.width
             text: qsTr("Rotate layout with device")

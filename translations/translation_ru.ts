@@ -845,6 +845,16 @@
         <translation>Смещение рабочей области</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="486"/>
+        <source>Bring window to front</source>
+        <translation>Выводить окно на передний план</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="487"/>
+        <source>Raise and focus the app window on key events</source>
+        <translation>Поднимать и фокусировать окно приложения при ключевых событиях</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="561"/>
         <source>Global pop-up</source>
         <translation>Глобальное всплывающее окно</translation>

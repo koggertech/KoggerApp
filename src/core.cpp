@@ -62,6 +62,10 @@ Core::Core() :
     mosaicIndexProvider_(6200)
 {
     qRegisterMetaType<uint8_t>("uint8_t");
+    {
+        QSettings settings("KOGGER", "KoggerApp");
+        bringWindowToFrontEnabled_ = settings.value("main/bringWindowToFrontEnabled", true).toBool();
+    }
     logger_.setDatasetPtr(datasetPtr_);
     createDeviceManagerConnections();
     createLinkManagerConnections();
@@ -2391,8 +2395,31 @@ void Core::moveAppToBackground()
 #endif
 }
 
+bool Core::getBringWindowToFrontEnabled() const
+{
+    return bringWindowToFrontEnabled_;
+}
+
+void Core::setBringWindowToFrontEnabled(bool enabled)
+{
+    if (bringWindowToFrontEnabled_ == enabled) {
+        return;
+    }
+
+    bringWindowToFrontEnabled_ = enabled;
+
+    QSettings settings("KOGGER", "KoggerApp");
+    settings.setValue("main/bringWindowToFrontEnabled", enabled);
+
+    emit bringWindowToFrontEnabledChanged();
+}
+
 void Core::bringWindowToFront()
 {
+    if (!bringWindowToFrontEnabled_) {
+        return;
+    }
+
     emit bringWindowToFrontRequested();
 }
 
