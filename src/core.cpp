@@ -75,6 +75,7 @@ Core::Core() :
 
 #ifdef FLASHER
     connect(&dev_flasher_, &DeviceFlasher::sendStepInfo, this, &Core::dev_flasher_rcv);
+    connect(&dev_flasher_, &DeviceFlasher::productsChanged, this, &Core::flasherProductsChanged);
 #endif
 }
 
@@ -3316,9 +3317,14 @@ void Core::connectOpenedLinkAsFlasher(QString pn) {
 
 void Core::setFlasherData(QString data) {
     dev_flasher_.setData(data);
+    emit flasherHasTokenChanged();
 }
 
 void Core::releaseFlasherLink() {
     dev_flasher_.releaseLink();
+}
+
+void Core::refreshFlasherProducts() {
+    dev_flasher_.fetchProducts();
 }
 #endif

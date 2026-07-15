@@ -197,6 +197,14 @@ Column {
         store: root.store
     }
 
+    // ── Factory (visible only in factory mode) ──────────
+
+    FactorySettingsGroup {
+        width: root.groupWidth
+        store: root.store
+        visible: (typeof core !== "undefined" && core) ? core.isFactoryMode : false
+    }
+
     // ── Экспорт ───────────────────────────────────────────────────────────────
 
     SettingsGroup {

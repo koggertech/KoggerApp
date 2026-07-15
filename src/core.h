@@ -177,6 +177,7 @@ public slots:
     void connectOpenedLinkAsFlasher(QString pn);
     void setFlasherData(QString data);
     void releaseFlasherLink();
+    void refreshFlasherProducts();          // refresh the factory device list
 #endif
 
     Q_INVOKABLE void setPosZeroing(bool state);
@@ -396,6 +397,8 @@ private:
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)
     Q_PROPERTY(int flasherIdInfo READ flasherIdInfo NOTIFY dev_flasher_changed)
+    Q_PROPERTY(QVariantList flasherProducts READ flasherProducts NOTIFY flasherProductsChanged)
+    Q_PROPERTY(bool flasherHasToken READ flasherHasToken NOTIFY flasherHasTokenChanged)
 private:
     DeviceFlasher dev_flasher_;
     int dev_flasher_msg_id_ = 0;
@@ -403,12 +406,17 @@ private:
 
     QString flasherTextInfo() { return dev_flasher_msg_; }
     int flasherIdInfo() { return dev_flasher_msg_id_; }
+    QVariantList flasherProducts() { return dev_flasher_.products(); }
+    bool flasherHasToken() { return dev_flasher_.hasToken(); }
 private slots:
     void dev_flasher_rcv(QString msg, int num);
 signals:
     void dev_flasher_changed();
+    void flasherProductsChanged();
+    void flasherHasTokenChanged();
 #endif
 
+private:   // reset access after the (signals-terminated) FLASHER block — else these leak into signals: under -DFLASHER
     QVector<QMetaObject::Connection> dataProcessorConnections_;
     QVector<QMetaObject::Connection> dataHorizonConnections_;
 
