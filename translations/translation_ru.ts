@@ -1268,11 +1268,6 @@
         <translation>Выберите файл</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1082"/>
-        <source>Devices:</source>
-        <translation>Устройства:</translation>
-    </message>
-    <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="1095"/>
         <source>Undefined</source>
         <translation>Не определено</translation>
@@ -1362,8 +1357,8 @@
     </message>
     <message>
         <location filename="../qml/app/ConnectionsSettingsPage.qml" line="20"/>
-        <source>Connections, logging and device settings.</source>
-        <translation>Подключения, логгирование, настройки устройств.</translation>
+        <source>Connections and logging.</source>
+        <translation>Подключения и логгирование.</translation>
     </message>
     <message>
         <source>Stop KLF logging</source>
@@ -1928,11 +1923,6 @@
 </context>
 <context>
     <name>DeviceSettingsTab</name>
-    <message>
-        <location filename="../qml/app/DeviceSettingsTab.qml" line="13"/>
-        <source>Devices:</source>
-        <translation>Устройства:</translation>
-    </message>
     <message>
         <location filename="../qml/app/DeviceSettingsTab.qml" line="27"/>
         <source>Settings:</source>

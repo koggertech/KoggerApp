@@ -20,6 +20,33 @@ function severity(dev) {
     return "idle"
 }
 
+function sourceState(recorder, port) {
+    if (!recorder || !recorder.recorderStatusValid || port < 1 || port > 3)
+        return ""
+    var bit = 1 << (port - 1)
+    if ((recorder.recorderStatusFlags   || 0) & bit) return "good"
+    if ((recorder.recorderDegradedFlags || 0) & bit) return "crit"
+    return ""
+}
+
+function linkState(dev) {
+    if (!dev) return ""
+    if (dev.linkConnected)    return dev.linkReceivesData ? "ok" : "warn"
+    if (dev.linkNotAvailable) return "down"
+    return ""
+}
+
+function pillState(dev, master, port) {
+    if (dev && dev.isRecorder && dev.recorderStatusValid) {
+        var s = severity(dev)
+        return s === "good" ? "ok" : s === "warn" ? "warn" : s === "crit" ? "down" : ""
+    }
+    var src = sourceState(master, port)
+    if (src === "good") return "ok"
+    if (src === "crit") return "down"
+    return linkState(dev)
+}
+
 function fmtSize(b) {
     if (!b || b <= 0) return "0 B"
     if (b < 1024) return b + " B"

@@ -12,12 +12,44 @@ Column {
     spacing: Tokens.spaceLg
     readonly property real groupWidth: Math.max(0, width)
 
+    Item {
+        id: devicesReveal
+        readonly property bool _hasDevices: deviceTopology.groups.length > 0
+        width: root.groupWidth
+        clip: true
+        height: _hasDevices ? devicesContent.implicitHeight : 0
+        visible: height > 0.5
+        opacity: _hasDevices ? 1 : 0
+        onVisibleChanged: if (visible) Qt.callLater(root._scrollToTop)
+
+        Behavior on height  { NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
+        Behavior on opacity { NumberAnimation { duration: Anim.fadeMs } }
+
+        Column {
+            id: devicesContent
+            width: parent.width
+            spacing: Tokens.spaceSm
+
+            DeviceTopologyView {
+                width: parent.width
+                groups: deviceTopology.groups
+                activeDevice: null
+                onDeviceClicked: function(device) {
+                    if (root.store) {
+                        root.store.selectDevice(device)
+                        root.store.openDeviceSettings()
+                    }
+                }
+            }
+        }
+    }
+
     SettingsGroup {
         id: connGroup
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Connections")
-        description: qsTr("Connections, logging and device settings.")
+        description: qsTr("Connections and logging.")
         stateStore: root.store
         stateKey: "app.connections"
         collapsedByDefault: false
@@ -102,5 +134,35 @@ Column {
                     item.width = width
             }
         }
+    }
+
+    function _findAncestorFlickable() {
+        var item = root.parent
+        while (item) {
+            if (item.contentY !== undefined
+                    && item.contentHeight !== undefined
+                    && item.contentWidth !== undefined)
+                return item
+            item = item.parent
+        }
+        return null
+    }
+
+    function _scrollToTop() {
+        var flick = _findAncestorFlickable()
+        if (!flick) return
+        if (flick.contentY <= 0.5) return
+        scrollToTopAnim.stop()
+        scrollToTopAnim.target = flick
+        scrollToTopAnim.from = flick.contentY
+        scrollToTopAnim.to = 0
+        scrollToTopAnim.start()
+    }
+
+    NumberAnimation {
+        id: scrollToTopAnim
+        property: "contentY"
+        duration: 240
+        easing.type: Easing.OutCubic
     }
 }

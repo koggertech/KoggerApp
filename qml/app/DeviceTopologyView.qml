@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import kqml_types 1.0
+import "RecorderStatus.js" as RecorderStatus
 
 Item {
     id: view
@@ -55,6 +56,7 @@ Item {
                 cells.push({ kind: "gap" })
             var mem = g.members || []
             var label = _linkLabel(g)
+            var masterDev = g.master ? g.master.device : null
             for (var mi = 0; mi < mem.length; ++mi) {
                 if (mi > 0)
                     cells.push({ kind: "conn" })
@@ -62,6 +64,7 @@ Item {
                 cells.push({ kind: "btn",
                              device: n.device,
                              port: (n.port !== undefined ? n.port : -1),
+                             master: masterDev,
                              showLink: mi === 0,
                              linkLabel: label })
             }
@@ -75,18 +78,29 @@ Item {
         id: pill
 
         property var device
+        property var master
         property bool showLink: false
         property string linkLabel: ""
         property int port: -1
 
         readonly property bool _selected: device === view.activeDevice
+        readonly property string _state: RecorderStatus.pillState(device, master, port)
         readonly property string _sub: showLink ? linkLabel
                                                 : (port >= 0 ? qsTr("Port %1").arg(port) : "")
 
         radius: Tokens.radiusLg
-        color: _selected ? AppPalette.accentBg
+        color: _state === "ok"   ? AppPalette.linkOkBg
+             : _state === "warn" ? AppPalette.linkIdleBg
+             : _state === "down" ? AppPalette.linkDownBg
+             : _selected ? AppPalette.accentBg
              : (pillMouse.pressed || pillMouse.containsMouse) ? AppPalette.cardHover
              : AppPalette.card
+        border.width: (_selected || _state !== "") ? Math.max(1, Math.round(1 * AppPalette.scale)) : 0
+        border.color: _selected ? AppPalette.accentBorder
+                    : _state === "ok"   ? AppPalette.linkOkBorder
+                    : _state === "warn" ? AppPalette.linkIdleBorder
+                    : _state === "down" ? AppPalette.linkDownBorder
+                    : "transparent"
         scale: pillMouse.pressed ? 0.98 : 1.0
 
         Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
@@ -147,6 +161,7 @@ Item {
                             anchors.fill: parent
                             visible: parent._isBtn
                             device: parent._isBtn ? parent.cell.device : null
+                            master: parent._isBtn ? parent.cell.master : null
                             port: parent._isBtn ? parent.cell.port : -1
                             showLink: parent._isBtn ? parent.cell.showLink : false
                             linkLabel: parent._isBtn ? parent.cell.linkLabel : ""

@@ -6,7 +6,6 @@ import Qt5Compat.GraphicalEffects
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
-import app 1.0
 
 Column {
     id: connectionViewer
@@ -267,33 +266,6 @@ Column {
                     onReleased: uTim.stop(); onCanceled: uTim.stop()
                 }
                 Timer { id: uTim; interval: 80; repeat: true; onTriggered: { if (cs.value < cs.to) cs.value++ } }
-            }
-        }
-    }
-
-    // ── Devices (buttons only; settings live in the Devices tab) ──────────
-
-    Column {
-        visible: deviceTopology.groups.length > 0
-        width: parent.width
-        spacing: Tokens.spaceSm
-
-        Text {
-            text: qsTr("Devices:")
-            color: AppPalette.textSecond
-            font.pixelSize: Tokens.fontBase
-            leftPadding: Tokens.spaceXxs
-        }
-
-        DeviceTopologyView {
-            width: parent.width
-            groups: deviceTopology.groups
-            activeDevice: null
-            onDeviceClicked: function(device) {
-                if (connectionViewer.store) {
-                    connectionViewer.store.selectDevice(device)
-                    connectionViewer.store.openDeviceSettings()
-                }
             }
         }
     }

@@ -9,13 +9,6 @@ Column {
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
 
-    Text {
-        text: qsTr("Devices:")
-        color: AppPalette.textSecond
-        font.pixelSize: Tokens.fontBase
-        leftPadding: Tokens.spaceXxs
-    }
-
     DeviceTopologyView {
         width: parent.width
         groups: (typeof deviceTopology !== "undefined" && deviceTopology) ? deviceTopology.groups : []

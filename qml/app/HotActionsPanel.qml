@@ -210,12 +210,14 @@ Item {
             for (var gi = 0; gi < groups.length; ++gi) {
                 var g = groups[gi]
                 var label = _linkLabelOf(g)
+                var masterDev = g.master ? g.master.device : null
                 var mem = g.members || []
                 for (var mi = 0; mi < mem.length; ++mi) {
                     var n = mem[mi]
                     items.push({ device: n.device,
                                  port: (n.port !== undefined ? n.port : -1),
                                  linkLabel: label,
+                                 master: masterDev,
                                  groupFirst: mi === 0 })
                 }
             }
@@ -236,35 +238,21 @@ Item {
         return "qrc:/icons/ui/device-unknown.svg"
     }
 
-    function linkFillColor(d) {
-        if (!d) return buttonFillColor
-        if (d.linkConnected)    return d.linkReceivesData ? AppPalette.linkOkBg : AppPalette.linkIdleBg
-        if (d.linkNotAvailable) return AppPalette.linkDownBg
-        return buttonFillColor
-    }
-
-    function linkBorderColor(d) {
-        if (!d) return buttonBorderColor
-        if (d.linkConnected)    return d.linkReceivesData ? AppPalette.linkOkBorder : AppPalette.linkIdleBorder
-        if (d.linkNotAvailable) return AppPalette.linkDownBorder
-        return buttonBorderColor
-    }
-
     function recorderSeverity(d) {
         return (d && d.isRecorder && d.recorderStatusValid) ? RecorderStatus.severity(d) : ""
     }
 
-    function severityFillColor(sev) {
-        if (sev === "good") return AppPalette.linkOkBg
-        if (sev === "warn") return AppPalette.linkIdleBg
-        if (sev === "crit") return AppPalette.linkDownBg
+    function pillFillColor(state) {
+        if (state === "ok")   return AppPalette.linkOkBg
+        if (state === "warn") return AppPalette.linkIdleBg
+        if (state === "down") return AppPalette.linkDownBg
         return buttonFillColor
     }
 
-    function severityBorderColor(sev) {
-        if (sev === "good") return AppPalette.linkOkBorder
-        if (sev === "warn") return AppPalette.linkIdleBorder
-        if (sev === "crit") return AppPalette.linkDownBorder
+    function pillBorderColor(state) {
+        if (state === "ok")   return AppPalette.linkOkBorder
+        if (state === "warn") return AppPalette.linkIdleBorder
+        if (state === "down") return AppPalette.linkDownBorder
         return buttonBorderColor
     }
 
@@ -923,8 +911,12 @@ Item {
                 id: devBadge
                 readonly property var _dev: devCell._dev
                 readonly property string _sev: root.recorderSeverity(_dev)
-                readonly property color _fill:   _sev !== "" ? root.severityFillColor(_sev)   : root.linkFillColor(_dev)
-                readonly property color _border: _sev !== "" ? root.severityBorderColor(_sev) : root.linkBorderColor(_dev)
+                readonly property string _state: RecorderStatus.pillState(
+                    _dev,
+                    devCell.modelData ? devCell.modelData.master : null,
+                    devCell.modelData ? devCell.modelData.port : -1)
+                readonly property color _fill:   root.pillFillColor(_state)
+                readonly property color _border: root.pillBorderColor(_state)
                 readonly property bool _transducer: !!(_dev
                                                        && _dev.isSonar
                                                        && _dev.isTransducerSupport
