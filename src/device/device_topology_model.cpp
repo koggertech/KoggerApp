@@ -34,6 +34,39 @@ QVariantMap nodeFor(DevQProperty* dev, DevQProperty* master, bool hasMaster)
     return node;
 }
 
+// Content fingerprint of the built groups — **identity/structure only**, on purpose.
+// Volatile display fields (baudrate, address, ports) are DELIBERATELY excluded so
+// that transient churn — notably serial baudrate auto-search cycling `baudrate`
+// every probe — does NOT re-emit `changed()`. Without this, `deviceTopology.groups`
+// would get a new reference each probe, `HotActionsPanel._connItems` would recompute,
+// and the Repeater would recreate every delegate — killing hover state (button
+// "flickers") and dropping clicks mid-recreation. Structure (which devices/links,
+// their roles/ports/grouping) is what actually decides delegate identity; the
+// snapshot's baudrate/address text refreshes on the next structural rebuild.
+QString topologySignature(const QVariantList& groups)
+{
+    QString sig;
+    sig.reserve(256);
+    for (const QVariant& gv : groups) {
+        const QVariantMap g = gv.toMap();
+        sig += g.value("linkUuid").toString();
+        sig += '|' + QString::number(g.value("linkType").toInt());
+        sig += '|' + g.value("portName").toString();
+        sig += '|' + QString::number(g.value("linkPresent").toBool());
+        sig += '|' + QString::number(g.value("hasMaster").toBool());
+        const QVariantList members = g.value("members").toList();
+        for (const QVariant& mv : members) {
+            const QVariantMap m = mv.toMap();
+            const auto* dev = m.value("device").value<DevQProperty*>();
+            sig += ';' + QString::number(reinterpret_cast<quintptr>(dev));
+            sig += ':' + QString::number(m.value("role").toInt());
+            sig += ':' + QString::number(m.value("port").toInt());
+        }
+        sig += '\n';
+    }
+    return sig;
+}
+
 }
 
 DeviceTopologyModel::DeviceTopologyModel(DeviceManagerWrapper* deviceWrapper,
@@ -144,6 +177,11 @@ void DeviceTopologyModel::rebuild()
         out.append(group);
     }
 
+    const QString sig = topologySignature(out);
+    if (sig == lastSignature_)
+        return;
+
+    lastSignature_ = sig;
     groups_ = out;
     emit changed();
 }

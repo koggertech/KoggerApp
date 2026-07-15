@@ -40,6 +40,7 @@ private:
     DeviceManagerWrapper* deviceWrapper_;
     LinkManagerWrapper*   linkWrapper_;
     QVariantList          groups_;
+    QString               lastSignature_;
     QSet<DevQProperty*>   watched_;
     bool                  rebuildScheduled_;
 };
