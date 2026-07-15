@@ -1161,6 +1161,11 @@
         <translation>Удалить</translation>
     </message>
     <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="424"/>
+        <source>Remove from recent</source>
+        <translation>Убрать из недавних</translation>
+    </message>
+    <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="621"/>
         <source>Auto search baudrate</source>
         <translation>Авто-поиск скорости</translation>

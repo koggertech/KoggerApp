@@ -111,6 +111,17 @@ QList<QUuid> LinkListModel::pinnedUuids() const
     return retVal;
 }
 
+QList<QUuid> LinkListModel::serialUuids() const
+{
+    QList<QUuid> retVal;
+    for (auto it = index_.cbegin(); it != index_.cend(); ++it) {
+        const int line = it.value();
+        if (vectors_[static_cast<int>(LinkListModel::Roles::LinkType)][line].toInt() == static_cast<int>(::LinkType::kLinkSerial))
+            retVal.append(it.key());
+    }
+    return retVal;
+}
+
 QVariant LinkListModel::valueForUuid(const QUuid& uuid, Roles role) const
 {
     const auto it = index_.constFind(uuid);

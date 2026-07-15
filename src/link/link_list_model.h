@@ -46,6 +46,7 @@ public:
     int rowForUuid(const QUuid& uuid) const;
     QVariant valueForUuid(const QUuid& uuid, Roles role) const;
     QList<QUuid> pinnedUuids() const;
+    QList<QUuid> serialUuids() const;
 
 private:
     Q_DISABLE_COPY(LinkListModel)

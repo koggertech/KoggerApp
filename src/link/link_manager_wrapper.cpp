@@ -289,6 +289,15 @@ QStringList LinkManagerWrapper::pinnedUuids() const
     return retVal;
 }
 
+QStringList LinkManagerWrapper::serialUuids() const
+{
+    QStringList retVal;
+    const auto uuids = model_.serialUuids();
+    for (const auto& u : uuids)
+        retVal.append(u.toString());
+    return retVal;
+}
+
 int LinkManagerWrapper::linkState(const QString& uuidStr) const
 {
     const QUuid uuid(uuidStr);

@@ -314,6 +314,9 @@ Column {
             readonly property bool receivesData: ReceivesData
             readonly property bool notAvailable: IsNotAvailable
             readonly property bool editing: linkList.expandedUuid === String(Uuid)
+            readonly property bool isRemembered: !!(connectionViewer.store
+                                                    && connectionViewer.store.rememberedLinks
+                                                    && connectionViewer.store.rememberedLinks.indexOf(String(Uuid)) !== -1)
             readonly property int rowIndex: index
             readonly property int vPad: Tokens.spaceXs   // fixed — no inward shift on expand (matches recRow)
             readonly property string typeLabel: LinkType === 1 ? PortName : (LinkType === 2 ? "UDP" : "TCP")
@@ -442,6 +445,13 @@ Column {
                             toolTipText: qsTr("Auto reconnect")
                             Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onToggled: function(v) { linkManagerWrapper.sendUpdateControlType(Uuid, Number(v)) }
+                        }
+                        IconBtn {
+                            visible: connRow.editing && connRow.isRemembered
+                            iconSource: "qrc:/icons/ui/eraser.svg"; iconFillRatio: 0.8
+                            toolTipText: qsTr("Remove from recent")
+                            Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                            onClicked: if (connectionViewer.store) connectionViewer.store.removeRememberedLink(Uuid)
                         }
                         IconBtn {
                             visible: connRow.editing && (LinkType === 2 || LinkType === 3)

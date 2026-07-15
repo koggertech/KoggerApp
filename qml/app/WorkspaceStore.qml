@@ -238,14 +238,16 @@ function removeRememberedLink(uuid) {
 function saveRememberedLinks() {
     if (typeof layoutStore === "undefined") return
     var arr = rememberedLinks || []
-    var pinnedSet = {}
+    var keepSet = {}
     if (typeof linkManagerWrapper !== "undefined" && linkManagerWrapper) {
         var pinned = linkManagerWrapper.pinnedUuids()
-        for (var i = 0; i < pinned.length; ++i) pinnedSet[pinned[i]] = true
+        for (var i = 0; i < pinned.length; ++i) keepSet[pinned[i]] = true
+        var serial = linkManagerWrapper.serialUuids()
+        for (var k = 0; k < serial.length; ++k) keepSet[serial[k]] = true
     }
     var keep = []
     for (var j = 0; j < arr.length; ++j)
-        if (pinnedSet[arr[j]]) keep.push(arr[j])
+        if (keepSet[arr[j]]) keep.push(arr[j])
     layoutStore.rememberedLinksJson = JSON.stringify(keep)
 }
 

@@ -1161,6 +1161,11 @@
         <translation>Usuń</translation>
     </message>
     <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="424"/>
+        <source>Remove from recent</source>
+        <translation>Usuń z ostatnich</translation>
+    </message>
+    <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="621"/>
         <source>Auto search baudrate</source>
         <translation>Auto-wykrywanie prędkości</translation>
