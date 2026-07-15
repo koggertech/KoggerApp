@@ -55,6 +55,8 @@ private:
                         int baudrate, bool parity, ::LinkType linkType, const QString& address, int sourcePort, int destinationPort,
                         bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState);
     void doRemove(QUuid uuid);
+    void moveRow(int from, int to);
+    int pinnedCount() const;
 
     /*data*/
     QHash<int, QByteArray> roleNames_ {

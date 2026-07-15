@@ -287,6 +287,10 @@ Column {
         spacing: Tokens.spaceXxs + 1
         property string expandedUuid: ""
 
+        move: Transition {
+            NumberAnimation { properties: "y"; duration: 220; easing.type: Easing.OutCubic }
+        }
+
         Repeater {
             id: linkRepeater
             model: linkManagerWrapper.linkListModel
@@ -372,6 +376,30 @@ Column {
                             Layout.fillHeight: true
                             verticalAlignment: Text.AlignVCenter
                             Layout.maximumWidth: Math.round((LinkType === 1 ? 80 : 44) * AppPalette.scale)
+                        }
+
+                        Item {
+                            visible: !!IsPinned && !connRow.editing
+                            Layout.preferredWidth: Math.round(13 * AppPalette.scale)
+                            Layout.preferredHeight: Math.round(13 * AppPalette.scale)
+                            Layout.alignment: Qt.AlignVCenter
+                            Image {
+                                id: pinInfoIcon
+                                anchors.fill: parent
+                                source: "qrc:/icons/ui/pin.svg"
+                                sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                                sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                                fillMode: Image.PreserveAspectFit
+                                smooth: true
+                                visible: false
+                                layer.enabled: true
+                            }
+                            ColorOverlay {
+                                anchors.fill: pinInfoIcon
+                                source: pinInfoIcon
+                                color: AppPalette.textMuted
+                                smooth: true
+                            }
                         }
 
                         // Компактный read-only итог (тип уже отдельным бейджем выше)

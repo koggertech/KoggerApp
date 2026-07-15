@@ -43,6 +43,7 @@ void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
     uuid_ =  QUuid::createUuidV3(QUuid{}, portName_);
     parity_ = parity;
     baudrate_ = baudrate;
+    autoSpeedSelection_ = true;
     baudrateSearchList_ = QList<uint32_t>(baudrateSearchList.cbegin(), baudrateSearchList.cend()); // by default
     resetLastSearchIndx();
 }
