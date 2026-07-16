@@ -127,6 +127,9 @@ Column {
     component DevButton: KButton {
         normalBg: AppPalette.controlRaised
         hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
+        dangerBg: AppPalette.controlRaised
+        dangerHoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
+        borderWidth: danger ? Math.max(1, Math.round(1.5 * AppPalette.scale)) : Tokens.cardBorderWidth
     }
 
     // ── Recorder ──────────────────────────────────────────────────────────
@@ -209,6 +212,13 @@ Column {
             if (s === "good")  return AppPalette.linkOkBorder
             if (s === "warn")  return AppPalette.linkIdleBorder
             if (s === "crit")  return AppPalette.linkDownBorder
+            if (s === "stale") return AppPalette.textMuted
+            return AppPalette.accentBar
+        }
+        function _sevText(s) {
+            if (s === "good")  return AppPalette.linkOkText
+            if (s === "warn")  return AppPalette.linkIdleText
+            if (s === "crit")  return AppPalette.linkDownText
             if (s === "stale") return AppPalette.textMuted
             return AppPalette.accentBar
         }
@@ -328,8 +338,8 @@ Column {
                 Text { visible: blabel.length > 0; text: blabel; color: AppPalette.textMuted
                        font.pixelSize: Tokens.fontXs }
                 Text { text: bvalue; font.pixelSize: Tokens.fontSm; font.bold: true
-                       color: (errorBox || alertBox) ? AppPalette.linkDownBorder
-                            : keyBox ? AppPalette.linkOkBorder : AppPalette.text }
+                       color: (errorBox || alertBox) ? AppPalette.linkDownText
+                            : keyBox ? AppPalette.linkOkText : AppPalette.text }
             }
             Rectangle {   // blink glow when errorBox
                 anchors.fill: parent; radius: parent.radius; color: "transparent"
@@ -415,7 +425,7 @@ Column {
                 id: heroText
                 width: parent.width - heroDisc.width - parent.spacing
                 spacing: Math.round(2 * AppPalette.scale)
-                Text { text: recorderGroup.hero.word; color: recorderGroup._sevColor(recorderGroup.hero.sev)
+                Text { text: recorderGroup.hero.word; color: recorderGroup._sevText(recorderGroup.hero.sev)
                        font.pixelSize: Tokens.fontXxl; font.bold: true
                        width: parent.width; elide: Text.ElideRight }
                 Text { text: recorderGroup.hero.sub; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm

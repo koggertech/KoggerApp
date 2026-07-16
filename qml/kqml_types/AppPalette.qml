@@ -137,19 +137,32 @@ QtObject {
     readonly property color accentBorder:   Qt.lighter(accent, 1.25)
     readonly property color accentBar:      accent
 
+    readonly property bool _desert: !!theme && theme.themeID === 8
+
     // ── Danger ────────────────────────────────────────────────────────────────
-    readonly property color dangerBg:     isDark ? "#2A1313" : "#FEF2F2"
-    readonly property color dangerHover:  isDark ? "#1F0F0F" : "#FEE2E2"
-    readonly property color dangerBorder: isDark ? "#7F1D1D" : "#EF4444"
-    readonly property color dangerText:   theme ? theme.textErrorColor : (isDark ? "#FCA5A5" : "#DC2626")
+    readonly property color dangerBg:     _desert ? Qt.tint(card, Qt.rgba(0.71, 0.26, 0.18, 0.18))
+                                         : isDark ? "#2A1313" : "#FEF2F2"
+    readonly property color dangerHover:  _desert ? Qt.tint(card, Qt.rgba(0.71, 0.26, 0.18, 0.26))
+                                         : isDark ? "#1F0F0F" : "#FEE2E2"
+    readonly property color dangerBorder: _desert ? "#B5432F"
+                                         : isDark ? "#7F1D1D" : "#EF4444"
+    readonly property color dangerText:   _desert ? "#5C1810"
+                                         : theme ? theme.textErrorColor : (isDark ? "#FCA5A5" : "#DC2626")
 
     // ── Link status (device connection dots: bright border on a tinted fill) ──
-    readonly property color linkOkBg:       isDark ? "#0D2D1A" : "#BBF7D0"
+    readonly property color linkOkBg:       _desert ? Qt.tint(card, Qt.rgba(0.086, 0.639, 0.290, 0.40))
+                                          : isDark ? "#0D2D1A" : "#BBF7D0"
     readonly property color linkOkBorder:   isDark ? "#10B981" : "#16A34A"
     readonly property color linkIdleBg:     isDark ? "#2D2200" : "#FEF08A"
     readonly property color linkIdleBorder: isDark ? "#F59E0B" : "#CA8A04"
-    readonly property color linkDownBg:     isDark ? "#2D0D0D" : "#FECACA"
-    readonly property color linkDownBorder: isDark ? "#EF4444" : "#DC2626"
+    readonly property color linkDownBg:     _desert ? Qt.tint(card, Qt.rgba(0.910, 0.365, 0.306, 0.42))
+                                          : isDark ? "#2D0D0D" : "#FECACA"
+    readonly property color linkDownBorder: _desert ? "#E85D4E"
+                                          : isDark ? "#EF4444" : "#DC2626"
+
+    readonly property color linkOkText:   isDark ? linkOkBorder   : Qt.darker(linkOkBorder, 1.7)
+    readonly property color linkIdleText: isDark ? linkIdleBorder : Qt.darker(linkIdleBorder, 1.7)
+    readonly property color linkDownText: isDark ? linkDownBorder : Qt.darker(linkDownBorder, 1.7)
 
     // ── Tooltip ───────────────────────────────────────────────────────────────
     readonly property color tooltipBg:     theme ? theme.tooltipBackColor   : (isDark ? "#0B1220" : "#FFFFFF")
