@@ -42,34 +42,46 @@ Column {
         return null
     }
 
+    function _collectGroups(item, out) {
+        var kids = item ? item.children : null
+        if (!kids) return
+        for (var i = 0; i < kids.length; ++i) {
+            var g = kids[i]
+            if (!g) continue
+            if (g.stateKey !== undefined && typeof g.expanded === "boolean")
+                out.push(g)
+            else
+                _collectGroups(g, out)
+        }
+    }
+
     function _snapshotGroups() {
         var m = {}
-        for (var i = 0; i < children.length; ++i) {
-            var g = children[i]
-            if (g && g.stateKey !== undefined && typeof g.expanded === "boolean")
-                m[g.stateKey] = g.expanded
-        }
+        var groups = []
+        _collectGroups(root, groups)
+        for (var i = 0; i < groups.length; ++i)
+            m[groups[i].stateKey] = groups[i].expanded
         return m
     }
 
     function _applyGroups(map) {
-        for (var i = 0; i < children.length; ++i) {
-            var g = children[i]
-            if (!g || g.stateKey === undefined || typeof g.expanded !== "boolean")
-                continue
+        var groups = []
+        _collectGroups(root, groups)
+        for (var i = 0; i < groups.length; ++i) {
+            var g = groups[i]
             if (g.bodyAnimated !== undefined)
                 g.bodyAnimated = false   // programmatic: snap, no expand/collapse flicker
-            g.expanded = (map && map[g.stateKey] !== undefined) ? map[g.stateKey] : true
+            g.expanded = (map && map[g.stateKey] !== undefined) ? map[g.stateKey] : !g.collapsedByDefault
         }
         Qt.callLater(_reenableGroupAnim)
     }
 
     function _reenableGroupAnim() {
-        for (var i = 0; i < children.length; ++i) {
-            var g = children[i]
-            if (g && g.bodyAnimated !== undefined)
-                g.bodyAnimated = true
-        }
+        var groups = []
+        _collectGroups(root, groups)
+        for (var i = 0; i < groups.length; ++i)
+            if (groups[i].bodyAnimated !== undefined)
+                groups[i].bodyAnimated = true
     }
 
     function _pruneGroupStates() {
@@ -85,11 +97,69 @@ Column {
         _groupStates = kept
     }
 
+    readonly property bool _isBasic2D: !!(dev && dev.devName === "Basic2D")
+    property bool _engExpanded: false
+
+    readonly property var _warnings: {
+        var w = []
+        if (!dev) return w
+        var tpl = qsTr('Group "%1" settings were not applied')
+        if (dev.chartSetupState === false) w.push(tpl.arg(qsTr("Echogram")))
+        if (dev.distSetupState === false)  w.push(tpl.arg(qsTr("Rangefinder")))
+        if (dev.transcState === false)     w.push(tpl.arg(qsTr("Transducer")))
+        if (dev.dspState === false || dev.soundState === false) w.push(tpl.arg(qsTr("DSP")))
+        if (dev.datasetState === false)    w.push(tpl.arg(qsTr("Dataset")))
+        if (dev.uartState === false)       w.push(tpl.arg(qsTr("Actions")))
+        return w
+    }
+
+    property int warningCount: _warnings.length
+    property bool warningShown: false
+    onWarningCountChanged: {
+        if (warningCount > 0) {
+            if (!warningShown) warnDelayTimer.restart()
+        } else {
+            warnDelayTimer.stop()
+            warningShown = false
+        }
+    }
+    Timer { id: warnDelayTimer; interval: 1000; onTriggered: root.warningShown = true }
+
+    function _advFlick() {
+        var item = root.parent
+        while (item) {
+            if (item.contentY !== undefined && item.contentHeight !== undefined && item.flickableDirection !== undefined)
+                return item
+            item = item.parent
+        }
+        return null
+    }
+    function _scrollAdvancedIntoView() {
+        var flick = _advFlick()
+        if (!flick) return
+        var topInContent = advancedPanel.mapToItem(flick.contentItem, 0, 0).y
+        var bottomInContent = topInContent + advancedPanel.height
+        var vpH = flick.height
+        var cy = flick.contentY
+        if (topInContent >= cy - 0.5 && bottomInContent <= cy + vpH + 0.5)
+            return
+        var target = bottomInContent - vpH + Tokens.spaceLg
+        target = Math.min(target, topInContent)
+        target = Math.max(0, Math.min(target, flick.contentHeight - vpH))
+        if (Math.abs(target - cy) < 0.5) return
+        advScrollAnim.target = flick
+        advScrollAnim.from = cy
+        advScrollAnim.to = target
+        advScrollAnim.restart()
+    }
+    NumberAnimation { id: advScrollAnim; property: "contentY"; duration: 240; easing.type: Easing.OutCubic }
+    Timer { id: advScrollTimer; interval: 260; onTriggered: root._scrollAdvancedIntoView() }
+
     readonly property real groupWidth: Math.max(0, width)
     readonly property real spinW: Math.round(115 * AppPalette.scale)
-    // Spinbox label width — account for SettingsGroup's content card padding
-    // (Tokens.spaceMd on each side) plus row spacing + small safety margin.
-    readonly property real lblW: Math.max(0, groupWidth - 2 * Tokens.spaceMd - spinW - Tokens.spaceMd - Tokens.spaceSm)
+
+    readonly property int chartSamplesMin: 100
+    readonly property int chartSamplesMax: 15000
 
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
@@ -130,6 +200,40 @@ Column {
         dangerBg: AppPalette.controlRaised
         dangerHoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
         borderWidth: danger ? Math.max(1, Math.round(1.5 * AppPalette.scale)) : Tokens.cardBorderWidth
+    }
+
+    component B2Card: Rectangle {
+        default property alias content: _b2col.data
+        width: root.groupWidth
+        radius: Tokens.radiusMd
+        color: AppPalette.card
+        border.width: Tokens.cardBorderWidth
+        border.color: AppPalette.border
+        implicitHeight: _b2col.implicitHeight + 2 * Tokens.spaceMd
+        Column {
+            id: _b2col
+            x: Tokens.spaceMd; y: Tokens.spaceMd
+            width: parent.width - 2 * Tokens.spaceMd
+            spacing: Tokens.spaceSm
+        }
+    }
+
+    component Reveal: Item {
+        id: rv
+        property bool open: false
+        property real contentHeight: Tokens.controlHMd
+        default property alias content: _rvInner.data
+        width: parent ? parent.width : 0
+        clip: true
+        height: open ? contentHeight : 0
+        Behavior on height { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
+        Item {
+            id: _rvInner
+            anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
+            height: rv.contentHeight
+            opacity: rv.open ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        }
     }
 
     // ── Recorder ──────────────────────────────────────────────────────────
@@ -669,30 +773,272 @@ Column {
         }
     }
 
+    // ── Basic2D user view ─────────────────────────────────────────────────
+
+    Column {
+        id: basicView
+        visible: root._isBasic2D
+        width: root.groupWidth
+        spacing: Tokens.spaceLg
+
+        Reveal {
+            open: root.warningShown
+            contentHeight: warnBanner.implicitHeight
+            Rectangle {
+                id: warnBanner
+                width: parent.width
+                radius: Tokens.radiusMd
+                readonly property color _accent: "#EAB308"
+                color: Qt.rgba(_accent.r, _accent.g, _accent.b, AppPalette.isDark ? 0.14 : 0.16)
+                border.width: Math.max(1, Math.round(AppPalette.scale))
+                border.color: _accent
+                implicitHeight: warnRow.implicitHeight + 2 * Tokens.spaceMd
+                Row {
+                    id: warnRow
+                    x: Tokens.spaceMd; y: Tokens.spaceMd
+                    width: parent.width - 2 * Tokens.spaceMd
+                    spacing: Tokens.spaceMd
+                    readonly property int badge: Math.round(20 * AppPalette.scale)
+                    Rectangle {
+                        width: warnRow.badge; height: width; radius: width / 2
+                        color: warnBanner._accent
+                        Text { anchors.centerIn: parent; text: "!"; color: "#10171F"
+                               font.bold: true; font.pixelSize: Math.round(13 * AppPalette.scale) }
+                    }
+                    Column {
+                        width: parent.width - parent.spacing - warnRow.badge
+                        spacing: Tokens.spaceXxs
+                        Text { text: qsTr("Not applied to the device"); color: AppPalette.textStrong
+                               font.pixelSize: Tokens.fontBase; font.bold: true }
+                        Repeater {
+                            model: root._warnings
+                            delegate: Text {
+                                width: parent.width
+                                text: "• " + modelData
+                                color: AppPalette.textSecond
+                                font.pixelSize: Tokens.fontSm
+                                wrapMode: Text.Wrap
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        B2Card {
+            Row {
+                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+                Text { text: qsTr("Period, ms"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+                DevSpin { from: 0; to: 2000; stepSize: 50; devValue: dev ? (dev.ch1Period || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.ch1Period = v } }
+            }
+        }
+
+        B2Card {
+            Row {
+                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+                Text { text: qsTr("Distance, m"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+                DevSpin {
+                    from: (dev && dev.chartResolution > 0) ? Math.round(dev.chartResolution * root.chartSamplesMin / 10) : 100
+                    to: (dev && dev.chartResolution > 0) ? Math.round(dev.chartResolution * root.chartSamplesMax / 10) : 10000
+                    stepSize: 10; divisor: 100; decimals: 2
+                    devValue: (dev && dev.chartResolution > 0) ? Math.round(dev.chartResolution * dev.chartSamples / 10) : 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    writeBack: function(v) { if (dev && dev.chartResolution > 0) dev.chartSamples = Math.round(v * 10 / dev.chartResolution) }
+                }
+            }
+        }
+
+        B2Card {
+            Text { text: qsTr("Echogram"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg }
+            KTabBar {
+                id: b2ChartTab; width: parent.width
+                options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("8-bit"), value: 1 }]
+                property int chartModel: dev ? (dev.datasetChart === 1 ? 1 : 0) : 0
+                property bool _g: false
+                onChartModelChanged: { if (currentValue !== chartModel) { _g = true; currentValue = chartModel; _g = false } }
+                Component.onCompleted: { _g = true; currentValue = chartModel; _g = false }
+                onValueSelected: function(v) { if (!_g && dev) dev.datasetChart = v }
+            }
+            Reveal {
+                open: b2ChartTab.currentValue === 1
+                Row {
+                    width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+                    Text { text: qsTr("Resolution, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+                    DevSpin { from: 10; to: 100; stepSize: 10; devValue: dev ? (dev.chartResolution || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartResolution = v } }
+                }
+            }
+        }
+
+        B2Card {
+            Text { text: qsTr("Rangefinder"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg }
+            KTabBar {
+                id: b2DistTab; width: parent.width
+                options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("On"), value: 1 }, { label: qsTr("NMEA"), value: 2 }]
+                property int distModel: dev ? (dev.datasetDist === 1 ? 1 : (dev.datasetSDDBT === 1 ? 2 : 0)) : 0
+                property bool _g: false
+                onDistModelChanged: { if (currentValue !== distModel) { _g = true; currentValue = distModel; _g = false } }
+                Component.onCompleted: { _g = true; currentValue = distModel; _g = false }
+                onValueSelected: function(v) {
+                    if (_g || !dev) return
+                    if (v === 1)      { dev.datasetDist = 1 }
+                    else if (v === 2) { dev.datasetSDDBT = 1 }
+                    else              { dev.datasetDist = 0; dev.datasetSDDBT = 0 }
+                }
+            }
+            Reveal {
+                open: b2DistTab.currentValue !== 0
+                Row {
+                    width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+                    Text { text: qsTr("Confidence threshold, %"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+                    DevSpin { from: 0; to: 100; stepSize: 1; devValue: dev ? (dev.distConfidence || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distConfidence = v } }
+                }
+            }
+        }
+
+        B2Card {
+            Row {
+                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+                Text { text: qsTr("Frequency, kHz"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+                DevSpin { from: 40; to: 6000; stepSize: 5; devValue: dev ? (dev.transFreq || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transFreq = v } }
+            }
+        }
+    }
+
+    // ── Advanced settings ("Расширенные настройки") ────────────────────────
+    Rectangle {
+        id: advancedPanel
+        width: root.groupWidth
+        radius: Tokens.radiusLg
+
+        readonly property bool _panel: root._isBasic2D
+        readonly property real pad: _panel ? Tokens.spaceMd : 0
+        readonly property real headerH: _panel ? Math.round(36 * AppPalette.scale) : 0
+        readonly property color _headerColor: !_panel ? "transparent"
+                                              : (cutMouse.containsMouse ? AppPalette.cardHover : AppPalette.card)
+        readonly property color _bodyColor: (_panel && root._engExpanded) ? AppPalette.bgDeep : _headerColor
+
+        implicitHeight: headerH + advReveal.height
+
+        border.width: (_panel && root._engExpanded) ? 1 : 0
+        border.color: AppPalette.groupBorder
+
+        readonly property real _seamStart: Math.min(1, headerH / Math.max(1, height))
+        readonly property real _seamEnd: Math.min(1, (headerH + Tokens.spaceMd) / Math.max(1, height))
+        readonly property real _seamSpan: _seamEnd - _seamStart
+        function _mix(a, b, t) {
+            return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t,
+                           a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t)
+        }
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: advancedPanel._headerColor }
+            GradientStop { position: advancedPanel._seamStart; color: advancedPanel._headerColor }
+            GradientStop { position: advancedPanel._seamStart + advancedPanel._seamSpan * 0.25
+                           color: advancedPanel._mix(advancedPanel._headerColor, advancedPanel._bodyColor, 0.58) }
+            GradientStop { position: advancedPanel._seamStart + advancedPanel._seamSpan * 0.55
+                           color: advancedPanel._mix(advancedPanel._headerColor, advancedPanel._bodyColor, 0.91) }
+            GradientStop { position: advancedPanel._seamEnd; color: advancedPanel._bodyColor }
+            GradientStop { position: 1.0; color: advancedPanel._bodyColor }
+        }
+
+        Item {
+            id: cutHeader
+            visible: advancedPanel._panel
+            x: 0; y: 0
+            width: parent.width
+            height: advancedPanel.headerH
+
+            Row {
+                anchors.fill: parent
+                anchors.leftMargin: Tokens.spaceMd
+                anchors.rightMargin: Tokens.spaceLg
+                spacing: Tokens.spaceSm
+                DisclosureIndicator {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.round(10 * AppPalette.scale)
+                    height: Math.round(10 * AppPalette.scale)
+                    expanded: root._engExpanded
+                    indicatorColor: AppPalette.textSecond
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.max(0, parent.width - Math.round(10 * AppPalette.scale) - parent.spacing)
+                    text: qsTr("Advanced settings")
+                    color: AppPalette.text
+                    font.pixelSize: Math.max(Math.round(16 * AppPalette.scale), 13)
+                    font.bold: true
+                    elide: Text.ElideRight
+                }
+            }
+            MouseArea {
+                id: cutMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    root._engExpanded = !root._engExpanded
+                    advScrollTimer.restart()
+                }
+            }
+        }
+
+        Item {
+            id: advReveal
+            x: advancedPanel.pad
+            y: advancedPanel.headerH
+            width: advancedPanel.width - 2 * advancedPanel.pad
+            clip: root._isBasic2D
+            property bool open: !root._isBasic2D || root._engExpanded
+            property bool _animReady: false
+            readonly property real _topGap: root._isBasic2D ? Tokens.spaceLg : 0
+            readonly property real _botPad: advancedPanel.pad
+            enabled: open
+            Component.onCompleted: Qt.callLater(function() { advReveal._animReady = true })
+
+            states: [
+                State {
+                    name: "open"; when: advReveal.open
+                    PropertyChanges { target: advReveal; height: advGroups.implicitHeight + advReveal._topGap + advReveal._botPad }
+                },
+                State {
+                    name: "closed"; when: !advReveal.open
+                    PropertyChanges { target: advReveal; height: 0 }
+                }
+            ]
+            transitions: Transition {
+                enabled: advReveal._animReady
+                NumberAnimation { property: "height"; duration: 220; easing.type: Easing.OutCubic }
+            }
+
+                Column {
+                    id: advGroups
+                    y: advReveal._topGap
+                    width: parent.width
+                    spacing: Tokens.spaceLg
+
     // ── Эхограмма ─────────────────────────────────────────────────────────
 
     DeviceSettingsGroup {
-        width: root.groupWidth; preferredWidth: root.groupWidth
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Echogram"); titlePixelSize: 13
-        stateKey: "dev.echogram"; collapsedByDefault: false
+        stateKey: "dev.echogram"; collapsedByDefault: root._isBasic2D
         visible: !!(dev && dev.isChartSupport)
         confirmed: !(dev && dev.chartSetupState === false)
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Resolution, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Resolution, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 10; to: 100; stepSize: 10; devValue: dev ? (dev.chartResolution || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartResolution = v } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Sample count"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
-            DevSpin { from: 100; to: 15000; stepSize: 100; devValue: dev ? (dev.chartSamples || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartSamples = v } }
+            Text { text: qsTr("Sample count"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+            DevSpin { from: root.chartSamplesMin; to: root.chartSamplesMax; stepSize: 100; devValue: dev ? (dev.chartSamples || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartSamples = v } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Offset"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Offset"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 10000; stepSize: 100; devValue: dev ? (dev.chartOffset || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartOffset = v } }
         }
     }
@@ -700,27 +1046,27 @@ Column {
     // ── Дальномер ─────────────────────────────────────────────────────────
 
     DeviceSettingsGroup {
-        width: root.groupWidth; preferredWidth: root.groupWidth
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Rangefinder"); titlePixelSize: 13
-        stateKey: "dev.rangefinder"; collapsedByDefault: false
+        stateKey: "dev.rangefinder"; collapsedByDefault: root._isBasic2D
         visible: !!(dev && dev.isDistSupport)
         confirmed: !(dev && dev.distSetupState === false)
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Max distance, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Max distance, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 50000; stepSize: 1000; devValue: dev ? (dev.distMax || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distMax = v } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Dead zone, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Dead zone, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 50000; stepSize: 100; devValue: dev ? (dev.distDeadZone || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distDeadZone = v } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Confidence threshold, %"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Confidence threshold, %"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 100; stepSize: 1; devValue: dev ? (dev.distConfidence || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distConfidence = v } }
         }
     }
@@ -728,21 +1074,21 @@ Column {
     // ── Преобразователь ───────────────────────────────────────────────────
 
     DeviceSettingsGroup {
-        width: root.groupWidth; preferredWidth: root.groupWidth
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Transducer"); titlePixelSize: 13
-        stateKey: "dev.transducer"; collapsedByDefault: false
+        stateKey: "dev.transducer"; collapsedByDefault: root._isBasic2D
         visible: !!(dev && dev.isTransducerSupport)
         confirmed: !(dev && dev.transcState === false)
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Pulse count"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Pulse count"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 5000; stepSize: 1; devValue: dev ? (dev.transPulse || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transPulse = v } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Frequency, kHz"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Frequency, kHz"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 40; to: 6000; stepSize: 5; devValue: dev ? (dev.transFreq || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transFreq = v } }
         }
 
@@ -760,21 +1106,21 @@ Column {
     // ── DSP ───────────────────────────────────────────────────────────────
 
     DeviceSettingsGroup {
-        width: root.groupWidth; preferredWidth: root.groupWidth
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("DSP"); titlePixelSize: 13
-        stateKey: "dev.dsp"; collapsedByDefault: false
+        stateKey: "dev.dsp"; collapsedByDefault: root._isBasic2D
         visible: !!(dev && dev.isDSPSupport)
         confirmed: !(dev && (dev.dspState === false || dev.soundState === false))
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Horizontal smoothing"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Horizontal smoothing"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 4; stepSize: 1; devValue: dev ? (dev.dspHorSmooth || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.dspHorSmooth = v } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Sound speed, m/s"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Sound speed, m/s"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 300; to: 6000; stepSize: 5; devValue: dev ? Math.round((dev.soundSpeed || 0) / 1000) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.soundSpeed = v * 1000 } }
         }
     }
@@ -782,15 +1128,15 @@ Column {
     // ── Датасет ───────────────────────────────────────────────────────────
 
     DeviceSettingsGroup {
-        width: root.groupWidth; preferredWidth: root.groupWidth
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Dataset"); titlePixelSize: 13
-        stateKey: "dev.dataset"; collapsedByDefault: false
+        stateKey: "dev.dataset"; collapsedByDefault: root._isBasic2D
         visible: !!(dev && dev.isDatasetSupport)
         confirmed: !(dev && dev.datasetState === false)
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Period, ms"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Period, ms"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 2000; stepSize: 50; devValue: dev ? (dev.ch1Period || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.ch1Period = v } }
         }
 
@@ -857,9 +1203,9 @@ Column {
 
     DeviceSettingsGroup {
         id: devActionsGroup
-        width: root.groupWidth; preferredWidth: root.groupWidth
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Actions"); titlePixelSize: 13
-        stateKey: "dev.actions"; collapsedByDefault: false
+        stateKey: "dev.actions"; collapsedByDefault: root._isBasic2D
         confirmed: !(dev && dev.uartState === false)
 
         readonly property var baudrateOptions: [9600, 19200, 38400, 57600, 115200,
@@ -914,9 +1260,9 @@ Column {
 
     DeviceSettingsGroup {
         id: devSettingsGroup
-        width: root.groupWidth; preferredWidth: root.groupWidth
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Settings file"); titlePixelSize: 13
-        stateKey: "dev.settingsFile"; collapsedByDefault: false
+        stateKey: "dev.settingsFile"; collapsedByDefault: root._isBasic2D
 
         property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
@@ -989,9 +1335,9 @@ Column {
     DeviceSettingsGroup {
         id: devUpgradeGroup
         visible: !!(dev && dev.isUpgradeSupport)
-        width: root.groupWidth; preferredWidth: root.groupWidth
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Upgrade"); titlePixelSize: 13
-        stateKey: "dev.upgrade"; collapsedByDefault: false
+        stateKey: "dev.upgrade"; collapsedByDefault: root._isBasic2D
 
         property var upgradeFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property string selectedUpgradePathSource: ""
@@ -1136,4 +1482,8 @@ Column {
             }
         }
     }
+
+                }
+            }
+        }
 }

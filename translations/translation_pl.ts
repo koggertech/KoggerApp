@@ -2116,7 +2116,7 @@
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="157"/>
         <source>DSP</source>
-        <translation>DSP</translation>
+        <translation>CPS</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="224"/>
@@ -2438,6 +2438,22 @@
     <message>
         <source>Sonar 2</source>
         <translation>Sonar 2</translation>
+    </message>
+    <message>
+        <source>Distance, m</source>
+        <translation>Odległość, m</translation>
+    </message>
+    <message>
+        <source>Advanced settings</source>
+        <translation>Ustawienia zaawansowane</translation>
+    </message>
+    <message>
+        <source>Not applied to the device</source>
+        <translation>Nie zastosowano na urządzeniu</translation>
+    </message>
+    <message>
+        <source>Group "%1" settings were not applied</source>
+        <translation>Ustawienia grupy "%1" nie zostały zastosowane</translation>
     </message>
 </context>
 <context>

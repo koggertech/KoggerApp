@@ -1978,6 +1978,22 @@
         <source>Export XML</source>
         <translation></translation>
     </message>
+    <message>
+        <source>Distance, m</source>
+        <translation>Distance, m</translation>
+    </message>
+    <message>
+        <source>Advanced settings</source>
+        <translation>Advanced settings</translation>
+    </message>
+    <message>
+        <source>Not applied to the device</source>
+        <translation>Not applied to the device</translation>
+    </message>
+    <message>
+        <source>Group "%1" settings were not applied</source>
+        <translation>Group "%1" settings were not applied</translation>
+    </message>
 </context>
 <context>
     <name>EchogramContactPopup</name>

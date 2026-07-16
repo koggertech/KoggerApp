@@ -2116,7 +2116,7 @@
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="157"/>
         <source>DSP</source>
-        <translation>ЦСП</translation>
+        <translation>ЦОС</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="224"/>
@@ -2438,6 +2438,22 @@
     <message>
         <source>Sonar 2</source>
         <translation>Сонар 2</translation>
+    </message>
+    <message>
+        <source>Distance, m</source>
+        <translation>Дистанция, м</translation>
+    </message>
+    <message>
+        <source>Advanced settings</source>
+        <translation>Расширенные настройки</translation>
+    </message>
+    <message>
+        <source>Not applied to the device</source>
+        <translation>Не применено на устройстве</translation>
+    </message>
+    <message>
+        <source>Group "%1" settings were not applied</source>
+        <translation>настройки группы "%1" не применены</translation>
     </message>
 </context>
 <context>
