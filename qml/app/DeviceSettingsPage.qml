@@ -435,19 +435,9 @@ Column {
                 id: heroText
                 width: parent.width - heroDisc.width - parent.spacing
                 spacing: Math.round(2 * AppPalette.scale)
-                Text { id: heroWord
-                       text: recorderGroup.hero.word; color: recorderGroup._sevText(recorderGroup.hero.sev)
+                Text { text: recorderGroup.hero.word; color: recorderGroup._sevText(recorderGroup.hero.sev)
                        font.pixelSize: Tokens.fontXxl; font.bold: true
-                       width: parent.width; elide: Text.ElideRight
-                       property real _pulseOp: 1.0
-                       opacity: heroPulse.running ? _pulseOp : 1.0
-                       SequentialAnimation {
-                           id: heroPulse
-                           running: recorderGroup.hero.pulse
-                           loops: Animation.Infinite
-                           NumberAnimation { target: heroWord; property: "_pulseOp"; from: 1.0; to: 0.45; duration: 850; easing.type: Easing.InOutSine }
-                           NumberAnimation { target: heroWord; property: "_pulseOp"; from: 0.45; to: 1.0; duration: 850; easing.type: Easing.InOutSine }
-                       } }
+                       width: parent.width; elide: Text.ElideRight }
                 Text { text: recorderGroup.hero.sub; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
                        width: parent.width; wrapMode: Text.WordWrap }
             }
@@ -614,12 +604,24 @@ Column {
                             width: Math.round(84 * AppPalette.scale); anchors.verticalCenter: parent.verticalCenter
                         }
                         Text {
+                            id: statusText
                             text: rowItem._uploading ? qsTr("Downloading… %1%").arg(Math.round(rowItem._pct * 100))
                                              : (rowItem._revealDone ? qsTr("Saved") : (recordState === 3 ? qsTr("Recording") : ""))
                             color: rowItem._revealDone ? AppPalette.accentBar : AppPalette.textMuted
                             font.pixelSize: Tokens.fontSm
                             width: textRow.width - Math.round(52 * AppPalette.scale) - Math.round(84 * AppPalette.scale) - 2 * textRow.spacing
                             anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+
+                            readonly property bool _recPulse: recordState === 3 && !rowItem._uploading && !rowItem._revealDone
+                            property real _pulseOp: 1.0
+                            opacity: recPulseAnim.running ? _pulseOp : 1.0
+                            SequentialAnimation {
+                                id: recPulseAnim
+                                running: statusText._recPulse
+                                loops: Animation.Infinite
+                                NumberAnimation { target: statusText; property: "_pulseOp"; from: 1.0; to: 0.4; duration: 800; easing.type: Easing.InOutSine }
+                                NumberAnimation { target: statusText; property: "_pulseOp"; from: 0.4; to: 1.0; duration: 800; easing.type: Easing.InOutSine }
+                            }
                         }
                     }
 
