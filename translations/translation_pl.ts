@@ -2289,6 +2289,21 @@
         <translation>Brak logów</translation>
     </message>
     <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="199"/>
+        <source>h</source>
+        <translation>h</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="200"/>
+        <source>m</source>
+        <translation>min</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="197"/>
+        <source>s</source>
+        <translation>s</translation>
+    </message>
+    <message>
         <source>No logs listed yet — tap Refresh to enumerate the recorder's archive.</source>
         <translation>Brak listy logów — naciśnij Odśwież, aby pobrać archiwum rejestratora.</translation>
     </message>

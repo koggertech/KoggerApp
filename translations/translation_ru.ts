@@ -2289,6 +2289,21 @@
         <translation>Логов пока нет</translation>
     </message>
     <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="199"/>
+        <source>h</source>
+        <translation>ч</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="200"/>
+        <source>m</source>
+        <translation>м</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="197"/>
+        <source>s</source>
+        <translation>с</translation>
+    </message>
+    <message>
         <source>No logs listed yet — tap Refresh to enumerate the recorder's archive.</source>
         <translation>Список логов пуст — нажмите «Обновить», чтобы получить архив рекордера.</translation>
     </message>

@@ -194,6 +194,16 @@ Column {
 
         function _fmtSize(b) { return RecorderStatus.fmtSize(b) }
         function _elapsed(s) { return RecorderStatus.elapsed(s) }
+        function _logDuration(s) {
+            if (!s || s <= 0) return "0" + qsTr("s")
+            var h = Math.floor(s / 3600)
+            var m = Math.floor((s % 3600) / 60)
+            var sec = Math.floor(s % 60)
+            var pad = function(n) { return (n < 10 ? "0" : "") + n }
+            if (h > 0)   return h + qsTr("h") + " " + pad(m) + qsTr("m")
+            if (m > 0)   return m + qsTr("m") + " " + pad(sec) + qsTr("s")
+            return sec + qsTr("s")
+        }
 
         readonly property int kStallS: 10
 
@@ -445,7 +455,7 @@ Column {
                     StatBox {
                         blabel: qsTr("Current log")
                         bvalue: (dev && dev.recorderCurrentLogId)
-                                ? ("#" + dev.recorderCurrentLogId + " · " + recorderGroup._fmtSize(recorderGroup.recordedBytes))
+                                ? ("#" + dev.recorderCurrentLogId + " · " + recorderGroup._logDuration(dev.recorderDurationSeconds) + " · " + recorderGroup._fmtSize(recorderGroup.recordedBytes))
                                 : qsTr("No log yet")
                     }
                     StatBox {

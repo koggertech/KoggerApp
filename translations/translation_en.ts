@@ -1697,6 +1697,18 @@
         <translation>Write current settings to device memory</translation>
     </message>
     <message>
+        <source>h</source>
+        <translation>h</translation>
+    </message>
+    <message>
+        <source>m</source>
+        <translation>m</translation>
+    </message>
+    <message>
+        <source>s</source>
+        <translation>s</translation>
+    </message>
+    <message>
         <source>Erase device settings (reset)</source>
         <translation>Erase device settings (reset)</translation>
     </message>
