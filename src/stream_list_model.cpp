@@ -23,18 +23,19 @@ QHash<int, QByteArray> StreamListModel::roleNames() const {
 void StreamListModel::doAppend(int id, uint32_t size, uint32_t doneSize, const QString& time, int recordState, int uploadState) {
 
     if(!_index.contains(id)) {
-        const int line = rowCount();
-        beginInsertRows(QModelIndex(), line, line);
+        beginInsertRows(QModelIndex(), 0, 0);
 
-        _vectors[StreamListModel::Visibility].append(true);
-        _vectors[StreamListModel::ID].append(id);
-        _vectors[StreamListModel::Size].append(size);
-        _vectors[StreamListModel::DoneSize].append(doneSize);
-        _vectors[StreamListModel::Time].append(time);
-        _vectors[StreamListModel::RecordState].append(recordState);
-        _vectors[StreamListModel::UploadingState].append(uploadState);
+        _vectors[StreamListModel::Visibility].prepend(true);
+        _vectors[StreamListModel::ID].prepend(id);
+        _vectors[StreamListModel::Size].prepend(size);
+        _vectors[StreamListModel::DoneSize].prepend(doneSize);
+        _vectors[StreamListModel::Time].prepend(time);
+        _vectors[StreamListModel::RecordState].prepend(recordState);
+        _vectors[StreamListModel::UploadingState].prepend(uploadState);
 
-        _index[id] = line;
+        for (auto it = _index.begin(); it != _index.end(); ++it)
+            ++it.value();
+        _index[id] = 0;
         _size++;
         endInsertRows();
     } else {

@@ -435,9 +435,19 @@ Column {
                 id: heroText
                 width: parent.width - heroDisc.width - parent.spacing
                 spacing: Math.round(2 * AppPalette.scale)
-                Text { text: recorderGroup.hero.word; color: recorderGroup._sevText(recorderGroup.hero.sev)
+                Text { id: heroWord
+                       text: recorderGroup.hero.word; color: recorderGroup._sevText(recorderGroup.hero.sev)
                        font.pixelSize: Tokens.fontXxl; font.bold: true
-                       width: parent.width; elide: Text.ElideRight }
+                       width: parent.width; elide: Text.ElideRight
+                       property real _pulseOp: 1.0
+                       opacity: heroPulse.running ? _pulseOp : 1.0
+                       SequentialAnimation {
+                           id: heroPulse
+                           running: recorderGroup.hero.pulse
+                           loops: Animation.Infinite
+                           NumberAnimation { target: heroWord; property: "_pulseOp"; from: 1.0; to: 0.45; duration: 850; easing.type: Easing.InOutSine }
+                           NumberAnimation { target: heroWord; property: "_pulseOp"; from: 0.45; to: 1.0; duration: 850; easing.type: Easing.InOutSine }
+                       } }
                 Text { text: recorderGroup.hero.sub; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
                        width: parent.width; wrapMode: Text.WordWrap }
             }
@@ -504,7 +514,7 @@ Column {
             width: parent.width
             visible: logList.count > 0
             readonly property int rowH: Tokens.controlHMd + Tokens.spaceMd * 2
-            height: Math.min(logList.count * rowH, Math.round(360 * AppPalette.scale)) + 2
+            height: Math.min(logList.count * rowH, Math.round(rowH * 3.5)) + 2
             color: AppPalette.bg; radius: Tokens.radiusMd
             border.width: Tokens.cardBorderWidth; border.color: AppPalette.border
             clip: true
@@ -515,7 +525,27 @@ Column {
                 clip: true
                 model: (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) ? deviceManagerWrapper.streamsList : null
                 boundsBehavior: Flickable.StopAtBounds
-                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                ScrollBar.vertical: ScrollBar {
+                    id: logScroll
+                    policy: ScrollBar.AsNeeded
+                    implicitWidth: Tokens.spaceLg
+                    readonly property int _handleW: Math.max(6, Math.round(7 * AppPalette.scale))
+                    leftPadding: (implicitWidth - _handleW) / 2
+                    rightPadding: leftPadding
+                    topPadding: Math.round(2 * AppPalette.scale)
+                    bottomPadding: topPadding
+
+                    property bool _shown: false
+                    onActiveChanged: { if (active) { _shown = true; hideTimer.stop() } else hideTimer.restart() }
+                    Timer { id: hideTimer; interval: 1100; onTriggered: logScroll._shown = false }
+
+                    contentItem: Rectangle {
+                        radius: width / 2
+                        color: logScroll.pressed ? AppPalette.borderHover : AppPalette.border
+                        opacity: logScroll._shown ? 1.0 : 0.0
+                        Behavior on opacity { NumberAnimation { duration: Anim.fadeMs } }
+                    }
+                }
 
                 delegate: Item {
                     id: rowItem
@@ -547,7 +577,7 @@ Column {
 
                     DevButton {
                         id: dlBtn
-                        anchors.right: parent.right; anchors.rightMargin: Tokens.spaceMd
+                        anchors.right: parent.right; anchors.rightMargin: Tokens.spaceLg
                         anchors.verticalCenter: parent.verticalCenter
                         width: Math.round(112 * AppPalette.scale); height: Tokens.controlHMd
                         fontPixelSize: Tokens.fontMd
@@ -567,7 +597,7 @@ Column {
 
                     Row {
                         id: textRow
-                        anchors.left: parent.left; anchors.leftMargin: Tokens.spaceMd
+                        anchors.left: parent.left; anchors.leftMargin: Tokens.spaceLg
                         anchors.right: dlBtn.left; anchors.rightMargin: Tokens.spaceMd
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.verticalCenterOffset: rowItem._active ? -rowItem._shift : 0
@@ -595,7 +625,7 @@ Column {
 
                     Rectangle {
                         id: progress
-                        anchors.left: parent.left; anchors.leftMargin: Tokens.spaceMd
+                        anchors.left: parent.left; anchors.leftMargin: Tokens.spaceLg
                         anchors.right: dlBtn.left; anchors.rightMargin: Tokens.spaceMd
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.verticalCenterOffset: Math.round(9 * AppPalette.scale)
