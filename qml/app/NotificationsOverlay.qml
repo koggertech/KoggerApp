@@ -57,10 +57,6 @@ Item {
         move: Transition {
             NumberAnimation { properties: "y"; duration: 180; easing.type: Easing.OutCubic }
         }
-        add: Transition {
-            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 180; easing.type: Easing.OutCubic }
-            NumberAnimation { property: "y"; duration: 180; easing.type: Easing.OutCubic }
-        }
 
         Repeater {
             model: notificationsModel
@@ -77,6 +73,14 @@ Item {
             readonly property bool isWarning: model.kind === 1
             property bool closing: false
 
+            opacity: 0
+            Component.onCompleted: enterAnim.start()
+            NumberAnimation {
+                id: enterAnim
+                target: card; property: "opacity"; from: 0.0; to: 1.0
+                duration: 200; easing.type: Easing.OutCubic
+            }
+
             anchors.horizontalCenter: parent.horizontalCenter
             width: Math.min(root.maxCardWidth,
                             Tokens.spaceLg + iconBadge.width + Tokens.spaceMd + messageText.implicitWidth
@@ -92,6 +96,7 @@ Item {
                     return
                 closing = true
                 lifeTimer.stop()
+                enterAnim.stop()
                 exitAnim.start()
             }
 
