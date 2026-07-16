@@ -129,7 +129,6 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
     if (frame.isComplete()) {
 
-#if !defined(Q_OS_ANDROID)
         if (frame.isStream())
             streamList_.append(&frame);
         if (frame.id() == ID_STREAM)
@@ -143,7 +142,6 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 startStreamDownload(kAutoDl.toInt());
             }
         }
-#endif
 
         if (link != nullptr) {
             if (frame.isProxy() || frame.completeAsKBP()) {
