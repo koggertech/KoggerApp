@@ -30,6 +30,11 @@ Item {
         return ""
     }
 
+    readonly property int _maxLinkChars: 7
+    function _shortLink(s) {
+        return (s && s.length > _maxLinkChars) ? "…" + s.slice(-_maxLinkChars) : (s || "")
+    }
+
     readonly property var _rows: {
         var rows = []
         var cur = []
@@ -87,8 +92,9 @@ Item {
 
         readonly property bool _selected: device === view.activeDevice
         readonly property string _state: RecorderStatus.pillState(device, master, port)
-        readonly property string _sub: showLink ? linkLabel
+        readonly property string _sub: showLink ? view._shortLink(linkLabel)
                                                 : (port >= 0 ? qsTr("Port %1").arg(port) : "")
+        readonly property bool _linkTrunc: showLink && linkLabel.length > view._maxLinkChars
 
         radius: Tokens.radiusLg
         readonly property color _baseColor: _state === "ok"   ? AppPalette.linkOkBg
@@ -115,17 +121,22 @@ Item {
 
         Column {
             anchors.centerIn: parent
+            width: pill.width - 2 * Tokens.spaceSm
             spacing: Math.round(1 * AppPalette.scale)
 
             Text {
-                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
                 text: pill.device ? pill.device.devName : ""
                 color: AppPalette.textStrong
                 font.pixelSize: Tokens.fontBase
                 font.bold: true
             }
             Text {
-                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideLeft
                 visible: pill._sub.length > 0
                 text: pill._sub
                 color: pill._selected ? AppPalette.textStrong : AppPalette.textMuted
@@ -139,6 +150,12 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: view.deviceClicked(pill.device)
+        }
+
+        KToolTip {
+            text: pill.linkLabel
+            targetItem: pill
+            shown: pillMouse.containsMouse && pill._linkTrunc
         }
     }
 
