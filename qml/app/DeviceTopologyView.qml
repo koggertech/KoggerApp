@@ -14,9 +14,11 @@ Item {
     readonly property int _cellMinW: Math.round(80 * AppPalette.scale)
     readonly property int _maxCols: 4
     readonly property int _btnH: Math.round(42 * AppPalette.scale)
+    readonly property int _pad: Math.round(7 * AppPalette.scale)
+    readonly property int _contentW: Math.max(0, width - 2 * _pad)
 
-    readonly property int _cols: Tokens.gridColumns(width, _cellMinW, _gap, _maxCols)
-    readonly property real _cellW: _cols > 0 ? Math.max(0, (width - _gap * (_cols - 1)) / _cols) : width
+    readonly property int _cols: Tokens.gridColumns(_contentW, _cellMinW, _gap, _maxCols)
+    readonly property real _cellW: _cols > 0 ? Math.max(0, (_contentW - _gap * (_cols - 1)) / _cols) : _contentW
 
     function _linkLabel(g) {
         if (!g)
@@ -72,7 +74,7 @@ Item {
         return cells
     }
 
-    implicitHeight: rowsCol.implicitHeight
+    implicitHeight: rowsCol.implicitHeight + 2 * _pad
 
     component DevPill: Rectangle {
         id: pill
@@ -89,22 +91,27 @@ Item {
                                                 : (port >= 0 ? qsTr("Port %1").arg(port) : "")
 
         radius: Tokens.radiusLg
-        color: _state === "ok"   ? AppPalette.linkOkBg
-             : _state === "warn" ? AppPalette.linkIdleBg
-             : _state === "down" ? AppPalette.linkDownBg
-             : _selected ? AppPalette.accentBg
-             : (pillMouse.pressed || pillMouse.containsMouse) ? AppPalette.cardHover
-             : AppPalette.card
-        border.width: (_selected || _state !== "") ? Math.max(1, Math.round(1 * AppPalette.scale)) : 0
+        readonly property color _baseColor: _state === "ok"   ? AppPalette.linkOkBg
+                                          : _state === "warn" ? AppPalette.linkIdleBg
+                                          : _state === "down" ? AppPalette.linkDownBg
+                                          : _selected ? AppPalette.accentBg
+                                          : AppPalette.card
+        color: pillMouse.pressed       ? Qt.darker(_baseColor, 1.1)
+             : pillMouse.containsMouse ? Qt.lighter(_baseColor, 1.15)
+             : _baseColor
+        border.width: _selected ? Math.max(2, Math.round(2 * AppPalette.scale))
+                     : _state !== "" ? Math.max(1, Math.round(1 * AppPalette.scale))
+                     : 0
         border.color: _selected ? AppPalette.accentBorder
                     : _state === "ok"   ? AppPalette.linkOkBorder
                     : _state === "warn" ? AppPalette.linkIdleBorder
                     : _state === "down" ? AppPalette.linkDownBorder
                     : "transparent"
-        scale: pillMouse.pressed ? 0.98 : 1.0
+        scale: pillMouse.pressed ? 0.97
+             : (_selected ? 1.05 : 1.0) + (pillMouse.containsMouse ? 0.03 : 0)
 
         Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
         Column {
             anchors.centerIn: parent
@@ -137,7 +144,9 @@ Item {
 
     Column {
         id: rowsCol
-        width: parent.width
+        x: view._pad
+        y: view._pad
+        width: view._contentW
         spacing: view._gap
 
         Repeater {
@@ -156,6 +165,7 @@ Item {
 
                         width: _isBtn ? view._cellW : view._gap
                         height: view._btnH
+                        z: _isBtn ? 1 : 0
 
                         DevPill {
                             anchors.fill: parent
