@@ -11,18 +11,19 @@ Column {
     property var dev: null
     property var store: null
 
-    // Per-device expand memory. This page is one instance whose `dev` changes on switch,
-    // so state is kept per device: on switch, snapshot the leaving device's groups and
-    // restore the entering device's (all collapsed if unseen). Entries for disconnected
-    // devices are pruned — a reconnect is a new object → fresh defaults.
-    property var _groupStates: []   // [{ dev, map: { stateKey: bool } }]
+    // Per-device UI memory. This page is one instance whose `dev` changes on switch,
+    // so disclosure state is kept per device: on switch, snapshot the leaving device's
+    // group expansions + advanced-cut state, restore the entering device's (all
+    // collapsed if unseen). Entries for disconnected devices are pruned — a reconnect
+    // is a new object → fresh defaults.
+    property var _groupStates: []   // [{ dev, map: { stateKey: bool }, eng: bool }]
     property var _prevDev: null
 
     onDevChanged: {
         if (_prevDev) {
             var prev = _groupStateFor(_prevDev)
-            if (prev) prev.map = _snapshotGroups()
-            else _groupStates.push({ dev: _prevDev, map: _snapshotGroups() })
+            if (prev) { prev.map = _snapshotGroups(); prev.eng = _engExpanded }
+            else _groupStates.push({ dev: _prevDev, map: _snapshotGroups(), eng: _engExpanded })
         }
         _pruneGroupStates()
         _applyForCurrentDev()
@@ -34,6 +35,12 @@ Column {
     function _applyForCurrentDev() {
         var cur = dev ? _groupStateFor(dev) : null
         _applyGroups(cur ? cur.map : null)
+        var eng = cur ? !!cur.eng : false
+        if (eng !== _engExpanded) {
+            advReveal._animReady = false   // snap the cut on switch, no reveal animation
+            _engExpanded = eng
+            Qt.callLater(function() { advReveal._animReady = true })
+        }
     }
 
     function _groupStateFor(d) {
@@ -1321,13 +1328,13 @@ Column {
             readonly property real bw: (width - Tokens.spaceSm) / 2
             DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                text: qsTr("Import XML")
+                text: qsTr("Import")
                 toolTipText: qsTr("Load all sonar settings from an XML file")
                 onClicked: { importXmlDialog.currentFolder = devSettingsGroup.importFolder; importXmlDialog.open() }
             }
             DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                text: qsTr("Export XML")
+                text: qsTr("Export")
                 toolTipText: qsTr("Save all sonar settings to an XML file")
                 onClicked: { exportXmlDialog.currentFolder = devSettingsGroup.exportFolder; exportXmlDialog.open() }
             }

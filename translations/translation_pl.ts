@@ -2205,13 +2205,13 @@
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="370"/>
-        <source>Export XML</source>
-        <translation>Eksport XML</translation>
+        <source>Export</source>
+        <translation>Eksport</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="365"/>
-        <source>Import XML</source>
-        <translation>Import XML</translation>
+        <source>Import</source>
+        <translation>Import</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="335"/>

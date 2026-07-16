@@ -1970,12 +1970,12 @@
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="365"/>
-        <source>Import XML</source>
+        <source>Import</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="370"/>
-        <source>Export XML</source>
+        <source>Export</source>
         <translation></translation>
     </message>
     <message>
