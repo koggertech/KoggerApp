@@ -30,7 +30,7 @@ Column {
             cornerRadius: Tokens.radiusLg   // uniform rounded chip, full header height
             borderWidth: 0
             scaleOnHover: false
-            enabled: _last.length > 0
+            visible: _last.length > 0
             iconSource: "qrc:/icons/ui/folder-open.svg"
             iconPixelSize: Math.round(width * 0.80)
             iconTintColor: AppPalette.text
