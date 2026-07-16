@@ -98,11 +98,13 @@ Column {
     }
 
     readonly property bool _isBasic2D: !!(dev && dev.devName === "Basic2D")
+    readonly property bool _isRecorder: !!(dev && dev.isRecorder)
+    readonly property bool _hasCut: _isBasic2D || _isRecorder
     property bool _engExpanded: false
 
     readonly property var _warnings: {
         var w = []
-        if (!dev) return w
+        if (!dev || !_isBasic2D) return w
         var tpl = qsTr('Group "%1" settings were not applied')
         if (dev.chartSetupState === false) w.push(tpl.arg(qsTr("Echogram")))
         if (dev.distSetupState === false)  w.push(tpl.arg(qsTr("Rangefinder")))
@@ -910,7 +912,7 @@ Column {
         width: root.groupWidth
         radius: Tokens.radiusLg
 
-        readonly property bool _panel: root._isBasic2D
+        readonly property bool _panel: root._hasCut
         readonly property real pad: _panel ? Tokens.spaceMd : 0
         readonly property real headerH: _panel ? Math.round(36 * AppPalette.scale) : 0
         readonly property color _headerColor: !_panel ? "transparent"
@@ -986,10 +988,10 @@ Column {
             x: advancedPanel.pad
             y: advancedPanel.headerH
             width: advancedPanel.width - 2 * advancedPanel.pad
-            clip: root._isBasic2D
-            property bool open: !root._isBasic2D || root._engExpanded
+            clip: root._hasCut
+            property bool open: !root._hasCut || root._engExpanded
             property bool _animReady: false
-            readonly property real _topGap: root._isBasic2D ? Tokens.spaceLg : 0
+            readonly property real _topGap: root._hasCut ? Tokens.spaceLg : 0
             readonly property real _botPad: advancedPanel.pad
             enabled: open
             Component.onCompleted: Qt.callLater(function() { advReveal._animReady = true })
@@ -1020,7 +1022,7 @@ Column {
     DeviceSettingsGroup {
         width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Echogram"); titlePixelSize: 13
-        stateKey: "dev.echogram"; collapsedByDefault: root._isBasic2D
+        stateKey: "dev.echogram"; collapsedByDefault: root._hasCut
         visible: !!(dev && dev.isChartSupport)
         confirmed: !(dev && dev.chartSetupState === false)
 
@@ -1048,7 +1050,7 @@ Column {
     DeviceSettingsGroup {
         width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Rangefinder"); titlePixelSize: 13
-        stateKey: "dev.rangefinder"; collapsedByDefault: root._isBasic2D
+        stateKey: "dev.rangefinder"; collapsedByDefault: root._hasCut
         visible: !!(dev && dev.isDistSupport)
         confirmed: !(dev && dev.distSetupState === false)
 
@@ -1076,7 +1078,7 @@ Column {
     DeviceSettingsGroup {
         width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Transducer"); titlePixelSize: 13
-        stateKey: "dev.transducer"; collapsedByDefault: root._isBasic2D
+        stateKey: "dev.transducer"; collapsedByDefault: root._hasCut
         visible: !!(dev && dev.isTransducerSupport)
         confirmed: !(dev && dev.transcState === false)
 
@@ -1108,7 +1110,7 @@ Column {
     DeviceSettingsGroup {
         width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("DSP"); titlePixelSize: 13
-        stateKey: "dev.dsp"; collapsedByDefault: root._isBasic2D
+        stateKey: "dev.dsp"; collapsedByDefault: root._hasCut
         visible: !!(dev && dev.isDSPSupport)
         confirmed: !(dev && (dev.dspState === false || dev.soundState === false))
 
@@ -1130,7 +1132,7 @@ Column {
     DeviceSettingsGroup {
         width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Dataset"); titlePixelSize: 13
-        stateKey: "dev.dataset"; collapsedByDefault: root._isBasic2D
+        stateKey: "dev.dataset"; collapsedByDefault: root._hasCut
         visible: !!(dev && dev.isDatasetSupport)
         confirmed: !(dev && dev.datasetState === false)
 
@@ -1205,7 +1207,7 @@ Column {
         id: devActionsGroup
         width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Actions"); titlePixelSize: 13
-        stateKey: "dev.actions"; collapsedByDefault: root._isBasic2D
+        stateKey: "dev.actions"; collapsedByDefault: root._hasCut
         confirmed: !(dev && dev.uartState === false)
 
         readonly property var baudrateOptions: [9600, 19200, 38400, 57600, 115200,
@@ -1262,7 +1264,7 @@ Column {
         id: devSettingsGroup
         width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Settings file"); titlePixelSize: 13
-        stateKey: "dev.settingsFile"; collapsedByDefault: root._isBasic2D
+        stateKey: "dev.settingsFile"; collapsedByDefault: root._hasCut
 
         property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
@@ -1337,7 +1339,7 @@ Column {
         visible: !!(dev && dev.isUpgradeSupport)
         width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Upgrade"); titlePixelSize: 13
-        stateKey: "dev.upgrade"; collapsedByDefault: root._isBasic2D
+        stateKey: "dev.upgrade"; collapsedByDefault: root._hasCut
 
         property var upgradeFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property string selectedUpgradePathSource: ""
