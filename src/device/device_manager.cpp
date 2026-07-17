@@ -726,6 +726,10 @@ void DeviceManager::refreshStreamList()
 {
     QList<DevQProperty*> recs = getDevList(BoardRecorderMini);
     if (!recs.isEmpty()) {
+        if (!streamList_.hasActiveDownload()) {
+            streamList_.reset();
+            emit streamChanged();
+        }
         recs.first()->requestStreamList();
     }
 }
@@ -874,7 +878,11 @@ void DeviceManager::deleteDevicesByLink(QUuid uuid)
 {
     if (devTree_.contains(uuid)) {
         const auto& devs = devTree_[uuid];
+        bool hadRecorder = false;
         for (auto i = devs.cbegin(), end = devs.cend(); i != end; ++i) {
+            if (i.value() && i.value()->isRecorder()) {
+                hadRecorder = true;
+            }
             if (lastDevice_ == i.value()) {
                 lastDevice_ = nullptr;
             }
@@ -888,6 +896,10 @@ void DeviceManager::deleteDevicesByLink(QUuid uuid)
         }
         devTree_[uuid].clear();
         devTree_.remove(uuid);
+        if (hadRecorder) {
+            streamList_.reset();
+            emit streamChanged();
+        }
         emit devChanged();
     }
 }

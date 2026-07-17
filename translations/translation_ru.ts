@@ -2316,8 +2316,8 @@
         <translation>Нет обновлений %1 — показаны последние данные.</translation>
     </message>
     <message>
-        <source>Not writing</source>
-        <translation>Не пишет</translation>
+        <source>Recording stopped</source>
+        <translation>Запись остановлена</translation>
     </message>
     <message>
         <source>%1 connected</source>

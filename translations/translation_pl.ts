@@ -2316,8 +2316,8 @@
         <translation>Brak aktualizacji przez %1 — pokazano ostatnie znane.</translation>
     </message>
     <message>
-        <source>Not writing</source>
-        <translation>Nie zapisuje</translation>
+        <source>Recording stopped</source>
+        <translation>Nagrywanie zatrzymane</translation>
     </message>
     <message>
         <source>%1 connected</source>

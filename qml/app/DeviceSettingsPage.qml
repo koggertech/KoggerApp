@@ -322,6 +322,26 @@ Column {
             return sec + qsTr("s")
         }
 
+        readonly property int _curId: dev ? (dev.recorderCurrentLogId || 0) : 0
+        property real _curSize: 0
+        property real _curDone: 0
+        property int  _curUpload: 1
+        property int  _hiddenCount: 0
+        readonly property int _otherLogsCount: Math.max(0, logList.count - _hiddenCount)
+
+        function _recount() {
+            var n = streamScan.count
+            var hidden = 0, sz = 0, dn = 0, up = 1
+            for (var i = 0; i < n; ++i) {
+                var it = streamScan.itemAt(i)
+                if (!it) continue
+                if (it._hidden) hidden++
+                if (it._isCur) { sz = it.rSize; dn = it.rDone; up = it.rUpload }
+            }
+            _hiddenCount = hidden
+            _curSize = sz; _curDone = dn; _curUpload = up
+        }
+
         readonly property int kStallS: 10
 
         // Join source names for flag-word bits 0/1/2 (Sonar1=1, Sonar2=2, Nav=4).
@@ -377,7 +397,7 @@ Column {
                 if (dev.recorderSecondsSinceLastWrite > kStallS || (silentBits && !active)) {
                     var sil = _sources(dev.recorderDegradedFlags || 0)
                     var gap = _elapsed(dev.recorderSecondsSinceLastWrite)
-                    return { sev: sev, word: qsTr("Not writing"),
+                    return { sev: sev, word: qsTr("Recording stopped"),
                              sub: sil.length ? qsTr("No data from %1 · nothing recorded for %2").arg(sil).arg(gap)
                                              : qsTr("Nothing recorded for %1 — source silent.").arg(gap),
                              pulse: false }
@@ -493,7 +513,7 @@ Column {
         Connections {
             target: dev
             ignoreUnknownSignals: true
-            function onRecorderStatusChanged() { recorderGroup._lastStatusMs = Date.now(); recorderGroup._nowMs = Date.now() }
+            function onRecorderStatusChanged() { recorderGroup._lastStatusMs = Date.now(); recorderGroup._nowMs = Date.now(); Qt.callLater(recorderGroup._recount) }
         }
 
         // ── Banner: severity-tinted; hero + vital boxes. Ports are in the header. ──
@@ -523,58 +543,102 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Tokens.spaceMd
 
-                // hero: disc + word + sub
                 Row {
+                    id: heroRow
                     width: parent.width; spacing: Tokens.spaceMd
 
-                    Item {
-                        id: heroDisc
-                width: Math.round(16 * AppPalette.scale); height: width
-                anchors.verticalCenter: heroText.verticalCenter
-                Rectangle {   // pulse ring while actively writing
-                    id: pulseRing
-                    anchors.centerIn: parent; width: parent.width; height: parent.height; radius: width / 2
-                    color: "transparent"; border.width: Math.max(1, Math.round(1.5 * AppPalette.scale))
-                    border.color: recorderGroup._sevColor(recorderGroup.hero.sev)
-                    visible: recorderGroup.hero.pulse
-                    ParallelAnimation {
-                        running: recorderGroup.hero.pulse; loops: Animation.Infinite
-                        NumberAnimation { target: pulseRing; property: "scale"; from: 1.0; to: 2.4; duration: 1500; easing.type: Easing.OutQuad }
-                        NumberAnimation { target: pulseRing; property: "opacity"; from: 0.5; to: 0.0; duration: 1500; easing.type: Easing.OutQuad }
+                    Column {
+                        id: heroTextBlock
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: heroRow.width - (freeBadge.visible ? freeBadge.width + heroRow.spacing : 0)
+                        spacing: Math.round(2 * AppPalette.scale)
+
+                        Row {
+                            width: parent.width; spacing: Tokens.spaceMd
+                            Item {
+                                id: heroDisc
+                                width: Math.round(16 * AppPalette.scale); height: width
+                                anchors.verticalCenter: parent.verticalCenter
+                                Rectangle {   // pulse ring while actively writing
+                                    id: pulseRing
+                                    anchors.centerIn: parent; width: parent.width; height: parent.height; radius: width / 2
+                                    color: "transparent"; border.width: Math.max(1, Math.round(1.5 * AppPalette.scale))
+                                    border.color: recorderGroup._sevColor(recorderGroup.hero.sev)
+                                    visible: recorderGroup.hero.pulse
+                                    ParallelAnimation {
+                                        running: recorderGroup.hero.pulse; loops: Animation.Infinite
+                                        NumberAnimation { target: pulseRing; property: "scale"; from: 1.0; to: 2.4; duration: 1500; easing.type: Easing.OutQuad }
+                                        NumberAnimation { target: pulseRing; property: "opacity"; from: 0.5; to: 0.0; duration: 1500; easing.type: Easing.OutQuad }
+                                    }
+                                }
+                                Rectangle {   // the severity disc
+                                    anchors.centerIn: parent; width: parent.width; height: parent.height; radius: width / 2
+                                    color: recorderGroup._sevColor(recorderGroup.hero.sev)
+                                }
+                            }
+                            Text {
+                                id: heroWord
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width - heroDisc.width - parent.spacing
+                                text: recorderGroup.hero.word; color: recorderGroup._sevText(recorderGroup.hero.sev)
+                                font.pixelSize: Tokens.fontXxl; font.bold: true
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        Text {
+                            width: parent.width
+                            visible: recorderGroup.hero.sub.length > 0
+                            text: recorderGroup.hero.sub; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+
+                    Rectangle {
+                        id: freeBadge
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: !!(dev && dev.recorderStatusValid)
+                        radius: Tokens.radiusMd
+                        implicitWidth: freeBadgeCol.implicitWidth + Tokens.spaceMd * 2; width: implicitWidth
+                        height: heroTextBlock.implicitHeight
+                        color: AppPalette.card
+                        border.width: 1
+                        border.color: recorderGroup._freeError() ? AppPalette.linkDownBorder
+                                    : (recorderGroup.hero.sev === "good" || recorderGroup.hero.sev === "idle")
+                                      ? Qt.rgba(AppPalette.linkOkBorder.r, AppPalette.linkOkBorder.g, AppPalette.linkOkBorder.b, 0.45)
+                                      : AppPalette.border
+                        Column {
+                            id: freeBadgeCol
+                            anchors.centerIn: parent; spacing: Math.round(2 * AppPalette.scale)
+                            Text {
+                                text: qsTr("Free space"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                            Text {
+                                text: (dev && (dev.recorderCriticalFlags & 1)) ? "—" : recorderGroup._fmtSize(recorderGroup.freeBytes)
+                                color: recorderGroup._freeError() ? AppPalette.linkDownText
+                                     : (recorderGroup.hero.sev === "good" || recorderGroup.hero.sev === "idle") ? AppPalette.linkOkText
+                                     : AppPalette.text
+                                font.pixelSize: Tokens.fontSm; font.bold: true
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                        }
+                        Rectangle {   // blink glow when free space is critical
+                            anchors.fill: parent; radius: parent.radius; color: "transparent"
+                            border.width: Math.round(2 * AppPalette.scale); border.color: AppPalette.linkDownBorder
+                            visible: recorderGroup._freeError()
+                            SequentialAnimation on opacity {
+                                running: recorderGroup._freeError(); loops: Animation.Infinite
+                                NumberAnimation { from: 1.0; to: 0.12; duration: 560; easing.type: Easing.InOutSine }
+                                NumberAnimation { from: 0.12; to: 1.0; duration: 560; easing.type: Easing.InOutSine }
+                            }
+                        }
                     }
                 }
-                Rectangle {   // the severity disc
-                    anchors.centerIn: parent; width: parent.width; height: parent.height; radius: width / 2
-                    color: recorderGroup._sevColor(recorderGroup.hero.sev)
-                }
-            }
-            Column {
-                id: heroText
-                width: parent.width - heroDisc.width - parent.spacing
-                spacing: Math.round(2 * AppPalette.scale)
-                Text { text: recorderGroup.hero.word; color: recorderGroup._sevText(recorderGroup.hero.sev)
-                       font.pixelSize: Tokens.fontXxl; font.bold: true
-                       width: parent.width; elide: Text.ElideRight }
-                Text { text: recorderGroup.hero.sub; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
-                       width: parent.width; wrapMode: Text.WordWrap }
-            }
-        }
 
-                // vital boxes: free space (blinks on error), current log · bytes, dropping frames
                 Flow {
                     width: parent.width; spacing: Tokens.spaceSm
-                    StatBox {
-                        blabel: qsTr("Free space")
-                        bvalue: (dev && (dev.recorderCriticalFlags & 1)) ? "—" : recorderGroup._fmtSize(recorderGroup.freeBytes)
-                        errorBox: recorderGroup._freeError()
-                        keyBox: !recorderGroup._freeError() && (recorderGroup.hero.sev === "good" || recorderGroup.hero.sev === "idle")
-                    }
-                    StatBox {
-                        blabel: qsTr("Current log")
-                        bvalue: (dev && dev.recorderCurrentLogId)
-                                ? ("#" + dev.recorderCurrentLogId + " · " + recorderGroup._logDuration(dev.recorderDurationSeconds) + " · " + recorderGroup._fmtSize(recorderGroup.recordedBytes))
-                                : qsTr("No log yet")
-                    }
+                    visible: !!(dev && dev.recorderStatusValid && (dev.recorderDegradedFlags & 0x8))
                     StatBox {
                         visible: !!(dev && dev.recorderStatusValid && (dev.recorderDegradedFlags & 0x8))
                         alertBox: true
@@ -592,11 +656,34 @@ Column {
             color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
         }
 
-        // Logs header: count + refresh
+        Item {
+            visible: false
+            Repeater {
+                id: streamScan
+                model: (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) ? deviceManagerWrapper.streamsList : null
+                onCountChanged: Qt.callLater(recorderGroup._recount)
+                delegate: Item {
+                    readonly property int  rId: id
+                    readonly property int  rRec: recordState
+                    readonly property real rSize: size
+                    readonly property real rDone: doneSize
+                    readonly property int  rUpload: uploadState
+                    readonly property bool _isCur: recorderGroup._curId > 0 && rId === recorderGroup._curId
+                    readonly property bool _hidden: _isCur || rRec === 3
+                    onRIdChanged: Qt.callLater(recorderGroup._recount)
+                    onRRecChanged: Qt.callLater(recorderGroup._recount)
+                    onRSizeChanged: Qt.callLater(recorderGroup._recount)
+                    onRDoneChanged: Qt.callLater(recorderGroup._recount)
+                    onRUploadChanged: Qt.callLater(recorderGroup._recount)
+                    Component.onCompleted: Qt.callLater(recorderGroup._recount)
+                }
+            }
+        }
+
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
             Text {
-                text: qsTr("Logs (%1)").arg(logList.count)
+                text: qsTr("Logs (%1)").arg(Math.max(logList.count, recorderGroup._curId > 0 ? 1 : 0))
                 color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; font.bold: true
                 width: parent.width - refreshBtn.width - parent.spacing
                 anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
@@ -610,18 +697,130 @@ Column {
         }
 
         Text {
-            visible: logList.count === 0
+            visible: logList.count === 0 && recorderGroup._curId === 0
             width: parent.width
             text: qsTr("No logs listed yet — tap Refresh to enumerate the recorder's archive.")
             color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; wrapMode: Text.WordWrap
         }
 
-        // Log archive — bounded, scrolls internally
+        // Current log + archive kept tight together (small gap) so the plate reads as the
+        // list's pinned first entry.
+        Column {
+            id: logsBlock
+            width: parent.width
+            spacing: Math.round(3 * AppPalette.scale)
+
+        // ── Current log plate: pinned directly above the archive list, reads as its first
+        // entry. Live/last log + download; hidden when there is no current log. ──
+        Rectangle {
+            id: curLogPlate
+            width: parent.width; radius: Tokens.radiusMd
+            color: AppPalette.card
+            border.width: 1
+            // frame mirrors the recorder state (same severity colour as the status banner)
+            border.color: recorderGroup.hero.sev === "idle"
+                          ? AppPalette.border
+                          : recorderGroup._sevColor(recorderGroup.hero.sev)
+            height: Tokens.controlHMd + Tokens.spaceMd * 2
+            visible: curLogPlate._hasLog
+
+            readonly property bool _hasLog: recorderGroup._curId > 0
+            readonly property bool _recording: !!(dev && dev.recorderStatusValid && dev.recorderRecordingState === 2)
+            readonly property bool _uploading: recorderGroup._curUpload === 3
+            readonly property bool _doneState: recorderGroup._curUpload === 1 && recorderGroup._curDone > 0
+            readonly property real _pct: recorderGroup._curSize > 0 ? Math.max(0, Math.min(1, recorderGroup._curDone / recorderGroup._curSize)) : 0
+            readonly property bool _active: _uploading || _revealDone
+            readonly property int _shift: Math.round(7 * AppPalette.scale)
+            readonly property string _sizeText: recorderGroup._fmtSize(curLogPlate._recording ? recorderGroup.recordedBytes : recorderGroup._curSize)
+            property bool _initiated: false
+            property bool _revealDone: false
+
+            on_DoneStateChanged: {
+                if (_doneState && _initiated) {
+                    _initiated = false
+                    _revealDone = true
+                    plateHideTimer.restart()
+                    if (typeof notifications !== "undefined" && notifications)
+                        notifications.info(qsTr("Saved \"%1\" to \"%2\"").arg("recorder_log_" + recorderGroup._curId + ".kp2").arg(recorderGroup._downloadDir))
+                }
+            }
+            on_UploadingChanged: if (_uploading) { _revealDone = false; plateHideTimer.stop() }
+            Timer { id: plateHideTimer; interval: 4000; onTriggered: curLogPlate._revealDone = false }
+
+            DevButton {
+                id: dlBtnPlate
+                anchors.right: parent.right; anchors.rightMargin: Tokens.spaceLg
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.round(112 * AppPalette.scale); height: Tokens.controlHMd
+                fontPixelSize: Tokens.fontMd
+                danger: curLogPlate._uploading
+                text: curLogPlate._uploading ? qsTr("Cancel") : (curLogPlate._revealDone ? qsTr("Re-download") : qsTr("Download"))
+                onClicked: {
+                    if (typeof deviceManagerWrapper === "undefined" || !deviceManagerWrapper || !curLogPlate._hasLog)
+                        return
+                    if (curLogPlate._uploading)
+                        deviceManagerWrapper.cancelStreamDownload(recorderGroup._curId)
+                    else {
+                        curLogPlate._initiated = true
+                        deviceManagerWrapper.startStreamDownload(recorderGroup._curId)
+                    }
+                }
+            }
+
+            Row {
+                id: plateTextRow
+                anchors.left: parent.left; anchors.leftMargin: Tokens.spaceLg
+                anchors.right: dlBtnPlate.left; anchors.rightMargin: Tokens.spaceMd
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: curLogPlate._active ? -curLogPlate._shift : 0
+                Behavior on anchors.verticalCenterOffset { NumberAnimation { duration: Anim.fadeMs; easing.type: Easing.OutCubic } }
+                spacing: Tokens.spaceSm
+
+                Text {
+                    text: "#" + recorderGroup._curId; color: AppPalette.text; font.pixelSize: Tokens.fontMd; font.bold: true
+                    width: Math.round(52 * AppPalette.scale); anchors.verticalCenter: parent.verticalCenter
+                    elide: Text.ElideRight
+                }
+                Text {
+                    text: curLogPlate._sizeText; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
+                    width: Math.round(84 * AppPalette.scale); anchors.verticalCenter: parent.verticalCenter
+                }
+                Text {
+                    text: curLogPlate._uploading ? qsTr("Downloading… %1%").arg(Math.round(curLogPlate._pct * 100))
+                                         : (curLogPlate._revealDone ? qsTr("Saved")
+                                            : (curLogPlate._recording ? recorderGroup._logDuration(dev.recorderDurationSeconds) : ""))
+                    color: curLogPlate._revealDone ? AppPalette.accentBar : AppPalette.textMuted
+                    font.pixelSize: Tokens.fontSm
+                    width: plateTextRow.width - Math.round(52 * AppPalette.scale) - Math.round(84 * AppPalette.scale) - 2 * plateTextRow.spacing
+                    anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+                }
+            }
+
+            Rectangle {
+                id: plateProgress
+                anchors.left: parent.left; anchors.leftMargin: Tokens.spaceLg
+                anchors.right: dlBtnPlate.left; anchors.rightMargin: Tokens.spaceMd
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: Math.round(9 * AppPalette.scale)
+                height: Math.round(4 * AppPalette.scale); radius: height / 2
+                color: AppPalette.trackOff
+                opacity: curLogPlate._active ? 1 : 0
+                visible: opacity > 0.01
+                Behavior on opacity { NumberAnimation { duration: Anim.fadeMs } }
+                Rectangle {
+                    height: parent.height; radius: parent.radius
+                    width: parent.width * curLogPlate._pct
+                    color: AppPalette.accentBar
+                    Behavior on width { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                }
+            }
+        }
+
         Rectangle {
             width: parent.width
-            visible: logList.count > 0
+            visible: recorderGroup._otherLogsCount > 0
             readonly property int rowH: Tokens.controlHMd + Tokens.spaceMd * 2
-            height: Math.min(logList.count * rowH, Math.round(rowH * 3.5)) + 2
+            height: Math.min(recorderGroup._otherLogsCount * rowH, Math.round(rowH * 3.5)) + 2
             color: AppPalette.bg; radius: Tokens.radiusMd
             border.width: Tokens.cardBorderWidth; border.color: AppPalette.border
             clip: true
@@ -656,8 +855,10 @@ Column {
 
                 delegate: Item {
                     id: rowItem
+                    readonly property bool _hidden: (recorderGroup._curId > 0 && id === recorderGroup._curId) || recordState === 3
                     width: ListView.view ? ListView.view.width : 0
-                    height: Tokens.controlHMd + Tokens.spaceMd * 2
+                    height: _hidden ? 0 : (Tokens.controlHMd + Tokens.spaceMd * 2)
+                    visible: !_hidden
 
                     readonly property bool _uploading: uploadState === 3
                     readonly property bool _done: uploadState === 1 && doneSize > 0
@@ -723,22 +924,11 @@ Column {
                         Text {
                             id: statusText
                             text: rowItem._uploading ? qsTr("Downloading… %1%").arg(Math.round(rowItem._pct * 100))
-                                             : (rowItem._revealDone ? qsTr("Saved") : (recordState === 3 ? qsTr("Recording") : ""))
+                                             : (rowItem._revealDone ? qsTr("Saved") : "")
                             color: rowItem._revealDone ? AppPalette.accentBar : AppPalette.textMuted
                             font.pixelSize: Tokens.fontSm
                             width: textRow.width - Math.round(52 * AppPalette.scale) - Math.round(84 * AppPalette.scale) - 2 * textRow.spacing
                             anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-
-                            readonly property bool _recPulse: recordState === 3 && !rowItem._uploading && !rowItem._revealDone
-                            property real _pulseOp: 1.0
-                            opacity: recPulseAnim.running ? _pulseOp : 1.0
-                            SequentialAnimation {
-                                id: recPulseAnim
-                                running: statusText._recPulse
-                                loops: Animation.Infinite
-                                NumberAnimation { target: statusText; property: "_pulseOp"; from: 1.0; to: 0.4; duration: 800; easing.type: Easing.InOutSine }
-                                NumberAnimation { target: statusText; property: "_pulseOp"; from: 0.4; to: 1.0; duration: 800; easing.type: Easing.InOutSine }
-                            }
                         }
                     }
 
@@ -764,10 +954,11 @@ Column {
                     Rectangle {
                         anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
                         height: 1; color: AppPalette.border; opacity: 0.5
-                        visible: index < logList.count - 1
+                        visible: !rowItem._hidden && index < logList.count - 1
                     }
                 }
             }
+        }
         }
 
         // Mirrors stream_list.cpp: QStandardPaths::DocumentsLocation + "/KoggerApp/recorder".

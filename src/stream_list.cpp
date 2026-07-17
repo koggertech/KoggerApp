@@ -81,6 +81,15 @@ void StreamList::startDownload(int id) {
     qInfo("Recorder download start: log=%d", id);
 }
 
+void StreamList::reset() {
+    _streams.clear();
+    _lastStreamId = 0xFFFF;
+    _lastStream = nullptr;
+    _activeDownloadId = -1;
+    _modelList.clear();
+    _isListChenged = true;
+}
+
 void StreamList::cancelDownload(int id) {
     if(!isStreamExist(id)) { return; }
     Stream* s = getStream(id);

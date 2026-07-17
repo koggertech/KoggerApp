@@ -148,6 +148,8 @@ public:
 
     void startDownload(int id);
     void cancelDownload(int id);
+    void reset();
+    bool hasActiveDownload() const { return _activeDownloadId >= 0; }
 
 signals:
     void requestRange(int id, quint32 start, quint32 end);
