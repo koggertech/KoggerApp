@@ -903,14 +903,6 @@ Column {
                 }
             }
         }
-
-        B2Card {
-            Row {
-                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-                Text { text: qsTr("Frequency, kHz"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-                DevSpin { from: 40; to: 6000; stepSize: 5; devValue: dev ? (dev.transFreq || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transFreq = v } }
-            }
-        }
     }
 
     // ── Advanced settings ("Расширенные настройки") ────────────────────────
