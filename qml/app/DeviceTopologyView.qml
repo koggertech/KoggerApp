@@ -26,13 +26,29 @@ Item {
         if (g.portName && g.portName.length > 0)
             return g.baudrate > 0 ? g.portName + " " + g.baudrate : g.portName
         if (g.address && g.address.length > 0)
-            return g.address
+            return g.destinationPort > 0 ? g.address + ":" + g.destinationPort : g.address
         return ""
     }
 
-    readonly property int _maxLinkChars: 7
+    readonly property int _maxNameChars: 5
+    function _shortName(s) {
+        return (s && s.length > _maxNameChars) ? "…" + s.slice(-_maxNameChars) : (s || "")
+    }
+    function _shortHost(h) {
+        var dot = h.lastIndexOf(".")
+        if (dot > 0 && dot < h.length - 1)
+            return "…" + h.substring(dot + 1)
+        return _shortName(h)
+    }
     function _shortLink(s) {
-        return (s && s.length > _maxLinkChars) ? "…" + s.slice(-_maxLinkChars) : (s || "")
+        if (!s) return ""
+        var sp = s.lastIndexOf(" ")
+        if (sp > 0 && /^\d+$/.test(s.substring(sp + 1)))
+            return _shortName(s.substring(0, sp)) + s.substring(sp)
+        var cp = s.lastIndexOf(":")
+        if (cp > 0 && /^\d+$/.test(s.substring(cp + 1)))
+            return _shortHost(s.substring(0, cp)) + s.substring(cp)
+        return _shortName(s)
     }
 
     readonly property var _rows: {
@@ -94,7 +110,7 @@ Item {
         readonly property string _state: RecorderStatus.pillState(device, master, port)
         readonly property string _sub: showLink ? view._shortLink(linkLabel)
                                                 : (port >= 0 ? qsTr("Port %1").arg(port) : "")
-        readonly property bool _linkTrunc: showLink && linkLabel.length > view._maxLinkChars
+        readonly property bool _linkTrunc: showLink && view._shortLink(linkLabel) !== linkLabel
 
         radius: Tokens.radiusLg
         readonly property color _baseColor: _state === "ok"   ? AppPalette.linkOkBg
