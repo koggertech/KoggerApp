@@ -33,6 +33,7 @@ signals:
 private slots:
     void scheduleRebuild();
     void rebuild();
+    void onLinkBaudrateEdited(QUuid uuid, int baudrate);
 
 private:
     QVariantMap buildLinkMeta(const QUuid& linkUuid) const;

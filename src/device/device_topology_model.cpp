@@ -35,14 +35,14 @@ QVariantMap nodeFor(DevQProperty* dev, DevQProperty* master, bool hasMaster)
 }
 
 // Content fingerprint of the built groups — **identity/structure only**, on purpose.
-// Volatile display fields (baudrate, address, ports) are DELIBERATELY excluded so
-// that transient churn — notably serial baudrate auto-search cycling `baudrate`
-// every probe — does NOT re-emit `changed()`. Without this, `deviceTopology.groups`
-// would get a new reference each probe, `HotActionsPanel._connItems` would recompute,
-// and the Repeater would recreate every delegate — killing hover state (button
-// "flickers") and dropping clicks mid-recreation. Structure (which devices/links,
-// their roles/ports/grouping) is what actually decides delegate identity; the
-// snapshot's baudrate/address text refreshes on the next structural rebuild.
+// Dedups `changed()`: an identical rebuild must not hand QML a new `groups` reference,
+// which would recreate every delegate (kill hover, drop clicks mid-recreation).
+// Volatile display fields (baudrate/address/ports) are DELIBERATELY excluded: during
+// serial baudrate auto-search an already-initialized device stays in the topology
+// (board version cached) while `baudrate` cycles every probe — putting them here would
+// flip the signature each probe and churn the delegates. Manual baudrate edits (which
+// auto-search never triggers) are pushed into the snapshot directly by
+// onLinkBaudrateEdited(), which bypasses this signature.
 QString topologySignature(const QVariantList& groups)
 {
     QString sig;
@@ -82,6 +82,9 @@ DeviceTopologyModel::DeviceTopologyModel(DeviceManagerWrapper* deviceWrapper,
 
     if (linkWrapper_) {
         connect(linkWrapper_, &LinkManagerWrapper::modelChanged, this, &DeviceTopologyModel::scheduleRebuild);
+        // Manual baudrate edit (UI emits sendUpdateBaudrate; auto-search never does) —
+        // patch the snapshot directly so the pill label refreshes without a rebuild.
+        connect(linkWrapper_, &LinkManagerWrapper::sendUpdateBaudrate, this, &DeviceTopologyModel::onLinkBaudrateEdited);
         if (LinkListModel* m = linkWrapper_->getModelPtr()) {
             connect(m, &QAbstractItemModel::rowsInserted, this, &DeviceTopologyModel::scheduleRebuild);
             connect(m, &QAbstractItemModel::rowsRemoved,  this, &DeviceTopologyModel::scheduleRebuild);
@@ -98,6 +101,22 @@ void DeviceTopologyModel::scheduleRebuild()
         return;
     rebuildScheduled_ = true;
     QMetaObject::invokeMethod(this, "rebuild", Qt::QueuedConnection);
+}
+
+void DeviceTopologyModel::onLinkBaudrateEdited(QUuid uuid, int baudrate)
+{
+    const QString key = uuid.toString(QUuid::WithoutBraces);
+    for (int i = 0; i < groups_.size(); ++i) {
+        QVariantMap g = groups_[i].toMap();
+        if (g.value("linkUuid").toString() == key) {
+            if (g.value("baudrate").toInt() != baudrate) {
+                g["baudrate"] = baudrate;
+                groups_[i] = g;
+                emit changed();
+            }
+            return;
+        }
+    }
 }
 
 void DeviceTopologyModel::rebuild()

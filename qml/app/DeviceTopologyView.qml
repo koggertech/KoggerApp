@@ -1,5 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
+import Qt5Compat.GraphicalEffects
 import kqml_types 1.0
 import "RecorderStatus.js" as RecorderStatus
 
@@ -28,6 +30,16 @@ Item {
         if (g.address && g.address.length > 0)
             return g.destinationPort > 0 ? g.address + ":" + g.destinationPort : g.address
         return ""
+    }
+
+    // Same mapping as HotActionsPanel.iconForDevice (the hot-actions/"hotkey" panel).
+    function _deviceIcon(d) {
+        if (!d)                          return "qrc:/icons/ui/device-unknown.svg"
+        if (d.isSonar)                   return "qrc:/icons/ui/device-transducer.svg"
+        if (d.isDoppler)                 return "qrc:/icons/ui/device-doppler.svg"
+        if (d.isUSBLBeacon || d.isUSBL)  return "qrc:/icons/ui/device-usbl.svg"
+        if (d.isRecorder)                return "qrc:/icons/ui/device-recorder.svg"
+        return "qrc:/icons/ui/device-unknown.svg"
     }
 
     readonly property int _maxNameChars: 5
@@ -108,9 +120,10 @@ Item {
 
         readonly property bool _selected: device === view.activeDevice
         readonly property string _state: RecorderStatus.pillState(device, master, port)
-        readonly property string _sub: showLink ? view._shortLink(linkLabel)
+        readonly property string _sub: showLink ? linkLabel
                                                 : (port >= 0 ? qsTr("Port %1").arg(port) : "")
         readonly property bool _linkTrunc: showLink && view._shortLink(linkLabel) !== linkLabel
+        readonly property string _icon: view._deviceIcon(device)
 
         radius: Tokens.radiusLg
         readonly property color _baseColor: _state === "ok"   ? AppPalette.linkOkBg
@@ -135,28 +148,99 @@ Item {
         Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
         Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
-        Column {
-            anchors.centerIn: parent
-            width: pill.width - 2 * Tokens.spaceSm
-            spacing: Math.round(1 * AppPalette.scale)
+        Row {
+            anchors.fill: parent
+            anchors.leftMargin: Tokens.spaceSm
+            anchors.rightMargin: Tokens.spaceSm
+            spacing: Tokens.spaceSm
 
-            Text {
-                width: parent.width
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                text: pill.device ? pill.device.devName : ""
-                color: AppPalette.textStrong
-                font.pixelSize: Tokens.fontBase
-                font.bold: true
+            Item {
+                id: devIcon
+                width: Math.round(22 * AppPalette.scale); height: width
+                anchors.verticalCenter: parent.verticalCenter
+                visible: pill._icon !== ""
+                Image {
+                    id: devIconImg
+                    anchors.fill: parent
+                    source: pill._icon
+                    sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                    sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    visible: false
+                }
+                ColorOverlay {
+                    anchors.fill: devIconImg
+                    source: devIconImg
+                    color: AppPalette.textStrong
+                    smooth: true
+                }
             }
-            Text {
-                width: parent.width
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideLeft
-                visible: pill._sub.length > 0
-                text: pill._sub
-                color: pill._selected ? AppPalette.textStrong : AppPalette.textMuted
-                font.pixelSize: Tokens.fontXs
+
+            Column {
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - (devIcon.visible ? devIcon.width + parent.spacing : 0)
+                spacing: Math.round(1 * AppPalette.scale)
+
+                Text {
+                    width: parent.width
+                    elide: Text.ElideRight
+                    text: pill.device ? pill.device.devName : ""
+                    color: AppPalette.textStrong
+                    font.pixelSize: Tokens.fontBase
+                    font.bold: true
+                }
+                // Link name + speed marquee — full text, slow ping-pong on overflow
+                // (same pattern as the recording row's path marquee in ConnectionViewer).
+                Item {
+                    id: subClip
+                    width: parent.width
+                    height: subText.implicitHeight
+                    visible: pill._sub.length > 0
+                    clip: true
+                    readonly property real fadeW: Math.round(8 * AppPalette.scale)
+
+                    Text {
+                        id: subText
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: pill._sub
+                        color: pill._selected ? AppPalette.textStrong : AppPalette.textMuted
+                        font.pixelSize: Tokens.fontXs
+                        readonly property bool overflow: width > subClip.width
+                        readonly property real leftEnd: subClip.width - width   // negative: scrolled so the tail shows
+                        x: 0
+                        onOverflowChanged: if (!overflow) x = 0
+                        SequentialAnimation on x {
+                            running: subText.overflow
+                            loops: Animation.Infinite
+                            PauseAnimation { duration: 1500 }
+                            NumberAnimation { to: subText.leftEnd; duration: Math.max(1500, subText.width * 6); easing.type: Easing.InOutSine }
+                            PauseAnimation { duration: 1500 }
+                            NumberAnimation { to: 0; duration: Math.max(1500, subText.width * 6); easing.type: Easing.InOutSine }
+                        }
+                    }
+
+                    Rectangle {   // left fade — head scrolled off
+                        anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+                        width: subClip.fadeW
+                        visible: subText.overflow && subText.x < -1
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: pill.color }
+                            GradientStop { position: 1.0; color: "transparent" }
+                        }
+                    }
+                    Rectangle {   // right fade — tail still hidden
+                        anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
+                        width: subClip.fadeW
+                        visible: subText.overflow && subText.x > subText.leftEnd + 1
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: "transparent" }
+                            GradientStop { position: 1.0; color: pill.color }
+                        }
+                    }
+                }
             }
         }
 
