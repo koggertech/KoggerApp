@@ -362,6 +362,8 @@ readonly property var activeDevice: (resolvedDeviceIndex >= 0 && resolvedDeviceI
 onActiveDeviceListChanged: {
     if (!activeDeviceList || activeDeviceList.length === 0) {
         if (activeDeviceIndex !== -1) setActiveDeviceIndex(-1)
+        if (settingsSubPageActive && settingsSubPageKind === "devices")
+            closeActiveSettingsSubPage()
     } else if (activeDeviceIndex >= activeDeviceList.length) {
         setActiveDeviceIndex(-1)
     }
