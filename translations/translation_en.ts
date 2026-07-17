@@ -1983,6 +1983,10 @@
         <translation>Distance, m</translation>
     </message>
     <message>
+        <source>Resolution, cm</source>
+        <translation>Resolution, cm</translation>
+    </message>
+    <message>
         <source>Advanced settings</source>
         <translation>Advanced settings</translation>
     </message>

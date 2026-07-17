@@ -2444,6 +2444,10 @@
         <translation>Дистанция, м</translation>
     </message>
     <message>
+        <source>Resolution, cm</source>
+        <translation>Разрешение, см</translation>
+    </message>
+    <message>
         <source>Advanced settings</source>
         <translation>Расширенные настройки</translation>
     </message>

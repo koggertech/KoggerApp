@@ -9,9 +9,11 @@ Item {
     property int from: 0
     property int to: 100
     property int stepSize: 1
+    property var stepValues: []
     property real divisor: 1.0
     property int decimals: 0
     property bool editable: true
+    property bool trimZeros: false
     property int fontPixelSize: Tokens.fontLg
     property color textColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
     property string toolTipText: ""
@@ -30,6 +32,35 @@ Item {
 
     function clamp(v) { return Math.max(root.from, Math.min(root.to, v)) }
 
+    readonly property bool _stepped: !!(stepValues && stepValues.length > 0)
+
+    function _snap(v) {
+        if (!_stepped) return v
+        var best = stepValues[0], bd = Math.abs(v - best)
+        for (var i = 1; i < stepValues.length; ++i) {
+            var d = Math.abs(v - stepValues[i])
+            if (d <= bd) { bd = d; best = stepValues[i] }
+        }
+        return best
+    }
+    function _stepFrom(cur, up) {
+        if (!_stepped) return cur + (up ? stepSize : -stepSize)
+        var i
+        if (up) {
+            for (i = 0; i < stepValues.length; ++i)
+                if (stepValues[i] > cur) return stepValues[i]
+            return stepValues[stepValues.length - 1]
+        }
+        for (i = stepValues.length - 1; i >= 0; --i)
+            if (stepValues[i] < cur) return stepValues[i]
+        return stepValues[0]
+    }
+    function _visibleValue() {
+        var raw = input.text.replace(",", ".").trim()
+        var p = parseFloat(raw)
+        return isNaN(p) ? root.value : Math.round(p * root.divisor)
+    }
+
     function applyValue(v) {
         var c = clamp(Math.round(v))
         if (c !== root.value) {
@@ -38,7 +69,12 @@ Item {
         }
     }
 
-    function displayedText() { return (root.value / root.divisor).toFixed(root.decimals) }
+    function displayedText() {
+        var s = (root.value / root.divisor).toFixed(root.decimals)
+        if (root.trimZeros && s.indexOf(".") >= 0)
+            s = s.replace(/0+$/, "").replace(/\.$/, "")
+        return s
+    }
 
     function _setText(t) {
         _settingText = true
@@ -57,13 +93,20 @@ Item {
 
     // Final commit: parse, apply, and re-format display to canonical form.
     function commitTyped() {
-        _parseAndApply()
+        if (_stepped) {
+            var raw = input.text.replace(",", ".").trim()
+            if (raw !== "" && raw !== "-" && raw !== ".") {
+                var parsed = parseFloat(raw)
+                if (!isNaN(parsed)) applyValue(_snap(parsed * root.divisor))
+            }
+        } else {
+            _parseAndApply()
+        }
         _setText(displayedText())
     }
 
     function increment() {
-        if (input.activeFocus) _parseAndApply()
-        applyValue(root.value + root.stepSize)
+        applyValue(_stepFrom(_visibleValue(), true))
         if (input.activeFocus) {
             _setText(displayedText())
             input.cursorPosition = input.text.length
@@ -71,8 +114,7 @@ Item {
     }
 
     function decrement() {
-        if (input.activeFocus) _parseAndApply()
-        applyValue(root.value - root.stepSize)
+        applyValue(_stepFrom(_visibleValue(), false))
         if (input.activeFocus) {
             _setText(displayedText())
             input.cursorPosition = input.text.length
@@ -187,6 +229,7 @@ Item {
             onTextChanged: {
                 if (root._settingText) return     // ignore our own programmatic writes
                 if (!activeFocus) return          // ignore external rewrites
+                if (root._stepped) return         // stepped mode: apply on commit/step only
                 root._parseAndApply()
             }
 

@@ -2444,6 +2444,10 @@
         <translation>Odległość, m</translation>
     </message>
     <message>
+        <source>Resolution, cm</source>
+        <translation>Rozdzielczość, cm</translation>
+    </message>
+    <message>
         <source>Advanced settings</source>
         <translation>Ustawienia zaawansowane</translation>
     </message>

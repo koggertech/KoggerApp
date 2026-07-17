@@ -169,6 +169,8 @@ Column {
 
     readonly property int chartSamplesMin: 100
     readonly property int chartSamplesMax: 15000
+    readonly property var distanceStepsM: [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 125, 150]
+    readonly property var periodStepsMs: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200, 250, 300, 350, 400, 450, 500, 750, 1000, 1500, 2000]
 
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
@@ -180,8 +182,10 @@ Column {
         property int from: 0
         property int to: 100
         property int stepSize: 1
+        property var stepValues: []
         property real divisor: 1.0
         property int decimals: 0
+        property bool trimZeros: false
         property var writeBack: null  // function(v) called on user interaction
 
         implicitWidth: Math.round(115 * AppPalette.scale); implicitHeight: Tokens.controlHMd
@@ -197,8 +201,8 @@ Column {
         KSpinBox {
             id: spin
             anchors.fill: parent
-            from: ds.from; to: ds.to; stepSize: ds.stepSize
-            divisor: ds.divisor; decimals: ds.decimals
+            from: ds.from; to: ds.to; stepSize: ds.stepSize; stepValues: ds.stepValues
+            divisor: ds.divisor; decimals: ds.decimals; trimZeros: ds.trimZeros
             onValueModified: function(v) { if (!ds._in && ds.writeBack) ds.writeBack(v) }
         }
     }
@@ -834,11 +838,39 @@ Column {
             }
         }
 
-        B2Card {
-            Row {
-                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-                Text { text: qsTr("Period, ms"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-                DevSpin { from: 0; to: 2000; stepSize: 50; devValue: dev ? (dev.ch1Period || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.ch1Period = v } }
+        ParamCard {
+            id: periodCard
+            width: parent.width
+            label: qsTr("Period, ms")
+            labelColor: AppPalette.textStrong
+            fillColor: AppPalette.card
+            slotWidth: root.spinW
+
+            property int _periodRestore: 100
+            property bool wantChecked: !!(dev && dev.ch1Period > 0)
+            property bool _g: false
+            onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
+            Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
+            onToggled: function(v) {
+                if (_g || !dev) return
+                if (v) {
+                    dev.ch1Period = _periodRestore
+                } else {
+                    if (dev.ch1Period > 0) _periodRestore = dev.ch1Period
+                    dev.ch1Period = 0
+                }
+            }
+
+            DevSpin {
+                anchors.left: parent.left; anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                height: Tokens.controlHMd
+                enabled: periodCard.checked
+                opacity: enabled ? 1.0 : 0.45
+                from: 10; to: 2000; divisor: 1; decimals: 0
+                stepValues: root.periodStepsMs
+                devValue: dev ? (dev.ch1Period || 0) : 0
+                writeBack: function(v) { if (dev) dev.ch1Period = v }
             }
         }
 
@@ -847,12 +879,14 @@ Column {
                 width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
                 Text { text: qsTr("Distance, m"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
                 DevSpin {
-                    from: (dev && dev.chartResolution > 0) ? Math.round(dev.chartResolution * root.chartSamplesMin / 10) : 100
-                    to: (dev && dev.chartResolution > 0) ? Math.round(dev.chartResolution * root.chartSamplesMax / 10) : 10000
-                    stepSize: 10; divisor: 100; decimals: 2
-                    devValue: (dev && dev.chartResolution > 0) ? Math.round(dev.chartResolution * dev.chartSamples / 10) : 0
+                    from: 1; to: 150; divisor: 1; decimals: 0
+                    stepValues: root.distanceStepsM
+                    devValue: (dev && dev.chartResolution > 0) ? Math.round(dev.chartResolution * dev.chartSamples / 1000) : 0
                     anchors.verticalCenter: parent.verticalCenter
-                    writeBack: function(v) { if (dev && dev.chartResolution > 0) dev.chartSamples = Math.round(v * 10 / dev.chartResolution) }
+                    writeBack: function(v) {
+                        if (dev && dev.chartResolution > 0)
+                            dev.chartSamples = Math.max(root.chartSamplesMin, Math.min(root.chartSamplesMax, Math.round(v * 1000 / dev.chartResolution)))
+                    }
                 }
             }
         }
@@ -872,8 +906,19 @@ Column {
                 open: b2ChartTab.currentValue === 1
                 Row {
                     width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-                    Text { text: qsTr("Resolution, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-                    DevSpin { from: 10; to: 100; stepSize: 10; devValue: dev ? (dev.chartResolution || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartResolution = v } }
+                    Text { text: qsTr("Resolution, cm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+                    DevSpin {
+                        from: 10; to: 100; stepSize: 10; divisor: 10; decimals: 1; trimZeros: true
+                        devValue: dev ? (dev.chartResolution || 0) : 0
+                        anchors.verticalCenter: parent.verticalCenter
+                        writeBack: function(v) {
+                            if (!dev || v <= 0) return
+                            var distCm = (dev.chartResolution > 0) ? Math.round(dev.chartResolution * dev.chartSamples / 10) : 0
+                            dev.chartResolution = v
+                            if (distCm > 0)
+                                dev.chartSamples = Math.max(root.chartSamplesMin, Math.min(root.chartSamplesMax, Math.round(distCm * 10 / v)))
+                        }
+                    }
                 }
             }
         }
