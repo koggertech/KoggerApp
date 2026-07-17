@@ -20,7 +20,6 @@ Column {
     readonly property var fieldDefs: [
         { key: "meas_nbr",         label: qsTr("Number"),                        tip: qsTr("Sequential measurement number (epoch)") + " — Number" },
         { key: "event_id",         label: qsTr("Event (UNIX / timestamp / ID)"), tip: qsTr("Event columns: UNIX time, timestamp and ID") + " — Event UNIX, Event timestamp, Event ID" },
-        { key: "rangefinder",      label: qsTr("Rangefinder"),                   tip: qsTr("Rangefinder distance (red line)") + " — Rangefinder" },
         { key: "bottom_depth",     label: qsTr("Beam distance"),                 tip: qsTr("Post-processing distance (green line)") + " — Beam distance" },
         { key: "pos_lat_lon",      label: qsTr("Position (lat / lon)"),          tip: qsTr("Coordinates: latitude and longitude") + " — Latitude, Longitude" },
         { key: "pos_time",         label: qsTr("GNSS UTC date / time"),          tip: qsTr("UTC date and time from GNSS") + " — GNSS UTC Date, GNSS UTC Time" },
@@ -29,7 +28,8 @@ Column {
         { key: "sonar_height",     label: qsTr("Sonar height"),                  tip: qsTr("Absolute height of the sonar") + " — SonarHeight" },
         { key: "bottom_height",    label: qsTr("Bottom height"),                 tip: qsTr("Absolute height of the bottom") + " — BottomHeight" },
         { key: "contact_info",     label: qsTr("Contact title"),                 tip: qsTr("Title of the marked contact") + " — ContactTitle" },
-        { key: "contact_distance", label: qsTr("Contact distance"),              tip: qsTr("Distance to the marked contact") + " — ContactDistance" }
+        { key: "contact_distance", label: qsTr("Contact distance"),              tip: qsTr("Distance to the marked contact") + " — ContactDistance" },
+        { key: "rangefinder",      label: qsTr("Rangefinder"),                   tip: qsTr("Rangefinder distance (red line)") + " — Rangefinder" }
     ]
 
     function doExport() {
