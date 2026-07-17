@@ -47,11 +47,21 @@ void qPlot2D::paint(QPainter *painter)
     clock_t start = clock();
 
     if (m_plot != nullptr && painter != nullptr) {
-        const int w = static_cast<int>(width());
-        const int h = static_cast<int>(height());
-        if (w <= 0 || h <= 0) {
+        const int lw = static_cast<int>(width());
+        const int lh = static_cast<int>(height());
+        if (lw <= 0 || lh <= 0) {
             return;
         }
+
+        const qreal dpr = window() ? window()->effectiveDevicePixelRatio() : 1.0;
+        deviceScale_ = (qAbs(dpr - qRound(dpr)) > 0.01) ? dpr : 1.0;
+        const int w = qRound(lw * deviceScale_);
+        const int h = qRound(lh * deviceScale_);
+
+        painter->save();
+        if (deviceScale_ != 1.0)
+            painter->scale(1.0 / deviceScale_, 1.0 / deviceScale_);
+        g_plotRenderExtraScale = deviceScale_;
 
         if (zoomPreviewMode_ && datasetPtr_ && datasetPtr_->size() > 0 && zoomPreviewEpochIndx_ >= 0) {
             const float halfWidth = static_cast<float>(qRound(w * 0.5f));
@@ -96,12 +106,14 @@ void qPlot2D::paint(QPainter *painter)
                 }
             }
 
-            const int sourceWidth = qBound(4, zoomPreviewSourceSize_, qMax(4, canvas().width()));
-            int sourceHeight = qBound(4, zoomPreviewSourceSize_, qMax(4, canvas().height()));
-            if (zoomPreviewReferenceDepthPixels_ > 0 && canvas().height() > 0) {
+            const int srcSize = qRound(zoomPreviewSourceSize_ * deviceScale_);
+            const int refDepthPx = qRound(zoomPreviewReferenceDepthPixels_ * deviceScale_);
+            const int sourceWidth = qBound(4, srcSize, qMax(4, canvas().width()));
+            int sourceHeight = qBound(4, srcSize, qMax(4, canvas().height()));
+            if (refDepthPx > 0 && canvas().height() > 0) {
                 const float scaledSource = static_cast<float>(sourceHeight)
                     * static_cast<float>(canvas().height())
-                    / static_cast<float>(zoomPreviewReferenceDepthPixels_);
+                    / static_cast<float>(refDepthPx);
                 sourceHeight = qBound(4, qRound(scaledSource), qMax(4, canvas().height()));
             }
             const QRect previewRect(0, 0, w, h);
@@ -151,6 +163,9 @@ void qPlot2D::paint(QPainter *painter)
                 emit contactChanged();
             }
         }
+
+        g_plotRenderExtraScale = 1.0;
+        painter->restore();
     }
 
     clock_t end = clock();
@@ -631,11 +646,13 @@ void qPlot2D::setOffsetZ(float value)
 void qPlot2D::plotMousePosition(int x, int y, bool isSync)
 {
     setAimEpochEventState(false);
+    const int sx = x >= 0 ? qRound(x * deviceScale_) : x;
+    const int sy = y >= 0 ? qRound(y * deviceScale_) : y;
     if(_isHorizontal) {
-        setMousePosition(x, y, isSync);
+        setMousePosition(sx, sy, isSync);
     } else {
-        if(x >=0 && y >= 0) {
-            setMousePosition(height() - y, x, isSync);
+        if(sx >=0 && sy >= 0) {
+            setMousePosition(qRound(height() * deviceScale_) - sy, sx, isSync);
         } else {
             setMousePosition(-1, -1, isSync);
         }
@@ -646,12 +663,14 @@ void qPlot2D::plotMousePosition(int x, int y, bool isSync)
 void qPlot2D::simplePlotMousePosition(int x, int y) {
     Plot2D::setAimEpochEventState(false);
 
+    const int sx = x >= 0 ? qRound(x * deviceScale_) : x;
+    const int sy = y >= 0 ? qRound(y * deviceScale_) : y;
     if(_isHorizontal) {
-        Plot2D::simpleSetMousePosition(x, y);
-    } 
+        Plot2D::simpleSetMousePosition(sx, sy);
+    }
     else {
-        if(x >=0 && y >= 0) {
-            Plot2D::simpleSetMousePosition(height() - y, x);
+        if(sx >=0 && sy >= 0) {
+            Plot2D::simpleSetMousePosition(qRound(height() * deviceScale_) - sy, sx);
         }
         else {
             Plot2D::simpleSetMousePosition(-1, -1);
@@ -661,7 +680,8 @@ void qPlot2D::simplePlotMousePosition(int x, int y) {
 
 void qPlot2D::onCursorMoved(int x, int y)
 {
-    Plot2D::onCursorMoved(x, y);
+    Plot2D::onCursorMoved(x >= 0 ? qRound(x * deviceScale_) : x,
+                          y >= 0 ? qRound(y * deviceScale_) : y);
 }
 
 void qPlot2D::timerUpdater() {

@@ -560,6 +560,8 @@ inline qreal Themes::checkResolutionCoeff() const
 }
 
 extern Themes theme;
-inline qreal renderScale() { return theme.getResolutionCoeff(); }
+
+inline thread_local qreal g_plotRenderExtraScale = 1.0;
+inline qreal renderScale() { return theme.getResolutionCoeff() * g_plotRenderExtraScale; }
 
 #endif // THEME_H

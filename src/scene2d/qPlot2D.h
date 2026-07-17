@@ -23,8 +23,8 @@ public:
     Q_PROPERTY(bool isEnabled READ getPlotEnabled WRITE setPlotEnabled NOTIFY plotEnabledChanged)
     Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo     NOTIFY contactChanged)
     Q_PROPERTY(bool    contactVisible   READ getContactVisible   WRITE setContactVisible  NOTIFY contactChanged)
-    Q_PROPERTY(int     contactPositionX READ getContactPositionX /*WRITE setContactPosition*/ NOTIFY contactChanged)
-    Q_PROPERTY(int     contactPositionY READ getContactPositionY /*WRITE setContactPosition*/ NOTIFY contactChanged)
+    Q_PROPERTY(int     contactPositionX READ qmlContactPositionX /*WRITE setContactPosition*/ NOTIFY contactChanged)
+    Q_PROPERTY(int     contactPositionY READ qmlContactPositionY /*WRITE setContactPosition*/ NOTIFY contactChanged)
     Q_PROPERTY(int     contactIndx      READ getContactIndx /*WRITE setContactIndx*/ NOTIFY contactChanged)
     Q_PROPERTY(double  contactLat       READ getContactLat /*WRITE setContactLat*/ NOTIFY contactChanged)
     Q_PROPERTY(double  contactLon       READ getContactLon /*WRITE setContactLon*/ NOTIFY contactChanged)
@@ -45,9 +45,12 @@ public:
 
     bool isHorizontal() { return _isHorizontal; }
 
+    int qmlContactPositionX() { return qRound(Plot2D::getContactPositionX() / deviceScale_); }
+    int qmlContactPositionY() { return qRound(Plot2D::getContactPositionY() / deviceScale_); }
+
     float viewportRatio() const {
         if (!datasetPtr_ || datasetPtr_->size() <= 0) return 1.0f;
-        const float dim = _isHorizontal ? static_cast<float>(width()) : static_cast<float>(height());
+        const float dim = (_isHorizontal ? static_cast<float>(width()) : static_cast<float>(height())) * static_cast<float>(deviceScale_);
         return qBound(0.0f, dim / static_cast<float>(datasetPtr_->size()), 1.0f);
     }
 
@@ -93,7 +96,7 @@ public:
             cursor_.selectEpochIndx = -1;
             return;
         }
-        const float halfWidth = static_cast<float>(qRound(width() * 0.5f));
+        const float halfWidth = static_cast<float>(qRound(width() * deviceScale_ * 0.5));
         const float timelinePos = static_cast<float>(epochIndx + halfWidth) / static_cast<float>(datasetPtr_->size());
         Plot2D::setTimelinePosition(qBound(0.0f, timelinePos, 1.0f));
         cursor_.selectEpochIndx = epochIndx;
@@ -143,6 +146,7 @@ protected:
     QTimer* m_updateTimer;
     bool m_needUpdate = true;
     bool _isHorizontal = true;
+    qreal deviceScale_ = 1.0;
 
 signals:
     void timelinePositionChanged();
