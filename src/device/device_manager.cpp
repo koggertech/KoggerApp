@@ -135,7 +135,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
             streamList_.parse(&frame);
         if (streamList_.isListChenged()) {
             emit streamChanged();
-            qInfo("stream-list: %d logs", streamList_.streamsList()->size());
+            // qInfo("stream-list: %d logs", streamList_.streamsList()->size());
             static const QString kAutoDl = qEnvironmentVariable("KOGGER_AUTODOWNLOAD");
             if (!kAutoDl.isEmpty() && !autoDownloadStarted_) {
                 autoDownloadStarted_ = true;
