@@ -1,6 +1,7 @@
 # build folder
 /build/
 build
+build-*/
 # deploy folder
 out_x64
 out_android
