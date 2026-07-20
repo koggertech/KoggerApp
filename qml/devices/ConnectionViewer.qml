@@ -821,16 +821,22 @@ Column {
                         font.pixelSize: Tokens.fontSm
                         readonly property bool overflow: (width + 2 * marqueeClip.pad) > marqueeClip.width
                         readonly property real leftEnd: marqueeClip.width - width - marqueeClip.pad   // symmetric right gap; fade is off at this end so the tail stays readable
-                        x: marqueeClip.pad
-                        onOverflowChanged: if (!overflow) x = marqueeClip.pad
-                        // ping-pong: pause right → glide left → pause left → glide back (same speed)
-                        SequentialAnimation on x {
-                            running: recStatus.overflow
+                        onOverflowChanged: _resync()
+                        onLeftEndChanged: if (overflow) _resync()
+                        Component.onCompleted: _resync()
+                        function _resync() {
+                            recMarquee.stop()
+                            x = marqueeClip.pad
+                            if (overflow)
+                                recMarquee.start()
+                        }
+                        SequentialAnimation {
+                            id: recMarquee
                             loops: Animation.Infinite
                             PauseAnimation { duration: 1500 }
-                            NumberAnimation { to: recStatus.leftEnd; duration: Math.max(1500, recStatus.width * 6); easing.type: Easing.InOutSine }
+                            NumberAnimation { target: recStatus; property: "x"; to: recStatus.leftEnd; duration: Math.max(1500, recStatus.width * 6); easing.type: Easing.InOutSine }
                             PauseAnimation { duration: 1500 }
-                            NumberAnimation { to: marqueeClip.pad; duration: Math.max(1500, recStatus.width * 6); easing.type: Easing.InOutSine }
+                            NumberAnimation { target: recStatus; property: "x"; to: marqueeClip.pad; duration: Math.max(1500, recStatus.width * 6); easing.type: Easing.InOutSine }
                         }
                     }
 

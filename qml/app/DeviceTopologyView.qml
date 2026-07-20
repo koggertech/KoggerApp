@@ -42,27 +42,6 @@ Item {
         return "qrc:/icons/ui/device-unknown.svg"
     }
 
-    readonly property int _maxNameChars: 5
-    function _shortName(s) {
-        return (s && s.length > _maxNameChars) ? "…" + s.slice(-_maxNameChars) : (s || "")
-    }
-    function _shortHost(h) {
-        var dot = h.lastIndexOf(".")
-        if (dot > 0 && dot < h.length - 1)
-            return "…" + h.substring(dot + 1)
-        return _shortName(h)
-    }
-    function _shortLink(s) {
-        if (!s) return ""
-        var sp = s.lastIndexOf(" ")
-        if (sp > 0 && /^\d+$/.test(s.substring(sp + 1)))
-            return _shortName(s.substring(0, sp)) + s.substring(sp)
-        var cp = s.lastIndexOf(":")
-        if (cp > 0 && /^\d+$/.test(s.substring(cp + 1)))
-            return _shortHost(s.substring(0, cp)) + s.substring(cp)
-        return _shortName(s)
-    }
-
     readonly property var _rows: {
         var rows = []
         var cur = []
@@ -122,7 +101,7 @@ Item {
         readonly property string _state: RecorderStatus.pillState(device, master, port)
         readonly property string _sub: showLink ? linkLabel
                                                 : (port >= 0 ? qsTr("Port %1").arg(port) : "")
-        readonly property bool _linkTrunc: showLink && view._shortLink(linkLabel) !== linkLabel
+        readonly property bool _linkTrunc: showLink && subText.overflow
         readonly property string _icon: view._deviceIcon(device)
 
         radius: Tokens.radiusLg
@@ -190,53 +169,68 @@ Item {
                     font.pixelSize: Tokens.fontBase
                     font.bold: true
                 }
-                // Link name + speed marquee — full text, slow ping-pong on overflow
-                // (same pattern as the recording row's path marquee in ConnectionViewer).
                 Item {
-                    id: subClip
+                    id: subArea
                     width: parent.width
                     height: subText.implicitHeight
                     visible: pill._sub.length > 0
-                    clip: true
-                    readonly property real fadeW: Math.round(8 * AppPalette.scale)
+                    readonly property int fadeW: Math.round(16 * AppPalette.scale)
+                    readonly property int over: Math.max(2, Math.round(2 * AppPalette.scale))
+                    readonly property real _leftFadeW:  (subText.overflow && (-subText.x) > 0.5) ? Math.max(over, Math.min(fadeW, -subText.x)) : 0
+                    readonly property real _rightFadeW: (subText.overflow && (subText.x - subText.leftEnd) > 0.5) ? Math.max(over, Math.min(fadeW, subText.x - subText.leftEnd)) : 0
 
-                    Text {
-                        id: subText
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: pill._sub
-                        color: pill._selected ? AppPalette.textStrong : AppPalette.textMuted
-                        font.pixelSize: Tokens.fontXs
-                        readonly property bool overflow: width > subClip.width
-                        readonly property real leftEnd: subClip.width - width   // negative: scrolled so the tail shows
-                        x: 0
-                        onOverflowChanged: if (!overflow) x = 0
-                        SequentialAnimation on x {
-                            running: subText.overflow
-                            loops: Animation.Infinite
-                            PauseAnimation { duration: 1500 }
-                            NumberAnimation { to: subText.leftEnd; duration: Math.max(1500, subText.width * 6); easing.type: Easing.InOutSine }
-                            PauseAnimation { duration: 1500 }
-                            NumberAnimation { to: 0; duration: Math.max(1500, subText.width * 6); easing.type: Easing.InOutSine }
+                    Item {
+                        id: subClip
+                        anchors.fill: parent
+                        clip: true
+
+                        Text {
+                            id: subText
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: pill._sub
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontXs
+                            readonly property bool overflow: width > subClip.width
+                            readonly property real leftEnd: subClip.width - width   // negative: scrolled so the tail shows
+                            onOverflowChanged: _resync()
+                            onLeftEndChanged: if (overflow) _resync()
+                            Component.onCompleted: _resync()
+                            function _resync() {
+                                subMarquee.stop()
+                                x = 0
+                                if (overflow)
+                                    subMarquee.start()
+                            }
+                            SequentialAnimation {
+                                id: subMarquee
+                                loops: Animation.Infinite
+                                PauseAnimation { duration: 1500 }
+                                NumberAnimation { target: subText; property: "x"; to: subText.leftEnd; duration: Math.max(1500, subText.width * 6); easing.type: Easing.InOutSine }
+                                PauseAnimation { duration: 1500 }
+                                NumberAnimation { target: subText; property: "x"; to: 0; duration: Math.max(1500, subText.width * 6); easing.type: Easing.InOutSine }
+                            }
                         }
                     }
 
-                    Rectangle {   // left fade — head scrolled off
-                        anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
-                        width: subClip.fadeW
-                        visible: subText.overflow && subText.x < -1
+                    Rectangle {   // left edge fade
+                        anchors { left: parent.left; top: parent.top; bottom: parent.bottom; leftMargin: -subArea.over }
+                        width: subArea._leftFadeW + subArea.over
+                        visible: subArea._leftFadeW > 0.5
                         gradient: Gradient {
                             orientation: Gradient.Horizontal
                             GradientStop { position: 0.0; color: pill.color }
+                            GradientStop { position: 0.5; color: pill.color }
                             GradientStop { position: 1.0; color: "transparent" }
                         }
                     }
-                    Rectangle {   // right fade — tail still hidden
-                        anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
-                        width: subClip.fadeW
-                        visible: subText.overflow && subText.x > subText.leftEnd + 1
+                    Rectangle {   // right edge fade
+                        anchors { right: parent.right; top: parent.top; bottom: parent.bottom; rightMargin: -subArea.over }
+                        width: subArea._rightFadeW + subArea.over
+                        visible: subArea._rightFadeW > 0.5
                         gradient: Gradient {
                             orientation: Gradient.Horizontal
                             GradientStop { position: 0.0; color: "transparent" }
+                            GradientStop { position: 0.5; color: pill.color }
                             GradientStop { position: 1.0; color: pill.color }
                         }
                     }
