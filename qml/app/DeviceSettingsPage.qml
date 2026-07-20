@@ -105,13 +105,15 @@ Column {
     }
 
     readonly property bool _isBasic2D: !!(dev && dev.devName === "Basic2D")
+    readonly property bool _isNanoSSS: !!(dev && dev.devName === "NanoSSS")
+    readonly property bool _isBasicSonar: _isBasic2D || _isNanoSSS
     readonly property bool _isRecorder: !!(dev && dev.isRecorder)
-    readonly property bool _hasCut: _isBasic2D || _isRecorder
+    readonly property bool _hasCut: _isBasicSonar || _isRecorder
     property bool _engExpanded: false
 
     readonly property var _warnings: {
         var w = []
-        if (!dev || !_isBasic2D) return w
+        if (!dev || !_isBasicSonar) return w
         var tpl = qsTr('Group "%1" settings were not applied')
         if (dev.chartSetupState === false) w.push(tpl.arg(qsTr("Echogram")))
         if (dev.distSetupState === false)  w.push(tpl.arg(qsTr("Rangefinder")))
@@ -981,7 +983,7 @@ Column {
 
     Column {
         id: basicView
-        visible: root._isBasic2D
+        visible: root._isBasicSonar
         width: root.groupWidth
         spacing: Tokens.spaceLg
 
@@ -1079,6 +1081,15 @@ Column {
                             dev.chartSamples = Math.max(root.chartSamplesMin, Math.min(root.chartSamplesMax, Math.round(v * 1000 / dev.chartResolution)))
                     }
                 }
+            }
+        }
+
+        B2Card {
+            visible: root._isNanoSSS
+            Row {
+                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+                Text { text: qsTr("Frequency, kHz"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+                DevSpin { from: 40; to: 6000; stepSize: 5; divisor: 1; decimals: 0; devValue: dev ? (dev.transFreq || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transFreq = v } }
             }
         }
 
