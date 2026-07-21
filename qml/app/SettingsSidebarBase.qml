@@ -19,8 +19,10 @@ Item {
     property real panelShadowOpacity: 0.72
     property int panelShadowSize: 30
     property real panelSizePx: 300
-    property int scrollBarReservePx: Math.round(20 * AppPalette.scale)
+    property int scrollBarReservePx: Tokens.spaceXl
     readonly property int _scrollThumbW: Math.round(12 * AppPalette.scale)
+    property int scrollAutoHideMs: 1500
+    readonly property int _hoverPopPad: Math.round(8 * AppPalette.scale)
     readonly property string resolvedSide: side === "right" ? "right" : "left"
     property real progress: open ? 1.0 : 0.0
     readonly property real panelWidth: panelSizePx
@@ -221,7 +223,7 @@ Item {
             anchors.right: parent.right
             anchors.top: topSection.bottom
             anchors.bottom: parent.bottom
-            anchors.leftMargin: Tokens.spaceXl
+            anchors.leftMargin: Tokens.spaceXl - panelRoot._hoverPopPad
             // No right margin: the scrollbar lives in scrollBarReservePx on
             // the right side of the Flickable — pushing the Flickable further
             // left makes the scrollbar look off-centre (large gap to panel
@@ -252,7 +254,8 @@ Item {
             Column {
                 id: contentColumn
 
-                width: Math.max(0, contentFlick.width - panelRoot.scrollBarReservePx)
+                x: panelRoot._hoverPopPad
+                width: Math.max(0, contentFlick.width - panelRoot.scrollBarReservePx - panelRoot._hoverPopPad)
                 spacing: Tokens.spaceLg
             }
         }
@@ -287,6 +290,15 @@ Item {
             stepSize: 0.04
             active: contentFlick.movingVertically || pressed || hovered
 
+            property bool _shown: false
+            Timer { id: vScrollHideTimer; interval: panelRoot.scrollAutoHideMs; onTriggered: vScroll._shown = false }
+            onActiveChanged: { if (active) { vScrollHideTimer.stop(); vScroll._shown = true } else vScrollHideTimer.restart() }
+            onVisibleChanged: if (visible) { vScroll._shown = true; vScrollHideTimer.restart() }
+            Connections {
+                target: contentFlick
+                function onContentYChanged() { vScroll._shown = true; if (!vScroll.active) vScrollHideTimer.restart() }
+            }
+
             onPositionChanged: {
                 if (vScroll.pressed) {
                     contentFlick.contentY = vScroll.position * contentFlick.contentHeight
@@ -299,9 +311,10 @@ Item {
                 color: vScroll.pressed
                        ? AppPalette.text
                        : (vScroll.hovered ? AppPalette.textSecond : AppPalette.textMuted)
-                opacity: vScroll.pressed ? 0.85 : (vScroll.hovered ? 0.65 : 0.45)
+                opacity: !vScroll._shown ? 0.0
+                         : (vScroll.pressed ? 0.85 : (vScroll.hovered ? 0.65 : 0.45))
                 Behavior on color   { ColorAnimation { duration: 120 } }
-                Behavior on opacity { NumberAnimation { duration: 120 } }
+                Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
             }
             background: Item {}
         }
@@ -399,7 +412,7 @@ Item {
             Flickable {
                 id: subFlick
                 anchors.fill: parent
-                anchors.leftMargin: Tokens.spaceXl
+                anchors.leftMargin: Tokens.spaceXl - panelRoot._hoverPopPad
                 anchors.rightMargin: 0
                 anchors.topMargin: Tokens.spaceLg
                 anchors.bottomMargin: Tokens.spaceXl
@@ -413,7 +426,8 @@ Item {
 
                 Loader {
                     id: subLoader
-                    width: subFlick.contentWidth
+                    x: panelRoot._hoverPopPad
+                    width: Math.max(0, subFlick.contentWidth - panelRoot._hoverPopPad)
                     active: panelRoot.subPage !== null
                     sourceComponent: panelRoot.subPage
                 }
@@ -441,6 +455,15 @@ Item {
                 stepSize: 0.04
                 active: subFlick.movingVertically || pressed || hovered
 
+                property bool _shown: false
+                Timer { id: subVScrollHideTimer; interval: panelRoot.scrollAutoHideMs; onTriggered: subVScroll._shown = false }
+                onActiveChanged: { if (active) { subVScrollHideTimer.stop(); subVScroll._shown = true } else subVScrollHideTimer.restart() }
+                onVisibleChanged: if (visible) { subVScroll._shown = true; subVScrollHideTimer.restart() }
+                Connections {
+                    target: subFlick
+                    function onContentYChanged() { subVScroll._shown = true; if (!subVScroll.active) subVScrollHideTimer.restart() }
+                }
+
                 onPositionChanged: {
                     if (subVScroll.pressed)
                         subFlick.contentY = subVScroll.position * subFlick.contentHeight
@@ -452,9 +475,10 @@ Item {
                     color: subVScroll.pressed
                            ? AppPalette.text
                            : (subVScroll.hovered ? AppPalette.textSecond : AppPalette.textMuted)
-                    opacity: subVScroll.pressed ? 0.85 : (subVScroll.hovered ? 0.65 : 0.45)
+                    opacity: !subVScroll._shown ? 0.0
+                             : (subVScroll.pressed ? 0.85 : (subVScroll.hovered ? 0.65 : 0.45))
                     Behavior on color   { ColorAnimation { duration: 120 } }
-                    Behavior on opacity { NumberAnimation { duration: 120 } }
+                    Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
                 }
                 background: Item {}
             }
