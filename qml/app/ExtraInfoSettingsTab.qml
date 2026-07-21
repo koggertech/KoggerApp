@@ -95,8 +95,8 @@ Column {
             showValueTip: false
             width: parent.width - opacityLabel.width - page.valueLabelW - 2 * Tokens.spaceMd
             anchors.verticalCenter: parent.verticalCenter
-            from: 25; to: 100; stepSize: 5
-            value: page.store ? page.store.extraInfoOpacity : 75
+            from: 0; to: 100; stepSize: 5
+            value: page.store ? page.store.extraInfoOpacity : 50
             valueSuffix: "%"
             onValueModified: function(v) { if (page.store) page.store.extraInfoOpacity = v }
         }
@@ -105,41 +105,27 @@ Column {
             width: page.valueLabelW
             horizontalAlignment: Text.AlignRight
             anchors.verticalCenter: parent.verticalCenter
-            text: (page.store ? Math.round(page.store.extraInfoOpacity) : 75) + "%"
+            text: (page.store ? Math.round(page.store.extraInfoOpacity) : 50) + "%"
             color: AppPalette.text; font.pixelSize: Tokens.fontLg
         }
     }
 
+    // Flat list (no section header). Order mirrors the panel.
     FieldGroup {
-        title: qsTr("Basic")
         fields: [
-            { key: "time",     label: qsTr("Time"),                   tip: qsTr("Local device clock."), vis: (page.store ? page.store.systemTimeValid : true) },
-            { key: "depth",    label: qsTr("Depth"),                  tip: qsTr("Measured depth below the sonar, in metres.") },
-            { key: "speed",    label: qsTr("Speed"),                  tip: qsTr("Boat ground speed derived from GNSS positions, in km/h.") },
-            { key: "boatLat",  label: qsTr("Latitude"),               tip: qsTr("Latitude of the latest GNSS fix.") },
-            { key: "boatLon",  label: qsTr("Longitude"),              tip: qsTr("Longitude of the latest GNSS fix.") },
-            { key: "actDist",  label: qsTr("Distance to active point"), tip: qsTr("Great-circle distance from the boat to the selected active point, in metres.") },
-            { key: "actAngle", label: qsTr("Angle to active point"),  tip: qsTr("Bearing from the boat heading to the selected active point, in degrees.") }
-        ]
-    }
-
-    FieldGroup {
-        title: qsTr("Sensors")
-        fields: [
-            { key: "temp",    label: qsTr("Temperature"),  tip: qsTr("Water temperature measured by the sonar, in °C.") },
-            { key: "rfDepth", label: qsTr("Rangefinder"),  tip: qsTr("Depth from the sonar's hardware rangefinder (echosounder first return), in metres.") },
-            { key: "btDepth", label: qsTr("Bottom track"), tip: qsTr("Depth computed by the software bottom-track algorithm from the echogram, in metres.") }
-        ]
-    }
-
-    FieldGroup {
-        title: qsTr("Autopilot")
-        fields: [
+            { key: "time",      label: qsTr("Time"),          tip: qsTr("Local device clock."), vis: (page.store ? page.store.systemTimeValid : true) },
+            { key: "depth",     label: qsTr("Total depth"),   tip: qsTr("Last depth — from the rangefinder or bottom track.") },
+            { key: "rfDepth",   label: qsTr("Rangefinder"),   tip: qsTr("Depth from the sonar.") },
+            { key: "btDepth",   label: qsTr("Bottom track"),  tip: qsTr("Depth obtained by post-processing in the app.") },
+            { key: "speed",     label: qsTr("Speed"),         tip: qsTr("Boat ground speed derived from GNSS positions, in km/h.") },
+            { key: "apSpeed",   label: qsTr("Ground speed"),  tip: qsTr("Autopilot horizontal ground speed (MAVLink), in m/s.") },
+            { key: "coord",     label: qsTr("Coordinate"),    tip: qsTr("Boat position (latitude and longitude) of the latest GNSS fix.") },
+            { key: "selPoint",  label: qsTr("Selected point"), tip: qsTr("Distance and angle from the boat to the selected point.") },
+            { key: "temp",      label: qsTr("Temperature"),   tip: qsTr("Water temperature measured by the sonar, in °C.") },
             { key: "apVoltage", label: qsTr("Battery voltage"), tip: qsTr("Autopilot battery voltage (MAVLink), in volts.") },
-            { key: "apCurrent", label: qsTr("Current"),         tip: qsTr("Autopilot battery current draw (MAVLink), in amperes.") },
-            { key: "apSpeed",   label: qsTr("Ground speed"),    tip: qsTr("Autopilot horizontal ground speed (MAVLink), in m/s.") },
-            { key: "apMode",    label: qsTr("Flight mode"),     tip: qsTr("Autopilot flight/drive mode number (MAVLink custom mode).") },
-            { key: "apArm",     label: qsTr("Arm state"),       tip: qsTr("Whether the autopilot is armed (MAVLink).") }
+            { key: "apCurrent", label: qsTr("Current"),       tip: qsTr("Autopilot battery current draw (MAVLink), in amperes.") },
+            { key: "apMode",    label: qsTr("Flight mode"),   tip: qsTr("Autopilot flight/drive mode number (MAVLink custom mode).") },
+            { key: "apArm",     label: qsTr("Arm state"),     tip: qsTr("Whether the autopilot is armed (MAVLink).") }
         ]
     }
 

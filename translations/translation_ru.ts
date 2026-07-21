@@ -3081,6 +3081,30 @@
 <context>
     <name>ExtraInfoPopup</name>
     <message>
+        <source>Flight mode</source>
+        <translation>Режим полёта</translation>
+    </message>
+    <message>
+        <source>Arm state</source>
+        <translation>Состояние Arm</translation>
+    </message>
+    <message>
+        <source>Total depth</source>
+        <translation>Глубина (общая)</translation>
+    </message>
+    <message>
+        <source>Coordinate</source>
+        <translation>Координата</translation>
+    </message>
+    <message>
+        <source>Selected point</source>
+        <translation>Выбранная точка</translation>
+    </message>
+    <message>
+        <source>Ground speed</source>
+        <translation>Путевая скорость</translation>
+    </message>
+    <message>
         <source>Sensors</source>
         <translation>Датчики</translation>
     </message>
@@ -3094,7 +3118,7 @@
     </message>
     <message>
         <source>Bottom track</source>
-        <translation>Боттом-трек</translation>
+        <translation>Трек дна</translation>
     </message>
     <message>
         <location filename="../qml/app/ExtraInfoPopup.qml" line="145"/>
@@ -3123,7 +3147,7 @@
     </message>
     <message>
         <source>Arm</source>
-        <translation>Взвод</translation>
+        <translation>Arm</translation>
     </message>
     <message>
         <location filename="../qml/app/ExtraInfoPopup.qml" line="157"/>
@@ -3257,6 +3281,38 @@
 <context>
     <name>ExtraInfoSettingsTab</name>
     <message>
+        <source>Distance and angle from the boat to the selected point.</source>
+        <translation>Расстояние и угол от лодки до выбранной точки.</translation>
+    </message>
+    <message>
+        <source>Total depth</source>
+        <translation>Глубина (общая)</translation>
+    </message>
+    <message>
+        <source>Coordinate</source>
+        <translation>Координата</translation>
+    </message>
+    <message>
+        <source>Selected point</source>
+        <translation>Выбранная точка</translation>
+    </message>
+    <message>
+        <source>Last depth — from the rangefinder or bottom track.</source>
+        <translation>Последняя глубина — с глубиномера или трека дна.</translation>
+    </message>
+    <message>
+        <source>Depth from the sonar.</source>
+        <translation>Глубина от сонара.</translation>
+    </message>
+    <message>
+        <source>Depth obtained by post-processing in the app.</source>
+        <translation>Глубина, полученная постобработкой в приложении.</translation>
+    </message>
+    <message>
+        <source>Boat position (latitude and longitude) of the latest GNSS fix.</source>
+        <translation>Координаты лодки (широта и долгота) последнего GNSS-фикса.</translation>
+    </message>
+    <message>
         <source>Time</source>
         <translation>Время</translation>
     </message>
@@ -3278,7 +3334,7 @@
     </message>
     <message>
         <source>Bottom track</source>
-        <translation>Боттом-трек</translation>
+        <translation>Трек дна</translation>
     </message>
     <message>
         <source>Water temperature measured by the sonar, in °C.</source>
@@ -3422,7 +3478,7 @@
     </message>
     <message>
         <source>Arm state</source>
-        <translation>Состояние взвода</translation>
+        <translation>Состояние Arm</translation>
     </message>
     <message>
         <source>Whether the autopilot is armed (MAVLink).</source>

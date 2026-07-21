@@ -391,7 +391,7 @@ property var profilesPopupState: ({ x: -1, y: -1 })
 property var extraInfoPopupState: ({ x: -1, y: -1 })
 property bool extraInfoVisible: false
 property bool extraInfoTransparencyEnabled: false
-property real extraInfoOpacity: 75   // percent; used only when extraInfoTransparencyEnabled
+property real extraInfoOpacity: 50   // percent; used only when extraInfoTransparencyEnabled
 
 // Local clock of the machine running the app (NOT device/GNSS time), ticking every
 // second as HH:MM:SS. Empty (invalid) when the system clock is unset (year < 2001) —
@@ -417,8 +417,8 @@ property var popupDocks: ({})
 // setExtraInfoFieldEnabled() reassigns the whole map object.
 readonly property var extraInfoFieldDefaults: ({
     "time": true,
-    "depth": true, "speed": true, "boatLat": true, "boatLon": true,
-    "actDist": false, "actAngle": false,
+    "depth": true, "speed": true, "coord": true,
+    "selPoint": false,
     "temp": false, "rfDepth": false, "btDepth": false,
     "apVoltage": false, "apCurrent": false, "apSpeed": false, "apMode": false, "apArm": false,
     "navFix": false, "navSats": false, "navTime": false, "navOffset": false,
@@ -855,7 +855,7 @@ property Settings layoutStore: Settings {
     property string extraInfoPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool extraInfoVisibleStored: false
     property bool extraInfoTransparencyEnabledStored: false
-    property real extraInfoOpacityStored: 75
+    property real extraInfoOpacityStored: 50
     property string extraInfoFieldsJson: "{}"
     property bool quickActionExtraInfoEnabledStored: true
     property bool quickActionConsoleEnabledStored: true

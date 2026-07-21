@@ -2303,6 +2303,30 @@
 <context>
     <name>ExtraInfoPopup</name>
     <message>
+        <source>Flight mode</source>
+        <translation>Flight mode</translation>
+    </message>
+    <message>
+        <source>Arm state</source>
+        <translation>Arm state</translation>
+    </message>
+    <message>
+        <source>Total depth</source>
+        <translation>Total depth</translation>
+    </message>
+    <message>
+        <source>Coordinate</source>
+        <translation>Coordinate</translation>
+    </message>
+    <message>
+        <source>Selected point</source>
+        <translation>Selected point</translation>
+    </message>
+    <message>
+        <source>Ground speed</source>
+        <translation>Ground speed</translation>
+    </message>
+    <message>
         <source>Sensors</source>
         <translation>Sensors</translation>
     </message>
@@ -2478,6 +2502,38 @@
 </context>
 <context>
     <name>ExtraInfoSettingsTab</name>
+    <message>
+        <source>Distance and angle from the boat to the selected point.</source>
+        <translation>Distance and angle from the boat to the selected point.</translation>
+    </message>
+    <message>
+        <source>Total depth</source>
+        <translation>Total depth</translation>
+    </message>
+    <message>
+        <source>Coordinate</source>
+        <translation>Coordinate</translation>
+    </message>
+    <message>
+        <source>Selected point</source>
+        <translation>Selected point</translation>
+    </message>
+    <message>
+        <source>Last depth — from the rangefinder or bottom track.</source>
+        <translation>Last depth — from the rangefinder or bottom track.</translation>
+    </message>
+    <message>
+        <source>Depth from the sonar.</source>
+        <translation>Depth from the sonar.</translation>
+    </message>
+    <message>
+        <source>Depth obtained by post-processing in the app.</source>
+        <translation>Depth obtained by post-processing in the app.</translation>
+    </message>
+    <message>
+        <source>Boat position (latitude and longitude) of the latest GNSS fix.</source>
+        <translation>Boat position (latitude and longitude) of the latest GNSS fix.</translation>
+    </message>
     <message>
         <source>Time</source>
         <translation>Time</translation>

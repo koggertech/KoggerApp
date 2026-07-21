@@ -35,6 +35,9 @@ BasePanePopup {
     fullscreenMode: false
     panelColor: "transparent"
     panelBorderColor: "transparent"
+    ghostFollowsContent: true
+    ghostGripAndContent: true
+    ghostRadius: _pillW / 2
     headerDragBarLength: Math.max(Math.round(24 * _s), _pillW - _sidePad * 2)
     siblingSnapAlignTop: true
     snapEdgeCenters: true
