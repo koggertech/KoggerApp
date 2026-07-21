@@ -1218,7 +1218,9 @@ ApplicationWindow {
             hotActionsRight: hotActions.visible ? hotActions.x + hotActions.width : 0
         }
 
-        NotificationsOverlay { }
+        NotificationsOverlay {
+            hideImportant: workspaceStore.hideImportantNotifications
+        }
 
         FileOpeningOverlay { }
 

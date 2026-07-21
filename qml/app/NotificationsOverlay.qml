@@ -13,6 +13,8 @@ Item {
     readonly property real maxCardWidth: Math.min(480 * AppPalette.scale, width - 2 * Tokens.spaceXl)
     property int nextNotificationId: 0
 
+    property bool hideImportant: false
+
     signal tagDismissRequested(string tag)
 
     function push(kind, text, tag) {
@@ -71,6 +73,8 @@ Item {
             id: card
 
             readonly property bool isWarning: model.kind === 1
+            readonly property bool autoDismiss: !isWarning || root.hideImportant
+            readonly property bool showClose: isWarning && !root.hideImportant
             property bool closing: false
 
             opacity: 0
@@ -103,7 +107,7 @@ Item {
             Timer {
                 id: lifeTimer
                 interval: root.infoLifetimeMs
-                running: !card.isWarning
+                running: card.autoDismiss
                 onTriggered: card.dismiss()
             }
 
@@ -131,9 +135,9 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 acceptedButtons: Qt.AllButtons
-                cursorShape: card.isWarning ? Qt.ArrowCursor : Qt.PointingHandCursor
+                cursorShape: card.autoDismiss ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: function(m) {
-                    if (!card.isWarning)
+                    if (card.autoDismiss)
                         card.dismiss()
                     m.accepted = true
                 }
@@ -165,7 +169,7 @@ Item {
                 anchors.left: iconBadge.right
                 anchors.leftMargin: Tokens.spaceMd
                 anchors.right: closeButton.left
-                anchors.rightMargin: card.isWarning ? Tokens.spaceMd : Tokens.spaceLg
+                anchors.rightMargin: card.showClose ? Tokens.spaceMd : Tokens.spaceLg
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.text
                 color: AppPalette.text
@@ -176,10 +180,10 @@ Item {
             KCircleIconButton {
                 id: closeButton
                 anchors.right: parent.right
-                anchors.rightMargin: card.isWarning ? Tokens.spaceSm : 0
+                anchors.rightMargin: card.showClose ? Tokens.spaceSm : 0
                 anchors.verticalCenter: parent.verticalCenter
-                visible: card.isWarning
-                width: card.isWarning ? Tokens.controlHSm : 0
+                visible: card.showClose
+                width: card.showClose ? Tokens.controlHSm : 0
                 height: Tokens.controlHSm
                 glyph: "×"
                 glyphPixelSize: Math.round(12 * AppPalette.scale)

@@ -52,6 +52,14 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Hide important notifications</source>
+        <translation>Ukrywaj ważne powiadomienia</translation>
+    </message>
+    <message>
+        <source>Auto-hide warning notifications like info ones</source>
+        <translation>Automatycznie ukrywaj powiadomienia ostrzegawcze jak informacyjne</translation>
+    </message>
+    <message>
         <source>Show the scale bar in the 3D scene</source>
         <translation>Pokaż podziałkę skali w scenie 3D</translation>
     </message>

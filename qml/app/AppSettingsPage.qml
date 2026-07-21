@@ -475,6 +475,14 @@ Column {
 
         KSwitch {
             width: parent.width
+            text: qsTr("Hide important notifications")
+            toolTipText: qsTr("Auto-hide warning notifications like info ones")
+            checked: root.store ? root.store.hideImportantNotifications : false
+            onToggled: if (root.store) root.store.hideImportantNotifications = checked
+        }
+
+        KSwitch {
+            width: parent.width
             text: qsTr("Hide UI elements for missing data")
             toolTipText: qsTr("Hide echogram controls when there is no matching data; off shows everything")
             checked: root.store ? root.store.hideEmptyEchogramControls : true
