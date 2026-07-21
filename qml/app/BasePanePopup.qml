@@ -21,6 +21,7 @@ Item {
     property bool dragEnabled: true
     property bool resizeEnabled: true
     property int headerDragBarLength: 0
+    property real dragHandleOpacity: 1.0   // multiplies the drag-grip opacity (for see-through panels)
     property bool overlayChrome: false
     property bool suspendSignals: false
     property bool collapseButtonVisible: true
@@ -64,6 +65,7 @@ Item {
                                         || _chromeRevealed
                                         || headerDrag.active
                                         || resizeDrag.active
+    readonly property bool revealActive: _chromeRevealed || headerDrag.active || resizeDrag.active
 
     Timer {
         id: chromeHideTimer
@@ -469,6 +471,7 @@ Item {
 
         TapHandler {
             acceptedDevices: PointerDevice.TouchScreen
+            onTapped: { root._chromeRevealed = true; chromeHideTimer.restart() }
             onDoubleTapped: root.popupDoubleClicked()
         }
 
@@ -492,7 +495,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: grip.width
                 height: parent.height
-                opacity: (root.chromeShown && !root.collapsed) ? 1.0 : 0.0
+                opacity: ((root.chromeShown && !root.collapsed) ? 1.0 : 0.0) * root.dragHandleOpacity
                 visible: opacity > 0.01
                 Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
 

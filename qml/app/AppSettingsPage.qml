@@ -546,7 +546,7 @@ Column {
 
         NavButton {
             width: parent.width
-            text: qsTr("Extra info panel")
+            text: qsTr("Info panel")
             onClicked: if (root.store) root.store.openExtraInfoSettings()
         }
 

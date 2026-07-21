@@ -4,7 +4,6 @@ qt_add_qml_module(kogger_app
     QML_FILES
         ActionChip.qml
         AppSettingsPage.qml
-        AutopilotPopup.qml
         BasePanePopup.qml
         BottomTrackEditPopup.qml
         AimPanelSettingsTab.qml

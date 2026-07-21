@@ -53,6 +53,7 @@ Column {
                 color: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
                 font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
+                Layout.preferredWidth: 1
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
             }
@@ -71,7 +72,8 @@ Column {
                 onClicked: crow.tgcLinkClicked()
             }
             KCombo {
-                Layout.preferredWidth: Math.max(Math.round(150 * AppPalette.scale), _popupContentWidth)
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
                 enabled: crow.enabledRow
                 model: crow.comboModel
                 currentIndex: crow.currentIndex
@@ -161,26 +163,20 @@ Column {
 
         SectionLabel { text: qsTr("Bottom-Track") + ":" }
 
-        KSwitch {
+        ParamCardGroup {
             width: parent.width
-            text: qsTr("Value")
-            checked: panel.vs ? panel.vs.bottomTrackValue : false
-            onToggled: if (panel.vs) panel.vs.bottomTrackValue = checked
-        }
-        KSwitch {
-            width: parent.width
-            // Master "show the track graphic" toggle — the Type below (Line /
-            // Points) only renders when this is on.
-            text: qsTr("Graphics")
+            bodySpacing: Tokens.spaceXs
+            label: qsTr("Visibility")
             checked: panel.vs ? panel.vs.bottomTrackLine : false
-            onToggled: if (panel.vs) panel.vs.bottomTrackLine = checked
-        }
-        ComboRow {
-            label: qsTr("Type")
-            enabledRow: panel.vs ? panel.vs.bottomTrackLine : false
-            comboModel: [qsTr("Line"), qsTr("Points")]
-            currentIndex: panel.vs ? panel.vs.bottomTrackTheme : 0
-            onPicked: function(index) { if (panel.vs) panel.vs.bottomTrackTheme = index }
+            onToggled: function(v) { if (panel.vs) panel.vs.bottomTrackLine = v }
+
+            ComboRow {
+                label: qsTr("Type")
+                recessed: true
+                comboModel: [qsTr("Line"), qsTr("Points")]
+                currentIndex: panel.vs ? panel.vs.bottomTrackTheme : 0
+                onPicked: function(index) { if (panel.vs) panel.vs.bottomTrackTheme = index }
+            }
         }
     }
 
@@ -192,24 +188,20 @@ Column {
 
         SectionLabel { text: qsTr("Rangefinder") + ":" }
 
-        KSwitch {
+        ParamCardGroup {
             width: parent.width
-            text: qsTr("Value")
-            checked: panel.vs ? panel.vs.rangefinderValue : false
-            onToggled: if (panel.vs) panel.vs.rangefinderValue = checked
-        }
-        KSwitch {
-            width: parent.width
-            text: qsTr("Graphics")
+            bodySpacing: Tokens.spaceXs
+            label: qsTr("Visibility")
             checked: panel.vs ? panel.vs.rangefinderLine : false
-            onToggled: if (panel.vs) panel.vs.rangefinderLine = checked
-        }
-        ComboRow {
-            label: qsTr("Type")
-            enabledRow: panel.vs ? panel.vs.rangefinderLine : false
-            comboModel: [qsTr("Line"), qsTr("Points")]
-            currentIndex: panel.vs ? panel.vs.rangefinderTheme : 0
-            onPicked: function(index) { if (panel.vs) panel.vs.rangefinderTheme = index }
+            onToggled: function(v) { if (panel.vs) panel.vs.rangefinderLine = v }
+
+            ComboRow {
+                label: qsTr("Type")
+                recessed: true
+                comboModel: [qsTr("Line"), qsTr("Points")]
+                currentIndex: panel.vs ? panel.vs.rangefinderTheme : 0
+                onPicked: function(index) { if (panel.vs) panel.vs.rangefinderTheme = index }
+            }
         }
     }
 
@@ -217,7 +209,6 @@ Column {
         text: qsTr("Data") + ":"
         visible: panel.instruments > 1 && (
                      panel.dataGate(panel.ds && panel.ds.hasAttitudeData)
-                  || panel.dataGate(panel.ds && panel.ds.hasTemperatureData)
                   || panel.dataGate(panel.ds && panel.ds.hasDopplerBeamData)
                   || panel.dataGate(panel.ds && panel.ds.hasDvlSolutionData)
                   || panel.dataGate(panel.ds && panel.ds.hasUsblData)
@@ -232,14 +223,6 @@ Column {
         checked: panel.vs ? panel.vs.ahrsVisible : false
         onToggled: if (panel.vs) panel.vs.ahrsVisible = checked
     }
-    KSwitch {
-        width: parent.width
-        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasTemperatureData)
-        text: qsTr("Temperature")
-        checked: panel.vs ? panel.vs.temperatureVisible : false
-        onToggled: if (panel.vs) panel.vs.temperatureVisible = checked
-    }
-
     // ══ Doppler Beams (instruments > 1) ══════════════════════════════════════════
     ParamCardGroup {
         width: parent.width

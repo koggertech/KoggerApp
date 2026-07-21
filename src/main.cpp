@@ -274,7 +274,9 @@ int main(int argc, char *argv[])
 #if defined(Q_OS_WIN)
     //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
-    QLoggingCategory::setFilterRules(QStringLiteral("qt.network.info.netlistmanager.warning=false"));
+    QLoggingCategory::setFilterRules(QStringLiteral(
+        "qt.network.info.netlistmanager.warning=false\n"
+        "qt.qpa.mime=false"));
 #endif
 
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGLRhi);

@@ -54,9 +54,6 @@ Item {
     property bool extraInfoEnabled: true
     readonly property bool _extraInfoRevealOverride: _revealActiveKey === "extraInfo"
     readonly property bool showExtraInfo: extraInfoEnabled || _extraInfoRevealOverride
-    property bool autopilotButtonEnabled: true
-    readonly property bool _autopilotRevealOverride: _revealActiveKey === "autopilot"
-    readonly property bool showAutopilot: autopilotButtonEnabled || _autopilotRevealOverride
     property bool consoleButtonEnabled: true
     readonly property bool _consoleRevealOverride: _revealActiveKey === "console"
     readonly property bool showConsole: consoleButtonEnabled || _consoleRevealOverride
@@ -1221,7 +1218,7 @@ Item {
             height: root.controlHeight
             iconSource: "qrc:/icons/ui/list-details.svg"
             iconTintColor: AppPalette.text
-            toolTipText: _open ? qsTr("Hide extra info") : qsTr("Extra info panel")
+            toolTipText: _open ? qsTr("Hide info panel") : qsTr("Info panel")
             fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
             fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
             fillPressedColor: root.buttonPressedColor
@@ -1233,30 +1230,6 @@ Item {
             onClicked: if (root.store) root.store.extraInfoVisible = !root.store.extraInfoVisible
 
             KCloseBadge { visible: extraInfoBtn._open }
-        }
-    }
-
-    Component {
-        id: qaAutopilotComp
-        KCircleIconButton {
-            id: autopilotBtn
-            readonly property bool _open: root.store && root.store.autopilotEnabled
-            width: root.controlHeight
-            height: root.controlHeight
-            iconSource: "qrc:/icons/ui/autopilot.svg"
-            iconTintColor: AppPalette.text
-            toolTipText: _open ? qsTr("Hide autopilot panel") : qsTr("Autopilot panel")
-            fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
-            fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
-            fillPressedColor: root.buttonPressedColor
-            borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
-            borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
-            highlighted: root.highlightedQuickActionKey === "autopilot"
-            flashToken: root.highlightPulseToken
-            highlightHold: root.draggingKey === "autopilot"
-            onClicked: if (root.store) root.store.autopilotEnabled = !root.store.autopilotEnabled
-
-            KCloseBadge { visible: autopilotBtn._open }
         }
     }
 
@@ -1528,7 +1501,6 @@ Item {
                            : key === "layouts"   ? root.hasFavoriteLayouts
                            : key === "bottomTrack" ? root.showBtEdit
                            : key === "extraInfo"   ? root.showExtraInfo
-                           : key === "autopilot"    ? root.showAutopilot
                            : key === "console"      ? root.showConsole
                            : key === "profiles"     ? root.showProfiles
                            : key === "secondWindow" ? root._showSecondWindow
@@ -1540,7 +1512,6 @@ Item {
                                    : key === "layouts"    ? qaFavoritesComp
                                    : key === "bottomTrack"  ? qaBottomTrackComp
                                    : key === "extraInfo"    ? qaExtraInfoComp
-                                   : key === "autopilot"    ? qaAutopilotComp
                                    : key === "console"      ? qaConsoleComp
                                    : key === "profiles"     ? qaProfilesComp
                                    : key === "secondWindow" ? qaSecondWindowComp

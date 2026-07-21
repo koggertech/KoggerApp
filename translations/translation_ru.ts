@@ -217,8 +217,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="531"/>
-        <source>Extra info panel</source>
-        <translation>Экстра-инфо панель</translation>
+        <source>Info panel</source>
+        <translation>Инфо-панель</translation>
     </message>
     <message>
         <source>Autopilot panel</source>
@@ -988,39 +988,6 @@
         <location filename="../qml/app/AppSettingsPage.qml" line="1631"/>
         <source>No echograms displayed</source>
         <translation>Нет отображённых эхограмм</translation>
-    </message>
-</context>
-<context>
-    <name>AutopilotPopup</name>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="123"/>
-        <source>Battery</source>
-        <translation>Батарея</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="124"/>
-        <source>Current</source>
-        <translation>Ток</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="125"/>
-        <source>Speed</source>
-        <translation>Скорость</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="126"/>
-        <source>Mode</source>
-        <translation>Режим</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="128"/>
-        <source>Arm</source>
-        <translation>Статус</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="147"/>
-        <source>Close</source>
-        <translation>Закрыть</translation>
     </message>
 </context>
 <context>
@@ -3114,9 +3081,49 @@
 <context>
     <name>ExtraInfoPopup</name>
     <message>
+        <source>Sensors</source>
+        <translation>Датчики</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation>Температура</translation>
+    </message>
+    <message>
+        <source>Rangefinder</source>
+        <translation>Глубиномер</translation>
+    </message>
+    <message>
+        <source>Bottom track</source>
+        <translation>Боттом-трек</translation>
+    </message>
+    <message>
         <location filename="../qml/app/ExtraInfoPopup.qml" line="145"/>
         <source>Close</source>
         <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>Configure info panel</source>
+        <translation>Настроить инфо-панель</translation>
+    </message>
+    <message>
+        <source>Autopilot</source>
+        <translation>Автопилот</translation>
+    </message>
+    <message>
+        <source>Battery</source>
+        <translation>Батарея</translation>
+    </message>
+    <message>
+        <source>Current</source>
+        <translation>Ток</translation>
+    </message>
+    <message>
+        <source>Mode</source>
+        <translation>Режим</translation>
+    </message>
+    <message>
+        <source>Arm</source>
+        <translation>Взвод</translation>
     </message>
     <message>
         <location filename="../qml/app/ExtraInfoPopup.qml" line="157"/>
@@ -3250,44 +3257,296 @@
 <context>
     <name>ExtraInfoSettingsTab</name>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="14"/>
-        <source>Show extra info panel</source>
-        <translation>Показывать экстра-инфо панель</translation>
+        <source>Time</source>
+        <translation>Время</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="20"/>
-        <source>Fields:</source>
-        <translation>Поля:</translation>
+        <source>Local device clock.</source>
+        <translation>Локальные часы устройства.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="27"/>
+        <source>Sensors</source>
+        <translation>Датчики</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation>Температура</translation>
+    </message>
+    <message>
+        <source>Rangefinder</source>
+        <translation>Глубиномер</translation>
+    </message>
+    <message>
+        <source>Bottom track</source>
+        <translation>Боттом-трек</translation>
+    </message>
+    <message>
+        <source>Water temperature measured by the sonar, in °C.</source>
+        <translation>Температура воды с датчика эхолота, °C.</translation>
+    </message>
+    <message>
+        <source>Depth from the sonar's hardware rangefinder (echosounder first return), in metres.</source>
+        <translation>Глубина с аппаратного глубиномера эхолота (первое эхо), в метрах.</translation>
+    </message>
+    <message>
+        <source>Depth computed by the software bottom-track algorithm from the echogram, in metres.</source>
+        <translation>Глубина, вычисленная программным боттом-треком по эхограмме, в метрах.</translation>
+    </message>
+    <message>
+        <source>The info panel is a floating info window. Turn on the fields below — a value appears when its data is available.</source>
+        <translation>Инфо-панель — плавающее информационное окно. Включите ниже нужные поля — значение появится при наличии данных.</translation>
+    </message>
+    <message>
+        <source>Defaults</source>
+        <translation>По умолчанию</translation>
+    </message>
+    <message>
+        <source>Restore the default set of shown fields.</source>
+        <translation>Вернуть набор отображаемых полей по умолчанию.</translation>
+    </message>
+    <message>
+        <source>Show info panel</source>
+        <translation>Показывать инфо-панель</translation>
+    </message>
+    <message>
+        <source>Show or hide the floating info panel on the map.</source>
+        <translation>Показать или скрыть плавающую инфо-панель на карте.</translation>
+    </message>
+    <message>
+        <source>Transparency</source>
+        <translation>Прозрачность</translation>
+    </message>
+    <message>
+        <source>Make the panel background see-through so the map shows behind it.</source>
+        <translation>Сделать фон панели полупрозрачным, чтобы под ним была видна карта.</translation>
+    </message>
+    <message>
+        <source>Opacity:</source>
+        <translation>Непрозрачность:</translation>
+    </message>
+    <message>
+        <source>Basic</source>
+        <translation>Основное</translation>
+    </message>
+    <message>
+        <source>Autopilot</source>
+        <translation>Автопилот</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Навигация</translation>
+    </message>
+    <message>
+        <source>Boat status</source>
+        <translation>Статус борта</translation>
+    </message>
+    <message>
         <source>Depth</source>
         <translation>Глубина</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="32"/>
+        <source>Measured depth below the sonar, in metres.</source>
+        <translation>Измеренная глубина под эхолотом, в метрах.</translation>
+    </message>
+    <message>
         <source>Speed</source>
         <translation>Скорость</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="37"/>
-        <source>Coordinates</source>
-        <translation>Координаты</translation>
+        <source>Boat ground speed derived from GNSS positions, in km/h.</source>
+        <translation>Путевая скорость лодки по данным GNSS, в км/ч.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="42"/>
-        <source>Active point</source>
-        <translation>Активная точка</translation>
+        <source>Latitude</source>
+        <translation>Широта</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="47"/>
-        <source>Navigation info</source>
-        <translation>Навигация</translation>
+        <source>Latitude of the latest GNSS fix.</source>
+        <translation>Широта последнего GNSS-фикса.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="52"/>
-        <source>Boat status</source>
-        <translation>Статус борта</translation>
+        <source>Longitude</source>
+        <translation>Долгота</translation>
+    </message>
+    <message>
+        <source>Longitude of the latest GNSS fix.</source>
+        <translation>Долгота последнего GNSS-фикса.</translation>
+    </message>
+    <message>
+        <source>Distance to active point</source>
+        <translation>Расстояние до активной точки</translation>
+    </message>
+    <message>
+        <source>Great-circle distance from the boat to the selected active point, in metres.</source>
+        <translation>Расстояние по большому кругу от лодки до выбранной активной точки, в метрах.</translation>
+    </message>
+    <message>
+        <source>Angle to active point</source>
+        <translation>Угол до активной точки</translation>
+    </message>
+    <message>
+        <source>Bearing from the boat heading to the selected active point, in degrees.</source>
+        <translation>Пеленг от курса лодки на выбранную активную точку, в градусах.</translation>
+    </message>
+    <message>
+        <source>Battery voltage</source>
+        <translation>Напряжение батареи</translation>
+    </message>
+    <message>
+        <source>Autopilot battery voltage (MAVLink), in volts.</source>
+        <translation>Напряжение батареи автопилота (MAVLink), в вольтах.</translation>
+    </message>
+    <message>
+        <source>Current</source>
+        <translation>Ток</translation>
+    </message>
+    <message>
+        <source>Autopilot battery current draw (MAVLink), in amperes.</source>
+        <translation>Потребляемый ток батареи автопилота (MAVLink), в амперах.</translation>
+    </message>
+    <message>
+        <source>Ground speed</source>
+        <translation>Путевая скорость</translation>
+    </message>
+    <message>
+        <source>Autopilot horizontal ground speed (MAVLink), in m/s.</source>
+        <translation>Горизонтальная путевая скорость автопилота (MAVLink), в м/с.</translation>
+    </message>
+    <message>
+        <source>Flight mode</source>
+        <translation>Режим полёта</translation>
+    </message>
+    <message>
+        <source>Autopilot flight/drive mode number (MAVLink custom mode).</source>
+        <translation>Номер режима автопилота (MAVLink custom mode).</translation>
+    </message>
+    <message>
+        <source>Arm state</source>
+        <translation>Состояние взвода</translation>
+    </message>
+    <message>
+        <source>Whether the autopilot is armed (MAVLink).</source>
+        <translation>Взведён ли автопилот (MAVLink).</translation>
+    </message>
+    <message>
+        <source>GNSS fix type</source>
+        <translation>Тип GNSS-фикса</translation>
+    </message>
+    <message>
+        <source>GNSS fix type from the SimpleNavV2 frame (0 = no fix).</source>
+        <translation>Тип GNSS-фикса из кадра SimpleNavV2 (0 = нет фикса).</translation>
+    </message>
+    <message>
+        <source>Satellites</source>
+        <translation>Спутники</translation>
+    </message>
+    <message>
+        <source>Number of satellites used in the fix.</source>
+        <translation>Число спутников, использованных в решении.</translation>
+    </message>
+    <message>
+        <source>UTC time</source>
+        <translation>Время UTC</translation>
+    </message>
+    <message>
+        <source>Fix time from the SimpleNavV2 frame (Unix seconds).</source>
+        <translation>Время фикса из кадра SimpleNavV2 (секунды Unix).</translation>
+    </message>
+    <message>
+        <source>Time offset</source>
+        <translation>Смещение времени</translation>
+    </message>
+    <message>
+        <source>Sub-second offset of the fix time, in milliseconds.</source>
+        <translation>Субсекундное смещение времени фикса, в миллисекундах.</translation>
+    </message>
+    <message>
+        <source>Nav latitude</source>
+        <translation>Широта (нав.)</translation>
+    </message>
+    <message>
+        <source>High-precision latitude from the SimpleNavV2 frame.</source>
+        <translation>Высокоточная широта из кадра SimpleNavV2.</translation>
+    </message>
+    <message>
+        <source>Nav longitude</source>
+        <translation>Долгота (нав.)</translation>
+    </message>
+    <message>
+        <source>High-precision longitude from the SimpleNavV2 frame.</source>
+        <translation>Высокоточная долгота из кадра SimpleNavV2.</translation>
+    </message>
+    <message>
+        <source>Ground course</source>
+        <translation>Путевой курс</translation>
+    </message>
+    <message>
+        <source>Course over ground from the SimpleNavV2 frame, in degrees.</source>
+        <translation>Путевой курс из кадра SimpleNavV2, в градусах.</translation>
+    </message>
+    <message>
+        <source>Ground velocity</source>
+        <translation>Путевая скорость (нав.)</translation>
+    </message>
+    <message>
+        <source>Ground velocity from the SimpleNavV2 frame, in m/s.</source>
+        <translation>Путевая скорость из кадра SimpleNavV2, в м/с.</translation>
+    </message>
+    <message>
+        <source>Yaw</source>
+        <translation>Рыскание</translation>
+    </message>
+    <message>
+        <source>Yaw / heading from the SimpleNavV2 frame, in degrees.</source>
+        <translation>Рыскание/курс из кадра SimpleNavV2, в градусах.</translation>
+    </message>
+    <message>
+        <source>Pitch</source>
+        <translation>Тангаж</translation>
+    </message>
+    <message>
+        <source>Pitch from the SimpleNavV2 frame, in degrees.</source>
+        <translation>Тангаж из кадра SimpleNavV2, в градусах.</translation>
+    </message>
+    <message>
+        <source>Roll</source>
+        <translation>Крен</translation>
+    </message>
+    <message>
+        <source>Roll from the SimpleNavV2 frame, in degrees.</source>
+        <translation>Крен из кадра SimpleNavV2, в градусах.</translation>
+    </message>
+    <message>
+        <source>Battery (boat)</source>
+        <translation>Батарея (лодка)</translation>
+    </message>
+    <message>
+        <source>Battery charge of the boat unit, in percent.</source>
+        <translation>Заряд батареи бортового блока, в процентах.</translation>
+    </message>
+    <message>
+        <source>Battery (bridge)</source>
+        <translation>Батарея (берег)</translation>
+    </message>
+    <message>
+        <source>Battery charge of the shore/bridge unit, in percent.</source>
+        <translation>Заряд батареи берегового блока, в процентах.</translation>
+    </message>
+    <message>
+        <source>Signal (boat)</source>
+        <translation>Сигнал (лодка)</translation>
+    </message>
+    <message>
+        <source>Radio link signal quality at the boat unit, in percent.</source>
+        <translation>Качество радиосигнала бортового блока, в процентах.</translation>
+    </message>
+    <message>
+        <source>Signal (bridge)</source>
+        <translation>Сигнал (берег)</translation>
+    </message>
+    <message>
+        <source>Radio link signal quality at the shore/bridge unit, in percent.</source>
+        <translation>Качество радиосигнала берегового блока, в процентах.</translation>
     </message>
 </context>
 <context>
@@ -3488,16 +3747,6 @@
         <translation>Устройство</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1131"/>
-        <source>Autopilot panel</source>
-        <translation>Панель автопилота</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1131"/>
-        <source>Hide autopilot panel</source>
-        <translation>Скрыть панель автопилота</translation>
-    </message>
-    <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="1155"/>
         <source>Console</source>
         <translation>Консоль</translation>
@@ -3550,13 +3799,13 @@
     </message>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="1107"/>
-        <source>Hide extra info</source>
-        <translation>Скрыть экстра-инфо</translation>
+        <source>Hide info panel</source>
+        <translation>Скрыть инфо-панель</translation>
     </message>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="1107"/>
-        <source>Extra info panel</source>
-        <translation>Экстра-инфо панель</translation>
+        <source>Info panel</source>
+        <translation>Инфо-панель</translation>
     </message>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="1179"/>
@@ -4222,8 +4471,8 @@
     </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="837"/>
-        <source>Extra info panel</source>
-        <translation>Экстра-инфо панель</translation>
+        <source>Info panel</source>
+        <translation>Инфо-панель</translation>
     </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="838"/>
@@ -4833,8 +5082,8 @@
     </message>
     <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="22"/>
-        <source>Extra info</source>
-        <translation>Экстра-инфо</translation>
+        <source>Info</source>
+        <translation>Инфо</translation>
     </message>
     <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="25"/>
@@ -4850,11 +5099,6 @@
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="27"/>
         <source>Power off</source>
         <translation>Выключить питание</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="23"/>
-        <source>Autopilot</source>
-        <translation>Автопилот</translation>
     </message>
     <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="20"/>

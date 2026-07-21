@@ -15,7 +15,7 @@
 ### 🚤 *Key Features*
 - Multiple connections of Kogger sonars via serial port or TCP/UDP network.
 
-- Autopilot data display (battery level, speed, communication quality).
+- Info panel with sonar, navigation and autopilot telemetry (depth, position, battery level, speed, communication quality).
 
 - Real-time display of highly detailed echogram.
 <p align="center">

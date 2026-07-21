@@ -102,7 +102,6 @@ property bool quickActionLoggingEnabled: true
 property bool quickActionBottomTrackEnabled: true
 property bool quickActionProfilesEnabled: true
 property bool quickActionExtraInfoEnabled: true
-property bool quickActionAutopilotEnabled: true
 property bool quickActionConsoleEnabled: true
 property bool quickActionSecondWindowEnabled: true
 property bool quickActionPowerOffEnabled: false
@@ -110,7 +109,7 @@ property bool quickActionPowerOffEnabled: false
 property string quickActionDraggingKey: ""
 
 readonly property var quickActionKeys: {
-    var base = ["connections", "logging", "layouts", "bottomTrack", "extraInfo", "autopilot", "console", "profiles"]
+    var base = ["connections", "logging", "layouts", "bottomTrack", "extraInfo", "console", "profiles"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
     if (Qt.platform.os === "linux" || (typeof manualTesting !== "undefined" && manualTesting === true))
@@ -124,7 +123,6 @@ property var quickActionOrderModel: ListModel {
     ListElement { key: "layouts" }
     ListElement { key: "bottomTrack" }
     ListElement { key: "extraInfo" }
-    ListElement { key: "autopilot" }
     ListElement { key: "console" }
     ListElement { key: "profiles" }
     ListElement { key: "secondWindow" }
@@ -144,10 +142,8 @@ function normalizeQuickActionOrder(list) {
         if (out.indexOf(quickActionKeys[j]) === -1) {
             if (quickActionKeys[j] === "logging" && out.indexOf("connections") !== -1)
                 out.splice(out.indexOf("connections") + 1, 0, "logging")   // keep logging right after devices
-            else if (quickActionKeys[j] === "autopilot" && out.indexOf("extraInfo") !== -1)
-                out.splice(out.indexOf("extraInfo") + 1, 0, "autopilot")   // keep autopilot right after extra-info
-            else if (quickActionKeys[j] === "console" && out.indexOf("autopilot") !== -1)
-                out.splice(out.indexOf("autopilot") + 1, 0, "console")   // keep console right after autopilot
+            else if (quickActionKeys[j] === "console" && out.indexOf("extraInfo") !== -1)
+                out.splice(out.indexOf("extraInfo") + 1, 0, "console")   // keep console right after info
             else
                 out.push(quickActionKeys[j])
         }
@@ -392,30 +388,71 @@ property bool profilesPopupOpen: false
 property var settingsProfiles: []
 property var profilesPopupState: ({ x: -1, y: -1 })
 
-property var autopilotPopupState: ({ x: -1, y: -1 })
-property bool autopilotEnabled: false   // panel shown; toggled by the hot-actions autopilot button
-
 property var extraInfoPopupState: ({ x: -1, y: -1 })
 property bool extraInfoVisible: false
+property bool extraInfoTransparencyEnabled: false
+property real extraInfoOpacity: 75   // percent; used only when extraInfoTransparencyEnabled
+
+// Local clock of the machine running the app (NOT device/GNSS time), ticking every
+// second as HH:MM:SS. Empty (invalid) when the system clock is unset (year < 2001) —
+// consumers hide the field and its setting in that case.
+property string systemTimeHms: ""
+readonly property bool systemTimeValid: systemTimeHms.length > 0
+function _updateSystemClock() {
+    var d = new Date()
+    if (isNaN(d.getTime()) || d.getFullYear() < 2001) { systemTimeHms = ""; return }
+    var p = function(n) { return (n < 10 ? "0" : "") + n }
+    systemTimeHms = p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds())
+}
+property Timer _systemClockTimer: Timer {
+    interval: 1000; running: true; repeat: true; triggeredOnStart: true
+    onTriggered: store._updateSystemClock()
+}
 
 property var popupDocks: ({})
-property bool extraInfoDepth: true
-property bool extraInfoSpeed: true
-property bool extraInfoCoordinates: true
-property bool extraInfoActivePoint: true
-property bool extraInfoNav: false
-property bool extraInfoBoatStatus: false
+
+// Info-panel per-field visibility. Stored as one JSON blob (like popupDocks), not
+// N bool properties. Missing key -> extraInfoFieldDefaults. Bindings that call
+// extraInfoFieldEnabled() react because the getter reads extraInfoFieldsMap, and
+// setExtraInfoFieldEnabled() reassigns the whole map object.
+readonly property var extraInfoFieldDefaults: ({
+    "time": true,
+    "depth": true, "speed": true, "boatLat": true, "boatLon": true,
+    "actDist": false, "actAngle": false,
+    "temp": false, "rfDepth": false, "btDepth": false,
+    "apVoltage": false, "apCurrent": false, "apSpeed": false, "apMode": false, "apArm": false,
+    "navFix": false, "navSats": false, "navTime": false, "navOffset": false,
+    "navLat": false, "navLon": false, "navCourse": false, "navVelocity": false,
+    "navYaw": false, "navPitch": false, "navRoll": false,
+    "bsBatBoat": false, "bsBatBridge": false, "bsSigBoat": false, "bsSigBridge": false
+})
+property var extraInfoFieldsMap: ({})
+
+function extraInfoFieldEnabled(key) {
+    if (extraInfoFieldsMap[key] !== undefined)
+        return extraInfoFieldsMap[key] === true
+    return extraInfoFieldDefaults[key] === true
+}
+
+function setExtraInfoFieldEnabled(key, value) {
+    var m = {}
+    for (var k in extraInfoFieldsMap)
+        m[k] = extraInfoFieldsMap[k]
+    m[key] = value
+    extraInfoFieldsMap = m
+    layoutStore.extraInfoFieldsJson = JSON.stringify(m)
+}
+
+function resetExtraInfoFields() {
+    extraInfoFieldsMap = {}
+    layoutStore.extraInfoFieldsJson = "{}"
+}
 
 onBottomTrackEditorOpenChanged: layoutStore.bottomTrackEditorOpenStored = bottomTrackEditorOpen
 onProfilesPopupOpenChanged: layoutStore.profilesPopupOpenStored = profilesPopupOpen
-onAutopilotEnabledChanged: layoutStore.autopilotEnabledStored = autopilotEnabled
 onExtraInfoVisibleChanged:     layoutStore.extraInfoVisibleStored = extraInfoVisible
-onExtraInfoDepthChanged:       layoutStore.extraInfoDepthStored = extraInfoDepth
-onExtraInfoSpeedChanged:       layoutStore.extraInfoSpeedStored = extraInfoSpeed
-onExtraInfoCoordinatesChanged: layoutStore.extraInfoCoordinatesStored = extraInfoCoordinates
-onExtraInfoActivePointChanged: layoutStore.extraInfoActivePointStored = extraInfoActivePoint
-onExtraInfoNavChanged:         layoutStore.extraInfoNavStored = extraInfoNav
-onExtraInfoBoatStatusChanged:  layoutStore.extraInfoBoatStatusStored = extraInfoBoatStatus
+onExtraInfoTransparencyEnabledChanged: layoutStore.extraInfoTransparencyEnabledStored = extraInfoTransparencyEnabled
+onExtraInfoOpacityChanged:     layoutStore.extraInfoOpacityStored = extraInfoOpacity
 
 readonly property real splitterThickness: 0
 readonly property real minPaneSize: 120
@@ -797,7 +834,7 @@ property Settings layoutStore: Settings {
     property bool quickActionLoggingEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
-    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,extraInfo,autopilot,console,profiles,secondWindow,powerOff"
+    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,extraInfo,console,profiles,secondWindow,powerOff"
     property string rememberedLinksJson: "[]"
     property string selectedConnectionFilePathStored: ""
     property string layoutsJson: "[]"
@@ -815,18 +852,12 @@ property Settings layoutStore: Settings {
     property string profilesPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool profilesPopupOpenStored: false
     property bool bottomTrackEditorOpenStored: false
-    property string autopilotPopupStateJson: "{\"x\":-1,\"y\":-1}"
-    property bool autopilotEnabledStored: false
     property string extraInfoPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool extraInfoVisibleStored: false
-    property bool extraInfoDepthStored: true
-    property bool extraInfoSpeedStored: true
-    property bool extraInfoCoordinatesStored: true
-    property bool extraInfoActivePointStored: true
-    property bool extraInfoNavStored: false
-    property bool extraInfoBoatStatusStored: false
+    property bool extraInfoTransparencyEnabledStored: false
+    property real extraInfoOpacityStored: 75
+    property string extraInfoFieldsJson: "{}"
     property bool quickActionExtraInfoEnabledStored: true
-    property bool quickActionAutopilotEnabledStored: true
     property bool quickActionConsoleEnabledStored: true
     property bool quickActionSecondWindowEnabledStored: true
     property bool quickActionPowerOffEnabledStored: false
@@ -1673,31 +1704,6 @@ function loadProfilesPopupPreferences() {
         try { parsed = JSON.parse(layoutStore.profilesPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
     }
     profilesPopupState = {
-        x: (typeof parsed.x === "number") ? parsed.x : -1,
-        y: (typeof parsed.y === "number") ? parsed.y : -1
-    }
-}
-
-function autopilotPopupPosition(popupWidth, popupHeight) {
-    var b = _btEditPopupBounds(popupWidth, popupHeight)
-    var s = autopilotPopupState || { x: -1, y: -1 }
-    var x = (typeof s.x === "number" && s.x >= 0) ? s.x : Math.round((b.minX + b.maxX) / 2)
-    var y = (typeof s.y === "number" && s.y >= 0) ? s.y : b.minY
-    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
-}
-
-function setAutopilotPopupPosition(x, y, popupWidth, popupHeight) {
-    var b = _btEditPopupBounds(popupWidth, popupHeight)
-    autopilotPopupState = { x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) }
-    layoutStore.autopilotPopupStateJson = JSON.stringify(autopilotPopupState)
-}
-
-function loadAutopilotPopupPreferences() {
-    var parsed = { x: -1, y: -1 }
-    if (layoutStore.autopilotPopupStateJson && layoutStore.autopilotPopupStateJson !== "") {
-        try { parsed = JSON.parse(layoutStore.autopilotPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
-    }
-    autopilotPopupState = {
         x: (typeof parsed.x === "number") ? parsed.x : -1,
         y: (typeof parsed.y === "number") ? parsed.y : -1
     }
@@ -2827,7 +2833,6 @@ function saveLayoutState() {
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
     layoutStore.quickActionExtraInfoEnabledStored = quickActionExtraInfoEnabled
-    layoutStore.quickActionAutopilotEnabledStored = quickActionAutopilotEnabled
     layoutStore.quickActionConsoleEnabledStored = quickActionConsoleEnabled
     layoutStore.quickActionSecondWindowEnabledStored = quickActionSecondWindowEnabled
     layoutStore.quickActionPowerOffEnabledStored = quickActionPowerOffEnabled
@@ -2847,7 +2852,6 @@ function restoreLayoutState() {
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
     quickActionExtraInfoEnabled = layoutStore.quickActionExtraInfoEnabledStored
-    quickActionAutopilotEnabled = layoutStore.quickActionAutopilotEnabledStored
     quickActionConsoleEnabled = layoutStore.quickActionConsoleEnabledStored
     quickActionSecondWindowEnabled = layoutStore.quickActionSecondWindowEnabledStored
     quickActionPowerOffEnabled = layoutStore.quickActionPowerOffEnabledStored
@@ -4047,17 +4051,14 @@ function loadPersistedUiState() {
     loadProfilesPopupPreferences()
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
     bottomTrackEditorOpen = layoutStore.bottomTrackEditorOpenStored
-    loadAutopilotPopupPreferences()
-    autopilotEnabled = layoutStore.autopilotEnabledStored
     loadExtraInfoPopupPreferences()
     loadPopupDocks()
-    extraInfoVisible     = layoutStore.extraInfoVisibleStored
-    extraInfoDepth       = layoutStore.extraInfoDepthStored
-    extraInfoSpeed       = layoutStore.extraInfoSpeedStored
-    extraInfoCoordinates = layoutStore.extraInfoCoordinatesStored
-    extraInfoActivePoint = layoutStore.extraInfoActivePointStored
-    extraInfoNav         = layoutStore.extraInfoNavStored
-    extraInfoBoatStatus  = layoutStore.extraInfoBoatStatusStored
+    extraInfoVisible = layoutStore.extraInfoVisibleStored
+    extraInfoTransparencyEnabled = layoutStore.extraInfoTransparencyEnabledStored
+    extraInfoOpacity = layoutStore.extraInfoOpacityStored
+    var storedFields = {}
+    try { storedFields = JSON.parse(layoutStore.extraInfoFieldsJson || "{}") } catch (e) { storedFields = {} }
+    extraInfoFieldsMap = storedFields
     return restoreLayoutState()
 }
 

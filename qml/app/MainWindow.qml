@@ -211,13 +211,6 @@ ApplicationWindow {
                        profilesPopup.expandedWidth, profilesPopup.expandedHeight)
     }
 
-    readonly property rect autopilotPopupEffectiveBounds: {
-        if (!autopilotPopup.visible || !autopilotPopup.popupVisible)
-            return Qt.rect(-1, -1, 0, 0)
-        return Qt.rect(autopilotPopup.panelX, autopilotPopup.panelY,
-                       autopilotPopup.expandedWidth, autopilotPopup.expandedHeight)
-    }
-
     readonly property rect extraInfoPopupEffectiveBounds: {
         if (!extraInfoPopup.visible || !extraInfoPopup.popupVisible)
             return Qt.rect(-1, -1, 0, 0)
@@ -751,7 +744,6 @@ ApplicationWindow {
             bottomTrackEditorEnabled: workspaceStore.quickActionBottomTrackEnabled
             profilesEnabled: workspaceStore.quickActionProfilesEnabled
             extraInfoEnabled: workspaceStore.quickActionExtraInfoEnabled
-            autopilotButtonEnabled: workspaceStore.quickActionAutopilotEnabled
             consoleButtonEnabled: workspaceStore.quickActionConsoleEnabled
             powerOffEnabled: workspaceStore.quickActionPowerOffEnabled
             onPowerOffTriggered: powerOffOverlay.active = true
@@ -911,7 +903,7 @@ ApplicationWindow {
                    : !workspaceStore.settingsSubPageActive
                      ? qsTr("Settings")
                      : workspaceStore.settingsSubPageKind === "quickActions" ? qsTr("Quick action menu")
-                     : workspaceStore.settingsSubPageKind === "extraInfo"    ? qsTr("Extra info panel")
+                     : workspaceStore.settingsSubPageKind === "extraInfo"    ? qsTr("Info panel")
                      : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
@@ -999,8 +991,8 @@ ApplicationWindow {
             z: ZOrder.bottomTrackEditPopup   // поверх глобал/фуллскрин попапов
             store: workspaceStore
             popupId: "btEdit"
-            siblingBoundsList: [root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
-            siblingIdList: ["profiles", "autopilot", "extraInfo"]
+            siblingBoundsList: [root.profilesPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
+            siblingIdList: ["profiles", "extraInfo"]
         }
 
         ProfilesPopup {
@@ -1009,18 +1001,8 @@ ApplicationWindow {
             z: ZOrder.profilesPopup
             store: workspaceStore
             popupId: "profiles"
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.autopilotPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
-            siblingIdList: ["btEdit", "autopilot", "extraInfo"]
-        }
-
-        AutopilotPopup {
-            id: autopilotPopup
-            anchors.fill: parent
-            z: ZOrder.autopilotPopup
-            store: workspaceStore
-            popupId: "autopilot"
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
-            siblingIdList: ["btEdit", "profiles", "extraInfo"]
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "extraInfo"]
         }
 
         ExtraInfoPopup {
@@ -1029,8 +1011,8 @@ ApplicationWindow {
             z: ZOrder.extraInfoPopup
             store: workspaceStore
             popupId: "extraInfo"
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
-            siblingIdList: ["btEdit", "profiles", "autopilot"]
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles"]
         }
 
         Connections {
@@ -1040,7 +1022,6 @@ ApplicationWindow {
                 fullscreenPanePopup.syncFromStore()
                 btEditPopup.syncFromStore()
                 profilesPopup.syncFromStore()
-                autopilotPopup.syncFromStore()
                 extraInfoPopup.syncFromStore()
             }
         }

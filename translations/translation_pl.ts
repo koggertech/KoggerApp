@@ -217,8 +217,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="531"/>
-        <source>Extra info panel</source>
-        <translation>Panel dodatkowych informacji</translation>
+        <source>Info panel</source>
+        <translation>Panel informacji</translation>
     </message>
     <message>
         <source>Autopilot panel</source>
@@ -988,39 +988,6 @@
         <location filename="../qml/app/AppSettingsPage.qml" line="1631"/>
         <source>No echograms displayed</source>
         <translation>Brak wyświetlanych echogramów</translation>
-    </message>
-</context>
-<context>
-    <name>AutopilotPopup</name>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="123"/>
-        <source>Battery</source>
-        <translation>Bateria</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="124"/>
-        <source>Current</source>
-        <translation>Prąd</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="125"/>
-        <source>Speed</source>
-        <translation>Prędkość</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="126"/>
-        <source>Mode</source>
-        <translation>Tryb</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="128"/>
-        <source>Arm</source>
-        <translation>Stan</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="147"/>
-        <source>Close</source>
-        <translation>Zamknij</translation>
     </message>
 </context>
 <context>
@@ -3114,9 +3081,49 @@
 <context>
     <name>ExtraInfoPopup</name>
     <message>
+        <source>Sensors</source>
+        <translation>Czujniki</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation>Temperatura</translation>
+    </message>
+    <message>
+        <source>Rangefinder</source>
+        <translation>Głębokościomierz</translation>
+    </message>
+    <message>
+        <source>Bottom track</source>
+        <translation>Ślad dna</translation>
+    </message>
+    <message>
         <location filename="../qml/app/ExtraInfoPopup.qml" line="145"/>
         <source>Close</source>
         <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Configure info panel</source>
+        <translation>Skonfiguruj panel informacji</translation>
+    </message>
+    <message>
+        <source>Autopilot</source>
+        <translation>Autopilot</translation>
+    </message>
+    <message>
+        <source>Battery</source>
+        <translation>Bateria</translation>
+    </message>
+    <message>
+        <source>Current</source>
+        <translation>Prąd</translation>
+    </message>
+    <message>
+        <source>Mode</source>
+        <translation>Tryb</translation>
+    </message>
+    <message>
+        <source>Arm</source>
+        <translation>Uzbrojenie</translation>
     </message>
     <message>
         <location filename="../qml/app/ExtraInfoPopup.qml" line="157"/>
@@ -3250,44 +3257,296 @@
 <context>
     <name>ExtraInfoSettingsTab</name>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="14"/>
-        <source>Show extra info panel</source>
+        <source>Time</source>
+        <translation>Czas</translation>
+    </message>
+    <message>
+        <source>Local device clock.</source>
+        <translation>Zegar lokalny urządzenia.</translation>
+    </message>
+    <message>
+        <source>Sensors</source>
+        <translation>Czujniki</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation>Temperatura</translation>
+    </message>
+    <message>
+        <source>Rangefinder</source>
+        <translation>Głębokościomierz</translation>
+    </message>
+    <message>
+        <source>Bottom track</source>
+        <translation>Ślad dna</translation>
+    </message>
+    <message>
+        <source>Water temperature measured by the sonar, in °C.</source>
+        <translation>Temperatura wody zmierzona przez echosondę, °C.</translation>
+    </message>
+    <message>
+        <source>Depth from the sonar's hardware rangefinder (echosounder first return), in metres.</source>
+        <translation>Głębokość ze sprzętowego głębokościomierza echosondy (pierwsze echo), w metrach.</translation>
+    </message>
+    <message>
+        <source>Depth computed by the software bottom-track algorithm from the echogram, in metres.</source>
+        <translation>Głębokość obliczona programowym algorytmem śledzenia dna z echogramu, w metrach.</translation>
+    </message>
+    <message>
+        <source>The info panel is a floating info window. Turn on the fields below — a value appears when its data is available.</source>
+        <translation>Panel informacji to pływające okno informacyjne. Włącz poniżej potrzebne pola — wartość pojawi się, gdy dostępne są dane.</translation>
+    </message>
+    <message>
+        <source>Defaults</source>
+        <translation>Domyślne</translation>
+    </message>
+    <message>
+        <source>Restore the default set of shown fields.</source>
+        <translation>Przywróć domyślny zestaw wyświetlanych pól.</translation>
+    </message>
+    <message>
+        <source>Show info panel</source>
         <translation>Pokaż panel informacji</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="20"/>
-        <source>Fields:</source>
-        <translation>Pola:</translation>
+        <source>Show or hide the floating info panel on the map.</source>
+        <translation>Pokaż lub ukryj pływający panel informacji na mapie.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="27"/>
+        <source>Transparency</source>
+        <translation>Przezroczystość</translation>
+    </message>
+    <message>
+        <source>Make the panel background see-through so the map shows behind it.</source>
+        <translation>Uczyń tło panelu półprzezroczystym, aby widoczna była mapa pod nim.</translation>
+    </message>
+    <message>
+        <source>Opacity:</source>
+        <translation>Nieprzezroczystość:</translation>
+    </message>
+    <message>
+        <source>Basic</source>
+        <translation>Podstawowe</translation>
+    </message>
+    <message>
+        <source>Autopilot</source>
+        <translation>Autopilot</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Nawigacja</translation>
+    </message>
+    <message>
+        <source>Boat status</source>
+        <translation>Status łodzi</translation>
+    </message>
+    <message>
         <source>Depth</source>
         <translation>Głębokość</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="32"/>
+        <source>Measured depth below the sonar, in metres.</source>
+        <translation>Zmierzona głębokość pod echosondą, w metrach.</translation>
+    </message>
+    <message>
         <source>Speed</source>
         <translation>Prędkość</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="37"/>
-        <source>Coordinates</source>
-        <translation>Współrzędne</translation>
+        <source>Boat ground speed derived from GNSS positions, in km/h.</source>
+        <translation>Prędkość łodzi względem ziemi na podstawie GNSS, w km/h.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="42"/>
-        <source>Active point</source>
-        <translation>Aktywny punkt</translation>
+        <source>Latitude</source>
+        <translation>Szerokość geogr.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="47"/>
-        <source>Navigation info</source>
-        <translation>Informacje nawigacyjne</translation>
+        <source>Latitude of the latest GNSS fix.</source>
+        <translation>Szerokość geogr. ostatniego ustalenia pozycji GNSS.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ExtraInfoSettingsTab.qml" line="52"/>
-        <source>Boat status</source>
-        <translation>Status łodzi</translation>
+        <source>Longitude</source>
+        <translation>Długość geogr.</translation>
+    </message>
+    <message>
+        <source>Longitude of the latest GNSS fix.</source>
+        <translation>Długość geogr. ostatniego ustalenia pozycji GNSS.</translation>
+    </message>
+    <message>
+        <source>Distance to active point</source>
+        <translation>Odległość do aktywnego punktu</translation>
+    </message>
+    <message>
+        <source>Great-circle distance from the boat to the selected active point, in metres.</source>
+        <translation>Odległość po ortodromie od łodzi do wybranego aktywnego punktu, w metrach.</translation>
+    </message>
+    <message>
+        <source>Angle to active point</source>
+        <translation>Kąt do aktywnego punktu</translation>
+    </message>
+    <message>
+        <source>Bearing from the boat heading to the selected active point, in degrees.</source>
+        <translation>Namiar od kursu łodzi do wybranego aktywnego punktu, w stopniach.</translation>
+    </message>
+    <message>
+        <source>Battery voltage</source>
+        <translation>Napięcie akumulatora</translation>
+    </message>
+    <message>
+        <source>Autopilot battery voltage (MAVLink), in volts.</source>
+        <translation>Napięcie akumulatora autopilota (MAVLink), w woltach.</translation>
+    </message>
+    <message>
+        <source>Current</source>
+        <translation>Prąd</translation>
+    </message>
+    <message>
+        <source>Autopilot battery current draw (MAVLink), in amperes.</source>
+        <translation>Pobór prądu akumulatora autopilota (MAVLink), w amperach.</translation>
+    </message>
+    <message>
+        <source>Ground speed</source>
+        <translation>Prędkość względem ziemi</translation>
+    </message>
+    <message>
+        <source>Autopilot horizontal ground speed (MAVLink), in m/s.</source>
+        <translation>Pozioma prędkość względem ziemi autopilota (MAVLink), w m/s.</translation>
+    </message>
+    <message>
+        <source>Flight mode</source>
+        <translation>Tryb lotu</translation>
+    </message>
+    <message>
+        <source>Autopilot flight/drive mode number (MAVLink custom mode).</source>
+        <translation>Numer trybu autopilota (MAVLink custom mode).</translation>
+    </message>
+    <message>
+        <source>Arm state</source>
+        <translation>Stan uzbrojenia</translation>
+    </message>
+    <message>
+        <source>Whether the autopilot is armed (MAVLink).</source>
+        <translation>Czy autopilot jest uzbrojony (MAVLink).</translation>
+    </message>
+    <message>
+        <source>GNSS fix type</source>
+        <translation>Typ ustalenia GNSS</translation>
+    </message>
+    <message>
+        <source>GNSS fix type from the SimpleNavV2 frame (0 = no fix).</source>
+        <translation>Typ ustalenia pozycji GNSS z ramki SimpleNavV2 (0 = brak).</translation>
+    </message>
+    <message>
+        <source>Satellites</source>
+        <translation>Satelity</translation>
+    </message>
+    <message>
+        <source>Number of satellites used in the fix.</source>
+        <translation>Liczba satelitów użytych w ustaleniu pozycji.</translation>
+    </message>
+    <message>
+        <source>UTC time</source>
+        <translation>Czas UTC</translation>
+    </message>
+    <message>
+        <source>Fix time from the SimpleNavV2 frame (Unix seconds).</source>
+        <translation>Czas ustalenia z ramki SimpleNavV2 (sekundy Unix).</translation>
+    </message>
+    <message>
+        <source>Time offset</source>
+        <translation>Przesunięcie czasu</translation>
+    </message>
+    <message>
+        <source>Sub-second offset of the fix time, in milliseconds.</source>
+        <translation>Podsekundowe przesunięcie czasu ustalenia, w milisekundach.</translation>
+    </message>
+    <message>
+        <source>Nav latitude</source>
+        <translation>Szerokość (naw.)</translation>
+    </message>
+    <message>
+        <source>High-precision latitude from the SimpleNavV2 frame.</source>
+        <translation>Wysokiej precyzji szerokość geogr. z ramki SimpleNavV2.</translation>
+    </message>
+    <message>
+        <source>Nav longitude</source>
+        <translation>Długość (naw.)</translation>
+    </message>
+    <message>
+        <source>High-precision longitude from the SimpleNavV2 frame.</source>
+        <translation>Wysokiej precyzji długość geogr. z ramki SimpleNavV2.</translation>
+    </message>
+    <message>
+        <source>Ground course</source>
+        <translation>Kurs względem ziemi</translation>
+    </message>
+    <message>
+        <source>Course over ground from the SimpleNavV2 frame, in degrees.</source>
+        <translation>Kurs względem ziemi z ramki SimpleNavV2, w stopniach.</translation>
+    </message>
+    <message>
+        <source>Ground velocity</source>
+        <translation>Prędkość względem ziemi (naw.)</translation>
+    </message>
+    <message>
+        <source>Ground velocity from the SimpleNavV2 frame, in m/s.</source>
+        <translation>Prędkość względem ziemi z ramki SimpleNavV2, w m/s.</translation>
+    </message>
+    <message>
+        <source>Yaw</source>
+        <translation>Odchylenie</translation>
+    </message>
+    <message>
+        <source>Yaw / heading from the SimpleNavV2 frame, in degrees.</source>
+        <translation>Odchylenie/kurs z ramki SimpleNavV2, w stopniach.</translation>
+    </message>
+    <message>
+        <source>Pitch</source>
+        <translation>Pochylenie</translation>
+    </message>
+    <message>
+        <source>Pitch from the SimpleNavV2 frame, in degrees.</source>
+        <translation>Pochylenie z ramki SimpleNavV2, w stopniach.</translation>
+    </message>
+    <message>
+        <source>Roll</source>
+        <translation>Przechylenie</translation>
+    </message>
+    <message>
+        <source>Roll from the SimpleNavV2 frame, in degrees.</source>
+        <translation>Przechylenie z ramki SimpleNavV2, w stopniach.</translation>
+    </message>
+    <message>
+        <source>Battery (boat)</source>
+        <translation>Bateria (łódź)</translation>
+    </message>
+    <message>
+        <source>Battery charge of the boat unit, in percent.</source>
+        <translation>Poziom baterii jednostki na łodzi, w procentach.</translation>
+    </message>
+    <message>
+        <source>Battery (bridge)</source>
+        <translation>Bateria (brzeg)</translation>
+    </message>
+    <message>
+        <source>Battery charge of the shore/bridge unit, in percent.</source>
+        <translation>Poziom baterii jednostki brzegowej, w procentach.</translation>
+    </message>
+    <message>
+        <source>Signal (boat)</source>
+        <translation>Sygnał (łódź)</translation>
+    </message>
+    <message>
+        <source>Radio link signal quality at the boat unit, in percent.</source>
+        <translation>Jakość łącza radiowego jednostki na łodzi, w procentach.</translation>
+    </message>
+    <message>
+        <source>Signal (bridge)</source>
+        <translation>Sygnał (brzeg)</translation>
+    </message>
+    <message>
+        <source>Radio link signal quality at the shore/bridge unit, in percent.</source>
+        <translation>Jakość łącza radiowego jednostki brzegowej, w procentach.</translation>
     </message>
 </context>
 <context>
@@ -3492,16 +3751,6 @@
         <translation>Urządzenie</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1131"/>
-        <source>Autopilot panel</source>
-        <translation>Panel autopilota</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1131"/>
-        <source>Hide autopilot panel</source>
-        <translation>Ukryj panel autopilota</translation>
-    </message>
-    <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="1155"/>
         <source>Console</source>
         <translation>Konsola</translation>
@@ -3554,13 +3803,13 @@
     </message>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="1107"/>
-        <source>Hide extra info</source>
-        <translation>Ukryj informacje</translation>
+        <source>Hide info panel</source>
+        <translation>Ukryj panel informacji</translation>
     </message>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="1107"/>
-        <source>Extra info panel</source>
-        <translation>Panel dodatkowych informacji</translation>
+        <source>Info panel</source>
+        <translation>Panel informacji</translation>
     </message>
     <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="1179"/>
@@ -4226,8 +4475,8 @@
     </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="837"/>
-        <source>Extra info panel</source>
-        <translation>Panel dodatkowych informacji</translation>
+        <source>Info panel</source>
+        <translation>Panel informacji</translation>
     </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="838"/>
@@ -4837,8 +5086,8 @@
     </message>
     <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="22"/>
-        <source>Extra info</source>
-        <translation>Dodatkowe informacje</translation>
+        <source>Info</source>
+        <translation>Info</translation>
     </message>
     <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="25"/>
@@ -4854,11 +5103,6 @@
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="27"/>
         <source>Power off</source>
         <translation>Wyłącz zasilanie</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="23"/>
-        <source>Autopilot</source>
-        <translation>Autopilot</translation>
     </message>
     <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="20"/>

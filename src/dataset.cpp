@@ -928,6 +928,7 @@ void Dataset::addSimpleNavV2(uint8_t gnssFixType,
 
 void Dataset::addTemp(float temp_c) {
     lastTemp_ = temp_c;
+    emit lastTempChanged();
 
     {
         QWriteLocker wl(&poolMtx_);
@@ -1624,6 +1625,7 @@ void Dataset::setLastDepth(float val)
 void Dataset::setLastRangefinderDepth(float val)
 {
     lastRangefinderDepth_ = val;
+    emit lastRangefinderDepthChanged();
 }
 
 void Dataset::setLastBottomTrackDepth(float val)
@@ -1641,6 +1643,7 @@ void Dataset::setLastBottomTrackDepth(float val)
     }
 
     lastBottomTrackDepth_ = val;
+    emit lastBottomTrackDepthChanged();
 }
 
 void Dataset::calcDimensionRects(uint64_t indx)
