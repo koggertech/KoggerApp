@@ -3926,6 +3926,26 @@
 <context>
     <name>HotkeysDialog</name>
     <message>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="83"/>
+        <source>Scroll up</source>
+        <translation>Przewiń w górę</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="85"/>
+        <source>Scroll down</source>
+        <translation>Przewiń w dół</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="87"/>
+        <source>Scroll to start</source>
+        <translation>Przewiń na początek</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="89"/>
+        <source>Scroll to end</source>
+        <translation>Przewiń na koniec</translation>
+    </message>
+    <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="410"/>
         <source>Scroll to top</source>
         <translation>Do góry</translation>

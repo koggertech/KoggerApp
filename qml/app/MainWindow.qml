@@ -424,6 +424,76 @@ ApplicationWindow {
         }
     }
 
+    // Desktop keyboard scrolling (PgUp/PgDn page, Home/End to top/bottom) for any
+    // open scrollable surface: key-bindings dialog, console, settings panel.
+    // Not on Android/iOS; suppressed while a text field is focused.
+    // Reactive text-focus flag (bindings track activeFocusItem). When a text
+    // field is focused the scroll shortcuts must NOT be enabled — otherwise they
+    // would swallow Home/End/PgUp/PgDn from the field.
+    readonly property bool _textInputFocused: {
+        var f = root.activeFocusItem
+        return !!f && (f instanceof TextEdit || f instanceof TextField
+                       || f instanceof TextArea || f instanceof TextInput)
+    }
+
+    // The modal key-bindings dialog handles these keys itself (a modal Popup
+    // blocks outside ApplicationShortcuts), so it's excluded here.
+    readonly property bool _kbdScrollActive: !root.isMobilePlatform
+                                             && (workspaceStore.settingsPanelOpen
+                                                 || consoleDrawer.consoleOpen)
+                                             && !workspaceStore.activeHotkeysDialog
+                                             && !root._textInputFocused
+
+    // "settings" | "console" — the surface most recently opened or clicked into.
+    // Updated by the surfaces' onOpenChanged / interacted(); a click on the scene
+    // (outside both) does NOT change it, so keys keep going to the last active one.
+    property string _lastScrollSurface: ""
+
+    function _kbdScrollTarget() {
+        var cOpen = consoleDrawer.consoleOpen
+        var sOpen = workspaceStore.settingsPanelOpen
+        if (cOpen && sOpen)
+            return (root._lastScrollSurface === "settings") ? settingsSidebar : consoleDrawer
+        if (sOpen)
+            return settingsSidebar
+        if (cOpen)
+            return consoleDrawer
+        return null
+    }
+
+    function _kbdScroll(kind) {
+        if (root.isTextInputFocused())
+            return
+        var t = _kbdScrollTarget()
+        if (t && typeof t.kbdScroll === "function")
+            t.kbdScroll(kind)
+    }
+
+    Shortcut {
+        sequence: StandardKey.MoveToNextPage
+        context: Qt.ApplicationShortcut
+        enabled: root._kbdScrollActive
+        onActivated: root._kbdScroll("down")
+    }
+    Shortcut {
+        sequence: StandardKey.MoveToPreviousPage
+        context: Qt.ApplicationShortcut
+        enabled: root._kbdScrollActive
+        onActivated: root._kbdScroll("up")
+    }
+    Shortcut {
+        sequence: StandardKey.MoveToStartOfLine
+        context: Qt.ApplicationShortcut
+        enabled: root._kbdScrollActive
+        onActivated: root._kbdScroll("top")
+    }
+    Shortcut {
+        sequence: StandardKey.MoveToEndOfLine
+        context: Qt.ApplicationShortcut
+        enabled: root._kbdScrollActive
+        onActivated: root._kbdScroll("bottom")
+    }
+
     function openSelectedFile() {
         var filePath = workspaceStore.selectedConnectionFilePath
         if (!filePath && core && core.filePath && core.filePath.length > 0)
@@ -896,6 +966,8 @@ ApplicationWindow {
 
             anchors.fill: parent
             open: workspaceStore.settingsPanelOpen
+            onOpenChanged: if (open) root._lastScrollSurface = "settings"
+            onInteracted: root._lastScrollSurface = "settings"
             dimEnabled: !workspaceStore.effectivePushContent
             panelShadowEnabled: !workspaceStore.editableMode
             title: workspaceStore.echogramSettingsActive
@@ -1140,6 +1212,8 @@ ApplicationWindow {
             anchors.rightMargin: root.settingsInsetRight
             z: ZOrder.consolePanel
             consoleOpen: theme ? theme.consoleVisible : false
+            onConsoleOpenChanged: if (consoleOpen) root._lastScrollSurface = "console"
+            onInteracted: root._lastScrollSurface = "console"
             maxHeight: parent.height
             hotActionsRight: hotActions.visible ? hotActions.x + hotActions.width : 0
         }

@@ -3085,6 +3085,26 @@
 <context>
     <name>HotkeysDialog</name>
     <message>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="83"/>
+        <source>Scroll up</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="85"/>
+        <source>Scroll down</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="87"/>
+        <source>Scroll to start</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="89"/>
+        <source>Scroll to end</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../qml/settings/HotkeysDialog.qml" line="410"/>
         <source>Scroll to top</source>
         <translation></translation>

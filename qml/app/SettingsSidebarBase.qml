@@ -28,6 +28,7 @@ Item {
     readonly property real panelWidth: panelSizePx
 
     signal closeRequested()
+    signal interacted()          // any press inside the panel (for last-active routing)
 
     property bool showBack: false
     signal backRequested()
@@ -65,6 +66,32 @@ Item {
         property: "contentY"
         to: 0
         duration: 220
+        easing.type: Easing.OutCubic
+    }
+
+    // ── Keyboard scrolling (kind: "up"/"down"/"top"/"bottom"; driven by host) ──
+    function kbdScroll(kind) {
+        var f = subPageOpen ? subFlick : contentFlick
+        if (!f)
+            return
+        if ((kind === "up" || kind === "down") && f.contentHeight <= f.height)
+            return
+        var maxY = Math.max(0, f.contentHeight - f.height)
+        var y = kind === "top"    ? 0
+              : kind === "bottom" ? maxY
+              : kind === "down"   ? Math.min(maxY, f.contentY + f.height * 0.9)
+              :                     Math.max(0, f.contentY - f.height * 0.9)
+        kbdScrollAnim.stop()
+        kbdScrollAnim.target = f
+        kbdScrollAnim.from = f.contentY
+        kbdScrollAnim.to = y
+        kbdScrollAnim.start()
+    }
+
+    NumberAnimation {
+        id: kbdScrollAnim
+        property: "contentY"
+        duration: 180
         easing.type: Easing.OutCubic
     }
 
@@ -127,6 +154,14 @@ Item {
         HoverHandler {
             id: panelHoverGuard
             enabled: panelRoot.progress > 0.01
+        }
+
+        // Observes any press inside the panel (passive — doesn't steal from
+        // controls) to mark this panel as the last-active scroll surface.
+        TapHandler {
+            acceptedButtons: Qt.AllButtons
+            gesturePolicy: TapHandler.DragThreshold
+            onPressedChanged: if (pressed) panelRoot.interacted()
         }
 
         Rectangle {

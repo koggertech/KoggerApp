@@ -11,6 +11,8 @@ Item {
     property var store: null
     property bool consoleOpen: false
     property real maxHeight: 800
+
+    signal interacted()          // any press inside the console (for last-active routing)
     property bool maximized: false
     property real hotActionsRight: 0
 
@@ -24,6 +26,41 @@ Item {
     readonly property int _pad: Tokens.spaceLg
     readonly property int _btnSize: Math.round(34 * _s)
     readonly property bool _colorize: !!store && store.consoleColorize
+
+    // Observes any press inside the drawer (passive — doesn't steal from the
+    // log/controls) to mark the console as the last-active scroll surface.
+    TapHandler {
+        acceptedButtons: Qt.AllButtons
+        gesturePolicy: TapHandler.DragThreshold
+        onPressedChanged: if (pressed) root.interacted()
+    }
+
+    // Keyboard scrolling (kind: "up"/"down"/"top"/"bottom") — driven by MainWindow.
+    function kbdScroll(kind) {
+        var f = logList
+        if (!f)
+            return
+        if ((kind === "up" || kind === "down") && f.contentHeight <= f.height)
+            return
+        var top  = f.originY
+        var maxY = top + Math.max(0, f.contentHeight - f.height)
+        var y = kind === "top"    ? top
+              : kind === "bottom" ? maxY
+              : kind === "down"   ? Math.min(maxY, f.contentY + f.height * 0.9)
+              :                     Math.max(top, f.contentY - f.height * 0.9)
+        kbdConsoleAnim.stop()
+        kbdConsoleAnim.from = f.contentY
+        kbdConsoleAnim.to = y
+        kbdConsoleAnim.start()
+    }
+
+    NumberAnimation {
+        id: kbdConsoleAnim
+        target: logList
+        property: "contentY"
+        duration: 180
+        easing.type: Easing.OutCubic
+    }
 
     function _logEsc(s) {
         return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/ /g, "&nbsp;")
