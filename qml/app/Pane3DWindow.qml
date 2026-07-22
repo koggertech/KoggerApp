@@ -275,8 +275,8 @@ Item {
     }
 
     readonly property bool hasTransientUi: contextMenu3D.visible
-                                         || (root.scene3dView !== null
-                                             && (root.scene3dView.rulerDrawing || root.scene3dView.rulerEnabled))
+                                         || (root.scene3dView !== null && root.scene3dView.ruler
+                                             && (root.scene3dView.ruler.drawing || root.scene3dView.ruler.enabled))
                                          || rightToolbar.geometryOpen
 
     function closeTransientUi() {
@@ -289,12 +289,12 @@ Item {
         // map-layer panel lived here too, but moved to AppSettings — no
         // local transient state for it any more.
         var handled = false
-        if (root.scene3dView && (root.scene3dView.rulerDrawing || root.scene3dView.rulerEnabled)) {
-            if (root.scene3dView.rulerDrawing
-                    && typeof root.scene3dView.rulerCancelDrawing === "function") {
-                root.scene3dView.rulerCancelDrawing()
+        if (root.scene3dView && root.scene3dView.ruler && (root.scene3dView.ruler.drawing || root.scene3dView.ruler.enabled)) {
+            if (root.scene3dView.ruler.drawing
+                    && typeof root.scene3dView.ruler.cancelDrawing === "function") {
+                root.scene3dView.ruler.cancelDrawing()
             }
-            root.scene3dView.rulerEnabled = false
+            root.scene3dView.ruler.enabled = false
             handled = true
         }
         if (rightToolbar.geometryOpen) {
@@ -344,7 +344,7 @@ Item {
                 return
             }
             // Ruler uses the slide-out pill (✓/✗) — RMB/long-tap shows no menu.
-            if (v && (v.rulerEnabled || v.rulerDrawing)) {
+            if (v && v.ruler && (v.ruler.enabled || v.ruler.drawing)) {
                 return
             }
             // Box-selection finished → apply active tool to selected vertices.

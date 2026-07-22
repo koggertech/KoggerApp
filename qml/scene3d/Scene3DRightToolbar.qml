@@ -24,8 +24,8 @@ Item {
 
     function dismissRuler() {
         if (!rulerControl.menuOpen) return
-        if (rulerControl.hasGeometry) { if (root.view) root.view.rulerFinishDrawing() }
-        else                         { if (root.view) root.view.clearRuler() }
+        if (rulerControl.hasGeometry) { if (root.view && root.view.ruler) root.view.ruler.finishDrawing() }
+        else                         { if (root.view && root.view.ruler) root.view.ruler.clear() }
         rulerControl._setOpen(false)
     }
 
@@ -59,8 +59,8 @@ Item {
     }
 
     function cancelRuler() {
-        if (root.view && root.view.rulerEnabled) {
-            root.view.clearRuler()
+        if (root.view && root.view.ruler && root.view.ruler.enabled) {
+            root.view.ruler.clear()
             Scene3dToolBarController.onRulerModeChanged(false)
         }
     }
@@ -240,12 +240,12 @@ Item {
             Layout.preferredWidth: root.buttonSize
             Layout.preferredHeight: root.buttonSize
 
-            readonly property bool menuOpen: root.view ? root.view.rulerEnabled : false
+            readonly property bool menuOpen: (root.view && root.view.ruler) ? root.view.ruler.enabled : false
             readonly property real _s: theme ? theme.resCoeff : 1.0
             readonly property int _pad: Math.round(5 * _s)
             readonly property int _gap: Math.round(6 * AppPalette.scale)
             readonly property real _openW: _pad * 2 + root.buttonSize * 2 + _gap
-            readonly property bool hasGeometry: root.view ? root.view.rulerHasGeometry : false
+            readonly property bool hasGeometry: (root.view && root.view.ruler) ? root.view.ruler.hasGeometry : false
 
             function _setOpen(open) {
                 Scene3dToolBarController.onRulerModeChanged(open)
@@ -294,7 +294,7 @@ Item {
                         toolTipText: qsTr("Save ruler")
                         enabled: rulerControl.hasGeometry
                         onClicked: {
-                            if (root.view) root.view.rulerFinishDrawing()
+                            if (root.view && root.view.ruler) root.view.ruler.finishDrawing()
                             rulerControl._setOpen(false)
                         }
                     }
@@ -309,7 +309,7 @@ Item {
                         borderColor: AppPalette.border
                         toolTipText: qsTr("Delete ruler")
                         onClicked: {
-                            if (root.view) root.view.clearRuler()
+                            if (root.view && root.view.ruler) root.view.ruler.clear()
                             rulerControl._setOpen(false)
                         }
                     }

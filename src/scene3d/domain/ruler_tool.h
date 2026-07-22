@@ -20,16 +20,15 @@ public:
         bool isEnabled() const;
 
         void clear();
-        void addPoint(const QVector3D& p);
-        void setPreviewPoint(const QVector3D& p);
-        void clearPreview();
+        void setGeometry(const QVector<QVector3D>& vertices,
+                         const QVector<QVector<QVector3D>>& lineStrips,
+                         const QVector<QVector3D>& midPoints,
+                         const QVector<double>& segMeters);
         void setSelected(bool selected);
         bool isSelected() const;
 
-        int pointsCount() const;
-
-        double totalDistanceXY(bool includePreview) const;
-        QVector<QVector3D> polylinePoints(bool includePreview) const;
+        int vertexCount() const;
+        QVector<QVector<QVector3D>> lineStrips() const;
 
         void render(QOpenGLFunctions* ctx,
                     const QMatrix4x4& model,
@@ -39,9 +38,10 @@ public:
 
     private:
         bool enabled_{false};
-        QVector<QVector3D> points_;
-        bool previewActive_{false};
-        QVector3D previewPoint_{};
+        QVector<QVector3D> vertices_;
+        QVector<QVector<QVector3D>> lineStrips_;
+        QVector<QVector3D> midPoints_;
+        QVector<double> segMeters_;
         bool selected_{false};
 
         QColor lineColor_{45, 64, 89, 255};
@@ -56,14 +56,15 @@ public:
     bool isEnabled() const;
 
     void clear();
-    void addPoint(const QVector3D& p);
-    void setPreviewPoint(const QVector3D& p);
-    void clearPreview();
+    void setGeometry(const QVector<QVector3D>& vertices,
+                     const QVector<QVector<QVector3D>>& lineStrips,
+                     const QVector<QVector3D>& midPoints,
+                     const QVector<double>& segMeters);
     void setSelected(bool selected);
     bool isSelected() const;
 
-    int pointsCount() const;
-    QVector<QVector3D> polylinePoints(bool includePreview = false) const;
+    int vertexCount() const;
+    QVector<QVector<QVector3D>> lineStrips() const;
 
 private:
     SceneObjectType type() const override { return SceneObjectType::Unknown; }

@@ -355,14 +355,15 @@ void GraphicsScene3dRenderer::drawObjects()
             glDisable(GL_DEPTH_TEST);
         }
 
-        //-----------Overlays that should work in any camera/reference state-------------
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        geoJsonLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
-        rulerToolRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
-        glDisable(GL_BLEND);
     }
+
+    //-----------Overlays that should work in any camera/reference state-------------
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    geoJsonLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+    rulerToolRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+    glDisable(GL_BLEND);
 
     const bool scaleBarVisible = scaleBar_ && m_camera.getIsPerspective();
 
