@@ -57,7 +57,7 @@ property var echogramSettingsPlot: null     // the Plot2D whose gear was clicked
 property int echogramSettingsLeafId: -1     // leaf of that plot (for focus dimming)
 property string echogramSettingsTitle: ""   // header title on the sub-page
 
-// True when a settings-internal drill-in (quickActions/extraInfo/uiSaving/tgc)
+// True when a settings-internal drill-in (quickActions/uiSaving/tgc/console)
 // is open. Echogram has its own flag (echogramSettingsActive) because it is
 // pane-scoped — it drives focus dimming and a dynamic title.
 property bool settingsSubPageActive: false
@@ -101,7 +101,7 @@ property bool quickActionConnectionStatusEnabled: true
 property bool quickActionLoggingEnabled: true
 property bool quickActionBottomTrackEnabled: true
 property bool quickActionProfilesEnabled: true
-property bool quickActionExtraInfoEnabled: true
+property bool quickActionWidgetsEnabled: true
 property bool quickActionConsoleEnabled: true
 property bool quickActionSecondWindowEnabled: true
 property bool quickActionPowerOffEnabled: false
@@ -109,7 +109,7 @@ property bool quickActionPowerOffEnabled: false
 property string quickActionDraggingKey: ""
 
 readonly property var quickActionKeys: {
-    var base = ["connections", "logging", "layouts", "bottomTrack", "extraInfo", "console", "profiles"]
+    var base = ["connections", "logging", "layouts", "bottomTrack", "widgets", "console", "profiles"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
     if (Qt.platform.os === "linux" || (typeof manualTesting !== "undefined" && manualTesting === true))
@@ -122,7 +122,7 @@ property var quickActionOrderModel: ListModel {
     ListElement { key: "logging" }
     ListElement { key: "layouts" }
     ListElement { key: "bottomTrack" }
-    ListElement { key: "extraInfo" }
+    ListElement { key: "widgets" }
     ListElement { key: "console" }
     ListElement { key: "profiles" }
     ListElement { key: "secondWindow" }
@@ -142,8 +142,8 @@ function normalizeQuickActionOrder(list) {
         if (out.indexOf(quickActionKeys[j]) === -1) {
             if (quickActionKeys[j] === "logging" && out.indexOf("connections") !== -1)
                 out.splice(out.indexOf("connections") + 1, 0, "logging")   // keep logging right after devices
-            else if (quickActionKeys[j] === "console" && out.indexOf("extraInfo") !== -1)
-                out.splice(out.indexOf("extraInfo") + 1, 0, "console")   // keep console right after info
+            else if (quickActionKeys[j] === "console" && out.indexOf("widgets") !== -1)
+                out.splice(out.indexOf("widgets") + 1, 0, "console")   // keep console right after widgets
             else
                 out.push(quickActionKeys[j])
         }
@@ -388,10 +388,41 @@ property bool profilesPopupOpen: false
 property var settingsProfiles: []
 property var profilesPopupState: ({ x: -1, y: -1 })
 
-property var extraInfoPopupState: ({ x: -1, y: -1 })
-property bool extraInfoVisible: false
-property bool extraInfoTransparencyEnabled: false
-property real extraInfoOpacity: 50   // percent; used only when extraInfoTransparencyEnabled
+property var  widgets: []
+readonly property bool hasWidgets: widgets.length > 0
+property var  widgetShownMap: ({})
+property var  widgetInstances: ({})
+property int  widgetEditIndex: -1
+property int  widgetEditStep: 1
+property var  widgetDragLayer: null
+
+property int  widgetDraftCols: 1
+property int  widgetDraftRows: 1
+property int  widgetDraftTransparency: 0
+property real widgetDraftScale: 1.0
+property var  widgetDraftCells: []
+property string widgetDraftRep: "value"
+readonly property var widgetScaleSteps: [0.75, 1.0, 1.25, 1.5, 2.0, 2.5]
+
+function widgetDraftSetScale(s) {
+    var best = widgetScaleSteps[0]
+    var bd = Math.abs(s - best)
+    for (var i = 1; i < widgetScaleSteps.length; ++i) {
+        var d = Math.abs(s - widgetScaleSteps[i])
+        if (d < bd) { bd = d; best = widgetScaleSteps[i] }
+    }
+    widgetDraftScale = best
+}
+
+property int  widgetDropRow: -1
+property int  widgetDropCol: -1
+property int  widgetDropSpan: 1
+property bool widgetDropValid: false
+property bool widgetOverPalette: false
+property int  widgetHoverCols: 0
+property int  widgetHoverRows: 0
+
+readonly property bool widgetEditorActive: settingsSubPageActive && settingsSubPageKind === "widgetEdit"
 
 // Local clock of the machine running the app (NOT device/GNSS time), ticking every
 // second as HH:MM:SS. Empty (invalid) when the system clock is unset (year < 2001) —
@@ -411,48 +442,257 @@ property Timer _systemClockTimer: Timer {
 
 property var popupDocks: ({})
 
-// Info-panel per-field visibility. Stored as one JSON blob (like popupDocks), not
-// N bool properties. Missing key -> extraInfoFieldDefaults. Bindings that call
-// extraInfoFieldEnabled() react because the getter reads extraInfoFieldsMap, and
-// setExtraInfoFieldEnabled() reassigns the whole map object.
-readonly property var extraInfoFieldDefaults: ({
-    "time": true,
-    "depth": true, "speed": true, "coord": true,
-    "selPoint": false,
-    "temp": false, "rfDepth": false, "btDepth": false,
-    "apVoltage": false, "apCurrent": false, "apSpeed": false, "apMode": false, "apArm": false,
-    "navFix": false, "navSats": false, "navTime": false, "navOffset": false,
-    "navLat": false, "navLon": false, "navCourse": false, "navVelocity": false,
-    "navYaw": false, "navPitch": false, "navRoll": false,
-    "bsBatBoat": false, "bsBatBridge": false, "bsSigBoat": false, "bsSigBridge": false
-})
-property var extraInfoFieldsMap: ({})
-
-function extraInfoFieldEnabled(key) {
-    if (extraInfoFieldsMap[key] !== undefined)
-        return extraInfoFieldsMap[key] === true
-    return extraInfoFieldDefaults[key] === true
+function widgetIndexById(id) {
+    if (!id) return -1
+    for (var i = 0; i < widgets.length; ++i)
+        if (widgets[i] && widgets[i].id === id)
+            return i
+    return -1
 }
 
-function setExtraInfoFieldEnabled(key, value) {
+function widgetById(id) {
+    var i = widgetIndexById(id)
+    return i >= 0 ? widgets[i] : null
+}
+
+function generateWidgetId() {
+    var id = ""
+    do {
+        id = "w_" + Math.floor((1 + Math.random()) * 0x10000000).toString(16)
+    } while (widgetIndexById(id) >= 0)
+    return id
+}
+
+function normalizeWidgetDef(raw) {
+    if (!raw || typeof raw !== "object")
+        return null
+    var cols = Math.round(raw.cols)
+    var rows = Math.round(raw.rows)
+    if (!(cols >= 1 && cols <= 3) || !(rows >= 1 && rows <= 4))
+        return null
+    var name = (typeof raw.name === "string") ? raw.name : ""
+    var transparency = (typeof raw.transparency === "number" && isFinite(raw.transparency))
+                       ? Math.max(0, Math.min(100, Math.round(raw.transparency))) : 0
+    var occupied = {}
+    var cells = []
+    var srcCells = Array.isArray(raw.cells) ? raw.cells : []
+    for (var i = 0; i < srcCells.length; ++i) {
+        var c = srcCells[i]
+        if (!c || typeof c !== "object") continue
+        var row = Math.round(c.row)
+        var col = Math.round(c.col)
+        if (!(row >= 0 && row < rows) || !(col >= 0 && col < cols)) continue
+        if (!DataFieldCatalog.hasField(c.field)) continue
+        var rep = (c.rep === "labelValueRow" || c.rep === "labelValueStacked") ? c.rep : "value"
+        var span = (rep === "labelValueRow") ? 2 : 1
+        if (span === 2 && col + 1 >= cols) continue
+        var k0 = row + "," + col
+        var k1 = row + "," + (col + 1)
+        if (occupied[k0]) continue
+        if (span === 2 && occupied[k1]) continue
+        occupied[k0] = true
+        if (span === 2) occupied[k1] = true
+        cells.push({ row: row, col: col, field: String(c.field), rep: rep })
+    }
+    var id = (typeof raw.id === "string" && raw.id.length) ? raw.id : ""
+    return { id: id, name: name, cols: cols, rows: rows, transparency: transparency, cells: cells }
+}
+
+function saveWidgets() {
+    layoutStore.widgetsJson = JSON.stringify(widgets)
+}
+
+function loadWidgets() {
+    var parsed = []
+    if (layoutStore.widgetsJson && layoutStore.widgetsJson !== "") {
+        try { parsed = JSON.parse(layoutStore.widgetsJson) } catch (e) { parsed = [] }
+    }
+    var next = []
+    if (Array.isArray(parsed)) {
+        for (var i = 0; i < parsed.length; ++i) {
+            var def = normalizeWidgetDef(parsed[i])
+            if (!def) continue
+            if (!def.id || def.id.length === 0) def.id = generateWidgetId()
+            next.push(def)
+        }
+    }
+    widgets = next
+    saveWidgets()
+}
+
+function saveWidget(def) {
+    var norm = normalizeWidgetDef(def)
+    if (!norm) return ""
+    var next = widgets.slice(0)
+    if (widgetEditIndex >= 0 && widgetEditIndex < next.length) {
+        norm.id = next[widgetEditIndex].id
+        next[widgetEditIndex] = norm
+    } else {
+        norm.id = generateWidgetId()
+        next.push(norm)
+    }
+    widgets = next
+    saveWidgets()
+    widgetEditIndex = -1
+    return norm.id
+}
+
+function deleteWidgetAt(index) {
+    if (index < 0 || index >= widgets.length) return
+    var id = widgets[index].id
+    var next = []
+    for (var i = 0; i < widgets.length; ++i)
+        if (i !== index) next.push(widgets[i])
+    widgets = next
+    saveWidgets()
+    if (id && widgetInstances[id]) {
+        var m = {}
+        for (var k in widgetInstances) if (k !== id) m[k] = widgetInstances[k]
+        widgetInstances = m
+        saveWidgetInstances()
+    }
+    if (id && widgetShownMap[id] !== undefined) {
+        var sm = {}
+        for (var sk in widgetShownMap) if (sk !== id) sm[sk] = widgetShownMap[sk]
+        widgetShownMap = sm
+        saveWidgetShown()
+    }
+}
+
+function widgetInstance(id) {
+    var d = (widgetInstances && id) ? widgetInstances[id] : null
+    return {
+        x: (d && typeof d.x === "number") ? d.x : -1,
+        y: (d && typeof d.y === "number") ? d.y : -1,
+        scale: (d && typeof d.scale === "number" && d.scale > 0) ? d.scale : 1.0
+    }
+}
+
+function _writeWidgetInstance(id, inst) {
+    if (!id) return
     var m = {}
-    for (var k in extraInfoFieldsMap)
-        m[k] = extraInfoFieldsMap[k]
-    m[key] = value
-    extraInfoFieldsMap = m
-    layoutStore.extraInfoFieldsJson = JSON.stringify(m)
+    for (var k in widgetInstances) m[k] = widgetInstances[k]
+    m[id] = inst
+    widgetInstances = m
+    saveWidgetInstances()
 }
 
-function resetExtraInfoFields() {
-    extraInfoFieldsMap = {}
-    layoutStore.extraInfoFieldsJson = "{}"
+function widgetShown(id) { return !!(id && widgetShownMap[id] === true) }
+
+function setWidgetShown(id, shown) {
+    if (!id) return
+    var m = {}
+    for (var k in widgetShownMap) m[k] = widgetShownMap[k]
+    m[id] = (shown === true)
+    widgetShownMap = m
+    saveWidgetShown()
+}
+
+function toggleWidgetShown(id) { setWidgetShown(id, !widgetShown(id)) }
+
+function widgetScale(id) { return widgetInstance(id).scale }
+
+function setWidgetScale(id, scale) {
+    var inst = widgetInstance(id)
+    inst.scale = clamp(scale, 0.75, 2.5)
+    _writeWidgetInstance(id, inst)
+}
+
+function widgetPosition(id, popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    var inst = widgetInstance(id)
+    var casc = (inst.x < 0 && inst.y < 0 && widgetIndexById(id) > 0) ? widgetIndexById(id) * 28 : 0
+    var x = (inst.x >= 0) ? inst.x : Math.round((b.minX + b.maxX) / 2) + casc
+    var y = (inst.y >= 0) ? inst.y : b.minY + casc
+    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
+}
+
+// Bounds that also keep the popup clear of the open settings panel strip, so a
+// widget shown while settings is open pops into the visible area instead of hiding behind it.
+function widgetRevealBounds(popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    if (settingsPanelOpen && settingsPanelSizePx > 0) {
+        var areaWidth = windowWidth > 0 ? windowWidth : workspaceWidth
+        var nb = { minX: b.minX, maxX: b.maxX, minY: b.minY, maxY: b.maxY }
+        if (settingsSide === "left")
+            nb.minX = Math.max(b.minX, settingsPanelSizePx + popupMarginPx)
+        else if (settingsSide === "right")
+            nb.maxX = Math.min(b.maxX, areaWidth - settingsPanelSizePx - popupWidth - popupMarginPx)
+        if (nb.maxX >= nb.minX)
+            return nb
+    }
+    return b
+}
+
+function setWidgetPosition(id, x, y, popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    var inst = widgetInstance(id)
+    inst.x = clamp(x, b.minX, b.maxX)
+    inst.y = clamp(y, b.minY, b.maxY)
+    _writeWidgetInstance(id, inst)
+}
+
+function saveWidgetInstances() {
+    layoutStore.widgetInstancesJson = JSON.stringify(widgetInstances)
+}
+
+function saveWidgetShown() {
+    layoutStore.widgetShownJson = JSON.stringify(widgetShownMap)
+}
+
+function loadWidgetInstances() {
+    var parsed = {}
+    if (layoutStore.widgetInstancesJson && layoutStore.widgetInstancesJson !== "") {
+        try { parsed = JSON.parse(layoutStore.widgetInstancesJson) } catch (e) { parsed = {} }
+    }
+    var m = {}
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        for (var k in parsed) {
+            var d = parsed[k]
+            if (!d || typeof d !== "object") continue
+            m[k] = {
+                x: (typeof d.x === "number") ? d.x : -1,
+                y: (typeof d.y === "number") ? d.y : -1,
+                scale: (typeof d.scale === "number" && d.scale > 0) ? d.scale : 1.0
+            }
+        }
+    }
+    widgetInstances = m
+}
+
+function loadWidgetShown() {
+    var parsed = {}
+    if (layoutStore.widgetShownJson && layoutStore.widgetShownJson !== "") {
+        try { parsed = JSON.parse(layoutStore.widgetShownJson) } catch (e) { parsed = {} }
+    }
+    var m = {}
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        for (var k in parsed)
+            m[k] = parsed[k] === true
+    }
+    widgetShownMap = m
+}
+
+function _reconcileWidgetMaps() {
+    var alive = {}
+    for (var i = 0; i < widgets.length; ++i)
+        if (widgets[i] && widgets[i].id) alive[widgets[i].id] = true
+    var mi = {}, changedI = false
+    for (var ki in widgetInstances) {
+        if (alive[ki]) mi[ki] = widgetInstances[ki]
+        else changedI = true
+    }
+    if (changedI) { widgetInstances = mi; saveWidgetInstances() }
+    var ms = {}, changedS = false
+    for (var ks in widgetShownMap) {
+        if (alive[ks]) ms[ks] = widgetShownMap[ks]
+        else changedS = true
+    }
+    if (changedS) { widgetShownMap = ms; saveWidgetShown() }
 }
 
 onBottomTrackEditorOpenChanged: layoutStore.bottomTrackEditorOpenStored = bottomTrackEditorOpen
 onProfilesPopupOpenChanged: layoutStore.profilesPopupOpenStored = profilesPopupOpen
-onExtraInfoVisibleChanged:     layoutStore.extraInfoVisibleStored = extraInfoVisible
-onExtraInfoTransparencyEnabledChanged: layoutStore.extraInfoTransparencyEnabledStored = extraInfoTransparencyEnabled
-onExtraInfoOpacityChanged:     layoutStore.extraInfoOpacityStored = extraInfoOpacity
 
 readonly property real splitterThickness: 0
 readonly property real minPaneSize: 120
@@ -841,7 +1081,7 @@ property Settings layoutStore: Settings {
     property bool quickActionLoggingEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
-    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,extraInfo,console,profiles,secondWindow,powerOff"
+    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,widgets,console,profiles,secondWindow,powerOff"
     property string rememberedLinksJson: "[]"
     property string selectedConnectionFilePathStored: ""
     property string layoutsJson: "[]"
@@ -859,12 +1099,10 @@ property Settings layoutStore: Settings {
     property string profilesPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool profilesPopupOpenStored: false
     property bool bottomTrackEditorOpenStored: false
-    property string extraInfoPopupStateJson: "{\"x\":-1,\"y\":-1}"
-    property bool extraInfoVisibleStored: false
-    property bool extraInfoTransparencyEnabledStored: false
-    property real extraInfoOpacityStored: 50
-    property string extraInfoFieldsJson: "{}"
-    property bool quickActionExtraInfoEnabledStored: true
+    property string widgetsJson: "[]"
+    property string widgetInstancesJson: "{}"
+    property string widgetShownJson: "{}"
+    property bool quickActionWidgetsEnabledStored: true
     property bool quickActionConsoleEnabledStored: true
     property bool quickActionSecondWindowEnabledStored: true
     property bool quickActionPowerOffEnabledStored: false
@@ -1126,7 +1364,162 @@ function _openSettingsSubPage(kind) {
 }
 
 function openQuickActionsSettings() { _openSettingsSubPage("quickActions") }
-function openExtraInfoSettings()    { _openSettingsSubPage("extraInfo") }
+function openWidgetSettings()       { openAppSettingsAtGroup("app.widgets") }
+function openWidgetCreateSettings() { widgetEditIndex = -1; widgetDraftReset(); widgetEditStep = 1; _openSettingsSubPage("widgetEdit") }
+function openWidgetEditSettings(index) { widgetEditIndex = index; widgetDraftReset(); widgetEditStep = 2; _openSettingsSubPage("widgetEdit") }
+
+function widgetDraftReset() {
+    if (widgetEditIndex >= 0 && widgetEditIndex < widgets.length) {
+        var d = widgets[widgetEditIndex]
+        widgetDraftCols = d.cols
+        widgetDraftRows = d.rows
+        widgetDraftTransparency = (typeof d.transparency === "number") ? d.transparency : 0
+        widgetDraftScale = widgetScale(d.id)
+        widgetDraftCells = JSON.parse(JSON.stringify(d.cells))
+    } else {
+        widgetDraftCols = 1
+        widgetDraftRows = 1
+        widgetDraftTransparency = 0
+        widgetDraftScale = 1.0
+        widgetDraftCells = []
+    }
+    widgetDraftRep = "value"
+    widgetDropRow = -1
+    widgetDropCol = -1
+    widgetDropSpan = 1
+    widgetOverPalette = false
+    widgetHoverCols = 0
+    widgetHoverRows = 0
+}
+
+function widgetDraftIsPlaced(field) {
+    for (var i = 0; i < widgetDraftCells.length; ++i)
+        if (widgetDraftCells[i].field === field) return true
+    return false
+}
+
+function widgetDraftOccupantAt(r, c) {
+    for (var i = 0; i < widgetDraftCells.length; ++i) {
+        var cell = widgetDraftCells[i]
+        if (cell.row === r && cell.col === c)
+            return { kind: "anchor", cell: cell }
+        if (cell.rep === "labelValueRow" && cell.row === r && cell.col === c - 1)
+            return { kind: "tail", cell: cell }
+    }
+    return null
+}
+
+function _wDraftCoordFree(r, c, ignoreField) {
+    var occ = widgetDraftOccupantAt(r, c)
+    if (!occ) return true
+    return occ.cell.field === ignoreField
+}
+
+function _wDraftCellCovers(cell, r, c) {
+    if (cell.row !== r) return false
+    if (cell.col === c) return true
+    if (cell.rep === "labelValueRow" && cell.col === c - 1) return true
+    return false
+}
+
+// Drop validity = footprint fits the grid. Occupied cells are allowed — the drop
+// replaces whatever is there (see widgetDraftAdd). Only out-of-grid is rejected.
+function widgetDraftCanDrop(r, c, rep, ignoreField) {
+    if (r < 0 || r >= widgetDraftRows || c < 0 || c >= widgetDraftCols) return false
+    var span = rep === "labelValueRow" ? 2 : 1
+    if (span === 2 && c + 1 >= widgetDraftCols) return false
+    return true
+}
+
+// Occupancy-aware fit (used by tap-to-change-type, which must not overlap others).
+function _widgetDraftFits(r, c, rep, ignoreField) {
+    if (!widgetDraftCanDrop(r, c, rep, ignoreField)) return false
+    var span = rep === "labelValueRow" ? 2 : 1
+    if (!_wDraftCoordFree(r, c, ignoreField)) return false
+    if (span === 2 && !_wDraftCoordFree(r, c + 1, ignoreField)) return false
+    return true
+}
+
+function widgetDraftAdd(r, c, field, rep) {
+    var span = rep === "labelValueRow" ? 2 : 1
+    var next = []
+    for (var i = 0; i < widgetDraftCells.length; ++i) {
+        var cell = widgetDraftCells[i]
+        if (cell.field === field) continue
+        if (_wDraftCellCovers(cell, r, c)) continue
+        if (span === 2 && _wDraftCellCovers(cell, r, c + 1)) continue
+        next.push(cell)
+    }
+    next.push({ row: r, col: c, field: field, rep: rep })
+    widgetDraftCells = next
+}
+
+function widgetDraftRemove(field) {
+    var next = []
+    for (var i = 0; i < widgetDraftCells.length; ++i)
+        if (widgetDraftCells[i].field !== field) next.push(widgetDraftCells[i])
+    widgetDraftCells = next
+}
+
+function widgetDraftCycle(field) {
+    var order = widgetDraftCols >= 2 ? ["value", "labelValueRow", "labelValueStacked"]
+                                     : ["value", "labelValueStacked"]
+    for (var i = 0; i < widgetDraftCells.length; ++i) {
+        if (widgetDraftCells[i].field !== field) continue
+        var cur = order.indexOf(widgetDraftCells[i].rep)
+        for (var s = 1; s <= order.length; ++s) {
+            var cand = order[(cur + s) % order.length]
+            if (_widgetDraftFits(widgetDraftCells[i].row, widgetDraftCells[i].col, cand, field)) {
+                var next = widgetDraftCells.slice()
+                next[i] = { row: widgetDraftCells[i].row, col: widgetDraftCells[i].col, field: field, rep: cand }
+                widgetDraftCells = next
+                return
+            }
+        }
+        return
+    }
+}
+
+function widgetDraftSetSize(c, r) {
+    if (c !== widgetDraftCols || r !== widgetDraftRows)
+        widgetDraftScale = 1.0
+    widgetDraftCols = c
+    widgetDraftRows = r
+    var norm = normalizeWidgetDef({ cols: c, rows: r, cells: widgetDraftCells })
+    widgetDraftCells = norm ? norm.cells : []
+    if (widgetDraftRep === "labelValueRow" && widgetDraftCols < 2)
+        widgetDraftRep = "value"
+}
+
+function widgetDraftCommitFromPalette(field, rep) {
+    if (widgetDropRow >= 0 && widgetDropCol >= 0 && widgetDraftCanDrop(widgetDropRow, widgetDropCol, rep, field))
+        widgetDraftAdd(widgetDropRow, widgetDropCol, field, rep)
+    widgetDropRow = -1
+    widgetDropCol = -1
+    widgetOverPalette = false
+}
+
+function widgetDraftCommitMoveOrRemove(field, rep) {
+    if (widgetDropRow >= 0 && widgetDropCol >= 0 && widgetDraftCanDrop(widgetDropRow, widgetDropCol, rep, field))
+        widgetDraftAdd(widgetDropRow, widgetDropCol, field, rep)
+    else if (widgetOverPalette)
+        widgetDraftRemove(field)
+    widgetDropRow = -1
+    widgetDropCol = -1
+    widgetOverPalette = false
+}
+
+function widgetDraftSave() {
+    var isCreate = widgetEditIndex < 0
+    var id = saveWidget({ cols: widgetDraftCols, rows: widgetDraftRows,
+                          transparency: widgetDraftTransparency, cells: widgetDraftCells })
+    if (id) {
+        setWidgetScale(id, widgetDraftScale)
+        if (isCreate)
+            setWidgetShown(id, true)
+    }
+    closeActiveSettingsSubPage()
+}
 function openAimPanelSettings()     { _openSettingsSubPage("aimPanel") }
 function openUiSavingSettings()     { _openSettingsSubPage("uiSaving") }
 function openTgcSettings()          { _openSettingsSubPage("tgc") }
@@ -1711,31 +2104,6 @@ function loadProfilesPopupPreferences() {
         try { parsed = JSON.parse(layoutStore.profilesPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
     }
     profilesPopupState = {
-        x: (typeof parsed.x === "number") ? parsed.x : -1,
-        y: (typeof parsed.y === "number") ? parsed.y : -1
-    }
-}
-
-function extraInfoPopupPosition(popupWidth, popupHeight) {
-    var b = _btEditPopupBounds(popupWidth, popupHeight)
-    var s = extraInfoPopupState || { x: -1, y: -1 }
-    var x = (typeof s.x === "number" && s.x >= 0) ? s.x : Math.round((b.minX + b.maxX) / 2)
-    var y = (typeof s.y === "number" && s.y >= 0) ? s.y : b.minY
-    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
-}
-
-function setExtraInfoPopupPosition(x, y, popupWidth, popupHeight) {
-    var b = _btEditPopupBounds(popupWidth, popupHeight)
-    extraInfoPopupState = { x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) }
-    layoutStore.extraInfoPopupStateJson = JSON.stringify(extraInfoPopupState)
-}
-
-function loadExtraInfoPopupPreferences() {
-    var parsed = { x: -1, y: -1 }
-    if (layoutStore.extraInfoPopupStateJson && layoutStore.extraInfoPopupStateJson !== "") {
-        try { parsed = JSON.parse(layoutStore.extraInfoPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
-    }
-    extraInfoPopupState = {
         x: (typeof parsed.x === "number") ? parsed.x : -1,
         y: (typeof parsed.y === "number") ? parsed.y : -1
     }
@@ -2839,7 +3207,7 @@ function saveLayoutState() {
     layoutStore.quickActionLoggingEnabledStored = quickActionLoggingEnabled
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
-    layoutStore.quickActionExtraInfoEnabledStored = quickActionExtraInfoEnabled
+    layoutStore.quickActionWidgetsEnabledStored = quickActionWidgetsEnabled
     layoutStore.quickActionConsoleEnabledStored = quickActionConsoleEnabled
     layoutStore.quickActionSecondWindowEnabledStored = quickActionSecondWindowEnabled
     layoutStore.quickActionPowerOffEnabledStored = quickActionPowerOffEnabled
@@ -2858,7 +3226,7 @@ function restoreLayoutState() {
     quickActionLoggingEnabled = layoutStore.quickActionLoggingEnabledStored
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
-    quickActionExtraInfoEnabled = layoutStore.quickActionExtraInfoEnabledStored
+    quickActionWidgetsEnabled = layoutStore.quickActionWidgetsEnabledStored
     quickActionConsoleEnabled = layoutStore.quickActionConsoleEnabledStored
     quickActionSecondWindowEnabled = layoutStore.quickActionSecondWindowEnabledStored
     quickActionPowerOffEnabled = layoutStore.quickActionPowerOffEnabledStored
@@ -4058,14 +4426,11 @@ function loadPersistedUiState() {
     loadProfilesPopupPreferences()
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
     bottomTrackEditorOpen = layoutStore.bottomTrackEditorOpenStored
-    loadExtraInfoPopupPreferences()
     loadPopupDocks()
-    extraInfoVisible = layoutStore.extraInfoVisibleStored
-    extraInfoTransparencyEnabled = layoutStore.extraInfoTransparencyEnabledStored
-    extraInfoOpacity = layoutStore.extraInfoOpacityStored
-    var storedFields = {}
-    try { storedFields = JSON.parse(layoutStore.extraInfoFieldsJson || "{}") } catch (e) { storedFields = {} }
-    extraInfoFieldsMap = storedFields
+    loadWidgets()
+    loadWidgetInstances()
+    loadWidgetShown()
+    _reconcileWidgetMaps()
     return restoreLayoutState()
 }
 

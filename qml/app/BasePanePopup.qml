@@ -365,7 +365,7 @@ Item {
         collapsedToggled(collapsed)
     }
 
-    readonly property var resizeSnapSizes: [
+    property var resizeSnapSizes: [
         Qt.size(320, 240),
         Qt.size(480, 360),
         Qt.size(640, 480),
@@ -569,6 +569,7 @@ Item {
             id: bodyDrag
             target: null
             enabled: root.dragAnywhere && root.dragEnabled && !root.fullscreenMode && !root.collapsed
+                     && !(root.resizeEnabled && (resizeHover.hovered || resizeDrag.active))
             xAxis.enabled: true
             yAxis.enabled: true
             onActiveChanged: active ? root._beginDrag() : root._endDrag()

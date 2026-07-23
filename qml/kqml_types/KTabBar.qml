@@ -12,6 +12,7 @@ Item {
     property int verticalPadding: Math.round(4 * AppPalette.scale)
     property int cornerRadius: Math.round(8 * AppPalette.scale)
     property int fontPixelSize: Tokens.fontLg
+    property color trackColor: AppPalette.bg
     property bool dragSelectEnabled: true
     signal valueSelected(var value)
 
@@ -129,7 +130,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: root.cornerRadius
-        color: AppPalette.bg
+        color: root.trackColor
         border.width: (root.activeFocus && !root._ringSuppressed) ? 2 : Tokens.cardBorderWidth
         border.color: (root.activeFocus && !root._ringSuppressed) ? AppPalette.accentBorder : AppPalette.border
     }

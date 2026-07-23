@@ -554,12 +554,6 @@ Column {
 
         NavButton {
             width: parent.width
-            text: qsTr("Info panel")
-            onClicked: if (root.store) root.store.openExtraInfoSettings()
-        }
-
-        NavButton {
-            width: parent.width
             text: qsTr("UI Saving")
             onClicked: if (root.store) root.store.openUiSavingSettings()
         }
@@ -639,6 +633,76 @@ Column {
             width: parent.width
             text: qsTr("Create layout")
             onClicked: root.store.openCreateLayoutSettings()
+        }
+    }
+
+    // ── Widgets ───────────────────────────────────────────────────────────────
+
+    SettingsGroup {
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Widgets")
+        description: qsTr("On-scene data widgets: grid size and drag-in fields.")
+        stateStore: root.store
+        stateKey: "app.widgets"
+
+        Repeater {
+            model: root.store.widgets.length
+            delegate: Item {
+                id: widgetRow
+                required property int index
+                readonly property int widgetIndex: index
+                readonly property var def: (widgetIndex >= 0 && widgetIndex < root.store.widgets.length) ? root.store.widgets[widgetIndex] : null
+                width: parent.width; height: widgetCardView.implicitHeight
+
+                WidgetCard {
+                    id: widgetCardView
+                    anchors.fill: parent
+                    def: widgetRow.def
+                    title: qsTr("Widget %1").arg(widgetRow.widgetIndex + 1)
+                    showText: true
+                    selectionMode: true
+                    selected: !!(root.store && widgetRow.def && root.store.widgetShown(widgetRow.def.id))
+                    extraHovered: widgetDeleteBtn.hovered || widgetEditBtn.hovered
+                    onToggled: function(value) {
+                        if (root.store && widgetRow.def)
+                            root.store.setWidgetShown(widgetRow.def.id, value)
+                    }
+                }
+
+                KCircleIconButton {
+                    id: widgetDeleteBtn
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    anchors.rightMargin: Tokens.spaceSm
+                    width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd; iconSource: ""; glyph: "×"
+                    glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
+                    fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                    borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
+                    toolTipText: qsTr("Delete widget"); z: 6
+                    onClicked: root.store.deleteWidgetAt(widgetRow.widgetIndex)
+                }
+
+                KCircleIconButton {
+                    id: widgetEditBtn
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: widgetDeleteBtn.left
+                    anchors.rightMargin: Tokens.spaceSm
+                    width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd
+                    iconSource: "qrc:/icons/ui/pencil.svg"; iconTintColor: AppPalette.textSecond
+                    fillColor: AppPalette.controlRaised
+                    fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                    borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover
+                    toolTipText: qsTr("Edit widget"); z: 6
+                    onClicked: root.store.openWidgetEditSettings(widgetRow.widgetIndex)
+                }
+            }
+        }
+
+        KButton {
+            width: parent.width
+            text: qsTr("Create widget")
+            onClicked: root.store.openWidgetCreateSettings()
         }
     }
 

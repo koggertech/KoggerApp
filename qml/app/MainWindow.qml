@@ -211,13 +211,6 @@ ApplicationWindow {
                        profilesPopup.expandedWidth, profilesPopup.expandedHeight)
     }
 
-    readonly property rect extraInfoPopupEffectiveBounds: {
-        if (!extraInfoPopup.visible || !extraInfoPopup.popupVisible)
-            return Qt.rect(-1, -1, 0, 0)
-        return Qt.rect(extraInfoPopup.panelX, extraInfoPopup.panelY,
-                       extraInfoPopup.expandedWidth, extraInfoPopup.expandedHeight)
-    }
-
     function isValidUuidText(uuidValue) {
         if (uuidValue === undefined || uuidValue === null)
             return false
@@ -331,11 +324,6 @@ ApplicationWindow {
             workspaceStore.profilesPopupOpen = false
             return true
         },
-        function() {  // extra info panel — Esc hides it
-            if (!workspaceStore.extraInfoVisible) return false
-            workspaceStore.extraInfoVisible = false
-            return true
-        },
         function() {  // console drawer — Esc closes it
             if (!theme || !theme.consoleVisible) return false
             theme.consoleVisible = false
@@ -344,6 +332,11 @@ ApplicationWindow {
         function() {  // HotActions favorites popup
             if (!hotActions.layoutsMenuOpen) return false
             hotActions.layoutsMenuOpen = false
+            return true
+        },
+        function() {  // HotActions widgets popup
+            if (!hotActions.widgetsMenuOpen) return false
+            hotActions.widgetsMenuOpen = false
             return true
         },
         function() {  // HotActions expanded — skip when it's a settings preview (Esc closes the tab instead)
@@ -357,9 +350,13 @@ ApplicationWindow {
             legacyPanelOpen = false
             return true
         },
-        function() {  // any settings drill-in (echogram / quick-actions / extra-info / UI saving / TGC)
+        function() {  // any settings drill-in (echogram / quick-actions / widget editor / UI saving / TGC)
             if (!workspaceStore.settingsPanelOpen || !workspaceStore.anySettingsSubPageActive)
                 return false
+            if (workspaceStore.settingsSubPageKind === "widgetEdit" && workspaceStore.widgetEditStep === 2) {
+                workspaceStore.widgetEditStep = 1
+                return true
+            }
             workspaceStore.closeActiveSettingsSubPage()
             return true
         },
@@ -813,7 +810,7 @@ ApplicationWindow {
             layoutEditing: root.hotkeysPreviewSticky
             bottomTrackEditorEnabled: workspaceStore.quickActionBottomTrackEnabled
             profilesEnabled: workspaceStore.quickActionProfilesEnabled
-            extraInfoEnabled: workspaceStore.quickActionExtraInfoEnabled
+            widgetsEnabled: workspaceStore.quickActionWidgetsEnabled
             consoleButtonEnabled: workspaceStore.quickActionConsoleEnabled
             powerOffEnabled: workspaceStore.quickActionPowerOffEnabled
             onPowerOffTriggered: powerOffOverlay.active = true
@@ -975,7 +972,7 @@ ApplicationWindow {
                    : !workspaceStore.settingsSubPageActive
                      ? qsTr("Settings")
                      : workspaceStore.settingsSubPageKind === "quickActions" ? qsTr("Quick action menu")
-                     : workspaceStore.settingsSubPageKind === "extraInfo"    ? qsTr("Info panel")
+                     : workspaceStore.settingsSubPageKind === "widgetEdit"   ? (workspaceStore.widgetEditIndex >= 0 ? qsTr("Edit widget") : qsTr("Create widget"))
                      : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
@@ -991,10 +988,17 @@ ApplicationWindow {
             onCloseRequested: workspaceStore.settingsPanelOpen = false
 
             showBack: workspaceStore.anySettingsSubPageActive
-            onBackRequested: workspaceStore.closeActiveSettingsSubPage()
+            onBackRequested: {
+                if (workspaceStore.settingsSubPageActive
+                    && workspaceStore.settingsSubPageKind === "widgetEdit"
+                    && workspaceStore.widgetEditStep === 2)
+                    workspaceStore.widgetEditStep = 1
+                else
+                    workspaceStore.closeActiveSettingsSubPage()
+            }
 
             subPage: workspaceStore.settingsSubPageKind === "quickActions" ? quickActionsSettingsTabComponent
-                     : workspaceStore.settingsSubPageKind === "extraInfo"  ? extraInfoSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "widgetEdit" ? widgetEditTabComponent
                      : workspaceStore.settingsSubPageKind === "uiSaving"   ? uiSavingSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
@@ -1019,6 +1023,19 @@ ApplicationWindow {
 
             anchors.fill: parent
             store: workspaceStore
+        }
+
+        WidgetEditOverlay {
+            anchors.fill: parent
+            z: ZOrder.widgetEditorOverlay
+            store: workspaceStore
+        }
+
+        Item {
+            id: widgetEditorDragLayer
+            anchors.fill: parent
+            z: ZOrder.widgetEditorDrag
+            Component.onCompleted: workspaceStore.widgetDragLayer = widgetEditorDragLayer
         }
 
         Binding {
@@ -1063,8 +1080,8 @@ ApplicationWindow {
             z: ZOrder.bottomTrackEditPopup   // поверх глобал/фуллскрин попапов
             store: workspaceStore
             popupId: "btEdit"
-            siblingBoundsList: [root.profilesPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
-            siblingIdList: ["profiles", "extraInfo"]
+            siblingBoundsList: [root.profilesPopupEffectiveBounds]
+            siblingIdList: ["profiles"]
         }
 
         ProfilesPopup {
@@ -1073,18 +1090,25 @@ ApplicationWindow {
             z: ZOrder.profilesPopup
             store: workspaceStore
             popupId: "profiles"
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
-            siblingIdList: ["btEdit", "extraInfo"]
+            siblingBoundsList: [root.btEditPopupEffectiveBounds]
+            siblingIdList: ["btEdit"]
         }
 
-        ExtraInfoPopup {
-            id: extraInfoPopup
-            anchors.fill: parent
-            z: ZOrder.extraInfoPopup
-            store: workspaceStore
-            popupId: "extraInfo"
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
-            siblingIdList: ["btEdit", "profiles"]
+        Repeater {
+            id: widgetsRepeater
+            model: workspaceStore.widgets.length
+            delegate: DataWidgetPopup {
+                required property int index
+                readonly property var _wdef: workspaceStore.widgets[index] || null
+                anchors.fill: parent
+                z: ZOrder.widgetPopup
+                store: workspaceStore
+                def: _wdef
+                popupVisible: !!_wdef && !_beingEdited && workspaceStore.widgetShown(_wdef.id)
+                popupId: _wdef ? "widget:" + _wdef.id : ""
+                siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+                siblingIdList: ["btEdit", "profiles"]
+            }
         }
 
         Connections {
@@ -1094,7 +1118,10 @@ ApplicationWindow {
                 fullscreenPanePopup.syncFromStore()
                 btEditPopup.syncFromStore()
                 profilesPopup.syncFromStore()
-                extraInfoPopup.syncFromStore()
+                for (var i = 0; i < widgetsRepeater.count; ++i) {
+                    var it = widgetsRepeater.itemAt(i)
+                    if (it) it.syncFromStore()
+                }
             }
         }
 
@@ -1115,9 +1142,9 @@ ApplicationWindow {
         }
 
         Component {
-            id: extraInfoSettingsTabComponent
+            id: widgetEditTabComponent
 
-            ExtraInfoSettingsTab {
+            WidgetEditPage {
                 store: workspaceStore
             }
         }

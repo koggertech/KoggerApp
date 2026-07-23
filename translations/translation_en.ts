@@ -925,6 +925,30 @@
         <source>Workspace adjust, ms:</source>
         <translation>Workspace adjust, ms:</translation>
     </message>
+    <message>
+        <source>Widgets</source>
+        <translation>Widgets</translation>
+    </message>
+    <message>
+        <source>On-scene data widgets: grid size and drag-in fields.</source>
+        <translation>On-scene data widgets: grid size and drag-in fields.</translation>
+    </message>
+    <message>
+        <source>Widget %1</source>
+        <translation>Widget %1</translation>
+    </message>
+    <message>
+        <source>Delete widget</source>
+        <translation>Delete widget</translation>
+    </message>
+    <message>
+        <source>Edit widget</source>
+        <translation>Edit widget</translation>
+    </message>
+    <message>
+        <source>Create widget</source>
+        <translation>Create widget</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>
@@ -3089,6 +3113,18 @@
         <source>Settings</source>
         <translation>Settings</translation>
     </message>
+    <message>
+        <source>No widgets yet.</source>
+        <translation>No widgets yet.</translation>
+    </message>
+    <message>
+        <source>Open widget settings</source>
+        <translation>Open widget settings</translation>
+    </message>
+    <message>
+        <source>Widgets</source>
+        <translation>Widgets</translation>
+    </message>
 </context>
 <context>
     <name>HotkeysDialog</name>
@@ -3702,6 +3738,14 @@
         <source>Export to CSV</source>
         <translation>Export to CSV</translation>
     </message>
+    <message>
+        <source>Create widget</source>
+        <translation>Create widget</translation>
+    </message>
+    <message>
+        <source>Edit widget</source>
+        <translation>Edit widget</translation>
+    </message>
 </context>
 <context>
     <name>ModeSettingsPanel</name>
@@ -4304,6 +4348,10 @@
         <source>Console</source>
         <translation>Console</translation>
     </message>
+    <message>
+        <source>Widgets</source>
+        <translation>Widgets</translation>
+    </message>
 </context>
 <context>
     <name>RulerTool</name>
@@ -4801,6 +4849,118 @@
         <location filename="../qml/app/WorkspaceView.qml" line="638"/>
         <source>Global pop-up</source>
         <translation>Global pop-up</translation>
+    </message>
+</context>
+<context>
+    <name>DataFieldCatalog</name>
+    <message>
+        <source>Time</source>
+        <translation>Time</translation>
+    </message>
+    <message>
+        <source>Total depth</source>
+        <translation>Total depth</translation>
+    </message>
+    <message>
+        <source>Rangefinder</source>
+        <translation>Rangefinder</translation>
+    </message>
+    <message>
+        <source>Bottom track</source>
+        <translation>Bottom track</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation>Speed</translation>
+    </message>
+    <message>
+        <source>Ground speed</source>
+        <translation>Ground speed</translation>
+    </message>
+    <message>
+        <source>Coordinate</source>
+        <translation>Coordinate</translation>
+    </message>
+    <message>
+        <source>Selected point</source>
+        <translation>Selected point</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation>Temperature</translation>
+    </message>
+    <message>
+        <source>Battery</source>
+        <translation>Battery</translation>
+    </message>
+    <message>
+        <source>Current</source>
+        <translation>Current</translation>
+    </message>
+    <message>
+        <source>Flight mode</source>
+        <translation>Flight mode</translation>
+    </message>
+    <message>
+        <source>Arm state</source>
+        <translation>Arm state</translation>
+    </message>
+    <message>
+        <source>m</source>
+        <translation>m</translation>
+    </message>
+    <message>
+        <source>km/h</source>
+        <translation>km/h</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetSizeStep</name>
+    <message>
+        <source>Choose the widget grid size. You will place data fields on the next step.</source>
+        <translation>Choose the widget grid size. You will place data fields on the next step.</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetPlaceStep</name>
+    <message>
+        <source>Value</source>
+        <translation>Value</translation>
+    </message>
+    <message>
+        <source>Label + Value</source>
+        <translation>Label + Value</translation>
+    </message>
+    <message>
+        <source>Label / Value</source>
+        <translation>Label / Value</translation>
+    </message>
+    <message>
+        <source>Pick a representation, then drag fields onto the widget shown in the working area. Drag a placed field back here to remove it, or tap it to change its type.</source>
+        <translation>Pick a representation, then drag fields onto the widget shown in the working area. Drag a placed field back here to remove it, or tap it to change its type.</translation>
+    </message>
+    <message>
+        <source>Representation</source>
+        <translation>Representation</translation>
+    </message>
+    <message>
+        <source>Fields</source>
+        <translation>Fields</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Background transparency</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Save</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetEditOverlay</name>
+    <message>
+        <source>Remove field</source>
+        <translation>Remove field</translation>
     </message>
 </context>
 </TS>

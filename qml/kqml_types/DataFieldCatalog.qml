@@ -1,0 +1,106 @@
+pragma Singleton
+import QtQuick 2.15
+
+QtObject {
+    id: catalog
+
+    readonly property var fields: [
+        { key: "time",      label: qsTr("Time"),           unit: "",             group: "general" },
+        { key: "depth",     label: qsTr("Total depth"),    unit: qsTr("m"),      group: "general" },
+        { key: "rfDepth",   label: qsTr("Rangefinder"),    unit: qsTr("m"),      group: "general" },
+        { key: "btDepth",   label: qsTr("Bottom track"),   unit: qsTr("m"),      group: "general" },
+        { key: "speed",     label: qsTr("Speed"),          unit: qsTr("km/h"),   group: "general" },
+        { key: "apSpeed",   label: qsTr("Ground speed"),   unit: "m/s",          group: "autopilot" },
+        { key: "coord",     label: qsTr("Coordinate"),     unit: "",             group: "general" },
+        { key: "selPoint",  label: qsTr("Selected point"), unit: "",             group: "general" },
+        { key: "temp",      label: qsTr("Temperature"),    unit: "°C",           group: "general" },
+        { key: "apVoltage", label: qsTr("Battery"),        unit: "V",            group: "autopilot" },
+        { key: "apCurrent", label: qsTr("Current"),        unit: "A",            group: "autopilot" },
+        { key: "apMode",    label: qsTr("Flight mode"),    unit: "",             group: "autopilot" },
+        { key: "apArm",     label: qsTr("Arm state"),      unit: "",             group: "autopilot" }
+    ]
+
+    function _meta(key) {
+        for (var i = 0; i < fields.length; ++i)
+            if (fields[i].key === key)
+                return fields[i]
+        return null
+    }
+
+    function hasField(key) { return _meta(key) !== null }
+
+    function label(key) {
+        var m = _meta(key)
+        return m ? m.label : key
+    }
+
+    function unit(key) {
+        var m = _meta(key)
+        return m ? m.unit : ""
+    }
+
+    function _dms(deg, isLat) {
+        if (deg === undefined || deg === null || isNaN(deg))
+            return ""
+        var hemi = isLat ? (deg >= 0 ? "N" : "S") : (deg >= 0 ? "E" : "W")
+        return hemi + " " + Math.abs(deg).toFixed(4) + "°"
+    }
+
+    function _autopilotValid(dmw) {
+        if (!dmw)
+            return false
+        return (!isNaN(dmw.vruVoltage) || !isNaN(dmw.vruCurrent) || !isNaN(dmw.vruVelocityH)
+                || dmw.pilotArmState >= 0 || dmw.pilotModeState >= 0)
+    }
+
+    function isValid(key, ds, dmw, store) {
+        switch (key) {
+        case "time":      return !!(store && store.systemTimeValid)
+        case "depth":     return !!(ds && ds.isLastDepthValid)
+        case "rfDepth":   return !!(ds && ds.isLastRangefinderDepthValid)
+        case "btDepth":   return !!(ds && ds.isLastBottomTrackDepthValid)
+        case "speed":     return !!(ds && ds.isSpeedValid && ds.isBoatCoordinateValid)
+        case "coord":     return !!(ds && ds.isBoatCoordinateValid)
+        case "selPoint":  return !!(ds && ds.isActiveContactIndxValid)
+        case "temp":      return !!(ds && ds.isLastTempValid)
+        case "apSpeed":   return _autopilotValid(dmw) && !isNaN(dmw.vruVelocityH)
+        case "apVoltage": return _autopilotValid(dmw) && !isNaN(dmw.vruVoltage)
+        case "apCurrent": return _autopilotValid(dmw) && !isNaN(dmw.vruCurrent)
+        case "apMode":    return _autopilotValid(dmw) && dmw.pilotModeState >= 0
+        case "apArm":     return _autopilotValid(dmw) && dmw.pilotArmState >= 0
+        }
+        return false
+    }
+
+    function formatValue(key, ds, dmw, store) {
+        switch (key) {
+        case "time":
+            return (store && store.systemTimeValid) ? store.systemTimeHms : "—"
+        case "depth":
+            return (ds && ds.isLastDepthValid) ? (ds.depth.toFixed(2) + " " + qsTr("m")) : "—"
+        case "rfDepth":
+            return (ds && ds.isLastRangefinderDepthValid) ? (ds.lastRangefinderDepth.toFixed(2) + " " + qsTr("m")) : "—"
+        case "btDepth":
+            return (ds && ds.isLastBottomTrackDepthValid) ? (ds.lastBottomTrackDepth.toFixed(2) + " " + qsTr("m")) : "—"
+        case "speed":
+            return (ds && ds.isSpeedValid && ds.isBoatCoordinateValid) ? (ds.speed.toFixed(1) + " " + qsTr("km/h")) : "—"
+        case "coord":
+            return (ds && ds.isBoatCoordinateValid) ? (_dms(ds.boatLatitude, true) + "\n" + _dms(ds.boatLongitude, false)) : "—"
+        case "selPoint":
+            return (ds && ds.isActiveContactIndxValid) ? (ds.distToContact.toFixed(1) + " " + qsTr("m") + "\n" + ds.angleToContact.toFixed(1) + "°") : "—"
+        case "temp":
+            return (ds && ds.isLastTempValid) ? (ds.lastTemp.toFixed(1) + " °C") : "—"
+        case "apSpeed":
+            return (dmw && !isNaN(dmw.vruVelocityH)) ? (dmw.vruVelocityH.toFixed(1) + " m/s") : "—"
+        case "apVoltage":
+            return (dmw && !isNaN(dmw.vruVoltage)) ? (dmw.vruVoltage.toFixed(1) + " V") : "—"
+        case "apCurrent":
+            return (dmw && !isNaN(dmw.vruCurrent)) ? (dmw.vruCurrent.toFixed(1) + " A") : "—"
+        case "apMode":
+            return (dmw && dmw.pilotModeState >= 0) ? String(dmw.pilotModeState) : "—"
+        case "apArm":
+            return (dmw && dmw.pilotArmState >= 0) ? (dmw.pilotArmState > 0 ? "ARMED" : "DISARMED") : "—"
+        }
+        return "—"
+    }
+}

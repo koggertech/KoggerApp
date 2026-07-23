@@ -997,6 +997,30 @@
         <source>No echograms displayed</source>
         <translation>Brak wyświetlanych echogramów</translation>
     </message>
+    <message>
+        <source>Widgets</source>
+        <translation>Widżety</translation>
+    </message>
+    <message>
+        <source>On-scene data widgets: grid size and drag-in fields.</source>
+        <translation>Widżety danych na scenie: rozmiar siatki i przeciąganie pól.</translation>
+    </message>
+    <message>
+        <source>Widget %1</source>
+        <translation>Widżet %1</translation>
+    </message>
+    <message>
+        <source>Delete widget</source>
+        <translation>Usuń widżet</translation>
+    </message>
+    <message>
+        <source>Edit widget</source>
+        <translation>Edytuj widżet</translation>
+    </message>
+    <message>
+        <source>Create widget</source>
+        <translation>Utwórz widżet</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>
@@ -3930,6 +3954,18 @@
         <source>Settings</source>
         <translation>Ustawienia</translation>
     </message>
+    <message>
+        <source>No widgets yet.</source>
+        <translation>Brak widżetów.</translation>
+    </message>
+    <message>
+        <source>Open widget settings</source>
+        <translation>Otwórz ustawienia widżetów</translation>
+    </message>
+    <message>
+        <source>Widgets</source>
+        <translation>Widżety</translation>
+    </message>
 </context>
 <context>
     <name>HotkeysDialog</name>
@@ -4582,6 +4618,14 @@
         <source>Export to CSV</source>
         <translation>Eksport do CSV</translation>
     </message>
+    <message>
+        <source>Create widget</source>
+        <translation>Utwórz widżet</translation>
+    </message>
+    <message>
+        <source>Edit widget</source>
+        <translation>Edytuj widżet</translation>
+    </message>
 </context>
 <context>
     <name>ModeSettingsPanel</name>
@@ -5197,6 +5241,10 @@
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="24"/>
         <source>Console</source>
         <translation>Konsola</translation>
+    </message>
+    <message>
+        <source>Widgets</source>
+        <translation>Widżety</translation>
     </message>
 </context>
 <context>
@@ -5951,6 +5999,118 @@
         <location filename="../qml/app/WorkspaceView.qml" line="46"/>
         <source>Second window</source>
         <translation>Drugie okno</translation>
+    </message>
+</context>
+<context>
+    <name>DataFieldCatalog</name>
+    <message>
+        <source>Time</source>
+        <translation>Czas</translation>
+    </message>
+    <message>
+        <source>Total depth</source>
+        <translation>Głębokość całkowita</translation>
+    </message>
+    <message>
+        <source>Rangefinder</source>
+        <translation>Dalmierz</translation>
+    </message>
+    <message>
+        <source>Bottom track</source>
+        <translation>Ślad dna</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation>Prędkość</translation>
+    </message>
+    <message>
+        <source>Ground speed</source>
+        <translation>Prędkość naziemna</translation>
+    </message>
+    <message>
+        <source>Coordinate</source>
+        <translation>Współrzędne</translation>
+    </message>
+    <message>
+        <source>Selected point</source>
+        <translation>Wybrany punkt</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation>Temperatura</translation>
+    </message>
+    <message>
+        <source>Battery</source>
+        <translation>Bateria</translation>
+    </message>
+    <message>
+        <source>Current</source>
+        <translation>Prąd</translation>
+    </message>
+    <message>
+        <source>Flight mode</source>
+        <translation>Tryb lotu</translation>
+    </message>
+    <message>
+        <source>Arm state</source>
+        <translation>Stan uzbrojenia</translation>
+    </message>
+    <message>
+        <source>m</source>
+        <translation>m</translation>
+    </message>
+    <message>
+        <source>km/h</source>
+        <translation>km/h</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetSizeStep</name>
+    <message>
+        <source>Choose the widget grid size. You will place data fields on the next step.</source>
+        <translation>Wybierz rozmiar siatki widżetu. Pola danych rozmieścisz w następnym kroku.</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetPlaceStep</name>
+    <message>
+        <source>Value</source>
+        <translation>Wartość</translation>
+    </message>
+    <message>
+        <source>Label + Value</source>
+        <translation>Etykieta + wart.</translation>
+    </message>
+    <message>
+        <source>Label / Value</source>
+        <translation>Etykieta / wart.</translation>
+    </message>
+    <message>
+        <source>Pick a representation, then drag fields onto the widget shown in the working area. Drag a placed field back here to remove it, or tap it to change its type.</source>
+        <translation>Wybierz reprezentację, a następnie przeciągnij pola na widżet widoczny w obszarze roboczym. Przeciągnij umieszczone pole z powrotem tutaj, aby je usunąć, lub kliknij, aby zmienić typ.</translation>
+    </message>
+    <message>
+        <source>Representation</source>
+        <translation>Reprezentacja</translation>
+    </message>
+    <message>
+        <source>Fields</source>
+        <translation>Pola</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Przezroczystość tła</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetEditOverlay</name>
+    <message>
+        <source>Remove field</source>
+        <translation>Usuń pole</translation>
     </message>
 </context>
 </TS>

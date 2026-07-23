@@ -51,9 +51,12 @@ Item {
     property bool profilesEnabled: true
     readonly property bool _profilesRevealOverride: _revealActiveKey === "profiles"
     readonly property bool showProfiles: profilesEnabled || _profilesRevealOverride
-    property bool extraInfoEnabled: true
-    readonly property bool _extraInfoRevealOverride: _revealActiveKey === "extraInfo"
-    readonly property bool showExtraInfo: extraInfoEnabled || _extraInfoRevealOverride
+    property bool widgetsEnabled: true
+    readonly property bool _widgetsRevealOverride: _revealActiveKey === "widgets"
+    readonly property bool showWidgets: widgetsEnabled || _widgetsRevealOverride
+    readonly property bool hasWidgets: !!(store && store.widgets && store.widgets.length > 0)
+    property bool widgetsMenuOpen: false
+    property var _widgetsSlot: null
     property bool consoleButtonEnabled: true
     readonly property bool _consoleRevealOverride: _revealActiveKey === "console"
     readonly property bool showConsole: consoleButtonEnabled || _consoleRevealOverride
@@ -345,6 +348,96 @@ Item {
         }
     }
 
+    Component {
+        id: widgetsPopupContentComponent
+
+        Column {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Math.round(7 * root._s)
+            spacing: Math.round(7 * root._s)
+
+            Flickable {
+                id: widgetsFlick
+                width: parent.width
+                height: Math.min(root.favoriteListMaxHeight, widgetsList.implicitHeight)
+                contentWidth: widgetsList.width
+                contentHeight: widgetsList.implicitHeight
+                clip: true
+                interactive: contentHeight > height
+                boundsBehavior: Flickable.StopAtBounds
+                visible: root.hasWidgets
+
+                ScrollBar.vertical: ScrollBar {
+                    id: widgetsScrollBar
+                    policy: ScrollBar.AsNeeded
+                    width: Math.round(6 * root._s)
+                }
+
+                Column {
+                    id: widgetsList
+                    width: widgetsFlick.width
+                           - (widgetsFlick.interactive ? widgetsScrollBar.width + Math.round(4 * root._s) : 0)
+                    spacing: root.favoriteItemSpacing
+
+                    Repeater {
+                        model: root.store ? root.store.widgets.length : 0
+                        delegate: WidgetCard {
+                            required property int index
+                            readonly property var widgetDef: (root.store && index < root.store.widgets.length)
+                                                             ? root.store.widgets[index] : null
+                            width: widgetsList.width
+                            height: root.favoriteItemHeight
+                            contentMargin: root.favoriteCardMargin
+                            previewWidth: root.favoritePreviewWidth
+                            previewHeight: root.favoritePreviewHeight
+                            def: widgetDef
+                            showText: false
+                            selectionMode: true
+                            selected: !!(root.store && widgetDef && root.store.widgetShown(widgetDef.id))
+                            onToggled: function(value) {
+                                if (root.store && widgetDef)
+                                    root.store.setWidgetShown(widgetDef.id, value)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                width: parent.width
+                visible: !root.hasWidgets
+                text: qsTr("No widgets yet.")
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontSm
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            Item {
+                width: parent.width
+                height: root.controlHeight
+
+                SettingsGearButton {
+                    anchors.centerIn: parent
+                    width: root.controlHeight
+                    height: root.controlHeight
+                    modeTag: "app"
+                    toolTipText: qsTr("Open widget settings")
+                    onClicked: {
+                        if (root.store && typeof root.store.openWidgetSettings === "function")
+                            root.store.openWidgetSettings()
+                        else
+                            root.settingsTriggered()
+                        root.widgetsMenuOpen = false
+                        root.expanded = false
+                    }
+                }
+            }
+        }
+    }
+
     // Stage 1: open the panel and make the about-to-flash icons visible
     // (via _revealActiveKey override). No pulse yet — see pulseRevealedAction.
     function revealQuickAction(key) {
@@ -373,6 +466,7 @@ Item {
     onExpandedChanged: {
         if (!expanded) {
             layoutsMenuOpen = false
+            widgetsMenuOpen = false
             _revealActiveKey = ""
         }
     }
@@ -396,7 +490,7 @@ Item {
                     ? panelOffsetX + panel.width
                     : root.panelPaddingX + 2 * root.toggleButtonSize + Math.round(8 * root._s)
                       + (collapsedDeviceRow.visible ? Math.round(8 * root._s) + collapsedDeviceRow.width : 0))
-    height: Math.max(leadingClusterHeight, panel.height, layoutsCombo.y + backing.height, btEditCombo.y + btEditCombo.height)
+    height: Math.max(leadingClusterHeight, panel.height, layoutsCombo.y + backing.height, btEditCombo.y + btEditCombo.height, widgetsCombo.y + widgetsBacking.height)
 
     component LayoutsTriggerButton: Rectangle {
         id: button
@@ -502,6 +596,111 @@ Item {
         onFlashTokenChanged: if (button.highlighted) revealPulseAnim.restart()
         onHighlightedChanged: if (!button.highlighted) revealPulse.opacity = 0.0
         Component.onCompleted: if (button.highlighted) revealPulseAnim.restart()
+    }
+
+    component WidgetsTriggerButton: Rectangle {
+        id: wbutton
+
+        property bool open: false
+        property bool dropped: false
+        property bool highlighted: false
+        property int flashToken: 0
+        property bool highlightHold: false
+        signal clicked()
+
+        implicitWidth: root.triggerButtonWidth
+        implicitHeight: root.controlHeight
+        radius: height / 2
+        color: wbutton.dropped ? "transparent"
+               : wbutton.highlightHold ? AppPalette.accentBgStrong
+               : (wbuttonMouse.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
+        border.width: 0
+
+        Behavior on color { ColorAnimation { duration: 120; easing.type: Easing.OutCubic } }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: "#FFFFFF"
+            opacity: wbuttonMouse.containsMouse ? 0.12 : 0.0
+            visible: opacity > 0.001
+            Behavior on opacity { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: AppPalette.accentBgStrong
+            opacity: wRevealPulse.opacity
+            visible: wbutton.highlighted
+        }
+
+        Rectangle {
+            id: wIcon
+            anchors.centerIn: parent
+            anchors.horizontalCenterOffset: -Math.round(6 * root._s)
+            height: root.controlHeight - Math.round(12 * root._s)
+            width: Math.round(height * 21 / 16)
+            radius: Math.round(6 * root._s)
+            color: AppPalette.bgDeep
+            border.width: 1
+            border.color: AppPalette.border
+
+            Text {
+                anchors.centerIn: parent
+                text: "info"
+                color: AppPalette.text
+                font.pixelSize: Math.round(10 * root._s)
+            }
+        }
+
+        DisclosureIndicator {
+            anchors.right: parent.right
+            anchors.rightMargin: Math.round(10 * root._s)
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.round(10 * root._s)
+            height: Math.round(10 * root._s)
+            expanded: wbutton.open
+            indicatorColor: AppPalette.textSecond
+        }
+
+        MouseArea {
+            id: wbuttonMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: wbutton.clicked()
+        }
+
+        KToolTip {
+            text: qsTr("Widgets")
+            targetItem: wbutton
+            shown: wbuttonMouse.containsMouse && !wbutton.open
+        }
+
+        Rectangle {
+            id: wRevealPulse
+            anchors.fill: parent
+            radius: wbutton.radius
+            color: "transparent"
+            border.width: Math.max(2, Math.round(2 * root._s))
+            border.color: AppPalette.accentBorder
+            opacity: 0
+            visible: wbutton.highlighted
+            z: 10
+        }
+
+        SequentialAnimation {
+            id: wRevealPulseAnim
+            running: false
+            NumberAnimation { target: wRevealPulse; property: "opacity"; to: 0.95; duration: 90;  easing.type: Easing.OutCubic }
+            NumberAnimation { target: wRevealPulse; property: "opacity"; to: 0.30; duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { target: wRevealPulse; property: "opacity"; to: 0.0;  duration: 280; easing.type: Easing.OutCubic }
+        }
+
+        onFlashTokenChanged: if (wbutton.highlighted) wRevealPulseAnim.restart()
+        onHighlightedChanged: if (!wbutton.highlighted) wRevealPulse.opacity = 0.0
+        Component.onCompleted: if (wbutton.highlighted) wRevealPulseAnim.restart()
     }
 
     component PulseSlot: Item {
@@ -1210,26 +1409,21 @@ Item {
     }
 
     Component {
-        id: qaExtraInfoComp
-        KCircleIconButton {
-            id: extraInfoBtn
-            readonly property bool _open: root.store && root.store.extraInfoVisible
-            width: root.controlHeight
+        id: qaWidgetsComp
+        Rectangle {
+            id: widgetsSlotItem
+            width: root.triggerButtonWidth
             height: root.controlHeight
-            iconSource: "qrc:/icons/ui/list-details.svg"
-            iconTintColor: AppPalette.text
-            toolTipText: _open ? qsTr("Hide info panel") : qsTr("Info panel")
-            fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
-            fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
-            fillPressedColor: root.buttonPressedColor
-            borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
-            borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
-            highlighted: root.highlightedQuickActionKey === "extraInfo"
-            flashToken: root.highlightPulseToken
-            highlightHold: root.draggingKey === "extraInfo"
-            onClicked: if (root.store) root.store.extraInfoVisible = !root.store.extraInfoVisible
-
-            KCloseBadge { visible: extraInfoBtn._open }
+            color: "transparent"
+            radius: height / 2
+            activeFocusOnTab: true
+            function _grab() { widgetsSlotItem.forceActiveFocus(); widgetsRing.suppress() }
+            Keys.onReturnPressed: root.widgetsMenuOpen = !root.widgetsMenuOpen
+            Keys.onEnterPressed:  root.widgetsMenuOpen = !root.widgetsMenuOpen
+            Keys.onSpacePressed:  root.widgetsMenuOpen = !root.widgetsMenuOpen
+            Component.onCompleted: root._widgetsSlot = widgetsSlotItem
+            Component.onDestruction: if (root._widgetsSlot === widgetsSlotItem) root._widgetsSlot = null
+            KFocusRing { id: widgetsRing; inset: 3 }
         }
     }
 
@@ -1500,7 +1694,7 @@ Item {
                            : key === "logging"     ? root._loggingBadgeVisibleExpanded
                            : key === "layouts"   ? root.hasFavoriteLayouts
                            : key === "bottomTrack" ? root.showBtEdit
-                           : key === "extraInfo"   ? root.showExtraInfo
+                           : key === "widgets"     ? root.showWidgets
                            : key === "console"      ? root.showConsole
                            : key === "profiles"     ? root.showProfiles
                            : key === "secondWindow" ? root._showSecondWindow
@@ -1511,7 +1705,7 @@ Item {
                                    : key === "logging"      ? qaLoggingComp
                                    : key === "layouts"    ? qaFavoritesComp
                                    : key === "bottomTrack"  ? qaBottomTrackComp
-                                   : key === "extraInfo"    ? qaExtraInfoComp
+                                   : key === "widgets"      ? qaWidgetsComp
                                    : key === "console"      ? qaConsoleComp
                                    : key === "profiles"     ? qaProfilesComp
                                    : key === "secondWindow" ? qaSecondWindowComp
@@ -1632,6 +1826,86 @@ Item {
             }
 
             KCloseBadge { visible: btEditTrigger._open }
+        }
+    }
+
+    Item {
+        id: widgetsCombo
+        readonly property int comboW: root.triggerButtonWidth
+        readonly property int gap: Math.round(6 * root._s)
+        readonly property int sidePad: Math.round(3 * root._s)
+        readonly property int _listContentH: root.hasWidgets
+            ? root.store.widgets.length * root.favoriteItemHeight
+              + Math.max(0, root.store.widgets.length - 1) * root.favoriteItemSpacing
+            : 0
+        readonly property int _bodyContentH: root.hasWidgets
+            ? Math.min(root.favoriteListMaxHeight, _listContentH)
+            : Math.round(40 * root._s)
+        readonly property int dropBodyH: (widgetsBodyLoader.item ? widgetsBodyLoader.item.implicitHeight
+                                                                  : _bodyContentH + root.controlHeight)
+                                         + Math.round(14 * root._s)
+        readonly property bool dropped: root.widgetsMenuOpen
+                                        || widgetsBacking.height > root.controlHeight + widgetsCombo.sidePad * 2 + 1
+        visible: root.showWidgets && panel.opacity > 0.01
+        opacity: panel.opacity
+        x: panel.x + topRow.x + (root._widgetsSlot && root._widgetsSlot.parent ? root._widgetsSlot.parent.x : 0) - widgetsCombo.sidePad
+        y: panel.y + topRow.y + (root._widgetsSlot && root._widgetsSlot.parent ? root._widgetsSlot.parent.y : 0) - widgetsCombo.sidePad
+        width: comboW + widgetsCombo.sidePad * 2
+        z: panel.z + 1
+        height: widgetsBacking.height
+
+        Rectangle {
+            id: widgetsBacking
+            width: parent.width
+            y: 0
+            height: widgetsCombo.sidePad + root.controlHeight
+                    + (root.widgetsMenuOpen ? widgetsCombo.gap + widgetsCombo.dropBodyH : widgetsCombo.sidePad)
+            radius: btEditCombo.width / 2
+            color: widgetsCombo.dropped ? root.hotkeysLayerColor : "transparent"
+            border.width: widgetsCombo.dropped ? 1 : 0
+            border.color: AppPalette.border
+            clip: true
+
+            Behavior on height {
+                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.AllButtons
+                onPressed: function(mouse) { mouse.accepted = true }
+                onClicked: function(mouse) { mouse.accepted = true }
+                onWheel: function(wheel) { wheel.accepted = true }
+            }
+
+            Loader {
+                id: widgetsBodyLoader
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.topMargin: widgetsCombo.sidePad + root.controlHeight + widgetsCombo.gap
+                sourceComponent: widgetsPopupContentComponent
+            }
+        }
+
+        WidgetsTriggerButton {
+            id: widgetsTrigger
+            anchors.top: parent.top
+            anchors.topMargin: widgetsCombo.sidePad
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: widgetsCombo.comboW
+            height: root.controlHeight
+            open: root.widgetsMenuOpen
+            dropped: widgetsCombo.dropped
+            highlighted: root.highlightedQuickActionKey === "widgets"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "widgets"
+            onClicked: {
+                if (root._widgetsSlot && root._widgetsSlot._grab) root._widgetsSlot._grab()
+                root.widgetsMenuOpen = !root.widgetsMenuOpen
+            }
         }
     }
 

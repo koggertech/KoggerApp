@@ -19,7 +19,7 @@ Column {
              : key === "logging"     ? qsTr("Logging")
              : key === "layouts"   ? qsTr("Layouts")
              : key === "bottomTrack" ? qsTr("Bottom track editing")
-             : key === "extraInfo"   ? qsTr("Info")
+             : key === "widgets"     ? qsTr("Widgets")
              : key === "console"     ? qsTr("Console")
              : key === "profiles"    ? qsTr("Profiles")
              : key === "secondWindow" ? qsTr("Second window")
@@ -32,7 +32,7 @@ Column {
              : key === "logging"     ? store.quickActionLoggingEnabled
              : key === "layouts"   ? store.quickActionLayoutsEnabled
              : key === "bottomTrack" ? store.quickActionBottomTrackEnabled
-             : key === "extraInfo"   ? store.quickActionExtraInfoEnabled
+             : key === "widgets"     ? store.quickActionWidgetsEnabled
              : key === "console"     ? store.quickActionConsoleEnabled
              : key === "profiles"    ? store.quickActionProfilesEnabled
              : key === "secondWindow" ? store.quickActionSecondWindowEnabled
@@ -54,9 +54,9 @@ Column {
         } else if (key === "bottomTrack") {
             store.quickActionBottomTrackEnabled = v
             store.requestHotkeysReveal("bottomTrack")
-        } else if (key === "extraInfo") {
-            store.quickActionExtraInfoEnabled = v
-            store.requestHotkeysReveal("extraInfo")
+        } else if (key === "widgets") {
+            store.quickActionWidgetsEnabled = v
+            store.requestHotkeysReveal("widgets")
         } else if (key === "console") {
             store.quickActionConsoleEnabled = v
             store.requestHotkeysReveal("console")

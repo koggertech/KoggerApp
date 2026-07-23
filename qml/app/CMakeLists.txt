@@ -11,6 +11,7 @@ qt_add_qml_module(kogger_app
         ConsolePanelDrawer.qml
         ConsoleSettingsTab.qml
         CsvExportSettingsTab.qml
+        DataWidgetPopup.qml
         DeviceSettingsGroup.qml
         DeviceSettingsPage.qml
         DeviceSettingsTab.qml
@@ -18,8 +19,6 @@ qt_add_qml_module(kogger_app
         DisclosureIndicator.qml
         EchogramSettingsPanel.qml
         EchogramSettingsTab.qml
-        ExtraInfoPopup.qml
-        ExtraInfoSettingsTab.qml
         FactorySettingsGroup.qml
         FavoriteLayoutCard.qml
         FileOpeningOverlay.qml
@@ -55,6 +54,12 @@ qt_add_qml_module(kogger_app
         SplashOverlay.qml
         TgcSettingsTab.qml
         UiSavingSettingsTab.qml
+        WidgetCard.qml
+        WidgetEditOverlay.qml
+        WidgetEditPage.qml
+        WidgetGridPreview.qml
+        WidgetPlaceStep.qml
+        WidgetSizeStep.qml
         WorkspaceStore.qml
         WorkspaceView.qml
         LayoutResize.js

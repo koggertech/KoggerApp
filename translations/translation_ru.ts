@@ -997,6 +997,30 @@
         <source>No echograms displayed</source>
         <translation>Нет отображённых эхограмм</translation>
     </message>
+    <message>
+        <source>Widgets</source>
+        <translation>Виджеты</translation>
+    </message>
+    <message>
+        <source>On-scene data widgets: grid size and drag-in fields.</source>
+        <translation>Виджеты данных на сцене: сетка и перетаскивание полей.</translation>
+    </message>
+    <message>
+        <source>Widget %1</source>
+        <translation>Виджет %1</translation>
+    </message>
+    <message>
+        <source>Delete widget</source>
+        <translation>Удалить виджет</translation>
+    </message>
+    <message>
+        <source>Edit widget</source>
+        <translation>Редактировать виджет</translation>
+    </message>
+    <message>
+        <source>Create widget</source>
+        <translation>Создать виджет</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>
@@ -3926,6 +3950,18 @@
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
+    <message>
+        <source>Widgets</source>
+        <translation>Виджеты</translation>
+    </message>
+    <message>
+        <source>No widgets yet.</source>
+        <translation>Пока нет виджетов.</translation>
+    </message>
+    <message>
+        <source>Open widget settings</source>
+        <translation>Открыть настройки виджетов</translation>
+    </message>
 </context>
 <context>
     <name>HotkeysDialog</name>
@@ -4578,6 +4614,14 @@
         <source>Export to CSV</source>
         <translation>Экспорт в CSV</translation>
     </message>
+    <message>
+        <source>Create widget</source>
+        <translation>Создать виджет</translation>
+    </message>
+    <message>
+        <source>Edit widget</source>
+        <translation>Редактировать виджет</translation>
+    </message>
 </context>
 <context>
     <name>ModeSettingsPanel</name>
@@ -5193,6 +5237,10 @@
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="24"/>
         <source>Console</source>
         <translation>Консоль</translation>
+    </message>
+    <message>
+        <source>Widgets</source>
+        <translation>Виджеты</translation>
     </message>
 </context>
 <context>
@@ -5940,6 +5988,118 @@
         <location filename="../qml/app/WorkspaceView.qml" line="46"/>
         <source>Second window</source>
         <translation>Второе окно</translation>
+    </message>
+</context>
+<context>
+    <name>DataFieldCatalog</name>
+    <message>
+        <source>Time</source>
+        <translation>Время</translation>
+    </message>
+    <message>
+        <source>Total depth</source>
+        <translation>Глубина (общая)</translation>
+    </message>
+    <message>
+        <source>Rangefinder</source>
+        <translation>Глубиномер</translation>
+    </message>
+    <message>
+        <source>Bottom track</source>
+        <translation>Трек дна</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation>Скорость</translation>
+    </message>
+    <message>
+        <source>Ground speed</source>
+        <translation>Путевая скорость</translation>
+    </message>
+    <message>
+        <source>Coordinate</source>
+        <translation>Координата</translation>
+    </message>
+    <message>
+        <source>Selected point</source>
+        <translation>Выбранная точка</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation>Температура</translation>
+    </message>
+    <message>
+        <source>Battery</source>
+        <translation>Батарея</translation>
+    </message>
+    <message>
+        <source>Current</source>
+        <translation>Ток</translation>
+    </message>
+    <message>
+        <source>Flight mode</source>
+        <translation>Режим полёта</translation>
+    </message>
+    <message>
+        <source>Arm state</source>
+        <translation>Состояние Arm</translation>
+    </message>
+    <message>
+        <source>m</source>
+        <translation>м</translation>
+    </message>
+    <message>
+        <source>km/h</source>
+        <translation>км/ч</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetSizeStep</name>
+    <message>
+        <source>Choose the widget grid size. You will place data fields on the next step.</source>
+        <translation>Выберите размер сетки виджета. Поля разместите на следующем шаге.</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetPlaceStep</name>
+    <message>
+        <source>Value</source>
+        <translation>Значение</translation>
+    </message>
+    <message>
+        <source>Label + Value</source>
+        <translation>Подпись + знач.</translation>
+    </message>
+    <message>
+        <source>Label / Value</source>
+        <translation>Подпись / знач.</translation>
+    </message>
+    <message>
+        <source>Pick a representation, then drag fields onto the widget shown in the working area. Drag a placed field back here to remove it, or tap it to change its type.</source>
+        <translation>Выберите представление и перетащите поля на виджет в рабочей области. Перетащите размещённое поле сюда, чтобы удалить, или нажмите, чтобы сменить тип.</translation>
+    </message>
+    <message>
+        <source>Representation</source>
+        <translation>Представление</translation>
+    </message>
+    <message>
+        <source>Fields</source>
+        <translation>Поля</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Прозрачность фона</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetEditOverlay</name>
+    <message>
+        <source>Remove field</source>
+        <translation>Убрать поле</translation>
     </message>
 </context>
 </TS>
