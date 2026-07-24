@@ -109,7 +109,7 @@ property bool quickActionPowerOffEnabled: false
 property string quickActionDraggingKey: ""
 
 readonly property var quickActionKeys: {
-    var base = ["connections", "logging", "layouts", "bottomTrack", "widgets", "console", "profiles"]
+    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "profiles"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
     if (Qt.platform.os === "linux" || (typeof manualTesting !== "undefined" && manualTesting === true))
@@ -121,9 +121,9 @@ property var quickActionOrderModel: ListModel {
     ListElement { key: "connections" }
     ListElement { key: "logging" }
     ListElement { key: "layouts" }
-    ListElement { key: "bottomTrack" }
     ListElement { key: "widgets" }
     ListElement { key: "console" }
+    ListElement { key: "bottomTrack" }
     ListElement { key: "profiles" }
     ListElement { key: "secondWindow" }
     ListElement { key: "powerOff" }
