@@ -55,6 +55,8 @@ qt_add_qml_module(kogger_app
         TgcSettingsTab.qml
         UiSavingSettingsTab.qml
         WidgetCard.qml
+        WidgetCellContent.qml
+        WidgetDragHandle.qml
         WidgetEditOverlay.qml
         WidgetEditPage.qml
         WidgetGridPreview.qml

@@ -6,7 +6,7 @@ QtObject {
 
     readonly property var fields: [
         { key: "time",      label: qsTr("Time"),           unit: "",             group: "general" },
-        { key: "depth",     label: qsTr("Total depth"),    unit: qsTr("m"),      group: "general" },
+        { key: "depth",     label: qsTr("Depth"),          unit: qsTr("m"),      group: "general" },
         { key: "rfDepth",   label: qsTr("Rangefinder"),    unit: qsTr("m"),      group: "general" },
         { key: "btDepth",   label: qsTr("Bottom track"),   unit: qsTr("m"),      group: "general" },
         { key: "speed",     label: qsTr("Speed"),          unit: qsTr("km/h"),   group: "general" },
@@ -100,6 +100,25 @@ QtObject {
             return (dmw && dmw.pilotModeState >= 0) ? String(dmw.pilotModeState) : "—"
         case "apArm":
             return (dmw && dmw.pilotArmState >= 0) ? (dmw.pilotArmState > 0 ? "ARMED" : "DISARMED") : "—"
+        }
+        return "—"
+    }
+
+    function sampleValue(key, store) {
+        switch (key) {
+        case "time":      return (store && store.systemTimeValid) ? store.systemTimeHms : "12:34:56"
+        case "depth":     return "3.20 " + qsTr("m")
+        case "rfDepth":   return "3.15 " + qsTr("m")
+        case "btDepth":   return "3.24 " + qsTr("m")
+        case "speed":     return "5.4 " + qsTr("km/h")
+        case "apSpeed":   return "1.5 m/s"
+        case "coord":     return "N 40.6035°\nE 45.0010°"
+        case "selPoint":  return "12.5 " + qsTr("m") + "\n135.0°"
+        case "temp":      return "18.4 °C"
+        case "apVoltage": return "12.4 V"
+        case "apCurrent": return "3.2 A"
+        case "apMode":    return "3"
+        case "apArm":     return "ARMED"
         }
         return "—"
     }

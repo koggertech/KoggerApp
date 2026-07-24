@@ -19,7 +19,7 @@ Column {
              : key === "logging"     ? qsTr("Logging")
              : key === "layouts"   ? qsTr("Layouts")
              : key === "bottomTrack" ? qsTr("Bottom track editing")
-             : key === "widgets"     ? qsTr("Widgets")
+             : key === "widgets"     ? qsTr("Widget panels")
              : key === "console"     ? qsTr("Console")
              : key === "profiles"    ? qsTr("Profiles")
              : key === "secondWindow" ? qsTr("Second window")

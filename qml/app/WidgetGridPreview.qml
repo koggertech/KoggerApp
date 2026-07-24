@@ -51,11 +51,13 @@ Item {
                 model: root.def ? root.def.cells : []
                 delegate: Rectangle {
                     required property var modelData
-                    readonly property int _span: modelData.rep === "labelValueRow" ? 2 : 1
+                    readonly property bool _cellBig: modelData.big === true
+                    readonly property int _sc: (modelData.rep === "labelValueRow" ? 2 : 1) * (_cellBig ? 2 : 1)
+                    readonly property int _sr: _cellBig ? 2 : 1
                     x: area.offX + modelData.col * (area.cell + root._gap)
                     y: area.offY + modelData.row * (area.cell + root._gap)
-                    width: _span * area.cell + (_span - 1) * root._gap
-                    height: area.cell
+                    width: _sc * area.cell + (_sc - 1) * root._gap
+                    height: _sr * area.cell + (_sr - 1) * root._gap
                     radius: 2
                     color: AppPalette.accentBg
                     border.width: 1

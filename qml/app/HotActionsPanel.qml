@@ -408,7 +408,7 @@ Item {
             Text {
                 width: parent.width
                 visible: !root.hasWidgets
-                text: qsTr("No widgets yet.")
+                text: qsTr("No panels yet.")
                 color: AppPalette.textMuted
                 font.pixelSize: Tokens.fontSm
                 wrapMode: Text.WordWrap
@@ -424,7 +424,7 @@ Item {
                     width: root.controlHeight
                     height: root.controlHeight
                     modeTag: "app"
-                    toolTipText: qsTr("Open widget settings")
+                    toolTipText: qsTr("Open panel settings")
                     onClicked: {
                         if (root.store && typeof root.store.openWidgetSettings === "function")
                             root.store.openWidgetSettings()
@@ -673,7 +673,7 @@ Item {
         }
 
         KToolTip {
-            text: qsTr("Widgets")
+            text: qsTr("Widget panels")
             targetItem: wbutton
             shown: wbuttonMouse.containsMouse && !wbutton.open
         }
@@ -753,7 +753,7 @@ Item {
         width: root.controlHeight
         height: root.controlHeight
 
-        activeFocusOnTab: visible
+        activeFocusOnTab: true
         Keys.onReturnPressed: pill.opened ? pill.close() : pill.open()
         Keys.onEnterPressed:  pill.opened ? pill.close() : pill.open()
         Keys.onSpacePressed:  pill.opened ? pill.close() : pill.open()

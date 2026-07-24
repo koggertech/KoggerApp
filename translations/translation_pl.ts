@@ -998,28 +998,28 @@
         <translation>Brak wyświetlanych echogramów</translation>
     </message>
     <message>
-        <source>Widgets</source>
-        <translation>Widżety</translation>
+        <source>Widget panels</source>
+        <translation>Panele widżetów</translation>
     </message>
     <message>
-        <source>On-scene data widgets: grid size and drag-in fields.</source>
-        <translation>Widżety danych na scenie: rozmiar siatki i przeciąganie pól.</translation>
+        <source>On-scene data panels: grid size and drag-in widgets.</source>
+        <translation>Panele danych na scenie: rozmiar siatki i przeciąganie widżetów.</translation>
     </message>
     <message>
-        <source>Widget %1</source>
-        <translation>Widżet %1</translation>
+        <source>Panel %1</source>
+        <translation>Panel %1</translation>
     </message>
     <message>
-        <source>Delete widget</source>
-        <translation>Usuń widżet</translation>
+        <source>Delete panel</source>
+        <translation>Usuń panel</translation>
     </message>
     <message>
-        <source>Edit widget</source>
-        <translation>Edytuj widżet</translation>
+        <source>Edit panel</source>
+        <translation>Edytuj panel</translation>
     </message>
     <message>
-        <source>Create widget</source>
-        <translation>Utwórz widżet</translation>
+        <source>Create panel</source>
+        <translation>Utwórz panel</translation>
     </message>
 </context>
 <context>
@@ -3955,16 +3955,16 @@
         <translation>Ustawienia</translation>
     </message>
     <message>
-        <source>No widgets yet.</source>
-        <translation>Brak widżetów.</translation>
+        <source>No panels yet.</source>
+        <translation>Brak paneli.</translation>
     </message>
     <message>
-        <source>Open widget settings</source>
-        <translation>Otwórz ustawienia widżetów</translation>
+        <source>Open panel settings</source>
+        <translation>Otwórz ustawienia paneli</translation>
     </message>
     <message>
-        <source>Widgets</source>
-        <translation>Widżety</translation>
+        <source>Widget panels</source>
+        <translation>Panele widżetów</translation>
     </message>
 </context>
 <context>
@@ -4619,12 +4619,12 @@
         <translation>Eksport do CSV</translation>
     </message>
     <message>
-        <source>Create widget</source>
-        <translation>Utwórz widżet</translation>
+        <source>Create panel</source>
+        <translation>Utwórz panel</translation>
     </message>
     <message>
-        <source>Edit widget</source>
-        <translation>Edytuj widżet</translation>
+        <source>Edit panel</source>
+        <translation>Edytuj panel</translation>
     </message>
 </context>
 <context>
@@ -5243,8 +5243,8 @@
         <translation>Konsola</translation>
     </message>
     <message>
-        <source>Widgets</source>
-        <translation>Widżety</translation>
+        <source>Widget panels</source>
+        <translation>Panele widżetów</translation>
     </message>
 </context>
 <context>
@@ -6008,8 +6008,8 @@
         <translation>Czas</translation>
     </message>
     <message>
-        <source>Total depth</source>
-        <translation>Głębokość całkowita</translation>
+        <source>Depth</source>
+        <translation>Głębokość</translation>
     </message>
     <message>
         <source>Rangefinder</source>
@@ -6067,12 +6067,32 @@
 <context>
     <name>WidgetSizeStep</name>
     <message>
-        <source>Choose the widget grid size. You will place data fields on the next step.</source>
-        <translation>Wybierz rozmiar siatki widżetu. Pola danych rozmieścisz w następnym kroku.</translation>
+        <source>Choose the panel grid size. You will place widgets on the next step.</source>
+        <translation>Wybierz rozmiar siatki panelu. Widżety rozmieścisz w następnym kroku.</translation>
     </message>
 </context>
 <context>
     <name>WidgetPlaceStep</name>
+    <message>
+        <source>Drag onto the panel, or tap to add.</source>
+        <translation>Przeciągnij na panel lub kliknij.</translation>
+    </message>
+    <message>
+        <source>All widgets are on the panel.</source>
+        <translation>Wszystkie widżety są na panelu.</translation>
+    </message>
+    <message>
+        <source>Cell size</source>
+        <translation>Rozmiar komórek</translation>
+    </message>
+    <message>
+        <source>Standard</source>
+        <translation>Standardowy</translation>
+    </message>
+    <message>
+        <source>Large</source>
+        <translation>Duży</translation>
+    </message>
     <message>
         <source>Value</source>
         <translation>Wartość</translation>
@@ -6086,16 +6106,16 @@
         <translation>Etykieta / wart.</translation>
     </message>
     <message>
-        <source>Pick a representation, then drag fields onto the widget shown in the working area. Drag a placed field back here to remove it, or tap it to change its type.</source>
-        <translation>Wybierz reprezentację, a następnie przeciągnij pola na widżet widoczny w obszarze roboczym. Przeciągnij umieszczone pole z powrotem tutaj, aby je usunąć, lub kliknij, aby zmienić typ.</translation>
+        <source>Pick a representation, then drag widgets onto the panel shown in the working area. Drag a placed widget back here to remove it, or tap it to change its type.</source>
+        <translation>Wybierz reprezentację, a następnie przeciągnij widżety na panel widoczny w obszarze roboczym. Przeciągnij umieszczony widżet z powrotem tutaj, aby go usunąć, lub kliknij, aby zmienić typ.</translation>
     </message>
     <message>
         <source>Representation</source>
         <translation>Reprezentacja</translation>
     </message>
     <message>
-        <source>Fields</source>
-        <translation>Pola</translation>
+        <source>Widgets</source>
+        <translation>Widżety</translation>
     </message>
     <message>
         <source>Background transparency</source>
@@ -6109,8 +6129,8 @@
 <context>
     <name>WidgetEditOverlay</name>
     <message>
-        <source>Remove field</source>
-        <translation>Usuń pole</translation>
+        <source>Remove widget</source>
+        <translation>Usuń widżet</translation>
     </message>
 </context>
 </TS>

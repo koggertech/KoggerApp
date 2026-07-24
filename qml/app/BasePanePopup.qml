@@ -102,6 +102,7 @@ Item {
     signal closeRequested()
     signal popupDoubleClicked()
     signal dockCommitted(string targetId, string side, real gap, real crossOffset)
+    signal interactionStarted()
 
     default property alias popupContent: contentHost.data
 
@@ -260,6 +261,7 @@ Item {
     function _beginDrag() {
         _dragStartX = panelX
         _dragStartY = panelY
+        interactionStarted()
     }
 
     function _updateDrag(tx, ty) {

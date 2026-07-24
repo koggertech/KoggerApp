@@ -17,28 +17,28 @@ Column {
     Text {
         width: parent.width
         wrapMode: Text.WordWrap
-        text: qsTr("Choose the widget grid size. You will place data fields on the next step.")
+        text: qsTr("Choose the panel grid size. You will place widgets on the next step.")
         color: AppPalette.textMuted
         font.pixelSize: Tokens.fontSm
     }
 
     Grid {
         width: parent.width
-        columns: 3
+        columns: 4
         spacing: Tokens.spaceMd
 
         Repeater {
             model: [
-                { c: 1, r: 1 }, { c: 2, r: 1 }, { c: 3, r: 1 },
-                { c: 1, r: 2 }, { c: 2, r: 2 }, { c: 3, r: 2 },
-                { c: 1, r: 3 }, { c: 2, r: 3 }, { c: 3, r: 3 },
-                { c: 1, r: 4 }, { c: 2, r: 4 }, { c: 3, r: 4 }
+                { c: 1, r: 1 }, { c: 2, r: 1 }, { c: 3, r: 1 }, { c: 4, r: 1 },
+                { c: 1, r: 2 }, { c: 2, r: 2 }, { c: 3, r: 2 }, { c: 4, r: 2 },
+                { c: 1, r: 3 }, { c: 2, r: 3 }, { c: 3, r: 3 }, { c: 4, r: 3 },
+                { c: 1, r: 4 }, { c: 2, r: 4 }, { c: 3, r: 4 }, { c: 4, r: 4 }
             ]
             delegate: Rectangle {
                 id: sizeCard
                 required property var modelData
                 readonly property bool hovered: cardMouse.containsMouse
-                width: Math.floor((step.width - 2 * Tokens.spaceMd) / 3)
+                width: Math.floor((step.width - 3 * Tokens.spaceMd) / 4)
                 height: Math.round(96 * AppPalette.scale)
                 radius: Tokens.radiusLg
                 color: hovered ? AppPalette.cardHover : AppPalette.card

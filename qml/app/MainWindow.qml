@@ -972,7 +972,7 @@ ApplicationWindow {
                    : !workspaceStore.settingsSubPageActive
                      ? qsTr("Settings")
                      : workspaceStore.settingsSubPageKind === "quickActions" ? qsTr("Quick action menu")
-                     : workspaceStore.settingsSubPageKind === "widgetEdit"   ? (workspaceStore.widgetEditIndex >= 0 ? qsTr("Edit widget") : qsTr("Create widget"))
+                     : workspaceStore.settingsSubPageKind === "widgetEdit"   ? (workspaceStore.widgetEditIndex >= 0 ? qsTr("Edit panel") : qsTr("Create panel"))
                      : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
@@ -1101,7 +1101,7 @@ ApplicationWindow {
                 required property int index
                 readonly property var _wdef: workspaceStore.widgets[index] || null
                 anchors.fill: parent
-                z: ZOrder.widgetPopup
+                z: ZOrder.widgetPopup + (_wdef ? workspaceStore.widgetStackRank(_wdef.id) : 0)
                 store: workspaceStore
                 def: _wdef
                 popupVisible: !!_wdef && !_beingEdited && workspaceStore.widgetShown(_wdef.id)

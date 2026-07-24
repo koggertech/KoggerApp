@@ -390,6 +390,8 @@ property var profilesPopupState: ({ x: -1, y: -1 })
 
 property var  widgets: []
 readonly property bool hasWidgets: widgets.length > 0
+readonly property int widgetLimit: 10
+readonly property bool canCreateWidget: widgets.length < widgetLimit
 property var  widgetShownMap: ({})
 property var  widgetInstances: ({})
 property int  widgetEditIndex: -1
@@ -400,16 +402,39 @@ property int  widgetDraftCols: 1
 property int  widgetDraftRows: 1
 property int  widgetDraftTransparency: 0
 property real widgetDraftScale: 1.0
+property bool widgetDraftBig: false
 property var  widgetDraftCells: []
 property string widgetDraftRep: "value"
 readonly property var widgetScaleSteps: [0.75, 1.0, 1.25, 1.5, 2.0, 2.5]
+readonly property bool widgetDraftBigAllowed: widgetDraftCols >= 2 && widgetDraftRows >= 2
 
-function widgetDraftSetScale(s) {
+function _cellSpan(rep, big) {
+    var m = big ? 2 : 1
+    return { sc: (rep === "labelValueRow" ? 2 : 1) * m, sr: 1 * m }
+}
+
+function widgetDraftRepAvailable(rep) {
+    var s = _cellSpan(rep, widgetDraftBig)
+    return s.sc <= widgetDraftCols && s.sr <= widgetDraftRows
+}
+
+function widgetDraftSetBig(b) {
+    widgetDraftBig = (b === true) && widgetDraftBigAllowed
+    if (!widgetDraftRepAvailable(widgetDraftRep))
+        widgetDraftRep = "value"
+    widgetDraftClearPreview()
+}
+
+function widgetDraftSetScale(s, maxScale) {
+    var mx = (typeof maxScale === "number" && maxScale > 0) ? maxScale : Infinity
     var best = widgetScaleSteps[0]
-    var bd = Math.abs(s - best)
-    for (var i = 1; i < widgetScaleSteps.length; ++i) {
-        var d = Math.abs(s - widgetScaleSteps[i])
-        if (d < bd) { bd = d; best = widgetScaleSteps[i] }
+    var bd = Infinity
+    var haveAllowed = false
+    for (var i = 0; i < widgetScaleSteps.length; ++i) {
+        var step = widgetScaleSteps[i]
+        if (step > mx) continue
+        var d = Math.abs(s - step)
+        if (!haveAllowed || d < bd) { bd = d; best = step; haveAllowed = true }
     }
     widgetDraftScale = best
 }
@@ -417,10 +442,33 @@ function widgetDraftSetScale(s) {
 property int  widgetDropRow: -1
 property int  widgetDropCol: -1
 property int  widgetDropSpan: 1
+property int  widgetDropSpanRows: 1
 property bool widgetDropValid: false
 property bool widgetOverPalette: false
+property int  widgetPreviewRow: -1
+property int  widgetPreviewCol: -1
+property int  widgetPreviewSpan: 1
+property int  widgetPreviewSpanRows: 1
+property bool widgetPreviewValid: false
+property string widgetPreviewField: ""
+property bool widgetDragActive: false
+property string widgetDragRep: "value"
+property bool widgetDragBig: false
+property string widgetDragField: ""
 property int  widgetHoverCols: 0
 property int  widgetHoverRows: 0
+
+function widgetDragBegin(rep, big, field) {
+    widgetDragRep = rep
+    widgetDragBig = (big === true)
+    widgetDragField = field ? field : ""
+    widgetDragActive = true
+    widgetDraftClearPreview()
+}
+
+function widgetDragEnd() {
+    widgetDragActive = false
+}
 
 readonly property bool widgetEditorActive: settingsSubPageActive && settingsSubPageKind === "widgetEdit"
 
@@ -468,7 +516,7 @@ function normalizeWidgetDef(raw) {
         return null
     var cols = Math.round(raw.cols)
     var rows = Math.round(raw.rows)
-    if (!(cols >= 1 && cols <= 3) || !(rows >= 1 && rows <= 4))
+    if (!(cols >= 1 && cols <= 4) || !(rows >= 1 && rows <= 4))
         return null
     var name = (typeof raw.name === "string") ? raw.name : ""
     var transparency = (typeof raw.transparency === "number" && isFinite(raw.transparency))
@@ -484,15 +532,21 @@ function normalizeWidgetDef(raw) {
         if (!(row >= 0 && row < rows) || !(col >= 0 && col < cols)) continue
         if (!DataFieldCatalog.hasField(c.field)) continue
         var rep = (c.rep === "labelValueRow" || c.rep === "labelValueStacked") ? c.rep : "value"
-        var span = (rep === "labelValueRow") ? 2 : 1
-        if (span === 2 && col + 1 >= cols) continue
-        var k0 = row + "," + col
-        var k1 = row + "," + (col + 1)
-        if (occupied[k0]) continue
-        if (span === 2 && occupied[k1]) continue
-        occupied[k0] = true
-        if (span === 2) occupied[k1] = true
-        cells.push({ row: row, col: col, field: String(c.field), rep: rep })
+        var cellBig = (c.big === true)
+        var s = _cellSpan(rep, cellBig)
+        if (row + s.sr > rows || col + s.sc > cols) continue
+        var conflict = false
+        var keys = []
+        for (var dr = 0; dr < s.sr && !conflict; ++dr) {
+            for (var dc = 0; dc < s.sc; ++dc) {
+                var k = (row + dr) + "," + (col + dc)
+                if (occupied[k]) { conflict = true; break }
+                keys.push(k)
+            }
+        }
+        if (conflict) continue
+        for (var ki = 0; ki < keys.length; ++ki) occupied[keys[ki]] = true
+        cells.push({ row: row, col: col, field: String(c.field), rep: rep, big: cellBig })
     }
     var id = (typeof raw.id === "string" && raw.id.length) ? raw.id : ""
     return { id: id, name: name, cols: cols, rows: rows, transparency: transparency, cells: cells }
@@ -514,6 +568,7 @@ function loadWidgets() {
             if (!def) continue
             if (!def.id || def.id.length === 0) def.id = generateWidgetId()
             next.push(def)
+            if (next.length >= widgetLimit) break
         }
     }
     widgets = next
@@ -528,6 +583,7 @@ function saveWidget(def) {
         norm.id = next[widgetEditIndex].id
         next[widgetEditIndex] = norm
     } else {
+        if (next.length >= widgetLimit) return ""
         norm.id = generateWidgetId()
         next.push(norm)
     }
@@ -564,8 +620,33 @@ function widgetInstance(id) {
     return {
         x: (d && typeof d.x === "number") ? d.x : -1,
         y: (d && typeof d.y === "number") ? d.y : -1,
-        scale: (d && typeof d.scale === "number" && d.scale > 0) ? d.scale : 1.0
+        scale: (d && typeof d.scale === "number" && d.scale > 0) ? d.scale : 1.0,
+        z: (d && typeof d.z === "number") ? d.z : 0
     }
+}
+
+function widgetStackRank(id) {
+    return Math.max(0, Math.min(widgetLimit - 1, widgetInstance(id).z))
+}
+
+function widgetBringToFront(id) {
+    if (!id) return
+    var ids = []
+    for (var i = 0; i < widgets.length; ++i)
+        if (widgets[i] && widgets[i].id) ids.push(widgets[i].id)
+    if (ids.indexOf(id) < 0) return
+    ids.sort(function(a, b) { return widgetInstance(a).z - widgetInstance(b).z })
+    if (ids[ids.length - 1] === id) return
+    ids.splice(ids.indexOf(id), 1)
+    ids.push(id)
+    var m = {}
+    for (var k in widgetInstances) m[k] = widgetInstances[k]
+    for (var j = 0; j < ids.length; ++j) {
+        var inst = widgetInstance(ids[j])
+        m[ids[j]] = { x: inst.x, y: inst.y, scale: inst.scale, z: j }
+    }
+    widgetInstances = m
+    saveWidgetInstances()
 }
 
 function _writeWidgetInstance(id, inst) {
@@ -653,7 +734,8 @@ function loadWidgetInstances() {
             m[k] = {
                 x: (typeof d.x === "number") ? d.x : -1,
                 y: (typeof d.y === "number") ? d.y : -1,
-                scale: (typeof d.scale === "number" && d.scale > 0) ? d.scale : 1.0
+                scale: (typeof d.scale === "number" && d.scale > 0) ? d.scale : 1.0,
+                z: (typeof d.z === "number") ? d.z : 0
             }
         }
     }
@@ -1383,13 +1465,19 @@ function widgetDraftReset() {
         widgetDraftScale = 1.0
         widgetDraftCells = []
     }
+    widgetDraftBig = false
     widgetDraftRep = "value"
     widgetDropRow = -1
     widgetDropCol = -1
     widgetDropSpan = 1
+    widgetDropSpanRows = 1
     widgetOverPalette = false
     widgetHoverCols = 0
     widgetHoverRows = 0
+    widgetPreviewRow = -1
+    widgetPreviewCol = -1
+    widgetPreviewValid = false
+    widgetDragActive = false
 }
 
 function widgetDraftIsPlaced(field) {
@@ -1401,10 +1489,9 @@ function widgetDraftIsPlaced(field) {
 function widgetDraftOccupantAt(r, c) {
     for (var i = 0; i < widgetDraftCells.length; ++i) {
         var cell = widgetDraftCells[i]
-        if (cell.row === r && cell.col === c)
-            return { kind: "anchor", cell: cell }
-        if (cell.rep === "labelValueRow" && cell.row === r && cell.col === c - 1)
-            return { kind: "tail", cell: cell }
+        var s = _cellSpan(cell.rep, cell.big === true)
+        if (r >= cell.row && r < cell.row + s.sr && c >= cell.col && c < cell.col + s.sc)
+            return { kind: (r === cell.row && c === cell.col) ? "anchor" : "tail", cell: cell }
     }
     return null
 }
@@ -1416,41 +1503,41 @@ function _wDraftCoordFree(r, c, ignoreField) {
 }
 
 function _wDraftCellCovers(cell, r, c) {
-    if (cell.row !== r) return false
-    if (cell.col === c) return true
-    if (cell.rep === "labelValueRow" && cell.col === c - 1) return true
-    return false
+    var s = _cellSpan(cell.rep, cell.big === true)
+    return r >= cell.row && r < cell.row + s.sr && c >= cell.col && c < cell.col + s.sc
 }
 
 // Drop validity = footprint fits the grid. Occupied cells are allowed — the drop
 // replaces whatever is there (see widgetDraftAdd). Only out-of-grid is rejected.
-function widgetDraftCanDrop(r, c, rep, ignoreField) {
-    if (r < 0 || r >= widgetDraftRows || c < 0 || c >= widgetDraftCols) return false
-    var span = rep === "labelValueRow" ? 2 : 1
-    if (span === 2 && c + 1 >= widgetDraftCols) return false
-    return true
+function widgetDraftCanDrop(r, c, rep, big, ignoreField) {
+    if (r < 0 || c < 0) return false
+    var s = _cellSpan(rep, big)
+    return r + s.sr <= widgetDraftRows && c + s.sc <= widgetDraftCols
 }
 
 // Occupancy-aware fit (used by tap-to-change-type, which must not overlap others).
-function _widgetDraftFits(r, c, rep, ignoreField) {
-    if (!widgetDraftCanDrop(r, c, rep, ignoreField)) return false
-    var span = rep === "labelValueRow" ? 2 : 1
-    if (!_wDraftCoordFree(r, c, ignoreField)) return false
-    if (span === 2 && !_wDraftCoordFree(r, c + 1, ignoreField)) return false
+function _widgetDraftFits(r, c, rep, big, ignoreField) {
+    if (!widgetDraftCanDrop(r, c, rep, big, ignoreField)) return false
+    var s = _cellSpan(rep, big)
+    for (var dr = 0; dr < s.sr; ++dr)
+        for (var dc = 0; dc < s.sc; ++dc)
+            if (!_wDraftCoordFree(r + dr, c + dc, ignoreField)) return false
     return true
 }
 
-function widgetDraftAdd(r, c, field, rep) {
-    var span = rep === "labelValueRow" ? 2 : 1
+function widgetDraftAdd(r, c, field, rep, big) {
+    var ns = _cellSpan(rep, big)
     var next = []
     for (var i = 0; i < widgetDraftCells.length; ++i) {
         var cell = widgetDraftCells[i]
         if (cell.field === field) continue
-        if (_wDraftCellCovers(cell, r, c)) continue
-        if (span === 2 && _wDraftCellCovers(cell, r, c + 1)) continue
+        var cs = _cellSpan(cell.rep, cell.big === true)
+        var overlap = cell.row < r + ns.sr && r < cell.row + cs.sr
+                   && cell.col < c + ns.sc && c < cell.col + cs.sc
+        if (overlap) continue
         next.push(cell)
     }
-    next.push({ row: r, col: c, field: field, rep: rep })
+    next.push({ row: r, col: c, field: field, rep: rep, big: big === true })
     widgetDraftCells = next
 }
 
@@ -1462,16 +1549,16 @@ function widgetDraftRemove(field) {
 }
 
 function widgetDraftCycle(field) {
-    var order = widgetDraftCols >= 2 ? ["value", "labelValueRow", "labelValueStacked"]
-                                     : ["value", "labelValueStacked"]
+    var order = ["value", "labelValueRow", "labelValueStacked"]
     for (var i = 0; i < widgetDraftCells.length; ++i) {
         if (widgetDraftCells[i].field !== field) continue
+        var cellBig = widgetDraftCells[i].big === true
         var cur = order.indexOf(widgetDraftCells[i].rep)
         for (var s = 1; s <= order.length; ++s) {
             var cand = order[(cur + s) % order.length]
-            if (_widgetDraftFits(widgetDraftCells[i].row, widgetDraftCells[i].col, cand, field)) {
+            if (_widgetDraftFits(widgetDraftCells[i].row, widgetDraftCells[i].col, cand, cellBig, field)) {
                 var next = widgetDraftCells.slice()
-                next[i] = { row: widgetDraftCells[i].row, col: widgetDraftCells[i].col, field: field, rep: cand }
+                next[i] = { row: widgetDraftCells[i].row, col: widgetDraftCells[i].col, field: field, rep: cand, big: cellBig }
                 widgetDraftCells = next
                 return
             }
@@ -1485,28 +1572,64 @@ function widgetDraftSetSize(c, r) {
         widgetDraftScale = 1.0
     widgetDraftCols = c
     widgetDraftRows = r
+    if (!widgetDraftBigAllowed)
+        widgetDraftBig = false
     var norm = normalizeWidgetDef({ cols: c, rows: r, cells: widgetDraftCells })
     widgetDraftCells = norm ? norm.cells : []
-    if (widgetDraftRep === "labelValueRow" && widgetDraftCols < 2)
+    if (!widgetDraftRepAvailable(widgetDraftRep))
         widgetDraftRep = "value"
+    widgetDraftClearPreview()
 }
 
-function widgetDraftCommitFromPalette(field, rep) {
-    if (widgetDropRow >= 0 && widgetDropCol >= 0 && widgetDraftCanDrop(widgetDropRow, widgetDropCol, rep, field))
-        widgetDraftAdd(widgetDropRow, widgetDropCol, field, rep)
+function widgetDraftCommitFromPalette(field, rep, big) {
+    if (widgetDropRow >= 0 && widgetDropCol >= 0 && widgetDraftCanDrop(widgetDropRow, widgetDropCol, rep, big, field))
+        widgetDraftAdd(widgetDropRow, widgetDropCol, field, rep, big)
     widgetDropRow = -1
     widgetDropCol = -1
     widgetOverPalette = false
+    widgetDraftClearPreview()
 }
 
-function widgetDraftCommitMoveOrRemove(field, rep) {
-    if (widgetDropRow >= 0 && widgetDropCol >= 0 && widgetDraftCanDrop(widgetDropRow, widgetDropCol, rep, field))
-        widgetDraftAdd(widgetDropRow, widgetDropCol, field, rep)
+function widgetDraftCommitMoveOrRemove(field, rep, big) {
+    if (widgetDropRow >= 0 && widgetDropCol >= 0 && _widgetDraftFits(widgetDropRow, widgetDropCol, rep, big, field))
+        widgetDraftAdd(widgetDropRow, widgetDropCol, field, rep, big)
     else if (widgetOverPalette)
         widgetDraftRemove(field)
     widgetDropRow = -1
     widgetDropCol = -1
     widgetOverPalette = false
+}
+
+function widgetDraftAutoPlace(field, rep, big) {
+    for (var r = 0; r < widgetDraftRows; ++r)
+        for (var c = 0; c < widgetDraftCols; ++c)
+            if (_widgetDraftFits(r, c, rep, big, field)) {
+                widgetDraftAdd(r, c, field, rep, big)
+                widgetDraftClearPreview()
+                return
+            }
+}
+
+function widgetDraftPreviewFor(field, rep, big) {
+    var s = _cellSpan(rep, big)
+    for (var r = 0; r < widgetDraftRows; ++r)
+        for (var c = 0; c < widgetDraftCols; ++c)
+            if (_widgetDraftFits(r, c, rep, big, field)) {
+                widgetPreviewRow = r
+                widgetPreviewCol = c
+                widgetPreviewSpan = s.sc
+                widgetPreviewSpanRows = s.sr
+                widgetPreviewValid = true
+                widgetPreviewField = field
+                return
+            }
+    widgetDraftClearPreview()
+}
+
+function widgetDraftClearPreview() {
+    widgetPreviewRow = -1
+    widgetPreviewCol = -1
+    widgetPreviewField = ""
 }
 
 function widgetDraftSave() {
@@ -1515,8 +1638,10 @@ function widgetDraftSave() {
                           transparency: widgetDraftTransparency, cells: widgetDraftCells })
     if (id) {
         setWidgetScale(id, widgetDraftScale)
-        if (isCreate)
+        if (isCreate) {
             setWidgetShown(id, true)
+            widgetBringToFront(id)
+        }
     }
     closeActiveSettingsSubPage()
 }

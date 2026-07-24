@@ -998,28 +998,28 @@
         <translation>Нет отображённых эхограмм</translation>
     </message>
     <message>
-        <source>Widgets</source>
-        <translation>Виджеты</translation>
+        <source>Widget panels</source>
+        <translation>Панели виджетов</translation>
     </message>
     <message>
-        <source>On-scene data widgets: grid size and drag-in fields.</source>
-        <translation>Виджеты данных на сцене: сетка и перетаскивание полей.</translation>
+        <source>On-scene data panels: grid size and drag-in widgets.</source>
+        <translation>Панели данных на сцене: сетка и перетаскивание виджетов.</translation>
     </message>
     <message>
-        <source>Widget %1</source>
-        <translation>Виджет %1</translation>
+        <source>Panel %1</source>
+        <translation>Панель %1</translation>
     </message>
     <message>
-        <source>Delete widget</source>
-        <translation>Удалить виджет</translation>
+        <source>Delete panel</source>
+        <translation>Удалить панель</translation>
     </message>
     <message>
-        <source>Edit widget</source>
-        <translation>Редактировать виджет</translation>
+        <source>Edit panel</source>
+        <translation>Редактировать панель</translation>
     </message>
     <message>
-        <source>Create widget</source>
-        <translation>Создать виджет</translation>
+        <source>Create panel</source>
+        <translation>Создать панель</translation>
     </message>
 </context>
 <context>
@@ -3951,16 +3951,16 @@
         <translation>Настройки</translation>
     </message>
     <message>
-        <source>Widgets</source>
-        <translation>Виджеты</translation>
+        <source>Widget panels</source>
+        <translation>Панели виджетов</translation>
     </message>
     <message>
-        <source>No widgets yet.</source>
-        <translation>Пока нет виджетов.</translation>
+        <source>No panels yet.</source>
+        <translation>Пока нет панелей.</translation>
     </message>
     <message>
-        <source>Open widget settings</source>
-        <translation>Открыть настройки виджетов</translation>
+        <source>Open panel settings</source>
+        <translation>Открыть настройки панелей</translation>
     </message>
 </context>
 <context>
@@ -4615,12 +4615,12 @@
         <translation>Экспорт в CSV</translation>
     </message>
     <message>
-        <source>Create widget</source>
-        <translation>Создать виджет</translation>
+        <source>Create panel</source>
+        <translation>Создать панель</translation>
     </message>
     <message>
-        <source>Edit widget</source>
-        <translation>Редактировать виджет</translation>
+        <source>Edit panel</source>
+        <translation>Редактировать панель</translation>
     </message>
 </context>
 <context>
@@ -5239,8 +5239,8 @@
         <translation>Консоль</translation>
     </message>
     <message>
-        <source>Widgets</source>
-        <translation>Виджеты</translation>
+        <source>Widget panels</source>
+        <translation>Панели виджетов</translation>
     </message>
 </context>
 <context>
@@ -5997,8 +5997,8 @@
         <translation>Время</translation>
     </message>
     <message>
-        <source>Total depth</source>
-        <translation>Глубина (общая)</translation>
+        <source>Depth</source>
+        <translation>Глубина</translation>
     </message>
     <message>
         <source>Rangefinder</source>
@@ -6056,12 +6056,32 @@
 <context>
     <name>WidgetSizeStep</name>
     <message>
-        <source>Choose the widget grid size. You will place data fields on the next step.</source>
-        <translation>Выберите размер сетки виджета. Поля разместите на следующем шаге.</translation>
+        <source>Choose the panel grid size. You will place widgets on the next step.</source>
+        <translation>Выберите размер сетки панели. Виджеты разместите на следующем шаге.</translation>
     </message>
 </context>
 <context>
     <name>WidgetPlaceStep</name>
+    <message>
+        <source>Drag onto the panel, or tap to add.</source>
+        <translation>Перетащите на панель или нажмите.</translation>
+    </message>
+    <message>
+        <source>All widgets are on the panel.</source>
+        <translation>Все виджеты уже на панели.</translation>
+    </message>
+    <message>
+        <source>Cell size</source>
+        <translation>Размер ячеек</translation>
+    </message>
+    <message>
+        <source>Standard</source>
+        <translation>Стандарт</translation>
+    </message>
+    <message>
+        <source>Large</source>
+        <translation>Большие</translation>
+    </message>
     <message>
         <source>Value</source>
         <translation>Значение</translation>
@@ -6075,16 +6095,16 @@
         <translation>Подпись / знач.</translation>
     </message>
     <message>
-        <source>Pick a representation, then drag fields onto the widget shown in the working area. Drag a placed field back here to remove it, or tap it to change its type.</source>
-        <translation>Выберите представление и перетащите поля на виджет в рабочей области. Перетащите размещённое поле сюда, чтобы удалить, или нажмите, чтобы сменить тип.</translation>
+        <source>Pick a representation, then drag widgets onto the panel shown in the working area. Drag a placed widget back here to remove it, or tap it to change its type.</source>
+        <translation>Выберите представление и перетащите виджеты на панель в рабочей области. Перетащите размещённый виджет сюда, чтобы удалить, или нажмите, чтобы сменить тип.</translation>
     </message>
     <message>
         <source>Representation</source>
         <translation>Представление</translation>
     </message>
     <message>
-        <source>Fields</source>
-        <translation>Поля</translation>
+        <source>Widgets</source>
+        <translation>Виджеты</translation>
     </message>
     <message>
         <source>Background transparency</source>
@@ -6098,8 +6118,8 @@
 <context>
     <name>WidgetEditOverlay</name>
     <message>
-        <source>Remove field</source>
-        <translation>Убрать поле</translation>
+        <source>Remove widget</source>
+        <translation>Убрать виджет</translation>
     </message>
 </context>
 </TS>

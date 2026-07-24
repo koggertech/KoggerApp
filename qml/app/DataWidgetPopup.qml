@@ -43,7 +43,7 @@ BasePanePopup {
         && store.widgets[store.widgetEditIndex].id === def.id)
 
     popupVisible: !_beingEdited
-    dragEnabled: true
+    dragEnabled: !(store && store.widgetEditorActive)
     dragAnywhere: true
     headerReserved: false
     resizeEnabled: false
@@ -111,6 +111,8 @@ BasePanePopup {
         store.setWidgetScale(def.id, widgetScale)
     }
 
+    onInteractionStarted: if (store && def && def.id) store.widgetBringToFront(def.id)
+
     dockState: (store && def && def.id) ? store.popupDock(popupId) : null
     onDockCommitted: function(targetId, side, gap, crossOffset) {
         store.setPopupDock(popupId, { targetId: targetId, side: side, gap: gap, cross: crossOffset })
@@ -132,107 +134,21 @@ BasePanePopup {
                 delegate: Item {
                     id: cell
                     required property var modelData
-                    readonly property int _span: modelData.rep === "labelValueRow" ? 2 : 1
+                    readonly property var _sp: root.store._cellSpan(modelData.rep, modelData.big === true)
                     readonly property string _field: modelData.field
-                    readonly property string _rep: modelData.rep
-                    readonly property string _label: DataFieldCatalog.label(_field)
-                    readonly property string _value: DataFieldCatalog.formatValue(_field, root._ds, root._dmw, root.store)
 
                     x: modelData.col * (root._cellW + root._gap)
                     y: modelData.row * (root._cellH + root._gap)
-                    width: _span * root._cellW + (_span - 1) * root._gap
-                    height: root._cellH
+                    width: _sp.sc * root._cellW + (_sp.sc - 1) * root._gap
+                    height: _sp.sr * root._cellH + (_sp.sr - 1) * root._gap
 
-                    Text {
-                        visible: cell._rep === "value"
+                    WidgetCellContent {
                         anchors.fill: parent
-                        anchors.margins: Math.round(6 * root._k)
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        fontSizeMode: Text.Fit
-                        minimumPixelSize: Math.max(6, Math.round(7 * root._k))
-                        font.pixelSize: Math.round(root._cellH * 0.6)
-                        font.bold: true
-                        elide: Text.ElideRight
-                        text: cell._value
-                        color: AppPalette.textStrong
-                    }
-
-                    Item {
-                        visible: cell._rep === "labelValueStacked"
-                        anchors.fill: parent
-                        anchors.margins: Math.round(6 * root._k)
-
-                        Text {
-                            id: stLabel
-                            anchors.top: parent.top
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            height: parent.height * 0.45
-                            verticalAlignment: Text.AlignVCenter
-                            wrapMode: Text.WordWrap
-                            maximumLineCount: 2
-                            fontSizeMode: Text.Fit
-                            minimumPixelSize: Math.max(6, Math.round(7 * root._k))
-                            font.pixelSize: Math.round(root._cellH * 0.42)
-                            font.bold: true
-                            elide: Text.ElideRight
-                            text: cell._label
-                            color: AppPalette.textSecond
-                        }
-                        Text {
-                            anchors.top: stLabel.bottom
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.bottom: parent.bottom
-                            verticalAlignment: Text.AlignVCenter
-                            fontSizeMode: Text.Fit
-                            minimumPixelSize: Math.max(6, Math.round(7 * root._k))
-                            font.pixelSize: Math.round(root._cellH * 0.55)
-                            font.bold: true
-                            elide: Text.ElideRight
-                            text: cell._value
-                            color: AppPalette.textStrong
-                        }
-                    }
-
-                    Item {
-                        visible: cell._rep === "labelValueRow"
-                        anchors.fill: parent
-                        anchors.margins: Math.round(6 * root._k)
-
-                        Text {
-                            id: rowLabel
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            width: (parent.width - root._gap) / 2
-                            verticalAlignment: Text.AlignVCenter
-                            wrapMode: Text.WordWrap
-                            maximumLineCount: 2
-                            fontSizeMode: Text.Fit
-                            minimumPixelSize: Math.max(6, Math.round(7 * root._k))
-                            font.pixelSize: Math.round(root._cellH * 0.42)
-                            font.bold: true
-                            elide: Text.ElideRight
-                            text: cell._label
-                            color: AppPalette.textSecond
-                        }
-                        Text {
-                            anchors.left: rowLabel.right
-                            anchors.leftMargin: root._gap
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            verticalAlignment: Text.AlignVCenter
-                            fontSizeMode: Text.Fit
-                            minimumPixelSize: Math.max(6, Math.round(7 * root._k))
-                            font.pixelSize: Math.round(root._cellH * 0.5)
-                            font.bold: true
-                            elide: Text.ElideRight
-                            text: cell._value
-                            color: AppPalette.textStrong
-                        }
+                        rep: cell.modelData.rep
+                        label: DataFieldCatalog.label(cell._field)
+                        value: DataFieldCatalog.formatValue(cell._field, root._ds, root._dmw, root.store)
+                        k: root._k
+                        gap: root._gap
                     }
                 }
             }

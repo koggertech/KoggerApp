@@ -926,28 +926,28 @@
         <translation>Workspace adjust, ms:</translation>
     </message>
     <message>
-        <source>Widgets</source>
-        <translation>Widgets</translation>
+        <source>Widget panels</source>
+        <translation>Widget panels</translation>
     </message>
     <message>
-        <source>On-scene data widgets: grid size and drag-in fields.</source>
-        <translation>On-scene data widgets: grid size and drag-in fields.</translation>
+        <source>On-scene data panels: grid size and drag-in widgets.</source>
+        <translation>On-scene data panels: grid size and drag-in widgets.</translation>
     </message>
     <message>
-        <source>Widget %1</source>
-        <translation>Widget %1</translation>
+        <source>Panel %1</source>
+        <translation>Panel %1</translation>
     </message>
     <message>
-        <source>Delete widget</source>
-        <translation>Delete widget</translation>
+        <source>Delete panel</source>
+        <translation>Delete panel</translation>
     </message>
     <message>
-        <source>Edit widget</source>
-        <translation>Edit widget</translation>
+        <source>Edit panel</source>
+        <translation>Edit panel</translation>
     </message>
     <message>
-        <source>Create widget</source>
-        <translation>Create widget</translation>
+        <source>Create panel</source>
+        <translation>Create panel</translation>
     </message>
 </context>
 <context>
@@ -3114,16 +3114,16 @@
         <translation>Settings</translation>
     </message>
     <message>
-        <source>No widgets yet.</source>
-        <translation>No widgets yet.</translation>
+        <source>No panels yet.</source>
+        <translation>No panels yet.</translation>
     </message>
     <message>
-        <source>Open widget settings</source>
-        <translation>Open widget settings</translation>
+        <source>Open panel settings</source>
+        <translation>Open panel settings</translation>
     </message>
     <message>
-        <source>Widgets</source>
-        <translation>Widgets</translation>
+        <source>Widget panels</source>
+        <translation>Widget panels</translation>
     </message>
 </context>
 <context>
@@ -3739,12 +3739,12 @@
         <translation>Export to CSV</translation>
     </message>
     <message>
-        <source>Create widget</source>
-        <translation>Create widget</translation>
+        <source>Create panel</source>
+        <translation>Create panel</translation>
     </message>
     <message>
-        <source>Edit widget</source>
-        <translation>Edit widget</translation>
+        <source>Edit panel</source>
+        <translation>Edit panel</translation>
     </message>
 </context>
 <context>
@@ -4349,8 +4349,8 @@
         <translation>Console</translation>
     </message>
     <message>
-        <source>Widgets</source>
-        <translation>Widgets</translation>
+        <source>Widget panels</source>
+        <translation>Widget panels</translation>
     </message>
 </context>
 <context>
@@ -4858,8 +4858,8 @@
         <translation>Time</translation>
     </message>
     <message>
-        <source>Total depth</source>
-        <translation>Total depth</translation>
+        <source>Depth</source>
+        <translation>Depth</translation>
     </message>
     <message>
         <source>Rangefinder</source>
@@ -4917,12 +4917,32 @@
 <context>
     <name>WidgetSizeStep</name>
     <message>
-        <source>Choose the widget grid size. You will place data fields on the next step.</source>
-        <translation>Choose the widget grid size. You will place data fields on the next step.</translation>
+        <source>Choose the panel grid size. You will place widgets on the next step.</source>
+        <translation>Choose the panel grid size. You will place widgets on the next step.</translation>
     </message>
 </context>
 <context>
     <name>WidgetPlaceStep</name>
+    <message>
+        <source>Drag onto the panel, or tap to add.</source>
+        <translation>Drag onto the panel, or tap to add.</translation>
+    </message>
+    <message>
+        <source>All widgets are on the panel.</source>
+        <translation>All widgets are on the panel.</translation>
+    </message>
+    <message>
+        <source>Cell size</source>
+        <translation>Cell size</translation>
+    </message>
+    <message>
+        <source>Standard</source>
+        <translation>Standard</translation>
+    </message>
+    <message>
+        <source>Large</source>
+        <translation>Large</translation>
+    </message>
     <message>
         <source>Value</source>
         <translation>Value</translation>
@@ -4936,16 +4956,16 @@
         <translation>Label / Value</translation>
     </message>
     <message>
-        <source>Pick a representation, then drag fields onto the widget shown in the working area. Drag a placed field back here to remove it, or tap it to change its type.</source>
-        <translation>Pick a representation, then drag fields onto the widget shown in the working area. Drag a placed field back here to remove it, or tap it to change its type.</translation>
+        <source>Pick a representation, then drag widgets onto the panel shown in the working area. Drag a placed widget back here to remove it, or tap it to change its type.</source>
+        <translation>Pick a representation, then drag widgets onto the panel shown in the working area. Drag a placed widget back here to remove it, or tap it to change its type.</translation>
     </message>
     <message>
         <source>Representation</source>
         <translation>Representation</translation>
     </message>
     <message>
-        <source>Fields</source>
-        <translation>Fields</translation>
+        <source>Widgets</source>
+        <translation>Widgets</translation>
     </message>
     <message>
         <source>Background transparency</source>
@@ -4959,8 +4979,8 @@
 <context>
     <name>WidgetEditOverlay</name>
     <message>
-        <source>Remove field</source>
-        <translation>Remove field</translation>
+        <source>Remove widget</source>
+        <translation>Remove widget</translation>
     </message>
 </context>
 </TS>

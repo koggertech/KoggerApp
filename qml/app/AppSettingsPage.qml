@@ -641,8 +641,8 @@ Column {
     SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: qsTr("Widgets")
-        description: qsTr("On-scene data widgets: grid size and drag-in fields.")
+        title: qsTr("Widget panels")
+        description: qsTr("On-scene data panels: grid size and drag-in widgets.")
         stateStore: root.store
         stateKey: "app.widgets"
 
@@ -659,7 +659,7 @@ Column {
                     id: widgetCardView
                     anchors.fill: parent
                     def: widgetRow.def
-                    title: qsTr("Widget %1").arg(widgetRow.widgetIndex + 1)
+                    title: qsTr("Panel %1").arg(widgetRow.widgetIndex + 1)
                     showText: true
                     selectionMode: true
                     selected: !!(root.store && widgetRow.def && root.store.widgetShown(widgetRow.def.id))
@@ -679,7 +679,7 @@ Column {
                     glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
                     fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
                     borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
-                    toolTipText: qsTr("Delete widget"); z: 6
+                    toolTipText: qsTr("Delete panel"); z: 6
                     onClicked: root.store.deleteWidgetAt(widgetRow.widgetIndex)
                 }
 
@@ -693,7 +693,7 @@ Column {
                     fillColor: AppPalette.controlRaised
                     fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
                     borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover
-                    toolTipText: qsTr("Edit widget"); z: 6
+                    toolTipText: qsTr("Edit panel"); z: 6
                     onClicked: root.store.openWidgetEditSettings(widgetRow.widgetIndex)
                 }
             }
@@ -701,7 +701,8 @@ Column {
 
         KButton {
             width: parent.width
-            text: qsTr("Create widget")
+            text: qsTr("Create panel")
+            enabled: !!root.store && root.store.canCreateWidget
             onClicked: root.store.openWidgetCreateSettings()
         }
     }
