@@ -46,8 +46,8 @@ Column {
         spacing: Tokens.spaceXs
         Text {
             text: qsTr("Representation")
-            color: AppPalette.textSecond
-            font.pixelSize: Tokens.fontSm
+            color: AppPalette.text
+            font.pixelSize: Tokens.fontBase
         }
         KTabBar {
             width: parent.width
@@ -64,8 +64,8 @@ Column {
         spacing: Tokens.spaceXs
         Text {
             text: qsTr("Cell size")
-            color: AppPalette.textSecond
-            font.pixelSize: Tokens.fontSm
+            color: AppPalette.text
+            font.pixelSize: Tokens.fontBase
         }
         KTabBar {
             width: parent.width
@@ -77,6 +77,25 @@ Column {
             currentValue: !!(step.store && step.store.widgetDraftBig)
             onValueSelected: function(value) { if (step.store) step.store.widgetDraftSetBig(value) }
         }
+
+        Item {
+            id: scaleResetWrap
+            width: parent.width
+            readonly property bool _show: !!step.store && Math.abs(step._scale - 1.0) > 0.001
+            height: _show ? resetScaleBtn.implicitHeight : 0
+            opacity: _show ? 1 : 0
+            clip: true
+            Behavior on height { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+            Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+
+            KButton {
+                id: resetScaleBtn
+                width: parent.width
+                anchors.top: parent.top
+                text: qsTr("Reset scale to default")
+                onClicked: if (step.store) step.store.widgetDraftScale = 1.0
+            }
+        }
     }
 
     Column {
@@ -84,8 +103,8 @@ Column {
         spacing: Tokens.spaceXs
         Text {
             text: qsTr("Background transparency")
-            color: AppPalette.textSecond
-            font.pixelSize: Tokens.fontSm
+            color: AppPalette.text
+            font.pixelSize: Tokens.fontBase
         }
         KSlider {
             width: parent.width
@@ -116,8 +135,8 @@ Column {
 
         Text {
             text: qsTr("Widgets")
-            color: AppPalette.textSecond
-            font.pixelSize: Tokens.fontSm
+            color: AppPalette.text
+            font.pixelSize: Tokens.fontBase
         }
 
         Text {
