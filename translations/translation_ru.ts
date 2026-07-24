@@ -5407,6 +5407,10 @@
 <context>
     <name>DataFieldCatalog</name>
     <message>
+        <source>m/s</source>
+        <translation>м/с</translation>
+    </message>
+    <message>
         <source>Device charge</source>
         <translation>Заряд устройства</translation>
     </message>

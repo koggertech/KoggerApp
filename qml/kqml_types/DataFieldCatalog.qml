@@ -10,7 +10,7 @@ QtObject {
         { key: "rfDepth",   label: qsTr("Rangefinder"),    unit: qsTr("m"),      group: "general" },
         { key: "btDepth",   label: qsTr("Bottom track"),   unit: qsTr("m"),      group: "general" },
         { key: "speed",     label: qsTr("Speed"),          unit: qsTr("km/h"),   group: "general" },
-        { key: "apSpeed",   label: qsTr("Ground speed"),   unit: "m/s",          group: "autopilot" },
+        { key: "apSpeed",   label: qsTr("Ground speed"),   unit: qsTr("m/s"),    group: "autopilot" },
         { key: "coord",     label: qsTr("Coordinate"),     unit: "",             group: "general" },
         { key: "selPoint",  label: qsTr("Selected point"), unit: "",             group: "general" },
         { key: "temp",      label: qsTr("Temperature"),    unit: "°C",           group: "general" },
@@ -95,7 +95,7 @@ QtObject {
         case "temp":
             return (ds && ds.isLastTempValid) ? (ds.lastTemp.toFixed(1) + " °C") : "—"
         case "apSpeed":
-            return (dmw && !isNaN(dmw.vruVelocityH)) ? (dmw.vruVelocityH.toFixed(1) + " m/s") : "—"
+            return (dmw && !isNaN(dmw.vruVelocityH)) ? (dmw.vruVelocityH.toFixed(1) + " " + qsTr("m/s")) : "—"
         case "apVoltage":
             return (dmw && !isNaN(dmw.vruVoltage)) ? (dmw.vruVoltage.toFixed(1) + " V") : "—"
         case "apCurrent":
@@ -115,7 +115,7 @@ QtObject {
         case "rfDepth":   return "3.15 " + qsTr("m")
         case "btDepth":   return "3.24 " + qsTr("m")
         case "speed":     return "5.4 " + qsTr("km/h")
-        case "apSpeed":   return "1.5 m/s"
+        case "apSpeed":   return "1.5 " + qsTr("m/s")
         case "coord":     return "N 40.6035°\nE 45.0010°"
         case "selPoint":  return "12.5 " + qsTr("m") + "\n135.0°"
         case "temp":      return "18.4 °C"
