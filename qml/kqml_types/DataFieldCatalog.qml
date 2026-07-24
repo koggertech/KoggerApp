@@ -14,6 +14,7 @@ QtObject {
         { key: "coord",     label: qsTr("Coordinate"),     unit: "",             group: "general" },
         { key: "selPoint",  label: qsTr("Selected point"), unit: "",             group: "general" },
         { key: "temp",      label: qsTr("Temperature"),    unit: "°C",           group: "general" },
+        { key: "sysBattery",label: qsTr("Device charge"),  unit: "%",            group: "general" },
         { key: "apVoltage", label: qsTr("Battery"),        unit: "V",            group: "autopilot" },
         { key: "apCurrent", label: qsTr("Current"),        unit: "A",            group: "autopilot" },
         { key: "apMode",    label: qsTr("Flight mode"),    unit: "",             group: "autopilot" },
@@ -53,9 +54,10 @@ QtObject {
                 || dmw.pilotArmState >= 0 || dmw.pilotModeState >= 0)
     }
 
-    function isValid(key, ds, dmw, store) {
+    function isValid(key, ds, dmw, store, sysbat) {
         switch (key) {
         case "time":      return !!(store && store.systemTimeValid)
+        case "sysBattery": return !!(sysbat && sysbat.available)
         case "depth":     return !!(ds && ds.isLastDepthValid)
         case "rfDepth":   return !!(ds && ds.isLastRangefinderDepthValid)
         case "btDepth":   return !!(ds && ds.isLastBottomTrackDepthValid)
@@ -72,10 +74,12 @@ QtObject {
         return false
     }
 
-    function formatValue(key, ds, dmw, store) {
+    function formatValue(key, ds, dmw, store, sysbat) {
         switch (key) {
         case "time":
             return (store && store.systemTimeValid) ? store.systemTimeHms : "—"
+        case "sysBattery":
+            return (sysbat && sysbat.available) ? (sysbat.level + " %") : "—"
         case "depth":
             return (ds && ds.isLastDepthValid) ? (ds.depth.toFixed(2) + " " + qsTr("m")) : "—"
         case "rfDepth":
@@ -115,11 +119,24 @@ QtObject {
         case "coord":     return "N 40.6035°\nE 45.0010°"
         case "selPoint":  return "12.5 " + qsTr("m") + "\n135.0°"
         case "temp":      return "18.4 °C"
+        case "sysBattery": return "87 %"
         case "apVoltage": return "12.4 V"
         case "apCurrent": return "3.2 A"
         case "apMode":    return "3"
         case "apArm":     return "ARMED"
         }
         return "—"
+    }
+
+    function previewAvailable(key, sysbat) {
+        if (key === "sysBattery")
+            return !!(sysbat && sysbat.available)
+        return true
+    }
+
+    function previewValue(key, store, sysbat) {
+        if (key === "sysBattery")
+            return formatValue(key, null, null, store, sysbat)
+        return sampleValue(key, store)
     }
 }

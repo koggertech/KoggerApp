@@ -30,6 +30,7 @@
 #include "scene_object.h"
 #include "bottom_track.h"
 #include "input_device_tracker.h"
+#include "system_battery.h"
 #include "language_controller.h"
 #include "app_utils.h"
 #include "settings_migration.h"
@@ -301,6 +302,7 @@ int main(int argc, char *argv[])
 
     LanguageController langController;
     InputDeviceTracker inputDeviceTracker;
+    SystemBattery systemBattery;
     core.initAfterApp();
 
     //qDebug() << "Lib paths:" << QCoreApplication::libraryPaths();
@@ -338,6 +340,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("echogramStateSerializer", &echogramStateSerializer);
     engine.rootContext()->setContextProperty("notifications", &notifications);
     engine.rootContext()->setContextProperty("inputDeviceTracker", &inputDeviceTracker);
+    engine.rootContext()->setContextProperty("systemBattery", &systemBattery);
     engine.rootContext()->setContextProperty("langController", &langController);
     engine.rootContext()->setContextProperty("appUtils", &appUtils);
 

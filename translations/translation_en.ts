@@ -4296,6 +4296,10 @@
 <context>
     <name>DataFieldCatalog</name>
     <message>
+        <source>Device charge</source>
+        <translation>Device charge</translation>
+    </message>
+    <message>
         <source>Time</source>
         <translation>Time</translation>
     </message>

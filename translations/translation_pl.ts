@@ -5418,6 +5418,10 @@
 <context>
     <name>DataFieldCatalog</name>
     <message>
+        <source>Device charge</source>
+        <translation>Ładunek urządzenia</translation>
+    </message>
+    <message>
         <source>Time</source>
         <translation>Czas</translation>
     </message>

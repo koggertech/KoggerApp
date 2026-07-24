@@ -17,11 +17,15 @@ Column {
                                    ? inputDeviceTracker.touchMode : false
     on_TouchChanged: if (_touch && store) store.widgetDraftClearPreview()
 
+    readonly property var _sysbat: (typeof systemBattery !== "undefined") ? systemBattery : null
+
     readonly property bool _anyUnplaced: {
         if (!store) return true
         var f = DataFieldCatalog.fields
-        for (var i = 0; i < f.length; ++i)
+        for (var i = 0; i < f.length; ++i) {
+            if (!DataFieldCatalog.previewAvailable(f[i].key, step._sysbat)) continue
             if (!store.widgetDraftIsPlaced(f[i].key)) return true
+        }
         return false
     }
 
@@ -228,7 +232,8 @@ Column {
 
                         width: paletteGrid._tileW
                         height: paletteGrid._tileH + caption.height + Tokens.spaceXs
-                        visible: !placed || dragHandle.dragActive
+                        visible: DataFieldCatalog.previewAvailable(tile.fieldKey, step._sysbat)
+                                 && (!placed || dragHandle.dragActive)
 
                         Drag.active: dragHandle.dragActive
                         Drag.source: tile
@@ -264,7 +269,7 @@ Column {
                                 anchors.fill: parent
                                 rep: tile.representationType
                                 label: DataFieldCatalog.label(tile.fieldKey)
-                                value: DataFieldCatalog.sampleValue(tile.fieldKey, step.store)
+                                value: DataFieldCatalog.previewValue(tile.fieldKey, step.store, step._sysbat)
                                 k: paletteGrid._k
                                 gap: step._gap
                             }

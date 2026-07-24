@@ -10,6 +10,7 @@ BasePanePopup {
 
     readonly property var _ds: (typeof dataset !== "undefined") ? dataset : null
     readonly property var _dmw: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
+    readonly property var _sysbat: (typeof systemBattery !== "undefined") ? systemBattery : null
 
     readonly property real _bgAlpha: {
         var t = (def && typeof def.transparency === "number") ? def.transparency : 0
@@ -146,7 +147,7 @@ BasePanePopup {
                         anchors.fill: parent
                         rep: cell.modelData.rep
                         label: DataFieldCatalog.label(cell._field)
-                        value: DataFieldCatalog.formatValue(cell._field, root._ds, root._dmw, root.store)
+                        value: DataFieldCatalog.formatValue(cell._field, root._ds, root._dmw, root.store, root._sysbat)
                         k: root._k
                         gap: root._gap
                     }

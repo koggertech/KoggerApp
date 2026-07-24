@@ -12,6 +12,7 @@ Item {
     readonly property real _s: AppPalette.appScale
     readonly property bool _touch: (typeof inputDeviceTracker !== "undefined" && inputDeviceTracker)
                                    ? inputDeviceTracker.touchMode : false
+    readonly property var _sysbat: (typeof systemBattery !== "undefined") ? systemBattery : null
     readonly property real _k: _s * (store ? store.widgetDraftScale : 1.0)
     readonly property real _cell: Math.round(84 * _k)
     readonly property real _gap: Math.round(4 * _k)
@@ -159,7 +160,7 @@ Item {
                         property string representationType: dropCell.isAnchor ? dropCell.occ.cell.rep : "value"
                         readonly property string _label: fieldKey ? DataFieldCatalog.label(fieldKey) : ""
                         readonly property string _value: fieldKey
-                            ? DataFieldCatalog.sampleValue(fieldKey, overlay.store)
+                            ? DataFieldCatalog.previewValue(fieldKey, overlay.store, overlay._sysbat)
                             : ""
 
                         Drag.active: dragHandle.dragActive
