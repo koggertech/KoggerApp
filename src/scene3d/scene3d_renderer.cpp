@@ -355,14 +355,15 @@ void GraphicsScene3dRenderer::drawObjects()
             glDisable(GL_DEPTH_TEST);
         }
 
-        //-----------Overlays that should work in any camera/reference state-------------
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        geoJsonLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
-        rulerToolRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
-        glDisable(GL_BLEND);
     }
+
+    //-----------Overlays that should work in any camera/reference state-------------
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    geoJsonLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+    rulerToolRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+    glDisable(GL_BLEND);
 
     const bool scaleBarVisible = scaleBar_ && m_camera.getIsPerspective();
 
@@ -384,10 +385,9 @@ void GraphicsScene3dRenderer::drawObjects()
         int compassX = viewport[0];
         int compassY = viewport[1];
         switch (compassPos_) {
-        case 1: compassX = viewport[0] + viewport[2] - compassSizePx; compassY = viewport[1];                              break;
-        case 2: compassX = viewport[0];                               compassY = viewport[1];                              break;
+        case 1: compassX = viewport[0] + viewport[2] - compassSizePx;                                                       break;
         case 3: compassX = viewport[0] + viewport[2] - compassSizePx; compassY = viewport[1] + viewport[3] - compassSizePx; break;
-        default: compassX = viewport[0];                              compassY = viewport[1];                              break;
+        default:                                                                                                           break;
         }
 
         // bottom-right compass shares the corner with the scale bar — lift it just above

@@ -38,24 +38,21 @@ bool RulerTool::RulerToolRenderImplementation::isEnabled() const
 
 void RulerTool::RulerToolRenderImplementation::clear()
 {
-    points_.clear();
-    previewActive_ = false;
+    vertices_.clear();
+    lineStrips_.clear();
+    midPoints_.clear();
+    segMeters_.clear();
 }
 
-void RulerTool::RulerToolRenderImplementation::addPoint(const QVector3D& p)
+void RulerTool::RulerToolRenderImplementation::setGeometry(const QVector<QVector3D>& vertices,
+                                                           const QVector<QVector<QVector3D>>& lineStrips,
+                                                           const QVector<QVector3D>& midPoints,
+                                                           const QVector<double>& segMeters)
 {
-    points_.push_back(p);
-}
-
-void RulerTool::RulerToolRenderImplementation::setPreviewPoint(const QVector3D& p)
-{
-    previewPoint_ = p;
-    previewActive_ = true;
-}
-
-void RulerTool::RulerToolRenderImplementation::clearPreview()
-{
-    previewActive_ = false;
+    vertices_ = vertices;
+    lineStrips_ = lineStrips;
+    midPoints_ = midPoints;
+    segMeters_ = segMeters;
 }
 
 void RulerTool::RulerToolRenderImplementation::setSelected(bool selected)
@@ -68,34 +65,14 @@ bool RulerTool::RulerToolRenderImplementation::isSelected() const
     return selected_;
 }
 
-int RulerTool::RulerToolRenderImplementation::pointsCount() const
+int RulerTool::RulerToolRenderImplementation::vertexCount() const
 {
-    return points_.size();
+    return vertices_.size();
 }
 
-double RulerTool::RulerToolRenderImplementation::totalDistanceXY(bool includePreview) const
+QVector<QVector<QVector3D>> RulerTool::RulerToolRenderImplementation::lineStrips() const
 {
-    const auto pts = polylinePoints(includePreview);
-    if (pts.size() < 2) {
-        return 0.0;
-    }
-
-    double sum = 0.0;
-    for (int i = 1; i < pts.size(); ++i) {
-        const double dx = static_cast<double>(pts[i].x() - pts[i - 1].x());
-        const double dy = static_cast<double>(pts[i].y() - pts[i - 1].y());
-        sum += std::sqrt(dx * dx + dy * dy);
-    }
-    return sum;
-}
-
-QVector<QVector3D> RulerTool::RulerToolRenderImplementation::polylinePoints(bool includePreview) const
-{
-    QVector<QVector3D> out = points_;
-    if (includePreview && previewActive_) {
-        out.push_back(previewPoint_);
-    }
-    return out;
+    return lineStrips_;
 }
 
 void RulerTool::RulerToolRenderImplementation::render(
@@ -109,8 +86,14 @@ void RulerTool::RulerToolRenderImplementation::render(
         return;
     }
 
-    const auto pts = polylinePoints(/*includePreview*/ true);
-    if (pts.size() < 2) {
+    bool hasLine = false;
+    for (const auto& strip : lineStrips_) {
+        if (strip.size() >= 2) {
+            hasLine = true;
+            break;
+        }
+    }
+    if (!hasLine) {
         return;
     }
 
@@ -132,17 +115,22 @@ void RulerTool::RulerToolRenderImplementation::render(
     shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(drawColor));
     shaderProgram->setUniformValue(matrixLoc, projection * view * model);
     shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->setAttributeArray(posLoc, pts.constData());
 
     ctx->glLineWidth(lineWidth_ * static_cast<float>(renderScale()));
-    ctx->glDrawArrays(GL_LINE_STRIP, 0, pts.size());
+    for (const auto& strip : lineStrips_) {
+        if (strip.size() < 2) {
+            continue;
+        }
+        shaderProgram->setAttributeArray(posLoc, strip.constData());
+        ctx->glDrawArrays(GL_LINE_STRIP, 0, strip.size());
+    }
     ctx->glLineWidth(1.0f);
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
 
     const QRectF viewport = DrawUtils::viewportRect(ctx);
-    // Markers (vertices + midpoints) in screen space so they stay the same size on screen
+    // Markers (vertices + segment midpoints) in screen space so they stay the same size on screen
     {
         auto shaderIt2 = shaderProgramMap.find("static_sec");
         if (shaderIt2 != shaderProgramMap.end() && shaderIt2.value()) {
@@ -150,7 +138,7 @@ void RulerTool::RulerToolRenderImplementation::render(
             const float halfH = viewport.height() * 0.5f;
             if (halfW > 0.0f && halfH > 0.0f) {
                 QVector<QVector2D> markersNdc;
-                markersNdc.reserve((pts.size() * 4) + ((pts.size() - 1) * 4));
+                markersNdc.reserve((vertices_.size() * 4) + (midPoints_.size() * 4));
 
                 const float uiScale = static_cast<float>(renderScale());
                 const float vertexPx = 10.0f * uiScale;
@@ -171,11 +159,11 @@ void RulerTool::RulerToolRenderImplementation::render(
                     markersNdc.push_back({nx, ny + dy});
                 };
 
-                for (const auto& p : pts) {
+                for (const auto& p : vertices_) {
                     addCrossNdc(p, dxV, dyV);
                 }
-                for (int i = 1; i < pts.size(); ++i) {
-                    addCrossNdc((pts[i - 1] + pts[i]) * 0.5f, dxM, dyM);
+                for (const auto& p : midPoints_) {
+                    addCrossNdc(p, dxM, dyM);
                 }
 
                 if (!markersNdc.isEmpty()) {
@@ -204,28 +192,29 @@ void RulerTool::RulerToolRenderImplementation::render(
     TextRenderer::instance().setColor(QColor(255, 255, 255));
     TextRenderer::instance().setBackgroundColor(QColor(0, 0, 0, 160));
     QVector<TextRenderer::Text2DItem> labelItems;
-    labelItems.reserve(pts.size());
+    labelItems.reserve(midPoints_.size() + 1);
 
-    // Segment labels (XY length)
-    for (int i = 1; i < pts.size(); ++i) {
-        const double dx = static_cast<double>(pts[i].x() - pts[i - 1].x());
-        const double dy = static_cast<double>(pts[i].y() - pts[i - 1].y());
-        const double segMeters = std::sqrt(dx * dx + dy * dy);
+    for (int i = 0; i < midPoints_.size(); ++i) {
+        const double segMeters = (i < segMeters_.size()) ? segMeters_[i] : 0.0;
 
-        const QVector3D mid = (pts[i - 1] + pts[i]) * 0.5f;
-        QVector2D midScreen = mid.project(view * model, projection, viewport.toRect()).toVector2D();
+        QVector2D midScreen = midPoints_[i].project(view * model, projection, viewport.toRect()).toVector2D();
         midScreen.setY(viewport.height() - midScreen.y());
-
-        midScreen += QVector2D(0.0f, ((i % 2 == 0) ? -18.0f : -34.0f) * static_cast<float>(renderScale()));
+        midScreen += QVector2D(0.0f, (((i + 1) % 2 == 0) ? -18.0f : -34.0f) * static_cast<float>(renderScale()));
 
         labelItems.append(TextRenderer::Text2DItem{formatDistanceMeters(segMeters), 1.0f, midScreen, true});
     }
 
-    // Total label (XY only)
-    const double totalMeters = totalDistanceXY(/*includePreview*/ true);
+    double totalMeters = 0.0;
+    for (const double m : segMeters_) {
+        totalMeters += m;
+    }
     const QString label = QCoreApplication::translate("RulerTool", "Σ %1").arg(formatDistanceMeters(totalMeters));
 
-    QVector3D anchor = pts.back();
+    if (vertices_.isEmpty()) {
+        TextRenderer::instance().render2DBatch(labelItems, ctx, textProjection, shaderProgramMap);
+        return;
+    }
+    const QVector3D anchor = vertices_.back();
     QVector2D screen = anchor.project(view * model, projection, viewport.toRect()).toVector2D();
     screen.setY(viewport.height() - screen.y());
     screen += QVector2D(12.0f * static_cast<float>(renderScale()), -14.0f * static_cast<float>(renderScale()));
@@ -243,8 +232,7 @@ RulerTool::RulerTool(QObject* parent)
 
 void RulerTool::setEnabled(bool enabled)
 {
-    auto* r = RENDER_IMPL(RulerTool);
-    r->setEnabled(enabled);
+    RENDER_IMPL(RulerTool)->setEnabled(enabled);
     Q_EMIT changed();
 }
 
@@ -255,36 +243,22 @@ bool RulerTool::isEnabled() const
 
 void RulerTool::clear()
 {
-    auto* r = RENDER_IMPL(RulerTool);
-    r->clear();
+    RENDER_IMPL(RulerTool)->clear();
     Q_EMIT changed();
 }
 
-void RulerTool::addPoint(const QVector3D& p)
+void RulerTool::setGeometry(const QVector<QVector3D>& vertices,
+                            const QVector<QVector<QVector3D>>& lineStrips,
+                            const QVector<QVector3D>& midPoints,
+                            const QVector<double>& segMeters)
 {
-    auto* r = RENDER_IMPL(RulerTool);
-    r->addPoint(p);
-    Q_EMIT changed();
-}
-
-void RulerTool::setPreviewPoint(const QVector3D& p)
-{
-    auto* r = RENDER_IMPL(RulerTool);
-    r->setPreviewPoint(p);
-    Q_EMIT changed();
-}
-
-void RulerTool::clearPreview()
-{
-    auto* r = RENDER_IMPL(RulerTool);
-    r->clearPreview();
+    RENDER_IMPL(RulerTool)->setGeometry(vertices, lineStrips, midPoints, segMeters);
     Q_EMIT changed();
 }
 
 void RulerTool::setSelected(bool selected)
 {
-    auto* r = RENDER_IMPL(RulerTool);
-    r->setSelected(selected);
+    RENDER_IMPL(RulerTool)->setSelected(selected);
     Q_EMIT changed();
 }
 
@@ -293,12 +267,12 @@ bool RulerTool::isSelected() const
     return RENDER_IMPL(RulerTool)->isSelected();
 }
 
-int RulerTool::pointsCount() const
+int RulerTool::vertexCount() const
 {
-    return RENDER_IMPL(RulerTool)->pointsCount();
+    return RENDER_IMPL(RulerTool)->vertexCount();
 }
 
-QVector<QVector3D> RulerTool::polylinePoints(bool includePreview) const
+QVector<QVector<QVector3D>> RulerTool::lineStrips() const
 {
-    return RENDER_IMPL(RulerTool)->polylinePoints(includePreview);
+    return RENDER_IMPL(RulerTool)->lineStrips();
 }

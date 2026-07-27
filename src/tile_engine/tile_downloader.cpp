@@ -150,7 +150,7 @@ void TileDownloader::startNextDownload()
 
     if (!url.isValid()) {
         qWarning() << "Constructed invalid URL for TileIndex:" << index.x_ << index.y_ << index.z_;
-        emit downloadFailed(index, "Invalid URL constructed");
+        emit downloadFailed(index, "Invalid URL constructed", 0);
         return;
     }
 
@@ -186,6 +186,7 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
 
     TileIndex index = reply->property("tileIndex").value<TileIndex>();
     const bool isOverlayStage = reply->property("isOverlay").toBool();
+    const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
     if (reply->error() != QNetworkReply::NoError) {
         if (reply->error() == QNetworkReply::OperationCanceledError) {
@@ -198,11 +199,11 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
             if (!baseImage.isNull()) {
                 emit tileDownloaded(index, baseImage);
             } else {
-                emit downloadFailed(index, reply->errorString());
+                emit downloadFailed(index, reply->errorString(), httpStatus);
             }
         }
         else {
-            emit downloadFailed(index, reply->errorString());
+            emit downloadFailed(index, reply->errorString(), httpStatus);
         }
     }
     else {
@@ -227,7 +228,7 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
             } else if (decoded) {
                 emit tileDownloaded(index, image);
             } else {
-                emit downloadFailed(index, "Failed to load overlay image");
+                emit downloadFailed(index, "Failed to load overlay image", httpStatus);
             }
         }
         else if (decoded) {
@@ -265,7 +266,7 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
             }
         }
         else {
-            emit downloadFailed(index, "Failed to load image from data");
+            emit downloadFailed(index, "Failed to load image from data", httpStatus);
         }
     }
 

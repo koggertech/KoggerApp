@@ -42,7 +42,6 @@ property string edgeResizeHighlightEdge: ""
 property real edgeResizePointerStart: 0
 property real edgeResizeMovingCoordStart: 0
 property real edgeResizeFixedCoord: 0
-property string edgeResizeFavoriteSignatureBefore: ""
 property bool edgeResizeGhostActive: false
 property real edgeResizeGhostCoord: 0       // workspace-axis coord of ghost split line (render)
 property real edgeResizeGhostSplitCoord: 0  // split-coord to apply on commit
@@ -51,12 +50,14 @@ property int maximizedLeafId: -1
 property int lastTappedLeafId: -1
 property real lastTapTimestamp: 0
 property bool settingsPanelOpen: false
+property bool filePathFocusRequested: false
+property bool recordingFocusRequested: false
 property bool echogramSettingsActive: false
 property var echogramSettingsPlot: null     // the Plot2D whose gear was clicked
 property int echogramSettingsLeafId: -1     // leaf of that plot (for focus dimming)
 property string echogramSettingsTitle: ""   // header title on the sub-page
 
-// True when a settings-internal drill-in (quickActions/extraInfo/uiSaving/tgc)
+// True when a settings-internal drill-in (quickActions/uiSaving/tgc/console)
 // is open. Echogram has its own flag (echogramSettingsActive) because it is
 // pane-scoped — it drives focus dimming and a dynamic title.
 property bool settingsSubPageActive: false
@@ -95,34 +96,57 @@ property bool layoutTransitionSuspended: false
 property string settingsSide: "left"
 property string selectedConnectionFilePath: ""
 property bool rotateLayoutEnabled: true
-property bool quickActionFavoritesEnabled: true
+property bool quickActionLayoutsEnabled: true
 property bool quickActionConnectionStatusEnabled: true
+property bool quickActionLoggingEnabled: true
 property bool quickActionBottomTrackEnabled: true
 property bool quickActionProfilesEnabled: true
-property bool quickActionExtraInfoEnabled: true
+property bool quickActionWidgetsEnabled: true
+property bool quickActionConsoleEnabled: true
+property bool quickActionSecondWindowEnabled: true
+property bool quickActionPowerOffEnabled: false
 
 property string quickActionDraggingKey: ""
 
-readonly property var quickActionKeys: ["connections", "favorites", "bottomTrack", "extraInfo", "profiles"]
+readonly property var quickActionKeys: {
+    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "profiles"]
+    if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
+        base.push("secondWindow")   // desktop-only; mobile drops it on normalize
+    if (Qt.platform.os === "linux" || (typeof manualTesting !== "undefined" && manualTesting === true))
+        base.push("powerOff")       // Ubuntu build (or any platform under MANUAL_TESTING)
+    return base
+}
 
 property var quickActionOrderModel: ListModel {
     ListElement { key: "connections" }
-    ListElement { key: "favorites" }
+    ListElement { key: "logging" }
+    ListElement { key: "layouts" }
+    ListElement { key: "widgets" }
+    ListElement { key: "console" }
     ListElement { key: "bottomTrack" }
-    ListElement { key: "extraInfo" }
     ListElement { key: "profiles" }
+    ListElement { key: "secondWindow" }
+    ListElement { key: "powerOff" }
 }
 
 function normalizeQuickActionOrder(list) {
     var out = []
     if (Array.isArray(list)) {
-        for (var i = 0; i < list.length; ++i)
-            if (quickActionKeys.indexOf(list[i]) !== -1 && out.indexOf(list[i]) === -1)
-                out.push(list[i])
+        for (var i = 0; i < list.length; ++i) {
+            var k = list[i] === "favorites" ? "layouts" : list[i]
+            if (quickActionKeys.indexOf(k) !== -1 && out.indexOf(k) === -1)
+                out.push(k)
+        }
     }
     for (var j = 0; j < quickActionKeys.length; ++j)   // append any missing keys (new in this version)
-        if (out.indexOf(quickActionKeys[j]) === -1)
-            out.push(quickActionKeys[j])
+        if (out.indexOf(quickActionKeys[j]) === -1) {
+            if (quickActionKeys[j] === "logging" && out.indexOf("connections") !== -1)
+                out.splice(out.indexOf("connections") + 1, 0, "logging")   // keep logging right after devices
+            else if (quickActionKeys[j] === "console" && out.indexOf("widgets") !== -1)
+                out.splice(out.indexOf("widgets") + 1, 0, "console")   // keep console right after widgets
+            else
+                out.push(quickActionKeys[j])
+        }
     return out
 }
 
@@ -151,6 +175,110 @@ function persistQuickActionOrder() {
     if (typeof layoutStore !== "undefined")
         layoutStore.quickActionOrderStored = quickActionOrderCsv()
 }
+
+property var rememberedLinks: []
+property int _linkStateRev: 0
+
+readonly property var reconnectInfo: {
+    var rev = _linkStateRev
+    var count = 0, open = 0, worst = 0
+    if (typeof linkManagerWrapper !== "undefined" && linkManagerWrapper) {
+        var arr = rememberedLinks || []
+        for (var i = 0; i < arr.length; ++i) {
+            var s = linkManagerWrapper.linkState(arr[i])
+            if (s < 0 || s === 3) continue
+            ++count
+            if (s === 1 || s === 2) { ++open; if (s > worst) worst = s }
+        }
+    }
+    return { count: count, open: open, worst: worst, allOpen: count > 0 && open === count }
+}
+
+property Connections _reconnectLinkConn: Connections {
+    target: (typeof linkManagerWrapper !== "undefined") ? linkManagerWrapper : null
+    ignoreUnknownSignals: true
+    function onLinkOpened(uuid) { store.addRememberedLink(uuid) }
+    function onLinkRemoved(uuid) { store.removeRememberedLink(uuid) }
+}
+
+property Connections _reconnectModelConn: Connections {
+    target: (typeof linkManagerWrapper !== "undefined" && linkManagerWrapper) ? linkManagerWrapper.linkListModel : null
+    ignoreUnknownSignals: true
+    function onDataChanged() { store._linkStateRev++; store.saveRememberedLinks() }
+    function onRowsInserted() { store._linkStateRev++; store.saveRememberedLinks() }
+    function onRowsRemoved() { store._linkStateRev++; store.saveRememberedLinks() }
+    function onModelReset() { store._linkStateRev++; store.saveRememberedLinks() }
+}
+
+function addRememberedLink(uuid) {
+    var s = uuid ? String(uuid) : ""
+    if (!s.length) return
+    var arr = (rememberedLinks || []).slice(0)
+    if (arr.indexOf(s) !== -1) return
+    arr.push(s)
+    rememberedLinks = arr
+    saveRememberedLinks()
+}
+
+function removeRememberedLink(uuid) {
+    var s = uuid ? String(uuid) : ""
+    if (!s.length) return
+    var arr = (rememberedLinks || []).slice(0)
+    var i = arr.indexOf(s)
+    if (i === -1) return
+    arr.splice(i, 1)
+    rememberedLinks = arr
+    saveRememberedLinks()
+}
+
+function saveRememberedLinks() {
+    if (typeof layoutStore === "undefined") return
+    var arr = rememberedLinks || []
+    var keepSet = {}
+    if (typeof linkManagerWrapper !== "undefined" && linkManagerWrapper) {
+        var pinned = linkManagerWrapper.pinnedUuids()
+        for (var i = 0; i < pinned.length; ++i) keepSet[pinned[i]] = true
+        var serial = linkManagerWrapper.serialUuids()
+        for (var k = 0; k < serial.length; ++k) keepSet[serial[k]] = true
+    }
+    var keep = []
+    for (var j = 0; j < arr.length; ++j)
+        if (keepSet[arr[j]]) keep.push(arr[j])
+    layoutStore.rememberedLinksJson = JSON.stringify(keep)
+}
+
+function loadRememberedLinks() {
+    var parsed = []
+    if (layoutStore.rememberedLinksJson && layoutStore.rememberedLinksJson !== "") {
+        try { parsed = JSON.parse(layoutStore.rememberedLinksJson) } catch (e) { parsed = [] }
+    }
+    rememberedLinks = Array.isArray(parsed) ? parsed : []
+}
+
+function toggleRememberedLinks() {
+    if (typeof linkManagerWrapper === "undefined" || !linkManagerWrapper) return
+    var arr = rememberedLinks || []
+
+    var closed = [], open = []
+    for (var i = 0; i < arr.length; ++i) {
+        var s = linkManagerWrapper.linkState(arr[i])
+        if (s === 0) closed.push(arr[i])
+        else if (s === 1 || s === 2) open.push(arr[i])
+    }
+    if (!closed.length && !open.length) return
+
+    if (closed.length) {
+        var hadFile = typeof core !== "undefined" && core && core.openedFilePath && core.openedFilePath.length > 0
+        if (!open.length && typeof core !== "undefined" && core && typeof core.closeLogFile === "function")
+            core.closeLogFile()
+        if (!hadFile)
+            for (var j = 0; j < closed.length; ++j)
+                linkManagerWrapper.reopenLink(closed[j])
+    } else {
+        for (var k = 0; k < open.length; ++k)
+            linkManagerWrapper.closeLink(open[k])
+    }
+}
 property string hotkeysRevealKey: ""
 property int hotkeysRevealNonce: 0
 // Live reference to the HotkeysDialog while it's open (set by the dialog
@@ -170,7 +298,7 @@ readonly property bool _compactMode: Tokens.isCompact(windowWidth)
 // Effective push behaviour: user preference, OR forced by compact-mode. Read
 // this instead of `settingsPushContent` for layout decisions — keeps the user
 // preference value intact across compact↔wide window transitions.
-readonly property bool effectivePushContent: settingsPushContent || _compactMode
+readonly property bool effectivePushContent: settingsPushContent || _compactMode || editableMode
 property int modePickerLeafId: -1
 property var modePickerLeafIds: []
 property int pendingCreatedLeafId: -1
@@ -180,12 +308,10 @@ property int highlightedLeafId: -1
 readonly property int globalPopupLeafId: 9999
 readonly property int secondaryEchogramKey: 10000
 property bool globalPopupFullscreen: false
-property var favoriteLayouts: []
-property bool currentLayoutIsFavorite: false
-property string currentLayoutFavoriteSignature: ""
+property var layouts: []
+readonly property bool hasLayouts: layouts.length > 0
+property int activeLayoutIndex: 0
 property var settingsGroupExpandedMap: ({})
-property real settingsScrollY: 0
-onSettingsScrollYChanged: if (typeof layoutStore !== "undefined") layoutStore.settingsScrollYStored = settingsScrollY
 property var fullscreenPopupSourceByHost: ({})
 property var fullscreenPopupStateByHost: ({})
 property bool globalPopupEnabled: false
@@ -210,6 +336,43 @@ readonly property bool secondary2DAvailable: effectiveSecondaryMode === "2D" || 
 // reliable selector. Session-only.
 property int activeDeviceIndex: -1
 
+readonly property var activeDeviceList: (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) ? deviceManagerWrapper.devs : []
+
+readonly property int resolvedDeviceIndex: {
+    var ds = activeDeviceList
+    if (!ds || ds.length === 0) return -1
+    var idx = activeDeviceIndex
+    if (idx >= 0 && idx < ds.length && ds[idx] && ds[idx].isBoardInited) return idx
+    var firstInited = -1
+    for (var i = 0; i < ds.length; ++i) {
+        if (ds[i] && ds[i].isBoardInited) {
+            if (firstInited < 0) firstInited = i
+            if (ds[i].isRecorder) return i
+        }
+    }
+    return firstInited
+}
+
+readonly property var activeDevice: (resolvedDeviceIndex >= 0 && resolvedDeviceIndex < activeDeviceList.length) ? activeDeviceList[resolvedDeviceIndex] : null
+
+onActiveDeviceListChanged: {
+    if (!activeDeviceList || activeDeviceList.length === 0) {
+        if (activeDeviceIndex !== -1) setActiveDeviceIndex(-1)
+        if (settingsSubPageActive && settingsSubPageKind === "devices")
+            closeActiveSettingsSubPage()
+    } else if (activeDeviceIndex >= activeDeviceList.length) {
+        setActiveDeviceIndex(-1)
+    }
+}
+
+function selectDevice(dev) {
+    var ds = activeDeviceList
+    if (!dev || !ds) return
+    for (var i = 0; i < ds.length; ++i) {
+        if (ds[i] === dev) { setActiveDeviceIndex(i); return }
+    }
+}
+
 property var globalPopupState: ({
     x: -1,
     y: -1,
@@ -225,29 +388,393 @@ property bool profilesPopupOpen: false
 property var settingsProfiles: []
 property var profilesPopupState: ({ x: -1, y: -1 })
 
-property var autopilotPopupState: ({ x: -1, y: -1 })
-property bool autopilotEnabled: true
+property var  widgets: []
+readonly property bool hasWidgets: widgets.length > 0
+readonly property int widgetLimit: 10
+readonly property bool canCreateWidget: widgets.length < widgetLimit
+property var  widgetShownMap: ({})
+property var  widgetInstances: ({})
+property int  widgetEditIndex: -1
+property int  widgetEditStep: 1
+property var  widgetDragLayer: null
 
-property var extraInfoPopupState: ({ x: -1, y: -1 })
-property bool extraInfoVisible: false
+property int  widgetDraftCols: 1
+property int  widgetDraftRows: 1
+property int  widgetDraftTransparency: 0
+property real widgetDraftScale: 1.0
+property bool widgetDraftBig: false
+property var  widgetDraftCells: []
+property string widgetDraftRep: "value"
+readonly property var widgetScaleSteps: [0.75, 1.0, 1.25, 1.5, 2.0, 2.5]
+readonly property bool widgetDraftBigAllowed: widgetDraftCols >= 2 && widgetDraftRows >= 2
+
+function _cellSpan(rep, big) {
+    var m = big ? 2 : 1
+    return { sc: (rep === "labelValueRow" ? 2 : 1) * m, sr: 1 * m }
+}
+
+function widgetDraftRepAvailable(rep) {
+    var s = _cellSpan(rep, widgetDraftBig)
+    return s.sc <= widgetDraftCols && s.sr <= widgetDraftRows
+}
+
+function widgetDraftSetBig(b) {
+    widgetDraftBig = (b === true) && widgetDraftBigAllowed
+    if (!widgetDraftRepAvailable(widgetDraftRep))
+        widgetDraftRep = "value"
+    widgetDraftClearPreview()
+}
+
+function widgetDraftSetScale(s, maxScale) {
+    var mx = (typeof maxScale === "number" && maxScale > 0) ? maxScale : Infinity
+    var best = widgetScaleSteps[0]
+    var bd = Infinity
+    var haveAllowed = false
+    for (var i = 0; i < widgetScaleSteps.length; ++i) {
+        var step = widgetScaleSteps[i]
+        if (step > mx) continue
+        var d = Math.abs(s - step)
+        if (!haveAllowed || d < bd) { bd = d; best = step; haveAllowed = true }
+    }
+    widgetDraftScale = best
+}
+
+property int  widgetDropRow: -1
+property int  widgetDropCol: -1
+property int  widgetDropSpan: 1
+property int  widgetDropSpanRows: 1
+property bool widgetDropValid: false
+property bool widgetOverPalette: false
+property int  widgetPreviewRow: -1
+property int  widgetPreviewCol: -1
+property int  widgetPreviewSpan: 1
+property int  widgetPreviewSpanRows: 1
+property bool widgetPreviewValid: false
+property string widgetPreviewField: ""
+property bool widgetDragActive: false
+property string widgetDragRep: "value"
+property bool widgetDragBig: false
+property string widgetDragField: ""
+property int  widgetHoverCols: 0
+property int  widgetHoverRows: 0
+
+function widgetDragBegin(rep, big, field) {
+    widgetDragRep = rep
+    widgetDragBig = (big === true)
+    widgetDragField = field ? field : ""
+    widgetDragActive = true
+    widgetDraftClearPreview()
+}
+
+function widgetDragEnd() {
+    widgetDragActive = false
+}
+
+readonly property bool widgetEditorActive: settingsSubPageActive && settingsSubPageKind === "widgetEdit"
+
+// Local clock of the machine running the app (NOT device/GNSS time), ticking every
+// second as HH:MM:SS. Empty (invalid) when the system clock is unset (year < 2001) —
+// consumers hide the field and its setting in that case.
+property string systemTimeHms: ""
+readonly property bool systemTimeValid: systemTimeHms.length > 0
+function _updateSystemClock() {
+    var d = new Date()
+    if (isNaN(d.getTime()) || d.getFullYear() < 2001) { systemTimeHms = ""; return }
+    var p = function(n) { return (n < 10 ? "0" : "") + n }
+    systemTimeHms = p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds())
+}
+property Timer _systemClockTimer: Timer {
+    interval: 1000; running: true; repeat: true; triggeredOnStart: true
+    onTriggered: store._updateSystemClock()
+}
 
 property var popupDocks: ({})
-property bool extraInfoDepth: true
-property bool extraInfoSpeed: true
-property bool extraInfoCoordinates: true
-property bool extraInfoActivePoint: true
-property bool extraInfoNav: false
-property bool extraInfoBoatStatus: false
 
+function widgetIndexById(id) {
+    if (!id) return -1
+    for (var i = 0; i < widgets.length; ++i)
+        if (widgets[i] && widgets[i].id === id)
+            return i
+    return -1
+}
+
+function widgetById(id) {
+    var i = widgetIndexById(id)
+    return i >= 0 ? widgets[i] : null
+}
+
+function generateWidgetId() {
+    var id = ""
+    do {
+        id = "w_" + Math.floor((1 + Math.random()) * 0x10000000).toString(16)
+    } while (widgetIndexById(id) >= 0)
+    return id
+}
+
+function normalizeWidgetDef(raw) {
+    if (!raw || typeof raw !== "object")
+        return null
+    var cols = Math.round(raw.cols)
+    var rows = Math.round(raw.rows)
+    if (!(cols >= 1 && cols <= 4) || !(rows >= 1 && rows <= 4))
+        return null
+    var name = (typeof raw.name === "string") ? raw.name : ""
+    var transparency = (typeof raw.transparency === "number" && isFinite(raw.transparency))
+                       ? Math.max(0, Math.min(100, Math.round(raw.transparency))) : 0
+    var occupied = {}
+    var cells = []
+    var srcCells = Array.isArray(raw.cells) ? raw.cells : []
+    for (var i = 0; i < srcCells.length; ++i) {
+        var c = srcCells[i]
+        if (!c || typeof c !== "object") continue
+        var row = Math.round(c.row)
+        var col = Math.round(c.col)
+        if (!(row >= 0 && row < rows) || !(col >= 0 && col < cols)) continue
+        if (!DataFieldCatalog.hasField(c.field)) continue
+        var rep = (c.rep === "labelValueRow" || c.rep === "labelValueStacked") ? c.rep : "value"
+        var cellBig = (c.big === true)
+        var s = _cellSpan(rep, cellBig)
+        if (row + s.sr > rows || col + s.sc > cols) continue
+        var conflict = false
+        var keys = []
+        for (var dr = 0; dr < s.sr && !conflict; ++dr) {
+            for (var dc = 0; dc < s.sc; ++dc) {
+                var k = (row + dr) + "," + (col + dc)
+                if (occupied[k]) { conflict = true; break }
+                keys.push(k)
+            }
+        }
+        if (conflict) continue
+        for (var ki = 0; ki < keys.length; ++ki) occupied[keys[ki]] = true
+        cells.push({ row: row, col: col, field: String(c.field), rep: rep, big: cellBig })
+    }
+    var id = (typeof raw.id === "string" && raw.id.length) ? raw.id : ""
+    return { id: id, name: name, cols: cols, rows: rows, transparency: transparency, cells: cells }
+}
+
+function saveWidgets() {
+    layoutStore.widgetsJson = JSON.stringify(widgets)
+}
+
+function loadWidgets() {
+    var parsed = []
+    if (layoutStore.widgetsJson && layoutStore.widgetsJson !== "") {
+        try { parsed = JSON.parse(layoutStore.widgetsJson) } catch (e) { parsed = [] }
+    }
+    var next = []
+    if (Array.isArray(parsed)) {
+        for (var i = 0; i < parsed.length; ++i) {
+            var def = normalizeWidgetDef(parsed[i])
+            if (!def) continue
+            if (!def.id || def.id.length === 0) def.id = generateWidgetId()
+            next.push(def)
+            if (next.length >= widgetLimit) break
+        }
+    }
+    widgets = next
+    saveWidgets()
+}
+
+function saveWidget(def) {
+    var norm = normalizeWidgetDef(def)
+    if (!norm) return ""
+    var next = widgets.slice(0)
+    if (widgetEditIndex >= 0 && widgetEditIndex < next.length) {
+        norm.id = next[widgetEditIndex].id
+        next[widgetEditIndex] = norm
+    } else {
+        if (next.length >= widgetLimit) return ""
+        norm.id = generateWidgetId()
+        next.push(norm)
+    }
+    widgets = next
+    saveWidgets()
+    widgetEditIndex = -1
+    return norm.id
+}
+
+function deleteWidgetAt(index) {
+    if (index < 0 || index >= widgets.length) return
+    var id = widgets[index].id
+    var next = []
+    for (var i = 0; i < widgets.length; ++i)
+        if (i !== index) next.push(widgets[i])
+    widgets = next
+    saveWidgets()
+    if (id && widgetInstances[id]) {
+        var m = {}
+        for (var k in widgetInstances) if (k !== id) m[k] = widgetInstances[k]
+        widgetInstances = m
+        saveWidgetInstances()
+    }
+    if (id && widgetShownMap[id] !== undefined) {
+        var sm = {}
+        for (var sk in widgetShownMap) if (sk !== id) sm[sk] = widgetShownMap[sk]
+        widgetShownMap = sm
+        saveWidgetShown()
+    }
+}
+
+function widgetInstance(id) {
+    var d = (widgetInstances && id) ? widgetInstances[id] : null
+    return {
+        x: (d && typeof d.x === "number") ? d.x : -1,
+        y: (d && typeof d.y === "number") ? d.y : -1,
+        scale: (d && typeof d.scale === "number" && d.scale > 0) ? d.scale : 1.0,
+        z: (d && typeof d.z === "number") ? d.z : 0
+    }
+}
+
+function widgetStackRank(id) {
+    return Math.max(0, Math.min(widgetLimit - 1, widgetInstance(id).z))
+}
+
+function widgetBringToFront(id) {
+    if (!id) return
+    var ids = []
+    for (var i = 0; i < widgets.length; ++i)
+        if (widgets[i] && widgets[i].id) ids.push(widgets[i].id)
+    if (ids.indexOf(id) < 0) return
+    ids.sort(function(a, b) { return widgetInstance(a).z - widgetInstance(b).z })
+    if (ids[ids.length - 1] === id) return
+    ids.splice(ids.indexOf(id), 1)
+    ids.push(id)
+    var m = {}
+    for (var k in widgetInstances) m[k] = widgetInstances[k]
+    for (var j = 0; j < ids.length; ++j) {
+        var inst = widgetInstance(ids[j])
+        m[ids[j]] = { x: inst.x, y: inst.y, scale: inst.scale, z: j }
+    }
+    widgetInstances = m
+    saveWidgetInstances()
+}
+
+function _writeWidgetInstance(id, inst) {
+    if (!id) return
+    var m = {}
+    for (var k in widgetInstances) m[k] = widgetInstances[k]
+    m[id] = inst
+    widgetInstances = m
+    saveWidgetInstances()
+}
+
+function widgetShown(id) { return !!(id && widgetShownMap[id] === true) }
+
+function setWidgetShown(id, shown) {
+    if (!id) return
+    var m = {}
+    for (var k in widgetShownMap) m[k] = widgetShownMap[k]
+    m[id] = (shown === true)
+    widgetShownMap = m
+    saveWidgetShown()
+}
+
+function toggleWidgetShown(id) { setWidgetShown(id, !widgetShown(id)) }
+
+function widgetScale(id) { return widgetInstance(id).scale }
+
+function setWidgetScale(id, scale) {
+    var inst = widgetInstance(id)
+    inst.scale = clamp(scale, 0.75, 2.5)
+    _writeWidgetInstance(id, inst)
+}
+
+function widgetPosition(id, popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    var inst = widgetInstance(id)
+    var casc = (inst.x < 0 && inst.y < 0 && widgetIndexById(id) > 0) ? widgetIndexById(id) * 28 : 0
+    var x = (inst.x >= 0) ? inst.x : Math.round((b.minX + b.maxX) / 2) + casc
+    var y = (inst.y >= 0) ? inst.y : b.minY + casc
+    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
+}
+
+// Bounds that also keep the popup clear of the open settings panel strip, so a
+// widget shown while settings is open pops into the visible area instead of hiding behind it.
+function widgetRevealBounds(popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    if (settingsPanelOpen && settingsPanelSizePx > 0) {
+        var areaWidth = windowWidth > 0 ? windowWidth : workspaceWidth
+        var nb = { minX: b.minX, maxX: b.maxX, minY: b.minY, maxY: b.maxY }
+        if (settingsSide === "left")
+            nb.minX = Math.max(b.minX, settingsPanelSizePx + popupMarginPx)
+        else if (settingsSide === "right")
+            nb.maxX = Math.min(b.maxX, areaWidth - settingsPanelSizePx - popupWidth - popupMarginPx)
+        if (nb.maxX >= nb.minX)
+            return nb
+    }
+    return b
+}
+
+function setWidgetPosition(id, x, y, popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    var inst = widgetInstance(id)
+    inst.x = clamp(x, b.minX, b.maxX)
+    inst.y = clamp(y, b.minY, b.maxY)
+    _writeWidgetInstance(id, inst)
+}
+
+function saveWidgetInstances() {
+    layoutStore.widgetInstancesJson = JSON.stringify(widgetInstances)
+}
+
+function saveWidgetShown() {
+    layoutStore.widgetShownJson = JSON.stringify(widgetShownMap)
+}
+
+function loadWidgetInstances() {
+    var parsed = {}
+    if (layoutStore.widgetInstancesJson && layoutStore.widgetInstancesJson !== "") {
+        try { parsed = JSON.parse(layoutStore.widgetInstancesJson) } catch (e) { parsed = {} }
+    }
+    var m = {}
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        for (var k in parsed) {
+            var d = parsed[k]
+            if (!d || typeof d !== "object") continue
+            m[k] = {
+                x: (typeof d.x === "number") ? d.x : -1,
+                y: (typeof d.y === "number") ? d.y : -1,
+                scale: (typeof d.scale === "number" && d.scale > 0) ? d.scale : 1.0,
+                z: (typeof d.z === "number") ? d.z : 0
+            }
+        }
+    }
+    widgetInstances = m
+}
+
+function loadWidgetShown() {
+    var parsed = {}
+    if (layoutStore.widgetShownJson && layoutStore.widgetShownJson !== "") {
+        try { parsed = JSON.parse(layoutStore.widgetShownJson) } catch (e) { parsed = {} }
+    }
+    var m = {}
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        for (var k in parsed)
+            m[k] = parsed[k] === true
+    }
+    widgetShownMap = m
+}
+
+function _reconcileWidgetMaps() {
+    var alive = {}
+    for (var i = 0; i < widgets.length; ++i)
+        if (widgets[i] && widgets[i].id) alive[widgets[i].id] = true
+    var mi = {}, changedI = false
+    for (var ki in widgetInstances) {
+        if (alive[ki]) mi[ki] = widgetInstances[ki]
+        else changedI = true
+    }
+    if (changedI) { widgetInstances = mi; saveWidgetInstances() }
+    var ms = {}, changedS = false
+    for (var ks in widgetShownMap) {
+        if (alive[ks]) ms[ks] = widgetShownMap[ks]
+        else changedS = true
+    }
+    if (changedS) { widgetShownMap = ms; saveWidgetShown() }
+}
+
+onBottomTrackEditorOpenChanged: layoutStore.bottomTrackEditorOpenStored = bottomTrackEditorOpen
 onProfilesPopupOpenChanged: layoutStore.profilesPopupOpenStored = profilesPopupOpen
-onAutopilotEnabledChanged: layoutStore.autopilotEnabledStored = autopilotEnabled
-onExtraInfoVisibleChanged:     layoutStore.extraInfoVisibleStored = extraInfoVisible
-onExtraInfoDepthChanged:       layoutStore.extraInfoDepthStored = extraInfoDepth
-onExtraInfoSpeedChanged:       layoutStore.extraInfoSpeedStored = extraInfoSpeed
-onExtraInfoCoordinatesChanged: layoutStore.extraInfoCoordinatesStored = extraInfoCoordinates
-onExtraInfoActivePointChanged: layoutStore.extraInfoActivePointStored = extraInfoActivePoint
-onExtraInfoNavChanged:         layoutStore.extraInfoNavStored = extraInfoNav
-onExtraInfoBoatStatusChanged:  layoutStore.extraInfoBoatStatusStored = extraInfoBoatStatus
 
 readonly property real splitterThickness: 0
 readonly property real minPaneSize: 120
@@ -261,7 +788,7 @@ signal workspaceSizeCommitRequested()
 
 property Settings scene3dPersistedSettings: Settings {
     id: scene3dPersistedSettings
-    category: "scene3d"
+    category: "scene3d/view"
     property bool navigationViewButton: false
     property bool useAngleButton: false
     property bool trackLastDataButton: false
@@ -276,6 +803,7 @@ onTrackLastDataEnabledChanged: Scene3dToolBarController.onTrackLastDataCheckButt
 
 property Settings scene3dLayerVisibility: Settings {
     id: scene3dLayerVisibility
+    category: "scene3d/view"
     property bool boatTrackCheckButton: true
     property bool bottomTrackCheckButton: false
     property bool isobathsCheckButton: false
@@ -290,6 +818,7 @@ property alias mosaicVisible:      scene3dLayerVisibility.mosaicViewCheckButton
 // dataset (default on). Toggled from the Interface settings group.
 property Settings echogramUiPrefs: Settings {
     id: echogramUiPrefs
+    category: "scene2d/ui"
     property bool hideEmptyEchogramControls: true
 }
 property alias hideEmptyEchogramControls: echogramUiPrefs.hideEmptyEchogramControls
@@ -297,14 +826,21 @@ property alias hideEmptyEchogramControls: echogramUiPrefs.hideEmptyEchogramContr
 // Interface pref: show the surface-quality (cm/cell) label in the 3D scene (default off).
 property Settings scene3dUiPrefs: Settings {
     id: scene3dUiPrefs
-    category: "scene3d_ui"
+    category: "scene3d/ui"
     property bool showSurfaceQuality: false
 }
 property alias showSurfaceQuality: scene3dUiPrefs.showSurfaceQuality
 
+property Settings notificationPrefs: Settings {
+    id: notificationPrefs
+    category: "main/ui"
+    property bool hideImportantNotifications: false
+}
+property alias hideImportantNotifications: notificationPrefs.hideImportantNotifications
+
 property Settings echogramLoupePrefs: Settings {
     id: echogramLoupePrefs
-    category: "echogram_loupe"
+    category: "scene2d/echogramLoupe"
     property bool visible: false
     property int size: 1
     property int zoom: 100
@@ -323,7 +859,7 @@ function echogramLoupePreview(phase) { echogramLoupePreviewPhase(phase) }
 
 property Settings echogramSyncPrefs: Settings {
     id: echogramSyncPrefs
-    category: "echogram_sync"
+    category: "scene2d/echogramSync"
     property bool cursor: true
     property bool view: false
 }
@@ -341,7 +877,7 @@ onEchogramSyncViewChanged: applyEchogramSyncToCore()
 
 property Settings echogramAimPrefs: Settings {
     id: echogramAimPrefs
-    category: "echogram_aim"
+    category: "scene2d/echogramAim"
     property bool visible: true
     property bool channel: true
     property bool epoch: true
@@ -386,13 +922,36 @@ onAimSoundSpeedChanged: applyAimFieldsToCore()
 
 property Settings loggingPersist: Settings {
     id: loggingPersist
-    property bool loggingCheck: false   // KLF
-    property bool loggingCheck2: false  // CSV
+    category: "main/logging"
+    property bool loggingCheck: false   // KLF active state (for restore)
+    property bool loggingCheck2: false  // CSV active state (for restore)
+    property bool recordKlf: true       // selected record type (REC starts these)
+    property bool recordCsv: false
+    property string recordFolder: ""    // log output dir (empty = default Documents/KoggerApp/logs)
+}
+
+property alias recordKlf: loggingPersist.recordKlf
+property alias recordCsv: loggingPersist.recordCsv
+property alias recordFolder: loggingPersist.recordFolder
+
+readonly property bool isRecording: (typeof core !== "undefined" && core) ? (core.loggingKlf || core.loggingCsv) : false
+
+function setRecording(on) {
+    if (typeof core === "undefined" || !core)
+        return
+    if (on && !core.prepareLogDirectory(recordFolder))
+        return   // invalid path → core warned; do not start recording
+    core.setKlfLogging(on && recordKlf)
+    core.setCsvLogging(on && recordCsv)
 }
 
 function restoreLoggingFromSettings() {
     if (typeof core === "undefined" || !core)
         return
+    if (loggingPersist.loggingCheck || loggingPersist.loggingCheck2) {
+        if (!core.prepareLogDirectory(recordFolder))
+            return   // saved path no longer usable → do not auto-resume
+    }
     core.setKlfLogging(loggingPersist.loggingCheck)
     core.setCsvLogging(loggingPersist.loggingCheck2)
 }
@@ -408,6 +967,7 @@ property Connections loggingSync: Connections {
 // legacy app.tgc group aliases, so existing settings carry over.
 property Settings tgcPersist: Settings {
     id: tgcPersist
+    category: "main/tgc"
     property real appTgcGainNear: 50
     property real appTgcGainFar: 250
     property bool appTgcCompensate: false
@@ -429,9 +989,27 @@ onTgcGainNearChanged:   applyTgcToCore()
 onTgcGainFarChanged:    applyTgcToCore()
 onTgcCompensateChanged: applyTgcToCore()
 
+property Settings consolePersist: Settings {
+    id: consolePersist
+    category: "main/console"
+    property bool consColorize: true
+    property int consMaxRows: 500
+}
+
+property alias consoleColorize: consolePersist.consColorize
+property alias consoleMaxRows: consolePersist.consMaxRows
+
+function applyConsoleMaxRows() {
+    if (typeof core !== "undefined" && core && core.consoleList)
+        core.consoleList.setMaxRows(consoleMaxRows)
+}
+
+onConsoleMaxRowsChanged: applyConsoleMaxRows()
+
 property Settings exportPersist: Settings {
     id: exportPersist
-    property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+    category: "main/export"
+    property var exportFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/KoggerApp/exports"
     property string exportFolderText: ""
     property bool exportDecimation: false
     property int exportDecimationValue: 10
@@ -446,13 +1024,18 @@ property alias exportDecimationValue: exportPersist.exportDecimationValue
 // combo and the 3D toolbar swatch picker drive the same value. Keys match the
 // legacy combo Settings aliases. Applied to the C++ controllers on change +
 // at startup (controllers queue if not ready yet).
-property Settings layerThemePersist: Settings {
-    id: layerThemePersist
+property Settings isobathsThemePersist: Settings {
+    id: isobathsThemePersist
+    category: "scene3d/isobaths"
     property int isobathsTheme: 0
+}
+property Settings mosaicThemePersist: Settings {
+    id: mosaicThemePersist
+    category: "scene3d/mosaic"
     property int mosaicTheme: 0
 }
-property alias isobathsThemeIndex: layerThemePersist.isobathsTheme
-property alias mosaicThemeIndex: layerThemePersist.mosaicTheme
+property alias isobathsThemeIndex: isobathsThemePersist.isobathsTheme
+property alias mosaicThemeIndex: mosaicThemePersist.mosaicTheme
 
 function applyLayerThemesToControllers() {
     if (typeof IsobathsViewControlMenuController !== "undefined" && IsobathsViewControlMenuController)
@@ -473,6 +1056,13 @@ onBottomTrackVisibleChanged: {
     Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(bottomTrackVisible)
     BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(bottomTrackVisible)
     if (bottomTrackVisible) surfaceLayersRefreshRequested()
+    applyBottomTrackRealtimeToCore()
+}
+
+function applyBottomTrackRealtimeToCore() {
+    if (typeof core === "undefined" || !core)
+        return
+    core.setBottomTrackRealtimeFromSettings(bottomTrackVisible)
 }
 onIsobathsVisibleChanged: {
     if (isobathsVisible) surfaceLayersRefreshRequested()
@@ -559,7 +1149,7 @@ property Connections _coreChannelConn: Connections {
 }
 
 property Settings layoutStore: Settings {
-    category: "workspace"
+    category: "main/workspace"
 
     property string layoutJson: ""
     property int nextLeafSerialStored: 0
@@ -568,15 +1158,18 @@ property Settings layoutStore: Settings {
     property bool settingsPushContentStored: false
     property string settingsSideStored: "left"
     property bool rotateLayoutEnabledStored: true
-    property bool quickActionFavoritesEnabledStored: true
+    property bool quickActionLayoutsEnabledStored: true
     property bool quickActionConnectionStatusEnabledStored: true
+    property bool quickActionLoggingEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
-    property string quickActionOrderStored: "connections,favorites,bottomTrack,extraInfo,profiles"
+    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,widgets,console,profiles,secondWindow,powerOff"
+    property string rememberedLinksJson: "[]"
     property string selectedConnectionFilePathStored: ""
-    property string favoriteLayoutsJson: "[]"
+    property string layoutsJson: "[]"
+    property string favoriteLayoutsJson: ""
+    property int activeLayoutIndexStored: 0
     property string settingsGroupExpandedJson: "{}"
-    property real settingsScrollYStored: 0
     property string fullscreenPopupSourceJson: "{}"
     property string fullscreenPopupStateJson: "{}"
     property bool globalPopupEnabledStored: false
@@ -587,17 +1180,14 @@ property Settings layoutStore: Settings {
     property string settingsProfilesJson: "[]"
     property string profilesPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool profilesPopupOpenStored: false
-    property string autopilotPopupStateJson: "{\"x\":-1,\"y\":-1}"
-    property bool autopilotEnabledStored: true
-    property string extraInfoPopupStateJson: "{\"x\":-1,\"y\":-1}"
-    property bool extraInfoVisibleStored: false
-    property bool extraInfoDepthStored: true
-    property bool extraInfoSpeedStored: true
-    property bool extraInfoCoordinatesStored: true
-    property bool extraInfoActivePointStored: true
-    property bool extraInfoNavStored: false
-    property bool extraInfoBoatStatusStored: false
-    property bool quickActionExtraInfoEnabledStored: true
+    property bool bottomTrackEditorOpenStored: false
+    property string widgetsJson: "[]"
+    property string widgetInstancesJson: "{}"
+    property string widgetShownJson: "{}"
+    property bool quickActionWidgetsEnabledStored: true
+    property bool quickActionConsoleEnabledStored: true
+    property bool quickActionSecondWindowEnabledStored: true
+    property bool quickActionPowerOffEnabledStored: false
     property bool secondaryWindowOpenStored: false
     property string secondaryWindowModeStored: ""
     property string liveEchogramStatesJson: "{}"
@@ -616,8 +1206,24 @@ property Timer favoriteStateSaveTimer: Timer {
 }
 
 onEditableModeChanged: {
-    if (editableMode && maximizedLeafId !== -1)
-        maximizedLeafId = -1
+    if (editableMode) {
+        if (maximizedLeafId !== -1)
+            maximizedLeafId = -1
+    } else if (modePickerLeafIds.length > 0) {
+        layoutTree = normalizeAndFixPaneModes(layoutTree, true)
+        clearModePickerSelection()
+        rebuildLayoutCaches()
+    }
+}
+
+onSettingsGroupExpandedMapChanged: {
+    if (editableMode && !isSettingsGroupExpanded("app.layoutPlacement"))
+        editableMode = false
+}
+
+onSettingsSubPageActiveChanged: {
+    if (settingsSubPageActive && editableMode)
+        editableMode = false
 }
 
 onSettingsPanelOpenChanged: {
@@ -646,7 +1252,7 @@ onModeSettingsPanelOpenChanged: {
 
 onLayoutTreeChanged: {
     sanitizeFullscreenPopupConfig()
-    updateCurrentLayoutFavoriteState()
+    syncActiveLayout()
 }
 
 onGlobalPopupEnabledChanged: {
@@ -840,11 +1446,210 @@ function _openSettingsSubPage(kind) {
 }
 
 function openQuickActionsSettings() { _openSettingsSubPage("quickActions") }
-function openExtraInfoSettings()    { _openSettingsSubPage("extraInfo") }
+function openWidgetSettings()       { openAppSettingsAtGroup("app.widgets") }
+function openWidgetCreateSettings() { widgetEditIndex = -1; widgetDraftReset(); widgetEditStep = 1; _openSettingsSubPage("widgetEdit") }
+function openWidgetEditSettings(index) { widgetEditIndex = index; widgetDraftReset(); widgetEditStep = 2; _openSettingsSubPage("widgetEdit") }
+
+function widgetDraftReset() {
+    if (widgetEditIndex >= 0 && widgetEditIndex < widgets.length) {
+        var d = widgets[widgetEditIndex]
+        widgetDraftCols = d.cols
+        widgetDraftRows = d.rows
+        widgetDraftTransparency = (typeof d.transparency === "number") ? d.transparency : 0
+        widgetDraftScale = widgetScale(d.id)
+        widgetDraftCells = JSON.parse(JSON.stringify(d.cells))
+    } else {
+        widgetDraftCols = 1
+        widgetDraftRows = 1
+        widgetDraftTransparency = 0
+        widgetDraftScale = 1.0
+        widgetDraftCells = []
+    }
+    widgetDraftBig = false
+    widgetDraftRep = "value"
+    widgetDropRow = -1
+    widgetDropCol = -1
+    widgetDropSpan = 1
+    widgetDropSpanRows = 1
+    widgetOverPalette = false
+    widgetHoverCols = 0
+    widgetHoverRows = 0
+    widgetPreviewRow = -1
+    widgetPreviewCol = -1
+    widgetPreviewValid = false
+    widgetDragActive = false
+}
+
+function widgetDraftIsPlaced(field) {
+    for (var i = 0; i < widgetDraftCells.length; ++i)
+        if (widgetDraftCells[i].field === field) return true
+    return false
+}
+
+function widgetDraftOccupantAt(r, c) {
+    for (var i = 0; i < widgetDraftCells.length; ++i) {
+        var cell = widgetDraftCells[i]
+        var s = _cellSpan(cell.rep, cell.big === true)
+        if (r >= cell.row && r < cell.row + s.sr && c >= cell.col && c < cell.col + s.sc)
+            return { kind: (r === cell.row && c === cell.col) ? "anchor" : "tail", cell: cell }
+    }
+    return null
+}
+
+function _wDraftCoordFree(r, c, ignoreField) {
+    var occ = widgetDraftOccupantAt(r, c)
+    if (!occ) return true
+    return occ.cell.field === ignoreField
+}
+
+function _wDraftCellCovers(cell, r, c) {
+    var s = _cellSpan(cell.rep, cell.big === true)
+    return r >= cell.row && r < cell.row + s.sr && c >= cell.col && c < cell.col + s.sc
+}
+
+// Drop validity = footprint fits the grid. Occupied cells are allowed — the drop
+// replaces whatever is there (see widgetDraftAdd). Only out-of-grid is rejected.
+function widgetDraftCanDrop(r, c, rep, big, ignoreField) {
+    if (r < 0 || c < 0) return false
+    var s = _cellSpan(rep, big)
+    return r + s.sr <= widgetDraftRows && c + s.sc <= widgetDraftCols
+}
+
+// Occupancy-aware fit (used by tap-to-change-type, which must not overlap others).
+function _widgetDraftFits(r, c, rep, big, ignoreField) {
+    if (!widgetDraftCanDrop(r, c, rep, big, ignoreField)) return false
+    var s = _cellSpan(rep, big)
+    for (var dr = 0; dr < s.sr; ++dr)
+        for (var dc = 0; dc < s.sc; ++dc)
+            if (!_wDraftCoordFree(r + dr, c + dc, ignoreField)) return false
+    return true
+}
+
+function widgetDraftAdd(r, c, field, rep, big) {
+    var ns = _cellSpan(rep, big)
+    var next = []
+    for (var i = 0; i < widgetDraftCells.length; ++i) {
+        var cell = widgetDraftCells[i]
+        if (cell.field === field) continue
+        var cs = _cellSpan(cell.rep, cell.big === true)
+        var overlap = cell.row < r + ns.sr && r < cell.row + cs.sr
+                   && cell.col < c + ns.sc && c < cell.col + cs.sc
+        if (overlap) continue
+        next.push(cell)
+    }
+    next.push({ row: r, col: c, field: field, rep: rep, big: big === true })
+    widgetDraftCells = next
+}
+
+function widgetDraftRemove(field) {
+    var next = []
+    for (var i = 0; i < widgetDraftCells.length; ++i)
+        if (widgetDraftCells[i].field !== field) next.push(widgetDraftCells[i])
+    widgetDraftCells = next
+}
+
+function widgetDraftCycle(field) {
+    var order = ["value", "labelValueRow", "labelValueStacked"]
+    for (var i = 0; i < widgetDraftCells.length; ++i) {
+        if (widgetDraftCells[i].field !== field) continue
+        var cellBig = widgetDraftCells[i].big === true
+        var cur = order.indexOf(widgetDraftCells[i].rep)
+        for (var s = 1; s <= order.length; ++s) {
+            var cand = order[(cur + s) % order.length]
+            if (_widgetDraftFits(widgetDraftCells[i].row, widgetDraftCells[i].col, cand, cellBig, field)) {
+                var next = widgetDraftCells.slice()
+                next[i] = { row: widgetDraftCells[i].row, col: widgetDraftCells[i].col, field: field, rep: cand, big: cellBig }
+                widgetDraftCells = next
+                return
+            }
+        }
+        return
+    }
+}
+
+function widgetDraftSetSize(c, r) {
+    if (c !== widgetDraftCols || r !== widgetDraftRows)
+        widgetDraftScale = 1.0
+    widgetDraftCols = c
+    widgetDraftRows = r
+    if (!widgetDraftBigAllowed)
+        widgetDraftBig = false
+    var norm = normalizeWidgetDef({ cols: c, rows: r, cells: widgetDraftCells })
+    widgetDraftCells = norm ? norm.cells : []
+    if (!widgetDraftRepAvailable(widgetDraftRep))
+        widgetDraftRep = "value"
+    widgetDraftClearPreview()
+}
+
+function widgetDraftCommitFromPalette(field, rep, big) {
+    if (widgetDropRow >= 0 && widgetDropCol >= 0 && widgetDraftCanDrop(widgetDropRow, widgetDropCol, rep, big, field))
+        widgetDraftAdd(widgetDropRow, widgetDropCol, field, rep, big)
+    widgetDropRow = -1
+    widgetDropCol = -1
+    widgetOverPalette = false
+    widgetDraftClearPreview()
+}
+
+function widgetDraftCommitMoveOrRemove(field, rep, big) {
+    if (widgetDropRow >= 0 && widgetDropCol >= 0 && _widgetDraftFits(widgetDropRow, widgetDropCol, rep, big, field))
+        widgetDraftAdd(widgetDropRow, widgetDropCol, field, rep, big)
+    else if (widgetOverPalette)
+        widgetDraftRemove(field)
+    widgetDropRow = -1
+    widgetDropCol = -1
+    widgetOverPalette = false
+}
+
+function widgetDraftAutoPlace(field, rep, big) {
+    for (var r = 0; r < widgetDraftRows; ++r)
+        for (var c = 0; c < widgetDraftCols; ++c)
+            if (_widgetDraftFits(r, c, rep, big, field)) {
+                widgetDraftAdd(r, c, field, rep, big)
+                widgetDraftClearPreview()
+                return
+            }
+}
+
+function widgetDraftPreviewFor(field, rep, big) {
+    var s = _cellSpan(rep, big)
+    for (var r = 0; r < widgetDraftRows; ++r)
+        for (var c = 0; c < widgetDraftCols; ++c)
+            if (_widgetDraftFits(r, c, rep, big, field)) {
+                widgetPreviewRow = r
+                widgetPreviewCol = c
+                widgetPreviewSpan = s.sc
+                widgetPreviewSpanRows = s.sr
+                widgetPreviewValid = true
+                widgetPreviewField = field
+                return
+            }
+    widgetDraftClearPreview()
+}
+
+function widgetDraftClearPreview() {
+    widgetPreviewRow = -1
+    widgetPreviewCol = -1
+    widgetPreviewField = ""
+}
+
+function widgetDraftSave() {
+    var isCreate = widgetEditIndex < 0
+    var id = saveWidget({ cols: widgetDraftCols, rows: widgetDraftRows,
+                          transparency: widgetDraftTransparency, cells: widgetDraftCells })
+    if (id) {
+        setWidgetScale(id, widgetDraftScale)
+        if (isCreate) {
+            setWidgetShown(id, true)
+            widgetBringToFront(id)
+        }
+    }
+    closeActiveSettingsSubPage()
+}
 function openAimPanelSettings()     { _openSettingsSubPage("aimPanel") }
 function openUiSavingSettings()     { _openSettingsSubPage("uiSaving") }
 function openTgcSettings()          { _openSettingsSubPage("tgc") }
 function openCsvExportSettings()    { _openSettingsSubPage("csvExport") }
+function openConsoleSettings()      { _openSettingsSubPage("console") }
 
 function closeActiveSettingsSubPage() {
     if (_settingsNav.length > 0) {
@@ -916,18 +1721,23 @@ function openConnectionsSettings() {
     setSettingsGroupExpanded("app.connections", true)
 }
 
+function openRecordingSettings() {
+    recordingFocusRequested = false
+    openConnectionsSettings()
+    recordingFocusRequested = true
+}
+
 function setActiveDeviceIndex(i) {
     if (typeof i !== "number")
         return
     activeDeviceIndex = i
 }
 
-property bool deviceSettingsScrollPending: false   // one-shot; survives lazy ConnectionViewer load (see qml-devices.md)
+function openDeviceSettings() { _openSettingsSubPage("devices") }
 
-function openConnectionsWithDeviceIndex(idx) {
+function openDeviceSettingsForIndex(idx) {
     setActiveDeviceIndex(idx)
-    openConnectionsSettings()
-    deviceSettingsScrollPending = true
+    openDeviceSettings()
 }
 
 function toggleAppLayoutSettings() {
@@ -1424,56 +2234,6 @@ function loadProfilesPopupPreferences() {
     }
 }
 
-function autopilotPopupPosition(popupWidth, popupHeight) {
-    var b = _btEditPopupBounds(popupWidth, popupHeight)
-    var s = autopilotPopupState || { x: -1, y: -1 }
-    var x = (typeof s.x === "number" && s.x >= 0) ? s.x : Math.round((b.minX + b.maxX) / 2)
-    var y = (typeof s.y === "number" && s.y >= 0) ? s.y : b.minY
-    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
-}
-
-function setAutopilotPopupPosition(x, y, popupWidth, popupHeight) {
-    var b = _btEditPopupBounds(popupWidth, popupHeight)
-    autopilotPopupState = { x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) }
-    layoutStore.autopilotPopupStateJson = JSON.stringify(autopilotPopupState)
-}
-
-function loadAutopilotPopupPreferences() {
-    var parsed = { x: -1, y: -1 }
-    if (layoutStore.autopilotPopupStateJson && layoutStore.autopilotPopupStateJson !== "") {
-        try { parsed = JSON.parse(layoutStore.autopilotPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
-    }
-    autopilotPopupState = {
-        x: (typeof parsed.x === "number") ? parsed.x : -1,
-        y: (typeof parsed.y === "number") ? parsed.y : -1
-    }
-}
-
-function extraInfoPopupPosition(popupWidth, popupHeight) {
-    var b = _btEditPopupBounds(popupWidth, popupHeight)
-    var s = extraInfoPopupState || { x: -1, y: -1 }
-    var x = (typeof s.x === "number" && s.x >= 0) ? s.x : Math.round((b.minX + b.maxX) / 2)
-    var y = (typeof s.y === "number" && s.y >= 0) ? s.y : b.minY
-    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
-}
-
-function setExtraInfoPopupPosition(x, y, popupWidth, popupHeight) {
-    var b = _btEditPopupBounds(popupWidth, popupHeight)
-    extraInfoPopupState = { x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) }
-    layoutStore.extraInfoPopupStateJson = JSON.stringify(extraInfoPopupState)
-}
-
-function loadExtraInfoPopupPreferences() {
-    var parsed = { x: -1, y: -1 }
-    if (layoutStore.extraInfoPopupStateJson && layoutStore.extraInfoPopupStateJson !== "") {
-        try { parsed = JSON.parse(layoutStore.extraInfoPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
-    }
-    extraInfoPopupState = {
-        x: (typeof parsed.x === "number") ? parsed.x : -1,
-        y: (typeof parsed.y === "number") ? parsed.y : -1
-    }
-}
-
 function globalPopupCollapsed() {
     return normalizedGlobalPopupState(globalPopupState).collapsed === true
 }
@@ -1617,7 +2377,7 @@ function sanitizeFullscreenPopupConfig() {
     if (sourceChanged || stateChanged)
         saveFullscreenPopupState()
     if (sourceChanged)
-        updateCurrentLayoutFavoriteState()
+        syncActiveLayout()
 }
 
 function popupSourceLeafIdForHost(hostLeafId) {
@@ -1693,7 +2453,7 @@ function setPopupSourceForHost(hostLeafId, sourceLeafId) {
     fullscreenPopupStateByHost = nextState
     sanitizeFullscreenPopupConfig()
     saveFullscreenPopupState()
-    updateCurrentLayoutFavoriteState()
+    syncActiveLayout()
 }
 
 function popupStateForHost(hostLeafId) {
@@ -2060,47 +2820,6 @@ function favoriteLayoutEntryFromCurrent() {
     }
 }
 
-// Strip ratio from layout snapshot so signatures compare structure only
-// (which panes, how they're split, orientations, modes). Ratios are still
-// kept on the original snapshot for restoration via applyFavoriteLayout.
-function stripRatiosFromSnapshot(node) {
-    if (!node || typeof node !== "object")
-        return node
-    if (node.type === "split") {
-        return {
-            type: "split",
-            orientation: node.orientation,
-            first: stripRatiosFromSnapshot(node.first),
-            second: stripRatiosFromSnapshot(node.second)
-        }
-    }
-    return node
-}
-
-function favoriteLayoutSignatureFromEntry(entry) {
-    if (!entry || !entry.layout)
-        return ""
-    return JSON.stringify({
-        layout: stripRatiosFromSnapshot(entry.layout),
-        popupLinks: Array.isArray(entry.popupLinks) ? entry.popupLinks : []
-    })
-}
-
-function currentFavoriteLayoutSignature() {
-    return favoriteLayoutSignatureFromEntry(favoriteLayoutEntryFromCurrent())
-}
-
-function favoriteLayoutIndexBySignature(signature) {
-    if (typeof signature !== "string" || signature === "")
-        return -1
-
-    for (var i = 0; i < favoriteLayouts.length; ++i) {
-        if (favoriteLayoutSignatureFromEntry(favoriteLayouts[i]) === signature)
-            return i
-    }
-    return -1
-}
-
 function persistLiveEchogramStatesSoon() {
     liveEchogramPersistTimer.restart()
 }
@@ -2128,21 +2847,17 @@ function echogramStatesForCurrentTree(leafIdToPaneId) {
     return out
 }
 
-function activeFavoriteIndex() {
-    return favoriteLayoutIndexBySignature(currentLayoutFavoriteSignature)
-}
-
 function writeActiveFavoriteEchogramState(paneId, s) {
-    var idx = activeFavoriteIndex()
-    if (idx < 0)
+    var idx = activeLayoutIndex
+    if (idx < 0 || idx >= layouts.length)
         return
-    var next = favoriteLayouts.slice(0)
+    var next = layouts.slice(0)
     var entry = next[idx]
     var states = (entry.echogramStates && typeof entry.echogramStates === "object")
         ? Object.assign({}, entry.echogramStates) : ({})
     states[String(paneId)] = s
     next[idx] = { layout: entry.layout, popupLinks: entry.popupLinks, echogramStates: states }
-    favoriteLayouts = next
+    layouts = next
     favoriteStateSaveTimer.restart()
 }
 
@@ -2161,7 +2876,7 @@ function captureEchogramState(plot, leafId, includeFavorite) {
     next[pane.contentId] = s
     liveEchogramStates = next
     persistLiveEchogramStatesSoon()
-    if (includeFavorite && currentLayoutIsFavorite)
+    if (includeFavorite && activeLayoutIndex >= 0 && activeLayoutIndex < layouts.length)
         writeActiveFavoriteEchogramState(pane.paneId, s)
 }
 
@@ -2230,65 +2945,8 @@ function pruneLiveEchogramStates() {
     }
 }
 
-function captureEdgeResizeFavoriteSignature() {
-    edgeResizeFavoriteSignatureBefore = ""
-    if (!layoutTree || favoriteLayouts.length === 0)
-        return
-
-    var currentSignature = currentFavoriteLayoutSignature()
-    if (favoriteLayoutIndexBySignature(currentSignature) === -1)
-        return
-
-    edgeResizeFavoriteSignatureBefore = currentSignature
-}
-
-function replaceFavoriteLayoutBySignature(previousSignature) {
-    if (typeof previousSignature !== "string" || previousSignature === "")
-        return false
-
-    var index = favoriteLayoutIndexBySignature(previousSignature)
-    if (index === -1)
-        return false
-
-    var replacement = favoriteLayoutEntryFromCurrent()
-    if (!replacement)
-        return false
-
-    var replacementSignature = favoriteLayoutSignatureFromEntry(replacement)
-    if (replacementSignature === "")
-        return false
-
-    var nextFavorites = []
-    var seen = {}
-    var replaced = false
-    for (var i = 0; i < favoriteLayouts.length; ++i) {
-        var entry = favoriteLayouts[i]
-        var signature = favoriteLayoutSignatureFromEntry(entry)
-
-        if (i === index) {
-            entry = replacement
-            signature = replacementSignature
-            replaced = true
-        }
-
-        if (signature === "" || seen[signature] === true)
-            continue
-
-        seen[signature] = true
-        nextFavorites.push(entry)
-    }
-
-    if (!replaced)
-        return false
-
-    favoriteLayouts = nextFavorites
-    saveFavoriteLayoutsState()
-    updateCurrentLayoutFavoriteState()
-    return true
-}
-
 function saveFavoriteLayoutsState() {
-    layoutStore.favoriteLayoutsJson = JSON.stringify(favoriteLayouts)
+    layoutStore.layoutsJson = JSON.stringify(layouts)
 }
 
 function normalizedSettingsGroupKey(key) {
@@ -2314,8 +2972,10 @@ function loadSettingsGroupsState() {
         for (var key in parsed) {
             if (!Object.prototype.hasOwnProperty.call(parsed, key))
                 continue
-            if (parsed[key] === true)
-                nextMap[key] = true
+            if (parsed[key] === true) {
+                nextMap[key] = true   // accordion: restore at most one open group
+                break
+            }
         }
     }
 
@@ -2352,20 +3012,11 @@ function unregisterSettingsGroup(group) {
     _settingsGroupInstances = arr
 }
 
-function toggleAllSettingsGroups() {
-    var anyOpen = false
-    var i, g
-    for (i = 0; i < _settingsGroupInstances.length; ++i) {
-        g = _settingsGroupInstances[i]
-        if (g && g.collapsible && g.expanded === true) {
-            anyOpen = true
-            break
-        }
-    }
-    for (i = 0; i < _settingsGroupInstances.length; ++i) {
-        g = _settingsGroupInstances[i]
+function collapseAllSettingsGroups() {
+    for (var i = 0; i < _settingsGroupInstances.length; ++i) {
+        var g = _settingsGroupInstances[i]
         if (g && g.collapsible)
-            g.expanded = !anyOpen
+            g.expanded = false
     }
 }
 
@@ -2379,14 +3030,8 @@ function setSettingsGroupExpanded(groupKey, expanded) {
     if (currentlyExpanded === nextValue)
         return
 
+    // Accordion: at most one group open — expanding one collapses the rest.
     var nextMap = {}
-    for (var existingKey in settingsGroupExpandedMap) {
-        if (!Object.prototype.hasOwnProperty.call(settingsGroupExpandedMap, existingKey))
-            continue
-        if (existingKey !== key && settingsGroupExpandedMap[existingKey] === true)
-            nextMap[existingKey] = true
-    }
-
     if (nextValue)
         nextMap[key] = true
 
@@ -2395,10 +3040,14 @@ function setSettingsGroupExpanded(groupKey, expanded) {
 }
 
 function loadFavoriteLayoutsState() {
+    var raw = layoutStore.layoutsJson
+    if ((!raw || raw === "" || raw === "[]") && layoutStore.favoriteLayoutsJson && layoutStore.favoriteLayoutsJson !== "")
+        raw = layoutStore.favoriteLayoutsJson
+
     var parsed = []
-    if (layoutStore.favoriteLayoutsJson && layoutStore.favoriteLayoutsJson !== "") {
+    if (raw && raw !== "") {
         try {
-            parsed = JSON.parse(layoutStore.favoriteLayoutsJson)
+            parsed = JSON.parse(raw)
         } catch (error) {
             parsed = []
         }
@@ -2413,96 +3062,25 @@ function loadFavoriteLayoutsState() {
         }
     }
 
-    favoriteLayouts = nextFavorites
+    layouts = nextFavorites
     saveFavoriteLayoutsState()
-    updateCurrentLayoutFavoriteState()
+    syncActiveLayout()
 }
 
-function updateCurrentLayoutFavoriteState() {
-    if (!layoutTree || favoriteLayouts.length === 0) {
-        currentLayoutFavoriteSignature = ""
-        currentLayoutIsFavorite = false
+function syncActiveLayout() {
+    if (!layoutTree)
         return
-    }
+    if (activeLayoutIndex < 0 || activeLayoutIndex >= layouts.length)
+        return
 
-    var currentEntry = favoriteLayoutEntryFromCurrent()
-    var currentSignature = favoriteLayoutSignatureFromEntry(currentEntry)
-    currentLayoutFavoriteSignature = currentSignature
-    var matchedIndex = -1
-    for (var i = 0; i < favoriteLayouts.length; ++i) {
-        if (favoriteLayoutSignatureFromEntry(favoriteLayouts[i]) === currentSignature) {
-            matchedIndex = i
-            break
-        }
-    }
-    currentLayoutIsFavorite = matchedIndex !== -1
-
-    // When current layout matches an existing favourite by structure, keep that
-    // favourite's stored ratios in sync with the current arrangement so a later
-    // applyFavoriteLayout() restores the splits the way the user last left them.
-    if (matchedIndex !== -1 && currentEntry) {
-        var stored = favoriteLayouts[matchedIndex]
-        if (JSON.stringify(stored.layout) !== JSON.stringify(currentEntry.layout)) {
-            var next = favoriteLayouts.slice(0)
-            next[matchedIndex] = {
-                layout: currentEntry.layout,
-                popupLinks: stored.popupLinks,
-                echogramStates: stored.echogramStates || {}
-            }
-            favoriteLayouts = next
-            saveFavoriteLayoutsState()
-        }
-    }
-}
-
-function favoriteLayoutIsCurrent(favoriteIndex) {
-    if (favoriteIndex < 0 || favoriteIndex >= favoriteLayouts.length)
-        return false
-    if (currentLayoutFavoriteSignature === "")
-        return false
-
-    return favoriteLayoutSignatureFromEntry(favoriteLayouts[favoriteIndex]) === currentLayoutFavoriteSignature
-}
-
-function addCurrentLayoutToFavorites() {
     var entry = favoriteLayoutEntryFromCurrent()
     if (!entry)
         return
 
-    var currentSignature = favoriteLayoutSignatureFromEntry(entry)
-    for (var i = 0; i < favoriteLayouts.length; ++i) {
-        if (favoriteLayoutSignatureFromEntry(favoriteLayouts[i]) === currentSignature) {
-            currentLayoutIsFavorite = true
-            return
-        }
-    }
-
-    favoriteLayouts = favoriteLayouts.concat([entry])
-    saveFavoriteLayoutsState()
-    updateCurrentLayoutFavoriteState()
-}
-
-function removeCurrentLayoutFromFavorites() {
-    if (!layoutTree || favoriteLayouts.length === 0)
-        return
-
-    var currentSignature = currentFavoriteLayoutSignature()
-    var nextFavorites = []
-    for (var i = 0; i < favoriteLayouts.length; ++i) {
-        if (favoriteLayoutSignatureFromEntry(favoriteLayouts[i]) !== currentSignature)
-            nextFavorites.push(favoriteLayouts[i])
-    }
-
-    favoriteLayouts = nextFavorites
-    saveFavoriteLayoutsState()
-    updateCurrentLayoutFavoriteState()
-}
-
-function toggleCurrentLayoutFavorite() {
-    if (currentLayoutIsFavorite)
-        removeCurrentLayoutFromFavorites()
-    else
-        addCurrentLayoutToFavorites()
+    var next = layouts.slice(0)
+    next[activeLayoutIndex] = entry
+    layouts = next
+    favoriteStateSaveTimer.restart()
 }
 
 function openModeSettingsForLeaf(leafId) {
@@ -2745,14 +3323,19 @@ function saveLayoutState() {
     layoutStore.nextLeafSerialStored = Math.max(nextLeafSerial, maxLeafIdInTree(layoutTree))
     layoutStore.nextSplitSerialStored = Math.max(nextSplitSerial, maxSplitIdInTree(layoutTree))
     layoutStore.activeLeafIdStored = activeLeafId
+    layoutStore.activeLayoutIndexStored = activeLayoutIndex
     layoutStore.settingsPushContentStored = settingsPushContent
     layoutStore.settingsSideStored = settingsSide
     layoutStore.rotateLayoutEnabledStored = rotateLayoutEnabled
-    layoutStore.quickActionFavoritesEnabledStored = quickActionFavoritesEnabled
+    layoutStore.quickActionLayoutsEnabledStored = quickActionLayoutsEnabled
     layoutStore.quickActionConnectionStatusEnabledStored = quickActionConnectionStatusEnabled
+    layoutStore.quickActionLoggingEnabledStored = quickActionLoggingEnabled
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
-    layoutStore.quickActionExtraInfoEnabledStored = quickActionExtraInfoEnabled
+    layoutStore.quickActionWidgetsEnabledStored = quickActionWidgetsEnabled
+    layoutStore.quickActionConsoleEnabledStored = quickActionConsoleEnabled
+    layoutStore.quickActionSecondWindowEnabledStored = quickActionSecondWindowEnabled
+    layoutStore.quickActionPowerOffEnabledStored = quickActionPowerOffEnabled
     layoutStore.quickActionOrderStored = quickActionOrderCsv()
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
     layoutStore.secondaryWindowOpenStored = secondaryWindowOpen
@@ -2760,67 +3343,32 @@ function saveLayoutState() {
 }
 
 function restoreLayoutState() {
-    if (!layoutStore.layoutJson || layoutStore.layoutJson === "")
-        return false
-
-    var parsed
-    try {
-        parsed = JSON.parse(layoutStore.layoutJson)
-    } catch (error) {
-        return false
-    }
-
-    if (!isValidLayoutNode(parsed))
-        return false
-
-    var hadModeField = layoutHasAnyModeField(parsed)
-    layoutTree = normalizeAndFixPaneModes(parsed, !hadModeField)
-    layoutTree = renumberPanes(layoutTree)
-    layoutTree = ensureContentIds(layoutTree)
-    nextLeafSerial = Math.max(layoutStore.nextLeafSerialStored, maxLeafIdInTree(layoutTree))
-    nextSplitSerial = Math.max(layoutStore.nextSplitSerialStored, maxSplitIdInTree(layoutTree))
-    activeLeafId = hasLeafIdInTree(layoutTree, layoutStore.activeLeafIdStored) ? layoutStore.activeLeafIdStored : firstLeafId()
     settingsPushContent = layoutStore.settingsPushContentStored
     settingsSide = normalizedSettingsSide(layoutStore.settingsSideStored)
     rotateLayoutEnabled = layoutStore.rotateLayoutEnabledStored
-    quickActionFavoritesEnabled = layoutStore.quickActionFavoritesEnabledStored
+    quickActionLayoutsEnabled = layoutStore.quickActionLayoutsEnabledStored
     quickActionConnectionStatusEnabled = layoutStore.quickActionConnectionStatusEnabledStored
+    quickActionLoggingEnabled = layoutStore.quickActionLoggingEnabledStored
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
-    quickActionExtraInfoEnabled = layoutStore.quickActionExtraInfoEnabledStored
+    quickActionWidgetsEnabled = layoutStore.quickActionWidgetsEnabledStored
+    quickActionConsoleEnabled = layoutStore.quickActionConsoleEnabledStored
+    quickActionSecondWindowEnabled = layoutStore.quickActionSecondWindowEnabledStored
+    quickActionPowerOffEnabled = layoutStore.quickActionPowerOffEnabledStored
     applyQuickActionOrder((layoutStore.quickActionOrderStored || "").split(","))
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored
     secondaryWindowMode = (storedSecondaryMode === "2D" || storedSecondaryMode === "3D") ? storedSecondaryMode : ""
     secondaryWindowOpen = layoutStore.secondaryWindowOpenStored
-    sanitizeFullscreenPopupConfig()
-    maximizedLeafId = -1
-    clearModePickerSelection()
-    closeModeSettingsPanel()
-    rebuildLayoutCaches()
-    return true
-}
 
-function resetWindowConfiguration() {
-    dragActive = false
-    draggedLeafId = -1
-    dropTargetLeafId = -1
-    maximizedLeafId = -1
-    clearModePickerSelection()
-    closeModeSettingsPanel()
-    clearEdgeResizeState()
+    if (layouts.length === 0)
+        return false
 
-    nextLeafSerial = 0
-    nextSplitSerial = 0
-    fullscreenPopupSourceByHost = ({})
-    fullscreenPopupStateByHost = ({})
-    saveFullscreenPopupState()
-    var firstLeaf = makeLeaf(makePane(1, "3D"))
-    layoutTree = firstLeaf
-    activeLeafId = firstLeaf.leafId
-
-    rebuildLayoutCaches()
-    saveLayoutState()
+    var idx = Math.round(layoutStore.activeLayoutIndexStored)
+    if (isNaN(idx) || idx < 0 || idx >= layouts.length)
+        idx = 0
+    applyLayout(idx)
+    return !!layoutTree
 }
 
 function buildPresetTree(presetId) {
@@ -2853,36 +3401,6 @@ function buildPresetTree(presetId) {
     }
 
     return null
-}
-
-function applyLayoutPreset(presetId) {
-    dragActive = false
-    draggedLeafId = -1
-    dropTargetLeafId = -1
-    maximizedLeafId = -1
-    clearModePickerSelection()
-    clearEdgeResizeState()
-    closeModeSettingsPanel()
-
-    nextLeafSerial = 0
-    nextSplitSerial = 0
-    fullscreenPopupSourceByHost = ({})
-    fullscreenPopupStateByHost = ({})
-    saveFullscreenPopupState()
-
-    var tree = buildPresetTree(presetId)
-    if (!tree)
-        return
-
-    layoutTree = renumberPanes(tree)
-    activeLeafId = firstLeafId()
-
-    var ids = []
-    allLeafIds(layoutTree, ids)
-    setModePickerLeafIds(ids)
-
-    rebuildLayoutCaches()
-    saveLayoutState()
 }
 
 function buildTreeFromFavoriteSnapshot(snapshot, state) {
@@ -2944,14 +3462,17 @@ function popupSourceMapFromFavoriteEntry(entry, targetTree) {
     return nextSource
 }
 
-function applyFavoriteLayout(favoriteIndex) {
-    if (favoriteIndex < 0 || favoriteIndex >= favoriteLayouts.length)
+function applyLayout(favoriteIndex) {
+    if (favoriteIndex < 0 || favoriteIndex >= layouts.length)
         return
 
-    var entry = favoriteLayouts[favoriteIndex]
+    var entry = layouts[favoriteIndex]
     var snapshot = favoriteLayoutSnapshotFromEntry(entry)
     if (!snapshot)
         return
+
+    activeLayoutIndex = favoriteIndex
+    layoutStore.activeLayoutIndexStored = favoriteIndex
 
     dragActive = false
     draggedLeafId = -1
@@ -2979,22 +3500,110 @@ function applyFavoriteLayout(favoriteIndex) {
     activeLeafId = firstLeafId()
     rebuildLayoutCaches()
     saveLayoutState()
-    updateCurrentLayoutFavoriteState()
+    syncActiveLayout()
 }
 
-function removeFavoriteLayoutAt(favoriteIndex) {
-    if (favoriteIndex < 0 || favoriteIndex >= favoriteLayouts.length)
+function deleteLayoutAt(favoriteIndex) {
+    if (favoriteIndex < 0 || favoriteIndex >= layouts.length)
+        return
+    if (layouts.length <= 1)
         return
 
     var nextFavorites = []
-    for (var i = 0; i < favoriteLayouts.length; ++i) {
+    for (var i = 0; i < layouts.length; ++i) {
         if (i !== favoriteIndex)
-            nextFavorites.push(favoriteLayouts[i])
+            nextFavorites.push(layouts[i])
     }
 
-    favoriteLayouts = nextFavorites
+    layouts = nextFavorites
     saveFavoriteLayoutsState()
-    updateCurrentLayoutFavoriteState()
+
+    if (favoriteIndex === activeLayoutIndex) {
+        applyLayout(Math.min(favoriteIndex, layouts.length - 1))
+    } else {
+        if (favoriteIndex < activeLayoutIndex)
+            activeLayoutIndex -= 1
+        layoutStore.activeLayoutIndexStored = activeLayoutIndex
+    }
+}
+
+function createLayoutFromCurrent() {
+    var entry = favoriteLayoutEntryFromCurrent()
+    if (entry)
+        _appendLayoutAndEdit(entry)
+}
+
+function createLayoutFromLayout(index) {
+    if (index < 0 || index >= layouts.length)
+        return
+    var entry
+    try {
+        entry = JSON.parse(JSON.stringify(layouts[index]))
+    } catch (e) {
+        return
+    }
+    _appendLayoutAndEdit(entry)
+}
+
+function createLayoutFromPreset(presetId) {
+    var tree = buildPresetTree(presetId)
+    if (!tree)
+        return
+    var snapState = { nextPaneId: 0, leafIdToPaneId: {} }
+    var snapshot = favoriteLayoutSnapshotFromNode(tree, snapState)
+    if (!snapshot)
+        return
+    _appendLayoutAndEdit({ layout: snapshot, popupLinks: [], echogramStates: {} })
+}
+
+function _appendLayoutAndEdit(entry) {
+    var next = layouts.slice(0)
+    next.push(entry)
+    layouts = next
+    saveFavoriteLayoutsState()
+
+    var newIndex = layouts.length - 1
+    applyLayout(newIndex)
+
+    settingsSubPageActive = false
+    settingsSubPageKind = "echogram"
+    setSettingsGroupExpanded("app.layoutPlacement", true)
+    pendingScrollGroupKey = "app.layoutPlacement"
+    editableMode = true
+
+    var ids = []
+    allLeafIds(layoutTree, ids)
+    setModePickerLeafIds(ids)
+}
+
+function openCreateLayoutSettings() { _openSettingsSubPage("createLayout") }
+
+function seedDefaultLayouts() {
+    var l1 = {
+        layout: {
+            type: "split", orientation: "vertical", ratio: 0.5,
+            first:  { type: "leaf", mode: "3D", paneId: 1 },
+            second: { type: "leaf", mode: "2D", paneId: 2 }
+        },
+        popupLinks: [], echogramStates: {}
+    }
+    var l2 = {
+        layout: {
+            type: "split", orientation: "horizontal", ratio: 0.5,
+            first: {
+                type: "split", orientation: "vertical", ratio: 0.5,
+                first:  { type: "leaf", mode: "3D", paneId: 1 },
+                second: { type: "leaf", mode: "2D", paneId: 2 }
+            },
+            second: { type: "leaf", mode: "2D", paneId: 3 }
+        },
+        popupLinks: [], echogramStates: {}
+    }
+    layouts = [l1, l2]
+    saveFavoriteLayoutsState()
+    activeLayoutIndex = 0
+    layoutStore.activeLayoutIndexStored = 0
+    applyLayout(0)
 }
 
 function leafCount() {
@@ -3337,7 +3946,6 @@ function beginResizeForSplitHandle(splitId, orientation, absX, absY) {
         if (edgeResizeMovingSplitId !== splitId)
             continue
 
-        captureEdgeResizeFavoriteSignature()
         edgeResizeHighlightLeafId = candidate.leafId
         edgeResizeHighlightEdge = candidate.edge
         return true
@@ -3356,7 +3964,6 @@ function beginResizeForSplitHandle(splitId, orientation, absX, absY) {
     edgeResizePointerStart = orientation === "vertical" ? absX : absY
     edgeResizeMovingCoordStart = splitCoord
     edgeResizeFixedCoord = 0
-    captureEdgeResizeFavoriteSignature()
     return true
 }
 function edgePlanForLeaf(leafId, edge) {
@@ -3692,7 +4299,6 @@ function beginEdgeResizeWithFallback(leafId, edge, absX, absY) {
     }
 
     if (started) {
-        captureEdgeResizeFavoriteSignature()
         if (edgeResizeHighlightLeafId === -1 || edgeResizeHighlightEdge === "") {
             edgeResizeHighlightLeafId = leafId
             edgeResizeHighlightEdge = edge
@@ -3758,7 +4364,6 @@ function clearEdgeResizeState() {
     edgeResizeAxis = ""
     edgeResizeHighlightLeafId = -1
     edgeResizeHighlightEdge = ""
-    edgeResizeFavoriteSignatureBefore = ""
     edgeResizeGhostActive = false
 }
 
@@ -3790,7 +4395,7 @@ function commitEdgeResize() {
     }
 
     rebuildLayoutCaches(true)
-    updateCurrentLayoutFavoriteState()
+    syncActiveLayout()
 }
 
 function cancelEdgeResizePreview() {
@@ -3936,51 +4541,38 @@ function loadPersistedUiState() {
     applyEchogramSyncToCore()
     applyAimFieldsToCore()
     loadSettingsGroupsState()
-    settingsScrollY = layoutStore.settingsScrollYStored
     loadFavoriteLayoutsState()
     loadLiveEchogramStates()
     loadFullscreenPopupState()
     loadGlobalPopupPreferences()
     loadBtEditPopupPreferences()
     loadSettingsProfiles()
+    loadRememberedLinks()
     loadProfilesPopupPreferences()
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
-    loadAutopilotPopupPreferences()
-    autopilotEnabled = layoutStore.autopilotEnabledStored
-    loadExtraInfoPopupPreferences()
+    bottomTrackEditorOpen = layoutStore.bottomTrackEditorOpenStored
     loadPopupDocks()
-    extraInfoVisible     = layoutStore.extraInfoVisibleStored
-    extraInfoDepth       = layoutStore.extraInfoDepthStored
-    extraInfoSpeed       = layoutStore.extraInfoSpeedStored
-    extraInfoCoordinates = layoutStore.extraInfoCoordinatesStored
-    extraInfoActivePoint = layoutStore.extraInfoActivePointStored
-    extraInfoNav         = layoutStore.extraInfoNavStored
-    extraInfoBoatStatus  = layoutStore.extraInfoBoatStatusStored
+    loadWidgets()
+    loadWidgetInstances()
+    loadWidgetShown()
+    _reconcileWidgetMaps()
     return restoreLayoutState()
 }
 
 function reapplyImportedUiState() {
-    loadPersistedUiState()
+    if (!loadPersistedUiState())
+        seedDefaultLayouts()
     sanitizeFullscreenPopupConfig()
-    updateCurrentLayoutFavoriteState()
     uiStateReapplied()
 }
 
 Component.onCompleted: {
-    if (!loadPersistedUiState()) {
-        var leftLeaf = makeLeaf(makePane(1, "3D"))
-        var rightLeaf = makeLeaf(makePane(2, "2D"))
-        layoutTree = makeSplit("vertical", leftLeaf, rightLeaf, 0.5)
-        activeLeafId = leftLeaf.leafId
-        clearModePickerSelection()
-        rebuildLayoutCaches()
-        addCurrentLayoutToFavorites()
-        saveLayoutState()
-    }
+    if (!loadPersistedUiState())
+        seedDefaultLayouts()
     sanitizeFullscreenPopupConfig()
-    updateCurrentLayoutFavoriteState()
     applyTgcToCore()
     applyLayerThemesToControllers()
+    applyBottomTrackRealtimeToCore()
 }
 
 }

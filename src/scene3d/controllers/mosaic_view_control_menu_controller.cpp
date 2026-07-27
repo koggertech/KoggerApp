@@ -151,7 +151,7 @@ QVariantList MosaicViewControlMenuController::themeStops(int index) const
     const int samples = 8;
     for (int s = 0; s < samples; ++s) {
         const double pos = (samples > 1) ? static_cast<double>(s) / (samples - 1) : 0.0;
-        const int rampIndex = qBound(0, static_cast<int>(pos * (rampSize - 1) + 0.5), rampSize - 1);
+        const int rampIndex = qBound(0, qRound(pos * (rampSize - 1)), rampSize - 1);
         QVariantMap stop;
         stop["pos"] = pos;
         stop["color"] = QColor(ramp[rampIndex]).name();

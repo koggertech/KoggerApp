@@ -32,6 +32,7 @@ private:
     QList<HotkeyData> parseHotkeysFromString(const QString& xmlString) const;
     QList<HotkeyData> parseHotkeysFromFile(const QString& filePath) const;
     bool saveHotkeysToFile(const QList<HotkeyData>& list, const QString& filePath) const;
+    int readHotkeysFileVersion(const QString& filePath) const;
 
     /*data*/
     static const char* s_defaultHotkeysXml;

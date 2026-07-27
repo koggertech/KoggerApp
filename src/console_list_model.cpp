@@ -45,14 +45,37 @@ void ConsoleListModel::doAppend(const QString& time, int category, const QString
     endInsertRows();
 }
 
+void ConsoleListModel::setMaxRows(int rows)
+{
+    rows = qBound(kMinRows, rows, kMaxRows);
+    if (rows == _maxRows) {
+        return;
+    }
+    _maxRows = rows;
+
+    const int removeCount = _size - _maxRows;
+    if (removeCount <= 0) {
+        return;
+    }
+
+    beginRemoveRows(QModelIndex(), 0, removeCount - 1);
+    _vectors[ConsoleListModel::Visibility].remove(0, removeCount);
+    _vectors[ConsoleListModel::Time].remove(0, removeCount);
+    _vectors[ConsoleListModel::Category].remove(0, removeCount);
+    _vectors[ConsoleListModel::Payload].remove(0, removeCount);
+    _size -= removeCount;
+    endRemoveRows();
+}
+
 void ConsoleListModel::trimHeadIfNeeded(int incomingCount)
 {
-    const int overflow = (_size + incomingCount) - kMaxRows;
+    const int overflow = (_size + incomingCount) - _maxRows;
     if (overflow <= 0) {
         return;
     }
 
-    const int removeCount = qMin(_size, qMax(overflow, kTrimBatch));
+    const int batch = qBound(1, _maxRows / 10, kTrimBatch);
+    const int removeCount = qMin(_size, qMax(overflow, batch));
     if (removeCount <= 0) {
         return;
     }

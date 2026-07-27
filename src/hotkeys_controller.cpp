@@ -29,6 +29,12 @@ bool HotkeysController::resetToDefaults()
     return true;
 }
 
+void HotkeysController::retranslate()
+{
+    refreshContextProperties();
+    emit hotkeysUpdated();
+}
+
 void HotkeysController::refreshContextProperties()
 {
     auto hotkeysMap     = manager_.loadHotkeysMapping();

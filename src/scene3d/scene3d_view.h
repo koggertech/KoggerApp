@@ -33,16 +33,14 @@
 
 class Dataset;
 class GraphicsScene3dRenderer;
+class RulerController;
 class QVariantAnimation;
 class QTimer;
 class GraphicsScene3dView : public QQuickFramebufferObject
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(GraphicsScene3dView)
-    Q_PROPERTY(bool rulerEnabled READ rulerEnabled WRITE setRulerEnabled NOTIFY rulerEnabledChanged)
-    Q_PROPERTY(bool rulerDrawing READ rulerDrawing NOTIFY rulerStateChanged)
-    Q_PROPERTY(bool rulerSelected READ rulerSelected NOTIFY rulerStateChanged)
-    Q_PROPERTY(bool rulerHasGeometry READ rulerHasGeometry NOTIFY rulerStateChanged)
+    Q_PROPERTY(QObject* ruler READ ruler CONSTANT)
     Q_PROPERTY(bool geoJsonEnabled READ geoJsonEnabled WRITE setGeoJsonEnabled NOTIFY geoJsonEnabledChanged)
     Q_PROPERTY(QObject* geoJsonController READ geoJsonController CONSTANT)
     Q_PROPERTY(bool cameraPerspective READ cameraPerspective NOTIFY cameraPerspectiveChanged)
@@ -120,6 +118,7 @@ public:
     private:
         friend class GraphicsScene3dView;
         friend class GraphicsScene3dRenderer;
+        friend class RulerController;
 
         Camera* cameraListener_ = nullptr;
 
@@ -249,10 +248,7 @@ public:
     void restoreMapViewState(const LLARef& viewRef, double lookAtN, double lookAtE, double distance, double yawRad, double pitchRad);
 
     bool geoJsonEnabled() const;
-    bool rulerEnabled() const;
-    bool rulerDrawing() const;
-    bool rulerSelected() const;
-    bool rulerHasGeometry() const;
+    QObject* ruler() const;
     QObject* geoJsonController() const;
     bool syncLoupeOverlayVisible() const;
     int syncLoupeEpochIndex() const;
@@ -279,9 +275,6 @@ public:
     Q_INVOKABLE void resetVerticalScale();
     Q_INVOKABLE void forceRefresh();
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
-    Q_INVOKABLE void rulerFinishDrawing();
-    Q_INVOKABLE void rulerCancelDrawing();
-    Q_INVOKABLE void rulerDeleteSelected();
     Q_INVOKABLE void geojsonFinishDrawing();
     Q_INVOKABLE void geojsonFinishDrawingDoubleClick();
     Q_INVOKABLE void geojsonCancelDrawing();
@@ -357,7 +350,6 @@ public Q_SLOTS:
     void calcVisEpochIndxs();
     void updateViews();
     void setRulerEnabled(bool enabled);
-    Q_INVOKABLE void clearRuler();
     void setGeoJsonEnabled(bool enabled);
     void onCameraMoved();
 
@@ -375,8 +367,6 @@ signals:
     void sendLlaRef(LLARef viewLlaRef);
     void sendDataZoom(int zoom);
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
-    void rulerEnabledChanged();
-    void rulerStateChanged();
     void geoJsonEnabledChanged();
     void sendCameraEpIndxs(const QVector<QPair<int, QSet<TileKey>>>& epIndxs);
     void sendVisibleTileKeys(int zoomIndx, const QSet<TileKey>& tileKeys);
@@ -393,14 +383,10 @@ private:
     void rebuildGeoJsonLayerIfNeeded();
     QVector3D geojsonToScene(const GeoJsonCoord& c) const;
     GeoJsonCoord sceneToGeojson(const QVector3D& p) const;
-    bool pickRuler(qreal x, qreal y) const;
     bool pickGeoJsonVertex(qreal x, qreal y, QString& outFeatureId, int& outVertexIndex, QVector3D& outWorld) const;
     bool pickGeoJsonSegmentMidpoint(qreal x, qreal y, QString& outFeatureId, int& outInsertIndex, QVector3D& outWorld) const;
     bool pickGeoJsonFeature(qreal x, qreal y, QString& outFeatureId) const;
     void stopGeoJsonDrag();
-    void setRulerDrawing(bool drawing);
-    void setRulerSelected(bool selected);
-    void resetRulerInteraction();
     void applyShadowSettingsToSceneRenderObjects();
     void updateForceSingleZoomAutoState();
     void refreshSyncLoupePreview();
@@ -416,6 +402,7 @@ private:
 private:
     friend class BottomTrack;
     friend class BoatTrack;
+    friend class RulerController;
 
     bool getViewQuadNed(std::array<QPointF, 4>* quad) const;
     std::tuple<float, float, float, float> getFieldViewDim() const;
@@ -485,7 +472,7 @@ private:
     QRectF compassRect_;
     bool compassPressed_ = false;
 
-    enum AnimCh { ChHeading, ChFollow, ChPose, ChVScale };
+    enum AnimCh : std::uint8_t { ChHeading, ChFollow, ChPose, ChVScale };
     Animator animator_;
     bool followSuspended_ = false;
     bool positionsLive_ = false;
@@ -500,12 +487,7 @@ private:
     float shadowHighlight_;
 
     bool planeGridType_;
-    bool rulerEnabled_{false};
-    bool rulerDrawing_{false};
-    bool rulerSelected_{false};
-    QElapsedTimer rulerLastLeftClickTimer_;
-    QPointF rulerLastLeftClickPos_{0.0, 0.0};
-    bool rulerHasLastLeftClick_{false};
+    RulerController* ruler_{nullptr};
 
     bool geoJsonEnabled_{false};
     bool geoJsonIgnoreNextLeftRelease_{false};

@@ -26,6 +26,7 @@ Item {
     readonly property real viewportW: visibleCount * buttonSize + (visibleCount - 1) * gap
     readonly property real contentW: themeCount * buttonSize + (themeCount - 1) * gap
     readonly property real _openW: _pad * 2 + buttonSize + gap + viewportW
+    readonly property real openWidth: _openW
     readonly property int _fadeW: Math.round(buttonSize / 2) + _pad
     readonly property color _bgClear: Qt.rgba(AppPalette.bg.r, AppPalette.bg.g, AppPalette.bg.b, 0)
 
@@ -80,9 +81,10 @@ Item {
             anchors.fill: parent
             radius: width / 2
             color: "transparent"
-            border.width: sw.selected ? Math.max(2, Math.round(2 * root._s)) : 1
-            border.color: sw.selected ? AppPalette.accentBar
-                                      : (sw.hovered ? AppPalette.borderHover : AppPalette.border)
+            // Ring only on the selected swatch (selection cue); others borderless.
+            border.width: sw.selected ? Math.max(2, Math.round(2 * root._s))
+                                      : (sw.hovered ? 1 : 0)
+            border.color: sw.selected ? AppPalette.accentBar : AppPalette.borderHover
         }
 
         MouseArea {
@@ -132,12 +134,12 @@ Item {
         height: root.buttonSize + root._pad * 2
         radius: height / 2
         color: AppPalette.bg
-        border.width: 1
-        border.color: AppPalette.border
+        border.width: 0
+        clip: true
         opacity: root.menuOpen ? 1 : 0
         visible: opacity > 0.01
 
-        Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
         Behavior on opacity { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
 
         HoverHandler { id: capsuleHover }

@@ -19,17 +19,30 @@ Item {
     property bool contentDimmed: false
     property int popupMargin: 16
     property bool dragEnabled: true
+    property bool dragAnywhere: false      // when true: drag by the whole panel body, no grip bar
+    property bool headerReserved: true     // when false: content fills the panel (no top header band)
     property bool resizeEnabled: true
     property int headerDragBarLength: 0
+    property real dragHandleOpacity: 1.0   // multiplies the drag-grip opacity (for see-through panels)
     property bool overlayChrome: false
     property bool suspendSignals: false
     property bool collapseButtonVisible: true
     property bool fullscreenMode: false
     property color panelColor: "#0B1220"
     property color panelBorderColor: "#93C5FD77"
+    property real panelRadius: 10                // corner radius of the panel Rectangle
+    property bool ghostFollowsContent: false     // drag/snap ghost mirrors the content rect (inset) instead of full panel
+    property bool ghostGripAndContent: false     // draw a SECOND ghost matching the header drag grip, alongside the content one
+    property real ghostRadius: panelRadius        // corner radius for drag/snap/resize ghosts
 
     readonly property real headerHeight: Math.round(32 * AppPalette.scale)
     readonly property real contentPadding: Tokens.spaceXs
+
+    readonly property real _contentTopMargin: (overlayChrome || !headerReserved) ? contentPadding : headerHeight
+    readonly property real _ghostLeft:   ghostFollowsContent ? contentPadding : 0
+    readonly property real _ghostTop:    ghostFollowsContent ? _contentTopMargin : 0
+    readonly property real _ghostRight:  ghostFollowsContent ? contentPadding : 0
+    readonly property real _ghostBottom: ghostFollowsContent ? contentPadding : 0
 
     property bool  _snapActive: false
     property real  _snapPreviewX: 0
@@ -63,7 +76,9 @@ Item {
     readonly property bool chromeShown: !overlayChrome
                                         || _chromeRevealed
                                         || headerDrag.active
+                                        || bodyDrag.active
                                         || resizeDrag.active
+    readonly property bool revealActive: _chromeRevealed || headerDrag.active || bodyDrag.active || resizeDrag.active
 
     Timer {
         id: chromeHideTimer
@@ -87,6 +102,7 @@ Item {
     signal closeRequested()
     signal popupDoubleClicked()
     signal dockCommitted(string targetId, string side, real gap, real crossOffset)
+    signal interactionStarted()
 
     default property alias popupContent: contentHost.data
 
@@ -239,6 +255,68 @@ Item {
         commitPosition()
     }
 
+    property real _dragStartX: 0
+    property real _dragStartY: 0
+
+    function _beginDrag() {
+        _dragStartX = panelX
+        _dragStartY = panelY
+        interactionStarted()
+    }
+
+    function _updateDrag(tx, ty) {
+        var rawX = clampX(_dragStartX + tx)
+        var rawY = clampY(_dragStartY + ty)
+        var sibSnap = computeSiblingSnap(rawX, rawY)
+        if (sibSnap !== null) {
+            _siblingSnapActive = true
+            _siblingSnapX = sibSnap.x
+            _siblingSnapY = sibSnap.y
+            _siblingSnapSide = sibSnap.side
+            _siblingSnapTargetIdx = sibSnap.targetIndex
+            _snapActive = false
+        } else {
+            _siblingSnapActive = false
+            _siblingSnapTargetIdx = -1
+            var snapped = snapToGrid(rawX, rawY)
+            var isSnapping = Math.abs(snapped.x - rawX) > 0.1 || Math.abs(snapped.y - rawY) > 0.1
+            _snapActive   = isSnapping
+            _snapPreviewX = snapped.x
+            _snapPreviewY = snapped.y
+        }
+        panelX = Math.round(rawX)
+        panelY = Math.round(rawY)
+    }
+
+    function _endDrag() {
+        if (_siblingSnapActive) {
+            panelX = Math.round(_siblingSnapX)
+            panelY = Math.round(_siblingSnapY)
+        } else if (_snapActive) {
+            panelX = Math.round(_snapPreviewX)
+            panelY = Math.round(_snapPreviewY)
+        }
+        var wasDock = _siblingSnapActive
+        var dIdx = _siblingSnapTargetIdx
+        var dSide = _siblingSnapSide
+        _siblingSnapActive = false
+        _snapActive = false
+        var ids = siblingIdList, bnds = siblingBoundsList
+        var tb = (wasDock && dIdx >= 0 && ids && bnds
+                  && dIdx < ids.length && dIdx < bnds.length) ? bnds[dIdx] : null
+        if (tb && tb.width > 0 && tb.height > 0) {
+            var cross = (dSide === "left" || dSide === "right")
+                        ? (panelY - tb.y) : (panelX - tb.x)
+            dockCommitted(ids[dIdx], dSide, siblingSnapGap, cross)
+        } else {
+            dockCommitted("", "", 0, 0)
+        }
+        _siblingSnapTargetIdx = -1
+        _siblingSnapSide = ""
+        commitPosition()
+        Qt.callLater(resolveOverlapWithSibling)
+    }
+
     function commitPosition() {
         if (suspendSignals) return
         positionCommitted(panelX, panelY, expandedWidth, expandedHeight)
@@ -289,7 +367,7 @@ Item {
         collapsedToggled(collapsed)
     }
 
-    readonly property var resizeSnapSizes: [
+    property var resizeSnapSizes: [
         Qt.size(320, 240),
         Qt.size(480, 360),
         Qt.size(640, 480),
@@ -363,11 +441,11 @@ Item {
     Rectangle {
         id: resizeGhost
         visible: root.popupVisible && resizeDrag.active
-        x: root.panelX
-        y: root.panelY
-        width: root._resizePreviewW
-        height: root._resizePreviewH
-        radius: 10
+        x: root.panelX + root._ghostLeft
+        y: root.panelY + root._ghostTop
+        width: root._resizePreviewW - root._ghostLeft - root._ghostRight
+        height: root._resizePreviewH - root._ghostTop - root._ghostBottom
+        radius: root.ghostRadius
         color: "transparent"
         border.color: "#93C5FD"
         border.width: 3
@@ -378,13 +456,29 @@ Item {
     Rectangle {
         id: snapGhost
         visible: root.popupVisible && (root._snapActive || root._siblingSnapActive)
-        x: root._siblingSnapActive ? root._siblingSnapX : root._snapPreviewX
-        y: root._siblingSnapActive ? root._siblingSnapY : root._snapPreviewY
-        width: root.expandedWidth
-        height: root.expandedHeight
-        radius: 10
+        x: (root._siblingSnapActive ? root._siblingSnapX : root._snapPreviewX) + root._ghostLeft
+        y: (root._siblingSnapActive ? root._siblingSnapY : root._snapPreviewY) + root._ghostTop
+        width: root.expandedWidth - root._ghostLeft - root._ghostRight
+        height: root.expandedHeight - root._ghostTop - root._ghostBottom
+        radius: root.ghostRadius
         color: "transparent"
         border.color: root._siblingSnapActive ? "#86EFAC" : "#93C5FD"
+        border.width: 2
+        opacity: 0.55
+        z: 0
+    }
+
+    // Second ghost mirroring the header drag grip (for pill popups with a separate grip capsule).
+    Rectangle {
+        id: gripGhost
+        visible: snapGhost.visible && root.ghostGripAndContent
+        width: grip.width
+        height: grip.height
+        x: (root._siblingSnapActive ? root._siblingSnapX : root._snapPreviewX) + (root.expandedWidth - width) / 2
+        y: (root._siblingSnapActive ? root._siblingSnapY : root._snapPreviewY) + (root.headerHeight - height) / 2
+        radius: Math.min(width, height) / 2
+        color: "transparent"
+        border.color: snapGhost.border.color
         border.width: 2
         opacity: 0.55
         z: 0
@@ -398,10 +492,9 @@ Item {
         y: root.panelY
         width: root.popupWidth
         height: root.popupHeight
-        radius: 10
+        radius: root.panelRadius
         color: root.collapsed ? "transparent" : root.panelColor
-        border.width: root.collapsed || root.fullscreenMode ? 0 : 1
-        border.color: root.panelBorderColor
+        border.width: 0
         z: 1
         layer.enabled: true
         layer.smooth: true
@@ -458,7 +551,7 @@ Item {
             anchors.fill: parent
             acceptedButtons: Qt.AllButtons
             hoverEnabled: false
-            preventStealing: true
+            preventStealing: !root.dragAnywhere
             propagateComposedEvents: false
             z: 0
             onPressed:       function(mouse) { mouse.accepted = true }
@@ -470,7 +563,19 @@ Item {
 
         TapHandler {
             acceptedDevices: PointerDevice.TouchScreen
+            onTapped: { root._chromeRevealed = true; chromeHideTimer.restart() }
             onDoubleTapped: root.popupDoubleClicked()
+        }
+
+        DragHandler {
+            id: bodyDrag
+            target: null
+            enabled: root.dragAnywhere && root.dragEnabled && !root.fullscreenMode && !root.collapsed
+                     && !(root.resizeEnabled && (resizeHover.hovered || resizeDrag.active))
+            xAxis.enabled: true
+            yAxis.enabled: true
+            onActiveChanged: active ? root._beginDrag() : root._endDrag()
+            onTranslationChanged: if (active) root._updateDrag(translation.x, translation.y)
         }
 
         Item {
@@ -493,8 +598,8 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: grip.width
                 height: parent.height
-                opacity: (root.chromeShown && !root.collapsed) ? 1.0 : 0.0
-                visible: opacity > 0.01
+                opacity: ((root.chromeShown && !root.collapsed && !root.dragAnywhere) ? 1.0 : 0.0) * root.dragHandleOpacity
+                visible: !root.dragAnywhere && opacity > 0.01
                 Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
 
                 KDragBar {
@@ -523,71 +628,11 @@ Item {
                 DragHandler {
                     id: headerDrag
                     target: null
-                    enabled: root.dragEnabled && !root.fullscreenMode
+                    enabled: root.dragEnabled && !root.fullscreenMode && !root.dragAnywhere
                     xAxis.enabled: true
                     yAxis.enabled: true
-
-                    property real startX: 0
-                    property real startY: 0
-
-                    onActiveChanged: {
-                    if (active) {
-                        startX = root.panelX
-                        startY = root.panelY
-                    } else {
-                        if (root._siblingSnapActive) {
-                            root.panelX = Math.round(root._siblingSnapX)
-                            root.panelY = Math.round(root._siblingSnapY)
-                        } else if (root._snapActive) {
-                            root.panelX = Math.round(root._snapPreviewX)
-                            root.panelY = Math.round(root._snapPreviewY)
-                        }
-                        var wasDock = root._siblingSnapActive
-                        var dIdx = root._siblingSnapTargetIdx
-                        var dSide = root._siblingSnapSide
-                        root._siblingSnapActive = false
-                        root._snapActive = false
-                        var ids = root.siblingIdList, bnds = root.siblingBoundsList
-                        var tb = (wasDock && dIdx >= 0 && ids && bnds
-                                  && dIdx < ids.length && dIdx < bnds.length) ? bnds[dIdx] : null
-                        if (tb && tb.width > 0 && tb.height > 0) {
-                            var cross = (dSide === "left" || dSide === "right")
-                                        ? (root.panelY - tb.y) : (root.panelX - tb.x)
-                            root.dockCommitted(ids[dIdx], dSide, root.siblingSnapGap, cross)
-                        } else {
-                            root.dockCommitted("", "", 0, 0)
-                        }
-                        root._siblingSnapTargetIdx = -1
-                        root._siblingSnapSide = ""
-                        root.commitPosition()
-                        Qt.callLater(root.resolveOverlapWithSibling)
-                    }
-                }
-
-                onTranslationChanged: {
-                    if (!active) return
-                    var rawX = root.clampX(startX + translation.x)
-                    var rawY = root.clampY(startY + translation.y)
-                    var sibSnap = root.computeSiblingSnap(rawX, rawY)
-                    if (sibSnap !== null) {
-                        root._siblingSnapActive = true
-                        root._siblingSnapX = sibSnap.x
-                        root._siblingSnapY = sibSnap.y
-                        root._siblingSnapSide = sibSnap.side
-                        root._siblingSnapTargetIdx = sibSnap.targetIndex
-                        root._snapActive = false
-                    } else {
-                        root._siblingSnapActive = false
-                        root._siblingSnapTargetIdx = -1
-                        var snapped = root.snapToGrid(rawX, rawY)
-                        var isSnapping = Math.abs(snapped.x - rawX) > 0.1 || Math.abs(snapped.y - rawY) > 0.1
-                        root._snapActive   = isSnapping
-                        root._snapPreviewX = snapped.x
-                        root._snapPreviewY = snapped.y
-                    }
-                    root.panelX = Math.round(rawX)
-                    root.panelY = Math.round(rawY)
-                }
+                    onActiveChanged: active ? root._beginDrag() : root._endDrag()
+                    onTranslationChanged: if (active) root._updateDrag(translation.x, translation.y)
                 }
             }
 
@@ -622,7 +667,7 @@ Item {
             anchors.fill: parent
             anchors.leftMargin: root.fullscreenMode ? 0 : root.contentPadding
             anchors.rightMargin: root.fullscreenMode ? 0 : root.contentPadding
-            anchors.topMargin: root.fullscreenMode ? 0 : (root.overlayChrome ? root.contentPadding : root.headerHeight)
+            anchors.topMargin: root.fullscreenMode ? 0 : root._contentTopMargin
             anchors.bottomMargin: root.fullscreenMode ? 0 : root.contentPadding
             visible: !root.collapsed
             z: 2

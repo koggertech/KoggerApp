@@ -36,6 +36,9 @@ public:
 public slots:
     Q_INVOKABLE bool isCreatedId(int id);
     Q_INVOKABLE StreamListModel* streamsList();
+    Q_INVOKABLE void startStreamDownload(int id);
+    Q_INVOKABLE void cancelStreamDownload(int id);
+    Q_INVOKABLE void refreshStreamList();
 
     void initStreamList();
     void frameInput(QUuid uuid, Link* link, Parsers::FrameParser frame);
@@ -50,6 +53,7 @@ public slots:
     void onLinkDeleted(QUuid uuid, Link* link);
     void binFrameOut(Parsers::ProtoBinOut protoOut);
     void setProtoBinConsoled(bool isConsoled);
+    void setNmeaConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
 
     void beaconActivationReceive(uint8_t id);
@@ -180,6 +184,7 @@ private:
     int lastAddress_;
     int progress_;
     bool isConsoled_;
+    bool nmeaConsoled_;
     volatile bool break_;
 #ifdef SEPARATE_READING
     bool onOpen_{ false };
@@ -191,6 +196,7 @@ private:
     uint8_t upgradeAddr_;
     QByteArray upgradeData_;
     bool loggingStarted_ = false;
+    bool autoDownloadStarted_ = false;
     LocationReader* locReader_{ nullptr };
     bool useGPS_{ false };
 

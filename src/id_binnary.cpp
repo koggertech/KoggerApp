@@ -1,5 +1,6 @@
 #include "id_binnary.h"
 #include "math.h"
+#include <utility>
 
 #include <core.h>
 extern Core core;
@@ -478,6 +479,24 @@ Resp IDBinBoatStatus::parsePayload(FrameParser& proto)
     return respOk;
 }
 
+static_assert(sizeof(IDBinRecorderStatus::RecorderStatus) == 21,
+              "RecorderStatusV0 wire layout must stay 21 bytes");
+
+Resp IDBinRecorderStatus::parsePayload(FrameParser& proto)
+{
+    if (proto.ver() != RecorderStatus::getVer()) {
+        return respErrorVersion;
+    }
+
+    if (proto.readAvailable() < static_cast<int16_t>(sizeof(RecorderStatus))) {
+        return respErrorPayload;
+    }
+
+    data_ = proto.read<RecorderStatus>();
+    valid_ = true;
+    return respOk;
+}
+
 Resp IDBinDVL::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
          vel_x = proto.read<F4>();
@@ -745,7 +764,7 @@ void IDBinDevSync::flushPending() {
     ProtoBinOut id_out;
     id_out.create(SETTING, v0, id(), m_address);
     id_out.write<U2>(m_periodMs);
-    for (char b : m_portSource)
+    for (char b : std::as_const(m_portSource))
         id_out.write<U1>(static_cast<U1>(b));
     id_out.end();
 

@@ -80,6 +80,7 @@ signals:
     void linkClosed(QUuid uuid, Link* link);
     void linkOpened(QUuid uuid, Link* link);
     void linkDeleted(QUuid uuid, Link* link);
+    void linkRemoved(QUuid uuid); // runtime removal only (deleteLink); NOT shutdown
     void sendDoRequestAll(QUuid uuid);
 
 private:

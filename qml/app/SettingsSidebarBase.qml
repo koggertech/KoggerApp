@@ -19,13 +19,16 @@ Item {
     property real panelShadowOpacity: 0.72
     property int panelShadowSize: 30
     property real panelSizePx: 300
-    property int scrollBarReservePx: Math.round(20 * AppPalette.scale)
+    property int scrollBarReservePx: Tokens.spaceXl
     readonly property int _scrollThumbW: Math.round(12 * AppPalette.scale)
+    property int scrollAutoHideMs: 1500
+    readonly property int _hoverPopPad: Math.round(8 * AppPalette.scale)
     readonly property string resolvedSide: side === "right" ? "right" : "left"
     property real progress: open ? 1.0 : 0.0
     readonly property real panelWidth: panelSizePx
 
     signal closeRequested()
+    signal interacted()          // any press inside the panel (for last-active routing)
 
     property bool showBack: false
     signal backRequested()
@@ -36,13 +39,12 @@ Item {
     default property alias contentData: contentColumn.data
 
     property var store: null
-    property bool _restoringScroll: false
 
-    function _toggleAllGroups() {
+    function _collapseAllGroups() {
         if (subPageOpen)
             return
-        if (store && typeof store.toggleAllSettingsGroups === "function")
-            store.toggleAllSettingsGroups()
+        if (store && typeof store.collapseAllSettingsGroups === "function")
+            store.collapseAllSettingsGroups()
         scrollToTopTimer.restart()
     }
 
@@ -67,42 +69,35 @@ Item {
         easing.type: Easing.OutCubic
     }
 
+    // ── Keyboard scrolling (kind: "up"/"down"/"top"/"bottom"; driven by host) ──
+    function kbdScroll(kind) {
+        var f = subPageOpen ? subFlick : contentFlick
+        if (!f)
+            return
+        if ((kind === "up" || kind === "down") && f.contentHeight <= f.height)
+            return
+        var maxY = Math.max(0, f.contentHeight - f.height)
+        var y = kind === "top"    ? 0
+              : kind === "bottom" ? maxY
+              : kind === "down"   ? Math.min(maxY, f.contentY + f.height * 0.9)
+              :                     Math.max(0, f.contentY - f.height * 0.9)
+        kbdScrollAnim.stop()
+        kbdScrollAnim.target = f
+        kbdScrollAnim.from = f.contentY
+        kbdScrollAnim.to = y
+        kbdScrollAnim.start()
+    }
+
+    NumberAnimation {
+        id: kbdScrollAnim
+        property: "contentY"
+        duration: 180
+        easing.type: Easing.OutCubic
+    }
+
     onOpenChanged: {
-        if (open) {
-            restoreScrollTimer.restart()
-        } else if (store && !subPageOpen) {
-            scrollSaveTimer.stop()
-            store.settingsScrollY = contentFlick.contentY
-        }
-    }
-
-    Timer {
-        id: restoreScrollTimer
-        interval: 60
-        repeat: false
-        onTriggered: {
-            if (!store) return
-            panelRoot._restoringScroll = true
-            var maxY = Math.max(0, contentFlick.contentHeight - contentFlick.height)
-            contentFlick.contentY = Math.max(0, Math.min(store.settingsScrollY, maxY))
-            panelRoot._restoringScroll = false
-        }
-    }
-
-    Timer {
-        id: scrollSaveTimer
-        interval: 300
-        repeat: false
-        onTriggered: if (store && !panelRoot.subPageOpen) store.settingsScrollY = contentFlick.contentY
-    }
-
-    Connections {
-        target: contentFlick
-        function onContentYChanged() {
-            if (panelRoot._restoringScroll || !panelRoot.open || panelRoot.subPageOpen || !store)
-                return
-            scrollSaveTimer.restart()
-        }
+        if (open)
+            contentFlick.contentY = 0
     }
 
     visible: progress > 0.01
@@ -133,8 +128,6 @@ Item {
         width: panelRoot.panelWidth
         height: panelRoot.height
         color: panelRoot.panelColor
-        border.width: 1
-        border.color: AppPalette.border
         z: 2
 
         MouseArea {
@@ -163,6 +156,14 @@ Item {
             enabled: panelRoot.progress > 0.01
         }
 
+        // Observes any press inside the panel (passive — doesn't steal from
+        // controls) to mark this panel as the last-active scroll surface.
+        TapHandler {
+            acceptedButtons: Qt.AllButtons
+            gesturePolicy: TapHandler.DragThreshold
+            onPressedChanged: if (pressed) panelRoot.interacted()
+        }
+
         Rectangle {
             id: topSection
 
@@ -170,7 +171,7 @@ Item {
             anchors.right: parent.right
             anchors.top: parent.top
             color: panelRoot.headerColor
-            height: topSectionContent.y + topSectionContent.implicitHeight + Tokens.spaceXl
+            height: topSectionContent.y + topSectionContent.implicitHeight + Tokens.spaceLg
             z: 1
 
             Column {
@@ -180,19 +181,21 @@ Item {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.leftMargin: Tokens.spaceXl
-                anchors.rightMargin: Tokens.spaceXl
-                anchors.topMargin: Tokens.spaceXl
+                anchors.rightMargin: Tokens.spaceLg
+                anchors.topMargin: Tokens.spaceLg
                 spacing: Tokens.spaceLg
 
                 RowLayout {
                     width: parent.width
-                    height: Tokens.controlHXl - Tokens.spaceXs
+                    height: Tokens.controlHLg
                     spacing: Tokens.spaceMd
 
                     KButton {
                         id: backButton
                         visible: panelRoot.showBack
                         text: ""
+                        normalBg: AppPalette.controlRaised
+                        hoverBg:  Qt.lighter(AppPalette.controlRaised, 1.2)
                         Layout.preferredWidth:  visible ? Tokens.controlHLg : 0
                         Layout.maximumWidth:    visible ? Tokens.controlHLg : 0
                         Layout.preferredHeight: Tokens.controlHLg
@@ -222,9 +225,9 @@ Item {
                         Layout.alignment: Qt.AlignVCenter
                         elide: Text.ElideRight
 
-                        // Double-tap toggles all SettingsGroup descendants.
+                        // Double-tap collapses all SettingsGroup descendants.
                         KTapArea {
-                            onDoubleTapped: panelRoot._toggleAllGroups()
+                            onDoubleTapped: panelRoot._collapseAllGroups()
                         }
                     }
 
@@ -233,6 +236,8 @@ Item {
                         width: Tokens.controlHLg
                         height: Tokens.controlHLg
                         fontPixelSize: Tokens.fontXxl
+                        normalBg: AppPalette.controlRaised
+                        hoverBg:  Qt.lighter(AppPalette.controlRaised, 1.2)
                         Layout.preferredWidth: width
                         Layout.preferredHeight: height
                         Layout.minimumWidth: width
@@ -253,7 +258,7 @@ Item {
             anchors.right: parent.right
             anchors.top: topSection.bottom
             anchors.bottom: parent.bottom
-            anchors.leftMargin: Tokens.spaceXl
+            anchors.leftMargin: Tokens.spaceXl - panelRoot._hoverPopPad
             // No right margin: the scrollbar lives in scrollBarReservePx on
             // the right side of the Flickable — pushing the Flickable further
             // left makes the scrollbar look off-centre (large gap to panel
@@ -284,7 +289,8 @@ Item {
             Column {
                 id: contentColumn
 
-                width: Math.max(0, contentFlick.width - panelRoot.scrollBarReservePx)
+                x: panelRoot._hoverPopPad
+                width: Math.max(0, contentFlick.width - panelRoot.scrollBarReservePx - panelRoot._hoverPopPad)
                 spacing: Tokens.spaceLg
             }
         }
@@ -319,6 +325,15 @@ Item {
             stepSize: 0.04
             active: contentFlick.movingVertically || pressed || hovered
 
+            property bool _shown: false
+            Timer { id: vScrollHideTimer; interval: panelRoot.scrollAutoHideMs; onTriggered: vScroll._shown = false }
+            onActiveChanged: { if (active) { vScrollHideTimer.stop(); vScroll._shown = true } else vScrollHideTimer.restart() }
+            onVisibleChanged: if (visible) { vScroll._shown = true; vScrollHideTimer.restart() }
+            Connections {
+                target: contentFlick
+                function onContentYChanged() { vScroll._shown = true; if (!vScroll.active) vScrollHideTimer.restart() }
+            }
+
             onPositionChanged: {
                 if (vScroll.pressed) {
                     contentFlick.contentY = vScroll.position * contentFlick.contentHeight
@@ -331,9 +346,10 @@ Item {
                 color: vScroll.pressed
                        ? AppPalette.text
                        : (vScroll.hovered ? AppPalette.textSecond : AppPalette.textMuted)
-                opacity: vScroll.pressed ? 0.85 : (vScroll.hovered ? 0.65 : 0.45)
+                opacity: !vScroll._shown ? 0.0
+                         : (vScroll.pressed ? 0.85 : (vScroll.hovered ? 0.65 : 0.45))
                 Behavior on color   { ColorAnimation { duration: 120 } }
-                Behavior on opacity { NumberAnimation { duration: 120 } }
+                Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
             }
             background: Item {}
         }
@@ -348,6 +364,23 @@ Item {
                                                   panelRoot.panelColor.b, 0)
         readonly property int _fadeHeight: Math.round(24 * AppPalette.scale)
 
+        readonly property bool _stickyHeaderAtTop: {
+            var _dep = contentFlick.contentY
+            if (!panelRoot.store || !panelRoot.store._settingsGroupInstances)
+                return false
+            var arr = panelRoot.store._settingsGroupInstances
+            for (var i = 0; i < arr.length; ++i) {
+                var g = arr[i]
+                if (!g || !g._bodyShown)
+                    continue
+                if (g._pinningToTop)
+                    return true
+                if (g._headerFade > 0.01 && g._headerTopInFlick <= panel._fadeHeight + 0.5)
+                    return true
+            }
+            return false
+        }
+
         Rectangle {
             id: topFade
             x: contentFlick.x
@@ -355,9 +388,12 @@ Item {
             width: contentFlick.width - panelRoot.scrollBarReservePx
             height: panel._fadeHeight
             z: 3
-            opacity: contentFlick.atYBeginning ? 0.0 : 1.0
+            opacity: (contentFlick.atYBeginning || panel._stickyHeaderAtTop) ? 0.0 : 1.0
             visible: opacity > 0.01
-            Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+            Behavior on opacity {
+                enabled: !panel._stickyHeaderAtTop
+                NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+            }
 
             gradient: Gradient {
                 GradientStop { position: 0.0; color: panel._fadeStart }
@@ -411,7 +447,7 @@ Item {
             Flickable {
                 id: subFlick
                 anchors.fill: parent
-                anchors.leftMargin: Tokens.spaceXl
+                anchors.leftMargin: Tokens.spaceXl - panelRoot._hoverPopPad
                 anchors.rightMargin: 0
                 anchors.topMargin: Tokens.spaceLg
                 anchors.bottomMargin: Tokens.spaceXl
@@ -425,7 +461,8 @@ Item {
 
                 Loader {
                     id: subLoader
-                    width: subFlick.contentWidth
+                    x: panelRoot._hoverPopPad
+                    width: Math.max(0, subFlick.contentWidth - panelRoot._hoverPopPad)
                     active: panelRoot.subPage !== null
                     sourceComponent: panelRoot.subPage
                 }
@@ -453,6 +490,15 @@ Item {
                 stepSize: 0.04
                 active: subFlick.movingVertically || pressed || hovered
 
+                property bool _shown: false
+                Timer { id: subVScrollHideTimer; interval: panelRoot.scrollAutoHideMs; onTriggered: subVScroll._shown = false }
+                onActiveChanged: { if (active) { subVScrollHideTimer.stop(); subVScroll._shown = true } else subVScrollHideTimer.restart() }
+                onVisibleChanged: if (visible) { subVScroll._shown = true; subVScrollHideTimer.restart() }
+                Connections {
+                    target: subFlick
+                    function onContentYChanged() { subVScroll._shown = true; if (!subVScroll.active) subVScrollHideTimer.restart() }
+                }
+
                 onPositionChanged: {
                     if (subVScroll.pressed)
                         subFlick.contentY = subVScroll.position * subFlick.contentHeight
@@ -464,9 +510,10 @@ Item {
                     color: subVScroll.pressed
                            ? AppPalette.text
                            : (subVScroll.hovered ? AppPalette.textSecond : AppPalette.textMuted)
-                    opacity: subVScroll.pressed ? 0.85 : (subVScroll.hovered ? 0.65 : 0.45)
+                    opacity: !subVScroll._shown ? 0.0
+                             : (subVScroll.pressed ? 0.85 : (subVScroll.hovered ? 0.65 : 0.45))
                     Behavior on color   { ColorAnimation { duration: 120 } }
-                    Behavior on opacity { NumberAnimation { duration: 120 } }
+                    Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
                 }
                 background: Item {}
             }

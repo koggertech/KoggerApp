@@ -14,6 +14,7 @@ DeviceManager::DeviceManager()
       lastAddress_(-1),
       progress_(0),
       isConsoled_(false),
+      nmeaConsoled_(true),
       break_(false),
       upgradeUuid_(QUuid()),
       upgradeAddr_(0)
@@ -128,14 +129,19 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
     if (frame.isComplete()) {
 
-// #if !defined(Q_OS_ANDROID)
-//         if (frame.isStream())
-//             streamList_.append(&frame);
-//         if (frame.id() == ID_STREAM)
-//             streamList_.parse(&frame);
-//         if (streamList_.isListChenged())
-//             emit streamChanged();
-// #endif
+        if (frame.isStream())
+            streamList_.append(&frame);
+        if (frame.id() == ID_STREAM)
+            streamList_.parse(&frame);
+        if (streamList_.isListChenged()) {
+            emit streamChanged();
+            // qInfo("stream-list: %d logs", streamList_.streamsList()->size());
+            static const QString kAutoDl = qEnvironmentVariable("KOGGER_AUTODOWNLOAD");
+            if (!kAutoDl.isEmpty() && !autoDownloadStarted_) {
+                autoDownloadStarted_ = true;
+                startStreamDownload(kAutoDl.toInt());
+            }
+        }
 
         if (link != nullptr) {
             if (frame.isProxy() || frame.completeAsKBP()) {
@@ -189,7 +195,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
             ProtoNMEA& prot_nmea = (ProtoNMEA&)frame;
             QString str_data = QByteArray((char*)prot_nmea.frame(), prot_nmea.frameLen() - 2);
 #ifndef SEPARATE_READING
-            core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
+            if (nmeaConsoled_) {
+                core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
+            }
 #endif
             if (prot_nmea.isEqualId("DBT")) {
                 prot_nmea.skip();
@@ -622,6 +630,11 @@ void DeviceManager::setProtoBinConsoled(bool isConsoled)
     isConsoled_ = isConsoled;
 }
 
+void DeviceManager::setNmeaConsoled(bool isConsoled)
+{
+    nmeaConsoled_ = isConsoled;
+}
+
 void DeviceManager::upgradeLastDev(QByteArray data)
 {
     if (lastDevs_ != nullptr) {
@@ -689,6 +702,36 @@ void DeviceManager::onSendRequestAll(QUuid uuid)
 StreamListModel* DeviceManager::streamsList()
 {
     return streamList_.streamsList();
+}
+
+void DeviceManager::startStreamDownload(int id)
+{
+    QList<DevQProperty*> recs = getDevList(BoardRecorderMini);
+    if (recs.isEmpty()) {
+        qInfo("startStreamDownload: no recorder device connected");
+        return;
+    }
+    DevQProperty* rec = recs.first();
+    qRegisterMetaType<QVector<quint32>>("QVector<quint32>");
+    connect(&streamList_, &StreamList::requestRanges, rec, &DevDriver::requestStreamRanges, Qt::UniqueConnection);
+    streamList_.startDownload(id);
+}
+
+void DeviceManager::cancelStreamDownload(int id)
+{
+    streamList_.cancelDownload(id);
+}
+
+void DeviceManager::refreshStreamList()
+{
+    QList<DevQProperty*> recs = getDevList(BoardRecorderMini);
+    if (!recs.isEmpty()) {
+        if (!streamList_.hasActiveDownload()) {
+            streamList_.reset();
+            emit streamChanged();
+        }
+        recs.first()->requestStreamList();
+    }
 }
 
 void DeviceManager::readyReadProxy(Link* link)
@@ -835,7 +878,11 @@ void DeviceManager::deleteDevicesByLink(QUuid uuid)
 {
     if (devTree_.contains(uuid)) {
         const auto& devs = devTree_[uuid];
+        bool hadRecorder = false;
         for (auto i = devs.cbegin(), end = devs.cend(); i != end; ++i) {
+            if (i.value() && i.value()->isRecorder()) {
+                hadRecorder = true;
+            }
             if (lastDevice_ == i.value()) {
                 lastDevice_ = nullptr;
             }
@@ -849,6 +896,10 @@ void DeviceManager::deleteDevicesByLink(QUuid uuid)
         }
         devTree_[uuid].clear();
         devTree_.remove(uuid);
+        if (hadRecorder) {
+            streamList_.reset();
+            emit streamChanged();
+        }
         emit devChanged();
     }
 }

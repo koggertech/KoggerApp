@@ -13,12 +13,14 @@ Item {
     readonly property real maxCardWidth: Math.min(480 * AppPalette.scale, width - 2 * Tokens.spaceXl)
     property int nextNotificationId: 0
 
+    property bool hideImportant: false
+
     signal tagDismissRequested(string tag)
 
-    function push(kind, text, tag) {
+    function push(kind, text, tag, actionPath) {
         if (notificationsModel.count >= maxVisible)
             evictOldestInfo()
-        notificationsModel.append({ notificationId: nextNotificationId++, kind: kind, text: text, tag: tag || "" })
+        notificationsModel.append({ notificationId: nextNotificationId++, kind: kind, text: text, tag: tag || "", actionPath: actionPath || "" })
     }
 
     function evictOldestInfo() {
@@ -42,7 +44,7 @@ Item {
     Connections {
         target: typeof notifications !== "undefined" ? notifications : null
         ignoreUnknownSignals: true
-        function onMessageRequested(kind, text, tag) { root.push(kind, text, tag) }
+        function onMessageRequested(kind, text, tag, actionPath) { root.push(kind, text, tag, actionPath) }
         function onDismissRequested(tag) { root.tagDismissRequested(tag) }
     }
 
@@ -56,10 +58,6 @@ Item {
 
         move: Transition {
             NumberAnimation { properties: "y"; duration: 180; easing.type: Easing.OutCubic }
-        }
-        add: Transition {
-            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 180; easing.type: Easing.OutCubic }
-            NumberAnimation { property: "y"; duration: 180; easing.type: Easing.OutCubic }
         }
 
         Repeater {
@@ -75,7 +73,18 @@ Item {
             id: card
 
             readonly property bool isWarning: model.kind === 1
+            readonly property bool hasAction: model.actionPath !== undefined && model.actionPath.length > 0
+            readonly property bool autoDismiss: !isWarning || root.hideImportant
+            readonly property bool showClose: isWarning && !root.hideImportant
             property bool closing: false
+
+            opacity: 0
+            Component.onCompleted: enterAnim.start()
+            NumberAnimation {
+                id: enterAnim
+                target: card; property: "opacity"; from: 0.0; to: 1.0
+                duration: 200; easing.type: Easing.OutCubic
+            }
 
             anchors.horizontalCenter: parent.horizontalCenter
             width: Math.min(root.maxCardWidth,
@@ -92,13 +101,14 @@ Item {
                     return
                 closing = true
                 lifeTimer.stop()
+                enterAnim.stop()
                 exitAnim.start()
             }
 
             Timer {
                 id: lifeTimer
                 interval: root.infoLifetimeMs
-                running: !card.isWarning
+                running: card.autoDismiss
                 onTriggered: card.dismiss()
             }
 
@@ -126,9 +136,11 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 acceptedButtons: Qt.AllButtons
-                cursorShape: card.isWarning ? Qt.ArrowCursor : Qt.PointingHandCursor
+                cursorShape: card.autoDismiss ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: function(m) {
-                    if (!card.isWarning)
+                    if (card.hasAction && typeof core !== "undefined")
+                        core.revealInFolder(model.actionPath)
+                    if (card.autoDismiss)
                         card.dismiss()
                     m.accepted = true
                 }
@@ -160,7 +172,7 @@ Item {
                 anchors.left: iconBadge.right
                 anchors.leftMargin: Tokens.spaceMd
                 anchors.right: closeButton.left
-                anchors.rightMargin: card.isWarning ? Tokens.spaceMd : Tokens.spaceLg
+                anchors.rightMargin: card.showClose ? Tokens.spaceMd : Tokens.spaceLg
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.text
                 color: AppPalette.text
@@ -171,10 +183,10 @@ Item {
             KCircleIconButton {
                 id: closeButton
                 anchors.right: parent.right
-                anchors.rightMargin: card.isWarning ? Tokens.spaceSm : 0
+                anchors.rightMargin: card.showClose ? Tokens.spaceSm : 0
                 anchors.verticalCenter: parent.verticalCenter
-                visible: card.isWarning
-                width: card.isWarning ? Tokens.controlHSm : 0
+                visible: card.showClose
+                width: card.showClose ? Tokens.controlHSm : 0
                 height: Tokens.controlHSm
                 glyph: "×"
                 glyphPixelSize: Math.round(12 * AppPalette.scale)

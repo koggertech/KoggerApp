@@ -12,6 +12,9 @@ Rectangle {
 
     property string label: ""
     property bool checked: false
+    property color fillColor: AppPalette.rowRaised   // bg when nested inside another card group
+    property int bodySpacing: Tokens.spaceMd
+    property string toolTipText: ""
     signal toggled(bool val)
 
     default property alias bodyData: pgroupBody.data
@@ -23,8 +26,8 @@ Rectangle {
     width: parent ? parent.width : implicitWidth
     height: _headerH + bodyContainer.height
     radius: Tokens.radiusLg
-    color: pgroup._hovered ? AppPalette.bgHover : AppPalette.bg
-    border.width: 1
+    color: pgroup._hovered ? AppPalette.cardHover : pgroup.fillColor
+    border.width: Tokens.cardBorderWidth
     border.color: pgroup._hovered ? AppPalette.borderHover : AppPalette.border
     clip: true
 
@@ -68,8 +71,8 @@ Rectangle {
             anchors.rightMargin: Tokens.spaceMd
             anchors.verticalCenter: parent.verticalCenter
             text: pgroup.label
-            color: AppPalette.textSecond
-            font.pixelSize: Tokens.fontMd
+            color: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+            font.pixelSize: Tokens.fontLg
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
         }
@@ -86,9 +89,9 @@ Rectangle {
             Rectangle {
                 anchors.fill: parent
                 radius: height / 2
-                color: pgroup.checked ? AppPalette.accentBgStrong : AppPalette.trackOff
+                color: pgroup.checked ? AppPalette.toggleOn : AppPalette.trackOff
                 border.width: 1
-                border.color: pgroup.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
+                border.color: pgroup.checked ? AppPalette.toggleOnBorder : AppPalette.trackOffBorder
                 Behavior on color       { ColorAnimation { duration: 120 } }
                 Behavior on border.color { ColorAnimation { duration: 120 } }
             }
@@ -119,7 +122,7 @@ Rectangle {
         anchors.top: pgroupHeader.bottom
         width: parent.width
         clip: true
-        height: pgroup.checked ? pgroupBody.implicitHeight + 2 * Tokens.spaceSm : 0
+        height: pgroup.checked ? pgroupBody.implicitHeight + 2 * pgroup.bodySpacing : 0
         visible: bodyContainer.height > 0.5
 
         Behavior on height {
@@ -133,8 +136,14 @@ Rectangle {
             anchors.leftMargin: Tokens.spaceMd
             anchors.rightMargin: Tokens.spaceMd
             anchors.top: parent.top
-            anchors.topMargin: Tokens.spaceSm
-            spacing: Tokens.spaceXs
+            anchors.topMargin: pgroup.bodySpacing
+            spacing: pgroup.bodySpacing
         }
+    }
+
+    KToolTip {
+        text: pgroup.toolTipText
+        targetItem: pgroup
+        shown: pgroup._hovered && pgroup.toolTipText.length > 0
     }
 }

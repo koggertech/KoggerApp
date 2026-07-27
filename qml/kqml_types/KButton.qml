@@ -7,6 +7,7 @@ Button {
     property bool danger: false
     property string toolTipText: text
     property int cornerRadius: Tokens.radiusMd
+    property int borderWidth: Tokens.cardBorderWidth
     property int fontPixelSize: Tokens.fontBase
     property bool bold: true
     property color normalBg: AppPalette.card
@@ -18,7 +19,7 @@ Button {
     property color dangerBg: AppPalette.dangerBg
     property color dangerHoverBg: AppPalette.dangerHover
     property color dangerBorder: AppPalette.dangerBorder
-    property color textColor: danger ? AppPalette.dangerText : AppPalette.text
+    property color textColor: danger ? AppPalette.dangerText : AppPalette.textStrong
     property real hoverWhiteness: 0.08
 
     property bool _tipSuppressed: false
@@ -69,7 +70,7 @@ Button {
                 return control.checkedBg
             return control.hovered ? control.hoverBg : control.normalBg
         }
-        border.width: 1
+        border.width: control.borderWidth
         border.color: {
             if (control.danger)
                 return control.dangerBorder
@@ -120,5 +121,6 @@ Button {
         text: control.toolTipText
         targetItem: control
         shown: control.hovered && control.enabled && !control._tipSuppressed
+               && control.toolTipText.length > 0 && control.toolTipText !== control.text
     }
 }

@@ -6,6 +6,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject(parent),
     averageChartLosses_(0),
     protoBinConsoledState_(false),
+    nmeaConsoledState_(true),
     USBLBeaconDirectAskState_(false)
 {
     workerObject_ = std::make_unique<DeviceManager>();
@@ -79,6 +80,33 @@ void DeviceManagerWrapper::initStreamList()
     QMetaObject::invokeMethod(workerObject_.get(), "initStreamList", Qt::QueuedConnection);
 #else
     workerObject_->initStreamList();
+#endif
+}
+
+void DeviceManagerWrapper::startStreamDownload(int id)
+{
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(workerObject_.get(), "startStreamDownload", Qt::QueuedConnection, Q_ARG(int, id));
+#else
+    workerObject_->startStreamDownload(id);
+#endif
+}
+
+void DeviceManagerWrapper::cancelStreamDownload(int id)
+{
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(workerObject_.get(), "cancelStreamDownload", Qt::QueuedConnection, Q_ARG(int, id));
+#else
+    workerObject_->cancelStreamDownload(id);
+#endif
+}
+
+void DeviceManagerWrapper::refreshStreamList()
+{
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(workerObject_.get(), "refreshStreamList", Qt::QueuedConnection);
+#else
+    workerObject_->refreshStreamList();
 #endif
 }
 

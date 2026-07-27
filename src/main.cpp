@@ -30,10 +30,13 @@
 #include "scene_object.h"
 #include "bottom_track.h"
 #include "input_device_tracker.h"
+#include "system_battery.h"
 #include "language_controller.h"
 #include "app_utils.h"
+#include "settings_migration.h"
 
 
+// NOLINTBEGIN(bugprone-throwing-static-initialization): application-lifetime singletons; a throw here is a fatal startup failure with nothing to catch
 Core core;
 AppUtils appUtils;
 Themes theme;
@@ -42,6 +45,7 @@ EchogramStateSerializer echogramStateSerializer;
 Notifications notifications;
 QTranslator translator;
 QVector<QString> availableLanguages{"en", "ru", "pl"};
+// NOLINTEND(bugprone-throwing-static-initialization)
 
 
 void loadLanguage(QGuiApplication &app)
@@ -49,7 +53,7 @@ void loadLanguage(QGuiApplication &app)
     QSettings settings;
     QString currentLanguage;
 
-    int savedLanguageIndex = settings.value("appLanguage", -1).toInt();
+    int savedLanguageIndex = settings.value("main/appLanguage", -1).toInt();
 
     if (savedLanguageIndex == -1) {
         currentLanguage = QLocale::system().name().split('_').first();
@@ -57,7 +61,7 @@ void loadLanguage(QGuiApplication &app)
             currentLanguage = availableLanguages.front();
         }
         else {
-            settings.setValue("appLanguage", indx);
+            settings.setValue("main/appLanguage", indx);
         }
     }
     else {
@@ -109,6 +113,8 @@ void registerQmlMetaTypes()
 #if defined(Q_OS_WIN)
 constexpr DWORD kDwmwaUseImmersiveDarkMode = 20;
 constexpr DWORD kDwmwaUseImmersiveDarkModeLegacy = 19;
+constexpr DWORD kDwmwaCaptionColor = 35;
+constexpr DWORD kDwmwaTextColor = 36;
 
 void applyWindowsSystemTitleBarTheme(QWindow* window)
 {
@@ -116,7 +122,7 @@ void applyWindowsSystemTitleBarTheme(QWindow* window)
         return;
     }
 
-    const HWND handle = reinterpret_cast<HWND>(window->winId());
+    const HWND handle = reinterpret_cast<HWND>(window->winId()); // NOLINT(performance-no-int-to-ptr): WId is integer, HWND is a pointer; Win32 interop requires the cast
     if (!handle) {
         return;
     }
@@ -133,7 +139,11 @@ void applyWindowsSystemTitleBarTheme(QWindow* window)
         return;
     }
 
-    const BOOL useDarkCaption = QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark ? TRUE : FALSE;
+    const QColor captionColor = theme.controlBackColor().darker(108);
+    const QColor captionTextColor = theme.textColor();
+    const qreal captionLuminance = captionColor.redF() * 0.299 + captionColor.greenF() * 0.587 + captionColor.blueF() * 0.114;
+
+    const BOOL useDarkCaption = captionLuminance < 0.5 ? TRUE : FALSE;
     HRESULT hr = setWindowAttribute(handle,
                                     kDwmwaUseImmersiveDarkMode,
                                     &useDarkCaption,
@@ -145,6 +155,12 @@ void applyWindowsSystemTitleBarTheme(QWindow* window)
                            sizeof(useDarkCaption));
     }
 
+    const COLORREF captionRef = RGB(captionColor.red(), captionColor.green(), captionColor.blue());
+    setWindowAttribute(handle, kDwmwaCaptionColor, &captionRef, sizeof(captionRef));
+
+    const COLORREF captionTextRef = RGB(captionTextColor.red(), captionTextColor.green(), captionTextColor.blue());
+    setWindowAttribute(handle, kDwmwaTextColor, &captionTextRef, sizeof(captionTextRef));
+
     FreeLibrary(dwmApi);
 }
 
@@ -155,7 +171,7 @@ void applyWindowsFullscreenBorderWorkaround(QWindow* window)
     }
 
     auto applyBorder = [window]() {
-        HWND handle = reinterpret_cast<HWND>(window->winId());
+        HWND handle = reinterpret_cast<HWND>(window->winId()); // NOLINT(performance-no-int-to-ptr): WId is integer, HWND is a pointer; Win32 interop requires the cast
         if (!handle) {
             return;
         }
@@ -186,7 +202,7 @@ void bringWindowToFront(QWindow* window)
     window->raise();
     window->requestActivate();
 
-    const HWND handle = reinterpret_cast<HWND>(window->winId());
+    const HWND handle = reinterpret_cast<HWND>(window->winId()); // NOLINT(performance-no-int-to-ptr): WId is integer, HWND is a pointer; Win32 interop requires the cast
     if (!handle) {
         return;
     }
@@ -202,7 +218,7 @@ void bringWindowToFront(QWindow* window)
 
     DWORD savedLockTimeout = 0;
     SystemParametersInfoW(SPI_GETFOREGROUNDLOCKTIMEOUT, 0, &savedLockTimeout, 0);
-    SystemParametersInfoW(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, reinterpret_cast<PVOID>(static_cast<UINT_PTR>(0)), SPIF_SENDCHANGE);
+    SystemParametersInfoW(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, reinterpret_cast<PVOID>(static_cast<UINT_PTR>(0)), SPIF_SENDCHANGE); // NOLINT(performance-no-int-to-ptr): Win32 passes an integer value through the pvParam pointer
 
     if (attach) {
         AttachThreadInput(foregroundThread, thisThread, TRUE);
@@ -215,7 +231,7 @@ void bringWindowToFront(QWindow* window)
     }
 
     SystemParametersInfoW(SPI_SETFOREGROUNDLOCKTIMEOUT, 0,
-                          reinterpret_cast<PVOID>(static_cast<UINT_PTR>(savedLockTimeout)), SPIF_SENDCHANGE);
+                          reinterpret_cast<PVOID>(static_cast<UINT_PTR>(savedLockTimeout)), SPIF_SENDCHANGE); // NOLINT(performance-no-int-to-ptr): Win32 passes an integer value through the pvParam pointer
 
     // flash taskbar button
     FLASHWINFO flash = {};
@@ -254,10 +270,14 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("KoggerApp");
     QCoreApplication::setApplicationVersion("1-1-1");
 
+    migrateSettingsSchema();
+
 #if defined(Q_OS_WIN)
     //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
-    QLoggingCategory::setFilterRules(QStringLiteral("qt.network.info.netlistmanager.warning=false"));
+    QLoggingCategory::setFilterRules(QStringLiteral(
+        "qt.network.info.netlistmanager.warning=false\n"
+        "qt.qpa.mime=false"));
 #endif
 
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGLRhi);
@@ -280,24 +300,9 @@ int main(int argc, char *argv[])
     // safe to read QSettings and primaryScreen() for DPI-aware resCoeff.
     theme.initSettings();
 
-    // One-shot migration: the "Chart" group (multi-plot + synchronisation) was
-    // removed from the new settings UI. Force any persisted multi-plot OR
-    // sync-on state back to single-plot, no-sync. OR (not AND) — otherwise
-    // users with numPlots=2,sync=false stay stuck in a layout the new UI
-    // can no longer toggle off.
-    {
-        QSettings s;
-        const bool needMigration =
-            s.value("numPlotsSpinBox", 1).toInt() >= 2 ||
-            s.value("plotSyncCheckBox", false).toBool();
-        if (needMigration) {
-            s.setValue("numPlotsSpinBox", 1);
-            s.setValue("plotSyncCheckBox", false);
-        }
-    }
-
     LanguageController langController;
     InputDeviceTracker inputDeviceTracker;
+    SystemBattery systemBattery;
     core.initAfterApp();
 
     //qDebug() << "Lib paths:" << QCoreApplication::libraryPaths();
@@ -329,11 +334,13 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("theme", &theme);
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
+    engine.rootContext()->setContextProperty("deviceTopology", core.getDeviceTopologyModelPtr());
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
     engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
     engine.rootContext()->setContextProperty("echogramStateSerializer", &echogramStateSerializer);
     engine.rootContext()->setContextProperty("notifications", &notifications);
     engine.rootContext()->setContextProperty("inputDeviceTracker", &inputDeviceTracker);
+    engine.rootContext()->setContextProperty("systemBattery", &systemBattery);
     engine.rootContext()->setContextProperty("langController", &langController);
     engine.rootContext()->setContextProperty("appUtils", &appUtils);
 
@@ -383,7 +390,7 @@ int main(int argc, char *argv[])
     {
         const QStringList appArgs = app.arguments();
         if (appArgs.size() > 1) {
-            const QString startupFilePath = appArgs.at(1);
+            const QString& startupFilePath = appArgs.at(1);
             auto* startupConn = new QMetaObject::Connection;
             *startupConn = QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                                             &core, [startupFilePath, startupConn, url](QObject* obj, const QUrl& objUrl) {
@@ -417,6 +424,15 @@ int main(int argc, char *argv[])
             applyWindowsSystemTitleBarTheme(secondary);
             applyWindowsFullscreenBorderWorkaround(secondary);
         }
+        QObject::connect(&theme, &Themes::changed, &app, [mainWindow]() {
+            if (!mainWindow) {
+                return;
+            }
+            applyWindowsSystemTitleBarTheme(mainWindow);
+            if (auto* secondary = mainWindow->findChild<QWindow*>(QStringLiteral("secondaryAppWindow"))) {
+                applyWindowsSystemTitleBarTheme(secondary);
+            }
+        });
 #endif
     }
     qInfo() << "App is created";

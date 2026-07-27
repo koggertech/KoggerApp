@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick          // unversioned → Qt 6.8 Rectangle (per-corner radius)
 import QtQuick.Window 2.15
 import Qt5Compat.GraphicalEffects
 import kqml_types 1.0
@@ -19,7 +19,7 @@ Item {
     property color fillPressedColor: AppPalette.bgDeep
     property color borderColor: AppPalette.border
     property color borderHoverColor: AppPalette.borderHover
-    property real borderWidth: 1
+    property real borderWidth: Tokens.cardBorderWidth   // borderless by default; set per-instance for active/accent state
     property bool enabled: true
     activeFocusOnTab: enabled
     Keys.onReturnPressed: if (root.enabled) root.clicked()
@@ -27,11 +27,16 @@ Item {
     Keys.onSpacePressed:  if (root.enabled) root.clicked()
     property bool rounded: true
     property real cornerRadius: rounded ? Math.min(width, height) / 2 : 10
+    property real topLeftRadius: -1
+    property real topRightRadius: -1
+    property real bottomLeftRadius: -1
+    property real bottomRightRadius: -1
     property int cursorShape: Qt.PointingHandCursor
     property int focusPolicy: Qt.NoFocus
     property real padding: 0
     property string toolTipText: ""
     property bool autoToolTip: true
+    property bool toolTipSuppressed: false   // external gate (e.g. hide while a pill/popup is open)
     property real hoverWhiteness: 0.12
     // External "look here" pulse — bumped via flashToken when highlighted.
     property bool highlighted: false
@@ -44,7 +49,8 @@ Item {
     property bool _tipSuppressed: false
     onPressedChanged: if (pressed) { _tipSuppressed = true; focusRing.suppress() }
     onHoveredChanged: if (!hovered) _tipSuppressed = false
-    readonly property real backgroundScale: !root.enabled ? 1.0 : (root.pressed ? 0.97 : (root.hovered ? 1.035 : 1.0))
+    property bool scaleOnHover: true
+    readonly property real backgroundScale: (!root.enabled || !root.scaleOnHover) ? 1.0 : (root.pressed ? 0.97 : (root.hovered ? 1.035 : 1.0))
     readonly property bool hasIcon: {
         var s = iconSource ? iconSource.toString() : ""
         return s !== "" && s.charAt(s.length - 1) !== "/"
@@ -82,6 +88,10 @@ Item {
         id: backgroundRect
         anchors.fill: parent
         radius: root.cornerRadius
+        topLeftRadius: root.topLeftRadius
+        topRightRadius: root.topRightRadius
+        bottomLeftRadius: root.bottomLeftRadius
+        bottomRightRadius: root.bottomRightRadius
         scale: root.backgroundScale
         color: !root.enabled
                ? "#0F172A55"
@@ -122,6 +132,10 @@ Item {
     Rectangle {
         anchors.fill: backgroundRect
         radius: root.cornerRadius
+        topLeftRadius: root.topLeftRadius
+        topRightRadius: root.topRightRadius
+        bottomLeftRadius: root.bottomLeftRadius
+        bottomRightRadius: root.bottomRightRadius
         scale: root.backgroundScale
         color: "#FFFFFF"
         opacity: !root.enabled ? 0.0 : (root.pressed ? 0.02 : (root.hovered ? root.hoverWhiteness : 0.0))
@@ -144,6 +158,10 @@ Item {
     Rectangle {
         anchors.fill: backgroundRect
         radius: root.cornerRadius
+        topLeftRadius: root.topLeftRadius
+        topRightRadius: root.topRightRadius
+        bottomLeftRadius: root.bottomLeftRadius
+        bottomRightRadius: root.bottomRightRadius
         color: AppPalette.accentBgStrong
         opacity: highlightOverlay.opacity
         visible: root.highlighted
@@ -181,6 +199,8 @@ Item {
             opacity: root.enabled ? 1.0 : 0.7
             visible: !iconWrap.tintActive
             layer.enabled: iconWrap.tintActive
+            layer.smooth: true
+            layer.textureSize: Qt.size(iconImage.sourceSize.width, iconImage.sourceSize.height)
         }
 
         ColorOverlay {
@@ -188,6 +208,7 @@ Item {
             source: iconImage
             visible: iconWrap.tintActive
             color: root.iconTintColor
+            smooth: true
             cached: true
         }
     }
@@ -302,6 +323,6 @@ Item {
     KToolTip {
         text: root.resolvedToolTipText
         targetItem: root
-        shown: root.hovered && root.enabled && !root._tipSuppressed
+        shown: root.hovered && root.enabled && !root._tipSuppressed && !root.toolTipSuppressed
     }
 }

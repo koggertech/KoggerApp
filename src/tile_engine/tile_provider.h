@@ -25,6 +25,11 @@ public:
     // don't need it can leave the default.
     virtual QString createOverlayURL(const map::TileIndex& tileIndx) const { Q_UNUSED(tileIndx); return QString(); }
 
+    virtual QString manifestKey() const { return QString(); }
+    virtual int imageryVersion() const { return -1; }
+    virtual void setImageryVersion(int version) { Q_UNUSED(version); }
+    virtual QString versionedCanaryUrl(int version) const { Q_UNUSED(version); return QString(); }
+
     virtual map::TileIndex llaToTileIndex(LLA lla, int32_t z);
     int32_t getProviderId() const;
 

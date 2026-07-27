@@ -29,6 +29,7 @@ public:
     void clear() {
         beginResetModel();
         _vectors.clear();
+        _index.clear();
         _size = 0;
         endResetModel();
     }

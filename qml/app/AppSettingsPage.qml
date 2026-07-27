@@ -16,9 +16,84 @@ Column {
 
     readonly property int instruments: theme ? theme.instrumentsGrade : 0
     readonly property real groupWidth: Math.max(0, width)
+    readonly property color _bright: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
 
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
+
+    property var _flick: null
+    Component.onCompleted: _flick = _settingsFlickable()
+    function _settingsFlickable() {
+        var it = root.parent
+        while (it) {
+            if (it.contentY !== undefined && it.contentHeight !== undefined && it.flickableDirection !== undefined)
+                return it
+            it = it.parent
+        }
+        return null
+    }
+    function _expandedGroupInFlick() {
+        if (!store || !store._settingsGroupInstances)
+            return null
+        var f = _flick || _settingsFlickable()
+        var arr = store._settingsGroupInstances
+        for (var i = 0; i < arr.length; ++i) {
+            var g = arr[i]
+            if (g && g.expanded && g.collapsible && g._flick === f)
+                return g
+        }
+        return null
+    }
+    function _scrollToTop() {
+        var f = _flick || _settingsFlickable()
+        if (!f)
+            return
+        var g = _expandedGroupInFlick()
+        var target = g ? g.mapToItem(f.contentItem, 0, 0).y : 0
+        target = Math.max(0, Math.min(target, Math.max(0, f.contentHeight - f.height)))
+        if (Math.abs(target - f.contentY) < 0.5)
+            return
+        scrollTopAnim.target = f
+        scrollTopAnim.from = f.contentY
+        scrollTopAnim.to = target
+        scrollTopAnim.restart()
+    }
+    NumberAnimation {
+        id: scrollTopAnim
+        property: "contentY"
+        duration: 220
+        easing.type: Easing.OutCubic
+    }
+
+    component ShowIn3DAction: KCircleIconButton {
+        property bool active: false
+        readonly property color _fg: active ? AppPalette.accentText : AppPalette.text
+        readonly property int _sz: Math.round(36 * AppPalette.scale)   // = SettingsGroup._headerH
+        width: _sz
+        height: _sz
+        cornerRadius: Tokens.radiusLg   // uniform rounded chip, full header height
+        borderWidth: 0
+        scaleOnHover: false
+        iconSource: active ? "qrc:/icons/ui/eye.svg" : "qrc:/icons/ui/eye-off.svg"
+        iconPixelSize: Math.round(width * 0.70)
+        iconTintColor: _fg
+        toolTipText: qsTr("Show in 3D")
+        fillColor:      active ? AppPalette.accentBgStrong : AppPalette.chipRaised
+        fillHoverColor: active ? AppPalette.accentBgStrong : AppPalette.chipRaisedHover
+
+        Text {
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottomMargin: Math.round(1 * AppPalette.scale)
+            text: "3D"
+            color: parent._fg
+            opacity: 0.9
+            font.pixelSize: Math.round(parent.width * 0.26)
+            font.bold: true
+            style: Text.Outline
+            styleColor: parent.fillColor
+        }
+    }
 
     // Parameter row card — matches KSwitch's full-width pattern.
     //
@@ -51,9 +126,9 @@ Column {
             id: scTrack
             anchors.fill: parent
             radius: height / 2
-            color: sc.checked ? AppPalette.accentBg : AppPalette.trackOff
+            color: sc.checked ? AppPalette.toggleOn : AppPalette.trackOff
             border.width: 1
-            border.color: sc.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
+            border.color: sc.checked ? AppPalette.toggleOnBorder : AppPalette.trackOffBorder
 
             Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -122,6 +197,14 @@ Column {
         store: root.store
     }
 
+    // ── Factory (visible only in factory mode) ──────────
+
+    FactorySettingsGroup {
+        width: root.groupWidth
+        store: root.store
+        visible: (typeof core !== "undefined" && core) ? core.isFactoryMode : false
+    }
+
     // ── Экспорт ───────────────────────────────────────────────────────────────
 
     SettingsGroup {
@@ -134,6 +217,7 @@ Column {
         stateStore: root.store
         stateKey: "app.export"
         collapsedByDefault: true
+        contentSpacing: Tokens.spaceSm
 
         function currentExportPath() {
             return root.store ? root.store.exportFolderSource : ""
@@ -141,14 +225,14 @@ Column {
 
         // Path row
         Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
 
             Rectangle {
-                width: parent.width - Math.round(44 * AppPalette.scale) - Tokens.spaceMd
+                width: parent.width - Tokens.controlHMd - Tokens.spaceSm
                 height: Tokens.controlHMd
                 radius: Tokens.radiusMd
                 color: AppPalette.bg
-                border.width: 1
+                border.width: exportPathField.activeFocus ? 1 : Tokens.cardBorderWidth
                 border.color: exportPathField.activeFocus ? AppPalette.accentBorder : AppPalette.border
 
                 TextInput {
@@ -160,16 +244,16 @@ Column {
                     TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: exportPathField.selectAll() }
                     verticalAlignment: TextInput.AlignVCenter
                     color: AppPalette.text
-                    font.pixelSize: Tokens.fontSm
+                    font.pixelSize: Tokens.fontBase
                     clip: true
-                    text: root.store ? root.localPath(root.store.exportFolderSource) : ""
+                    text: root.store ? (root.store.exportFolderSource.length ? root.localPath(root.store.exportFolderSource) : core.defaultExportDirectory()) : ""
                     onTextEdited: if (root.store) root.store.exportFolderSource = root.localPath(text)
 
                     Connections {
                         target: root.store
                         ignoreUnknownSignals: true
                         function onExportFolderSourceChanged() {
-                            var clean = root.localPath(root.store.exportFolderSource)
+                            var clean = root.store.exportFolderSource.length ? root.localPath(root.store.exportFolderSource) : core.defaultExportDirectory()
                             if (exportPathField.text !== clean)
                                 exportPathField.text = clean
                         }
@@ -179,14 +263,16 @@ Column {
                         visible: !exportPathField.text.length
                         text: qsTr("Export path...")
                         color: AppPalette.textMuted
-                        font.pixelSize: Tokens.fontSm
+                        font.pixelSize: Tokens.fontBase
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
             }
 
             KButton {
-                width: Math.round(44 * AppPalette.scale); height: Tokens.controlHMd; text: "..."
+                width: Tokens.controlHMd; height: Tokens.controlHMd; text: "..."
+                horizontalPadding: 0; verticalPadding: 0
+                toolTipText: qsTr("Choose export folder")
                 onClicked: {
                     if (root.store)
                         exportFolderDialog.currentFolder = root.store.exportFolderUrl
@@ -205,9 +291,10 @@ Column {
             }
         }
 
-        KButton {
+        NavButton {
             width: parent.width
             text: qsTr("Export to CSV")
+            toolTipText: qsTr("Open the CSV export tab")
             onClicked: if (root.store) root.store.openCsvExportSettings()
         }
 
@@ -237,18 +324,6 @@ Column {
         description: qsTr("Language, theme, UI scale and panel visibility.")
         stateStore: root.store
         stateKey: "app.preference"
-        headerActions: KCircleIconButton {
-            readonly property bool _on: (typeof theme !== "undefined" && theme) ? theme.consoleVisible : false
-            width: interfaceGroup.headerActionSize
-            height: interfaceGroup.headerActionSize
-            iconSource: "qrc:/icons/ui/terminal.svg"
-            iconPixelSize: Math.round(width * 0.58)
-            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
-            toolTipText: qsTr("Console")
-            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
-            onClicked: if (typeof theme !== "undefined" && theme) theme.consoleVisible = !theme.consoleVisible
-        }
         collapsedByDefault: false
 
         Column {
@@ -260,6 +335,7 @@ Column {
             KTabBar {
                 id: langTabBar
                 width: parent.width
+                fontPixelSize: Tokens.fontLg
                 options: [
                     { label: "English", value: 0 },
                     { label: "Русский", value: 1 },
@@ -281,20 +357,20 @@ Column {
                 width: parent.width
                 property int selectedIndex: 0
 
-                readonly property var names: ["Dark","S.Dark","Light","S.Light","OneDark","Monokai","Kimbie","Solar","Desert","Olive"]
+                readonly property var names: ["Dark","S.Dark","Light","S.Light","OneDark","Monokai","Kimbie","Solarized","Desert","Olive","Dracula","Nord"]
                 readonly property int gap: Tokens.spaceXs
                 readonly property int cellMinW: Math.round(80 * AppPalette.scale)
-                readonly property int cols: Tokens.gridColumns(width, cellMinW, gap, 5)
+                readonly property int cols: Tokens.gridColumns(width, cellMinW, gap, 4)
                 readonly property int itemH: Tokens.controlHMd
                 readonly property real itemW: (width - (cols - 1) * gap) / cols
-                readonly property int rows: Math.ceil(10 / cols)
+                readonly property int rows: Math.ceil(names.length / cols)
                 height: rows * itemH + (rows - 1) * gap
 
                 onSelectedIndexChanged: if (theme) theme.themeID = selectedIndex
                 Component.onCompleted: if (theme) theme.themeID = selectedIndex
 
                 Repeater {
-                    model: 10
+                    model: appThemeHolder.names.length
                     delegate: Rectangle {
                         id: themeCell
                         required property int index
@@ -304,9 +380,13 @@ Column {
                         width: appThemeHolder.itemW
                         height: appThemeHolder.itemH
                         radius: Tokens.radiusMd
-                        color: sel ? AppPalette.accentBg : AppPalette.bg
-                        border.width: 1
+                        color: sel ? AppPalette.accentBg
+                               : (themeMa.pressed ? AppPalette.bgDeep : (themeMa.containsMouse ? AppPalette.cardHover : AppPalette.bg))
+                        border.width: Tokens.cardBorderWidth
                         border.color: sel ? AppPalette.accentBorder : AppPalette.border
+                        scale: themeMa.pressed ? 0.97 : (themeMa.containsMouse ? 1.03 : 1.0)
+                        Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
 
                         activeFocusOnTab: true
                         Keys.onReturnPressed: appThemeHolder.selectedIndex = index
@@ -316,15 +396,17 @@ Column {
                         Text {
                             anchors.centerIn: parent
                             text: appThemeHolder.names[index]
-                            color: AppPalette.text
-                            font.pixelSize: Tokens.fontXs
+                            color: themeCell.sel ? AppPalette.accentText : AppPalette.textStrong
+                            font.pixelSize: Tokens.fontBase; font.bold: true
                             elide: Text.ElideRight
                         }
 
                         KFocusRing { id: focusRing }
 
                         MouseArea {
+                            id: themeMa
                             anchors.fill: parent
+                            hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onPressed: focusRing.suppress()
                             onClicked: { themeCell.forceActiveFocus(); appThemeHolder.selectedIndex = index }
@@ -332,7 +414,7 @@ Column {
                     }
                 }
 
-                Settings { property alias appTheme: appThemeHolder.selectedIndex }
+                Settings { category: "main/ui"; property alias appTheme: appThemeHolder.selectedIndex }
             }
         }
 
@@ -350,6 +432,7 @@ Column {
                 KTabBar {
                     id: gradeTabBar
                     width: parent.width
+                    fontPixelSize: Tokens.fontLg
                     options: [
                         { label: qsTr("Fish Finders"),  value: 0 },
                         { label: qsTr("Bottom Track"),  value: 1 },
@@ -366,26 +449,16 @@ Column {
             width: parent.width
             spacing: Tokens.spaceMd
 
-            Row {
-                width: parent.width
-                spacing: Tokens.spaceMd
-                Text {
-                    text: qsTr("UI scale:")
-                    color: AppPalette.textSecond
-                    font.pixelSize: Tokens.fontBase
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-                Text {
-                    text: theme ? Math.round(theme.manualScale * 100) + "%" : "100%"
-                    color: AppPalette.text
-                    font.pixelSize: Tokens.fontBase; font.bold: true
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+            Text {
+                text: qsTr("UI scale:")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
             }
 
             KTabBar {
                 id: uiScaleTabBar
                 width: parent.width
+                fontPixelSize: Tokens.fontLg
                 options: [
                     { label: "75%",  value: 0.75 },
                     { label: "100%", value: 1.00 },
@@ -401,44 +474,36 @@ Column {
         // ── Merged from former "Interface" group ──────────────────────────
 
         KSwitch {
-            id: consoleVisible
-            visible: instruments >= 2
             width: parent.width
-            text: qsTr("Console")
-            checked: theme ? theme.consoleVisible : false
-            onToggled: if (theme) theme.consoleVisible = checked
-
-            Connections {
-                target: theme
-                ignoreUnknownSignals: true
-                function onInterfaceChanged() {
-                    if (consoleVisible.checked !== theme.consoleVisible)
-                        consoleVisible.checked = theme.consoleVisible
-                }
-            }
+            text: qsTr("Hide important notifications")
+            toolTipText: qsTr("Auto-hide warning notifications like info ones")
+            checked: root.store ? root.store.hideImportantNotifications : false
+            onToggled: if (root.store) root.store.hideImportantNotifications = checked
         }
-
-        Settings { property alias consoleVisible: consoleVisible.checked }
 
         KSwitch {
             width: parent.width
             text: qsTr("Hide UI elements for missing data")
+            toolTipText: qsTr("Hide echogram controls when there is no matching data; off shows everything")
             checked: root.store ? root.store.hideEmptyEchogramControls : true
             onToggled: if (root.store) root.store.hideEmptyEchogramControls = checked
         }
 
         KSwitch {
             width: parent.width
-            text: qsTr("Autopilot panel")
-            checked: root.store ? root.store.autopilotEnabled : true
-            onToggled: if (root.store) root.store.autopilotEnabled = checked
+            text: qsTr("Workspace shift")
+            toolTipText: qsTr("Shift the workspace aside when the settings panel opens, instead of overlaying on top")
+            checked: root.store.settingsPushContent
+            onToggled: { root.store.settingsPushContent = checked }
         }
 
         KSwitch {
+            visible: Qt.platform.os === "windows"
             width: parent.width
-            text: qsTr("Workspace shift")
-            checked: root.store.settingsPushContent
-            onToggled: { root.store.settingsPushContent = checked }
+            text: qsTr("Bring window to front")
+            toolTipText: qsTr("Raise and focus the app window on key events")
+            checked: core.bringWindowToFrontEnabled
+            onToggled: core.bringWindowToFrontEnabled = checked
         }
 
         KSwitch {
@@ -457,6 +522,7 @@ Column {
 
             KTabBar {
                 width: parent.width
+                fontPixelSize: Tokens.fontLg
                 options: [
                     { label: qsTr("Left"),  value: "left"  },
                     { label: qsTr("Right"), value: "right" }
@@ -466,10 +532,10 @@ Column {
             }
         }
 
-        KButton {
+        NavButton {
             visible: Qt.platform.os !== "android"
             width: parent.width
-            text: qsTr("Hotkeys")
+            text: qsTr("Key bindings")
             onClicked: { hotkeysLoader.active = true; hotkeysLoader.item.open() }
         }
 
@@ -480,22 +546,23 @@ Column {
             onLoaded: { if (item) item.store = root.store }
         }
 
-        KButton {
+        NavButton {
             width: parent.width
             text: qsTr("Quick action menu")
             onClicked: if (root.store) root.store.openQuickActionsSettings()
         }
 
-        KButton {
-            width: parent.width
-            text: qsTr("Extra info panel")
-            onClicked: if (root.store) root.store.openExtraInfoSettings()
-        }
-
-        KButton {
+        NavButton {
             width: parent.width
             text: qsTr("UI Saving")
             onClicked: if (root.store) root.store.openUiSavingSettings()
+        }
+
+        NavButton {
+            width: parent.width
+            text: qsTr("Console")
+            toolTipText: qsTr("Colour marking and log buffer size")
+            onClicked: if (root.store) root.store.openConsoleSettings()
         }
     }
 
@@ -504,14 +571,15 @@ Column {
     SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
-        title: qsTr("Workspace Layout")
-        description: qsTr("Pane editing, favorites and ready-made layout presets.")
+        title: qsTr("Workspace")
+        description: qsTr("Workspace layouts and pane editing.")
         stateStore: root.store
         stateKey: "app.layoutPlacement"
 
         KSwitch {
             width: parent.width
             text: qsTr("Edit")
+            toolTipText: qsTr("Edit workspace panes")
             checked: root.store.editableMode
             onToggled: { root.store.editableMode = checked }
         }
@@ -519,156 +587,123 @@ Column {
         KSwitch {
             width: parent.width
             text: qsTr("Global pop-up")
+            toolTipText: qsTr("Floating window over the workspace, independent of the layout")
             checked: root.store.globalPopupEnabled
             onToggled: { root.store.globalPopupEnabled = checked }
         }
 
-        KButton {
-            width: parent.width
-            text: qsTr("Reset workspace")
-            onClicked: root.store.resetWindowConfiguration()
-        }
-
-        Row {
-            spacing: Tokens.spaceLg
-
-            KButton {
-                width: Tokens.controlHLg; height: Tokens.controlHLg
-                text: root.store.currentLayoutIsFavorite ? "★" : "☆"
-                checkable: true
-                checked: root.store.currentLayoutIsFavorite
-                fontPixelSize: Tokens.fontXl
-                onClicked: root.store.toggleCurrentLayoutFavorite()
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.store.currentLayoutIsFavorite ? qsTr("Current layout is in favorites") : qsTr("Add current layout to favorites")
-                color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase
-            }
-        }
-
-        Text { text: qsTr("Favorite layouts"); color: AppPalette.text; font.pixelSize: Tokens.fontLg; font.bold: true }
-
-        Text {
-            visible: root.store.favoriteLayouts.length === 0
-            text: qsTr("No favorite layouts yet")
-            color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
-        }
-
         Repeater {
-            model: root.store.favoriteLayouts.length
+            model: root.store.layouts.length
             delegate: Item {
-                id: favoriteCard
+                id: layoutCard
                 required property int index
-                readonly property int favoriteIndex: index
-                readonly property var favoriteEntry: (favoriteIndex >= 0 && favoriteIndex < root.store.favoriteLayouts.length) ? root.store.favoriteLayouts[favoriteIndex] : null
-                readonly property var snapshot: favoriteEntry && favoriteEntry.layout ? favoriteEntry.layout : favoriteEntry
-                readonly property var popupLinks: favoriteEntry && favoriteEntry.popupLinks ? favoriteEntry.popupLinks : []
-                readonly property bool selected: root.store.favoriteLayoutIsCurrent(favoriteIndex)
-                width: parent.width; height: favoriteCardView.implicitHeight
+                readonly property int layoutIndex: index
+                readonly property var layoutEntry: (layoutIndex >= 0 && layoutIndex < root.store.layouts.length) ? root.store.layouts[layoutIndex] : null
+                readonly property var snapshot: layoutEntry && layoutEntry.layout ? layoutEntry.layout : layoutEntry
+                readonly property var popupLinks: layoutEntry && layoutEntry.popupLinks ? layoutEntry.popupLinks : []
+                readonly property bool selected: layoutIndex === root.store.activeLayoutIndex
+                width: parent.width; height: layoutCardView.implicitHeight
 
                 FavoriteLayoutCard {
-                    id: favoriteCardView
+                    id: layoutCardView
                     anchors.fill: parent
-                    snapshot: favoriteCard.snapshot; popupLinks: favoriteCard.popupLinks
-                    favoriteIndex: favoriteCard.favoriteIndex; selected: favoriteCard.selected; showText: true
-                    onClicked: root.store.applyFavoriteLayout(favoriteCard.favoriteIndex)
+                    snapshot: layoutCard.snapshot; popupLinks: layoutCard.popupLinks
+                    favoriteIndex: layoutCard.layoutIndex; selected: layoutCard.selected; showText: true
+                    extraHovered: deleteBtn.hovered
+                    onClicked: root.store.applyLayout(layoutCard.layoutIndex)
                 }
 
                 KCircleIconButton {
+                    id: deleteBtn
+                    visible: root.store.layouts.length > 1
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: Tokens.spaceSm
-                    width: Tokens.iconLg; height: Tokens.iconLg; iconSource: ""; glyph: "×"
-                    glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.card
-                    fillHoverColor: AppPalette.cardHover; fillPressedColor: AppPalette.bgDeep
+                    width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd; iconSource: ""; glyph: "×"
+                    glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
+                    fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
                     borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
-                    toolTipText: qsTr("Remove favorite"); z: 6
-                    onClicked: root.store.removeFavoriteLayoutAt(favoriteIndex)
+                    toolTipText: qsTr("Delete layout"); z: 6
+                    onClicked: root.store.deleteLayoutAt(layoutCard.layoutIndex)
                 }
             }
         }
 
-        Rectangle { width: parent.width; height: 1; color: AppPalette.border }
+        KButton {
+            width: parent.width
+            text: qsTr("Create layout")
+            onClicked: root.store.openCreateLayoutSettings()
+        }
+    }
 
-        Text { text: qsTr("Layout presets"); color: AppPalette.text; font.pixelSize: Tokens.fontLg; font.bold: true }
+    // ── Widgets ───────────────────────────────────────────────────────────────
+
+    SettingsGroup {
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Widget panels")
+        description: qsTr("On-scene data panels: grid size and drag-in widgets.")
+        stateStore: root.store
+        stateKey: "app.widgets"
 
         Repeater {
-            model: [
-                { presetId: 4, title: qsTr("Single window"), subtitle: qsTr("One pane") },
-                { presetId: 5, title: qsTr("Two windows"), subtitle: qsTr("Side by side") },
-                { presetId: 1, title: qsTr("Three windows"), subtitle: qsTr("2 top panes, 1 bottom pane") },
-                { presetId: 2, title: qsTr("Four windows"), subtitle: qsTr("2 × 2 grid") }
-            ]
-            delegate: Rectangle {
-                id: presetCard
-                required property var modelData
-                readonly property var preset: modelData
-                readonly property bool hovered: cardMouse.containsMouse
-                width: parent.width; height: Math.round(88 * AppPalette.scale); radius: Tokens.radiusLg
-                color: hovered ? AppPalette.bg : AppPalette.card; border.width: 1
-                border.color: hovered ? AppPalette.borderHover : AppPalette.border
+            model: root.store.widgets.length
+            delegate: Item {
+                id: widgetRow
+                required property int index
+                readonly property int widgetIndex: index
+                readonly property var def: (widgetIndex >= 0 && widgetIndex < root.store.widgets.length) ? root.store.widgets[widgetIndex] : null
+                width: parent.width; height: widgetCardView.implicitHeight
 
-                activeFocusOnTab: true
-                Keys.onReturnPressed: root.store.applyLayoutPreset(preset.presetId)
-                Keys.onEnterPressed:  root.store.applyLayoutPreset(preset.presetId)
-                Keys.onSpacePressed:  root.store.applyLayoutPreset(preset.presetId)
-
-                Row {
-                    anchors.fill: parent; anchors.margins: Tokens.spaceMd; spacing: Tokens.spaceLg
-                    Rectangle {
-                        width: Math.round(84 * AppPalette.scale); height: Math.round(64 * AppPalette.scale); radius: Tokens.radiusMd; color: AppPalette.bgDeep
-                        border.width: 1; border.color: AppPalette.border
-                        Item {
-                            id: previewArea
-                            anchors.fill: parent; anchors.margins: Tokens.spaceXs
-                            readonly property real gap: 4
-                            Repeater {
-                                model: {
-                                    var iw = previewArea.width, ih = previewArea.height, g = previewArea.gap
-                                    if (iw <= 0 || ih <= 0) return []
-                                    if (preset.presetId === 4) {
-                                        return [ {x:0,y:0,w:iw,h:ih} ]
-                                    } else if (preset.presetId === 5) {
-                                        var lW5 = iw*.5-g/2, rW5 = iw-lW5-g
-                                        return [ {x:0,y:0,w:lW5,h:ih}, {x:lW5+g,y:0,w:rW5,h:ih} ]
-                                    } else if (preset.presetId === 1) {
-                                        var tH = ih*.5-g/2, bH = ih-tH-g, lW = iw*.5-g/2, rW = iw-lW-g
-                                        return [ {x:0,y:0,w:lW,h:tH}, {x:lW+g,y:0,w:rW,h:tH}, {x:0,y:tH+g,w:iw,h:bH} ]
-                                    } else if (preset.presetId === 2) {
-                                        var lW2 = iw*.5-g/2, rW2 = iw-lW2-g, tH2 = ih*.5-g/2, bH2 = ih-tH2-g
-                                        return [ {x:0,y:0,w:lW2,h:tH2}, {x:lW2+g,y:0,w:rW2,h:tH2}, {x:0,y:tH2+g,w:lW2,h:bH2}, {x:lW2+g,y:tH2+g,w:rW2,h:bH2} ]
-                                    }
-                                    return []
-                                }
-                                delegate: Rectangle {
-                                    required property var modelData
-                                    x: modelData.x; y: modelData.y
-                                    width: modelData.w; height: modelData.h
-                                    color: "transparent"
-                                    border.width: 1; border.color: "#64748B"
-                                }
-                            }
-                        }
-                    }
-                    Column {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.max(0, parent.width - Math.round(84 * AppPalette.scale) - Tokens.spaceLg); spacing: Tokens.spaceXs
-                        Text { text: preset.title; color: AppPalette.text; font.pixelSize: Tokens.fontBase; font.bold: true }
-                        Text { text: preset.subtitle; color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm }
+                WidgetCard {
+                    id: widgetCardView
+                    anchors.fill: parent
+                    def: widgetRow.def
+                    title: qsTr("Panel %1").arg(widgetRow.widgetIndex + 1)
+                    showText: true
+                    selectionMode: true
+                    selected: !!(root.store && widgetRow.def && root.store.widgetShown(widgetRow.def.id))
+                    extraHovered: widgetDeleteBtn.hovered || widgetEditBtn.hovered
+                    onToggled: function(value) {
+                        if (root.store && widgetRow.def)
+                            root.store.setWidgetShown(widgetRow.def.id, value)
                     }
                 }
-                KFocusRing { id: focusRing }
 
-                MouseArea { id: cardMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onPressed: focusRing.suppress(); onClicked: { presetCard.forceActiveFocus(); root.store.applyLayoutPreset(preset.presetId) } }
+                KCircleIconButton {
+                    id: widgetDeleteBtn
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    anchors.rightMargin: Tokens.spaceSm
+                    width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd; iconSource: ""; glyph: "×"
+                    glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
+                    fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                    borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
+                    toolTipText: qsTr("Delete panel"); z: 6
+                    onClicked: root.store.deleteWidgetAt(widgetRow.widgetIndex)
+                }
+
+                KCircleIconButton {
+                    id: widgetEditBtn
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: widgetDeleteBtn.left
+                    anchors.rightMargin: Tokens.spaceSm
+                    width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd
+                    iconSource: "qrc:/icons/ui/pencil.svg"; iconTintColor: AppPalette.textSecond
+                    fillColor: AppPalette.controlRaised
+                    fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                    borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover
+                    toolTipText: qsTr("Edit panel"); z: 6
+                    onClicked: root.store.openWidgetEditSettings(widgetRow.widgetIndex)
+                }
             }
         }
 
-        Text {
-            width: parent.width; wrapMode: Text.WordWrap
-            text: qsTr("After applying a preset, choose 2D or 3D mode for each pane.")
-            color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
+        KButton {
+            width: parent.width
+            text: qsTr("Create panel")
+            enabled: !!root.store && root.store.canCreateWidget
+            onClicked: root.store.openWidgetCreateSettings()
         }
     }
 
@@ -680,7 +715,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Dataset")
-        description: qsTr("Black-stripe smoothing and sonar mount-point offset.")
+        description: qsTr("Black-stripe filtering and sonar mount-point offset.")
         stateStore: root.store
         stateKey: "app.dataset"
         collapsedByDefault: true
@@ -698,11 +733,16 @@ Column {
         ParamCard {
             id: fixBlackStripesCheckButton
             label: qsTr("FBS forward / backward:")
+            labelColor: root._bright
+            labelPixelSize: Tokens.fontLg
+            toolTipText: qsTr("Fills black stripes in the echogram by interpolating the given number of steps forward / backward.")
             slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
             onToggled: function(v) { core.setFixBlackStripesState(v) }
 
             KSpinBox {
                 id: fixBlackStripesForwardStepsSpinBox
+                fontPixelSize: Tokens.fontLg
+                textColor: root._bright
                 width: Math.round(93 * AppPalette.scale)
                 height: Tokens.controlHMd
                 anchors.left: parent.left
@@ -713,6 +753,8 @@ Column {
 
             KSpinBox {
                 id: fixBlackStripesBackwardStepsSpinBox
+                fontPixelSize: Tokens.fontLg
+                textColor: root._bright
                 width: Math.round(93 * AppPalette.scale)
                 height: Tokens.controlHMd
                 anchors.left: fixBlackStripesForwardStepsSpinBox.right
@@ -723,14 +765,17 @@ Column {
             }
         }
 
-        Settings { property alias fixBlackStripesCheckButton: fixBlackStripesCheckButton.checked }
-        Settings { property alias fixBlackStripesForwardStepsSpinBox: fixBlackStripesForwardStepsSpinBox.value }
-        Settings { property alias fixBlackStripesBackwardStepsSpinBox: fixBlackStripesBackwardStepsSpinBox.value }
+        Settings { category: "main/blackStripes"; property alias fixBlackStripesCheckButton: fixBlackStripesCheckButton.checked }
+        Settings { category: "main/blackStripes"; property alias fixBlackStripesForwardStepsSpinBox: fixBlackStripesForwardStepsSpinBox.value }
+        Settings { category: "main/blackStripes"; property alias fixBlackStripesBackwardStepsSpinBox: fixBlackStripesBackwardStepsSpinBox.value }
 
         // Sonar offset row
         ParamCard {
             id: sonarOffsetCheckButton
             label: qsTr("S.offset XY, mm:")
+            labelColor: root._bright
+            labelPixelSize: Tokens.fontLg
+            toolTipText: qsTr("Sonar mount-point offset along the X / Y axes, in millimeters.")
             slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
             onToggled: function(v) {
                 if (v) dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, 0)
@@ -740,6 +785,8 @@ Column {
 
             KSpinBox {
                 id: sonarOffsetValueX
+                fontPixelSize: Tokens.fontLg
+                textColor: root._bright
                 width: Math.round(93 * AppPalette.scale)
                 height: Tokens.controlHMd
                 anchors.left: parent.left
@@ -753,6 +800,8 @@ Column {
 
             KSpinBox {
                 id: sonarOffsetValueY
+                fontPixelSize: Tokens.fontLg
+                textColor: root._bright
                 width: Math.round(93 * AppPalette.scale)
                 height: Tokens.controlHMd
                 anchors.left: sonarOffsetValueX.right
@@ -766,28 +815,36 @@ Column {
             }
         }
 
-        Settings { property alias sonarOffsetCheckButton: sonarOffsetCheckButton.checked }
-        Settings { property alias sonarOffsetValueX: sonarOffsetValueX.value }
-        Settings { property alias sonarOffsetValueY: sonarOffsetValueY.value }
+        Settings { category: "main/sonarOffset"; property alias sonarOffsetCheckButton: sonarOffsetCheckButton.checked }
+        Settings { category: "main/sonarOffset"; property alias sonarOffsetValueX: sonarOffsetValueX.value }
+        Settings { category: "main/sonarOffset"; property alias sonarOffsetValueY: sonarOffsetValueY.value }
 
         ParamCard {
             id: zeroingPosButton
             label: qsTr("Pos zeroing")
+            labelColor: root._bright
+            labelPixelSize: Tokens.fontLg
+            toolTipText: qsTr("Zeroes position coordinates relative to the start point.")
             onToggled: function(v) { core.setPosZeroing(v) }
         }
-        Settings { property alias zeroingPosButtonCheched: zeroingPosButton.checked }
+        Settings { category: "main/dataset"; property alias zeroingPosButtonCheched: zeroingPosButton.checked }
 
         ParamCard {
             id: zeroingBottomTrackButton
             label: qsTr("Bottom track zeroing")
+            labelColor: root._bright
+            labelPixelSize: Tokens.fontLg
+            toolTipText: qsTr("Zeroes the bottom-track depth reference.")
             onToggled: function(v) { core.setBottomTrackZeroing(v) }
         }
-        Settings { property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
+        Settings { category: "main/dataset"; property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
 
-        KButton {
+        NavButton {
             visible: instruments >= 1
             width: parent.width
+            height: Math.round(38 * AppPalette.scale)
             text: qsTr("TGC")
+            toolTipText: qsTr("Open TGC settings")
             onClicked: if (root.store) root.store.openTgcSettings()
         }
     }
@@ -802,26 +859,13 @@ Column {
         description: qsTr("Vessel track displayed in the 3D scene.")
         stateStore: root.store
         stateKey: "app.boattrack"
-        headerActions: KCircleIconButton {
-            readonly property bool _on: root.store ? root.store.boatTrackVisible : false
-            width: boatTrackGroup.headerActionSize
-            height: boatTrackGroup.headerActionSize
-            iconSource: "qrc:/icons/ui/3dcube.svg"
-            iconPixelSize: Math.round(width * 0.58)
-            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
-            toolTipText: qsTr("Show in 3D")
-            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+        headerActions: ShowIn3DAction {
+            active: root.store ? root.store.boatTrackVisible : false
             onClicked: if (root.store) root.store.boatTrackVisible = !root.store.boatTrackVisible
         }
+        expandable: false   // no body controls — header + description only
         collapsedByDefault: true
 
-        ParamCard {
-            id: boatTrackVisible3d
-            label: qsTr("Show in 3D")
-            onToggled: function(v) { if (root.store) root.store.boatTrackVisible = v }
-            Binding { target: boatTrackVisible3d; property: "checked"; value: root.store ? root.store.boatTrackVisible : true }
-        }
     }
 
     // Bottom Track
@@ -834,16 +878,8 @@ Column {
         description: qsTr("Bottom detection presets, thresholds and search window.")
         stateStore: root.store
         stateKey: "app.bottomtrack"
-        headerActions: KCircleIconButton {
-            readonly property bool _on: root.store ? root.store.bottomTrackVisible : false
-            width: btGroup.headerActionSize
-            height: btGroup.headerActionSize
-            iconSource: "qrc:/icons/ui/3dcube.svg"
-            iconPixelSize: Math.round(width * 0.58)
-            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
-            toolTipText: qsTr("Show in 3D")
-            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+        headerActions: ShowIn3DAction {
+            active: root.store ? root.store.bottomTrackVisible : false
             onClicked: if (root.store) root.store.bottomTrackVisible = !root.store.bottomTrackVisible
         }
         collapsedByDefault: false
@@ -885,13 +921,6 @@ Column {
 
         Component.onCompleted: refreshParams()
 
-        ParamCard {
-            id: bottomTrackVisible3d
-            label: qsTr("Show in 3D")
-            onToggled: function(v) { if (root.store) root.store.bottomTrackVisible = v }
-            Binding { target: bottomTrackVisible3d; property: "checked"; value: root.store ? root.store.bottomTrackVisible : false }
-        }
-
         // Preset
         Column {
             width: parent.width
@@ -919,14 +948,14 @@ Column {
                     onValueSelected: function(v) { btPresetHolder.selectedIndex = v }
                 }
 
-                Settings { property alias bottomTrackList: btPresetHolder.selectedIndex }
+                Settings { category: "scene2d/bottomTrack"; property alias bottomTrackList: btPresetHolder.selectedIndex }
             }
         }
 
         // Gain slope
         ParamCard {
             id: bottomTrackGainSlope
-            label: qsTr("Gain slope:")
+            label: qsTr("Gain slope")
             checked: true
             slotWidth: btGroup.spinW
             onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setGainSlope(bottomTrackGainSlopeValue.value / 100) }
@@ -941,13 +970,13 @@ Column {
                 onValueModified: function(v) { if (bottomTrackGainSlope.checked && root.targetPlot) root.targetPlot.setGainSlope(v / 100) }
             }
         }
-        Settings { property alias bottomTrackGainSlope: bottomTrackGainSlope.checked }
-        Settings { property alias bottomTrackGainSlopeValue: bottomTrackGainSlopeValue.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackGainSlope: bottomTrackGainSlope.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackGainSlopeValue: bottomTrackGainSlopeValue.value }
 
         // Threshold
         ParamCard {
             id: bottomTrackThreshold
-            label: qsTr("Threshold:")
+            label: qsTr("Threshold")
             slotWidth: btGroup.spinW
             onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setThreshold(bottomTrackThresholdValue.value / 100) }
 
@@ -961,13 +990,13 @@ Column {
                 onValueModified: function(v) { if (bottomTrackThreshold.checked && root.targetPlot) root.targetPlot.setThreshold(v / 100) }
             }
         }
-        Settings { property alias bottomTrackThreshold: bottomTrackThreshold.checked }
-        Settings { property alias bottomTrackThresholdValue: bottomTrackThresholdValue.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackThreshold: bottomTrackThreshold.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackThresholdValue: bottomTrackThresholdValue.value }
 
         // Horizontal window
         ParamCard {
             id: bottomTrackWindow
-            label: qsTr("Horizontal window:")
+            label: qsTr("Horizontal window")
             slotWidth: btGroup.spinW
             onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setWindowSize(bottomTrackWindowValue.value) }
 
@@ -981,13 +1010,13 @@ Column {
                 onValueModified: function(v) { if (bottomTrackWindow.checked && root.targetPlot) root.targetPlot.setWindowSize(v) }
             }
         }
-        Settings { property alias bottomTrackWindow: bottomTrackWindow.checked }
-        Settings { property alias bottomTrackWindowValue: bottomTrackWindowValue.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackWindow: bottomTrackWindow.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackWindowValue: bottomTrackWindowValue.value }
 
         // Vertical gap
         ParamCard {
             id: bottomTrackVerticalGap
-            label: qsTr("Vertical gap, %:")
+            label: qsTr("Vertical gap, %")
             slotWidth: btGroup.spinW
             onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01) }
 
@@ -1001,13 +1030,13 @@ Column {
                 onValueModified: function(v) { if (bottomTrackVerticalGap.checked && root.targetPlot) root.targetPlot.setVerticalGap(v * 0.01) }
             }
         }
-        Settings { property alias bottomTrackVerticalGap: bottomTrackVerticalGap.checked }
-        Settings { property alias bottomTrackVerticalGapValue: bottomTrackVerticalGapValue.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackVerticalGap: bottomTrackVerticalGap.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackVerticalGapValue: bottomTrackVerticalGapValue.value }
 
         // Min range
         ParamCard {
             id: bottomTrackMinRange
-            label: qsTr("Min range, m:")
+            label: qsTr("Min range, m")
             slotWidth: btGroup.spinW
             onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMin(bottomTrackMinRangeValue.value / 1000) }
 
@@ -1021,13 +1050,13 @@ Column {
                 onValueModified: function(v) { if (bottomTrackMinRange.checked && root.targetPlot) root.targetPlot.setRangeMin(v / 1000) }
             }
         }
-        Settings { property alias bottomTrackMinRange: bottomTrackMinRange.checked }
-        Settings { property alias bottomTrackMinRangeValue: bottomTrackMinRangeValue.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMinRange: bottomTrackMinRange.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMinRangeValue: bottomTrackMinRangeValue.value }
 
         // Max range
         ParamCard {
             id: bottomTrackMaxRange
-            label: qsTr("Max range, m:")
+            label: qsTr("Max range, m")
             slotWidth: btGroup.spinW
             onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMax(bottomTrackMaxRangeValue.value / 1000) }
 
@@ -1041,13 +1070,13 @@ Column {
                 onValueModified: function(v) { if (bottomTrackMaxRange.checked && root.targetPlot) root.targetPlot.setRangeMax(v / 1000) }
             }
         }
-        Settings { property alias bottomTrackMaxRange: bottomTrackMaxRange.checked }
-        Settings { property alias bottomTrackMaxRangeValue: bottomTrackMaxRangeValue.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMaxRange: bottomTrackMaxRange.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMaxRangeValue: bottomTrackMaxRangeValue.value }
 
         // Sensor offset (label row + values row)
         ParamCard {
             id: bottomTrackSensorOffset
-            label: qsTr("Sonar offset XYZ, mm:")
+            label: qsTr("Sonar offset XYZ, mm")
             onToggled: function(v) {
                 if (v && root.targetPlot) {
                     root.targetPlot.setOffsetX(btOffX.value *  0.001)
@@ -1077,31 +1106,17 @@ Column {
                 onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetZ(v * 0.001) }
             }
         }
-        Settings { property alias bottomTrackSensorOffset: bottomTrackSensorOffset.checked }
-        Settings { property alias bottomTrackSensorOffsetValueX: btOffX.value }
-        Settings { property alias bottomTrackSensorOffsetValueY: btOffY.value }
-        Settings { property alias bottomTrackSensorOffsetValueZ: btOffZ.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffset: bottomTrackSensorOffset.checked }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueX: btOffX.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueY: btOffY.value }
+        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueZ: btOffZ.value }
 
         // Action buttons
-        Row {
-            width: parent.width; spacing: Tokens.spaceMd
-            readonly property real bw: (width - Tokens.spaceMd) / 2
-
-            KButton {
-                width: parent.bw
-                text: qsTr("Processing")
-                onClicked: btGroup.doDistProcessing()
-            }
-
-            KButton {
-                id: btRealtimeBtn
-                width: parent.bw
-                text: qsTr("Realtime")
-                checkable: true
-                checked: false
-                onToggled: core.setBottomTrackRealtimeFromSettings(checked)
-                Component.onCompleted: core.setBottomTrackRealtimeFromSettings(false)
-            }
+        KButton {
+            width: parent.width
+            fontPixelSize: Tokens.fontLg
+            text: qsTr("Processing")
+            onClicked: btGroup.doDistProcessing()
         }
     }
 
@@ -1115,23 +1130,15 @@ Column {
         description: qsTr("Equal-depth contour lines on the surface.")
         stateStore: root.store
         stateKey: "app.isobaths"
-        headerActions: KCircleIconButton {
-            readonly property bool _on: root.store ? root.store.isobathsVisible : false
-            width: isobathsGroup.headerActionSize
-            height: isobathsGroup.headerActionSize
-            iconSource: "qrc:/icons/ui/3dcube.svg"
-            iconPixelSize: Math.round(width * 0.58)
-            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
-            toolTipText: qsTr("Show in 3D")
-            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+        headerActions: ShowIn3DAction {
+            active: root.store ? root.store.isobathsVisible : false
             onClicked: if (root.store) root.store.isobathsVisible = !root.store.isobathsVisible
         }
         collapsedByDefault: true
 
-        readonly property int ctrlW: Math.round(200 * AppPalette.scale)
-        property var exportSurfaceFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
-        property string exportSurfacePathSource: ""
+        readonly property int ctrlW: Math.round(170 * AppPalette.scale)
+        property var exportSurfaceFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/KoggerApp/exports"
+        property string exportSurfacePathSource: core.defaultExportDirectory() + "/surface.csv"
 
         // Hotkey API — invoked from WorkspaceStore.applyIsobathsHotkey().
         function prevTheme() {
@@ -1172,18 +1179,21 @@ Column {
             return displayText
         }
         function currentExportSurfacePath() {
-            return isoEffectiveSource(exportSurfacePathText.text, exportSurfacePathSource)
+            var p = isoSourceUrl(isoEffectiveSource(exportSurfacePathText.text, exportSurfacePathSource))
+            if (!p || p.length === 0)
+                p = core.defaultExportDirectory() + "/surface.csv"
+            return p
+        }
+        function hasInvalidFileName(p) {
+            var name = p.replace(/^.*[\\/]/, "")
+            if (name.length === 0) return true
+            return /[<>:"|?*\x00-\x1F]/.test(name)
         }
 
         Component.onCompleted: {
+            if (!exportSurfacePathSource || exportSurfacePathSource.length === 0)
+                exportSurfacePathSource = core.defaultExportDirectory() + "/surface.csv"
             exportSurfacePathText.text = isoDisplayUrl(exportSurfacePathSource)
-        }
-
-        ParamCard {
-            id: isobathsVisible3d
-            label: qsTr("Show in 3D")
-            onToggled: function(v) { if (root.store) root.store.isobathsVisible = v }
-            Binding { target: isobathsVisible3d; property: "checked"; value: root.store ? root.store.isobathsVisible : false }
         }
 
         RowLayout {
@@ -1192,12 +1202,13 @@ Column {
 
             Text {
                 text: qsTr("Theme:")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontMd
+                color: AppPalette.textStrong
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
             }
             KCombo {
                 id: isobathsTheme
+                toolTipText: qsTr("Colour theme for isobaths (palette by depth)")
                 Layout.preferredWidth: isobathsGroup.ctrlW
                 model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("Standard"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green")]
                 swatchFor: function(i) { return IsobathsViewControlMenuController.themeStops(i) }
@@ -1219,18 +1230,19 @@ Column {
 
             Text {
                 text: qsTr("Edge limit, m:")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontMd
+                color: AppPalette.textStrong
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
             }
             KSpinBox {
                 id: isobathsEdgeLimitSpinBox
+                toolTipText: qsTr("Max triangulation edge length")
                 Layout.preferredWidth: isobathsGroup.ctrlW
                 from: 10; to: 1000; stepSize: 5; value: 100
                 editable: false
                 onValueModified: function(v) { IsobathsViewControlMenuController.onEdgeLimitChanged(v) }
                 Component.onCompleted: IsobathsViewControlMenuController.onEdgeLimitChanged(value)
-                Settings { property alias isobathsEdgeLimitSpinBox: isobathsEdgeLimitSpinBox.value }
+                Settings { category: "scene3d/isobaths"; property alias isobathsEdgeLimitSpinBox: isobathsEdgeLimitSpinBox.value }
             }
         }
 
@@ -1240,12 +1252,13 @@ Column {
 
             Text {
                 text: qsTr("Step, m:")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontMd
+                color: AppPalette.textStrong
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
             }
             KSpinBox {
                 id: isobathsSurfaceLineStepSizeSpinBox
+                toolTipText: qsTr("Isobath interval — spacing between depth lines")
                 Layout.preferredWidth: isobathsGroup.ctrlW
                 from: 1; to: 200; stepSize: 1; value: 10
                 divisor: 10; decimals: 1
@@ -1253,7 +1266,7 @@ Column {
                 readonly property real realValue: value / 10
                 onValueModified: function(v) { IsobathsViewControlMenuController.onSetSurfaceLineStepSize(v / 10) }
                 Component.onCompleted: IsobathsViewControlMenuController.onSetSurfaceLineStepSize(realValue)
-                Settings { property alias isobathsSurfaceLineStepSizeSpinBox: isobathsSurfaceLineStepSizeSpinBox.value }
+                Settings { category: "scene3d/isobaths"; property alias isobathsSurfaceLineStepSizeSpinBox: isobathsSurfaceLineStepSizeSpinBox.value }
             }
         }
 
@@ -1263,18 +1276,19 @@ Column {
 
             Text {
                 text: qsTr("Extra width, m:")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontMd
+                color: AppPalette.textStrong
+                font.pixelSize: Tokens.fontLg
                 Layout.fillWidth: true
             }
             KSpinBox {
                 id: extraWidthSpinBox
+                toolTipText: qsTr("Surface extrapolation radius around the track")
                 Layout.preferredWidth: isobathsGroup.ctrlW
                 from: 5; to: 100; stepSize: 5; value: 10
                 editable: false
                 onValueModified: function(v) { IsobathsViewControlMenuController.onSetExtraWidth(v) }
                 Component.onCompleted: IsobathsViewControlMenuController.onSetExtraWidth(value)
-                Settings { property alias extraWidthSpinBox: extraWidthSpinBox.value }
+                Settings { category: "scene3d/isobaths"; property alias extraWidthSpinBox: extraWidthSpinBox.value }
             }
         }
 
@@ -1284,12 +1298,10 @@ Column {
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredWidth: isobathsGroup.ctrlW
-                Layout.maximumWidth: isobathsGroup.ctrlW
                 Layout.preferredHeight: Tokens.controlHMd
                 radius: Tokens.radiusMd
                 color: AppPalette.bg
-                border.width: 1
+                border.width: exportSurfacePathText.activeFocus ? 1 : Tokens.cardBorderWidth
                 border.color: exportSurfacePathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
 
                 TextInput {
@@ -1301,14 +1313,14 @@ Column {
                     TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: exportSurfacePathText.selectAll() }
                     verticalAlignment: TextInput.AlignVCenter
                     color: AppPalette.text
-                    font.pixelSize: Tokens.fontSm
+                    font.pixelSize: Tokens.fontBase
                     clip: true
 
                     Text {
                         visible: !exportSurfacePathText.text.length
                         text: qsTr("Enter path")
                         color: AppPalette.textMuted
-                        font.pixelSize: Tokens.fontSm
+                        font.pixelSize: Tokens.fontBase
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
@@ -1316,8 +1328,13 @@ Column {
 
             KButton {
                 text: "..."
+                toolTipText: qsTr("Choose the surface .csv file")
                 Layout.fillWidth: false
-                implicitWidth: Math.round(40 * AppPalette.scale)
+                Layout.preferredWidth: Tokens.controlHMd
+                Layout.maximumWidth: Tokens.controlHMd
+                Layout.preferredHeight: Tokens.controlHMd
+                horizontalPadding: 0
+                verticalPadding: 0
                 onClicked: {
                     exportSurfaceFileDialog.currentFolder = isobathsGroup.exportSurfaceFolder
                     exportSurfaceFileDialog.open()
@@ -1344,12 +1361,29 @@ Column {
 
             KButton {
                 text: qsTr("Export to CSV")
-                Layout.fillWidth: true
-                onClicked: Scene3DControlMenuController.onExportToCSVButtonClicked(isobathsGroup.currentExportSurfacePath())
+                toolTipText: qsTr("Export the surface to CSV")
+                fontPixelSize: Tokens.fontLg
+                Layout.fillWidth: false
+                Layout.preferredWidth: isobathsGroup.ctrlW
+                Layout.maximumWidth: isobathsGroup.ctrlW
+                Layout.preferredHeight: Tokens.controlHMd
+                onClicked: {
+                    var p = isobathsGroup.currentExportSurfacePath()
+                    var hasN = typeof notifications !== "undefined" && notifications
+                    if (isobathsGroup.hasInvalidFileName(p)) {
+                        if (hasN) notifications.warning(qsTr("Invalid characters in file name"))
+                        return
+                    }
+                    var ok = Scene3DControlMenuController.onExportToCSVButtonClicked(p)
+                    if (hasN) {
+                        if (ok) notifications.info(qsTr("Surface exported to %1").arg(p), p)
+                        else    notifications.warning(qsTr("Surface export failed"))
+                    }
+                }
             }
 
-            Settings { property alias exportSurfaceFolder:     isobathsGroup.exportSurfaceFolder }
-            Settings { property alias exportSurfaceFolderText: isobathsGroup.exportSurfacePathSource }
+            Settings { category: "main/export"; property alias exportSurfaceFolder:     isobathsGroup.exportSurfaceFolder }
+            Settings { category: "main/export"; property alias exportSurfaceFolderText: isobathsGroup.exportSurfacePathSource }
         }
     }
 
@@ -1363,22 +1397,14 @@ Column {
         description: qsTr("Side-scan mosaic visualisation.")
         stateStore: root.store
         stateKey: "app.mosaic"
-        headerActions: KCircleIconButton {
-            readonly property bool _on: root.store ? root.store.mosaicVisible : false
-            width: mosaicGroup.headerActionSize
-            height: mosaicGroup.headerActionSize
-            iconSource: "qrc:/icons/ui/3dcube.svg"
-            iconPixelSize: Math.round(width * 0.58)
-            iconTintColor: _on ? AppPalette.text : AppPalette.textSecond
-            toolTipText: qsTr("Show in 3D")
-            fillColor:   _on ? AppPalette.accentBgStrong : AppPalette.card
-            borderColor: _on ? AppPalette.accentBorder : AppPalette.border
+        headerActions: ShowIn3DAction {
+            active: root.store ? root.store.mosaicVisible : false
             onClicked: if (root.store) root.store.mosaicVisible = !root.store.mosaicVisible
         }
         collapsedByDefault: true
 
         readonly property int labelW: Math.round(140 * AppPalette.scale)
-        readonly property int ctrlW:  Math.round(220 * AppPalette.scale)
+        readonly property int ctrlW:  Math.round(170 * AppPalette.scale)
 
         function setChannelNamesToBackend() {
             core.setMosaicChannels(channel1Combo.currentText, channel2Combo.currentText)
@@ -1414,13 +1440,6 @@ Column {
                 mosaicLevelsSlider.startValue = mosaicLevelsSlider.stopValue
         }
 
-        ParamCard {
-            id: mosaicVisible3d
-            label: qsTr("Show in 3D")
-            onToggled: function(v) { if (root.store) root.store.mosaicVisible = v }
-            Binding { target: mosaicVisible3d; property: "checked"; value: root.store ? root.store.mosaicVisible : false }
-        }
-
         RowLayout {
             width: parent.width
             spacing: Tokens.spaceMd
@@ -1428,10 +1447,12 @@ Column {
             KChartLevelCapsule {
                 id: mosaicLevelsSlider
                 Layout.fillHeight: true
+                cornerRadius: Tokens.radiusLg   // settings: rounded rectangle (2D overlay stays a pill)
                 onStartValueChanged: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
                 onStopValueChanged:  MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
                 Component.onCompleted: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
                 Settings {
+                    category: "scene3d/mosaic"
                     property alias mosaicLevelsStart: mosaicLevelsSlider.startValue
                     property alias mosaicLevelsStop:  mosaicLevelsSlider.stopValue
                 }
@@ -1445,8 +1466,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Theme:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
                         Layout.fillWidth: true
                     }
                     KCombo {
@@ -1470,13 +1491,13 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Channels:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignTop
                     }
                     ColumnLayout {
-                        spacing: Tokens.spaceXs
+                        spacing: Tokens.spaceMd
                         Layout.preferredWidth: mosaicGroup.ctrlW
 
                         KCombo {
@@ -1581,17 +1602,18 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Angle, °:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignTop
                     }
                     ColumnLayout {
-                        spacing: Tokens.spaceXs
+                        spacing: Tokens.spaceMd
                         Layout.preferredWidth: mosaicGroup.ctrlW
 
                         KSpinBox {
                             id: mosaicLAngleOffset
+                            toolTipText: qsTr("Left-side beam angle offset for the mosaic, °")
                             Layout.preferredWidth: mosaicGroup.ctrlW
                             from: -90; to: 90; stepSize: 1; value: 0
                             onValueModified: function(v) {
@@ -1602,11 +1624,12 @@ Column {
                                 MosaicViewControlMenuController.onSetLAngleOffset(value)
                                 dataset.onSetLAngleOffset(value)
                             }
-                            Settings { property alias mosaicLAngleOffset: mosaicLAngleOffset.value }
+                            Settings { category: "scene3d/mosaic"; property alias mosaicLAngleOffset: mosaicLAngleOffset.value }
                         }
 
                         KSpinBox {
                             id: mosaicRAngleOffset
+                            toolTipText: qsTr("Right-side beam angle offset for the mosaic, °")
                             Layout.preferredWidth: mosaicGroup.ctrlW
                             from: -90; to: 90; stepSize: 1; value: 0
                             onValueModified: function(v) {
@@ -1617,7 +1640,7 @@ Column {
                                 MosaicViewControlMenuController.onSetRAngleOffset(value)
                                 dataset.onSetRAngleOffset(value)
                             }
-                            Settings { property alias mosaicRAngleOffset: mosaicRAngleOffset.value }
+                            Settings { category: "scene3d/mosaic"; property alias mosaicRAngleOffset: mosaicRAngleOffset.value }
                         }
                     }
                 }
@@ -1625,19 +1648,21 @@ Column {
                 KSwitch {
                     id: mosaicTraceLine
                     text: qsTr("Trace line")
+                    toolTipText: qsTr("Show the current mosaic trace line")
                     checked: true
                     Layout.fillWidth: true
                     onToggled: MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
                     Component.onCompleted: MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
-                    Settings { property alias mosaicTraceLine: mosaicTraceLine.checked }
+                    Settings { category: "scene3d/mosaic"; property alias mosaicTraceLine: mosaicTraceLine.checked }
                 }
 
                 RowLayout {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Data source:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
+                        elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
                     KCircleIconButton {
@@ -1646,8 +1671,10 @@ Column {
                         Layout.preferredHeight: Tokens.controlHMd
                         iconSource: "qrc:/icons/ui/settings.svg"
                         iconTintColor: AppPalette.accentBar
-                        fillColor: "transparent"
-                        fillHoverColor: AppPalette.cardHover
+                        cornerRadius: Tokens.radiusSm   // square, not a circle
+                        fillColor: AppPalette.controlRaised
+                        fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
+                        borderWidth: 0
                         borderColor: "transparent"
                         toolTipText: qsTr("Open TGC settings")
                         onClicked: if (root.store) root.store.openTgcSettings()
@@ -1659,7 +1686,7 @@ Column {
                         currentIndex: 1
                         onCurrentIndexChanged: core.setMosaicSource(currentIndex)
                         Component.onCompleted: core.setMosaicSource(currentIndex)
-                        Settings { property alias mosaicSource: mosaicSource.currentIndex }
+                        Settings { category: "scene3d/mosaic"; property alias mosaicSource: mosaicSource.currentIndex }
                     }
                 }
 
@@ -1709,7 +1736,7 @@ Column {
                                 readonly property int effectiveN: (core.posZeroing && value < to) ? value : 0
                                 onEffectiveNChanged: core.setMosaicFakeCoordsLastN(effectiveN)
                                 Component.onCompleted: core.setMosaicFakeCoordsLastN(effectiveN)
-                                Settings { property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value }
+                                Settings { category: "main/dataset"; property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value }
                             }
                             Text {
                                 Layout.preferredWidth: Math.round(50 * AppPalette.scale)
@@ -1729,7 +1756,7 @@ Column {
                             readonly property bool effectiveClearOldData: checked && core.posZeroing
                             onEffectiveClearOldDataChanged: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
                             Component.onCompleted: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
-                            Settings { property alias fakeCoordsClearOldDataCheck: fakeCoordsClearOldDataCheck.checked }
+                            Settings { category: "main/dataset"; property alias fakeCoordsClearOldDataCheck: fakeCoordsClearOldDataCheck.checked }
                         }
                     }
                 }
@@ -1751,7 +1778,7 @@ Column {
 
         Column {
             width: parent.width
-            spacing: Tokens.spaceXs
+            spacing: Tokens.spaceMd
 
             HoverHandler {
                 onHoveredChanged: if (!hovered) root.store.highlightedLeafId = -1
@@ -1775,7 +1802,7 @@ Column {
                     height: Math.round(38 * AppPalette.scale)
                     radius: Tokens.radiusLg
                     color: navMouse.containsMouse ? AppPalette.bgHover : AppPalette.bg
-                    border.width: 1
+                    border.width: Tokens.cardBorderWidth
                     border.color: navMouse.containsMouse ? AppPalette.borderHover : AppPalette.border
                     Behavior on color       { ColorAnimation { duration: 110 } }
                     Behavior on border.color { ColorAnimation { duration: 110 } }
@@ -1792,8 +1819,8 @@ Column {
                         anchors.rightMargin: Tokens.spaceMd
                         anchors.verticalCenter: parent.verticalCenter
                         text: modelData.label
-                        color: AppPalette.text
-                        font.pixelSize: Tokens.fontMd
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
                         elide: Text.ElideRight
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -1836,8 +1863,8 @@ Column {
                 spacing: Tokens.spaceMd
                 Text {
                     text: qsTr("Size")
-                    color: AppPalette.textSecond
-                    font.pixelSize: Tokens.fontMd
+                    color: root._bright
+                    font.pixelSize: Tokens.fontLg
                     Layout.fillWidth: true
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -1854,8 +1881,8 @@ Column {
                 spacing: Tokens.spaceMd
                 Text {
                     text: qsTr("Zoom")
-                    color: AppPalette.textSecond
-                    font.pixelSize: Tokens.fontMd
+                    color: root._bright
+                    font.pixelSize: Tokens.fontLg
                     verticalAlignment: Text.AlignVCenter
                 }
                 KSlider {
@@ -1873,9 +1900,9 @@ Column {
                 }
                 Text {
                     text: (root.store ? Math.round(root.store.echogramLoupeZoom) : 0) + "%"
-                    color: AppPalette.textMuted
-                    font.pixelSize: Tokens.fontSm
-                    Layout.preferredWidth: Math.round(40 * AppPalette.scale)
+                    color: root._bright
+                    font.pixelSize: Tokens.fontLg
+                    Layout.preferredWidth: Math.round(52 * AppPalette.scale)
                     horizontalAlignment: Text.AlignRight
                 }
             }
@@ -1884,21 +1911,25 @@ Column {
         ParamCardGroup {
             width: parent.width
             label: qsTr("Sync echograms")
+            toolTipText: qsTr("Sync the cursor position across all echograms")
             checked: root.store ? root.store.echogramSyncCursor : false
             onToggled: function(v) { if (root.store) root.store.echogramSyncCursor = v }
 
             KSwitch {
                 width: parent.width
                 text: qsTr("Sync view")
+                toolTipText: qsTr("Sync scroll and zoom across echograms")
                 enabled: root.store ? root.store.echogramSyncCursor : false
                 checked: root.store ? root.store.echogramSyncView : false
                 onToggled: if (root.store) root.store.echogramSyncView = checked
             }
         }
 
-        KButton {
+        NavButton {
             width: parent.width
+            fontPixelSize: Tokens.fontLg
             text: qsTr("Information panel")
+            toolTipText: qsTr("Configure the information panel")
             onClicked: if (root.store) root.store.openAimPanelSettings()
         }
     }
@@ -1918,25 +1949,16 @@ Column {
 
             Text {
                 width: parent.width
-                text: qsTr("Rendering")
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
+                text: qsTr("Rendering") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
                 topPadding: Tokens.spaceXs
-            }
-
-            KButton {
-                width: parent.width
-                text: qsTr("Reset depth zoom")
-                visible: Qt.platform.os !== "android"
-                onClicked: {
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onCancelZoomButtonClicked()
-                }
             }
 
             ParamCard {
                 width: parent.width
                 label: qsTr("Show surface quality")
+                toolTipText: qsTr("Show the surface quality label in the 3D scene")
                 checked: root.store ? root.store.showSurfaceQuality : false
                 onToggled: function(v) {
                     if (root.store)
@@ -1972,8 +1994,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Size")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
                         Layout.fillWidth: true
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -1993,8 +2015,8 @@ Column {
                     spacing: Tokens.spaceMd
                     Text {
                         text: qsTr("Zoom, %:")
-                        color: AppPalette.textSecond
-                        font.pixelSize: Tokens.fontMd
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
                         verticalAlignment: Text.AlignVCenter
                     }
                     KSlider {
@@ -2014,9 +2036,9 @@ Column {
                     }
                     Text {
                         text: Math.round(syncLoupeZoomSlider.value) + "%"
-                        color: AppPalette.textMuted
-                        font.pixelSize: Tokens.fontSm
-                        Layout.preferredWidth: Math.round(40 * AppPalette.scale)
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
+                        Layout.preferredWidth: Math.round(52 * AppPalette.scale)
                         horizontalAlignment: Text.AlignRight
                     }
                 }
@@ -2025,6 +2047,7 @@ Column {
             ParamCard {
                 width: parent.width
                 label: qsTr("North mode")
+                toolTipText: qsTr("Orient the 3D view to north (north stays up)")
                 checked: render3dSettings.isNorthViewButton
                 onToggled: function(v) {
                     render3dSettings.isNorthViewButton = v
@@ -2036,6 +2059,7 @@ Column {
             ParamCard {
                 width: parent.width
                 label: qsTr("Sync echogram")
+                toolTipText: qsTr("Sync the cursor between the 2D echogram and the 3D scene")
                 checked: render3dSettings.selectionToolButton
                 onToggled: function(v) {
                     render3dSettings.selectionToolButton = v
@@ -2055,10 +2079,10 @@ Column {
                         Scene3dToolBarController.onGridVisibilityCheckedChanged(v)
                 }
 
-                // Nested: Circle sub-group with its own animated body.
                 ParamCardGroup {
                     id: gridTypeCard
                     label: qsTr("Circle")
+                    fillColor: AppPalette.bg
                     checked: render3dSettings.gridTypeCheckButton
                     onToggled: function(v) {
                         render3dSettings.gridTypeCheckButton = v
@@ -2077,63 +2101,84 @@ Column {
                         }
                     }
                     KParamGrid {
-                        RowLayout {
+                        Rectangle {
                             Layout.fillWidth: true
-                            height: Tokens.controlHMd
-                            spacing: Tokens.spaceSm
-                            Text {
-                                text: qsTr("Size:")
-                                color: AppPalette.textSecond
-                                font.pixelSize: Tokens.fontMd
-                            }
-                            KSpinBox {
-                                id: circleGridSizeSpinBox
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: Tokens.controlHMd
-                                from: 1; to: 3; stepSize: 1; value: 1
-                                onValueModified: function(v) {
-                                    if (typeof Scene3dToolBarController !== "undefined")
-                                        Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(v)
+                            Layout.preferredHeight: Tokens.controlHMd + 2 * Tokens.spaceXs
+                            radius: Tokens.radiusMd
+                            color: AppPalette.rowRaised
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: Tokens.spaceMd
+                                anchors.rightMargin: Tokens.spaceSm
+                                spacing: Tokens.spaceSm
+                                Text {
+                                    text: qsTr("Size")
+                                    color: root._bright
+                                    font.pixelSize: Tokens.fontLg
+                                }
+                                KSpinBox {
+                                    id: circleGridSizeSpinBox
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    from: 1; to: 3; stepSize: 1; value: 1
+                                    onValueModified: function(v) {
+                                        if (typeof Scene3dToolBarController !== "undefined")
+                                            Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(v)
+                                    }
                                 }
                             }
                         }
-                        RowLayout {
+                        Rectangle {
                             Layout.fillWidth: true
-                            height: Tokens.controlHMd
-                            spacing: Tokens.spaceSm
-                            Text {
-                                text: qsTr("Step:")
-                                color: AppPalette.textSecond
-                                font.pixelSize: Tokens.fontMd
-                            }
-                            KSpinBox {
-                                id: circleGridStepSpinBox
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: Tokens.controlHMd
-                                from: 1; to: 20; stepSize: 1; value: 1
-                                onValueModified: function(v) {
-                                    if (typeof Scene3dToolBarController !== "undefined")
-                                        Scene3dToolBarController.onPlaneGridCircleGridStepChanged(v)
+                            Layout.preferredHeight: Tokens.controlHMd + 2 * Tokens.spaceXs
+                            radius: Tokens.radiusMd
+                            color: AppPalette.rowRaised
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: Tokens.spaceMd
+                                anchors.rightMargin: Tokens.spaceSm
+                                spacing: Tokens.spaceSm
+                                Text {
+                                    text: qsTr("Step")
+                                    color: root._bright
+                                    font.pixelSize: Tokens.fontLg
+                                }
+                                KSpinBox {
+                                    id: circleGridStepSpinBox
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    from: 1; to: 20; stepSize: 1; value: 1
+                                    onValueModified: function(v) {
+                                        if (typeof Scene3dToolBarController !== "undefined")
+                                            Scene3dToolBarController.onPlaneGridCircleGridStepChanged(v)
+                                    }
                                 }
                             }
                         }
-                        RowLayout {
+                        Rectangle {
                             Layout.fillWidth: true
-                            height: Tokens.controlHMd
-                            spacing: Tokens.spaceSm
-                            Text {
-                                text: qsTr("Angle:")
-                                color: AppPalette.textSecond
-                                font.pixelSize: Tokens.fontMd
-                            }
-                            KSpinBox {
-                                id: circleGridAngleSpinBox
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: Tokens.controlHMd
-                                from: 1; to: 5; stepSize: 1; value: 1
-                                onValueModified: function(v) {
-                                    if (typeof Scene3dToolBarController !== "undefined")
-                                        Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(v)
+                            Layout.preferredHeight: Tokens.controlHMd + 2 * Tokens.spaceXs
+                            radius: Tokens.radiusMd
+                            color: AppPalette.rowRaised
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: Tokens.spaceMd
+                                anchors.rightMargin: Tokens.spaceSm
+                                spacing: Tokens.spaceSm
+                                Text {
+                                    text: qsTr("Angle")
+                                    color: root._bright
+                                    font.pixelSize: Tokens.fontLg
+                                }
+                                KSpinBox {
+                                    id: circleGridAngleSpinBox
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    from: 1; to: 5; stepSize: 1; value: 1
+                                    onValueModified: function(v) {
+                                        if (typeof Scene3dToolBarController !== "undefined")
+                                            Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(v)
+                                    }
                                 }
                             }
                         }
@@ -2168,9 +2213,9 @@ Column {
                         Layout.fillWidth: true
                         spacing: Tokens.spaceSm
                         Text {
-                            text: qsTr("Shape:")
-                            color: AppPalette.textSecond
-                            font.pixelSize: Tokens.fontMd
+                            text: qsTr("Shape")
+                            color: root._bright
+                            font.pixelSize: Tokens.fontLg
                         }
                         KCombo {
                             id: navigationArrowShapeCombo
@@ -2188,9 +2233,9 @@ Column {
                         Layout.fillWidth: true
                         spacing: Tokens.spaceSm
                         Text {
-                            text: qsTr("Size:")
-                            color: AppPalette.textSecond
-                            font.pixelSize: Tokens.fontMd
+                            text: qsTr("Size")
+                            color: root._bright
+                            font.pixelSize: Tokens.fontLg
                         }
                         KSpinBox {
                             id: navigationArrowSizeSpinBox
@@ -2222,9 +2267,9 @@ Column {
                         Layout.fillWidth: true
                         spacing: Tokens.spaceSm
                         Text {
-                            text: qsTr("Pos:")
-                            color: AppPalette.textSecond
-                            font.pixelSize: Tokens.fontMd
+                            text: qsTr("Pos")
+                            color: root._bright
+                            font.pixelSize: Tokens.fontLg
                         }
                         KSpinBox {
                             id: compassPosSpinBox
@@ -2241,9 +2286,9 @@ Column {
                         Layout.fillWidth: true
                         spacing: Tokens.spaceSm
                         Text {
-                            text: qsTr("Size:")
-                            color: AppPalette.textSecond
-                            font.pixelSize: Tokens.fontMd
+                            text: qsTr("Size")
+                            color: root._bright
+                            font.pixelSize: Tokens.fontLg
                         }
                         KSpinBox {
                             id: compassSizeSpinBox
@@ -2262,6 +2307,7 @@ Column {
             ParamCard {
                 width: parent.width
                 label: qsTr("Scale bar")
+                toolTipText: qsTr("Show the scale bar in the 3D scene")
                 checked: render3dSettings.scaleBarCheckButton
                 onToggled: function(v) {
                     render3dSettings.scaleBarCheckButton = v
@@ -2272,6 +2318,7 @@ Column {
 
             Settings {
                 id: render3dSettings
+                category: "scene3d/view"
                 property bool forceSingleZoomCheckButton: false
                 property bool syncLoupeCheckButton: false
                 property bool isNorthViewButton: false
@@ -2284,21 +2331,21 @@ Column {
                 property bool compassCheckButton: true
                 property bool scaleBarCheckButton: true
             }
-            Settings { property alias syncLoupeSize:        syncLoupeSizeSpinBox.value }
-            Settings { property alias syncLoupeZoom:        syncLoupeZoomSlider.value }
-            Settings { property alias circleGridSize:       circleGridSizeSpinBox.value }
-            Settings { property alias circleGridStep:       circleGridStepSpinBox.value }
-            Settings { property alias circleGridAngle:      circleGridAngleSpinBox.value }
-            Settings { property alias navigationArrowSize:  navigationArrowSizeSpinBox.value }
-            Settings { property alias navigationArrowShape: navigationArrowShapeCombo.currentIndex }
-            Settings { property alias compassPos:           compassPosSpinBox.value }
-            Settings { property alias compassSize:          compassSizeSpinBox.value }
+            Settings { category: "scene2d/echogramLoupe"; property alias syncLoupeSize:        syncLoupeSizeSpinBox.value }
+            Settings { category: "scene2d/echogramLoupe"; property alias syncLoupeZoom:        syncLoupeZoomSlider.value }
+            Settings { category: "scene3d/grid";            property alias circleGridSize:       circleGridSizeSpinBox.value }
+            Settings { category: "scene3d/grid";            property alias circleGridStep:       circleGridStepSpinBox.value }
+            Settings { category: "scene3d/grid";            property alias circleGridAngle:      circleGridAngleSpinBox.value }
+            Settings { category: "scene3d/navigationArrow"; property alias navigationArrowSize:  navigationArrowSizeSpinBox.value }
+            Settings { category: "scene3d/navigationArrow"; property alias navigationArrowShape: navigationArrowShapeCombo.currentIndex }
+            Settings { category: "scene3d/compass";         property alias compassPos:           compassPosSpinBox.value }
+            Settings { category: "scene3d/compass";         property alias compassSize:          compassSizeSpinBox.value }
 
             Text {
                 width: parent.width
-                text: qsTr("Map")
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
+                text: qsTr("Map") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
                 topPadding: Tokens.spaceXs
             }
 
@@ -2319,7 +2366,43 @@ Column {
             // preferences carry over from the old in-3D-toolbar UI.
             Settings {
                 id: mapVisibilitySettings
+                category: "scene3d/map"
                 property bool mapViewCheckButton: true
+            }
+
+            Row {
+                width: parent.width
+                spacing: Tokens.spaceMd
+                height: Tokens.controlHSm
+                visible: core.metered
+
+                Rectangle {
+                    width: Math.round(10 * AppPalette.scale)
+                    height: width
+                    radius: width / 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: AppPalette.linkIdleBorder
+                    border.width: 1
+                    border.color: AppPalette.border
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Metered network (limited)")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontMd
+                }
+            }
+
+            Settings { id: meteredSettings; category: "scene3d/map"; property bool deferTilesOnMetered: true }
+
+            ParamCard {
+                width: parent.width
+                label: qsTr("Limit downloads on metered networks")
+                checked: meteredSettings.deferTilesOnMetered
+                onToggled: function(v) {
+                    meteredSettings.deferTilesOnMetered = v
+                    core.setDeferTilesOnMetered(v)
+                }
             }
 
             // ── Internet status row ──────────────────────────────────────
@@ -2346,46 +2429,11 @@ Column {
                 }
             }
 
-            Row {
-                width: parent.width
-                spacing: Tokens.spaceMd
-                height: Tokens.controlHSm
-                visible: core.metered
-
-                Rectangle {
-                    width: Math.round(10 * AppPalette.scale)
-                    height: width
-                    radius: width / 2
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: AppPalette.linkIdleBorder
-                    border.width: 1
-                    border.color: AppPalette.border
-                }
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("Metered network (limited)")
-                    color: AppPalette.textSecond
-                    font.pixelSize: Tokens.fontMd
-                }
-            }
-
-            Settings { id: meteredSettings; property bool deferTilesOnMetered: true }
-
-            ParamCard {
-                width: parent.width
-                label: qsTr("Limit downloads on metered networks")
-                checked: meteredSettings.deferTilesOnMetered
-                onToggled: function(v) {
-                    meteredSettings.deferTilesOnMetered = v
-                    core.setDeferTilesOnMetered(v)
-                }
-            }
-
             Text {
                 width: parent.width
-                text: qsTr("Providers")
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
+                text: qsTr("Providers") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
                 topPadding: Tokens.spaceXs
             }
 
@@ -2416,7 +2464,7 @@ Column {
                     color: isSelected
                            ? AppPalette.accentBg
                            : (providerMouse.containsMouse ? AppPalette.bgHover : AppPalette.bg)
-                    border.width: 1
+                    border.width: Tokens.cardBorderWidth
                     border.color: isSelected
                                   ? AppPalette.accentBorder
                                   : (providerMouse.containsMouse ? AppPalette.borderHover : AppPalette.border)
@@ -2444,7 +2492,7 @@ Column {
                                 anchors.rightMargin: Tokens.spaceMd
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: modelData.name
-                                color: AppPalette.text
+                                color: providerRow.isSelected ? AppPalette.accentText : AppPalette.textStrong
                                 font.pixelSize: Tokens.fontMd
                                 elide: Text.ElideRight
                             }
@@ -2453,7 +2501,9 @@ Column {
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: modelData.layer_type
-                                color: AppPalette.textMuted
+                                color: providerRow.isSelected
+                                       ? Qt.rgba(AppPalette.accentText.r, AppPalette.accentText.g, AppPalette.accentText.b, 0.82)
+                                       : AppPalette.textSecond
                                 font.pixelSize: Tokens.fontSm
                             }
                         }
@@ -2472,7 +2522,9 @@ Column {
                                               : d.toLocaleDateString(Qt.locale(), Locale.ShortFormat)
                                 return qsTr("Cache since %1  •  %2 MB").arg(dateStr).arg(mb)
                             }
-                            color: AppPalette.textMuted
+                            color: providerRow.isSelected
+                                   ? Qt.rgba(AppPalette.accentText.r, AppPalette.accentText.g, AppPalette.accentText.b, 0.82)
+                                   : AppPalette.textMuted
                             font.pixelSize: Tokens.fontXs
                             elide: Text.ElideRight
                         }
@@ -2491,13 +2543,11 @@ Column {
                 }
             }
 
-            Item { width: parent.width; height: Tokens.spaceMd }
-
             Text {
                 width: parent.width
-                text: qsTr("Navigator")
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
+                text: qsTr("Navigator") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
                 topPadding: Tokens.spaceXs
             }
 
@@ -2523,29 +2573,63 @@ Column {
                 }
             }
 
-            Item { width: parent.width; height: Tokens.spaceMd }
-
-            KButton {
-                id: resetSurfaceBtn
+            Text {
                 width: parent.width
+                text: qsTr("Data") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                topPadding: Tokens.spaceXs
+            }
+
+            Item {
+                id: resetSurfaceRow
+                width: parent.width
+                implicitHeight: Tokens.controlHMd
+                height: implicitHeight
                 property bool confirming: false
-                text: confirming ? qsTr("Clear?") : qsTr("Reset surface")
-                danger: confirming
-                onClicked: {
-                    if (!confirming) {
-                        confirming = true
+
+                KButton {
+                    anchors.fill: parent
+                    visible: !resetSurfaceRow.confirming
+                    text: qsTr("Reset surface")
+                    onClicked: {
+                        resetSurfaceRow.confirming = true
                         resetSurfaceConfirmTimer.restart()
-                    } else {
-                        resetSurfaceConfirmTimer.stop()
-                        confirming = false
-                        if (typeof Scene3dToolBarController !== "undefined")
-                            Scene3dToolBarController.onResetProcessingButtonClicked()
                     }
                 }
+
+                RowLayout {
+                    anchors.fill: parent
+                    visible: resetSurfaceRow.confirming
+                    spacing: Tokens.spaceMd
+
+                    KButton {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        danger: true
+                        text: qsTr("Clear?")
+                        onClicked: {
+                            resetSurfaceConfirmTimer.stop()
+                            resetSurfaceRow.confirming = false
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onResetProcessingButtonClicked()
+                        }
+                    }
+                    KButton {
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: Math.round(110 * AppPalette.scale)
+                        text: qsTr("Cancel")
+                        onClicked: {
+                            resetSurfaceConfirmTimer.stop()
+                            resetSurfaceRow.confirming = false
+                        }
+                    }
+                }
+
                 Timer {
                     id: resetSurfaceConfirmTimer
                     interval: 3000
-                    onTriggered: resetSurfaceBtn.confirming = false
+                    onTriggered: resetSurfaceRow.confirming = false
                 }
             }
 
@@ -2628,7 +2712,7 @@ Column {
             }
 
             // Persists the chosen value across launches.
-            Settings { property alias appDoubleTapDistancePx: tapTolerSlider.value }
+            Settings { category: "main/ui"; property alias appDoubleTapDistancePx: tapTolerSlider.value }
 
             // ── Pane split grab thickness ────────────────────────────────
             Row {
@@ -2657,7 +2741,7 @@ Column {
                 onValueModified: function(v) { AppPalette.splitHitSizePx = v }
             }
 
-            Settings { property alias appSplitHitSizePx: splitHitSlider.value }
+            Settings { category: "main/ui"; property alias appSplitHitSizePx: splitHitSlider.value }
 
             // ── Sidebar slide animation duration ─────────────────────────
             Row {
@@ -2686,7 +2770,7 @@ Column {
                 onValueModified: function(v) { AppPalette.sidebarAnimMs = v }
             }
 
-            Settings { property alias appSidebarAnimMs: sidebarAnimSlider.value }
+            Settings { category: "main/ui"; property alias appSidebarAnimMs: sidebarAnimSlider.value }
 
             // ── Workspace rubber-band adjustment duration ────────────────
             Row {
@@ -2715,7 +2799,7 @@ Column {
                 onValueModified: function(v) { AppPalette.workspaceAnimMs = v }
             }
 
-            Settings { property alias appWorkspaceAnimMs: workspaceAnimSlider.value }
+            Settings { category: "main/ui"; property alias appWorkspaceAnimMs: workspaceAnimSlider.value }
 
             Component.onCompleted: {
                 AppPalette.doubleTapDistancePx = tapTolerSlider.value
@@ -2759,6 +2843,31 @@ Column {
                 text: "KOGGER LLC"
                 color: AppPalette.textMuted
                 font.pixelSize: Tokens.fontSm
+            }
+        }
+
+        KCircleIconButton {
+            visible: !!root._flick && root._flick.contentHeight > root._flick.height + 0.5
+            anchors.right: parent.right
+            anchors.rightMargin: Tokens.spaceLg
+            anchors.verticalCenter: footerCol.verticalCenter
+            width: Tokens.controlHLg
+            height: width
+            rounded: false
+            cornerRadius: Tokens.radiusMd
+            borderWidth: 0
+            fillColor: AppPalette.controlRaised
+            fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
+            toolTipText: qsTr("Scroll to top")
+            onClicked: root._scrollToTop()
+
+            DisclosureIndicator {
+                anchors.centerIn: parent
+                width: Math.round(12 * AppPalette.scale)
+                height: width
+                expanded: true
+                rotation: 180
+                indicatorColor: AppPalette.text
             }
         }
     }

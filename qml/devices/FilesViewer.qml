@@ -1,6 +1,8 @@
 import QtQuick 2.15
+import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import Qt5Compat.GraphicalEffects
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
@@ -19,6 +21,7 @@ Column {
     spacing: Tokens.spaceSm
 
     Settings {
+        category: "main/files"
         property alias logFolder:         filesViewer.lastLogFolder
         property alias recentOpenedFiles: filesViewer.recentOpenedFiles
         property alias pathText:          filesViewer.selectedLogPathSource
@@ -28,6 +31,21 @@ Column {
         target: core
         function onFileOpenFailed(path) { filesViewer.removeRecentFile(path) }
         function onFilePathChanged() { filesViewer.setLogPath(core.filePath) }
+    }
+
+    onStoreChanged: _consumeFilePathFocus()
+
+    Connections {
+        target: filesViewer.store
+        ignoreUnknownSignals: true
+        function onFilePathFocusRequestedChanged() { filesViewer._consumeFilePathFocus() }
+    }
+
+    function _consumeFilePathFocus() {
+        if (store && store.filePathFocusRequested) {
+            store.filePathFocusRequested = false
+            Qt.callLater(function() { if (pathText) pathText.forceActiveFocus() })
+        }
     }
 
     function urlSource(value) {
@@ -100,7 +118,10 @@ Column {
         recentOpenedFiles = updated
     }
 
-    Component.onCompleted: setLogPath(selectedLogPathSource.length ? selectedLogPathSource : core.filePath)
+    Component.onCompleted: {
+        setLogPath(selectedLogPathSource.length ? selectedLogPathSource : core.filePath)
+        _consumeFilePathFocus()
+    }
 
     component IconBtn: Rectangle {
         id: ib
@@ -108,12 +129,14 @@ Column {
         property bool checkable: false
         property string iconSource: ""
         property string toolTipText: ""
+        property real iconFillRatio: 0.55
+        property color iconColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
         signal clicked()
         signal toggled(bool val)
 
         width: Math.round(28 * AppPalette.scale); height: Math.round(28 * AppPalette.scale); radius: Tokens.radiusSm + 1
         color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? AppPalette.cardHover : AppPalette.card))
-        border.width: 1
+        border.width: Tokens.cardBorderWidth
         border.color: (checked || ibMa.containsMouse) ? AppPalette.borderHover : AppPalette.border
 
         Behavior on color { ColorAnimation { duration: 80 } }
@@ -129,14 +152,32 @@ Column {
 
         KFocusRing { id: focusRing }
 
-        Image {
+        Item {
+            id: iconWrap
             anchors.centerIn: parent
-            width: Math.round(ib.width * 0.55)
-            height: Math.round(ib.height * 0.55)
-            source: ib.iconSource
-            fillMode: Image.PreserveAspectFit
-            opacity: ib.checked ? 1.0 : 0.7
-            smooth: true
+            width: Math.round(ib.width * ib.iconFillRatio)
+            height: Math.round(ib.height * ib.iconFillRatio)
+            opacity: 1.0
+
+            Image {
+                id: ibImg
+                anchors.fill: parent
+                source: ib.iconSource
+                sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                visible: false
+                layer.enabled: true
+            }
+
+            ColorOverlay {
+                anchors.fill: ibImg
+                source: ibImg
+                color: ib.iconColor
+                smooth: true
+                cached: true
+            }
         }
 
         MouseArea {
@@ -155,18 +196,19 @@ Column {
 
     Text {
         text: qsTr("Open file:")
-        color: AppPalette.textMuted
-        font.pixelSize: Tokens.fontXs
+        color: AppPalette.textSecond
+        font.pixelSize: Tokens.fontBase
         leftPadding: Tokens.spaceXxs
     }
 
     Row {
-        width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
+        width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceXs
 
         Rectangle {
             // path + 3 IconBtn-а (open/append/close) = 4 элемента, 3 spacing-а.
-            width: parent.width - 3 * Tokens.controlHMd - 3 * Tokens.spaceSm
-            height: Tokens.controlHMd; radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+            width: parent.width - 3 * Tokens.controlHMd - 3 * Tokens.spaceXs
+            height: Tokens.controlHMd; radius: Tokens.radiusMd; color: AppPalette.bg
+            border.width: pathText.activeFocus ? 1 : Tokens.cardBorderWidth
             border.color: pathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
 
             TextInput {
@@ -175,10 +217,10 @@ Column {
                 anchors.fill: parent; anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
                 TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: pathText.selectAll() }
                 verticalAlignment: TextInput.AlignVCenter
-                color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
+                color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
                 Text {
                     visible: !pathText.text.length; text: qsTr("File path...")
-                    color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter
+                    color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; anchors.verticalCenter: parent.verticalCenter
                 }
                 Keys.onPressed: function(event) {
                     if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -192,7 +234,7 @@ Column {
         }
 
         IconBtn {
-            iconSource: "qrc:/icons/ui/file.svg"; toolTipText: qsTr("Open file")
+            iconSource: "qrc:/icons/ui/file.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Open file")
             width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
             onClicked: filesViewer.openNewFileDialog()
 
@@ -215,7 +257,7 @@ Column {
         }
 
         IconBtn {
-            iconSource: "qrc:/icons/ui/file_plus.svg"; toolTipText: qsTr("Append file")
+            iconSource: "qrc:/icons/ui/file_plus.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Append file")
             width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
             onClicked: { appendFileDialog.currentFolder = filesViewer.lastLogFolder; appendFileDialog.open() }
 
@@ -236,7 +278,7 @@ Column {
         }
 
         IconBtn {
-            iconSource: "qrc:/icons/ui/file_off.svg"; toolTipText: qsTr("Close file")
+            iconSource: "qrc:/icons/ui/file_off.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Close file")
             width: Tokens.controlHMd; height: Tokens.controlHMd; anchors.verticalCenter: parent.verticalCenter
             onClicked: {
                 if (core.openedFilePath.length > 0) {
@@ -253,12 +295,12 @@ Column {
     Column {
         visible: recentOpenedFiles.length > 0
         width: parent.width
-        spacing: Tokens.spaceXxs + 1
+        spacing: Tokens.spaceXs
 
         Text {
             text: qsTr("Recently opened:")
-            color: AppPalette.textMuted
-            font.pixelSize: Tokens.fontXs
+            color: AppPalette.textSecond
+            font.pixelSize: Tokens.fontBase
             leftPadding: Tokens.spaceXxs
         }
 
@@ -266,17 +308,23 @@ Column {
             model: Math.min(recentOpenedFiles.length, 3)
 
             Row {
+                id: recentRow
                 width: parent.width
                 spacing: Tokens.spaceXs
 
                 property string filePath: recentOpenedFiles[index] || ""
+                readonly property string fileName: {
+                    var d = filesViewer.urlDisplay(filePath)
+                    var i = Math.max(d.lastIndexOf("/"), d.lastIndexOf("\\"))
+                    return i >= 0 ? d.substring(i + 1) : d
+                }
 
                 Rectangle {
                     id: recentCard
                     width: parent.width - removeBtn.width - parent.spacing
-                    height: Tokens.controlHMd - Tokens.spaceXxs; radius: Tokens.radiusMd
+                    height: Tokens.controlHMd; radius: Tokens.radiusMd
                     color: recentMa.containsMouse ? AppPalette.cardHover : AppPalette.card
-                    border.width: 1; border.color: AppPalette.border
+                    border.width: Tokens.cardBorderWidth; border.color: AppPalette.border
                     Behavior on color { ColorAnimation { duration: 80 } }
 
                     activeFocusOnTab: true
@@ -288,7 +336,7 @@ Column {
                         anchors.fill: parent
                         anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
                         text: filesViewer.urlDisplay(parent.parent.filePath)
-                        color: AppPalette.text; font.pixelSize: Tokens.fontXs
+                        color: AppPalette.text; font.pixelSize: Tokens.fontLg
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideLeft
                     }
@@ -303,14 +351,20 @@ Column {
                         onPressed: focusRing.suppress()
                         onClicked: { recentCard.forceActiveFocus(); filesViewer.openRecentFile(parent.parent.filePath) }
                     }
+
+                    KToolTip {
+                        text: qsTr("Open %1").arg(recentRow.fileName)
+                        targetItem: recentCard
+                        shown: recentMa.containsMouse
+                    }
                 }
 
                 IconBtn {
                     id: removeBtn
                     iconSource: "qrc:/icons/ui/x.svg"
-                    width: Tokens.controlHMd - Tokens.spaceXxs
-                    height: Tokens.controlHMd - Tokens.spaceXxs
-                    toolTipText: qsTr("Remove")
+                    iconFillRatio: 0.8
+                    width: Tokens.controlHMd
+                    height: Tokens.controlHMd
                     onClicked: filesViewer.removeRecentFile(parent.filePath)
                 }
             }

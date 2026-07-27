@@ -13,7 +13,7 @@ Rectangle {
     property int contentMargin: 4
     property real splitGap: 4
     property color pane2DFill: "#2563EB"
-    property color pane2DStroke: AppPalette.accentBorder
+    property color pane2DStroke: "#93C5FD"
     property color pane3DFill: "#16A34A"
     property color pane3DStroke: "#86EFAC"
     property color popupFill: "#EF4444"

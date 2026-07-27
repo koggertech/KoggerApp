@@ -55,7 +55,7 @@ public:
     // and QGuiApplication is up — loads persisted manualScale and recomputes resCoeff.
     Q_INVOKABLE void initSettings() {
         QSettings settings;
-        manualScale_ = qBound(0.5, settings.value("ui/manualScale", 1.0).toReal(), 2.5);
+        manualScale_ = qBound(0.5, settings.value("main/ui/manualScale", 1.0).toReal(), 2.5);
         updateResCoeff();
         emit changed();
     }
@@ -113,7 +113,7 @@ public:
         if (qFuzzyCompare(s + 1.0, manualScale_ + 1.0)) return;
         manualScale_ = s;
         QSettings settings;
-        settings.setValue("ui/manualScale", s);
+        settings.setValue("main/ui/manualScale", s);
         updateResCoeff();
         emit changed();
     }
@@ -165,7 +165,7 @@ public:
 
     void setTheme(int theme_id = 0) {
         clearThemeResources();
-        if (theme_id < 0 || theme_id > 9) {
+        if (theme_id < 0 || theme_id > 11) {
             theme_id = 0;
         }
         _id = theme_id;
@@ -322,8 +322,8 @@ public:
             _disabledBackColor = new QColor(38, 30, 20);
             _hoveredBackColor = new QColor(74, 59, 39);
         } else if(theme_id == 7) {
-            _textColor = new QColor(147, 161, 161);
-            _textSolidColor = new QColor(147, 161, 161);
+            _textColor = new QColor(219, 228, 228);
+            _textSolidColor = new QColor(219, 228, 228);
             _menuBackColor = new QColor(0, 43, 54, 246);
             _controlBackColor = new QColor(7, 54, 66);
             _controlBorderColor = new QColor(88, 110, 117);
@@ -380,6 +380,46 @@ public:
             _disabledTextColor = new QColor(126, 128, 98);
             _disabledBackColor = new QColor(44, 46, 34);
             _hoveredBackColor = new QColor(86, 90, 66);
+        } else if(theme_id == 10) {
+            // Dracula
+            _textColor = new QColor(248, 248, 242);
+            _textSolidColor = new QColor(248, 248, 242);
+            _menuBackColor = new QColor(40, 42, 54, 245);
+            _controlBackColor = new QColor(55, 58, 74);
+            _controlBorderColor = new QColor(98, 114, 164);
+            _controlSolidBackColor = new QColor(68, 71, 90);
+            _controlSolidBorderColor = new QColor(120, 130, 170);
+            _activeControlBackColor = new QColor(245, 245, 240);
+            _sliderHandleColor = new QColor(236, 235, 244);
+            _sliderHandlePressedColor = new QColor(248, 248, 242);
+            _placeholderTextColor = new QColor(200, 204, 220, 220);
+            _tooltipBackColor = new QColor(40, 42, 54, 238);
+            _tooltipBorderColor = new QColor(255, 255, 255, 54);
+            _tooltipTextColor = new QColor(248, 248, 242);
+
+            _disabledTextColor = new QColor(120, 124, 140);
+            _disabledBackColor = new QColor(44, 46, 58);
+            _hoveredBackColor = new QColor(68, 71, 90);
+        } else if(theme_id == 11) {
+            // Nord
+            _textColor = new QColor(216, 222, 233);
+            _textSolidColor = new QColor(216, 222, 233);
+            _menuBackColor = new QColor(46, 52, 64, 245);
+            _controlBackColor = new QColor(59, 66, 82);
+            _controlBorderColor = new QColor(76, 86, 106);
+            _controlSolidBackColor = new QColor(67, 76, 94);
+            _controlSolidBorderColor = new QColor(110, 120, 140);
+            _activeControlBackColor = new QColor(236, 239, 244);
+            _sliderHandleColor = new QColor(229, 233, 240);
+            _sliderHandlePressedColor = new QColor(236, 239, 244);
+            _placeholderTextColor = new QColor(205, 211, 222, 220);
+            _tooltipBackColor = new QColor(46, 52, 64, 240);
+            _tooltipBorderColor = new QColor(236, 239, 244, 54);
+            _tooltipTextColor = new QColor(236, 239, 244);
+
+            _disabledTextColor = new QColor(118, 128, 146);
+            _disabledBackColor = new QColor(43, 49, 60);
+            _hoveredBackColor = new QColor(67, 76, 94);
         }
 #if defined(Q_OS_ANDROID)
         _controlHeight = 48;
@@ -520,6 +560,8 @@ inline qreal Themes::checkResolutionCoeff() const
 }
 
 extern Themes theme;
-inline qreal renderScale() { return theme.getResolutionCoeff(); }
+
+inline thread_local qreal g_plotRenderExtraScale = 1.0;
+inline qreal renderScale() { return theme.getResolutionCoeff() * g_plotRenderExtraScale; }
 
 #endif // THEME_H

@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtCore
 import kqml_types 1.0
 
 Popup {
@@ -41,10 +42,10 @@ Popup {
     function groupName(g) {
         switch (g) {
             case "Application": return qsTr("Application")
-            case "Echogram":    return qsTr("Echogram")
+            case "Echogram":    return qsTr("Echograms")
             case "3D":          return qsTr("3D")
             case "Mosaic":      return qsTr("Mosaic")
-            case "Surface":     return qsTr("Surface")
+            case "Surface":     return qsTr("Isobaths")
             default:            return g
         }
     }
@@ -61,29 +62,88 @@ Popup {
         }
     }
 
+    // Desktop-only fixed navigation keys (not rebindable) — shown read-only at
+    // the bottom of the "Application" group. The actual scrolling is handled by
+    // MainWindow Shortcuts; these rows are for discoverability only.
+    readonly property bool _isMobile: Qt.platform.os === "android" || Qt.platform.os === "ios"
+
+    function _fixedAppRows() {
+        if (_isMobile)
+            return []
+        return [
+            { group: "Application", fixed: true, scanCode: 0, parameter: 0, functionName: "",
+              keyName: "PgUp",   description: qsTr("Scroll up") },
+            { group: "Application", fixed: true, scanCode: 0, parameter: 0, functionName: "",
+              keyName: "PgDown", description: qsTr("Scroll down") },
+            { group: "Application", fixed: true, scanCode: 0, parameter: 0, functionName: "",
+              keyName: "Home",   description: qsTr("Scroll to start") },
+            { group: "Application", fixed: true, scanCode: 0, parameter: 0, functionName: "",
+              keyName: "End",    description: qsTr("Scroll to end") }
+        ]
+    }
+
+    // Normalize a C++ display entry to the SAME role set as the fixed rows.
+    // ListModel derives its roles from the first appended item, so every row
+    // must carry `fixed` (else model.fixed is undefined for the fixed rows).
+    function _normalize(e) {
+        return { group: e.group, scanCode: e.scanCode, keyName: e.keyName,
+                 functionName: e.functionName, parameter: e.parameter,
+                 description: e.description, fixed: false }
+    }
+
+    // hotkeysDisplayList with the fixed rows spliced in at the end of the
+    // "Application" group (so they sit under the single Application header).
+    function _composedList() {
+        var out = []
+        var inserted = false
+        for (var i = 0; i < hotkeysDisplayList.length; ++i) {
+            var e = hotkeysDisplayList[i]
+            if (!inserted && e.group !== "Application") {
+                var fx = _fixedAppRows()
+                for (var j = 0; j < fx.length; ++j) out.push(fx[j])
+                inserted = true
+            }
+            out.push(_normalize(e))
+        }
+        if (!inserted) {
+            var fx2 = _fixedAppRows()
+            for (var k = 0; k < fx2.length; ++k) out.push(fx2[k])
+        }
+        return out
+    }
+
     // Full rebuild — used on open only.
     function rebuildModel() {
+        var list = _composedList()
         listModel.clear()
-        for (var i = 0; i < hotkeysDisplayList.length; ++i)
-            listModel.append(hotkeysDisplayList[i])
+        for (var i = 0; i < list.length; ++i)
+            listModel.append(list[i])
         listeningIndex = -1
     }
 
     // In-place update — preserves scroll position.
     function refreshModel() {
-        for (var i = 0; i < hotkeysDisplayList.length && i < listModel.count; ++i)
-            listModel.set(i, hotkeysDisplayList[i])
+        var list = _composedList()
+        for (var i = 0; i < list.length && i < listModel.count; ++i)
+            listModel.set(i, list[i])
         listeningIndex = -1
     }
 
     onOpened: {
-        rebuildModel()
+        if (listModel.count === 0) {
+            rebuildModel()
+            _pendingRestore = true
+            Qt.callLater(_tryRestore)
+        } else {
+            refreshModel()
+        }
         keyCapture.forceActiveFocus()
         if (store)
             store.activeHotkeysDialog = hotkeysDialog
     }
 
     onClosed: {
+        _saveScroll()
         if (paramSaveTimer.running) {
             paramSaveTimer.stop()
             if (hotkeysController && _pendingFn !== "")
@@ -98,8 +158,65 @@ Popup {
     // store.activeHotkeysDialog would keep a dangling reference and the next
     // Esc would invoke .close() on a deleted object.
     Component.onDestruction: {
+        _saveScroll()
         if (store && store.activeHotkeysDialog === hotkeysDialog)
             store.activeHotkeysDialog = null
+    }
+
+    property bool _pendingRestore: false
+
+    Settings {
+        id: hkSettings
+        category: "main/ui"
+        property real hotkeysScrollY: 0
+    }
+
+    NumberAnimation {
+        id: scrollTopAnim
+        target: listView
+        property: "contentY"
+        duration: 220
+        easing.type: Easing.OutCubic
+    }
+
+    // Keyboard scrolling (kind: "up"/"down"/"top"/"bottom") — driven by MainWindow.
+    function kbdScroll(kind) {
+        var f = listView
+        if (!f)
+            return
+        if ((kind === "up" || kind === "down") && f.contentHeight <= f.height)
+            return
+        var top  = f.originY
+        var maxY = top + Math.max(0, f.contentHeight - f.height)
+        var y = kind === "top"    ? top
+              : kind === "bottom" ? maxY
+              : kind === "down"   ? Math.min(maxY, f.contentY + f.height * 0.9)
+              :                     Math.max(top, f.contentY - f.height * 0.9)
+        hotkeysDialog._pendingRestore = false
+        kbdListAnim.stop()
+        kbdListAnim.from = f.contentY
+        kbdListAnim.to = y
+        kbdListAnim.start()
+    }
+
+    NumberAnimation {
+        id: kbdListAnim
+        target: listView
+        property: "contentY"
+        duration: 180
+        easing.type: Easing.OutCubic
+    }
+
+    function _saveScroll() {
+        if (!_pendingRestore)
+            hkSettings.hotkeysScrollY = listView.contentY
+    }
+    function _tryRestore() {
+        if (!_pendingRestore || listView.contentHeight <= 0)
+            return
+        var maxY = Math.max(0, listView.contentHeight - listView.height)
+        listView.contentY = Math.max(0, Math.min(hkSettings.hotkeysScrollY, maxY))
+        _pendingRestore = false
     }
 
     Connections {
@@ -134,8 +251,19 @@ Popup {
                 return
             }
 
-            // Pass through anything else while not listening for a reassign.
+            // Not listening: PgUp/PgDn/Home/End scroll the list (a modal Popup
+            // blocks the app-level scroll shortcuts, so handle them here).
             if (hotkeysDialog.listeningIndex < 0) {
+                if (!hotkeysDialog._isMobile
+                        && (event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp
+                            || event.key === Qt.Key_Home || event.key === Qt.Key_End)) {
+                    hotkeysDialog.kbdScroll(event.key === Qt.Key_PageDown ? "down"
+                                          : event.key === Qt.Key_PageUp   ? "up"
+                                          : event.key === Qt.Key_Home     ? "top"
+                                          :                                 "bottom")
+                    event.accepted = true
+                    return
+                }
                 event.accepted = false
                 return
             }
@@ -171,7 +299,7 @@ Popup {
             Text {
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
-                text: qsTr("Keyboard Shortcuts")
+                text: qsTr("Key bindings")
                 color: AppPalette.text
                 font.pixelSize: Math.round(16 * AppPalette.scale)
                 font.bold: true
@@ -184,7 +312,7 @@ Popup {
                 radius: Tokens.radiusMd
                 color: AppPalette.headerBg
                 border.color: AppPalette.border
-                border.width: 1
+                border.width: Tokens.cardBorderWidth
 
                 Row {
                     anchors.fill: parent
@@ -227,7 +355,12 @@ Popup {
                 clip: true
                 model: listModel
                 spacing: 2
-                ScrollBar.vertical: ScrollBar {}
+                ScrollBar.vertical: ScrollBar {
+                    active: listView.moving || hovered || pressed || scrollTopAnim.running || kbdListAnim.running
+                }
+
+                onContentHeightChanged: hotkeysDialog._tryRestore()
+                onMovementStarted: hotkeysDialog._pendingRestore = false
 
                 section.property: "group"
                 section.delegate: Item {
@@ -267,6 +400,8 @@ Popup {
                     readonly property bool listening: hotkeysDialog.listeningIndex === index
                     readonly property int  cellH: hotkeysDialog._rowH - 6
                     readonly property real cellY: Math.floor((height - cellH) / 2)
+                    readonly property bool param3D: model.group === "3D"
+                    readonly property int  paramMax: param3D ? 50 : 99999
 
                     // hover background
                     Rectangle {
@@ -291,20 +426,21 @@ Popup {
                         clip: true
                         color: row.listening ? AppPalette.accentBg : AppPalette.card
                         border.color: row.listening ? AppPalette.accentBorder : AppPalette.border
-                        border.width: 1
+                        border.width: row.listening ? 1 : Tokens.cardBorderWidth
 
                         Text {
                             anchors.centerIn: parent
                             width: parent.width - 8
                             horizontalAlignment: Text.AlignHCenter
                             text: row.listening ? qsTr("…") : (model.keyName || "")
-                            color: AppPalette.text
-                            font.pixelSize: Math.round(13 * AppPalette.scale)
+                            color: (model.fixed === true) ? AppPalette.textSecond : AppPalette.text
+                            font.pixelSize: Math.round(16 * AppPalette.scale)
                         }
 
                         MouseArea {
                             anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
+                            enabled: !(model.fixed === true)
+                            cursorShape: (model.fixed === true) ? Qt.ArrowCursor : Qt.PointingHandCursor
                             onClicked: {
                                 hotkeysDialog.listeningIndex = row.listening ? -1 : index
                                 hotkeysDialog._conflictText = ""
@@ -324,7 +460,7 @@ Popup {
                         clip: true
                         color: AppPalette.card
                         border.color: paramInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                        border.width: 1
+                        border.width: paramInput.activeFocus ? 1 : Tokens.cardBorderWidth
 
                         TextInput {
                             id: paramInput
@@ -332,19 +468,25 @@ Popup {
                             width: parent.width - 8
                             horizontalAlignment: TextInput.AlignHCenter
                             color: AppPalette.text
-                            font.pixelSize: Math.round(13 * AppPalette.scale)
+                            font.pixelSize: Math.round(16 * AppPalette.scale)
                             selectionColor: AppPalette.accentBg
                             text: model.parameter > 0 ? model.parameter.toString() : ""
                             inputMethodHints: Qt.ImhDigitsOnly
-                            validator: IntValidator { bottom: 1; top: 99999 }
+                            validator: RegularExpressionValidator {
+                                regularExpression: row.param3D ? /^([1-9]|[1-4][0-9]|50)$/ : /^[1-9][0-9]{0,4}$/
+                            }
                             onTextChanged: {
                                 if (!acceptableInput) return
                                 var val = parseInt(text)
-                                if (val < 1 || val > 99999) return
+                                if (val < 1 || val > row.paramMax) return
                                 hotkeysDialog._pendingFn    = model.functionName
                                 hotkeysDialog._pendingSc    = model.scanCode
                                 hotkeysDialog._pendingParam = val
                                 paramSaveTimer.restart()
+                            }
+                            onActiveFocusChanged: {
+                                if (!activeFocus && (text.length === 0 || !acceptableInput))
+                                    text = model.parameter > 0 ? model.parameter.toString() : ""
                             }
                         }
                     }
@@ -385,6 +527,28 @@ Popup {
                              ? AppPalette.accentBorder
                              : AppPalette.textSecond
                     elide: Text.ElideRight
+                }
+
+                KCircleIconButton {
+                    Layout.preferredWidth: Math.round(Tokens.controlHMd * 1.4)
+                    Layout.preferredHeight: Tokens.controlHMd
+                    visible: listView.contentY > 1
+                    rounded: false
+                    cornerRadius: Tokens.radiusMd
+                    fillColor: AppPalette.card
+                    fillHoverColor: AppPalette.cardHover
+                    borderColor: AppPalette.border
+                    borderWidth: Tokens.cardBorderWidth
+                    iconSource: "qrc:/icons/ui/chevron-up.svg"
+                    iconTintColor: AppPalette.text
+                    toolTipText: qsTr("Scroll to top")
+                    onClicked: {
+                        hotkeysDialog._pendingRestore = false
+                        scrollTopAnim.stop()
+                        scrollTopAnim.from = listView.contentY
+                        scrollTopAnim.to = listView.originY
+                        scrollTopAnim.restart()
+                    }
                 }
 
                 KButton {

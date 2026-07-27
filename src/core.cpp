@@ -4,19 +4,23 @@
 #include <cmath>
 #include <ctime>
 #include <cstring>
+#include <utility>
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
+#include <QUrl>
 #include <QStandardPaths>
 #include <QDateTime>
+#include <QProcess>
+#include <QDesktopServices>
 #include "bottom_track.h"
-#include "hotkeys_manager.h"
 #include "tile_provider_ids.h"
 #include "notifications.h"
 
 extern Notifications notifications;
 #ifdef Q_OS_WINDOWS
 #include <Windows.h>
+#include <shlobj.h>
 #endif
 #ifdef Q_OS_ANDROID
 #include "platform/android/src/android_interface.h"
@@ -34,6 +38,7 @@ Core::Core() :
     consolePtr_(new Console),
     deviceManagerWrapperPtr_(std::make_unique<DeviceManagerWrapper>(this)),
     linkManagerWrapperPtr_(std::make_unique<LinkManagerWrapper>(this)),
+    deviceTopologyModelPtr_(std::make_unique<DeviceTopologyModel>(deviceManagerWrapperPtr_.get(), linkManagerWrapperPtr_.get(), this)),
     internetManager_(nullptr),
     internetThread_(nullptr),
     dataProcessor_(nullptr),
@@ -59,6 +64,10 @@ Core::Core() :
     mosaicIndexProvider_(6200)
 {
     qRegisterMetaType<uint8_t>("uint8_t");
+    {
+        QSettings settings("KOGGER", "KoggerApp");
+        bringWindowToFrontEnabled_ = settings.value("main/bringWindowToFrontEnabled", true).toBool();
+    }
     logger_.setDatasetPtr(datasetPtr_);
     createDeviceManagerConnections();
     createLinkManagerConnections();
@@ -68,6 +77,7 @@ Core::Core() :
 
 #ifdef FLASHER
     connect(&dev_flasher_, &DeviceFlasher::sendStepInfo, this, &Core::dev_flasher_rcv);
+    connect(&dev_flasher_, &DeviceFlasher::productsChanged, this, &Core::flasherProductsChanged);
 #endif
 }
 
@@ -76,23 +86,35 @@ Core::~Core()
     shutdownBackgroundWorkers();
 }
 
+QString Core::defaultExportDirectory() const
+{
+    return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+           + QStringLiteral("/KoggerApp/exports");
+}
+
 QString Core::resolveExportBasePath(const QString& basePath) const
 {
+    QString result;
     const QUrl url(basePath);
     if (url.isLocalFile()) {
-        return url.toLocalFile();
-    }
-
+        result = url.toLocalFile();
+    } else {
 #ifdef Q_OS_ANDROID
-    if (url.scheme() == "content") {
-        const QString resolvedPath = resolveAndroidUriToPath(basePath);
-        if (!resolvedPath.isEmpty()) {
-            return resolvedPath;
+        if (url.scheme() == "content") {
+            const QString resolvedPath = resolveAndroidUriToPath(basePath);
+            if (!resolvedPath.isEmpty()) {
+                return resolvedPath;   // Android content URI — used as-is
+            }
         }
-    }
 #endif
+        result = basePath;             // already a plain local path
+    }
 
-    return basePath;
+    if (result.trimmed().isEmpty()) {
+        result = defaultExportDirectory();   // no folder chosen → default
+    }
+    QDir().mkpath(result);                    // create it if missing
+    return result;
 }
 
 QString Core::buildExportFileStem(const QString& openedFilePath) const
@@ -233,6 +255,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     }
     hotkeysController_ = std::make_unique<HotkeysController>(qmlAppEnginePtr_, this);
     qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysController", hotkeysController_.get());
+    connect(this, &Core::languageChanged, hotkeysController_.get(), &HotkeysController::retranslate);
 #else
     qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysDisplayList", QVariantList());
     qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysController", nullptr);
@@ -262,6 +285,11 @@ DeviceManagerWrapper* Core::getDeviceManagerWrapperPtr() const
 LinkManagerWrapper* Core::getLinkManagerWrapperPtr() const
 {
     return linkManagerWrapperPtr_.get();
+}
+
+DeviceTopologyModel* Core::getDeviceTopologyModelPtr() const
+{
+    return deviceTopologyModelPtr_.get();
 }
 
 void Core::setConsoleOutputEnabled(bool enabled)
@@ -979,22 +1007,151 @@ void Core::setKlfLogging(bool isLogging)
     if (isLogging) {
         success = logger_.startNewKlfLog();
         if (success) {
-            notifications.info(tr("KLF logging started:\n%1").arg(QDir::toNativeSeparators(logger_.klfLogFilePath())));
+            const QString path = logger_.klfLogFilePath();
+            notifications.info(tr("KLF logging started:\n%1").arg(QDir::toNativeSeparators(path)), path);
         }
         else {
             notifications.warning(tr("KLF logging not started"));
         }
     } else {
-        const QString path = QDir::toNativeSeparators(logger_.klfLogFilePath());
+        const QString path = logger_.klfLogFilePath();
         logger_.stopKlfLogging();
         if (!path.isEmpty())
-            notifications.info(tr("KLF log saved:\n%1").arg(path));
+            notifications.info(tr("KLF log saved:\n%1").arg(QDir::toNativeSeparators(path)), path);
         else
             notifications.info(tr("KLF logging disabled"));
     }
     isLoggingKlf_ = isLogging && success;
 
     emit loggingKlfChanged();
+}
+
+QString Core::klfLogFilePath() const
+{
+    return logger_.klfLogFilePath();
+}
+
+void Core::revealInFolder(const QString& path)
+{
+    if (path.isEmpty())
+        return;
+
+    QString localPath = path;
+    if (localPath.startsWith(QStringLiteral("file:")))
+        localPath = QUrl(localPath).toLocalFile();
+
+    const QFileInfo info(localPath);
+    const QString absPath = info.absoluteFilePath();
+    const QString dir = info.absolutePath();
+    if (dir.isEmpty())
+        return;
+
+#if defined(Q_OS_ANDROID)
+    Q_UNUSED(absPath)
+    Q_UNUSED(dir)
+#elif defined(Q_OS_WIN)
+    const QString native = QDir::toNativeSeparators(absPath);
+    const HRESULT coInit = ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    PIDLIST_ABSOLUTE pidl = nullptr;
+    if (SUCCEEDED(::SHParseDisplayName(reinterpret_cast<PCWSTR>(native.utf16()), nullptr, &pidl, 0, nullptr)) && pidl) {
+        ::SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0);
+        ::CoTaskMemFree(pidl);
+    } else {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(dir));
+    }
+    if (coInit == S_OK || coInit == S_FALSE)
+        ::CoUninitialize();
+#elif defined(Q_OS_LINUX)
+    const QString uri = QUrl::fromLocalFile(absPath).toString();
+    const bool shown = QProcess::startDetached(QStringLiteral("dbus-send"), {
+        QStringLiteral("--session"),
+        QStringLiteral("--dest=org.freedesktop.FileManager1"),
+        QStringLiteral("--type=method_call"),
+        QStringLiteral("/org/freedesktop/FileManager1"),
+        QStringLiteral("org.freedesktop.FileManager1.ShowItems"),
+        QStringLiteral("array:string:") + uri,
+        QStringLiteral("string:")
+    });
+    if (!shown)
+        QDesktopServices::openUrl(QUrl::fromLocalFile(dir));
+#else
+    Q_UNUSED(absPath)
+    Q_UNUSED(dir)
+#endif
+}
+
+QString Core::csvLogFilePath() const
+{
+    return logger_.csvLogFilePath();
+}
+
+qint64 Core::activeLogSizeBytes() const
+{
+    return logger_.activeLogSizeBytes();
+}
+
+int Core::activeLogDurationSecs() const
+{
+    return logger_.activeLogDurationSecs();
+}
+
+void Core::setLogDirectory(const QString& dir)
+{
+    QString clean = dir;
+    if (clean.startsWith(QStringLiteral("file:"))) {
+        clean = QUrl(clean).toLocalFile();   // accept a URL too; Logger needs a local path
+    }
+    logger_.setLogDirectory(clean);
+}
+
+QString Core::logDirectory() const
+{
+    return logger_.logDirectory();
+}
+
+QString Core::logDirectoryUrl() const
+{
+    const QString dir = logger_.logDirectory();
+    QDir().mkpath(dir);                       // ensure it exists so the dialog opens there
+    return QUrl::fromLocalFile(dir).toString();
+}
+
+bool Core::prepareLogDirectory(const QString& dir)
+{
+    QString clean = dir;
+    if (clean.startsWith(QStringLiteral("file:"))) {
+        clean = QUrl(clean).toLocalFile();
+    }
+    clean = clean.trimmed();
+
+    if (clean.isEmpty()) {
+        logger_.setLogDirectory(QString());   // empty → default Documents/KoggerApp/logs
+        return true;
+    }
+
+    QDir d;
+    if (!d.mkpath(clean)) {
+        notifications.warning(tr("Invalid log folder:\n%1").arg(QDir::toNativeSeparators(clean)));
+        return false;
+    }
+
+    const QFileInfo info(clean);
+    if (!info.isDir() || !info.isWritable()) {
+        notifications.warning(tr("Log folder is not writable:\n%1").arg(QDir::toNativeSeparators(clean)));
+        return false;
+    }
+
+    logger_.setLogDirectory(clean);
+    return true;
+}
+
+void Core::powerOffSystem()
+{
+#ifdef Q_OS_LINUX
+    if (QProcess::startDetached(QStringLiteral("systemctl"), QStringList{ QStringLiteral("poweroff") }))
+        return;
+    QProcess::startDetached(QStringLiteral("poweroff"), QStringList{});
+#endif
 }
 
 bool Core::getFixBlackStripesState() const
@@ -1077,16 +1234,17 @@ void Core::setCsvLogging(bool isLogging)
     if (isLogging) {
         success = logger_.startNewCsvLog();
         if (success) {
-            notifications.info(tr("CSV logging started:\n%1").arg(QDir::toNativeSeparators(logger_.csvLogFilePath())));
+            const QString path = logger_.csvLogFilePath();
+            notifications.info(tr("CSV logging started:\n%1").arg(QDir::toNativeSeparators(path)), path);
         }
         else {
             notifications.warning(tr("CSV logging not started"));
         }
     } else {
-        const QString path = QDir::toNativeSeparators(logger_.csvLogFilePath());
+        const QString path = logger_.csvLogFilePath();
         logger_.stopCsvLogging();
         if (!path.isEmpty())
-            notifications.info(tr("CSV log saved:\n%1").arg(path));
+            notifications.info(tr("CSV log saved:\n%1").arg(QDir::toNativeSeparators(path)), path);
         else
             notifications.info(tr("CSV logging disabled"));
     }
@@ -1176,7 +1334,7 @@ bool Core::exportComplexToCSV(QString file_path) {
         notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
     }
-    notifications.info(tr("Complex signals exported to CSV: %1").arg(exportPath));
+    notifications.info(tr("Complex signals exported to CSV: %1").arg(exportPath), exportPath);
 
     return true;
 }
@@ -1220,7 +1378,7 @@ bool Core::exportUSBLToCSV(QString filePath)
         notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
     }
-    notifications.info(tr("USBL exported to CSV: %1").arg(exportPath));
+    notifications.info(tr("USBL exported to CSV: %1").arg(exportPath), exportPath);
 
     return true;
 }
@@ -1249,7 +1407,7 @@ void Core::loadCsvExportFields()
         return;
     }
     QSettings settings("KOGGER", "KoggerApp");
-    settings.beginGroup("csv_export_fields");
+    settings.beginGroup("main/csvExportFields");
     for (const auto& f : kCsvFieldDefs) {
         const QString key = QString::fromLatin1(f.key);
         csvExportFields_[key] = settings.value(key, f.def).toBool();
@@ -1261,7 +1419,7 @@ void Core::loadCsvExportFields()
 void Core::saveCsvExportFields()
 {
     QSettings settings("KOGGER", "KoggerApp");
-    settings.beginGroup("csv_export_fields");
+    settings.beginGroup("main/csvExportFields");
     for (auto it = csvExportFields_.constBegin(); it != csvExportFields_.constEnd(); ++it) {
         settings.setValue(it.key(), it.value());
     }
@@ -1573,7 +1731,7 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
     }
-    notifications.info(tr("Exported to CSV: %1").arg(exportPath));
+    notifications.info(tr("Exported to CSV: %1").arg(exportPath), exportPath);
 
     return true;
 }
@@ -1604,7 +1762,7 @@ bool Core::exportPlotAsXTF(QString filePath)
         notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
     }
-    notifications.info(tr("Exported to XTF: %1").arg(exportPath));
+    notifications.info(tr("Exported to XTF: %1").arg(exportPath), exportPath);
     return true;
 }
 
@@ -1750,7 +1908,7 @@ void Core::UILoad(QObject* object, const QUrl& url)
     }
     // Re-bind plots registered before scene3dViewPtr_ existed (findChildren misses
     // reparented slot delegates). See docs scene2d.md "2D↔3D синхронизация эпох".
-    for (auto* plot : plot2dList_) {
+    for (auto* plot : std::as_const(plot2dList_)) {
         bindPlot2D(plot);
     }
     scene3dViewPtr_->setDataset(datasetPtr_);
@@ -2104,7 +2262,7 @@ void Core::setMapTileProvider(int providerId)
     }
 
     QSettings settings("KOGGER", "KoggerApp");
-    settings.setValue("Map/TileProviderId", providerId);
+    settings.setValue("scene3d/map/TileProviderId", providerId);
 }
 
 void Core::toggleMapTileProvider()
@@ -2120,7 +2278,7 @@ void Core::toggleMapTileProvider()
     }
 
     QSettings settings("KOGGER", "KoggerApp");
-    settings.setValue("Map/TileProviderId", tileManager_->currentProviderId());
+    settings.setValue("scene3d/map/TileProviderId", tileManager_->currentProviderId());
 }
 
 int Core::getMapTileProviderId() const
@@ -2291,8 +2449,31 @@ void Core::moveAppToBackground()
 #endif
 }
 
+bool Core::getBringWindowToFrontEnabled() const
+{
+    return bringWindowToFrontEnabled_;
+}
+
+void Core::setBringWindowToFrontEnabled(bool enabled)
+{
+    if (bringWindowToFrontEnabled_ == enabled) {
+        return;
+    }
+
+    bringWindowToFrontEnabled_ = enabled;
+
+    QSettings settings("KOGGER", "KoggerApp");
+    settings.setValue("main/bringWindowToFrontEnabled", enabled);
+
+    emit bringWindowToFrontEnabledChanged();
+}
+
 void Core::bringWindowToFront()
 {
+    if (!bringWindowToFrontEnabled_) {
+        return;
+    }
+
     emit bringWindowToFrontRequested();
 }
 
@@ -2309,7 +2490,7 @@ void Core::setActiveTransientUi(QObject* who)
 int Core::loadSavedMapTileProviderId() const
 {
     QSettings settings("KOGGER", "KoggerApp");
-    return settings.value("Map/TileProviderId", map::kGoogleProviderId).toInt();
+    return settings.value("scene3d/map/TileProviderId", map::kGoogleProviderId).toInt();
 }
 
 void Core::onFileStopsOpening()
@@ -2694,7 +2875,7 @@ void Core::saveLLARefToSettings()
         auto ref = datasetPtr_->getLlaRef();
 
         QSettings settings("KOGGER", "KoggerApp");
-        QString group{"LLARef"};
+        QString group{"scene3d/llaRef"};
 
         settings.beginGroup(group);
         settings.setValue("refLatSin", ref.refLatSin);
@@ -2727,7 +2908,7 @@ void Core::loadLLARefFromSettings()
 
     try {
         QSettings settings("KOGGER", "KoggerApp");
-        QString group{"LLARef"};
+        QString group{"scene3d/llaRef"};
 
         settings.beginGroup(group);
         LLARef ref;
@@ -2778,7 +2959,7 @@ void Core::saveCameraViewToSettings()
         }
 
         QSettings settings("KOGGER", "KoggerApp");
-        settings.beginGroup("CameraView");
+        settings.beginGroup("scene3d/cameraView");
         settings.setValue("refLatSin", ref.refLatSin);
         settings.setValue("refLatCos", ref.refLatCos);
         settings.setValue("refLatRad", ref.refLatRad);
@@ -2811,7 +2992,7 @@ void Core::loadCameraViewFromSettings()
 
     try {
         QSettings settings("KOGGER", "KoggerApp");
-        settings.beginGroup("CameraView");
+        settings.beginGroup("scene3d/cameraView");
         const bool has = settings.contains("isInit");
         LLARef ref;
         ref.refLatSin = settings.value("refLatSin", NAN).toDouble();
@@ -3189,9 +3370,14 @@ void Core::connectOpenedLinkAsFlasher(QString pn) {
 
 void Core::setFlasherData(QString data) {
     dev_flasher_.setData(data);
+    emit flasherHasTokenChanged();
 }
 
 void Core::releaseFlasherLink() {
     dev_flasher_.releaseLink();
+}
+
+void Core::refreshFlasherProducts() {
+    dev_flasher_.fetchProducts();
 }
 #endif

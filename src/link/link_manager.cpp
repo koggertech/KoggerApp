@@ -9,6 +9,7 @@
 #include <QRegularExpression>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <utility>
 #include "notifications.h"
 
 extern Notifications notifications;
@@ -26,6 +27,16 @@ bool xmlBoolValue(const QString& value)
     return normalized == QStringLiteral("TRUE") || normalized == QStringLiteral("1");
 }
 
+bool shouldPersist(const Link* link)
+{
+    if (!link || link->getIsHided())
+        return false;
+    const LinkType t = link->getLinkType();
+    if (t == LinkType::kLinkIPUDP || t == LinkType::kLinkIPTCP)
+        return true;
+    return link->getIsPinned();
+}
+
 QByteArray buildPinnedLinksXmlData(const QList<Link*>& links)
 {
     QByteArray xmlData;
@@ -40,7 +51,7 @@ QByteArray buildPinnedLinksXmlData(const QList<Link*>& links)
     xmlWriter.writeStartElement("pinned_links");
 
     for (Link* link : links) {
-        if (!link || !link->getIsPinned()) {
+        if (!link || !shouldPersist(link)) {
             continue;
         }
 
@@ -216,8 +227,20 @@ void LinkManager::openAutoConnections()
         }
     }
 
+    // Headless test hook: force-auto-connect a named serial port so an agent can
+    // drive the app against real hardware with no click. Off unless KOGGER_AUTOTEST
+    // names a port (e.g. KOGGER_AUTOTEST=COM17). Normal runs are unaffected.
+    static const QString kAutotestPort = qEnvironmentVariable("KOGGER_AUTOTEST");
+
     for (int i = 0; i < list_.size(); ++i) {
         Link* link = list_.at(i);
+
+        if (!kAutotestPort.isEmpty() &&
+            link->getLinkType() == LinkType::kLinkSerial &&
+            link->getPortName() == kAutotestPort &&
+            link->getControlType() != ControlType::kAuto) {
+            link->setControlType(ControlType::kAuto);
+        }
 
         if (!link->getConnectionStatus()) {
             bool autoConnOnce = link->getAutoConnOnce();
@@ -358,7 +381,7 @@ bool LinkManager::parsePinnedLinksXmlData(const QByteArray& xmlData, QList<Pinne
         }
 
         PinnedLinkRecord record;
-        while (!(xmlReader.tokenType() == QXmlStreamReader::EndElement && xmlReader.name() == QStringLiteral("link"))) {
+        while (xmlReader.tokenType() != QXmlStreamReader::EndElement || xmlReader.name() != QStringLiteral("link")) {
             xmlReader.readNext();
             if (xmlReader.atEnd()) {
                 break;
@@ -463,7 +486,7 @@ void LinkManager::appendPinnedLinkRecords(const QList<PinnedLinkRecord>& records
         link->setAddress(record.address);
         link->setSourcePort(record.sourcePort);
         link->setDestinationPort(record.destinationPort);
-        link->setIsPinned(true);
+        link->setIsPinned(record.isPinned);
         link->setIsHided(record.isHided);
         link->setIsNotAvailable(record.isNotAvailable);
         link->setAutoSpeedSelection(record.autoSpeedSelection);
@@ -503,7 +526,7 @@ bool LinkManager::reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
         filteredRecords.reserve(records.size());
         int skippedCount = 0;
 
-        for (const PinnedLinkRecord& record : records) {
+        for (const PinnedLinkRecord& record : std::as_const(records)) {
             const bool isSerialByType = record.linkType == LinkType::kLinkSerial;
             const bool isSerialByPortName = looksLikeSerialPortName(record.portName);
             if (isSerialByType || isSerialByPortName) {
@@ -521,7 +544,7 @@ bool LinkManager::reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
     }
 
     // Stop all currently active links before replacing pinned set.
-    for (Link* link : list_) {
+    for (Link* link : std::as_const(list_)) {
         if (!link) {
             continue;
         }
@@ -531,10 +554,10 @@ bool LinkManager::reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
         doEmitAppendModifyModel(link);
     }
 
-    // Remove all existing pinned links.
+    // Remove all existing persisted links.
     for (int i = list_.size() - 1; i >= 0; --i) {
         Link* link = list_.at(i);
-        if (!link || !link->getIsPinned()) {
+        if (!link || !shouldPersist(link)) {
             continue;
         }
 
@@ -616,7 +639,7 @@ void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
 
-        if (linkPtr->getIsPinned() && linkPtr->getConnectionStatus()) {
+        if (shouldPersist(linkPtr) && linkPtr->getConnectionStatus()) {
             exportPinnedLinksToXML();
         }
     }
@@ -638,7 +661,7 @@ void LinkManager::onLinkBaudrateChanged(QUuid uuid)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
 
-        if (linkPtr->getIsPinned()) {
+        if (shouldPersist(linkPtr)) {
             exportPinnedLinksToXML();
         }
     }
@@ -773,7 +796,7 @@ void LinkManager::closeLink(QUuid uuid)
 
         doEmitAppendModifyModel(linkPtr); //
 
-        if (linkPtr->getIsPinned()) {
+        if (shouldPersist(linkPtr)) {
             exportPinnedLinksToXML();
         }
     }
@@ -797,6 +820,7 @@ void LinkManager::deleteLink(QUuid uuid)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         notifications.dismiss(linkNotAvailableTag(uuid));
         emit linkDeleted(linkPtr->getUuid(), linkPtr);
+        emit linkRemoved(uuid);
 
         emit deleteModel(linkPtr->getUuid());
         linkPtr->disconnect();
@@ -826,7 +850,7 @@ void LinkManager::updateBaudrate(QUuid uuid, int baudrate)
 
         doEmitAppendModifyModel(linkPtr); // why?
 
-        if (linkPtr->getIsPinned())
+        if (shouldPersist(linkPtr))
             exportPinnedLinksToXML();
     }
 }
@@ -863,7 +887,7 @@ void LinkManager::updateAddress(QUuid uuid, const QString &address)
         linkPtr->setAddress(address);
 
         doEmitAppendModifyModel(linkPtr);
-        if (linkPtr->getIsPinned())
+        if (shouldPersist(linkPtr))
             exportPinnedLinksToXML();
     }
 }
@@ -876,7 +900,7 @@ void LinkManager::updateAutoSpeedSelection(QUuid uuid, bool state)
         linkPtr->setAutoSpeedSelection(state);
 
         doEmitAppendModifyModel(linkPtr);
-        if (linkPtr->getIsPinned())
+        if (shouldPersist(linkPtr))
             exportPinnedLinksToXML();
     }
 }
@@ -889,7 +913,7 @@ void LinkManager::updateSourcePort(QUuid uuid, int sourcePort)
         linkPtr->setSourcePort(sourcePort);
 
         doEmitAppendModifyModel(linkPtr);
-        if (linkPtr->getIsPinned())
+        if (shouldPersist(linkPtr))
             exportPinnedLinksToXML();
     }
 }
@@ -902,7 +926,7 @@ void LinkManager::updateDestinationPort(QUuid uuid, int destinationPort)
         linkPtr->setDestinationPort(destinationPort);
 
         doEmitAppendModifyModel(linkPtr);
-        if (linkPtr->getIsPinned())
+        if (shouldPersist(linkPtr))
             exportPinnedLinksToXML();
     }
 }
@@ -927,7 +951,7 @@ void LinkManager::updateControlType(QUuid uuid, ControlType controlType)
         linkPtr->setControlType(controlType);
 
         doEmitAppendModifyModel(linkPtr);
-        if (linkPtr->getIsPinned())
+        if (shouldPersist(linkPtr))
             exportPinnedLinksToXML();
     }
 }
@@ -947,6 +971,7 @@ void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPo
     list_.append(newLinkPtr);
 
     doEmitAppendModifyModel(newLinkPtr);
+    exportPinnedLinksToXML();
     emit linkCreatedInteractively(newLinkPtr->getUuid());
 }
 
@@ -959,6 +984,7 @@ void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPo
     list_.append(newLinkPtr);
 
     doEmitAppendModifyModel(newLinkPtr);
+    exportPinnedLinksToXML();
     emit linkCreatedInteractively(newLinkPtr->getUuid());
 }
 
