@@ -17,10 +17,10 @@ Item {
 
     signal tagDismissRequested(string tag)
 
-    function push(kind, text, tag) {
+    function push(kind, text, tag, actionPath) {
         if (notificationsModel.count >= maxVisible)
             evictOldestInfo()
-        notificationsModel.append({ notificationId: nextNotificationId++, kind: kind, text: text, tag: tag || "" })
+        notificationsModel.append({ notificationId: nextNotificationId++, kind: kind, text: text, tag: tag || "", actionPath: actionPath || "" })
     }
 
     function evictOldestInfo() {
@@ -44,7 +44,7 @@ Item {
     Connections {
         target: typeof notifications !== "undefined" ? notifications : null
         ignoreUnknownSignals: true
-        function onMessageRequested(kind, text, tag) { root.push(kind, text, tag) }
+        function onMessageRequested(kind, text, tag, actionPath) { root.push(kind, text, tag, actionPath) }
         function onDismissRequested(tag) { root.tagDismissRequested(tag) }
     }
 
@@ -73,6 +73,7 @@ Item {
             id: card
 
             readonly property bool isWarning: model.kind === 1
+            readonly property bool hasAction: model.actionPath !== undefined && model.actionPath.length > 0
             readonly property bool autoDismiss: !isWarning || root.hideImportant
             readonly property bool showClose: isWarning && !root.hideImportant
             property bool closing: false
@@ -137,6 +138,8 @@ Item {
                 acceptedButtons: Qt.AllButtons
                 cursorShape: card.autoDismiss ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: function(m) {
+                    if (card.hasAction && typeof core !== "undefined")
+                        core.revealInFolder(model.actionPath)
                     if (card.autoDismiss)
                         card.dismiss()
                     m.accepted = true

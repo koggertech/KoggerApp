@@ -12,6 +12,7 @@
 #include <QStandardPaths>
 #include <QDateTime>
 #include <QProcess>
+#include <QDesktopServices>
 #include "bottom_track.h"
 #include "tile_provider_ids.h"
 #include "notifications.h"
@@ -19,6 +20,7 @@
 extern Notifications notifications;
 #ifdef Q_OS_WINDOWS
 #include <Windows.h>
+#include <shlobj.h>
 #endif
 #ifdef Q_OS_ANDROID
 #include "platform/android/src/android_interface.h"
@@ -1005,16 +1007,17 @@ void Core::setKlfLogging(bool isLogging)
     if (isLogging) {
         success = logger_.startNewKlfLog();
         if (success) {
-            notifications.info(tr("KLF logging started:\n%1").arg(QDir::toNativeSeparators(logger_.klfLogFilePath())));
+            const QString path = logger_.klfLogFilePath();
+            notifications.info(tr("KLF logging started:\n%1").arg(QDir::toNativeSeparators(path)), path);
         }
         else {
             notifications.warning(tr("KLF logging not started"));
         }
     } else {
-        const QString path = QDir::toNativeSeparators(logger_.klfLogFilePath());
+        const QString path = logger_.klfLogFilePath();
         logger_.stopKlfLogging();
         if (!path.isEmpty())
-            notifications.info(tr("KLF log saved:\n%1").arg(path));
+            notifications.info(tr("KLF log saved:\n%1").arg(QDir::toNativeSeparators(path)), path);
         else
             notifications.info(tr("KLF logging disabled"));
     }
@@ -1026,6 +1029,55 @@ void Core::setKlfLogging(bool isLogging)
 QString Core::klfLogFilePath() const
 {
     return logger_.klfLogFilePath();
+}
+
+void Core::revealInFolder(const QString& path)
+{
+    if (path.isEmpty())
+        return;
+
+    QString localPath = path;
+    if (localPath.startsWith(QStringLiteral("file:")))
+        localPath = QUrl(localPath).toLocalFile();
+
+    const QFileInfo info(localPath);
+    const QString absPath = info.absoluteFilePath();
+    const QString dir = info.absolutePath();
+    if (dir.isEmpty())
+        return;
+
+#if defined(Q_OS_ANDROID)
+    Q_UNUSED(absPath)
+    Q_UNUSED(dir)
+#elif defined(Q_OS_WIN)
+    const QString native = QDir::toNativeSeparators(absPath);
+    const HRESULT coInit = ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    PIDLIST_ABSOLUTE pidl = nullptr;
+    if (SUCCEEDED(::SHParseDisplayName(reinterpret_cast<PCWSTR>(native.utf16()), nullptr, &pidl, 0, nullptr)) && pidl) {
+        ::SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0);
+        ::CoTaskMemFree(pidl);
+    } else {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(dir));
+    }
+    if (coInit == S_OK || coInit == S_FALSE)
+        ::CoUninitialize();
+#elif defined(Q_OS_LINUX)
+    const QString uri = QUrl::fromLocalFile(absPath).toString();
+    const bool shown = QProcess::startDetached(QStringLiteral("dbus-send"), {
+        QStringLiteral("--session"),
+        QStringLiteral("--dest=org.freedesktop.FileManager1"),
+        QStringLiteral("--type=method_call"),
+        QStringLiteral("/org/freedesktop/FileManager1"),
+        QStringLiteral("org.freedesktop.FileManager1.ShowItems"),
+        QStringLiteral("array:string:") + uri,
+        QStringLiteral("string:")
+    });
+    if (!shown)
+        QDesktopServices::openUrl(QUrl::fromLocalFile(dir));
+#else
+    Q_UNUSED(absPath)
+    Q_UNUSED(dir)
+#endif
 }
 
 QString Core::csvLogFilePath() const
@@ -1182,16 +1234,17 @@ void Core::setCsvLogging(bool isLogging)
     if (isLogging) {
         success = logger_.startNewCsvLog();
         if (success) {
-            notifications.info(tr("CSV logging started:\n%1").arg(QDir::toNativeSeparators(logger_.csvLogFilePath())));
+            const QString path = logger_.csvLogFilePath();
+            notifications.info(tr("CSV logging started:\n%1").arg(QDir::toNativeSeparators(path)), path);
         }
         else {
             notifications.warning(tr("CSV logging not started"));
         }
     } else {
-        const QString path = QDir::toNativeSeparators(logger_.csvLogFilePath());
+        const QString path = logger_.csvLogFilePath();
         logger_.stopCsvLogging();
         if (!path.isEmpty())
-            notifications.info(tr("CSV log saved:\n%1").arg(path));
+            notifications.info(tr("CSV log saved:\n%1").arg(QDir::toNativeSeparators(path)), path);
         else
             notifications.info(tr("CSV logging disabled"));
     }
@@ -1281,7 +1334,7 @@ bool Core::exportComplexToCSV(QString file_path) {
         notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
     }
-    notifications.info(tr("Complex signals exported to CSV: %1").arg(exportPath));
+    notifications.info(tr("Complex signals exported to CSV: %1").arg(exportPath), exportPath);
 
     return true;
 }
@@ -1325,7 +1378,7 @@ bool Core::exportUSBLToCSV(QString filePath)
         notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
     }
-    notifications.info(tr("USBL exported to CSV: %1").arg(exportPath));
+    notifications.info(tr("USBL exported to CSV: %1").arg(exportPath), exportPath);
 
     return true;
 }
@@ -1678,7 +1731,7 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
     }
-    notifications.info(tr("Exported to CSV: %1").arg(exportPath));
+    notifications.info(tr("Exported to CSV: %1").arg(exportPath), exportPath);
 
     return true;
 }
@@ -1709,7 +1762,7 @@ bool Core::exportPlotAsXTF(QString filePath)
         notifications.warning(tr("Export failed: %1").arg(exportPath));
         return false;
     }
-    notifications.info(tr("Exported to XTF: %1").arg(exportPath));
+    notifications.info(tr("Exported to XTF: %1").arg(exportPath), exportPath);
     return true;
 }
 

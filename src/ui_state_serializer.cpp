@@ -403,7 +403,7 @@ bool UIStateSerializer::exportToJsonFile(const QString& path)
     }
 
     setLastStatus(tr("Exported %1 keys.").arg(settingsObject.size()));
-    notifications.info(tr("UI state exported: %1").arg(filePath));
+    notifications.info(tr("UI state exported: %1").arg(filePath), filePath);
     return true;
 }
 
@@ -574,7 +574,7 @@ bool UIStateSerializer::importFromJsonFile(const QString& path)
                       .arg(skippedPathKeys)
                       .arg(skippedSerialLinks)
                       .arg(linksStatus));
-    notifications.info(tr("UI state imported: %1").arg(filePath));
+    notifications.info(tr("UI state imported: %1").arg(filePath), filePath);
     return true;
 }
 

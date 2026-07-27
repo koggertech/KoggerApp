@@ -1376,7 +1376,7 @@ Column {
                     }
                     var ok = Scene3DControlMenuController.onExportToCSVButtonClicked(p)
                     if (hasN) {
-                        if (ok) notifications.info(qsTr("Surface exported to %1").arg(p))
+                        if (ok) notifications.info(qsTr("Surface exported to %1").arg(p), p)
                         else    notifications.warning(qsTr("Surface export failed"))
                     }
                 }
