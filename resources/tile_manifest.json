@@ -1,0 +1,7 @@
+{
+  "providers": {
+    "google": {
+      "version": 1012
+    }
+  }
+}
