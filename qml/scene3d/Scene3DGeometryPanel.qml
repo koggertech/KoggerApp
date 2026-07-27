@@ -20,6 +20,7 @@ Item {
     property var saveKgtFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
     Settings {
+        category: "scene3d/geometry"
         property alias openKgtFolder: root.openKgtFolder
         property alias saveKgtFolder: root.saveKgtFolder
     }
@@ -58,8 +59,7 @@ Item {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         color: theme.menuBackColor
-        border.color: theme.controlBorderColor
-        border.width: 1
+        border.width: 0
         radius: 4
         clip: true
         enabled: root.expanded

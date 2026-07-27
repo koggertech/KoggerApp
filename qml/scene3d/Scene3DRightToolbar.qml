@@ -24,8 +24,8 @@ Item {
 
     function dismissRuler() {
         if (!rulerControl.menuOpen) return
-        if (rulerControl.hasGeometry) { if (root.view) root.view.rulerFinishDrawing() }
-        else                         { if (root.view) root.view.clearRuler() }
+        if (rulerControl.hasGeometry) { if (root.view && root.view.ruler) root.view.ruler.finishDrawing() }
+        else                         { if (root.view && root.view.ruler) root.view.ruler.clear() }
         rulerControl._setOpen(false)
     }
 
@@ -59,8 +59,8 @@ Item {
     }
 
     function cancelRuler() {
-        if (root.view && root.view.rulerEnabled) {
-            root.view.clearRuler()
+        if (root.view && root.view.ruler && root.view.ruler.enabled) {
+            root.view.ruler.clear()
             Scene3dToolBarController.onRulerModeChanged(false)
         }
     }
@@ -104,7 +104,7 @@ Item {
             fillColor: AppPalette.card
             fillHoverColor: AppPalette.cardHover
             borderColor: AppPalette.border
-            toolTipText: qsTr("Reset zoom")
+            toolTipText: qsTr("Reset scaling coefficient")
             onClicked: if (root.view) root.view.resetVerticalScale()
         }
 
@@ -163,8 +163,7 @@ Item {
                 width: navArrowControl.pending ? navArrowControl._openW : 0
                 radius: height / 2
                 color: AppPalette.bg
-                border.width: 1
-                border.color: AppPalette.border
+                border.width: 0
                 opacity: navArrowControl.pending ? 1 : 0
                 visible: opacity > 0.01
                 clip: true
@@ -217,7 +216,7 @@ Item {
                 readonly property bool checked: root.store ? root.store.trackLastDataEnabled : false
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
-                borderWidth: checked ? 2 : 1
+                borderWidth: checked ? 2 : 0
 
                 onClicked: {
                     root.cancelRuler()
@@ -241,12 +240,12 @@ Item {
             Layout.preferredWidth: root.buttonSize
             Layout.preferredHeight: root.buttonSize
 
-            readonly property bool menuOpen: root.view ? root.view.rulerEnabled : false
+            readonly property bool menuOpen: (root.view && root.view.ruler) ? root.view.ruler.enabled : false
             readonly property real _s: theme ? theme.resCoeff : 1.0
             readonly property int _pad: Math.round(5 * _s)
             readonly property int _gap: Math.round(6 * AppPalette.scale)
             readonly property real _openW: _pad * 2 + root.buttonSize * 2 + _gap
-            readonly property bool hasGeometry: root.view ? root.view.rulerHasGeometry : false
+            readonly property bool hasGeometry: (root.view && root.view.ruler) ? root.view.ruler.hasGeometry : false
 
             function _setOpen(open) {
                 Scene3dToolBarController.onRulerModeChanged(open)
@@ -264,8 +263,7 @@ Item {
                 width: rulerControl.menuOpen ? rulerControl._openW : 0
                 radius: height / 2
                 color: AppPalette.bg
-                border.width: 1
-                border.color: AppPalette.border
+                border.width: 0
                 opacity: rulerControl.menuOpen ? 1 : 0
                 visible: opacity > 0.01
                 clip: true
@@ -296,7 +294,7 @@ Item {
                         toolTipText: qsTr("Save ruler")
                         enabled: rulerControl.hasGeometry
                         onClicked: {
-                            if (root.view) root.view.rulerFinishDrawing()
+                            if (root.view && root.view.ruler) root.view.ruler.finishDrawing()
                             rulerControl._setOpen(false)
                         }
                     }
@@ -311,7 +309,7 @@ Item {
                         borderColor: AppPalette.border
                         toolTipText: qsTr("Delete ruler")
                         onClicked: {
-                            if (root.view) root.view.clearRuler()
+                            if (root.view && root.view.ruler) root.view.ruler.clear()
                             rulerControl._setOpen(false)
                         }
                     }
@@ -328,7 +326,7 @@ Item {
                 fillHoverColor: AppPalette.cardHover
                 fillColor:   rulerControl.hasGeometry ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: rulerControl.hasGeometry ? AppPalette.accentBorder : AppPalette.border
-                borderWidth: rulerControl.hasGeometry ? 2 : 1
+                borderWidth: rulerControl.hasGeometry ? 2 : 0
                 toolTipText: qsTr("Ruler")
                 onClicked: rulerControl._setOpen(true)
             }
@@ -374,6 +372,7 @@ Item {
                 property bool checked: root.geo ? root.geo.tool === 1 : false
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
+                borderWidth: checked ? 2 : 0
                 onClicked: { root.cancelRuler(); if (root.geo) root.geo.tool = (root.geo.tool === 1 ? 0 : 1) }
             }
 
@@ -389,6 +388,7 @@ Item {
                 property bool checked: root.geo ? root.geo.tool === 2 : false
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
+                borderWidth: checked ? 2 : 0
                 onClicked: { root.cancelRuler(); if (root.geo) root.geo.tool = (root.geo.tool === 2 ? 0 : 2) }
             }
 
@@ -404,6 +404,7 @@ Item {
                 property bool checked: root.geo ? root.geo.tool === 3 : false
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
+                borderWidth: checked ? 2 : 0
                 onClicked: { root.cancelRuler(); if (root.geo) root.geo.tool = (root.geo.tool === 3 ? 0 : 3) }
             }
         }
@@ -419,6 +420,7 @@ Item {
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/file-check.svg"
                 iconTintColor: AppPalette.text
+                fillColor: AppPalette.card
                 fillHoverColor: AppPalette.cardHover
                 toolTipText: qsTr("Finish drawing")
                 enabled: root.geo ? root.geo.drawing : false
@@ -432,6 +434,7 @@ Item {
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/repeat.svg"
                 iconTintColor: AppPalette.text
+                fillColor: AppPalette.card
                 fillHoverColor: AppPalette.cardHover
                 toolTipText: qsTr("Undo")
                 enabled: root.geo ? root.geo.drawing : false
@@ -445,6 +448,7 @@ Item {
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/x.svg"
                 iconTintColor: AppPalette.text
+                fillColor: AppPalette.card
                 fillHoverColor: AppPalette.cardHover
                 toolTipText: qsTr("Cancel drawing")
                 enabled: root.geo ? root.geo.drawing : false

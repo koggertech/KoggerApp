@@ -8,11 +8,11 @@ Switch {
     property string toolTipText: text
     property int switchHorizontalPadding: Math.round(10 * AppPalette.scale)
     property int cornerRadius: Tokens.radiusLg
-    property color textColor: AppPalette.textSecond
-    property color backgroundColor: AppPalette.bg
+    property color textColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+    property color backgroundColor: AppPalette.rowRaised
     property color borderColor: AppPalette.border
-    property color accentColor: AppPalette.accentBg
-    property color accentBorderColor: AppPalette.accentBorder
+    property color accentColor: AppPalette.toggleOn
+    property color accentBorderColor: AppPalette.toggleOnBorder
     property color trackOffColor: AppPalette.trackOff
     property color trackOffBorderColor: AppPalette.trackOffBorder
     property color knobColor: AppPalette.knob
@@ -22,13 +22,15 @@ Switch {
     property bool highlighted: false
     property int flashToken: 0
     property color highlightBorderColor: AppPalette.accentBorder
-    property int fontPixelSize: Tokens.fontBase
+    property int fontPixelSize: Tokens.fontLg
 
     readonly property int _knobMargin: Math.max(2, Math.round(2 * AppPalette.scale))
     readonly property int _knobSize: Math.max(8, trackHeight - 2 * _knobMargin)
 
     implicitWidth: Math.round(260 * AppPalette.scale)
     implicitHeight: rowHeight
+    padding: 0
+    spacing: 0
     opacity: enabled ? 1.0 : 0.55
     focusPolicy: Qt.StrongFocus
 
@@ -96,7 +98,7 @@ Switch {
         id: bg
         radius: control.cornerRadius
         color: control.hovered ? AppPalette.bgHover : control.backgroundColor
-        border.width: 1
+        border.width: Tokens.cardBorderWidth
         border.color: control.borderColor
 
         Rectangle {
@@ -133,5 +135,6 @@ Switch {
         text: control.toolTipText
         targetItem: control
         shown: control.hovered && control.enabled
+               && control.toolTipText.length > 0 && control.toolTipText !== control.text
     }
 }

@@ -10,7 +10,7 @@ public:
     virtual ~PlotLayer() = default;
 
     bool isVisible() const { return isVisible_; }
-    void setVisible(bool visible) { isVisible_ = visible; }
+    virtual void setVisible(bool visible) { isVisible_ = visible; }
 
     virtual bool draw(Plot2D* parent, Dataset* dataset) = 0;
 

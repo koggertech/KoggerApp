@@ -1,23 +1,26 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import kqml_types 1.0
+import "RecorderStatus.js" as RecorderStatus
 
 Item {
     id: root
 
     required property var store
-    property bool favoritesEnabled: true
+    property bool layoutsEnabled: true
     property bool expanded: false
     property bool showToggleButton: true
     property int revealShiftX: 0
-    readonly property real _s: 1.5 * (theme ? theme.resCoeff : 1.0)
+    readonly property real _s: AppPalette.appScale
     readonly property int _windowW: store ? store.windowWidth : 1440
+    readonly property int _leadOffset: showToggleButton ? toggleButtonSize + Math.round(8 * root._s) : 0
     property real maxExpandedWidth: Math.max(240,
                                              Math.min(620 * root._s,
-                                                      _windowW - 32 * root._s))
-    property int controlHeight: Math.round(36 * root._s) - 2
+                                                      _windowW - root.x - _leadOffset - Math.round(16 * root._s)))
+    property int controlHeight: Math.round(36 * root._s)
     property int panelPaddingX: Math.round(3 * root._s)
-    property int triggerButtonWidth: Math.round(92 * root._s)
+    readonly property int quickActionSpacing: Math.round(8 * root._s)
+    property int triggerButtonWidth: 2 * controlHeight + quickActionSpacing
     readonly property int toggleButtonSize: root.controlHeight
     readonly property color hotkeysLayerColor: AppPalette.bg
     readonly property color hotkeysPopupLayerColor: AppPalette.bg
@@ -28,15 +31,18 @@ Item {
     readonly property color buttonHoverBorderColor: AppPalette.borderHover
     readonly property int panelHeight: controlHeight + panelPaddingX * 2
     readonly property int _arrowSlotW: showToggleButton ? toggleButtonSize + Math.round(8 * root._s) : 0
+    readonly property int _flowContentW: Math.max(root.controlHeight,
+                                                  root.maxExpandedWidth - 2 * root.panelPaddingX - root._arrowSlotW)
+    readonly property int _bgAdjustMs: 190
     // While the "layouts" reveal sequence is active we keep showing the icons
     // even if the user just disabled them — so they're visible during the
     // whole open → pulse → close cycle instead of disappearing instantly.
     readonly property bool _favoritesRevealOverride: _revealActiveKey === "layouts"
-    readonly property bool hasFavoriteLayouts: (favoritesEnabled || _favoritesRevealOverride)
+    readonly property bool hasFavoriteLayouts: (layoutsEnabled || _favoritesRevealOverride)
                                               && store
-                                              && store.favoriteLayouts
-                                              && store.favoriteLayouts.length > 0
-    readonly property int favoriteCount: hasFavoriteLayouts ? store.favoriteLayouts.length : 0
+                                              && store.layouts
+                                              && store.layouts.length > 0
+    readonly property int favoriteCount: hasFavoriteLayouts ? store.layouts.length : 0
     property bool layoutsMenuOpen: false
     property bool bottomTrackEditorEnabled: true
     readonly property bool _btEditRevealOverride: _revealActiveKey === "bottomTrack"
@@ -45,13 +51,20 @@ Item {
     property bool profilesEnabled: true
     readonly property bool _profilesRevealOverride: _revealActiveKey === "profiles"
     readonly property bool showProfiles: profilesEnabled || _profilesRevealOverride
-    property bool extraInfoEnabled: true
-    readonly property bool _extraInfoRevealOverride: _revealActiveKey === "extraInfo"
-    readonly property bool showExtraInfo: extraInfoEnabled || _extraInfoRevealOverride
+    property bool widgetsEnabled: true
+    readonly property bool _widgetsRevealOverride: _revealActiveKey === "widgets"
+    readonly property bool showWidgets: widgetsEnabled || _widgetsRevealOverride
+    readonly property bool hasWidgets: !!(store && store.widgets && store.widgets.length > 0)
+    property bool widgetsMenuOpen: false
+    property var _widgetsSlot: null
+    property bool consoleButtonEnabled: true
+    readonly property bool _consoleRevealOverride: _revealActiveKey === "console"
+    readonly property bool showConsole: consoleButtonEnabled || _consoleRevealOverride
     property int favoriteItemSpacing: Math.round(6 * root._s)
     property int favoriteListMaxHeight: Math.round(244 * root._s)
     property bool connectionsOnline: true
     property bool connectionStatusToolVisible: true
+    property bool layoutEditing: false
     property string highlightedQuickActionKey: ""
     property int highlightPulseToken: 0
     readonly property string draggingKey: store ? store.quickActionDraggingKey : ""
@@ -63,7 +76,10 @@ Item {
     property color inputDeviceColor: "#2563EB"
     readonly property int inputDeviceStackSpacing: Math.round(8 * root._s)
 
-    readonly property int favoriteItemHeight: Math.round(62 * root._s)
+    readonly property int favoriteCardMargin: Math.round(7 * root._s)
+    readonly property int favoritePreviewWidth: Math.round(root.triggerButtonWidth * 0.66)
+    readonly property int favoritePreviewHeight: Math.round(root.favoritePreviewWidth * 16 / 21)
+    readonly property int favoriteItemHeight: favoritePreviewHeight + 2 * favoriteCardMargin
     readonly property int favoriteListContentHeight: favoriteCount > 0
                                                      ? favoriteCount * favoriteItemHeight + (favoriteCount - 1) * favoriteItemSpacing
                                                      : 0
@@ -87,6 +103,15 @@ Item {
     signal legacyRequested()
     signal secondWindowToggleRequested()
     property bool secondWindowOpen: false
+    property bool secondWindowButtonEnabled: true
+    readonly property bool _secondWindowAvailable: Qt.platform.os !== "android" && Qt.platform.os !== "ios"
+    readonly property bool _secondWindowRevealOverride: _revealActiveKey === "secondWindow"
+    readonly property bool _showSecondWindow: _secondWindowAvailable && (secondWindowButtonEnabled || _secondWindowRevealOverride)
+
+    property bool powerOffEnabled: false
+    signal powerOffTriggered()
+    readonly property bool _powerOffRevealOverride: _revealActiveKey === "powerOff"
+    readonly property bool _showPowerOff: (Qt.platform.os === "linux" || _manualTesting) && (powerOffEnabled || _powerOffRevealOverride)
 
     // Devices bound from MainWindow (deviceManagerWrapper.devs).
     // Status colors mirror ConnectionViewer link-row palette.
@@ -95,16 +120,114 @@ Item {
     signal deviceTriggered(int devIndex)
 
     readonly property bool _hasConnectedDevice: {
-        var ds = root.devices
+        var ds = root.effectiveDevices
         if (!ds) return false
         for (var i = 0; i < ds.length; ++i)
-            if (ds[i] && ds[i].devType !== 0) return true
+            if (ds[i] && ds[i].isBoardInited) return true
         return false
     }
     property var _favSlot: null
     property var _btSlot: null
 
     readonly property bool _loggingActive: typeof core !== "undefined" && core && (core.loggingKlf || core.loggingCsv)
+    property bool loggingButtonEnabled: true
+    readonly property bool _loggingRevealOverride: _revealActiveKey === "logging"
+    readonly property bool _loggingBadgeVisibleCollapsed: (loggingButtonEnabled && _loggingActive) || _loggingRevealOverride
+    readonly property bool _loggingBadgeVisibleExpanded: loggingButtonEnabled || _loggingRevealOverride
+
+    readonly property bool _manualTesting: typeof manualTesting !== "undefined" && manualTesting === true
+
+    QtObject {
+        id: fakeDevice
+        property int devType: 1
+        property bool isBoardInited: true
+        property string devName: "Echosounder"
+        property string fwVersion: "0.0"
+        property int devSN: 0
+        property bool isSonar: true
+        property bool isDoppler: false
+        property bool isUSBL: false
+        property bool isUSBLBeacon: false
+        property bool isRecorder: false
+        property bool isTransducerSupport: true
+        property int transFreq: 700
+        property bool linkConnected: true
+        property bool linkReceivesData: true
+        property bool linkNotAvailable: false
+    }
+
+    readonly property var effectiveDevices: (devices && devices.length > 0)
+                                            ? devices
+                                            : (_manualTesting ? [fakeDevice] : [])
+
+    QtObject {
+        id: placeholderDevice
+        property int devType: 1
+        property bool isBoardInited: true
+        property string devName: qsTr("Device")
+        property string fwVersion: ""
+        property int devSN: 0
+        property bool isSonar: true
+        property bool isDoppler: false
+        property bool isUSBL: false
+        property bool isUSBLBeacon: false
+        property bool isRecorder: false
+        property bool isTransducerSupport: true
+        property int transFreq: 700
+        property bool linkConnected: true
+        property bool linkReceivesData: true
+        property bool linkNotAvailable: false
+    }
+
+    // While editing the layout: show a single device slot (first real device, or
+    // a neutral placeholder if none). Otherwise the full device list.
+    readonly property int _connGap: Math.round(9 * root._s)
+
+    function _linkLabelOf(g) {
+        if (!g) return ""
+        if (g.portName && g.portName.length > 0)
+            return g.baudrate > 0 ? g.portName + " " + g.baudrate : g.portName
+        if (g.address && g.address.length > 0)
+            return g.address
+        return ""
+    }
+
+    function _devIndex(dev) {
+        if (!dev || !devices) return -1
+        for (var i = 0; i < devices.length; ++i)
+            if (devices[i] === dev) return i
+        return -1
+    }
+
+    readonly property var _connItems: {
+        if (layoutEditing) {
+            var d0 = effectiveDevices.length > 0 ? effectiveDevices[0] : placeholderDevice
+            return [{ device: d0, port: -1, linkLabel: "", groupFirst: true }]
+        }
+        var groups = (typeof deviceTopology !== "undefined" && deviceTopology) ? deviceTopology.groups : []
+        if (groups && groups.length > 0) {
+            var items = []
+            for (var gi = 0; gi < groups.length; ++gi) {
+                var g = groups[gi]
+                var label = _linkLabelOf(g)
+                var masterDev = g.master ? g.master.device : null
+                var mem = g.members || []
+                for (var mi = 0; mi < mem.length; ++mi) {
+                    var n = mem[mi]
+                    items.push({ device: n.device,
+                                 port: (n.port !== undefined ? n.port : -1),
+                                 linkLabel: label,
+                                 master: masterDev,
+                                 groupFirst: mi === 0 })
+                }
+            }
+            return items
+        }
+        var flat = []
+        for (var k = 0; k < effectiveDevices.length; ++k)
+            flat.push({ device: effectiveDevices[k], port: -1, linkLabel: "", groupFirst: true })
+        return flat
+    }
 
     function iconForDevice(d) {
         if (!d) return "qrc:/icons/ui/device-unknown.svg"
@@ -115,17 +238,21 @@ Item {
         return "qrc:/icons/ui/device-unknown.svg"
     }
 
-    function linkFillColor(d) {
-        if (!d) return buttonFillColor
-        if (d.linkConnected)    return d.linkReceivesData ? AppPalette.linkOkBg : AppPalette.linkIdleBg
-        if (d.linkNotAvailable) return AppPalette.linkDownBg
+    function recorderSeverity(d) {
+        return (d && d.isRecorder && d.recorderStatusValid) ? RecorderStatus.severity(d) : ""
+    }
+
+    function pillFillColor(state) {
+        if (state === "ok")   return AppPalette.linkOkBg
+        if (state === "warn") return AppPalette.linkIdleBg
+        if (state === "down") return AppPalette.linkDownBg
         return buttonFillColor
     }
 
-    function linkBorderColor(d) {
-        if (!d) return buttonBorderColor
-        if (d.linkConnected)    return d.linkReceivesData ? AppPalette.linkOkBorder : AppPalette.linkIdleBorder
-        if (d.linkNotAvailable) return AppPalette.linkDownBorder
+    function pillBorderColor(state) {
+        if (state === "ok")   return AppPalette.linkOkBorder
+        if (state === "warn") return AppPalette.linkIdleBorder
+        if (state === "down") return AppPalette.linkDownBorder
         return buttonBorderColor
     }
 
@@ -169,29 +296,27 @@ Item {
                             required property int index
                             readonly property int favoriteEntryIndex: index
                             readonly property var favoriteEntry: (root.store
-                                                                 && root.store.favoriteLayouts
-                                                                 && favoriteEntryIndex < root.store.favoriteLayouts.length)
-                                                             ? root.store.favoriteLayouts[favoriteEntryIndex]
+                                                                 && root.store.layouts
+                                                                 && favoriteEntryIndex < root.store.layouts.length)
+                                                             ? root.store.layouts[favoriteEntryIndex]
                                                              : null
                             readonly property var snapshotData: favoriteEntry && favoriteEntry.layout ? favoriteEntry.layout : favoriteEntry
                             readonly property var popupLinksData: favoriteEntry && favoriteEntry.popupLinks ? favoriteEntry.popupLinks : []
 
                             width: favoritesList.width
                             height: root.favoriteItemHeight
-                            contentMargin: Math.round(6 * root._s)
-                            previewWidth:  Math.round(60 * root._s)
-                            previewHeight: Math.round(46 * root._s)
+                            contentMargin: root.favoriteCardMargin
+                            previewWidth:  root.favoritePreviewWidth
+                            previewHeight: root.favoritePreviewHeight
                             snapshot: snapshotData
                             popupLinks: popupLinksData
                             favoriteIndex: favoriteEntryIndex
-                            selected: root.store && root.store.favoriteLayoutIsCurrent
-                                      ? root.store.favoriteLayoutIsCurrent(favoriteEntryIndex)
-                                      : false
+                            selected: !!root.store && favoriteEntryIndex === root.store.activeLayoutIndex
                             showText: false
 
                             onClicked: {
-                                if (root.store && root.store.applyFavoriteLayout)
-                                    root.store.applyFavoriteLayout(favoriteEntryIndex)
+                                if (root.store && root.store.applyLayout)
+                                    root.store.applyLayout(favoriteEntryIndex)
                                 root.layoutsMenuOpen = false
                                 root.expanded = false
                             }
@@ -216,6 +341,96 @@ Item {
                         else
                             root.settingsTriggered()
                         root.layoutsMenuOpen = false
+                        root.expanded = false
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: widgetsPopupContentComponent
+
+        Column {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Math.round(7 * root._s)
+            spacing: Math.round(7 * root._s)
+
+            Flickable {
+                id: widgetsFlick
+                width: parent.width
+                height: Math.min(root.favoriteListMaxHeight, widgetsList.implicitHeight)
+                contentWidth: widgetsList.width
+                contentHeight: widgetsList.implicitHeight
+                clip: true
+                interactive: contentHeight > height
+                boundsBehavior: Flickable.StopAtBounds
+                visible: root.hasWidgets
+
+                ScrollBar.vertical: ScrollBar {
+                    id: widgetsScrollBar
+                    policy: ScrollBar.AsNeeded
+                    width: Math.round(6 * root._s)
+                }
+
+                Column {
+                    id: widgetsList
+                    width: widgetsFlick.width
+                           - (widgetsFlick.interactive ? widgetsScrollBar.width + Math.round(4 * root._s) : 0)
+                    spacing: root.favoriteItemSpacing
+
+                    Repeater {
+                        model: root.store ? root.store.widgets.length : 0
+                        delegate: WidgetCard {
+                            required property int index
+                            readonly property var widgetDef: (root.store && index < root.store.widgets.length)
+                                                             ? root.store.widgets[index] : null
+                            width: widgetsList.width
+                            height: root.favoriteItemHeight
+                            contentMargin: root.favoriteCardMargin
+                            previewWidth: root.favoritePreviewWidth
+                            previewHeight: root.favoritePreviewHeight
+                            def: widgetDef
+                            showText: false
+                            selectionMode: true
+                            selected: !!(root.store && widgetDef && root.store.widgetShown(widgetDef.id))
+                            onToggled: function(value) {
+                                if (root.store && widgetDef)
+                                    root.store.setWidgetShown(widgetDef.id, value)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                width: parent.width
+                visible: !root.hasWidgets
+                text: qsTr("No panels yet.")
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontSm
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            Item {
+                width: parent.width
+                height: root.controlHeight
+
+                SettingsGearButton {
+                    anchors.centerIn: parent
+                    width: root.controlHeight
+                    height: root.controlHeight
+                    modeTag: "app"
+                    toolTipText: qsTr("Open panel settings")
+                    onClicked: {
+                        if (root.store && typeof root.store.openWidgetSettings === "function")
+                            root.store.openWidgetSettings()
+                        else
+                            root.settingsTriggered()
+                        root.widgetsMenuOpen = false
                         root.expanded = false
                     }
                 }
@@ -251,6 +466,7 @@ Item {
     onExpandedChanged: {
         if (!expanded) {
             layoutsMenuOpen = false
+            widgetsMenuOpen = false
             _revealActiveKey = ""
         }
     }
@@ -267,14 +483,14 @@ Item {
                                                 ? toggleButton.height
                                                   + (inputDeviceBadgeVisible ? inputDeviceStackSpacing + inputDeviceBadge.height : 0)
                                                 : 0
-    readonly property int panelOffsetX: (root.showToggleButton ? root.toggleButtonSize + Math.round(8 * root._s) : 0) + root.revealShiftX
+    readonly property int panelOffsetX: root._leadOffset + root.revealShiftX
 
     width: Math.max(leadingClusterWidth,
                     root.expanded
                     ? panelOffsetX + panel.width
                     : root.panelPaddingX + 2 * root.toggleButtonSize + Math.round(8 * root._s)
                       + (collapsedDeviceRow.visible ? Math.round(8 * root._s) + collapsedDeviceRow.width : 0))
-    height: Math.max(leadingClusterHeight, panel.height, layoutsCombo.y + backing.height, btEditCombo.y + btEditCombo.height)
+    height: Math.max(leadingClusterHeight, panel.height, layoutsCombo.y + backing.height, btEditCombo.y + btEditCombo.height, widgetsCombo.y + widgetsBacking.height)
 
     component LayoutsTriggerButton: Rectangle {
         id: button
@@ -298,7 +514,7 @@ Item {
         color: button.dropped ? "transparent"
                : button.highlightHold ? AppPalette.accentBgStrong
                : (buttonMouse.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
-        border.width: button.dropped ? 0 : 1
+        border.width: 0
         border.color: button.highlightHold ? AppPalette.accentBorder
                       : (buttonMouse.containsMouse ? root.buttonHoverBorderColor : root.buttonBorderColor)
 
@@ -354,7 +570,7 @@ Item {
         KToolTip {
             text: qsTr("Layouts")
             targetItem: button
-            shown: buttonMouse.containsMouse
+            shown: buttonMouse.containsMouse && !button.open
         }
 
         Rectangle {
@@ -380,6 +596,111 @@ Item {
         onFlashTokenChanged: if (button.highlighted) revealPulseAnim.restart()
         onHighlightedChanged: if (!button.highlighted) revealPulse.opacity = 0.0
         Component.onCompleted: if (button.highlighted) revealPulseAnim.restart()
+    }
+
+    component WidgetsTriggerButton: Rectangle {
+        id: wbutton
+
+        property bool open: false
+        property bool dropped: false
+        property bool highlighted: false
+        property int flashToken: 0
+        property bool highlightHold: false
+        signal clicked()
+
+        implicitWidth: root.triggerButtonWidth
+        implicitHeight: root.controlHeight
+        radius: height / 2
+        color: wbutton.dropped ? "transparent"
+               : wbutton.highlightHold ? AppPalette.accentBgStrong
+               : (wbuttonMouse.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
+        border.width: 0
+
+        Behavior on color { ColorAnimation { duration: 120; easing.type: Easing.OutCubic } }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: "#FFFFFF"
+            opacity: wbuttonMouse.containsMouse ? 0.12 : 0.0
+            visible: opacity > 0.001
+            Behavior on opacity { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: AppPalette.accentBgStrong
+            opacity: wRevealPulse.opacity
+            visible: wbutton.highlighted
+        }
+
+        Rectangle {
+            id: wIcon
+            anchors.centerIn: parent
+            anchors.horizontalCenterOffset: -Math.round(6 * root._s)
+            height: root.controlHeight - Math.round(12 * root._s)
+            width: Math.round(height * 21 / 16)
+            radius: Math.round(6 * root._s)
+            color: AppPalette.bgDeep
+            border.width: 1
+            border.color: AppPalette.border
+
+            Text {
+                anchors.centerIn: parent
+                text: "info"
+                color: AppPalette.text
+                font.pixelSize: Math.round(10 * root._s)
+            }
+        }
+
+        DisclosureIndicator {
+            anchors.right: parent.right
+            anchors.rightMargin: Math.round(10 * root._s)
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.round(10 * root._s)
+            height: Math.round(10 * root._s)
+            expanded: wbutton.open
+            indicatorColor: AppPalette.textSecond
+        }
+
+        MouseArea {
+            id: wbuttonMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: wbutton.clicked()
+        }
+
+        KToolTip {
+            text: qsTr("Widget panels")
+            targetItem: wbutton
+            shown: wbuttonMouse.containsMouse && !wbutton.open
+        }
+
+        Rectangle {
+            id: wRevealPulse
+            anchors.fill: parent
+            radius: wbutton.radius
+            color: "transparent"
+            border.width: Math.max(2, Math.round(2 * root._s))
+            border.color: AppPalette.accentBorder
+            opacity: 0
+            visible: wbutton.highlighted
+            z: 10
+        }
+
+        SequentialAnimation {
+            id: wRevealPulseAnim
+            running: false
+            NumberAnimation { target: wRevealPulse; property: "opacity"; to: 0.95; duration: 90;  easing.type: Easing.OutCubic }
+            NumberAnimation { target: wRevealPulse; property: "opacity"; to: 0.30; duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { target: wRevealPulse; property: "opacity"; to: 0.0;  duration: 280; easing.type: Easing.OutCubic }
+        }
+
+        onFlashTokenChanged: if (wbutton.highlighted) wRevealPulseAnim.restart()
+        onHighlightedChanged: if (!wbutton.highlighted) wRevealPulse.opacity = 0.0
+        Component.onCompleted: if (wbutton.highlighted) wRevealPulseAnim.restart()
     }
 
     component PulseSlot: Item {
@@ -429,24 +750,48 @@ Item {
 
     component LoggingBadge: Item {
         id: logBadge
-        visible: root._loggingActive
-        width: visible ? root.controlHeight : 0
+        width: root.controlHeight
         height: root.controlHeight
 
+        activeFocusOnTab: true
+        Keys.onReturnPressed: pill.opened ? pill.close() : pill.open()
+        Keys.onEnterPressed:  pill.opened ? pill.close() : pill.open()
+        Keys.onSpacePressed:  pill.opened ? pill.close() : pill.open()
+
+        readonly property bool _active: root._loggingActive
         readonly property bool _klf: typeof core !== "undefined" && core && core.loggingKlf
         readonly property bool _csv: typeof core !== "undefined" && core && core.loggingCsv
+        readonly property real _hoverScale: badgeMa.pressed ? 0.97 : (badgeMa.containsMouse ? 1.035 : 1.0)
+        readonly property bool _dragHold: root.draggingKey === "logging"
+
+        onVisibleChanged: if (!visible && pill.opened) pill.close()
+        Connections {
+            target: root
+            function onExpandedChanged() { if (pill.opened) pill.close() }   // collapse menu → close record pill
+        }
 
         Rectangle {
+            id: badgeCircle
             anchors.fill: parent
             radius: width / 2
-            color: root.buttonFillColor
-            border.width: 1
-            border.color: "#EF4444"
+            scale: logBadge._hoverScale
+            color: logBadge._dragHold ? AppPalette.accentBgStrong
+                   : (badgeMa.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
+            border.width: (logBadge._active || logBadge._dragHold) ? 1 : 0
+            border.color: logBadge._dragHold ? AppPalette.accentBorder
+                          : logBadge._active ? (badgeMa.containsMouse ? Qt.lighter("#EF4444", 1.15) : "#EF4444")
+                          : "transparent"
+            Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+            Behavior on border.color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         }
 
         Column {
             anchors.centerIn: parent
+            visible: logBadge._active
+            scale: logBadge._hoverScale
             spacing: Math.round(1 * root._s)
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
             Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -456,7 +801,7 @@ Item {
                 color: "#EF4444"
 
                 SequentialAnimation on opacity {
-                    running: logBadge.visible
+                    running: logBadge.visible && logBadge._active
                     loops: Animation.Infinite
                     NumberAnimation { to: 0.3; duration: 650; easing.type: Easing.InOutQuad }
                     NumberAnimation { to: 1.0; duration: 650; easing.type: Easing.InOutQuad }
@@ -490,13 +835,244 @@ Item {
             }
         }
 
+        Text {
+            anchors.centerIn: parent
+            visible: !logBadge._active
+            scale: logBadge._hoverScale
+            text: "REC"
+            color: AppPalette.textSecond
+            font.pixelSize: Math.round(10 * root._s)
+            font.bold: true
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        }
+
         MouseArea {
+            id: badgeMa
             anchors.fill: parent
             enabled: logBadge.visible
+            hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                root.loggingIndicatorTriggered()
-                root.expanded = false
+            onPressed: logFocusRing.suppress()
+            onClicked: { logBadge.forceActiveFocus(); pill.opened ? pill.close() : pill.open() }
+        }
+
+        KFocusRing { id: logFocusRing; target: badgeCircle; focusItem: logBadge }
+
+        KToolTip { text: logBadge._active ? qsTr("Recording") : qsTr("Start recording"); shown: badgeMa.containsMouse && !pill.opened }
+
+        readonly property bool _highlighted: root.highlightedQuickActionKey === "logging"
+
+        Rectangle {
+            id: logPulse
+            anchors.fill: parent
+            radius: width / 2
+            color: "transparent"
+            border.width: Math.max(2, Math.round(2 * root._s))
+            border.color: AppPalette.accentBorder
+            opacity: 0
+            visible: logBadge._highlighted
+            z: 10
+        }
+
+        SequentialAnimation {
+            id: logPulseAnim
+            NumberAnimation { target: logPulse; property: "opacity"; to: 0.95; duration: 90;  easing.type: Easing.OutCubic }
+            NumberAnimation { target: logPulse; property: "opacity"; to: 0.30; duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { target: logPulse; property: "opacity"; to: 0.0;  duration: 280; easing.type: Easing.OutCubic }
+        }
+
+        Connections {
+            target: root
+            function onHighlightPulseTokenChanged() { if (logBadge._highlighted) logPulseAnim.restart() }
+        }
+
+        Timer {
+            running: pill.visible && logBadge._active
+            interval: 1000
+            repeat: true
+            onTriggered: pill.refresh()
+        }
+
+        Popup {
+            id: pill
+            readonly property int pad: Math.round(2 * root._s)
+            x: -pad
+            y: -pad
+            width: logBadge.width + 2 * pad
+            padding: pad
+            closePolicy: Popup.CloseOnEscape   // stays open independently of other pills
+
+            property int sizeB: 0
+            property int secs: 0
+            function refresh() {
+                if (typeof core === "undefined" || !core) return
+                pill.sizeB = core.activeLogSizeBytes()
+                pill.secs  = core.activeLogDurationSecs()
+            }
+            function fmtSize(b) {
+                if (b < 1024) return b + " B"
+                var kb = b / 1024
+                if (kb < 1024) return (kb < 10 ? kb.toFixed(1) : Math.round(kb)) + " KB"
+                var mb = kb / 1024
+                if (mb < 1024) return (mb < 10 ? mb.toFixed(1) : Math.round(mb)) + " MB"
+                var gb = mb / 1024
+                return (gb < 10 ? gb.toFixed(1) : Math.round(gb)) + " GB"
+            }
+            function fmtTime(s) {
+                var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60
+                function p(n) { return (n < 10 ? "0" : "") + n }
+                return h > 0 ? (h + ":" + p(m) + ":" + p(ss)) : (p(m) + ":" + p(ss))
+            }
+            onOpened: refresh()
+
+            background: Rectangle {
+                color: AppPalette.bg
+                radius: width / 2
+                border.width: 1
+                border.color: logBadge._active ? "#EF4444" : AppPalette.border
+            }
+
+            contentItem: Column {
+                spacing: Math.round(5 * root._s)
+
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: logBadge.width; height: width
+                    radius: width / 2
+                    color: root.buttonFillColor
+                    border.width: 0
+
+                    Column {
+                        anchors.centerIn: parent
+                        visible: logBadge._active
+                        spacing: Math.round(1 * root._s)
+
+                        Rectangle {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: Math.round(8 * root._s); height: width
+                            radius: width / 2
+                            color: "#EF4444"
+                            SequentialAnimation on opacity {
+                                running: pill.visible && logBadge._active
+                                loops: Animation.Infinite
+                                NumberAnimation { to: 0.3; duration: 650; easing.type: Easing.InOutQuad }
+                                NumberAnimation { to: 1.0; duration: 650; easing.type: Easing.InOutQuad }
+                            }
+                        }
+                        Column {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            spacing: 0
+                            Text {
+                                visible: logBadge._klf
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "KLF"; color: "#EF4444"
+                                font.pixelSize: Math.round(9 * root._s); font.bold: true
+                                lineHeight: 0.82; lineHeightMode: Text.ProportionalHeight
+                            }
+                            Text {
+                                visible: logBadge._csv
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "CSV"; color: "#EF4444"
+                                font.pixelSize: Math.round(9 * root._s); font.bold: true
+                                lineHeight: 0.82; lineHeightMode: Text.ProportionalHeight
+                            }
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: !logBadge._active
+                        text: "REC"
+                        color: AppPalette.textSecond
+                        font.pixelSize: Math.round(10 * root._s); font.bold: true
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: pill.close()
+                    }
+                }
+
+                Column {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible: logBadge._active
+                    spacing: 0
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: pill.fmtSize(pill.sizeB)
+                        color: AppPalette.text
+                        font.pixelSize: Math.round(9 * root._s)
+                        font.bold: true
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: pill.fmtTime(pill.secs)
+                        color: AppPalette.textMuted
+                        font.pixelSize: Math.round(9 * root._s)
+                    }
+                }
+
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: logBadge.width; height: width
+                    radius: width / 2
+                    color: logBadge._active ? (actionMa.containsMouse ? "#991B1B" : "#7F1D1D")
+                                            : (actionMa.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
+                    border.width: 0
+                    Rectangle {
+                        visible: logBadge._active
+                        anchors.centerIn: parent
+                        width: Math.round(logBadge.width * 0.3); height: width
+                        radius: Math.round(2 * root._s)
+                        color: "#FFFFFF"
+                    }
+                    Rectangle {
+                        visible: !logBadge._active
+                        anchors.centerIn: parent
+                        width: Math.round(logBadge.width * 0.34); height: width
+                        radius: width / 2
+                        color: "#EF4444"
+                    }
+                    MouseArea {
+                        id: actionMa
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (root.store) root.store.setRecording(!logBadge._active)
+                            pill.close()
+                        }
+                    }
+                    KToolTip { text: logBadge._active ? qsTr("Stop recording") : qsTr("Start recording"); shown: actionMa.containsMouse }
+                }
+
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: logBadge.width; height: width
+                    radius: width / 2
+                    color: gearMa.containsMouse ? AppPalette.cardHover : AppPalette.card
+                    border.width: 0
+                    Image {
+                        anchors.centerIn: parent
+                        width: Math.round(logBadge.width * 0.5); height: width
+                        source: "qrc:/icons/ui/settings.svg"
+                        fillMode: Image.PreserveAspectFit
+                        opacity: 0.85
+                    }
+                    MouseArea {
+                        id: gearMa
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.loggingIndicatorTriggered()
+                            pill.close()
+                            root.expanded = false
+                        }
+                    }
+                    KToolTip { text: qsTr("Recording settings"); shown: gearMa.containsMouse }
+                }
             }
         }
     }
@@ -504,49 +1080,227 @@ Item {
     Component {
         id: deviceShortcutDelegate
 
-        KCircleIconButton {
+        Row {
+            id: devCell
             required property var modelData
             required property int index
-            readonly property color _fill:   root.linkFillColor(modelData)
-            readonly property color _border: root.linkBorderColor(modelData)
+            readonly property var _dev: modelData ? modelData.device : null
+            spacing: 0
 
-            visible: modelData ? (modelData.devType !== 0) : false
-            width: visible ? root.controlHeight : 0
-            height: root.controlHeight
-            iconSource: root.iconForDevice(modelData)
-            iconTintColor: AppPalette.text
-            toolTipText: modelData
-                         ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]")
-                         : ""
-            fillColor:        _fill
-            fillHoverColor:   _fill
-            fillPressedColor: root.buttonPressedColor
-            borderColor:      _border
-            borderHoverColor: _border
+            Item {
+                visible: devCell.index > 0
+                width: visible ? (devCell.modelData && devCell.modelData.groupFirst
+                                  ? root.quickActionSpacing : root._connGap)
+                               : 0
+                height: root.controlHeight
 
-            highlighted: root.highlightedQuickActionKey === "connections"
-            flashToken: root.highlightPulseToken
-            highlightHold: root.draggingKey === "connections"
-
-            onClicked: {
-                if (!modelData) return
-                root.deviceTriggered(index)
-                root.expanded = false
+                Rectangle {
+                    visible: !!(devCell.modelData && !devCell.modelData.groupFirst)
+                    anchors.centerIn: parent
+                    width: parent.width
+                    height: Math.max(2, Math.round(2 * root._s))
+                    color: root.buttonFillColor
+                }
             }
 
-            // Set sonar frequency (transducer kHz) — small number, bottom-right.
-            Text {
-                visible: !!(modelData && modelData.isTransducerSupport && modelData.transFreq > 0)
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                anchors.bottomMargin: Math.round(2 * root._s)
-                anchors.rightMargin: Math.round(4 * root._s)
-                text: (modelData && modelData.transFreq > 0) ? String(modelData.transFreq) : ""
-                color: AppPalette.text
-                font.pixelSize: Math.round(9 * root._s)
-                font.bold: true
-                style: Text.Outline
-                styleColor: "#000000B0"
+            Item {
+                id: devBadge
+                readonly property var _dev: devCell._dev
+                readonly property string _sev: root.recorderSeverity(_dev)
+                readonly property string _state: RecorderStatus.pillState(
+                    _dev,
+                    devCell.modelData ? devCell.modelData.master : null,
+                    devCell.modelData ? devCell.modelData.port : -1)
+                readonly property color _fill:   root.pillFillColor(_state)
+                readonly property color _border: root.pillBorderColor(_state)
+                readonly property bool _transducer: !!(_dev
+                                                       && _dev.isSonar
+                                                       && _dev.isTransducerSupport
+                                                       && !_dev.isDoppler
+                                                       && !_dev.isRecorder
+                                                       && !_dev.isUSBL
+                                                       && !_dev.isUSBLBeacon)
+                readonly property string _tip: {
+                    if (!_dev) return ""
+                    var t = _dev.devName
+                    var p = devCell.modelData ? devCell.modelData.port : -1
+                    if (p >= 0) {
+                        t += " · " + qsTr("Port %1").arg(p)
+                    } else {
+                        var lbl = devCell.modelData ? devCell.modelData.linkLabel : ""
+                        if (lbl && lbl.length > 0)
+                            t += " · " + lbl
+                    }
+                    return t
+                }
+
+                visible: !!(_dev && _dev.isBoardInited)
+                width: visible ? root.controlHeight : 0
+                height: root.controlHeight
+
+                onVisibleChanged: if (!visible && devPill.opened) devPill.close()
+                Connections {
+                    target: root
+                    function onExpandedChanged() { if (devPill.opened) devPill.close() }
+                }
+
+                KCircleIconButton {
+                    anchors.fill: parent
+                    iconSource: root.iconForDevice(devBadge._dev)
+                    iconTintColor: AppPalette.text
+                    toolTipText: devBadge._tip
+                    toolTipSuppressed: devPill.opened
+                    fillColor:        devBadge._fill
+                    fillHoverColor:   devBadge._fill
+                    fillPressedColor: root.buttonPressedColor
+                    borderColor:      devBadge._border
+                    borderHoverColor: devBadge._border
+                    borderWidth:      1
+
+                    highlighted: root.highlightedQuickActionKey === "connections"
+                    flashToken: root.highlightPulseToken
+                    highlightHold: root.draggingKey === "connections"
+
+                    onClicked: devPill.opened ? devPill.close() : devPill.open()
+
+                    Text {
+                        visible: !!(devBadge._dev && devBadge._dev.isTransducerSupport && devBadge._dev.transFreq > 0)
+                        anchors.bottom: parent.bottom
+                        anchors.right: parent.right
+                        anchors.bottomMargin: Math.round(2 * root._s)
+                        anchors.rightMargin: Math.round(4 * root._s)
+                        text: (devBadge._dev && devBadge._dev.transFreq > 0) ? String(devBadge._dev.transFreq) : ""
+                        color: AppPalette.text
+                        font.pixelSize: Math.round(9 * root._s)
+                        font.bold: true
+                        style: Text.Outline
+                        styleColor: "#000000B0"
+                    }
+                }
+
+                Popup {
+                    id: devPill
+                    readonly property int pad: Math.round(2 * root._s)
+                    readonly property bool _isRec: devBadge._sev !== ""
+                    x: -pad
+                    y: -pad
+                    width: devBadge.width + 2 * pad
+                    padding: pad
+                    closePolicy: Popup.CloseOnEscape
+
+                    background: Rectangle {
+                        color: AppPalette.bg
+                        radius: width / 2
+                        border.width: 1
+                        border.color: devBadge._border
+                    }
+
+                    contentItem: Column {
+                        spacing: Math.round(5 * root._s)
+
+                        KCircleIconButton {
+                            width: devBadge.width; height: width
+                            iconSource: root.iconForDevice(devBadge._dev)
+                            iconTintColor: AppPalette.text
+                            toolTipSuppressed: true
+                            fillColor:        devBadge._fill
+                            fillHoverColor:   devBadge._fill
+                            borderColor:      devBadge._border
+                            borderHoverColor: devBadge._border
+                            onClicked: devPill.close()
+
+                            Text {
+                                visible: !!(devBadge._dev && devBadge._dev.isTransducerSupport && devBadge._dev.transFreq > 0)
+                                anchors.bottom: parent.bottom
+                                anchors.right: parent.right
+                                anchors.bottomMargin: Math.round(2 * root._s)
+                                anchors.rightMargin: Math.round(4 * root._s)
+                                text: (devBadge._dev && devBadge._dev.transFreq > 0) ? String(devBadge._dev.transFreq) : ""
+                                color: AppPalette.text
+                                font.pixelSize: Math.round(9 * root._s)
+                                font.bold: true
+                                style: Text.Outline
+                                styleColor: "#000000B0"
+                            }
+                        }
+
+                        Column {
+                            visible: devPill._isRec
+                            width: devBadge.width
+                            spacing: Math.round(1 * root._s)
+                            readonly property var d: devBadge._dev
+
+                            Text {
+                                width: parent.width; horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
+                                text: (parent.d && parent.d.recorderCurrentLogId > 0) ? "#" + parent.d.recorderCurrentLogId : "—"
+                                color: AppPalette.text; font.pixelSize: Math.round(12 * root._s); font.bold: true
+                            }
+                            Text {
+                                width: parent.width; horizontalAlignment: Text.AlignHCenter
+                                text: RecorderStatus.elapsed(parent.d ? parent.d.recorderDurationSeconds : 0)
+                                color: AppPalette.textSecond; font.pixelSize: Math.round(11 * root._s)
+                            }
+                            Text {
+                                width: parent.width; horizontalAlignment: Text.AlignHCenter
+                                text: RecorderStatus.fmtSizeShort(parent.d ? (parent.d.recorderRecordedSize64k || 0) * 65536 : 0)
+                                color: AppPalette.textSecond; font.pixelSize: Math.round(11 * root._s)
+                            }
+                            Text {
+                                width: parent.width; horizontalAlignment: Text.AlignHCenter
+                                text: RecorderStatus.fmtSizeShort(parent.d ? (parent.d.recorderFreeSpace1m || 0) * 1000000 : 0)
+                                color: AppPalette.textMuted; font.pixelSize: Math.round(11 * root._s)
+                            }
+                        }
+
+                        KCircleIconButton {
+                            visible: devBadge._transducer
+                            width: devBadge.width; height: width
+                            glyph: "700"
+                            glyphPixelSize: Math.round(11 * root._s)
+                            readonly property bool _active: devBadge._dev && devBadge._dev.transFreq === 700
+                            fillColor:      _active ? AppPalette.accentBgStrong : AppPalette.card
+                            fillHoverColor: AppPalette.cardHover
+                            borderColor:    _active ? AppPalette.accentBorder : AppPalette.border
+                            toolTipText: qsTr("Set 700 kHz")
+                            onClicked: {
+                                if (devBadge._dev) devBadge._dev.transFreq = 700
+                                devPill.close()
+                            }
+                        }
+
+                        KCircleIconButton {
+                            visible: devBadge._transducer
+                            width: devBadge.width; height: width
+                            glyph: "450"
+                            glyphPixelSize: Math.round(11 * root._s)
+                            readonly property bool _active: devBadge._dev && devBadge._dev.transFreq === 450
+                            fillColor:      _active ? AppPalette.accentBgStrong : AppPalette.card
+                            fillHoverColor: AppPalette.cardHover
+                            borderColor:    _active ? AppPalette.accentBorder : AppPalette.border
+                            toolTipText: qsTr("Set 450 kHz")
+                            onClicked: {
+                                if (devBadge._dev) devBadge._dev.transFreq = 450
+                                devPill.close()
+                            }
+                        }
+
+                        KCircleIconButton {
+                            width: devBadge.width; height: width
+                            iconSource: "qrc:/icons/ui/settings.svg"
+                            iconTintColor: AppPalette.text
+                            fillColor: AppPalette.card
+                            fillHoverColor: AppPalette.cardHover
+                            borderColor: AppPalette.border
+                            toolTipText: qsTr("Device settings")
+                            onClicked: {
+                                root.deviceTriggered(root._devIndex(devBadge._dev))
+                                devPill.close()
+                                root.expanded = false
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -554,58 +1308,146 @@ Item {
     Component {
         id: qaConnectionsComp
         Row {
-            spacing: Math.round(8 * root._s)
+            spacing: 0
             height: root.controlHeight
             Repeater {
-                model: root.devices
+                model: root._connItems
                 delegate: deviceShortcutDelegate
             }
         }
     }
 
     Component {
+        id: qaLoggingComp
+        LoggingBadge {}
+    }
+
+    Component {
+        id: qaSecondWindowComp
+        KCircleIconButton {
+            width: root.controlHeight
+            height: root.controlHeight
+            iconSource: "qrc:/icons/ui/external-link.svg"
+            iconTintColor: AppPalette.text
+            toolTipText: root.secondWindowOpen
+                         ? qsTr("Close second window")
+                         : qsTr("Open second window")
+            fillColor:        root.secondWindowOpen ? AppPalette.accentBgStrong : root.buttonFillColor
+            fillHoverColor:   root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      root.secondWindowOpen ? AppPalette.accentBorder : root.buttonBorderColor
+            borderHoverColor: root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverBorderColor
+            highlighted: root.highlightedQuickActionKey === "secondWindow"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "secondWindow"
+            onClicked: {
+                root.secondWindowToggleRequested()
+                root.expanded = false
+            }
+        }
+    }
+
+    Component {
+        id: qaPowerOffComp
+        KCircleIconButton {
+            width: root.controlHeight
+            height: root.controlHeight
+            iconSource: "qrc:/icons/ui/plug_off.svg"
+            iconTintColor: AppPalette.dangerText
+            toolTipText: qsTr("Power off")
+            fillColor:        root.buttonFillColor
+            fillHoverColor:   root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      root.buttonBorderColor
+            borderHoverColor: root.buttonHoverBorderColor
+            highlighted: root.highlightedQuickActionKey === "powerOff"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "powerOff"
+            onClicked: {
+                root.powerOffTriggered()
+                root.expanded = false
+            }
+        }
+    }
+
+    Component {
         id: qaFavoritesComp
-        Item {
+        Rectangle {
             id: favSlotItem
             width: root.triggerButtonWidth
             height: root.controlHeight
+            color: "transparent"
+            radius: height / 2
+            activeFocusOnTab: true
+            function _grab() { favSlotItem.forceActiveFocus(); favRing.suppress() }
+            Keys.onReturnPressed: root.layoutsMenuOpen = !root.layoutsMenuOpen
+            Keys.onEnterPressed:  root.layoutsMenuOpen = !root.layoutsMenuOpen
+            Keys.onSpacePressed:  root.layoutsMenuOpen = !root.layoutsMenuOpen
             Component.onCompleted: root._favSlot = favSlotItem
             Component.onDestruction: if (root._favSlot === favSlotItem) root._favSlot = null
+            KFocusRing { id: favRing; inset: 3 }
         }
     }
 
     Component {
         id: qaBottomTrackComp
-        Item {
+        Rectangle {
             id: btSlotItem
             width: root.controlHeight
             height: root.controlHeight
+            color: "transparent"
+            radius: height / 2
+            activeFocusOnTab: true
+            function _grab() { btSlotItem.forceActiveFocus(); btRing.suppress() }
+            Keys.onReturnPressed: if (root.store) root.store.bottomTrackEditorOpen = !root.store.bottomTrackEditorOpen
+            Keys.onEnterPressed:  if (root.store) root.store.bottomTrackEditorOpen = !root.store.bottomTrackEditorOpen
+            Keys.onSpacePressed:  if (root.store) root.store.bottomTrackEditorOpen = !root.store.bottomTrackEditorOpen
             Component.onCompleted: root._btSlot = btSlotItem
             Component.onDestruction: if (root._btSlot === btSlotItem) root._btSlot = null
+            KFocusRing { id: btRing; inset: 3 }
         }
     }
 
     Component {
-        id: qaExtraInfoComp
+        id: qaWidgetsComp
+        Rectangle {
+            id: widgetsSlotItem
+            width: root.triggerButtonWidth
+            height: root.controlHeight
+            color: "transparent"
+            radius: height / 2
+            activeFocusOnTab: true
+            function _grab() { widgetsSlotItem.forceActiveFocus(); widgetsRing.suppress() }
+            Keys.onReturnPressed: root.widgetsMenuOpen = !root.widgetsMenuOpen
+            Keys.onEnterPressed:  root.widgetsMenuOpen = !root.widgetsMenuOpen
+            Keys.onSpacePressed:  root.widgetsMenuOpen = !root.widgetsMenuOpen
+            Component.onCompleted: root._widgetsSlot = widgetsSlotItem
+            Component.onDestruction: if (root._widgetsSlot === widgetsSlotItem) root._widgetsSlot = null
+            KFocusRing { id: widgetsRing; inset: 3 }
+        }
+    }
+
+    Component {
+        id: qaConsoleComp
         KCircleIconButton {
-            id: extraInfoBtn
-            readonly property bool _open: root.store && root.store.extraInfoVisible
+            id: consoleBtn
+            readonly property bool _open: typeof theme !== "undefined" && theme && theme.consoleVisible
             width: root.controlHeight
             height: root.controlHeight
-            iconSource: "qrc:/icons/ui/list-details.svg"
+            iconSource: "qrc:/icons/ui/terminal.svg"
             iconTintColor: AppPalette.text
-            toolTipText: _open ? qsTr("Hide extra info") : qsTr("Extra info panel")
+            toolTipText: _open ? qsTr("Hide console") : qsTr("Console")
             fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
             fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
             fillPressedColor: root.buttonPressedColor
             borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
             borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
-            highlighted: root.highlightedQuickActionKey === "extraInfo"
+            highlighted: root.highlightedQuickActionKey === "console"
             flashToken: root.highlightPulseToken
-            highlightHold: root.draggingKey === "extraInfo"
-            onClicked: if (root.store) root.store.extraInfoVisible = !root.store.extraInfoVisible
+            highlightHold: root.draggingKey === "console"
+            onClicked: if (typeof theme !== "undefined" && theme) theme.consoleVisible = !theme.consoleVisible
 
-            KCloseBadge { visible: extraInfoBtn._open }
+            KCloseBadge { visible: consoleBtn._open }
         }
     }
 
@@ -654,14 +1496,14 @@ Item {
         height: visible ? root.toggleButtonSize : 0
         y: Math.round((root.panelHeight - height) / 2)
         iconSource: "qrc:/icons/app/kogger_app.png"
-        iconTintColor: AppPalette.accentBar
+        iconTintColor: AppPalette.brandK
         iconPixelSize: Math.round(root.toggleButtonSize * 0.7)
         fillColor: root.buttonFillColor
         fillHoverColor: root.buttonHoverColor
         fillPressedColor: root.buttonPressedColor
         borderColor: root.buttonBorderColor
         borderHoverColor: root.buttonHoverBorderColor
-        toolTipText: qsTr("Settings")
+        toolTipText: qsTr("Open settings")
 
         onClicked: {
             if (!root.showToggleButton)
@@ -752,8 +1594,8 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: root.panelPaddingX + 2 * root.toggleButtonSize + 2 * Math.round(8 * root._s)
         anchors.verticalCenter: toggleButton.verticalCenter
-        spacing: Math.round(8 * root._s)
-        visible: root.showToggleButton && !root.expanded && (root.connectionStatusToolVisible || root._loggingActive)
+        spacing: root.quickActionSpacing
+        visible: root.showToggleButton && !root.expanded && (root.connectionStatusToolVisible || root._loggingBadgeVisibleCollapsed)
         opacity: visible ? 1 : 0
 
         Behavior on opacity {
@@ -761,11 +1603,19 @@ Item {
         }
 
         Repeater {
-            model: root.connectionStatusToolVisible ? root.devices : 0
-            delegate: deviceShortcutDelegate
+            model: root.store ? root.store.quickActionOrderModel : 0
+            delegate: Loader {
+                required property string key
+                height: root.controlHeight
+                visible: key === "connections" ? (root.connectionStatusToolVisible && root._hasConnectedDevice)
+                       : key === "logging"     ? root._loggingBadgeVisibleCollapsed
+                       : false
+                active: visible
+                sourceComponent: key === "connections" ? qaConnectionsComp
+                               : key === "logging"      ? qaLoggingComp
+                               : null
+            }
         }
-
-        LoggingBadge {}
     }
 
     Rectangle {
@@ -776,17 +1626,25 @@ Item {
         width: root.expanded ? Math.min(root.maxExpandedWidth,
                                         2 * root.panelPaddingX + root._arrowSlotW + topRow.implicitWidth)
                              : 0
-        height: root.panelHeight
-        radius: height / 2
+        height: root.expanded
+                ? Math.max(root.panelHeight, 2 * root.panelPaddingX + topRow.implicitHeight)
+                : root.panelHeight
+        radius: Math.min(height, root.panelHeight) / 2
         clip: true
         color: root.hotkeysLayerColor
-        border.width: root.expanded ? 1 : 0
-        border.color: AppPalette.border
+        border.width: 0
         opacity: root.expanded ? 1 : 0
 
         Behavior on width {
             NumberAnimation {
-                duration: 220
+                duration: root._bgAdjustMs
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        Behavior on height {
+            NumberAnimation {
+                duration: root._bgAdjustMs
                 easing.type: Easing.OutCubic
             }
         }
@@ -810,58 +1668,49 @@ Item {
             onWheel: function(wheel) { wheel.accepted = true }
         }
 
-        Row {
+        Flow {
             id: topRow
             anchors.left: parent.left
             anchors.leftMargin: root.panelPaddingX + root._arrowSlotW
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Math.round(8 * root._s)
-            height: root.controlHeight
+            anchors.top: parent.top
+            anchors.topMargin: root.panelPaddingX
+            width: root._flowContentW
+            spacing: root.quickActionSpacing   // Flow applies this to BOTH axes → equal H/V gaps
+            enabled: root.expanded
 
             move: Transition {
-                NumberAnimation { properties: "x"; duration: 220; easing.type: Easing.OutCubic }
+                SequentialAnimation {
+                    PauseAnimation { duration: root._bgAdjustMs }
+                    NumberAnimation { properties: "x,y"; duration: 200; easing.type: Easing.OutCubic }
+                }
             }
-
-            LoggingBadge {}
 
             Repeater {
                 model: root.store ? root.store.quickActionOrderModel : 0
                 delegate: Loader {
                     required property string key
                     height: root.controlHeight
-                    visible: key === "connections" ? ((root.connectionStatusToolVisible || root._revealActiveKey === "connections") && root._hasConnectedDevice)
-                           : key === "favorites"   ? root.hasFavoriteLayouts
+                    visible: key === "connections" ? ((root.connectionStatusToolVisible || root._revealActiveKey === "connections") && (root._hasConnectedDevice || root.layoutEditing))
+                           : key === "logging"     ? root._loggingBadgeVisibleExpanded
+                           : key === "layouts"   ? root.hasFavoriteLayouts
                            : key === "bottomTrack" ? root.showBtEdit
-                           : key === "extraInfo"   ? root.showExtraInfo
-                           : key === "profiles"    ? root.showProfiles
+                           : key === "widgets"     ? root.showWidgets
+                           : key === "console"      ? root.showConsole
+                           : key === "profiles"     ? root.showProfiles
+                           : key === "secondWindow" ? root._showSecondWindow
+                           : key === "powerOff"     ? root._showPowerOff
                            : false
                     active: visible
                     sourceComponent: key === "connections" ? qaConnectionsComp
-                                   : key === "favorites"   ? qaFavoritesComp
-                                   : key === "bottomTrack" ? qaBottomTrackComp
-                                   : key === "extraInfo"   ? qaExtraInfoComp
-                                   : key === "profiles"    ? qaProfilesComp
+                                   : key === "logging"      ? qaLoggingComp
+                                   : key === "layouts"    ? qaFavoritesComp
+                                   : key === "bottomTrack"  ? qaBottomTrackComp
+                                   : key === "widgets"      ? qaWidgetsComp
+                                   : key === "console"      ? qaConsoleComp
+                                   : key === "profiles"     ? qaProfilesComp
+                                   : key === "secondWindow" ? qaSecondWindowComp
+                                   : key === "powerOff"     ? qaPowerOffComp
                                    : null
-                }
-            }
-
-            KCircleIconButton {
-                visible: Qt.platform.os !== "android" && Qt.platform.os !== "ios"
-                width: root.controlHeight
-                height: root.controlHeight
-                iconSource: "qrc:/icons/ui/external-link.svg"
-                iconTintColor: AppPalette.text
-                toolTipText: root.secondWindowOpen
-                             ? qsTr("Close second window")
-                             : qsTr("Open second window")
-                fillColor:        root.secondWindowOpen ? AppPalette.accentBgStrong : root.buttonFillColor
-                fillHoverColor:   root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverColor
-                fillPressedColor: root.buttonPressedColor
-                borderColor:      root.secondWindowOpen ? AppPalette.accentBorder : root.buttonBorderColor
-                borderHoverColor: root.secondWindowOpen ? AppPalette.accentBorder : root.buttonHoverBorderColor
-                onClicked: {
-                    root.secondWindowToggleRequested()
-                    root.expanded = false
                 }
             }
 
@@ -880,7 +1729,7 @@ Item {
         visible: root.hasFavoriteLayouts && panel.opacity > 0.01
         opacity: panel.opacity         // fade in/out together with the pill
         x: panel.x + topRow.x + (root._favSlot && root._favSlot.parent ? root._favSlot.parent.x : 0) - layoutsCombo.sidePad
-        y: panel.y + topRow.y - layoutsCombo.sidePad
+        y: panel.y + topRow.y + (root._favSlot && root._favSlot.parent ? root._favSlot.parent.y : 0) - layoutsCombo.sidePad
         width: comboW + layoutsCombo.sidePad * 2
         z: panel.z + 1                 // above the toolbar; the button is the head
         height: backing.height
@@ -931,8 +1780,11 @@ Item {
             dropped: layoutsCombo.dropped
             highlighted: root.highlightedQuickActionKey === "layouts"
             flashToken: root.highlightPulseToken
-            highlightHold: root.draggingKey === "favorites"
-            onClicked: root.layoutsMenuOpen = !root.layoutsMenuOpen
+            highlightHold: root.draggingKey === "layouts"
+            onClicked: {
+                if (root._favSlot && root._favSlot._grab) root._favSlot._grab()
+                root.layoutsMenuOpen = !root.layoutsMenuOpen
+            }
         }
     }
 
@@ -942,7 +1794,7 @@ Item {
         visible: root.showBtEdit && panel.opacity > 0.01
         opacity: panel.opacity
         x: panel.x + topRow.x + (root._btSlot && root._btSlot.parent ? root._btSlot.parent.x : 0) - btEditCombo.sidePad
-        y: panel.y + topRow.y - btEditCombo.sidePad
+        y: panel.y + topRow.y + (root._btSlot && root._btSlot.parent ? root._btSlot.parent.y : 0) - btEditCombo.sidePad
         width: root.controlHeight + btEditCombo.sidePad * 2
         height: root.controlHeight + btEditCombo.sidePad * 2
         z: panel.z + 1
@@ -952,6 +1804,7 @@ Item {
             anchors.centerIn: parent
             width: root.controlHeight
             height: root.controlHeight
+            activeFocusOnTab: false
             readonly property bool _open: root.store && root.store.bottomTrackEditorOpen
             readonly property bool _accent: root.btTool !== 0 || _open
             iconSource: "qrc:/icons/ui/pencil.svg"
@@ -967,11 +1820,92 @@ Item {
             flashToken: root.highlightPulseToken
             highlightHold: root.draggingKey === "bottomTrack"
             onClicked: {
+                if (root._btSlot && root._btSlot._grab) root._btSlot._grab()
                 if (!root.store) return
                 root.store.bottomTrackEditorOpen = !root.store.bottomTrackEditorOpen   // keep the menu open
             }
 
             KCloseBadge { visible: btEditTrigger._open }
+        }
+    }
+
+    Item {
+        id: widgetsCombo
+        readonly property int comboW: root.triggerButtonWidth
+        readonly property int gap: Math.round(6 * root._s)
+        readonly property int sidePad: Math.round(3 * root._s)
+        readonly property int _listContentH: root.hasWidgets
+            ? root.store.widgets.length * root.favoriteItemHeight
+              + Math.max(0, root.store.widgets.length - 1) * root.favoriteItemSpacing
+            : 0
+        readonly property int _bodyContentH: root.hasWidgets
+            ? Math.min(root.favoriteListMaxHeight, _listContentH)
+            : Math.round(40 * root._s)
+        readonly property int dropBodyH: (widgetsBodyLoader.item ? widgetsBodyLoader.item.implicitHeight
+                                                                  : _bodyContentH + root.controlHeight)
+                                         + Math.round(14 * root._s)
+        readonly property bool dropped: root.widgetsMenuOpen
+                                        || widgetsBacking.height > root.controlHeight + widgetsCombo.sidePad * 2 + 1
+        visible: root.showWidgets && panel.opacity > 0.01
+        opacity: panel.opacity
+        x: panel.x + topRow.x + (root._widgetsSlot && root._widgetsSlot.parent ? root._widgetsSlot.parent.x : 0) - widgetsCombo.sidePad
+        y: panel.y + topRow.y + (root._widgetsSlot && root._widgetsSlot.parent ? root._widgetsSlot.parent.y : 0) - widgetsCombo.sidePad
+        width: comboW + widgetsCombo.sidePad * 2
+        z: panel.z + 1
+        height: widgetsBacking.height
+
+        Rectangle {
+            id: widgetsBacking
+            width: parent.width
+            y: 0
+            height: widgetsCombo.sidePad + root.controlHeight
+                    + (root.widgetsMenuOpen ? widgetsCombo.gap + widgetsCombo.dropBodyH : widgetsCombo.sidePad)
+            radius: btEditCombo.width / 2
+            color: widgetsCombo.dropped ? root.hotkeysLayerColor : "transparent"
+            border.width: widgetsCombo.dropped ? 1 : 0
+            border.color: AppPalette.border
+            clip: true
+
+            Behavior on height {
+                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.AllButtons
+                onPressed: function(mouse) { mouse.accepted = true }
+                onClicked: function(mouse) { mouse.accepted = true }
+                onWheel: function(wheel) { wheel.accepted = true }
+            }
+
+            Loader {
+                id: widgetsBodyLoader
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.topMargin: widgetsCombo.sidePad + root.controlHeight + widgetsCombo.gap
+                sourceComponent: widgetsPopupContentComponent
+            }
+        }
+
+        WidgetsTriggerButton {
+            id: widgetsTrigger
+            anchors.top: parent.top
+            anchors.topMargin: widgetsCombo.sidePad
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: widgetsCombo.comboW
+            height: root.controlHeight
+            open: root.widgetsMenuOpen
+            dropped: widgetsCombo.dropped
+            highlighted: root.highlightedQuickActionKey === "widgets"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "widgets"
+            onClicked: {
+                if (root._widgetsSlot && root._widgetsSlot._grab) root._widgetsSlot._grab()
+                root.widgetsMenuOpen = !root.widgetsMenuOpen
+            }
         }
     }
 

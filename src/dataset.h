@@ -47,6 +47,12 @@ public:
     Q_PROPERTY(float depth                    READ getLastDepth             NOTIFY lastDepthChanged)
     Q_PROPERTY(float isSpeedValid             READ isValidSpeed             NOTIFY speedChanged)
     Q_PROPERTY(float speed                    READ getSpeed                 NOTIFY speedChanged)
+    Q_PROPERTY(bool  isLastTempValid              READ isValidLastTemp              NOTIFY lastTempChanged)
+    Q_PROPERTY(float lastTemp                     READ getLastTemp                  NOTIFY lastTempChanged)
+    Q_PROPERTY(bool  isLastRangefinderDepthValid  READ isValidLastRangefinderDepth  NOTIFY lastRangefinderDepthChanged)
+    Q_PROPERTY(float lastRangefinderDepth         READ getLastRangefinderDepth      NOTIFY lastRangefinderDepthChanged)
+    Q_PROPERTY(bool  isLastBottomTrackDepthValid  READ isValidLastBottomTrackDepth  NOTIFY lastBottomTrackDepthChanged)
+    Q_PROPERTY(float lastBottomTrackDepth         READ getLastBottomTrackDepth      NOTIFY lastBottomTrackDepthChanged)
     Q_PROPERTY(bool isSimpleNavV2Valid                  READ isValidSimpleNavV2                   NOTIFY simpleNavV2Changed)
     Q_PROPERTY(int simpleNavV2GnssFixType               READ simpleNavV2GnssFixType               NOTIFY simpleNavV2Changed)
     Q_PROPERTY(int simpleNavV2NumSats                   READ simpleNavV2NumSats                   NOTIFY simpleNavV2Changed)
@@ -234,6 +240,7 @@ public:
         return lastTemp_;
     }
 
+    bool isValidLastTemp() const { return isfinite(lastTemp_); }
     bool isValidLastRangefinderDepth() const { return isfinite(lastRangefinderDepth_); }
     bool isValidLastBottomTrackDepth() const { return isfinite(lastBottomTrackDepth_); }
     float getLastRangefinderDepth() const { return lastRangefinderDepth_; }
@@ -377,8 +384,11 @@ public slots:
     void setRefPosition(Epoch* ref_epoch);
     void setRefPosition(Position position);
     void setRefPositionByFirstValid();
+
+public:
     Epoch* getFirstEpochByValidPosition();
 
+public slots:
     QStringList channelsNameList();
 
     void onDistCompleted(int epIndx, const ChannelId& channelId, float dist);
@@ -406,6 +416,9 @@ signals:
     void activeContactChanged();
     void lastDepthChanged();
     void speedChanged();
+    void lastTempChanged();
+    void lastRangefinderDepthChanged();
+    void lastBottomTrackDepthChanged();
     void simpleNavV2Changed();
     void boatStatusChanged();
     void spatialPreparingChanged();

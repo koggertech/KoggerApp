@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
+import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
 
@@ -37,9 +38,41 @@ ApplicationWindow {
     // Читаем глобальные настройки при запуске (те же ключи, что сохраняет AppSettingsPage)
     Settings {
         id: startupSettings
+        category: "main/ui"
         property int appTheme: 0
         property int instrumentsGradeList: 0
+    }
+    Settings {
+        id: consoleVisibilitySettings
+        category: "main/console"
         property bool consoleVisible: false
+    }
+
+    Settings {
+        id: openFileDialogSettings
+        category: "main/ui"
+        property string lastLogFolder: ""
+    }
+
+    FileDialog {
+        id: openLogFileDialog
+        title: qsTr("Please choose a file")
+        fileMode: FileDialog.OpenFile
+        nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
+        onAccepted: {
+            openFileDialogSettings.lastLogFolder = currentFolder
+            if (!selectedFile)
+                return
+            var path = selectedFile.toString()
+            if (path.startsWith("file:///"))
+                path = Qt.platform.os === "windows" ? path.slice(8) : path.slice(7)
+            else if (path.startsWith("file://"))
+                path = path.slice(7)
+            if (path.length && core && typeof core.openLogFile === "function") {
+                workspaceStore.selectedConnectionFilePath = path
+                core.openLogFile(path, false, false)
+            }
+        }
     }
 
     ApplicationWindow {
@@ -78,7 +111,7 @@ ApplicationWindow {
         ignoreUnknownSignals: true
         function onThemeIDChanged()          { startupSettings.appTheme          = theme.themeID }
         function onInstrumentsGradeChanged() { startupSettings.instrumentsGradeList = theme.instrumentsGrade }
-        function onInterfaceChanged()        { startupSettings.consoleVisible     = theme.consoleVisible }
+        function onInterfaceChanged()        { consoleVisibilitySettings.consoleVisible = theme.consoleVisible }
     }
 
     // Sidebar moves first, workspace waits, then catches up.
@@ -176,20 +209,6 @@ ApplicationWindow {
             return Qt.rect(-1, -1, 0, 0)
         return Qt.rect(profilesPopup.panelX, profilesPopup.panelY,
                        profilesPopup.expandedWidth, profilesPopup.expandedHeight)
-    }
-
-    readonly property rect autopilotPopupEffectiveBounds: {
-        if (!autopilotPopup.visible || !autopilotPopup.popupVisible)
-            return Qt.rect(-1, -1, 0, 0)
-        return Qt.rect(autopilotPopup.panelX, autopilotPopup.panelY,
-                       autopilotPopup.expandedWidth, autopilotPopup.expandedHeight)
-    }
-
-    readonly property rect extraInfoPopupEffectiveBounds: {
-        if (!extraInfoPopup.visible || !extraInfoPopup.popupVisible)
-            return Qt.rect(-1, -1, 0, 0)
-        return Qt.rect(extraInfoPopup.panelX, extraInfoPopup.panelY,
-                       extraInfoPopup.expandedWidth, extraInfoPopup.expandedHeight)
     }
 
     function isValidUuidText(uuidValue) {
@@ -305,11 +324,6 @@ ApplicationWindow {
             workspaceStore.profilesPopupOpen = false
             return true
         },
-        function() {  // extra info panel — Esc hides it
-            if (!workspaceStore.extraInfoVisible) return false
-            workspaceStore.extraInfoVisible = false
-            return true
-        },
         function() {  // console drawer — Esc closes it
             if (!theme || !theme.consoleVisible) return false
             theme.consoleVisible = false
@@ -320,8 +334,14 @@ ApplicationWindow {
             hotActions.layoutsMenuOpen = false
             return true
         },
-        function() {  // HotActions expanded
+        function() {  // HotActions widgets popup
+            if (!hotActions.widgetsMenuOpen) return false
+            hotActions.widgetsMenuOpen = false
+            return true
+        },
+        function() {  // HotActions expanded — skip when it's a settings preview (Esc closes the tab instead)
             if (!hotActions.expanded) return false
+            if (root.hotkeysPreviewPinned || root.hotkeysPreviewSticky) return false
             hotActions.expanded = false
             return true
         },
@@ -330,9 +350,13 @@ ApplicationWindow {
             legacyPanelOpen = false
             return true
         },
-        function() {  // any settings drill-in (echogram / quick-actions / extra-info / UI saving / TGC)
+        function() {  // any settings drill-in (echogram / quick-actions / widget editor / UI saving / TGC)
             if (!workspaceStore.settingsPanelOpen || !workspaceStore.anySettingsSubPageActive)
                 return false
+            if (workspaceStore.settingsSubPageKind === "widgetEdit" && workspaceStore.widgetEditStep === 2) {
+                workspaceStore.widgetEditStep = 1
+                return true
+            }
             workspaceStore.closeActiveSettingsSubPage()
             return true
         },
@@ -397,6 +421,76 @@ ApplicationWindow {
         }
     }
 
+    // Desktop keyboard scrolling (PgUp/PgDn page, Home/End to top/bottom) for any
+    // open scrollable surface: key-bindings dialog, console, settings panel.
+    // Not on Android/iOS; suppressed while a text field is focused.
+    // Reactive text-focus flag (bindings track activeFocusItem). When a text
+    // field is focused the scroll shortcuts must NOT be enabled — otherwise they
+    // would swallow Home/End/PgUp/PgDn from the field.
+    readonly property bool _textInputFocused: {
+        var f = root.activeFocusItem
+        return !!f && (f instanceof TextEdit || f instanceof TextField
+                       || f instanceof TextArea || f instanceof TextInput)
+    }
+
+    // The modal key-bindings dialog handles these keys itself (a modal Popup
+    // blocks outside ApplicationShortcuts), so it's excluded here.
+    readonly property bool _kbdScrollActive: !root.isMobilePlatform
+                                             && (workspaceStore.settingsPanelOpen
+                                                 || consoleDrawer.consoleOpen)
+                                             && !workspaceStore.activeHotkeysDialog
+                                             && !root._textInputFocused
+
+    // "settings" | "console" — the surface most recently opened or clicked into.
+    // Updated by the surfaces' onOpenChanged / interacted(); a click on the scene
+    // (outside both) does NOT change it, so keys keep going to the last active one.
+    property string _lastScrollSurface: ""
+
+    function _kbdScrollTarget() {
+        var cOpen = consoleDrawer.consoleOpen
+        var sOpen = workspaceStore.settingsPanelOpen
+        if (cOpen && sOpen)
+            return (root._lastScrollSurface === "settings") ? settingsSidebar : consoleDrawer
+        if (sOpen)
+            return settingsSidebar
+        if (cOpen)
+            return consoleDrawer
+        return null
+    }
+
+    function _kbdScroll(kind) {
+        if (root.isTextInputFocused())
+            return
+        var t = _kbdScrollTarget()
+        if (t && typeof t.kbdScroll === "function")
+            t.kbdScroll(kind)
+    }
+
+    Shortcut {
+        sequence: StandardKey.MoveToNextPage
+        context: Qt.ApplicationShortcut
+        enabled: root._kbdScrollActive
+        onActivated: root._kbdScroll("down")
+    }
+    Shortcut {
+        sequence: StandardKey.MoveToPreviousPage
+        context: Qt.ApplicationShortcut
+        enabled: root._kbdScrollActive
+        onActivated: root._kbdScroll("up")
+    }
+    Shortcut {
+        sequence: StandardKey.MoveToStartOfLine
+        context: Qt.ApplicationShortcut
+        enabled: root._kbdScrollActive
+        onActivated: root._kbdScroll("top")
+    }
+    Shortcut {
+        sequence: StandardKey.MoveToEndOfLine
+        context: Qt.ApplicationShortcut
+        enabled: root._kbdScrollActive
+        onActivated: root._kbdScroll("bottom")
+    }
+
     function openSelectedFile() {
         var filePath = workspaceStore.selectedConnectionFilePath
         if (!filePath && core && core.filePath && core.filePath.length > 0)
@@ -408,7 +502,8 @@ ApplicationWindow {
             return true
         }
 
-        workspaceStore.openConnectionsSettings()
+        workspaceStore.filePathFocusRequested = true
+        workspaceStore.openAppSettingsAtGroup("app.files")
         return true
     }
 
@@ -469,6 +564,12 @@ ApplicationWindow {
         // F11 handled by Shortcut above (lastActiveWindow routing).
         if (fn === "openFile")
             return openSelectedFile()
+        if (fn === "openFileDialog") {
+            if (openFileDialogSettings.lastLogFolder.length)
+                openLogFileDialog.currentFolder = openFileDialogSettings.lastLogFolder
+            openLogFileDialog.open()
+            return true
+        }
         if (fn === "closeFile")
             return closeSelectedFile()
         if (fn === "updateBottomTrack")
@@ -489,21 +590,14 @@ ApplicationWindow {
             return true
         if (workspaceStore.applyIsobathsHotkey(fn, parameter))
             return true
-
-        if (fn === "clickConnections") {
-            legacyPanelOpen = false
-            workspaceStore.toggleConnectionsSettings()
+        if (workspaceView.apply3DHotkey(fn, parameter))
             return true
-        }
+
         if (fn === "clickSettings") {
             legacyPanelOpen = false
             workspaceStore.toggleAppLayoutSettings()
             return true
         }
-        if (fn === "click3D")
-            return setActivePaneMode("3D")
-        if (fn === "click2D")
-            return setActivePaneMode("2D")
 
         return false
     }
@@ -564,7 +658,7 @@ ApplicationWindow {
         if (theme) {
             theme.themeID          = startupSettings.appTheme
             theme.instrumentsGrade = startupSettings.instrumentsGradeList
-            theme.consoleVisible   = startupSettings.consoleVisible
+            theme.consoleVisible   = consoleVisibilitySettings.consoleVisible
         }
 
         refreshConnectionsIndicator()
@@ -604,6 +698,54 @@ ApplicationWindow {
             // doesn't flash the ApplicationWindow default background.
             anchors.fill: parent
             color: "#0B1220"
+        }
+
+        DropArea {
+            id: fileDropArea
+            anchors.fill: parent
+            z: ZOrder.hotActionsActive + 1
+
+            property string droppedFilePath: ""
+
+            function _extractLogPath(urlList) {
+                for (var i = 0; i < urlList.length; ++i) {
+                    var path = String(urlList[i])
+                    if (path.startsWith("file:///"))
+                        path = Qt.platform.os === "windows" ? path.slice(8) : path.slice(7)
+                    else if (path.startsWith("file://"))
+                        path = path.slice(7)
+                    var lower = path.toLowerCase()
+                    if (lower.endsWith(".klf") || lower.endsWith(".xtf") || lower.endsWith(".ubx"))
+                        return path
+                }
+                return ""
+            }
+
+            onEntered: function(drag) {
+                droppedFilePath = drag.hasUrls ? _extractLogPath(drag.urls) : ""
+                drag.accepted = droppedFilePath !== ""
+            }
+
+            onExited: droppedFilePath = ""
+
+            onDropped: function(drop) {
+                if (droppedFilePath !== "" && core && typeof core.openLogFile === "function") {
+                    workspaceStore.selectedConnectionFilePath = droppedFilePath
+                    core.openLogFile(droppedFilePath, false, true)
+                    drop.accept()
+                }
+                droppedFilePath = ""
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: AppPalette.accentBar
+                opacity: fileDropArea.containsDrag && fileDropArea.droppedFilePath !== "" ? 0.18 : 0.0
+                visible: opacity > 0.001
+                border.width: Math.max(1, Math.round(2 * AppPalette.scale))
+                border.color: AppPalette.accentBar
+                Behavior on opacity { NumberAnimation { duration: 200 } }
+            }
         }
 
         Connections {
@@ -661,11 +803,17 @@ ApplicationWindow {
                : ZOrder.hotActions
 
             store: workspaceStore
-            favoritesEnabled: workspaceStore.quickActionFavoritesEnabled
+            layoutsEnabled: workspaceStore.quickActionLayoutsEnabled
             connectionStatusToolVisible: workspaceStore.quickActionConnectionStatusEnabled
+            loggingButtonEnabled: workspaceStore.quickActionLoggingEnabled
+            secondWindowButtonEnabled: workspaceStore.quickActionSecondWindowEnabled
+            layoutEditing: root.hotkeysPreviewSticky
             bottomTrackEditorEnabled: workspaceStore.quickActionBottomTrackEnabled
             profilesEnabled: workspaceStore.quickActionProfilesEnabled
-            extraInfoEnabled: workspaceStore.quickActionExtraInfoEnabled
+            widgetsEnabled: workspaceStore.quickActionWidgetsEnabled
+            consoleButtonEnabled: workspaceStore.quickActionConsoleEnabled
+            powerOffEnabled: workspaceStore.quickActionPowerOffEnabled
+            onPowerOffTriggered: powerOffOverlay.active = true
             inputDeviceLabel: workspaceView.inputDeviceLabel
             inputDeviceColor: workspaceView.inputDeviceColor
             showToggleButton: !workspaceStore.settingsPanelOpen && !workspaceStore.modeSettingsPanelOpen
@@ -684,7 +832,7 @@ ApplicationWindow {
 
             onLoggingIndicatorTriggered: {
                 legacyPanelOpen = false
-                workspaceStore.openConnectionsSettings()
+                workspaceStore.openRecordingSettings()
                 refreshConnectionsIndicator()
             }
 
@@ -709,7 +857,7 @@ ApplicationWindow {
 
             devices: deviceManagerWrapper ? deviceManagerWrapper.devs : []
             onDeviceTriggered: function(devIndex) {
-                workspaceStore.openConnectionsWithDeviceIndex(devIndex)
+                workspaceStore.openDeviceSettingsForIndex(devIndex)
                 refreshConnectionsIndicator()
             }
         }
@@ -815,6 +963,8 @@ ApplicationWindow {
 
             anchors.fill: parent
             open: workspaceStore.settingsPanelOpen
+            onOpenChanged: if (open) root._lastScrollSurface = "settings"
+            onInteracted: root._lastScrollSurface = "settings"
             dimEnabled: !workspaceStore.effectivePushContent
             panelShadowEnabled: !workspaceStore.editableMode
             title: workspaceStore.echogramSettingsActive
@@ -822,11 +972,14 @@ ApplicationWindow {
                    : !workspaceStore.settingsSubPageActive
                      ? qsTr("Settings")
                      : workspaceStore.settingsSubPageKind === "quickActions" ? qsTr("Quick action menu")
-                     : workspaceStore.settingsSubPageKind === "extraInfo"    ? qsTr("Extra info panel")
+                     : workspaceStore.settingsSubPageKind === "widgetEdit"   ? (workspaceStore.widgetEditIndex >= 0 ? qsTr("Edit panel") : qsTr("Create panel"))
                      : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
                      : workspaceStore.settingsSubPageKind === "aimPanel"     ? qsTr("Information panel")
+                     : workspaceStore.settingsSubPageKind === "console"      ? qsTr("Console")
+                     : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
+                     : workspaceStore.settingsSubPageKind === "devices"      ? qsTr("Devices")
                      : qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
@@ -835,14 +988,24 @@ ApplicationWindow {
             onCloseRequested: workspaceStore.settingsPanelOpen = false
 
             showBack: workspaceStore.anySettingsSubPageActive
-            onBackRequested: workspaceStore.closeActiveSettingsSubPage()
+            onBackRequested: {
+                if (workspaceStore.settingsSubPageActive
+                    && workspaceStore.settingsSubPageKind === "widgetEdit"
+                    && workspaceStore.widgetEditStep === 2)
+                    workspaceStore.widgetEditStep = 1
+                else
+                    workspaceStore.closeActiveSettingsSubPage()
+            }
 
             subPage: workspaceStore.settingsSubPageKind === "quickActions" ? quickActionsSettingsTabComponent
-                     : workspaceStore.settingsSubPageKind === "extraInfo"  ? extraInfoSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "widgetEdit" ? widgetEditTabComponent
                      : workspaceStore.settingsSubPageKind === "uiSaving"   ? uiSavingSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "aimPanel"   ? aimPanelSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "console"    ? consoleSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
+                     : workspaceStore.settingsSubPageKind === "devices"      ? deviceSettingsTabComponent
                      : echogramSettingsTabComponent
             subPageOpen: workspaceStore.anySettingsSubPageActive
 
@@ -862,32 +1025,23 @@ ApplicationWindow {
             store: workspaceStore
         }
 
-        SettingsSidebarBase {
-            id: legacySidebar
-            z: ZOrder.legacySidebar
-
+        WidgetEditOverlay {
             anchors.fill: parent
-            open: legacyPanelOpen
-            dimEnabled: true
-            panelShadowEnabled: !workspaceStore.editableMode
-            title: "Legacy menus"
-            side: workspaceStore.settingsSide
-            gearMode: "app"
-            panelSizePx: 560
+            z: ZOrder.widgetEditorOverlay
             store: workspaceStore
-            onCloseRequested: legacyPanelOpen = false
+        }
 
-            Loader {
-                width: parent.width
-                active: false
-                sourceComponent: legacyMenuComponent
-            }
+        Item {
+            id: widgetEditorDragLayer
+            anchors.fill: parent
+            z: ZOrder.widgetEditorDrag
+            Component.onCompleted: workspaceStore.widgetDragLayer = widgetEditorDragLayer
         }
 
         Binding {
             target: workspaceStore
             property: "pointerOverSidebar"
-            value: settingsSidebar.pointerInside || modeSettingsPanel.pointerInside || legacySidebar.pointerInside
+            value: settingsSidebar.pointerInside || modeSettingsPanel.pointerInside
         }
 
         Loader {
@@ -926,8 +1080,8 @@ ApplicationWindow {
             z: ZOrder.bottomTrackEditPopup   // поверх глобал/фуллскрин попапов
             store: workspaceStore
             popupId: "btEdit"
-            siblingBoundsList: [root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
-            siblingIdList: ["profiles", "autopilot", "extraInfo"]
+            siblingBoundsList: [root.profilesPopupEffectiveBounds]
+            siblingIdList: ["profiles"]
         }
 
         ProfilesPopup {
@@ -936,28 +1090,25 @@ ApplicationWindow {
             z: ZOrder.profilesPopup
             store: workspaceStore
             popupId: "profiles"
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.autopilotPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
-            siblingIdList: ["btEdit", "autopilot", "extraInfo"]
+            siblingBoundsList: [root.btEditPopupEffectiveBounds]
+            siblingIdList: ["btEdit"]
         }
 
-        AutopilotPopup {
-            id: autopilotPopup
-            anchors.fill: parent
-            z: ZOrder.autopilotPopup
-            store: workspaceStore
-            popupId: "autopilot"
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds, root.extraInfoPopupEffectiveBounds]
-            siblingIdList: ["btEdit", "profiles", "extraInfo"]
-        }
-
-        ExtraInfoPopup {
-            id: extraInfoPopup
-            anchors.fill: parent
-            z: ZOrder.extraInfoPopup
-            store: workspaceStore
-            popupId: "extraInfo"
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
-            siblingIdList: ["btEdit", "profiles", "autopilot"]
+        Repeater {
+            id: widgetsRepeater
+            model: workspaceStore.widgets.length
+            delegate: DataWidgetPopup {
+                required property int index
+                readonly property var _wdef: workspaceStore.widgets[index] || null
+                anchors.fill: parent
+                z: ZOrder.widgetPopup + (_wdef ? workspaceStore.widgetStackRank(_wdef.id) : 0)
+                store: workspaceStore
+                def: _wdef
+                popupVisible: !!_wdef && !_beingEdited && workspaceStore.widgetShown(_wdef.id)
+                popupId: _wdef ? "widget:" + _wdef.id : ""
+                siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+                siblingIdList: ["btEdit", "profiles"]
+            }
         }
 
         Connections {
@@ -967,36 +1118,9 @@ ApplicationWindow {
                 fullscreenPanePopup.syncFromStore()
                 btEditPopup.syncFromStore()
                 profilesPopup.syncFromStore()
-                autopilotPopup.syncFromStore()
-                extraInfoPopup.syncFromStore()
-            }
-        }
-
-        Component {
-            id: legacyMenuComponent
-
-            Item {
-                anchors.fill: parent
-
-                Loader {
-                    id: legacyMenuLoader
-                    anchors.fill: parent
-                    source: "qrc:/qml/menus/MainMenuBar.qml"
-
-                    onLoaded: {
-                        if (item)
-                            item.targetPlot = workspaceView.primaryPlotItem
-                    }
-                }
-
-                Connections {
-                    target: workspaceView
-                    ignoreUnknownSignals: true
-
-                    function onPrimaryPlotItemChanged() {
-                        if (legacyMenuLoader.item)
-                            legacyMenuLoader.item.targetPlot = workspaceView.primaryPlotItem
-                    }
+                for (var i = 0; i < widgetsRepeater.count; ++i) {
+                    var it = widgetsRepeater.itemAt(i)
+                    if (it) it.syncFromStore()
                 }
             }
         }
@@ -1018,9 +1142,9 @@ ApplicationWindow {
         }
 
         Component {
-            id: extraInfoSettingsTabComponent
+            id: widgetEditTabComponent
 
-            ExtraInfoSettingsTab {
+            WidgetEditPage {
                 store: workspaceStore
             }
         }
@@ -1051,9 +1175,33 @@ ApplicationWindow {
         }
 
         Component {
+            id: consoleSettingsTabComponent
+
+            ConsoleSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
             id: aimPanelSettingsTabComponent
 
             AimPanelSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: layoutCreateTabComponent
+
+            LayoutCreatePage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: deviceSettingsTabComponent
+
+            DeviceSettingsTab {
                 store: workspaceStore
             }
         }
@@ -1083,6 +1231,7 @@ ApplicationWindow {
 
         ConsolePanelDrawer {
             id: consoleDrawer
+            store: workspaceStore
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
@@ -1090,15 +1239,24 @@ ApplicationWindow {
             anchors.rightMargin: root.settingsInsetRight
             z: ZOrder.consolePanel
             consoleOpen: theme ? theme.consoleVisible : false
+            onConsoleOpenChanged: if (consoleOpen) root._lastScrollSurface = "console"
+            onInteracted: root._lastScrollSurface = "console"
             maxHeight: parent.height
             hotActionsRight: hotActions.visible ? hotActions.x + hotActions.width : 0
         }
 
-        NotificationsOverlay { }
+        NotificationsOverlay {
+            hideImportant: workspaceStore.hideImportantNotifications
+        }
 
         FileOpeningOverlay { }
 
         SplashOverlay { }
+
+        PowerOffConfirmOverlay {
+            id: powerOffOverlay
+            onConfirmed: if (typeof core !== "undefined" && core) core.powerOffSystem()
+        }
 
         Rectangle {
             id: welcomeOverlay
@@ -1107,7 +1265,7 @@ ApplicationWindow {
             color: "#000000B0"
             visible: !welcomeSettings.welcomeShown
 
-            Settings { id: welcomeSettings; property bool welcomeShown: false }
+            Settings { id: welcomeSettings; category: "main/ui"; property bool welcomeShown: false }
 
             function finish() {
                 welcomeSettings.welcomeShown = true

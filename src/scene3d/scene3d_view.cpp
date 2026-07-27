@@ -11,6 +11,7 @@
 #include <QDebug>
 #include <QtGlobal>
 #include "scene3d_renderer.h"
+#include "controllers/ruler_controller.h"
 #include "dataset.h"
 #include "map_defs.h"
 #include "data_processor_defs.h"
@@ -160,6 +161,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(rulerTool_.get(), &RulerTool::changed, this, &QQuickFramebufferObject::update);
+    ruler_ = new RulerController(this, rulerTool_.get(), this);
     QObject::connect(geoJsonLayer_.get(), &GeoJsonLayer::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(&core, &Core::languageChanged, this, &QQuickFramebufferObject::update);
     QObject::connect(geoJsonController_, &GeoJsonController::documentChanged, this, [this]() {
@@ -370,10 +372,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
     //isobathsView_->clear();
     surfaceView_->clear();
     contacts_->clear();
-    rulerTool_->clear();
-    setRulerDrawing(false);
-    setRulerSelected(false);
-    resetRulerInteraction();
+    ruler_->clear();
     imageView_->clear();//
     if (cleanMap) {
         mapView_->clear();
@@ -664,7 +663,7 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     }
 
     if (mouseButton == Qt::MouseButton::RightButton) {
-        if (rulerEnabled_) {
+        if (ruler_->enabled()) {
             QQuickFramebufferObject::update();
             return;
         }
@@ -733,13 +732,7 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         }
     }
 
-    if (rulerEnabled_ && mouseButton == Qt::MouseButton::NoButton) {
-        if (rulerDrawing_ && rulerTool_->pointsCount() > 0) {
-            rulerTool_->setPreviewPoint(to);
-        } else if (!rulerDrawing_) {
-            rulerTool_->clearPreview();
-        }
-    }
+    ruler_->onMouseMove(mouseButton, x, y);
 
     if (geoJsonEnabled_ && geoJsonBlockCameraMove_ && mouseButton.testFlag(Qt::LeftButton)) {
         m_lastMousePos = { x, y };
@@ -869,44 +862,9 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
         return;
     }
 
-    if (rulerEnabled_) {
+    if (ruler_->enabled()) {
         if (!wasMoved_ && mouseButton.testFlag(Qt::LeftButton)) {
-            auto fromOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-            auto fromEnd = QVector3D(x, height() - y, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-            auto fromDir = (fromEnd - fromOrig).normalized();
-            auto p = calculateIntersectionPoint(fromOrig, fromDir, 0);
-
-            if (!rulerDrawing_) {
-                rulerTool_->clear();
-                resetRulerInteraction();
-                setRulerDrawing(true);
-                rulerTool_->addPoint(p);
-                rulerTool_->clearPreview();
-                rulerLastLeftClickPos_ = QPointF(x, y);
-                rulerHasLastLeftClick_ = true;
-                rulerLastLeftClickTimer_.restart();
-            } else {
-                const QPointF clickPos(x, y);
-                const bool isDoubleClick = rulerHasLastLeftClick_ &&
-                                           rulerLastLeftClickTimer_.isValid() &&
-                                           rulerLastLeftClickTimer_.elapsed() < 350 &&
-                                           (QLineF(clickPos, rulerLastLeftClickPos_).length() < 6.0);
-
-                rulerLastLeftClickPos_ = clickPos;
-                rulerHasLastLeftClick_ = true;
-                rulerLastLeftClickTimer_.restart();
-
-                if (isDoubleClick && rulerTool_->pointsCount() >= 2) {
-                    rulerFinishDrawing();
-                    rulerHasLastLeftClick_ = false;
-                } else {
-                    rulerTool_->addPoint(p);
-                    rulerTool_->clearPreview();
-                }
-            }
-
-            emit rulerStateChanged();
-            QQuickFramebufferObject::update();
+            ruler_->onLeftClick(x, y);
         }
 
         switchedToBottomTrackVertexComboSelectionMode_ = false;
@@ -957,7 +915,7 @@ void GraphicsScene3dView::cancelPointerInteraction()
 
     geoJsonBlockCameraMove_ = false;
     geoJsonIgnoreNextLeftRelease_ = false;
-    resetRulerInteraction();
+    ruler_->onPointerCanceled();
 
     QQuickFramebufferObject::update();
 }
@@ -1126,21 +1084,8 @@ void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
         }
     }
 
-    if (rulerEnabled_ || rulerSelected_) {
-        if (key == Qt::Key_Delete || key == Qt::Key_Backspace) {
-            rulerDeleteSelected();
-            return;
-        }
-    }
-    if (rulerEnabled_) {
-        if (key == Qt::Key_Escape) {
-            rulerCancelDrawing();
-            return;
-        }
-        if (key == Qt::Key_Enter || key == Qt::Key_Return) {
-            rulerFinishDrawing();
-            return;
-        }
+    if (ruler_->onKey(key)) {
+        return;
     }
 
     m_bottomTrack->keyPressEvent(key);
@@ -1209,82 +1154,14 @@ void GraphicsScene3dView::forceRefresh()
     QQuickFramebufferObject::update();
 }
 
+QObject* GraphicsScene3dView::ruler() const
+{
+    return ruler_;
+}
+
 void GraphicsScene3dView::setRulerEnabled(bool enabled)
 {
-    if (rulerEnabled_ == enabled) {
-        return;
-    }
-
-    rulerEnabled_ = enabled;
-    rulerTool_->setSelected(enabled); // orange while the tool/pill is active, normal once closed
-    if (rulerEnabled_) {
-        // Drawing mode can be disabled, but finished ruler geometry should remain visible.
-        rulerTool_->setEnabled(true);
-    }
-    if (!rulerEnabled_) {
-        rulerTool_->clearPreview();
-        setRulerDrawing(false);
-        setRulerSelected(false);
-        resetRulerInteraction();
-    } else {
-        setRulerDrawing(false);
-        setRulerSelected(false);
-        notifyManualCameraInteraction();
-    }
-    emit rulerEnabledChanged();
-    QQuickFramebufferObject::update();
-}
-
-void GraphicsScene3dView::clearRuler()
-{
-    rulerTool_->clear();
-    setRulerDrawing(false);
-    setRulerSelected(false);
-    resetRulerInteraction();
-    emit rulerStateChanged();
-    QQuickFramebufferObject::update();
-}
-
-void GraphicsScene3dView::rulerFinishDrawing()
-{
-    if (!rulerEnabled_ || !rulerDrawing_) {
-        return;
-    }
-    if (rulerTool_->pointsCount() < 2) {
-        return;
-    }
-
-    rulerTool_->clearPreview();
-    setRulerDrawing(false);
-    setRulerSelected(true);
-    resetRulerInteraction();
-    setRulerEnabled(false);
-    emit rulerStateChanged();
-}
-
-void GraphicsScene3dView::rulerCancelDrawing()
-{
-    if (!rulerEnabled_) {
-        return;
-    }
-
-    rulerTool_->clear();
-    setRulerDrawing(false);
-    setRulerSelected(false);
-    resetRulerInteraction();
-    QQuickFramebufferObject::update();
-}
-
-void GraphicsScene3dView::rulerDeleteSelected()
-{
-    if (rulerDrawing_ || !rulerSelected_) {
-        return;
-    }
-
-    rulerTool_->clear();
-    setRulerSelected(false);
-    resetRulerInteraction();
-    QQuickFramebufferObject::update();
+    ruler_->setEnabled(enabled);
 }
 
 void GraphicsScene3dView::setGeoJsonEnabled(bool enabled)
@@ -2143,26 +2020,6 @@ bool GraphicsScene3dView::geoJsonEnabled() const
     return geoJsonEnabled_;
 }
 
-bool GraphicsScene3dView::rulerEnabled() const
-{
-    return rulerEnabled_;
-}
-
-bool GraphicsScene3dView::rulerDrawing() const
-{
-    return rulerDrawing_;
-}
-
-bool GraphicsScene3dView::rulerSelected() const
-{
-    return rulerSelected_;
-}
-
-bool GraphicsScene3dView::rulerHasGeometry() const
-{
-    return rulerTool_ && rulerTool_->pointsCount() >= 2;
-}
-
 QObject* GraphicsScene3dView::geoJsonController() const
 {
     return geoJsonController_;
@@ -2739,7 +2596,6 @@ QVector3D GraphicsScene3dView::geojsonToScene(const GeoJsonCoord& c) const
 GeoJsonCoord GraphicsScene3dView::sceneToGeojson(const QVector3D& p) const
 {
     NED ned(static_cast<double>(p.x()), static_cast<double>(p.y()), static_cast<double>(-p.z()));
-    qDebug() << "sceneToGeojson NED:" << ned.n << ned.e << ned.d;
     LLA lla(&ned, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
 
     GeoJsonCoord c;
@@ -2749,79 +2605,6 @@ GeoJsonCoord GraphicsScene3dView::sceneToGeojson(const QVector3D& p) const
     c.hasZ = std::isfinite(lla.altitude);
 
     return c;
-}
-
-void GraphicsScene3dView::setRulerDrawing(bool drawing)
-{
-    if (rulerDrawing_ == drawing) {
-        return;
-    }
-    rulerDrawing_ = drawing;
-    emit rulerStateChanged();
-}
-
-void GraphicsScene3dView::setRulerSelected(bool /*selected*/)
-{
-    // Ruler is not selectable (no orange highlight, no context menu).
-    if (!rulerSelected_) {
-        return;
-    }
-    rulerSelected_ = false;
-    rulerTool_->setSelected(false);
-    emit rulerStateChanged();
-}
-
-void GraphicsScene3dView::resetRulerInteraction()
-{
-    rulerHasLastLeftClick_ = false;
-}
-
-bool GraphicsScene3dView::pickRuler(qreal x, qreal y) const
-{
-    const auto points = rulerTool_->polylinePoints(false);
-    if (points.size() < 2) {
-        return false;
-    }
-
-    const QRect viewport = boundingRect().toRect();
-    const QPointF target(x, height() - y);
-    const QMatrix4x4 mv = m_camera->m_view * m_model;
-
-    const float thresholdPx = 8.0f;
-    float best = thresholdPx;
-    bool found = false;
-
-    auto distPointSegment = [](const QPointF& p, const QPointF& a, const QPointF& b) -> float {
-        const QPointF ab = b - a;
-        const double ab2 = ab.x() * ab.x() + ab.y() * ab.y();
-        if (ab2 <= 1e-6) {
-            const QPointF d = p - a;
-            return static_cast<float>(std::sqrt(d.x() * d.x() + d.y() * d.y()));
-        }
-        const QPointF ap = p - a;
-        double t = (ap.x() * ab.x() + ap.y() * ab.y()) / ab2;
-        t = std::max(0.0, std::min(1.0, t));
-        const QPointF proj(a.x() + ab.x() * t, a.y() + ab.y() * t);
-        const QPointF d = p - proj;
-        return static_cast<float>(std::sqrt(d.x() * d.x() + d.y() * d.y()));
-    };
-
-    QVector<QPointF> screenPoints;
-    screenPoints.reserve(points.size());
-    for (const auto& world : points) {
-        const QVector3D win = world.project(mv, m_projection, viewport);
-        screenPoints.push_back(QPointF(win.x(), win.y()));
-    }
-
-    for (int i = 0; i + 1 < screenPoints.size(); ++i) {
-        const float d = distPointSegment(target, screenPoints[i], screenPoints[i + 1]);
-        if (d < best) {
-            best = d;
-            found = true;
-        }
-    }
-
-    return found;
 }
 
 bool GraphicsScene3dView::pickGeoJsonVertex(qreal x, qreal y, QString& outFeatureId, int& outVertexIndex, QVector3D& outWorld) const
@@ -3670,6 +3453,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->contactsRenderImpl_         = *(dynamic_cast<Contacts::ContactsRenderImplementation*>(view->contacts_->m_renderImpl));
     m_renderer->geoJsonLayerRenderImpl_     = *(dynamic_cast<GeoJsonLayer::GeoJsonLayerRenderImplementation*>(view->geoJsonLayer_->m_renderImpl));
+    view->ruler_->rebuildIfNeeded();
     m_renderer->rulerToolRenderImpl_        = *(dynamic_cast<RulerTool::RulerToolRenderImplementation*>(view->rulerTool_->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));

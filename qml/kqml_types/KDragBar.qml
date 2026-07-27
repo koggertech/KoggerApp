@@ -36,8 +36,7 @@ Item {
         visible: root.showCapsule
         radius: Math.min(width, height) / 2
         color: root.barColor
-        border.width: 1
-        border.color: root.borderColor
+        border.width: 0
     }
 
     Grid {

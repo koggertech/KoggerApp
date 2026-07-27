@@ -12,14 +12,40 @@ Item {
     property var model
     property int currentIndex: 0
     property string displayTextOverride: ""
-    property int fontPixelSize: Tokens.fontMd
+    property int fontPixelSize: Tokens.fontLg
     property bool bold: true
     property int maxVisibleItems: 8
     property int radius: Tokens.radiusMd
+    property color fillColor: AppPalette.bg   // field fill; set lighter when the row is recessed
     // Optional: function(index) -> [{pos, color}] colormap stops. When set, a
     // small gradient dot is drawn before each item's text (and in the field).
     property var swatchFor: null
     readonly property int swatchSize: Math.round(18 * AppPalette.scale)
+    property string toolTipText: ""
+
+    Item {
+        id: _sizer
+        visible: false
+        Repeater {
+            id: _sizerRep
+            model: root.model
+            Text {
+                text: modelData !== undefined ? String(modelData) : ""
+                font.pixelSize: root.fontPixelSize
+                font.bold: root.bold
+            }
+        }
+    }
+    readonly property int _popupContentWidth: {
+        var mw = 0
+        for (var i = 0; i < _sizerRep.count; ++i) {
+            var it = _sizerRep.itemAt(i)
+            if (it && it.implicitWidth > mw) mw = it.implicitWidth
+        }
+        var leftInset = root.swatchFor ? (Tokens.spaceSm + root.swatchSize + Tokens.spaceXs) : Tokens.spaceSm
+        var rightReserve = Math.round(12 * AppPalette.scale) + 2 * Tokens.spaceXs
+        return Math.ceil(mw) + leftInset + rightReserve + Tokens.spaceSm
+    }
 
     readonly property string currentText: combo.currentText
     readonly property alias hovered: combo.hovered
@@ -66,8 +92,8 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: root.radius
-        color: AppPalette.bg
-        border.width: 1
+        color: root.fillColor
+        border.width: combo.activeFocus ? 1 : Tokens.cardBorderWidth
         border.color: combo.activeFocus
                       ? AppPalette.accentBorder
                       : (combo.hovered ? AppPalette.borderHover : AppPalette.border)
@@ -159,7 +185,7 @@ Item {
                 readonly property int itemHeight: Tokens.controlHMd
 
                 y: combo.height + Tokens.spaceXxs
-                width: combo.width
+                width: Math.max(combo.width, root._popupContentWidth)
                 implicitHeight: Math.min(contentItem.implicitHeight,
                                          itemHeight * root.maxVisibleItems)
                                 + 2 * Tokens.spaceXs
@@ -190,5 +216,11 @@ Item {
                 root.activated(idx)
             }
         }
+    }
+
+    KToolTip {
+        text: root.toolTipText
+        targetItem: root
+        shown: root.hovered && root.toolTipText.length > 0
     }
 }

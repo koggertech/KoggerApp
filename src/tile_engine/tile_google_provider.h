@@ -10,11 +10,11 @@ namespace map {
 
 constexpr double GOOGLE_TILE_CONSTANT = 126543000.03392;
 const int GOOGLE_PROVIDER_ID = kGoogleProviderId;
-const int googleSat = 1012;
-const QString secGoogleWord = QStringLiteral("Galileo");
-const QString language = QStringLiteral("en-US");
-const QString server = QStringLiteral("khm");
-const QString request = QStringLiteral("kh");
+inline constexpr int kGoogleSatFallback = 1012;
+inline constexpr QLatin1StringView secGoogleWord("Galileo");
+inline constexpr QLatin1StringView language("en-US");
+inline constexpr QLatin1StringView server("khm");
+inline constexpr QLatin1StringView request("kh");
 
 
 class TileGoogleProvider : public TileProvider
@@ -29,9 +29,17 @@ public:
     map::TileInfo indexToTileInfo(map::TileIndex tileIndx, map::TilePosition pos = map::TilePosition::kFits) const final;
     QString createURL(const map::TileIndex& tileIndx) const final;
 
+    QString manifestKey() const final;
+    int imageryVersion() const final;
+    void setImageryVersion(int version) final;
+    QString versionedCanaryUrl(int version) const final;
+
 private:
+    QString buildUrl(const map::TileIndex& tileIndx, int version) const;
     int generateNum(int x, int y) const;
     void generateWords(const int x, const int y, QString& sec1, QString& sec2) const;
+
+    int satVersion_;
 };
 
 

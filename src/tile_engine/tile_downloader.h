@@ -33,7 +33,7 @@ public:
 
 signals:
     void tileDownloaded(const map::TileIndex& tileIndx, const QImage& image);
-    void downloadFailed(const map::TileIndex& tileIndx, const QString& errorString);
+    void downloadFailed(const map::TileIndex& tileIndx, const QString& errorString, int httpStatus);
     void downloadStopped(const map::TileIndex& tileIndx);
 
 private slots:

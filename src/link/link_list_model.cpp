@@ -89,6 +89,53 @@ QList<QPair<QUuid, LinkType>> LinkListModel::getOpenedUuids() const
     return retVal;
 }
 
+bool LinkListModel::containsUuid(const QUuid& uuid) const
+{
+    return index_.contains(uuid);
+}
+
+int LinkListModel::rowForUuid(const QUuid& uuid) const
+{
+    const auto it = index_.constFind(uuid);
+    return it == index_.constEnd() ? -1 : it.value();
+}
+
+QList<QUuid> LinkListModel::pinnedUuids() const
+{
+    QList<QUuid> retVal;
+    for (auto it = index_.cbegin(); it != index_.cend(); ++it) {
+        const int line = it.value();
+        if (vectors_[static_cast<int>(LinkListModel::Roles::IsPinned)][line].toBool())
+            retVal.append(it.key());
+    }
+    return retVal;
+}
+
+QList<QUuid> LinkListModel::serialUuids() const
+{
+    QList<QUuid> retVal;
+    for (auto it = index_.cbegin(); it != index_.cend(); ++it) {
+        const int line = it.value();
+        if (vectors_[static_cast<int>(LinkListModel::Roles::LinkType)][line].toInt() == static_cast<int>(::LinkType::kLinkSerial))
+            retVal.append(it.key());
+    }
+    return retVal;
+}
+
+QVariant LinkListModel::valueForUuid(const QUuid& uuid, Roles role) const
+{
+    const auto it = index_.constFind(uuid);
+    if (it == index_.constEnd())
+        return {};
+
+    const int line = it.value();
+    const auto vecIt = vectors_.constFind(static_cast<int>(role));
+    if (vecIt == vectors_.constEnd() || line < 0 || line >= vecIt.value().size())
+        return {};
+
+    return vecIt.value().at(line);
+}
+
 int LinkListModel::getSize() const
 {
     return size_;
@@ -126,9 +173,13 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool recei
 
         ++size_;
         endInsertRows();
+
+        if (isPinned)
+            moveRow(size_ - 1, 0);
     }
     else {
         int line = index_[uuid];
+        const bool wasPinned = vectors_[static_cast<int>(LinkListModel::Roles::IsPinned)][line].toBool();
 
         vectors_[static_cast<int>(LinkListModel::Roles::Uuid)][line] = uuid;
         vectors_[static_cast<int>(LinkListModel::Roles::ConnectionStatus)][line] = connectionStatus;
@@ -148,7 +199,44 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool recei
         vectors_[static_cast<int>(LinkListModel::Roles::IsUpgradingState)][line] = isUpgradingState;
 
         emit dataChanged(index(line, 0), index(line, 0));
+
+        if (isPinned != wasPinned)
+            moveRow(line, isPinned ? 0 : pinnedCount());
     }
+}
+
+int LinkListModel::pinnedCount() const
+{
+    const auto it = vectors_.constFind(static_cast<int>(LinkListModel::Roles::IsPinned));
+    if (it == vectors_.constEnd())
+        return 0;
+    int count = 0;
+    for (const QVariant& v : it.value())
+        if (v.toBool())
+            ++count;
+    return count;
+}
+
+void LinkListModel::moveRow(int from, int to)
+{
+    if (from == to || from < 0 || to < 0 || from >= size_ || to >= size_)
+        return;
+
+    const int dest = to > from ? to + 1 : to;
+    if (!beginMoveRows(QModelIndex(), from, from, QModelIndex(), dest))
+        return;
+
+    for (auto it = vectors_.begin(); it != vectors_.end(); ++it) {
+        QVector<QVariant>& v = it.value();
+        if (from < v.size())
+            v.insert(to, v.takeAt(from));
+    }
+
+    const QVector<QVariant>& uuidVec = vectors_[static_cast<int>(LinkListModel::Roles::Uuid)];
+    for (int i = 0; i < size_; ++i)
+        index_[uuidVec[i].toUuid()] = i;
+
+    endMoveRows();
 }
 
 void LinkListModel::doRemove(QUuid uuid)

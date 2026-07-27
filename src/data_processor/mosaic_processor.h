@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "dataset_defs.h"
 #include "epoch.h"
 #include "surface_tile.h"
@@ -15,7 +17,7 @@ class MosaicProcessor
 public:
     // Источник амплитуды для отрисовки мозайки.
     // Значения должны совпадать с порядком в qml/MosaicExtraSettings.qml (CCombo mosaicSource).
-    enum class Source : int {
+    enum class Source : std::uint8_t {
         Amplitude = 0,  // Echogram::amplitude (сырое)
         SideScan  = 1,  // Echogram::compensated (gain-compensation)
         Tgc       = 2,  // Echogram::tgc (линейный TGC, параметры — Echogram::gTgc*)

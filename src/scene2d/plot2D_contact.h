@@ -14,7 +14,7 @@ public:
     QString getInfo();
     void setInfo(const QString& info);
     bool getVisible();
-    void setVisible(bool visible);
+    void setVisible(bool visible) override;
     QPoint getPosition();
     int getIndx();
     double getLat();

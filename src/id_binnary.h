@@ -525,8 +525,8 @@ class IDBinServoControl : public IDBin
 public:
     static constexpr int AngleScale = 100;
 
-    enum GeneralBits : U2 { GenEnable = 0x0001 };
-    enum OptionsBits : U2 { OptReverse = 0x0001 };
+    enum GeneralBits : U1 { GenEnable = 0x0001 };
+    enum OptionsBits : U1 { OptReverse = 0x0001 };
 
     explicit IDBinServoControl() : IDBin() {}
 
@@ -1114,6 +1114,60 @@ public:
 
 protected:
     BoatStatus data_{};
+};
+
+class IDBinRecorderStatus : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinRecorderStatus() : IDBin() {
+    }
+
+    ID id() override { return ID_RECORDER_STATUS; }
+    Resp parsePayload(FrameParser& proto) override;
+
+    struct RecorderStatus {
+        static constexpr ID getId() { return ID_RECORDER_STATUS; }
+        static constexpr Version getVer() { return v0; }
+
+        union {
+            struct {
+                uint8_t device_condition : 3;
+                uint8_t recording_mode   : 2;
+                uint8_t recording_state  : 3;
+            };
+            uint8_t packed_status;
+        };
+        uint16_t status_flags;
+        uint16_t warning_flags;
+        uint16_t degraded_flags;
+        uint16_t critical_flags;
+        uint16_t uptime_10s;
+        uint16_t current_log_id;
+        uint16_t recorded_size_64k;
+        uint16_t free_space_1m;
+        uint16_t recording_duration_seconds;
+        uint16_t seconds_since_last_write;
+    } __attribute__((packed));
+
+    bool     isValid() const { return valid_; }
+    uint8_t  deviceCondition() const { return data_.device_condition; }
+    uint8_t  recordingMode() const { return data_.recording_mode; }
+    uint8_t  recordingState() const { return data_.recording_state; }
+    uint16_t statusFlags() const { return data_.status_flags; }
+    uint16_t warningFlags() const { return data_.warning_flags; }
+    uint16_t degradedFlags() const { return data_.degraded_flags; }
+    uint16_t criticalFlags() const { return data_.critical_flags; }
+    uint16_t uptime10s() const { return data_.uptime_10s; }
+    uint16_t currentLogId() const { return data_.current_log_id; }
+    uint16_t recordedSize64k() const { return data_.recorded_size_64k; }
+    uint16_t freeSpace1m() const { return data_.free_space_1m; }
+    uint16_t recordingDurationSeconds() const { return data_.recording_duration_seconds; }
+    uint16_t secondsSinceLastWrite() const { return data_.seconds_since_last_write; }
+
+protected:
+    RecorderStatus data_{};
+    bool valid_ = false;
 };
 
 class IDBinDVL : public IDBin

@@ -45,13 +45,42 @@ void Logger::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 }
 
+QString Logger::logDirectory() const
+{
+    return logDirectory_.isEmpty() ? resolveLogDirectoryPath() : logDirectory_;
+}
+
+qint64 Logger::activeLogSizeBytes() const
+{
+    qint64 total = 0;
+    const QString paths[] = { klfLogFilePath(), csvLogFilePath() };
+    for (const QString& path : paths) {
+        if (path.isEmpty()) {
+            continue;
+        }
+        const QFileInfo info(path);
+        if (info.exists()) {
+            total += info.size();
+        }
+    }
+    return total;
+}
+
+int Logger::activeLogDurationSecs() const
+{
+    if (recordStartMs_ == 0) {
+        return 0;
+    }
+    return int((QDateTime::currentMSecsSinceEpoch() - recordStartMs_) / 1000);
+}
+
 bool Logger::startNewKlfLog()
 {
     stopKlfLogging();
 
     bool isOpen = false;
     QDir dir;
-    const QString logPath = resolveLogDirectoryPath();
+    const QString logPath = logDirectory();
 
 #ifdef Q_OS_ANDROID
     if (!AndroidInterface::checkStoragePermissions()) {
@@ -82,6 +111,9 @@ bool Logger::startNewKlfLog()
     }
 
     if (isOpen) {
+        if (recordStartMs_ == 0) {
+            recordStartMs_ = QDateTime::currentMSecsSinceEpoch();
+        }
         emit loggingKlfStarted(true);
     }
 
@@ -96,6 +128,10 @@ bool Logger::stopKlfLogging()
 
     klfLogFile_->close();
     klfCurrentIteration_ = 0;
+
+    if (!isOpenCsv()) {
+        recordStartMs_ = 0;
+    }
 
     emit loggingKlfStarted(false);
 
@@ -143,7 +179,7 @@ bool Logger::startNewCsvLog()
     // open file
     bool isOpen = false;
     QDir dir;
-    const QString logPath = resolveLogDirectoryPath();
+    const QString logPath = logDirectory();
 
 #ifdef Q_OS_ANDROID
     if (!AndroidInterface::checkStoragePermissions()) {
@@ -174,6 +210,9 @@ bool Logger::startNewCsvLog()
     }
 
     if (isOpen) {
+        if (recordStartMs_ == 0) {
+            recordStartMs_ = QDateTime::currentMSecsSinceEpoch();
+        }
         // connects
         csvData_.csvConnections.append(QObject::connect(datasetPtr_, &Dataset::dataUpdate, this, &Logger::loggingCsvStream, Qt::AutoConnection));
     }
@@ -195,6 +234,10 @@ bool Logger::stopCsvLogging()
 
     if (isOpenCsv()) {
         csvLogFile_->close();
+    }
+
+    if (!isOpenKlf()) {
+        recordStartMs_ = 0;
     }
 
     return true;

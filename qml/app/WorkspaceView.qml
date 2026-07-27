@@ -158,6 +158,11 @@ Item {
                 handled = true
                 action(item)
             })
+            var sec = workspace.secondaryPlotItem
+            if (sec && workspace.store && workspace.store.effectiveSecondaryMode === "2D") {
+                handled = true
+                action(sec)
+            }
         }
 
         switch (fn) {
@@ -216,24 +221,82 @@ Item {
             })
             break
         case "prevTheme":
-            applyToVisiblePlots(function(item) {
-                var themeId = item.getThemeId()
-                if (themeId > 0)
-                    item.plotEchogramTheme(themeId - 1)
-            })
+            applyToVisiblePlots(function(item) { item.stepEchogramTheme(-1) })
             break
         case "nextTheme":
-            applyToVisiblePlots(function(item) {
-                var themeId = item.getThemeId()
-                if (themeId < 9)
-                    item.plotEchogramTheme(themeId + 1)
-            })
+            applyToVisiblePlots(function(item) { item.stepEchogramTheme(1) })
+            break
+        case "toggleEchogramType":
+            applyToVisiblePlots(function(item) { item.toggleEchogramType() })
             break
         default:
             return false
         }
 
         return handled
+    }
+
+    function apply3DHotkey(functionName, parameter) {
+        var fn = typeof functionName === "string" ? functionName : ""
+        if (fn === "")
+            return false
+        if (active3DHostItem === null || !scene3dView)
+            return false
+
+        var step = Number(parameter)
+        if (!isFinite(step) || step <= 0)
+            step = 1
+
+        switch (fn) {
+        case "scene3dZoomIn":
+            scene3dView.zoomStepTrigger(step)
+            return true
+        case "scene3dZoomOut":
+            scene3dView.zoomStepTrigger(-step)
+            return true
+        case "resetDepthZoom3D":
+            scene3dView.resetVerticalScale()
+            return true
+        case "resetCameraTop3D":
+            scene3dView.resetCameraAngleTrigger()
+            return true
+        case "cameraShiftXMinus3D":
+            scene3dView.panStepTrigger(0, -step)
+            return true
+        case "cameraShiftXPlus3D":
+            scene3dView.panStepTrigger(0, step)
+            return true
+        case "cameraShiftYMinus3D":
+            scene3dView.panStepTrigger(-step, 0)
+            return true
+        case "cameraShiftYPlus3D":
+            scene3dView.panStepTrigger(step, 0)
+            return true
+        case "cameraShiftZMinus3D":
+            scene3dView.zStepTrigger(-step)
+            return true
+        case "cameraShiftZPlus3D":
+            scene3dView.zStepTrigger(step)
+            return true
+        case "toggleBoatTrack3D":
+            if (workspace.store)
+                workspace.store.boatTrackVisible = !workspace.store.boatTrackVisible
+            return true
+        case "toggleBottomTrack3D":
+            if (workspace.store)
+                workspace.store.bottomTrackVisible = !workspace.store.bottomTrackVisible
+            return true
+        case "toggleIsobaths3D":
+            if (workspace.store)
+                workspace.store.isobathsVisible = !workspace.store.isobathsVisible
+            return true
+        case "toggleMosaic3D":
+            if (workspace.store)
+                workspace.store.mosaicVisible = !workspace.store.mosaicVisible
+            return true
+        default:
+            return false
+        }
     }
 
     function leafRectForId(leafId) {
@@ -511,6 +574,7 @@ Item {
 
             Settings {
                 id: rendererPersist
+                category: "scene3d/view"
                 property real verticalScale: 1.0
             }
         }

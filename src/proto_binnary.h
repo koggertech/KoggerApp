@@ -4,6 +4,7 @@
 #include "stdint.h"
 #include "stddef.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <cmath>
 #include "mav_link_conf.h"
 
@@ -80,6 +81,7 @@ enum ID : uint16_t {
     ID_FLASH = 0x23,
     ID_BOOT = 0x24,
     ID_UPDATE = 0x25,
+    ID_RECORDER_STATUS = 0x26,
 
     ID_SERVO_CONTROL = 0x27,
     ID_PWM_ROUTE     = 0x28,
@@ -1012,12 +1014,6 @@ public:
         _readPosition++;
     }
 
-    char readChar() {
-        char c = _frame[_readPosition++];
-        _readPosition++;
-        return c;
-    }
-
     double readDouble() {
         uint32_t i = 0;
         char data[20] = {};
@@ -1029,7 +1025,11 @@ public:
 
         double res = NAN;
         if(i > 0) {
-            sscanf(data, "%lf", &res);
+            char* end = nullptr;
+            const double parsed = strtod(data, &end);
+            if (end != data) {
+                res = parsed;
+            }
         }
 
         _readPosition++;

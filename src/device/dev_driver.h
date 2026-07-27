@@ -119,6 +119,22 @@ public:
 
     QString fwVersion() { return m_fwVer; }
 
+    // Recorder status (ID_RECORDER_STATUS 0x26 / RecorderStatusV0). See docs
+    // Recorder-Host-Integration-Guide.md for field meaning.
+    bool recorderStatusValid()           { return idRecorderStatus && idRecorderStatus->isValid(); }
+    int  recorderDeviceCondition()       { return idRecorderStatus ? idRecorderStatus->deviceCondition() : 0; }
+    int  recorderRecordingMode()         { return idRecorderStatus ? idRecorderStatus->recordingMode() : 0; }
+    int  recorderRecordingState()        { return idRecorderStatus ? idRecorderStatus->recordingState() : 0; }
+    int  recorderStatusFlags()           { return idRecorderStatus ? idRecorderStatus->statusFlags() : 0; }
+    int  recorderWarningFlags()          { return idRecorderStatus ? idRecorderStatus->warningFlags() : 0; }
+    int  recorderDegradedFlags()         { return idRecorderStatus ? idRecorderStatus->degradedFlags() : 0; }
+    int  recorderCriticalFlags()         { return idRecorderStatus ? idRecorderStatus->criticalFlags() : 0; }
+    int  recorderCurrentLogId()          { return idRecorderStatus ? idRecorderStatus->currentLogId() : 0; }
+    int  recorderRecordedSize64k()       { return idRecorderStatus ? idRecorderStatus->recordedSize64k() : 0; }
+    int  recorderFreeSpace1m()           { return idRecorderStatus ? idRecorderStatus->freeSpace1m() : 0; }
+    int  recorderDurationSeconds()       { return idRecorderStatus ? idRecorderStatus->recordingDurationSeconds() : 0; }
+    int  recorderSecondsSinceLastWrite() { return idRecorderStatus ? idRecorderStatus->secondsSinceLastWrite() : 0; }
+
     BoardVersion boardVersion() {
         return idVersion->boardVersion();
     }
@@ -240,6 +256,7 @@ signals:
     void deviceVersionChanged();
     void deviceIDChanged(QByteArray uid);
     void onReboot();
+    void recorderStatusChanged();
 
     void dopplerVeloComplete();
     void dopplerBeamComplete(IDBinDVL::BeamSolution *beams, uint16_t cnt);
@@ -256,6 +273,9 @@ public slots:
 
     void requestStreamList();
     void requestStream(int stream_id);
+    void requestStreamRange(int stream_id, quint32 start, quint32 end);
+    void requestStreamRanges(int stream_id, QVector<quint32> ranges);
+    void requestRecorderStatus();
 
     void setConsoleOut(bool is_console);
 
@@ -330,6 +350,7 @@ protected:
 
     IDBinNav* idNav = nullptr;
     IDBinBoatStatus* idBoatStatus = nullptr;
+    IDBinRecorderStatus* idRecorderStatus = nullptr;
     IDBinDVL* idDVL = nullptr;
     IDBinDVLMode* idDVLMode = nullptr;
 
@@ -451,6 +472,7 @@ protected slots:
 
     void receivedNav        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedBoatStatus (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedRecorderStatus(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedDVL        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedDVLMode    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
@@ -481,4 +503,6 @@ private:
     bool linkConnected_    = false;
     bool linkReceivesData_ = false;
     bool linkNotAvailable_ = false;
+    int64_t lastRecorderStatusReq_ = 0;
+    bool streamListRequested_ = false;
 };

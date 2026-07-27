@@ -3,6 +3,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
+import "RecorderStatus.js" as RecorderStatus
 
 Column {
     id: root
@@ -10,11 +11,168 @@ Column {
     property var dev: null
     property var store: null
 
+    // Per-device UI memory. This page is one instance whose `dev` changes on switch,
+    // so disclosure state is kept per device: on switch, snapshot the leaving device's
+    // group expansions + advanced-cut state, restore the entering device's (all
+    // collapsed if unseen). Entries for disconnected devices are pruned — a reconnect
+    // is a new object → fresh defaults.
+    property var _groupStates: []   // [{ dev, map: { stateKey: bool }, eng: bool }]
+    property var _prevDev: null
+
+    onDevChanged: {
+        if (_prevDev) {
+            var prev = _groupStateFor(_prevDev)
+            if (prev) { prev.map = _snapshotGroups(); prev.eng = _engExpanded }
+            else _groupStates.push({ dev: _prevDev, map: _snapshotGroups(), eng: _engExpanded })
+        }
+        _pruneGroupStates()
+        _applyForCurrentDev()
+        _prevDev = dev
+    }
+
+    Component.onCompleted: _applyForCurrentDev()
+
+    function _applyForCurrentDev() {
+        var cur = dev ? _groupStateFor(dev) : null
+        _applyGroups(cur ? cur.map : null)
+        var eng = cur ? !!cur.eng : false
+        if (eng !== _engExpanded) {
+            advReveal._animReady = false   // snap the cut on switch, no reveal animation
+            _engExpanded = eng
+            Qt.callLater(function() { advReveal._animReady = true })
+        }
+    }
+
+    function _groupStateFor(d) {
+        for (var i = 0; i < _groupStates.length; ++i)
+            if (_groupStates[i].dev === d) return _groupStates[i]
+        return null
+    }
+
+    function _collectGroups(item, out) {
+        var kids = item ? item.children : null
+        if (!kids) return
+        for (var i = 0; i < kids.length; ++i) {
+            var g = kids[i]
+            if (!g) continue
+            if (g.stateKey !== undefined && typeof g.expanded === "boolean")
+                out.push(g)
+            else
+                _collectGroups(g, out)
+        }
+    }
+
+    function _snapshotGroups() {
+        var m = {}
+        var groups = []
+        _collectGroups(root, groups)
+        for (var i = 0; i < groups.length; ++i)
+            m[groups[i].stateKey] = groups[i].expanded
+        return m
+    }
+
+    function _applyGroups(map) {
+        var groups = []
+        _collectGroups(root, groups)
+        for (var i = 0; i < groups.length; ++i) {
+            var g = groups[i]
+            if (g.bodyAnimated !== undefined)
+                g.bodyAnimated = false   // programmatic: snap, no expand/collapse flicker
+            g.expanded = (map && map[g.stateKey] !== undefined) ? map[g.stateKey] : !g.collapsedByDefault
+        }
+        Qt.callLater(_reenableGroupAnim)
+    }
+
+    function _reenableGroupAnim() {
+        var groups = []
+        _collectGroups(root, groups)
+        for (var i = 0; i < groups.length; ++i)
+            if (groups[i].bodyAnimated !== undefined)
+                groups[i].bodyAnimated = true
+    }
+
+    function _pruneGroupStates() {
+        var ds = (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) ? deviceManagerWrapper.devs : []
+        var kept = []
+        for (var i = 0; i < _groupStates.length; ++i) {
+            var e = _groupStates[i], present = false
+            for (var j = 0; j < ds.length; ++j)
+                if (ds[j] === e.dev) { present = true; break }
+            if (present)
+                kept.push(e)
+        }
+        _groupStates = kept
+    }
+
+    readonly property bool _isBasic2D: !!(dev && dev.devName === "Basic2D")
+    readonly property bool _isNanoSSS: !!(dev && dev.devName === "NanoSSS")
+    readonly property bool _isBasicSonar: _isBasic2D || _isNanoSSS
+    readonly property bool _isRecorder: !!(dev && dev.isRecorder)
+    readonly property bool _hasCut: _isBasicSonar || _isRecorder
+    property bool _engExpanded: false
+
+    readonly property var _warnings: {
+        var w = []
+        if (!dev || !_isBasicSonar) return w
+        var tpl = qsTr('Group "%1" settings were not applied')
+        if (dev.chartSetupState === false) w.push(tpl.arg(qsTr("Echogram")))
+        if (dev.distSetupState === false)  w.push(tpl.arg(qsTr("Rangefinder")))
+        if (dev.transcState === false)     w.push(tpl.arg(qsTr("Transducer")))
+        if (dev.dspState === false || dev.soundState === false) w.push(tpl.arg(qsTr("DSP")))
+        if (dev.datasetState === false)    w.push(tpl.arg(qsTr("Dataset")))
+        if (dev.uartState === false)       w.push(tpl.arg(qsTr("Actions")))
+        return w
+    }
+
+    property int warningCount: _warnings.length
+    property bool warningShown: false
+    onWarningCountChanged: {
+        if (warningCount > 0) {
+            if (!warningShown) warnDelayTimer.restart()
+        } else {
+            warnDelayTimer.stop()
+            warningShown = false
+        }
+    }
+    Timer { id: warnDelayTimer; interval: 1000; onTriggered: root.warningShown = true }
+
+    function _advFlick() {
+        var item = root.parent
+        while (item) {
+            if (item.contentY !== undefined && item.contentHeight !== undefined && item.flickableDirection !== undefined)
+                return item
+            item = item.parent
+        }
+        return null
+    }
+    function _scrollAdvancedIntoView() {
+        var flick = _advFlick()
+        if (!flick) return
+        var topInContent = advancedPanel.mapToItem(flick.contentItem, 0, 0).y
+        var bottomInContent = topInContent + advancedPanel.height
+        var vpH = flick.height
+        var cy = flick.contentY
+        if (topInContent >= cy - 0.5 && bottomInContent <= cy + vpH + 0.5)
+            return
+        var target = bottomInContent - vpH + Tokens.spaceLg
+        target = Math.min(target, topInContent)
+        target = Math.max(0, Math.min(target, flick.contentHeight - vpH))
+        if (Math.abs(target - cy) < 0.5) return
+        advScrollAnim.target = flick
+        advScrollAnim.from = cy
+        advScrollAnim.to = target
+        advScrollAnim.restart()
+    }
+    NumberAnimation { id: advScrollAnim; property: "contentY"; duration: 240; easing.type: Easing.OutCubic }
+    Timer { id: advScrollTimer; interval: 260; onTriggered: root._scrollAdvancedIntoView() }
+
     readonly property real groupWidth: Math.max(0, width)
     readonly property real spinW: Math.round(115 * AppPalette.scale)
-    // Spinbox label width — account for SettingsGroup's content card padding
-    // (Tokens.spaceMd on each side) plus row spacing + small safety margin.
-    readonly property real lblW: Math.max(0, groupWidth - 2 * Tokens.spaceMd - spinW - Tokens.spaceMd - Tokens.spaceSm)
+
+    readonly property int chartSamplesMin: 100
+    readonly property int chartSamplesMax: 15000
+    readonly property var distanceStepsM: [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 125, 150]
+    readonly property var periodStepsMs: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200, 250, 300, 350, 400, 450, 500, 750, 1000, 1500, 2000]
 
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
@@ -26,8 +184,10 @@ Column {
         property int from: 0
         property int to: 100
         property int stepSize: 1
+        property var stepValues: []
         property real divisor: 1.0
         property int decimals: 0
+        property bool trimZeros: false
         property var writeBack: null  // function(v) called on user interaction
 
         implicitWidth: Math.round(115 * AppPalette.scale); implicitHeight: Tokens.controlHMd
@@ -43,94 +203,1140 @@ Column {
         KSpinBox {
             id: spin
             anchors.fill: parent
-            from: ds.from; to: ds.to; stepSize: ds.stepSize
-            divisor: ds.divisor; decimals: ds.decimals
+            from: ds.from; to: ds.to; stepSize: ds.stepSize; stepValues: ds.stepValues
+            divisor: ds.divisor; decimals: ds.decimals; trimZeros: ds.trimZeros
             onValueModified: function(v) { if (!ds._in && ds.writeBack) ds.writeBack(v) }
         }
     }
 
-    // Section heading above the per-area device settings groups.
-    Text {
-        text: qsTr("Settings:")
-        color: AppPalette.textMuted
-        font.pixelSize: Tokens.fontXs
-        leftPadding: Tokens.spaceXxs
+    component DevButton: KButton {
+        normalBg: AppPalette.controlRaised
+        hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
+        dangerBg: AppPalette.controlRaised
+        dangerHoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
+        borderWidth: danger ? Math.max(1, Math.round(1.5 * AppPalette.scale)) : Tokens.cardBorderWidth
     }
+
+    component B2Card: Rectangle {
+        default property alias content: _b2col.data
+        width: root.groupWidth
+        radius: Tokens.radiusMd
+        color: AppPalette.card
+        border.width: Tokens.cardBorderWidth
+        border.color: AppPalette.border
+        implicitHeight: _b2col.implicitHeight + 2 * Tokens.spaceMd
+        Column {
+            id: _b2col
+            x: Tokens.spaceMd; y: Tokens.spaceMd
+            width: parent.width - 2 * Tokens.spaceMd
+            spacing: Tokens.spaceSm
+        }
+    }
+
+    component Reveal: Item {
+        id: rv
+        property bool open: false
+        property real contentHeight: Tokens.controlHMd
+        default property alias content: _rvInner.data
+        width: parent ? parent.width : 0
+        clip: true
+        height: open ? contentHeight : 0
+        Behavior on height { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
+        Item {
+            id: _rvInner
+            anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
+            height: rv.contentHeight
+            opacity: rv.open ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        }
+    }
+
+    // ── Recorder ──────────────────────────────────────────────────────────
+    // Status snapshot + log archive with per-log batched download. Data comes from
+    // dev.recorder* (ID_RECORDER_STATUS) and deviceManagerWrapper.streamsList; download
+    // is driven by deviceManagerWrapper.startStreamDownload(id). See
+    // RecorderN/docs/Recorder-Host-Integration-Guide.md.
+    DeviceSettingsGroup {
+        id: recorderGroup
+        width: root.groupWidth; preferredWidth: root.groupWidth
+        title: qsTr("Recorder"); titlePixelSize: 13
+        stateKey: "dev.recorder"; collapsedByDefault: false
+        visible: !!(dev && dev.isRecorder)
+
+        // Input ports live in the HEADER — visible even when the group is collapsed.
+        // Compact: dot + short label (S1/S2/Nav). gray=never · green=live · red=lost.
+        headerActions: Row {
+            id: portsRow
+            readonly property int gap: Tokens.spaceSm
+            spacing: gap
+            rightPadding: gap
+            visible: !!(dev && dev.recorderStatusValid)
+            readonly property int dotSize: Math.round(8 * AppPalette.scale)
+            readonly property int innerGap: Math.round(6 * AppPalette.scale)
+            Repeater {
+                model: recorderGroup._sourceChips()
+                delegate: Rectangle {
+                    readonly property color accent: modelData.state === "live" ? AppPalette.linkOkBorder
+                                                  : modelData.state === "lost" ? AppPalette.linkDownBorder
+                                                  : AppPalette.textMuted
+                    readonly property bool off: modelData.state === "off"
+                    implicitWidth: chipContent.implicitWidth + Tokens.spaceLg * 2
+                    width: implicitWidth
+                    height: recorderGroup.headerActionSize - portsRow.gap * 2; radius: height / 2
+                    anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+                    color: "transparent"
+                    border.width: Math.max(1, Math.round(1.5 * AppPalette.scale))
+                    border.color: off ? AppPalette.border : accent
+                    Row {
+                        id: chipContent
+                        anchors.centerIn: parent; spacing: portsRow.innerGap
+                        Rectangle {
+                            width: portsRow.dotSize; height: width; radius: width / 2
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: off ? "transparent" : accent
+                            border.width: off ? Math.max(1, Math.round(1.5 * AppPalette.scale)) : 0
+                            border.color: AppPalette.textMuted
+                        }
+                        Text { text: modelData.short; color: AppPalette.textStrong
+                               font.pixelSize: Tokens.fontBase; font.bold: true
+                               anchors.verticalCenter: parent.verticalCenter }
+                    }
+                }
+            }
+        }
+
+        // real, not int: free/recorded bytes exceed 2^31 (QML int is 32-bit) and would wrap.
+        // recorded_size is 64 KiB units (2^16); free_space is 1 MB = 10^6-byte units (matches
+        // the firmware's freeSpaceBytes()/1000000).
+        readonly property real recordedBytes: dev ? (dev.recorderRecordedSize64k || 0) * 65536.0 : 0
+        readonly property real freeBytes:     dev ? (dev.recorderFreeSpace1m || 0) * 1000000.0 : 0
+
+        function _fmtSize(b) { return RecorderStatus.fmtSize(b) }
+        function _elapsed(s) { return RecorderStatus.elapsed(s) }
+        function _logDuration(s) {
+            if (!s || s <= 0) return "0" + qsTr("s")
+            var h = Math.floor(s / 3600)
+            var m = Math.floor((s % 3600) / 60)
+            var sec = Math.floor(s % 60)
+            var pad = function(n) { return (n < 10 ? "0" : "") + n }
+            if (h > 0)   return h + qsTr("h") + " " + pad(m) + qsTr("m")
+            if (m > 0)   return m + qsTr("m") + " " + pad(sec) + qsTr("s")
+            return sec + qsTr("s")
+        }
+
+        readonly property int _curId: dev ? (dev.recorderCurrentLogId || 0) : 0
+        property real _curSize: 0
+        property real _curDone: 0
+        property int  _curUpload: 1
+        property int  _hiddenCount: 0
+        readonly property int _otherLogsCount: Math.max(0, logList.count - _hiddenCount)
+
+        function _recount() {
+            var n = streamScan.count
+            var hidden = 0, sz = 0, dn = 0, up = 1
+            for (var i = 0; i < n; ++i) {
+                var it = streamScan.itemAt(i)
+                if (!it) continue
+                if (it._hidden) hidden++
+                if (it._isCur) { sz = it.rSize; dn = it.rDone; up = it.rUpload }
+            }
+            _hiddenCount = hidden
+            _curSize = sz; _curDone = dn; _curUpload = up
+        }
+
+        readonly property int kStallS: 10
+
+        // Join source names for flag-word bits 0/1/2 (Sonar1=1, Sonar2=2, Nav=4).
+        function _sources(v) {
+            var a = []
+            if (v & 1) a.push(qsTr("Sonar 1"))
+            if (v & 2) a.push(qsTr("Sonar 2"))
+            if (v & 4) a.push(qsTr("Nav"))
+            if (!a.length) return ""
+            return a.length === 1 ? a[0] : a.slice(0, -1).join(", ") + qsTr(" & ") + a[a.length - 1]
+        }
+
+        // Semantic severity accent (from the app palette; distinct from the blue accent).
+        function _sevColor(s) {
+            if (s === "good")  return AppPalette.linkOkBorder
+            if (s === "warn")  return AppPalette.linkIdleBorder
+            if (s === "crit")  return AppPalette.linkDownBorder
+            if (s === "stale") return AppPalette.textMuted
+            return AppPalette.accentBar
+        }
+        function _sevText(s) {
+            if (s === "good")  return AppPalette.linkOkText
+            if (s === "warn")  return AppPalette.linkIdleText
+            if (s === "crit")  return AppPalette.linkDownText
+            if (s === "stale") return AppPalette.textMuted
+            return AppPalette.accentBar
+        }
+
+        // Worst-state-wins hero: { sev, word, sub, pulse }. Mirrors the UX concept: the one
+        // line that answers "is my data being saved right now, and if not, what broke?".
+        readonly property var hero: _hero()
+        function _hero() {
+            var sev = (!dev || !dev.recorderStatusValid) ? "idle"
+                    : stale ? "stale"
+                    : RecorderStatus.severity(dev)
+            if (!dev || !dev.recorderStatusValid)
+                return { sev: sev, word: qsTr("Connecting…"), sub: qsTr("Waiting for the recorder."), pulse: false }
+            if (stale)
+                return { sev: sev, word: qsTr("No response"),
+                         sub: qsTr("No update for %1 — showing last known.").arg(_elapsed(staleAgeS)), pulse: false }
+            var st = dev.recorderRecordingState
+            if (st === 3 || dev.recorderCriticalFlags)
+                return { sev: sev,
+                         word: (dev.recorderCriticalFlags & 1) ? qsTr("Storage lost") : qsTr("Recording failed"),
+                         sub: qsTr("Recording stopped — check the recorder."), pulse: false }
+            if (st === 4)
+                return { sev: sev, word: qsTr("Recording off"), sub: qsTr("Recording is disabled."), pulse: false }
+            if (st === 2) {
+                var active = dev.recorderStatusFlags || 0
+                var silentBits = (dev.recorderDegradedFlags || 0) & 0x7
+                // Not writing: no data landed for a while, OR every seen source has gone
+                // silent. Still green if another source is feeding (that rides as an alert).
+                if (dev.recorderSecondsSinceLastWrite > kStallS || (silentBits && !active)) {
+                    var sil = _sources(dev.recorderDegradedFlags || 0)
+                    var gap = _elapsed(dev.recorderSecondsSinceLastWrite)
+                    return { sev: sev, word: qsTr("Recording stopped"),
+                             sub: sil.length ? qsTr("No data from %1 · nothing recorded for %2").arg(sil).arg(gap)
+                                             : qsTr("Nothing recorded for %1 — source silent.").arg(gap),
+                             pulse: false }
+                }
+                var lostBits = silentBits & ~active
+                if (lostBits) {
+                    var seen = active | lostBits
+                    var defs = [{ b: 1, n: qsTr("Sonar 1") }, { b: 2, n: qsTr("Sonar 2") }, { b: 4, n: qsTr("Nav") }]
+                    var parts = []
+                    for (var i = 0; i < defs.length; i++)
+                        if (seen & defs[i].b)
+                            parts.push((active & defs[i].b ? qsTr("%1 connected") : qsTr("%1 disconnected")).arg(defs[i].n))
+                    var detail = parts.join(", ")
+                    var logId2 = dev.recorderCurrentLogId || 0
+                    return { sev: sev, word: qsTr("Recording"),
+                             sub: logId2 > 0 ? qsTr("Saving to log #%1 — %2").arg(logId2).arg(detail)
+                                             : qsTr("Saving — %1").arg(detail),
+                             pulse: true }
+                }
+                var live = _sources(active)
+                var liveN = (active & 1 ? 1 : 0) + (active & 2 ? 1 : 0) + (active & 4 ? 1 : 0)
+                var logId = dev.recorderCurrentLogId || 0
+                var sub
+                if (logId > 0)
+                    sub = live.length ? (liveN > 1 ? qsTr("Saving to log #%1 — %2 are connected.").arg(logId).arg(live)
+                                                   : qsTr("Saving to log #%1 — %2 connected.").arg(logId).arg(live))
+                                      : qsTr("Saving to log #%1.").arg(logId)
+                else
+                    sub = live.length ? (liveN > 1 ? qsTr("Saving — %1 are connected.").arg(live)
+                                                   : qsTr("Saving — %1 connected.").arg(live))
+                                      : qsTr("Saving.")
+                return { sev: sev, word: qsTr("Recording"), sub: sub, pulse: true }
+            }
+            if (st === 1)
+                return { sev: sev, word: qsTr("Idle"), sub: qsTr("Armed — waiting for data."), pulse: false }
+            return { sev: sev, word: qsTr("Starting…"), sub: qsTr("Recorder is coming up."), pulse: false }
+        }
+
+        // Input ports — ALL THREE always shown. Per-port state: "live" (status_flags,
+        // green), "lost" (degraded_flags, red), "off" (neither seen, gray hollow).
+        function _sourceChips() {
+            if (!dev || !dev.recorderStatusValid) return []
+            var sf = dev.recorderStatusFlags || 0, df = dev.recorderDegradedFlags || 0
+            var defs = [{ b: 1, n: qsTr("Sonar 1"), s: qsTr("S1") },
+                        { b: 2, n: qsTr("Sonar 2"), s: qsTr("S2") },
+                        { b: 4, n: qsTr("Nav"), s: qsTr("Nav") }]
+            var out = []
+            for (var i = 0; i < defs.length; i++)
+                out.push({ name: defs[i].n, short: defs[i].s,
+                           state: (sf & defs[i].b) ? "live" : ((df & defs[i].b) ? "lost" : "off") })
+            return out
+        }
+
+        // Severity tint for the banner background (low-alpha sev colour; idle = none).
+        function _sevBg(s) {
+            if (s === "idle") return "transparent"
+            var c = _sevColor(s)
+            return Qt.rgba(c.r, c.g, c.b, 0.12)
+        }
+        // Free-space "error" (blink): storage fault, or free space critically low (<2 GB).
+        function _freeError() {
+            if (!dev || !dev.recorderStatusValid) return false
+            if (dev.recorderCriticalFlags) return true
+            return recorderGroup.freeBytes > 0 && recorderGroup.freeBytes < 2000000000
+        }
+
+        // A vital-number tile for the banner: label + value. keyBox = green (good), errorBox
+        // = red border + blink, alertBox = red static (e.g. dropping frames).
+        component StatBox: Rectangle {
+            property string blabel: ""
+            property string bvalue: ""
+            property bool keyBox: false
+            property bool errorBox: false
+            property bool alertBox: false
+            height: Math.round(42 * AppPalette.scale); radius: Tokens.radiusMd
+            implicitWidth: sbCol.implicitWidth + Tokens.spaceMd * 2; width: implicitWidth
+            color: AppPalette.card
+            border.width: 1
+            border.color: (errorBox || alertBox) ? AppPalette.linkDownBorder
+                        : keyBox ? Qt.rgba(AppPalette.linkOkBorder.r, AppPalette.linkOkBorder.g, AppPalette.linkOkBorder.b, 0.45)
+                        : AppPalette.border
+            Column {
+                id: sbCol
+                anchors.centerIn: parent; spacing: Math.round(1 * AppPalette.scale)
+                Text { visible: blabel.length > 0; text: blabel; color: AppPalette.textMuted
+                       font.pixelSize: Tokens.fontXs }
+                Text { text: bvalue; font.pixelSize: Tokens.fontSm; font.bold: true
+                       color: (errorBox || alertBox) ? AppPalette.linkDownText
+                            : keyBox ? AppPalette.linkOkText : AppPalette.text }
+            }
+            Rectangle {   // blink glow when errorBox
+                anchors.fill: parent; radius: parent.radius; color: "transparent"
+                border.width: Math.round(2 * AppPalette.scale); border.color: AppPalette.linkDownBorder
+                visible: errorBox
+                SequentialAnimation on opacity {
+                    running: errorBox; loops: Animation.Infinite
+                    NumberAnimation { from: 1.0; to: 0.12; duration: 560; easing.type: Easing.InOutSine }
+                    NumberAnimation { from: 0.12; to: 1.0; duration: 560; easing.type: Easing.InOutSine }
+                }
+            }
+        }
+
+        // Freshness: recorderStatusChanged fires every poll (~3s). If it stops (e.g. the
+        // telem link is pulled — the serial port stays "open", so link state won't notice)
+        // the last snapshot is stale and the device's real state is unknown. Track the age
+        // of the last status and flag it, so the readout isn't mistaken for live truth.
+        property double _lastStatusMs: 0
+        property double _nowMs: 0
+        readonly property bool stale: _lastStatusMs > 0 && (_nowMs - _lastStatusMs) > 7000
+        readonly property int staleAgeS: _lastStatusMs > 0 ? Math.floor((_nowMs - _lastStatusMs) / 1000) : 0
+
+        Timer { interval: 1000; repeat: true; running: true; onTriggered: recorderGroup._nowMs = Date.now() }
+        Connections {
+            target: dev
+            ignoreUnknownSignals: true
+            function onRecorderStatusChanged() { recorderGroup._lastStatusMs = Date.now(); recorderGroup._nowMs = Date.now(); Qt.callLater(recorderGroup._recount) }
+        }
+
+        // ── Banner: severity-tinted; hero + vital boxes. Ports are in the header. ──
+        Rectangle {
+            id: banner
+            width: parent.width; radius: Tokens.radiusMd
+            color: recorderGroup._sevBg(recorderGroup.hero.sev)
+            border.width: recorderGroup.hero.sev === "idle" ? 1 : 0
+            border.color: AppPalette.border
+            implicitHeight: bannerCol.implicitHeight + Tokens.spaceMd * 2; height: implicitHeight
+            opacity: recorderGroup.stale ? 0.6 : 1.0
+
+            Rectangle {   // left severity stripe
+                anchors.left: parent.left; anchors.leftMargin: Math.round(2 * AppPalette.scale)
+                anchors.top: parent.top; anchors.bottom: parent.bottom
+                anchors.topMargin: parent.radius; anchors.bottomMargin: parent.radius
+                width: Math.round(3 * AppPalette.scale); radius: width / 2
+                color: recorderGroup._sevColor(recorderGroup.hero.sev)
+                visible: recorderGroup.hero.sev !== "idle"
+            }
+
+            Column {
+                id: bannerCol
+                anchors.left: parent.left; anchors.right: parent.right
+                anchors.leftMargin: Tokens.spaceMd + Math.round(4 * AppPalette.scale)
+                anchors.rightMargin: Tokens.spaceMd
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Tokens.spaceMd
+
+                Row {
+                    id: heroRow
+                    width: parent.width; spacing: Tokens.spaceMd
+
+                    Column {
+                        id: heroTextBlock
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: heroRow.width - (freeBadge.visible ? freeBadge.width + heroRow.spacing : 0)
+                        spacing: Math.round(2 * AppPalette.scale)
+
+                        Row {
+                            width: parent.width; spacing: Tokens.spaceMd
+                            Item {
+                                id: heroDisc
+                                width: Math.round(16 * AppPalette.scale); height: width
+                                anchors.verticalCenter: parent.verticalCenter
+                                Rectangle {   // pulse ring while actively writing
+                                    id: pulseRing
+                                    anchors.centerIn: parent; width: parent.width; height: parent.height; radius: width / 2
+                                    color: "transparent"; border.width: Math.max(1, Math.round(1.5 * AppPalette.scale))
+                                    border.color: recorderGroup._sevColor(recorderGroup.hero.sev)
+                                    visible: recorderGroup.hero.pulse
+                                    ParallelAnimation {
+                                        running: recorderGroup.hero.pulse; loops: Animation.Infinite
+                                        NumberAnimation { target: pulseRing; property: "scale"; from: 1.0; to: 2.4; duration: 1500; easing.type: Easing.OutQuad }
+                                        NumberAnimation { target: pulseRing; property: "opacity"; from: 0.5; to: 0.0; duration: 1500; easing.type: Easing.OutQuad }
+                                    }
+                                }
+                                Rectangle {   // the severity disc
+                                    anchors.centerIn: parent; width: parent.width; height: parent.height; radius: width / 2
+                                    color: recorderGroup._sevColor(recorderGroup.hero.sev)
+                                }
+                            }
+                            Text {
+                                id: heroWord
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width - heroDisc.width - parent.spacing
+                                text: recorderGroup.hero.word; color: recorderGroup._sevText(recorderGroup.hero.sev)
+                                font.pixelSize: Tokens.fontXxl; font.bold: true
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        Text {
+                            width: parent.width
+                            visible: recorderGroup.hero.sub.length > 0
+                            text: recorderGroup.hero.sub; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+
+                    Rectangle {
+                        id: freeBadge
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: !!(dev && dev.recorderStatusValid)
+                        radius: Tokens.radiusMd
+                        implicitWidth: freeBadgeCol.implicitWidth + Tokens.spaceMd * 2; width: implicitWidth
+                        height: heroTextBlock.implicitHeight
+                        color: AppPalette.card
+                        border.width: 1
+                        border.color: recorderGroup._freeError() ? AppPalette.linkDownBorder
+                                    : (recorderGroup.hero.sev === "good" || recorderGroup.hero.sev === "idle")
+                                      ? Qt.rgba(AppPalette.linkOkBorder.r, AppPalette.linkOkBorder.g, AppPalette.linkOkBorder.b, 0.45)
+                                      : AppPalette.border
+                        Column {
+                            id: freeBadgeCol
+                            anchors.centerIn: parent; spacing: Math.round(2 * AppPalette.scale)
+                            Text {
+                                text: qsTr("Free space"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                            Text {
+                                text: (dev && (dev.recorderCriticalFlags & 1)) ? "—" : recorderGroup._fmtSize(recorderGroup.freeBytes)
+                                color: recorderGroup._freeError() ? AppPalette.linkDownText
+                                     : (recorderGroup.hero.sev === "good" || recorderGroup.hero.sev === "idle") ? AppPalette.linkOkText
+                                     : AppPalette.text
+                                font.pixelSize: Tokens.fontSm; font.bold: true
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                        }
+                        Rectangle {   // blink glow when free space is critical
+                            anchors.fill: parent; radius: parent.radius; color: "transparent"
+                            border.width: Math.round(2 * AppPalette.scale); border.color: AppPalette.linkDownBorder
+                            visible: recorderGroup._freeError()
+                            SequentialAnimation on opacity {
+                                running: recorderGroup._freeError(); loops: Animation.Infinite
+                                NumberAnimation { from: 1.0; to: 0.12; duration: 560; easing.type: Easing.InOutSine }
+                                NumberAnimation { from: 0.12; to: 1.0; duration: 560; easing.type: Easing.InOutSine }
+                            }
+                        }
+                    }
+                }
+
+                Flow {
+                    width: parent.width; spacing: Tokens.spaceSm
+                    visible: !!(dev && dev.recorderStatusValid && (dev.recorderDegradedFlags & 0x8))
+                    StatBox {
+                        visible: !!(dev && dev.recorderStatusValid && (dev.recorderDegradedFlags & 0x8))
+                        alertBox: true
+                        bvalue: qsTr("⚠ Dropping frames")
+                    }
+                }
+            }
+        }
+
+        // Stale note — the banner already shows "No response"; this labels the frozen values.
+        Text {
+            visible: recorderGroup.stale
+            width: parent.width
+            text: qsTr("Values may be outdated.")
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+        }
+
+        Item {
+            visible: false
+            Repeater {
+                id: streamScan
+                model: (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) ? deviceManagerWrapper.streamsList : null
+                onCountChanged: Qt.callLater(recorderGroup._recount)
+                delegate: Item {
+                    readonly property int  rId: id
+                    readonly property int  rRec: recordState
+                    readonly property real rSize: size
+                    readonly property real rDone: doneSize
+                    readonly property int  rUpload: uploadState
+                    readonly property bool _isCur: recorderGroup._curId > 0 && rId === recorderGroup._curId
+                    readonly property bool _hidden: _isCur || rRec === 3
+                    onRIdChanged: Qt.callLater(recorderGroup._recount)
+                    onRRecChanged: Qt.callLater(recorderGroup._recount)
+                    onRSizeChanged: Qt.callLater(recorderGroup._recount)
+                    onRDoneChanged: Qt.callLater(recorderGroup._recount)
+                    onRUploadChanged: Qt.callLater(recorderGroup._recount)
+                    Component.onCompleted: Qt.callLater(recorderGroup._recount)
+                }
+            }
+        }
+
+        Row {
+            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
+            Text {
+                text: qsTr("Logs (%1)").arg(Math.max(logList.count, recorderGroup._curId > 0 ? 1 : 0))
+                color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; font.bold: true
+                width: parent.width - refreshBtn.width - parent.spacing
+                anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+            }
+            DevButton {
+                id: refreshBtn
+                width: Math.round(112 * AppPalette.scale); height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                text: qsTr("Refresh")
+                onClicked: if (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) deviceManagerWrapper.refreshStreamList()
+            }
+        }
+
+        Text {
+            visible: logList.count === 0 && recorderGroup._curId === 0
+            width: parent.width
+            text: qsTr("No logs listed yet — tap Refresh to enumerate the recorder's archive.")
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; wrapMode: Text.WordWrap
+        }
+
+        // Current log + archive kept tight together (small gap) so the plate reads as the
+        // list's pinned first entry.
+        Column {
+            id: logsBlock
+            width: parent.width
+            spacing: Math.round(3 * AppPalette.scale)
+
+        // ── Current log plate: pinned directly above the archive list, reads as its first
+        // entry. Live/last log + download; hidden when there is no current log. ──
+        Rectangle {
+            id: curLogPlate
+            width: parent.width; radius: Tokens.radiusMd
+            color: AppPalette.card
+            border.width: 1
+            // frame mirrors the recorder state (same severity colour as the status banner)
+            border.color: recorderGroup.hero.sev === "idle"
+                          ? AppPalette.border
+                          : recorderGroup._sevColor(recorderGroup.hero.sev)
+            height: Tokens.controlHMd + Tokens.spaceMd * 2
+            visible: curLogPlate._hasLog
+
+            readonly property bool _hasLog: recorderGroup._curId > 0
+            readonly property bool _recording: !!(dev && dev.recorderStatusValid && dev.recorderRecordingState === 2)
+            readonly property bool _uploading: recorderGroup._curUpload === 3
+            readonly property bool _doneState: recorderGroup._curUpload === 1 && recorderGroup._curDone > 0
+            readonly property real _pct: recorderGroup._curSize > 0 ? Math.max(0, Math.min(1, recorderGroup._curDone / recorderGroup._curSize)) : 0
+            readonly property bool _active: _uploading || _revealDone
+            readonly property int _shift: Math.round(7 * AppPalette.scale)
+            readonly property string _sizeText: recorderGroup._fmtSize(curLogPlate._recording ? recorderGroup.recordedBytes : recorderGroup._curSize)
+            property bool _initiated: false
+            property bool _revealDone: false
+
+            on_DoneStateChanged: {
+                if (_doneState && _initiated) {
+                    _initiated = false
+                    _revealDone = true
+                    plateHideTimer.restart()
+                    if (typeof notifications !== "undefined" && notifications)
+                        notifications.info(qsTr("Saved \"%1\" to \"%2\"").arg("recorder_log_" + recorderGroup._curId + ".kp2").arg(recorderGroup._downloadDir))
+                }
+            }
+            on_UploadingChanged: if (_uploading) { _revealDone = false; plateHideTimer.stop() }
+            Timer { id: plateHideTimer; interval: 4000; onTriggered: curLogPlate._revealDone = false }
+
+            DevButton {
+                id: dlBtnPlate
+                anchors.right: parent.right; anchors.rightMargin: Tokens.spaceLg
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.round(112 * AppPalette.scale); height: Tokens.controlHMd
+                fontPixelSize: Tokens.fontMd
+                danger: curLogPlate._uploading
+                text: curLogPlate._uploading ? qsTr("Cancel") : (curLogPlate._revealDone ? qsTr("Re-download") : qsTr("Download"))
+                onClicked: {
+                    if (typeof deviceManagerWrapper === "undefined" || !deviceManagerWrapper || !curLogPlate._hasLog)
+                        return
+                    if (curLogPlate._uploading)
+                        deviceManagerWrapper.cancelStreamDownload(recorderGroup._curId)
+                    else {
+                        curLogPlate._initiated = true
+                        deviceManagerWrapper.startStreamDownload(recorderGroup._curId)
+                    }
+                }
+            }
+
+            Row {
+                id: plateTextRow
+                anchors.left: parent.left; anchors.leftMargin: Tokens.spaceLg
+                anchors.right: dlBtnPlate.left; anchors.rightMargin: Tokens.spaceMd
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: curLogPlate._active ? -curLogPlate._shift : 0
+                Behavior on anchors.verticalCenterOffset { NumberAnimation { duration: Anim.fadeMs; easing.type: Easing.OutCubic } }
+                spacing: Tokens.spaceSm
+
+                Text {
+                    text: "#" + recorderGroup._curId; color: AppPalette.text; font.pixelSize: Tokens.fontMd; font.bold: true
+                    width: Math.round(52 * AppPalette.scale); anchors.verticalCenter: parent.verticalCenter
+                    elide: Text.ElideRight
+                }
+                Text {
+                    text: curLogPlate._sizeText; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
+                    width: Math.round(84 * AppPalette.scale); anchors.verticalCenter: parent.verticalCenter
+                }
+                Text {
+                    text: curLogPlate._uploading ? qsTr("Downloading… %1%").arg(Math.round(curLogPlate._pct * 100))
+                                         : (curLogPlate._revealDone ? qsTr("Saved")
+                                            : (curLogPlate._recording ? recorderGroup._logDuration(dev.recorderDurationSeconds) : ""))
+                    color: curLogPlate._revealDone ? AppPalette.accentBar : AppPalette.textMuted
+                    font.pixelSize: Tokens.fontSm
+                    width: plateTextRow.width - Math.round(52 * AppPalette.scale) - Math.round(84 * AppPalette.scale) - 2 * plateTextRow.spacing
+                    anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+                }
+            }
+
+            Rectangle {
+                id: plateProgress
+                anchors.left: parent.left; anchors.leftMargin: Tokens.spaceLg
+                anchors.right: dlBtnPlate.left; anchors.rightMargin: Tokens.spaceMd
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: Math.round(9 * AppPalette.scale)
+                height: Math.round(4 * AppPalette.scale); radius: height / 2
+                color: AppPalette.trackOff
+                opacity: curLogPlate._active ? 1 : 0
+                visible: opacity > 0.01
+                Behavior on opacity { NumberAnimation { duration: Anim.fadeMs } }
+                Rectangle {
+                    height: parent.height; radius: parent.radius
+                    width: parent.width * curLogPlate._pct
+                    color: AppPalette.accentBar
+                    Behavior on width { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                }
+            }
+        }
+
+        Rectangle {
+            width: parent.width
+            visible: recorderGroup._otherLogsCount > 0
+            readonly property int rowH: Tokens.controlHMd + Tokens.spaceMd * 2
+            height: Math.min(recorderGroup._otherLogsCount * rowH, Math.round(rowH * 3.5)) + 2
+            color: AppPalette.bg; radius: Tokens.radiusMd
+            border.width: Tokens.cardBorderWidth; border.color: AppPalette.border
+            clip: true
+
+            ListView {
+                id: logList
+                anchors.fill: parent; anchors.margins: 1
+                clip: true
+                model: (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) ? deviceManagerWrapper.streamsList : null
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: ScrollBar {
+                    id: logScroll
+                    policy: ScrollBar.AsNeeded
+                    implicitWidth: Tokens.spaceLg
+                    readonly property int _handleW: Math.max(6, Math.round(7 * AppPalette.scale))
+                    leftPadding: (implicitWidth - _handleW) / 2
+                    rightPadding: leftPadding
+                    topPadding: Math.round(2 * AppPalette.scale)
+                    bottomPadding: topPadding
+
+                    property bool _shown: false
+                    onActiveChanged: { if (active) { _shown = true; hideTimer.stop() } else hideTimer.restart() }
+                    Timer { id: hideTimer; interval: 1100; onTriggered: logScroll._shown = false }
+
+                    contentItem: Rectangle {
+                        radius: width / 2
+                        color: logScroll.pressed ? AppPalette.borderHover : AppPalette.border
+                        opacity: logScroll._shown ? 1.0 : 0.0
+                        Behavior on opacity { NumberAnimation { duration: Anim.fadeMs } }
+                    }
+                }
+
+                delegate: Item {
+                    id: rowItem
+                    readonly property bool _hidden: (recorderGroup._curId > 0 && id === recorderGroup._curId) || recordState === 3
+                    width: ListView.view ? ListView.view.width : 0
+                    height: _hidden ? 0 : (Tokens.controlHMd + Tokens.spaceMd * 2)
+                    visible: !_hidden
+
+                    readonly property bool _uploading: uploadState === 3
+                    readonly property bool _done: uploadState === 1 && doneSize > 0
+                    readonly property real _pct: size > 0 ? Math.max(0, Math.min(1, doneSize / size)) : 0
+                    // active = downloading, or the brief reveal after a user-initiated download
+                    // finishes; drives the progress bar + text-lift, then auto-reverts.
+                    property bool _initiated: false
+                    property bool _revealDone: false
+                    readonly property bool _active: _uploading || _revealDone
+                    readonly property int _shift: Math.round(7 * AppPalette.scale)
+
+                    on_DoneChanged: {
+                        if (_done && _initiated) {
+                            _initiated = false
+                            _revealDone = true
+                            hideTimer.restart()
+                            if (typeof notifications !== "undefined" && notifications)
+                                notifications.info(qsTr("Saved \"%1\" to \"%2\"").arg("recorder_log_" + id + ".kp2").arg(recorderGroup._downloadDir))
+                        }
+                    }
+                    on_UploadingChanged: if (_uploading) { _revealDone = false; hideTimer.stop() }
+
+                    Timer { id: hideTimer; interval: 4000; onTriggered: rowItem._revealDone = false }
+
+                    DevButton {
+                        id: dlBtn
+                        anchors.right: parent.right; anchors.rightMargin: Tokens.spaceLg
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.round(112 * AppPalette.scale); height: Tokens.controlHMd
+                        fontPixelSize: Tokens.fontMd
+                        danger: rowItem._uploading
+                        text: rowItem._uploading ? qsTr("Cancel") : (rowItem._revealDone ? qsTr("Re-download") : qsTr("Download"))
+                        onClicked: {
+                            if (typeof deviceManagerWrapper === "undefined" || !deviceManagerWrapper)
+                                return
+                            if (rowItem._uploading)
+                                deviceManagerWrapper.cancelStreamDownload(id)
+                            else {
+                                rowItem._initiated = true
+                                deviceManagerWrapper.startStreamDownload(id)
+                            }
+                        }
+                    }
+
+                    Row {
+                        id: textRow
+                        anchors.left: parent.left; anchors.leftMargin: Tokens.spaceLg
+                        anchors.right: dlBtn.left; anchors.rightMargin: Tokens.spaceMd
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: rowItem._active ? -rowItem._shift : 0
+                        Behavior on anchors.verticalCenterOffset { NumberAnimation { duration: Anim.fadeMs; easing.type: Easing.OutCubic } }
+                        spacing: Tokens.spaceSm
+
+                        Text {
+                            text: "#" + id; color: AppPalette.text; font.pixelSize: Tokens.fontMd; font.bold: true
+                            width: Math.round(52 * AppPalette.scale); anchors.verticalCenter: parent.verticalCenter
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            text: recorderGroup._fmtSize(size); color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
+                            width: Math.round(84 * AppPalette.scale); anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Text {
+                            id: statusText
+                            text: rowItem._uploading ? qsTr("Downloading… %1%").arg(Math.round(rowItem._pct * 100))
+                                             : (rowItem._revealDone ? qsTr("Saved") : "")
+                            color: rowItem._revealDone ? AppPalette.accentBar : AppPalette.textMuted
+                            font.pixelSize: Tokens.fontSm
+                            width: textRow.width - Math.round(52 * AppPalette.scale) - Math.round(84 * AppPalette.scale) - 2 * textRow.spacing
+                            anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+                        }
+                    }
+
+                    Rectangle {
+                        id: progress
+                        anchors.left: parent.left; anchors.leftMargin: Tokens.spaceLg
+                        anchors.right: dlBtn.left; anchors.rightMargin: Tokens.spaceMd
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: Math.round(9 * AppPalette.scale)
+                        height: Math.round(4 * AppPalette.scale); radius: height / 2
+                        color: AppPalette.trackOff
+                        opacity: rowItem._active ? 1 : 0
+                        visible: opacity > 0.01
+                        Behavior on opacity { NumberAnimation { duration: Anim.fadeMs } }
+                        Rectangle {
+                            height: parent.height; radius: parent.radius
+                            width: parent.width * rowItem._pct
+                            color: AppPalette.accentBar
+                            Behavior on width { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+                        height: 1; color: AppPalette.border; opacity: 0.5
+                        visible: !rowItem._hidden && index < logList.count - 1
+                    }
+                }
+            }
+        }
+        }
+
+        // Mirrors stream_list.cpp: QStandardPaths::DocumentsLocation + "/KoggerApp/recorder".
+        readonly property string _downloadDir: {
+            var s = String(StandardPaths.writableLocation(StandardPaths.DocumentsLocation))
+            if (s.indexOf("file:///") === 0)      s = (Qt.platform.os === "windows" ? s.slice(8) : s.slice(7))
+            else if (s.indexOf("file://") === 0)  s = s.slice(7)
+            try { s = decodeURIComponent(s) } catch (e) {}
+            return s + "/KoggerApp/recorder"
+        }
+
+        Text {
+            width: parent.width
+            text: qsTr("Downloads are saved to \"%1\"").arg(recorderGroup._downloadDir)
+            color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm; wrapMode: Text.WordWrap
+        }
+    }
+
+    // ── Basic2D user view ─────────────────────────────────────────────────
+
+    Column {
+        id: basicView
+        visible: root._isBasicSonar
+        width: root.groupWidth
+        spacing: Tokens.spaceLg
+
+        Reveal {
+            open: root.warningShown
+            contentHeight: warnBanner.implicitHeight
+            Rectangle {
+                id: warnBanner
+                width: parent.width
+                radius: Tokens.radiusMd
+                readonly property color _accent: "#EAB308"
+                color: Qt.rgba(_accent.r, _accent.g, _accent.b, AppPalette.isDark ? 0.14 : 0.16)
+                border.width: Math.max(1, Math.round(AppPalette.scale))
+                border.color: _accent
+                implicitHeight: warnRow.implicitHeight + 2 * Tokens.spaceMd
+                Row {
+                    id: warnRow
+                    x: Tokens.spaceMd; y: Tokens.spaceMd
+                    width: parent.width - 2 * Tokens.spaceMd
+                    spacing: Tokens.spaceMd
+                    readonly property int badge: Math.round(20 * AppPalette.scale)
+                    Rectangle {
+                        width: warnRow.badge; height: width; radius: width / 2
+                        color: warnBanner._accent
+                        Text { anchors.centerIn: parent; text: "!"; color: "#10171F"
+                               font.bold: true; font.pixelSize: Math.round(13 * AppPalette.scale) }
+                    }
+                    Column {
+                        width: parent.width - parent.spacing - warnRow.badge
+                        spacing: Tokens.spaceXxs
+                        Text { text: qsTr("Not applied to the device"); color: AppPalette.textStrong
+                               font.pixelSize: Tokens.fontBase; font.bold: true }
+                        Repeater {
+                            model: root._warnings
+                            delegate: Text {
+                                width: parent.width
+                                text: "• " + modelData
+                                color: AppPalette.textSecond
+                                font.pixelSize: Tokens.fontSm
+                                wrapMode: Text.Wrap
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        ParamCard {
+            id: periodCard
+            width: parent.width
+            label: qsTr("Period, ms")
+            labelColor: AppPalette.textStrong
+            fillColor: AppPalette.card
+            slotWidth: root.spinW
+
+            property int _periodRestore: 100
+            property bool wantChecked: !!(dev && dev.ch1Period > 0)
+            property bool _g: false
+            onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
+            Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
+            onToggled: function(v) {
+                if (_g || !dev) return
+                if (v) {
+                    dev.ch1Period = _periodRestore
+                } else {
+                    if (dev.ch1Period > 0) _periodRestore = dev.ch1Period
+                    dev.ch1Period = 0
+                }
+            }
+
+            DevSpin {
+                anchors.left: parent.left; anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                height: Tokens.controlHMd
+                enabled: periodCard.checked
+                opacity: enabled ? 1.0 : 0.45
+                from: 10; to: 2000; divisor: 1; decimals: 0
+                stepValues: root.periodStepsMs
+                devValue: dev ? (dev.ch1Period || 0) : 0
+                writeBack: function(v) { if (dev) dev.ch1Period = v }
+            }
+        }
+
+        B2Card {
+            Row {
+                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+                Text { text: qsTr("Distance, m"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+                DevSpin {
+                    from: 1; to: 150; divisor: 1; decimals: 0
+                    stepValues: root.distanceStepsM
+                    devValue: (dev && dev.chartResolution > 0) ? Math.round(dev.chartResolution * dev.chartSamples / 1000) : 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    writeBack: function(v) {
+                        if (dev && dev.chartResolution > 0)
+                            dev.chartSamples = Math.max(root.chartSamplesMin, Math.min(root.chartSamplesMax, Math.round(v * 1000 / dev.chartResolution)))
+                    }
+                }
+            }
+        }
+
+        B2Card {
+            visible: root._isNanoSSS
+            Row {
+                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+                Text { text: qsTr("Frequency, kHz"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+                DevSpin { from: 40; to: 6000; stepSize: 5; divisor: 1; decimals: 0; devValue: dev ? (dev.transFreq || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transFreq = v } }
+            }
+        }
+
+        B2Card {
+            Text { text: qsTr("Echogram"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg }
+            KTabBar {
+                id: b2ChartTab; width: parent.width
+                options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("8-bit"), value: 1 }]
+                property int chartModel: dev ? (dev.datasetChart === 1 ? 1 : 0) : 0
+                property bool _g: false
+                onChartModelChanged: { if (currentValue !== chartModel) { _g = true; currentValue = chartModel; _g = false } }
+                Component.onCompleted: { _g = true; currentValue = chartModel; _g = false }
+                onValueSelected: function(v) { if (!_g && dev) dev.datasetChart = v }
+            }
+            Reveal {
+                open: b2ChartTab.currentValue === 1
+                Row {
+                    width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+                    Text { text: qsTr("Resolution, cm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+                    DevSpin {
+                        from: 10; to: 100; stepSize: 10; divisor: 10; decimals: 1; trimZeros: true
+                        devValue: dev ? (dev.chartResolution || 0) : 0
+                        anchors.verticalCenter: parent.verticalCenter
+                        writeBack: function(v) {
+                            if (!dev || v <= 0) return
+                            var distCm = (dev.chartResolution > 0) ? Math.round(dev.chartResolution * dev.chartSamples / 10) : 0
+                            dev.chartResolution = v
+                            if (distCm > 0)
+                                dev.chartSamples = Math.max(root.chartSamplesMin, Math.min(root.chartSamplesMax, Math.round(distCm * 10 / v)))
+                        }
+                    }
+                }
+            }
+        }
+
+        B2Card {
+            Text { text: qsTr("Rangefinder"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg }
+            KTabBar {
+                id: b2DistTab; width: parent.width
+                options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("On"), value: 1 }, { label: qsTr("NMEA"), value: 2 }]
+                property int distModel: dev ? (dev.datasetDist === 1 ? 1 : (dev.datasetSDDBT === 1 ? 2 : 0)) : 0
+                property bool _g: false
+                onDistModelChanged: { if (currentValue !== distModel) { _g = true; currentValue = distModel; _g = false } }
+                Component.onCompleted: { _g = true; currentValue = distModel; _g = false }
+                onValueSelected: function(v) {
+                    if (_g || !dev) return
+                    if (v === 1)      { dev.datasetDist = 1 }
+                    else if (v === 2) { dev.datasetSDDBT = 1 }
+                    else              { dev.datasetDist = 0; dev.datasetSDDBT = 0 }
+                }
+            }
+            Reveal {
+                open: b2DistTab.currentValue !== 0
+                Row {
+                    width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
+                    Text { text: qsTr("Confidence threshold, %"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+                    DevSpin { from: 0; to: 100; stepSize: 1; devValue: dev ? (dev.distConfidence || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distConfidence = v } }
+                }
+            }
+        }
+    }
+
+    // ── Advanced settings ("Расширенные настройки") ────────────────────────
+    Rectangle {
+        id: advancedPanel
+        width: root.groupWidth
+        radius: Tokens.radiusLg
+
+        readonly property bool _panel: root._hasCut
+        readonly property real pad: _panel ? Tokens.spaceMd : 0
+        readonly property real headerH: _panel ? Math.round(36 * AppPalette.scale) : 0
+        readonly property color _headerColor: !_panel ? "transparent"
+                                              : (cutMouse.containsMouse ? AppPalette.cardHover : AppPalette.card)
+        readonly property color _bodyColor: (_panel && root._engExpanded) ? AppPalette.bgDeep : _headerColor
+
+        implicitHeight: headerH + advReveal.height
+
+        border.width: (_panel && root._engExpanded) ? 1 : 0
+        border.color: AppPalette.groupBorder
+
+        readonly property real _seamStart: Math.min(1, headerH / Math.max(1, height))
+        readonly property real _seamEnd: Math.min(1, (headerH + Tokens.spaceMd) / Math.max(1, height))
+        readonly property real _seamSpan: _seamEnd - _seamStart
+        function _mix(a, b, t) {
+            return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t,
+                           a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t)
+        }
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: advancedPanel._headerColor }
+            GradientStop { position: advancedPanel._seamStart; color: advancedPanel._headerColor }
+            GradientStop { position: advancedPanel._seamStart + advancedPanel._seamSpan * 0.25
+                           color: advancedPanel._mix(advancedPanel._headerColor, advancedPanel._bodyColor, 0.58) }
+            GradientStop { position: advancedPanel._seamStart + advancedPanel._seamSpan * 0.55
+                           color: advancedPanel._mix(advancedPanel._headerColor, advancedPanel._bodyColor, 0.91) }
+            GradientStop { position: advancedPanel._seamEnd; color: advancedPanel._bodyColor }
+            GradientStop { position: 1.0; color: advancedPanel._bodyColor }
+        }
+
+        Item {
+            id: cutHeader
+            visible: advancedPanel._panel
+            x: 0; y: 0
+            width: parent.width
+            height: advancedPanel.headerH
+
+            Row {
+                anchors.fill: parent
+                anchors.leftMargin: Tokens.spaceMd
+                anchors.rightMargin: Tokens.spaceLg
+                spacing: Tokens.spaceSm
+                DisclosureIndicator {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.round(10 * AppPalette.scale)
+                    height: Math.round(10 * AppPalette.scale)
+                    expanded: root._engExpanded
+                    indicatorColor: AppPalette.textSecond
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.max(0, parent.width - Math.round(10 * AppPalette.scale) - parent.spacing)
+                    text: qsTr("Advanced settings")
+                    color: AppPalette.text
+                    font.pixelSize: Math.max(Math.round(16 * AppPalette.scale), 13)
+                    font.bold: true
+                    elide: Text.ElideRight
+                }
+            }
+            MouseArea {
+                id: cutMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    root._engExpanded = !root._engExpanded
+                    advScrollTimer.restart()
+                }
+            }
+        }
+
+        Item {
+            id: advReveal
+            x: advancedPanel.pad
+            y: advancedPanel.headerH
+            width: advancedPanel.width - 2 * advancedPanel.pad
+            clip: root._hasCut
+            property bool open: !root._hasCut || root._engExpanded
+            property bool _animReady: false
+            readonly property real _topGap: root._hasCut ? Tokens.spaceLg : 0
+            readonly property real _botPad: advancedPanel.pad
+            enabled: open
+            Component.onCompleted: Qt.callLater(function() { advReveal._animReady = true })
+
+            states: [
+                State {
+                    name: "open"; when: advReveal.open
+                    PropertyChanges { target: advReveal; height: advGroups.implicitHeight + advReveal._topGap + advReveal._botPad }
+                },
+                State {
+                    name: "closed"; when: !advReveal.open
+                    PropertyChanges { target: advReveal; height: 0 }
+                }
+            ]
+            transitions: Transition {
+                enabled: advReveal._animReady
+                NumberAnimation { property: "height"; duration: 220; easing.type: Easing.OutCubic }
+            }
+
+                Column {
+                    id: advGroups
+                    y: advReveal._topGap
+                    width: parent.width
+                    spacing: Tokens.spaceLg
 
     // ── Эхограмма ─────────────────────────────────────────────────────────
 
-    SettingsGroup {
-        width: root.groupWidth; preferredWidth: root.groupWidth
+    DeviceSettingsGroup {
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Echogram"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.echogram"; collapsedByDefault: true
+        stateKey: "dev.echogram"; collapsedByDefault: root._hasCut
         visible: !!(dev && dev.isChartSupport)
         confirmed: !(dev && dev.chartSetupState === false)
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Resolution, mm:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Resolution, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 10; to: 100; stepSize: 10; devValue: dev ? (dev.chartResolution || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartResolution = v } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Sample count:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
-            DevSpin { from: 100; to: 15000; stepSize: 100; devValue: dev ? (dev.chartSamples || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartSamples = v } }
+            Text { text: qsTr("Sample count"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+            DevSpin { from: root.chartSamplesMin; to: root.chartSamplesMax; stepSize: 100; devValue: dev ? (dev.chartSamples || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartSamples = v } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Offset:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Offset"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 10000; stepSize: 100; devValue: dev ? (dev.chartOffset || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartOffset = v } }
         }
     }
 
     // ── Дальномер ─────────────────────────────────────────────────────────
 
-    SettingsGroup {
-        width: root.groupWidth; preferredWidth: root.groupWidth
+    DeviceSettingsGroup {
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Rangefinder"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.rangefinder"; collapsedByDefault: true
+        stateKey: "dev.rangefinder"; collapsedByDefault: root._hasCut
         visible: !!(dev && dev.isDistSupport)
         confirmed: !(dev && dev.distSetupState === false)
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Max distance, mm:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Max distance, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 50000; stepSize: 1000; devValue: dev ? (dev.distMax || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distMax = v } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Dead zone, mm:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Dead zone, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 50000; stepSize: 100; devValue: dev ? (dev.distDeadZone || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distDeadZone = v } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Confidence threshold, %:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Confidence threshold, %"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 100; stepSize: 1; devValue: dev ? (dev.distConfidence || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distConfidence = v } }
         }
     }
 
     // ── Преобразователь ───────────────────────────────────────────────────
 
-    SettingsGroup {
-        width: root.groupWidth; preferredWidth: root.groupWidth
+    DeviceSettingsGroup {
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Transducer"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.transducer"; collapsedByDefault: true
+        stateKey: "dev.transducer"; collapsedByDefault: root._hasCut
         visible: !!(dev && dev.isTransducerSupport)
         confirmed: !(dev && dev.transcState === false)
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Pulse count:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Pulse count"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 5000; stepSize: 1; devValue: dev ? (dev.transPulse || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transPulse = v } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Frequency, kHz:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Frequency, kHz"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 40; to: 6000; stepSize: 5; devValue: dev ? (dev.transFreq || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transFreq = v } }
         }
 
@@ -147,44 +1353,44 @@ Column {
 
     // ── DSP ───────────────────────────────────────────────────────────────
 
-    SettingsGroup {
-        width: root.groupWidth; preferredWidth: root.groupWidth
+    DeviceSettingsGroup {
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("DSP"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.dsp"; collapsedByDefault: true
+        stateKey: "dev.dsp"; collapsedByDefault: root._hasCut
         visible: !!(dev && dev.isDSPSupport)
         confirmed: !(dev && (dev.dspState === false || dev.soundState === false))
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Horizontal smoothing:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Horizontal smoothing"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 4; stepSize: 1; devValue: dev ? (dev.dspHorSmooth || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.dspHorSmooth = v } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Sound speed, m/s:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Sound speed, m/s"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 300; to: 6000; stepSize: 5; devValue: dev ? Math.round((dev.soundSpeed || 0) / 1000) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.soundSpeed = v * 1000 } }
         }
     }
 
     // ── Датасет ───────────────────────────────────────────────────────────
 
-    SettingsGroup {
-        width: root.groupWidth; preferredWidth: root.groupWidth
+    DeviceSettingsGroup {
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Dataset"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.dataset"; collapsedByDefault: true
+        stateKey: "dev.dataset"; collapsedByDefault: root._hasCut
         visible: !!(dev && dev.isDatasetSupport)
         confirmed: !(dev && dev.datasetState === false)
 
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Period, ms:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; width: root.lblW; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight }
+            Text { text: qsTr("Period, ms"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
             DevSpin { from: 0; to: 2000; stepSize: 50; devValue: dev ? (dev.ch1Period || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.ch1Period = v } }
         }
 
         Column {
             width: parent.width; spacing: Tokens.spaceSm
-            Text { text: qsTr("Echogram:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd }
+            Text { text: qsTr("Echogram"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg }
             KTabBar {
                 id: datasetChartTab; width: parent.width
                 options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("8-bit"), value: 1 }]
@@ -198,7 +1404,7 @@ Column {
 
         Column {
             width: parent.width; spacing: Tokens.spaceSm
-            Text { text: qsTr("Rangefinder:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd }
+            Text { text: qsTr("Rangefinder"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg }
             KTabBar {
                 id: datasetDistTab; width: parent.width
                 options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("On"), value: 1 }, { label: qsTr("NMEA"), value: 2 }]
@@ -243,11 +1449,11 @@ Column {
         }
     }
 
-    SettingsGroup {
+    DeviceSettingsGroup {
         id: devActionsGroup
-        width: root.groupWidth; preferredWidth: root.groupWidth
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Actions"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.actions"; collapsedByDefault: true
+        stateKey: "dev.actions"; collapsedByDefault: root._hasCut
         confirmed: !(dev && dev.uartState === false)
 
         readonly property var baudrateOptions: [9600, 19200, 38400, 57600, 115200,
@@ -256,19 +1462,22 @@ Column {
         Row {
             width: parent.width; spacing: Tokens.spaceSm
             readonly property real bw: (width - 2 * Tokens.spaceSm) / 3
-            KButton {
+            DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Flash settings")
+                toolTipText: qsTr("Write current settings to device memory")
                 onClicked: { if (dev) { dev.flashSettings(); notifications.info(qsTr("Settings written to device: %1").arg(dev.devName)) } }
             }
-            KButton {
+            DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Erase settings"); danger: true
+                toolTipText: qsTr("Erase device settings (reset)")
                 onClicked: { if (dev) { dev.resetSettings(); notifications.info(qsTr("Settings erased on device: %1").arg(dev.devName)) } }
             }
-            KButton {
+            DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Reboot")
+                toolTipText: qsTr("Reboot the device")
                 onClicked: { if (dev) { dev.reboot(); notifications.info(qsTr("Reboot command sent: %1").arg(dev.devName)) } }
             }
         }
@@ -282,9 +1491,10 @@ Column {
                 model: devActionsGroup.baudrateOptions
                 currentIndex: devActionsGroup.baudrateOptions.indexOf(115200)
             }
-            KButton {
+            DevButton {
                 width: parent.setW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Set baudrate")
+                toolTipText: qsTr("Apply the selected baud rate")
                 onClicked: {
                     if (dev) {
                         var b = devActionsGroup.baudrateOptions[baudrateCombo.currentIndex]
@@ -296,16 +1506,17 @@ Column {
         }
     }
 
-    SettingsGroup {
+    DeviceSettingsGroup {
         id: devSettingsGroup
-        width: root.groupWidth; preferredWidth: root.groupWidth
-        title: qsTr("Settings"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.settingsFile"; collapsedByDefault: true
+        width: advGroups.width; preferredWidth: advGroups.width
+        title: qsTr("Settings file"); titlePixelSize: 13
+        stateKey: "dev.settingsFile"; collapsedByDefault: root._hasCut
 
         property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
         Settings {
+            category: "main/devices"
             property alias devImportFolder: devSettingsGroup.importFolder
             property alias devExportFolder: devSettingsGroup.exportFolder
         }
@@ -354,30 +1565,32 @@ Column {
         Row {
             width: parent.width; spacing: Tokens.spaceSm
             readonly property real bw: (width - Tokens.spaceSm) / 2
-            KButton {
+            DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                text: qsTr("Import XML")
+                text: qsTr("Import")
+                toolTipText: qsTr("Load all sonar settings from an XML file")
                 onClicked: { importXmlDialog.currentFolder = devSettingsGroup.importFolder; importXmlDialog.open() }
             }
-            KButton {
+            DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                text: qsTr("Export XML")
+                text: qsTr("Export")
+                toolTipText: qsTr("Save all sonar settings to an XML file")
                 onClicked: { exportXmlDialog.currentFolder = devSettingsGroup.exportFolder; exportXmlDialog.open() }
             }
         }
     }
 
-    SettingsGroup {
+    DeviceSettingsGroup {
         id: devUpgradeGroup
         visible: !!(dev && dev.isUpgradeSupport)
-        width: root.groupWidth; preferredWidth: root.groupWidth
+        width: advGroups.width; preferredWidth: advGroups.width
         title: qsTr("Upgrade"); titlePixelSize: 13
-        stateStore: root.store; stateKey: "dev.upgrade"; collapsedByDefault: true
+        stateKey: "dev.upgrade"; collapsedByDefault: root._hasCut
 
         property var upgradeFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property string selectedUpgradePathSource: ""
 
-        Settings { property alias devUpgradeFolder: devUpgradeGroup.upgradeFolder }
+        Settings { category: "main/devices"; property alias devUpgradeFolder: devUpgradeGroup.upgradeFolder }
 
         function _src(value) {
             if (!value) return ""
@@ -450,11 +1663,12 @@ Column {
 
         Row {
             width: parent.width; spacing: Tokens.spaceSm
-            readonly property real browseW: Math.round(44 * AppPalette.scale)
+            readonly property real browseW: Tokens.controlHMd
             Rectangle {
                 width: parent.width - parent.browseW - Tokens.spaceSm
                 height: Tokens.controlHMd; radius: Tokens.radiusMd
-                color: AppPalette.bg; border.width: 1
+                color: AppPalette.bg
+                border.width: upgradePathInput.activeFocus ? 1 : Tokens.cardBorderWidth
                 border.color: upgradePathInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
                 TextInput {
                     id: upgradePathInput
@@ -470,12 +1684,15 @@ Column {
                     }
                 }
             }
-            KButton {
-                width: parent.browseW; height: Tokens.controlHMd; text: "..."; fontPixelSize: Tokens.fontMd
+            DevButton {
+                width: Tokens.controlHMd; height: Tokens.controlHMd; text: "..."
+                fontPixelSize: Tokens.fontLg; bold: false
+                horizontalPadding: 0; verticalPadding: 0
+                toolTipText: qsTr("Choose firmware")
                 onClicked: { upgradeFileDialog.currentFolder = devUpgradeGroup.upgradeFolder; upgradeFileDialog.open() }
             }
         }
-        KButton {
+        DevButton {
             width: parent.width; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
             text: qsTr("UPGRADE")
             visible: upgradePathInput.text !== ""
@@ -513,4 +1730,8 @@ Column {
             }
         }
     }
+
+                }
+            }
+        }
 }

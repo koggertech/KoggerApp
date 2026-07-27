@@ -4,19 +4,22 @@ qt_add_qml_module(kogger_app
     QML_FILES
         ActionChip.qml
         AppSettingsPage.qml
-        AutopilotPopup.qml
         BasePanePopup.qml
         BottomTrackEditPopup.qml
         AimPanelSettingsTab.qml
         ConnectionsSettingsPage.qml
         ConsolePanelDrawer.qml
+        ConsoleSettingsTab.qml
         CsvExportSettingsTab.qml
+        DataWidgetPopup.qml
+        DeviceSettingsGroup.qml
         DeviceSettingsPage.qml
+        DeviceSettingsTab.qml
+        DeviceTopologyView.qml
         DisclosureIndicator.qml
         EchogramSettingsPanel.qml
         EchogramSettingsTab.qml
-        ExtraInfoPopup.qml
-        ExtraInfoSettingsTab.qml
+        FactorySettingsGroup.qml
         FavoriteLayoutCard.qml
         FileOpeningOverlay.qml
         FilesSettingsPage.qml
@@ -24,9 +27,11 @@ qt_add_qml_module(kogger_app
         GlobalPanePopup.qml
         HotActionsPanel.qml
         InputDeviceState.qml
+        LayoutCreatePage.qml
         LayoutSnapshotPreview.qml
         MainWindow.qml
         ModeSettingsPanel.qml
+        NavButton.qml
         NotificationsOverlay.qml
         Pane2DSettingsPage.qml
         Pane2DWindow.qml
@@ -36,19 +41,30 @@ qt_add_qml_module(kogger_app
         PaneEditorChrome.qml
         PaneFrame.qml
         PaneInputBridge.qml
+        PowerOffConfirmOverlay.qml
         ParamCard.qml
         ParamCardGroup.qml
         ProfilesPopup.qml
         QuickActionSettingsTab.qml
         SecondaryWindow.qml
         SettingsGearButton.qml
+        SettingsGroupBase.qml
         SettingsGroup.qml
         SettingsSidebarBase.qml
         SplashOverlay.qml
         TgcSettingsTab.qml
         UiSavingSettingsTab.qml
+        WidgetCard.qml
+        WidgetCellContent.qml
+        WidgetDragHandle.qml
+        WidgetEditOverlay.qml
+        WidgetEditPage.qml
+        WidgetGridPreview.qml
+        WidgetPlaceStep.qml
+        WidgetSizeStep.qml
         WorkspaceStore.qml
         WorkspaceView.qml
         LayoutResize.js
         LayoutRules.js
-        LayoutTree.js)
+        LayoutTree.js
+        RecorderStatus.js)

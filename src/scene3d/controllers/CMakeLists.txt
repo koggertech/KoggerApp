@@ -11,6 +11,7 @@ target_sources(KoggerApp PRIVATE
     point_group_control_menu_controller.h     point_group_control_menu_controller.cpp
     polygon_group_control_menu_controller.h   polygon_group_control_menu_controller.cpp
     qml_component_controller.h                qml_component_controller.cpp
+    ruler_controller.h                        ruler_controller.cpp
     scene3d_control_menu_controller.h         scene3d_control_menu_controller.cpp
     scene3d_toolbar_controller.h              scene3d_toolbar_controller.cpp
     mosaic_view_control_menu_controller.h     mosaic_view_control_menu_controller.cpp

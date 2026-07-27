@@ -38,8 +38,7 @@ Item {
         height: messageText.implicitHeight + 2 * Tokens.spaceLg + Tokens.spaceSm
         radius: Tokens.radiusLg + Tokens.radiusSm / 2
         color: AppPalette.card
-        border.width: 1
-        border.color: AppPalette.border
+        border.width: 0
 
         Text {
             id: messageText

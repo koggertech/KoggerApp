@@ -1,6 +1,6 @@
 add_library(kogger_kqml_types STATIC)
 set_source_files_properties(
-    ZOrder.qml AppPalette.qml Tokens.qml Anim.qml
+    ZOrder.qml AppPalette.qml Tokens.qml Anim.qml DataFieldCatalog.qml
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_add_qml_module(kogger_kqml_types
@@ -8,6 +8,7 @@ qt_add_qml_module(kogger_kqml_types
     QML_FILES
         Anim.qml
         AppPalette.qml
+        DataFieldCatalog.qml
         IdleFade.qml
         KButton.qml
         KCheckBox.qml

@@ -42,6 +42,12 @@ public:
     QList<QPair<QUuid, ::LinkType>> getOpenedUuids() const;
     QHash<QUuid, QString> getLinkNames() const;
 
+    bool containsUuid(const QUuid& uuid) const;
+    int rowForUuid(const QUuid& uuid) const;
+    QVariant valueForUuid(const QUuid& uuid, Roles role) const;
+    QList<QUuid> pinnedUuids() const;
+    QList<QUuid> serialUuids() const;
+
 private:
     Q_DISABLE_COPY(LinkListModel)
 
@@ -50,6 +56,8 @@ private:
                         int baudrate, bool parity, ::LinkType linkType, const QString& address, int sourcePort, int destinationPort,
                         bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState);
     void doRemove(QUuid uuid);
+    void moveRow(int from, int to);
+    int pinnedCount() const;
 
     /*data*/
     QHash<int, QByteArray> roleNames_ {

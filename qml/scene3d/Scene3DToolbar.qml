@@ -28,8 +28,8 @@ Item  {
     function toggleMosaic()           { if (store) store.mosaicVisible     = !store.mosaicVisible     }
 
     function cancelRuler() {
-        if (view && view.rulerEnabled) {
-            view.clearRuler()
+        if (view && view.ruler && view.ruler.enabled) {
+            view.ruler.clear()
             Scene3dToolBarController.onRulerModeChanged(false)
         }
     }
@@ -140,6 +140,7 @@ Item  {
             }
 
             Settings {
+                category: "scene3d/view"
                 property alias geoJsonToolButton: geoJsonToolButton.checked
             }
         }

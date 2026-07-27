@@ -59,6 +59,7 @@ public:
     Q_PROPERTY(int devSN READ devSerialNumber NOTIFY deviceVersionChanged)
     Q_PROPERTY(QString fwVersion READ fwVersion NOTIFY deviceVersionChanged)
 
+    Q_PROPERTY(bool isBoardInited READ isBoardInited NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isSonar READ isSonar NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isRecorder READ isRecorder NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isDoppler READ isDoppler NOTIFY deviceVersionChanged)
@@ -95,6 +96,21 @@ public:
     Q_PROPERTY(bool linkConnected     READ linkConnected     NOTIFY linkStatusChanged)
     Q_PROPERTY(bool linkReceivesData  READ linkReceivesData  NOTIFY linkStatusChanged)
     Q_PROPERTY(bool linkNotAvailable  READ linkNotAvailable  NOTIFY linkStatusChanged)
+
+    // Recorder status (ID_RECORDER_STATUS). Field meaning: Recorder-Host-Integration-Guide.md.
+    Q_PROPERTY(bool recorderStatusValid           READ recorderStatusValid           NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderDeviceCondition       READ recorderDeviceCondition       NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderRecordingMode         READ recorderRecordingMode         NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderRecordingState        READ recorderRecordingState        NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderStatusFlags           READ recorderStatusFlags           NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderWarningFlags          READ recorderWarningFlags          NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderDegradedFlags         READ recorderDegradedFlags         NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderCriticalFlags         READ recorderCriticalFlags         NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderCurrentLogId          READ recorderCurrentLogId          NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderRecordedSize64k       READ recorderRecordedSize64k       NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderFreeSpace1m           READ recorderFreeSpace1m           NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderDurationSeconds       READ recorderDurationSeconds       NOTIFY recorderStatusChanged)
+    Q_PROPERTY(int  recorderSecondsSinceLastWrite READ recorderSecondsSinceLastWrite NOTIFY recorderStatusChanged)
 #endif
 
     int devSyncPeriodMs() const { return idDevSync ? idDevSync->periodMs() : 0; }

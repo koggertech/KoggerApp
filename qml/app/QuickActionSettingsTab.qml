@@ -16,44 +16,59 @@ Column {
 
     function _label(key) {
         return key === "connections" ? qsTr("Connected devices")
-             : key === "favorites"   ? qsTr("Favorite layouts")
+             : key === "logging"     ? qsTr("Logging")
+             : key === "layouts"   ? qsTr("Layouts")
              : key === "bottomTrack" ? qsTr("Bottom track editing")
-             : key === "extraInfo"   ? qsTr("Extra info button")
-             : key === "profiles"    ? qsTr("Profiles button")
+             : key === "widgets"     ? qsTr("Widget panels")
+             : key === "console"     ? qsTr("Console")
+             : key === "profiles"    ? qsTr("Profiles")
+             : key === "secondWindow" ? qsTr("Second window")
+             : key === "powerOff"    ? qsTr("Power off")
              : key
     }
     function _checked(key) {
         if (!store) return false
         return key === "connections" ? store.quickActionConnectionStatusEnabled
-             : key === "favorites"   ? store.quickActionFavoritesEnabled
+             : key === "logging"     ? store.quickActionLoggingEnabled
+             : key === "layouts"   ? store.quickActionLayoutsEnabled
              : key === "bottomTrack" ? store.quickActionBottomTrackEnabled
-             : key === "extraInfo"   ? store.quickActionExtraInfoEnabled
+             : key === "widgets"     ? store.quickActionWidgetsEnabled
+             : key === "console"     ? store.quickActionConsoleEnabled
              : key === "profiles"    ? store.quickActionProfilesEnabled
+             : key === "secondWindow" ? store.quickActionSecondWindowEnabled
+             : key === "powerOff"    ? store.quickActionPowerOffEnabled
              : false
     }
     function _toggle(key, v) {
         if (!store) return
         if (key === "connections") {
             store.quickActionConnectionStatusEnabled = v
-            if (deviceManagerWrapper && deviceManagerWrapper.devs) {
-                for (var i = 0; i < deviceManagerWrapper.devs.length; ++i) {
-                    var d = deviceManagerWrapper.devs[i]
-                    if (d && d.devType !== 0) { store.requestHotkeysReveal("connections"); break }
-                }
-            }
-        } else if (key === "favorites") {
-            store.quickActionFavoritesEnabled = v
-            if (store.favoriteLayouts && store.favoriteLayouts.length > 0)
+            store.requestHotkeysReveal("connections")
+        } else if (key === "logging") {
+            store.quickActionLoggingEnabled = v
+            store.requestHotkeysReveal("logging")
+        } else if (key === "layouts") {
+            store.quickActionLayoutsEnabled = v
+            if (store.layouts && store.layouts.length > 0)
                 store.requestHotkeysReveal("layouts")
         } else if (key === "bottomTrack") {
             store.quickActionBottomTrackEnabled = v
             store.requestHotkeysReveal("bottomTrack")
-        } else if (key === "extraInfo") {
-            store.quickActionExtraInfoEnabled = v
-            store.requestHotkeysReveal("extraInfo")
+        } else if (key === "widgets") {
+            store.quickActionWidgetsEnabled = v
+            store.requestHotkeysReveal("widgets")
+        } else if (key === "console") {
+            store.quickActionConsoleEnabled = v
+            store.requestHotkeysReveal("console")
         } else if (key === "profiles") {
             store.quickActionProfilesEnabled = v
             store.requestHotkeysReveal("profiles")
+        } else if (key === "secondWindow") {
+            store.quickActionSecondWindowEnabled = v
+            store.requestHotkeysReveal("secondWindow")
+        } else if (key === "powerOff") {
+            store.quickActionPowerOffEnabled = v
+            store.requestHotkeysReveal("powerOff")
         }
     }
 
@@ -102,7 +117,7 @@ Column {
                     width: dropArea.width
                     height: page.rowH
                     radius: Tokens.radiusLg
-                    color: dragArea.drag.active ? AppPalette.bgHover : "transparent"
+                    color: dragArea.drag.active ? AppPalette.cardHover : AppPalette.card
                     border.width: dragArea.drag.active ? 1 : 0
                     border.color: AppPalette.border
                     property int visualIndex: dropArea.visualIndex
@@ -154,6 +169,7 @@ Column {
                         KSwitch {
                             width: parent.width - page.handleW - parent.spacing
                             text: page._label(key)
+                            backgroundColor: "transparent"   // row card provides the fill
                             checked: page._checked(key)
                             onToggled: page._toggle(key, checked)
                         }

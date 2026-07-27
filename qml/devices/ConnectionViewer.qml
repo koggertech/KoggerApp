@@ -1,10 +1,11 @@
 import QtQuick 2.15
+import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import Qt5Compat.GraphicalEffects
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
-import app 1.0
 
 Column {
     id: connectionViewer
@@ -14,18 +15,11 @@ Column {
 
     property var devList: deviceManagerWrapper.devs
 
-    // Resolved via store.activeDeviceIndex (devSN not unique), falls back to devList[0].
-    readonly property var dev: {
-        if (!devList || devList.length === 0) return null
-        var idx = store ? store.activeDeviceIndex : -1
-        if (idx >= 0 && idx < devList.length)
-            return devList[idx]
-        return devList[0]
-    }
     property var lastImportTrackFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     property string importTrackPathSource: ""
 
     Settings {
+        category: "main/csvImport"
         property alias importTrackFolder:   connectionViewer.lastImportTrackFolder
         property alias importPathText:      connectionViewer.importTrackPathSource
     }
@@ -83,23 +77,13 @@ Column {
         setImportTrackPath(importTrackPathSource)
     }
 
-    onDevListChanged: syncActiveDevice()
-
-    function syncActiveDevice() {
-        if (!store) return
-        if (!devList || devList.length === 0) {
-            store.setActiveDeviceIndex(-1)
-            return
-        }
-        var idx = store.activeDeviceIndex
-        if (idx >= 0 && idx < devList.length)
-            return
-        store.setActiveDeviceIndex(0)
+    Component.onDestruction: {
+        if (store)
+            store.recordingFocusRequested = false
     }
 
     onStoreChanged: {
-        syncActiveDevice()
-        _maybeScrollToDevice()
+        _maybeFocusRecording()
     }
 
     Connections {
@@ -117,12 +101,14 @@ Column {
         property bool checkable: false
         property string iconSource: ""
         property string toolTipText: ""
+        property real iconFillRatio: 0.55
+        property color iconColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
         signal clicked()
         signal toggled(bool val)
 
         width: Math.round(28 * AppPalette.scale); height: Math.round(28 * AppPalette.scale); radius: Tokens.radiusSm + 1
-        color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? AppPalette.cardHover : AppPalette.card))
-        border.width: 1
+        color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? Qt.lighter(AppPalette.controlRaised, 1.2) : AppPalette.controlRaised))
+        border.width: Tokens.cardBorderWidth
         border.color: (checked || ibMa.containsMouse) ? AppPalette.borderHover : AppPalette.border
 
         Behavior on color { ColorAnimation { duration: 80 } }
@@ -138,16 +124,32 @@ Column {
 
         KFocusRing { id: focusRing }
 
-        Image {
+        Item {
+            id: iconWrap
             anchors.centerIn: parent
-            // Proportional to outer — scales reliably regardless of consumer's
-            // width/height override (gear, autoSpeed, etc. set their own size).
-            width: Math.round(ib.width * 0.55)
-            height: Math.round(ib.height * 0.55)
-            source: ib.iconSource
-            fillMode: Image.PreserveAspectFit
-            opacity: ib.checked ? 1.0 : 0.7
-            smooth: true
+            width: Math.round(ib.width * ib.iconFillRatio)
+            height: Math.round(ib.height * ib.iconFillRatio)
+            opacity: 1.0
+
+            Image {
+                id: ibImg
+                anchors.fill: parent
+                source: ib.iconSource
+                sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                visible: false
+                layer.enabled: true
+            }
+
+            ColorOverlay {
+                anchors.fill: ibImg
+                source: ibImg
+                color: ib.iconColor
+                smooth: true
+                cached: true
+            }
         }
 
         MouseArea {
@@ -184,9 +186,9 @@ Column {
             id: scTrack
             anchors.fill: parent
             radius: height / 2
-            color: sc.checked ? AppPalette.accentBg : AppPalette.trackOff
+            color: sc.checked ? AppPalette.toggleOn : AppPalette.trackOff
             border.width: 1
-            border.color: sc.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
+            border.color: sc.checked ? AppPalette.toggleOnBorder : AppPalette.trackOffBorder
             Behavior on color { ColorAnimation { duration: 120 } }
 
             Rectangle {
@@ -273,8 +275,8 @@ Column {
     Text {
         visible: linkRepeater.count > 0
         text: qsTr("Connections:")
-        color: AppPalette.textMuted
-        font.pixelSize: Tokens.fontXs
+        color: AppPalette.textSecond
+        font.pixelSize: Tokens.fontBase
         leftPadding: Tokens.spaceXxs
     }
 
@@ -284,6 +286,10 @@ Column {
         visible: linkRepeater.count > 0
         spacing: Tokens.spaceXxs + 1
         property string expandedUuid: ""
+
+        move: Transition {
+            NumberAnimation { properties: "y"; duration: 220; easing.type: Easing.OutCubic }
+        }
 
         Repeater {
             id: linkRepeater
@@ -308,9 +314,11 @@ Column {
             readonly property bool receivesData: ReceivesData
             readonly property bool notAvailable: IsNotAvailable
             readonly property bool editing: linkList.expandedUuid === String(Uuid)
+            readonly property bool isRemembered: !!(connectionViewer.store
+                                                    && connectionViewer.store.rememberedLinks
+                                                    && connectionViewer.store.rememberedLinks.indexOf(String(Uuid)) !== -1)
             readonly property int rowIndex: index
-            property int vPad: connRow.editing ? Tokens.spaceSm : Tokens.spaceXs
-            Behavior on vPad { NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
+            readonly property int vPad: Tokens.spaceXs   // fixed — no inward shift on expand (matches recRow)
             readonly property string typeLabel: LinkType === 1 ? PortName : (LinkType === 2 ? "UDP" : "TCP")
 
             height: content.implicitHeight + 2 * vPad
@@ -318,7 +326,7 @@ Column {
             Rectangle {
                 anchors.fill: parent; radius: Tokens.radiusMd; clip: true
                 color: isConnected ? (receivesData ? AppPalette.linkOkBg : AppPalette.linkIdleBg) : (notAvailable ? AppPalette.linkDownBg : AppPalette.card)
-                border.width: connRow.editing ? 2 : 1
+                border.width: connRow.editing ? 2 : Tokens.cardBorderWidth
                 border.color: connRow.editing ? AppPalette.accentBorder
                        : isConnected ? (receivesData ? AppPalette.linkOkBorder : AppPalette.linkIdleBorder) : (notAvailable ? AppPalette.linkDownBorder : AppPalette.border)
                 opacity: IsUpgradingState ? 0.55 : 1.0
@@ -355,7 +363,8 @@ Column {
                             id: gearBtn
                             checked: connRow.editing
                             iconSource: "qrc:/icons/ui/settings.svg"
-                            toolTipText: qsTr("Settings")
+                            iconFillRatio: 0.8
+                            toolTipText: qsTr("Connection settings")
                             Layout.alignment: Qt.AlignVCenter
                             Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onClicked: connRow._toggleEdit()
@@ -370,6 +379,30 @@ Column {
                             Layout.fillHeight: true
                             verticalAlignment: Text.AlignVCenter
                             Layout.maximumWidth: Math.round((LinkType === 1 ? 80 : 44) * AppPalette.scale)
+                        }
+
+                        Item {
+                            visible: !!IsPinned && !connRow.editing
+                            Layout.preferredWidth: Math.round(13 * AppPalette.scale)
+                            Layout.preferredHeight: Math.round(13 * AppPalette.scale)
+                            Layout.alignment: Qt.AlignVCenter
+                            Image {
+                                id: pinInfoIcon
+                                anchors.fill: parent
+                                source: "qrc:/icons/ui/pin.svg"
+                                sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                                sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                                fillMode: Image.PreserveAspectFit
+                                smooth: true
+                                visible: false
+                                layer.enabled: true
+                            }
+                            ColorOverlay {
+                                anchors.fill: pinInfoIcon
+                                source: pinInfoIcon
+                                color: AppPalette.textMuted
+                                smooth: true
+                            }
                         }
 
                         // Компактный read-only итог (тип уже отдельным бейджем выше)
@@ -399,6 +432,7 @@ Column {
                             visible: connRow.editing
                             checked: IsPinned; checkable: true
                             iconSource: "qrc:/icons/ui/pin.svg"
+                            iconFillRatio: 0.8
                             toolTipText: checked ? qsTr("Unpin") : qsTr("Pin")
                             Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onToggled: function(v) { linkManagerWrapper.sendUpdatePinnedState(Uuid, v) }
@@ -407,13 +441,21 @@ Column {
                             visible: connRow.editing
                             checked: ControlType; checkable: true
                             iconSource: "qrc:/icons/ui/repeat.svg"
+                            iconFillRatio: 0.8
                             toolTipText: qsTr("Auto reconnect")
                             Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onToggled: function(v) { linkManagerWrapper.sendUpdateControlType(Uuid, Number(v)) }
                         }
                         IconBtn {
+                            visible: connRow.editing && connRow.isRemembered
+                            iconSource: "qrc:/icons/ui/eraser.svg"; iconFillRatio: 0.8
+                            toolTipText: qsTr("Remove from recent")
+                            Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                            onClicked: if (connectionViewer.store) connectionViewer.store.removeRememberedLink(Uuid)
+                        }
+                        IconBtn {
                             visible: connRow.editing && (LinkType === 2 || LinkType === 3)
-                            iconSource: "qrc:/icons/ui/x.svg"; toolTipText: qsTr("Delete")
+                            iconSource: "qrc:/icons/ui/x.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Delete")
                             Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onClicked: linkManagerWrapper.deleteLink(Uuid)
                         }
@@ -429,8 +471,11 @@ Column {
                             Layout.maximumWidth: openCloseW
                             Layout.preferredHeight: Tokens.controlHMd
                             text: isConnected ? qsTr("Close") : qsTr("Open")
-                            fontPixelSize: Tokens.fontSm; bold: false
-                            normalBg: AppPalette.card
+                            fontPixelSize: Tokens.fontLg; bold: false
+                            horizontalPadding: Math.round(6 * AppPalette.scale)
+                            verticalPadding: Math.round(2 * AppPalette.scale)
+                            normalBg: AppPalette.controlRaised
+                            hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
                             checkedBg: "#134E2E"; checkedBorder: "#10B981"
                             onClicked: {
                                 if (isConnected) {
@@ -472,7 +517,8 @@ Column {
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+                                    radius: Tokens.radiusMd; color: AppPalette.bg
+                                    border.width: ipField.activeFocus ? 1 : Tokens.cardBorderWidth
                                     border.color: ipField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
                                         id: ipField
@@ -517,7 +563,8 @@ Column {
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+                                    radius: Tokens.radiusMd; color: AppPalette.bg
+                                    border.width: srcPortField.activeFocus ? 1 : Tokens.cardBorderWidth
                                     border.color: srcPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
                                         id: srcPortField
@@ -539,7 +586,8 @@ Column {
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+                                    radius: Tokens.radiusMd; color: AppPalette.bg
+                                    border.width: dstPortFieldUdp.activeFocus ? 1 : Tokens.cardBorderWidth
                                     border.color: dstPortFieldUdp.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
                                         id: dstPortFieldUdp
@@ -568,7 +616,8 @@ Column {
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg; border.width: 1
+                                    radius: Tokens.radiusMd; color: AppPalette.bg
+                                    border.width: dstPortFieldTcp.activeFocus ? 1 : Tokens.cardBorderWidth
                                     border.color: dstPortFieldTcp.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
                                         id: dstPortFieldTcp
@@ -613,7 +662,7 @@ Column {
                                 IconBtn {
                                     id: autoSpeedBtn
                                     checked: AutoSpeedSelection; checkable: true
-                                    iconSource: "qrc:/icons/ui/refresh.svg"; toolTipText: qsTr("Auto search baudrate")
+                                    iconSource: "qrc:/icons/ui/refresh.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Auto search baudrate")
                                     Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                                     onToggled: function(v) { linkManagerWrapper.sendAutoSpeedSelection(Uuid, v) }
                                     onCheckedChanged: { if (!checked) linkManagerWrapper.sendAutoSpeedSelection(Uuid, false) }
@@ -636,9 +685,9 @@ Column {
     // ── Action buttons (4 per row, equal width) ───────────────────────────
 
     Text {
-        text: qsTr("Add connection, start recording:")
-        color: AppPalette.textMuted
-        font.pixelSize: Tokens.fontXs
+        text: qsTr("Add connection:")
+        color: AppPalette.textSecond
+        font.pixelSize: Tokens.fontBase
         leftPadding: Tokens.spaceXxs
     }
 
@@ -652,61 +701,22 @@ Column {
         readonly property real cellW: Math.max(0, (width - columnSpacing * (columns - 1)) / columns)
 
         KButton {
-            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontBase; horizontalPadding: Math.round(8 * AppPalette.scale)
             text: qsTr("+UDP")
             onClicked: linkManagerWrapper.createAsUdp("", 0, 0)
         }
 
         KButton {
-            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontBase; horizontalPadding: Math.round(8 * AppPalette.scale)
             text: qsTr("+TCP")
             onClicked: linkManagerWrapper.createAsTcp("", 0, 0)
         }
 
         KButton {
-            id: loggingCheck
-            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
-            text: qsTr("● KLF")
-            checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
-            onCheckedChanged: {
-                core.setKlfLogging(checked)
-                if (checked !== core.loggingKlf) checked = core.loggingKlf
-            }
-            Component.onCompleted: {
-                if (checked !== core.loggingKlf) checked = core.loggingKlf
-            }
-            Connections {
-                target: core
-                function onLoggingKlfChanged() {
-                    if (loggingCheck.checked !== core.loggingKlf) loggingCheck.checked = core.loggingKlf
-                }
-            }
-        }
-
-        KButton {
-            id: loggingCheck2
-            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
-            text: qsTr("● CSV")
-            checkedBg: "#7F1D1D"; checkedBorder: "#EF4444"
-            onCheckedChanged: {
-                core.setCsvLogging(checked)
-                if (checked !== core.loggingCsv) checked = core.loggingCsv
-            }
-            Component.onCompleted: {
-                if (checked !== core.loggingCsv) checked = core.loggingCsv
-            }
-            Connections {
-                target: core
-                function onLoggingCsvChanged() {
-                    if (loggingCheck2.checked !== core.loggingCsv) loggingCheck2.checked = core.loggingCsv
-                }
-            }
-        }
-
-        KButton {
             id: mavlinkProxy
-            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontBase; horizontalPadding: Math.round(8 * AppPalette.scale); checkable: true
             text: qsTr("MAVProxy")
+            toolTipText: qsTr("Proxy MAVLink telemetry to 127.0.0.1:14550")
             onToggled: {
                 if (checked) linkManagerWrapper.sendCreateAndOpenAsUdpProxy("127.0.0.1", 14551, 14550)
                 else         linkManagerWrapper.sendCloseUdpProxy()
@@ -718,6 +728,273 @@ Column {
             visible: false
             width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm; checkable: true
             text: qsTr("Import")
+        }
+    }
+
+    // ── Recording row (gear + status marquee + size/time + REC) ───────────
+
+    Text {
+        id: recordingHeader
+        text: qsTr("Recording:")
+        color: AppPalette.textSecond
+        font.pixelSize: Tokens.fontBase
+        leftPadding: Tokens.spaceXxs
+    }
+
+    Rectangle {
+        id: recRow
+        width: parent.width
+        radius: Tokens.radiusMd
+        readonly property bool active: !!(core.loggingKlf || core.loggingCsv)
+        color: active ? "#7F1D1D" : AppPalette.card
+        border.width: recGear.checked ? 2 : Tokens.cardBorderWidth
+        border.color: recGear.checked ? AppPalette.accentBorder : (active ? "#EF4444" : AppPalette.border)
+        implicitHeight: recCol.implicitHeight + 2 * Tokens.spaceXs
+        Behavior on color { ColorAnimation { duration: Anim.fadeMs } }
+        Behavior on border.color { ColorAnimation { duration: Anim.fadeMs } }
+
+        property int recSeconds: 0
+        property int recBytes: 0
+        function _refresh() {
+            recSeconds = core.activeLogDurationSecs()
+            recBytes = core.activeLogSizeBytes()
+        }
+        onActiveChanged: { _refresh(); if (active) recGear.checked = false }   // collapse + lock settings during recording
+        Component.onCompleted: _refresh()
+        Timer {
+            interval: 1000; repeat: true; running: recRow.active
+            onTriggered: recRow._refresh()
+        }
+
+        function _fmtDur(s) {
+            var m = Math.floor(s / 60), ss = s % 60
+            return (m < 10 ? "0" : "") + m + ":" + (ss < 10 ? "0" : "") + ss
+        }
+        function _fmtSize(b) {
+            if (b < 1024) return b + " B"
+            if (b < 1048576) return (b / 1024).toFixed(1) + " KB"
+            return (b / 1048576).toFixed(1) + " MB"
+        }
+        function _activePath() {
+            if (core.loggingKlf) return core.klfLogFilePath()
+            if (core.loggingCsv) return core.csvLogFilePath()
+            return ""
+        }
+
+        Column {
+            id: recCol
+            anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
+            anchors.leftMargin: Tokens.spaceXs; anchors.rightMargin: Tokens.spaceXs; anchors.topMargin: Tokens.spaceXs
+            spacing: Tokens.spaceXs
+
+            RowLayout {
+                width: parent.width
+                height: Tokens.controlHMd
+                spacing: Tokens.spaceXs
+
+                IconBtn {
+                    id: recGear
+                    checkable: true
+                    visible: !recRow.active                 // hidden while recording
+                    iconSource: "qrc:/icons/ui/settings.svg"
+                    iconFillRatio: 0.8
+                    toolTipText: qsTr("Recording settings")
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                }
+
+                Item {
+                    id: marqueeClip
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    readonly property int pad: Tokens.spaceMd
+
+                    Text {
+                        id: recStatus
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: recRow.active ? recRow._activePath()
+                              : (store.recordKlf && store.recordCsv ? qsTr("Press REC to record KLF and CSV logs")
+                                 : store.recordCsv ? qsTr("Press REC to record CSV log")
+                                 : qsTr("Press REC to record KLF log"))
+                        color: recRow.active ? "#FFFFFF" : AppPalette.textMuted
+                        font.pixelSize: Tokens.fontSm
+                        readonly property bool overflow: (width + 2 * marqueeClip.pad) > marqueeClip.width
+                        readonly property real leftEnd: marqueeClip.width - width - marqueeClip.pad   // symmetric right gap; fade is off at this end so the tail stays readable
+                        onOverflowChanged: _resync()
+                        onLeftEndChanged: if (overflow) _resync()
+                        Component.onCompleted: _resync()
+                        function _resync() {
+                            recMarquee.stop()
+                            x = marqueeClip.pad
+                            if (overflow)
+                                recMarquee.start()
+                        }
+                        SequentialAnimation {
+                            id: recMarquee
+                            loops: Animation.Infinite
+                            PauseAnimation { duration: 1500 }
+                            NumberAnimation { target: recStatus; property: "x"; to: recStatus.leftEnd; duration: Math.max(1500, recStatus.width * 6); easing.type: Easing.InOutSine }
+                            PauseAnimation { duration: 1500 }
+                            NumberAnimation { target: recStatus; property: "x"; to: marqueeClip.pad; duration: Math.max(1500, recStatus.width * 6); easing.type: Easing.InOutSine }
+                        }
+                    }
+
+                    // edge fade-out — only on the side where text is still hidden
+                    Rectangle {
+                        anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+                        width: marqueeClip.pad * 2
+                        visible: recStatus.overflow && recStatus.x < marqueeClip.pad - 1   // start scrolled past left edge
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: recRow.color }
+                            GradientStop { position: 1.0; color: "transparent" }
+                        }
+                    }
+                    Rectangle {
+                        anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
+                        width: marqueeClip.pad * 2
+                        visible: recStatus.overflow && recStatus.x > recStatus.leftEnd + 1   // tail still past right edge
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: "transparent" }
+                            GradientStop { position: 1.0; color: recRow.color }
+                        }
+                    }
+                }
+
+                Text {
+                    visible: recRow.active
+                    text: recRow._fmtSize(recRow.recBytes) + "  •  " + recRow._fmtDur(recRow.recSeconds)
+                    color: "#FFFFFF"
+                    font.pixelSize: Tokens.fontBase
+                    font.bold: true
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.rightMargin: Tokens.spaceXxs
+                }
+
+                KButton {
+                    id: recBtn
+                    checkable: true
+                    checked: recRow.active                  // follows real recording state (no race)
+                    text: recRow.active ? qsTr("■ STOP") : qsTr("● REC")
+                    fontPixelSize: Tokens.fontLg
+                    horizontalPadding: Math.round(8 * AppPalette.scale)
+                    verticalPadding: Math.round(2 * AppPalette.scale)
+                    normalBg: AppPalette.controlRaised
+                    hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
+                    checkedBg: "#B91C1C"; checkedBorder: "#EF4444"
+                    Layout.preferredWidth: recBtn.implicitWidth
+                    Layout.preferredHeight: Tokens.controlHMd
+                    Layout.alignment: Qt.AlignVCenter
+                    onClicked: {
+                        store.setRecording(!recRow.active)
+                        checked = Qt.binding(function() { return recRow.active })   // click toggled it; rebind to truth
+                    }
+                }
+            }
+
+            Column {
+                visible: recGear.checked
+                onVisibleChanged: if (visible) logPathInput.syncFromStore()
+                width: parent.width
+                spacing: Tokens.spaceXs
+
+                Text {
+                    text: qsTr("Log folder:")
+                    color: AppPalette.textMuted
+                    font.pixelSize: Tokens.fontXs
+                }
+
+                Row {
+                    width: parent.width
+                    spacing: Tokens.spaceXs
+
+                    Rectangle {
+                        width: logBrowseBtn.visible ? parent.width - logBrowseBtn.width - parent.spacing : parent.width
+                        height: Tokens.controlHMd
+                        radius: Tokens.radiusSm
+                        color: AppPalette.bg
+                        border.width: logPathInput.activeFocus ? 1 : Tokens.cardBorderWidth
+                        border.color: logPathInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                        TextInput {
+                            id: logPathInput
+                            anchors.fill: parent
+                            anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceSm
+                            verticalAlignment: TextInput.AlignVCenter
+                            clip: true
+                            readOnly: Qt.platform.os === "android"   // Android: fixed default dir, no manual path
+                            activeFocusOnTab: !readOnly
+                            selectByMouse: !readOnly
+                            color: AppPalette.text
+                            font.pixelSize: Tokens.fontBase
+                            // Show the effective save location — the custom path, or the
+                            // default (Documents/KoggerApp/logs) when none is set.
+                            function syncFromStore() {
+                                if (activeFocus) return
+                                var def = (typeof core !== "undefined" && core) ? core.logDirectory() : ""
+                                text = (store && store.recordFolder && store.recordFolder.length) ? store.recordFolder : def
+                            }
+                            Component.onCompleted: syncFromStore()
+                            onEditingFinished: if (store) store.recordFolder = text.trim()
+                            TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: logPathInput.selectAll() }
+                            Connections {
+                                target: store
+                                function onRecordFolderChanged() { logPathInput.syncFromStore() }
+                            }
+                        }
+                    }
+
+                    KButton {
+                        id: logBrowseBtn
+                        visible: Qt.platform.os !== "android"   // Android: fixed default dir, no folder picker
+                        text: "..."
+                        toolTipText: qsTr("Choose recording folder")
+                        normalBg: AppPalette.controlRaised
+                        hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
+                        fontPixelSize: Tokens.fontLg; bold: false
+                        horizontalPadding: 0; verticalPadding: 0
+                        height: Tokens.controlHMd
+                        width: Tokens.controlHMd
+                        onClicked: {
+                            core.setLogDirectory(store.recordFolder)            // sync selection (empty = default)
+                            logFolderDialog.currentFolder = core.logDirectoryUrl()  // existing dir as start location
+                            logFolderDialog.open()
+                        }
+                    }
+                }
+
+                FolderDialog {
+                    id: logFolderDialog
+                    title: qsTr("Select log folder")
+                    onAccepted: {
+                        var p = connectionViewer.urlSource("" + selectedFolder)   // url → local path (strips file://)
+                        store.recordFolder = p
+                        core.setLogDirectory(p)
+                    }
+                }
+
+                KSwitch {
+                    width: parent.width
+                    text: qsTr("KLF")
+                    backgroundColor: AppPalette.bg   // recessed on the card recording strip
+                    checked: store.recordKlf
+                    onToggled: {
+                        if (!checked && !store.recordCsv) { checked = Qt.binding(function() { return store.recordKlf }); return }   // keep at least one type
+                        store.recordKlf = checked
+                    }
+                }
+                KSwitch {
+                    width: parent.width
+                    text: qsTr("CSV")
+                    backgroundColor: AppPalette.bg   // recessed on the card recording strip
+                    checked: store.recordCsv
+                    onToggled: {
+                        if (!checked && !store.recordKlf) { checked = Qt.binding(function() { return store.recordCsv }); return }
+                        store.recordCsv = checked
+                    }
+                }
+            }
         }
     }
 
@@ -740,21 +1017,21 @@ Column {
                     focusPolicy: Qt.StrongFocus
                     background: Rectangle { color: "transparent"; border.width: 0 }
                     contentItem: Text { leftPadding: 6; text: separatorCombo.displayText; color: AppPalette.text; font.pixelSize: Tokens.fontXs; verticalAlignment: Text.AlignVCenter }
-                    Settings { property alias separatorCombo: separatorCombo.currentIndex }
+                    Settings { category: "main/csvImport"; property alias separatorCombo: separatorCombo.currentIndex }
                 }
             }
             Text { text: qsTr("Row:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
-            CsvSpin { id: firstRow; value: 1; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVfirstRow: firstRow.value } }
+            CsvSpin { id: firstRow; value: 1; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVfirstRow: firstRow.value } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd - Tokens.spaceXxs; spacing: Tokens.spaceMd
             SmallCheck {
                 id: timeEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
-                Settings { property alias importCSVtimeEnable: timeEnable.checked }
+                Settings { category: "main/csvImport"; property alias importCSVtimeEnable: timeEnable.checked }
             }
             Text { text: qsTr("Time col:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
-            CsvSpin { id: timeColumn; value: 6; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVtimeColumn: timeColumn.value } }
+            CsvSpin { id: timeColumn; value: 6; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVtimeColumn: timeColumn.value } }
             Rectangle {
                 width: Math.round(100 * AppPalette.scale); height: Math.round(26 * AppPalette.scale); radius: Tokens.radiusSm; color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
                 anchors.verticalCenter: parent.verticalCenter
@@ -763,7 +1040,7 @@ Column {
                     focusPolicy: Qt.StrongFocus
                     background: Rectangle { color: "transparent"; border.width: 0 }
                     contentItem: Text { leftPadding: 6; text: utcGpsCombo.displayText; color: AppPalette.text; font.pixelSize: Tokens.fontXs; verticalAlignment: Text.AlignVCenter }
-                    Settings { property alias utcGpsCombo: utcGpsCombo.currentIndex }
+                    Settings { category: "main/csvImport"; property alias utcGpsCombo: utcGpsCombo.currentIndex }
                 }
             }
         }
@@ -772,24 +1049,24 @@ Column {
             width: parent.width; height: Tokens.controlHMd - Tokens.spaceXxs; spacing: Tokens.spaceMd
             SmallCheck {
                 id: latLonEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
-                Settings { property alias importCSVlatLonEnable: latLonEnable.checked }
+                Settings { category: "main/csvImport"; property alias importCSVlatLonEnable: latLonEnable.checked }
             }
             Text { text: qsTr("Lat/Lon/Alt:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
-            CsvSpin { id: latColumn;  value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVlatColumn:  latColumn.value  } }
-            CsvSpin { id: lonColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVlonColumn:  lonColumn.value  } }
-            CsvSpin { id: altColumn;  value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSValtColumn:  altColumn.value  } }
+            CsvSpin { id: latColumn;  value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVlatColumn:  latColumn.value  } }
+            CsvSpin { id: lonColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVlonColumn:  lonColumn.value  } }
+            CsvSpin { id: altColumn;  value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSValtColumn:  altColumn.value  } }
         }
 
         Row {
             width: parent.width; height: Tokens.controlHMd - Tokens.spaceXxs; spacing: Tokens.spaceMd
             SmallCheck {
                 id: xyzEnable; checked: true; anchors.verticalCenter: parent.verticalCenter
-                Settings { property alias importCSVxyzEnable: xyzEnable.checked }
+                Settings { category: "main/csvImport"; property alias importCSVxyzEnable: xyzEnable.checked }
             }
             Text { text: qsTr("NEU:"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
-            CsvSpin { id: northColumn; value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVnorthColumn: northColumn.value } }
-            CsvSpin { id: eastColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVeastColumn:  eastColumn.value  } }
-            CsvSpin { id: upColumn;    value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { property alias importCSVupColumn:    upColumn.value    } }
+            CsvSpin { id: northColumn; value: 2; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVnorthColumn: northColumn.value } }
+            CsvSpin { id: eastColumn;  value: 3; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVeastColumn:  eastColumn.value  } }
+            CsvSpin { id: upColumn;    value: 4; from: 1; to: 100; anchors.verticalCenter: parent.verticalCenter; Settings { category: "main/csvImport"; property alias importCSVupColumn:    upColumn.value    } }
         }
 
         Row {
@@ -850,146 +1127,54 @@ Column {
         }
     }
 
-    // ── Device tabs ───────────────────────────────────────────────────────
-
-    Column {
-        visible: devList.length > 0
-        width: parent.width
-        spacing: Tokens.spaceSm
-
-        Text {
-            text: qsTr("Devices")
-            color: AppPalette.textSecond
-            font.pixelSize: Tokens.fontSm; font.bold: true
-        }
-
-        Flow {
-            width: parent.width; spacing: Tokens.spaceSm
-
-            Repeater {
-                model: devList
-                delegate: KButton {
-                    required property var modelData
-                    required property int index
-                    text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : qsTr("Undefined")
-                    height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
-                    checkable: true
-                    checked: store && store.activeDeviceIndex === index
-                    checkedBorder: AppPalette.accentBorder
-                    visible: modelData ? (modelData.devType !== 0) : false
-                    onClicked: {
-                        if (store)
-                            store.setActiveDeviceIndex(index)
-                        checked = Qt.binding(function() { return !!(store && store.activeDeviceIndex === index) })
-                    }
-                }
-            }
-        }
-
-        // Visual breathing room between device tabs and the settings card below.
-        Item { width: 1; height: Tokens.spaceSm }
-    }
-
-    // ── Factory mode ──────────────────────────────────────────────────────
-
-    Row {
-        visible: core.isFactoryMode; width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
-
-        KButton {
-            text: qsTr("Flash Firmware"); height: Tokens.controlHMd; fontPixelSize: Tokens.fontSm
-            onClicked: core.connectOpenedLinkAsFlasher(flasherPnText.text)
-        }
-
-        IconBtn {
-            id: flasherDataRefresh; checkable: true
-            iconSource: "qrc:/icons/ui/refresh.svg"; width: Tokens.controlHMd; height: Tokens.controlHMd
-            onToggled: function(v) { if (!v) flasherDataInput.text = "" }
-        }
-    }
-
-    Row {
-        visible: flasherDataRefresh.checked && core.isFactoryMode
-        width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
-
-        Rectangle {
-            width: parent.width - Tokens.controlHLg; height: Tokens.controlHMd; radius: Tokens.radiusMd
-            color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
-            TextInput {
-                id: flasherDataInput
-                activeFocusOnTab: true
-                anchors.fill: parent; anchors.margins: 8
-                verticalAlignment: TextInput.AlignVCenter; color: AppPalette.text; font.pixelSize: Tokens.fontSm
-                onVisibleChanged: if (visible) focus = true
-            }
-        }
-
-        IconBtn {
-            iconSource: "qrc:/icons/ui/file_download.svg"; width: Tokens.controlHMd; height: Tokens.controlHMd
-            onClicked: {
-                if (flasherDataInput.text !== "") {
-                    core.setFlasherData(flasherDataInput.text)
-                    flasherDataInput.text = ""
-                    flasherDataRefresh.checked = false
-                }
-            }
-        }
-    }
-
-    Row {
-        visible: core.isFactoryMode; width: parent.width; height: 30; spacing: 8
-
-        Text { text: qsTr("Part Number:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontMd; anchors.verticalCenter: parent.verticalCenter }
-
-        Rectangle {
-            width: parent.width - 92 - 8; height: 30; radius: 6
-            color: AppPalette.bg; border.width: 1; border.color: AppPalette.border
-            TextInput {
-                id: flasherPnText
-                activeFocusOnTab: true
-                anchors.fill: parent; anchors.margins: 8
-                verticalAlignment: TextInput.AlignVCenter; color: AppPalette.text; font.pixelSize: Tokens.fontSm
-                Settings { property alias flasherPartNumber: flasherPnText.text }
-            }
-        }
-    }
-
-    Text {
-        visible: core.isFactoryMode && FLASHER_STATE
-        text: core.isFactoryMode && FLASHER_STATE ? core.flasherTextInfo : ""
-        color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm; width: parent.width; wrapMode: Text.WordWrap
-    }
-
-    // ── Device settings ───────────────────────────────────────────────────
-
-    DeviceSettingsPage {
-        id: deviceSettingsAnchor
-        visible: connectionViewer.dev !== null
-        width: parent.width
-        dev: connectionViewer.dev
-    }
-
-    Timer {
-        id: scrollToDeviceSettingsTimer
-        interval: 240
-        repeat: false
-        onTriggered: {
-            connectionViewer._scrollToDeviceSettings()
-            if (connectionViewer.store)
-                connectionViewer.store.deviceSettingsScrollPending = false
-        }
-    }
-
-    function _maybeScrollToDevice() {
-        if (connectionViewer.store && connectionViewer.store.deviceSettingsScrollPending === true)
-            scrollToDeviceSettingsTimer.restart()
-    }
-
     Connections {
         target: connectionViewer.store
         ignoreUnknownSignals: true
-        function onDeviceSettingsScrollPendingChanged() {
-            connectionViewer._maybeScrollToDevice()
+        function onRecordingFocusRequestedChanged() {
+            connectionViewer._maybeFocusRecording()
         }
+    }
+
+    Timer {
+        id: recordingFocusTimer
+        interval: 240
+        repeat: false
+        onTriggered: {
+            connectionViewer._scrollToRecording()
+            if (connectionViewer.store)
+                connectionViewer.store.recordingFocusRequested = false
+        }
+    }
+
+    function _maybeFocusRecording() {
+        if (!(connectionViewer.store && connectionViewer.store.recordingFocusRequested === true))
+            return
+        if (!recRow.active)
+            recGear.checked = true
+        recordingFocusTimer.restart()
+    }
+
+    function _scrollToRecording() {
+        if (!recordingHeader) return
+        var flick = _findAncestorFlickable()
+        if (!flick) return
+
+        var topInContent = recordingHeader.mapToItem(flick.contentItem, 0, 0).y
+        var target = Math.max(0, topInContent - Tokens.spaceXl * 3)
+        target = Math.min(target, Math.max(0, flick.contentHeight - flick.height))
+        if (Math.abs(target - flick.contentY) < 0.5) return
+
+        scrollToRecordingAnim.target = flick
+        scrollToRecordingAnim.from = flick.contentY
+        scrollToRecordingAnim.to = target
+        scrollToRecordingAnim.restart()
+    }
+
+    NumberAnimation {
+        id: scrollToRecordingAnim
+        property: "contentY"
+        duration: 240
+        easing.type: Easing.OutCubic
     }
 
     function _findAncestorFlickable() {
@@ -1002,30 +1187,6 @@ Column {
             item = item.parent
         }
         return null
-    }
-
-    function _scrollToDeviceSettings() {
-        if (!deviceSettingsAnchor || !deviceSettingsAnchor.visible)
-            return
-        var flick = _findAncestorFlickable()
-        if (!flick) return
-
-        var topInContent = deviceSettingsAnchor.mapToItem(flick.contentItem, 0, 0).y
-        var target = Math.max(0, topInContent - Tokens.spaceLg)
-        target = Math.min(target, Math.max(0, flick.contentHeight - flick.height))
-        if (Math.abs(target - flick.contentY) < 0.5) return
-
-        scrollToDeviceAnim.target = flick
-        scrollToDeviceAnim.from = flick.contentY
-        scrollToDeviceAnim.to = target
-        scrollToDeviceAnim.restart()
-    }
-
-    NumberAnimation {
-        id: scrollToDeviceAnim
-        property: "contentY"
-        duration: 240
-        easing.type: Easing.OutCubic
     }
 
     property int _pendingExpandIndex: -1

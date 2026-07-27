@@ -18,6 +18,10 @@ Rectangle {
     property string label: ""
     property bool checked: false
     property int slotWidth: 0
+    property color fillColor: AppPalette.rowRaised   // bg when nested inside a card group
+    property color labelColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+    property int labelPixelSize: Tokens.fontLg
+    property string toolTipText: ""
     signal toggled(bool val)
 
     default property alias contentData: pcardSlot.data
@@ -33,11 +37,11 @@ Rectangle {
     width: parent ? parent.width : implicitWidth
     height: Math.round(38 * AppPalette.scale)
     radius: Tokens.radiusLg
-    color: pcard._hovered ? AppPalette.bgHover : AppPalette.bg
-    border.width: 1
+    color: pcard._hovered ? AppPalette.cardHover : pcard.fillColor
+    border.width: Tokens.cardBorderWidth
     border.color: pcard._hovered ? AppPalette.borderHover : AppPalette.border
 
-    Behavior on color       { ColorAnimation { duration: 110 } }
+    Behavior on color        { ColorAnimation { duration: 110 } }
     Behavior on border.color { ColorAnimation { duration: 110 } }
 
     function _flip() {
@@ -82,8 +86,10 @@ Rectangle {
         anchors.rightMargin: Tokens.spaceMd
         anchors.verticalCenter: parent.verticalCenter
         text: pcard.label
-        color: AppPalette.textSecond
-        font.pixelSize: Tokens.fontMd
+        color: pcard.labelColor
+        font.pixelSize: pcard.labelPixelSize
+        fontSizeMode: Text.HorizontalFit
+        minimumPixelSize: Tokens.fontSm
         elide: Text.ElideRight
         verticalAlignment: Text.AlignVCenter
     }
@@ -109,9 +115,9 @@ Rectangle {
         Rectangle {
             anchors.fill: parent
             radius: height / 2
-            color: pcard.checked ? AppPalette.accentBg : AppPalette.trackOff
+            color: pcard.checked ? AppPalette.toggleOn : AppPalette.trackOff
             border.width: 1
-            border.color: pcard.checked ? AppPalette.accentBorder : AppPalette.trackOffBorder
+            border.color: pcard.checked ? AppPalette.toggleOnBorder : AppPalette.trackOffBorder
             Behavior on color { ColorAnimation { duration: 120 } }
 
             Rectangle {
@@ -129,4 +135,10 @@ Rectangle {
     }
 
     KFocusRing { id: focusRing }
+
+    KToolTip {
+        text: pcard.toolTipText
+        targetItem: pcard
+        shown: pcard._hovered && pcard.toolTipText.length > 0
+    }
 }

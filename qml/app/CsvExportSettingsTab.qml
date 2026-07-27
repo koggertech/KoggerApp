@@ -11,23 +11,25 @@ Column {
     required property var store
     property var targetPlot: null
 
+    readonly property color _bright: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
 
     // Ordered column list — labels translatable here; keys match Core.
     readonly property var fieldDefs: [
-        { key: "meas_nbr",         label: qsTr("Number") },
-        { key: "event_id",         label: qsTr("Event (UNIX / timestamp / ID)") },
-        { key: "rangefinder",      label: qsTr("Rangefinder") },
-        { key: "bottom_depth",     label: qsTr("Beam distance") },
-        { key: "pos_lat_lon",      label: qsTr("Position (lat / lon)") },
-        { key: "pos_time",         label: qsTr("GNSS UTC date / time") },
-        { key: "external_pos_lla", label: qsTr("External position (LLA)") },
-        { key: "external_pos_neu", label: qsTr("External position (NEU)") },
-        { key: "sonar_height",     label: qsTr("Sonar height") },
-        { key: "bottom_height",    label: qsTr("Bottom height") },
-        { key: "contact_info",     label: qsTr("Contact title") },
-        { key: "contact_distance", label: qsTr("Contact distance") }
+        { key: "meas_nbr",         label: qsTr("Number"),                        tip: qsTr("Sequential measurement number (epoch)") + " — Number" },
+        { key: "event_id",         label: qsTr("Event (UNIX / timestamp / ID)"), tip: qsTr("Event columns: UNIX time, timestamp and ID") + " — Event UNIX, Event timestamp, Event ID" },
+        { key: "bottom_depth",     label: qsTr("Beam distance"),                 tip: qsTr("Post-processing distance (green line)") + " — Beam distance" },
+        { key: "pos_lat_lon",      label: qsTr("Position (lat / lon)"),          tip: qsTr("Coordinates: latitude and longitude") + " — Latitude, Longitude" },
+        { key: "pos_time",         label: qsTr("GNSS UTC date / time"),          tip: qsTr("UTC date and time from GNSS") + " — GNSS UTC Date, GNSS UTC Time" },
+        { key: "external_pos_lla", label: qsTr("External position (LLA)"),       tip: qsTr("External position: latitude / longitude / altitude") + " — ExtLatitude, ExtLongitude, ExtAltitude" },
+        { key: "external_pos_neu", label: qsTr("External position (NEU)"),       tip: qsTr("External position in local NEU (north / east / up)") + " — ExtNorth, ExtEast, ExtHeight" },
+        { key: "sonar_height",     label: qsTr("Sonar height"),                  tip: qsTr("Absolute height of the sonar") + " — SonarHeight" },
+        { key: "bottom_height",    label: qsTr("Bottom height"),                 tip: qsTr("Absolute height of the bottom") + " — BottomHeight" },
+        { key: "contact_info",     label: qsTr("Contact title"),                 tip: qsTr("Title of the marked contact") + " — ContactTitle" },
+        { key: "contact_distance", label: qsTr("Contact distance"),              tip: qsTr("Distance to the marked contact") + " — ContactDistance" },
+        { key: "rangefinder",      label: qsTr("Rangefinder"),                   tip: qsTr("Rangefinder distance (red line)") + " — Rangefinder" }
     ]
 
     function doExport() {
@@ -52,6 +54,9 @@ Column {
         id: decimationCard
         width: parent.width
         label: qsTr("Decimation, m:")
+        toolTipText: qsTr("Thin out points: keep one per given distance interval (m); off exports every point")
+        labelColor: page._bright
+        labelPixelSize: Tokens.fontLg
         slotWidth: Math.round(120 * AppPalette.scale)
         checked: page.store ? page.store.exportDecimationEnabled : false
         onToggled: function(v) { if (page.store) page.store.exportDecimationEnabled = v }
@@ -59,6 +64,8 @@ Column {
         KSpinBox {
             width: Math.round(120 * AppPalette.scale)
             height: Tokens.controlHMd
+            fontPixelSize: Tokens.fontLg
+            textColor: page._bright
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             from: 0; to: 100; stepSize: 1
@@ -106,7 +113,7 @@ Column {
         radius: Tokens.radiusLg
         color: AppPalette.bgDeep
         border.color: AppPalette.border
-        border.width: 1
+        border.width: Tokens.cardBorderWidth
 
         Loader {
             id: fieldsLoader
@@ -138,6 +145,9 @@ Column {
                     required property var modelData
                     width: parent.width
                     text: modelData.label
+                    toolTipText: modelData.tip
+                    textColor: page._bright
+                    fontPixelSize: Tokens.fontLg
                     checked: core.csvExportFieldEnabled(modelData.key)
                     onToggled: core.setCsvExportField(modelData.key, checked)
                 }

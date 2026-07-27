@@ -5,6 +5,9 @@
 #include <cmath>
 #include <algorithm>
 #include <QFile>
+#include <QDir>
+#include <QFileInfo>
+#include <QUrl>
 #include "math_defs.h"
 #include "themes.h"
 
@@ -292,24 +295,33 @@ void SurfaceView::setLlaRef(LLARef llaRef)
     llaRef_ = llaRef;
 }
 
-void SurfaceView::saveVerticesToFile(const QString &path)
+bool SurfaceView::saveVerticesToFile(const QString &path)
 {
     auto* r = RENDER_IMPL(SurfaceView);
     if (!r) {
         qWarning() << "SurfaceView::saveVerticesToFile: no render impl";
-        return;
+        return false;
     }
 
 #ifdef Q_OS_ANDROID
     const QString filePath = path;
 #else
-    const QString filePath = QUrl(path).toLocalFile();
+    QString filePath = QUrl(path).toLocalFile();
+    if (filePath.isEmpty())
+        filePath = path;
 #endif
+
+    if (filePath.isEmpty()) {
+        qWarning() << "SurfaceView::saveVerticesToFile: empty path";
+        return false;
+    }
+
+    QDir().mkpath(QFileInfo(filePath).absolutePath());
 
     QFile file(filePath);
     if (!file.open(QFile::WriteOnly | QFile::Text)) {
         qWarning() << "Failed to open file for writing:" << filePath;
-        return;
+        return false;
     }
 
     QTextStream out(&file);
@@ -356,6 +368,7 @@ void SurfaceView::saveVerticesToFile(const QString &path)
     }
 
     file.close();
+    return true;
 }
 
 bool SurfaceView::trySetMosaicTextureId(const TileKey &key, GLuint texId)

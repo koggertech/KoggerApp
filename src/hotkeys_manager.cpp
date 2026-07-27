@@ -10,6 +10,9 @@
 #include <QXmlStreamWriter>
 
 
+static constexpr int kHotkeysSchemaVersion = 3;
+
+
 static const char* hotkeyDescription(const QString& functionName)
 {
     // QT_TRANSLATE_NOOP marks strings for lupdate; translation happens via
@@ -17,10 +20,7 @@ static const char* hotkeyDescription(const QString& functionName)
     static const QHash<QString, const char*> map = {
         // Application
         { "closeSettings",      QT_TRANSLATE_NOOP("HotkeysManager", "Close menu") },
-        { "clickConnections",   QT_TRANSLATE_NOOP("HotkeysManager", "Connection button") },
         { "clickSettings",      QT_TRANSLATE_NOOP("HotkeysManager", "Settings button") },
-        { "click3D",            QT_TRANSLATE_NOOP("HotkeysManager", "3D button") },
-        { "click2D",            QT_TRANSLATE_NOOP("HotkeysManager", "2D button") },
         { "toggleFullScreen",   QT_TRANSLATE_NOOP("HotkeysManager", "Toggle fullscreen") },
         { "openFile",           QT_TRANSLATE_NOOP("HotkeysManager", "Open last file") },
         { "openFileDialog",     QT_TRANSLATE_NOOP("HotkeysManager", "Open file dialog") },
@@ -40,19 +40,20 @@ static const char* hotkeyDescription(const QString& functionName)
         { "nextTheme",          QT_TRANSLATE_NOOP("HotkeysManager", "Switch the echogram theme to the next one") },
         { "toggleEchogramType", QT_TRANSLATE_NOOP("HotkeysManager", "Switch echogram data type") },
         // 3D
-        { "scene3dZoomIn",        QT_TRANSLATE_NOOP("HotkeysManager", "3D movement along the Z-axis down") },
-        { "scene3dZoomOut",       QT_TRANSLATE_NOOP("HotkeysManager", "3D movement along the Z-axis up") },
-        { "resetDepthZoom3D",     QT_TRANSLATE_NOOP("HotkeysManager", "Z-axis scaling in 3D: reset") },
-        { "resetCameraTop3D",     QT_TRANSLATE_NOOP("HotkeysManager", "3D Camera: Reset Rotation") },
-        { "cameraShiftXMinus3D",  QT_TRANSLATE_NOOP("HotkeysManager", "3D camera: Y-axis shift downward") },
-        { "cameraShiftXPlus3D",   QT_TRANSLATE_NOOP("HotkeysManager", "3D camera: Y-axis shift upward") },
-        { "cameraShiftYMinus3D",  QT_TRANSLATE_NOOP("HotkeysManager", "3D camera: shift to the right along the X-axis") },
-        { "cameraShiftYPlus3D",   QT_TRANSLATE_NOOP("HotkeysManager", "3D camera: shift left along the X-axis") },
-        { "cameraShiftZMinus3D",  QT_TRANSLATE_NOOP("HotkeysManager", "Scaling along the Z-axis in 3D: decrease") },
-        { "cameraShiftZPlus3D",   QT_TRANSLATE_NOOP("HotkeysManager", "Scaling along the Z-axis in 3D: increase") },
-        { "toggleBottomTrack3D",  QT_TRANSLATE_NOOP("HotkeysManager", "Toggle 3D bottom track") },
-        { "toggleIsobaths3D",     QT_TRANSLATE_NOOP("HotkeysManager", "Toggle 3D isobaths") },
-        { "toggleMosaic3D",       QT_TRANSLATE_NOOP("HotkeysManager", "Toggle 3D mosaic") },
+        { "scene3dZoomIn",        QT_TRANSLATE_NOOP("HotkeysManager", "Movement along the Z-axis down") },
+        { "scene3dZoomOut",       QT_TRANSLATE_NOOP("HotkeysManager", "Movement along the Z-axis up") },
+        { "resetDepthZoom3D",     QT_TRANSLATE_NOOP("HotkeysManager", "Z-axis scaling: reset") },
+        { "resetCameraTop3D",     QT_TRANSLATE_NOOP("HotkeysManager", "Camera: reset rotation") },
+        { "cameraShiftXMinus3D",  QT_TRANSLATE_NOOP("HotkeysManager", "Camera: Y-axis shift downward") },
+        { "cameraShiftXPlus3D",   QT_TRANSLATE_NOOP("HotkeysManager", "Camera: Y-axis shift upward") },
+        { "cameraShiftYMinus3D",  QT_TRANSLATE_NOOP("HotkeysManager", "Camera: shift to the right along the X-axis") },
+        { "cameraShiftYPlus3D",   QT_TRANSLATE_NOOP("HotkeysManager", "Camera: shift left along the X-axis") },
+        { "cameraShiftZMinus3D",  QT_TRANSLATE_NOOP("HotkeysManager", "Z-axis scaling: decrease") },
+        { "cameraShiftZPlus3D",   QT_TRANSLATE_NOOP("HotkeysManager", "Z-axis scaling: increase") },
+        { "toggleBoatTrack3D",    QT_TRANSLATE_NOOP("HotkeysManager", "Toggle boat track") },
+        { "toggleBottomTrack3D",  QT_TRANSLATE_NOOP("HotkeysManager", "Toggle bottom track") },
+        { "toggleIsobaths3D",     QT_TRANSLATE_NOOP("HotkeysManager", "Toggle isobaths") },
+        { "toggleMosaic3D",       QT_TRANSLATE_NOOP("HotkeysManager", "Toggle mosaic") },
         // Mosaic
         { "mosaicPrevTheme",      QT_TRANSLATE_NOOP("HotkeysManager", "Mosaic previous theme") },
         { "mosaicNextTheme",      QT_TRANSLATE_NOOP("HotkeysManager", "Mosaic next theme") },
@@ -77,10 +78,7 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
 <Hotkeys>
     <!-- Application -->
     <Hotkey functionName="closeSettings"     scanCode="9"  group="Application"/>
-    <Hotkey functionName="clickConnections"  scanCode="56" group="Application"/>
-    <Hotkey functionName="clickSettings"     scanCode="57" group="Application"/>
-    <Hotkey functionName="click3D"           scanCode="52" group="Application"/>
-    <Hotkey functionName="click2D"           scanCode="53" group="Application"/>
+    <Hotkey functionName="clickSettings"     scanCode="56" group="Application"/>
     <Hotkey functionName="toggleFullScreen"  scanCode="95" group="Application"/>
     <Hotkey functionName="openFile"          scanCode="76" group="Application"/>
     <Hotkey functionName="openFileDialog"    scanCode="96" group="Application"/>
@@ -100,19 +98,25 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="nextTheme"         scanCode="55" group="Echogram"/>
     <Hotkey functionName="toggleEchogramType" scanCode="61" group="Echogram"/>
     <!-- 3D -->
-    <Hotkey functionName="scene3dZoomIn"       scanCode="29" group="3D"/>
-    <Hotkey functionName="scene3dZoomOut"      scanCode="43" group="3D"/>
+    <Hotkey functionName="scene3dZoomIn"       scanCode="29" parameter="4" group="3D"/>
+    <Hotkey functionName="scene3dZoomOut"      scanCode="43" parameter="4" group="3D"/>
     <Hotkey functionName="resetDepthZoom3D"    scanCode="17" group="3D"/>
     <Hotkey functionName="resetCameraTop3D"    scanCode="14" group="3D"/>
-    <Hotkey functionName="cameraShiftXMinus3D" scanCode="10" group="3D"/>
-    <Hotkey functionName="cameraShiftXPlus3D"  scanCode="11" group="3D"/>
-    <Hotkey functionName="cameraShiftYMinus3D" scanCode="12" group="3D"/>
-    <Hotkey functionName="cameraShiftYPlus3D"  scanCode="13" group="3D"/>
-    <Hotkey functionName="cameraShiftZMinus3D" scanCode="15" group="3D"/>
-    <Hotkey functionName="cameraShiftZPlus3D"  scanCode="16" group="3D"/>
-    <Hotkey functionName="toggleBottomTrack3D" scanCode="50" group="3D"/>
+    <Hotkey functionName="cameraShiftXMinus3D" scanCode="10" parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftXPlus3D"  scanCode="11" parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftYMinus3D" scanCode="12" parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftYPlus3D"  scanCode="13" parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftZMinus3D" scanCode="15" parameter="1" group="3D"/>
+    <Hotkey functionName="cameraShiftZPlus3D"  scanCode="16" parameter="1" group="3D"/>
+    <Hotkey functionName="toggleBoatTrack3D"   scanCode="57" group="3D"/>
+    <Hotkey functionName="toggleBottomTrack3D" scanCode="58" group="3D"/>
     <Hotkey functionName="toggleIsobaths3D"    scanCode="59" group="3D"/>
     <Hotkey functionName="toggleMosaic3D"      scanCode="60" group="3D"/>
+    <!-- Surface -->
+    <Hotkey functionName="surfacePrevTheme" scanCode="33" group="Surface"/>
+    <Hotkey functionName="surfaceNextTheme" scanCode="47" group="Surface"/>
+    <Hotkey functionName="surfaceStepDown"  scanCode="34" parameter="1" group="Surface"/>
+    <Hotkey functionName="surfaceStepUp"    scanCode="48" parameter="1" group="Surface"/>
     <!-- Mosaic -->
     <Hotkey functionName="mosaicPrevTheme"     scanCode="30" group="Mosaic"/>
     <Hotkey functionName="mosaicNextTheme"     scanCode="44" group="Mosaic"/>
@@ -120,11 +124,6 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="mosaicLowLevelDown"  scanCode="45" parameter="1" group="Mosaic"/>
     <Hotkey functionName="mosaicHighLevelUp"   scanCode="32" parameter="1" group="Mosaic"/>
     <Hotkey functionName="mosaicHighLevelDown" scanCode="46" parameter="1" group="Mosaic"/>
-    <!-- Surface -->
-    <Hotkey functionName="surfacePrevTheme" scanCode="33" group="Surface"/>
-    <Hotkey functionName="surfaceNextTheme" scanCode="47" group="Surface"/>
-    <Hotkey functionName="surfaceStepDown"  scanCode="34" parameter="1" group="Surface"/>
-    <Hotkey functionName="surfaceStepUp"    scanCode="48" parameter="1" group="Surface"/>
 </Hotkeys>
 )";
 #else
@@ -132,10 +131,7 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
 <Hotkeys>
     <!-- Application -->
     <Hotkey functionName="closeSettings"     scanCode="1"  group="Application"/>
-    <Hotkey functionName="clickConnections"  scanCode="48" group="Application"/>
-    <Hotkey functionName="clickSettings"     scanCode="49" group="Application"/>
-    <Hotkey functionName="click3D"           scanCode="44" group="Application"/>
-    <Hotkey functionName="click2D"           scanCode="45" group="Application"/>
+    <Hotkey functionName="clickSettings"     scanCode="48" group="Application"/>
     <Hotkey functionName="toggleFullScreen"  scanCode="87" group="Application"/>
     <Hotkey functionName="openFile"          scanCode="68" group="Application"/>
     <Hotkey functionName="openFileDialog"    scanCode="88" group="Application"/>
@@ -155,19 +151,25 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="nextTheme"         scanCode="47" group="Echogram"/>
     <Hotkey functionName="toggleEchogramType" scanCode="53" group="Echogram"/>
     <!-- 3D -->
-    <Hotkey functionName="scene3dZoomIn"       scanCode="21" group="3D"/>
-    <Hotkey functionName="scene3dZoomOut"      scanCode="35" group="3D"/>
+    <Hotkey functionName="scene3dZoomIn"       scanCode="21" parameter="4" group="3D"/>
+    <Hotkey functionName="scene3dZoomOut"      scanCode="35" parameter="4" group="3D"/>
     <Hotkey functionName="resetDepthZoom3D"    scanCode="9"  group="3D"/>
     <Hotkey functionName="resetCameraTop3D"    scanCode="6"  group="3D"/>
-    <Hotkey functionName="cameraShiftXMinus3D" scanCode="2"  group="3D"/>
-    <Hotkey functionName="cameraShiftXPlus3D"  scanCode="3"  group="3D"/>
-    <Hotkey functionName="cameraShiftYMinus3D" scanCode="4"  group="3D"/>
-    <Hotkey functionName="cameraShiftYPlus3D"  scanCode="5"  group="3D"/>
-    <Hotkey functionName="cameraShiftZMinus3D" scanCode="7"  group="3D"/>
-    <Hotkey functionName="cameraShiftZPlus3D"  scanCode="8"  group="3D"/>
+    <Hotkey functionName="cameraShiftXMinus3D" scanCode="2"  parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftXPlus3D"  scanCode="3"  parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftYMinus3D" scanCode="4"  parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftYPlus3D"  scanCode="5"  parameter="4" group="3D"/>
+    <Hotkey functionName="cameraShiftZMinus3D" scanCode="7"  parameter="1" group="3D"/>
+    <Hotkey functionName="cameraShiftZPlus3D"  scanCode="8"  parameter="1" group="3D"/>
+    <Hotkey functionName="toggleBoatTrack3D"   scanCode="49" group="3D"/>
     <Hotkey functionName="toggleBottomTrack3D" scanCode="50" group="3D"/>
     <Hotkey functionName="toggleIsobaths3D"    scanCode="51" group="3D"/>
     <Hotkey functionName="toggleMosaic3D"      scanCode="52" group="3D"/>
+    <!-- Surface -->
+    <Hotkey functionName="surfacePrevTheme" scanCode="25" group="Surface"/>
+    <Hotkey functionName="surfaceNextTheme" scanCode="39" group="Surface"/>
+    <Hotkey functionName="surfaceStepDown"  scanCode="26" parameter="1" group="Surface"/>
+    <Hotkey functionName="surfaceStepUp"    scanCode="40" parameter="1" group="Surface"/>
     <!-- Mosaic -->
     <Hotkey functionName="mosaicPrevTheme"     scanCode="22" group="Mosaic"/>
     <Hotkey functionName="mosaicNextTheme"     scanCode="36" group="Mosaic"/>
@@ -175,11 +177,6 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="mosaicLowLevelDown"  scanCode="37" parameter="1" group="Mosaic"/>
     <Hotkey functionName="mosaicHighLevelUp"   scanCode="24" parameter="1" group="Mosaic"/>
     <Hotkey functionName="mosaicHighLevelDown" scanCode="38" parameter="1" group="Mosaic"/>
-    <!-- Surface -->
-    <Hotkey functionName="surfacePrevTheme" scanCode="25" group="Surface"/>
-    <Hotkey functionName="surfaceNextTheme" scanCode="39" group="Surface"/>
-    <Hotkey functionName="surfaceStepDown"  scanCode="26" parameter="1" group="Surface"/>
-    <Hotkey functionName="surfaceStepUp"    scanCode="40" parameter="1" group="Surface"/>
 </Hotkeys>
 )";
 #endif
@@ -190,95 +187,42 @@ HotkeysManager::HotkeysManager()
     ensureDefaultHotkeysFile();
 }
 
+int HotkeysManager::readHotkeysFileVersion(const QString& filePath) const
+{
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return 0;
+    }
+
+    QXmlStreamReader xml(&file);
+    while (!xml.atEnd() && !xml.hasError()) {
+        if (xml.readNext() == QXmlStreamReader::StartElement && xml.name() == "Hotkeys") {
+            const int version = xml.attributes().value("version").toInt();
+            file.close();
+            return version;
+        }
+    }
+
+    file.close();
+    return 0;
+}
+
 void HotkeysManager::ensureDefaultHotkeysFile() const
 {
     QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     QDir().mkpath(configDir);
 
     QString filePath = configDir + "/hotkeys.xml";
-    QFile file(filePath);
 
-    if (!file.exists()) {
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            file.write(s_defaultHotkeysXml);
-            file.close();
-            qDebug() << "Created default hotkeys.xml in" << filePath;
-        }
-        else {
-            qWarning() << "Cannot create hotkeys.xml in" << filePath;
-        }
+    if (QFile::exists(filePath) && readHotkeysFileVersion(filePath) >= kHotkeysSchemaVersion) {
+        return;
+    }
+
+    if (saveHotkeysToFile(parseHotkeysFromString(QString::fromUtf8(s_defaultHotkeysXml)), filePath)) {
+        qDebug() << "hotkeys.xml written to defaults (schema v" << kHotkeysSchemaVersion << ") in" << filePath;
     }
     else {
-        QList<HotkeyData> existingList = parseHotkeysFromFile(filePath);
-        QList<HotkeyData> defaultList = parseHotkeysFromString(QString::fromUtf8(s_defaultHotkeysXml));
-
-        // build lookup map from defaults
-        QMap<QString, HotkeyData> defaultByFunction;
-        for (const auto& hk : std::as_const(defaultList))
-            defaultByFunction[hk.functionName] = hk;
-
-        // remove hotkeys that no longer exist in defaults
-        bool wasModified = false;
-        for (int i = existingList.size() - 1; i >= 0; --i) {
-            if (!defaultByFunction.contains(existingList[i].functionName)) {
-                existingList.removeAt(i);
-                wasModified = true;
-            }
-        }
-
-        // add missing hotkeys and sync group/description from defaults
-        QSet<QString> existingFunctions;
-        for (const auto& hk : std::as_const(existingList))
-            existingFunctions.insert(hk.functionName);
-
-        for (auto& hk : existingList) {
-            const HotkeyData& def = defaultByFunction[hk.functionName];
-            if (hk.group != def.group) {
-                hk.group    = def.group;
-                wasModified = true;
-            }
-        }
-
-        for (const auto& hk : std::as_const(defaultList)) {
-            if (!existingFunctions.contains(hk.functionName)) {
-                existingList.append(hk);
-                wasModified = true;
-            }
-        }
-
-        // Reorder existing entries to match the canonical default order
-        {
-            QMap<QString, HotkeyData> byFunction;
-            for (const auto& hk : std::as_const(existingList))
-                byFunction[hk.functionName] = hk;
-
-            QList<HotkeyData> reordered;
-            reordered.reserve(existingList.size());
-            for (const auto& def : std::as_const(defaultList)) {
-                if (byFunction.contains(def.functionName))
-                    reordered.append(byFunction[def.functionName]);
-            }
-
-            bool orderChanged = (reordered.size() != existingList.size());
-            if (!orderChanged) {
-                for (int i = 0; i < reordered.size(); ++i) {
-                    if (reordered[i].functionName != existingList[i].functionName) {
-                        orderChanged = true;
-                        break;
-                    }
-                }
-            }
-            if (orderChanged) {
-                existingList = reordered;
-                wasModified = true;
-            }
-        }
-
-        if (wasModified) {
-            if (saveHotkeysToFile(existingList, filePath)) {
-                qDebug() << "hotkeys.xml was updated in" << filePath;
-            }
-        }
+        qWarning() << "Cannot write hotkeys.xml in" << filePath;
     }
 }
 
@@ -434,6 +378,7 @@ bool HotkeysManager::saveHotkeysToFile(const QList<HotkeyData> &list, const QStr
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
     xml.writeStartElement("Hotkeys");
+    xml.writeAttribute("version", QString::number(kHotkeysSchemaVersion));
 
     for (const HotkeyData &item : list) {
         xml.writeStartElement("Hotkey");

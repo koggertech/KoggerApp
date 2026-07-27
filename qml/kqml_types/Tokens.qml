@@ -48,6 +48,8 @@ QtObject {
     readonly property int radiusMd: Math.round(6 * s)
     readonly property int radiusLg: Math.round(8 * s)
 
+    readonly property int cardBorderWidth: 0
+
     // Responsive grid columns: how many cellMinW-wide cells fit into availableW.
     function gridColumns(availableW, cellMinW, gap, maxCols) {
         if (availableW <= 0 || cellMinW <= 0) return 1

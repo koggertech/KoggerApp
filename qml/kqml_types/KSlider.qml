@@ -11,8 +11,8 @@ Slider {
     property color knobBorderColor: AppPalette.borderHover
     property color knobBorderActiveColor: AppPalette.accentBorder
 
-    property int trackHeight: 6
-    property int knobSize: 18
+    property int trackHeight: Math.round(7 * AppPalette.scale)
+    property int knobSize: Math.round(28 * AppPalette.scale)
 
     property string toolTipText: ""
     property bool showValueTip: true
@@ -23,7 +23,7 @@ Slider {
     signal valueModified(real val)
 
     implicitWidth: 200
-    implicitHeight: Math.max(knobSize, 30)
+    implicitHeight: Math.max(knobSize, Math.round(44 * AppPalette.scale))
     horizontalPadding: knobSize / 2
     verticalPadding: 0
     snapMode: Slider.SnapAlways
@@ -44,7 +44,7 @@ Slider {
         height: control.trackHeight
         radius: height / 2
         color: control.trackOffColor
-        border.width: 1
+        border.width: Tokens.cardBorderWidth
         border.color: control.trackOffBorderColor
 
         Rectangle {

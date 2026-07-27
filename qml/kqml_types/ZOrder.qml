@@ -15,18 +15,19 @@ QtObject {
 
     readonly property int fullscreenPopup:  1300    // FullscreenPanePopup (per-pane)
     readonly property int globalPopup:      1400    // GlobalPanePopup (floating window)
-    readonly property int hotActions:       1450    // HotActionsPanel — above window popups so its gear stays clickable
-    readonly property int bottomTrackEditPopup: 1500 // bottom-track tool palette (always on top)
+    readonly property int bottomTrackEditPopup: 1500 // bottom-track tool palette (above window popups)
     readonly property int profilesPopup:        1510 // settings-profile palette (tool level, with bt-edit)
-    readonly property int autopilotPopup:       1520 // autopilot telemetry plate (tool level)
-    readonly property int extraInfoPopup:        1530 // extra info panel (tool level)
+    readonly property int widgetPopup:           1520 // data widgets — base of reserved 10-level stack band 1520..1529 (max 10 widgets); most-recently-moved on top
+    readonly property int hotActions:       1530    // HotActionsPanel — above the widget stack band + tool palettes so its buttons + hotkey dropdowns stay on top and clickable
+    readonly property int widgetEditorOverlay:   1900 // widget editor: dim + real widget (below settings sidebar)
 
     readonly property int settingsSidebar:  2000    // AppSettings sidebar
     readonly property int modeSettings:     2001    // ModeSettingsPanel
-    readonly property int legacySidebar:    2002    // legacy menus sidebar
+    readonly property int widgetEditorDrag: 2500    // widget editor: floating drag layer (above settings)
 
     readonly property int notificationsOverlay: 4000 // toast notifications (top-center stack)
     readonly property int fileOpeningOverlay: 5000  // modal "file is opening" banner
     readonly property int splashOverlay:    6000    // startup launch banner (fades out)
     readonly property int welcomeOverlay:   6500    // first-launch welcome / toolset picker (modal)
+    readonly property int powerOffOverlay:  6700    // slide-to-confirm power off (modal, Ubuntu)
 }

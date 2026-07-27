@@ -34,6 +34,7 @@
 #include "hotkeys_controller.h"
 #include "device_manager_wrapper.h"
 #include "link_manager_wrapper.h"
+#include "device_topology_model.h"
 #include "tile_manager.h"
 #include "internet_manager.h"
 #include "data_horizon.h"
@@ -56,6 +57,7 @@ public:
     Q_PROPERTY(bool              isKlfLogging                 READ getKlfLogging                   NOTIFY loggingKlfChanged)
     Q_PROPERTY(bool              loggingCsv                   READ getCsvLogging                   WRITE setCsvLogging                   NOTIFY loggingCsvChanged)
     Q_PROPERTY(bool              useGPS                       READ getUseGPS                       WRITE setUseGPS                       NOTIFY useGPSChanged)
+    Q_PROPERTY(bool              bringWindowToFrontEnabled    READ getBringWindowToFrontEnabled    WRITE setBringWindowToFrontEnabled    NOTIFY bringWindowToFrontEnabledChanged)
     Q_PROPERTY(bool              fixBlackStripesState         READ getFixBlackStripesState         WRITE setFixBlackStripesState         NOTIFY fixBlackStripesStateChanged)
     Q_PROPERTY(int               fixBlackStripesForwardSteps  READ getFixBlackStripesForwardSteps  WRITE setFixBlackStripesForwardSteps  NOTIFY fixBlackStripesForwardStepsChanged)
     Q_PROPERTY(int               fixBlackStripesBackwardSteps READ getFixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps NOTIFY fixBlackStripesBackwardStepsChanged)
@@ -85,6 +87,7 @@ public:
     DataProcessor* getDataProcessorPtr() const;
     DeviceManagerWrapper* getDeviceManagerWrapperPtr() const;
     LinkManagerWrapper* getLinkManagerWrapperPtr() const;
+    DeviceTopologyModel* getDeviceTopologyModelPtr() const;
 #ifdef SEPARATE_READING
     QString getTryOpenedfilePath() const;
     void stopDeviceManagerThread() const;
@@ -108,6 +111,16 @@ public:
     int  getFixBlackStripesForwardSteps() const;
     int  getFixBlackStripesBackwardSteps() const;
     bool getCsvLogging() const;
+    Q_INVOKABLE QString klfLogFilePath() const;
+    Q_INVOKABLE void    revealInFolder(const QString& path);
+    Q_INVOKABLE QString csvLogFilePath() const;
+    Q_INVOKABLE qint64  activeLogSizeBytes() const;
+    Q_INVOKABLE int     activeLogDurationSecs() const;
+    Q_INVOKABLE void    setLogDirectory(const QString& dir);
+    Q_INVOKABLE QString logDirectory() const;
+    Q_INVOKABLE QString logDirectoryUrl() const;
+    Q_INVOKABLE bool    prepareLogDirectory(const QString& dir);
+    Q_INVOKABLE void    powerOffSystem();
     bool getUseGPS() const;
     bool getNeedForceZooming() const { return needForceZooming_; }
 
@@ -148,6 +161,7 @@ public slots:
     Q_INVOKABLE bool csvExportFieldEnabled(const QString& key) const;
     Q_INVOKABLE void setCsvExportField(const QString& key, bool enabled);
     Q_INVOKABLE void resetCsvExportFields();
+    Q_INVOKABLE QString defaultExportDirectory() const;
     void refreshMosaicProcessing();
     void setPlotStartLevel(int level);
     void setPlotStopLevel(int level);
@@ -164,6 +178,7 @@ public slots:
     void connectOpenedLinkAsFlasher(QString pn);
     void setFlasherData(QString data);
     void releaseFlasherLink();
+    void refreshFlasherProducts();          // refresh the factory device list
 #endif
 
     Q_INVOKABLE void setPosZeroing(bool state);
@@ -209,13 +224,16 @@ public slots:
     Q_INVOKABLE void setDeferTilesOnMetered(bool defer);
     Q_INVOKABLE bool getMapTileLoadingEnabled() const;
     Q_INVOKABLE void setMapTileLoadingEnabled(bool enabled);
+    Q_INVOKABLE bool getBringWindowToFrontEnabled() const;
+    Q_INVOKABLE void setBringWindowToFrontEnabled(bool enabled);
     Q_INVOKABLE void moveAppToBackground();
-    Q_INVOKABLE void bringWindowToFront(); // raise+activate main window (wired to the OS-level raise in main.cpp)
+    Q_INVOKABLE void bringWindowToFront(); // raise+activate main window (wired to the OS-level raise in main.cpp), gated by bringWindowToFrontEnabled_
     Q_INVOKABLE void requestDismissTransientUi();
     Q_INVOKABLE void setActiveTransientUi(QObject* who);
 
 signals:
     void bringWindowToFrontRequested();
+    void bringWindowToFrontEnabledChanged();
     void activeTransientUiChanged(QObject* who);
     void csvExportFieldsReset();   // emitted by resetCsvExportFields() so UI can rebuild
     void connectionChanged(bool duplex = false);
@@ -319,6 +337,7 @@ private:
     std::unique_ptr<HotkeysController> hotkeysController_;
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
+    std::unique_ptr<DeviceTopologyModel> deviceTopologyModelPtr_;
     InternetManager* internetManager_;
     QThread* internetThread_;
     std::unique_ptr<map::TileManager> tileManager_;
@@ -365,6 +384,7 @@ private:
     bool metered_ = false;
     bool deferTilesOnMetered_ = true;
     bool mapTileLoadingEnabled_ = true;
+    bool bringWindowToFrontEnabled_ = true;
     bool needForceZooming_ = false; // debug
 
     bool fixBlackStripesState_;
@@ -378,6 +398,8 @@ private:
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)
     Q_PROPERTY(int flasherIdInfo READ flasherIdInfo NOTIFY dev_flasher_changed)
+    Q_PROPERTY(QVariantList flasherProducts READ flasherProducts NOTIFY flasherProductsChanged)
+    Q_PROPERTY(bool flasherHasToken READ flasherHasToken NOTIFY flasherHasTokenChanged)
 private:
     DeviceFlasher dev_flasher_;
     int dev_flasher_msg_id_ = 0;
@@ -385,12 +407,17 @@ private:
 
     QString flasherTextInfo() { return dev_flasher_msg_; }
     int flasherIdInfo() { return dev_flasher_msg_id_; }
+    QVariantList flasherProducts() { return dev_flasher_.products(); }
+    bool flasherHasToken() { return dev_flasher_.hasToken(); }
 private slots:
     void dev_flasher_rcv(QString msg, int num);
 signals:
     void dev_flasher_changed();
+    void flasherProductsChanged();
+    void flasherHasTokenChanged();
 #endif
 
+private:   // reset access after the (signals-terminated) FLASHER block — else these leak into signals: under -DFLASHER
     QVector<QMetaObject::Connection> dataProcessorConnections_;
     QVector<QMetaObject::Connection> dataHorizonConnections_;
 

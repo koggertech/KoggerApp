@@ -29,7 +29,7 @@ Item {
         radius: Tokens.radiusMd
         color: crowMouse.containsMouse ? paneFrame.menuButtonHoverColor
                : (crow.selected ? AppPalette.accentBg : paneFrame.menuButtonFillColor)
-        border.width: 1
+        border.width: 0
         border.color: crowMouse.containsMouse ? paneFrame.menuButtonHoverBorderColor
                                               : paneFrame.menuButtonBorderColor
 
@@ -108,7 +108,7 @@ Item {
                 height: paneFrame.centerQuickIconSize
                 Layout.preferredWidth: paneFrame.centerQuickIconSize
                 Layout.preferredHeight: paneFrame.centerQuickIconSize
-                borderWidth: 1
+                borderWidth: 0
                 fillColor: paneFrame.menuButtonFillColor
                 fillHoverColor: paneFrame.menuButtonHoverColor
                 fillPressedColor: paneFrame.menuButtonPressedColor
@@ -130,7 +130,7 @@ Item {
                 height: paneFrame.centerQuickIconSize
                 Layout.preferredWidth: paneFrame.centerQuickIconSize
                 Layout.preferredHeight: paneFrame.centerQuickIconSize
-                borderWidth: 1
+                borderWidth: 0
                 fillColor: paneFrame.menuButtonFillColor
                 fillHoverColor: paneFrame.menuButtonHoverColor
                 fillPressedColor: paneFrame.menuButtonPressedColor
@@ -146,11 +146,12 @@ Item {
 
             KCircleIconButton {
                 id: movePaneButton
+                visible: paneFrame.store.leafCount() > 1
                 width: paneFrame.centerQuickIconSize
                 height: paneFrame.centerQuickIconSize
                 Layout.preferredWidth: paneFrame.centerQuickIconSize
                 Layout.preferredHeight: paneFrame.centerQuickIconSize
-                borderWidth: 1
+                borderWidth: 0
                 fillColor: paneFrame.menuButtonFillColor
                 fillHoverColor: paneFrame.menuButtonHoverColor
                 fillPressedColor: paneFrame.menuButtonPressedColor
@@ -186,11 +187,12 @@ Item {
 
             KCircleIconButton {
                 id: deletePaneButton
+                visible: paneFrame.store.leafCount() > 1
                 width: paneFrame.centerQuickIconSize
                 height: paneFrame.centerQuickIconSize
                 Layout.preferredWidth: paneFrame.centerQuickIconSize
                 Layout.preferredHeight: paneFrame.centerQuickIconSize
-                borderWidth: 1
+                borderWidth: 0
                 fillColor: paneFrame.menuButtonFillColor
                 fillHoverColor: paneFrame.menuButtonHoverColor
                 fillPressedColor: paneFrame.menuButtonPressedColor
@@ -319,7 +321,7 @@ Item {
         y: (parent.height - height) / 2
         radius: Tokens.radiusLg
         color: AppPalette.bg
-        border.width: 1
+        border.width: 0
         border.color: AppPalette.borderHover
 
         MouseArea {
@@ -411,7 +413,7 @@ Item {
         visible: paneFrame.store.editableMode && paneFrame.store.modePickerLeafId === -1 && paneFrame.canAddPane
         width: paneFrame.edgeAddButtonSize
         height: paneFrame.edgeAddButtonSize
-        borderWidth: 1
+        borderWidth: 0
         fillColor: paneFrame.menuButtonFillColor
         fillHoverColor: paneFrame.menuButtonHoverColor
         fillPressedColor: paneFrame.menuButtonPressedColor
@@ -432,7 +434,7 @@ Item {
         visible: paneFrame.store.editableMode && paneFrame.store.modePickerLeafId === -1 && paneFrame.canAddPane
         width: paneFrame.edgeAddButtonSize
         height: paneFrame.edgeAddButtonSize
-        borderWidth: 1
+        borderWidth: 0
         fillColor: paneFrame.menuButtonFillColor
         fillHoverColor: paneFrame.menuButtonHoverColor
         fillPressedColor: paneFrame.menuButtonPressedColor
@@ -453,7 +455,7 @@ Item {
         visible: paneFrame.store.editableMode && paneFrame.store.modePickerLeafId === -1 && paneFrame.canAddPane
         width: paneFrame.edgeAddButtonSize
         height: paneFrame.edgeAddButtonSize
-        borderWidth: 1
+        borderWidth: 0
         fillColor: paneFrame.menuButtonFillColor
         fillHoverColor: paneFrame.menuButtonHoverColor
         fillPressedColor: paneFrame.menuButtonPressedColor
@@ -474,7 +476,7 @@ Item {
         visible: paneFrame.store.editableMode && paneFrame.store.modePickerLeafId === -1 && paneFrame.canAddPane
         width: paneFrame.edgeAddButtonSize
         height: paneFrame.edgeAddButtonSize
-        borderWidth: 1
+        borderWidth: 0
         fillColor: paneFrame.menuButtonFillColor
         fillHoverColor: paneFrame.menuButtonHoverColor
         fillPressedColor: paneFrame.menuButtonPressedColor
@@ -617,7 +619,7 @@ Item {
         height: verticalStrip ? edgePanelColumn.implicitHeight + 8 : edgePanelRow.implicitHeight + 8
         radius: 8
         color: paneFrame.menuPanelColor
-        border.width: 1
+        border.width: 0
         border.color: paneFrame.menuButtonBorderColor
         z: 30
 

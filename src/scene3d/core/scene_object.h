@@ -130,7 +130,7 @@ public:
     Cube bounds() const;
     AbstractEntityDataFilter* filter() const;
     int primitiveType() const;
-    QVector3D position() const;
+    virtual QVector3D position() const;
     static void qmlDeclare();
 
 protected:

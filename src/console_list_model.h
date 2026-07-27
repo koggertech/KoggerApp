@@ -19,6 +19,9 @@ public:
 
     void init();
 
+    Q_INVOKABLE void setMaxRows(int rows);
+    Q_INVOKABLE int maxRows() const { return _maxRows; }
+
     enum Roles : uint8_t {
         Visibility,
         Time,
@@ -33,9 +36,11 @@ private:
     Q_DISABLE_COPY(ConsoleListModel)
 
     static constexpr int kMaxRows = 4000;
+    static constexpr int kMinRows = 50;
     static constexpr int kTrimBatch = 256;
 
     int _size = 0;
+    int _maxRows = kMaxRows;
     int _categories = 0;
 
     QVector<int> _roles;

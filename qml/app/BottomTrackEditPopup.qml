@@ -10,8 +10,8 @@ BasePanePopup {
 
     required property var store
 
-    readonly property real _s: 1.5 * (theme ? theme.resCoeff : 1.0)
-    readonly property int _controlH: Math.round(36 * _s) - 2
+    readonly property real _s: AppPalette.appScale
+    readonly property int _controlH: Math.round(36 * _s)
     readonly property int _sidePad: Math.round(3 * _s)
     readonly property int _gap: Math.round(6 * _s)
 
@@ -36,6 +36,9 @@ BasePanePopup {
     fullscreenMode: false
     panelColor: "transparent"
     panelBorderColor: "transparent"
+    ghostFollowsContent: true
+    ghostGripAndContent: true
+    ghostRadius: _pillW / 2
     headerDragBarLength: Math.max(Math.round(24 * _s), _pillW - _sidePad * 2)
     siblingSnapAlignTop: true
     snapEdgeCenters: true
@@ -97,8 +100,7 @@ BasePanePopup {
         anchors.fill: parent
         radius: width / 2
         color: AppPalette.bg
-        border.width: 1
-        border.color: AppPalette.border
+        border.width: 0
 
         Column {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -110,7 +112,6 @@ BasePanePopup {
                 height: root._controlH
                 iconSource: "qrc:/icons/ui/x.svg"
                 iconTintColor: AppPalette.text
-                toolTipText: qsTr("Close")
                 fillColor:        AppPalette.card
                 fillHoverColor:   AppPalette.cardHover
                 fillPressedColor: AppPalette.bgDeep
