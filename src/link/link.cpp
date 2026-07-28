@@ -573,9 +573,10 @@ void Link::onCheckedTimerEnd()
         emit isReceivesDataChanged(uuid_);
     }
 
-    // autosearch
+    // autosearch; boot-attributed links have their baudrate managed externally — never cycle it
+    // here (the protocol on them stays silent for seconds at a time, which looks like a dead link)
     bool isAutoSpeedSelection = autoSpeedSelection_ || (!autoSpeedSelection_ && onUpgradingFirmware_) || localGhostIgnoreCount_;
-    bool isNeedSearch = isAutoSpeedSelection && !isReceivesData_ && !timeoutCnt_ && !baudrateSearchList_.empty();
+    bool isNeedSearch = attribute_ == LinkAttribute::kLinkAttributeNone && isAutoSpeedSelection && !isReceivesData_ && !timeoutCnt_ && !baudrateSearchList_.empty();
 
     if (isNeedSearch) {
         timeoutCnt_ = linkNumTimeoutsSmall;
