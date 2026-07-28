@@ -467,25 +467,25 @@ ApplicationWindow {
     }
 
     Shortcut {
-        sequence: StandardKey.MoveToNextPage
+        sequences: [ StandardKey.MoveToNextPage ]
         context: Qt.ApplicationShortcut
         enabled: root._kbdScrollActive
         onActivated: root._kbdScroll("down")
     }
     Shortcut {
-        sequence: StandardKey.MoveToPreviousPage
+        sequences: [ StandardKey.MoveToPreviousPage ]
         context: Qt.ApplicationShortcut
         enabled: root._kbdScrollActive
         onActivated: root._kbdScroll("up")
     }
     Shortcut {
-        sequence: StandardKey.MoveToStartOfLine
+        sequences: [ StandardKey.MoveToStartOfLine ]
         context: Qt.ApplicationShortcut
         enabled: root._kbdScrollActive
         onActivated: root._kbdScroll("top")
     }
     Shortcut {
-        sequence: StandardKey.MoveToEndOfLine
+        sequences: [ StandardKey.MoveToEndOfLine ]
         context: Qt.ApplicationShortcut
         enabled: root._kbdScrollActive
         onActivated: root._kbdScroll("bottom")
