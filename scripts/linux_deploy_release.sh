@@ -36,6 +36,14 @@ export QML_SOURCES_PATHS="$QML_DIR"
 # 1.5. Set linuxdeploy, linuxdeploy-plugin-qt
 LINUXDEPLOY="$OUT_DIR/linuxdeploy-x86_64.AppImage"
 LINUXDEPLOY_QT="$OUT_DIR/linuxdeploy-plugin-qt-x86_64.AppImage"
+# 1.6. App version (single source: resources/version.txt) -> AppImage file name
+VERSION="$(tr -d '\r\n' < "$ROOT_DIR/resources/version.txt")"
+if ! printf '%s' "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+  echo "ERROR: invalid version in resources/version.txt: '$VERSION'" >&2
+  exit 1
+fi
+OUTPUT="KoggerApp-${VERSION}-x86_64.AppImage"
+export VERSION OUTPUT
 ############################################
 
 
@@ -121,7 +129,7 @@ QML_SOURCES_PATHS="$QML_DIR" \
   --plugin qt \
   -o appimage
 # 6.1 Copy AppImage to $OUT_DIR
-mv KoggerApp-x86_64.AppImage "$OUT_DIR"/
+mv "$OUTPUT" "$OUT_DIR"/
 ############################################
 
 
@@ -132,8 +140,8 @@ echo "==> Complete! Checking results in $OUT_DIR"
 ls -lh "$OUT_DIR"/*.AppImage || echo "AppImage not finded!"
 echo
 echo "For run KoggerApp AppImage try:"
-echo "  chmod +x $OUT_DIR/KoggerApp*.AppImage"
-echo "  ./$OUT_DIR/KoggerApp*.AppImage"
+echo "  chmod +x $OUT_DIR/$OUTPUT"
+echo "  $OUT_DIR/$OUTPUT"
 echo
 echo "Done."
 ############################################
