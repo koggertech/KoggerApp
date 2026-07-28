@@ -30,7 +30,7 @@ Item {
         color: AppPalette.bg
     }
 
-    // ── Plot2D (dedicated indx=6, settings persisted under "Plot2D_6") ──
+    // ── Plot2D (dedicated indx=6) ──
     // Smooth resize on window fullscreen toggle — mirrors PaneFrame's animation.
     Loader {
         id: plot2DLoader
