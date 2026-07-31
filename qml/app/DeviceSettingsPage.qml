@@ -108,7 +108,13 @@ Column {
     readonly property bool _isNanoSSS: !!(dev && dev.devName === "NanoSSS")
     readonly property bool _isBasicSonar: _isBasic2D || _isNanoSSS
     readonly property bool _isRecorder: !!(dev && dev.isRecorder)
-    readonly property bool _hasCut: _isBasicSonar || _isRecorder
+    readonly property bool _isUsbl: !!(dev && (dev.isUSBL || dev.isUSBLBeacon))
+    // Without a cut the panel has no header and advReveal.open is permanently true, so
+    // Actions / Settings file / Upgrade sit open below the operating groups and the
+    // "Advanced settings" row is a zero-height, unclickable ghost. USBL gets the cut for
+    // the same reason the basic sonars do: those three are firmware and maintenance
+    // actions, not operating controls.
+    readonly property bool _hasCut: _isBasicSonar || _isRecorder || _isUsbl
     property bool _engExpanded: false
 
     readonly property var _warnings: {

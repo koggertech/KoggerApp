@@ -16,6 +16,12 @@ DeviceSettingsGroup {
     // the `time` field.
     property string clockTick: ""
 
+    // VESTIGIAL. The store now REPLACES its whole state on every edit (UsblPlanLogic.js),
+    // so `plan.groups`, `plan.trigger()` and friends already change identity and bindings
+    // re-evaluate on their own. The few `var _d = _rev` reads left below are harmless
+    // no-ops kept to avoid churning working bindings -- do not copy the pattern.
+    readonly property int _rev: plan ? plan.rev : 0
+
     title: qsTr("USBL")
     titlePixelSize: 13
     stateKey: "dev.usbl"
@@ -192,12 +198,12 @@ DeviceSettingsGroup {
         StatCell {
             width: parent.cellW
             value: usblGroup._hasFix ? usblGroup._num(dataset.lastUsblAzimuth, 1, "°") : "—"
-            label: qsTr("Azimuth")
+            label: qsTr("Azimuth, °")
         }
         StatCell {
             width: parent.cellW
             value: usblGroup._hasFix ? usblGroup._num(dataset.lastUsblElevation, 1, "°") : "—"
-            label: qsTr("Elevation")
+            label: qsTr("Elevation, °")
         }
         StatCell {
             width: parent.cellW
@@ -221,8 +227,8 @@ DeviceSettingsGroup {
         width: parent.width; height: Tokens.controlHSm; spacing: Tokens.spaceSm
         Text {
             text: plan && plan.role === "initiator"
-                  ? qsTr("Remote nodes — whom we interrogate")
-                  : qsTr("Remote nodes — whose requests we accept")
+                  ? qsTr("Nodes we interrogate")
+                  : qsTr("Nodes that interrogate us")
             color: AppPalette.textMuted
             font.pixelSize: Tokens.fontSm; font.bold: true
             width: Math.max(0, parent.width - _addNodeBtn.width - parent.spacing)
@@ -255,7 +261,10 @@ DeviceSettingsGroup {
         }
 
         Repeater {
-            model: plan ? plan.nodes : []
+            // nodesView, not nodes: the view is rebuilt on every `rev` bump, so a step
+            // added or removed actually reaches the card. Binding to `nodes` gave each
+            // delegate a live node object whose in-place edits QML cannot see.
+            model: plan ? plan.nodesView : []
             delegate: Rectangle {
                 id: nodeCard
                 required property var modelData
@@ -285,7 +294,7 @@ DeviceSettingsGroup {
                             onToggled: if (plan) plan.toggleNode(nodeCard._n.id)
                         }
                         Text {
-                            text: qsTr("Addr")
+                            text: qsTr("Address")
                             color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -298,9 +307,9 @@ DeviceSettingsGroup {
                             writeBack: function (v) { if (plan) plan.setNodeAddr(nodeCard._n.id, v) }
                         }
                         Text {
-                            text: nodeCard._n.refs.length
-                                  ? qsTr("%1 cmd").arg(nodeCard._n.refs.length)
-                                  : qsTr("no commands, cmd = 0 implicit")
+                            text: nodeCard._n.cmdCount
+                                  ? qsTr("%1 command(s)").arg(nodeCard._n.cmdCount)
+                                  : qsTr("no commands")
                             color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
                             width: Math.max(0, parent.width - _nodeSw.width - _addrSpin.width
                                             - _stepCombo.width - _delNode.width - parent.spacing * 5
@@ -311,9 +320,14 @@ DeviceSettingsGroup {
                         Item { width: 1; height: 1 }
                         KCombo {
                             id: _stepCombo
-                            readonly property var _avail: plan
-                                ? plan.groups.filter(function (g) { return plan.schedulable(g) }) : []
-                            model: [qsTr("+ step")].concat(_avail.map(function (g) {
+                            readonly property var _avail: {
+                                var _d = usblGroup._rev
+                                return plan
+                                    ? plan.groups.filter(function (g) { return plan.schedulable(g) })
+                                    : []
+                            }
+                            model: [qsTr("+ Command")].concat(_avail.map(function (g) {
+                                var _d = usblGroup._rev
                                 return "cmd " + plan.slotLabel(g)
                             }))
                             currentIndex: 0
@@ -342,13 +356,19 @@ DeviceSettingsGroup {
                     Flow {
                         width: parent.width
                         spacing: Tokens.spaceXs
-                        visible: nodeCard._n.refs.length > 0
+                        visible: nodeCard._n.steps.length > 0
                         Repeater {
-                            model: nodeCard._n.refs
+                            model: nodeCard._n.steps
                             delegate: Rectangle {
+                                // Needs an id: QML property lookup goes own-properties ->
+                                // ids in the component -> component root. An ANCESTOR's
+                                // properties are not in scope, so a bare `_cur` inside the
+                                // Texts below resolves to nothing at runtime.
+                                id: _refChip
                                 required property var modelData
                                 required property int index
-                                readonly property var _g: plan ? plan.groupById(modelData.group) : null
+                                // Colour comes from the snapshot; groupById()/colorOf() in a
+                                // binding would not re-run when the plan changes.
                                 readonly property bool _cur: usblGroup._curStep
                                                              && usblGroup._curStep.nodeId === nodeCard._n.id
                                                              && usblGroup._curStep.groupId === modelData.group
@@ -357,7 +377,7 @@ DeviceSettingsGroup {
                                 color: _cur ? AppPalette.accent : AppPalette.card
                                 border.width: Tokens.cardBorderWidth
                                 border.color: _cur ? AppPalette.accentBorder
-                                            : (_g ? plan.colorOf(_g) : AppPalette.border)
+                                                   : _refChip.modelData.color
                                 implicitWidth: _chip.implicitWidth + Tokens.spaceMd * 2
                                 implicitHeight: Math.round(24 * AppPalette.scale)
                                 Row {
@@ -366,13 +386,13 @@ DeviceSettingsGroup {
                                     spacing: Tokens.spaceXs
                                     Text {
                                         text: "cmd " + modelData.cmd
-                                        color: _cur ? AppPalette.accentText : AppPalette.textStrong
+                                        color: _refChip._cur ? AppPalette.accentText : AppPalette.textStrong
                                         font.pixelSize: Tokens.fontXs; font.bold: true
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                     Text {
                                         text: "×"
-                                        color: _cur ? AppPalette.accentText : AppPalette.textMuted
+                                        color: _refChip._cur ? AppPalette.accentText : AppPalette.textMuted
                                         font.pixelSize: Tokens.fontMd
                                         anchors.verticalCenter: parent.verticalCenter
                                         KTapArea {
@@ -396,8 +416,8 @@ DeviceSettingsGroup {
         color: AppPalette.textMuted
         font.pixelSize: Tokens.fontXs
         text: plan && plan.role === "initiator"
-              ? qsTr("Projects to the ping schedule. A node with no commands is interrogated once with cmd = 0.")
-              : qsTr("Projects to the response address filter — the same list, a different frame.")
+              ? qsTr("A node with no commands is interrogated once, with command 0.")
+              : qsTr("These are the addresses this device will answer.")
     }
 
     Rectangle { width: parent.width; height: 1; color: AppPalette.border }
@@ -489,6 +509,10 @@ DeviceSettingsGroup {
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         Rectangle {
+                            // id needed so the child Text can reach _cur: ancestor
+                            // properties are not in QML scope, and a bare `_cur` there is a
+                            // runtime ReferenceError that no compile step catches.
+                            id: _stepChip
                             readonly property bool _cur: plan && plan.schedule.length
                                 && usblGroup._stepIndex >= 0
                                 && (usblGroup._stepIndex % plan.schedule.length) === index
@@ -503,9 +527,9 @@ DeviceSettingsGroup {
                                 id: _stepTxt
                                 anchors.centerIn: parent
                                 text: qsTr("addr %1 · cmd %2").arg(modelData.addr).arg(modelData.cmd)
-                                color: _cur ? AppPalette.accentText : AppPalette.text
+                                color: _stepChip._cur ? AppPalette.accentText : AppPalette.text
                                 font.pixelSize: Tokens.fontXs
-                                font.bold: _cur
+                                font.bold: _stepChip._cur
                             }
                         }
                     }
@@ -535,10 +559,10 @@ DeviceSettingsGroup {
                 from: 100; to: 5000; stepSize: 100; value: 700
                 implicitWidth: Math.round(96 * AppPalette.scale)
                 anchors.verticalCenter: parent.verticalCenter
-                toolTipText: qsTr("Host-driven step interval")
+                toolTipText: qsTr("Interval between steps, timed by the app")
             }
             Text {
-                text: qsTr("ms · %1 ping frames per cycle").arg(plan ? plan.runFrames : 0)
+                text: qsTr("ms between steps")
                 color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
                 width: Math.max(0, parent.width - _dwell.width - Math.round(60 * AppPalette.scale) - parent.spacing * 2)
                 elide: Text.ElideRight

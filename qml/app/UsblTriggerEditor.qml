@@ -16,8 +16,23 @@ Rectangle {
     property int groupId: -1
     property string which: "request"   // "request" (ev 1) | "response" (ev 2)
 
-    readonly property var _t: (plan && groupId >= 0) ? plan.trigger(groupId, which) : null
-    readonly property int _sections: plan ? plan.sectionCount(_t) : 0
+    // VESTIGIAL. The store now REPLACES its whole state on every edit (UsblPlanLogic.js),
+    // so `plan.groups`, `plan.trigger()` and friends already change identity and bindings
+    // re-evaluate on their own. The few `var _d = _rev` reads left below are harmless
+    // no-ops kept to avoid churning working bindings -- do not copy the pattern.
+    readonly property int _rev: plan ? plan.rev : 0
+
+    // No copy needed: the store replaces its state on every edit, so plan.trigger() returns a
+    // new object each time and every `_t.recv` / `_t.adv.*` binding re-evaluates. Writes go
+    // through plan.setSectionField()/setDisposition() by id, never through this.
+    readonly property var _t: {
+        var _d = plan ? plan.st : null
+        return (plan && groupId >= 0) ? plan.trigger(groupId, which) : null
+    }
+    readonly property int _sections: {
+        var _d = root._rev
+        return plan ? plan.sectionCount(_t) : 0
+    }
     readonly property int _ev: which === "request" ? 1 : 2
     // Inbound wiring accent. Not an AppPalette token yet — the palette has no hue distinct
     // from `accent` for a second semantic channel; promote it if this UI ships.
@@ -51,7 +66,8 @@ Rectangle {
         Row {
             id: _fr
             spacing: Tokens.spaceSm
-            height: parent.height
+            // No `height: parent.height` -- the enclosing Row derives its height from its
+            // children, so that binding is a feedback loop. verticalCenter aligns it.
             anchors.verticalCenter: parent.verticalCenter
         }
     }
@@ -65,21 +81,20 @@ Rectangle {
         Row {
             width: parent.width; spacing: Tokens.spaceSm
             Text {
+                // No "(ev 1)"/"(ev 2)": that is the wire's eventFilter value, the same kind
+                // of implementation leak as the struct name. root._ev still carries it.
                 text: root.which === "request"
-                      ? qsTr("Handle request  (ev 1)") : qsTr("Handle reply  (ev 2)")
+                      ? qsTr("Handle request") : qsTr("Handle reply")
                 color: AppPalette.textStrong
                 font.pixelSize: Tokens.fontXs; font.bold: true
                 anchors.verticalCenter: parent.verticalCenter
             }
-            Text {
-                text: root.plan ? root.plan.structOf(root._t) : ""
-                color: root._violet
-                font.pixelSize: Tokens.fontXs
+            // Spacer, not a label: which wire struct this projects to is an implementation
+            // detail (structOf still decides it in _apply), so it stays out of the UI.
+            Item {
                 width: Math.max(0, parent.width - Math.round(130 * AppPalette.scale)
                                 - Tokens.controlHSm - parent.spacing * 2)
-                horizontalAlignment: Text.AlignRight
-                elide: Text.ElideRight
-                anchors.verticalCenter: parent.verticalCenter
+                height: 1
             }
             KCircleIconButton {
                 glyph: "×"
@@ -99,8 +114,11 @@ Rectangle {
             width: parent.width
             buttonHeight: Math.round(24 * AppPalette.scale)
             fontPixelSize: Tokens.fontXs
+            // KTabBar reads option.label (optionLabelAt falls back to String(option), so a
+            // "text" key silently renders "[object Object]"). Same shape the rest of the
+            // page uses: { label, value }.
             options: root.plan ? root.plan.dispositions.map(function (d) {
-                return { "value": d.id, "text": d.label }
+                return { "label": d.label, "value": d.id }
             }) : []
             currentValue: root._t ? root._t.disposition : "ack"
             onValueSelected: function (v) {
@@ -116,10 +134,17 @@ Rectangle {
             ]
             delegate: Rectangle {
                 required property var modelData
+                // id so the nested FieldRows can reach _s/_fmt: ancestor properties are not in
+                // QML scope. These read fine on this Rectangle's own bindings and fail inside
+                // its children, which is why nothing catches it at build time.
+                id: _payCard
                 readonly property var _s: root._t
                     ? (modelData.side === "recv" ? root._t.recv : root._t.send) : null
-                readonly property var _fmt: (root.plan && _s)
-                    ? root.plan.findBy(root.plan.formats, _s.fmt) : null
+                readonly property var _fmt: {
+                    var _d = root._rev
+                    return (root.plan && _payCard._s)
+                        ? root.plan.findBy(root.plan.formats, _payCard._s.fmt) : null
+                }
                 visible: !!_s
                 width: parent.width
                 radius: Tokens.radiusSm
@@ -170,9 +195,9 @@ Rectangle {
                         KCombo {
                             model: root.plan ? root.plan.formats.map(function (f) { return f.label }) : []
                             currentIndex: {
-                                if (!root.plan || !_s) return 0
+                                if (!root.plan || !_payCard._s) return 0
                                 for (var i = 0; i < root.plan.formats.length; ++i)
-                                    if (root.plan.formats[i].id === _s.fmt) return i
+                                    if (root.plan.formats[i].id === _payCard._s.fmt) return i
                                 return 0
                             }
                             implicitWidth: Math.round(170 * AppPalette.scale)
@@ -186,10 +211,10 @@ Rectangle {
 
                     FieldRow {
                         label: qsTr("expect")
-                        visible: modelData.side === "recv" && !!(_fmt && _fmt.sized)
+                        visible: modelData.side === "recv" && !!(_payCard._fmt && _payCard._fmt.sized)
                         UsblSpin {
                             from: 0; to: 4096; stepSize: 8
-                            devValue: _s ? _s.bits : 0
+                            devValue: _payCard._s ? _payCard._s.bits : 0
                             implicitWidth: Math.round(96 * AppPalette.scale)
                             anchors.verticalCenter: parent.verticalCenter
                             writeBack: function (v) { root._setSection("recv", "bits", v) }
@@ -203,17 +228,20 @@ Rectangle {
 
                     FieldRow {
                         label: qsTr("bytes")
-                        visible: modelData.side === "send" && !!(_fmt && _fmt.sized)
+                        visible: modelData.side === "send" && !!(_payCard._fmt && _payCard._fmt.sized)
                         UsblHexField {
-                            value: _s ? _s.payload : ""
+                            value: _payCard._s ? _payCard._s.payload : ""
                             placeholder: qsTr("hex bytes")
                             implicitWidth: Math.round(130 * AppPalette.scale)
                             anchors.verticalCenter: parent.verticalCenter
                             onCommitted: function (v) { root._setSection("send", "payload", v) }
                         }
                         Text {
-                            text: qsTr("%1 bit").arg(root.plan && _s
-                                ? root.plan.payloadBytes(_s.payload) * 8 : 0)
+                            text: {
+                                var _d = root._rev
+                                return qsTr("%1 bit").arg(root.plan && _payCard._s
+                                    ? root.plan.payloadBytes(_payCard._s.payload) * 8 : 0)
+                            }
                             color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -280,7 +308,7 @@ Rectangle {
             }
 
             FieldRow {
-                label: qsTr("role")
+                label: qsTr("direction")
                 KCombo {
                     model: [qsTr("Swap request/response"), qsTr("Keep same")]
                     currentIndex: (root._t && root._t.adv.eventAction === "Same") ? 1 : 0

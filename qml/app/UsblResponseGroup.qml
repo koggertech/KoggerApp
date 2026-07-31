@@ -139,6 +139,6 @@ DeviceSettingsGroup {
         wrapMode: Text.WordWrap
         color: AppPalette.textMuted
         font.pixelSize: Tokens.fontXs
-        text: qsTr("ID_USBL_CONTROL has no read-back, so these values show what the host last sent, not what the device holds.")
+        text: qsTr("The device cannot report these back, so this shows what was last sent — not necessarily what the device holds.")
     }
 }

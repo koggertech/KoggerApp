@@ -13,14 +13,24 @@ DeviceSettingsGroup {
     property var dev: null
     property var plan: null
 
+    // VESTIGIAL. The store now REPLACES its whole state on every edit (UsblPlanLogic.js),
+    // so `plan.groups`, `plan.trigger()` and friends already change identity and bindings
+    // re-evaluate on their own. The few `var _d = _rev` reads left below are harmless
+    // no-ops kept to avoid churning working bindings -- do not copy the pattern.
+    readonly property int _rev: plan ? plan.rev : 0
+
     title: qsTr("USBL command plan")
     titlePixelSize: 13
     stateKey: "dev.usblPlan"
     collapsedByDefault: true
     visible: !!(dev && (dev.isUSBL || dev.isUSBLBeacon))
 
+    // The active group. No copy needed: the store replaces its whole state on every edit, so
+    // `plan.groups` is a new array of new objects each time and every binding reading
+    // `_g.ini.reply` re-evaluates by itself. Never write through this — go via the store.
     readonly property var _g: (plan && plan.groups.length)
-                              ? plan.groups[Math.min(plan.activeGroup, plan.groups.length - 1)] : null
+                              ? plan.groups[Math.min(plan.activeGroup, plan.groups.length - 1)]
+                              : null
     property string _slotNote: qsTr("Exclusive — taking a slot removes it from the group that held it.")
     // Inbound wiring accent — see UsblTriggerEditor.
     readonly property color _violet: AppPalette.isDark ? "#A78BFA" : "#7C5CD3"
@@ -95,7 +105,9 @@ DeviceSettingsGroup {
         Row {
             id: _fr
             spacing: Tokens.spaceSm
-            height: parent.height
+            // No `height: parent.height` -- the enclosing Row sizes itself from its
+            // children, so binding back to it is a feedback loop. verticalCenter already
+            // does the alignment this was reaching for.
             anchors.verticalCenter: parent.verticalCenter
         }
     }
@@ -162,24 +174,12 @@ DeviceSettingsGroup {
             x: Tokens.spaceMd; y: Tokens.spaceMd
             width: parent.width - 2 * Tokens.spaceMd
             spacing: Tokens.spaceSm
-            Text {
-                text: String(plan ? plan.setupFrames : 0)
-                color: AppPalette.accent
-                font.pixelSize: Tokens.fontXl; font.bold: true
-            }
-            Text {
-                width: parent.width; wrapMode: Text.WordWrap
-                color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
-                text: plan && plan.role === "initiator"
-                      ? qsTr("config frames — one per reply handler slot, sent once on Apply")
-                      : qsTr("config frames — one per request handler slot, plus address filter and response enable")
-            }
             // Releases are destructive on the device, so they are named before you press it.
             Text {
                 visible: !!(plan && plan.releaseFrames > 0)
                 width: parent.width; wrapMode: Text.WordWrap
                 color: AppPalette.linkIdleText; font.pixelSize: Tokens.fontXs; font.bold: true
-                text: qsTr("+ %1 slot(s) switched off — written earlier, no longer in the plan")
+                text: qsTr("%1 slot(s) will be switched off — configured earlier, no longer in this plan")
                       .arg(plan ? plan.releaseFrames : 0)
             }
             UsblButton {
@@ -259,7 +259,7 @@ DeviceSettingsGroup {
             anchors.verticalCenter: parent.verticalCenter
         }
         Text {
-            text: qsTr("8 hardware slots · one config frame each")
+            text: qsTr("8 hardware slots")
             color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
             width: Math.max(0, parent.width - Math.round(90 * AppPalette.scale) - parent.spacing)
             horizontalAlignment: Text.AlignRight
@@ -332,13 +332,19 @@ DeviceSettingsGroup {
             id: _tabRow
             spacing: Tokens.spaceXxs
             Repeater {
-                model: plan ? plan.groups : []
+                // plan.groupsView, not plan.groups: the view is rebuilt whenever `rev`
+                // changes, so the chips follow in-place slot edits. Binding to `groups`
+                // and calling slotLabel() left the label frozen at whatever it was when
+                // the delegate was created.
+                model: plan ? plan.groupsView : []
                 delegate: Rectangle {
                     required property var modelData
                     required property int index
+                    // id so the Row's children can reach _sel/_c -- ancestor properties are not in
+                    // QML scope, and a bare reference there is a silent runtime ReferenceError.
+                    id: _tabChip
                     readonly property bool _sel: plan && plan.activeGroup === index
-                    readonly property color _c: plan
-                        ? plan.groupColors[index % plan.groupColors.length] : AppPalette.accent
+                    readonly property color _c: _tabChip.modelData.color
                     radius: Tokens.radiusSm
                     color: _sel ? Qt.rgba(_c.r, _c.g, _c.b, 0.14) : "transparent"
                     border.width: Tokens.cardBorderWidth
@@ -351,17 +357,17 @@ DeviceSettingsGroup {
                         spacing: Tokens.spaceXs
                         Rectangle {
                             width: Math.round(7 * AppPalette.scale); height: width; radius: 2
-                            color: _c
+                            color: _tabChip._c
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         Text {
                             text: "G" + (index + 1)
-                            color: _sel ? AppPalette.textStrong : AppPalette.textMuted
+                            color: _tabChip._sel ? AppPalette.textStrong : AppPalette.textMuted
                             font.pixelSize: Tokens.fontSm; font.bold: true
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         Text {
-                            text: plan ? plan.slotLabel(modelData) : ""
+                            text: _tabChip.modelData.label
                             color: AppPalette.textMuted
                             font.pixelSize: Tokens.fontXs
                             anchors.verticalCenter: parent.verticalCenter
@@ -399,7 +405,10 @@ DeviceSettingsGroup {
         Rectangle {
             width: parent.width; height: Math.max(2, Math.round(2 * AppPalette.scale))
             radius: height / 2
-            color: planGroup._g && plan ? plan.colorOf(planGroup._g) : AppPalette.accent
+            color: {
+                var _d = planGroup._rev
+                return (planGroup._g && plan) ? plan.colorOf(planGroup._g) : AppPalette.accent
+            }
         }
 
         Column {
@@ -417,7 +426,9 @@ DeviceSettingsGroup {
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 Text {
-                    text: qsTr("%1 of %2").arg(planGroup._g ? planGroup._g.slots.length : 0)
+                    // plan.activeSlotCount, not _g.slots.length: reading a field off the
+                    // mutable group object is not a tracked dependency, so the count froze.
+                    text: qsTr("%1 of %2").arg(plan ? plan.activeSlotCount : 0)
                                           .arg(plan ? plan.slotCount : 8)
                     color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
                     width: Math.max(0, parent.width - Math.round(70 * AppPalette.scale)
@@ -448,14 +459,24 @@ DeviceSettingsGroup {
                     delegate: Rectangle {
                         id: slotBtn
                         required property int index
-                        readonly property var _owner: planGroup.plan
-                            ? planGroup.plan.ownerOf(slotBtn.index) : null
-                        readonly property bool _mine: !!(planGroup._g && slotBtn._owner === planGroup._g)
-                        readonly property bool _taken: !!slotBtn._owner && !slotBtn._mine
+                        // Ownership comes from plan.coverage — the same rev-derived array the
+                        // coverage strip above uses, so the two can no longer disagree.
+                        // plan.ownerOf() in a binding is a function call with no dependency on
+                        // `rev`, which is why these buttons kept showing a stale selection
+                        // while the strip was correct.
+                        readonly property var _cov: (planGroup.plan
+                            && slotBtn.index < planGroup.plan.coverage.length)
+                            ? planGroup.plan.coverage[slotBtn.index] : null
+                        readonly property int _ownerId: slotBtn._cov ? slotBtn._cov.groupId : -1
+                        readonly property bool _mine: !!(planGroup._g
+                            && slotBtn._ownerId === planGroup._g.id)
+                        readonly property bool _taken: slotBtn._ownerId >= 0 && !slotBtn._mine
                         readonly property color _gc: planGroup._g && planGroup.plan
                             ? planGroup.plan.colorOf(planGroup._g) : AppPalette.accent
-                        readonly property color _oc: slotBtn._owner && planGroup.plan
-                            ? planGroup.plan.colorOf(slotBtn._owner) : AppPalette.border
+                        readonly property color _oc: (slotBtn._ownerId >= 0 && planGroup.plan)
+                            ? planGroup.plan.groupColors[slotBtn._cov.index
+                                % planGroup.plan.groupColors.length]
+                            : AppPalette.border
                         width: slotGrid.cellW
                         implicitHeight: Tokens.controlHMd
                         radius: Tokens.radiusSm
@@ -503,218 +524,243 @@ DeviceSettingsGroup {
             }
 
             // ══ INITIATOR ══
-            Column {
+            // The accent rail must NOT be a child of the Column it spans: a Column derives
+            // its height from its children, so `height: parent.height` on a child closes a
+            // feedback loop. Qt detects the polish() loop and ABORTS the layout pass -- which
+            // silently breaks every positioner on the page, not just this one. Rail and
+            // content are siblings inside a plain Item instead.
+            Item {
                 width: parent.width
-                spacing: Tokens.spaceSm
-                leftPadding: Tokens.spaceMd
+                implicitHeight: _iniCol.implicitHeight
 
                 Rectangle {
-                    x: -Tokens.spaceMd; y: 0
                     width: Math.max(2, Math.round(2 * AppPalette.scale))
                     height: parent.height
                     color: AppPalette.accent
                 }
 
-                Row {
-                    width: parent.width - parent.leftPadding
+                Column {
+                    id: _iniCol
+                    x: Tokens.spaceMd
+                    width: parent.width - Tokens.spaceMd
                     spacing: Tokens.spaceSm
-                    Text {
-                        text: qsTr("Initiator"); color: AppPalette.textStrong
-                        font.pixelSize: Tokens.fontSm; font.bold: true
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    Text {
-                        text: plan && planGroup._g ? plan.subroleInitiator(planGroup._g) : ""
-                        color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
-                        font.italic: true
-                        width: Math.max(0, parent.width - Math.round(60 * AppPalette.scale) - parent.spacing)
-                        horizontalAlignment: Text.AlignRight
-                        elide: Text.ElideRight
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
 
-                // Send request — USBLPingRequest, one frame per schedule step
-                Rectangle {
-                    visible: !!(planGroup._g && planGroup._g.ini.send)
-                    width: parent.width - parent.leftPadding
-                    radius: Tokens.radiusSm
-                    color: AppPalette.card
-                    border.width: Tokens.cardBorderWidth
-                    border.color: AppPalette.border
-                    implicitHeight: _sendCol.implicitHeight + 2 * Tokens.spaceSm
-                    Column {
-                        id: _sendCol
-                        x: Tokens.spaceMd; y: Tokens.spaceSm
-                        width: parent.width - 2 * Tokens.spaceMd
-                        spacing: Tokens.spaceXs
-                        readonly property var _snd: planGroup._g ? planGroup._g.ini.send : null
-                        readonly property var _fn: (plan && _snd) ? plan.findBy(plan.pingFunctions, _snd.fn) : null
-
-                        Row {
-                            width: parent.width; spacing: Tokens.spaceSm
-                            Text {
-                                text: qsTr("Send request"); color: AppPalette.textStrong
-                                font.pixelSize: Tokens.fontXs; font.bold: true
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            Text {
-                                text: "USBLPingRequest v1"; color: AppPalette.textMuted
-                                font.pixelSize: Tokens.fontXs
-                                width: Math.max(0, parent.width - Math.round(80 * AppPalette.scale)
-                                                - Tokens.controlHSm - parent.spacing * 2)
-                                horizontalAlignment: Text.AlignRight
-                                elide: Text.ElideRight
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            KCircleIconButton {
-                                glyph: "×"
-                                width: Tokens.controlHSm; height: Tokens.controlHSm
-                                glyphPixelSize: Math.round(13 * AppPalette.scale)
-                                borderWidth: Tokens.cardBorderWidth
-                                anchors.verticalCenter: parent.verticalCenter
-                                toolTipText: qsTr("Remove")
-                                onClicked: if (plan && planGroup._g) plan.detachSend(planGroup._g.id)
-                            }
+                    Row {
+                        width: parent.width
+                        spacing: Tokens.spaceSm
+                        Text {
+                            text: qsTr("Initiator"); color: AppPalette.textStrong
+                            font.pixelSize: Tokens.fontSm; font.bold: true
+                            anchors.verticalCenter: parent.verticalCenter
                         }
-                        FieldRow {
-                            label: qsTr("carries")
-                            KCombo {
-                                model: plan ? plan.pingFunctions.map(function (f) { return f.label }) : []
-                                currentIndex: {
-                                    if (!plan || !_sendCol._snd) return 0
-                                    for (var i = 0; i < plan.pingFunctions.length; ++i)
-                                        if (plan.pingFunctions[i].id === _sendCol._snd.fn) return i
-                                    return 0
-                                }
-                                implicitWidth: Math.round(190 * AppPalette.scale)
-                                fontPixelSize: Tokens.fontXs
-                                anchors.verticalCenter: parent.verticalCenter
-                                onActivated: function (i) {
-                                    if (plan && planGroup._g)
-                                        plan.setSendField(planGroup._g.id, "fn", plan.pingFunctions[i].id)
-                                }
-                            }
-                        }
-                        FieldRow {
-                            label: qsTr("payload")
-                            visible: !!(_sendCol._fn && _sendCol._fn.payload)
-                            UsblHexField {
-                                value: _sendCol._snd ? _sendCol._snd.payload : ""
-                                placeholder: qsTr("hex bytes")
-                                implicitWidth: Math.round(140 * AppPalette.scale)
-                                anchors.verticalCenter: parent.verticalCenter
-                                onCommitted: function (v) {
-                                    if (plan && planGroup._g)
-                                        plan.setSendField(planGroup._g.id, "payload", v)
-                                }
-                            }
-                            Text {
-                                text: qsTr("%1 bit").arg(plan && _sendCol._snd
-                                    ? plan.payloadBytes(_sendCol._snd.payload) * 8 : 0)
-                                color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-                        FieldRow {
-                            label: qsTr("reply at")
-                            UsblSpin {
-                                from: 0; to: 2000000; stepSize: 1000
-                                devValue: _sendCol._snd ? _sendCol._snd.reply : 0
-                                implicitWidth: Math.round(110 * AppPalette.scale)
-                                anchors.verticalCenter: parent.verticalCenter
-                                writeBack: function (v) {
-                                    if (plan && planGroup._g) plan.setSendField(planGroup._g.id, "reply", v)
-                                }
-                            }
-                            Text {
-                                text: (_sendCol._snd && _sendCol._snd.reply === 0)
-                                      ? qsTr("mm — pinger") : qsTr("mm — interrogator")
-                                color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
+                        Text {
+                            text: plan && planGroup._g ? plan.subroleInitiator(planGroup._g) : ""
+                            color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+                            font.italic: true
+                            width: Math.max(0, parent.width - Math.round(60 * AppPalette.scale) - parent.spacing)
+                            horizontalAlignment: Text.AlignRight
+                            elide: Text.ElideRight
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
-                }
 
-                UsblTriggerEditor {
-                    visible: !!(planGroup._g && planGroup._g.ini.reply)
-                    width: parent.width - parent.leftPadding
-                    plan: planGroup.plan
-                    groupId: planGroup._g ? planGroup._g.id : -1
-                    which: "response"
-                }
+                    // Send request — USBLPingRequest, one frame per schedule step
+                    Rectangle {
+                        visible: !!(planGroup._g && planGroup._g.ini.send)
+                        width: parent.width
+                        radius: Tokens.radiusSm
+                        color: AppPalette.card
+                        border.width: Tokens.cardBorderWidth
+                        border.color: AppPalette.border
+                        implicitHeight: _sendCol.implicitHeight + 2 * Tokens.spaceSm
+                        Column {
+                            id: _sendCol
+                            x: Tokens.spaceMd; y: Tokens.spaceSm
+                            width: parent.width - 2 * Tokens.spaceMd
+                            spacing: Tokens.spaceXs
+                            readonly property var _snd: planGroup._g ? planGroup._g.ini.send : null
+                            readonly property var _fn: {
+                                var _d = planGroup._rev
+                                return (plan && _snd) ? plan.findBy(plan.pingFunctions, _snd.fn) : null
+                            }
 
-                Row {
-                    width: parent.width - parent.leftPadding
-                    spacing: Tokens.spaceSm
-                    UsblButton {
-                        visible: !!(planGroup._g && !planGroup._g.ini.send)
-                        text: qsTr("+ Send request")
-                        implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
-                        onClicked: if (plan && planGroup._g) plan.attachSend(planGroup._g.id)
+                            Row {
+                                width: parent.width; spacing: Tokens.spaceSm
+                                Text {
+                                    text: qsTr("Send request"); color: AppPalette.textStrong
+                                    font.pixelSize: Tokens.fontXs; font.bold: true
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                // Spacer, not a label: the wire struct name belongs in the
+                                // protocol doc, not on an operator's screen. Keeps the ×
+                                // pushed to the right edge.
+                                Item {
+                                    width: Math.max(0, parent.width - Math.round(80 * AppPalette.scale)
+                                                    - Tokens.controlHSm - parent.spacing * 2)
+                                    height: 1
+                                }
+                                KCircleIconButton {
+                                    glyph: "×"
+                                    width: Tokens.controlHSm; height: Tokens.controlHSm
+                                    glyphPixelSize: Math.round(13 * AppPalette.scale)
+                                    borderWidth: Tokens.cardBorderWidth
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    toolTipText: qsTr("Remove")
+                                    onClicked: if (plan && planGroup._g) plan.detachSend(planGroup._g.id)
+                                }
+                            }
+                            FieldRow {
+                                label: qsTr("carries")
+                                KCombo {
+                                    model: plan ? plan.pingFunctions.map(function (f) { return f.label }) : []
+                                    currentIndex: {
+                                        if (!plan || !_sendCol._snd) return 0
+                                        for (var i = 0; i < plan.pingFunctions.length; ++i)
+                                            if (plan.pingFunctions[i].id === _sendCol._snd.fn) return i
+                                        return 0
+                                    }
+                                    implicitWidth: Math.round(190 * AppPalette.scale)
+                                    fontPixelSize: Tokens.fontXs
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    onActivated: function (i) {
+                                        if (plan && planGroup._g)
+                                            plan.setSendField(planGroup._g.id, "fn", plan.pingFunctions[i].id)
+                                    }
+                                }
+                            }
+                            FieldRow {
+                                label: qsTr("payload")
+                                visible: !!(_sendCol._fn && _sendCol._fn.payload)
+                                UsblHexField {
+                                    value: _sendCol._snd ? _sendCol._snd.payload : ""
+                                    placeholder: qsTr("hex bytes")
+                                    implicitWidth: Math.round(140 * AppPalette.scale)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    onCommitted: function (v) {
+                                        if (plan && planGroup._g)
+                                            plan.setSendField(planGroup._g.id, "payload", v)
+                                    }
+                                }
+                                Text {
+                                    text: {
+                                        var _d = planGroup._rev
+                                        return qsTr("%1 bit").arg(plan && _sendCol._snd
+                                            ? plan.payloadBytes(_sendCol._snd.payload) * 8 : 0)
+                                    }
+                                    color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+                            FieldRow {
+                                label: qsTr("max range")
+                                UsblSpin {
+                                    from: 0; to: 2000000; stepSize: 1000
+                                    devValue: _sendCol._snd ? _sendCol._snd.reply : 0
+                                    implicitWidth: Math.round(110 * AppPalette.scale)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    writeBack: function (v) {
+                                        if (plan && planGroup._g) plan.setSendField(planGroup._g.id, "reply", v)
+                                    }
+                                }
+                                Text {
+                                    text: (_sendCol._snd && _sendCol._snd.reply === 0)
+                                          ? qsTr("mm · expect no reply") : qsTr("mm")
+                                    color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+                        }
                     }
-                    UsblButton {
-                        visible: !!(planGroup._g && !planGroup._g.ini.reply)
-                        text: qsTr("+ Handle reply")
-                        implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
-                        onClicked: if (plan && planGroup._g) plan.attachTrigger(planGroup._g.id, "reply")
+
+                    UsblTriggerEditor {
+                        visible: !!(planGroup._g && planGroup._g.ini.reply)
+                        width: parent.width
+                        plan: planGroup.plan
+                        groupId: planGroup._g ? planGroup._g.id : -1
+                        which: "response"
+                    }
+
+                    Row {
+                        width: parent.width
+                        spacing: Tokens.spaceSm
+                        UsblButton {
+                            visible: !!(planGroup._g && !planGroup._g.ini.send)
+                            text: qsTr("+ Send request")
+                            implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
+                            onClicked: if (plan && planGroup._g) plan.attachSend(planGroup._g.id)
+                        }
+                        UsblButton {
+                            visible: !!(planGroup._g && !planGroup._g.ini.reply)
+                            text: qsTr("+ Handle reply")
+                            implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
+                            onClicked: if (plan && planGroup._g) plan.attachTrigger(planGroup._g.id, "reply")
+                        }
                     }
                 }
             }
 
             // ══ TRANSPONDER ══
-            Column {
+            // The accent rail must NOT be a child of the Column it spans: a Column derives
+            // its height from its children, so `height: parent.height` on a child closes a
+            // feedback loop. Qt detects the polish() loop and ABORTS the layout pass -- which
+            // silently breaks every positioner on the page, not just this one. Rail and
+            // content are siblings inside a plain Item instead.
+            Item {
                 width: parent.width
-                spacing: Tokens.spaceSm
-                leftPadding: Tokens.spaceMd
+                implicitHeight: _trCol.implicitHeight
 
                 Rectangle {
-                    x: -Tokens.spaceMd; y: 0
                     width: Math.max(2, Math.round(2 * AppPalette.scale))
                     height: parent.height
                     color: planGroup._violet
                 }
 
-                Row {
-                    width: parent.width - parent.leftPadding
+                Column {
+                    id: _trCol
+                    x: Tokens.spaceMd
+                    width: parent.width - Tokens.spaceMd
                     spacing: Tokens.spaceSm
-                    Text {
-                        text: qsTr("Transponder"); color: AppPalette.textStrong
-                        font.pixelSize: Tokens.fontSm; font.bold: true
-                        anchors.verticalCenter: parent.verticalCenter
+
+                    Row {
+                        width: parent.width
+                        spacing: Tokens.spaceSm
+                        Text {
+                            text: qsTr("Transponder"); color: AppPalette.textStrong
+                            font.pixelSize: Tokens.fontSm; font.bold: true
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Text {
+                            text: plan && planGroup._g ? plan.subroleTransponder(planGroup._g) : ""
+                            color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+                            font.italic: true
+                            width: Math.max(0, parent.width - Math.round(80 * AppPalette.scale) - parent.spacing)
+                            horizontalAlignment: Text.AlignRight
+                            elide: Text.ElideRight
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    UsblTriggerEditor {
+                        visible: !!(planGroup._g && planGroup._g.tr.request)
+                        width: parent.width
+                        plan: planGroup.plan
+                        groupId: planGroup._g ? planGroup._g.id : -1
+                        which: "request"
+                    }
+
+                    UsblButton {
+                        visible: !!(planGroup._g && !planGroup._g.tr.request)
+                        text: qsTr("+ Handle request")
+                        implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
+                        onClicked: if (plan && planGroup._g) plan.attachTrigger(planGroup._g.id, "request")
                     }
                     Text {
-                        text: plan && planGroup._g ? plan.subroleTransponder(planGroup._g) : ""
+                        visible: !!(planGroup._g && !planGroup._g.tr.request)
+                        width: parent.width
+                        wrapMode: Text.WordWrap
+                        text: qsTr("nothing written as transponder — slots keep device defaults")
                         color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
-                        font.italic: true
-                        width: Math.max(0, parent.width - Math.round(80 * AppPalette.scale) - parent.spacing)
-                        horizontalAlignment: Text.AlignRight
-                        elide: Text.ElideRight
-                        anchors.verticalCenter: parent.verticalCenter
                     }
-                }
-
-                UsblTriggerEditor {
-                    visible: !!(planGroup._g && planGroup._g.tr.request)
-                    width: parent.width - parent.leftPadding
-                    plan: planGroup.plan
-                    groupId: planGroup._g ? planGroup._g.id : -1
-                    which: "request"
-                }
-
-                UsblButton {
-                    visible: !!(planGroup._g && !planGroup._g.tr.request)
-                    text: qsTr("+ Handle request")
-                    implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
-                    onClicked: if (plan && planGroup._g) plan.attachTrigger(planGroup._g.id, "request")
-                }
-                Text {
-                    visible: !!(planGroup._g && !planGroup._g.tr.request)
-                    width: parent.width - parent.leftPadding
-                    wrapMode: Text.WordWrap
-                    text: qsTr("nothing written as transponder — slots keep device defaults")
-                    color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
                 }
             }
         }
@@ -726,7 +772,7 @@ DeviceSettingsGroup {
     Row {
         width: parent.width; height: Tokens.controlHSm; spacing: Tokens.spaceSm
         Text {
-            text: qsTr("Contract check"); color: AppPalette.textMuted
+            text: qsTr("Plan check"); color: AppPalette.textMuted
             font.pixelSize: Tokens.fontSm; font.bold: true
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -783,3 +829,4 @@ DeviceSettingsGroup {
         }
     }
 }
+
