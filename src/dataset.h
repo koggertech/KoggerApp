@@ -53,6 +53,22 @@ public:
     Q_PROPERTY(float lastRangefinderDepth         READ getLastRangefinderDepth      NOTIFY lastRangefinderDepthChanged)
     Q_PROPERTY(bool  isLastBottomTrackDepthValid  READ isValidLastBottomTrackDepth  NOTIFY lastBottomTrackDepthChanged)
     Q_PROPERTY(float lastBottomTrackDepth         READ getLastBottomTrackDepth      NOTIFY lastBottomTrackDepthChanged)
+    // Last USBL solution, flattened for QML. Per-field absence is NAN (checked with
+    // isNaN in QML, as the autopilot fields are); isLastUsblSolutionValid only says a
+    // solution was ever received. lastUsblFixEpochMs is HOST arrival time, not the
+    // device clock in UsblSolution::timestamp_us — it is what fix age is measured from,
+    // and it is a double because QML int is 32-bit and epoch ms would wrap.
+    Q_PROPERTY(bool   isLastUsblSolutionValid          READ isValidLastUsblSolution        NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(double lastUsblFixEpochMs               READ getLastUsblFixEpochMs          NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(int    lastUsblAddress                  READ getLastUsblAddress             NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(float  lastUsblDistance                 READ getLastUsblDistance            NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(float  lastUsblAzimuth                  READ getLastUsblAzimuth             NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(float  lastUsblElevation                READ getLastUsblElevation           NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(float  lastUsblSnr                      READ getLastUsblSnr                 NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(bool   isLastUsblBeaconCoordinateValid  READ isValidLastUsblBeaconCoordinate NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(double lastUsblBeaconLatitude           READ getLastUsblBeaconLatitude      NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(double lastUsblBeaconLongitude          READ getLastUsblBeaconLongitude     NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(float  lastUsblBeaconDepth              READ getLastUsblBeaconDepth         NOTIFY lastUsblSolutionChanged)
     Q_PROPERTY(bool isSimpleNavV2Valid                  READ isValidSimpleNavV2                   NOTIFY simpleNavV2Changed)
     Q_PROPERTY(int simpleNavV2GnssFixType               READ simpleNavV2GnssFixType               NOTIFY simpleNavV2Changed)
     Q_PROPERTY(int simpleNavV2NumSats                   READ simpleNavV2NumSats                   NOTIFY simpleNavV2Changed)
@@ -246,6 +262,20 @@ public:
     float getLastRangefinderDepth() const { return lastRangefinderDepth_; }
     float getLastBottomTrackDepth() const { return lastBottomTrackDepth_; }
 
+    bool   isValidLastUsblSolution() const { return lastUsblFixEpochMs_ > 0.0; }
+    double getLastUsblFixEpochMs() const { return lastUsblFixEpochMs_; }
+    int    getLastUsblAddress() const { return lastUsblSolution_.id; }
+    float  getLastUsblDistance() const { return lastUsblSolution_.distance_m; }
+    float  getLastUsblAzimuth() const { return lastUsblSolution_.azimuth_deg; }
+    float  getLastUsblElevation() const { return lastUsblSolution_.elevation_deg; }
+    float  getLastUsblSnr() const { return lastUsblSolution_.snr; }
+    double getLastUsblBeaconLatitude() const { return lastUsblSolution_.beacon_latitude; }
+    double getLastUsblBeaconLongitude() const { return lastUsblSolution_.beacon_longitude; }
+    float  getLastUsblBeaconDepth() const { return lastUsblSolution_.beacon_depth; }
+    bool   isValidLastUsblBeaconCoordinate() const {
+        return LLA(lastUsblSolution_.beacon_latitude, lastUsblSolution_.beacon_longitude).isCoordinatesValid();
+    }
+
     BottomTrackParam getBottomTrackParam() {
         QReadLocker rl(&lock_);
 
@@ -419,6 +449,7 @@ signals:
     void lastTempChanged();
     void lastRangefinderDepthChanged();
     void lastBottomTrackDepthChanged();
+    void lastUsblSolutionChanged();
     void simpleNavV2Changed();
     void boatStatusChanged();
     void spatialPreparingChanged();
@@ -526,6 +557,8 @@ private:
     float lastRangefinderDepth_ = NAN;
     float lastBottomTrackDepth_ = NAN;
     float speed_                = 0.0f;
+    IDBinUsblSolution::UsblSolution lastUsblSolution_;
+    double lastUsblFixEpochMs_  = 0.0;
     bool simpleNavV2Valid_ = false;
     uint8_t simpleNavV2GnssFixType_ = 0;
     uint8_t simpleNavV2NumSats_ = 0;

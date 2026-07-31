@@ -99,8 +99,7 @@ enum ID : uint16_t {
 
     ID_USBL_SOLUTION = 0x65,
 
-    ID_SIGNAL_ENCODER = 0x66, // 102
-    ID_SIGNAL_DECODER = 0x67, // 103
+    ID_MODEM_SOLUTION = 0x66, // 102
     ID_USBL_CONTROL = 0x68, // 104
 
     ID_GFW = 200,

@@ -1152,6 +1152,43 @@ Column {
         }
     }
 
+    // ── USBL ──────────────────────────────────────────────────────────────
+    // Three groups ordered by how often they are touched: operating (nodes + schedule)
+    // stays open, the command plan and the response gating start collapsed. The plan model
+    // is shared by the first two and persists independently of the device.
+    UsblPlanStore {
+        id: usblPlan
+        Component.onCompleted: load()
+    }
+
+    UsblGroup {
+        width: root.groupWidth; preferredWidth: root.groupWidth
+        dev: root.dev
+        plan: usblPlan
+        clockTick: root._usblClock
+    }
+
+    UsblPlanGroup {
+        width: root.groupWidth; preferredWidth: root.groupWidth
+        dev: root.dev
+        plan: usblPlan
+    }
+
+    UsblResponseGroup {
+        width: root.groupWidth; preferredWidth: root.groupWidth
+        dev: root.dev
+    }
+
+    // Ticks only while a USBL device is selected — fix age is the one thing on the page
+    // that has to re-render without an incoming signal.
+    property string _usblClock: ""
+    Timer {
+        interval: 1000
+        repeat: true
+        running: !!(root.dev && (root.dev.isUSBL || root.dev.isUSBLBeacon))
+        onTriggered: root._usblClock = String(Date.now())
+    }
+
     // ── Advanced settings ("Расширенные настройки") ────────────────────────
     Rectangle {
         id: advancedPanel

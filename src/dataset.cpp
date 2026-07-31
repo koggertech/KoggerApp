@@ -4,6 +4,7 @@
 #include "data_processor_defs.h"
 extern Core core;
 #include <algorithm>
+#include <QDateTime>
 #include <QTimer>
 
 
@@ -525,8 +526,8 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         tracks[-2].type_ = UsblView::UsblObjectType::kUsbl;
         tracks[-2].yaw_ = 0.0f;
 
-        float beacon_n = data.beacon_n;
-        float beacon_e = data.beacon_e;
+        float beacon_n = data.beacon_n_m;
+        float beacon_e = data.beacon_e_m;
 
         if(pos.ned.isCoordinatesValid()) {
             beacon_n += pos.ned.n;
@@ -564,6 +565,12 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         pool_[poolIndex].setAtt(data.usbl_yaw, data.usbl_pitch, data.usbl_roll);
         pool_[poolIndex].set(data);
     }
+
+    // Host arrival time: the device clock in data.timestamp_us is not comparable with
+    // the host's, and fix age is what tells the operator whether a range is live.
+    lastUsblSolution_ = data;
+    lastUsblFixEpochMs_ = (double)QDateTime::currentMSecsSinceEpoch();
+    emit lastUsblSolutionChanged();
 
     markDataAvailable(hasUsblData_);
     emit dataUpdate();

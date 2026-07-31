@@ -54,6 +54,14 @@ qt_add_qml_module(kogger_app
         SplashOverlay.qml
         TgcSettingsTab.qml
         UiSavingSettingsTab.qml
+        UsblButton.qml
+        UsblGroup.qml
+        UsblHexField.qml
+        UsblPlanGroup.qml
+        UsblPlanStore.qml
+        UsblResponseGroup.qml
+        UsblSpin.qml
+        UsblTriggerEditor.qml
         WidgetCard.qml
         WidgetCellContent.qml
         WidgetDragHandle.qml

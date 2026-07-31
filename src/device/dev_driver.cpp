@@ -60,6 +60,8 @@ DevDriver::DevDriver(QObject *parent)
 
     regID(idUSBLControl = new IDBinUsblControl(), &DevDriver::receivedUSBLControl);
 
+    regID(idModemSolution = new IDBinModemSolution(), &DevDriver::receivedModemSolution);
+
     regID(idServoControl = new IDBinServoControl(), &DevDriver::receivedServoControl, true);
     regID(idPwmRoute = new IDBinPwmRoute(), &DevDriver::receivedPwmRoute, true);
     regID(idDevSync = new IDBinDevSync(), &DevDriver::receivedDevSync, true);
@@ -549,23 +551,20 @@ void DevDriver::setLinkStatus(bool connected, bool receivesData, bool notAvailab
 
 void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask)
 {
-    Q_UNUSED(ask)
-
     if (!m_state.connect) {
         return;
     }
 
-    idUSBLControl->pingRequest(0xFFFFFFFF, 0xFF);
+    idUSBL->askBeacon(ask);
 }
 
 void DevDriver::enableBeaconOnce(float timeout)
 {
-    Q_UNUSED(timeout)
-
     if (!m_state.connect) {
         return;
-        // idUSBL->enableBeaconOnce(timeout);
     }
+
+    idUSBL->enableBeaconOnce(timeout);
 }
 
 void DevDriver::acousticPingRequest(uint8_t address, uint32_t timeout_us) {
@@ -573,14 +572,144 @@ void DevDriver::acousticPingRequest(uint8_t address, uint32_t timeout_us) {
     idUSBLControl->pingRequest(timeout_us, address);
 }
 
+void DevDriver::acousticPingRequestEx(uint8_t address, uint32_t timeout_us, uint8_t cmdId, uint32_t replyDistanceMm, const QByteArray& payload) {
+    if(!m_state.connect) return;
+    idUSBLControl->pingRequest(timeout_us, address, cmdId, replyDistanceMm, payload);
+}
+
 void DevDriver::acousticResponceFilter(uint8_t address) {
     if(!m_state.connect) return;
     idUSBLControl->setResponseAddressFilter(address);
 }
 
+void DevDriver::acousticResponceFilterSlots(const QVector<int>& addresses) {
+    if(!m_state.connect) return;
+
+    std::array<uint8_t, 8> filter;
+    filter.fill(0xFF);
+    const int count = qMin((int)filter.size(), (int)addresses.size());
+    for(int i = 0; i < count; ++i) {
+        filter[i] = (uint8_t)addresses[i];
+    }
+    idUSBLControl->setResponseAddressFilter(filter);
+}
+
 void DevDriver::acousticResponceTimeout(uint32_t timeout_us) {
     if(!m_state.connect) return;
     idUSBLControl->setResponseTimeout(timeout_us);
+}
+
+void DevDriver::setUsblTransponderEnable(bool enabled) {
+    if(!m_state.connect) return;
+    idUSBLControl->setTransponderEnable(enabled ? 0xFFFFFFFF : 0);
+}
+
+void DevDriver::setUsblMonitorConfig(uint32_t suppressSelfResponseUs, uint32_t suppressSelfRequestUs, bool receiveResponseInIdle) {
+    if(!m_state.connect) return;
+
+    IDBinUsblControl::USBLMonitorConfig cfg;
+    cfg.suppressSelfResponse_us = suppressSelfResponseUs;
+    cfg.suppressSelfRequest_us = suppressSelfRequestUs;
+    cfg.receiveResponseInIdle = receiveResponseInIdle;
+    idUSBLControl->setMonitorConfig(cfg);
+}
+
+void DevDriver::setCmdSlotAsModemReceiver(int cmdId, int bitLength) {
+    if(!m_state.connect) return;
+    idUSBLControl->setCmdSlotAsModemReceiver((uint8_t)cmdId, bitLength);
+}
+
+QByteArray DevDriver::parseHexPayload(const QString& text) {
+    QString digits;
+    for(const QChar& c : text) {
+        if(c.isDigit() || (c.toLower() >= 'a' && c.toLower() <= 'f'))
+            digits.append(c);
+    }
+    // fromHex() silently drops a trailing lone nibble; pad so a half-typed byte still lands.
+    if(digits.size() % 2)
+        digits.prepend('0');
+    return QByteArray::fromHex(digits.toLatin1());
+}
+
+void DevDriver::setCmdSlotAsModemResponse(int cmdId, const QString& hexPayload, int bitLength) {
+    if(!m_state.connect) return;
+
+    const QByteArray payload = parseHexPayload(hexPayload);
+    const int bits = bitLength > 0 ? bitLength : (int)payload.size() * 8;
+    idUSBLControl->setCmdSlotAsModemResponse((uint8_t)cmdId, payload, bits);
+}
+
+void DevDriver::setUsblCmdSlotDisposition(int cmdId, int event, int function) {
+    if(!m_state.connect) return;
+
+    typedef IDBinUsblControl::USBLCmdSlotConfig Slot;
+
+    // Only the payload-free values are dispositions. Refuse anything else rather than
+    // coercing it: silently falling back to Disabled would switch off a slot the operator
+    // never asked to switch off.
+    Slot::Function fn;
+    switch(function) {
+    case Slot::FunctionDisabled: fn = Slot::FunctionDisabled; break;
+    case Slot::FunctionSilent:   fn = Slot::FunctionSilent;   break;
+    case Slot::FunctionNothing:  fn = Slot::FunctionNothing;  break;
+    default:
+        qWarning("setUsblCmdSlotDisposition: function %d is not a disposition, ignored", function);
+        return;
+    }
+
+    Slot cfg;
+    cfg.cmd_id = (uint8_t)qBound(0, cmdId, 255);
+    cfg.eventFilter = event == Slot::EventOnResponse ? Slot::EventOnResponse : Slot::EventOnRequest;
+    cfg.type = Slot::PayloadContainer;
+    cfg.function = fn;
+    cfg.bit_length = 0;
+
+    idUSBLControl->setCmdSlot(cfg);
+}
+
+void DevDriver::setUsblCmdConfig(int cmdId, int event,
+                                 int receiverFunction, int receiveBitLength,
+                                 int senderFunction, const QString& sendHexPayload,
+                                 int eventAction,
+                                 int cmdIdAction, int cmdIdReplacement,
+                                 int addressAction, int addressReplacement) {
+    if(!m_state.connect) return;
+
+    typedef IDBinUsblControl::USBLCmdConfig Cfg;
+
+    // Every enum here is narrow, and the values arrive from QML as plain ints — clamp
+    // rather than cast, so a bad value cannot put an undefined byte on the wire.
+    auto fn = [](int v) {
+        switch(v) {
+        case Cfg::FunctionBitArray:     return Cfg::FunctionBitArray;
+        case Cfg::FunctionLLGeoAzimuth: return Cfg::FunctionLLGeoAzimuth;
+        default:                        return Cfg::FunctionDefault;
+        }
+    };
+
+    Cfg cfg;
+    cfg.cmd_id = (uint8_t)qBound(0, cmdId, 255);
+    cfg.eventFilter = event == Cfg::EventOnReceiveResponse ? Cfg::EventOnReceiveResponse
+                                                           : Cfg::EventOnReceiveRequest;
+    cfg.cmdIdAction = cmdIdAction == Cfg::SendBackCmdIdReplacement ? Cfg::SendBackCmdIdReplacement
+                                                                  : Cfg::SendBackCmdIdIncoming;
+    cfg.cmd_id_replacement = (uint8_t)qBound(0, cmdIdReplacement, 255);
+    cfg.addressAction = addressAction == Cfg::SendBackAddressReplacement ? Cfg::SendBackAddressReplacement
+                                                                        : Cfg::SendBackAddressIncoming;
+    cfg.address_replacement = (uint8_t)qBound(0, addressReplacement, 255);
+    cfg.eventAction = eventAction == Cfg::SendBackEventSame ? Cfg::SendBackEventSame
+                                                           : Cfg::SendBackEventSwaping;
+    cfg.receiver_function = fn(receiverFunction);
+    cfg.receive_bit_length = (uint16_t)qBound(0, receiveBitLength, 65535);
+    cfg.sender_function = fn(senderFunction);
+    // sending_bit_length is derived from the payload actually written, inside setCmdConfig.
+
+    const QByteArray payload = parseHexPayload(sendHexPayload);
+    idUSBLControl->setCmdConfig(cfg, payload);
+}
+
+QString DevDriver::modemLastPayload() const {
+    return QString::fromLatin1(idModemSolution->payload().toHex(' '));
 }
 
 void DevDriver::doRequestAll()
@@ -1693,16 +1822,32 @@ void DevDriver::receivedDVLMode(Parsers::Type type, Parsers::Version ver, Parser
 void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
 {
     Q_UNUSED(type);
+    Q_UNUSED(ver);
 
-    if(resp == respNone) {
-        if(ver == Parsers::v0) {
-            emit usblSolutionComplete(idUSBL->usblSolution());
-        } else if(ver == Parsers::v1) {
-            qDebug("usbl p.ver %d", ver);
-            emit beaconActivationComplete(0);
-        }
+    if(resp != respNone) {
+        return;
     }
 
+    // Dispatch on what was actually parsed: v1 carries either a nav solution or
+    // a beacon activation response, so the version is not enough.
+    switch(idUSBL->lastPayloadKind()) {
+    case IDBinUsblSolution::PayloadKind::Solution:
+        emit usblSolutionComplete(idUSBL->usblSolution());
+        break;
+    case IDBinUsblSolution::PayloadKind::AcousticNav:
+        emit acousticNavSolutionComplete(idUSBL->acousticNavSolution());
+        emit usblSolutionComplete(idUSBL->usblSolution());
+        break;
+    case IDBinUsblSolution::PayloadKind::BaseToBeacon:
+        emit baseToBeaconComplete(idUSBL->baseToBeacon());
+        emit usblSolutionComplete(idUSBL->usblSolution());
+        break;
+    case IDBinUsblSolution::PayloadKind::BeaconActivation:
+        emit beaconActivationComplete(0);
+        break;
+    case IDBinUsblSolution::PayloadKind::None:
+        break;
+    }
 }
 
 void DevDriver::receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
@@ -1710,6 +1855,19 @@ void DevDriver::receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Pa
     Q_UNUSED(type)
     Q_UNUSED(ver)
     Q_UNUSED(resp)
+}
+
+void DevDriver::receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
+{
+    Q_UNUSED(type)
+    Q_UNUSED(ver)
+
+    if(resp != respNone) {
+        return;
+    }
+
+    emit modemSolutionComplete(idModemSolution->header(), idModemSolution->payload());
+    emit modemPayloadChanged();
 }
 
 void DevDriver::process() {

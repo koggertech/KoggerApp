@@ -26,6 +26,9 @@ DeviceManager::DeviceManager()
     qRegisterMetaType<QVector<uint8_t>>("QVector<uint8_t>");
     qRegisterMetaType<QByteArray>("QByteArray");
     qRegisterMetaType<IDBinUsblSolution::UsblSolution>("IDBinUsblSolution::UsblSolution");
+    qRegisterMetaType<IDBinUsblSolution::AcousticNavSolution>("IDBinUsblSolution::AcousticNavSolution");
+    qRegisterMetaType<IDBinUsblSolution::BaseToBeacon>("IDBinUsblSolution::BaseToBeacon");
+    qRegisterMetaType<IDBinModemSolution::ModemSolutionHeader>("IDBinModemSolution::ModemSolutionHeader");
     qRegisterMetaType<IDBinDVL::BeamSolution>("IDBinDVL::BeamSolution");
     qRegisterMetaType<uint16_t>("uint16_t");
     qRegisterMetaType<IDBinDVL::DVLSolution>("IDBinDVL::DVLSolution");

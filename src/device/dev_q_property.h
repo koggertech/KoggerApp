@@ -113,6 +113,22 @@ public:
     Q_PROPERTY(int  recorderSecondsSinceLastWrite READ recorderSecondsSinceLastWrite NOTIFY recorderStatusChanged)
 #endif
 
+    // Last modem payload received over ID_MODEM_SOLUTION. Device-scoped (a per-device
+    // test tool), unlike the USBL solution readout, which is scene telemetry and comes
+    // from Dataset.
+    Q_PROPERTY(QString modemLastPayload     READ modemLastPayload     NOTIFY modemPayloadChanged)
+    Q_PROPERTY(int modemLastAddressFrom     READ modemLastAddressFrom NOTIFY modemPayloadChanged)
+    Q_PROPERTY(int modemLastAddressTo       READ modemLastAddressTo   NOTIFY modemPayloadChanged)
+    Q_PROPERTY(int modemLastCmdId           READ modemLastCmdId       NOTIFY modemPayloadChanged)
+    Q_PROPERTY(int modemLastBitLength       READ modemLastBitLength   NOTIFY modemPayloadChanged)
+    Q_PROPERTY(int modemLastEvent           READ modemLastEvent       NOTIFY modemPayloadChanged)
+
+    int modemLastAddressFrom() const { return idModemSolution ? idModemSolution->header().address_from : 0; }
+    int modemLastAddressTo() const   { return idModemSolution ? idModemSolution->header().address_to : 0; }
+    int modemLastCmdId() const       { return idModemSolution ? idModemSolution->header().cmd_id_from : 0; }
+    int modemLastBitLength() const   { return idModemSolution ? idModemSolution->header().bit_length : 0; }
+    int modemLastEvent() const       { return idModemSolution ? (int)idModemSolution->header().event : 0; }
+
     int devSyncPeriodMs() const { return idDevSync ? idDevSync->periodMs() : 0; }
 
     QVariantList devSyncPorts() const {
