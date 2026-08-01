@@ -546,8 +546,17 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     dist_save = dist;
     angl_save = angl_usbl;
 
-    std::shared_ptr<UsblView> view = scene3dViewPtr_->getUsblViewPtr();
-    view->setTrackRef(tracks);
+    // scene3dViewPtr_ starts null and is only filled by setScene3D(). A USBL solution
+    // arriving before that -- which is a race, not an edge case, because solutions come
+    // from the link thread while the 3D scene is still being constructed -- dereferenced
+    // null here and took the whole app down. `tracks` is a Dataset member, so it is still
+    // populated above; only handing it to the view has to wait for a view to exist.
+    if (scene3dViewPtr_) {
+        std::shared_ptr<UsblView> view = scene3dViewPtr_->getUsblViewPtr();
+        if (view) {
+            view->setTrackRef(tracks);
+        }
+    }
 
     {
         QWriteLocker wl(&poolMtx_);
