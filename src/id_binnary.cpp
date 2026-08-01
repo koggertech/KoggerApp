@@ -1402,55 +1402,6 @@ void IDBinUsblControl::setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& 
     emit binFrameOut(proto_cfg);
 }
 
-void IDBinUsblControl::setCmdSlot(USBLCmdSlotConfig cfg, const QByteArray& payload) {
-    ProtoBinOut out;
-    out.create(SETTING, USBLCmdSlotConfig::getVer(), id(), m_address);
-
-    int space = out.frameSpaceAvail() - (int)sizeof(USBLCmdSlotConfig);
-    if(space < 0) {
-        space = 0;
-    }
-
-    int bytes = 0;
-    if(!payload.isEmpty() && cfg.bit_length > 0) {
-        const int wanted = ((int)cfg.bit_length + 7) / 8;
-        bytes = qMin(qMin(wanted, (int)payload.size()), space);
-        // Never declare more bits than were actually written.
-        cfg.bit_length = (uint16_t)qMin((int)cfg.bit_length, bytes * 8);
-    }
-
-    out.write<USBLCmdSlotConfig>(cfg);
-    if(bytes > 0) {
-        out.write((void*)payload.constData(), (uint16_t)bytes);
-    }
-    out.end();
-
-    emit binFrameOut(out);
-}
-
-void IDBinUsblControl::setCmdSlotAsModemResponse(uint8_t cmd_id, QByteArray byte_array, int bit_length) {
-    USBLCmdSlotConfig cmd_slot = {};
-    cmd_slot.cmd_id = cmd_id;
-    cmd_slot.type = USBLCmdSlotConfig::PayloadRequest;
-    cmd_slot.eventFilter = USBLCmdSlotConfig::EventOnResponse;
-    cmd_slot.function = USBLCmdSlotConfig::FunctionBitArray;
-    cmd_slot.bit_length = (uint16_t)qMax(0, bit_length);
-
-    setCmdSlot(cmd_slot, byte_array);
-}
-
-void IDBinUsblControl::setCmdSlotAsModemReceiver(uint8_t cmd_id, int bit_length) {
-    USBLCmdSlotConfig cmd_slot = {};
-    cmd_slot.cmd_id = cmd_id;
-    cmd_slot.type = USBLCmdSlotConfig::PayloadContainer;
-    cmd_slot.eventFilter = USBLCmdSlotConfig::EventOnRequest;
-    cmd_slot.function = USBLCmdSlotConfig::FunctionBitArray;
-    // A declared expectation, not a payload — no trailing bytes accompany it.
-    cmd_slot.bit_length = (uint16_t)qMax(0, bit_length);
-
-    setCmdSlot(cmd_slot);
-}
-
 Resp IDBinModemSolution::parsePayload(FrameParser &proto) {
     if(proto.ver() != v0) {
         return respErrorVersion;

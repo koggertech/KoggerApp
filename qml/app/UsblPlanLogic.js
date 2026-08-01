@@ -17,11 +17,16 @@
 // lives -- this module returns CODES and numbers, never sentences.
 
 var SLOT_COUNT = 8;
+// One group per slot is the most that can ever be useful: groups partition the slots, so
+// a ninth group is guaranteed to own nothing.
+var MAX_GROUPS = SLOT_COUNT;
+var ROLES = ["initiator", "transponder"];
 
 // ── state ────────────────────────────────────────────────────────────────────
+// `applied` maps a role to the snapshot that was last written as that role. There is no
+// current role: a role is an argument to Apply, not a mode the plan sits in.
 function emptyState() {
-    return { groups: [], nodes: [], role: "initiator", activeGroup: 0,
-             appliedOnce: false, appliedSnapshot: "", nextId: 1, written: {} };
+    return { groups: [], nodes: [], activeGroup: 0, nextId: 1, applied: {} };
 }
 
 // Deep copy per edit. A plan is at most 8 slots and 8 nodes, so the cost is irrelevant and
@@ -32,7 +37,7 @@ function _next(st) { st.nextId = st.nextId + 1; return st.nextId; }
 
 function newSend()    { return { fn: "default", payload: "", reply: 20000 }; }
 function newTrigger() {
-    return { disposition: "ack", recv: null, send: null, advOpen: false,
+    return { recv: null, send: null, advOpen: false,
              adv: { eventAction: "Swap", cmdIdAction: "Incoming", cmdIdRepl: 0,
                     addrAction: "Incoming", addrRepl: 0 } };
 }
@@ -95,20 +100,28 @@ function hasRewrite(t) {
     return !!t && (t.adv.cmdIdAction === "Replacement" || t.adv.addrAction === "Replacement"
                 || t.adv.eventAction === "Same");
 }
-// Two attached sections need USBLCmdConfig -- the only struct carrying both a
-// receiver_function and a sender_function. Rewrite rules force it too.
-function structOf(t) {
-    if (!t) return "";
-    return (sectionCount(t) === 2 || hasRewrite(t)) ? "USBLCmdConfig" : "USBLCmdSlotConfig";
-}
-function roleEvent(st) { return st.role === "initiator" ? 2 : 1; }
+// The eventFilter this role writes: an initiator configures what happens when a RESPONSE
+// comes back (2), a transponder what happens when a REQUEST arrives (1).
+function roleEvent(role) { return role === "initiator" ? 2 : 1; }
+function triggerFor(g, role) { return role === "initiator" ? g.ini.reply : g.tr.request; }
 
 // ── mutators: state in, NEW state out ────────────────────────────────────────
-function addGroup(st) {
-    var n = clone(st), free = [];
-    for (var c = 0; c < SLOT_COUNT; ++c)
-        if (!ownerOf(n, c)) free.push(c);
-    n.groups = n.groups.concat([newGroup(_next(n), free.length ? [free[0]] : [])]);
+function canAddGroup(st) { return st.groups.length < MAX_GROUPS; }
+
+// With no argument the new group claims the first free slot, so a group is never born
+// unable to do anything. `slots` overrides that when the caller knows which slot it wants.
+// Refused at MAX_GROUPS -- enforced here, not only by hiding the button, so a stale
+// binding or a repaired blob cannot get past it.
+function addGroup(st, slots) {
+    if (!canAddGroup(st)) return st;
+    var n = clone(st), want = slots;
+    if (!want) {
+        var free = [];
+        for (var c = 0; c < SLOT_COUNT; ++c)
+            if (!ownerOf(n, c)) free.push(c);
+        want = free.length ? [free[0]] : [];
+    }
+    n.groups = n.groups.concat([newGroup(_next(n), want)]);
     n.activeGroup = n.groups.length - 1;
     return n;
 }
@@ -175,22 +188,43 @@ function setStepCmd(st, nodeId, index, cmd) {
     return n;
 }
 
-// Exclusive assignment: taking a slot removes it from whichever group held it, so the eight
-// hardware slots stay partitioned and no write-order question can arise.
-// Returns { state, takenFrom } -- takenFrom is the previous owner's id, or -1.
-function toggleSlot(st, groupId, cmd) {
-    var n = clone(st), g = groupById(n, groupId);
-    if (!g) return { state: st, takenFrom: -1 };
-    var takenFrom = -1;
-    if (hasSlot(g, cmd)) {
+// The single slot interaction. One bar, and what a click means follows from the cell's
+// relationship to the selected group -- no modifier, no mode:
+//
+//   owned by ANOTHER group  -> select that group. Never steals: a transfer that happens
+//                              behind your back is the thing that made the old bar
+//                              unusable in practice.
+//   owned by the SELECTED   -> release it. The holder is the only thing that can let go.
+//   unowned                 -> assign it to the selected group, creating one if the plan
+//                              is empty so the first click on an empty plan still works.
+//
+// Moving a slot is therefore two explicit clicks, and both are visible in the bar.
+// Returns { state, action } with action in select | release | assign | create | none.
+function slotClick(st, cmd) {
+    if (cmd < 0 || cmd >= SLOT_COUNT) return { state: st, action: "none" };
+    var owner = ownerOf(st, cmd);
+    var sel = activeGroupOf(st);
+
+    if (owner) {
+        if (!sel || owner.id !== sel.id) {
+            var i = groupIndexById(st, owner.id);
+            if (i === st.activeGroup) return { state: st, action: "select" };
+            return { state: setActiveGroup(st, i), action: "select" };
+        }
+        var n = clone(st), g = groupById(n, owner.id);
         g.slots = g.slots.filter(function (v) { return v !== cmd; });
-    } else {
-        var prev = ownerOf(n, cmd);
-        if (prev) { takenFrom = prev.id; prev.slots = prev.slots.filter(function (v) { return v !== cmd; }); }
-        g.slots = g.slots.concat([cmd]).sort(function (a, b) { return a - b; });
+        _clampRefs(n);
+        return { state: n, action: "release" };
     }
-    _clampRefs(n);
-    return { state: n, takenFrom: takenFrom };
+
+    if (!sel) {
+        var made = addGroup(st, [cmd]);
+        return made === st ? { state: st, action: "none" }
+                           : { state: made, action: "create" };
+    }
+    var m = clone(st), t = groupById(m, sel.id);
+    t.slots = t.slots.concat([cmd]).sort(function (a, b) { return a - b; });
+    return { state: m, action: "assign" };
 }
 
 // A scheduled step must name a slot its group still owns; otherwise fall back to the
@@ -241,12 +275,6 @@ function detachTrigger(st, groupId, which) {
     else g.ini.reply = null;
     return n;
 }
-function setDisposition(st, groupId, which, id) {
-    var n = clone(st), t = trigger(n, groupId, which);
-    if (!t) return st;
-    t.disposition = id;
-    return n;
-}
 function attachSection(st, groupId, which, side) {
     var n = clone(st), t = trigger(n, groupId, which);
     if (!t) return st;
@@ -286,12 +314,6 @@ function setAdvField(st, groupId, which, field, value) {
 function setActiveGroup(st, i) {
     var n = clone(st);
     n.activeGroup = Math.max(0, Math.min(i, Math.max(0, n.groups.length - 1)));
-    return n;
-}
-// Switching role invalidates "applied": the two roles write different halves.
-function setRole(st, r) {
-    var n = clone(st);
-    n.role = r; n.appliedOnce = false; n.appliedSnapshot = "";
     return n;
 }
 
@@ -351,61 +373,94 @@ function schedule(st) {
     }
     return out;
 }
-// cmd_id has no wildcard, so a group of N slots costs N frames.
-function setupFrames(st) {
-    var n = 0;
-    for (var i = 0; i < st.groups.length; ++i) {
-        var g = st.groups[i];
-        if (st.role === "initiator") { if (g.ini.reply) n += g.slots.length; }
-        else if (g.tr.request) n += g.slots.length;
+// Payload FORMAT -> the Function value on the wire. USBLPingRequest::Function and
+// USBLCmdConfig::Function agree (0 default / 1 bit array / 2 lat-lon-azimuth), which is
+// the only reason one table serves both. Absence is 0, never a menu item.
+function formatWire(id) { return id === "bits" ? 1 : (id === "llgeo" ? 2 : 0); }
+
+// The exact ID_USBL_CONTROL v6 writes Apply will emit, in cmd order.
+//
+// APPLY IS TOTAL: one frame for every one of the eight slots, every time. A slot a group
+// configures gets that configuration; every other slot gets USBLCmdConfig's own defaults.
+//
+// That is what makes Apply mean "the device's slot table now matches this pane" rather
+// than "some slots were poked". Three things fall out of it:
+//
+//   - An empty plan is a meaningful thing to apply: it resets the side to defaults.
+//   - Releasing a slot needs no bookkeeping. It reverts on the next Apply because it is
+//     written every time, so `written` / staleWrites / releaseFrames are all gone -- and
+//     with them the class of bug where the device held a configuration the pane had
+//     forgotten. ID_USBL_CONTROL has no read-back, so "write everything" is the only way
+//     to actually know what the device holds.
+//   - The frame count is fixed: 8, plus the transponder's two globals.
+//
+// The cost is that Apply overwrites slots configured outside this pane. The pane presents
+// all eight as its own, so that is the intended reading.
+//
+// Pure, so `node` asserts every byte with no device, no window and no click -- which is
+// the only reason Apply is verified at all.
+function applyWrites(st, role) {
+    var ev = roleEvent(role), out = [], byCmd = {}, i, j;
+
+    for (i = 0; i < st.groups.length; ++i) {
+        var g = st.groups[i], t = triggerFor(g, role);
+        if (!t) continue;
+        for (j = 0; j < g.slots.length; ++j) byCmd[g.slots[j]] = t;
     }
-    if (st.role !== "initiator") n += 2;   // address filter + transponder enable
+
+    for (var cmd = 0; cmd < SLOT_COUNT; ++cmd) {
+        var e = { cmd: cmd, event: ev, configured: false,
+                  recvFn: 0, recvBits: 0, sendFn: 0, sendHex: "",
+                  eventAction: 0, cmdIdAction: 0, cmdIdRepl: 0,
+                  addrAction: 0, addrRepl: 0 };
+        var h = byCmd[cmd];
+        if (h) {
+            e.configured = true;
+            e.recvFn = h.recv ? formatWire(h.recv.fmt) : 0;
+            e.recvBits = h.recv ? h.recv.bits : 0;
+            e.sendFn = h.send ? formatWire(h.send.fmt) : 0;
+            e.sendHex = h.send ? h.send.payload : "";
+            e.eventAction = h.adv.eventAction === "Same" ? 1 : 0;
+            e.cmdIdAction = h.adv.cmdIdAction === "Replacement" ? 1 : 0;
+            e.cmdIdRepl = h.adv.cmdIdRepl;
+            e.addrAction = h.adv.addrAction === "Replacement" ? 1 : 0;
+            e.addrRepl = h.adv.addrRepl;
+        }
+        out.push(e);
+    }
+    return out;
+}
+
+// Derived from applyWrites(), never counted separately, so the number on the button
+// cannot disagree with what the button sends.
+function applyFrames(st, role) {
+    return applyWrites(st, role).length + (role === "transponder" ? 2 : 0);
+}
+// How many of those eight carry a configuration rather than defaults. Only ever a label.
+function configuredSlots(st, role) {
+    var n = 0, w = applyWrites(st, role);
+    for (var i = 0; i < w.length; ++i) if (w[i].configured) ++n;
     return n;
 }
-function runFrames(st) { return st.role === "initiator" ? schedule(st).length : 0; }
-
-function plannedWrites(st) {
-    var out = {}, ev = roleEvent(st);
-    for (var i = 0; i < st.groups.length; ++i) {
-        var g = st.groups[i];
-        var t = st.role === "initiator" ? g.ini.reply : g.tr.request;
-        if (!t) continue;
-        for (var j = 0; j < g.slots.length; ++j) out[g.slots[j] + ":" + ev] = true;
-    }
-    return out;
-}
-// Slots this role wrote before and no longer configures. ID_USBL_CONTROL has no read-back,
-// so detaching a handler host-side leaves the device holding it -- these must be explicitly
-// switched off. Scoped to this role's own event so one role cannot tear down the other's.
-function staleWrites(st) {
-    var ev = roleEvent(st), planned = plannedWrites(st), out = [];
-    for (var k in st.written) {
-        var parts = String(k).split(":");
-        if (parseInt(parts[1], 10) !== ev) continue;
-        if (!planned[k]) out.push({ cmd: parseInt(parts[0], 10), event: ev });
-    }
-    return out;
-}
-function releaseFrames(st) { return staleWrites(st).length; }
 
 // Only the half this role writes counts toward staleness.
-function snapshot(st) {
+function snapshot(st, role) {
     return JSON.stringify(st.groups.map(function (g) {
-        return [g.slots, st.role === "initiator" ? g.ini.reply : g.tr.request];
+        return [g.slots, triggerFor(g, role)];
     }));
 }
-function isStale(st) { return st.appliedOnce && st.appliedSnapshot !== snapshot(st); }
-
-// Records the write set in the same step as marking applied, so a caller cannot mark the
-// plan applied while leaving the device's slot table untracked.
-function markApplied(st) {
-    var n = clone(st), ev = roleEvent(n), planned = plannedWrites(n), next = {};
-    for (var k in n.written)                       // other event belongs to the other role
-        if (parseInt(String(k).split(":")[1], 10) !== ev) next[k] = true;
-    for (var p in planned) next[p] = true;
-    n.written = next;
-    n.appliedSnapshot = snapshot(n);
-    n.appliedOnce = true;
+function appliedOnce(st, role) { return typeof st.applied[role] === "string"; }
+function isStale(st, role) {
+    return appliedOnce(st, role) && st.applied[role] !== snapshot(st, role);
+}
+// Any role applied, then edited. Drives the header badge while the pane is collapsed.
+function anyStale(st) {
+    for (var i = 0; i < ROLES.length; ++i) if (isStale(st, ROLES[i])) return true;
+    return false;
+}
+function markApplied(st, role) {
+    var n = clone(st);
+    n.applied[role] = snapshot(n, role);
     return n;
 }
 
@@ -417,8 +472,6 @@ function subroleInitiatorCode(g) {
 function subroleTransponderCode(g) {
     var t = g ? g.tr.request : null;
     if (!t) return "defaultTransponder";
-    if (t.disposition === "off" && sectionCount(t) === 0) return "disabled";
-    if (t.disposition === "silent" && sectionCount(t) === 0) return "silentReceiver";
     if (t.recv && t.send) return "relay";
     if (t.send) return "source";
     if (t.recv) return "sink";
@@ -460,10 +513,6 @@ function issueCodes(st) {
                            group: gi, key: key, bits: back, expected: rs.recv.bits });
         }
 
-        if (snd && snd.reply > 0 && rq && sectionCount(rq) === 0
-                && (rq.disposition === "silent" || rq.disposition === "off"))
-            out.push({ code: "interrogatorVsSilent", sev: "crit",
-                       group: gi, key: key, disposition: rq.disposition });
         if (snd && snd.reply === 0 && rq && sectionCount(rq) > 0)
             out.push({ code: "pingerVsAnswering", sev: "warn", group: gi, key: key });
         if (rs && !snd)
@@ -474,11 +523,9 @@ function issueCodes(st) {
 
 // ── persistence payload ──────────────────────────────────────────────────────
 function serialize(st) {
-    return JSON.stringify({ v: 3, groups: st.groups, nodes: st.nodes,
-                            nextId: st.nextId, written: st.written,
-                            role: st.role, activeGroup: st.activeGroup,
-                            appliedOnce: st.appliedOnce,
-                            appliedSnapshot: st.appliedSnapshot });
+    return JSON.stringify({ v: 5, groups: st.groups, nodes: st.nodes,
+                            nextId: st.nextId, activeGroup: st.activeGroup,
+                            applied: st.applied });
 }
 // Tolerant by design: a malformed or older blob yields defaults rather than a broken plan.
 function deserialize(raw) {
@@ -490,15 +537,23 @@ function deserialize(raw) {
     if (Array.isArray(o.groups)) st.groups = o.groups;
     if (Array.isArray(o.nodes)) st.nodes = o.nodes;
     if (typeof o.nextId === "number") st.nextId = o.nextId;
-    if (o.written && typeof o.written === "object") st.written = o.written;
-    if (o.role === "initiator" || o.role === "transponder") st.role = o.role;
     if (typeof o.activeGroup === "number") st.activeGroup = o.activeGroup;
-    if (typeof o.appliedOnce === "boolean") st.appliedOnce = o.appliedOnce;
-    if (typeof o.appliedSnapshot === "string") st.appliedSnapshot = o.appliedSnapshot;
+    // v<=4 carried a single current role with one snapshot. Migrate it onto that role and
+    // leave the other unapplied, which is the truth: the other half was never written.
+    if (o.applied && typeof o.applied === "object") {
+        for (var r = 0; r < ROLES.length; ++r)
+            if (typeof o.applied[ROLES[r]] === "string")
+                st.applied[ROLES[r]] = o.applied[ROLES[r]];
+    } else if (o.appliedOnce && typeof o.appliedSnapshot === "string"
+               && ROLES.indexOf(o.role) >= 0) {
+        st.applied[o.role] = o.appliedSnapshot;
+    }
 
     // Repair anything the blob got wrong rather than trusting it: slots must be unique,
     // in range and owned by exactly one group, and every step must name a slot its group
-    // still owns.
+    // still owns. A blob from a build without the cap is trimmed to it -- the extras
+    // could only be groups owning nothing.
+    if (st.groups.length > MAX_GROUPS) st.groups = st.groups.slice(0, MAX_GROUPS);
     var seen = {};
     for (var i = 0; i < st.groups.length; ++i) {
         var g = st.groups[i];
@@ -524,7 +579,6 @@ function deserialize(raw) {
         if (typeof st.nodes[k].addr !== "number") st.nodes[k].addr = 0;
         st.nodes[k].active = !!st.nodes[k].active;
     }
-    st.written = normWritten(st.written);
     _clampRefs(st);
     if (st.activeGroup >= st.groups.length) st.activeGroup = Math.max(0, st.groups.length - 1);
     return st;
@@ -537,23 +591,10 @@ function _repairTrigger(t) {
                           addrAction: "Incoming", addrRepl: 0 };
     if (t.recv && typeof t.recv.bits !== "number") t.recv.bits = 0;
     if (t.send && typeof t.send.payload !== "string") t.send.payload = "";
-    if (typeof t.disposition !== "string") t.disposition = "ack";
+    // v3 blobs carry a slot disposition. USBLCmdSlotConfig no longer exists, so drop it
+    // rather than let a dead field ride along in every later save.
+    if ("disposition" in t) delete t.disposition;
     t.advOpen = !!t.advOpen;
-}
-
-// A v1/v2 payload has no write set; treat an unreadable one as "nothing known written" so
-// the first Apply cannot release slots it never wrote.
-function normWritten(raw) {
-    var out = {};
-    if (!raw) return out;
-    for (var k in raw) {
-        var p = String(k).split(":");
-        var cmd = parseInt(p[0], 10), ev = parseInt(p[1], 10);
-        if (isNaN(cmd) || cmd < 0 || cmd >= SLOT_COUNT) continue;
-        if (ev !== 1 && ev !== 2) continue;
-        out[cmd + ":" + ev] = true;
-    }
-    return out;
 }
 
 // The seeded plan a first-run operator sees: one baseline group answering on the spare
@@ -584,30 +625,32 @@ function defaults() {
 // ignores the guard.
 if (typeof module !== "undefined" && module.exports) {
     module.exports = {
-        SLOT_COUNT: SLOT_COUNT,
+        SLOT_COUNT: SLOT_COUNT, MAX_GROUPS: MAX_GROUPS, ROLES: ROLES,
+        canAddGroup: canAddGroup,
         emptyState: emptyState, clone: clone,
         newSend: newSend, newTrigger: newTrigger, newGroup: newGroup,
         groupById: groupById, groupIndexById: groupIndexById, nodeById: nodeById,
         hasSlot: hasSlot, ownerOf: ownerOf, schedulable: schedulable,
         activeGroupOf: activeGroupOf, slotLabel: slotLabel, payloadBytes: payloadBytes,
         trigger: trigger, sectionCount: sectionCount, hasRewrite: hasRewrite,
-        structOf: structOf, roleEvent: roleEvent,
+        roleEvent: roleEvent, triggerFor: triggerFor,
         addGroup: addGroup, removeGroup: removeGroup, addNode: addNode,
         removeNode: removeNode, setNodeAddr: setNodeAddr, toggleNode: toggleNode,
         addStep: addStep, removeStep: removeStep, setStepCmd: setStepCmd,
-        toggleSlot: toggleSlot,
+        slotClick: slotClick,
         setSendField: setSendField, attachSend: attachSend, detachSend: detachSend,
         attachTrigger: attachTrigger, detachTrigger: detachTrigger,
-        setDisposition: setDisposition, attachSection: attachSection,
+        attachSection: attachSection,
         detachSection: detachSection, setSectionField: setSectionField,
         setAdvOpen: setAdvOpen, setAdvField: setAdvField,
-        setActiveGroup: setActiveGroup, setRole: setRole,
+        setActiveGroup: setActiveGroup,
         coverage: coverage, groupsView: groupsView, nodesView: nodesView,
         activeSlotCount: activeSlotCount, activeNodeCount: activeNodeCount,
-        schedule: schedule, defaults: defaults, normWritten: normWritten,
-        setupFrames: setupFrames, runFrames: runFrames,
-        plannedWrites: plannedWrites, staleWrites: staleWrites,
-        releaseFrames: releaseFrames, snapshot: snapshot, isStale: isStale,
+        schedule: schedule, defaults: defaults,
+        applyFrames: applyFrames, configuredSlots: configuredSlots,
+        formatWire: formatWire,
+        applyWrites: applyWrites, snapshot: snapshot,
+        appliedOnce: appliedOnce, isStale: isStale, anyStale: anyStale,
         markApplied: markApplied,
         subroleInitiatorCode: subroleInitiatorCode,
         subroleTransponderCode: subroleTransponderCode,

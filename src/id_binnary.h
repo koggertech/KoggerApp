@@ -1512,6 +1512,7 @@ public:
         uint8_t address[8] = {0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     } __attribute__((packed));
 
+    // Firmware calls this USBLTransponderEnable.
     struct USBLResponseTimeout {
         static constexpr ID getId() { return ID_USBL_CONTROL; }
         static constexpr Version getVer() { return v3; }
@@ -1530,7 +1531,7 @@ public:
         bool receiveResponseInIdle = false;
     } __attribute__((packed));
 
-    // Filter for incoming addresses
+    // Filter for incoming request addresses. Firmware calls this USBLRequestAddressFilter.
     struct USBLResponseAddressFilter {
         static constexpr ID getId() { return ID_USBL_CONTROL; }
         static constexpr Version getVer() { return v4; }
@@ -1538,55 +1539,11 @@ public:
         uint8_t address[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     } __attribute__((packed));
 
-    // NOTE: USBLCmdSlotConfig and USBLCmdConfig deliberately share version v6 —
-    // the firmware tells them apart by payload length (16 vs 18 bytes). Do not
-    // change either layout without changing the firmware.
-    struct USBLCmdSlotConfig  {
-        static constexpr ID getId() { return ID_USBL_CONTROL; }
-        static constexpr Version getVer() { return v6; }
-
-        enum EventFilter : uint8_t {
-            EventOnRequest = 1,
-            EventOnResponse = 2,
-        } eventFilter = EventOnRequest;
-
-        enum Type : uint8_t {
-            PayloadContainer = 0,
-            PayloadRequest = 1,
-        } type = PayloadContainer;
-
-        enum Function : uint8_t {
-            FunctionDisabled = 0,
-            FunctionSilent = 1,
-            FunctionNothing = 2,
-            FunctionBitArray = 3,
-            FunctionLLGeoAzimuth = 4
-        } function = FunctionNothing;
-
-        enum CmdAction : uint8_t {
-            CmdActionRepeat = 0,
-            CmdActionUseNext = 1
-        } cmdAction = CmdActionRepeat;
-
-        enum AddressAction : uint8_t {
-            AddressActionRepeat = 0,
-            AddressActionUseNext = 1,
-        } addressAction = AddressActionRepeat;
-
-        enum EventAction : uint8_t {
-            EventActionSwap = 0,
-            EventActionSame = 1,
-        } eventAction = EventActionSwap;
-
-        uint32_t reserved1 = 0; //  must be 0
-
-        uint8_t cmd_id = 0;
-        uint8_t cmd_id_next = 0;
-        uint8_t address_next = 0;
-        uint8_t reserved2 = 0; //  must be 0
-        uint16_t bit_length = 0; // for the next bytes
-    } __attribute__((packed));
-
+    // The one per-command-slot configuration. Firmware dispatches ID_USBL_CONTROL by
+    // VERSION ALONE (a flat isContextVer chain, no length discrimination anywhere), so a
+    // second struct at v6 is unreachable by construction — an earlier USBLCmdSlotConfig
+    // here was silently parsed as this struct and rejected with RespErrorPayload.
+    // One version, one struct.
     struct USBLCmdConfig  {
         static constexpr ID getId() { return ID_USBL_CONTROL; }
         static constexpr Version getVer() { return v6; }
@@ -1639,13 +1596,9 @@ public:
     void setMonitorConfig(const USBLMonitorConfig& cfg);
     void setResponseAddressFilter(const std::array<uint8_t, 8>& addresses);
     void setResponseAddressFilter(uint8_t address);
+    // sending_bit_length is derived from the payload actually written, so a truncated
+    // payload can never declare more bits than went on the wire.
     void setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& sendingPayload = {});
-    // General command-slot write. `cfg` is taken by value: bit_length is lowered to what
-    // was actually written when the payload has to be truncated to fit the frame.
-    // A cfg.bit_length of 0 means "no trailing payload", whatever `payload` holds.
-    void setCmdSlot(USBLCmdSlotConfig cfg, const QByteArray& payload = {});
-    void setCmdSlotAsModemResponse(uint8_t cmd_id, QByteArray byte_array, int bit_length);
-    void setCmdSlotAsModemReceiver(uint8_t cmd_id, int bit_length);
 
 protected:
 

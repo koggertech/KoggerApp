@@ -19,22 +19,15 @@ QtObject {
     id: store
 
     readonly property int slotCount: Logic.SLOT_COUNT
+    readonly property int maxGroups: Logic.MAX_GROUPS
     readonly property var groupColors: ["#3E8FD6", "#7C5CD3", "#16A34A", "#E0902B", "#0E9BB5", "#D6539B"]
 
-    // Payload FORMAT only. A format's wire value depends on the struct carrying it:
-    // USBLCmdSlotConfig numbers formats 3/4, USBLCmdConfig 1/2 — see usbl-protocol.md.
+    // Payload format. `wire` is the Function value in both v1 USBLPingRequest and
+    // v6 USBLCmdConfig — the two enums agree.
     readonly property var formats: [
-        { "id": "bits",  "label": qsTr("Raw bytes"),          "slotWire": 3, "cfgWire": 1, "sized": true  },
-        { "id": "llgeo", "label": qsTr("Position + azimuth"), "slotWire": 4, "cfgWire": 2, "sized": false }
+        { "id": "bits",  "label": qsTr("Raw bytes"),          "wire": 1, "sized": true  },
+        { "id": "llgeo", "label": qsTr("Position + azimuth"), "wire": 2, "sized": false }
     ]
-    // Slot-level disposition, expressible only while no payload section is attached: the
-    // slot struct has a single `function` field.
-    readonly property var dispositions: [
-        { "id": "ack",    "label": qsTr("Acknowledge"),   "wire": 2 },
-        { "id": "silent", "label": qsTr("Stay silent"),   "wire": 1 },
-        { "id": "off",    "label": qsTr("Turn slot off"), "wire": 0 }
-    ]
-    // A different enum again: bit-array is 1 here and 3 in the slot struct.
     readonly property var pingFunctions: [
         { "id": "default", "label": qsTr("Plain interrogation"),      "wire": 0, "payload": false },
         { "id": "bits",    "label": qsTr("Carry payload bytes"),      "wire": 1, "payload": true  },
@@ -52,9 +45,6 @@ QtObject {
 
     readonly property var groups: st.groups
     readonly property var nodes: st.nodes
-    readonly property string role: st.role
-    readonly property bool appliedOnce: st.appliedOnce
-    readonly property var written: st.written
 
     // Writable, because consumers do `plan.activeGroup = i`. Mirrored into `st` one way; the
     // property stays the source of truth for reads.
@@ -67,12 +57,26 @@ QtObject {
     readonly property int activeSlotCount: Logic.activeSlotCount(st)
     readonly property int activeNodeCount: Logic.activeNodeCount(st)
     readonly property var schedule: Logic.schedule(st)
-    readonly property int setupFrames: Logic.setupFrames(st)
-    readonly property int runFrames: Logic.runFrames(st)
-    readonly property int releaseFrames: Logic.releaseFrames(st)
-    readonly property string snapshot: Logic.snapshot(st)
-    readonly property bool stale: Logic.isStale(st)
-    readonly property int roleEvent: Logic.roleEvent(st)
+    readonly property bool anyStale: Logic.anyStale(st)
+    // A property, not a function: the add chip's `visible` is a binding, and a function
+    // call in a binding is not a tracked dependency.
+    readonly property bool canAddGroup: Logic.canAddGroup(st)
+
+    // Per-role apply state as a PROPERTY, not a function. A function call in a binding is
+    // not a tracked dependency, so `plan.applyFrames("initiator")` would render once and
+    // then lie -- the exact failure this store was rewritten to make impossible. One
+    // property recomputed when `st` is replaced; QML indexes into it by role.
+    readonly property var applyInfo: {
+        var out = {}
+        for (var i = 0; i < Logic.ROLES.length; ++i) {
+            var r = Logic.ROLES[i]
+            out[r] = { "frames": Logic.applyFrames(st, r),
+                       "configured": Logic.configuredSlots(st, r),
+                       "applied": Logic.appliedOnce(st, r),
+                       "stale": Logic.isStale(st, r) }
+        }
+        return out
+    }
 
     // Colour is a QML concern, so it is grafted on here rather than in the logic module.
     readonly property var groupsView: {
@@ -97,9 +101,10 @@ QtObject {
     function trigger(gid, which) { return Logic.trigger(st, gid, which) }
     function sectionCount(t)     { return Logic.sectionCount(t) }
     function hasRewrite(t)       { return Logic.hasRewrite(t) }
-    function structOf(t)         { return Logic.structOf(t) }
-    function plannedWrites()     { return Logic.plannedWrites(st) }
-    function staleWrites()       { return Logic.staleWrites(st) }
+    // Every ID_USBL_CONTROL v6 write Apply will emit for `role`, already reduced to wire
+    // values -- all eight slots, always. Only ever called from the click handler, never
+    // from a binding. Tested by tools/qml_test/test_usbl_plan_logic.mjs.
+    function applyWrites(role)   { return Logic.applyWrites(st, role) }
     function colorOf(g) {
         var i = Logic.groupIndexById(st, g ? g.id : -1)
         return groupColors[(i < 0 ? 0 : i) % groupColors.length]
@@ -137,12 +142,12 @@ QtObject {
     function removeStep(nodeId, index)  { _commit(Logic.removeStep(st, nodeId, index)) }
     function setStepCmd(nId, i, cmd)    { _commit(Logic.setStepCmd(st, nId, i, cmd)) }
 
-    // Returns the group the slot was taken from, or null — the caller shows that in a note.
-    function toggleSlot(groupId, cmd) {
-        var r = Logic.toggleSlot(st, groupId, cmd)
-        var from = r.takenFrom
+    // The one slot interaction — see Logic.slotClick. Returns what happened
+    // (select | release | assign | create | none) so the caller can say so.
+    function slotClick(cmd) {
+        var r = Logic.slotClick(st, cmd)
         _commit(r.state)
-        return from >= 0 ? Logic.groupById(st, from) : null
+        return r.action
     }
 
     function setSendField(gid, f, v)        { _commit(Logic.setSendField(st, gid, f, v)) }
@@ -150,7 +155,6 @@ QtObject {
     function detachSend(gid)                { _commit(Logic.detachSend(st, gid)) }
     function attachTrigger(gid, which)      { _commit(Logic.attachTrigger(st, gid, which)) }
     function detachTrigger(gid, which)      { _commit(Logic.detachTrigger(st, gid, which)) }
-    function setDisposition(gid, which, id) { _commit(Logic.setDisposition(st, gid, which, id)) }
     function attachSection(gid, w, side)    { _commit(Logic.attachSection(st, gid, w, side)) }
     function detachSection(gid, w, side)    { _commit(Logic.detachSection(st, gid, w, side)) }
     function setSectionField(gid, w, side, f, v) {
@@ -158,8 +162,7 @@ QtObject {
     }
     function setAdvOpen(gid, w, open)       { _commit(Logic.setAdvOpen(st, gid, w, open)) }
     function setAdvField(gid, w, f, v)      { _commit(Logic.setAdvField(st, gid, w, f, v)) }
-    function setRole(r)                     { _commit(Logic.setRole(st, r)) }
-    function markApplied()                  { _commit(Logic.markApplied(st)) }
+    function markApplied(role)              { _commit(Logic.markApplied(st, role)) }
 
     // ── derived roles, translated from the logic module's codes ────────────
     readonly property var _subroleText: ({
@@ -167,8 +170,6 @@ QtObject {
         "interrogator":       qsTr("interrogator"),
         "pinger":            qsTr("pinger / beacon"),
         "defaultTransponder": qsTr("default transponder"),
-        "disabled":          qsTr("disabled"),
-        "silentReceiver":    qsTr("silent receiver"),
         "relay":             qsTr("data relay"),
         "source":            qsTr("data source"),
         "sink":              qsTr("data sink"),
@@ -192,7 +193,7 @@ QtObject {
     function _issueText(e) {
         switch (e.code) {
         case "unownedSlots":
-            return qsTr("%1 belong to no group — those slots keep whatever the device already holds")
+            return qsTr("%1 belong to no group — Apply resets them to defaults on the device")
                    .arg(e.slots.join(", "))
         case "groupOwnsNoSlots":
             return qsTr("owns no slots, so it writes nothing and cannot be scheduled")
@@ -208,9 +209,6 @@ QtObject {
         case "answerBitsMismatch":
             return qsTr("transponder answers %1 bit, reply handler expects %2 bit")
                    .arg(e.bits).arg(e.expected)
-        case "interrogatorVsSilent":
-            return qsTr("interrogator waits for a reply, transponder is \"%1\" — every step times out")
-                   .arg(findBy(dispositions, e.disposition).label)
         case "pingerVsAnswering":
             return qsTr("pinger expects no reply, but the transponder half is configured to answer")
         case "replyHandlerWithoutRequest":

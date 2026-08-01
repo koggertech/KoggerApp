@@ -7,8 +7,7 @@ import kqml_types 1.0
 // A trigger is a slot whose defaults you replace by attaching payload sections. Receive
 // and send are independent attachments, not modes, so every picker here offers only a
 // payload FORMAT. Absence is never a menu item: an unattached section emits the carrying
-// enum's zero value, and the number of attached sections decides which struct is used —
-// one section fits USBLCmdSlotConfig, two need USBLCmdConfig.
+// enum's zero value. Every combination goes out as one v6 USBLCmdConfig.
 Rectangle {
     id: root
 
@@ -24,7 +23,7 @@ Rectangle {
 
     // No copy needed: the store replaces its state on every edit, so plan.trigger() returns a
     // new object each time and every `_t.recv` / `_t.adv.*` binding re-evaluates. Writes go
-    // through plan.setSectionField()/setDisposition() by id, never through this.
+    // through plan.setSectionField() by id, never through this.
     readonly property var _t: {
         var _d = plan ? plan.st : null
         return (plan && groupId >= 0) ? plan.trigger(groupId, which) : null
@@ -89,8 +88,7 @@ Rectangle {
                 font.pixelSize: Tokens.fontXs; font.bold: true
                 anchors.verticalCenter: parent.verticalCenter
             }
-            // Spacer, not a label: which wire struct this projects to is an implementation
-            // detail (structOf still decides it in _apply), so it stays out of the UI.
+            // Spacer, not a label: the wire struct is an implementation detail.
             Item {
                 width: Math.max(0, parent.width - Math.round(130 * AppPalette.scale)
                                 - Tokens.controlHSm - parent.spacing * 2)
@@ -107,23 +105,15 @@ Rectangle {
             }
         }
 
-        // Disposition is only expressible while nothing is attached — USBLCmdSlotConfig
-        // has one `function` field, so "stay silent" and "carry a bit array" are exclusive.
-        KTabBar {
+        // A handler with nothing attached still answers — the device has no per-slot
+        // "silent" or "off" any more. Say so rather than leave an empty card.
+        Text {
             visible: root._sections === 0
             width: parent.width
-            buttonHeight: Math.round(24 * AppPalette.scale)
-            fontPixelSize: Tokens.fontXs
-            // KTabBar reads option.label (optionLabelAt falls back to String(option), so a
-            // "text" key silently renders "[object Object]"). Same shape the rest of the
-            // page uses: { label, value }.
-            options: root.plan ? root.plan.dispositions.map(function (d) {
-                return { "label": d.label, "value": d.id }
-            }) : []
-            currentValue: root._t ? root._t.disposition : "ack"
-            onValueSelected: function (v) {
-                if (root.plan) root.plan.setDisposition(root.groupId, root.which, v)
-            }
+            text: qsTr("Answers with no payload. Attach a section to carry data.")
+            color: AppPalette.textMuted
+            font.pixelSize: Tokens.fontXs
+            wrapMode: Text.WordWrap
         }
 
         // ── attached payload sections ─────────────────────────────────────

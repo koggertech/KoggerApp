@@ -1,6 +1,6 @@
 {
   "_generated_by": "tools/protocol_contract/gen_contract_fw.cpp",
-  "_source": "EmbedCode/Bootloader/io/Parser/PayloadDefines.h",
+  "_source": "EmbedCode/USBL-agent/io/Parser/PayloadDefines.h",
   "_side": "firmware",
   "_partial_enums": ["ID", "Type", "Version", "BoardVersion"],
   "structs": {

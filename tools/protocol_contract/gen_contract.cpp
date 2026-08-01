@@ -229,21 +229,6 @@ int main() {
     FIELD(Ctl::USBLResponseAddressFilter, address);
     structEnd();
 
-    STRUCT(Ctl::USBLCmdSlotConfig, "ID_USBL_CONTROL", 6, "request");
-    FIELD(Ctl::USBLCmdSlotConfig, eventFilter);
-    FIELD(Ctl::USBLCmdSlotConfig, type);
-    FIELD(Ctl::USBLCmdSlotConfig, function);
-    FIELD(Ctl::USBLCmdSlotConfig, cmdAction);
-    FIELD(Ctl::USBLCmdSlotConfig, addressAction);
-    FIELD(Ctl::USBLCmdSlotConfig, eventAction);
-    FIELD(Ctl::USBLCmdSlotConfig, reserved1);
-    FIELD(Ctl::USBLCmdSlotConfig, cmd_id);
-    FIELD(Ctl::USBLCmdSlotConfig, cmd_id_next);
-    FIELD(Ctl::USBLCmdSlotConfig, address_next);
-    FIELD(Ctl::USBLCmdSlotConfig, reserved2);
-    FIELD(Ctl::USBLCmdSlotConfig, bit_length);
-    structEnd();
-
     STRUCT(Ctl::USBLCmdConfig, "ID_USBL_CONTROL", 6, "request");
     FIELD(Ctl::USBLCmdConfig, cmd_id);
     FIELD(Ctl::USBLCmdConfig, eventFilter);
@@ -275,49 +260,15 @@ int main() {
     printf("\n  },\n");
 
     // ---- enums -------------------------------------------------------------
-    // Emitted by name so the simulator asserts against real values instead of
-    // literals. USBLPingRequest::FunctionBitArray == 1 while
-    // USBLCmdSlotConfig::FunctionBitArray == 3 — both legal on the wire, which is
-    // why a shared control corrupts frames in silence.
+    // Emitted by name so the simulator asserts against real values instead of literals.
+    // USBLPingRequest::Function and USBLCmdConfig::Function agree (0/1/2), which is the
+    // only reason one UI format table can feed both.
     printf("  \"enums\": {");
 
     enumBegin("USBLPingRequest::Function");
     val("FunctionDefault", Ctl::USBLPingRequest::FunctionDefault);
     val("FunctionBitArray", Ctl::USBLPingRequest::FunctionBitArray);
     val("FunctionLLGeoAzimuth", Ctl::USBLPingRequest::FunctionLLGeoAzimuth);
-    enumEnd();
-
-    enumBegin("USBLCmdSlotConfig::Function");
-    val("FunctionDisabled", Ctl::USBLCmdSlotConfig::FunctionDisabled);
-    val("FunctionSilent", Ctl::USBLCmdSlotConfig::FunctionSilent);
-    val("FunctionNothing", Ctl::USBLCmdSlotConfig::FunctionNothing);
-    val("FunctionBitArray", Ctl::USBLCmdSlotConfig::FunctionBitArray);
-    val("FunctionLLGeoAzimuth", Ctl::USBLCmdSlotConfig::FunctionLLGeoAzimuth);
-    enumEnd();
-
-    enumBegin("USBLCmdSlotConfig::EventFilter");
-    val("EventOnRequest", Ctl::USBLCmdSlotConfig::EventOnRequest);
-    val("EventOnResponse", Ctl::USBLCmdSlotConfig::EventOnResponse);
-    enumEnd();
-
-    enumBegin("USBLCmdSlotConfig::Type");
-    val("PayloadContainer", Ctl::USBLCmdSlotConfig::PayloadContainer);
-    val("PayloadRequest", Ctl::USBLCmdSlotConfig::PayloadRequest);
-    enumEnd();
-
-    enumBegin("USBLCmdSlotConfig::CmdAction");
-    val("CmdActionRepeat", Ctl::USBLCmdSlotConfig::CmdActionRepeat);
-    val("CmdActionUseNext", Ctl::USBLCmdSlotConfig::CmdActionUseNext);
-    enumEnd();
-
-    enumBegin("USBLCmdSlotConfig::AddressAction");
-    val("AddressActionRepeat", Ctl::USBLCmdSlotConfig::AddressActionRepeat);
-    val("AddressActionUseNext", Ctl::USBLCmdSlotConfig::AddressActionUseNext);
-    enumEnd();
-
-    enumBegin("USBLCmdSlotConfig::EventAction");
-    val("EventActionSwap", Ctl::USBLCmdSlotConfig::EventActionSwap);
-    val("EventActionSame", Ctl::USBLCmdSlotConfig::EventActionSame);
     enumEnd();
 
     enumBegin("USBLCmdConfig::Function");

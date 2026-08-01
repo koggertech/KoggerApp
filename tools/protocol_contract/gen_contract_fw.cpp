@@ -6,7 +6,10 @@
 // the app. Compiling the firmware's own PayloadDefines.h gives a second, unrelated
 // account of the same wire, and `kpdevtool.py contract-diff` compares them.
 //
-// Source: EmbedCode/Bootloader/io/Parser/{FrameParser.hpp,PayloadDefines.h}
+// Source: EmbedCode/USBL-agent/io/Parser/{FrameParser.hpp,PayloadDefines.h} -- the USBL
+// firmware repo itself. (The Bootloader repo vendors a byte-identical copy of the same
+// io submodule; the agent repo is the one to point at, because it also carries the
+// ParceUSBLControl dispatch that decides which version means which struct.)
 // Build:  tools/protocol_contract/gen.ps1 -Firmware
 
 #include <cstddef>
@@ -100,7 +103,7 @@ static const char* idName(CMD_ID_e id) {
 
 int main() {
     printf("{\n  \"_generated_by\": \"tools/protocol_contract/gen_contract_fw.cpp\",\n");
-    printf("  \"_source\": \"EmbedCode/Bootloader/io/Parser/PayloadDefines.h\",\n");
+    printf("  \"_source\": \"EmbedCode/USBL-agent/io/Parser/PayloadDefines.h\",\n");
     printf("  \"_side\": \"firmware\",\n");
     // Emitted as a hand-picked subset on each side, so absence proves nothing about
     // them -- only a value disagreement does.

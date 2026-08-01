@@ -115,20 +115,6 @@
     "Ctl::USBLResponseAddressFilter": { "size": 8, "id": "ID_USBL_CONTROL", "ver": 4, "dir": "request", "fields": [
       { "name": "address", "offset": 0, "size": 1, "count": 8, "kind": "u" }
     ] },
-    "Ctl::USBLCmdSlotConfig": { "size": 16, "id": "ID_USBL_CONTROL", "ver": 6, "dir": "request", "fields": [
-      { "name": "eventFilter", "offset": 0, "size": 1, "count": 1, "kind": "u" },
-      { "name": "type", "offset": 1, "size": 1, "count": 1, "kind": "u" },
-      { "name": "function", "offset": 2, "size": 1, "count": 1, "kind": "u" },
-      { "name": "cmdAction", "offset": 3, "size": 1, "count": 1, "kind": "u" },
-      { "name": "addressAction", "offset": 4, "size": 1, "count": 1, "kind": "u" },
-      { "name": "eventAction", "offset": 5, "size": 1, "count": 1, "kind": "u" },
-      { "name": "reserved1", "offset": 6, "size": 4, "count": 1, "kind": "u" },
-      { "name": "cmd_id", "offset": 10, "size": 1, "count": 1, "kind": "u" },
-      { "name": "cmd_id_next", "offset": 11, "size": 1, "count": 1, "kind": "u" },
-      { "name": "address_next", "offset": 12, "size": 1, "count": 1, "kind": "u" },
-      { "name": "reserved2", "offset": 13, "size": 1, "count": 1, "kind": "u" },
-      { "name": "bit_length", "offset": 14, "size": 2, "count": 1, "kind": "u" }
-    ] },
     "Ctl::USBLCmdConfig": { "size": 18, "id": "ID_USBL_CONTROL", "ver": 6, "dir": "request", "fields": [
       { "name": "cmd_id", "offset": 0, "size": 1, "count": 1, "kind": "u" },
       { "name": "eventFilter", "offset": 1, "size": 1, "count": 1, "kind": "u" },
@@ -158,12 +144,6 @@
   },
   "enums": {
     "USBLPingRequest::Function": { "FunctionDefault": 0, "FunctionBitArray": 1, "FunctionLLGeoAzimuth": 2 },
-    "USBLCmdSlotConfig::Function": { "FunctionDisabled": 0, "FunctionSilent": 1, "FunctionNothing": 2, "FunctionBitArray": 3, "FunctionLLGeoAzimuth": 4 },
-    "USBLCmdSlotConfig::EventFilter": { "EventOnRequest": 1, "EventOnResponse": 2 },
-    "USBLCmdSlotConfig::Type": { "PayloadContainer": 0, "PayloadRequest": 1 },
-    "USBLCmdSlotConfig::CmdAction": { "CmdActionRepeat": 0, "CmdActionUseNext": 1 },
-    "USBLCmdSlotConfig::AddressAction": { "AddressActionRepeat": 0, "AddressActionUseNext": 1 },
-    "USBLCmdSlotConfig::EventAction": { "EventActionSwap": 0, "EventActionSame": 1 },
     "USBLCmdConfig::Function": { "FunctionDefault": 0, "FunctionBitArray": 1, "FunctionLLGeoAzimuth": 2 },
     "USBLCmdConfig::EventFilter": { "EventOnReceiveRequest": 1, "EventOnReceiveResponse": 2 },
     "USBLCmdConfig::SendBackCmdIdAction": { "SendBackCmdIdIncoming": 0, "SendBackCmdIdReplacement": 1 },

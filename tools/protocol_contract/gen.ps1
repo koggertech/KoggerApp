@@ -1,22 +1,48 @@
-# Regenerate contract/kp-layouts.json from the current headers.
-# Run after touching src/id_binnary.h or src/proto_binnary.h; commit the diff.
+# Regenerate the KP wire contracts and commit the diff.
+#
+#   gen.ps1              -> contract/kp-layouts.json           from src/id_binnary.h
+#   gen.ps1 -Firmware    -> contract/kp-layouts-firmware.json  from the USBL firmware repo
+#
+# Run both after touching either side's headers. `kpdevtool.py contract-diff` compares
+# them, so a header change the other side has not followed shows up as a finding instead
+# of as a frame the device silently rejects.
 param(
     [string]$Qt      = "C:/Qt/6.8.3/llvm-mingw_64",
     [string]$Clang   = "C:/Qt/Tools/llvm-mingw1706_64/bin/clang++.exe",
-    [string]$OutJson = "contract/kp-layouts.json"
+    [switch]$Firmware,
+    [string]$FwRoot  = "D:/Kogger/EmbedCode/USBL-agent/io/Parser",
+    [string]$OutJson
 )
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 Push-Location $root
 try {
+    if (-not $OutJson) {
+        if ($Firmware) { $OutJson = "contract/kp-layouts-firmware.json" }
+        else           { $OutJson = "contract/kp-layouts.json" }
+    }
     New-Item -ItemType Directory -Force -Path build, (Split-Path $OutJson) | Out-Null
-    $exe = "build/gen_contract.exe"
 
-    & $Clang -std=c++23 -fno-exceptions -w `
-        -I src -I "$Qt/include" -I "$Qt/include/QtCore" -I "$Qt/include/QtGui" `
-        -o $exe tools/protocol_contract/gen_contract.cpp `
-        -L "$Qt/lib" -lQt6Core -lQt6Gui
+    if ($Firmware) {
+        if (-not (Test-Path "$FwRoot/PayloadDefines.h")) {
+            throw "no PayloadDefines.h under $FwRoot - pass -FwRoot <repo>/io/Parser"
+        }
+        $exe = "build/gen_contract_fw.exe"
+        # fwshim/ supplies the two MCU headers PayloadDefines.h pulls in. Nothing else
+        # from the firmware tree compiles on the host, and nothing else is needed to
+        # read struct layouts.
+        & $Clang -std=c++23 -fno-exceptions -w `
+            -I $FwRoot -I tools/protocol_contract/fwshim `
+            -o $exe tools/protocol_contract/gen_contract_fw.cpp
+    }
+    else {
+        $exe = "build/gen_contract.exe"
+        & $Clang -std=c++23 -fno-exceptions -w `
+            -I src -I "$Qt/include" -I "$Qt/include/QtCore" -I "$Qt/include/QtGui" `
+            -o $exe tools/protocol_contract/gen_contract.cpp `
+            -L "$Qt/lib" -lQt6Core -lQt6Gui
+    }
     if ($LASTEXITCODE -ne 0) { throw "compile failed ($LASTEXITCODE)" }
 
     $env:PATH = "$Qt/bin;$(Split-Path $Clang);$env:PATH"

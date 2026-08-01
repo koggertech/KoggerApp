@@ -614,11 +614,6 @@ void DevDriver::setUsblMonitorConfig(uint32_t suppressSelfResponseUs, uint32_t s
     idUSBLControl->setMonitorConfig(cfg);
 }
 
-void DevDriver::setCmdSlotAsModemReceiver(int cmdId, int bitLength) {
-    if(!m_state.connect) return;
-    idUSBLControl->setCmdSlotAsModemReceiver((uint8_t)cmdId, bitLength);
-}
-
 QByteArray DevDriver::parseHexPayload(const QString& text) {
     QString digits;
     for(const QChar& c : text) {
@@ -629,42 +624,6 @@ QByteArray DevDriver::parseHexPayload(const QString& text) {
     if(digits.size() % 2)
         digits.prepend('0');
     return QByteArray::fromHex(digits.toLatin1());
-}
-
-void DevDriver::setCmdSlotAsModemResponse(int cmdId, const QString& hexPayload, int bitLength) {
-    if(!m_state.connect) return;
-
-    const QByteArray payload = parseHexPayload(hexPayload);
-    const int bits = bitLength > 0 ? bitLength : (int)payload.size() * 8;
-    idUSBLControl->setCmdSlotAsModemResponse((uint8_t)cmdId, payload, bits);
-}
-
-void DevDriver::setUsblCmdSlotDisposition(int cmdId, int event, int function) {
-    if(!m_state.connect) return;
-
-    typedef IDBinUsblControl::USBLCmdSlotConfig Slot;
-
-    // Only the payload-free values are dispositions. Refuse anything else rather than
-    // coercing it: silently falling back to Disabled would switch off a slot the operator
-    // never asked to switch off.
-    Slot::Function fn;
-    switch(function) {
-    case Slot::FunctionDisabled: fn = Slot::FunctionDisabled; break;
-    case Slot::FunctionSilent:   fn = Slot::FunctionSilent;   break;
-    case Slot::FunctionNothing:  fn = Slot::FunctionNothing;  break;
-    default:
-        qWarning("setUsblCmdSlotDisposition: function %d is not a disposition, ignored", function);
-        return;
-    }
-
-    Slot cfg;
-    cfg.cmd_id = (uint8_t)qBound(0, cmdId, 255);
-    cfg.eventFilter = event == Slot::EventOnResponse ? Slot::EventOnResponse : Slot::EventOnRequest;
-    cfg.type = Slot::PayloadContainer;
-    cfg.function = fn;
-    cfg.bit_length = 0;
-
-    idUSBLControl->setCmdSlot(cfg);
 }
 
 void DevDriver::setUsblCmdConfig(int cmdId, int event,

@@ -323,21 +323,13 @@ public slots:
 
     void setUsblTransponderEnable(bool enabled);
     void setUsblMonitorConfig(uint32_t suppressSelfResponseUs, uint32_t suppressSelfRequestUs, bool receiveResponseInIdle);
-    void setCmdSlotAsModemReceiver(int cmdId, int bitLength);
-    void setCmdSlotAsModemResponse(int cmdId, const QString& hexPayload, int bitLength);
-    // Payload-free slot disposition. `function` uses USBLCmdSlotConfig numbering and only
-    // accepts the three non-payload values — Disabled(0), Silent(1), Nothing(2).
+    // The only per-slot write there is. v6 USBLCmdConfig carries a receiver_function AND a
+    // sender_function, so one frame configures both directions of a command slot.
     //
-    // This is the only way to switch OFF a slot the device already holds: ID_USBL_CONTROL
-    // has no read-back, so dropping the handler host-side changes nothing on the device.
-    void setUsblCmdSlotDisposition(int cmdId, int event, int function);
-    // Both directions in one frame. USBLCmdConfig is the only control payload carrying a
-    // receiver_function AND a sender_function, so it is what a command slot needs when it
-    // both accepts and returns a payload. The trailing rewrite arguments default to
-    // "echo what came in", which is USBLCmdConfig's own default.
-    //
-    // NOTE the Function enums differ per struct: BitArray is 1 here and in
-    // USBLPingRequest, but 3 in USBLCmdSlotConfig. Pass USBLCmdConfig numbering.
+    // There is no "disable" or "stay silent": current firmware dropped those Function
+    // values along with USBLCmdSlotConfig. All-default arguments are the closest thing —
+    // the slot still answers, it just handles no payload. Per-device silence is
+    // setUsblTransponderEnable(false); per-address filtering is acousticResponceFilterSlots().
     void setUsblCmdConfig(int cmdId, int event,
                           int receiverFunction, int receiveBitLength,
                           int senderFunction, const QString& sendHexPayload,

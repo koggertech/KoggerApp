@@ -225,10 +225,11 @@ DeviceSettingsGroup {
     // ── remote nodes ──────────────────────────────────────────────────────
     Row {
         width: parent.width; height: Tokens.controlHSm; spacing: Tokens.spaceSm
+        // NOT keyed on plan.role. That tab lives in the collapsible command-plan pane and
+        // only picks which half Apply writes; this list is the address book both halves
+        // use, and this pane has to keep working whether or not that pane is even open.
         Text {
-            text: plan && plan.role === "initiator"
-                  ? qsTr("Nodes we interrogate")
-                  : qsTr("Nodes that interrogate us")
+            text: qsTr("Nodes")
             color: AppPalette.textMuted
             font.pixelSize: Tokens.fontSm; font.bold: true
             width: Math.max(0, parent.width - _addNodeBtn.width - parent.spacing)
@@ -415,9 +416,9 @@ DeviceSettingsGroup {
         wrapMode: Text.WordWrap
         color: AppPalette.textMuted
         font.pixelSize: Tokens.fontXs
-        text: plan && plan.role === "initiator"
-              ? qsTr("A node with no commands is interrogated once, with command 0.")
-              : qsTr("These are the addresses this device will answer.")
+        text: qsTr("The schedule interrogates these addresses; a node with no commands is "
+                 + "interrogated once, with command 0. Applying the plan as transponder "
+                 + "also makes them the addresses this device answers.")
     }
 
     Rectangle { width: parent.width; height: 1; color: AppPalette.border }
@@ -451,11 +452,14 @@ DeviceSettingsGroup {
         onTriggered: usblGroup._advance()
     }
 
+    // Always visible. The schedule is the host's own interrogation loop -- it sends
+    // ID_USBL_CONTROL v1 ping requests and needs nothing applied to the device first.
+    // It used to disappear when the plan pane's role tab was set to Transponder, which
+    // is a control in a different, collapsible pane.
     Column {
         id: _schedSect
         width: parent.width
         spacing: Tokens.spaceSm
-        visible: !plan || plan.role === "initiator"
 
         Row {
             width: parent.width; height: Tokens.controlHSm; spacing: Tokens.spaceSm
