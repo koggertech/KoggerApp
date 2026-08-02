@@ -9,6 +9,7 @@
 #include <QPair>
 #include <QVector>
 #include <QVector3D>
+#include <QVariantMap>
 #include <QReadWriteLock>
 
 #include "black_stripes_processor.h"
@@ -66,6 +67,10 @@ public:
     Q_PROPERTY(float  lastUsblElevation                READ getLastUsblElevation           NOTIFY lastUsblSolutionChanged)
     Q_PROPERTY(float  lastUsblSnr                      READ getLastUsblSnr                 NOTIFY lastUsblSolutionChanged)
     Q_PROPERTY(bool   isLastUsblBeaconCoordinateValid  READ isValidLastUsblBeaconCoordinate NOTIFY lastUsblSolutionChanged)
+    // address (as a string key) -> one solution object. A single property rather than a
+    // Q_INVOKABLE per address, because a function call in a QML binding is not a tracked
+    // dependency -- the value would render once and then never update.
+    Q_PROPERTY(QVariantMap usblSolutions                READ getUsblSolutions               NOTIFY lastUsblSolutionChanged)
     Q_PROPERTY(double lastUsblBeaconLatitude           READ getLastUsblBeaconLatitude      NOTIFY lastUsblSolutionChanged)
     Q_PROPERTY(double lastUsblBeaconLongitude          READ getLastUsblBeaconLongitude     NOTIFY lastUsblSolutionChanged)
     Q_PROPERTY(float  lastUsblBeaconDepth              READ getLastUsblBeaconDepth         NOTIFY lastUsblSolutionChanged)
@@ -275,6 +280,7 @@ public:
     bool   isValidLastUsblBeaconCoordinate() const {
         return LLA(lastUsblSolution_.beacon_latitude, lastUsblSolution_.beacon_longitude).isCoordinatesValid();
     }
+    QVariantMap getUsblSolutions() const;
 
     BottomTrackParam getBottomTrackParam() {
         QReadLocker rl(&lock_);
@@ -559,6 +565,16 @@ private:
     float speed_                = 0.0f;
     IDBinUsblSolution::UsblSolution lastUsblSolution_;
     double lastUsblFixEpochMs_  = 0.0;
+    // One entry per beacon address. `lastUsblSolution_` above is whichever answered most
+    // recently, which is ambiguous the moment a schedule interrogates more than one
+    // beacon -- a "range" reading flickers between them with nothing saying whose it is.
+    // Entries are never expired: the fix age tells the operator it is stale, and dropping
+    // it would blank a widget instead of marking it old.
+    QMap<int, IDBinUsblSolution::UsblSolution> usblByAddr_;
+    QMap<int, double> usblEpochMsByAddr_;
+    // Written from the data thread, read from the QML thread. A torn read of the POD
+    // above is a wrong number; a torn read of a QMap is a crash, so this one is locked.
+    mutable QReadWriteLock usblAddrLock_;
     bool simpleNavV2Valid_ = false;
     uint8_t simpleNavV2GnssFixType_ = 0;
     uint8_t simpleNavV2NumSats_ = 0;

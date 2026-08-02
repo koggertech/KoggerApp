@@ -26,4 +26,5 @@ qt_add_qml_module(kogger_kqml_types
         KToggleRow.qml
         KToolTip.qml
         Tokens.qml
-        ZOrder.qml)
+        ZOrder.qml
+        UsblFieldLogic.js)

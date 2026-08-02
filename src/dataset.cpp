@@ -577,12 +577,44 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
 
     // Host arrival time: the device clock in data.timestamp_us is not comparable with
     // the host's, and fix age is what tells the operator whether a range is live.
+    const double nowMs = (double)QDateTime::currentMSecsSinceEpoch();
     lastUsblSolution_ = data;
-    lastUsblFixEpochMs_ = (double)QDateTime::currentMSecsSinceEpoch();
+    lastUsblFixEpochMs_ = nowMs;
+
+    // Keep it per address as well. 0xFF is the "no address" marker in the payload, and
+    // the protocol only ever uses 0..8, so anything else is not a beacon we can name.
+    if (data.id <= 8) {
+        QWriteLocker wl(&usblAddrLock_);
+        usblByAddr_[(int)data.id] = data;
+        usblEpochMsByAddr_[(int)data.id] = nowMs;
+    }
     emit lastUsblSolutionChanged();
 
     markDataAvailable(hasUsblData_);
     emit dataUpdate();
+}
+
+QVariantMap Dataset::getUsblSolutions() const {
+    QReadLocker rl(&usblAddrLock_);
+
+    QVariantMap out;
+    for (auto it = usblByAddr_.constBegin(); it != usblByAddr_.constEnd(); ++it) {
+        const IDBinUsblSolution::UsblSolution& s = it.value();
+        QVariantMap e;
+        e["address"]      = it.key();
+        e["distance"]     = s.distance_m;
+        e["azimuth"]      = s.azimuth_deg;
+        e["elevation"]    = s.elevation_deg;
+        e["snr"]          = s.snr;
+        e["beaconLat"]    = s.beacon_latitude;
+        e["beaconLon"]    = s.beacon_longitude;
+        e["beaconDepth"]  = s.beacon_depth;
+        e["epochMs"]      = usblEpochMsByAddr_.value(it.key(), 0.0);
+        e["coordValid"]   = LLA(s.beacon_latitude, s.beacon_longitude).isCoordinatesValid();
+        // String key: QVariantMap keys are QStrings, so QML indexes it as usblSolutions["2"].
+        out[QString::number(it.key())] = e;
+    }
+    return out;
 }
 
 void Dataset::addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
