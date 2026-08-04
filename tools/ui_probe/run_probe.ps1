@@ -1,8 +1,13 @@
 # Launch KoggerApp with the UI probe armed, then check the capture.
 #
-# Run this yourself from a normal terminal. The app segfaults at startup when launched
-# detached/backgrounded (reproducible WITHOUT the probe, so it is not the probe's fault);
-# a foreground launch is reliable.
+# Run this yourself from a normal terminal, because this script BLOCKS on the app and then
+# checks the capture it left behind.
+#
+# It does not have to be a foreground launch. An earlier note here claimed the app segfaults
+# when started detached; that was wrong. A controlled matrix showed Start-Process works with
+# and without redirected stdio and with the probe armed. What actually happened is that
+# PowerShell does not wait on a GUI-subsystem binary, so `& .\KoggerApp.exe` returns at once
+# and this script printed "app exited ()" while the app was still running.
 #
 #   powershell -File tools/ui_probe/run_probe.ps1
 #   powershell -File tools/ui_probe/run_probe.ps1 -WaitFor AppSettingsPage

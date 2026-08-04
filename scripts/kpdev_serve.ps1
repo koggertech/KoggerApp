@@ -17,14 +17,38 @@
 # kpdev lives in another repo, and this one is public, so neither location is baked in here.
 # Point at your checkout with -KpTools or $env:KPTOOLS_DIR, and at an interpreter with
 # -Python or $env:KPDEV_PYTHON (default: whatever `python` resolves to on PATH).
+#
+# CALLING THIS FROM A SCRIPT OR AN AGENT: do not wait on it. It starts kpdev and returns, but
+# the served process inherits the stdio handles this script redirects, so a caller that waits
+# for the pipeline to close waits for kpdev's whole run. Observed twice; the redirect stays
+# because it is the only way a startup crash gets reported. Launch it detached instead:
+#
+#   Start-Process powershell -ArgumentList '-File','scripts/kpdev_serve.ps1','-KpTools','<dir>'
+#
+# then confirm with the process check the -Stop path uses. Interactive use is unaffected.
 param(
-    [int]    $Port     = 14650,
-    [string] $Scenario = "usbl",
-    [double] $Hours    = 8,
-    [double] $Period   = 1.0,        # solution emission interval, s (0 = judge only)
-    [int]    $Seed     = 7,          # fixed: a run that cannot replay makes every flake a hunt
-    [string] $KpTools  = "",
-    [string] $Python   = "",
+    [int]    $Port       = 14650,
+    [string] $Scenario   = "usbl",
+    [double] $Hours      = 8,
+    # UNSOLICITED emission, off by default. kpdev now ANSWERS interrogations (2R/c plus the
+    # node's turn-around), which is what a head does and the only mode in which the app's own
+    # answer window means anything. Free-running emission on top of that is actively
+    # misleading: solutions keep arriving after the app stops asking, which looks like a host
+    # bug and is not one. Pass -Period 1 only if a test needs a stream nobody requested.
+    [double] $Period     = 0,
+    # Named link condition. 'clean' is what the water does and nothing else. 'flaky' is the
+    # bad-link test: 300-800 ms of latency drawn per interrogation, 30% of them never answered.
+    # Any of the three overrides below wins over the profile.
+    [ValidateSet("clean", "flaky")]
+    [string] $Profile       = "clean",
+    [Nullable[double]] $ReplyDelay    = $null,  # 0 = derive from range; above the app's dwell
+                                                # makes every interrogation time out
+    [Nullable[double]] $ReplyDelayMax = $null,  # above -ReplyDelay: drawn per interrogation
+    [Nullable[double]] $DropProb      = $null,  # fraction left unanswered
+    [int]    $Seed       = 7,        # fixed: a run that cannot replay makes every flake a hunt
+    [string] $KpTools    = "",
+    [string] $Python     = "",
+    [switch] $NoReply,               # pre-2026-08 behaviour: nothing answers, --period only
     [switch] $Stop
 )
 
@@ -90,9 +114,16 @@ $argList = @(
     "--trace", $trace,
     "--duration", [int]($Hours * 3600),
     "--period", $Period,
+    "--profile", $Profile,
     "--seed", $Seed,
     "--quiet"
 )
+# Only pass the overrides that were actually given: kpdev distinguishes "not given" from
+# "given as 0" so that -DropProb 0 can switch a profile's loss off.
+if ($null -ne $ReplyDelay)    { $argList += @("--reply-delay",     $ReplyDelay) }
+if ($null -ne $ReplyDelayMax) { $argList += @("--reply-delay-max", $ReplyDelayMax) }
+if ($null -ne $DropProb)      { $argList += @("--drop-prob",       $DropProb) }
+if ($NoReply)                 { $argList += "--no-reply" }
 
 $proc = Start-Process -FilePath $Python -ArgumentList $argList -WorkingDirectory $KpTools `
                       -WindowStyle Hidden -PassThru `
@@ -106,6 +137,15 @@ if ($proc.HasExited) {
 }
 
 Write-Host "kpdev serving scenario '$Scenario' on UDP $Port"
+if ($NoReply) {
+    Write-Host "  replies: OFF -- nothing answers interrogations"
+} else {
+    Write-Host "  replies: ON, profile '$Profile'$(if ($Profile -eq 'flaky') { ' -- 300-800 ms latency, 30% unanswered' } else { ' -- 2R/c + turn-around, none lost' })"
+    foreach ($o in @(@("reply-delay", $ReplyDelay), @("reply-delay-max", $ReplyDelayMax), @("drop-prob", $DropProb))) {
+        if ($null -ne $o[1]) { Write-Host "           override: $($o[0]) = $($o[1])" }
+    }
+}
+if ($Period -gt 0) { Write-Host "  plus UNSOLICITED emission every $Period s" }
 Write-Host "  PID:      $($proc.Id)   (stops itself after $Hours h)"
 Write-Host "  trace:    $trace"
 Write-Host "  log:      $log"
