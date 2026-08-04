@@ -337,7 +337,17 @@ function addStep(st, nodeId, groupId) {
     var cmd = g.slots[0];
     for (var j = 0; j < g.slots.length; ++j)
         if (!used[g.slots[j]]) { cmd = g.slots[j]; break; }
-    x.refs = x.refs.concat([{ group: g.id, cmd: cmd }]);
+    x.refs = x.refs.concat([{ group: g.id, cmd: cmd, on: true }]);
+    return n;
+}
+// Whether the schedule interrogates this step. A step is a plan item that keeps its position and
+// its group binding; muting one used to mean DELETING it and adding it back, which lost both.
+//
+// It is deliberately not the same thing as the node's own switch: that stops the whole node.
+function toggleStep(st, nodeId, index) {
+    var n = clone(st), x = nodeById(n, nodeId);
+    if (!x || !x.refs[index]) return st;
+    x.refs[index].on = !x.refs[index].on;
     return n;
 }
 function removeStep(st, nodeId, index) {
@@ -429,6 +439,10 @@ function _clampRefs(st) {
             var o = ownerOf(st, r.cmd);
             if (!o) return false;
             r.group = o.id;
+            // Absent means scheduled. Every blob written before the flag existed holds steps
+            // that WERE being interrogated, so defaulting to false would silently stop a
+            // working schedule on upgrade.
+            r.on = (r.on === undefined) ? true : !!r.on;
             return true;
         });
     }
@@ -550,6 +564,7 @@ function nodesView(st) {
         var x = st.nodes[i], steps = [];
         for (var j = 0; j < x.refs.length; ++j)
             steps.push({ group: x.refs[j].group, cmd: x.refs[j].cmd, index: j,
+                         on: x.refs[j].on !== false,
                          groupIndex: groupIndexById(st, x.refs[j].group) });
         out.push({ id: x.id, addr: x.addr, active: x.active,
                    cmdCount: x.refs.length, steps: steps });
@@ -576,9 +591,14 @@ function schedule(st) {
             out.push({ addr: n.addr, cmd: 0, implicit: true, nodeId: n.id, groupId: -1 });
             continue;
         }
-        for (var j = 0; j < n.refs.length; ++j)
+        // A node whose every step is muted contributes NOTHING -- not even the implicit cmd 0
+        // that a node with no steps at all gets. Falling back to it would make muting the last
+        // step silently start interrogating something else.
+        for (var j = 0; j < n.refs.length; ++j) {
+            if (n.refs[j].on === false) continue;
             out.push({ addr: n.addr, cmd: n.refs[j].cmd, implicit: false,
                        nodeId: n.id, groupId: n.refs[j].group });
+        }
     }
     return out;
 }
@@ -748,7 +768,7 @@ function issueCodes(st) {
 
 // ── persistence payload ──────────────────────────────────────────────────────
 function serialize(st) {
-    return JSON.stringify({ v: 6, groups: st.groups, nodes: st.nodes,
+    return JSON.stringify({ v: 7, groups: st.groups, nodes: st.nodes,
                             nextId: st.nextId, activeId: st.activeId,
                             applied: st.applied });
 }
@@ -866,8 +886,9 @@ function defaults() {
     st.activeId = baseline.id;
     st.nodes = [
         { id: _next(st), addr: 1, active: true,
-          refs: [{ group: data.id, cmd: 1 }, { group: data.id, cmd: 2 },
-                 { group: data.id, cmd: 3 }] },
+          refs: [{ group: data.id, cmd: 1, on: true },
+                 { group: data.id, cmd: 2, on: true },
+                 { group: data.id, cmd: 3, on: true }] },
         { id: _next(st), addr: 2, active: true, refs: [] }
     ];
     return st;
@@ -892,7 +913,7 @@ if (typeof module !== "undefined" && module.exports) {
         roleEvent: roleEvent, triggerFor: triggerFor,
         addGroup: addGroup, removeGroup: removeGroup, addNode: addNode,
         removeNode: removeNode, setNodeAddr: setNodeAddr, toggleNode: toggleNode,
-        addStep: addStep, removeStep: removeStep, setStepCmd: setStepCmd,
+        addStep: addStep, removeStep: removeStep, toggleStep: toggleStep, setStepCmd: setStepCmd,
         slotClick: slotClick,
         setSendField: setSendField, attachSend: attachSend, detachSend: detachSend,
         attachTrigger: attachTrigger, detachTrigger: detachTrigger,

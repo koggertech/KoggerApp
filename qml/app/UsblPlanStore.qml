@@ -171,6 +171,8 @@ QtObject {
     function toggleNode(id)             { _commit(Logic.toggleNode(st, id)) }
     function addStep(nodeId, groupId)   { _commit(Logic.addStep(st, nodeId, groupId)) }
     function removeStep(nodeId, index)  { _commit(Logic.removeStep(st, nodeId, index)) }
+    // Mute a step without losing it. Not the same as the node's switch, which stops the node.
+    function toggleStep(nodeId, index)  { _commit(Logic.toggleStep(st, nodeId, index)) }
     function setStepCmd(nId, i, cmd)    { _commit(Logic.setStepCmd(st, nId, i, cmd)) }
 
     // The one slot interaction — see Logic.slotClick. Returns what happened

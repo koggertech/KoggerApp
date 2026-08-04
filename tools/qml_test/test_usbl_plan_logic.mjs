@@ -440,6 +440,89 @@ console.log("schedule");
     eq("addresses are clamped to the wire range", L.nodesView(st)[0].addr, 8);
 }
 
+// ── muting a step ────────────────────────────────────────────────────────────
+// A step can be taken out of the schedule without being deleted. It used to be delete-and-re-add,
+// which lost the step's position in the cycle and its group binding, so "stop asking this one
+// thing for a minute" cost more than it was worth.
+console.log("muting a step");
+{
+    let st = L.initialState();
+    const g = st.groups[0].id;
+    st = L.addNode(st);
+    const n = st.nodes[0].id;
+    st = L.addStep(st, n, g);
+    st = L.addStep(st, n, g);
+
+    eq("a new step is scheduled", L.nodesView(st)[0].steps.map((s) => s.on), [true, true]);
+    eq("...and both are in the schedule", L.schedule(st).length, 2);
+
+    const before = L.applyWrites(st, "initiator");
+    st = L.toggleStep(st, n, 0);
+    eq("muting one flips only its flag", L.nodesView(st)[0].steps.map((s) => s.on),
+       [false, true]);
+    eq("...and takes it out of the schedule", L.schedule(st).map((s) => s.cmd),
+       [L.nodesView(st)[0].steps[1].cmd]);
+    eq("...while the step itself is still there", L.nodesView(st)[0].steps.length, 2);
+
+    // THE ONE THING THAT MUST NOT HAPPEN. A ref's schedule flag is host loop intent; it never
+    // reaches the device's slot table. If muting changed the wire bytes it would mark the plan
+    // stale and invite a pointless re-apply.
+    eq("muting changes not one byte Apply would send", L.applyWrites(st, "initiator"), before);
+    ok("...so it cannot make the plan read as stale", !L.isStale(st, "initiator")
+       || !L.appliedOnce(st, "initiator"));
+
+    st = L.toggleStep(st, n, 0);
+    eq("unmuting puts it back", L.schedule(st).length, 2);
+
+    // Muting every step is not the same as having none: a node with no steps at all is
+    // interrogated once with cmd 0, and falling back to that here would silently start
+    // interrogating something the operator just switched off.
+    st = L.toggleStep(L.toggleStep(st, n, 0), n, 1);
+    eq("a node with every step muted contributes nothing", L.schedule(st).length, 0);
+    eq("...not even an implicit cmd 0", L.schedule(st).filter((s) => s.implicit).length, 0);
+
+    // Immutability, same rule as everything else here.
+    const held = st;
+    const flipped = L.toggleStep(st, n, 0);
+    ok("toggleStep returns a new state", flipped !== held);
+    eq("...and leaves the old one alone", L.nodesView(held)[0].steps[0].on, false);
+    ok("an out-of-range index is a no-op", L.toggleStep(st, n, 99) === st);
+    ok("an unknown node is a no-op", L.toggleStep(st, 9999, 0) === st);
+}
+
+// ── the flag survives a reload, and its absence means scheduled ─────────────
+console.log("muting persists");
+{
+    let st = L.initialState();
+    const g = st.groups[0].id;
+    st = L.addNode(st);
+    const n = st.nodes[0].id;
+    st = L.addStep(st, n, g);
+    st = L.addStep(st, n, g);
+    st = L.toggleStep(st, n, 1);
+
+    const back = L.deserialize(L.serialize(st));
+    eq("a muted step comes back muted", back.nodes[0].refs.map((r) => r.on), [true, false]);
+    eq("...and the schedule agrees", L.schedule(back).length, 1);
+
+    // Every blob written before the flag existed holds steps that WERE being interrogated.
+    // Defaulting to false would stop a working schedule the first time someone upgraded.
+    const legacy = JSON.parse(L.serialize(st));
+    legacy.v = 6;
+    for (const r of legacy.nodes[0].refs) delete r.on;
+    const upgraded = L.deserialize(JSON.stringify(legacy));
+    eq("a blob from before the flag reads as fully scheduled",
+       upgraded.nodes[0].refs.map((r) => r.on), [true, true]);
+    eq("...so nothing stops being interrogated on upgrade", L.schedule(upgraded).length, 2);
+
+    // A hand-edited or corrupt value must not leave a third state in the model.
+    const junk = JSON.parse(L.serialize(st));
+    junk.nodes[0].refs[0].on = "yes";
+    junk.nodes[0].refs[1].on = 0;
+    const fixed = L.deserialize(JSON.stringify(junk));
+    eq("a non-boolean flag is normalised", fixed.nodes[0].refs.map((r) => r.on), [true, false]);
+}
+
 // ── frame accounting ─────────────────────────────────────────────────────────
 // Apply is total: eight frames for the eight slots, always, plus the transponder's two
 // globals. A plan where nothing is configured is still applicable -- it resets the side to
