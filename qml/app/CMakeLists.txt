@@ -76,4 +76,5 @@ qt_add_qml_module(kogger_app
         LayoutRules.js
         LayoutTree.js
         RecorderStatus.js
+        UsblNodeLogic.js
         UsblPlanLogic.js)
