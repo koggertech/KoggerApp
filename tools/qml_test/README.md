@@ -4,14 +4,19 @@
 node tools/qml_test/test_usbl_plan_logic.mjs
 ```
 
-72 assertions over [qml/app/UsblPlanLogic.js](../../qml/app/UsblPlanLogic.js) — no Qt, no
+196 assertions over [qml/app/UsblPlanLogic.js](../../qml/app/UsblPlanLogic.js) — no Qt, no
 window, no GPU, ~0.1 s. Exit 0 = all pass.
 
-Every UI defect the USBL feature shipped is a rule in here: slot exclusivity, the derived
+Every UI defect the USBL feature shipped is a rule in here, and so is every invariant the
+model rests on: the **total partition** (all eight slots owned exactly once, checked as a
+property over a sequence of edits rather than in one case), dissolve-on-empty, `def` as a
+label that follows the settings rather than a group that exists, duplicate groups being legal
+and joinable, `reconstruct` collapsing equal settings and being a fixed point, the derived
 views agreeing with each other, `addStep` walking a group's slots instead of repeating the
-first, schedule length matching the node cards, struct selection (1 section → slot config,
-2 → cmd config, a rewrite rule forces the wider one), release tracking scoped to one role's
-event, bit-length consistency, and persistence repairing a blob rather than trusting it.
+first, schedule length matching the node cards, the exact bytes of a total `Apply` (all eight
+slots, every time), staleness measured in wire bytes so a join never provokes a re-apply,
+bit-length consistency, and persistence repairing a blob rather than trusting it — including
+the v4/v5 → v6 migrations.
 
 ## Why the logic is plain JS and not QML
 

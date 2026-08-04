@@ -16,17 +16,66 @@
 // window and no GPU. Anything user-visible (labels, issue prose) stays in QML where qsTr
 // lives -- this module returns CODES and numbers, never sentences.
 
+// ── THE MODEL ────────────────────────────────────────────────────────────────
+//
+// The eight slots are the state. Each one is configured, always -- with the defaults if
+// nothing else -- so THE SLOTS ARE TOTALLY PARTITIONED: every slot is in exactly one group,
+// there is always at least one group, and there is no such thing as an unowned slot.
+//
+// A GROUP OWNS A SET OF SLOTS AND ONE SETTINGS OBJECT THEY SHARE. That sharing is the whole
+// point of the concept: a group exists so several slots -- or all of them -- can be edited at
+// once. It is not a protocol object; nothing on the wire knows about groups.
+//
+// Because the wire does not carry them, group membership cannot be read back from a device,
+// only RECONSTRUCTED -- and the reconstruction rule is the definition: slots with the exact
+// same settings belong in one group (see `reconstruct`).
+//
+// Two groups holding identical settings are LEGAL. Collapsing them the moment they match
+// would fight the operator mid-edit, so duplicates are allowed to exist and the plan check
+// offers to join them (`duplicateSets` -> `joinGroups`). Joining changes nothing a device
+// sees -- Apply writes per-slot bytes, and duplicates write identical bytes -- so it is a
+// suggestion about how the pane is organised, never a correctness gate.
+//
+// "def" is a LABEL, not a group: whichever group's settings equal the defaults renders as
+// `def`. Edit it and the label moves off it. There may be no def group at all, and
+// (transiently) more than one.
+//
+// ── WHY THIS IS A SEPARATE FILE ──────────────────────────────────────────────
+//
+// The plan used to live in UsblPlanStore.qml and was edited IN PLACE, with a `rev` counter
+// as the only change signal. That made every binding a trap: `_g.ini.reply` or
+// `plan.slotLabel(g)` reads correctly once and then silently renders stale forever, because
+// QML never saw the object change. Three separate rounds of "the button does nothing" were
+// all that one design decision.
+//
+// Here every mutator takes a state and returns a NEW state. QML reassigns one `var`
+// property, its identity changes, and every dependent binding re-evaluates on its own. No
+// `rev` discipline to remember, no snapshots, and the failure mode stops existing.
+//
+// Being plain JS is the second half of the point: `node` can test all of it with no Qt, no
+// window and no GPU. Anything user-visible (labels, issue prose) stays in QML where qsTr
+// lives -- this module returns CODES and numbers, never sentences.
+
 var SLOT_COUNT = 8;
-// One group per slot is the most that can ever be useful: groups partition the slots, so
-// a ninth group is guaranteed to own nothing.
+// Eight slots partition into at most eight non-empty groups, so a ninth could only ever be
+// the empty one being edited -- and there would be no slot left to put in it.
 var MAX_GROUPS = SLOT_COUNT;
 var ROLES = ["initiator", "transponder"];
 
 // ── state ────────────────────────────────────────────────────────────────────
 // `applied` maps a role to the snapshot that was last written as that role. There is no
 // current role: a role is an argument to Apply, not a mode the plan sits in.
-function emptyState() {
-    return { groups: [], nodes: [], activeGroup: 0, nextId: 1, applied: {} };
+//
+// The starting plan is ONE group at the defaults holding all eight slots -- the honest
+// reading of a device nobody has configured, and the smallest state the partition invariant
+// allows. `activeId` names the selected group by id; an index shifts when a group dissolves.
+function initialState() {
+    var st = { groups: [], nodes: [], activeId: 0, nextId: 1, applied: {} };
+    var all = [];
+    for (var c = 0; c < SLOT_COUNT; ++c) all.push(c);
+    st.groups = [newGroup(_next(st), all)];
+    st.activeId = st.groups[0].id;
+    return st;
 }
 
 // Deep copy per edit. A plan is at most 8 slots and 8 nodes, so the cost is irrelevant and
@@ -44,6 +93,29 @@ function newTrigger() {
 function newGroup(id, slots) {
     return { id: id, slots: (slots || []).slice().sort(function (a, b) { return a - b; }),
              ini: { send: newSend(), reply: null }, tr: { request: null } };
+}
+
+// ── group identity: the shared settings, canonically ─────────────────────────
+// What a group's slots share, and therefore what makes two groups the same group. Slots, id
+// and selection are deliberately NOT part of it.
+function settingsOf(g) {
+    return g ? { send: g.ini.send, reply: g.ini.reply, request: g.tr.request } : null;
+}
+// Key order is sorted rather than trusted: a blob written by an older build, or hand-edited,
+// can carry the same settings with the fields in another order, and JSON.stringify would then
+// call two identical groups different. Cheap at eight groups, and it makes `signature`
+// depend on the values alone.
+function _canon(v) {
+    if (v === null || typeof v !== "object") return v;
+    if (Array.isArray(v)) return v.map(_canon);
+    var keys = Object.keys(v).sort(), out = {};
+    for (var i = 0; i < keys.length; ++i) out[keys[i]] = _canon(v[keys[i]]);
+    return out;
+}
+function signature(g) { return JSON.stringify(_canon(settingsOf(g))); }
+// The `def` label: this group's settings are the ones a slot has when nothing was configured.
+function isDefaultSettings(g) {
+    return !!g && signature(g) === signature(newGroup(0, []));
 }
 
 // ── lookups (pure reads) ─────────────────────────────────────────────────────
@@ -69,16 +141,45 @@ function ownerOf(st, cmd) {
     return null;
 }
 function schedulable(g) { return !!(g && g.ini.send && g.slots.length > 0); }
+// Selection is a group ID. Falls back to the first group rather than returning null: the
+// partition guarantees one exists, and a pane with nothing selected is not a state the UI
+// should have to render.
 function activeGroupOf(st) {
     if (!st.groups.length) return null;
-    return st.groups[Math.min(st.activeGroup, st.groups.length - 1)];
+    var g = groupById(st, st.activeId);
+    return g ? g : st.groups[0];
+}
+// The group currently carrying the defaults, if any. Ordinary lookup, not a special member:
+// it is whichever group happens to match, and there may be none.
+function defaultGroupOf(st) {
+    for (var i = 0; i < st.groups.length; ++i)
+        if (isDefaultSettings(st.groups[i])) return st.groups[i];
+    return null;
+}
+// Groups holding identical settings, as sets of ids. Empty groups are excluded: a fresh one
+// carries the defaults and would duplicate the def group by construction, and it dissolves
+// as soon as the selection leaves it -- warning about that would be noise.
+function duplicateSets(st) {
+    var bySig = {}, order = [];
+    for (var i = 0; i < st.groups.length; ++i) {
+        var g = st.groups[i];
+        if (!g.slots.length) continue;
+        var s = signature(g);
+        if (!bySig[s]) { bySig[s] = []; order.push(s); }
+        bySig[s].push(g.id);
+    }
+    var out = [];
+    for (var k = 0; k < order.length; ++k)
+        if (bySig[order[k]].length > 1) out.push(bySig[order[k]]);
+    return out;
 }
 
 // Compact "0,2–5,7" rendering of a slot set. Digits and separators only, so it needs no
 // translation.
-function slotLabel(g) {
-    if (!g || !g.slots.length) return "";
-    var s = g.slots, runs = [], start = s[0], prev = s[0];
+function slotLabel(g) { return slotRunLabel(g ? g.slots : []); }
+function slotRunLabel(s) {
+    if (!s || !s.length) return "";
+    var runs = [], start = s[0], prev = s[0];
     for (var i = 1; i <= s.length; ++i) {
         if (i < s.length && s[i] === prev + 1) { prev = s[i]; continue; }
         runs.push(start === prev ? String(start) : start + "–" + prev);
@@ -108,30 +209,94 @@ function triggerFor(g, role) { return role === "initiator" ? g.ini.reply : g.tr.
 // ── mutators: state in, NEW state out ────────────────────────────────────────
 function canAddGroup(st) { return st.groups.length < MAX_GROUPS; }
 
-// With no argument the new group claims the first free slot, so a group is never born
-// unable to do anything. `slots` overrides that when the caller knows which slot it wants.
-// Refused at MAX_GROUPS -- enforced here, not only by hiding the button, so a stale
-// binding or a repaired blob cannot get past it.
+// A new group is born EMPTY, at the defaults, and selected -- there is no free slot to claim
+// any more, because there are no free slots. You fill it by clicking slots in the bar, which
+// is also the only way to move a slot anywhere. If it is still empty when the selection
+// leaves it, it dissolves (see setActiveGroup): an empty group cannot survive a
+// reconstruction, so persisting one would be a promise the model cannot keep.
+//
+// Refused at MAX_GROUPS -- enforced here, not only by hiding the button, so a stale binding
+// or a repaired blob cannot get past it.
 function addGroup(st, slots) {
     if (!canAddGroup(st)) return st;
-    var n = clone(st), want = slots;
-    if (!want) {
-        var free = [];
-        for (var c = 0; c < SLOT_COUNT; ++c)
-            if (!ownerOf(n, c)) free.push(c);
-        want = free.length ? [free[0]] : [];
-    }
-    n.groups = n.groups.concat([newGroup(_next(n), want)]);
-    n.activeGroup = n.groups.length - 1;
+    var n = clone(st);
+    var g = newGroup(_next(n), slots || []);
+    n.groups = n.groups.concat([g]);
+    n.activeId = g.id;
     return n;
 }
+
+// "Remove" cannot mean delete: the slots need a home, and every slot must have exactly one.
+// So it means RESET THESE SLOTS TO DEFAULTS -- they move into the def group, which is created
+// if no group currently holds the defaults, and this group dissolves. Selection follows the
+// slots, because that is where the operator is looking.
 function removeGroup(st, id) {
-    var n = clone(st), i = groupIndexById(n, id);
-    if (i < 0) return st;
-    for (var k = 0; k < n.nodes.length; ++k)
-        n.nodes[k].refs = n.nodes[k].refs.filter(function (r) { return r.group !== id; });
-    n.groups.splice(i, 1);
-    if (n.activeGroup >= n.groups.length) n.activeGroup = Math.max(0, n.groups.length - 1);
+    var n = clone(st), g = groupById(n, id);
+    if (!g) return st;
+    var moving = g.slots.slice();
+    n.groups = n.groups.filter(function (x) { return x.id !== id; });
+
+    var target = defaultGroupOf(n);
+    if (moving.length && !target) {
+        target = newGroup(_next(n), []);
+        n.groups = n.groups.concat([target]);
+    }
+    if (target) {
+        target.slots = target.slots.concat(moving).sort(function (a, b) { return a - b; });
+        n.activeId = target.id;
+    } else if (n.groups.length) {
+        n.activeId = n.groups[0].id;
+    }
+    _repairPartition(n);
+    _clampRefs(n);
+    return n;
+}
+
+// Join groups holding identical settings into one, which is what the plan check's button
+// does. The survivor is the earliest of them, so the tab an operator was reading keeps its
+// place; the others hand over their slots and disappear. This writes nothing new -- the
+// settings are equal by definition, which is why the device cannot tell the difference.
+function joinGroups(st, ids) {
+    if (!ids || ids.length < 2) return st;
+    var n = clone(st), keep = null, moved = [];
+    for (var i = 0; i < n.groups.length; ++i) {
+        var g = n.groups[i];
+        if (ids.indexOf(g.id) < 0) continue;
+        if (!keep) { keep = g; continue; }
+        moved = moved.concat(g.slots);
+    }
+    if (!keep || !moved.length) return st;
+    keep.slots = keep.slots.concat(moved).sort(function (a, b) { return a - b; });
+    n.groups = n.groups.filter(function (g) {
+        return g.id === keep.id || ids.indexOf(g.id) < 0;
+    });
+    if (!groupById(n, n.activeId)) n.activeId = keep.id;
+    _clampRefs(n);
+    return n;
+}
+
+// Group membership rebuilt from the slot settings ALONE: one group per distinct settings
+// value, holding every slot that carries it. This is the most that can be recovered when
+// nothing stored the membership -- the reconstruction rule that gives the concept its
+// definition. Idempotent, and a plan with no duplicates is already a fixed point.
+//
+// Used for a blob whose group identity cannot be trusted, and as the shape the join button
+// converges on.
+function reconstruct(st) {
+    var n = clone(st), bySig = {}, order = [], groups = [];
+    for (var i = 0; i < n.groups.length; ++i) {
+        var g = n.groups[i];
+        if (!g.slots.length) continue;
+        var s = signature(g);
+        if (!bySig[s]) { bySig[s] = g; order.push(s); groups.push(g); continue; }
+        bySig[s].slots = bySig[s].slots.concat(g.slots);
+    }
+    for (var k = 0; k < groups.length; ++k)
+        groups[k].slots.sort(function (a, b) { return a - b; });
+    n.groups = groups;
+    if (!groupById(n, n.activeId) && n.groups.length) n.activeId = n.groups[0].id;
+    _repairPartition(n);
+    _clampRefs(n);
     return n;
 }
 function addNode(st) {
@@ -188,54 +353,82 @@ function setStepCmd(st, nodeId, index, cmd) {
     return n;
 }
 
-// The single slot interaction. One bar, and what a click means follows from the cell's
-// relationship to the selected group -- no modifier, no mode:
+// THE slot interaction, and now it has exactly one meaning: a click MOVES the slot into the
+// selected group.
 //
-//   owned by ANOTHER group  -> select that group. Never steals: a transfer that happens
-//                              behind your back is the thing that made the old bar
-//                              unusable in practice.
-//   owned by the SELECTED   -> release it. The holder is the only thing that can let go.
-//   unowned                 -> assign it to the selected group, creating one if the plan
-//                              is empty so the first click on an empty plan still works.
+//   in another group      -> move it here. The group it left dissolves if that was its last
+//                            slot, because a group with nothing to bulk-edit is nothing.
+//   in the SELECTED group -> nothing. It is already here; saying so is the whole response.
 //
-// Moving a slot is therefore two explicit clicks, and both are visible in the bar.
-// Returns { state, action } with action in select | release | assign | create | none.
+// Moving used to be forbidden ("never steal") and it had to be: clicking a slot was also how
+// you selected a group, so one click meant two things and a mistake cost you someone else's
+// slot. The tab row selects now, which frees the bar to do the one job it is for -- and under
+// a total partition, moving is the ONLY way a slot can change hands, so refusing it would
+// make the bar decorative.
+//
+// Returns { state, action } with action in move | already | none.
 function slotClick(st, cmd) {
     if (cmd < 0 || cmd >= SLOT_COUNT) return { state: st, action: "none" };
-    var owner = ownerOf(st, cmd);
     var sel = activeGroupOf(st);
+    if (!sel) return { state: st, action: "none" };
+    if (hasSlot(sel, cmd)) return { state: st, action: "already" };
 
+    var n = clone(st), target = groupById(n, sel.id), owner = ownerOf(n, cmd);
     if (owner) {
-        if (!sel || owner.id !== sel.id) {
-            var i = groupIndexById(st, owner.id);
-            if (i === st.activeGroup) return { state: st, action: "select" };
-            return { state: setActiveGroup(st, i), action: "select" };
-        }
-        var n = clone(st), g = groupById(n, owner.id);
-        g.slots = g.slots.filter(function (v) { return v !== cmd; });
-        _clampRefs(n);
-        return { state: n, action: "release" };
+        owner.slots = owner.slots.filter(function (v) { return v !== cmd; });
+        // Dissolve on empty -- never the target, which just gained a slot.
+        if (!owner.slots.length)
+            n.groups = n.groups.filter(function (g) { return g.id !== owner.id; });
     }
-
-    if (!sel) {
-        var made = addGroup(st, [cmd]);
-        return made === st ? { state: st, action: "none" }
-                           : { state: made, action: "create" };
-    }
-    var m = clone(st), t = groupById(m, sel.id);
-    t.slots = t.slots.concat([cmd]).sort(function (a, b) { return a - b; });
-    return { state: m, action: "assign" };
+    target.slots = target.slots.concat([cmd]).sort(function (a, b) { return a - b; });
+    _clampRefs(n);
+    return { state: n, action: "move" };
 }
 
-// A scheduled step must name a slot its group still owns; otherwise fall back to the
-// group's first remaining slot, or drop the step if the group owns none. Mutates in place --
-// only ever called on a state that is already a private copy.
+// Every slot in exactly one group, at least one group, no duplicates and nothing out of
+// range. Orphans -- which only a damaged or foreign blob can produce -- land in the def
+// group, created if no group holds the defaults, because that is what an unconfigured slot
+// is. Mutates in place; only ever called on a state that is already a private copy.
+function _repairPartition(st) {
+    var seen = {}, i, j;
+    for (i = 0; i < st.groups.length; ++i) {
+        var keep = [], raw = st.groups[i].slots || [];
+        for (j = 0; j < raw.length; ++j) {
+            var c = raw[j];
+            if (typeof c !== "number" || c < 0 || c >= SLOT_COUNT || seen[c]) continue;
+            seen[c] = true; keep.push(c);
+        }
+        st.groups[i].slots = keep.sort(function (a, b) { return a - b; });
+    }
+    var orphans = [];
+    for (var cmd = 0; cmd < SLOT_COUNT; ++cmd) if (!seen[cmd]) orphans.push(cmd);
+
+    if (orphans.length) {
+        var target = defaultGroupOf(st);
+        if (!target) {
+            target = newGroup(_next(st), []);
+            st.groups = st.groups.concat([target]);
+        }
+        target.slots = target.slots.concat(orphans).sort(function (a, b) { return a - b; });
+    }
+    if (!st.groups.length) {
+        var all = [];
+        for (var k = 0; k < SLOT_COUNT; ++k) all.push(k);
+        st.groups = [newGroup(_next(st), all)];
+    }
+    if (!groupById(st, st.activeId)) st.activeId = st.groups[0].id;
+}
+
+// A scheduled step names a slot; which group that is follows from who owns the slot, so it is
+// recomputed rather than stored twice. Under a total partition the owner always exists, which
+// is why this can no longer drop a step: a slot cannot go missing, only change hands.
 function _clampRefs(st) {
     for (var i = 0; i < st.nodes.length; ++i) {
         st.nodes[i].refs = st.nodes[i].refs.filter(function (r) {
-            var g = groupById(st, r.group);
-            if (!g || !g.slots.length) return false;
-            if (!hasSlot(g, r.cmd)) r.cmd = g.slots[0];
+            if (typeof r.cmd !== "number" || r.cmd < 0 || r.cmd >= SLOT_COUNT) return false;
+            var o = ownerOf(st, r.cmd);
+            if (!o) return false;
+            r.group = o.id;
             return true;
         });
     }
@@ -311,27 +504,43 @@ function setAdvField(st, groupId, which, field, value) {
     t.adv[field] = value;
     return n;
 }
-function setActiveGroup(st, i) {
-    var n = clone(st);
-    n.activeGroup = Math.max(0, Math.min(i, Math.max(0, n.groups.length - 1)));
+// Selection by id, and the one place an empty group dies. A group added but never filled has
+// nothing to bulk-edit and could not be reconstructed, so leaving it behind would put a group
+// in the tab row that a reload would not produce. Selecting away is exactly the moment the
+// operator stopped filling it.
+function setActiveGroup(st, id) {
+    var target = groupById(st, id);
+    if (!target) return st;
+    if (target.id === st.activeId) return st;
+    var n = clone(st), prev = groupById(n, n.activeId);
+    n.activeId = target.id;
+    if (prev && prev.id !== target.id && !prev.slots.length)
+        n.groups = n.groups.filter(function (g) { return g.id !== prev.id; });
     return n;
 }
 
 // ── derived views ────────────────────────────────────────────────────────────
+// Every slot is owned, so `groupId` and `index` are always real. They stay in the shape
+// anyway: the bar reads them per cell and should not have to know that.
 function coverage(st) {
     var out = [];
     for (var c = 0; c < SLOT_COUNT; ++c) {
         var o = ownerOf(st, c);
-        out.push({ cmd: c, groupId: o ? o.id : -1, index: o ? groupIndexById(st, o.id) : -1 });
+        out.push({ cmd: c, groupId: o ? o.id : -1, index: o ? groupIndexById(st, o.id) : -1,
+                   isDefault: isDefaultSettings(o) });
     }
     return out;
 }
+// `isDefault` is what makes a tab render as `def` instead of `Gn`. It is a property of the
+// settings, so it moves from group to group as they are edited, and can be true of none of
+// them or -- until the plan check's join is taken -- of several.
 function groupsView(st) {
     var out = [];
     for (var i = 0; i < st.groups.length; ++i) {
         var g = st.groups[i];
         out.push({ id: g.id, index: i, label: slotLabel(g), count: g.slots.length,
-                   slots: g.slots.slice(), schedulable: schedulable(g) });
+                   slots: g.slots.slice(), schedulable: schedulable(g),
+                   isDefault: isDefaultSettings(g) });
     }
     return out;
 }
@@ -443,8 +652,15 @@ function configuredSlots(st, role) {
     return n;
 }
 
-// Only the half this role writes counts toward staleness.
-function snapshot(st, role) {
+// Staleness is measured in WHAT THE DEVICE WOULD RECEIVE, not in how the pane is organised:
+// the snapshot is the role's eight per-slot writes. Joining duplicate groups, dissolving an
+// emptied one, or renumbering therefore does not read as a change -- which is what lets the
+// plan check offer a join without provoking a pointless re-apply. Only the half this role
+// writes counts.
+function snapshot(st, role) { return JSON.stringify(applyWrites(st, role)); }
+// The pre-partition scheme, kept for ONE purpose: deciding whether a v5 blob's recorded
+// snapshot still describes the plan being loaded (see _migrateApplied). Never write it.
+function _legacySnapshot(st, role) {
     return JSON.stringify(st.groups.map(function (g) {
         return [g.slots, triggerFor(g, role)];
     }));
@@ -481,13 +697,22 @@ function subroleTransponderCode(g) {
 // ── consistency check ────────────────────────────────────────────────────────
 // Returns CODES and numbers; the QML layer turns them into translated sentences. Keeping
 // prose out of here is what lets `node` test the rules.
+//
+// An entry may carry an ACTION -- a fix the UI can offer as a button, with the ids it applies
+// to. `duplicateGroups` is the first: groups holding identical settings are legal (nothing is
+// wrong on the wire, they write the same bytes to their own slots), so this is an offer to
+// tidy, not a defect. Its severity says so.
+//
+// Slots at the defaults are not reported at all: they are a group like any other now, and
+// there is no such thing as an unowned slot to warn about.
 function issueCodes(st) {
-    var out = [], gaps = [];
-    for (var c = 0; c < SLOT_COUNT; ++c)
-        if (!ownerOf(st, c)) gaps.push(c);
-    if (gaps.length)
-        out.push({ code: "unownedSlots", sev: "warn", slots: gaps });
-
+    var out = [], dups = duplicateSets(st);
+    for (var d = 0; d < dups.length; ++d) {
+        var ids = dups[d], idx = [];
+        for (var q = 0; q < ids.length; ++q) idx.push(groupIndexById(st, ids[q]));
+        out.push({ code: "duplicateGroups", sev: "info", groups: idx, ids: ids,
+                   action: "join", key: slotLabel(groupById(st, ids[0])) });
+    }
     for (var i = 0; i < st.groups.length; ++i) {
         var g = st.groups[i], gi = i, key = slotLabel(g);
         if (!g.slots.length)
@@ -523,13 +748,15 @@ function issueCodes(st) {
 
 // ── persistence payload ──────────────────────────────────────────────────────
 function serialize(st) {
-    return JSON.stringify({ v: 5, groups: st.groups, nodes: st.nodes,
-                            nextId: st.nextId, activeGroup: st.activeGroup,
+    return JSON.stringify({ v: 6, groups: st.groups, nodes: st.nodes,
+                            nextId: st.nextId, activeId: st.activeId,
                             applied: st.applied });
 }
-// Tolerant by design: a malformed or older blob yields defaults rather than a broken plan.
+// Tolerant by design: a malformed or older blob yields a usable plan rather than a broken one.
+// The partition is repaired, not trusted -- orphan slots, double ownership and empty groups
+// are all things a v5 blob can legitimately contain, because v5 allowed them.
 function deserialize(raw) {
-    var st = emptyState();
+    var st = initialState();
     if (!raw || !String(raw).length) return st;
     var o;
     try { o = JSON.parse(raw); } catch (e) { return st; }
@@ -537,38 +764,26 @@ function deserialize(raw) {
     if (Array.isArray(o.groups)) st.groups = o.groups;
     if (Array.isArray(o.nodes)) st.nodes = o.nodes;
     if (typeof o.nextId === "number") st.nextId = o.nextId;
-    if (typeof o.activeGroup === "number") st.activeGroup = o.activeGroup;
-    // v<=4 carried a single current role with one snapshot. Migrate it onto that role and
-    // leave the other unapplied, which is the truth: the other half was never written.
-    if (o.applied && typeof o.applied === "object") {
-        for (var r = 0; r < ROLES.length; ++r)
-            if (typeof o.applied[ROLES[r]] === "string")
-                st.applied[ROLES[r]] = o.applied[ROLES[r]];
-    } else if (o.appliedOnce && typeof o.appliedSnapshot === "string"
-               && ROLES.indexOf(o.role) >= 0) {
-        st.applied[o.role] = o.appliedSnapshot;
-    }
 
-    // Repair anything the blob got wrong rather than trusting it: slots must be unique,
-    // in range and owned by exactly one group, and every step must name a slot its group
-    // still owns. A blob from a build without the cap is trimmed to it -- the extras
-    // could only be groups owning nothing.
-    if (st.groups.length > MAX_GROUPS) st.groups = st.groups.slice(0, MAX_GROUPS);
-    var seen = {};
     for (var i = 0; i < st.groups.length; ++i) {
         var g = st.groups[i];
         if (!g || typeof g !== "object") { st.groups.splice(i--, 1); continue; }
         if (!g.ini) g.ini = { send: newSend(), reply: null };
         if (!g.tr) g.tr = { request: null };
-        var keep = [];
-        var raws = Array.isArray(g.slots) ? g.slots : [];
-        for (var j = 0; j < raws.length; ++j) {
-            var c = raws[j];
-            if (typeof c !== "number" || c < 0 || c >= SLOT_COUNT || seen[c]) continue;
-            seen[c] = true; keep.push(c);
-        }
-        g.slots = keep.sort(function (a, b) { return a - b; });
+        if (typeof g.id !== "number") g.id = _next(st);
+        if (!Array.isArray(g.slots)) g.slots = [];
     }
+    // An empty group is transient by design (setActiveGroup drops it), so a reload -- which
+    // has no "still filling this one" context -- keeps none of them.
+    st.groups = st.groups.filter(function (x) { return x.slots.length > 0; });
+    if (st.groups.length > MAX_GROUPS) st.groups = st.groups.slice(0, MAX_GROUPS);
+
+    // Selection: v6 stores an id, v5 stored an index into `groups`. Translate rather than
+    // discard, or every reload of a v5 plan would open the wrong group.
+    if (typeof o.activeId === "number") st.activeId = o.activeId;
+    else if (typeof o.activeGroup === "number" && st.groups[o.activeGroup])
+        st.activeId = st.groups[o.activeGroup].id;
+
     for (var gi = 0; gi < st.groups.length; ++gi) {
         _repairTrigger(st.groups[gi].ini.reply);
         _repairTrigger(st.groups[gi].tr.request);
@@ -579,9 +794,42 @@ function deserialize(raw) {
         if (typeof st.nodes[k].addr !== "number") st.nodes[k].addr = 0;
         st.nodes[k].active = !!st.nodes[k].active;
     }
+    // Measured BEFORE the partition repair, because that is the shape the old snapshot
+    // described. Repairing adds a group to own slots the blob never mentioned, which changes
+    // the old-format string without changing a single byte Apply would send -- compare after
+    // it and every migrated plan would falsely read as stale.
+    var legacyBefore = {};
+    for (var r = 0; r < ROLES.length; ++r) legacyBefore[ROLES[r]] = _legacySnapshot(st, ROLES[r]);
+
+    _repairPartition(st);
     _clampRefs(st);
-    if (st.activeGroup >= st.groups.length) st.activeGroup = Math.max(0, st.groups.length - 1);
+    _migrateApplied(st, o, legacyBefore);
     return st;
+}
+
+// What was applied, across the change of snapshot format.
+//
+// v<=4 carried a single current role with one snapshot; v5 carried one per role, in the
+// per-group format `_legacySnapshot` still computes. A v5 string can never equal a v6 one, so
+// carrying it over verbatim would make every previously-applied plan claim "changed since
+// applied" on first load -- a lie, and one that costs an operator a needless write.
+//
+// It is decidable, though: if the blob's own LEGACY snapshot matches what was recorded,
+// nothing has changed since that Apply, so the same plan can be re-recorded in the new format.
+// If it does not match, the plan really did change and the stale reading is correct -- keep
+// the old string, which cannot match, and let it read as stale.
+function _migrateApplied(st, o, legacyBefore) {
+    var raw = {};
+    if (o.applied && typeof o.applied === "object") raw = o.applied;
+    else if (o.appliedOnce && typeof o.appliedSnapshot === "string"
+             && ROLES.indexOf(o.role) >= 0) raw[o.role] = o.appliedSnapshot;
+
+    for (var r = 0; r < ROLES.length; ++r) {
+        var role = ROLES[r], was = raw[role];
+        if (typeof was !== "string") continue;
+        if (typeof o.v === "number" && o.v >= 6) { st.applied[role] = was; continue; }
+        st.applied[role] = (was === legacyBefore[role]) ? snapshot(st, role) : was;
+    }
 }
 
 // A blob written by an older build may lack `adv`, or carry the wrong type in a section.
@@ -598,9 +846,10 @@ function _repairTrigger(t) {
 }
 
 // The seeded plan a first-run operator sees: one baseline group answering on the spare
-// slots, one data group carrying a payload both ways, and two nodes.
+// slots, one data group carrying a payload both ways, and two nodes. Between them they hold
+// all eight slots -- the partition invariant applies to the seed like anything else.
 function defaults() {
-    var st = emptyState();
+    var st = initialState();
     var baseline = newGroup(_next(st), [0, 4, 5, 6, 7]);
     baseline.tr.request = newTrigger();
     var data = newGroup(_next(st), [1, 2, 3]);
@@ -611,7 +860,10 @@ function defaults() {
     data.tr.request.send = { fmt: "bits", payload: "FF 01" };
     data.ini.reply = newTrigger();
     data.ini.reply.recv = { fmt: "bits", bits: 16 };
+    // Replacing `groups` orphans the initial group's id, so say which group is selected
+    // rather than leaving activeGroupOf to fall back to the first one.
     st.groups = [baseline, data];
+    st.activeId = baseline.id;
     st.nodes = [
         { id: _next(st), addr: 1, active: true,
           refs: [{ group: data.id, cmd: 1 }, { group: data.id, cmd: 2 },
@@ -627,11 +879,15 @@ if (typeof module !== "undefined" && module.exports) {
     module.exports = {
         SLOT_COUNT: SLOT_COUNT, MAX_GROUPS: MAX_GROUPS, ROLES: ROLES,
         canAddGroup: canAddGroup,
-        emptyState: emptyState, clone: clone,
+        initialState: initialState, clone: clone,
         newSend: newSend, newTrigger: newTrigger, newGroup: newGroup,
+        settingsOf: settingsOf, signature: signature,
+        isDefaultSettings: isDefaultSettings, defaultGroupOf: defaultGroupOf,
+        duplicateSets: duplicateSets, joinGroups: joinGroups, reconstruct: reconstruct,
         groupById: groupById, groupIndexById: groupIndexById, nodeById: nodeById,
         hasSlot: hasSlot, ownerOf: ownerOf, schedulable: schedulable,
-        activeGroupOf: activeGroupOf, slotLabel: slotLabel, payloadBytes: payloadBytes,
+        activeGroupOf: activeGroupOf,
+        slotLabel: slotLabel, slotRunLabel: slotRunLabel, payloadBytes: payloadBytes,
         trigger: trigger, sectionCount: sectionCount, hasRewrite: hasRewrite,
         roleEvent: roleEvent, triggerFor: triggerFor,
         addGroup: addGroup, removeGroup: removeGroup, addNode: addNode,

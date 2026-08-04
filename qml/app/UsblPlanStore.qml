@@ -35,7 +35,7 @@ QtObject {
     ]
 
     // ── the state ─────────────────────────────────────────────────────────
-    property var st: Logic.emptyState()
+    property var st: Logic.initialState()
 
     // Retained only so existing `_rev` touches in the UI keep compiling; nothing needs it
     // now that `st` changes identity. New bindings should not reference it.
@@ -46,12 +46,17 @@ QtObject {
     readonly property var groups: st.groups
     readonly property var nodes: st.nodes
 
-    // Writable, because consumers do `plan.activeGroup = i`. Mirrored into `st` one way; the
-    // property stays the source of truth for reads.
-    property int activeGroup: 0
-    onActiveGroupChanged: if (st.activeGroup !== activeGroup) st = Logic.setActiveGroup(st, activeGroup)
-
     // ── derived (all re-evaluate when `st` is replaced) ────────────────────
+    // Selection is READ-ONLY here and changed through selectGroup(). It used to be a writable
+    // property mirrored into `st` by a handler, which meant two places could disagree about
+    // which group was open -- and selecting now has a side effect (an unfilled group
+    // dissolves), so it has to go through _commit like every other edit or the dissolve would
+    // never be saved.
+    readonly property int activeId: st.activeId
+    // The selected group. Consumers read this instead of indexing `groups` themselves, so
+    // "which group is open" has exactly one answer. Never null in practice: the partition
+    // guarantees a group exists and activeGroupOf falls back to the first.
+    readonly property var activeGroupObj: Logic.activeGroupOf(st)
     readonly property var coverage: Logic.coverage(st)
     readonly property var nodesView: Logic.nodesView(st)
     readonly property int activeSlotCount: Logic.activeSlotCount(st)
@@ -78,17 +83,31 @@ QtObject {
         return out
     }
 
-    // Colour is a QML concern, so it is grafted on here rather than in the logic module.
+    // Colour and the `def` name are QML concerns, so they are grafted on here rather than in
+    // the logic module. `isDefault` comes from the logic and follows the SETTINGS -- it moves
+    // from group to group as they are edited, and may be true of none or (until the plan
+    // check's join is taken) of several.
     readonly property var groupsView: {
         var base = Logic.groupsView(st), out = []
         for (var i = 0; i < base.length; ++i) {
             var v = base[i]
             out.push({ "id": v.id, "index": v.index, "label": v.label, "count": v.count,
                        "slots": v.slots, "schedulable": v.schedulable,
+                       "isDefault": v.isDefault, "name": nameOf(v.index),
                        "color": groupColors[i % groupColors.length] })
         }
         return out
     }
+    // What a tab and a coverage cell call a group: ALWAYS its number.
+    //
+    // Naming the default-settings group `def` instead was tried and is wrong. Duplicates are
+    // legal, so "the group at the defaults" is routinely several groups -- a fresh plan is
+    // every group -- and every tab then read `def`, identifying nothing. Identity wins the
+    // two lines a cell has; which settings a group carries is said in its pane, where there
+    // is room for a sentence.
+    function nameOf(index) { return "G" + (index + 1) }
+    // Sets of groups holding identical settings. Legal, and only the plan check cares.
+    readonly property var duplicateSets: Logic.duplicateSets(st)
 
     // ── pure reads, forwarded ─────────────────────────────────────────────
     function groupById(id)       { return Logic.groupById(st, id) }
@@ -109,6 +128,11 @@ QtObject {
         var i = Logic.groupIndexById(st, g ? g.id : -1)
         return groupColors[(i < 0 ? 0 : i) % groupColors.length]
     }
+    // The name of a group object, for the panes that hold one rather than a view row.
+    function nameOfGroup(g) { return nameOf(Logic.groupIndexById(st, g ? g.id : -1)) }
+    // Whether a group carries the settings a slot has when nothing was configured. Said in
+    // words in the pane, because that is where there is room to say it.
+    function isAtDefaults(g) { return Logic.isDefaultSettings(g) }
     // "none" is user-visible, so the empty case is translated here rather than in the
     // logic module.
     function slotLabel(g) {
@@ -125,15 +149,22 @@ QtObject {
     function _commit(next) {
         if (next === st) return false      // no-op: do not churn every binding for nothing
         st = next
-        if (activeGroup !== st.activeGroup) activeGroup = st.activeGroup
         rev = rev + 1
         _save()
         planChanged()
         return true
     }
 
+    // Selecting is an edit, not just a view change: an unfilled group dissolves when the
+    // selection leaves it, and that has to be saved like anything else.
+    function selectGroup(id)            { _commit(Logic.setActiveGroup(st, id)) }
+
     function addGroup()                 { _commit(Logic.addGroup(st)) }
+    // Not a delete -- the slots move to the def group and this one dissolves. See the logic
+    // module: under a total partition the slots have to go somewhere.
     function removeGroup(id)            { _commit(Logic.removeGroup(st, id)) }
+    // The plan check's fix for duplicate groups. Writes nothing new to the device.
+    function joinGroups(ids)            { _commit(Logic.joinGroups(st, ids)) }
     function addNode()                  { _commit(Logic.addNode(st)) }
     function removeNode(id)             { _commit(Logic.removeNode(st, id)) }
     function setNodeAddr(id, addr)      { _commit(Logic.setNodeAddr(st, id, addr)) }
@@ -179,22 +210,36 @@ QtObject {
     function subroleTransponder(g) { return _subroleText[Logic.subroleTransponderCode(g)] || "" }
 
     // ── consistency check: codes in, sentences out ────────────────────────
+    // An entry may carry a FIX: `action` names it and `ids` are what it applies to, so the
+    // delegate can offer a button instead of leaving the operator to work out the edit.
     readonly property var issues: {
         var raw = Logic.issueCodes(st), out = []
         for (var i = 0; i < raw.length; ++i) {
             var e = raw[i]
-            var key = e.code === "unownedSlots"     ? qsTr("slots")
-                    : e.code === "groupOwnsNoSlots" ? qsTr("group %1").arg(e.group + 1)
+            var key = e.code === "duplicateGroups"  ? _groupNames(e.ids).join(" · ")
+                    : e.code === "groupOwnsNoSlots" ? nameOf(e.group)
                                                     : "cmd " + (e.key.length ? e.key : qsTr("none"))
-            out.push({ "key": key, "sev": e.sev, "text": _issueText(e) })
+            out.push({ "key": key, "sev": e.sev, "text": _issueText(e),
+                       "action": e.action ? e.action : "", "ids": e.ids ? e.ids : [],
+                       "fixLabel": e.action === "join" ? qsTr("Join") : "" })
         }
+        return out
+    }
+    function _groupNames(ids) {
+        var out = []
+        for (var i = 0; i < (ids ? ids.length : 0); ++i)
+            out.push(nameOfGroup(Logic.groupById(st, ids[i])))
         return out
     }
     function _issueText(e) {
         switch (e.code) {
-        case "unownedSlots":
-            return qsTr("%1 belong to no group — Apply resets them to defaults on the device")
-                   .arg(e.slots.join(", "))
+        case "duplicateGroups":
+            // Deliberately not phrased as a fault: identical groups write identical bytes to
+            // their own slots, so there is nothing wrong with the plan -- only with how many
+            // tabs it takes to read it.
+            return qsTr("%1 hold identical settings, so they write the same bytes. "
+                      + "Joining them changes nothing on the device.")
+                   .arg(_groupNames(e.ids).join(", "))
         case "groupOwnsNoSlots":
             return qsTr("owns no slots, so it writes nothing and cannot be scheduled")
         case "requestCarriesButNoReceiver":
@@ -231,18 +276,17 @@ QtObject {
 
     function load() {
         var raw = usblPersisted.planJson
-        // deserialize() repairs rather than trusts: out-of-range or doubly-owned slots,
-        // missing sub-objects and dangling step references are all fixed on read.
+        // deserialize() repairs rather than trusts: out-of-range or doubly-owned slots, slots
+        // no group claims, saved empty groups, missing sub-objects and dangling step
+        // references are all fixed on read, and the partition comes back total.
         var next = (raw && raw.length) ? Logic.deserialize(raw) : Logic.defaults()
-        if (!next.groups.length && !next.nodes.length) next = Logic.defaults()
+        if (!next.nodes.length && !raw) next = Logic.defaults()
         st = next
-        activeGroup = st.activeGroup
         rev = rev + 1
         planChanged()
     }
     function resetToDefaults() {
         st = Logic.defaults()
-        activeGroup = st.activeGroup
         rev = rev + 1
         _save()
         planChanged()

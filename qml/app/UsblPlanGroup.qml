@@ -27,20 +27,17 @@ DeviceSettingsGroup {
     collapsedByDefault: true
     visible: !!(dev && (dev.isUSBL || dev.isUSBLBeacon))
 
-    // The active group. No copy needed: the store replaces its whole state on every edit, so
-    // `plan.groups` is a new array of new objects each time and every binding reading
-    // `_g.ini.reply` re-evaluates by itself. Never write through this — go via the store.
-    readonly property var _g: (plan && plan.groups.length)
-                              ? plan.groups[Math.min(plan.activeGroup, plan.groups.length - 1)]
-                              : null
-    // What the last slot click did, so the bar's three behaviours are learnable by using it.
-    property string _slotNote: qsTr("Click a slot: another group's opens it, this group's releases it, a free one joins it.")
+    // The active group, or null when the DEFAULT group is selected. No copy needed: the store
+    // replaces its whole state on every edit, so `plan.groups` is a new array of new objects
+    // each time and every binding reading `_g.ini.reply` re-evaluates by itself. Never write
+    // through this — go via the store.
+    readonly property var _g: plan ? plan.activeGroupObj : null
+    // What the last slot click did, so the bar's one behaviour is learnable by using it.
+    property string _slotNote: qsTr("Pick a group above, then click slots to move them into it.")
     function _noteFor(action, cmd) {
         switch (action) {
-        case "select":  return qsTr("slot %1 belongs to this group — click it again to release it").arg(cmd)
-        case "release": return qsTr("slot %1 released — click it again to give it to this group").arg(cmd)
-        case "assign":  return qsTr("slot %1 added to this group").arg(cmd)
-        case "create":  return qsTr("new group created holding slot %1").arg(cmd)
+        case "move":    return qsTr("slot %1 moved into this group").arg(cmd)
+        case "already": return qsTr("slot %1 is already in this group").arg(cmd)
         }
         return planGroup._slotNote
     }
@@ -106,6 +103,50 @@ DeviceSettingsGroup {
         KTapArea { anchors.fill: parent; onTapped: ms.toggled() }
     }
 
+    // One cell of the two 8-column rows — a group tab, or a slot in the coverage bar. Both
+    // rows answer the same question about the same eight slots, so they are the same cell:
+    // same size, same fill, two lines stacked rather than side by side (which is what lets a
+    // cell be an eighth of the pane wide at all).
+    //
+    // FILL says which group, always. FRAME says selected, only. Anything else needing an
+    // outline would put a second meaning on the border and the row stops being readable at a
+    // glance -- which is what the frame on every cell used to do.
+    component SlotTab: Rectangle {
+        id: tab
+        property color tint: AppPalette.textMuted
+        property bool sel: false
+        property string label: ""
+        property string sub: ""
+        signal tapped()
+        radius: Tokens.radiusSm
+        color: Qt.rgba(tab.tint.r, tab.tint.g, tab.tint.b, tab.sel ? 0.28 : 0.10)
+        border.width: tab.sel ? Math.max(1, Math.round(1.5 * AppPalette.scale)) : 0
+        border.color: tab.tint
+        implicitHeight: Math.round(38 * AppPalette.scale)
+        Column {
+            anchors.centerIn: parent
+            spacing: 0
+            Text {
+                text: tab.label
+                color: tab.tint
+                font.pixelSize: Tokens.fontSm; font.bold: true
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Text {
+                text: tab.sub
+                color: tab.sel ? tab.tint : AppPalette.textMuted
+                font.pixelSize: Math.round(9 * AppPalette.scale)
+                font.bold: tab.sel
+                // A long run label ("0,2–5,7") has to give way rather than paint over the
+                // neighbouring cell.
+                width: Math.max(0, tab.width - Tokens.spaceXs)
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+            }
+        }
+        KTapArea { anchors.fill: parent; onTapped: tab.tapped() }
+    }
+
     // A labelled field row sized like the rest of the settings page.
     component FieldRow: Row {
         id: fr
@@ -165,9 +206,9 @@ DeviceSettingsGroup {
             anchors.verticalCenter: parent.verticalCenter
         }
         Text {
-            text: plan && plan.groups.length
-                  ? qsTr("%1 of %2 groups").arg(plan.groups.length).arg(plan.maxGroups)
-                  : qsTr("8 hardware slots, none claimed")
+            // No "none claimed" case any more: the slots are always fully partitioned, so
+            // there is always at least one group.
+            text: plan ? qsTr("%1 of %2 groups").arg(plan.groups.length).arg(plan.maxGroups) : ""
             color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
             width: Math.max(0, parent.width - Math.round(104 * AppPalette.scale)
                             - parent.spacing)
@@ -177,101 +218,84 @@ DeviceSettingsGroup {
         }
     }
 
-    // Explicit selection, above the bar that shows what the selection owns.
+    // Selection, above the bar that shows what the selection owns, on the same eight-column
+    // geometry — the two rows are about the same eight slots and read as one control.
     //
-    // The bar alone cannot do this job: a group holding NO slots has no cell in it and
-    // would be unreachable — you could add a group and never select it again. These
-    // chips also name a group before you have to decode a colour.
+    // Every group is here, including whichever one currently carries the defaults: that one is
+    // named `def` and is otherwise completely ordinary. The bar alone could not do this job,
+    // because a group being filled holds no slots yet and would have no cell to click.
     //
-    // They SELECT and nothing else. Slots are claimed and released in the bar below;
-    // that split is what stops the two from ever disagreeing.
-    Flickable {
+    // The tabs SELECT and nothing else. Slots move in the bar below, and that split is what
+    // lets a slot click mean one thing.
+    Grid {
+        id: tabGrid
         width: parent.width
-        implicitHeight: _tabRow.implicitHeight
-        contentWidth: _tabRow.implicitWidth
-        contentHeight: _tabRow.implicitHeight
-        flickableDirection: Flickable.HorizontalFlick
-        clip: true
-        Row {
-            id: _tabRow
-            spacing: Tokens.spaceXxs
-            Repeater {
-                // plan.groupsView, not plan.groups: the view is rebuilt whenever the state
-                // is replaced, so a chip's label follows its group's slot edits. Binding to
-                // `groups` and calling slotLabel() left the label frozen at creation time.
-                model: plan ? plan.groupsView : []
-                delegate: Rectangle {
-                    required property var modelData
-                    required property int index
-                    // id so the Row's children can reach _sel/_c -- ancestor properties are
-                    // not in QML scope, and a bare reference there is a runtime ReferenceError.
-                    id: _tabChip
-                    readonly property bool _sel: plan && plan.activeGroup === _tabChip.index
-                    readonly property color _c: _tabChip.modelData.color
-                    radius: Tokens.radiusSm
-                    color: _tabChip._sel ? Qt.rgba(_tabChip._c.r, _tabChip._c.g, _tabChip._c.b, 0.14)
-                                         : "transparent"
-                    border.width: Tokens.cardBorderWidth
-                    border.color: _tabChip._sel ? _tabChip._c : AppPalette.border
-                    implicitWidth: _tabContent.implicitWidth + Tokens.spaceMd * 2
-                    implicitHeight: Tokens.controlHMd
-                    Row {
-                        id: _tabContent
-                        anchors.centerIn: parent
-                        spacing: Tokens.spaceXs
-                        Rectangle {
-                            width: Math.round(7 * AppPalette.scale); height: width; radius: 2
-                            color: _tabChip._c
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        Text {
-                            text: "G" + (_tabChip.index + 1)
-                            color: _tabChip._sel ? AppPalette.textStrong : AppPalette.textMuted
-                            font.pixelSize: Tokens.fontSm; font.bold: true
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        // A group with no slots is legal and must still say so, otherwise
-                        // the chip reads as broken rather than as empty.
-                        Text {
-                            text: _tabChip.modelData.count
-                                  ? _tabChip.modelData.label : qsTr("no slots")
-                            color: AppPalette.textMuted
-                            font.pixelSize: Tokens.fontXs
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-                    KTapArea {
-                        anchors.fill: parent
-                        onTapped: if (plan) plan.activeGroup = _tabChip.index
-                    }
-                }
+        columns: 8
+        columnSpacing: Tokens.spaceXxs
+        rowSpacing: Tokens.spaceXxs
+        readonly property real cellW: (width - columnSpacing * 7) / 8
+
+        Repeater {
+            // plan.groupsView, not plan.groups: the view is rebuilt whenever the state is
+            // replaced, so a tab's name and slot label follow the edits. Binding to `groups`
+            // and calling slotLabel() left the label frozen at creation time.
+            model: planGroup.plan ? planGroup.plan.groupsView : []
+            delegate: SlotTab {
+                id: tabCell
+                required property var modelData
+                width: tabGrid.cellW
+                tint: tabCell.modelData.color
+                sel: !!(planGroup.plan && planGroup.plan.activeId === tabCell.modelData.id)
+                // `def` when these are the default settings, `Gn` otherwise -- a property of
+                // the settings, so it moves as they are edited.
+                label: tabCell.modelData.name
+                // A group being filled holds nothing yet and must still say so, or the tab
+                // reads as broken rather than as empty.
+                sub: tabCell.modelData.count ? tabCell.modelData.label : qsTr("none")
+                onTapped: if (planGroup.plan) planGroup.plan.selectGroup(tabCell.modelData.id)
             }
-            // Last chip, so adding a group is where the groups are. Eight slots is eight
-            // groups at most — a ninth could own nothing and would exist only to be
-            // deleted, so the chip goes away rather than sitting there doing nothing.
-            Rectangle {
-                id: _addChip
-                visible: !!(plan && plan.canAddGroup)
-                radius: Tokens.radiusSm
-                color: "transparent"
-                border.width: Tokens.cardBorderWidth
-                border.color: AppPalette.border
-                implicitWidth: Tokens.controlHMd; implicitHeight: Tokens.controlHMd
-                Text {
-                    anchors.centerIn: parent
-                    text: "+"; color: AppPalette.accent
-                    font.pixelSize: Tokens.fontXl; font.bold: true
-                }
-                KTapArea { anchors.fill: parent; onTapped: if (plan) plan.addGroup() }
-            }
+        }
+        // Last tab, so adding a group is where the groups are. It arrives empty and at the
+        // defaults; you fill it by clicking slots. Eight slots is eight groups at most, and a
+        // ninth would have nothing to hold, so the tab goes away at the cap.
+        SlotTab {
+            visible: !!(planGroup.plan && planGroup.plan.canAddGroup)
+            width: tabGrid.cellW
+            tint: AppPalette.accent
+            label: "+"
+            sub: qsTr("add")
+            onTapped: if (planGroup.plan) planGroup.plan.addGroup()
         }
     }
 
-    // THE bar: the only place slot ownership is CHANGED. The chips above select a group;
-    // this says what every slot belongs to and is where slots move. There used to be a
-    // third surface as well -- the selected group's own slot row -- and all three could
-    // disagree. See Logic.slotClick for the three outcomes; the note underneath reports
-    // which one just happened.
+    // The bar's own heading. The two rows share a geometry on purpose, which is exactly why
+    // each needs to say what it is: the tabs are the groups that exist, this is where every
+    // slot currently sits. Unlabelled, the second row reads as a wrapped continuation of the
+    // first. The right half names the target of the next click, at the place the click
+    // happens -- the note below reports what the last one did.
+    Row {
+        width: parent.width; height: Tokens.controlHSm; spacing: Tokens.spaceSm
+        Text {
+            text: qsTr("Command slots"); color: AppPalette.textMuted
+            font.pixelSize: Tokens.fontSm; font.bold: true
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        Text {
+            text: (plan && planGroup._g)
+                  ? qsTr("click moves into %1").arg(plan.nameOfGroup(planGroup._g)) : ""
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+            width: Math.max(0, parent.width - Math.round(96 * AppPalette.scale)
+                            - parent.spacing)
+            horizontalAlignment: Text.AlignRight
+            elide: Text.ElideRight
+            anchors.verticalCenter: parent.verticalCenter
+        }
+    }
+
+    // THE bar: the only place a slot changes hands. The tabs above select; a click here MOVES
+    // the clicked slot into the selected group, and that is its only meaning. There used to be
+    // a third surface as well -- the selected group's own slot row -- and all three could
+    // disagree. See Logic.slotClick; the note underneath reports what just happened.
     Grid {
         width: parent.width
         columns: 8
@@ -281,59 +305,26 @@ DeviceSettingsGroup {
         readonly property real cellW: (width - columnSpacing * 7) / 8
         Repeater {
             model: planGroup.plan ? planGroup.plan.coverage : []
-            delegate: Rectangle {
+            // Every cell carries its group's colour as a fill; only the SELECTED group's cells
+            // are framed. Which group a slot is in is the fill plus the name under the number
+            // -- never an outline, because the outline already means "selected".
+            delegate: SlotTab {
                 id: covCell
                 required property var modelData
-                readonly property bool _owned: covCell.modelData.groupId >= 0
-                readonly property bool _mine: covCell._owned && !!planGroup._g
-                                              && covCell.modelData.groupId === planGroup._g.id
-                readonly property color _c: covCell._owned && planGroup.plan
-                    ? planGroup.plan.groupColors[covCell.modelData.index % planGroup.plan.groupColors.length]
-                    : AppPalette.border
                 width: covGrid.cellW
-                implicitHeight: Math.round(38 * AppPalette.scale)
-                radius: Tokens.radiusSm
-                // Three states have to be told apart at a glance, because a click means
-                // something different in each: filled = this group's (releases), tinted =
-                // another group's (opens it), outline = free (claims it).
-                color: covCell._mine
-                       ? Qt.rgba(covCell._c.r, covCell._c.g, covCell._c.b, 0.28)
-                       : (covCell._owned
-                          ? Qt.rgba(covCell._c.r, covCell._c.g, covCell._c.b, 0.10)
-                          : "transparent")
-                border.width: covCell._mine
-                              ? Math.max(1, Math.round(1.5 * AppPalette.scale))
-                              : Math.max(1, Math.round(1 * AppPalette.scale))
-                border.color: covCell._owned
-                              ? (covCell._mine
-                                 ? covCell._c
-                                 : Qt.rgba(covCell._c.r, covCell._c.g, covCell._c.b, 0.5))
-                              : AppPalette.border
-                Column {
-                    anchors.centerIn: parent
-                    spacing: 0
-                    Text {
-                        text: String(covCell.modelData.cmd)
-                        color: covCell._owned ? covCell._c : AppPalette.textMuted
-                        font.pixelSize: Tokens.fontSm; font.bold: true
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    Text {
-                        text: covCell._owned ? "G" + (covCell.modelData.index + 1) : "—"
-                        color: covCell._mine ? covCell._c : AppPalette.textMuted
-                        font.pixelSize: Math.round(9 * AppPalette.scale)
-                        font.bold: covCell._mine
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                }
-                KTapArea {
-                    anchors.fill: parent
-                    onTapped: {
-                        if (!planGroup.plan) return
-                        var cmd = covCell.modelData.cmd
-                        planGroup._slotNote =
-                            planGroup._noteFor(planGroup.plan.slotClick(cmd), cmd)
-                    }
+                tint: planGroup.plan
+                      ? planGroup.plan.groupColors[covCell.modelData.index
+                                                   % planGroup.plan.groupColors.length]
+                      : AppPalette.textMuted
+                sel: !!(planGroup._g && covCell.modelData.groupId === planGroup._g.id)
+                label: String(covCell.modelData.cmd)
+                // The same name the tab shows, from the same place.
+                sub: planGroup.plan ? planGroup.plan.nameOf(covCell.modelData.index) : ""
+                onTapped: {
+                    if (!planGroup.plan) return
+                    var cmd = covCell.modelData.cmd
+                    planGroup._slotNote =
+                        planGroup._noteFor(planGroup.plan.slotClick(cmd), cmd)
                 }
             }
         }
@@ -346,6 +337,8 @@ DeviceSettingsGroup {
     }
 
     // ── active group pane ─────────────────────────────────────────────────
+    // There is always a selected group, including the one carrying the defaults -- it is
+    // edited here like any other, and editing it is exactly how the `def` name moves off it.
     Rectangle {
         width: parent.width
         visible: !!planGroup._g
@@ -382,11 +375,17 @@ DeviceSettingsGroup {
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 Text {
-                    text: planGroup._g && plan
-                          ? qsTr("Group %1 \u00b7 slots %2")
-                            .arg(plan.groupIndexById(planGroup._g.id) + 1)
-                            .arg(plan.slotLabel(planGroup._g))
-                          : ""
+                    // Names the group the same way its tab does, so "which one am I editing"
+                    // needs no translation between the two -- and this is where there is room
+                    // to say that its settings are the untouched ones.
+                    text: {
+                        if (!planGroup._g || !plan) return ""
+                        var n = plan.nameOfGroup(planGroup._g)
+                        var s = plan.slotLabel(planGroup._g)
+                        return plan.isAtDefaults(planGroup._g)
+                               ? qsTr("Group %1 \u00b7 slots %2 \u00b7 at device defaults").arg(n).arg(s)
+                               : qsTr("Group %1 \u00b7 slots %2").arg(n).arg(s)
+                    }
                     color: AppPalette.textStrong
                     font.pixelSize: Tokens.fontSm; font.bold: true
                     width: Math.max(0, parent.width - Math.round(10 * AppPalette.scale)
@@ -394,13 +393,16 @@ DeviceSettingsGroup {
                     elide: Text.ElideRight
                     anchors.verticalCenter: parent.verticalCenter
                 }
+                // Not a delete: the slots have to belong to something, so they go back to the
+                // defaults -- which means into the def group, created if there isn't one -- and
+                // this group dissolves. The tooltip says that, because "\u00d7" does not.
                 KCircleIconButton {
                     glyph: "\u00d7"
                     width: Tokens.controlHSm; height: Tokens.controlHSm
                     glyphPixelSize: Math.round(14 * AppPalette.scale)
                     borderWidth: Tokens.cardBorderWidth
                     anchors.verticalCenter: parent.verticalCenter
-                    toolTipText: qsTr("Remove this group")
+                    toolTipText: qsTr("Reset these slots to defaults and drop the group")
                     onClicked: if (plan && planGroup._g) plan.removeGroup(planGroup._g.id)
                 }
             }
@@ -682,14 +684,25 @@ DeviceSettingsGroup {
         }
         Repeater {
             model: plan ? plan.issues : []
+            // Three severities, and the third is not a fault: `info` is an offer to tidy
+            // something that is already correct -- duplicate groups write the same bytes -- so
+            // it must not wear the warning colour. An entry carrying an `action` gets the
+            // button that performs it, because telling an operator to work out the edit
+            // themselves is how a check gets ignored.
             delegate: Rectangle {
+                id: issueRow
                 required property var modelData
-                readonly property bool _crit: modelData.sev === "crit"
+                readonly property bool _crit: issueRow.modelData.sev === "crit"
+                readonly property bool _info: issueRow.modelData.sev === "info"
                 width: parent.width
                 radius: Tokens.radiusSm
-                color: _crit ? AppPalette.dangerBg : AppPalette.linkIdleBg
-                border.width: Tokens.cardBorderWidth
-                border.color: _crit ? AppPalette.dangerBorder : AppPalette.linkIdleBorder
+                color: issueRow._crit ? AppPalette.dangerBg
+                                      : (issueRow._info ? AppPalette.card : AppPalette.linkIdleBg)
+                border.width: issueRow._info ? Math.max(1, Math.round(1 * AppPalette.scale))
+                                             : Tokens.cardBorderWidth
+                border.color: issueRow._crit ? AppPalette.dangerBorder
+                                             : (issueRow._info ? AppPalette.border
+                                                               : AppPalette.linkIdleBorder)
                 implicitHeight: _iss.implicitHeight + 2 * Tokens.spaceSm
                 Column {
                     id: _iss
@@ -697,15 +710,30 @@ DeviceSettingsGroup {
                     width: parent.width - 2 * Tokens.spaceMd
                     spacing: 1
                     Text {
-                        text: modelData.key
+                        text: issueRow.modelData.key
                         color: AppPalette.textStrong
                         font.pixelSize: Tokens.fontXs; font.bold: true
                     }
                     Text {
-                        text: modelData.text
+                        text: issueRow.modelData.text
                         color: AppPalette.text
                         font.pixelSize: Tokens.fontXs
                         width: parent.width; wrapMode: Text.WordWrap
+                    }
+                    Item {
+                        width: 1; height: Tokens.spaceXs
+                        visible: issueRow.modelData.action.length > 0
+                    }
+                    UsblButton {
+                        visible: issueRow.modelData.action.length > 0
+                        text: issueRow.modelData.fixLabel
+                        implicitHeight: Tokens.controlHSm
+                        fontPixelSize: Tokens.fontXs
+                        onClicked: {
+                            if (!plan) return
+                            if (issueRow.modelData.action === "join")
+                                plan.joinGroups(issueRow.modelData.ids)
+                        }
                     }
                 }
             }
