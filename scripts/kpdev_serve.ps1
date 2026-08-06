@@ -3,6 +3,7 @@
 #   powershell -File scripts/kpdev_serve.ps1            # start, 8 h cap, fresh trace
 #   powershell -File scripts/kpdev_serve.ps1 -Stop      # stop whatever is serving
 #   powershell -File scripts/kpdev_serve.ps1 -Hours 1 -Period 0    # judge only, no stimulus
+#   powershell -File scripts/kpdev_serve.ps1 -Keep 20   # keep more past runs (0 = keep all)
 #
 # The app auto-connects to it because pinned_links.xml has a kAuto UDP link on
 # 127.0.0.1:14650 -- see docs/KoggerApp-Docs/virtual-device-harness.md. No device, no USBL
@@ -46,6 +47,9 @@ param(
     [Nullable[double]] $ReplyDelayMax = $null,  # above -ReplyDelay: drawn per interrogation
     [Nullable[double]] $DropProb      = $null,  # fraction left unanswered
     [int]    $Seed       = 7,        # fixed: a run that cannot replay makes every flake a hunt
+    # Past runs to keep in build/kpdev. 0 keeps everything, for when you are deliberately
+    # collecting a series and would rather manage it yourself.
+    [int]    $Keep       = 5,
     [string] $KpTools    = "",
     [string] $Python     = "",
     [switch] $NoReply,               # pre-2026-08 behaviour: nothing answers, --period only
@@ -102,6 +106,40 @@ foreach ($f in @($tool, $contract, $Python)) {
 
 $outDir = Join-Path $root "build/kpdev"
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+
+# ── retention ────────────────────────────────────────────────────────────────
+# --duration caps how big ONE run gets. Nothing capped how many runs accumulate, which is a
+# different problem with the same ending: this directory reached 1.02 GB across 121 files, and
+# the only reason it was noticed is that somebody asked. Three files per run, and every run
+# ever started was still here.
+#
+# KEYED ON THE STAMP IN THE NAME, not on mtime. The name is when a run STARTED; mtime is when
+# it was last appended to, so an eight-hour run started this morning looks newer than a short
+# one started since, and "keep the newest" would keep the wrong ones. The stamp sorts as a
+# string because it is yyyyMMdd-HHmmss.
+#
+# IT ONLY TOUCHES FILES IT MADE -- trace-<stamp>.jsonl and serve-<stamp>.log[.err]. A
+# hand-named capture is not this script's to delete: when this directory was last cleared by
+# hand the one file worth keeping turned out to be exactly that, a written-up soak result that
+# nothing else records. Anything not matching the pattern is left alone, whatever its size.
+#
+# Logs whose trace is already gone are swept with the rest, or they outlive every run they
+# describe and the count drifts away from what is actually on disk.
+if ($Keep -gt 0) {
+    $stamps = Get-ChildItem $outDir -File -Filter "trace-*.jsonl" -ErrorAction SilentlyContinue |
+        ForEach-Object { if ($_.BaseName -match '^trace-(\d{8}-\d{6})$') { $Matches[1] } } |
+        Sort-Object -Descending
+    $keepSet = @($stamps | Select-Object -First $Keep)
+    $doomed = @(Get-ChildItem $outDir -File -ErrorAction SilentlyContinue | Where-Object {
+        ($_.Name -match '^(?:trace|serve)-(\d{8}-\d{6})') -and ($keepSet -notcontains $Matches[1])
+    })
+    if ($doomed.Count) {
+        $freed = [math]::Round((($doomed | Measure-Object Length -Sum).Sum / 1MB), 1)
+        Write-Host "retention: dropping $($doomed.Count) file(s) from older runs, $freed MB (keeping the newest $Keep)"
+        $doomed | Remove-Item -Force -Confirm:$false -ErrorAction SilentlyContinue
+    }
+}
+
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $trace = Join-Path $outDir "trace-$stamp.jsonl"
 $log   = Join-Path $outDir "serve-$stamp.log"
