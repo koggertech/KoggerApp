@@ -8,28 +8,28 @@ namespace {
 // A beacon reads as three marks that mean three different things, so they are deliberately
 // different sizes: the surface ball is where it is ON THE CHART, the small ball is where it
 // actually is IN THE WATER, and the line between them is the depth that separates them.
-constexpr float kSurfaceBallPx = 22.0f;
-constexpr float kDeepBallPx    = 9.0f;
-constexpr float kHeadBallPx    = 24.0f;
-constexpr float kHaloPx        = 3.0f;
+constexpr float kSurfaceBallPx = 44.0f;
+constexpr float kDeepBallPx    = 18.0f;
+constexpr float kHeadBallPx    = 48.0f;
+// An OUTLINE, so it does not scale with the ball -- a contour that grew with the fill would read
+// as a second ring rather than as an edge. This is a DIAMETER increment: half of it is the ring's
+// visible thickness on each side.
+constexpr float kHaloPx        = 6.0f;
 
-constexpr float kTrackWidth    = 2.5f;
+constexpr float kTrackWidth    = 5.0f;
 // Thinner than a track, because it is not a path: nothing travelled along it.
 constexpr float kDropWidth     = 1.5f;
 
-// The arrow is drawn ON the head's ball rather than protruding from it, so it takes the ball's
-// own point size. baseScale sets both the base's height and its width in the shader (see
-// usbl_arrow.fsh), and this value is the widest head that still sits inside the unit disc.
-constexpr float kYawArrowScale = 0.45f;
-constexpr float kYawArrowSize  = 0.82f;
+// The heading marker is a paper dart drawn ON the head's ball, not protruding from it. Its
+// half-span is what makes it narrow; its length is fixed in the shader. The sprite is sized just
+// under the ball so the whole dart sits inside the disc with a hair of margin -- the shape's
+// furthest corner is at ~0.96 of the sprite radius, so 0.90 leaves it clear of the rim.
+constexpr float kYawDartHalfWidth = 0.42f;
+constexpr float kYawDartSize      = 0.90f;
 
 constexpr float kMutedOpacity  = 0.45f;
 
 constexpr float kDegToRad = 0.01745329252f;
-
-// The halo. Every ball gets one, because a saturated dot on a satellite basemap can land on a
-// patch of its own colour and vanish -- which is the one thing a position marker must not do.
-const QVector4D kHaloColor(0.94f, 0.94f, 0.94f, 1.0f);
 
 QVector4D toVec4(const QColor& c, float opacity)
 {
@@ -37,6 +37,19 @@ QVector4D toVec4(const QColor& c, float opacity)
                      static_cast<float>(c.greenF()),
                      static_cast<float>(c.blueF()),
                      opacity);
+}
+
+// The contour every ball gets, because a saturated dot on a satellite basemap can land on a patch
+// of its own colour and vanish -- which is the one thing a position marker must not do.
+//
+// It is a DARKENED VERSION OF THE BALL rather than a neutral light ring. White separated the mark
+// from the chart but also from the beacon: eight addresses in eight colours all wearing the same
+// bright halo, and at a glance the halo is what you see. Darkening the fill keeps the ring reading
+// as that beacon's edge, and dark holds its own against a basemap that is mostly mid-tones and
+// sunlight.
+QColor contourOf(const QColor& fill)
+{
+    return fill.darker(250);
 }
 
 // Ink for a mark drawn on top of a fill, picked by luminance for the same reason
@@ -106,7 +119,7 @@ void UsblLayer::UsblLayerRenderImplementation::drawBall(QOpenGLFunctions* ctx,
 
     prog->setAttributeArray(posLoc, one.constData());
 
-    prog->setUniformValue(colorLoc, QVector4D(kHaloColor.x(), kHaloColor.y(), kHaloColor.z(), opacity));
+    prog->setUniformValue(colorLoc, toVec4(contourOf(fill), opacity));
     prog->setUniformValue(widthLoc, (radiusPx + kHaloPx) * scale);
     ctx->glDrawArrays(GL_POINTS, 0, 1);
 
@@ -231,6 +244,12 @@ void UsblLayer::UsblLayerRenderImplementation::render(QOpenGLFunctions* ctx, con
     // Drawn last and on top of its own ball. This is the ACOUSTIC head's yaw, not the boat's:
     // NavigationArrow marks the same patch of water from the GNSS/IMU heading, and the two
     // disagreeing by a mounting offset is a thing worth being able to see.
+    //
+    // `usbl_yaw` is passed straight through as a COMPASS BEARING in degrees -- 0 = north, turning
+    // clockwise -- and usbl_arrow.fsh is written to that convention. The layer this replaced fed
+    // the same shader a hard-coded 0.0f and 90.0f, so no version of this code has ever put a
+    // measured heading through it; if the dart points somewhere the head does not, the sign or
+    // the zero is what to question, and both live in the shader.
     if (arrowShaderProgram && data_.head.hasFix && data_.head.hasYaw && arrowShaderProgram->bind()) {
         const QVector<QVector3D> one{ data_.head.pos };
 
@@ -238,12 +257,12 @@ void UsblLayer::UsblLayerRenderImplementation::render(QOpenGLFunctions* ctx, con
         arrowShaderProgram->setUniformValue(arrowShaderProgram->uniformLocation("matrix"), mvp);
         arrowShaderProgram->setUniformValue(arrowShaderProgram->uniformLocation("yaw"),
                                             data_.head.yawDeg * kDegToRad);
-        arrowShaderProgram->setUniformValue(arrowShaderProgram->uniformLocation("baseScale"),
-                                            kYawArrowScale);
+        arrowShaderProgram->setUniformValue(arrowShaderProgram->uniformLocation("halfWidth"),
+                                            kYawDartHalfWidth);
         arrowShaderProgram->setUniformValue(arrowShaderProgram->uniformLocation("color"),
                                             inkOn(QColor(60, 70, 82), 1.0f));
         arrowShaderProgram->setUniformValue(arrowShaderProgram->uniformLocation("width"),
-                                            kHeadBallPx * kYawArrowSize * scale);
+                                            kHeadBallPx * kYawDartSize * scale);
         arrowShaderProgram->enableAttributeArray(aPos);
         arrowShaderProgram->setAttributeArray(aPos, one.constData());
         ctx->glDrawArrays(GL_POINTS, 0, 1);
