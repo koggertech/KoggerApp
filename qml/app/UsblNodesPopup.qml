@@ -50,9 +50,16 @@ BasePanePopup {
     readonly property bool _note: _noDevice || _noNodes || _stopped
 
     // ── metrics ───────────────────────────────────────────────────────────
-    // The width of a four-cell grid panel, so this sits in the same visual family as the panels
-    // it shares a scene with. Height is the only dimension the data moves.
-    readonly property real _baseW: Math.round(348 * _appScale) + contentPadding * 2
+    // WIDTH IS THE WIDEST ROW, not a grid multiple. It used to be the width of a four-cell grid
+    // panel, on the reasoning that this should sit in the same visual family as the panels it
+    // shares a scene with -- but a row is a badge, a range, an SNR and three chips, and none of
+    // that reaches a four-cell width. The family resemblance cost a third of the card in empty
+    // space, on a panel whose whole argument for existing is that it is glanceable over a chart.
+    // Height is still the only dimension the data moves.
+    readonly property real _baseW: Math.round(_rowW * _appScale) + contentPadding * 2
+    // Line 1 (badge + range at 1.2x + SNR + the age chip pushed right) is the binding one; line 2
+    // is three chips and fits inside it.
+    readonly property real _rowW: 260
 
     // CHIP HEIGHT COMES FROM THE THEME, via Tokens.chipH, but it cannot be used raw here.
     // Tokens are in AppPalette.scale space; this panel's metrics are in appScale space (the
@@ -67,7 +74,7 @@ BasePanePopup {
     readonly property real _gap: Math.round(4 * _k)
     readonly property real _pad: Math.round(8 * _k)
 
-    readonly property real _contentW: Math.round(348 * _k)
+    readonly property real _contentW: Math.round(_rowW * _k)
     readonly property real _contentH: {
         var n = Math.max(1, _shown)          // an empty plan still occupies one line, which says so
         var h = n * _rowH + (n - 1) * _gap
@@ -250,11 +257,19 @@ BasePanePopup {
                     Rectangle {
                         anchors.fill: parent
                         radius: Tokens.radiusSm
-                        // A plain light-blue fill while this node's request is out -- the same
-                        // mark the pane's rows use, and the only thing on the panel that moves.
+                        // A DARKER row while this node's request is out -- the only thing on the
+                        // panel that moves.
+                        //
+                        // It used to be the accent colour at 14% alpha. Alpha was the wrong tool:
+                        // the panel sits on a scene whose transparency the operator controls, so
+                        // a translucent fill composited against whatever chart happened to be
+                        // underneath -- over dark water it read as nothing at all, and the one
+                        // moving mark on the panel was invisible exactly where the panel is used.
+                        // A solid colour derived from the row's own surface is the same mark
+                        // everywhere. Two factors because a dark theme needs the bigger nudge to
+                        // shift at all, which is how bgDeep and groupBorder are already built.
                         color: nodeRow._r && nodeRow._r.op === "waiting"
-                               ? Qt.rgba(AppPalette.accent.r, AppPalette.accent.g,
-                                         AppPalette.accent.b, 0.14)
+                               ? Qt.darker(AppPalette.rowRaised, AppPalette.isDark ? 1.35 : 1.10)
                                : AppPalette.rowRaised
                         border.width: Tokens.cardBorderWidth
                         border.color: AppPalette.border
@@ -280,11 +295,15 @@ BasePanePopup {
                             diameter: root._chipH
                             anchors.verticalCenter: parent.verticalCenter
                         }
+                        // The range is what the panel is READ for -- the chips beside it say
+                        // whether to believe it, but this is the number. Set 1.2x the row's other
+                        // text so it wins at a glance over a chart, which is the distance this
+                        // panel is looked at from.
                         Text {
                             text: root._num(nodeRow._r && nodeRow._r.entry
                                             ? nodeRow._r.entry.distance : NaN, 1) + " " + qsTr("m")
                             color: AppPalette.textStrong
-                            font.pixelSize: Math.max(8, Math.round(13 * root._k))
+                            font.pixelSize: Math.max(8, Math.round(13 * 1.2 * root._k))
                             font.bold: true
                             anchors.verticalCenter: parent.verticalCenter
                         }
