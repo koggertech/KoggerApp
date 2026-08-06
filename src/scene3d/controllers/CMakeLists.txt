@@ -15,7 +15,6 @@ target_sources(KoggerApp PRIVATE
     scene3d_control_menu_controller.h         scene3d_control_menu_controller.cpp
     scene3d_toolbar_controller.h              scene3d_toolbar_controller.cpp
     mosaic_view_control_menu_controller.h     mosaic_view_control_menu_controller.cpp
-    isobaths_view_control_menu_controller.h   isobaths_view_control_menu_controller.cpp
-    usbl_view_control_menu_controller.h       usbl_view_control_menu_controller.cpp)
+    isobaths_view_control_menu_controller.h   isobaths_view_control_menu_controller.cpp)
 
 target_include_directories(KoggerApp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

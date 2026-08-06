@@ -17,7 +17,6 @@
 #include "data_interpolator.h"
 #include "epoch.h"
 #include "id_binnary.h"
-#include "usbl_view.h"
 
 
 class Dataset : public QObject
@@ -405,17 +404,6 @@ public slots:
     void setChannelOffset(const ChannelId& channelId, float x, float y, float z);
     void spatialProcessing();
 
-    void usblProcessing();
-    QVector<QVector3D> beaconTrack() {
-        return _beaconTrack;
-    }
-
-    QVector<QVector3D> beaconTrack1() {
-        return _beaconTrack1;
-    }
-
-    void setScene3D(GraphicsScene3dView* scene3dViewPtr) { scene3dViewPtr_ = scene3dViewPtr; };
-
     void setRefPosition(int epoch_index);
     void setRefPosition(Epoch* ref_epoch);
     void setRefPosition(Position position);
@@ -478,11 +466,6 @@ protected:
 
     void validateChannelList(const ChannelId& channelId, uint8_t subChannelId);
 
-    QVector<QVector3D> _beaconTrack;
-    QVector<QVector3D> _beaconTrack1;
-
-    QMap<int, UsblView::UsblObjectParams> tracks;
-
     //enum {
     //    AutoRangeNone,
     //    AutoRangeLast,
@@ -514,8 +497,6 @@ protected:
     }
 
     Epoch* addNewEpoch();
-
-    GraphicsScene3dView* scene3dViewPtr_ = nullptr;
 
 private:
     friend class DataInterpolator;

@@ -21,7 +21,6 @@
 #include "point_group.h"
 #include "ray.h"
 #include "navigation_arrow.h"
-#include "usbl_view.h"
 //#include "isobaths_view.h"
 #include "ruler_tool.h"
 #include "geojson_layer.h"
@@ -225,7 +224,6 @@ public:
     std::shared_ptr<GeoJsonLayer> getGeoJsonLayerPtr() const;
     std::shared_ptr<PointGroup> pointGroup() const;
     std::shared_ptr<PolygonGroup> polygonGroup() const;
-    std::shared_ptr<UsblView> getUsblViewPtr() const;
     std::shared_ptr<NavigationArrow> getNavigationArrowPtr() const;
     std::weak_ptr <Camera> camera() const;
     float verticalScale() const;
@@ -427,7 +425,6 @@ private:
     std::shared_ptr<PlaneGrid> m_planeGrid;
     std::shared_ptr<SceneObject> m_vertexSynchroCursour;
     std::shared_ptr<NavigationArrow> navigationArrow_;
-    std::shared_ptr<UsblView> usblView_;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;

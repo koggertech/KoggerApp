@@ -111,7 +111,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_coordAxes(std::make_shared<CoordinateAxes>()),
     m_planeGrid(std::make_shared<PlaneGrid>()),
     navigationArrow_(std::make_shared<NavigationArrow>()),
-    usblView_(std::make_shared<UsblView>()),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     qmlRootObject_(nullptr),
@@ -217,7 +216,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_coordAxes.get(), &CoordinateAxes::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_planeGrid.get(), &PlaneGrid::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::changed, this, &QQuickFramebufferObject::update);
-    QObject::connect(usblView_.get(), &UsblView::changed, this, &QQuickFramebufferObject::update);
 
     //QObject::connect(isobathsView_.get(), &IsobathsView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(surfaceView_.get(), &SurfaceView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -230,7 +228,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_coordAxes.get(), &CoordinateAxes::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(boatTrack_.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-    QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
     applyShadowSettingsToSceneRenderObjects();
     updatePlaneGrid();
@@ -327,11 +324,6 @@ std::shared_ptr<PolygonGroup> GraphicsScene3dView::polygonGroup() const
     return m_polygonGroup;
 }
 
-std::shared_ptr<UsblView> GraphicsScene3dView::getUsblViewPtr() const
-{
-    return usblView_;
-}
-
 std::shared_ptr<NavigationArrow> GraphicsScene3dView::getNavigationArrowPtr() const
 {
     return navigationArrow_;
@@ -382,7 +374,6 @@ void GraphicsScene3dView::clear(bool cleanMap)
     m_polygonGroup->clearData();
     m_pointGroup->clearData();
     navigationArrow_->clearData();
-    usblView_->clearTracks();
     m_planeGrid->clear();
     m_bounds = Cube();
 
@@ -2507,8 +2498,7 @@ void GraphicsScene3dView::updateBounds()
                    .merge(m_polygonGroup->bounds())
                    .merge(m_pointGroup->bounds())
                    .merge(surfaceView_->bounds())
-                   .merge(imageView_->bounds())
-                   .merge(usblView_->bounds());
+                   .merge(imageView_->bounds());
 
     updatePlaneGrid();
 
@@ -3458,7 +3448,6 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
     m_renderer->navigationArrowRenderImpl_  = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->navigationArrow_->m_renderImpl));
-    m_renderer->usblViewRenderImpl_         = *(dynamic_cast<UsblView::UsblViewRenderImplementation*>(view->usblView_->m_renderImpl));
     m_renderer->m_viewSize                  = view->size();
     m_renderer->m_camera                    = *view->m_camera;
     m_renderer->m_axesThumbnailCamera       = *view->m_axesThumbnailCamera;
