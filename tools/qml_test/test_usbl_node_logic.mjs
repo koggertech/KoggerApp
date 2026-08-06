@@ -879,7 +879,16 @@ console.log("the acoustic-nodes panel");
     // Auto-extension, which is the feature: height is a function of the row count.
     ok("the panel's height follows the row count",
        /_contentH[\s\S]{0,200}_rowH/.test(panel) && /expandedHeight\s*=/.test(panel));
-    ok("...and its width does not", /_contentW:\s*Math\.round\(348/.test(panel));
+    // Width is a CONSTANT while height is a function of the row count -- that asymmetry is the
+    // feature, and it is what this checks. It used to pin the literal 348, which made it a test
+    // of the number instead of the property: narrowing the panel to fit its actual content broke
+    // it while the invariant it was defending held perfectly. Now it asserts the shape -- a fixed
+    // row width, and no dependency on how many rows there are.
+    const widthLine = (panel.match(/^.*_contentW:.*$/m) || [""])[0];
+    ok("...and its width does not",
+       /Math\.round\(_rowW\s*\*/.test(widthLine)
+       && !/(_shown|_rows\b|_rowH)/.test(widthLine)
+       && /_rowW:\s*\d+\s*$/m.test(panel));
     // A Repeater bound to the array itself rebuilds every delegate on every clock tick, because
     // the composer returns a new array each time. Same rule the widget list already follows.
     ok("the row Repeater is modelled on the count, not the array",
