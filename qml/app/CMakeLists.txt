@@ -54,9 +54,12 @@ qt_add_qml_module(kogger_app
         SplashOverlay.qml
         TgcSettingsTab.qml
         UiSavingSettingsTab.qml
+        UsblAddressBadge.qml
         UsblButton.qml
+        UsblEngine.qml
         UsblGroup.qml
         UsblHexField.qml
+        UsblNodesPopup.qml
         UsblPlanGroup.qml
         UsblPlanStore.qml
         UsblResponseGroup.qml
@@ -68,6 +71,8 @@ qt_add_qml_module(kogger_app
         WidgetEditOverlay.qml
         WidgetEditPage.qml
         WidgetGridPreview.qml
+        WidgetKindStep.qml
+        WidgetUsblStep.qml
         WidgetPlaceStep.qml
         WidgetSizeStep.qml
         WorkspaceStore.qml

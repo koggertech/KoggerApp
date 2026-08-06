@@ -6,7 +6,7 @@ node tools/qml_test/test_usbl_node_logic.mjs
 node tools/qml_test/test_usbl_field_logic.mjs
 ```
 
-444 assertions over the three USBL logic modules â€” no Qt, no window, no GPU, ~0.3 s for all
+521 assertions over the three USBL logic modules — no Qt, no window, no GPU, ~0.3 s for all
 three. Exit 0 = all pass.
 
 **215 Â· [UsblPlanLogic.js](../../qml/app/UsblPlanLogic.js)** â€” what the plan IS. Every UI
@@ -25,7 +25,7 @@ stale. A node with every step muted contributes nothing â€” not even the im
 no steps gets, which would otherwise mean muting the last step silently started interrogating
 something else.
 
-**179 Â· [UsblNodeLogic.js](../../qml/app/UsblNodeLogic.js)** â€” what a node row and its command
+**256 · [UsblNodeLogic.js](../../qml/app/UsblNodeLogic.js)** — what a node row and its command
 chips REPORT: the interrogation cycle as a reducer. One request is in flight at a time, so an
 answer window closes when its reply lands, when the next request goes out, or when its budget
 (dwell + grace) runs out â€” and an unanswered window is a *result*, recorded immediately rather
@@ -54,6 +54,25 @@ Three shipped defects are rules in here.
 
 There is also an assertion that `stepKey` cannot collide by concatenation: node 1 cmd 12 and node
 11 cmd 2 would be one key without a separator, and that collision is silent.
+
+Two later sections defend things that are invisible in *both* a behaviour test and a screenshot,
+so they assert over SOURCE TEXT instead:
+
+- **The loop outlives the pane.** `UsblEngine` and `UsblPlanStore` must be declared in
+  `MainWindow`, not in `DeviceSettingsPage` — a settings sub-page whose loader destroys it on
+  navigation, which is how closing the settings panel used to stop interrogation silently. The
+  pane must own no `Timer` and no poll state of its own, dwell must persist and `running` must
+  not, and losing the device must stop the loop.
+- **The on-scene nodes panel.** It must not compose its own rows (a second implementation of the
+  pane is free to disagree with it), its height must follow the row count while its width does
+  not, its `Repeater` must be modelled on the count rather than the recomposed array, it must
+  send nothing, and both its `Component`s must sit *inside* the delegate — declared beside the
+  `Repeater` they cannot see its id, and every binding through it is a `ReferenceError` that
+  loads a panel painting nothing. That one shipped and was caught by the UI probe.
+
+Both node-state surfaces keep their own translation tables, because `qsTr`'s context is the file;
+the suite asserts that each names exactly the codes the reducer can return, which is what stops
+two copies becoming two vocabularies.
 
 **50 Â· [UsblFieldLogic.js](../../qml/kqml_types/UsblFieldLogic.js)** â€” what a data widget
 shows: picking the right beacon out of `Dataset.usblSolutions` and rendering it. The failure

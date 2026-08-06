@@ -32,6 +32,44 @@ var FIELDS = [
     { key: "usblPresent",      addressable: false, digits: 0 }
 ];
 
+// ── a colour per address ─────────────────────────────────────────────────────
+//
+// IDENTITY, NOT STATE. A node's colour never changes: it is how you match a row in the pane to
+// a row in the on-scene panel to a marker on the map. State is carried by the chips, which are
+// pale tinted fills with a word in them -- a different visual register from a saturated solid
+// with a digit -- so a green address badge does not read as "replied".
+//
+// THIS TABLE IS A COMPATIBILITY SURFACE. Inserting a colour rather than appending re-colours
+// every beacon above it for every operator who had learned them. Append only; the order is
+// asserted verbatim in test_usbl_field_logic.mjs so a well-meant reshuffle fails there rather
+// than on a boat.
+//
+// Address 0 is the PROMISCUOUS address, so it gets a neutral slate rather than an identity hue
+// -- it is not one beacon, and colouring it like one would say it was.
+//
+// Deliberately NOT the plan's `groupColors`: a command group and a node are different things
+// that appear in the same pane, and one palette for both would invite reading a node's colour
+// as its group's.
+var ADDRESS_COLORS = [
+    "#64748B",  // 0 promiscuous — neutral
+    "#3E8FD6",  // 1 blue
+    "#16A34A",  // 2 green
+    "#E0902B",  // 3 amber
+    "#8B5CF6",  // 4 violet
+    "#0E9BB5",  // 5 cyan
+    "#D6539B",  // 6 magenta
+    "#C2703A",  // 7 copper
+    "#6D8B21"   // 8 olive
+];
+
+// Anything outside 0..MAX_ADDR takes the neutral. A hand-edited blob or a future wider address
+// range then renders a legible badge instead of an empty one.
+function addressColor(addr) {
+    var n = parseInt(addr, 10);
+    if (isNaN(n) || n < 0 || n >= ADDRESS_COLORS.length) return ADDRESS_COLORS[0];
+    return ADDRESS_COLORS[n];
+}
+
 function meta(key) {
     for (var i = 0; i < FIELDS.length; ++i)
         if (FIELDS[i].key === key) return FIELDS[i];
@@ -157,6 +195,7 @@ function rawValue(key, entry, nowMs) {
 if (typeof module !== "undefined" && module.exports) {
     module.exports = {
         ANY: ANY, MAX_ADDR: MAX_ADDR, STALE_MS: STALE_MS, FIELDS: FIELDS,
+        ADDRESS_COLORS: ADDRESS_COLORS, addressColor: addressColor,
         meta: meta, isUsblField: isUsblField, isAddressable: isAddressable,
         normAddr: normAddr, knownAddresses: knownAddresses, pick: pick,
         ageMs: ageMs, stateCode: stateCode, isValid: isValid, rawValue: rawValue

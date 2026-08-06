@@ -539,6 +539,126 @@ console.log("age");
     eq("a future timestamp clamps to zero", N.ageMs(sol(1, -500), NOW), 0);
 }
 
+// ── the last command asked of a node ────────────────────────────────────────
+// A second fact per node, and it is NOT the one `last` holds. `last` is the verdict of
+// whichever step resolved most recently; this is which command was most recently SENT. They
+// name different commands whenever a request is out, which is exactly when the difference
+// matters: the row's reply badge keeps standing on the previous outcome while the chip says
+// what is happening right now.
+//
+// Written in one place -- the send -- so the chip's state is `stepCode` of it and needs no
+// second bookkeeping. That is what makes "waiting outranks the previous verdict" fall out
+// rather than being re-implemented.
+console.log("the last command asked");
+{
+    const p0 = N.initialPoll();
+    eq("nothing has been asked to begin with", N.lastAskedCmd(p0, 1), -1);
+
+    const p1 = N.noteSent(p0, 1, 3, NOW);
+    eq("sending records which command", N.lastAskedCmd(p1, 1), 3);
+    eq("...for that node only", N.lastAskedCmd(p1, 2), -1);
+    eq("...and its state is the step's own", N.stepCode(p1, 1, N.lastAskedCmd(p1, 1)), N.WAITING);
+
+    const p2 = N.noteReplyAddr(p1, NODES, 1);
+    eq("the answer does not change which command was last asked", N.lastAskedCmd(p2, 1), 3);
+    eq("...only its state", N.stepCode(p2, 1, 3), N.REPLIED);
+
+    const p3 = N.noteTimeout(N.noteSent(p2, 1, 5, NOW + 700));
+    eq("a later command takes over", N.lastAskedCmd(p3, 1), 5);
+    eq("...carrying its own miss", N.stepCode(p3, 1, 5), N.STALE);
+    eq("...and the earlier one keeps its answer", N.stepCode(p3, 1, 3), N.REPLIED);
+
+    // THE CASE THE CHIP EXISTS FOR. cmd 5 has just gone out, so the node's last RESOLVED
+    // verdict (cmd 3, replied) and its last ASKED command (cmd 5, waiting) disagree -- and
+    // both are true. A single fact here would have to pick one and be wrong about the other.
+    const inFlight = N.noteSent(p2, 1, 5, NOW + 700);
+    eq("the reply badge still reports the last resolved outcome",
+       N.nodeReplyCode(inFlight, 1, null), N.REPLIED);
+    eq("...while the chip names the command in flight", N.lastAskedCmd(inFlight, 1), 5);
+    eq("...and reads waiting", N.stepCode(inFlight, 1, 5), N.WAITING);
+
+    // Interrogating another node must not rewrite this one's chip, even though it closes this
+    // one's window.
+    const other = N.noteSent(inFlight, 2, 0, NOW + 1400);
+    eq("another node's turn leaves the chip naming the same command",
+       N.lastAskedCmd(other, 1), 5);
+    eq("...now showing the miss it caused", N.stepCode(other, 1, 5), N.STALE);
+    eq("...and the other node gets its own", N.lastAskedCmd(other, 2), 0);
+
+    // cmd 0 is a real command -- the implicit step a node with no refs contributes. A reader
+    // testing the cmd for truthiness reports "never asked" about the commonest case there is.
+    const zero = N.noteSent(p0, 2, 0, NOW);
+    eq("cmd 0 is a command, not an absence", N.lastAskedCmd(zero, 2), 0);
+    ok("...distinguishable from never having asked", N.lastAskedCmd(zero, 1) === -1);
+}
+
+// ── the row a panel draws ───────────────────────────────────────────────────
+// One composer, used by the pane and by the on-scene panel, so the two cannot disagree about
+// what a node is doing. It returns the four marks and the numbers behind them; everything
+// user-visible stays in QML.
+console.log("panel rows");
+{
+    const sols = { "1": sol(1, 250), "2": sol(2, 60000) };
+    const p0 = N.initialPoll();
+
+    const rows = N.panelRows(NODES, sols, p0, NOW);
+    eq("one row per node, in plan order", rows.map((r) => r.addr), [1, 2]);
+    eq("a row carries its node's identity", rows[0].nodeId, 1);
+
+    // Nothing asked yet: idle, no verdict, no chip -- and the numbers are still there, because
+    // they came from the beacon rather than from us asking.
+    eq("nothing asked yet reads idle", rows[0].op, N.IDLE);
+    eq("...with the node's own heard-from verdict", rows[0].reply, N.REPLIED);
+    eq("...and no command chip at all", rows[0].lastCmd, -1);
+    eq("...which has no state either", rows[0].lastCmdState, "");
+    eq("the numbers come straight from the fix", rows[0].entry.distance, 11);
+    eq("...and the age with them", rows[0].ageMs, 250);
+    ok("...not flagged old", rows[0].aged === false);
+    ok("a minute-old fix is flagged old", rows[1].aged === true);
+
+    // A node nobody has ever heard from: every number absent, and the row still exists.
+    const unheard = N.panelRows([node(9, 7)], sols, p0, NOW);
+    eq("an address that never answered still gets a row", unheard.length, 1);
+    eq("...with no entry", unheard[0].entry, null);
+    eq("...never-answered, not stale", unheard[0].reply, N.NONE);
+    eq("...and no age rather than a zero one", unheard[0].ageMs, -1);
+    ok("...and is not flagged old, because there is nothing to be old", unheard[0].aged === false);
+
+    // Switched off outranks everything, including an open window -- or the switch looks ignored.
+    const off = N.panelRows([node(1, 1, false)], sols, N.noteSent(p0, 1, 2, NOW), NOW);
+    eq("a switched-off node reads off even with a request out", off[0].op, N.OFF);
+    eq("...and keeps the last thing it said", off[0].reply, N.REPLIED);
+
+    // The four marks, all moving at once, on the case that produced them.
+    const mid = N.noteSent(N.noteReplyAddr(N.noteSent(p0, 1, 3, NOW), NODES, 1), 1, 5, NOW + 700);
+    const r = N.panelRows(NODES, sols, mid, NOW + 800)[0];
+    eq("op says a request is out",        r.op, N.WAITING);
+    eq("reply still says what resolved",  r.reply, N.REPLIED);
+    eq("the chip names the live command", r.lastCmd, 5);
+    eq("...and says it is out",           r.lastCmdState, N.WAITING);
+
+    // The composer must not invent a clock of its own: same poll, same solutions, two times.
+    const a = N.panelRows(NODES, sols, mid, NOW);
+    const b = N.panelRows(NODES, sols, mid, NOW + 30000);
+    ok("no verdict moves with time",
+       a[0].op === b[0].op && a[0].reply === b[0].reply
+       && a[0].lastCmdState === b[0].lastCmdState);
+    ok("...only the age does", b[0].ageMs - a[0].ageMs === 30000);
+
+    eq("no nodes, no rows", N.panelRows([], sols, p0, NOW), []);
+    eq("no plan at all is not a crash", N.panelRows(null, null, p0, NOW), []);
+
+    // The panel and the pane must agree node by node, or one of them is lying about the same
+    // beacon on the same screen.
+    let agrees = true;
+    for (const row of N.panelRows(NODES, sols, mid, NOW)) {
+        const e = N.entryFor(sols, row.addr);
+        if (row.reply !== N.nodeReplyCode(mid, row.nodeId, e)) agrees = false;
+        if (row.op !== N.operationCode(true, N.isWaiting(mid, row.nodeId))) agrees = false;
+    }
+    ok("a row says exactly what the pane's own reads say", agrees);
+}
+
 // ── relationship to the widget module ───────────────────────────────────────
 console.log("relationship to UsblFieldLogic");
 {
@@ -580,34 +700,34 @@ console.log("the row's vocabulary and wiring");
 {
     const src = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblGroup.qml"), "utf8");
 
-    const table = (name) => {
-        const at = src.indexOf(`property var ${name}: ({`);
-        ok(`${name} exists`, at >= 0);
-        return at < 0 ? "" : src.slice(at, src.indexOf("})", at));
+    // Both surfaces that render a node state keep their OWN tables, because qsTr's context is
+    // the file and a shared one would need a QML singleton in kqml_types, which cannot import
+    // a module out of qml/app. So the guard against two vocabularies is here: each file must
+    // name exactly the codes the reducer can return, no more and no fewer.
+    const tableIn = (text, name, where) => {
+        const at = text.indexOf(`property var ${name}: ({`);
+        ok(`${name} exists in ${where}`, at >= 0);
+        return at < 0 ? "" : text.slice(at, text.indexOf("})", at));
     };
-    const keys = (name) => [...table(name).matchAll(/"([a-z]+)":/g)].map((m) => m[1]).sort();
+    const keysIn = (text, name, where) =>
+        [...tableIn(text, name, where).matchAll(/"([a-z]+)":/g)].map((m) => m[1]).sort();
 
-    eq("every operation code has a word, and no word is orphaned",
-       keys("_opText"), [N.IDLE, N.OFF, N.WAITING].sort());
-    eq("every reply code has a word, and no word is orphaned",
-       keys("_replyText"), [N.NONE, N.REPLIED, N.STALE].sort());
+    const panel = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblNodesPopup.qml"),
+                               "utf8");
+    for (const [text, where] of [[src, "the pane"], [panel, "the panel"]]) {
+        eq(`every operation code has a word in ${where}, and no word is orphaned`,
+           keysIn(text, "_opText", where), [N.IDLE, N.OFF, N.WAITING].sort());
+        eq(`every reply code has a word in ${where}, and no word is orphaned`,
+           keysIn(text, "_replyText", where), [N.NONE, N.REPLIED, N.STALE].sort());
+    }
 
     ok("the row reads its state through the logic module",
        /import "UsblNodeLogic\.js" as Node/.test(src));
 
-    // Every transition the reducer defines has to actually be driven from the UI, or the state
-    // machine is correct and unreachable -- which is exactly how the single-Step bug shipped.
-    ok("sending a request opens a window for that STEP",
-       /Node\.noteSent\(\s*_poll,\s*s\.nodeId,\s*s\.cmd,/.test(src));
-    ok("the budget running out closes it",   /Node\.noteTimeout\(/.test(src));
-    ok("an arriving solution closes it",     /Node\.noteReplyAddr\(/.test(src));
-    ok("...driven by the per-solution signal", /onLastUsblSolutionChanged/.test(src));
-    ok("the window is timed by dwell plus grace", /Node\.waitMs\(/.test(src));
-
     // The operation axis must NOT be a function of whether the loop is running: one Step opens a
     // window with the loop stopped, and that is the case that regressed.
     ok("the operation axis does not consult the run timer",
-       !/operationCode\([^)]*_runTimer/.test(src));
+       !/operationCode\([^)]*[Rr]unning/.test(src));
     // Nor may any verdict consult the clock.
     ok("no verdict is computed from the clock",
        !/nodeReplyCode\([^)]*_nowMs/.test(src) && !/stepCode\([^)]*_nowMs/.test(src));
@@ -656,8 +776,6 @@ console.log("the row's vocabulary and wiring");
        /modelData\.on\s*\?/.test(src));
     ok("the extended row mutes a command without losing it",
        /plan\.toggleStep\(/.test(src));
-    ok("the manual queue is drained, not just filled",
-       /_drainManual\(\)/.test(src) && /Node\.dequeueEmit\(/.test(src));
     ok("a queued interrogation says so rather than looking dead",
        /_queued/.test(src) && /queued —/.test(src));
     // The collapsed header is the same fact from further away, so it must not have its own,
@@ -677,6 +795,168 @@ console.log("the row's vocabulary and wiring");
     ok("the copy affordance routes through one seam", /function _copyCoordinate/.test(src));
     ok("...and says it is not wired up yet",
        /not wired up|no backend yet|backend later/i.test(src));
+}
+
+// ── the loop outlives the pane ───────────────────────────────────────────────
+// The interrogation loop used to live in UsblGroup, which lives in DeviceSettingsPage, which
+// is a settings SUB-PAGE: its loader destroys it as soon as the operator navigates away. So
+// leaving the page stopped interrogation -- silently, with nothing on screen saying so.
+//
+// Nothing about that is visible in a behaviour test, in a screenshot, or in a geometry dump:
+// the reducer is correct either way and the pane looks identical. What can be checked is WHERE
+// each piece is declared, so that is what is asserted. Put a Timer back in the pane, or a
+// UsblPlanStore back in the settings page, and this section fails.
+console.log("the loop outlives the pane");
+{
+    const read = (...p) => readFileSync(path.join(here, "..", "..", ...p), "utf8");
+    const engine = read("qml", "app", "UsblEngine.qml");
+    const pane   = read("qml", "app", "UsblGroup.qml");
+    const page   = read("qml", "app", "DeviceSettingsPage.qml");
+    const main   = read("qml", "app", "MainWindow.qml");
+
+    // Every transition the reducer defines has to actually be driven, or the state machine is
+    // correct and unreachable -- which is exactly how the single-Step bug shipped. They are
+    // driven from the engine now.
+    ok("the engine reads the rules from the logic module",
+       /import "UsblNodeLogic\.js" as Node/.test(engine));
+    ok("sending a request opens a window for that STEP",
+       /Node\.noteSent\(\s*poll,\s*s\.nodeId,\s*s\.cmd,/.test(engine));
+    ok("the budget running out closes it",     /Node\.noteTimeout\(/.test(engine));
+    ok("an arriving solution closes it",       /Node\.noteReplyAddr\(/.test(engine));
+    ok("...driven by the per-solution signal", /onLastUsblSolutionChanged/.test(engine));
+    ok("the window is timed by dwell plus grace", /Node\.waitMs\(/.test(engine));
+    ok("the manual queue is drained, not just filled",
+       /drainManual\(\)/.test(engine) && /Node\.dequeueEmit\(/.test(engine));
+
+    // The lifetime itself.
+    ok("the engine and the plan are declared in MainWindow, which lives for the session",
+       /UsblEngine\s*\{/.test(main) && /UsblPlanStore\s*\{/.test(main));
+    ok("...and NOT in the settings page, which is destroyed on navigation",
+       !/UsblEngine\s*\{/.test(page) && !/UsblPlanStore\s*\{/.test(page));
+    ok("...which therefore receives them", /property var usblEngine/.test(page));
+    ok("the pane drives no timer of its own",
+       !/Timer\s*\{/.test(pane));
+    ok("...and holds no poll state of its own -- it reads the engine's",
+       /readonly property var _poll:\s*engine/.test(pane));
+    ok("the pane's Start button asks the engine, not a local timer",
+       /engine\.toggleRun\(\)/.test(pane) && !/_runTimer/.test(pane));
+
+    // A loop that resumed on launch with no USBL UI on screen would be a head transmitting
+    // because of a setting nobody remembers making. Dwell persists; running does not.
+    const persisted = engine.slice(engine.indexOf("category: \"main/usblSchedule\""),
+                                   engine.indexOf("category: \"main/usblSchedule\"") + 200);
+    ok("dwell is persisted", /property int dwellMs/.test(persisted));
+    ok("...and whether the loop is running is not", !/property bool running/.test(persisted));
+
+    // A head that has gone away cannot answer, and a loop still ticking at one marks every step
+    // stale for as long as it is unplugged.
+    ok("losing the device stops the loop", /onHasDeviceChanged:[^\n]*stop\(\)/.test(engine));
+
+    // Widget fields whose value is an age need a ticking property; Date.now() in a binding is
+    // evaluated once. DataFieldCatalog reads store.nowMs and nothing used to write it.
+    ok("the widget clock actually ticks",
+       /property real nowMs/.test(read("qml", "app", "WorkspaceStore.qml"))
+       && /nowMs = Date\.now\(\)/.test(read("qml", "app", "WorkspaceStore.qml")));
+}
+
+// ── the on-scene panel ───────────────────────────────────────────────────────
+// Source assertions again, for the things that are invisible in both a behaviour test and a
+// screenshot: where the rows come from, that the panel cannot recompose them its own way, and
+// that its size follows the data instead of a constant.
+console.log("the acoustic-nodes panel");
+{
+    const read = (...p) => readFileSync(path.join(here, "..", "..", ...p), "utf8");
+    const panel = read("qml", "app", "UsblNodesPopup.qml");
+    const store = read("qml", "app", "WorkspaceStore.qml");
+    const main  = read("qml", "app", "MainWindow.qml");
+
+    // The whole reason panelRows exists. A panel that picked entries out of usblSolutions and
+    // judged them itself is a second implementation of the pane, free to disagree with it.
+    ok("the panel does not compose its own rows", !/panelRows\(/.test(panel));
+    ok("...it reads the engine's", /engine\.rows/.test(panel));
+    ok("the engine composes them through the logic module", /Node\.panelRows\(/.test(read("qml", "app", "UsblEngine.qml")));
+
+    // Auto-extension, which is the feature: height is a function of the row count.
+    ok("the panel's height follows the row count",
+       /_contentH[\s\S]{0,200}_rowH/.test(panel) && /expandedHeight\s*=/.test(panel));
+    ok("...and its width does not", /_contentW:\s*Math\.round\(348/.test(panel));
+    // A Repeater bound to the array itself rebuilds every delegate on every clock tick, because
+    // the composer returns a new array each time. Same rule the widget list already follows.
+    ok("the row Repeater is modelled on the count, not the array",
+       /model:\s*root\._shown/.test(panel));
+
+    // Read-only. Starting a schedule transmits; a transmit control on a floating card over a
+    // chart is a different feature from a readout.
+    ok("the panel sends nothing", !/requestEmit|acousticPing|\.start\(\)|toggleRun/.test(panel));
+    // Every no-rows case says what is missing rather than leaving an empty card.
+    ok("no device, no nodes and a stopped schedule each say so",
+       /_noDevice/.test(panel) && /_noNodes/.test(panel) && /_stopped/.test(panel));
+    ok("...and more nodes than fit are counted, not dropped silently",
+       /_hidden/.test(panel) && /\+%1 more/.test(panel));
+    ok("nothing on the panel fades or blinks",
+       !/Behavior on opacity/.test(panel) && !/loops:\s*Animation\.Infinite/.test(panel));
+
+    // ONE SHAPE FOR AN ADDRESS. The pane said "addr 2" and the panel said "2"; a bare number
+    // beside other numbers reads as a row index. Both go through the shared badge now, and
+    // neither may re-inline a number -- that is the drift the component exists to prevent.
+    const pane2 = read("qml", "app", "UsblGroup.qml");
+    ok("both surfaces render the address through the shared badge",
+       /UsblAddressBadge\s*\{/.test(panel) && /UsblAddressBadge\s*\{/.test(pane2));
+    ok("...and the pane no longer spells the word in a row",
+       !/qsTr\("addr %1"\)/.test(pane2));
+    // Identity, not state: a fifth mark tinted like the reply chip would say what the reply
+    // chip already says, on a row that has four marks already.
+    const badge = read("qml", "app", "UsblAddressBadge.qml");
+    ok("the badge carries no state colour",
+       !/linkOk|linkIdle|accentBg|waiting|replied|stale/.test(badge));
+    // A SURFACE token cannot be trusted to contrast with a surface: `controlRaised` was tried
+    // and landed within a shade of the pane on several themes, so the badge vanished into the
+    // row. What it is filled with NOW, and why the digit stays readable on it, is asserted in
+    // test_usbl_field_logic.mjs beside the colour table it comes from.
+    const fillLine = (badge.match(/_fill:[^\n]*/) || [""])[0];
+    ok("the badge fill is not a surface token",
+       !/controlRaised|rowRaised|bgDeep|chipRaised|AppPalette\.card/.test(fillLine));
+
+    // HEIGHTS COME FROM THE THEME. Only Tokens.controlH follows theme.controlHeight, so every
+    // literal pixel height stayed the size it was typed at and read as undersized against a
+    // theme asking for taller controls -- which is exactly what these panes were full of.
+    ok("chips and badges size from Tokens.chipH",
+       /Tokens\.chipH/.test(badge) && /Tokens\.chipH/.test(pane2) && /Tokens\.chipH/.test(panel));
+    ok("...and no chip or row in the USBL panes hard-codes its height",
+       ![badge, pane2, panel].some((f) => /implicitHeight:\s*Math\.round\(\d/.test(f)));
+    ok("a tappable chip takes the full control height, not the inline-mark height",
+       /implicitHeight:\s*Tokens\.controlH\b/.test(pane2));
+    // Tokens are in AppPalette.scale space, the panel in appScale space; they differ by
+    // appScaleBoost, so a chip taking Tokens.chipH raw is ~11% shorter than the pane's.
+    ok("the panel converts chipH into its own scale space rather than mixing the two",
+       /Tokens\.chipH\s*\/\s*Math\.max\(0\.01,\s*AppPalette\.scale\)/.test(panel));
+
+    // The kind discriminator, and the one thing that must never regress about it: a def written
+    // before kinds existed has no `kind` and has to keep loading as a grid.
+    ok("the store knows both kinds", /widgetKinds:\s*\["grid",\s*"usblNodes"\]/.test(store));
+    ok("...and treats an absent kind as a grid",
+       /kind === "usblNodes"\)\s*\?\s*"usblNodes"\s*:\s*"grid"/.test(store));
+    ok("a nodes def is normalized without a grid",
+       /raw\.kind === "usblNodes"/.test(store));
+    ok("MainWindow picks the popup by kind",
+       /widgetSlot\._wdef\.kind === "usblNodes"\)\s*[\s\S]{0,40}usblNodesPanelComp/.test(main));
+    // A Loader sits between the Repeater and the popup now, and uiStateReapplied walks the
+    // Repeater's items -- so the delegate has to forward syncFromStore or restored layouts
+    // stop reaching the panels.
+    ok("...and forwards the layout re-sync through the Loader",
+       /function syncFromStore\(\)\s*\{\s*if \(slotLoader\.item\) slotLoader\.item\.syncFromStore\(\)/.test(main));
+    // The bug this cost a probe run to find, written down: an object created from a Component
+    // gets that COMPONENT's creation context, so a Component declared beside the Repeater
+    // cannot see the delegate's id and every binding through it is a ReferenceError -- a panel
+    // that loads and paints nothing. Both Components must sit inside the delegate.
+    {
+        const at = main.indexOf("id: widgetSlot");
+        const end = main.indexOf("Connections {", at);
+        const delegateBody = at < 0 ? "" : main.slice(at, end);
+        ok("the panel Components are declared inside the delegate, where its id is in scope",
+           /id: dataWidgetPanelComp/.test(delegateBody)
+           && /id: usblNodesPanelComp/.test(delegateBody));
+    }
 }
 
 console.log("");

@@ -92,13 +92,33 @@ function stepKey(nodeId, cmd) { return String(nodeId) + ":" + String(cmd); }
 // `result` is per step and `last` is per node: the verdict of whichever of a node's steps
 // resolved most recently. Both are needed and neither is derivable from the other -- `result`
 // has no ordering, and a per-node verdict cannot say which command it came from.
+//
+// `asked` is per node as well, and it is a DIFFERENT fact from `last`: which command was most
+// recently SENT to that node, resolved or not. The two name different commands for as long as a
+// request is out -- `last` still carries the previous outcome while `asked` names what is in
+// flight -- and both readings are true at once. A row's reply badge wants the first; a chip
+// saying which command is being asked wants the second.
+//
+// It is written in ONE place, the send, and its state is then `stepCode` of it. That is what
+// makes "waiting outranks the previous verdict" fall out of the existing rules instead of being
+// re-implemented for the chip.
 function initialPoll() {
-    return { waitKey: "", waitNodeId: -1, waitCmd: -1, sentAt: 0, result: {}, last: {} };
+    return { waitKey: "", waitNodeId: -1, waitCmd: -1, sentAt: 0,
+             result: {}, last: {}, asked: {} };
 }
 
 function _copyResult(r) {
     var out = {};
     for (var k in (r || {})) if (r[k]) out[k] = r[k];
+    return out;
+}
+
+// NOT _copyResult: these values are cmd NUMBERS and cmd 0 is a real command -- the implicit step
+// a node with no refs contributes, which is the commonest one there is. A truthiness filter drops
+// it and the chip then reports "never asked" about the default case.
+function _copyAsked(a) {
+    var out = {};
+    for (var k in (a || {})) if (typeof a[k] === "number") out[k] = a[k];
     return out;
 }
 
@@ -110,12 +130,14 @@ function _copyResult(r) {
 // is re-asked.
 function noteSent(poll, nodeId, cmd, nowMs) {
     var result = _copyResult(poll.result), last = _copyResult(poll.last);
+    var asked = _copyAsked(poll.asked);
     if (poll.waitKey) {
         result[poll.waitKey] = STALE;
         last[poll.waitNodeId] = STALE;
     }
+    asked[nodeId] = cmd;
     return { waitKey: stepKey(nodeId, cmd), waitNodeId: nodeId, waitCmd: cmd,
-             sentAt: nowMs, result: result, last: last };
+             sentAt: nowMs, result: result, last: last, asked: asked };
 }
 
 // The window closed with nothing in it.
@@ -124,8 +146,10 @@ function noteTimeout(poll) {
     var result = _copyResult(poll.result), last = _copyResult(poll.last);
     result[poll.waitKey] = STALE;
     last[poll.waitNodeId] = STALE;
+    // `asked` is carried, not cleared: which command was last asked does not stop being true
+    // because it went unanswered -- that IS the thing the chip has to report.
     return { waitKey: "", waitNodeId: -1, waitCmd: -1, sentAt: 0,
-             result: result, last: last };
+             result: result, last: last, asked: _copyAsked(poll.asked) };
 }
 
 // A solution arrived for `addr`. Addresses, not node ids, because that is what a solution
@@ -145,7 +169,7 @@ function noteReplyAddr(poll, nodes, addr) {
     result[poll.waitKey] = REPLIED;
     last[poll.waitNodeId] = REPLIED;
     return { waitKey: "", waitNodeId: -1, waitCmd: -1, sentAt: 0,
-             result: result, last: last };
+             result: result, last: last, asked: _copyAsked(poll.asked) };
 }
 
 // ── interrogations asked for by hand ─────────────────────────────────────────
@@ -220,6 +244,16 @@ function nodeReplyCode(poll, nodeId, entry) {
     return (entry && entry.epochMs) ? REPLIED : NONE;
 }
 
+// Which command was last SENT to this node, -1 if none ever was. Its state is stepCode of it, so
+// the chip reads Waiting while the request is out and the verdict once the window resolves --
+// the same precedence every other mark on the pane follows.
+//
+// -1 rather than 0 for "never", because cmd 0 is a real command.
+function lastAskedCmd(poll, nodeId) {
+    var a = (poll && poll.asked) ? poll.asked[nodeId] : undefined;
+    return (typeof a === "number") ? a : -1;
+}
+
 // Whether the row's age chip should ask to be noticed. Never-answered is NOT aged -- there is no
 // data to be old, and the reply badge already says so.
 function isAged(entry, nowMs, warnMs) {
@@ -279,6 +313,44 @@ function summary(nodes, solutions, poll) {
     return { total: total, active: active, replying: replying };
 }
 
+// ── one row, composed once ───────────────────────────────────────────────────
+//
+// The pane and the on-scene panel draw the same node from the same four marks, so the
+// composition lives here rather than in either of them. Two surfaces computing "what is node 2
+// doing" separately is two chances to answer differently on one screen, and the wrong one is
+// invisible until an operator trusts it.
+//
+// The row is a NODE, not a step. Distance and SNR are cached per address (Dataset::usblSolutions),
+// so per-step rows would repeat one node's numbers down its commands; the per-command detail
+// survives as `lastCmd`.
+//
+// Codes and numbers out. Units, words and colours are the caller's, as everywhere else here.
+function panelRows(nodes, solutions, poll, nowMs) {
+    var out = [];
+    for (var i = 0; i < (nodes ? nodes.length : 0); ++i) {
+        var n = nodes[i];
+        var entry = entryFor(solutions, n.addr);
+        var cmd = lastAskedCmd(poll, n.id);
+        out.push({
+            nodeId: n.id,
+            addr: n.addr,
+            active: n.active !== false,
+            // Off outranks an open window, or the switch looks ignored.
+            op: operationCode(n.active !== false, isWaiting(poll, n.id)),
+            // The last RESOLVED outcome. Deliberately not the same question as the chip below.
+            reply: nodeReplyCode(poll, n.id, entry),
+            // The last command ASKED, and its own state. "" when nothing ever was, so the caller
+            // draws no chip rather than a chip about nothing.
+            lastCmd: cmd,
+            lastCmdState: cmd < 0 ? "" : stepCode(poll, n.id, cmd),
+            entry: entry,
+            ageMs: ageMs(entry, nowMs),
+            aged: isAged(entry, nowMs, AGE_WARN_MS)
+        });
+    }
+    return out;
+}
+
 // Node consumes this via module.exports; QML sees the top-level functions and ignores it.
 if (typeof module !== "undefined" && module.exports) {
     module.exports = {
@@ -289,9 +361,9 @@ if (typeof module !== "undefined" && module.exports) {
         queueEmit: queueEmit, dequeueEmit: dequeueEmit, isQueued: isQueued,
         noteSent: noteSent, noteTimeout: noteTimeout, noteReplyAddr: noteReplyAddr,
         isWaiting: isWaiting, isWaitingStep: isWaitingStep,
-        stepResult: stepResult, stepCode: stepCode,
+        stepResult: stepResult, stepCode: stepCode, lastAskedCmd: lastAskedCmd,
         operationCode: operationCode, nodeReplyCode: nodeReplyCode,
         isAged: isAged, cursorNodeId: cursorNodeId, isCursorStep: isCursorStep,
-        entryFor: entryFor, ageMs: ageMs, summary: summary
+        entryFor: entryFor, ageMs: ageMs, summary: summary, panelRows: panelRows
     };
 }

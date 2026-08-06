@@ -1,5 +1,4 @@
 import QtQuick 2.15
-import QtCore
 import kqml_types 1.0
 import "UsblNodeLogic.js" as Node
 
@@ -23,14 +22,14 @@ DeviceSettingsGroup {
 
     property var dev: null
     property var plan: null
-    // 1 s clock, for ages and for the age-based half of the reply axis. epochMs is constant per
-    // fix, so the ticking dependency has to come from outside: Date.now() inside a binding is
-    // evaluated once and then frozen. Supplied by DeviceSettingsPage.
-    //
-    // It does NOT drive the window transitions. A window can be shorter than one tick, so
-    // sampling at 1 Hz would miss it entirely -- Waiting is opened by the send, closed by the
-    // arriving solution or by a timer that fires exactly at the deadline.
-    property string clockTick: ""
+    // The interrogation loop, which is NOT owned here any more -- see UsblEngine.qml. This pane
+    // is a settings sub-page and gets destroyed the moment the operator navigates away, so a
+    // loop living in it stopped whenever the panel closed. Everything below reads the engine's
+    // state and calls its functions; nothing here decides a transition.
+    property var engine: null
+    // 1 s clock, for ages. Comes from the engine so the pane and the on-scene panel age their
+    // numbers off the same tick.
+    readonly property string clockTick: engine ? engine.clockTick : ""
 
     // VESTIGIAL. The store now REPLACES its whole state on every edit (UsblPlanLogic.js), so
     // `plan.groups`, `plan.trigger()` and friends already change identity and bindings
@@ -106,11 +105,16 @@ DeviceSettingsGroup {
     }
 
     // ── the interrogation cycle ───────────────────────────────────────────
-    // Which node's answer window is open, and which nodes are known to have missed. Replaced
-    // wholesale by the reducer, never edited here.
-    property var _poll: Node.initialPoll()
+    // Read-only views of the engine's state, kept under the names the delegates below already
+    // use. Aliases rather than a rename: the pane's reading of the cycle did not change when
+    // the loop moved out of it, and rewriting fifty working bindings to prove that would be
+    // the risk, not the safety.
+    readonly property var _poll: engine ? engine.poll : Node.initialPoll()
+    readonly property var _manual: engine ? engine.manual : []
+    readonly property var _curStep: engine ? engine.curStep : null
 
     readonly property bool _anyWaiting: _poll.waitNodeId >= 0
+    readonly property bool _running: !!(engine && engine.running)
 
     // Which rows are expanded, by node id. Session state, not plan content: it is how you are
     // looking at the pane right now, and persisting it would restore an inspection nobody asked
@@ -122,38 +126,6 @@ DeviceSettingsGroup {
         if (next[nodeId]) delete next[nodeId]
         else next[nodeId] = true
         _expanded = next
-    }
-
-    // The deadline. Non-repeating and restarted on every request: while the schedule runs the
-    // next request closes the window first, so this only decides the single-Step case and the
-    // last step before Stop. It is a real timer rather than a comparison against the 1 s clock
-    // because the window is usually shorter than one tick.
-    property Timer _waitTimer: Timer {
-        interval: Node.waitMs(usblGroup._dwellMs, Node.GRACE_MS)
-        repeat: false
-        onTriggered: {
-            usblGroup._poll = Node.noteTimeout(usblGroup._poll)
-            usblGroup._drainManual()
-        }
-    }
-
-    // One signal per arriving solution (Dataset::addUsblSolution emits it after updating the
-    // per-address cache), which is what lets a window close the instant its reply lands instead
-    // of on the next clock tick.
-    Connections {
-        target: dataset
-        function onLastUsblSolutionChanged() {
-            if (!plan) return
-            var wasOpen = usblGroup._poll.waitNodeId
-            usblGroup._poll = Node.noteReplyAddr(usblGroup._poll, plan.nodes,
-                                                 dataset.lastUsblAddress)
-            if (wasOpen >= 0 && usblGroup._poll.waitNodeId < 0) {
-                usblGroup._waitTimer.stop()
-                // The window just closed, so anything asked for by hand can go now rather than
-                // waiting for a scheduler that may not be running.
-                usblGroup._drainManual()
-            }
-        }
     }
 
     // The one received payload the app retains. Dataset keeps a solution per address, but the
@@ -181,8 +153,11 @@ DeviceSettingsGroup {
         id: ms
         property bool checked: false
         signal toggled()
-        implicitWidth: Math.round(36 * AppPalette.scale)
-        implicitHeight: Math.round(20 * AppPalette.scale)
+        // Tokens.chipH, not a literal 20: only controlH follows theme.controlHeight, so a
+        // hard-coded height stays put while the buttons beside it grow with the theme. The
+        // 1.8 track ratio is what the 36x20 original had.
+        implicitWidth: Math.round(Tokens.chipH * 1.8)
+        implicitHeight: Tokens.chipH
         radius: height / 2
         color: ms.checked ? AppPalette.toggleOn : AppPalette.trackOff
         border.width: Math.max(1, Math.round(1 * AppPalette.scale))
@@ -218,7 +193,7 @@ DeviceSettingsGroup {
         readonly property bool _ok:    bdg.reply && bdg.code === "replied"
         readonly property bool _old:   bdg.reply && bdg.code === "stale"
         implicitWidth: _bdgText.implicitWidth + Tokens.spaceMd * 2
-        implicitHeight: Math.round(20 * AppPalette.scale)
+        implicitHeight: Tokens.chipH
         radius: Tokens.radiusSm
         color: bdg._open ? AppPalette.accentBg
              : bdg._ok   ? AppPalette.linkOkBg
@@ -360,105 +335,11 @@ DeviceSettingsGroup {
     // ── the schedule: what drives the list ────────────────────────────────
     // Always visible, and first. The schedule is the host's own interrogation loop -- it sends
     // ID_USBL_CONTROL v1 ping requests and needs nothing applied to the device beforehand.
-    property var _curStep: null
-    property int _stepIndex: -1
+    // It RUNS IN UsblEngine, not here; these three forward to it.
+    function requestEmit(nodeId, cmd) { if (engine) engine.requestEmit(nodeId, cmd) }
 
-    // Interrogations asked for by hand, waiting their turn. See Node.queueEmit.
-    property var _manual: []
-
-    // One send path, so a manual interrogation and a scheduled one are indistinguishable to the
-    // device, to the poll state and to the row that reports them.
-    function _send(s) {
-        _curStep = s
-        if (!dev) return
-        // The window opens here and not before: with no device nothing was transmitted, and a
-        // step must not be blamed for failing to answer a request that never left. Keyed by the
-        // step's cmd, so four commands on one node succeed or fail independently.
-        _poll = Node.noteSent(_poll, s.nodeId, s.cmd, Date.now())
-        _waitTimer.restart()
-
-        // Only the schedule is per-node, so only the ping is sent per step.
-        var g = s.implicit ? null : plan.groupById(s.groupId)
-        var snd = g ? g.ini.send : null
-        if (!snd) { dev.acousticPingRequest(s.addr, 0xFFFFFFFF); return }
-        var fn = plan.findBy(plan.pingFunctions, snd.fn)
-        var payload = (fn.id === "bits") ? snd.payload : ""
-        dev.acousticPingRequestEx(s.addr, 0xFFFFFFFF, s.cmd, snd.reply, payload)
-    }
-
-    // Build the step a hand-asked interrogation stands for. A muted step is still sendable --
-    // "ask this one thing now without putting it in the cycle" is the whole point of the pairing --
-    // so this reads the node's refs rather than the schedule, which has already filtered them out.
-    function _stepFor(nodeId, cmd) {
-        var n = null, i
-        for (i = 0; i < plan.nodes.length; ++i) if (plan.nodes[i].id === nodeId) n = plan.nodes[i]
-        if (!n) return null
-        for (i = 0; i < n.refs.length; ++i)
-            if (n.refs[i].cmd === cmd)
-                return { addr: n.addr, cmd: cmd, implicit: false,
-                         nodeId: nodeId, groupId: n.refs[i].group }
-        return { addr: n.addr, cmd: cmd, implicit: true, nodeId: nodeId, groupId: -1 }
-    }
-
-    // Asked for by hand. While the schedule runs it takes its turn at the next tick -- which is
-    // when the open window has resolved one way or the other. Stopped, it goes as soon as nothing
-    // is outstanding, which is usually at once.
-    function requestEmit(nodeId, cmd) {
-        if (!plan) return
-        _manual = Node.queueEmit(_manual, nodeId, cmd)
-        if (!_runTimer.running) _drainManual()
-    }
-    function _drainManual() {
-        if (!plan || !_manual.length || _poll.waitKey !== "") return
-        var r = Node.dequeueEmit(_manual)
-        _manual = r.queue
-        var s = _stepFor(r.step.nodeId, r.step.cmd)
-        if (s) _send(s)
-    }
-
-    function _advance() {
-        if (!plan) return
-        // Hand-asked interrogations go first and do NOT move the cycle on: a manual shot is an
-        // interruption, not a step, and losing your place in the schedule to take one would make
-        // the feature cost more than it gives.
-        if (_manual.length) {
-            var r = Node.dequeueEmit(_manual)
-            _manual = r.queue
-            var ms = _stepFor(r.step.nodeId, r.step.cmd)
-            if (ms) { _send(ms); return }
-        }
-        var sched = plan.schedule
-        if (!sched.length) { _stop(); return }
-        _stepIndex = _stepIndex < 0 ? 0 : _stepIndex + 1
-        _send(sched[_stepIndex % sched.length])
-    }
-    // Stop does NOT close an open window. A reply already in the water can still land, and
-    // discarding it would report a miss that did not happen.
-    function _stop() { _runTimer.stop() }
-    function _start() { _runTimer.start(); _advance() }
-
-    // Dwell outlives the session. It is host loop timing rather than plan content, so it is
-    // persisted here instead of in the plan blob -- which would need a schema bump and a
-    // migration for a number the device never sees.
-    property Settings schedPersisted: Settings {
-        id: schedSettings
-        category: "main/usblSchedule"
-        property int dwellMs: 700
-    }
-    // Stored in MILLISECONDS and shown in seconds: the timers and the answer budget are integer
-    // ms, and rounding a float seconds value back into them at every read is a way to be wrong
-    // slowly. Clamped on the way out so a value persisted before the floor existed cannot leave
-    // the loop running faster than the control can express.
-    readonly property int _dwellMs: Math.max(_dwellMinMs, schedSettings.dwellMs)
-    // 0.4 s is about 300 m of two-way travel plus turn-around, which is the shortest window that
-    // can contain a real answer. Below it every interrogation would time out by construction.
-    readonly property int _dwellMinMs: 400
-
-    property Timer _runTimer: Timer {
-        interval: usblGroup._dwellMs
-        repeat: true
-        onTriggered: usblGroup._advance()
-    }
+    readonly property int _dwellMs: engine ? engine.dwellMs : 700
+    readonly property int _dwellMinMs: engine ? engine.dwellMinMs : 400
 
     // Step, Start and Dwell on ONE row, because they are one thought: what to send, when to
     // start, how far apart. On two rows the interval sat somewhere you were not looking while
@@ -488,7 +369,7 @@ DeviceSettingsGroup {
             toolTipText: qsTr("Interval between steps, and the answer window each step is "
                             + "allowed — a reply still counts for %1 s past it")
                          .arg((Node.GRACE_MS / 1000).toFixed(2))
-            onValueModified: function (v) { schedSettings.dwellMs = v }
+            onValueModified: function (v) { if (usblGroup.engine) usblGroup.engine.setDwellMs(v) }
         }
         // Also the spacer: it takes whatever is left, which is what pins the buttons right.
         Text {
@@ -503,18 +384,20 @@ DeviceSettingsGroup {
             id: _stepBtn
             text: qsTr("Step"); implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
             anchors.verticalCenter: parent.verticalCenter
-            enabled: !!(dev && plan && plan.schedule.length)
+            enabled: !!(usblGroup.engine && usblGroup.engine.canRun)
             toolTipText: qsTr("Send the next interrogation and stop there")
-            onClicked: { usblGroup._stop(); usblGroup._advance() }
+            onClicked: if (usblGroup.engine) usblGroup.engine.step()
         }
         UsblButton {
             id: _runBtn
-            text: usblGroup._runTimer.running ? qsTr("■ Stop") : qsTr("▶ Start")
+            // The loop now outlives this pane, so the button reports the engine rather than a
+            // timer of its own -- and closing the settings panel no longer stops it.
+            text: usblGroup._running ? qsTr("■ Stop") : qsTr("▶ Start")
             implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
-            checked: usblGroup._runTimer.running
+            checked: usblGroup._running
             anchors.verticalCenter: parent.verticalCenter
-            enabled: !!(dev && plan && plan.schedule.length)
-            onClicked: usblGroup._runTimer.running ? usblGroup._stop() : usblGroup._start()
+            enabled: !!(usblGroup.engine && usblGroup.engine.canRun)
+            onClicked: if (usblGroup.engine) usblGroup.engine.toggleRun()
         }
     }
 
@@ -662,10 +545,14 @@ DeviceSettingsGroup {
                             // A spin box in a scanning list is a mis-click that silently re-points
                             // an interrogation at a different beacon, and an address is set-up-once
                             // data that does not deserve a permanent control.
-                            Text {
-                                text: qsTr("addr %1").arg(nodeCard._n.addr)
-                                color: AppPalette.textStrong
-                                font.pixelSize: Tokens.fontSm; font.bold: true
+                            //
+                            // The badge replaced the words "addr 2". The shape says which fact it
+                            // is, so the label was costing about 28 px of a row that also holds a
+                            // chevron, a switch, three chips and two buttons at a 300 px pane
+                            // width. The word survives where it is edited -- the Address spin box
+                            // below carries it.
+                            UsblAddressBadge {
+                                address: nodeCard._n.addr
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             Badge {
@@ -821,7 +708,10 @@ DeviceSettingsGroup {
                                             : _bad ? AppPalette.linkIdleBorder : AppPalette.border
                                 Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
                                 implicitWidth: _chip.implicitWidth + Tokens.spaceMd * 2
-                                implicitHeight: Math.round(24 * AppPalette.scale)
+                                // A tappable chip is a CONTROL, not an inline mark -- the whole
+                                // thing fires an interrogation -- so it takes the theme's own
+                                // control height rather than chipH.
+                                implicitHeight: Tokens.controlH
 
                                 Row {
                                     id: _chip
@@ -949,7 +839,10 @@ DeviceSettingsGroup {
                                             : _ok  ? AppPalette.linkOkBorder
                                             : _bad ? AppPalette.linkIdleBorder : AppPalette.border
                                 Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                                implicitHeight: Math.round(30 * AppPalette.scale)
+                                // A row holding controlHSm buttons has to clear them, and it has
+                                // to grow when the theme's controls do.
+                                implicitHeight: Math.max(Tokens.controlHMd,
+                                                         Tokens.controlH + Tokens.spaceXs)
 
                                 Row {
                                     id: _cmdLeft

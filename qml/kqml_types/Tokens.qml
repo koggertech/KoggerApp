@@ -37,6 +37,14 @@ QtObject {
     readonly property int controlHLg:  Math.round(36 * s)
     readonly property int controlHXl:  Math.round(48 * s)
 
+    // Inline marks — chips, badges, the compact switches that sit INSIDE a control row rather
+    // than being rows of their own. Only `controlH` follows `theme.controlHeight`, so anything
+    // written as a literal stayed the size it was written at and read as undersized against
+    // every theme asking for more; the USBL panes were full of hard-coded 20 px. Floored at
+    // controlHSm so a theme with unusually short controls cannot shrink a chip below the
+    // buttons standing next to it.
+    readonly property int chipH: Math.max(controlHSm, Math.round(controlH * 0.92))
+
     // Iconography
     readonly property int iconSm: Math.round(16 * s)
     readonly property int iconMd: Math.round(20 * s)

@@ -1337,7 +1337,13 @@ public:
         float elevation_deg = NAN;
         float elevation_unc = 0;
 
-        float snr = 0;
+        // NAN like its neighbours, and for the same reason: v1/v2 are PROJECTED onto this struct
+        // and projectToSolution assigns no SNR, because neither AcousticNavSolution nor
+        // BaseToBeacon carries one. A 0 default made that absence indistinguishable from a
+        // measured 0 dB, and every consumer -- the node rows, the widget fields, the CSV export --
+        // reported a confident zero for a number the payload never contained. Only v0 reads this
+        // off the wire, where a genuine 0 stays a genuine 0.
+        float snr = NAN;
 
         float beacon_x_m = NAN;
         float beacon_y_m = NAN;

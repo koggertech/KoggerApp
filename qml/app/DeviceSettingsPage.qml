@@ -10,6 +10,12 @@ Column {
 
     property var dev: null
     property var store: null
+    // The USBL plan and the interrogation loop are NOT owned here. This page is a settings
+    // sub-page: its loader destroys it the moment the operator navigates away, which used to
+    // take the schedule down with it. Both now live in MainWindow for the session and arrive
+    // as properties. See UsblEngine.qml.
+    property var usblPlan: null
+    property var usblEngine: null
 
     // Per-device UI memory. This page is one instance whose `dev` changes on switch,
     // so disclosure state is kept per device: on switch, snapshot the leaving device's
@@ -1162,37 +1168,22 @@ Column {
     // Three groups ordered by how often they are touched: operating (nodes + schedule)
     // stays open, the command plan and the response gating start collapsed. The plan model
     // is shared by the first two and persists independently of the device.
-    UsblPlanStore {
-        id: usblPlan
-        Component.onCompleted: load()
-    }
-
     UsblGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         dev: root.dev
-        plan: usblPlan
-        clockTick: root._usblClock
+        plan: root.usblPlan
+        engine: root.usblEngine
     }
 
     UsblPlanGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         dev: root.dev
-        plan: usblPlan
+        plan: root.usblPlan
     }
 
     UsblResponseGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         dev: root.dev
-    }
-
-    // Ticks only while a USBL device is selected — fix age is the one thing on the page
-    // that has to re-render without an incoming signal.
-    property string _usblClock: ""
-    Timer {
-        interval: 1000
-        repeat: true
-        running: !!(root.dev && (root.dev.isUSBL || root.dev.isUSBLBeacon))
-        onTriggered: root._usblClock = String(Date.now())
     }
 
     // ── Advanced settings ("Расширенные настройки") ────────────────────────

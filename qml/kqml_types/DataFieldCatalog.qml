@@ -58,6 +58,10 @@ QtObject {
 
     function isAddressable(key) { return UsblLogic.isAddressable(key) }
     function addressAny() { return UsblLogic.ANY }
+    // A beacon's identity colour, constant for the life of that address. The badge in the
+    // settings pane, the badge on the scene panel and (when it lands) the marker on the map
+    // are the same beacon, so they take the same colour from one table.
+    function usblAddressColor(addr) { return UsblLogic.addressColor(addr) }
     // Forwarded so WorkspaceStore has one owner of the rule rather than a second copy —
     // it cannot import this module's .js directly.
     function normAddr(a) { return UsblLogic.normAddr(a) }
@@ -72,11 +76,10 @@ QtObject {
     function _usblEntry(ds, addr) {
         return ds ? UsblLogic.pick(ds.usblSolutions, addr) : null
     }
-    // NOTE: nothing ticks this yet. Date.now() inside a binding is evaluated once and
-    // then frozen, so `usblAge` and the tracking/stale flip in `usblState` will not
-    // advance on their own -- they update only when some OTHER dependency of the binding
-    // changes (a new fix arriving, for instance). Whatever surfaces these fields has to
-    // supply a ticking property here; `store.nowMs` on a 1 s timer is enough.
+    // `store.nowMs` is WorkspaceStore's 1 s clock, and it has to exist: Date.now() inside a
+    // binding is evaluated once and then frozen, so without a ticking property `usblAge` and
+    // the tracking/stale flip in `usblState` would only advance when some OTHER dependency
+    // changed. The fallback keeps a caller that passes no store rendering something sane.
     function _nowMs(store) {
         return (store && store.nowMs) ? store.nowMs : Date.now()
     }

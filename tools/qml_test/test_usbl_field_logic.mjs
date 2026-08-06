@@ -170,6 +170,51 @@ console.log("palette containment");
        new Set([...paletteKeys, ...usblKeys]).size === paletteKeys.length + usblKeys.length);
 }
 
+// ── a colour per address ─────────────────────────────────────────────────────
+// The colour IS the beacon's identity: it ties a row in the settings pane to a row on the
+// scene panel to a marker on the map. Two beacons sharing one, or one beacon changing colour
+// between releases, breaks the only thing it is for — and neither is visible in a screenshot
+// of a single pane.
+console.log("address colours");
+{
+    eq("every protocol address has a colour", U.ADDRESS_COLORS.length, U.MAX_ADDR + 1);
+
+    let allHex = true;
+    for (const c of U.ADDRESS_COLORS) if (!/^#[0-9A-Fa-f]{6}$/.test(c)) allHex = false;
+    ok("...all of them literal 6-digit hex, so no theme can move them", allHex);
+
+    ok("no two addresses share a colour",
+       new Set(U.ADDRESS_COLORS).size === U.ADDRESS_COLORS.length);
+
+    for (let a = 0; a <= U.MAX_ADDR; ++a)
+        eq(`address ${a} takes its own entry`, U.addressColor(a), U.ADDRESS_COLORS[a]);
+
+    // 0 is the promiscuous address, not a beacon, so it is deliberately the neutral one and
+    // the out-of-range fallback lands on it too.
+    eq("out of range falls back to the neutral", U.addressColor(99), U.ADDRESS_COLORS[0]);
+    eq("...as does a negative", U.addressColor(-1), U.ADDRESS_COLORS[0]);
+    eq("...and a non-number", U.addressColor("beacon"), U.ADDRESS_COLORS[0]);
+    eq("a numeric string still resolves", U.addressColor("3"), U.ADDRESS_COLORS[3]);
+
+    // THE TABLE IS A COMPATIBILITY SURFACE. Inserting rather than appending re-colours every
+    // beacon above the insertion for every operator who had learned them, and nothing in the
+    // app would report it. Pinned verbatim so that edit fails here instead.
+    eq("the table is pinned — append only, never insert or reorder", U.ADDRESS_COLORS, [
+        "#64748B", "#3E8FD6", "#16A34A", "#E0902B", "#8B5CF6",
+        "#0E9BB5", "#D6539B", "#C2703A", "#6D8B21"
+    ]);
+
+    // The badge is a fixed fill under a changing theme, so its ink cannot come from the theme.
+    const badge = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblAddressBadge.qml"),
+                               "utf8");
+    ok("the badge takes its fill from this table",
+       /usblAddressColor\(/.test(badge));
+    ok("...and picks readable ink for whatever colour that is",
+       /AppPalette\.luminance\(/.test(badge));
+    ok("...and is a rounded square, not a disc",
+       /radius:\s*Tokens\.radiusSm/.test(badge) && !/radius:\s*height\s*\/\s*2/.test(badge));
+}
+
 console.log("");
 console.log(`${pass} passed, ${fails.length} failed`);
 for (const f of fails) console.log("  FAILED: " + f);
