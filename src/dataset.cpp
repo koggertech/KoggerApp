@@ -21,6 +21,9 @@ Dataset::Dataset() :
 {
     qRegisterMetaType<ChannelId>("ChannelId");
     qRegisterMetaType<uint64_t>("uint64_t");
+    // usblSolutionAdded crosses from the link thread to the GUI thread queued, and a queued
+    // connection cannot marshal a type the metatype system has not been told about.
+    qRegisterMetaType<IDBinUsblSolution::UsblSolution>("IDBinUsblSolution::UsblSolution");
     resetDataset();
 }
 
@@ -541,6 +544,7 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         usblEpochMsByAddr_[(int)data.id] = nowMs;
     }
     emit lastUsblSolutionChanged();
+    emit usblSolutionAdded(data);
 
     markDataAvailable(hasUsblData_);
     emit dataUpdate();

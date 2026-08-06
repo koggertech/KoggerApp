@@ -8,6 +8,7 @@
 #include "image_view.h"
 #include "map_view.h"
 #include "contacts.h"
+#include "usbl_layer.h"
 #include "geojson_layer.h"
 #include "ruler_tool.h"
 #include "point_group.h"
@@ -71,6 +72,7 @@ private:
     ImageView::ImageViewRenderImplementation imageViewRenderImpl_;
     MapView::MapViewRenderImplementation mapViewRenderImpl_;
     Contacts::ContactsRenderImplementation contactsRenderImpl_;
+    UsblLayer::UsblLayerRenderImplementation usblLayerRenderImpl_;
     GeoJsonLayer::GeoJsonLayerRenderImplementation geoJsonLayerRenderImpl_;
     RulerTool::RulerToolRenderImplementation rulerToolRenderImpl_;
     BottomTrack::BottomTrackRenderImplementation m_bottomTrackRenderImpl;

@@ -444,6 +444,10 @@ signals:
     void lastRangefinderDepthChanged();
     void lastBottomTrackDepthChanged();
     void lastUsblSolutionChanged();
+    // The solution itself, for consumers that need more than the QML-facing flattening --
+    // usbl_yaw and the head's own position are not in `usblSolutions`, and a map track needs both.
+    // Emitted on the LINK thread, so anything on the GUI side must connect queued.
+    void usblSolutionAdded(IDBinUsblSolution::UsblSolution solution);
     void simpleNavV2Changed();
     void boatStatusChanged();
     void spatialPreparingChanged();

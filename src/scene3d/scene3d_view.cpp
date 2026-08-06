@@ -12,6 +12,7 @@
 #include <QtGlobal>
 #include "scene3d_renderer.h"
 #include "controllers/ruler_controller.h"
+#include "controllers/usbl_layer_controller.h"
 #include "dataset.h"
 #include "map_defs.h"
 #include "data_processor_defs.h"
@@ -111,6 +112,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_coordAxes(std::make_shared<CoordinateAxes>()),
     m_planeGrid(std::make_shared<PlaneGrid>()),
     navigationArrow_(std::make_shared<NavigationArrow>()),
+    usblLayer_(std::make_shared<UsblLayer>()),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     qmlRootObject_(nullptr),
@@ -161,6 +163,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(rulerTool_.get(), &RulerTool::changed, this, &QQuickFramebufferObject::update);
     ruler_ = new RulerController(this, rulerTool_.get(), this);
+    usblLayerController_ = new UsblLayerController(this, usblLayer_.get(), this);
     QObject::connect(geoJsonLayer_.get(), &GeoJsonLayer::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(&core, &Core::languageChanged, this, &QQuickFramebufferObject::update);
     QObject::connect(geoJsonController_, &GeoJsonController::documentChanged, this, [this]() {
@@ -216,6 +219,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_coordAxes.get(), &CoordinateAxes::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_planeGrid.get(), &PlaneGrid::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(usblLayer_.get(), &UsblLayer::changed, this, &QQuickFramebufferObject::update);
 
     //QObject::connect(isobathsView_.get(), &IsobathsView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(surfaceView_.get(), &SurfaceView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -365,6 +369,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
     surfaceView_->clear();
     contacts_->clear();
     ruler_->clear();
+    usblLayerController_->clear();
     imageView_->clear();//
     if (cleanMap) {
         mapView_->clear();
@@ -2016,6 +2021,11 @@ QObject* GraphicsScene3dView::geoJsonController() const
     return geoJsonController_;
 }
 
+QObject* GraphicsScene3dView::usblLayer() const
+{
+    return usblLayerController_;
+}
+
 bool GraphicsScene3dView::syncLoupeOverlayVisible() const
 {
     return syncLoupeOverlayVisible_;
@@ -2416,6 +2426,13 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                              m_bottomTrack->isEpochsChanged(from, to, false, false);
                          }
                      }, Qt::QueuedConnection);
+
+    // QUEUED, and not by preference: addUsblSolution runs on the link thread (the device
+    // connections are Direct unless SEPARATE_READING), while the controller re-projects against
+    // the camera and writes into a render impl the GUI thread owns.
+    QObject::connect(datasetPtr_, &Dataset::usblSolutionAdded,
+                     usblLayerController_, &UsblLayerController::onUsblSolution,
+                     Qt::QueuedConnection);
 
     QObject::connect(datasetPtr_, &Dataset::updatedLlaRef,
                      this,      [this]() -> void {
@@ -3445,6 +3462,10 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->geoJsonLayerRenderImpl_     = *(dynamic_cast<GeoJsonLayer::GeoJsonLayerRenderImplementation*>(view->geoJsonLayer_->m_renderImpl));
     view->ruler_->rebuildIfNeeded();
     m_renderer->rulerToolRenderImpl_        = *(dynamic_cast<RulerTool::RulerToolRenderImplementation*>(view->rulerTool_->m_renderImpl));
+    // Re-projected BEFORE the copy, for the same reason the ruler is: a frame change this frame
+    // must reach the renderer this frame, or the layer lags the camera by one.
+    view->usblLayerController_->rebuildIfNeeded();
+    m_renderer->usblLayerRenderImpl_        = *(dynamic_cast<UsblLayer::UsblLayerRenderImplementation*>(view->usblLayer_->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
     m_renderer->navigationArrowRenderImpl_  = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->navigationArrow_->m_renderImpl));
