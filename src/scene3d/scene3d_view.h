@@ -299,6 +299,7 @@ public:
     void setCompassPos(int val);
     void setCompassSize(int val);
     void setScaleBarState(bool state);
+    void setUsblLayerVisible(bool state);
     void setShadowsEnabled(bool state);
     void setShadowVectorX(float value);
     void setShadowVectorY(float value);

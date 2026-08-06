@@ -1294,6 +1294,7 @@ ApplicationWindow {
             anchors.rightMargin: root.settingsInsetRight
             anchors.bottomMargin: consoleDrawer.height
             store: workspaceStore
+            usblPlan: appUsblPlan
             secondaryPlotItem: secondaryContent ? secondaryContent.plot2DInstance : null
         }
 

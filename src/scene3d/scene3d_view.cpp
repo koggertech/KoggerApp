@@ -1334,6 +1334,17 @@ void GraphicsScene3dView::setScaleBarState(bool state)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setUsblLayerVisible(bool state)
+{
+    // Through the controller rather than straight at the layer: it owns the history, and hiding
+    // the layer must not be a reason to forget where a beacon has been.
+    if (usblLayerController_) {
+        usblLayerController_->setEnabled(state);
+    }
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::resetHeadingToNorth()
 {
     if (!m_camera) {

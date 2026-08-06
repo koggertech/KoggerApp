@@ -351,6 +351,34 @@ function panelRows(nodes, solutions, poll, nowMs) {
     return out;
 }
 
+// ── what the map is told about the plan ──────────────────────────────────────
+//
+// The beacons drawn on the scene are the plan's nodes, so the plan has to reach the layer. This
+// is that message, and it is deliberately NOT derived from panelRows.
+//
+// A row carries ages and verdicts, so it is recomposed on every clock tick. The map's node list
+// changes only when the operator EDITS the plan. Binding the push to rows would hand the scene an
+// identical list once a second, and on the other side of that call each one costs a full
+// re-projection of every beacon's remembered history.
+//
+// So: addresses and switches, nothing that moves with time. Colour is grafted on by the caller
+// from DataFieldCatalog, where the one address palette lives -- a second table down in C++ is a
+// second thing to forget to change, and the colour's whole job is that pane, panel and map agree.
+//
+// Two nodes CAN share an address. They are one beacon and one track, so the first wins; the
+// caller must not draw the same beacon twice with two different switches.
+function mapSpec(nodes) {
+    var out = [], seen = {};
+    for (var i = 0; i < (nodes ? nodes.length : 0); ++i) {
+        var n = nodes[i];
+        if (!n || typeof n.addr !== "number") continue;
+        if (seen[n.addr]) continue;
+        seen[n.addr] = true;
+        out.push({ addr: n.addr, active: n.active !== false });
+    }
+    return out;
+}
+
 // Node consumes this via module.exports; QML sees the top-level functions and ignores it.
 if (typeof module !== "undefined" && module.exports) {
     module.exports = {
@@ -364,6 +392,7 @@ if (typeof module !== "undefined" && module.exports) {
         stepResult: stepResult, stepCode: stepCode, lastAskedCmd: lastAskedCmd,
         operationCode: operationCode, nodeReplyCode: nodeReplyCode,
         isAged: isAged, cursorNodeId: cursorNodeId, isCursorStep: isCursorStep,
-        entryFor: entryFor, ageMs: ageMs, summary: summary, panelRows: panelRows
+        entryFor: entryFor, ageMs: ageMs, summary: summary, panelRows: panelRows,
+        mapSpec: mapSpec
     };
 }

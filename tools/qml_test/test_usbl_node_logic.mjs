@@ -959,6 +959,64 @@ console.log("the acoustic-nodes panel");
     }
 }
 
+// ── what the map is told about the plan ──────────────────────────────────────
+//
+// mapSpec is the whole message from the plan to the 3D layer, and its cost is asymmetric: on the
+// other side of the call, C++ re-projects every remembered fix of every beacon. So the thing
+// being defended here is not the shape of the array -- it is that the array does not change when
+// nothing about the plan changed.
+console.log("map spec");
+{
+    const nodes = [
+        { id: 1, addr: 2, active: true,  refs: [] },
+        { id: 2, addr: 5, active: false, refs: [] }
+    ];
+
+    eq("one entry per node", N.mapSpec(nodes).length, 2);
+    eq("carrying the address", N.mapSpec(nodes)[0].addr, 2);
+    ok("...and the switch, so a muted node can be dimmed rather than dropped",
+       N.mapSpec(nodes)[0].active === true && N.mapSpec(nodes)[1].active === false);
+    eq("an empty plan is an empty spec", N.mapSpec([]).length, 0);
+    eq("...and so is no plan at all", N.mapSpec(null).length, 0);
+
+    // A hand-edited blob, or a node mid-construction. Drawing a beacon at address `undefined`
+    // gives it the fallback colour and a track that can never be matched to a row.
+    eq("a node with no numeric address is not a beacon",
+       N.mapSpec([{ id: 1, active: true }, { id: 2, addr: 3, active: true }]).length, 1);
+
+    // addStep produces this legitimately, and UsblPlanLogic does not forbid it.
+    const dup = N.mapSpec([{ id: 1, addr: 4, active: true }, { id: 2, addr: 4, active: false }]);
+    eq("two nodes on one address are one beacon", dup.length, 1);
+    ok("...and the first named wins", dup[0].active === true);
+
+    // THE ONE THAT MATTERS. panelRows folds in `nowMs`, so it is a different array every clock
+    // tick; if the map push were derived from it, the scene would re-project every beacon's whole
+    // history once a second, forever, for no change. The guarantee is structural -- mapSpec takes
+    // only `nodes` -- so it is asserted against the source rather than by sampling a clock.
+    const src = readFileSync(
+        path.join(here, "..", "..", "qml", "app", "UsblNodeLogic.js"), "utf8");
+    const body = src.slice(src.indexOf("function mapSpec("),
+                           src.indexOf("// Node consumes this via module.exports"));
+    ok("the spec reads no clock", !/Date|nowMs|epochMs|ageMs/.test(body));
+    ok("...and no interrogation state", !/poll|solutions|entry/.test(body));
+    eq("mapSpec takes the plan's nodes and nothing else",
+       /function mapSpec\(([^)]*)\)/.exec(src)[1].trim(), "nodes");
+
+    // The push itself: the scene must be told on an edit, and must NOT be told otherwise.
+    const wv = readFileSync(
+        path.join(here, "..", "..", "qml", "app", "WorkspaceView.qml"), "utf8");
+    ok("WorkspaceView hands the spec to the layer",
+       /usblLayer\.setNodes\(/.test(wv));
+    ok("...with the colour from the one address table",
+       /DataFieldCatalog\.usblAddressColor\(/.test(wv));
+    ok("...and does not re-push an unchanged plan",
+       /_usblPushed/.test(wv));
+    const mw = readFileSync(
+        path.join(here, "..", "..", "qml", "app", "MainWindow.qml"), "utf8");
+    ok("MainWindow gives WorkspaceView the plan to push",
+       /WorkspaceView\s*\{[\s\S]{0,600}?usblPlan:\s*appUsblPlan/.test(mw));
+}
+
 console.log("");
 console.log(`${pass} passed, ${fails.length} failed`);
 for (const f of fails) console.log("  FAILED: " + f);
