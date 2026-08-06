@@ -61,12 +61,15 @@ Supported versions: Windows 10 (1809 or later), 11.
 - Portable: Download .zip. Extract and run "KoggerApp.exe".  
 - Installer: Download and launch the installer (Optionally associates .klf files with the app during setup).
 
-🤖 Android (armeabi-v7a, arm64-v8a):  
+🤖 Android (universal APK: armeabi-v7a + arm64-v8a):  
 Supported versions: Android 9.0 (Pie, level 28) and above.  
-Download and install the .apk file. You may need to enable "Install from unknown sources" in your device settings.
+A single **universal .apk** carries both ABIs, so there is no per-device variant to choose — download that one file and install it. You may need to enable "Install from unknown sources" in your device settings.
 
-🐧 Linux (Ubuntu x86_64):  
-Supported distributions: Ubuntu 22.04, 24.04 and compatible systems.  
+🐧 Linux (x86_64, AppImage):  
+The AppImage bundles Qt and the application's own libraries — it runs on any modern x86_64 distribution with **glibc 2.39 or newer**. The AppImage is built on Ubuntu 24.04, and glibc is never bundled into an AppImage; check yours with `ldd --version`.
+
+Runs on: Ubuntu 24.04+, Linux Mint 22+, Pop!_OS 24.04+, elementary OS 8+, Debian 13+, Fedora 40+, RHEL / Rocky / AlmaLinux 10+, Arch / Manjaro / EndeavourOS and openSUSE Tumbleweed.
+
 Download the .AppImage file and make it executable:
 ```bash
 chmod +x KoggerApp_version_linux_x86_64.AppImage
@@ -100,9 +103,16 @@ Steps:
 - Build > Build Project
 - Install the generated `.apk` on a device
 
-🐧 Linux (Ubuntu x86_64)  
+🐧 Linux (x86_64)  
 Compiler: Clang 18.1.3  
 Qt version: Qt 6.8.3 (gcc_64)  
+
+Build dependencies besides Qt itself:
+- Debian / Ubuntu: `sudo apt install build-essential cmake ninja-build libgl1-mesa-dev`
+- Fedora / RHEL: `sudo dnf install gcc-c++ cmake ninja-build mesa-libGL-devel`
+- Arch / Manjaro: `sudo pacman -S base-devel cmake ninja mesa`
+- openSUSE: `sudo zypper install gcc-c++ cmake ninja Mesa-libGL-devel`
+
 Clone and build (set `CMAKE_PREFIX_PATH` to your Qt installation):
 ```bash
 git clone https://github.com/koggertech/KoggerApp.git

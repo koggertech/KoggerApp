@@ -202,7 +202,7 @@ void StreamList::saveStream(Stream* stream) {
         core.consoleInfo("Recorder download: cannot create " + dir);
         return;
     }
-    const QString path = dir + QString("/recorder_log_%1.kp2").arg(stream->id);
+    const QString path = dir + QString("/recorder_log_%1.klf").arg(stream->id);
     QFile f(path);
     if(!f.open(QIODevice::WriteOnly)) {
         core.consoleInfo("Recorder download: cannot write " + path);
