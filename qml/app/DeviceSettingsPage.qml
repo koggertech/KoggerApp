@@ -755,7 +755,7 @@ Column {
                     _revealDone = true
                     plateHideTimer.restart()
                     if (typeof notifications !== "undefined" && notifications)
-                        notifications.info(qsTr("Saved \"%1\" to \"%2\"").arg("recorder_log_" + recorderGroup._curId + ".kp2").arg(recorderGroup._downloadDir))
+                        notifications.info(qsTr("Saved \"%1\" to \"%2\"").arg("recorder_log_" + recorderGroup._curId + ".klf").arg(recorderGroup._downloadDir))
                 }
             }
             on_UploadingChanged: if (_uploading) { _revealDone = false; plateHideTimer.stop() }
@@ -890,7 +890,7 @@ Column {
                             _revealDone = true
                             hideTimer.restart()
                             if (typeof notifications !== "undefined" && notifications)
-                                notifications.info(qsTr("Saved \"%1\" to \"%2\"").arg("recorder_log_" + id + ".kp2").arg(recorderGroup._downloadDir))
+                                notifications.info(qsTr("Saved \"%1\" to \"%2\"").arg("recorder_log_" + id + ".klf").arg(recorderGroup._downloadDir))
                         }
                     }
                     on_UploadingChanged: if (_uploading) { _revealDone = false; hideTimer.stop() }
