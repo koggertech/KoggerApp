@@ -1,5 +1,7 @@
 <p align="center">
-  <img src="resources/images/readme_md/kogger_app_logo.png" alt="KoggerApp Logo" width="670">
+  <a href="https://kogger.tech/koggerapp/">
+    <img src="resources/images/readme_md/kogger_app_logo.png" alt="KoggerApp Logo" width="670">
+  </a>
 </p>
 
 <p align="center">
@@ -133,11 +135,14 @@ KoggerApp is open-source, meaning you have the power to shape it! Whether you're
 
 ### 🔗 *Useful links*
 - 🌐 [Official Website](https://kogger.tech/)
+- 📄 [KoggerApp Product Page](https://kogger.tech/koggerapp/)
 
 ---
 
 Unlock next-level insights in hydrography and survey with KoggerApp.
 
 <p align="center">
-<img src="resources/images/readme_md/kogger_logo.png" alt="kogger logo" width="670">
+<a href="https://kogger.tech/">
+  <img src="resources/images/readme_md/kogger_logo.png" alt="kogger logo" width="670">
+</a>
 </p>
