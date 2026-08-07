@@ -56,14 +56,17 @@ qt_add_qml_module(kogger_app
         UiSavingSettingsTab.qml
         UsblAddressBadge.qml
         UsblButton.qml
+        UsblCmdMark.qml
         UsblEngine.qml
         UsblGroup.qml
         UsblHexField.qml
         UsblNodesPopup.qml
+        UsblOpBadge.qml
         UsblPlanGroup.qml
         UsblPlanStore.qml
         UsblResponseGroup.qml
         UsblSpin.qml
+        UsblStateBadge.qml
         UsblTriggerEditor.qml
         WidgetCard.qml
         WidgetCellContent.qml

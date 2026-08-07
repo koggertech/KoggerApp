@@ -63,7 +63,8 @@ QtObject {
     // internally would freeze the binding.
     readonly property var _sols: (typeof dataset !== "undefined" && dataset && dataset.usblSolutions)
                                  ? dataset.usblSolutions : ({})
-    readonly property var rows: Node.panelRows(plan ? plan.nodes : [], _sols, poll, nowMs)
+    readonly property var rows: Node.panelRows(plan ? plan.nodes : [], _sols, poll, nowMs,
+                                               curStep, plan ? plan.schedule : [])
 
     // 1 s clock, for ages only. epochMs is constant per fix, so the ticking dependency has to
     // come from outside: Date.now() inside a binding is evaluated once and then frozen.
@@ -100,8 +101,11 @@ QtObject {
         function onLastUsblSolutionChanged() {
             if (!engine.plan) return
             var wasOpen = engine.poll.waitNodeId
+            // The clock goes in here because this is where a reply is ATTRIBUTED to a node, and
+            // that is the instant the row's age counts from -- not when the solution landed in
+            // Dataset, which happens for late replies too.
             engine.poll = Node.noteReplyAddr(engine.poll, engine.plan.nodes,
-                                             dataset.lastUsblAddress)
+                                             dataset.lastUsblAddress, Date.now())
             if (wasOpen >= 0 && engine.poll.waitNodeId < 0) {
                 engine._waitTimer.stop()
                 // The window just closed, so anything asked for by hand can go now rather than

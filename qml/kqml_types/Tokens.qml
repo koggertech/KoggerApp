@@ -13,6 +13,9 @@ QtObject {
     function isCompact(w) { return w > 0 && w < bpCompact }
 
     // Typography
+    // fontXxs is the state-label size: caps with tracking, a step under fontXs so
+    // an all-caps word reads as a label instead of shouting a sentence.
+    readonly property int fontXxs:  Math.round(10 * s)
     readonly property int fontXs:   Math.round(11 * s)
     readonly property int fontSm:   Math.round(12 * s)
     readonly property int fontMd:   Math.round(13 * s)

@@ -54,33 +54,25 @@ DeviceSettingsGroup {
     // node was last interrogated -- and before anything has been asked, which one Step will take.
     readonly property int _cursorNodeId: Node.cursorNodeId(_curStep, plan ? plan.schedule : [])
 
-    // Codes from UsblNodeLogic, translated here -- the logic module never returns prose.
+    // TWO AXES, read together, and neither is spelled out here any more: UsblOpBadge draws what
+    // the host is doing and UsblStateBadge draws what the beacon did, both taking the codes
+    // UsblNodeLogic returns. The words live in UsblStateBadge, which is the only place they
+    // exist -- see docs/KoggerApp-Docs/usbl-node-row.md.
     //
-    // TWO AXES, read together. Whether a node's answer window is open sits beside what the node
-    // last did, because "stale" means a fault while we are asking and means nothing at all while
-    // we are not. test_usbl_node_logic.mjs asserts these tables name every code the module can
-    // return and nothing else.
-    //
-    // There is no word for emission. It lasts milliseconds and the protocol reports nothing
-    // about it, so the row blinks Waiting to say the request is fresh rather than inventing a
+    // There is still no word for emission. It lasts milliseconds and the protocol reports
+    // nothing about it, so the operation badge says a request is out rather than inventing a
     // state nobody can observe.
-    readonly property var _opText: ({
-        "off":     qsTr("Off"),
-        "idle":    qsTr("Idle"),
-        "waiting": qsTr("Waiting")
-    })
-    readonly property var _replyText: ({
-        "replied": qsTr("Replied"),
-        "stale":   qsTr("Stale"),
-        // Never answered. A symbol, not a sentence: there is nothing to translate, and a word
-        // here would read as a diagnosis of a beacon nobody has heard from.
-        "none":    "—"
-    })
 
+    // TIERED, so the string cannot grow without bound. Seconds alone reached "86400 s ago" after
+    // a night on the bench, and a slot cannot be fixed around a number that keeps gaining digits.
     function _fmtAge(ms) {
         if (ms < 0) return ""
         var s = ms / 1000
-        return (s < 10 ? s.toFixed(1) : Math.round(s)) + qsTr(" s ago")
+        if (s < 10)  return s.toFixed(1) + qsTr(" s ago")
+        if (s < 100) return Math.round(s) + qsTr(" s ago")
+        var m = s / 60
+        if (m < 100) return Math.round(m) + qsTr(" m ago")
+        return Math.round(m / 60) + qsTr(" h ago")
     }
     function _num(v, digits, suffix) {
         if (v === undefined || v === null || isNaN(v)) return "—"
@@ -172,49 +164,13 @@ DeviceSettingsGroup {
         KTapArea { anchors.fill: parent; onTapped: ms.toggled() }
     }
 
-    // Both axes render the same way -- a word, a fill, an outline -- so one component owns the
-    // code -> colour mapping. It takes the CODE and the already-translated word: the tables
-    // above live on the file root, which is not in an inline component's scope.
+    // How old a row's numbers are is no longer a chip of its own -- it rides inside the verdict
+    // badge, because it is a fact ABOUT that exchange's readings. This is what every row's badge
+    // sizes its age slot to, so the ages line up as a column down the list.
     //
-    // NOTHING HERE FADES. Pulsing `opacity` was tried and is wrong: opacity applies to the
-    // border as well as the fill, so every dim phase erased the frame that identifies the
-    // badge. What moves instead is the ROW's background colour, below -- one pulsing thing on
-    // the pane, and it is the thing that is happening.
-    component Badge: Rectangle {
-        id: bdg
-        property string label: ""
-        property string code: ""
-        property bool reply: false          // false = the operation axis
-        // The age chip. Not a code: it reports how old the numbers are, which is a different
-        // question from what the last interrogation did, and it stays OUTLINED rather than
-        // filled so it reads as a note about the data instead of a verdict on the beacon.
-        property bool aged: false
-        readonly property bool _open: !bdg.reply && bdg.code === "waiting"
-        readonly property bool _ok:    bdg.reply && bdg.code === "replied"
-        readonly property bool _old:   bdg.reply && bdg.code === "stale"
-        implicitWidth: _bdgText.implicitWidth + Tokens.spaceMd * 2
-        implicitHeight: Tokens.chipH
-        radius: Tokens.radiusSm
-        color: bdg._open ? AppPalette.accentBg
-             : bdg._ok   ? AppPalette.linkOkBg
-             : bdg._old  ? AppPalette.linkIdleBg : "transparent"
-        border.width: Math.max(1, Math.round(1 * AppPalette.scale))
-        border.color: bdg._open ? AppPalette.accentBorder
-                    : bdg._ok   ? AppPalette.linkOkBorder
-                    : bdg._old  ? AppPalette.linkIdleBorder
-                    : bdg.aged  ? AppPalette.linkIdleBorder : AppPalette.border
-        Text {
-            id: _bdgText
-            anchors.centerIn: parent
-            text: bdg.label
-            color: bdg._open ? AppPalette.accentText
-                 : bdg._ok   ? AppPalette.linkOkText
-                 : bdg._old  ? AppPalette.linkIdleText
-                 : bdg.aged  ? AppPalette.linkIdleText : AppPalette.textMuted
-            font.pixelSize: Tokens.fontXs
-            font.bold: true
-        }
-    }
+    // STATIC: the widest string _fmtAge can produce, not the widest one currently on screen. A
+    // slot sized to live data resizes as the data ticks, which moves every chip beside it.
+    readonly property string _ageSample: _fmtAge(3596400000)
 
     // A row is read by scanning down a column, so the three numbers keep the same three places
     // whatever is missing. Absence is an em dash in place, never a collapsed cell.
@@ -471,26 +427,28 @@ DeviceSettingsGroup {
                 // you are investigating; opening one never closes another, because a row that
                 // shuts by itself is worse than scrolling.
                 readonly property bool _open: !!usblGroup._expanded[nodeCard._n.id]
-                readonly property real _ageMs: Node.ageMs(nodeCard._e, usblGroup._nowMs)
-                readonly property bool _aged: Node.isAged(nodeCard._e, usblGroup._nowMs,
-                                                          Node.AGE_WARN_MS)
+                // Time since this node ANSWERED US, not since a solution for its address landed:
+                // a reply arriving after its window closed is a miss that still refreshes the
+                // fix, so fix-age reset on every one of them. See Node.replyAgeMs.
+                readonly property real _ageMs: Node.replyAgeMs(usblGroup._poll, nodeCard._n.id,
+                                                               nodeCard._e, usblGroup._nowMs)
+                readonly property bool _aged: Node.isReplyAged(usblGroup._poll, nodeCard._n.id,
+                                                               nodeCard._e, usblGroup._nowMs,
+                                                               Node.AGE_WARN_MS)
 
                 width: parent.width
                 radius: Tokens.radiusMd
-                // TWO MARKS, TWO FACTS.
+                // ONE MARK, ONE FACT. The FRAME follows the cursor: the node last interrogated,
+                // or the one the next Step will take. It stays after the answer window closes,
+                // because with the cycle strip gone this is the only thing that says where in
+                // the schedule you are — and a frame that comes and goes is a frame you cannot
+                // use to find the row.
                 //
-                // The FRAME follows the cursor: the node last interrogated, or the one the next
-                // Step will take. It stays after the answer window closes, because with the cycle
-                // strip gone this is the only thing that says where in the schedule you are — and
-                // a frame that comes and goes is a frame you cannot use to find the row.
-                //
-                // The BACKGROUND is a plain light blue while a request is out, and it does not
-                // move. Two earlier versions animated it -- opacity, then an alternating fill --
-                // and both were noise: with a sub-second window the eye has nothing to track, and
-                // the transition in and out already says when it changed.
-                color: nodeCard._waiting
-                       ? Qt.rgba(AppPalette.accent.r, AppPalette.accent.g, AppPalette.accent.b, 0.14)
-                       : AppPalette.rowRaised
+                // The row no longer tints blue while a request is out. That was the third mark
+                // saying "in flight" on one row, after the operation badge and the frame, and it
+                // was the loudest of the three — a whole row changing colour for a sub-second
+                // window, on a pane whose rows are meant to be scanned as a list.
+                color: AppPalette.rowRaised
                 border.width: nodeCard._isCursor ? Math.max(1, Math.round(1.5 * AppPalette.scale))
                                                  : Tokens.cardBorderWidth
                 border.color: nodeCard._isCursor ? AppPalette.accentBorder : AppPalette.border
@@ -555,30 +513,21 @@ DeviceSettingsGroup {
                                 address: nodeCard._n.addr
                                 anchors.verticalCenter: parent.verticalCenter
                             }
-                            Badge {
+                            UsblOpBadge {
                                 code: nodeCard._op
-                                label: usblGroup._opText[nodeCard._op] || nodeCard._op
                                 anchors.verticalCenter: parent.verticalCenter
                             }
-                            Badge {
-                                reply: true
+                            // The verdict, and how old the readings are, in one chip. The age
+                            // warns in ink only: filling the chip stays the verdict's alone, so
+                            // a node that is answering but has not been asked lately does not
+                            // read as a failure.
+                            UsblStateBadge {
                                 code: nodeCard._reply
-                                label: usblGroup._replyText[nodeCard._reply] || nodeCard._reply
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            // How old the numbers are, as a control rather than a caption: the
-                            // same chip shape as the badges, outlined in amber once it passes
-                            // AGE_WARN_MS. Age lives HERE now — the reply badge deliberately
-                            // knows nothing about the clock, so this is the only thing on the row
-                            // that changes while nothing is being interrogated.
-                            //
-                            // In the row rather than anchored across the gap: three chips of one
-                            // shape read as one strip, and a positioner cannot overlap the buttons
-                            // on the right the way a floating item can.
-                            Badge {
-                                visible: nodeCard._ageMs >= 0
+                                age: nodeCard._ageMs >= 0
+                                     ? usblGroup._fmtAge(nodeCard._ageMs) : ""
                                 aged: nodeCard._aged
-                                label: usblGroup._fmtAge(nodeCard._ageMs)
+                                lost: Node.isLost(usblGroup._poll, nodeCard._n.id)
+                                ageSample: usblGroup._ageSample
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
@@ -691,6 +640,11 @@ DeviceSettingsGroup {
                                 readonly property bool _bad: _state === "stale"
                                 readonly property bool _queued: Node.isQueued(
                                         usblGroup._manual, nodeCard._n.id, modelData.cmd)
+                                // One ink for the mark and the number, so they cannot drift.
+                                readonly property color _cmdInk:
+                                      _out ? AppPalette.accentText
+                                    : _ok  ? AppPalette.linkOkText
+                                    : _bad ? AppPalette.linkIdleText : AppPalette.textStrong
 
                                 radius: Tokens.radiusSm
                                 color: _out ? AppPalette.accentBg
@@ -731,12 +685,16 @@ DeviceSettingsGroup {
                                         border.color: _refChip._out ? AppPalette.accentText
                                                                     : AppPalette.textMuted
                                     }
+                                    // The same prompt the on-scene panel puts in front of a
+                                    // command id, so one thing is one shape on both surfaces.
+                                    UsblCmdMark {
+                                        width: Math.round(Tokens.fontXs * 1.25); height: width
+                                        ink: _refChip._cmdInk
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
                                     Text {
-                                        text: "cmd " + modelData.cmd
-                                        color: _refChip._out ? AppPalette.accentText
-                                             : _refChip._ok  ? AppPalette.linkOkText
-                                             : _refChip._bad ? AppPalette.linkIdleText
-                                                             : AppPalette.textStrong
+                                        text: String(modelData.cmd)
+                                        color: _refChip._cmdInk
                                         font.pixelSize: Tokens.fontXs; font.bold: true
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
@@ -824,6 +782,10 @@ DeviceSettingsGroup {
                                 // The one retained payload, and only if it names THIS command.
                                 readonly property bool _hasData: usblGroup._modemMatches(
                                         nodeCard._n.addr, modelData.cmd)
+                                readonly property color _cmdInk:
+                                      _out ? AppPalette.accentText
+                                    : _ok  ? AppPalette.linkOkText
+                                    : _bad ? AppPalette.linkIdleText : AppPalette.textStrong
 
                                 width: parent.width
                                 radius: Tokens.radiusSm
@@ -877,12 +839,14 @@ DeviceSettingsGroup {
                                         onClicked: if (plan) plan.toggleStep(nodeCard._n.id,
                                                                             _cmdRow.index)
                                     }
+                                    UsblCmdMark {
+                                        width: Math.round(Tokens.fontSm * 1.25); height: width
+                                        ink: _cmdRow._cmdInk
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
                                     Text {
-                                        text: "cmd " + _cmdRow.modelData.cmd
-                                        color: _cmdRow._out ? AppPalette.accentText
-                                             : _cmdRow._ok  ? AppPalette.linkOkText
-                                             : _cmdRow._bad ? AppPalette.linkIdleText
-                                                            : AppPalette.textStrong
+                                        text: String(_cmdRow.modelData.cmd)
+                                        color: _cmdRow._cmdInk
                                         font.pixelSize: Tokens.fontSm; font.bold: true
                                         anchors.verticalCenter: parent.verticalCenter
                                     }

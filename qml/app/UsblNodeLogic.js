@@ -73,6 +73,20 @@ var GRACE_MS = 250;
 // arithmetic on "14:32:07".
 var AGE_WARN_MS = 10000;
 
+// How many interrogations a node has to miss IN A ROW before it stops being a dropped ping and
+// starts being a beacon that is gone.
+//
+// COUNTED, NOT TIMED, and that is the whole point. The first version escalated on the age of the
+// last FIX, which cannot work: Dataset caches a solution per address on arrival whether or not a
+// window was open to attribute it to, so a reply that lands after its window closed still
+// refreshes the age. A node answering just too late to be counted therefore missed every
+// interrogation while its age reset every time -- permanently MISSED and never LOST.
+//
+// A count also fixes the other half. It advances only when we ASK, so a stopped schedule cannot
+// escalate a row on its own, and the threshold means the same thing at any dwell: three refusals,
+// not "long enough that somebody should have answered".
+var LOST_MISSES = 3;
+
 function waitMs(dwellMs, graceMs) {
     var d = (typeof dwellMs === "number" && dwellMs > 0) ? dwellMs : 700;
     var g = (typeof graceMs === "number" && graceMs >= 0) ? graceMs : GRACE_MS;
@@ -102,9 +116,12 @@ function stepKey(nodeId, cmd) { return String(nodeId) + ":" + String(cmd); }
 // It is written in ONE place, the send, and its state is then `stepCode` of it. That is what
 // makes "waiting outranks the previous verdict" fall out of the existing rules instead of being
 // re-implemented for the chip.
+// `misses` is the consecutive-miss streak per node: incremented wherever a window closes
+// unresolved, reset to zero by an answer. It is the escalation to LOST, and it is a COUNT rather
+// than a clock -- see LOST_MISSES.
 function initialPoll() {
     return { waitKey: "", waitNodeId: -1, waitCmd: -1, sentAt: 0,
-             result: {}, last: {}, asked: {} };
+             result: {}, last: {}, asked: {}, misses: {}, repliedAt: {} };
 }
 
 function _copyResult(r) {
@@ -121,6 +138,17 @@ function _copyAsked(a) {
     for (var k in (a || {})) if (typeof a[k] === "number") out[k] = a[k];
     return out;
 }
+// Same rule as _copyAsked and for the same reason: a streak of 0 is a real value -- it is what
+// "this node is answering" looks like -- and a truthiness filter would drop it.
+function _copyMisses(m) {
+    var out = {};
+    for (var k in (m || {})) if (typeof m[k] === "number") out[k] = m[k];
+    return out;
+}
+function _bumpMiss(misses, nodeId) {
+    var n = (typeof misses[nodeId] === "number") ? misses[nodeId] : 0;
+    misses[nodeId] = n + 1;
+}
 
 // A request just went out to (nodeId, cmd).
 //
@@ -130,26 +158,31 @@ function _copyAsked(a) {
 // is re-asked.
 function noteSent(poll, nodeId, cmd, nowMs) {
     var result = _copyResult(poll.result), last = _copyResult(poll.last);
-    var asked = _copyAsked(poll.asked);
+    var asked = _copyAsked(poll.asked), misses = _copyMisses(poll.misses);
     if (poll.waitKey) {
         result[poll.waitKey] = STALE;
         last[poll.waitNodeId] = STALE;
+        _bumpMiss(misses, poll.waitNodeId);
     }
     asked[nodeId] = cmd;
     return { waitKey: stepKey(nodeId, cmd), waitNodeId: nodeId, waitCmd: cmd,
-             sentAt: nowMs, result: result, last: last, asked: asked };
+             sentAt: nowMs, result: result, last: last, asked: asked, misses: misses,
+             repliedAt: _copyMisses(poll.repliedAt) };
 }
 
 // The window closed with nothing in it.
 function noteTimeout(poll) {
     if (!poll.waitKey) return poll;
     var result = _copyResult(poll.result), last = _copyResult(poll.last);
+    var misses = _copyMisses(poll.misses);
     result[poll.waitKey] = STALE;
     last[poll.waitNodeId] = STALE;
+    _bumpMiss(misses, poll.waitNodeId);
     // `asked` is carried, not cleared: which command was last asked does not stop being true
     // because it went unanswered -- that IS the thing the chip has to report.
     return { waitKey: "", waitNodeId: -1, waitCmd: -1, sentAt: 0,
-             result: result, last: last, asked: _copyAsked(poll.asked) };
+             result: result, last: last, asked: _copyAsked(poll.asked), misses: misses,
+             repliedAt: _copyMisses(poll.repliedAt) };
 }
 
 // A solution arrived for `addr`. Addresses, not node ids, because that is what a solution
@@ -158,7 +191,7 @@ function noteTimeout(poll) {
 // A solution for some other address, or one arriving with no window open, resolves nothing: there
 // is no honest way to say which command it belongs to. It still reaches the row's numbers, which
 // come from Dataset directly.
-function noteReplyAddr(poll, nodes, addr) {
+function noteReplyAddr(poll, nodes, addr, nowMs) {
     if (!poll.waitKey) return poll;
     var open = null;
     for (var i = 0; i < (nodes ? nodes.length : 0); ++i)
@@ -166,10 +199,18 @@ function noteReplyAddr(poll, nodes, addr) {
     if (!open || open.addr !== addr) return poll;
 
     var result = _copyResult(poll.result), last = _copyResult(poll.last);
+    var misses = _copyMisses(poll.misses), repliedAt = _copyMisses(poll.repliedAt);
     result[poll.waitKey] = REPLIED;
     last[poll.waitNodeId] = REPLIED;
+    // An answer clears the streak outright. One good exchange is the end of a fault, not a
+    // decrement of it -- a node that answers is answering.
+    misses[poll.waitNodeId] = 0;
+    // WHEN this node last answered US. Stamped here and nowhere else, because this is the only
+    // place a reply is attributed to a node -- see replyAgeMs.
+    if (typeof nowMs === "number") repliedAt[poll.waitNodeId] = nowMs;
     return { waitKey: "", waitNodeId: -1, waitCmd: -1, sentAt: 0,
-             result: result, last: last, asked: _copyAsked(poll.asked) };
+             result: result, last: last, asked: _copyAsked(poll.asked),
+             misses: misses, repliedAt: repliedAt };
 }
 
 // ── interrogations asked for by hand ─────────────────────────────────────────
@@ -244,6 +285,20 @@ function nodeReplyCode(poll, nodeId, entry) {
     return (entry && entry.epochMs) ? REPLIED : NONE;
 }
 
+// How many interrogations this node has missed in a row. Zero means the last one answered.
+function missStreak(poll, nodeId) {
+    var m = (poll && poll.misses) ? poll.misses[nodeId] : undefined;
+    return (typeof m === "number") ? m : 0;
+}
+
+// Whether a node has stopped being a dropped ping and started being a beacon that is gone.
+// Takes no clock, deliberately: a stopped schedule must not be able to escalate a row, and the
+// age of the last fix is not evidence about this at all (see LOST_MISSES).
+function isLost(poll, nodeId, threshold) {
+    var t = (typeof threshold === "number" && threshold > 0) ? threshold : LOST_MISSES;
+    return missStreak(poll, nodeId) >= t;
+}
+
 // Which command was last SENT to this node, -1 if none ever was. Its state is stepCode of it, so
 // the chip reads Waiting while the request is out and the verdict once the window resolves --
 // the same precedence every other mark on the pane follows.
@@ -290,9 +345,37 @@ function entryFor(solutions, addr) {
 
 // -1 means "never answered", which is a different thing from "answered a long time ago" and has
 // to stay distinguishable from it all the way to the badge.
+//
+// This is the age of the FIX -- when a solution for this address last arrived. It is what a data
+// widget wants (is this number usable), and it is NOT what a node row wants; see replyAgeMs.
 function ageMs(entry, nowMs) {
     if (!entry || !entry.epochMs) return -1;
     return Math.max(0, nowMs - entry.epochMs);
+}
+
+// HOW LONG SINCE THIS NODE ANSWERED US -- which is not the same as how old its numbers are, and
+// the row wants the first.
+//
+// Dataset stamps a solution's arrival per ADDRESS, unconditionally: a reply that lands after its
+// window closed is scored a miss and still refreshes that stamp. So a node answering just too
+// late for the dwell showed a miss beside an age that reset on every one of them. The age was
+// telling the truth about the wrong question.
+//
+// Stamped instead where a reply is ATTRIBUTED, in noteReplyAddr. Falling back to the fix covers
+// the node that has been heard from without any interrogation of ours resolving -- an unsolicited
+// solution, or another interrogator on the same address -- which is the same fallback
+// nodeReplyCode makes, and for the same reason.
+function replyAgeMs(poll, nodeId, entry, nowMs) {
+    var t = (poll && poll.repliedAt) ? poll.repliedAt[nodeId] : undefined;
+    if (typeof t === "number") return Math.max(0, nowMs - t);
+    return ageMs(entry, nowMs);
+}
+
+// Whether the row's age chip should ask to be noticed, on the same number the row shows.
+function isReplyAged(poll, nodeId, entry, nowMs, warnMs) {
+    var ms = replyAgeMs(poll, nodeId, entry, nowMs);
+    if (ms < 0) return false;
+    return ms > ((typeof warnMs === "number" && warnMs >= 0) ? warnMs : AGE_WARN_MS);
 }
 
 // What the group header reports whether it is open or collapsed. Outcome-based like the badges,
@@ -325,8 +408,10 @@ function summary(nodes, solutions, poll) {
 // survives as `lastCmd`.
 //
 // Codes and numbers out. Units, words and colours are the caller's, as everywhere else here.
-function panelRows(nodes, solutions, poll, nowMs) {
+function panelRows(nodes, solutions, poll, nowMs, curStep, schedule) {
     var out = [];
+    // Where the cycle is, resolved once for the whole list rather than per row.
+    var cursor = cursorNodeId(curStep, schedule);
     for (var i = 0; i < (nodes ? nodes.length : 0); ++i) {
         var n = nodes[i];
         var entry = entryFor(solutions, n.addr);
@@ -343,9 +428,18 @@ function panelRows(nodes, solutions, poll, nowMs) {
             // draws no chip rather than a chip about nothing.
             lastCmd: cmd,
             lastCmdState: cmd < 0 ? "" : stepCode(poll, n.id, cmd),
+            // Where the cycle is: the node last interrogated, or -- before anything has been
+            // asked -- the one the next Step will take. It outlives the answer window closing,
+            // which is the point: it is the only thing that says where in the schedule you are.
+            // Composed here rather than in the panel, like everything else a row says.
+            cursor: cursor >= 0 && cursor === n.id,
+            // The escalation: consecutive misses, and whether they have gone past the threshold.
+            missStreak: missStreak(poll, n.id),
+            lost: isLost(poll, n.id),
             entry: entry,
-            ageMs: ageMs(entry, nowMs),
-            aged: isAged(entry, nowMs, AGE_WARN_MS)
+            // Time since this node ANSWERED, not since its numbers landed -- see replyAgeMs.
+            ageMs: replyAgeMs(poll, n.id, entry, nowMs),
+            aged: isReplyAged(poll, n.id, entry, nowMs, AGE_WARN_MS)
         });
     }
     return out;
@@ -384,14 +478,16 @@ if (typeof module !== "undefined" && module.exports) {
     module.exports = {
         OFF: OFF, IDLE: IDLE, WAITING: WAITING,
         REPLIED: REPLIED, STALE: STALE, NONE: NONE,
-        GRACE_MS: GRACE_MS, AGE_WARN_MS: AGE_WARN_MS,
+        GRACE_MS: GRACE_MS, AGE_WARN_MS: AGE_WARN_MS, LOST_MISSES: LOST_MISSES,
+        missStreak: missStreak, isLost: isLost,
         waitMs: waitMs, stepKey: stepKey, initialPoll: initialPoll,
         queueEmit: queueEmit, dequeueEmit: dequeueEmit, isQueued: isQueued,
         noteSent: noteSent, noteTimeout: noteTimeout, noteReplyAddr: noteReplyAddr,
         isWaiting: isWaiting, isWaitingStep: isWaitingStep,
         stepResult: stepResult, stepCode: stepCode, lastAskedCmd: lastAskedCmd,
         operationCode: operationCode, nodeReplyCode: nodeReplyCode,
-        isAged: isAged, cursorNodeId: cursorNodeId, isCursorStep: isCursorStep,
+        isAged: isAged, replyAgeMs: replyAgeMs, isReplyAged: isReplyAged,
+        cursorNodeId: cursorNodeId, isCursorStep: isCursorStep,
         entryFor: entryFor, ageMs: ageMs, summary: summary, panelRows: panelRows,
         mapSpec: mapSpec
     };

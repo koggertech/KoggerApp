@@ -285,6 +285,81 @@ console.log("the row badge");
     ok("nodeReplyCode no longer needs the command list", N.nodeReplyCode.length === 3);
 }
 
+// ── how a miss becomes a loss ────────────────────────────────────────────────
+//
+// THE BUG THIS REPLACES. The escalation used to be "stale AND the last fix is older than
+// AGE_WARN_MS", and it never fired. Dataset::addUsblSolution caches a solution per address the
+// moment it arrives, whether or not a window was open to attribute it to -- so a reply landing
+// just after its window closed is a MISS that still refreshes the age. A node answering slightly
+// too late missed every single interrogation while its age reset every time: permanently MISSED,
+// never LOST. The age of a fix is simply not evidence about whether interrogations are working.
+//
+// So it is COUNTED. It advances only when we ask, which also means a stopped schedule cannot
+// escalate a row on its own, and the threshold means the same thing at any dwell.
+console.log("the loss threshold");
+{
+    const nodes = [node(1, 1)];
+    let p = N.initialPoll();
+    eq("nothing has missed to begin with", N.missStreak(p, 1), 0);
+    ok("...so nothing is lost", !N.isLost(p, 1));
+
+    // Miss them one at a time, by the budget running out.
+    for (let i = 1; i < N.LOST_MISSES; ++i) {
+        p = N.noteTimeout(N.noteSent(p, 1, 0, NOW + i * 1000));
+        eq(`${i} miss(es) counted`, N.missStreak(p, 1), i);
+        ok("...still just a miss", !N.isLost(p, 1));
+    }
+    p = N.noteTimeout(N.noteSent(p, 1, 0, NOW + 9000));
+    eq("the threshold is reached", N.missStreak(p, 1), N.LOST_MISSES);
+    ok("...and the node is lost", N.isLost(p, 1));
+
+    // One answer ends it outright. A node that answers is answering.
+    const healed = N.noteReplyAddr(N.noteSent(p, 1, 0, NOW + 10000), nodes, 1);
+    eq("one answer clears the streak", N.missStreak(healed, 1), 0);
+    ok("...and the node is no longer lost", !N.isLost(healed, 1));
+    eq("...and it reads as replying again", N.nodeReplyCode(healed, 1, null), N.REPLIED);
+
+    // THE CASE THAT PROMPTED THIS. The reply lands, but after its window closed -- so it is a
+    // miss, and the fix it carries is brand new. Age says "fresh", the cycle says "missed", and
+    // only the count can tell them apart.
+    let late = N.initialPoll();
+    for (let i = 0; i < N.LOST_MISSES; ++i) {
+        late = N.noteTimeout(N.noteSent(late, 1, 0, NOW + i * 1000));   // window closes empty
+        late = N.noteReplyAddr(late, nodes, 1);                        // ...then the answer lands
+    }
+    eq("a reply landing after its window still counts as a miss",
+       N.missStreak(late, 1), N.LOST_MISSES);
+    ok("...so a node answering too late is reported lost", N.isLost(late, 1));
+    ok("...even though its fix is brand new",
+       !N.isAged(sol(1, 0), NOW, N.AGE_WARN_MS));
+
+    // The streak is per node, like every other verdict here.
+    const two = N.noteTimeout(N.noteSent(N.initialPoll(), 2, 0, NOW));
+    eq("one node's misses are not another's", N.missStreak(two, 1), 0);
+    eq("...only its own", N.missStreak(two, 2), 1);
+
+    // Moving on to the next step closes the previous window, so that path has to count too --
+    // it is the one the schedule actually takes.
+    const moved = N.noteSent(N.noteSent(N.initialPoll(), 1, 0, NOW), 1, 2, NOW + 700);
+    eq("the cycle moving on counts the miss it caused", N.missStreak(moved, 1), 1);
+
+    // No clock anywhere in it: that is what stops a stopped schedule escalating a row.
+    ok("isLost takes no time argument", N.isLost.length === 3);
+    ok("missStreak takes no time argument", N.missStreak.length === 2);
+    eq("the threshold is a count of interrogations, not a duration", typeof N.LOST_MISSES, "number");
+    ok("...and a small one -- three refusals, not thirty", N.LOST_MISSES <= 5);
+
+    // Immutability, same rule as the rest of the poll state.
+    const before = N.noteTimeout(N.noteSent(N.initialPoll(), 1, 0, NOW));
+    const after = N.noteTimeout(N.noteSent(before, 1, 0, NOW + 1000));
+    eq("counting a miss does not edit the previous state", N.missStreak(before, 1), 1);
+    eq("...only the new one", N.missStreak(after, 1), 2);
+
+    // A missing poll state must not throw on either read.
+    eq("no poll state, no streak", N.missStreak(null, 1), 0);
+    ok("...and nothing is lost", !N.isLost(null, 1));
+}
+
 // ── interrogations asked for by hand ─────────────────────────────────────────
 // The head cannot transmit while it is waiting, so a manual request takes its turn behind
 // whatever window is open. Sending it straight away would abandon an answer still in the water
@@ -387,6 +462,73 @@ console.log("the age chip");
     ok("...and fresh with Stale",
        !N.isAged(sol(1, 100), NOW, N.AGE_WARN_MS)
        && N.nodeReplyCode(missed, 1, sol(1, 100)) === N.STALE);
+}
+
+// ── the age the ROW shows: since the last ANSWER, not the last fix ──────────
+//
+// THE BUG THIS REPLACES, and it is the same root cause as the loss threshold's. Dataset stamps a
+// solution's arrival per ADDRESS, unconditionally -- so a reply landing after its window closed
+// is scored a miss AND refreshes that stamp. The row therefore showed "missed" beside an age
+// that reset on every single miss. The number was telling the truth about a different question.
+console.log("the row's age");
+{
+    const nodes = [node(1, 1)];
+    const fresh = sol(1, 0);          // a fix that landed this instant
+
+    // Nothing attributed yet: fall back to the fix, which covers a node heard from without any
+    // interrogation of ours resolving -- an unsolicited solution, or another interrogator.
+    const p0 = N.initialPoll();
+    eq("with nothing of ours resolved, the age falls back to the fix",
+       N.replyAgeMs(p0, 1, sol(1, 4000), NOW), 4000);
+    eq("...and no fix either means no age at all", N.replyAgeMs(p0, 1, null, NOW), -1);
+
+    // An attributed reply is what the age counts from.
+    const answered = N.noteReplyAddr(N.noteSent(p0, 1, 0, NOW), nodes, 1, NOW + 100);
+    eq("an answer starts the clock", N.replyAgeMs(answered, 1, fresh, NOW + 100), 0);
+    eq("...and it runs", N.replyAgeMs(answered, 1, fresh, NOW + 5100), 5000);
+
+    // THE CASE THAT PROMPTED THIS. The window closes empty -- a miss -- and THEN the reply lands.
+    // Dataset refreshes the fix, so fix-age says "brand new"; nothing was attributed, so the row
+    // must keep counting from the last real answer.
+    let late = N.noteTimeout(N.noteSent(answered, 1, 0, NOW + 6000));
+    late = N.noteReplyAddr(late, nodes, 1, NOW + 7000);   // no window open: attributes nothing
+    // sol(addr, ageMs) stamps relative to NOW, so a fix that is brand new at NOW+7100 is
+    // sol(1, -7100) -- which is exactly what Dataset would hold after that late arrival.
+    const justLanded = sol(1, -7100);
+    eq("a reply landing after its window does not restart the age",
+       N.replyAgeMs(late, 1, justLanded, NOW + 7100), 7000);
+    eq("...even though the fix itself is brand new", N.ageMs(justLanded, NOW + 7100), 0);
+    eq("...and the row still reads as having missed", N.nodeReplyCode(late, 1, justLanded), N.STALE);
+
+    // Answering properly again restarts it.
+    const healed = N.noteReplyAddr(N.noteSent(late, 1, 0, NOW + 8000), nodes, 1, NOW + 8100);
+    eq("an attributed answer restarts the age", N.replyAgeMs(healed, 1, fresh, NOW + 8100), 0);
+
+    // The warning threshold reads the same number the row shows, or the chip warns about one
+    // thing while displaying another.
+    ok("the warning follows the same number",
+       !N.isReplyAged(answered, 1, fresh, NOW + 100 + N.AGE_WARN_MS, N.AGE_WARN_MS)
+       && N.isReplyAged(answered, 1, fresh, NOW + 101 + N.AGE_WARN_MS, N.AGE_WARN_MS));
+    ok("...and a node with nothing to be old about is not aged",
+       !N.isReplyAged(p0, 1, null, NOW + 600000, N.AGE_WARN_MS));
+
+    // Per node, like every other fact in here.
+    const two = N.noteReplyAddr(N.noteSent(p0, 2, 0, NOW), [node(2, 2)], 2, NOW + 50);
+    eq("one node's answer does not restart another's age",
+       N.replyAgeMs(two, 1, null, NOW + 5000), -1);
+    eq("...only its own", N.replyAgeMs(two, 2, null, NOW + 5050), 5000);
+
+    // A host clock that steps backwards must not produce a negative age.
+    eq("a future stamp clamps to zero", N.replyAgeMs(answered, 1, fresh, NOW - 5000), 0);
+
+    // The row a panel draws must carry THIS number, not the fix's -- read past the warning
+    // threshold, where the two answers differ by more than a value: one warns and one does not.
+    const T = NOW + 15100;                       // 15 s since the last real answer
+    const rows = N.panelRows(nodes, { "1": sol(1, -15100) }, late, T);
+    eq("the panel row shows the answer age", rows[0].ageMs, 15000);
+    ok("...and is flagged old on it", rows[0].aged === true);
+    ok("...where the fix age would have said otherwise",
+       N.ageMs(sol(1, -15100), T) === 0 && !N.isAged(sol(1, -15100), T, N.AGE_WARN_MS));
 }
 
 // ── the cursor: where the cycle is ──────────────────────────────────────────
@@ -648,6 +790,33 @@ console.log("panel rows");
     eq("no nodes, no rows", N.panelRows([], sols, p0, NOW), []);
     eq("no plan at all is not a crash", N.panelRows(null, null, p0, NOW), []);
 
+    // WHERE THE CYCLE IS is composed here too, so the panel frames the same row the pane does.
+    // A panel deriving it from curStep itself is a second implementation free to disagree.
+    {
+        const sched = [{ nodeId: 1, addr: 1, cmd: 0 }, { nodeId: 2, addr: 2, cmd: 0 }];
+        const before = N.panelRows(NODES, sols, p0, NOW, null, sched);
+        eq("before anything runs, the cursor is the first scheduled node",
+           before.map((r) => r.cursor), [true, false]);
+        const after = N.panelRows(NODES, sols, p0, NOW, sched[1], sched);
+        eq("once a step has run it follows that step", after.map((r) => r.cursor), [false, true]);
+        // The window closing must not move it -- that is the whole reason it is derived from the
+        // step rather than from the poll state.
+        const closed = N.panelRows(NODES, sols, N.noteTimeout(N.noteSent(p0, 2, 0, NOW)),
+                                   NOW, sched[1], sched);
+        eq("...and stays there after the answer window closes",
+           closed.map((r) => r.cursor), [false, true]);
+        // No schedule and nothing run: nothing is framed, rather than row 0 by accident.
+        eq("with no schedule at all, no row is framed",
+           N.panelRows(NODES, sols, p0, NOW, null, []).map((r) => r.cursor), [false, false]);
+        eq("...and an absent schedule does not throw",
+           N.panelRows(NODES, sols, p0, NOW).map((r) => r.cursor), [false, false]);
+        // It must agree with the read the settings pane makes, or the two frame different rows.
+        let agrees = true;
+        for (const row of after)
+            if (row.cursor !== (N.cursorNodeId(sched[1], sched) === row.nodeId)) agrees = false;
+        ok("the row's cursor is exactly the pane's own read", agrees);
+    }
+
     // The panel and the pane must agree node by node, or one of them is lying about the same
     // beacon on the same screen.
     let agrees = true;
@@ -700,26 +869,150 @@ console.log("the row's vocabulary and wiring");
 {
     const src = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblGroup.qml"), "utf8");
 
-    // Both surfaces that render a node state keep their OWN tables, because qsTr's context is
-    // the file and a shared one would need a QML singleton in kqml_types, which cannot import
-    // a module out of qml/app. So the guard against two vocabularies is here: each file must
-    // name exactly the codes the reducer can return, no more and no fewer.
-    const tableIn = (text, name, where) => {
-        const at = text.indexOf(`property var ${name}: ({`);
-        ok(`${name} exists in ${where}`, at >= 0);
-        return at < 0 ? "" : text.slice(at, text.indexOf("})", at));
-    };
-    const keysIn = (text, name, where) =>
-        [...tableIn(text, name, where).matchAll(/"([a-z]+)":/g)].map((m) => m[1]).sort();
-
+    // ONE VOCABULARY, IN ONE FILE. Both surfaces used to keep a table of state words each,
+    // because qsTr's context is the file and a shared one would have needed a singleton in
+    // kqml_types, which cannot import a module out of qml/app. UsblStateBadge is a plain
+    // component in qml/app, so it owns them -- and one table cannot drift from itself.
+    //
+    // What is still worth defending is that it names exactly the codes the reducer can return,
+    // and that neither surface has quietly grown a second copy.
     const panel = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblNodesPopup.qml"),
                                "utf8");
-    for (const [text, where] of [[src, "the pane"], [panel, "the panel"]]) {
-        eq(`every operation code has a word in ${where}, and no word is orphaned`,
-           keysIn(text, "_opText", where), [N.IDLE, N.OFF, N.WAITING].sort());
-        eq(`every reply code has a word in ${where}, and no word is orphaned`,
-           keysIn(text, "_replyText", where), [N.NONE, N.REPLIED, N.STALE].sort());
+    const stateBadge = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblStateBadge.qml"),
+                                    "utf8");
+    const opBadge = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblOpBadge.qml"),
+                                 "utf8");
+    {
+        const at = stateBadge.indexOf("property var _text: ({");
+        ok("the verdict badge holds the words", at >= 0);
+        const table = at < 0 ? "" : stateBadge.slice(at, stateBadge.indexOf("})", at));
+        // Every reducer code has a word, no word is orphaned -- plus exactly one key that is
+        // NOT a reducer code: `lost`, the escalation the badge derives from a miss that has
+        // aged out. It is presentation, and the module must stay unaware of it.
+        eq("every reply code has a word, and no word is orphaned",
+           [...table.matchAll(/"([a-z]+)":/g)].map((m) => m[1]).sort(),
+           [N.NONE, N.REPLIED, N.STALE, "lost"].sort());
+        ok("...and the escalation is the badge's, not the reducer's",
+           [N.OFF, N.IDLE, N.WAITING, N.NONE, N.REPLIED, N.STALE].indexOf("lost") < 0);
+        // The WORDS, as distinct from the codes they are keyed by: the code stays `stale`
+        // because that is what the reducer returns, and the prose must not be, because this
+        // axis reports what the last interrogation DID and is deliberately time-independent.
+        // The age chip is a separate control with a separate threshold, sitting on the same
+        // row -- so naming this one after the clock puts two marks there that look like one.
+        const words = [...table.matchAll(/qsTr\("([^"]+)"\)/g)].map((m) => m[1]);
+        eq("all four words are translatable", words.length, 4);
+        ok("the miss is not named after the clock", !words.some((w) => /stale|old|age/i.test(w)));
+        ok("...it uses the module's own word for it", words.indexOf("MISSED") >= 0);
     }
+    for (const [text, where] of [[src, "the pane"], [panel, "the panel"]]) {
+        ok(`${where} keeps no state vocabulary of its own`,
+           !/property var _opText/.test(text) && !/property var _replyText/.test(text));
+        ok(`${where} draws both state axes through the shared badges`,
+           /UsblOpBadge\s*\{/.test(text) && /UsblStateBadge\s*\{/.test(text));
+        // The drift this replaces: a surface spelling a state out for itself again.
+        ok(`${where} does not re-inline a state word`,
+           !/qsTr\("(Replied|Stale|Missed|Never|Idle|Waiting)"\)/.test(text));
+    }
+    ok("the operation badge takes the reducer's own codes",
+       /"off"/.test(opBadge) && /"waiting"/.test(opBadge));
+
+    // Colour is spent on the fault and nothing else: a healthy row carries no fill, so a panel
+    // of eight has exactly as many coloured things on it as there are problems.
+    ok("only a miss fills the verdict badge",
+       /color:\s*_lost\s*\?\s*AppPalette\.dangerBg\s*:\s*_bad\s*\?\s*AppPalette\.linkIdleBg\s*:\s*"transparent"/
+           .test(stateBadge));
+    ok("...and the neutral states still carry a border",
+       /border\.color:\s*_lost[\s\S]{0,120}AppPalette\.border/.test(stateBadge));
+    ok("...while the tick keeps its own green", /linkOkBorder/.test(stateBadge));
+
+    // THREE SEVERITIES OUT OF TWO CODES. A dropped interrogation is routine; a node that has
+    // refused LOST_MISSES in a row is a different event, and amber meaning both means neither.
+    //
+    // THE ESCALATION IS COUNTED, NOT TIMED, and the badge is told rather than deriving it. It
+    // was derived from the fix age once and could not work -- see the reducer section below.
+    ok("a node that keeps refusing escalates",
+       /_lost:\s*badge\.code === "stale" && badge\.lost/.test(stateBadge)
+       && /_bad:\s*badge\.code === "stale" && !badge\.lost/.test(stateBadge));
+    ok("...and the badge does not decide it from the clock",
+       !/_lost[\s\S]{0,80}aged/.test(stateBadge));
+    ok("...into the danger palette, not a louder amber",
+       /dangerBg/.test(stateBadge) && /dangerBorder/.test(stateBadge)
+       && /dangerText/.test(stateBadge));
+    ok("...under a word of its own", /"lost":\s*qsTr\("LOST"\)/.test(stateBadge));
+    ok("...and the escalated word is measured with the others, or the slot clips",
+       /_mLost\.width/.test(stateBadge));
+    // The escalation must never reach a row that is not stale: a REPLIED node is answering, and
+    // filling its chip would accuse it of a failure it has not had.
+    ok("both severities require a miss",
+       !/_lost:[^\n]*\|\|/.test(stateBadge)
+       && /_lost:\s*badge\.code === "stale"/.test(stateBadge));
+
+    // The amber pair is a bright border colour on a very dark fill in the dark themes, which
+    // glares rather than reads.
+    ok("the filled chip's ink is stepped down from the shared link colour",
+       /_amberInk[\s\S]{0,140}Qt\.darker\(AppPalette\.linkIdleBorder/.test(stateBadge));
+    // Word and age are different sizes, so the hierarchy is in the type rather than in the
+    // colour -- which is already carrying the state.
+    ok("the word leads and the age is a note beside it",
+       /property real fontPixelSize:\s*Tokens\.fontSm/.test(stateBadge)
+       && /property real ageFontPixelSize:\s*Tokens\.fontXxs/.test(stateBadge));
+
+    // The badge sizes itself to the widest of its three words as the LOCALE renders them. A
+    // literal width is right in English and clips the first time someone runs lupdate.
+    ok("the verdict badge measures its own width", /TextMetrics\s*\{/.test(stateBadge));
+    ok("...over every word it can draw, not the current one",
+       /_wordW:\s*Math\.max\(_mReplied\.width,[\s\S]{0,140}_mNever\.width\)/.test(stateBadge));
+    // The word is drawn into a fixed slot rather than centred: with a fixed chip width and a
+    // centred row, the mark shifts sideways every time the verdict changes length.
+    ok("...and draws the word into that slot, so the mark does not move",
+       /id:\s*_label[\s\S]{0,120}width:\s*badge\._wordW/.test(stateBadge));
+
+    // THE AGE RIDES INSIDE THE VERDICT BADGE, and the two must not be confusable. The age is a
+    // number that ticks, so its slot is fixed and the value is drawn into it; and it warns in
+    // INK only, because a node that is answering but has not been asked lately must not look
+    // like one that missed.
+    ok("the age is carried by the verdict badge",
+       /property string age/.test(stateBadge) && /property bool aged/.test(stateBadge));
+    ok("...in a slot sized by a sample rather than by the current value",
+       /property string ageSample/.test(stateBadge)
+       && /_ageW:\s*badge\.ageSample\.length\s*\?\s*_mAge\.width\s*:\s*0/.test(stateBadge));
+    ok("...right-aligned, so the ages line up as a column",
+       /id:\s*_ageLabel[\s\S]{0,200}horizontalAlignment:\s*Text\.AlignRight/.test(stateBadge));
+    // The command chip names what the host is SENDING, so it takes a control's text colour.
+    // Muted made it read as a caption about the row rather than as part of it.
+    ok("the command chip is inked like a control, not like a caption",
+       /_ink:\s*AppPalette\.text\b/.test(panel));
+
+    // ONE SHAPE FOR A COMMAND ID, on both surfaces. The pane spelled the word and the panel drew
+    // a prompt, which is the same drift the address badge exists to prevent.
+    const cmdMark = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblCmdMark.qml"),
+                                 "utf8");
+    ok("the command prompt is a component, not a copy per surface",
+       /Canvas\s*\{/.test(cmdMark) && /property color ink/.test(cmdMark));
+    for (const [text, where] of [[src, "the pane"], [panel, "the panel"]]) {
+        ok(`${where} draws command ids through the shared mark`, /UsblCmdMark\s*\{/.test(text));
+        ok(`...and ${where} no longer spells the word beside one`,
+           !/"cmd " \+ (modelData|_cmdRow)/.test(text));
+    }
+    for (const [text, where] of [[src, "the pane"], [panel, "the panel"]]) {
+        ok(`${where} no longer draws an age chip of its own`,
+           !/AgeBadge/.test(text) && /ageSample:/.test(text));
+        // THE SLOT IS SIZED BY A STATIC SAMPLE, never by live data. A slot measured off the
+        // widest age currently on screen resizes as the ages tick, which moves every chip beside
+        // it -- and on the panel, the whole card.
+        ok(`${where} sizes the age column from a static sample`,
+           /_ageSample:\s*_fmtAge\(\d+\)/.test(text) && !/_widestAge/.test(text));
+        // ...which is only honest if the formatter is bounded. Seconds alone reached "86400 s".
+        const fmt = text.slice(text.indexOf("function _fmtAge("),
+                               text.indexOf("function _num("));
+        ok(`${where}'s age formatter is tiered, so its string cannot grow without bound`,
+           /qsTr\(" m/.test(fmt) && /qsTr\(" h/.test(fmt));
+    }
+
+    const tokens = readFileSync(path.join(here, "..", "..", "qml", "kqml_types", "Tokens.qml"),
+                                "utf8");
+    ok("the state label has a token of its own rather than a literal", /fontXxs/.test(tokens));
+    ok("...and the badge takes it", /Tokens\.fontXxs/.test(stateBadge));
 
     ok("the row reads its state through the logic module",
        /import "UsblNodeLogic\.js" as Node/.test(src));
@@ -743,8 +1036,11 @@ console.log("the row's vocabulary and wiring");
     ok("the row frame follows the cursor, not the open window",
        /border\.color:\s*nodeCard\._isCursor/.test(src)
        && !/border\.color:\s*nodeCard\._waiting/.test(src));
-    ok("...and a plain light-blue background follows the open window",
-       /color:\s*nodeCard\._waiting[\s\S]{0,160}AppPalette\.accent\.r/.test(src));
+    // The row used to tint blue while a request was out. That made three marks saying "in
+    // flight" on one row -- the badge, the cursor frame and a whole row changing colour -- and
+    // the loudest of them was the one carrying the least information.
+    ok("...and the row itself does not repaint for an open window",
+       !/color:\s*nodeCard\._waiting/.test(src));
     // NOTHING ON THIS PANE ANIMATES ON A LOOP. Two versions of the waiting mark did -- a fading
     // opacity, which took the frame with it, then an alternating fill -- and both were noise
     // against a sub-second window. A colour transition when the state changes is not that.
@@ -754,6 +1050,14 @@ console.log("the row's vocabulary and wiring");
        !/_pulse/.test(src) && !/loops:\s*Animation\.Infinite/.test(src));
     ok("age is its own control, highlighted past the warning threshold",
        /aged:\s*nodeCard\._aged/.test(src) && /Node\.AGE_WARN_MS/.test(src));
+    // ...and it is the age of the ANSWER, not of the fix. Dataset refreshes a fix on arrival
+    // whether or not a window was open to attribute it to, so fix-age reset on every miss.
+    ok("the pane ages from the last answer, not the last fix",
+       /Node\.replyAgeMs\(/.test(src) && /Node\.isReplyAged\(/.test(src)
+       && !/_ageMs:\s*Node\.ageMs\(/.test(src));
+    ok("...and the reply's arrival is what stamps it",
+       /Node\.noteReplyAddr\([\s\S]{0,140}Date\.now\(\)/.test(
+           readFileSync(path.join(here, "..", "..", "qml", "app", "UsblEngine.qml"), "utf8")));
 
     // THREE MARKS ON A CHIP. Frame for position, fill for in-flight, fill for the result -- and
     // the frame must not be something the result can overwrite.
@@ -879,20 +1183,72 @@ console.log("the acoustic-nodes panel");
     // Auto-extension, which is the feature: height is a function of the row count.
     ok("the panel's height follows the row count",
        /_contentH[\s\S]{0,200}_rowH/.test(panel) && /expandedHeight\s*=/.test(panel));
-    // Width is a CONSTANT while height is a function of the row count -- that asymmetry is the
-    // feature, and it is what this checks. It used to pin the literal 348, which made it a test
-    // of the number instead of the property: narrowing the panel to fit its actual content broke
-    // it while the invariant it was defending held perfectly. Now it asserts the shape -- a fixed
-    // row width, and no dependency on how many rows there are.
+    // WIDTH MUST NOT MOVE WITH THE DATA. Height follows the row count; width follows nothing a
+    // beacon does. This shipped wrong once: the samples were the widest values currently on
+    // screen, so the card resized under the cursor as ages ticked and commands changed.
+    //
+    // It is still measured rather than pinned -- a literal encodes a layout and a locale, and it
+    // has been wrong twice for exactly that reason (348, then 260) -- but measured off STATIC
+    // samples, so the result is a constant for a given theme and language.
     const widthLine = (panel.match(/^.*_contentW:.*$/m) || [""])[0];
     ok("...and its width does not",
-       /Math\.round\(_rowW\s*\*/.test(widthLine)
-       && !/(_shown|_rows\b|_rowH)/.test(widthLine)
-       && /_rowW:\s*\d+\s*$/m.test(panel));
+       !/(_shown|_rows\b|_rowH)/.test(widthLine));
+    ok("the width is measured off the prototype, not pinned to a literal",
+       /_contentW:[\s\S]{0,160}_protoStatus\.implicitWidth/.test(panel));
+    ok("...and no sample it measures comes from live data",
+       !/_widestCmd|_widestAge|_widestRange/.test(panel)
+       && /_cmdSample:\s*"\d+"/.test(panel) && /_rangeSample:\s*"[\d.]+"/.test(panel));
+    // The bug that made the card too narrow, twice over: the prototype was laid out unscaled and
+    // the result multiplied by _k, and the rows' own side margins were never counted at all.
+    const proto = panel.slice(panel.indexOf("id: _protoStatus"), panel.indexOf("id: _protoRead"));
+    ok("...off a prototype built from the same chips the real row uses",
+       /UsblAddressBadge/.test(proto) && /UsblOpBadge/.test(proto)
+       && /UsblStateBadge/.test(proto) && /CmdChip/.test(proto));
+    ok("...laid out at the sizes the real rows use, not unscaled and multiplied",
+       /_chipH/.test(proto) && !/_uChipH/.test(proto));
+    ok("...and the row's own side margins are in the total",
+       /_contentW:[\s\S]{0,300}_rowPadH\s*\*\s*2/.test(panel));
+    // The readings line is taller than a chip now, so a row height of 2 x chipH clips it.
+    ok("the row height measures the readings line rather than assuming another chip",
+       /_readH[\s\S]{0,120}_protoRead\.implicitHeight/.test(panel));
     // A Repeater bound to the array itself rebuilds every delegate on every clock tick, because
     // the composer returns a new array each time. Same rule the widget list already follows.
     ok("the row Repeater is modelled on the count, not the array",
        /model:\s*root\._shown/.test(panel));
+
+    // THE ROW IS TURNED OVER: everything that is a state on the top line, everything that is a
+    // reading underneath -- the shape the settings pane's row already had. Asserted because it
+    // is the kind of thing a later edit "tidying" the delegate would quietly put back.
+    {
+        const line1 = panel.slice(panel.indexOf("id: _line1"), panel.indexOf("id: _line2"));
+        const line2 = panel.slice(panel.indexOf("id: _line2"));
+        ok("the top line is the status bar",
+           /UsblOpBadge/.test(line1) && /UsblStateBadge/.test(line1) && /CmdChip/.test(line1));
+        ok("...and carries no readings",
+           !/entry\.distance/.test(line1) && !/entry\.snr/.test(line1));
+        // The command id is a prompt, not the word CMD. A lone chevron was rejected because
+        // DisclosureIndicator draws that exact shape in the pane's own node row.
+        ok("the command chip is a prompt mark, not a word",
+           /component CmdChip/.test(panel) && !/qsTr\("CMD/.test(panel));
+        ok("...with its number in a measured slot, since nothing anchors the bar's right edge",
+           /property string numSample/.test(panel) && /_mNum\.width/.test(panel));
+        ok("the bottom line is the readings, at the size the freed line can carry",
+           /entry\.distance/.test(line2) && /_rangeFont/.test(line2));
+        // A dot-and-ring span was drawn for this and rejected: the operation badge one line
+        // above IS a dot in a ring, and one shape may not mean two things on one row.
+        ok("...with a range mark that shares no shape with the operation badge",
+           /component RangeMark/.test(panel) && !/RangeMark[\s\S]{0,600}ctx\.arc\(/.test(panel));
+    }
+
+    // THE FRAME IS THE CURSOR, on both surfaces and for the same reason: it says where in the
+    // schedule you are, and it outlives the answer window closing. Bordering every row instead
+    // was tried and is worse -- eight outlines are not a mark, they are a table.
+    ok("the panel frames the cursor row and nothing else",
+       /border\.width:\s*\(nodeRow\._r && nodeRow\._r\.cursor\)/.test(panel)
+       && /border\.color:\s*AppPalette\.accentBorder/.test(panel));
+    // ...and the panel is told which row that is, rather than working it out itself: one
+    // composer, or the two surfaces can disagree about where the cycle is.
+    ok("...on the composer's say-so, not its own", !/cursorNodeId|isCursorStep/.test(panel));
 
     // Read-only. Starting a schedule transmits; a transmit control on a floating card over a
     // chart is a different feature from a readout.
@@ -929,10 +1285,16 @@ console.log("the acoustic-nodes panel");
     // HEIGHTS COME FROM THE THEME. Only Tokens.controlH follows theme.controlHeight, so every
     // literal pixel height stayed the size it was typed at and read as undersized against a
     // theme asking for taller controls -- which is exactly what these panes were full of.
+    const opB = read("qml", "app", "UsblOpBadge.qml");
+    const stB = read("qml", "app", "UsblStateBadge.qml");
     ok("chips and badges size from Tokens.chipH",
-       /Tokens\.chipH/.test(badge) && /Tokens\.chipH/.test(pane2) && /Tokens\.chipH/.test(panel));
+       [badge, pane2, panel, opB, stB].every((f) => /Tokens\.chipH/.test(f)));
     ok("...and no chip or row in the USBL panes hard-codes its height",
-       ![badge, pane2, panel].some((f) => /implicitHeight:\s*Math\.round\(\d/.test(f)));
+       ![badge, pane2, panel, opB, stB].some((f) => /implicitHeight:\s*Math\.round\(\d/.test(f)));
+    // Both badges take their size from the caller, because the pane and the panel measure in
+    // different scale spaces and a component that assumed one would render short in the other.
+    ok("both state badges are sized by their caller",
+       /property real diameter/.test(opB) && /property real chipHeight/.test(stB));
     ok("a tappable chip takes the full control height, not the inline-mark height",
        /implicitHeight:\s*Tokens\.controlH\b/.test(pane2));
     // Tokens are in AppPalette.scale space, the panel in appScale space; they differ by
