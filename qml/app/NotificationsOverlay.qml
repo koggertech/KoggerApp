@@ -32,6 +32,11 @@ Item {
         }
     }
 
+    function reveal(path) {
+        if (path.length > 0 && typeof core !== "undefined" && core)
+            core.revealInFolder(path)
+    }
+
     function removeById(id) {
         for (var i = 0; i < notificationsModel.count; ++i) {
             if (notificationsModel.get(i).notificationId === id) {
@@ -138,11 +143,12 @@ Item {
                 acceptedButtons: Qt.AllButtons
                 cursorShape: card.autoDismiss ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: function(m) {
-                    if (card.hasAction && typeof core !== "undefined")
-                        core.revealInFolder(model.actionPath)
+                    m.accepted = true
+                    var path = card.hasAction ? String(model.actionPath) : ""
                     if (card.autoDismiss)
                         card.dismiss()
-                    m.accepted = true
+                    if (path.length > 0)
+                        Qt.callLater(root.reveal, path)
                 }
                 onWheel: function(w) { w.accepted = true }
             }

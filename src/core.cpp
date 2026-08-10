@@ -13,6 +13,8 @@
 #include <QDateTime>
 #include <QProcess>
 #include <QDesktopServices>
+#include <QPointer>
+#include <QThreadPool>
 #include "bottom_track.h"
 #include "tile_provider_ids.h"
 #include "notifications.h"
@@ -1050,17 +1052,21 @@ void Core::revealInFolder(const QString& path)
     Q_UNUSED(absPath)
     Q_UNUSED(dir)
 #elif defined(Q_OS_WIN)
-    const QString native = QDir::toNativeSeparators(absPath);
-    const HRESULT coInit = ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-    PIDLIST_ABSOLUTE pidl = nullptr;
-    if (SUCCEEDED(::SHParseDisplayName(reinterpret_cast<PCWSTR>(native.utf16()), nullptr, &pidl, 0, nullptr)) && pidl) {
-        ::SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0);
-        ::CoTaskMemFree(pidl);
-    } else {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(dir));
-    }
-    if (coInit == S_OK || coInit == S_FALSE)
-        ::CoUninitialize();
+    QPointer<Core> self(this);
+    QThreadPool::globalInstance()->start([self, absPath, dir]() {
+        const QString native = QDir::toNativeSeparators(absPath);
+        const HRESULT coInit = ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+        bool shown = false;
+        PIDLIST_ABSOLUTE pidl = nullptr;
+        if (SUCCEEDED(::SHParseDisplayName(reinterpret_cast<PCWSTR>(native.utf16()), nullptr, &pidl, 0, nullptr)) && pidl) {
+            shown = SUCCEEDED(::SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0));
+            ::CoTaskMemFree(pidl);
+        }
+        if (coInit == S_OK || coInit == S_FALSE)
+            ::CoUninitialize();
+        if (!shown && self)
+            QMetaObject::invokeMethod(self.data(), [dir]() { QDesktopServices::openUrl(QUrl::fromLocalFile(dir)); }, Qt::QueuedConnection);
+    });
 #elif defined(Q_OS_LINUX)
     const QString uri = QUrl::fromLocalFile(absPath).toString();
     const bool shown = QProcess::startDetached(QStringLiteral("dbus-send"), {
