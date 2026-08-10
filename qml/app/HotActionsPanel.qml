@@ -754,9 +754,17 @@ Item {
         height: root.controlHeight
 
         activeFocusOnTab: true
-        Keys.onReturnPressed: pill.opened ? pill.close() : pill.open()
-        Keys.onEnterPressed:  pill.opened ? pill.close() : pill.open()
-        Keys.onSpacePressed:  pill.opened ? pill.close() : pill.open()
+        Keys.onReturnPressed: logBadge.toggleRecording()
+        Keys.onEnterPressed:  logBadge.toggleRecording()
+        Keys.onSpacePressed:  logBadge.toggleRecording()
+        Keys.onDownPressed:   pill.opened ? pill.close() : pill.open()
+
+        readonly property int _holdMs: 500
+
+        function toggleRecording() {
+            if (root.store)
+                root.store.setRecording(!logBadge._active)
+        }
 
         readonly property bool _active: root._loggingActive
         readonly property bool _klf: typeof core !== "undefined" && core && core.loggingKlf
@@ -784,6 +792,32 @@ Item {
             Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
             Behavior on border.color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
             Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        }
+
+        Rectangle {
+            id: holdRing
+            anchors.fill: parent
+            radius: width / 2
+            scale: logBadge._hoverScale
+            color: "transparent"
+            border.width: Math.max(2, Math.round(2 * root._s))
+            border.color: AppPalette.accentBorder
+            opacity: 0
+
+            NumberAnimation {
+                id: holdRingAnim
+                target: holdRing
+                property: "opacity"
+                from: 0
+                to: 0.9
+                duration: logBadge._holdMs
+                easing.type: Easing.InQuad
+            }
+
+            function reset() {
+                holdRingAnim.stop()
+                holdRing.opacity = 0
+            }
         }
 
         Column {
@@ -852,13 +886,30 @@ Item {
             enabled: logBadge.visible
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onPressed: logFocusRing.suppress()
-            onClicked: { logBadge.forceActiveFocus(); pill.opened ? pill.close() : pill.open() }
+            pressAndHoldInterval: logBadge._holdMs
+            onPressed: { logFocusRing.suppress(); holdRingAnim.restart() }
+            onReleased: holdRing.reset()
+            onCanceled: holdRing.reset()
+            onPressAndHold: {
+                holdRing.reset()
+                logBadge.forceActiveFocus()
+                pill.opened ? pill.close() : pill.open()
+            }
+            onClicked: function(mouse) {
+                logBadge.forceActiveFocus()
+                if (mouse.wasHeld)
+                    return
+                logBadge.toggleRecording()
+            }
         }
 
         KFocusRing { id: logFocusRing; target: badgeCircle; focusItem: logBadge }
 
-        KToolTip { text: logBadge._active ? qsTr("Recording") : qsTr("Start recording"); shown: badgeMa.containsMouse && !pill.opened }
+        KToolTip {
+            text: (logBadge._active ? qsTr("Stop recording") : qsTr("Start recording"))
+                  + " · " + qsTr("hold for options")
+            shown: badgeMa.containsMouse && !pill.opened
+        }
 
         readonly property bool _highlighted: root.highlightedQuickActionKey === "logging"
 
@@ -987,10 +1038,55 @@ Item {
                         font.pixelSize: Math.round(10 * root._s); font.bold: true
                     }
 
-                    MouseArea {
+                    Rectangle {
+                        id: pillHeadHoldRing
                         anchors.fill: parent
+                        radius: width / 2
+                        color: "transparent"
+                        border.width: Math.max(2, Math.round(2 * root._s))
+                        border.color: AppPalette.accentBorder
+                        opacity: 0
+
+                        NumberAnimation {
+                            id: pillHeadHoldAnim
+                            target: pillHeadHoldRing
+                            property: "opacity"
+                            from: 0
+                            to: 0.9
+                            duration: logBadge._holdMs
+                            easing.type: Easing.InQuad
+                        }
+
+                        function reset() {
+                            pillHeadHoldAnim.stop()
+                            pillHeadHoldRing.opacity = 0
+                        }
+                    }
+
+                    MouseArea {
+                        id: pillHeadMa
+                        anchors.fill: parent
+                        hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: pill.close()
+                        pressAndHoldInterval: logBadge._holdMs
+                        onPressed: pillHeadHoldAnim.restart()
+                        onReleased: pillHeadHoldRing.reset()
+                        onCanceled: pillHeadHoldRing.reset()
+                        onPressAndHold: {
+                            pillHeadHoldRing.reset()
+                            pill.close()
+                        }
+                        onClicked: function(mouse) {
+                            if (mouse.wasHeld)
+                                return
+                            logBadge.toggleRecording()
+                        }
+                    }
+
+                    KToolTip {
+                        text: (logBadge._active ? qsTr("Stop recording") : qsTr("Start recording"))
+                              + " · " + qsTr("hold to collapse")
+                        shown: pillHeadMa.containsMouse
                     }
                 }
 
