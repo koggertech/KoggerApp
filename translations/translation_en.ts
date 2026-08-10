@@ -2496,6 +2496,22 @@
         <translation>Stop recording</translation>
     </message>
     <message>
+        <source>Start recording · hold for options</source>
+        <translation>Start recording · hold for options</translation>
+    </message>
+    <message>
+        <source>Stop recording · hold for options</source>
+        <translation>Stop recording · hold for options</translation>
+    </message>
+    <message>
+        <source>Start recording · hold to collapse</source>
+        <translation>Start recording · hold to collapse</translation>
+    </message>
+    <message>
+        <source>Stop recording · hold to collapse</source>
+        <translation>Stop recording · hold to collapse</translation>
+    </message>
+    <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="827"/>
         <source>Recording settings</source>
         <translation>Recording settings</translation>

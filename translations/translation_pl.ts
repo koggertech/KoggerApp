@@ -3309,6 +3309,22 @@
         <translation>Zatrzymaj nagrywanie</translation>
     </message>
     <message>
+        <source>Start recording · hold for options</source>
+        <translation>Rozpocznij nagrywanie · przytrzymaj, aby zobaczyć opcje</translation>
+    </message>
+    <message>
+        <source>Stop recording · hold for options</source>
+        <translation>Zatrzymaj nagrywanie · przytrzymaj, aby zobaczyć opcje</translation>
+    </message>
+    <message>
+        <source>Start recording · hold to collapse</source>
+        <translation>Rozpocznij nagrywanie · przytrzymaj, aby zwinąć</translation>
+    </message>
+    <message>
+        <source>Stop recording · hold to collapse</source>
+        <translation>Zatrzymaj nagrywanie · przytrzymaj, aby zwinąć</translation>
+    </message>
+    <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="827"/>
         <source>Recording settings</source>
         <translation>Ustawienia nagrywania</translation>

@@ -906,8 +906,8 @@ Item {
         KFocusRing { id: logFocusRing; target: badgeCircle; focusItem: logBadge }
 
         KToolTip {
-            text: (logBadge._active ? qsTr("Stop recording") : qsTr("Start recording"))
-                  + " · " + qsTr("hold for options")
+            text: logBadge._active ? qsTr("Stop recording · hold for options")
+                                   : qsTr("Start recording · hold for options")
             shown: badgeMa.containsMouse && !pill.opened
         }
 
@@ -1084,8 +1084,8 @@ Item {
                     }
 
                     KToolTip {
-                        text: (logBadge._active ? qsTr("Stop recording") : qsTr("Start recording"))
-                              + " · " + qsTr("hold to collapse")
+                        text: logBadge._active ? qsTr("Stop recording · hold to collapse")
+                                               : qsTr("Start recording · hold to collapse")
                         shown: pillHeadMa.containsMouse
                     }
                 }

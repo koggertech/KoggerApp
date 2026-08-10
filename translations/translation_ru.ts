@@ -3305,6 +3305,22 @@
         <translation>Остановить запись</translation>
     </message>
     <message>
+        <source>Start recording · hold for options</source>
+        <translation>Начать запись · удерживайте для опций</translation>
+    </message>
+    <message>
+        <source>Stop recording · hold for options</source>
+        <translation>Остановить запись · удерживайте для опций</translation>
+    </message>
+    <message>
+        <source>Start recording · hold to collapse</source>
+        <translation>Начать запись · удерживайте, чтобы свернуть</translation>
+    </message>
+    <message>
+        <source>Stop recording · hold to collapse</source>
+        <translation>Остановить запись · удерживайте, чтобы свернуть</translation>
+    </message>
+    <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="827"/>
         <source>Recording settings</source>
         <translation>Настройки записи</translation>
