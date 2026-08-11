@@ -60,6 +60,7 @@ public slots:
 
     Q_INVOKABLE int  linkState(const QString& uuidStr) const; // -1 absent, 0 closed, 1 ok, 2 idle, 3 unavailable
     Q_INVOKABLE void reopenLink(const QString& uuidStr);
+    Q_INVOKABLE void updateBaudrateFor(const QString& uuidStr, int baudrate); // callers holding a uuid string (topology meta), not a model QUuid
     Q_INVOKABLE QStringList pinnedUuids() const; // uuids of pinned links present in the model
     Q_INVOKABLE QStringList serialUuids() const; // uuids of serial links present in the model
 

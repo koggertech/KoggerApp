@@ -251,6 +251,15 @@ void LinkManagerWrapper::updateBaudrate(QUuid uuid, int baudrate)
     emit sendUpdateBaudrate(uuid, baudrate);
 }
 
+void LinkManagerWrapper::updateBaudrateFor(const QString& uuidStr, int baudrate)
+{
+    const QUuid uuid(uuidStr);
+    if (uuid.isNull() || !model_.containsUuid(uuid))
+        return;
+
+    emit sendUpdateBaudrate(uuid, baudrate);
+}
+
 void LinkManagerWrapper::setRequestToSend(QUuid uuid, bool rts) {
     emit sendSetRequestToSend(uuid, rts);
 }

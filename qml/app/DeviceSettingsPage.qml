@@ -111,6 +111,25 @@ Column {
     readonly property bool _hasCut: _isBasicSonar || _isRecorder
     property bool _engExpanded: false
 
+    function _linkUuidOfDev() {
+        if (!dev || typeof deviceTopology === "undefined" || !deviceTopology)
+            return ""
+        var groups = deviceTopology.groups || []
+        for (var gi = 0; gi < groups.length; ++gi) {
+            var members = groups[gi].members || []
+            for (var mi = 0; mi < members.length; ++mi)
+                if (members[mi].device === dev)
+                    return groups[gi].linkUuid || ""
+        }
+        return ""
+    }
+
+    function _applyLinkBaudrate(uuid, baudrate) {
+        if (typeof linkManagerWrapper === "undefined" || !linkManagerWrapper)
+            return
+        linkManagerWrapper.updateBaudrateFor(uuid, baudrate)
+    }
+
     readonly property var _warnings: {
         var w = []
         if (!dev || !_isBasicSonar) return w
@@ -215,6 +234,19 @@ Column {
         dangerBg: AppPalette.controlRaised
         dangerHoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
         borderWidth: danger ? Math.max(1, Math.round(1.5 * AppPalette.scale)) : Tokens.cardBorderWidth
+    }
+
+    component FlashButton: DevButton {
+        height: Tokens.controlHMd
+        fontPixelSize: Tokens.fontMd
+        text: qsTr("Flash settings")
+        toolTipText: qsTr("Write current settings to device memory")
+        onClicked: {
+            if (!root.dev)
+                return
+            root.dev.flashSettings()
+            notifications.info(qsTr("Settings written to device: %1").arg(root.dev.devName))
+        }
     }
 
     component B2Card: Rectangle {
@@ -1152,6 +1184,11 @@ Column {
         }
     }
 
+    B2Card {
+        visible: root._hasCut
+        FlashButton { width: parent.width }
+    }
+
     // ── Advanced settings ("Расширенные настройки") ────────────────────────
     Rectangle {
         id: advancedPanel
@@ -1462,12 +1499,7 @@ Column {
         Row {
             width: parent.width; spacing: Tokens.spaceSm
             readonly property real bw: (width - 2 * Tokens.spaceSm) / 3
-            DevButton {
-                width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                text: qsTr("Flash settings")
-                toolTipText: qsTr("Write current settings to device memory")
-                onClicked: { if (dev) { dev.flashSettings(); notifications.info(qsTr("Settings written to device: %1").arg(dev.devName)) } }
-            }
+            FlashButton { width: parent.bw }
             DevButton {
                 width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
                 text: qsTr("Erase settings"); danger: true
@@ -1481,6 +1513,7 @@ Column {
                 onClicked: { if (dev) { dev.reboot(); notifications.info(qsTr("Reboot command sent: %1").arg(dev.devName)) } }
             }
         }
+
         Row {
             width: parent.width; spacing: Tokens.spaceSm
             readonly property real setW: Math.round(120 * AppPalette.scale)
@@ -1496,11 +1529,14 @@ Column {
                 text: qsTr("Set baudrate")
                 toolTipText: qsTr("Apply the selected baud rate")
                 onClicked: {
-                    if (dev) {
-                        var b = devActionsGroup.baudrateOptions[baudrateCombo.currentIndex]
-                        dev.baudrate = b
-                        notifications.info(qsTr("Baudrate set: %1").arg(b))
-                    }
+                    if (!dev)
+                        return
+                    var b = devActionsGroup.baudrateOptions[baudrateCombo.currentIndex]
+                    var uuid = root._linkUuidOfDev()
+                    dev.baudrate = b
+                    notifications.info(qsTr("Baudrate set: %1").arg(b))
+                    if (uuid.length > 0)
+                        Qt.callLater(root._applyLinkBaudrate, uuid, b)
                 }
             }
         }

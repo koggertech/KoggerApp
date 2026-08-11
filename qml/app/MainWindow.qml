@@ -384,10 +384,6 @@ ApplicationWindow {
         return handled
     }
 
-    // Esc peels one layer; the input lock has to leave nothing open behind it.
-    // Runs the whole chain repeatedly because closing one layer can expose the
-    // next (a settings drill-in unwinds to the panel, which then closes too).
-    // Bounded by the layer count so a closer that reopens something cannot spin.
     function closeAllTransientUi() {
         if (_closingTransientUi)
             return
@@ -628,8 +624,6 @@ ApplicationWindow {
     }
 
     function handleHotkeyKeyEvent(event) {
-        // Input lock is a hard gate. The unlock key is handled before this, in
-        // mainLayer's own Keys handlers, and never reaches the scancode table.
         if (workspaceStore.inputLocked)
             return false
 
@@ -637,9 +631,6 @@ ApplicationWindow {
         if (event && event.key === Qt.Key_Escape)
             return false
 
-        // The scancode table has no modifier column — every entry is a bare
-        // key — so a chorded press must not resolve through it. Ctrl+L would
-        // otherwise fire scanCode 38 = "mosaicHighLevelDown" like a plain L.
         if (event && (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
             return false
 
@@ -722,9 +713,6 @@ ApplicationWindow {
 
         Component.onCompleted: forceActiveFocus()
 
-        // Input-lock key. Same split as the badge: a tap locks, a hold of
-        // inputLockHoldTimer.interval unlocks. That needs press AND release,
-        // which Shortcut does not expose — hence the raw Keys handlers.
         readonly property int inputLockKey: Qt.Key_F8
         property bool inputLockHoldConsumed: false
         property bool inputLockKeyDown: false
@@ -847,13 +835,7 @@ ApplicationWindow {
             function onInputLockedChanged() {
                 if (workspaceStore.inputLocked)
                     root.closeAllTransientUi()
-                // A release that never arrives (focus lost mid-hold) would leave
-                // the key latched down and replay the hold animation next time.
                 mainLayer.inputLockKeyDown = false
-                // The control that toggled the lock took active focus on click
-                // and is then hidden by the collapse, which drops active focus
-                // entirely — mainLayer's Keys handlers, and with them the F8
-                // path, would never fire again. Claim it back on both edges.
                 mainLayer.forceActiveFocus()
             }
         }
@@ -1363,9 +1345,6 @@ ApplicationWindow {
             hoverEnabled: true
             preventStealing: true
             propagateComposedEvents: false
-            // cursorShape is deliberately left unassigned: an unset shape lets
-            // the item underneath keep its own cursor, any assignment (even
-            // ArrowCursor) would override it.
             onPressed:       function(mouse) { mouse.accepted = true }
             onReleased:      function(mouse) { mouse.accepted = true }
             onClicked:       function(mouse) { mouse.accepted = true }

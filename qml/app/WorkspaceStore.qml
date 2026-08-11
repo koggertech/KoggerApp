@@ -107,13 +107,8 @@ property bool quickActionSecondWindowEnabled: true
 property bool quickActionPowerOffEnabled: false
 property bool quickActionInputLockEnabled: true
 
-// Deliberately NOT persisted: a lock that survives a restart turns any bug in
-// the unlock gesture into an unusable app.
 property bool inputLocked: false
 
-// Popups live in the window overlay layer, above any z inside contentItem —
-// the swallower cannot cover one that is already open, so they are dismissed
-// as the lock goes on.
 function setInputLocked(on) {
     inputLocked = !!on
     if (inputLocked && typeof core !== "undefined" && core)

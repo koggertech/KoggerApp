@@ -112,8 +112,6 @@ Item {
 
     property bool inputLocked: false
     property bool inputLockEnabled: true
-    // Driven by MainWindow's F8 press/release so the badge shows the same hold
-    // feedback for the key as it does for a pointer.
     property bool inputLockKeyHeld: false
     readonly property bool _inputLockRevealOverride: _revealActiveKey === "inputLock"
     readonly property bool _showInputLock: inputLockEnabled || _inputLockRevealOverride
@@ -806,9 +804,6 @@ Item {
                           : "transparent"
             Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
             Behavior on border.color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
-            // Off while the hold ramp drives holdScale: otherwise every tick of
-            // that 500 ms animation is re-smoothed by a 120 ms Behavior and the
-            // swell lags the ring. Back on for the snap to 1.0 on release.
             Behavior on scale { enabled: !holdRingAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         }
 
@@ -1218,8 +1213,6 @@ Item {
         readonly property bool _highlighted: root.highlightedQuickActionKey === "inputLock"
         property bool _holdHandled: false
 
-        // Hold feedback is driven by state, not by the input event, so mouse,
-        // finger and the F8 key all produce the same ring + swell.
         property bool pointerHold: false
         property real holdScale: 1.0
         readonly property bool holdActive: lockBadge._locked
@@ -1259,14 +1252,9 @@ Item {
             border.width: lockBadge._locked || lockBadge._dragHold ? 1 : 0
             border.color: AppPalette.accentBorder
             Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
-            // Off while lockHoldAnim drives holdScale — a 120 ms Behavior
-            // re-smoothing every tick of the 500 ms ramp makes the swell lag
-            // the ring. Back on for the snap to 1.0 when the hold ends.
             Behavior on scale { enabled: !lockHoldAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         }
 
-        // Sits on top of the accent fill the locked state paints, so the ring
-        // is white — an accent-coloured ring is invisible against it.
         Rectangle {
             id: lockHoldRing
             anchors.fill: parent
@@ -1306,8 +1294,6 @@ Item {
             scale: lockBadge._hoverScale
             Behavior on scale { enabled: !lockHoldAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
-            // The tabler SVGs are stroke="currentColor" — untinted they render
-            // black. Same Image + ColorOverlay pair as KCircleIconButton.
             Image {
                 id: lockIcon
                 anchors.fill: parent
@@ -1869,12 +1855,6 @@ Item {
         }
     }
 
-    // Input lock, in two parts. Gating each control's `enabled` or its handler
-    // was wrong twice over: writing `enabled` into a KCircleIconButton repaints
-    // it as disabled, and gating the handler leaves hover and press animations
-    // alive, so a dead button still reads as working. One blocker above the
-    // whole panel kills pointer AND hover for everything in one place; the
-    // badge is floated above the blocker instead of living inside the row.
     MouseArea {
         id: panelInputBlocker
         anchors.fill: parent
@@ -1959,8 +1939,6 @@ Item {
             NumberAnimation { duration: 170; easing.type: Easing.OutCubic }
         }
 
-        // Placeholder only — it reserves the leading slot so the devices shift
-        // right; the live badge is `lockedBadge`, floated above the blocker.
         Item {
             width: visible ? root.controlHeight : 0
             height: root.controlHeight

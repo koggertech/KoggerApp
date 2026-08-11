@@ -95,9 +95,6 @@ Item {
 
     FileOpeningOverlay { }
 
-    // The MainWindow swallower cannot reach a separate Window — the second
-    // window needs its own. No lock badge here: unlocking is done in the main
-    // window, by holding the badge or F8.
     MouseArea {
         anchors.fill: parent
         z: ZOrder.inputLockOverlay
