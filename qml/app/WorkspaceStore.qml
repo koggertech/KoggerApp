@@ -105,11 +105,27 @@ property bool quickActionWidgetsEnabled: true
 property bool quickActionConsoleEnabled: true
 property bool quickActionSecondWindowEnabled: true
 property bool quickActionPowerOffEnabled: false
+property bool quickActionInputLockEnabled: true
+
+// Deliberately NOT persisted: a lock that survives a restart turns any bug in
+// the unlock gesture into an unusable app.
+property bool inputLocked: false
+
+// Popups live in the window overlay layer, above any z inside contentItem —
+// the swallower cannot cover one that is already open, so they are dismissed
+// as the lock goes on.
+function setInputLocked(on) {
+    inputLocked = !!on
+    if (inputLocked && typeof core !== "undefined" && core)
+        core.requestDismissTransientUi()
+}
+
+function toggleInputLock() { setInputLocked(!inputLocked) }
 
 property string quickActionDraggingKey: ""
 
 readonly property var quickActionKeys: {
-    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "profiles"]
+    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "profiles", "inputLock"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
     if (Qt.platform.os === "linux" || (typeof manualTesting !== "undefined" && manualTesting === true))
@@ -125,6 +141,7 @@ property var quickActionOrderModel: ListModel {
     ListElement { key: "console" }
     ListElement { key: "bottomTrack" }
     ListElement { key: "profiles" }
+    ListElement { key: "inputLock" }
     ListElement { key: "secondWindow" }
     ListElement { key: "powerOff" }
 }
@@ -144,6 +161,8 @@ function normalizeQuickActionOrder(list) {
                 out.splice(out.indexOf("connections") + 1, 0, "logging")   // keep logging right after devices
             else if (quickActionKeys[j] === "console" && out.indexOf("widgets") !== -1)
                 out.splice(out.indexOf("widgets") + 1, 0, "console")   // keep console right after widgets
+            else if (quickActionKeys[j] === "inputLock" && out.indexOf("secondWindow") !== -1)
+                out.splice(out.indexOf("secondWindow"), 0, "inputLock") // keep the lock right before the second window
             else
                 out.push(quickActionKeys[j])
         }
@@ -1163,7 +1182,7 @@ property Settings layoutStore: Settings {
     property bool quickActionLoggingEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
-    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,widgets,console,profiles,secondWindow,powerOff"
+    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,widgets,console,profiles,inputLock,secondWindow,powerOff"
     property string rememberedLinksJson: "[]"
     property string selectedConnectionFilePathStored: ""
     property string layoutsJson: "[]"
@@ -1188,6 +1207,7 @@ property Settings layoutStore: Settings {
     property bool quickActionConsoleEnabledStored: true
     property bool quickActionSecondWindowEnabledStored: true
     property bool quickActionPowerOffEnabledStored: false
+    property bool quickActionInputLockEnabledStored: true
     property bool secondaryWindowOpenStored: false
     property string secondaryWindowModeStored: ""
     property string liveEchogramStatesJson: "{}"
@@ -3336,6 +3356,7 @@ function saveLayoutState() {
     layoutStore.quickActionConsoleEnabledStored = quickActionConsoleEnabled
     layoutStore.quickActionSecondWindowEnabledStored = quickActionSecondWindowEnabled
     layoutStore.quickActionPowerOffEnabledStored = quickActionPowerOffEnabled
+    layoutStore.quickActionInputLockEnabledStored = quickActionInputLockEnabled
     layoutStore.quickActionOrderStored = quickActionOrderCsv()
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
     layoutStore.secondaryWindowOpenStored = secondaryWindowOpen
@@ -3355,6 +3376,7 @@ function restoreLayoutState() {
     quickActionConsoleEnabled = layoutStore.quickActionConsoleEnabledStored
     quickActionSecondWindowEnabled = layoutStore.quickActionSecondWindowEnabledStored
     quickActionPowerOffEnabled = layoutStore.quickActionPowerOffEnabledStored
+    quickActionInputLockEnabled = layoutStore.quickActionInputLockEnabledStored
     applyQuickActionOrder((layoutStore.quickActionOrderStored || "").split(","))
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored

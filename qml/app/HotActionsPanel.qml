@@ -1,5 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
+import Qt5Compat.GraphicalEffects
 import kqml_types 1.0
 import "RecorderStatus.js" as RecorderStatus
 
@@ -107,6 +109,14 @@ Item {
     readonly property bool _secondWindowAvailable: Qt.platform.os !== "android" && Qt.platform.os !== "ios"
     readonly property bool _secondWindowRevealOverride: _revealActiveKey === "secondWindow"
     readonly property bool _showSecondWindow: _secondWindowAvailable && (secondWindowButtonEnabled || _secondWindowRevealOverride)
+
+    property bool inputLocked: false
+    property bool inputLockEnabled: true
+    // Driven by MainWindow's F8 press/release so the badge shows the same hold
+    // feedback for the key as it does for a pointer.
+    property bool inputLockKeyHeld: false
+    readonly property bool _inputLockRevealOverride: _revealActiveKey === "inputLock"
+    readonly property bool _showInputLock: inputLockEnabled || _inputLockRevealOverride
 
     property bool powerOffEnabled: false
     signal powerOffTriggered()
@@ -471,6 +481,8 @@ Item {
         }
     }
 
+    onInputLockedChanged: if (inputLocked) expanded = false
+
     onHasFavoriteLayoutsChanged: {
         if (!hasFavoriteLayouts)
             layoutsMenuOpen = false
@@ -769,7 +781,10 @@ Item {
         readonly property bool _active: root._loggingActive
         readonly property bool _klf: typeof core !== "undefined" && core && core.loggingKlf
         readonly property bool _csv: typeof core !== "undefined" && core && core.loggingCsv
-        readonly property real _hoverScale: badgeMa.pressed ? 0.97 : (badgeMa.containsMouse ? 1.035 : 1.0)
+        property real holdScale: 1.0
+        readonly property real _hoverScale: (badgeMa.pressed ? 0.97
+                                             : (badgeMa.containsMouse ? 1.035 : 1.0))
+                                            * logBadge.holdScale
         readonly property bool _dragHold: root.draggingKey === "logging"
 
         onVisibleChanged: if (!visible && pill.opened) pill.close()
@@ -791,7 +806,10 @@ Item {
                           : "transparent"
             Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
             Behavior on border.color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
-            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            // Off while the hold ramp drives holdScale: otherwise every tick of
+            // that 500 ms animation is re-smoothed by a 120 ms Behavior and the
+            // swell lags the ring. Back on for the snap to 1.0 on release.
+            Behavior on scale { enabled: !holdRingAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         }
 
         Rectangle {
@@ -804,19 +822,24 @@ Item {
             border.color: AppPalette.accentBorder
             opacity: 0
 
-            NumberAnimation {
+            ParallelAnimation {
                 id: holdRingAnim
-                target: holdRing
-                property: "opacity"
-                from: 0
-                to: 0.9
-                duration: logBadge._holdMs
-                easing.type: Easing.InQuad
+                NumberAnimation {
+                    target: holdRing; property: "opacity"
+                    from: 0; to: 0.9
+                    duration: logBadge._holdMs; easing.type: Easing.InQuad
+                }
+                NumberAnimation {
+                    target: logBadge; property: "holdScale"
+                    from: 1.0; to: 1.14
+                    duration: logBadge._holdMs; easing.type: Easing.InQuad
+                }
             }
 
             function reset() {
                 holdRingAnim.stop()
                 holdRing.opacity = 0
+                logBadge.holdScale = 1.0
             }
         }
 
@@ -825,7 +848,7 @@ Item {
             visible: logBadge._active
             scale: logBadge._hoverScale
             spacing: Math.round(1 * root._s)
-            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            Behavior on scale { enabled: !holdRingAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
             Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -877,7 +900,7 @@ Item {
             color: AppPalette.textSecond
             font.pixelSize: Math.round(10 * root._s)
             font.bold: true
-            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            Behavior on scale { enabled: !holdRingAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         }
 
         MouseArea {
@@ -987,6 +1010,7 @@ Item {
                 spacing: Math.round(5 * root._s)
 
                 Rectangle {
+                    id: pillHead
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: logBadge.width; height: width
                     radius: width / 2
@@ -1047,19 +1071,24 @@ Item {
                         border.color: AppPalette.accentBorder
                         opacity: 0
 
-                        NumberAnimation {
+                        ParallelAnimation {
                             id: pillHeadHoldAnim
-                            target: pillHeadHoldRing
-                            property: "opacity"
-                            from: 0
-                            to: 0.9
-                            duration: logBadge._holdMs
-                            easing.type: Easing.InQuad
+                            NumberAnimation {
+                                target: pillHeadHoldRing; property: "opacity"
+                                from: 0; to: 0.9
+                                duration: logBadge._holdMs; easing.type: Easing.InQuad
+                            }
+                            NumberAnimation {
+                                target: pillHead; property: "scale"
+                                from: 1.0; to: 1.14
+                                duration: logBadge._holdMs; easing.type: Easing.InQuad
+                            }
                         }
 
                         function reset() {
                             pillHeadHoldAnim.stop()
                             pillHeadHoldRing.opacity = 0
+                            pillHead.scale = 1.0
                         }
                     }
 
@@ -1170,6 +1199,200 @@ Item {
                     KToolTip { text: qsTr("Recording settings"); shown: gearMa.containsMouse }
                 }
             }
+        }
+    }
+
+    component InputLockBadge: Item {
+        id: lockBadge
+        width: root.controlHeight
+        height: root.controlHeight
+
+        activeFocusOnTab: true
+        Keys.onReturnPressed: lockBadge.lock()
+        Keys.onEnterPressed:  lockBadge.lock()
+        Keys.onSpacePressed:  lockBadge.lock()
+
+        readonly property int _holdMs: 500
+        readonly property bool _locked: root.inputLocked
+        readonly property bool _dragHold: root.draggingKey === "inputLock"
+        readonly property bool _highlighted: root.highlightedQuickActionKey === "inputLock"
+        property bool _holdHandled: false
+
+        // Hold feedback is driven by state, not by the input event, so mouse,
+        // finger and the F8 key all produce the same ring + swell.
+        property bool pointerHold: false
+        property real holdScale: 1.0
+        readonly property bool holdActive: lockBadge._locked
+                                           && (lockBadge.pointerHold || root.inputLockKeyHeld)
+
+        readonly property real _hoverScale: (lockBadge.holdActive ? 1.0
+                                             : (lockMa.pressed ? 0.97
+                                                : (lockMa.containsMouse ? 1.035 : 1.0)))
+                                            * lockBadge.holdScale
+
+        onHoldActiveChanged: {
+            if (lockBadge.holdActive)
+                lockHoldAnim.restart()
+            else
+                lockBadge.resetHold()
+        }
+
+        function resetHold() {
+            lockHoldAnim.stop()
+            lockHintAnim.stop()
+            lockHoldRing.opacity = 0
+            lockBadge.holdScale = 1.0
+        }
+
+        function lock() {
+            if (root.store && !lockBadge._locked)
+                root.store.setInputLocked(true)
+        }
+
+        Rectangle {
+            id: lockCircle
+            anchors.fill: parent
+            radius: width / 2
+            scale: lockBadge._hoverScale
+            color: lockBadge._locked || lockBadge._dragHold ? AppPalette.accentBgStrong
+                   : (lockMa.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
+            border.width: lockBadge._locked || lockBadge._dragHold ? 1 : 0
+            border.color: AppPalette.accentBorder
+            Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+            // Off while lockHoldAnim drives holdScale — a 120 ms Behavior
+            // re-smoothing every tick of the 500 ms ramp makes the swell lag
+            // the ring. Back on for the snap to 1.0 when the hold ends.
+            Behavior on scale { enabled: !lockHoldAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        }
+
+        // Sits on top of the accent fill the locked state paints, so the ring
+        // is white — an accent-coloured ring is invisible against it.
+        Rectangle {
+            id: lockHoldRing
+            anchors.fill: parent
+            radius: width / 2
+            scale: lockBadge._hoverScale
+            color: "transparent"
+            border.width: Math.max(2, Math.round(2.5 * root._s))
+            border.color: "#FFFFFF"
+            opacity: 0
+            z: 5
+
+            ParallelAnimation {
+                id: lockHoldAnim
+                NumberAnimation {
+                    target: lockHoldRing; property: "opacity"
+                    from: 0; to: 0.9
+                    duration: lockBadge._holdMs; easing.type: Easing.InQuad
+                }
+                NumberAnimation {
+                    target: lockBadge; property: "holdScale"
+                    from: 1.0; to: 1.14
+                    duration: lockBadge._holdMs; easing.type: Easing.InQuad
+                }
+            }
+
+            SequentialAnimation {
+                id: lockHintAnim
+                NumberAnimation { target: lockHoldRing; property: "opacity"; to: 0.9; duration: 90;  easing.type: Easing.OutCubic }
+                NumberAnimation { target: lockHoldRing; property: "opacity"; to: 0.0; duration: 260; easing.type: Easing.OutCubic }
+            }
+        }
+
+        Item {
+            anchors.centerIn: parent
+            width: Math.round(lockBadge.width * 0.52)
+            height: width
+            scale: lockBadge._hoverScale
+            Behavior on scale { enabled: !lockHoldAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+
+            // The tabler SVGs are stroke="currentColor" — untinted they render
+            // black. Same Image + ColorOverlay pair as KCircleIconButton.
+            Image {
+                id: lockIcon
+                anchors.fill: parent
+                source: lockBadge._locked ? "qrc:/icons/ui/lock.svg" : "qrc:/icons/ui/lock-open.svg"
+                sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                fillMode: Image.PreserveAspectFit
+                visible: false
+                layer.enabled: true
+                layer.smooth: true
+            }
+
+            ColorOverlay {
+                anchors.fill: lockIcon
+                source: lockIcon
+                color: AppPalette.text
+                smooth: true
+                cached: true
+            }
+        }
+
+        MouseArea {
+            id: lockMa
+            anchors.fill: parent
+            enabled: lockBadge.visible
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            pressAndHoldInterval: lockBadge._holdMs
+            onPressed: {
+                lockFocusRing.suppress()
+                lockBadge._holdHandled = false
+                lockBadge.pointerHold = true
+            }
+            onReleased: lockBadge.pointerHold = false
+            onCanceled: lockBadge.pointerHold = false
+            onPressAndHold: {
+                if (!lockBadge._locked)
+                    return
+                lockBadge._holdHandled = true
+                lockBadge.forceActiveFocus()
+                if (root.store)
+                    root.store.setInputLocked(false)
+            }
+            onClicked: {
+                lockBadge.forceActiveFocus()
+                if (lockBadge._holdHandled)
+                    return
+                if (lockBadge._locked) {
+                    lockHintAnim.restart()
+                    return
+                }
+                lockBadge.lock()
+            }
+        }
+
+        KFocusRing { id: lockFocusRing; target: lockCircle; focusItem: lockBadge }
+
+        KToolTip {
+            text: lockBadge._locked ? qsTr("Input locked · hold to unlock")
+                                    : qsTr("Lock input")
+            shown: lockMa.containsMouse
+        }
+
+        Rectangle {
+            id: lockPulse
+            anchors.fill: parent
+            radius: width / 2
+            color: "transparent"
+            border.width: Math.max(2, Math.round(2 * root._s))
+            border.color: AppPalette.accentBorder
+            opacity: 0
+            visible: lockBadge._highlighted
+            z: 10
+        }
+
+        SequentialAnimation {
+            id: lockPulseAnim
+            NumberAnimation { target: lockPulse; property: "opacity"; to: 0.95; duration: 90;  easing.type: Easing.OutCubic }
+            NumberAnimation { target: lockPulse; property: "opacity"; to: 0.30; duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { target: lockPulse; property: "opacity"; to: 0.0;  duration: 280; easing.type: Easing.OutCubic }
+        }
+
+        Connections {
+            target: root
+            function onHighlightPulseTokenChanged() { if (lockBadge._highlighted) lockPulseAnim.restart() }
         }
     }
 
@@ -1419,6 +1642,11 @@ Item {
     }
 
     Component {
+        id: qaInputLockComp
+        InputLockBadge {}
+    }
+
+    Component {
         id: qaSecondWindowComp
         KCircleIconButton {
             width: root.controlHeight
@@ -1641,6 +1869,38 @@ Item {
         }
     }
 
+    // Input lock, in two parts. Gating each control's `enabled` or its handler
+    // was wrong twice over: writing `enabled` into a KCircleIconButton repaints
+    // it as disabled, and gating the handler leaves hover and press animations
+    // alive, so a dead button still reads as working. One blocker above the
+    // whole panel kills pointer AND hover for everything in one place; the
+    // badge is floated above the blocker instead of living inside the row.
+    MouseArea {
+        id: panelInputBlocker
+        anchors.fill: parent
+        z: 99
+        visible: root.inputLocked
+        enabled: visible
+        acceptedButtons: Qt.AllButtons
+        hoverEnabled: true
+        preventStealing: true
+        propagateComposedEvents: false
+        onPressed:       function(mouse) { mouse.accepted = true }
+        onReleased:      function(mouse) { mouse.accepted = true }
+        onClicked:       function(mouse) { mouse.accepted = true }
+        onDoubleClicked: function(mouse) { mouse.accepted = true }
+        onPressAndHold:  function(mouse) { mouse.accepted = true }
+        onWheel:         function(wheel) { wheel.accepted = true }
+    }
+
+    InputLockBadge {
+        id: lockedBadge
+        x: collapsedDeviceRow.x
+        y: collapsedDeviceRow.y
+        z: 100
+        visible: root.inputLocked
+    }
+
     Item {
         id: inputDeviceBadge
         anchors.left: parent.left
@@ -1691,11 +1951,20 @@ Item {
         anchors.leftMargin: root.panelPaddingX + 2 * root.toggleButtonSize + 2 * Math.round(8 * root._s)
         anchors.verticalCenter: toggleButton.verticalCenter
         spacing: root.quickActionSpacing
-        visible: root.showToggleButton && !root.expanded && (root.connectionStatusToolVisible || root._loggingBadgeVisibleCollapsed)
+        visible: root.showToggleButton && !root.expanded
+                 && (root.connectionStatusToolVisible || root._loggingBadgeVisibleCollapsed || root.inputLocked)
         opacity: visible ? 1 : 0
 
         Behavior on opacity {
             NumberAnimation { duration: 170; easing.type: Easing.OutCubic }
+        }
+
+        // Placeholder only — it reserves the leading slot so the devices shift
+        // right; the live badge is `lockedBadge`, floated above the blocker.
+        Item {
+            width: visible ? root.controlHeight : 0
+            height: root.controlHeight
+            visible: root.inputLocked
         }
 
         Repeater {
@@ -1793,6 +2062,7 @@ Item {
                            : key === "widgets"     ? root.showWidgets
                            : key === "console"      ? root.showConsole
                            : key === "profiles"     ? root.showProfiles
+                           : key === "inputLock"    ? root._showInputLock
                            : key === "secondWindow" ? root._showSecondWindow
                            : key === "powerOff"     ? root._showPowerOff
                            : false
@@ -1804,6 +2074,7 @@ Item {
                                    : key === "widgets"      ? qaWidgetsComp
                                    : key === "console"      ? qaConsoleComp
                                    : key === "profiles"     ? qaProfilesComp
+                                   : key === "inputLock"    ? qaInputLockComp
                                    : key === "secondWindow" ? qaSecondWindowComp
                                    : key === "powerOff"     ? qaPowerOffComp
                                    : null

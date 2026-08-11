@@ -384,6 +384,28 @@ ApplicationWindow {
         return handled
     }
 
+    // Esc peels one layer; the input lock has to leave nothing open behind it.
+    // Runs the whole chain repeatedly because closing one layer can expose the
+    // next (a settings drill-in unwinds to the panel, which then closes too).
+    // Bounded by the layer count so a closer that reopens something cannot spin.
+    function closeAllTransientUi() {
+        if (_closingTransientUi)
+            return
+        _closingTransientUi = true
+
+        for (var pass = 0; pass < _transientUiLayers.length; ++pass) {
+            var handled = false
+            for (var i = 0; i < _transientUiLayers.length; ++i) {
+                if (_transientUiLayers[i]())
+                    handled = true
+            }
+            if (!handled)
+                break
+        }
+
+        _closingTransientUi = false
+    }
+
     function toggleFullScreenMode() {
         if (root.isMobilePlatform)
             return false
@@ -398,6 +420,7 @@ ApplicationWindow {
     Shortcut {
         sequence: "F11"
         context: Qt.ApplicationShortcut
+        enabled: !workspaceStore.inputLocked
         onActivated: {
             if (root.lastActiveWindow === secondWindow && secondWindow.visible) {
                 secondWindow.visibility = secondWindow.visibility === Window.FullScreen
@@ -414,6 +437,7 @@ ApplicationWindow {
         sequence: "Esc"
         context: Qt.ApplicationShortcut
         autoRepeat: false
+        enabled: !workspaceStore.inputLocked
         onActivated: {
             if (root.isTextInputFocused())
                 return
@@ -439,6 +463,7 @@ ApplicationWindow {
                                              && (workspaceStore.settingsPanelOpen
                                                  || consoleDrawer.consoleOpen)
                                              && !workspaceStore.activeHotkeysDialog
+                                             && !workspaceStore.inputLocked
                                              && !root._textInputFocused
 
     // "settings" | "console" — the surface most recently opened or clicked into.
@@ -603,8 +628,19 @@ ApplicationWindow {
     }
 
     function handleHotkeyKeyEvent(event) {
+        // Input lock is a hard gate. The unlock key is handled before this, in
+        // mainLayer's own Keys handlers, and never reaches the scancode table.
+        if (workspaceStore.inputLocked)
+            return false
+
         // Esc handled by ApplicationShortcut — skip legacy hotkey (scanCode 1 → "closeSettings").
         if (event && event.key === Qt.Key_Escape)
+            return false
+
+        // The scancode table has no modifier column — every entry is a bare
+        // key — so a chorded press must not resolve through it. Ctrl+L would
+        // otherwise fire scanCode 38 = "mosaicHighLevelDown" like a plain L.
+        if (event && (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
             return false
 
         var scanCode = event && typeof event.nativeScanCode === "number" && event.nativeScanCode > 0
@@ -686,7 +722,48 @@ ApplicationWindow {
 
         Component.onCompleted: forceActiveFocus()
 
+        // Input-lock key. Same split as the badge: a tap locks, a hold of
+        // inputLockHoldTimer.interval unlocks. That needs press AND release,
+        // which Shortcut does not expose — hence the raw Keys handlers.
+        readonly property int inputLockKey: Qt.Key_F8
+        property bool inputLockHoldConsumed: false
+        property bool inputLockKeyDown: false
+
+        Timer {
+            id: inputLockHoldTimer
+            interval: 500
+            repeat: false
+            onTriggered: {
+                if (!workspaceStore.inputLocked)
+                    return
+                workspaceStore.setInputLocked(false)
+                mainLayer.inputLockHoldConsumed = true
+            }
+        }
+
+        Keys.onPressed: function(event) {
+            if (event.key !== mainLayer.inputLockKey)
+                return
+            if (!event.isAutoRepeat) {
+                mainLayer.inputLockHoldConsumed = false
+                mainLayer.inputLockKeyDown = true
+                inputLockHoldTimer.restart()
+            }
+            event.accepted = true
+        }
+
         Keys.onReleased: function(event) {
+            if (event.key === mainLayer.inputLockKey) {
+                if (!event.isAutoRepeat) {
+                    inputLockHoldTimer.stop()
+                    mainLayer.inputLockKeyDown = false
+                    if (!mainLayer.inputLockHoldConsumed && !workspaceStore.inputLocked)
+                        workspaceStore.setInputLocked(true)
+                    mainLayer.inputLockHoldConsumed = false
+                }
+                event.accepted = true
+                return
+            }
             if (handleHotkeyKeyEvent(event)) {
                 event.accepted = true
             }
@@ -767,6 +844,18 @@ ApplicationWindow {
             function onActiveLeafIdChanged() {
                 if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
             }
+            function onInputLockedChanged() {
+                if (workspaceStore.inputLocked)
+                    root.closeAllTransientUi()
+                // A release that never arrives (focus lost mid-hold) would leave
+                // the key latched down and replay the hold animation next time.
+                mainLayer.inputLockKeyDown = false
+                // The control that toggled the lock took active focus on click
+                // and is then hidden by the collapse, which drops active focus
+                // entirely — mainLayer's Keys handlers, and with them the F8
+                // path, would never fire again. Claim it back on both edges.
+                mainLayer.forceActiveFocus()
+            }
         }
 
         MouseArea {
@@ -791,6 +880,7 @@ ApplicationWindow {
                      || hotkeysPreviewMode
                      || hotkeysPreviewPinned
                      || hotkeysPreviewSticky
+                     || workspaceStore.inputLocked
 
             anchors.left: parent.left
             anchors.top: parent.top
@@ -798,7 +888,9 @@ ApplicationWindow {
                                 ? Math.round(workspaceStore.settingsPanelSizePx * settingsSidebar.progress) + root.hotkeysPreviewGap
                                 : 8
             anchors.topMargin: 8
-            z: hotkeysPreviewMode || hotkeysPreviewSticky || (workspaceStore.settingsPanelOpen && hotActions.expanded)
+            z: workspaceStore.inputLocked
+               ? ZOrder.inputLockPanel
+               : hotkeysPreviewMode || hotkeysPreviewSticky || (workspaceStore.settingsPanelOpen && hotActions.expanded)
                ? ZOrder.hotActionsActive
                : ZOrder.hotActions
 
@@ -814,6 +906,9 @@ ApplicationWindow {
             consoleButtonEnabled: workspaceStore.quickActionConsoleEnabled
             powerOffEnabled: workspaceStore.quickActionPowerOffEnabled
             onPowerOffTriggered: powerOffOverlay.active = true
+            inputLockEnabled: workspaceStore.quickActionInputLockEnabled
+            inputLocked: workspaceStore.inputLocked
+            inputLockKeyHeld: mainLayer.inputLockKeyDown
             inputDeviceLabel: workspaceView.inputDeviceLabel
             inputDeviceColor: workspaceView.inputDeviceColor
             showToggleButton: !workspaceStore.settingsPanelOpen && !workspaceStore.modeSettingsPanelOpen
@@ -1256,6 +1351,27 @@ ApplicationWindow {
         PowerOffConfirmOverlay {
             id: powerOffOverlay
             onConfirmed: if (typeof core !== "undefined" && core) core.powerOffSystem()
+        }
+
+        MouseArea {
+            id: inputLockSwallower
+            anchors.fill: parent
+            z: ZOrder.inputLockOverlay
+            visible: workspaceStore.inputLocked
+            enabled: visible
+            acceptedButtons: Qt.AllButtons
+            hoverEnabled: true
+            preventStealing: true
+            propagateComposedEvents: false
+            // cursorShape is deliberately left unassigned: an unset shape lets
+            // the item underneath keep its own cursor, any assignment (even
+            // ArrowCursor) would override it.
+            onPressed:       function(mouse) { mouse.accepted = true }
+            onReleased:      function(mouse) { mouse.accepted = true }
+            onClicked:       function(mouse) { mouse.accepted = true }
+            onDoubleClicked: function(mouse) { mouse.accepted = true }
+            onPressAndHold:  function(mouse) { mouse.accepted = true }
+            onWheel:         function(wheel) { wheel.accepted = true }
         }
 
         Rectangle {

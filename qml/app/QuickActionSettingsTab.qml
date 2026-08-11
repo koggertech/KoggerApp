@@ -22,6 +22,7 @@ Column {
              : key === "widgets"     ? qsTr("Widget panels")
              : key === "console"     ? qsTr("Console")
              : key === "profiles"    ? qsTr("Profiles")
+             : key === "inputLock"   ? qsTr("Lock input")
              : key === "secondWindow" ? qsTr("Second window")
              : key === "powerOff"    ? qsTr("Power off")
              : key
@@ -35,6 +36,7 @@ Column {
              : key === "widgets"     ? store.quickActionWidgetsEnabled
              : key === "console"     ? store.quickActionConsoleEnabled
              : key === "profiles"    ? store.quickActionProfilesEnabled
+             : key === "inputLock"   ? store.quickActionInputLockEnabled
              : key === "secondWindow" ? store.quickActionSecondWindowEnabled
              : key === "powerOff"    ? store.quickActionPowerOffEnabled
              : false
@@ -63,6 +65,9 @@ Column {
         } else if (key === "profiles") {
             store.quickActionProfilesEnabled = v
             store.requestHotkeysReveal("profiles")
+        } else if (key === "inputLock") {
+            store.quickActionInputLockEnabled = v
+            store.requestHotkeysReveal("inputLock")
         } else if (key === "secondWindow") {
             store.quickActionSecondWindowEnabled = v
             store.requestHotkeysReveal("secondWindow")

@@ -2496,6 +2496,14 @@
         <translation>Stop recording</translation>
     </message>
     <message>
+        <source>Lock input</source>
+        <translation>Lock input</translation>
+    </message>
+    <message>
+        <source>Input locked · hold to unlock</source>
+        <translation>Input locked · hold to unlock</translation>
+    </message>
+    <message>
         <source>Start recording · hold for options</source>
         <translation>Start recording · hold for options</translation>
     </message>
@@ -3790,6 +3798,10 @@
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="26"/>
         <source>Second window</source>
         <translation>Second window</translation>
+    </message>
+    <message>
+        <source>Lock input</source>
+        <translation>Lock input</translation>
     </message>
     <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="27"/>

@@ -94,4 +94,24 @@ Item {
     }
 
     FileOpeningOverlay { }
+
+    // The MainWindow swallower cannot reach a separate Window — the second
+    // window needs its own. No lock badge here: unlocking is done in the main
+    // window, by holding the badge or F8.
+    MouseArea {
+        anchors.fill: parent
+        z: ZOrder.inputLockOverlay
+        visible: !!(root.store && root.store.inputLocked)
+        enabled: visible
+        acceptedButtons: Qt.AllButtons
+        hoverEnabled: true
+        preventStealing: true
+        propagateComposedEvents: false
+        onPressed:       function(mouse) { mouse.accepted = true }
+        onReleased:      function(mouse) { mouse.accepted = true }
+        onClicked:       function(mouse) { mouse.accepted = true }
+        onDoubleClicked: function(mouse) { mouse.accepted = true }
+        onPressAndHold:  function(mouse) { mouse.accepted = true }
+        onWheel:         function(wheel) { wheel.accepted = true }
+    }
 }

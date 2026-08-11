@@ -3305,6 +3305,14 @@
         <translation>Остановить запись</translation>
     </message>
     <message>
+        <source>Lock input</source>
+        <translation>Заблокировать нажатия</translation>
+    </message>
+    <message>
+        <source>Input locked · hold to unlock</source>
+        <translation>Нажатия заблокированы · удерживайте для разблокировки</translation>
+    </message>
+    <message>
         <source>Start recording · hold for options</source>
         <translation>Начать запись · удерживайте для опций</translation>
     </message>
@@ -4652,6 +4660,10 @@
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="26"/>
         <source>Second window</source>
         <translation>Второе окно</translation>
+    </message>
+    <message>
+        <source>Lock input</source>
+        <translation>Блокировка нажатий</translation>
     </message>
     <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="27"/>

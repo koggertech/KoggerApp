@@ -30,4 +30,6 @@ QtObject {
     readonly property int splashOverlay:    6000    // startup launch banner (fades out)
     readonly property int welcomeOverlay:   6500    // first-launch welcome / toolset picker (modal)
     readonly property int powerOffOverlay:  6700    // slide-to-confirm power off (modal, Ubuntu)
+    readonly property int inputLockOverlay: 6800    // input lock: full-window event swallower (above every other overlay)
+    readonly property int inputLockPanel:   6810    // HotActionsPanel while locked — the only surface above the swallower
 }

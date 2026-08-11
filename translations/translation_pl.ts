@@ -3309,6 +3309,14 @@
         <translation>Zatrzymaj nagrywanie</translation>
     </message>
     <message>
+        <source>Lock input</source>
+        <translation>Zablokuj dotyk</translation>
+    </message>
+    <message>
+        <source>Input locked · hold to unlock</source>
+        <translation>Dotyk zablokowany · przytrzymaj, aby odblokować</translation>
+    </message>
+    <message>
         <source>Start recording · hold for options</source>
         <translation>Rozpocznij nagrywanie · przytrzymaj, aby zobaczyć opcje</translation>
     </message>
@@ -4656,6 +4664,10 @@
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="26"/>
         <source>Second window</source>
         <translation>Drugie okno</translation>
+    </message>
+    <message>
+        <source>Lock input</source>
+        <translation>Zablokuj dotyk</translation>
     </message>
     <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="27"/>

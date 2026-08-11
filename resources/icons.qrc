@@ -181,5 +181,7 @@
         <file>icons/ui/fit-in-view.svg</file>
         <file>icons/ui/route_crossed_out.svg</file>
         <file>icons/ui/double_route_crossed_out.svg</file>
+        <file>icons/ui/lock.svg</file>
+        <file>icons/ui/lock-open.svg</file>
     </qresource>
 </RCC>
