@@ -8,7 +8,7 @@ import kqml_types 1.0
 // press at the bottom of the pane.
 //
 // Reading order is the working order: what the plan is, then what is wrong with it, then
-// the button that sends it. See docs/KoggerApp-Docs/usbl-protocol.md.
+// the button that sends it.
 DeviceSettingsGroup {
     id: planGroup
 

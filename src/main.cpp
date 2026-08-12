@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
 
     // Machine-readable UI verification. Costs nothing unless KOGGER_UI_PROBE names an
     // output directory; exposed to QML so an interaction test can dump at a chosen
-    // moment instead of on a timer. See docs/KoggerApp-Docs/ui-verification.md.
+    // moment instead of on a timer.
     UiProbe uiProbe;
     engine.rootContext()->setContextProperty("uiProbe", &uiProbe);
 

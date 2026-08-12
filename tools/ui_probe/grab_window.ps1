@@ -4,7 +4,7 @@
 #
 # WHY NOT THE PROBE'S PNG. UiProbe's KOGGER_UI_PROBE_PNG uses QQuickWindow::grabWindow(),
 # which has to round-trip the scene graph and is not reliably safe against this app's custom
-# GL scene -- see docs/KoggerApp-Docs/ui-verification.md. This reads the desktop instead, so
+# GL scene. This reads the desktop instead, so
 # the app is never asked to do anything, and what lands in the file is the composited result
 # including the GL viewport.
 #

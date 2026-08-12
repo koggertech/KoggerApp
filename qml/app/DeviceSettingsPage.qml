@@ -266,8 +266,7 @@ Column {
     // ── Recorder ──────────────────────────────────────────────────────────
     // Status snapshot + log archive with per-log batched download. Data comes from
     // dev.recorder* (ID_RECORDER_STATUS) and deviceManagerWrapper.streamsList; download
-    // is driven by deviceManagerWrapper.startStreamDownload(id). See
-    // RecorderN/docs/Recorder-Host-Integration-Guide.md.
+    // is driven by deviceManagerWrapper.startStreamDownload(id).
     DeviceSettingsGroup {
         id: recorderGroup
         width: root.groupWidth; preferredWidth: root.groupWidth

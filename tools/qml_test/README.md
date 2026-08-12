@@ -98,7 +98,7 @@ The tests came second; the reason the logic is extractable at all is that the pl
 edited **in place** with a `rev` counter as the only change signal. Every binding reading
 `_g.ini.reply` rendered once and then silently lied. `UsblPlanLogic.js` returns a new state
 from every mutator, so `UsblPlanStore.qml` reassigns one property and QML re-evaluates
-everything by itself â€” see [ui-verification.md](../../docs/KoggerApp-Docs/ui-verification.md).
+everything by itself.
 
 Plain JS also means `node` can load it. Two approaches that do **not** work, both verified,
 so nobody repeats them:

@@ -10,7 +10,6 @@ import kqml_types 1.0
 // TWO FACTS, ONE CHIP, AND THEY MUST NOT BE CONFUSED. The verdict fills the chip when it is a
 // miss. The age never does -- it warns in its own INK, so a node that is answering but has not
 // been asked lately reads "tick, REPLIED, amber 34 s" rather than looking like a failure.
-// See docs/KoggerApp-Docs/usbl-node-row.md.
 Rectangle {
     id: badge
 

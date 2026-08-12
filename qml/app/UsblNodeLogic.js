@@ -50,7 +50,6 @@
 // which highlights past AGE_WARN_MS. Two questions, two controls, neither able to lie about the
 // other. This does leave the row on a different threshold from UsblFieldLogic.STALE_MS, which
 // decides whether a data WIDGET calls a fix usable -- a different question about the same number.
-// See docs/KoggerApp-Docs/usbl-protocol.md.
 
 // Operation -- whether an answer window is open.
 var OFF     = "off";        // switched off: the schedule skips it, nothing is being asked

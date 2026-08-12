@@ -14,7 +14,7 @@ import "UsblNodeLogic.js" as Node
 // the transitions live in UsblNodeLogic.js; this file drives them and translates the codes.
 //
 // Rows read Dataset, not the device: widget panels are global and the solution cache is
-// device-agnostic (see docs/KoggerApp-Docs/usbl-protocol.md -> QML-facing surface).
+// device-agnostic.
 //
 // What each row REPORTS is UsblNodeLogic.js; what it CONFIGURES is UsblPlanGroup.
 DeviceSettingsGroup {
@@ -57,7 +57,7 @@ DeviceSettingsGroup {
     // TWO AXES, read together, and neither is spelled out here any more: UsblOpBadge draws what
     // the host is doing and UsblStateBadge draws what the beacon did, both taking the codes
     // UsblNodeLogic returns. The words live in UsblStateBadge, which is the only place they
-    // exist -- see docs/KoggerApp-Docs/usbl-node-row.md.
+    // exist.
     //
     // There is still no word for emission. It lasts milliseconds and the protocol reports
     // nothing about it, so the operation badge says a request is out rather than inventing a

@@ -6,7 +6,7 @@
 #   powershell -File scripts/kpdev_serve.ps1 -Keep 20   # keep more past runs (0 = keep all)
 #
 # The app auto-connects to it because pinned_links.xml has a kAuto UDP link on
-# 127.0.0.1:14650 -- see docs/KoggerApp-Docs/virtual-device-harness.md. No device, no USBL
+# 127.0.0.1:14650. No device, no USBL
 # groups in the UI: their `visible` is bound to dev.isUSBL.
 #
 # WHY THIS SCRIPT EXISTS. A hand-typed `kpdevtool.py serve` ran unattended for three days and

@@ -2,8 +2,7 @@ import QtQuick 2.15
 import kqml_types 1.0
 
 // What the HOST is doing about a node: off, idle, or a request in flight.
-// Takes the codes UsblNodeLogic.operationCode returns; see
-// docs/KoggerApp-Docs/usbl-node-row.md for what the three marks mean.
+// Takes the codes UsblNodeLogic.operationCode returns.
 Rectangle {
     id: badge
 

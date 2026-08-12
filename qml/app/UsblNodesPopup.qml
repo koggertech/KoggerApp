@@ -18,7 +18,7 @@ import "UsblNodeLogic.js" as Node
 //
 // THE TOP LINE IS A STATUS BAR and the bottom line is the readings -- the shape the settings
 // pane's row already had. It was the other way round until the two state chips became two
-// badges; see docs/KoggerApp-Docs/usbl-node-row.md.
+// badges.
 //
 // A ROW IS A NODE, not a step. Range and SNR are cached per ADDRESS, so per-command rows would
 // repeat one node's numbers down its commands. The per-command detail survives as the cmd chip.
