@@ -85,6 +85,13 @@ bool spin(int msTimeout, const std::function<bool()>& until)
     return satisfied || (until && until());
 }
 
+void drain(int ms)
+{
+    QEventLoop loop;
+    QTimer::singleShot(ms, &loop, &QEventLoop::quit);
+    loop.exec();
+}
+
 struct Observed {
     int startUpgrading = 0;
     int doneUpgrading  = 0;
@@ -101,6 +108,9 @@ struct Observed {
     int  deviceFramesMarked = 0;
 
     int  markSettings = 0;
+    int  versionGettings = 0;
+    int  versionAnswersAfterUpgrade = 0;
+    qint64 firstUpdateAtMs = -1;
 
     QList<quint16> packetNumbers;
     QByteArray fwAsSent;
@@ -134,14 +144,23 @@ public:
     FakeRecorder& device() { return device_; }
     Observed&     obs()    { return obs_; }
 
-    bool bringUp(int msTimeout = 12000)
+    bool bringUp(bool quiesce = true, int msTimeout = 12000)
     {
         dev_.startConnection(true);
         if (!spin(msTimeout, [this]() { return obs_.sawSetupRequest; })) {
             return false;
         }
+        if (!quiesce) {
+            return true;
+        }
 
         return spin(msTimeout, [this]() { return quietForMs() > 400; });
+    }
+
+    void startUpgrade(const QByteArray& fw)
+    {
+        sinceUpgrade_.start();
+        dev_.sendUpdateFW(fw);
     }
 
     qint64 quietForMs() const
@@ -158,9 +177,13 @@ private:
         if (decode(bytes, &f)) {
             if (f.id == ID_UPDATE && f.type == SETTING && f.payload.size() >= 2) {
                 ++obs_.updateFrames;
+                if (obs_.firstUpdateAtMs < 0 && sinceUpgrade_.isValid()) {
+                    obs_.firstUpdateAtMs = sinceUpgrade_.elapsed();
+                }
                 obs_.packetNumbers.append(rd16(f.payload, 0));
                 obs_.fwAsSent.append(f.payload.mid(2));
             }
+            if (f.id == ID_VERSION && f.type == GETTING) ++obs_.versionGettings;
             if (f.id == ID_BOOT && f.type == SETTING) {
                 if (f.ver == v0) ++obs_.bootV0Frames;
                 if (f.ver == v1) ++obs_.bootV1Frames;
@@ -181,6 +204,7 @@ private:
         if (decode(bytes, &df)) {
             ++obs_.deviceFrames;
             if (df.mark) ++obs_.deviceFramesMarked;
+            if (df.id == ID_VERSION && sinceUpgrade_.isValid()) ++obs_.versionAnswersAfterUpgrade;
             if (df.id != ID_UPDATE) trace("dev->host", df);
         }
 
@@ -200,6 +224,7 @@ private:
     Parsers::FrameParser parser_;
     QByteArray   inbox_;
     QElapsedTimer sinceLastDeviceFrame_;
+    QElapsedTimer sinceUpgrade_;
     Observed     obs_;
 };
 
@@ -241,6 +266,7 @@ void scenarioHappyPath(const QByteArray& fw, Report& r)
     rig.dev().sendUpdateFW(fw);
 
     const bool finished = spin(120000, [&]() { return rig.obs().doneUpgrading > 0; });
+    drain(100);
 
     const int expectedPackets = int((fw.size() + kPacketPayload - 1) / kPacketPayload);
     r.note(QString("packets sent %1, expected %2, device stored %3 of %4 bytes")
@@ -288,6 +314,7 @@ void scenarioReenumerationRecovers(const QByteArray& fw, Report& r)
     rig.dev().sendUpdateFW(fw);
 
     const bool finished = spin(120000, [&]() { return rig.obs().doneUpgrading > 0; });
+    drain(100);
 
     r.note(QString("packets sent %1, device stored %2 of %3 bytes")
                .arg(rig.obs().updateFrames).arg(rig.device().received().size()).arg(fw.size()));
@@ -434,11 +461,45 @@ void scenarioLegacyAckOnly(const QByteArray& fw, Report& r)
     rig.dev().sendUpdateFW(fw);
 
     const bool finished = spin(120000, [&]() { return rig.obs().doneUpgrading > 0; });
+    drain(100);
 
     r.note(QString("packets sent %1, device stored %2 of %3 bytes")
                .arg(rig.obs().updateFrames).arg(rig.device().received().size()).arg(fw.size()));
 
     r.check(finished, "upgrade finishes in legacy ACK mode");
+    r.check(rig.device().received() == fw, "bytes the device stored equal the firmware file");
+}
+
+void scenarioStaleVersionRace(const QByteArray& fw, Report& r)
+{
+    const int unreachableMs = 2500;
+
+    FakeRecorder::Policy policy;
+    policy.versionLatencyMs = 150;
+    policy.unreachableForMs = unreachableMs;
+    policy.bootWindowMs     = 5000;
+    Rig rig(policy);
+
+    r.check(rig.bringUp(false), "device identifies and the driver reaches connected state");
+
+    core.clear();
+    rig.startUpgrade(fw);
+
+    const bool finished = spin(60000, [&]() { return rig.obs().doneUpgrading > 0; });
+    drain(100);
+
+    r.note(QString("first ID_UPDATE at %1 ms, device unreachable until %2 ms, "
+                   "ID_VERSION answers landing after the reboot: %3; %4")
+               .arg(rig.obs().firstUpdateAtMs).arg(unreachableMs)
+               .arg(rig.obs().versionAnswersAfterUpgrade).arg(rigState(rig)));
+
+    r.check(rig.obs().versionAnswersAfterUpgrade > 0,
+            "an ID_VERSION answer really did land after the reboot command");
+    r.check(rig.obs().firstUpdateAtMs < 0 || rig.obs().firstUpdateAtMs >= unreachableMs,
+            "no packet is sent while the device is still resetting",
+            QString("first packet at %1 ms, %2 ms before the device could answer")
+                .arg(rig.obs().firstUpdateAtMs).arg(unreachableMs - rig.obs().firstUpdateAtMs));
+    r.check(finished, "upgrade still completes once the bootloader is reachable");
     r.check(rig.device().received() == fw, "bytes the device stored equal the firmware file");
 }
 
@@ -451,6 +512,7 @@ const Scenario kScenarios[] = {
     { "happy-path",              scenarioHappyPath },
     { "legacy-ack-only",         scenarioLegacyAckOnly },
     { "reenumeration-recovers",  scenarioReenumerationRecovers },
+    { "stale-version-race",      scenarioStaleVersionRace },
     { "window-missed",           scenarioWindowMissed },
     { "bootloader-unreachable",  scenarioBootloaderUnreachable },
     { "bootloader-mute",         scenarioBootloaderNeverIdentifies },

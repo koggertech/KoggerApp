@@ -20,6 +20,7 @@ public:
 
     struct Policy {
         int  latencyMs          = 1;
+        int  versionLatencyMs   = 0;
         int  bootWindowMs       = 5000;
         int  unreachableForMs   = 0;
         bool bootAnswersVersion = true;
@@ -86,9 +87,11 @@ private:
         return sinceReboot_.elapsed() < policy_.unreachableForMs;
     }
 
-    void send(const QByteArray& frame)
+    void send(const QByteArray& frame, int latencyMs = -1)
     {
-        QTimer::singleShot(policy_.latencyMs > 0 ? policy_.latencyMs : 0, Qt::PreciseTimer, this,
+        const int ms = latencyMs >= 0 ? latencyMs
+                                      : (policy_.latencyMs > 0 ? policy_.latencyMs : 0);
+        QTimer::singleShot(ms, Qt::PreciseTimer, this,
                            [this, frame]() { if (toHost_) toHost_(frame); });
     }
 
@@ -124,7 +127,8 @@ private:
         } else {
             return;
         }
-        send(encode(CONTENT, ver, ID_VERSION, route_, markOn_, false, p));
+        send(encode(CONTENT, ver, ID_VERSION, route_, markOn_, false, p),
+             policy_.versionLatencyMs > 0 ? policy_.versionLatencyMs : -1);
     }
 
     void onUpdate(const WireFrame& f)

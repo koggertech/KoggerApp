@@ -460,8 +460,10 @@ protected:
     int64_t _lastUpgradeAnswerTime = 0;
     int64_t _timeoutUpgradeAnswerTime = 0;
     int64_t upgradeStartedTime_ = 0;
+    int64_t rebootAtTime_ = 0;
     int upgradeResendCount_ = 0;
 
+    static constexpr int64_t staleVersionGuardMsec = 400;
     static constexpr int64_t bootHandshakeTimeoutMsec = 8000;
     static constexpr int64_t packetAnswerTimeoutMsec = 2000;
     static constexpr int upgradeResendLimit = 5;
@@ -480,6 +482,7 @@ protected:
     void fwUpgradeProcess();
     bool checkUpgradeTimeouts(int64_t curr_time);
     void abortUpgrade(const QString& reason);
+    bool isStaleVersionAfterReboot() const;
 
     // Tolerant hex text → bytes: accepts separators and an odd digit count, which is what a
     // hand-typed payload field produces. Deliberately outside the slots section — it is a

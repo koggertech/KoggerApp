@@ -1040,9 +1040,15 @@ void DevDriver::resetSettings() {
 void DevDriver::reboot() {
     if(!m_state.connect) return;
     idVersion->reset();
+    rebootAtTime_ = QDateTime::currentMSecsSinceEpoch();
     idBoot->reboot();
     m_state.reboot = true;
     emit onReboot();
+}
+
+bool DevDriver::isStaleVersionAfterReboot() const {
+    return rebootAtTime_ != 0 &&
+           QDateTime::currentMSecsSinceEpoch() - rebootAtTime_ < staleVersionGuardMsec;
 }
 
 int DevDriver::distMax() {
@@ -1473,6 +1479,11 @@ void DevDriver::receivedUART(Parsers::Type type, Parsers::Version ver, Parsers::
 
 void DevDriver::receivedVersion(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
     Q_UNUSED(type);
+
+    if(resp == respNone && isStaleVersionAfterReboot()) {
+        idVersion->reset();
+        return;
+    }
 
     if(resp == respNone) {
         if(ver == v0) {
