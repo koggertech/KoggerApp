@@ -83,6 +83,14 @@ signals:
     void linkRemoved(QUuid uuid); // runtime removal only (deleteLink); NOT shutdown
     void sendDoRequestAll(QUuid uuid);
 
+protected:
+    // Seam: the only place LinkManager asks the OS what exists. Port names are all the
+    // rest of the class ever reads out of a QSerialPortInfo, and a name is something a
+    // test can supply for a port that is not plugged in -- QSerialPortInfo(QString) only
+    // populates itself for ports that are actually present.
+    // See docs/KoggerApp-Docs/fw-upgrade-host.md.
+    virtual QStringList currentSerialPortNames() const;
+
 private:
     /*structures*/
     class TimerController {
@@ -111,10 +119,9 @@ private:
     };
 
     /*methods*/
-    QList<QSerialPortInfo> getCurrentSerialList() const;
-    Link* createSerialPort(const QSerialPortInfo& serialInfo) const;
-    void addNewLinks(const QList<QSerialPortInfo> &currSerialList);
-    void deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList);
+    Link* createSerialPort(const QString& portName) const;
+    void addNewLinks(const QStringList &currSerialList);
+    void deleteMissingLinks(const QStringList &currSerialList);
     void openAutoConnections();
     void update();
     void doEmitAppendModifyModel(Link* linkPtr);

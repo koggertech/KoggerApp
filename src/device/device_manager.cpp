@@ -914,11 +914,6 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     dev->setBusAddress(addr);
     dev->setLinkUuid(uuid);
 
-    if (upgradeUuid_ == uuid && upgradeAddr_ == addr) {
-        dev->setFirmware(upgradeData_);
-        upgradeUuid_ = QUuid();
-    }
-
 #ifdef SEPARATE_READING
     auto connType = Qt::AutoConnection;
 
@@ -1012,6 +1007,18 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
         connect(link, &Link::isReceivesDataChanged,   dev, syncStatus);
         connect(link, &Link::isNotAvailableChanged,   dev, syncStatus);
         syncStatus();
+    }
+
+    // Resume of an upgrade the device dropped out of. This has to run after every connect
+    // above and after startConnection: sendUpdateFW emits startUpgradingFirmware, and an
+    // emit made before the wiring exists is simply lost -- which used to leave the link
+    // unarmed for the next dropout. Queued so it also lands after the invokeMethod'd
+    // startConnection on the SEPARATE_READING path.
+    if (upgradeUuid_ == uuid && upgradeAddr_ == addr) {
+        upgradeUuid_ = QUuid();
+        QMetaObject::invokeMethod(dev, [dev, firmware = upgradeData_]() {
+            dev->setFirmware(firmware);
+        }, Qt::QueuedConnection);
     }
 
     emit devChanged();

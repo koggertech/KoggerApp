@@ -1,6 +1,9 @@
 #include "dev_driver.h"
 #include <time.h>
 #include <core.h>
+#include <QDateTime>
+#include <QFile>
+#include <QVariant>
 #include <QXmlStreamWriter>
 
 extern Core core;
@@ -935,6 +938,9 @@ void DevDriver::sendUpdateFW(QByteArray update_data) {
     restartState();
 
     _timeoutUpgradeAnswerTime = 5000;
+    upgradeStartedTime_ = QDateTime::currentMSecsSinceEpoch();
+    _lastUpgradeAnswerTime = upgradeStartedTime_;
+    upgradeResendCount_ = 0;
     idUpdate->setUpdate(update_data);
     m_bootloaderLagacyMode = true;
     m_state.in_boot = true;
@@ -1566,6 +1572,14 @@ void DevDriver::receivedBoot(Parsers::Type type, Parsers::Version ver, Parsers::
 }
 
 void DevDriver::fwUpgradeProcess() {
+    // The pipeline is two packets deep from packet 3 on, so the last two answers both
+    // arrive after the firmware has run out and each would otherwise complete the upgrade:
+    // two runFW frames and two upgradingFirmwareDone. Completion clears in_update, so this
+    // guard makes the second one a no-op. It also swallows a late answer after an abort.
+    if(!m_state.in_update) {
+        return;
+    }
+
     bool is_avail_data = idUpdate->putUpdate();
     if(is_avail_data && idUpdate->currentNumPacket() == 3) {
         is_avail_data = idUpdate->putUpdate();
@@ -1573,8 +1587,11 @@ void DevDriver::fwUpgradeProcess() {
     m_upgrade_status = idUpdate->progress();
     if(!is_avail_data) {
         idBoot->runFW();
+        m_state.in_boot = false;
         m_state.in_update = false;
         m_upgrade_status = successUpgrade;
+        upgradeStartedTime_ = 0;
+        upgradeResendCount_ = 0;
 
         emit upgradingFirmwareDone();
         emit upgradingFirmwareDoneDM();
@@ -1586,6 +1603,68 @@ void DevDriver::fwUpgradeProcess() {
     }
 }
 
+// The device is entitled to stop answering -- a USB VCP drops off the bus on every reboot,
+// and its bootloader hands over to the firmware if it hears nothing for a few seconds.
+// What is not acceptable is the host never noticing: in_boot and in_update both hold the
+// link in isUpgradingState, which LinkManager will not clean up, so a stall with no exit
+// leaves a port the app owns and does not use.
+bool DevDriver::checkUpgradeTimeouts(int64_t curr_time) {
+    if(!(m_state.in_boot || m_state.in_update)) {
+        return false;
+    }
+
+    if(m_state.in_boot) {
+        if(upgradeStartedTime_ != 0 && curr_time - upgradeStartedTime_ > bootHandshakeTimeoutMsec) {
+            abortUpgrade("bootloader did not answer in time");
+            return true;
+        }
+        return false;
+    }
+
+    if(_timeoutUpgradeAnswerTime <= 0 ||
+       curr_time - _lastUpgradeAnswerTime <= _timeoutUpgradeAnswerTime) {
+        return false;
+    }
+
+    if(upgradeResendCount_ >= upgradeResendLimit) {
+        abortUpgrade(QString("no answer after %1 resends").arg(upgradeResendCount_));
+        return true;
+    }
+
+    ++upgradeResendCount_;
+    _lastUpgradeAnswerTime = curr_time;
+
+#ifndef SEPARATE_READING
+    core.consoleInfo(QString("Upgrade: timeout, resend %1/%2").arg(upgradeResendCount_).arg(upgradeResendLimit));
+#endif
+
+    idUpdate->putUpdate(false);
+    return false;
+}
+
+void DevDriver::abortUpgrade(const QString& reason) {
+#ifndef SEPARATE_READING
+    core.consoleInfo(QString("Upgrade: aborted -- %1").arg(reason));
+#else
+    Q_UNUSED(reason);
+#endif
+
+    m_upgrade_status = failUpgrade;
+    m_state.in_boot = false;
+    m_state.in_update = false;
+    m_bootloaderLagacyMode = true;
+    _timeoutUpgradeAnswerTime = 0;
+    upgradeStartedTime_ = 0;
+    upgradeResendCount_ = 0;
+
+    emit upgradingFirmwareDone();
+    emit upgradingFirmwareDoneDM();
+    emit upgradeProgressChanged(m_upgrade_status);
+    emit upgradeChanged();
+
+    restartState();
+}
+
 void DevDriver::receivedUpdate(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
 {
     Q_UNUSED(type);
@@ -1593,11 +1672,12 @@ void DevDriver::receivedUpdate(Parsers::Type type, Parsers::Version ver, Parsers
     if(resp == respNone) {
         if(ver == v0) {
             m_bootloaderLagacyMode = false;
-            _timeoutUpgradeAnswerTime = 2000;
+            _timeoutUpgradeAnswerTime = packetAnswerTimeoutMsec;
             IDBinUpdate::ID_UPGRADE_V0 prog = idUpdate->getDeviceProgress();
 
             if(prog.type <= 2) {
                 _lastUpgradeAnswerTime = QDateTime::currentMSecsSinceEpoch();
+                upgradeResendCount_ = 0;
 
                 if(prog.type == 1) {
 #ifndef SEPARATE_READING
@@ -1613,39 +1693,19 @@ void DevDriver::receivedUpdate(Parsers::Type type, Parsers::Version ver, Parsers
 
                 fwUpgradeProcess();
             } else {
-                // if( m_state.in_boot) {
-#ifndef SEPARATE_READING
-                    core.consoleInfo("Upgrade: critical error!");
-#endif
-                m_upgrade_status = failUpgrade;
-
-                    emit upgradingFirmwareDone();
-                    emit upgradingFirmwareDoneDM();
-
-                    m_state.in_update = false;
-                    m_bootloaderLagacyMode = true;
-                    restartState();
-                // }
+                abortUpgrade(QString("device reported a fatal condition (type %1)").arg(prog.type));
             }
         }
     } else {
         if(resp == respOk) {
             if( m_state.in_update && m_bootloaderLagacyMode) {
+                _lastUpgradeAnswerTime = QDateTime::currentMSecsSinceEpoch();
+                upgradeResendCount_ = 0;
                 fwUpgradeProcess();
             }
         } else {
             if( m_state.in_update && m_bootloaderLagacyMode) {
-#ifndef SEPARATE_READING
-                core.consoleInfo("Upgrade: lagacy mode error");
-#endif
-                m_upgrade_status = failUpgrade;
-
-                emit upgradingFirmwareDone();
-                emit upgradingFirmwareDoneDM();
-
-                m_state.in_update = false;
-                m_bootloaderLagacyMode = true;
-                restartState();
+                abortUpgrade("lagacy mode error");
             }
         }
     }
@@ -1831,6 +1891,11 @@ void DevDriver::receivedModemSolution(Parsers::Type type, Parsers::Version ver, 
 
 void DevDriver::process() {
     int64_t curr_time = QDateTime::currentMSecsSinceEpoch();
+
+    if(checkUpgradeTimeouts(curr_time)) {
+        return;
+    }
+
     if(m_state.duplex) {
         if(m_state.mark) {
             if(idVersion->boardVersion() != BoardNone) {
@@ -1859,6 +1924,12 @@ void DevDriver::process() {
                     m_state.in_update = true;
                     // idUpdate->putUpdate();
 
+                    // The packet phase owns the watchdog from here: measure silence from
+                    // now, not from the button, or the handshake time is charged twice.
+                    _timeoutUpgradeAnswerTime = packetAnswerTimeoutMsec;
+                    _lastUpgradeAnswerTime = curr_time;
+                    upgradeResendCount_ = 0;
+
                     QTimer::singleShot(100, idUpdate, [update = idUpdate]() {
                         update->putUpdate();
                     });
@@ -1870,14 +1941,6 @@ void DevDriver::process() {
                     //qDebug() << "Request setup";
                 }
 
-                if(m_state.in_update && !m_bootloaderLagacyMode) {
-                    if(curr_time - _lastUpgradeAnswerTime > _timeoutUpgradeAnswerTime && _timeoutUpgradeAnswerTime > 0) {
-#ifndef SEPARATE_READING
-                        core.consoleInfo("Upgrade: timeout error!");
-#endif
-                        idUpdate->putUpdate(false);
-                    }
-                }
             } else {
                 idVersion->requestAll();
                 //qDebug() << "Request version again";

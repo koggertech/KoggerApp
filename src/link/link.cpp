@@ -1,5 +1,7 @@
 #include "link.h"
 
+#include <QDateTime>
+
 
 Link::Link()
     : ioDevice_(nullptr),
@@ -25,7 +27,8 @@ Link::Link()
       onUpgradingFirmware_(false),
       localGhostIgnoreCount_(0),
       requestCnt_(requestAllCntBig),
-      autoConnOnce_(false)
+      autoConnOnce_(false),
+      autoConnUntilMsecs_(0)
 {
     frame_.resetComplete();
 
@@ -377,6 +380,20 @@ void Link::setIsUpgradingState(bool state)
 void Link::setAutoConnOnce(bool state)
 {
     autoConnOnce_ = state;
+    if (!autoConnOnce_) {
+        autoConnUntilMsecs_ = 0;
+    }
+}
+
+void Link::armAutoConn(int windowMs)
+{
+    autoConnOnce_ = true;
+    autoConnUntilMsecs_ = windowMs > 0 ? QDateTime::currentMSecsSinceEpoch() + windowMs : 0;
+}
+
+bool Link::isAutoConnExpired(qint64 nowMsecs) const
+{
+    return autoConnUntilMsecs_ != 0 && nowMsecs > autoConnUntilMsecs_;
 }
 
 QUuid Link::getUuid() const
@@ -522,7 +539,7 @@ void Link::onStartUpgradingFirmware()
     timeoutCnt_ = linkNumTimeoutsSmall;
     requestCnt_ = requestAllCntSmall;
     resetLastSearchIndx();
-    setAutoConnOnce(true); // logger
+    armAutoConn(linkUpgradeReconnectWindowMs);
 }
 
 void Link::onUpgradingFirmwareDone()
@@ -534,7 +551,7 @@ void Link::onUpgradingFirmwareDone()
     localGhostIgnoreCount_ = ghostIgnoreCount;
     requestCnt_ = requestAllCntBig;
     resetLastSearchIndx();
-    setAutoConnOnce(true); // logger
+    armAutoConn(linkUpgradeReconnectWindowMs);
 }
 
 void Link::onCheckedTimerEnd()
