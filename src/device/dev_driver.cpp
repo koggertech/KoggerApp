@@ -1572,10 +1572,6 @@ void DevDriver::receivedBoot(Parsers::Type type, Parsers::Version ver, Parsers::
 }
 
 void DevDriver::fwUpgradeProcess() {
-    // The pipeline is two packets deep from packet 3 on, so the last two answers both
-    // arrive after the firmware has run out and each would otherwise complete the upgrade:
-    // two runFW frames and two upgradingFirmwareDone. Completion clears in_update, so this
-    // guard makes the second one a no-op. It also swallows a late answer after an abort.
     if(!m_state.in_update) {
         return;
     }
@@ -1603,11 +1599,6 @@ void DevDriver::fwUpgradeProcess() {
     }
 }
 
-// The device is entitled to stop answering -- a USB VCP drops off the bus on every reboot,
-// and its bootloader hands over to the firmware if it hears nothing for a few seconds.
-// What is not acceptable is the host never noticing: in_boot and in_update both hold the
-// link in isUpgradingState, which LinkManager will not clean up, so a stall with no exit
-// leaves a port the app owns and does not use.
 bool DevDriver::checkUpgradeTimeouts(int64_t curr_time) {
     if(!(m_state.in_boot || m_state.in_update)) {
         return false;
@@ -1924,8 +1915,6 @@ void DevDriver::process() {
                     m_state.in_update = true;
                     // idUpdate->putUpdate();
 
-                    // The packet phase owns the watchdog from here: measure silence from
-                    // now, not from the button, or the handshake time is charged twice.
                     _timeoutUpgradeAnswerTime = packetAnswerTimeoutMsec;
                     _lastUpgradeAnswerTime = curr_time;
                     upgradeResendCount_ = 0;

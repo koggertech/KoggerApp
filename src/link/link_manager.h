@@ -84,11 +84,6 @@ signals:
     void sendDoRequestAll(QUuid uuid);
 
 protected:
-    // Seam: the only place LinkManager asks the OS what exists. Port names are all the
-    // rest of the class ever reads out of a QSerialPortInfo, and a name is something a
-    // test can supply for a port that is not plugged in -- QSerialPortInfo(QString) only
-    // populates itself for ports that are actually present.
-    // See docs/KoggerApp-Docs/fw-upgrade-host.md.
     virtual QStringList currentSerialPortNames() const;
 
 private:

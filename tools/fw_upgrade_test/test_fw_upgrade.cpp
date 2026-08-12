@@ -5,8 +5,6 @@
 // path: DevDriver::binFrameOut -> bytes -> device, device -> FrameParser ->
 // DevDriver::protoComplete. No hardware, no link layer, no UI.
 //
-// Scenarios and what each one is for are in docs/KoggerApp-Docs/fw-upgrade-host.md.
-//
 //   test_fw_upgrade.exe <firmware.ufw> [scenario ...]
 
 #include <cstdio>

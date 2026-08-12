@@ -244,9 +244,6 @@ void LinkManager::openAutoConnections()
             link->setControlType(ControlType::kAuto);
         }
 
-        // While a flash is in flight the reconnect window measures continuous absence, so
-        // it is refreshed for as long as the link is actually up. Without this, a long
-        // upgrade that loses the port late would find the window already spent.
         if (link->getConnectionStatus() && link->getIsUpgradingState()) {
             link->armAutoConn(linkUpgradeReconnectWindowMs);
         }
@@ -254,15 +251,9 @@ void LinkManager::openAutoConnections()
         if (!link->getConnectionStatus()) {
             bool autoConnOnce = link->getAutoConnOnce();
 
-            // A USB-VCP device is off the bus for the whole re-enumeration, so the first
-            // attempt after a reboot lands on a port that does not exist yet and cannot
-            // succeed. Retry until it does, or until the arm's window runs out.
             if (autoConnOnce && link->isAutoConnExpired(QDateTime::currentMSecsSinceEpoch())) {
                 link->setAutoConnOnce(false);
                 autoConnOnce = false;
-                // Nothing came back. Release the flag, or the row stays pinned in an
-                // upgrading state that deleteMissingLinks refuses to clean up. The setter
-                // notifies the model itself.
                 link->setIsUpgradingState(false);
             }
 
@@ -278,9 +269,6 @@ void LinkManager::openAutoConnections()
                     default:                   { break; }
                 }
 
-                // Spend the arm on a result, not on an attempt. TCP connects
-                // asynchronously and has no result to read here, so it keeps the old
-                // one-shot behaviour.
                 if (autoConnOnce &&
                     (link->getConnectionStatus() || link->getLinkType() == LinkType::kLinkIPTCP)) {
                     link->setAutoConnOnce(false);

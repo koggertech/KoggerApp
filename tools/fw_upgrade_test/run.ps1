@@ -10,9 +10,7 @@
 #   test_link_reconnect- Link + LinkManager across a USB-VCP port dropout. Adds Network and
 #                        SerialPort, and needs LinkManager's getCurrentSerialList seam.
 #
-# Neither one opens a real port or needs a device. A non-zero exit means a check failed --
-# see docs/KoggerApp-Docs/fw-upgrade-host.md for what each scenario is asserting and which
-# of them currently fail against unfixed code.
+# Neither one opens a real port or needs a device. A non-zero exit means a check failed.
 #
 # The compiler and Qt default to the same llvm-mingw kit tools/protocol_contract/gen.ps1
 # uses. Override if your kit lives elsewhere; a wrong path fails here rather than half way

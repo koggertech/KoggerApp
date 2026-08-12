@@ -30,7 +30,7 @@ static const int ghostIgnoreCount = 3; // number of steps to ignore after flashi
 static const int requestAllCntBig = 3; // number of steps to requestAll big
 static const int requestAllCntSmall = 1; // number of steps to requestAll small
 static const int linkCheckingTimeInterval = 100; // msecs
-static const int linkUpgradeReconnectWindowMs = 20000; // msecs, see fw-upgrade-host.md
+static const int linkUpgradeReconnectWindowMs = 20000; // msecs
 
 inline constexpr std::array<uint32_t, 15> baudrates = { 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000 };
 inline constexpr std::array<uint32_t, 8> baudrateSearchList = { 115200, 921600, 9600, 38400, 115200, 921600, 460800, 230400 };

@@ -1009,11 +1009,6 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
         syncStatus();
     }
 
-    // Resume of an upgrade the device dropped out of. This has to run after every connect
-    // above and after startConnection: sendUpdateFW emits startUpgradingFirmware, and an
-    // emit made before the wiring exists is simply lost -- which used to leave the link
-    // unarmed for the next dropout. Queued so it also lands after the invokeMethod'd
-    // startConnection on the SEPARATE_READING path.
     if (upgradeUuid_ == uuid && upgradeAddr_ == addr) {
         upgradeUuid_ = QUuid();
         QMetaObject::invokeMethod(dev, [dev, firmware = upgradeData_]() {
