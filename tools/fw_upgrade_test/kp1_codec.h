@@ -1,8 +1,5 @@
 #pragma once
 
-// Device-side KP1 codec. Deliberately a second, independent implementation: if it were
-// built on ProtoBinOut the test would confirm that the host agrees with itself.
-
 #include <QByteArray>
 #include <QVector>
 
@@ -53,8 +50,6 @@ inline QByteArray encode(Type type, Version ver, ID id, uint8_t route,
     return f;
 }
 
-// Decodes exactly one complete KP1 frame from the head of `bytes`. The host writes one
-// frame per binFrameOut, so streaming reassembly is not needed on this side.
 inline bool decode(const QByteArray& bytes, WireFrame* out)
 {
     if (bytes.size() < 8) return false;

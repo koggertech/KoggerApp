@@ -1,11 +1,3 @@
-// Firmware-upgrade regression test for the host side of the KP1 upgrade exchange.
-//
-// Drives the real DevDriver / IDBinUpdate state machine against a scriptable Recorder
-// (fake_recorder.h) over an in-process wire that has the same shape as the production
-// path: DevDriver::binFrameOut -> bytes -> device, device -> FrameParser ->
-// DevDriver::protoComplete. No hardware, no link layer, no UI.
-//
-//   test_fw_upgrade.exe <firmware.ufw> [scenario ...]
 
 #include <cstdio>
 #include <functional>
@@ -20,7 +12,7 @@
 #include <QStringList>
 #include <QTimer>
 
-#include "core.h"                 // resolves to tools/fw_upgrade_test/shim/core.h
+#include "core.h"
 #include "device/dev_driver.h"
 #include "fake_recorder.h"
 
@@ -30,14 +22,9 @@ namespace {
 
 using namespace FwTest;
 
-constexpr uint8_t  kRecorderRoute = 2;   // a Recorder answers on its own bus address, not 0
-constexpr int      kPacketPayload = 96;  // IDBinUpdate::_packetSize
+constexpr uint8_t  kRecorderRoute = 2;
+constexpr int      kPacketPayload = 96;
 
-// ---------------------------------------------------------------- reporting
-
-// FWTEST_TRACE=<scenario> dumps that scenario's wire exchange. Worth leaving in: the
-// scenarios are timing machines, and "which frame arrived when, carrying which mark bit"
-// is the only question worth asking when one behaves unlike its isolated run.
 bool gTrace = false;
 QElapsedTimer gTraceClock;
 
@@ -74,8 +61,6 @@ struct Report {
     }
 };
 
-// Runs the event loop until `until` holds or the deadline passes. Never busy-waits: the
-// device answers on zero-delay timers, so everything here depends on the loop turning.
 bool spin(int msTimeout, const std::function<bool()>& until)
 {
     if (until && until()) return true;
@@ -100,8 +85,6 @@ bool spin(int msTimeout, const std::function<bool()>& until)
     return satisfied || (until && until());
 }
 
-// ---------------------------------------------------------------- the rig
-
 struct Observed {
     int startUpgrading = 0;
     int doneUpgrading  = 0;
@@ -109,23 +92,18 @@ struct Observed {
     int lastProgress = -999;
     QList<int> progress;
 
-    int  updateFrames = 0;          // ID_UPDATE SETTING frames the host put on the wire
-    int  bootV0Frames = 0;          // reboot-into-bootloader
-    int  bootV1Frames = 0;          // run-the-new-firmware
-    bool sawSetupRequest = false;   // proves DevDriver reached m_state.connect == true
+    int  updateFrames = 0;
+    int  bootV0Frames = 0;
+    int  bootV1Frames = 0;
+    bool sawSetupRequest = false;
 
-    // The mark bit gates the whole upgrade state machine, so how many device frames carry
-    // it is the first thing worth knowing when a scenario behaves unexpectedly.
     int  deviceFrames = 0;
     int  deviceFramesMarked = 0;
 
-    // ID_MARK SETTING is emitted from exactly one place: the process() branch taken when
-    // m_state.mark is clear, which also calls restartState(). Counting it says how often
-    // the driver decided the device had gone quiet.
     int  markSettings = 0;
 
     QList<quint16> packetNumbers;
-    QByteArray fwAsSent;            // payload bytes in the order the host emitted them
+    QByteArray fwAsSent;
 
     void reset() { *this = Observed(); }
 };
@@ -156,10 +134,6 @@ public:
     FakeRecorder& device() { return device_; }
     Observed&     obs()    { return obs_; }
 
-    // Brings the device up exactly the way DeviceManager does, then waits until the
-    // driver is genuinely connected. That matters: DevDriver::reboot() -- the first thing
-    // sendUpdateFW does -- silently returns when m_state.connect is false, so a test that
-    // flashed too early would exercise a path the button never takes.
     bool bringUp(int msTimeout = 12000)
     {
         dev_.startConnection(true);
@@ -167,13 +141,6 @@ public:
             return false;
         }
 
-        // Then wait for the link to go quiet before handing back. The setup codecs re-ask
-        // every 1500 ms, so there is almost always an answer in flight; if UPGRADE is
-        // pressed while an ID_VERSION reply is on the wire, that reply lands after
-        // reboot()'s idVersion->reset() and re-identifies the device from stale evidence,
-        // and the driver walks into the packet phase without the bootloader ever having
-        // spoken. Real, and worth knowing about -- but it is not what most of these
-        // scenarios are measuring, so they start from an idle link instead of racing it.
         return spin(msTimeout, [this]() { return quietForMs() > 400; });
     }
 
@@ -206,7 +173,6 @@ private:
         QTimer::singleShot(0, &ctx_, [this, bytes]() { device_.fromHost(bytes); });
     }
 
-    // Mirrors Link::toParser: bytes in, complete frames out, straight into the driver.
     void onDeviceFrame(const QByteArray& bytes)
     {
         sinceLastDeviceFrame_.start();
@@ -264,10 +230,6 @@ bool packetNumbersAreContiguous(const QList<quint16>& numbers, QString* detail)
     return true;
 }
 
-// ---------------------------------------------------------------- scenarios
-
-// The exchange as it is supposed to go. Also the only scenario that proves the wire
-// format itself: every firmware byte has to arrive at the device unchanged and in order.
 void scenarioHappyPath(const QByteArray& fw, Report& r)
 {
     FakeRecorder::Policy policy;
@@ -313,14 +275,10 @@ void scenarioHappyPath(const QByteArray& fw, Report& r)
             QString("stored %1 bytes").arg(rig.device().received().size()));
 }
 
-// The port comes back inside the bootloader's window. Nothing in the driver has to be
-// clever about this -- it just has to keep asking until somebody answers -- so this
-// scenario is what separates a driver defect from a link defect. If it passes and the real
-// app still fails, the fault is in the link layer, not here.
 void scenarioReenumerationRecovers(const QByteArray& fw, Report& r)
 {
     FakeRecorder::Policy policy;
-    policy.unreachableForMs = 1500;   // typical STM32 CDC re-enumeration on Windows
+    policy.unreachableForMs = 1500;
     policy.bootWindowMs     = 5000;
     Rig rig(policy);
 
@@ -340,10 +298,6 @@ void scenarioReenumerationRecovers(const QByteArray& fw, Report& r)
     r.check(rig.device().received() == fw, "bytes the device stored equal the firmware file");
 }
 
-// The port comes back after the window has closed. The bootloader has already jumped into
-// the firmware that is still flashed, so the thing that answers is an ordinary application
-// with no ID_UPDATE. The host has to notice and stop -- otherwise it flashes into a void
-// and leaves the link marked upgrading for the rest of the session.
 void scenarioWindowMissed(const QByteArray& fw, Report& r)
 {
     FakeRecorder::Policy policy;
@@ -371,8 +325,6 @@ void scenarioWindowMissed(const QByteArray& fw, Report& r)
     r.check(!rig.dev().isUpdatingFw(), "driver leaves the updating state");
 }
 
-// The port never comes back under the same handle. Same requirement as above and the
-// simplest possible shape of it.
 void scenarioBootloaderUnreachable(const QByteArray& fw, Report& r)
 {
     FakeRecorder::Policy policy;
@@ -384,7 +336,6 @@ void scenarioBootloaderUnreachable(const QByteArray& fw, Report& r)
 
     rig.dev().sendUpdateFW(fw);
 
-    // Well past _timeoutUpgradeAnswerTime, which sendUpdateFW sets to 5000 ms.
     const bool gaveUp = spin(20000, [&]() { return rig.obs().doneUpgrading > 0; });
 
     r.note(rigState(rig) + QString(", console: %1").arg(core.lines().join(" | ")));
@@ -396,9 +347,6 @@ void scenarioBootloaderUnreachable(const QByteArray& fw, Report& r)
     r.check(core.countContaining("aborted") > 0, "the give-up is reported to the console");
 }
 
-// The bootloader answers the mark but never identifies itself, so boardVersion() stays
-// BoardNone and process() can never promote in_boot to in_update. Same requirement as
-// above: the host owns the timeout, not the user.
 void scenarioBootloaderNeverIdentifies(const QByteArray& fw, Report& r)
 {
     FakeRecorder::Policy policy;
@@ -420,9 +368,6 @@ void scenarioBootloaderNeverIdentifies(const QByteArray& fw, Report& r)
     r.check(!rig.dev().isUpdatingFw(), "driver leaves the updating state");
 }
 
-// The link dies partway through the transfer. The host is entitled to retry, but the
-// retries have to be bounded and it has to fail in the end -- an unbounded resend keeps
-// the link marked "upgrading" forever, which is what makes the port unrecoverable.
 void scenarioStallsMidTransfer(const QByteArray& fw, Report& r)
 {
     const int stopAfter = 100;
@@ -454,19 +399,11 @@ void scenarioStallsMidTransfer(const QByteArray& fw, Report& r)
             QString("got %1").arg(rig.dev().upgradeFWStatus()));
 }
 
-// Characterisation, not a defect claim: this pins how hard the upgrade depends on the mark
-// bit. DevDriver::protoComplete reassigns m_state.mark from every frame it receives, and a
-// tick that sees it clear calls restartState(), which wipes in_update -- so a bootloader
-// whose answers carry no mark can never be reached at all, and the 5 s window lapses while
-// the host is still asking. Whether any bootloader behaves that way has not been checked;
-// the firmware was not read. If this scenario ever starts failing, the coupling changed and
-// somebody should decide whether that was on purpose.
 void scenarioMarkDependency(const QByteArray& fw, Report& r)
 {
     FakeRecorder::Policy policy;
     policy.bootSetsMark = false;
-    policy.bootWindowMs = 60000;   // hold the device in the bootloader so only the mark
-                                   // bit is under test, not the fallback timer
+    policy.bootWindowMs = 60000;
     Rig rig(policy);
 
     r.check(rig.bringUp(), "device identifies and the driver reaches connected state");
@@ -485,8 +422,6 @@ void scenarioMarkDependency(const QByteArray& fw, Report& r)
             QString("got %1").arg(rig.dev().upgradeFWStatus()));
 }
 
-// Old bootloaders answer an ID_UPDATE with a bare ACK instead of a progress report;
-// m_bootloaderLagacyMode is the host's name for that mode. It has to still work.
 void scenarioLegacyAckOnly(const QByteArray& fw, Report& r)
 {
     FakeRecorder::Policy policy;
@@ -523,7 +458,7 @@ const Scenario kScenarios[] = {
     { "mark-dependency",         scenarioMarkDependency },
 };
 
-} // namespace
+}
 
 int main(int argc, char* argv[])
 {

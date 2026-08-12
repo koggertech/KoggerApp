@@ -5,16 +5,7 @@
 #   run.ps1 -Firmware ... -SkipLink                        # driver scenarios only
 #   run.ps1 -Build                                         # compile, do not run
 #
-# Two binaries, deliberately:
-#   test_fw_upgrade    - DevDriver + IDBinUpdate against a scriptable Recorder. Qt Core only.
-#   test_link_reconnect- Link + LinkManager across a USB-VCP port dropout. Adds Network and
-#                        SerialPort, and needs LinkManager's getCurrentSerialList seam.
-#
-# Neither one opens a real port or needs a device. A non-zero exit means a check failed.
-#
-# The compiler and Qt default to the same llvm-mingw kit tools/protocol_contract/gen.ps1
-# uses. Override if your kit lives elsewhere; a wrong path fails here rather than half way
-# through a link step.
+# No hardware and no real port. A non-zero exit means a check failed.
 param(
     [string] $Qt       = "C:/Qt/6.8.3/llvm-mingw_64",
     [string] $Clang    = "C:/Qt/Tools/llvm-mingw1706_64/bin/clang++.exe",
@@ -36,19 +27,19 @@ try {
     $out = "build/fw_upgrade_test"
     New-Item -ItemType Directory -Force -Path $out | Out-Null
 
+    # shim must precede src so <core.h> resolves to the stub
     $inc = @(
-        "-I", "tools/fw_upgrade_test/shim",   # must precede src/ so <core.h> resolves to the stub
+        "-I", "tools/fw_upgrade_test/shim",
         "-I", "src",
         "-I", "tools/fw_upgrade_test",
         "-I", "$Qt/include",
         "-I", "$Qt/include/QtCore",
-        "-I", "$Qt/include/QtGui",        # dataset_defs.h -> math_defs.h -> QVector3D
+        "-I", "$Qt/include/QtGui",
         "-I", "$Qt/include/QtNetwork",
         "-I", "$Qt/include/QtSerialPort"
     )
 
     # ---- moc -------------------------------------------------------------------
-    # Same set CMake's AUTOMOC would produce for these translation units.
     $mocHeaders = @{
         "src/id_binnary.h"          = "$out/moc_id_binnary.cpp"
         "src/device/dev_driver.h"   = "$out/moc_dev_driver.cpp"
@@ -75,6 +66,8 @@ try {
     Write-Host "built $driverExe"
 
     # ---- link-level test -------------------------------------------------------
+    # src/notifications.cpp is not compiled here on purpose: its quoted #include "core.h"
+    # would resolve to the real src/core.h. The test defines the three methods instead.
     $linkExe = "$out/test_link_reconnect.exe"
     if (-not $SkipLink) {
         & $Clang -std=c++23 -g -w @inc `
@@ -90,6 +83,7 @@ try {
 
     if ($Build) { Write-Host "-Build given, not running"; exit 0 }
 
+    # ---- run -------------------------------------------------------------------
     $env:PATH = "$Qt/bin;$(Split-Path $Clang);$env:PATH"
     $failed = 0
 
@@ -105,10 +99,7 @@ try {
     if (-not $SkipLink) {
         Write-Host ""
         & $linkExe
-        # 2 = the scenario could not run on this Qt build; that is not a pass and not a
-        # product failure, so it is reported separately instead of folded into the count.
-        if ($LASTEXITCODE -eq 2) { Write-Host "link scenario INCONCLUSIVE" }
-        elseif ($LASTEXITCODE -ne 0) { $failed++ }
+        if ($LASTEXITCODE -ne 0) { $failed++ }
     }
 
     Write-Host ""
