@@ -859,12 +859,19 @@ public:
     explicit IDBinVersion() : IDBin() {
     }
 
+    enum BootMode : int {
+        BootModeUnknown = -1,
+        BootModeFirmware = 0,
+        BootModeBootloader = 1
+    };
+
     ID id() override { return ID_VERSION; }
     Resp  parsePayload(FrameParser &proto) override;
     uint8_t productName() { return 0; }
 
     BoardVersion boardVersion() { return m_boardVersion; }
     uint8_t boardVersionMinor() { return m_boardVersionMinor; }
+    int bootMode() const { return _bootMode; }
 
     int fwVersion() { return _fwVersion; }
     int fwVersionMinor() { return _fwVersionMinor; }
@@ -875,6 +882,7 @@ public:
         m_boardVersion = BoardNone;
         m_boardVersionMinor = 0;
         m_serialNumber = 0;
+        _bootMode = BootModeUnknown;
     }
 
     QByteArray uid() { return _uid; }
@@ -894,7 +902,7 @@ protected:
     int _fwVersionMinor = 0;
     int _bootVersion = 0;
     int _bootVersionMinor = 0;
-    int _bootMode = 0;
+    int _bootMode = BootModeUnknown;
 };
 
 class IDBinMark : public IDBin

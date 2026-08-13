@@ -1480,7 +1480,8 @@ void DevDriver::receivedUART(Parsers::Type type, Parsers::Version ver, Parsers::
 void DevDriver::receivedVersion(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
     Q_UNUSED(type);
 
-    if(resp == respNone && isStaleVersionAfterReboot()) {
+    if(resp == respNone && idVersion->bootMode() != IDBinVersion::BootModeBootloader &&
+       isStaleVersionAfterReboot()) {
         idVersion->reset();
         return;
     }
@@ -1921,7 +1922,10 @@ void DevDriver::process() {
                     requestStreamList();
                 }
 
-                if(m_state.in_boot) {
+                if(m_state.in_boot && idVersion->bootMode() == IDBinVersion::BootModeFirmware) {
+                    idVersion->requestAll();
+                }
+                else if(m_state.in_boot) {
                     m_state.in_boot = false;
                     m_state.in_update = true;
                     // idUpdate->putUpdate();

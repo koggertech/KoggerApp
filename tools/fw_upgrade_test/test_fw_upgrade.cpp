@@ -499,7 +499,9 @@ void scenarioStaleVersionRace(const QByteArray& fw, Report& r)
             "no packet is sent while the device is still resetting",
             QString("first packet at %1 ms, %2 ms before the device could answer")
                 .arg(rig.obs().firstUpdateAtMs).arg(unreachableMs - rig.obs().firstUpdateAtMs));
-    r.check(finished, "upgrade still completes once the bootloader is reachable");
+    r.check(finished && rig.dev().upgradeFWStatus() == DevDriver::successUpgrade,
+            "upgrade still completes once the bootloader is reachable",
+            QString("finished %1, status %2").arg(finished).arg(rig.dev().upgradeFWStatus()));
     r.check(rig.device().received() == fw, "bytes the device stored equal the firmware file");
 }
 
