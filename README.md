@@ -136,6 +136,8 @@ KoggerApp is open-source, meaning you have the power to shape it! Whether you're
 ### 🔗 *Useful links*
 - 🌐 [Official Website](https://kogger.tech/)
 - 📄 [KoggerApp Product Page](https://kogger.tech/koggerapp/)
+- 📄 [KoggerApp - first introductory post](https://kogger.tech/koggerapp-sonar-survey-software/)
+- 📄 [KoggerApp - second introductory post](https://kogger.tech/koggerapp-sonar-survey-workflow/)
 
 ---
 
