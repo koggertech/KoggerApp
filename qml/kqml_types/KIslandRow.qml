@@ -6,7 +6,7 @@ Item {
     property string label: ""
     property string caption: ""
     property color labelColor: AppPalette.textStrong
-    property int labelPixelSize: Tokens.fontLg
+    property int labelPixelSize: island ? island.labelPixelSize : Tokens.fontLg
     property bool stacked: false
     property bool open: true
     property bool interactive: false

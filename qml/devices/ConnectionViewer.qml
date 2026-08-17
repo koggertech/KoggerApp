@@ -900,66 +900,113 @@ Column {
                 width: parent.width
                 spacing: Tokens.spaceXs
 
-                Text {
-                    text: qsTr("Log folder:")
-                    color: AppPalette.textMuted
-                    font.pixelSize: Tokens.fontXs
-                }
+                KIsland {
+                    fillColor: AppPalette.bg
+                    rowPadding: Tokens.spaceSm
+                    labelPixelSize: Tokens.fontBase
 
-                Row {
-                    width: parent.width
-                    spacing: Tokens.spaceXs
+                    KIslandRow {
+                        label: qsTr("Log folder:")
+                        stacked: true
+                        minHeight: 0
+                        verticalPadding: Tokens.spaceSm
 
-                    Rectangle {
-                        width: logBrowseBtn.visible ? parent.width - logBrowseBtn.width - parent.spacing : parent.width
-                        height: Tokens.controlHMd
-                        radius: Tokens.radiusSm
-                        color: AppPalette.bg
-                        border.width: logPathInput.activeFocus ? 1 : Tokens.cardBorderWidth
-                        border.color: logPathInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                        TextInput {
-                            id: logPathInput
-                            anchors.fill: parent
-                            anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceSm
-                            verticalAlignment: TextInput.AlignVCenter
-                            clip: true
-                            readOnly: Qt.platform.os === "android"   // Android: fixed default dir, no manual path
-                            activeFocusOnTab: !readOnly
-                            selectByMouse: !readOnly
-                            color: AppPalette.text
-                            font.pixelSize: Tokens.fontBase
-                            // Show the effective save location — the custom path, or the
-                            // default (Documents/KoggerApp/logs) when none is set.
-                            function syncFromStore() {
-                                if (activeFocus) return
-                                var def = (typeof core !== "undefined" && core) ? core.logDirectory() : ""
-                                text = (store && store.recordFolder && store.recordFolder.length) ? store.recordFolder : def
+                        Row {
+                            width: parent.width
+                            spacing: Tokens.spaceXs
+
+                            Rectangle {
+                                width: logBrowseBtn.visible ? parent.width - logBrowseBtn.width - parent.spacing : parent.width
+                                height: Tokens.controlHMd
+                                radius: Tokens.radiusSm
+                                color: AppPalette.bgDeep
+                                border.width: logPathInput.activeFocus ? 1 : Tokens.cardBorderWidth
+                                border.color: logPathInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                TextInput {
+                                    id: logPathInput
+                                    anchors.fill: parent
+                                    anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceSm
+                                    verticalAlignment: TextInput.AlignVCenter
+                                    clip: true
+                                    readOnly: Qt.platform.os === "android"   // Android: fixed default dir, no manual path
+                                    activeFocusOnTab: !readOnly
+                                    selectByMouse: !readOnly
+                                    color: AppPalette.text
+                                    font.pixelSize: Tokens.fontBase
+                                    // Show the effective save location — the custom path, or the
+                                    // default (Documents/KoggerApp/logs) when none is set.
+                                    function syncFromStore() {
+                                        if (activeFocus) return
+                                        var def = (typeof core !== "undefined" && core) ? core.logDirectory() : ""
+                                        text = (store && store.recordFolder && store.recordFolder.length) ? store.recordFolder : def
+                                    }
+                                    Component.onCompleted: syncFromStore()
+                                    onEditingFinished: if (store) store.recordFolder = text.trim()
+                                    TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: logPathInput.selectAll() }
+                                    Connections {
+                                        target: store
+                                        function onRecordFolderChanged() { logPathInput.syncFromStore() }
+                                    }
+                                }
                             }
-                            Component.onCompleted: syncFromStore()
-                            onEditingFinished: if (store) store.recordFolder = text.trim()
-                            TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: logPathInput.selectAll() }
-                            Connections {
-                                target: store
-                                function onRecordFolderChanged() { logPathInput.syncFromStore() }
+
+                            KButton {
+                                id: logBrowseBtn
+                                visible: Qt.platform.os !== "android"   // Android: fixed default dir, no folder picker
+                                text: "..."
+                                toolTipText: qsTr("Choose recording folder")
+                                normalBg: AppPalette.controlRaised
+                                hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
+                                fontPixelSize: Tokens.fontLg; bold: false
+                                horizontalPadding: 0; verticalPadding: 0
+                                height: Tokens.controlHMd
+                                width: Tokens.controlHMd
+                                onClicked: {
+                                    core.setLogDirectory(store.recordFolder)            // sync selection (empty = default)
+                                    logFolderDialog.currentFolder = core.logDirectoryUrl()  // existing dir as start location
+                                    logFolderDialog.open()
+                                }
                             }
                         }
                     }
 
-                    KButton {
-                        id: logBrowseBtn
-                        visible: Qt.platform.os !== "android"   // Android: fixed default dir, no folder picker
-                        text: "..."
-                        toolTipText: qsTr("Choose recording folder")
-                        normalBg: AppPalette.controlRaised
-                        hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
-                        fontPixelSize: Tokens.fontLg; bold: false
-                        horizontalPadding: 0; verticalPadding: 0
-                        height: Tokens.controlHMd
-                        width: Tokens.controlHMd
-                        onClicked: {
-                            core.setLogDirectory(store.recordFolder)            // sync selection (empty = default)
-                            logFolderDialog.currentFolder = core.logDirectoryUrl()  // existing dir as start location
-                            logFolderDialog.open()
+                    KIslandRow {
+                        stacked: true
+                        minHeight: 0
+                        verticalPadding: Tokens.spaceSm
+
+                        KTabBar {
+                            id: recFormatTab
+                            width: parent.width
+                            trackColor: AppPalette.bgDeep
+                            fontPixelSize: Tokens.fontBase
+                            options: [{ label: qsTr("KLF"), value: 1 },
+                                      { label: qsTr("CSV"), value: 2 },
+                                      { label: qsTr("KLF") + " + " + qsTr("CSV"), value: 3 }]
+
+                            readonly property int storeMask: (store && store.recordKlf ? 1 : 0)
+                                                           | (store && store.recordCsv ? 2 : 0)
+                            property bool _g: false
+                            function pushFromStore() {
+                                if (!store)
+                                    return
+                                if (storeMask === 0) {   // legacy settings: no type at all maps to no tab
+                                    store.recordKlf = true
+                                    return
+                                }
+                                if (currentValue === storeMask)
+                                    return
+                                _g = true; currentValue = storeMask; _g = false
+                            }
+                            readonly property var storeRef: store
+                            onStoreRefChanged: pushFromStore()
+                            onStoreMaskChanged: pushFromStore()
+                            Component.onCompleted: pushFromStore()
+                            onValueSelected: function(v) {
+                                if (_g || !store) return
+                                store.recordKlf = (v & 1) !== 0
+                                store.recordCsv = (v & 2) !== 0
+                            }
                         }
                     }
                 }
@@ -971,27 +1018,6 @@ Column {
                         var p = connectionViewer.urlSource("" + selectedFolder)   // url → local path (strips file://)
                         store.recordFolder = p
                         core.setLogDirectory(p)
-                    }
-                }
-
-                KSwitch {
-                    width: parent.width
-                    text: qsTr("KLF")
-                    backgroundColor: AppPalette.bg   // recessed on the card recording strip
-                    checked: store.recordKlf
-                    onToggled: {
-                        if (!checked && !store.recordCsv) { checked = Qt.binding(function() { return store.recordKlf }); return }   // keep at least one type
-                        store.recordKlf = checked
-                    }
-                }
-                KSwitch {
-                    width: parent.width
-                    text: qsTr("CSV")
-                    backgroundColor: AppPalette.bg   // recessed on the card recording strip
-                    checked: store.recordCsv
-                    onToggled: {
-                        if (!checked && !store.recordKlf) { checked = Qt.binding(function() { return store.recordCsv }); return }
-                        store.recordCsv = checked
                     }
                 }
             }

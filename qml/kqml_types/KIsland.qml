@@ -15,6 +15,7 @@ Item {
     property real rowPadding: Tokens.spaceLg
     property real separatorInset: rowPadding
     property real slotWidth: 0
+    property int labelPixelSize: Tokens.fontLg
     property bool separatorsVisible: true
 
     default property alias rows: rowColumn.data
