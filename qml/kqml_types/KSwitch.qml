@@ -10,6 +10,7 @@ Switch {
     property int cornerRadius: Tokens.radiusLg
     property color textColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
     property color backgroundColor: AppPalette.rowRaised
+    property color hoverBackgroundColor: AppPalette.bgHover
     property color borderColor: AppPalette.border
     property color accentColor: AppPalette.toggleOn
     property color accentBorderColor: AppPalette.toggleOnBorder
@@ -97,7 +98,7 @@ Switch {
     background: Rectangle {
         id: bg
         radius: control.cornerRadius
-        color: control.hovered ? AppPalette.bgHover : control.backgroundColor
+        color: control.hovered ? control.hoverBackgroundColor : control.backgroundColor
         border.width: Tokens.cardBorderWidth
         border.color: control.borderColor
 

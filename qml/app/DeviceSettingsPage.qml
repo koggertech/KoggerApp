@@ -187,6 +187,8 @@ Column {
 
     readonly property real groupWidth: Math.max(0, width)
     readonly property real spinW: Math.round(115 * AppPalette.scale)
+    readonly property real toggleW: Math.round(44 * AppPalette.scale)
+    readonly property real spinToggleSlotW: spinW + Tokens.spaceMd + toggleW
 
     readonly property int chartSamplesMin: 100
     readonly property int chartSamplesMax: 15000
@@ -246,22 +248,6 @@ Column {
                 return
             root.dev.flashSettings()
             notifications.info(qsTr("Settings written to device: %1").arg(root.dev.devName))
-        }
-    }
-
-    component B2Card: Rectangle {
-        default property alias content: _b2col.data
-        width: root.groupWidth
-        radius: Tokens.radiusMd
-        color: AppPalette.card
-        border.width: Tokens.cardBorderWidth
-        border.color: AppPalette.border
-        implicitHeight: _b2col.implicitHeight + 2 * Tokens.spaceMd
-        Column {
-            id: _b2col
-            x: Tokens.spaceMd; y: Tokens.spaceMd
-            width: parent.width - 2 * Tokens.spaceMd
-            spacing: Tokens.spaceSm
         }
     }
 
@@ -1063,130 +1049,153 @@ Column {
             }
         }
 
-        ParamCard {
-            id: periodCard
-            width: parent.width
-            label: qsTr("Period, ms")
-            labelColor: AppPalette.textStrong
-            fillColor: AppPalette.card
-            slotWidth: root.spinW
+        KIsland {
+            slotWidth: root.spinToggleSlotW
 
-            property int _periodRestore: 100
-            property bool wantChecked: !!(dev && dev.ch1Period > 0)
-            property bool _g: false
-            onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
-            Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
-            onToggled: function(v) {
-                if (_g || !dev) return
-                if (v) {
-                    dev.ch1Period = _periodRestore
-                } else {
-                    if (dev.ch1Period > 0) _periodRestore = dev.ch1Period
-                    dev.ch1Period = 0
+            KIslandRow {
+                id: periodRow
+                label: qsTr("Period, ms")
+
+                property int _periodRestore: 100
+                readonly property bool wantChecked: !!(dev && dev.ch1Period > 0)
+                onWantCheckedChanged: periodSwitch.pushFromDev()
+                Component.onCompleted: periodSwitch.pushFromDev()
+
+                Item {
+                    width: parent.width
+                    height: Tokens.controlHMd
+
+                    DevSpin {
+                        width: root.spinW
+                        height: parent.height
+                        enabled: periodSwitch.checked
+                        opacity: enabled ? 1.0 : 0.45
+                        from: 10; to: 2000; divisor: 1; decimals: 0
+                        stepValues: root.periodStepsMs
+                        devValue: dev ? (dev.ch1Period || 0) : 0
+                        writeBack: function(v) { if (dev) dev.ch1Period = v }
+                    }
+
+                    KSwitch {
+                        id: periodSwitch
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: trackWidth
+                        height: parent.height
+                        switchHorizontalPadding: 0
+                        backgroundColor: "transparent"
+                        hoverBackgroundColor: "transparent"
+
+                        property bool _g: false
+                        function pushFromDev() {
+                            if (checked === periodRow.wantChecked) return
+                            _g = true; checked = periodRow.wantChecked; _g = false
+                        }
+                        onToggled: {
+                            if (_g || !dev) return
+                            if (checked) {
+                                dev.ch1Period = periodRow._periodRestore
+                            } else {
+                                if (dev.ch1Period > 0) periodRow._periodRestore = dev.ch1Period
+                                dev.ch1Period = 0
+                            }
+                        }
+                    }
                 }
             }
 
-            DevSpin {
-                anchors.left: parent.left; anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                enabled: periodCard.checked
-                opacity: enabled ? 1.0 : 0.45
-                from: 10; to: 2000; divisor: 1; decimals: 0
-                stepValues: root.periodStepsMs
-                devValue: dev ? (dev.ch1Period || 0) : 0
-                writeBack: function(v) { if (dev) dev.ch1Period = v }
-            }
-        }
-
-        B2Card {
-            Row {
-                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-                Text { text: qsTr("Distance, m"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
+            KIslandRow {
+                label: qsTr("Distance, m")
                 DevSpin {
                     from: 1; to: 150; divisor: 1; decimals: 0
                     stepValues: root.distanceStepsM
                     devValue: (dev && dev.chartResolution > 0) ? Math.round(dev.chartResolution * dev.chartSamples / 1000) : 0
-                    anchors.verticalCenter: parent.verticalCenter
                     writeBack: function(v) {
                         if (dev && dev.chartResolution > 0)
                             dev.chartSamples = Math.max(root.chartSamplesMin, Math.min(root.chartSamplesMax, Math.round(v * 1000 / dev.chartResolution)))
                     }
                 }
             }
-        }
 
-        B2Card {
-            visible: root._isNanoSSS
-            Row {
-                width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-                Text { text: qsTr("Frequency, kHz"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-                DevSpin { from: 40; to: 6000; stepSize: 5; divisor: 1; decimals: 0; devValue: dev ? (dev.transFreq || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transFreq = v } }
+            KIslandRow {
+                label: qsTr("Frequency, kHz")
+                visible: root._isNanoSSS
+                DevSpin { from: 40; to: 6000; stepSize: 5; divisor: 1; decimals: 0; devValue: dev ? (dev.transFreq || 0) : 0; writeBack: function(v) { if (dev) dev.transFreq = v } }
             }
-        }
 
-        B2Card {
-            Text { text: qsTr("Echogram"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg }
-            KTabBar {
-                id: b2ChartTab; width: parent.width
-                options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("8-bit"), value: 1 }]
-                property int chartModel: dev ? (dev.datasetChart === 1 ? 1 : 0) : 0
-                property bool _g: false
-                onChartModelChanged: { if (currentValue !== chartModel) { _g = true; currentValue = chartModel; _g = false } }
-                Component.onCompleted: { _g = true; currentValue = chartModel; _g = false }
-                onValueSelected: function(v) { if (!_g && dev) dev.datasetChart = v }
+            KIslandSection { label: qsTr("Echogram") }
+
+            KIslandRow {
+                stacked: true
+                KTabBar {
+                    id: b2ChartTab; width: parent.width
+                    trackColor: AppPalette.bgDeep
+                    options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("8-bit"), value: 1 }]
+                    property int chartModel: dev ? (dev.datasetChart === 1 ? 1 : 0) : 0
+                    property bool _g: false
+                    onChartModelChanged: { if (currentValue !== chartModel) { _g = true; currentValue = chartModel; _g = false } }
+                    Component.onCompleted: { _g = true; currentValue = chartModel; _g = false }
+                    onValueSelected: function(v) { if (!_g && dev) dev.datasetChart = v }
+                }
             }
-            Reveal {
+
+            KIslandRow {
+                label: qsTr("Resolution, cm")
                 open: b2ChartTab.currentValue === 1
-                Row {
-                    width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-                    Text { text: qsTr("Resolution, cm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-                    DevSpin {
-                        from: 10; to: 100; stepSize: 10; divisor: 10; decimals: 1; trimZeros: true
-                        devValue: dev ? (dev.chartResolution || 0) : 0
-                        anchors.verticalCenter: parent.verticalCenter
-                        writeBack: function(v) {
-                            if (!dev || v <= 0) return
-                            var distCm = (dev.chartResolution > 0) ? Math.round(dev.chartResolution * dev.chartSamples / 10) : 0
-                            dev.chartResolution = v
-                            if (distCm > 0)
-                                dev.chartSamples = Math.max(root.chartSamplesMin, Math.min(root.chartSamplesMax, Math.round(distCm * 10 / v)))
-                        }
+                DevSpin {
+                    from: 10; to: 100; stepSize: 10; divisor: 10; decimals: 1; trimZeros: true
+                    devValue: dev ? (dev.chartResolution || 0) : 0
+                    writeBack: function(v) {
+                        if (!dev || v <= 0) return
+                        var distCm = (dev.chartResolution > 0) ? Math.round(dev.chartResolution * dev.chartSamples / 10) : 0
+                        dev.chartResolution = v
+                        if (distCm > 0)
+                            dev.chartSamples = Math.max(root.chartSamplesMin, Math.min(root.chartSamplesMax, Math.round(distCm * 10 / v)))
                     }
                 }
             }
-        }
 
-        B2Card {
-            Text { text: qsTr("Rangefinder"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg }
-            KTabBar {
-                id: b2DistTab; width: parent.width
-                options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("On"), value: 1 }, { label: qsTr("NMEA"), value: 2 }]
-                property int distModel: dev ? (dev.datasetDist === 1 ? 1 : (dev.datasetSDDBT === 1 ? 2 : 0)) : 0
-                property bool _g: false
-                onDistModelChanged: { if (currentValue !== distModel) { _g = true; currentValue = distModel; _g = false } }
-                Component.onCompleted: { _g = true; currentValue = distModel; _g = false }
-                onValueSelected: function(v) {
-                    if (_g || !dev) return
-                    if (v === 1)      { dev.datasetDist = 1 }
-                    else if (v === 2) { dev.datasetSDDBT = 1 }
-                    else              { dev.datasetDist = 0; dev.datasetSDDBT = 0 }
+            KIslandSection { label: qsTr("Rangefinder") }
+
+            KIslandRow {
+                stacked: true
+                KTabBar {
+                    id: b2DistTab; width: parent.width
+                    trackColor: AppPalette.bgDeep
+                    options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("On"), value: 1 }, { label: qsTr("NMEA"), value: 2 }]
+                    property int distModel: dev ? (dev.datasetDist === 1 ? 1 : (dev.datasetSDDBT === 1 ? 2 : 0)) : 0
+                    property bool _g: false
+                    onDistModelChanged: { if (currentValue !== distModel) { _g = true; currentValue = distModel; _g = false } }
+                    Component.onCompleted: { _g = true; currentValue = distModel; _g = false }
+                    onValueSelected: function(v) {
+                        if (_g || !dev) return
+                        if (v === 1)      { dev.datasetDist = 1 }
+                        else if (v === 2) { dev.datasetSDDBT = 1 }
+                        else              { dev.datasetDist = 0; dev.datasetSDDBT = 0 }
+                    }
                 }
             }
-            Reveal {
+
+            KIslandRow {
+                label: qsTr("Confidence threshold, %")
                 open: b2DistTab.currentValue !== 0
-                Row {
-                    width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-                    Text { text: qsTr("Confidence threshold, %"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-                    DevSpin { from: 0; to: 100; stepSize: 1; devValue: dev ? (dev.distConfidence || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distConfidence = v } }
-                }
+                DevSpin { from: 0; to: 100; stepSize: 1; devValue: dev ? (dev.distConfidence || 0) : 0; writeBack: function(v) { if (dev) dev.distConfidence = v } }
+            }
+
+            KIslandRow {
+                stacked: true
+                forceSeparator: true
+                FlashButton { width: parent.width }
             }
         }
     }
 
-    B2Card {
-        visible: root._hasCut
-        FlashButton { width: parent.width }
+    KIsland {
+        visible: root._isRecorder && !root._isBasicSonar
+        KIslandRow {
+            stacked: true
+            FlashButton { width: parent.width }
+        }
     }
 
     // ── Advanced settings ("Расширенные настройки") ────────────────────────
