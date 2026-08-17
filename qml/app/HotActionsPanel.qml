@@ -1404,7 +1404,7 @@ Item {
                     anchors.centerIn: parent
                     width: parent.width
                     height: Math.max(2, Math.round(2 * root._s))
-                    color: root.buttonFillColor
+                    color: AppPalette.textMuted
                 }
             }
 
