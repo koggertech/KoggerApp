@@ -28,7 +28,7 @@ target_sources(KoggerApp PRIVATE
     surface_view.h          surface_view.cpp
     isobaths_view.h         isobaths_view.cpp
     triangle.h
-    usbl_view.h             usbl_view.cpp
+    usbl_layer.h            usbl_layer.cpp
     contacts.h              contacts.cpp)
 
 target_include_directories(KoggerApp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

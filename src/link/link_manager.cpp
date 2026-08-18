@@ -1,6 +1,7 @@
 #include "link_manager.h"
 
 #include <QBuffer>
+#include <QDateTime>
 #include <QFile>
 #include <QSaveFile>
 #include <QDebug>
@@ -124,41 +125,41 @@ void LinkManager::shutdown()
     proxyLinkUuid_ = QUuid();
 }
 
-QList<QSerialPortInfo> LinkManager::getCurrentSerialList() const
+QStringList LinkManager::currentSerialPortNames() const
 {
     const auto allPorts = QSerialPortInfo::availablePorts();
 
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-    QList<QSerialPortInfo> filteredPorts;
+    QStringList names;
     for (const auto& portInfo : allPorts) {
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
         const QString systemLocation = portInfo.systemLocation();
         const bool hasUsbIdentifiers = portInfo.hasVendorIdentifier() || portInfo.hasProductIdentifier();
         const bool hasUsbLikeName = systemLocation.startsWith("/dev/ttyUSB")
                                  || systemLocation.startsWith("/dev/ttyACM");
 
-        if (hasUsbIdentifiers || hasUsbLikeName) {
-            filteredPorts.append(portInfo);
+        if (!hasUsbIdentifiers && !hasUsbLikeName) {
+            continue;
+        }
+#endif
+        if (!portInfo.portName().isEmpty()) {
+            names.append(portInfo.portName());
         }
     }
-    return filteredPorts;
-#else
-    return allPorts;
-#endif
+    return names;
 }
 
-Link* LinkManager::createSerialPort(const QSerialPortInfo &serialInfo) const
+Link* LinkManager::createSerialPort(const QString &portName) const
 {
-    Link* newLinkPtr = nullptr;
+    if (portName.isEmpty())
+        return nullptr;
 
-    if (serialInfo.isNull())
-        return newLinkPtr;
-    newLinkPtr = createNewLink();
-    newLinkPtr->createAsSerial(serialInfo.portName(), 921600, false);   
+    Link* newLinkPtr = createNewLink();
+    newLinkPtr->createAsSerial(portName, 921600, false);
 
     return newLinkPtr;
 }
 
-void LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
+void LinkManager::addNewLinks(const QStringList &currSerialList)
 {
     for (const auto& itmI : currSerialList) {
         bool isBeen{ false };
@@ -167,21 +168,22 @@ void LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
             if (itmJ->getLinkType() != LinkType::kLinkSerial)
                 continue;
 
-            if (itmI.portName() == itmJ->getPortName()) {
+            if (itmI == itmJ->getPortName()) {
                 isBeen = true;
                 break;
             }
         }
 
         if (!isBeen) {
-            auto link = createSerialPort(itmI);
-            list_.append(link);
-            doEmitAppendModifyModel(link);
+            if (auto link = createSerialPort(itmI); link) {
+                list_.append(link);
+                doEmitAppendModifyModel(link);
+            }
         }
     }
 }
 
-void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList)
+void LinkManager::deleteMissingLinks(const QStringList &currSerialList)
 {
     for (int i = 0; i < list_.size(); ++i) {
         Link* link = list_.at(i);
@@ -195,7 +197,7 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
 
         bool isBeen{ false };
         for (const auto& itm : currSerialList) {
-            if (itm.portName() == link->getPortName()) {
+            if (itm == link->getPortName()) {
                 isBeen = true;
                 break;
             }
@@ -242,16 +244,22 @@ void LinkManager::openAutoConnections()
             link->setControlType(ControlType::kAuto);
         }
 
+        if (link->getConnectionStatus() && link->getIsUpgradingState()) {
+            link->armAutoConn(linkUpgradeReconnectWindowMs);
+        }
+
         if (!link->getConnectionStatus()) {
             bool autoConnOnce = link->getAutoConnOnce();
+
+            if (autoConnOnce && link->isAutoConnExpired(QDateTime::currentMSecsSinceEpoch())) {
+                link->setAutoConnOnce(false);
+                autoConnOnce = false;
+                link->setIsUpgradingState(false);
+            }
 
             if ((link->getControlType() == ControlType::kAuto &&
                 !link->getIsNotAvailable()) ||
                 autoConnOnce) {
-
-                if (autoConnOnce) {
-                    link->setAutoConnOnce(false);
-                }
 
                 switch (link->getLinkType()) {
                     case LinkType::kLinkNone:   { break; }
@@ -260,6 +268,11 @@ void LinkManager::openAutoConnections()
                     case LinkType::kLinkIPTCP:  { link->openAsTcp(); break; }
                     default:                   { break; }
                 }
+
+                if (autoConnOnce &&
+                    (link->getConnectionStatus() || link->getLinkType() == LinkType::kLinkIPTCP)) {
+                    link->setAutoConnOnce(false);
+                }
             }
         }
     }
@@ -267,7 +280,7 @@ void LinkManager::openAutoConnections()
 
 void LinkManager::update()
 {
-    auto currSerialList{ getCurrentSerialList() };
+    auto currSerialList{ currentSerialPortNames() };
 
     addNewLinks(currSerialList);
 

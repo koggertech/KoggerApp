@@ -6,8 +6,9 @@ Item {
 
     property var def: null
 
-    readonly property int _cols: def ? def.cols : 1
-    readonly property int _rows: def ? def.rows : 1
+    readonly property bool _isNodes: !!(def && def.kind === "usblNodes")
+    readonly property int _cols: (def && typeof def.cols === "number") ? def.cols : 1
+    readonly property int _rows: (def && typeof def.rows === "number") ? def.rows : 1
     readonly property real _gap: Math.round(3 * AppPalette.scale)
 
     Rectangle {
@@ -17,8 +18,34 @@ Item {
         border.width: 1
         border.color: AppPalette.border
 
+        // A nodes panel has no grid to preview and no fixed row count to draw honestly, so the
+        // thumbnail is a glyph for "a list": three full-width bars. Drawing three cells of a
+        // grid instead would promise a shape the panel does not have.
+        Column {
+            visible: root._isNodes
+            anchors.fill: parent
+            anchors.margins: Tokens.spaceXs
+            spacing: root._gap
+            Repeater {
+                model: 3
+                delegate: Rectangle {
+                    required property int index
+                    width: parent.width
+                    height: Math.max(2, (parent.height - 2 * root._gap) / 3)
+                    radius: 2
+                    color: AppPalette.accentBg
+                    border.width: 1
+                    border.color: AppPalette.accentBorder
+                    // Fading down the list says "and however many more", which is the one thing
+                    // a fixed-count thumbnail has to get across.
+                    opacity: 1.0 - index * 0.28
+                }
+            }
+        }
+
         Item {
             id: area
+            visible: !root._isNodes
             anchors.fill: parent
             anchors.margins: Tokens.spaceXs
 

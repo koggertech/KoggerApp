@@ -62,6 +62,8 @@ public:
     void setAutoSpeedSelection(bool autoSpeedSelection);
     void setIsUpgradingState(bool state);
     void setAutoConnOnce(bool state);
+    void armAutoConn(int windowMs);
+    bool isAutoConnExpired(qint64 nowMsecs) const;
     QUuid       getUuid() const;
     bool        getConnectionStatus() const;
     bool        getIsRecievesData() const;
@@ -145,6 +147,7 @@ private:
     int localGhostIgnoreCount_;
     int requestCnt_;
     bool autoConnOnce_;
+    qint64 autoConnUntilMsecs_;
 
 private slots:
     void readyRead();

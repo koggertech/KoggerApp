@@ -35,6 +35,23 @@ ApplicationWindow {
         Component.onCompleted: initLayerVisibilityControllers()
     }
 
+    // The USBL command plan and the interrogation loop, for the session.
+    //
+    // They used to be declared inside DeviceSettingsPage, which is a settings SUB-PAGE — the
+    // loader swaps its component out as soon as the operator navigates elsewhere, so leaving
+    // the page destroyed the schedule timer and the poll state and interrogation just stopped.
+    // An on-scene panel reporting the plan is read precisely when that panel is closed, so
+    // they belong here. The device settings page now receives both as properties.
+    UsblPlanStore {
+        id: appUsblPlan
+        Component.onCompleted: load()
+    }
+    UsblEngine {
+        id: appUsblEngine
+        plan: appUsblPlan
+        preferredDev: workspaceStore.activeDevice
+    }
+
     // Читаем глобальные настройки при запуске (те же ключи, что сохраняет AppSettingsPage)
     Settings {
         id: startupSettings
@@ -1171,20 +1188,66 @@ ApplicationWindow {
             siblingIdList: ["btEdit"]
         }
 
+        // One delegate per panel, of whichever KIND the def names. The Loader is the branch: a
+        // field grid and an acoustic-nodes list are different popups that happen to share the
+        // whole of the panel machinery around them — position, scale, z-rank, docking, the
+        // shown map — which is exactly why the branch is here and not inside either of them.
         Repeater {
             id: widgetsRepeater
             model: workspaceStore.widgets.length
-            delegate: DataWidgetPopup {
+            delegate: Item {
+                id: widgetSlot
                 required property int index
                 readonly property var _wdef: workspaceStore.widgets[index] || null
                 anchors.fill: parent
                 z: ZOrder.widgetPopup + (_wdef ? workspaceStore.widgetStackRank(_wdef.id) : 0)
-                store: workspaceStore
-                def: _wdef
-                popupVisible: !!_wdef && !_beingEdited && workspaceStore.widgetShown(_wdef.id)
-                popupId: _wdef ? "widget:" + _wdef.id : ""
-                siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
-                siblingIdList: ["btEdit", "profiles"]
+
+                // uiStateReapplied re-syncs every panel by walking the Repeater's items; the
+                // Loader now sits between, so this has to forward rather than swallow the call.
+                function syncFromStore() { if (slotLoader.item) slotLoader.item.syncFromStore() }
+
+                Loader {
+                    id: slotLoader
+                    anchors.fill: parent
+                    sourceComponent: (widgetSlot._wdef && widgetSlot._wdef.kind === "usblNodes")
+                                     ? usblNodesPanelComp : dataWidgetPanelComp
+                }
+
+                // BOTH COMPONENTS LIVE INSIDE THE DELEGATE, and they have to. An object created
+                // from a Component gets that Component's creation context; declared beside the
+                // Repeater instead, `widgetSlot` is not in scope and every binding reading it
+                // is a runtime ReferenceError -- a panel that loads and then paints nothing.
+                Component {
+                    id: dataWidgetPanelComp
+                    DataWidgetPopup {
+                        readonly property var _wdef: widgetSlot._wdef
+                        anchors.fill: parent
+                        store: workspaceStore
+                        def: _wdef
+                        popupVisible: !!_wdef && !_beingEdited && workspaceStore.widgetShown(_wdef.id)
+                        popupId: _wdef ? "widget:" + _wdef.id : ""
+                        siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+                        siblingIdList: ["btEdit", "profiles"]
+                    }
+                }
+
+                Component {
+                    id: usblNodesPanelComp
+                    UsblNodesPopup {
+                        readonly property var _wdef: widgetSlot._wdef
+                        anchors.fill: parent
+                        store: workspaceStore
+                        engine: appUsblEngine
+                        def: _wdef
+                        // No _beingEdited term: this panel has no on-scene editor to hide
+                        // behind, so hiding it while its (text-only) settings page is open
+                        // would blank the very thing being configured.
+                        popupVisible: !!_wdef && workspaceStore.widgetShown(_wdef.id)
+                        popupId: _wdef ? "widget:" + _wdef.id : ""
+                        siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+                        siblingIdList: ["btEdit", "profiles"]
+                    }
+                }
             }
         }
 
@@ -1280,6 +1343,11 @@ ApplicationWindow {
 
             DeviceSettingsTab {
                 store: workspaceStore
+                // NOT `usblPlan: usblPlan` -- property lookup finds the object's OWN property
+                // before any id, so that binds the property to itself. Hence the app- prefix
+                // on the ids.
+                usblPlan: appUsblPlan
+                usblEngine: appUsblEngine
             }
         }
 
@@ -1303,6 +1371,7 @@ ApplicationWindow {
             anchors.rightMargin: root.settingsInsetRight
             anchors.bottomMargin: consoleDrawer.height
             store: workspaceStore
+            usblPlan: appUsblPlan
             secondaryPlotItem: secondaryContent ? secondaryContent.plot2DInstance : null
         }
 

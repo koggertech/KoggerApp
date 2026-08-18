@@ -26,6 +26,9 @@ DeviceManager::DeviceManager()
     qRegisterMetaType<QVector<uint8_t>>("QVector<uint8_t>");
     qRegisterMetaType<QByteArray>("QByteArray");
     qRegisterMetaType<IDBinUsblSolution::UsblSolution>("IDBinUsblSolution::UsblSolution");
+    qRegisterMetaType<IDBinUsblSolution::AcousticNavSolution>("IDBinUsblSolution::AcousticNavSolution");
+    qRegisterMetaType<IDBinUsblSolution::BaseToBeacon>("IDBinUsblSolution::BaseToBeacon");
+    qRegisterMetaType<IDBinModemSolution::ModemSolutionHeader>("IDBinModemSolution::ModemSolutionHeader");
     qRegisterMetaType<IDBinDVL::BeamSolution>("IDBinDVL::BeamSolution");
     qRegisterMetaType<uint16_t>("uint16_t");
     qRegisterMetaType<IDBinDVL::DVLSolution>("IDBinDVL::DVLSolution");
@@ -911,11 +914,6 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     dev->setBusAddress(addr);
     dev->setLinkUuid(uuid);
 
-    if (upgradeUuid_ == uuid && upgradeAddr_ == addr) {
-        dev->setFirmware(upgradeData_);
-        upgradeUuid_ = QUuid();
-    }
-
 #ifdef SEPARATE_READING
     auto connType = Qt::AutoConnection;
 
@@ -1009,6 +1007,13 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
         connect(link, &Link::isReceivesDataChanged,   dev, syncStatus);
         connect(link, &Link::isNotAvailableChanged,   dev, syncStatus);
         syncStatus();
+    }
+
+    if (upgradeUuid_ == uuid && upgradeAddr_ == addr) {
+        upgradeUuid_ = QUuid();
+        QMetaObject::invokeMethod(dev, [dev, firmware = upgradeData_]() {
+            dev->setFirmware(firmware);
+        }, Qt::QueuedConnection);
     }
 
     emit devChanged();

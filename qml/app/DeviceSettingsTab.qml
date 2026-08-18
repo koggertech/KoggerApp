@@ -5,6 +5,10 @@ Item {
     id: page
 
     required property var store
+    // Session-lived, owned by MainWindow: this tab is a settings sub-page and is destroyed
+    // whenever the operator navigates away, which must no longer stop the schedule.
+    property var usblPlan: null
+    property var usblEngine: null
 
     width: parent ? parent.width : implicitWidth
     implicitHeight: topoWrap.height + Tokens.spaceLg + contentCol.implicitHeight
@@ -73,6 +77,8 @@ Item {
             visible: !!(page.store && page.store.activeDevice)
             dev: page.store ? page.store.activeDevice : null
             store: page.store
+            usblPlan: page.usblPlan
+            usblEngine: page.usblEngine
         }
     }
 

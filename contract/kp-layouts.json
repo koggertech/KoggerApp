@@ -1,0 +1,159 @@
+{
+  "_generated_by": "tools/protocol_contract/gen_contract.cpp",
+  "_source": "src/id_binnary.h + src/proto_binnary.h",
+  "_note": "Compiler-emitted sizes/offsets, derived from the APP headers: this pins app-vs-simulator agreement on usage, NOT app-vs-firmware layout.",
+  "_partial_enums": ["ID", "Type", "Version", "BoardVersion"],
+  "structs": {
+    "Usbl::UsblSolution": { "size": 152, "id": "ID_USBL_SOLUTION", "ver": 0, "dir": "content", "fields": [
+      { "name": "id", "offset": 0, "size": 1, "count": 1, "kind": "u" },
+      { "name": "role", "offset": 1, "size": 1, "count": 1, "kind": "u" },
+      { "name": "cmd_id", "offset": 2, "size": 1, "count": 1, "kind": "u" },
+      { "name": "reserved", "offset": 3, "size": 1, "count": 1, "kind": "u" },
+      { "name": "timestamp_us", "offset": 4, "size": 8, "count": 1, "kind": "i" },
+      { "name": "ping_counter", "offset": 12, "size": 4, "count": 1, "kind": "u" },
+      { "name": "carrier_counter", "offset": 16, "size": 8, "count": 1, "kind": "i" },
+      { "name": "distance_m", "offset": 24, "size": 4, "count": 1, "kind": "f" },
+      { "name": "distance_unc", "offset": 28, "size": 4, "count": 1, "kind": "f" },
+      { "name": "azimuth_deg", "offset": 32, "size": 4, "count": 1, "kind": "f" },
+      { "name": "azimuth_unc", "offset": 36, "size": 4, "count": 1, "kind": "f" },
+      { "name": "elevation_deg", "offset": 40, "size": 4, "count": 1, "kind": "f" },
+      { "name": "elevation_unc", "offset": 44, "size": 4, "count": 1, "kind": "f" },
+      { "name": "snr", "offset": 48, "size": 4, "count": 1, "kind": "f" },
+      { "name": "beacon_x_m", "offset": 52, "size": 4, "count": 1, "kind": "f" },
+      { "name": "beacon_y_m", "offset": 56, "size": 4, "count": 1, "kind": "f" },
+      { "name": "beacon_latitude", "offset": 60, "size": 8, "count": 1, "kind": "f" },
+      { "name": "beacon_longitude", "offset": 68, "size": 8, "count": 1, "kind": "f" },
+      { "name": "beacon_depth", "offset": 76, "size": 4, "count": 1, "kind": "f" },
+      { "name": "usbl_yaw", "offset": 80, "size": 4, "count": 1, "kind": "f" },
+      { "name": "usbl_pitch", "offset": 84, "size": 4, "count": 1, "kind": "f" },
+      { "name": "usbl_roll", "offset": 88, "size": 4, "count": 1, "kind": "f" },
+      { "name": "usbl_latitude", "offset": 92, "size": 8, "count": 1, "kind": "f" },
+      { "name": "usbl_longitude", "offset": 100, "size": 8, "count": 1, "kind": "f" },
+      { "name": "last_iTOW", "offset": 108, "size": 4, "count": 1, "kind": "u" },
+      { "name": "beacon_n_m", "offset": 112, "size": 4, "count": 1, "kind": "f" },
+      { "name": "beacon_e_m", "offset": 116, "size": 4, "count": 1, "kind": "f" },
+      { "name": "code_snr", "offset": 120, "size": 4, "count": 8, "kind": "f" }
+    ] },
+    "Usbl::AcousticNavSolution": { "size": 86, "id": "ID_USBL_SOLUTION", "ver": 1, "dir": "content", "fields": [
+      { "name": "address", "offset": 0, "size": 1, "count": 1, "kind": "u" },
+      { "name": "cmd_id", "offset": 1, "size": 1, "count": 1, "kind": "u" },
+      { "name": "reserved", "offset": 2, "size": 4, "count": 1, "kind": "u" },
+      { "name": "timestamp_us", "offset": 6, "size": 8, "count": 1, "kind": "i" },
+      { "name": "carrier_us", "offset": 14, "size": 8, "count": 1, "kind": "i" },
+      { "name": "carrier_counter", "offset": 22, "size": 8, "count": 1, "kind": "i" },
+      { "name": "lat", "offset": 30, "size": 8, "count": 1, "kind": "f" },
+      { "name": "lon", "offset": 38, "size": 8, "count": 1, "kind": "f" },
+      { "name": "depth", "offset": 46, "size": 4, "count": 1, "kind": "f" },
+      { "name": "acousticAzimuth", "offset": 50, "size": 4, "count": 1, "kind": "f" },
+      { "name": "geoAzimuth", "offset": 54, "size": 4, "count": 1, "kind": "f" },
+      { "name": "heading", "offset": 58, "size": 4, "count": 1, "kind": "f" },
+      { "name": "distance", "offset": 62, "size": 4, "count": 1, "kind": "f" },
+      { "name": "baseLat", "offset": 66, "size": 8, "count": 1, "kind": "f" },
+      { "name": "baseLon", "offset": 74, "size": 8, "count": 1, "kind": "f" },
+      { "name": "baseDepth", "offset": 82, "size": 4, "count": 1, "kind": "f" }
+    ] },
+    "Usbl::BaseToBeacon": { "size": 94, "id": "ID_USBL_SOLUTION", "ver": 2, "dir": "content", "fields": [
+      { "name": "address", "offset": 0, "size": 1, "count": 1, "kind": "u" },
+      { "name": "cmd_id", "offset": 1, "size": 1, "count": 1, "kind": "u" },
+      { "name": "reserved", "offset": 2, "size": 4, "count": 1, "kind": "u" },
+      { "name": "timestamp_us", "offset": 6, "size": 8, "count": 1, "kind": "i" },
+      { "name": "carrier_us", "offset": 14, "size": 8, "count": 1, "kind": "i" },
+      { "name": "carrier_counter", "offset": 22, "size": 8, "count": 1, "kind": "i" },
+      { "name": "acousticAzimuth", "offset": 30, "size": 4, "count": 1, "kind": "f" },
+      { "name": "geoAzimuth", "offset": 34, "size": 4, "count": 1, "kind": "f" },
+      { "name": "beaconDistance", "offset": 38, "size": 4, "count": 1, "kind": "f" },
+      { "name": "beaconN", "offset": 42, "size": 4, "count": 1, "kind": "f" },
+      { "name": "beaconE", "offset": 46, "size": 4, "count": 1, "kind": "f" },
+      { "name": "beaconD", "offset": 50, "size": 4, "count": 1, "kind": "f" },
+      { "name": "beaconLat", "offset": 54, "size": 8, "count": 1, "kind": "f" },
+      { "name": "beaconLon", "offset": 62, "size": 8, "count": 1, "kind": "f" },
+      { "name": "antennaYaw", "offset": 70, "size": 4, "count": 1, "kind": "f" },
+      { "name": "antennaDepth", "offset": 74, "size": 4, "count": 1, "kind": "f" },
+      { "name": "antennaLat", "offset": 78, "size": 8, "count": 1, "kind": "f" },
+      { "name": "antennaLon", "offset": 86, "size": 8, "count": 1, "kind": "f" }
+    ] },
+    "Usbl::USBLRequestBeacon": { "size": 36, "id": "ID_USBL_SOLUTION", "ver": 0, "dir": "request", "fields": [
+      { "name": "id", "offset": 0, "size": 1, "count": 1, "kind": "u" },
+      { "name": "reserved", "offset": 1, "size": 1, "count": 1, "kind": "u" },
+      { "name": "watermark", "offset": 2, "size": 2, "count": 1, "kind": "u" },
+      { "name": "latitude_deg", "offset": 4, "size": 8, "count": 1, "kind": "f" },
+      { "name": "longitude_deg", "offset": 12, "size": 8, "count": 1, "kind": "f" },
+      { "name": "external_heading_deg", "offset": 20, "size": 4, "count": 1, "kind": "f" },
+      { "name": "force_beacon_depth_m", "offset": 24, "size": 4, "count": 1, "kind": "f" },
+      { "name": "external_pitch", "offset": 28, "size": 4, "count": 1, "kind": "f" },
+      { "name": "external_roll", "offset": 32, "size": 4, "count": 1, "kind": "f" }
+    ] },
+    "Usbl::BeaconActivationResponce": { "size": 4, "id": "ID_USBL_SOLUTION", "ver": 1, "dir": "content", "fields": [
+      { "name": "id", "offset": 0, "size": 1, "count": 1, "kind": "u" },
+      { "name": "reserved", "offset": 1, "size": 1, "count": 1, "kind": "u" },
+      { "name": "reserved1", "offset": 2, "size": 2, "count": 1, "kind": "u" }
+    ] },
+    "Usbl::BeaconActivate": { "size": 4, "id": "ID_USBL_SOLUTION", "ver": 1, "dir": "request", "fields": [
+      { "name": "timeout_s", "offset": 0, "size": 4, "count": 1, "kind": "f" }
+    ] },
+    "Ctl::USBLPingRequest": { "size": 13, "id": "ID_USBL_CONTROL", "ver": 1, "dir": "request", "fields": [
+      { "name": "trigger_timeout_us", "offset": 0, "size": 4, "count": 1, "kind": "u" },
+      { "name": "address", "offset": 4, "size": 1, "count": 1, "kind": "u" },
+      { "name": "cmd_id", "offset": 5, "size": 1, "count": 1, "kind": "u" },
+      { "name": "reply_distance_mm", "offset": 6, "size": 4, "count": 1, "kind": "u" },
+      { "name": "function", "offset": 10, "size": 1, "count": 1, "kind": "u" },
+      { "name": "payload_bit_length", "offset": 11, "size": 2, "count": 1, "kind": "u" }
+    ] },
+    "Ctl::USBLPingAddresses": { "size": 10, "id": "ID_USBL_CONTROL", "ver": 2, "dir": "request", "fields": [
+      { "name": "cur_position", "offset": 0, "size": 1, "count": 1, "kind": "u" },
+      { "name": "max_position", "offset": 1, "size": 1, "count": 1, "kind": "u" },
+      { "name": "address", "offset": 2, "size": 1, "count": 8, "kind": "u" }
+    ] },
+    "Ctl::USBLResponseTimeout": { "size": 4, "id": "ID_USBL_CONTROL", "ver": 3, "dir": "request", "fields": [
+      { "name": "timeout_us", "offset": 0, "size": 4, "count": 1, "kind": "u" }
+    ] },
+    "Ctl::USBLMonitorConfig": { "size": 9, "id": "ID_USBL_CONTROL", "ver": 7, "dir": "request", "fields": [
+      { "name": "suppressSelfResponse_us", "offset": 0, "size": 4, "count": 1, "kind": "u" },
+      { "name": "suppressSelfRequest_us", "offset": 4, "size": 4, "count": 1, "kind": "u" },
+      { "name": "receiveResponseInIdle", "offset": 8, "size": 1, "count": 1, "kind": "u" }
+    ] },
+    "Ctl::USBLResponseAddressFilter": { "size": 8, "id": "ID_USBL_CONTROL", "ver": 4, "dir": "request", "fields": [
+      { "name": "address", "offset": 0, "size": 1, "count": 8, "kind": "u" }
+    ] },
+    "Ctl::USBLCmdConfig": { "size": 18, "id": "ID_USBL_CONTROL", "ver": 6, "dir": "request", "fields": [
+      { "name": "cmd_id", "offset": 0, "size": 1, "count": 1, "kind": "u" },
+      { "name": "eventFilter", "offset": 1, "size": 1, "count": 1, "kind": "u" },
+      { "name": "cmdIdAction", "offset": 2, "size": 1, "count": 1, "kind": "u" },
+      { "name": "cmd_id_replacement", "offset": 3, "size": 1, "count": 1, "kind": "u" },
+      { "name": "addressAction", "offset": 4, "size": 1, "count": 1, "kind": "u" },
+      { "name": "address_replacement", "offset": 5, "size": 1, "count": 1, "kind": "u" },
+      { "name": "eventAction", "offset": 6, "size": 1, "count": 1, "kind": "u" },
+      { "name": "reserved1", "offset": 7, "size": 1, "count": 1, "kind": "u" },
+      { "name": "reserved2", "offset": 8, "size": 4, "count": 1, "kind": "u" },
+      { "name": "receiver_function", "offset": 12, "size": 1, "count": 1, "kind": "u" },
+      { "name": "receive_bit_length", "offset": 13, "size": 2, "count": 1, "kind": "u" },
+      { "name": "sender_function", "offset": 15, "size": 1, "count": 1, "kind": "u" },
+      { "name": "sending_bit_length", "offset": 16, "size": 2, "count": 1, "kind": "u" }
+    ] },
+    "Modem::ModemSolutionHeader": { "size": 38, "id": "ID_MODEM_SOLUTION", "ver": 0, "dir": "content", "fields": [
+      { "name": "timestamp_us", "offset": 0, "size": 8, "count": 1, "kind": "i" },
+      { "name": "carrier_us", "offset": 8, "size": 8, "count": 1, "kind": "i" },
+      { "name": "carrier_counter", "offset": 16, "size": 8, "count": 1, "kind": "i" },
+      { "name": "reserved1", "offset": 24, "size": 8, "count": 1, "kind": "u" },
+      { "name": "event", "offset": 32, "size": 1, "count": 1, "kind": "u" },
+      { "name": "address_from", "offset": 33, "size": 1, "count": 1, "kind": "u" },
+      { "name": "address_to", "offset": 34, "size": 1, "count": 1, "kind": "u" },
+      { "name": "cmd_id_from", "offset": 35, "size": 1, "count": 1, "kind": "u" },
+      { "name": "bit_length", "offset": 36, "size": 2, "count": 1, "kind": "u" }
+    ] }
+  },
+  "enums": {
+    "USBLPingRequest::Function": { "FunctionDefault": 0, "FunctionBitArray": 1, "FunctionLLGeoAzimuth": 2 },
+    "USBLCmdConfig::Function": { "FunctionDefault": 0, "FunctionBitArray": 1, "FunctionLLGeoAzimuth": 2 },
+    "USBLCmdConfig::EventFilter": { "EventOnReceiveRequest": 1, "EventOnReceiveResponse": 2 },
+    "USBLCmdConfig::SendBackCmdIdAction": { "SendBackCmdIdIncoming": 0, "SendBackCmdIdReplacement": 1 },
+    "USBLCmdConfig::SendBackAddressAction": { "SendBackAddressIncoming": 0, "SendBackAddressReplacement": 1 },
+    "USBLCmdConfig::SendBackEventAction": { "SendBackEventSwaping": 0, "SendBackEventSame": 1 },
+    "ModemSolutionHeader::EventFilter": { "EventOnRequest": 1, "EventOnResponse": 2 },
+    "PayloadKind": { "None": 0, "Solution": 1, "AcousticNav": 2, "BaseToBeacon": 3, "BeaconActivation": 4 },
+    "ID": { "ID_VERSION": 32, "ID_MARK": 33, "ID_DIST": 2, "ID_CHART": 3, "ID_DATASET": 16, "ID_TIMESTAMP": 1, "ID_NAV": 100, "ID_USBL_SOLUTION": 101, "ID_MODEM_SOLUTION": 102, "ID_USBL_CONTROL": 104 },
+    "Type": { "CONTENT": 1, "SETTING": 2, "GETTING": 3 },
+    "Version": { "v0": 0, "v1": 1, "v2": 2, "v3": 3, "v4": 4, "v5": 5, "v6": 6, "v7": 7 },
+    "BoardVersion": { "BoardNone": -1, "BoardEnhanced": 1, "BoardBase": 3, "BoardNBase": 4, "BoardChirp": 5, "BoardAssist": 6, "BoardDVL": 10, "BoardUSBL": 15, "BoardUSBLBeacon": 16 }
+  }
+}

@@ -8,13 +8,13 @@
 #include "image_view.h"
 #include "map_view.h"
 #include "contacts.h"
+#include "usbl_layer.h"
 #include "geojson_layer.h"
 #include "ruler_tool.h"
 #include "point_group.h"
 #include "polygon_group.h"
 #include "scene3d_view.h"
 #include "navigation_arrow.h"
-#include "usbl_view.h"
 #include <QMatrix4x4>
 #include "qsystemdetection.h"
 #if !defined(Q_OS_ANDROID) && !defined(LINUX_ES)
@@ -72,6 +72,7 @@ private:
     ImageView::ImageViewRenderImplementation imageViewRenderImpl_;
     MapView::MapViewRenderImplementation mapViewRenderImpl_;
     Contacts::ContactsRenderImplementation contactsRenderImpl_;
+    UsblLayer::UsblLayerRenderImplementation usblLayerRenderImpl_;
     GeoJsonLayer::GeoJsonLayerRenderImplementation geoJsonLayerRenderImpl_;
     RulerTool::RulerToolRenderImplementation rulerToolRenderImpl_;
     BottomTrack::BottomTrackRenderImplementation m_bottomTrackRenderImpl;
@@ -79,7 +80,6 @@ private:
     PointGroup::PointGroupRenderImplementation m_pointGroupRenderImpl;
     BoatTrack::BoatTrackRenderImplementation m_boatTrackRenderImpl;
     NavigationArrow::NavigationArrowRenderImplementation navigationArrowRenderImpl_;
-    UsblView::UsblViewRenderImplementation usblViewRenderImpl_;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;

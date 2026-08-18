@@ -1,6 +1,9 @@
 #include "dev_driver.h"
 #include <time.h>
 #include <core.h>
+#include <QDateTime>
+#include <QFile>
+#include <QVariant>
 #include <QXmlStreamWriter>
 
 extern Core core;
@@ -59,6 +62,8 @@ DevDriver::DevDriver(QObject *parent)
     regID(idUSBL = new IDBinUsblSolution(), &DevDriver::receivedUSBL);
 
     regID(idUSBLControl = new IDBinUsblControl(), &DevDriver::receivedUSBLControl);
+
+    regID(idModemSolution = new IDBinModemSolution(), &DevDriver::receivedModemSolution);
 
     regID(idServoControl = new IDBinServoControl(), &DevDriver::receivedServoControl, true);
     regID(idPwmRoute = new IDBinPwmRoute(), &DevDriver::receivedPwmRoute, true);
@@ -549,23 +554,20 @@ void DevDriver::setLinkStatus(bool connected, bool receivesData, bool notAvailab
 
 void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask)
 {
-    Q_UNUSED(ask)
-
     if (!m_state.connect) {
         return;
     }
 
-    idUSBLControl->pingRequest(0xFFFFFFFF, 0xFF);
+    idUSBL->askBeacon(ask);
 }
 
 void DevDriver::enableBeaconOnce(float timeout)
 {
-    Q_UNUSED(timeout)
-
     if (!m_state.connect) {
         return;
-        // idUSBL->enableBeaconOnce(timeout);
     }
+
+    idUSBL->enableBeaconOnce(timeout);
 }
 
 void DevDriver::acousticPingRequest(uint8_t address, uint32_t timeout_us) {
@@ -573,14 +575,103 @@ void DevDriver::acousticPingRequest(uint8_t address, uint32_t timeout_us) {
     idUSBLControl->pingRequest(timeout_us, address);
 }
 
+void DevDriver::acousticPingRequestEx(uint8_t address, uint32_t timeout_us, uint8_t cmdId, uint32_t replyDistanceMm, const QByteArray& payload) {
+    if(!m_state.connect) return;
+    idUSBLControl->pingRequest(timeout_us, address, cmdId, replyDistanceMm, payload);
+}
+
 void DevDriver::acousticResponceFilter(uint8_t address) {
     if(!m_state.connect) return;
     idUSBLControl->setResponseAddressFilter(address);
 }
 
+void DevDriver::acousticResponceFilterSlots(const QVector<int>& addresses) {
+    if(!m_state.connect) return;
+
+    std::array<uint8_t, 8> filter;
+    filter.fill(0xFF);
+    const int count = qMin((int)filter.size(), (int)addresses.size());
+    for(int i = 0; i < count; ++i) {
+        filter[i] = (uint8_t)addresses[i];
+    }
+    idUSBLControl->setResponseAddressFilter(filter);
+}
+
 void DevDriver::acousticResponceTimeout(uint32_t timeout_us) {
     if(!m_state.connect) return;
     idUSBLControl->setResponseTimeout(timeout_us);
+}
+
+void DevDriver::setUsblTransponderEnable(bool enabled) {
+    if(!m_state.connect) return;
+    idUSBLControl->setTransponderEnable(enabled ? 0xFFFFFFFF : 0);
+}
+
+void DevDriver::setUsblMonitorConfig(uint32_t suppressSelfResponseUs, uint32_t suppressSelfRequestUs, bool receiveResponseInIdle) {
+    if(!m_state.connect) return;
+
+    IDBinUsblControl::USBLMonitorConfig cfg;
+    cfg.suppressSelfResponse_us = suppressSelfResponseUs;
+    cfg.suppressSelfRequest_us = suppressSelfRequestUs;
+    cfg.receiveResponseInIdle = receiveResponseInIdle;
+    idUSBLControl->setMonitorConfig(cfg);
+}
+
+QByteArray DevDriver::parseHexPayload(const QString& text) {
+    QString digits;
+    for(const QChar& c : text) {
+        if(c.isDigit() || (c.toLower() >= 'a' && c.toLower() <= 'f'))
+            digits.append(c);
+    }
+    // fromHex() silently drops a trailing lone nibble; pad so a half-typed byte still lands.
+    if(digits.size() % 2)
+        digits.prepend('0');
+    return QByteArray::fromHex(digits.toLatin1());
+}
+
+void DevDriver::setUsblCmdConfig(int cmdId, int event,
+                                 int receiverFunction, int receiveBitLength,
+                                 int senderFunction, const QString& sendHexPayload,
+                                 int eventAction,
+                                 int cmdIdAction, int cmdIdReplacement,
+                                 int addressAction, int addressReplacement) {
+    if(!m_state.connect) return;
+
+    typedef IDBinUsblControl::USBLCmdConfig Cfg;
+
+    // Every enum here is narrow, and the values arrive from QML as plain ints — clamp
+    // rather than cast, so a bad value cannot put an undefined byte on the wire.
+    auto fn = [](int v) {
+        switch(v) {
+        case Cfg::FunctionBitArray:     return Cfg::FunctionBitArray;
+        case Cfg::FunctionLLGeoAzimuth: return Cfg::FunctionLLGeoAzimuth;
+        default:                        return Cfg::FunctionDefault;
+        }
+    };
+
+    Cfg cfg;
+    cfg.cmd_id = (uint8_t)qBound(0, cmdId, 255);
+    cfg.eventFilter = event == Cfg::EventOnReceiveResponse ? Cfg::EventOnReceiveResponse
+                                                           : Cfg::EventOnReceiveRequest;
+    cfg.cmdIdAction = cmdIdAction == Cfg::SendBackCmdIdReplacement ? Cfg::SendBackCmdIdReplacement
+                                                                  : Cfg::SendBackCmdIdIncoming;
+    cfg.cmd_id_replacement = (uint8_t)qBound(0, cmdIdReplacement, 255);
+    cfg.addressAction = addressAction == Cfg::SendBackAddressReplacement ? Cfg::SendBackAddressReplacement
+                                                                        : Cfg::SendBackAddressIncoming;
+    cfg.address_replacement = (uint8_t)qBound(0, addressReplacement, 255);
+    cfg.eventAction = eventAction == Cfg::SendBackEventSame ? Cfg::SendBackEventSame
+                                                           : Cfg::SendBackEventSwaping;
+    cfg.receiver_function = fn(receiverFunction);
+    cfg.receive_bit_length = (uint16_t)qBound(0, receiveBitLength, 65535);
+    cfg.sender_function = fn(senderFunction);
+    // sending_bit_length is derived from the payload actually written, inside setCmdConfig.
+
+    const QByteArray payload = parseHexPayload(sendHexPayload);
+    idUSBLControl->setCmdConfig(cfg, payload);
+}
+
+QString DevDriver::modemLastPayload() const {
+    return QString::fromLatin1(idModemSolution->payload().toHex(' '));
 }
 
 void DevDriver::doRequestAll()
@@ -847,6 +938,9 @@ void DevDriver::sendUpdateFW(QByteArray update_data) {
     restartState();
 
     _timeoutUpgradeAnswerTime = 5000;
+    upgradeStartedTime_ = QDateTime::currentMSecsSinceEpoch();
+    _lastUpgradeAnswerTime = upgradeStartedTime_;
+    upgradeResendCount_ = 0;
     idUpdate->setUpdate(update_data);
     m_bootloaderLagacyMode = true;
     m_state.in_boot = true;
@@ -946,9 +1040,15 @@ void DevDriver::resetSettings() {
 void DevDriver::reboot() {
     if(!m_state.connect) return;
     idVersion->reset();
+    rebootAtTime_ = QDateTime::currentMSecsSinceEpoch();
     idBoot->reboot();
     m_state.reboot = true;
     emit onReboot();
+}
+
+bool DevDriver::isStaleVersionAfterReboot() const {
+    return rebootAtTime_ != 0 &&
+           QDateTime::currentMSecsSinceEpoch() - rebootAtTime_ < staleVersionGuardMsec;
 }
 
 int DevDriver::distMax() {
@@ -1380,6 +1480,12 @@ void DevDriver::receivedUART(Parsers::Type type, Parsers::Version ver, Parsers::
 void DevDriver::receivedVersion(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
     Q_UNUSED(type);
 
+    if(resp == respNone && idVersion->bootMode() != IDBinVersion::BootModeBootloader &&
+       isStaleVersionAfterReboot()) {
+        idVersion->reset();
+        return;
+    }
+
     if(resp == respNone) {
         if(ver == v0) {
             switch (idVersion->boardVersion()) {
@@ -1478,6 +1584,10 @@ void DevDriver::receivedBoot(Parsers::Type type, Parsers::Version ver, Parsers::
 }
 
 void DevDriver::fwUpgradeProcess() {
+    if(!m_state.in_update) {
+        return;
+    }
+
     bool is_avail_data = idUpdate->putUpdate();
     if(is_avail_data && idUpdate->currentNumPacket() == 3) {
         is_avail_data = idUpdate->putUpdate();
@@ -1485,8 +1595,11 @@ void DevDriver::fwUpgradeProcess() {
     m_upgrade_status = idUpdate->progress();
     if(!is_avail_data) {
         idBoot->runFW();
+        m_state.in_boot = false;
         m_state.in_update = false;
         m_upgrade_status = successUpgrade;
+        upgradeStartedTime_ = 0;
+        upgradeResendCount_ = 0;
 
         emit upgradingFirmwareDone();
         emit upgradingFirmwareDoneDM();
@@ -1498,6 +1611,63 @@ void DevDriver::fwUpgradeProcess() {
     }
 }
 
+bool DevDriver::checkUpgradeTimeouts(int64_t curr_time) {
+    if(!(m_state.in_boot || m_state.in_update)) {
+        return false;
+    }
+
+    if(m_state.in_boot) {
+        if(upgradeStartedTime_ != 0 && curr_time - upgradeStartedTime_ > bootHandshakeTimeoutMsec) {
+            abortUpgrade("bootloader did not answer in time");
+            return true;
+        }
+        return false;
+    }
+
+    if(_timeoutUpgradeAnswerTime <= 0 ||
+       curr_time - _lastUpgradeAnswerTime <= _timeoutUpgradeAnswerTime) {
+        return false;
+    }
+
+    if(upgradeResendCount_ >= upgradeResendLimit) {
+        abortUpgrade(QString("no answer after %1 resends").arg(upgradeResendCount_));
+        return true;
+    }
+
+    ++upgradeResendCount_;
+    _lastUpgradeAnswerTime = curr_time;
+
+#ifndef SEPARATE_READING
+    core.consoleInfo(QString("Upgrade: timeout, resend %1/%2").arg(upgradeResendCount_).arg(upgradeResendLimit));
+#endif
+
+    idUpdate->putUpdate(false);
+    return false;
+}
+
+void DevDriver::abortUpgrade(const QString& reason) {
+#ifndef SEPARATE_READING
+    core.consoleInfo(QString("Upgrade: aborted -- %1").arg(reason));
+#else
+    Q_UNUSED(reason);
+#endif
+
+    m_upgrade_status = failUpgrade;
+    m_state.in_boot = false;
+    m_state.in_update = false;
+    m_bootloaderLagacyMode = true;
+    _timeoutUpgradeAnswerTime = 0;
+    upgradeStartedTime_ = 0;
+    upgradeResendCount_ = 0;
+
+    emit upgradingFirmwareDone();
+    emit upgradingFirmwareDoneDM();
+    emit upgradeProgressChanged(m_upgrade_status);
+    emit upgradeChanged();
+
+    restartState();
+}
+
 void DevDriver::receivedUpdate(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
 {
     Q_UNUSED(type);
@@ -1505,11 +1675,12 @@ void DevDriver::receivedUpdate(Parsers::Type type, Parsers::Version ver, Parsers
     if(resp == respNone) {
         if(ver == v0) {
             m_bootloaderLagacyMode = false;
-            _timeoutUpgradeAnswerTime = 2000;
+            _timeoutUpgradeAnswerTime = packetAnswerTimeoutMsec;
             IDBinUpdate::ID_UPGRADE_V0 prog = idUpdate->getDeviceProgress();
 
             if(prog.type <= 2) {
                 _lastUpgradeAnswerTime = QDateTime::currentMSecsSinceEpoch();
+                upgradeResendCount_ = 0;
 
                 if(prog.type == 1) {
 #ifndef SEPARATE_READING
@@ -1525,39 +1696,19 @@ void DevDriver::receivedUpdate(Parsers::Type type, Parsers::Version ver, Parsers
 
                 fwUpgradeProcess();
             } else {
-                // if( m_state.in_boot) {
-#ifndef SEPARATE_READING
-                    core.consoleInfo("Upgrade: critical error!");
-#endif
-                m_upgrade_status = failUpgrade;
-
-                    emit upgradingFirmwareDone();
-                    emit upgradingFirmwareDoneDM();
-
-                    m_state.in_update = false;
-                    m_bootloaderLagacyMode = true;
-                    restartState();
-                // }
+                abortUpgrade(QString("device reported a fatal condition (type %1)").arg(prog.type));
             }
         }
     } else {
         if(resp == respOk) {
             if( m_state.in_update && m_bootloaderLagacyMode) {
+                _lastUpgradeAnswerTime = QDateTime::currentMSecsSinceEpoch();
+                upgradeResendCount_ = 0;
                 fwUpgradeProcess();
             }
         } else {
             if( m_state.in_update && m_bootloaderLagacyMode) {
-#ifndef SEPARATE_READING
-                core.consoleInfo("Upgrade: lagacy mode error");
-#endif
-                m_upgrade_status = failUpgrade;
-
-                emit upgradingFirmwareDone();
-                emit upgradingFirmwareDoneDM();
-
-                m_state.in_update = false;
-                m_bootloaderLagacyMode = true;
-                restartState();
+                abortUpgrade("lagacy mode error");
             }
         }
     }
@@ -1693,16 +1844,32 @@ void DevDriver::receivedDVLMode(Parsers::Type type, Parsers::Version ver, Parser
 void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
 {
     Q_UNUSED(type);
+    Q_UNUSED(ver);
 
-    if(resp == respNone) {
-        if(ver == Parsers::v0) {
-            emit usblSolutionComplete(idUSBL->usblSolution());
-        } else if(ver == Parsers::v1) {
-            qDebug("usbl p.ver %d", ver);
-            emit beaconActivationComplete(0);
-        }
+    if(resp != respNone) {
+        return;
     }
 
+    // Dispatch on what was actually parsed: v1 carries either a nav solution or
+    // a beacon activation response, so the version is not enough.
+    switch(idUSBL->lastPayloadKind()) {
+    case IDBinUsblSolution::PayloadKind::Solution:
+        emit usblSolutionComplete(idUSBL->usblSolution());
+        break;
+    case IDBinUsblSolution::PayloadKind::AcousticNav:
+        emit acousticNavSolutionComplete(idUSBL->acousticNavSolution());
+        emit usblSolutionComplete(idUSBL->usblSolution());
+        break;
+    case IDBinUsblSolution::PayloadKind::BaseToBeacon:
+        emit baseToBeaconComplete(idUSBL->baseToBeacon());
+        emit usblSolutionComplete(idUSBL->usblSolution());
+        break;
+    case IDBinUsblSolution::PayloadKind::BeaconActivation:
+        emit beaconActivationComplete(0);
+        break;
+    case IDBinUsblSolution::PayloadKind::None:
+        break;
+    }
 }
 
 void DevDriver::receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
@@ -1712,8 +1879,26 @@ void DevDriver::receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Pa
     Q_UNUSED(resp)
 }
 
+void DevDriver::receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
+{
+    Q_UNUSED(type)
+    Q_UNUSED(ver)
+
+    if(resp != respNone) {
+        return;
+    }
+
+    emit modemSolutionComplete(idModemSolution->header(), idModemSolution->payload());
+    emit modemPayloadChanged();
+}
+
 void DevDriver::process() {
     int64_t curr_time = QDateTime::currentMSecsSinceEpoch();
+
+    if(checkUpgradeTimeouts(curr_time)) {
+        return;
+    }
+
     if(m_state.duplex) {
         if(m_state.mark) {
             if(idVersion->boardVersion() != BoardNone) {
@@ -1737,10 +1922,17 @@ void DevDriver::process() {
                     requestStreamList();
                 }
 
-                if(m_state.in_boot) {
+                if(m_state.in_boot && idVersion->bootMode() == IDBinVersion::BootModeFirmware) {
+                    idVersion->requestAll();
+                }
+                else if(m_state.in_boot) {
                     m_state.in_boot = false;
                     m_state.in_update = true;
                     // idUpdate->putUpdate();
+
+                    _timeoutUpgradeAnswerTime = packetAnswerTimeoutMsec;
+                    _lastUpgradeAnswerTime = curr_time;
+                    upgradeResendCount_ = 0;
 
                     QTimer::singleShot(100, idUpdate, [update = idUpdate]() {
                         update->putUpdate();
@@ -1753,14 +1945,6 @@ void DevDriver::process() {
                     //qDebug() << "Request setup";
                 }
 
-                if(m_state.in_update && !m_bootloaderLagacyMode) {
-                    if(curr_time - _lastUpgradeAnswerTime > _timeoutUpgradeAnswerTime && _timeoutUpgradeAnswerTime > 0) {
-#ifndef SEPARATE_READING
-                        core.consoleInfo("Upgrade: timeout error!");
-#endif
-                        idUpdate->putUpdate(false);
-                    }
-                }
             } else {
                 idVersion->requestAll();
                 //qDebug() << "Request version again";

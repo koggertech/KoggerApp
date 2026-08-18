@@ -1,0 +1,1394 @@
+// Behaviour tests for the acoustic-node interrogation cycle. No Qt, no window, no device.
+//
+//   node tools/qml_test/test_usbl_node_logic.mjs
+//
+// Exit 0 = all pass. Four things are being defended.
+//
+// First, the CYCLE. One interrogation is in flight at a time, so a window closes when the next
+// request goes out or when its budget runs out -- and an unanswered window is a result, not a
+// gap. Every way of getting that wrong either accuses a working beacon or exonerates a dead one,
+// and nothing on the wire can be consulted to settle it: the verdict is entirely inference.
+//
+// Second, the GRANULARITY. The unit is a STEP, (node, cmd), not a node. Four commands on one node
+// fail independently, and keying this by node made that unreadable -- the row went stale with no
+// way to tell which command had gone unanswered. There is a section below for exactly that case.
+//
+// Third, the SINGLE-STEP path. One press of Step sends once and nothing follows it, so it is the
+// case where the timeout is the only thing that can close the window. It regressed once already
+// -- the operation axis keyed on "is the loop running", so a single Step never showed Waiting at
+// all -- and the scenario below is that bug written down.
+//
+// Fourth, TIME INDEPENDENCE. A result badge must not change while nothing is being asked. Age is
+// a separate control with a separate threshold.
+
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
+const require = createRequire(import.meta.url);
+const here = path.dirname(fileURLToPath(import.meta.url));
+const N = require(path.join(here, "..", "..", "qml", "app", "UsblNodeLogic.js"));
+const F = require(path.join(here, "..", "..", "qml", "kqml_types", "UsblFieldLogic.js"));
+
+let pass = 0;
+const fails = [];
+function ok(name, cond, detail) {
+    if (cond) { pass++; console.log("  ok   " + name); }
+    else { fails.push(name); console.log(`  FAIL ${name}${detail ? "   -- " + detail : ""}`); }
+}
+const j = (v) => JSON.stringify(v);
+function eq(name, got, want) { ok(name, j(got) === j(want), `got ${j(got)}, want ${j(want)}`); }
+
+const NOW = 1_000_000;
+const STALE = F.STALE_MS;
+
+function sol(addr, ageMs) {
+    return {
+        address: addr, distance: 10 + addr, azimuth: 90 + addr, elevation: -5,
+        snr: 20 + addr, beaconLat: 59.9386, beaconLon: 30.3141, beaconDepth: 12.5,
+        epochMs: NOW - ageMs, coordValid: true
+    };
+}
+function node(id, addr, active) { return { id: id, addr: addr, active: active !== false }; }
+
+// Two nodes, the shape a real schedule has: node 1 on address 1, node 2 on address 2.
+const NODES = [node(1, 1), node(2, 2)];
+
+// ── the answer window, per step ──────────────────────────────────────────────
+console.log("the answer window");
+{
+    const p0 = N.initialPoll();
+    ok("nothing is waiting to begin with", !N.isWaiting(p0, 1) && !N.isWaitingStep(p0, 1, 0));
+    eq("...and nothing has resolved", N.stepResult(p0, 1, 0), "");
+
+    const p1 = N.noteSent(p0, 1, 0, NOW);
+    ok("interrogating (node 1, cmd 0) opens that step's window", N.isWaitingStep(p1, 1, 0));
+    ok("...and the node reads as waiting", N.isWaiting(p1, 1));
+    ok("...but its other commands do not", !N.isWaitingStep(p1, 1, 2));
+    ok("...and neither does another node", !N.isWaiting(p1, 2));
+    eq("...recording when", p1.sentAt, NOW);
+    eq("...and accusing nothing yet", N.stepResult(p1, 1, 0), "");
+
+    const p2 = N.noteReplyAddr(p1, NODES, 1);
+    ok("its reply closes the window", !N.isWaitingStep(p2, 1, 0));
+    eq("...and records the answer against that command", N.stepResult(p2, 1, 0), N.REPLIED);
+
+    // Rule 1: the head is transmitting again, so a reply landing now cannot be attributed.
+    const p3 = N.noteSent(N.noteSent(p0, 1, 0, NOW), 1, 2, NOW + 700);
+    ok("moving on to cmd 2 opens cmd 2's window", N.isWaitingStep(p3, 1, 2));
+    ok("...closes cmd 0's", !N.isWaitingStep(p3, 1, 0));
+    eq("...and records cmd 0 as having missed", N.stepResult(p3, 1, 0), N.STALE);
+    eq("...while cmd 2 has no verdict yet", N.stepResult(p3, 1, 2), "");
+
+    // Across nodes, the same rule.
+    const p4 = N.noteSent(N.noteSent(p0, 1, 0, NOW), 2, 0, NOW + 700);
+    eq("moving on to another node also closes the previous step",
+       N.stepResult(p4, 1, 0), N.STALE);
+    ok("...and the new node is the one waiting", N.isWaiting(p4, 2));
+
+    // Answered before its turn passed: no accusation.
+    const p5 = N.noteSent(N.noteReplyAddr(N.noteSent(p0, 1, 0, NOW), NODES, 1), 1, 2, NOW + 700);
+    eq("a step that answered before its turn passed keeps its answer",
+       N.stepResult(p5, 1, 0), N.REPLIED);
+
+    // The lone-step case. Nothing else ever takes its turn, so if re-interrogation did not count
+    // as closing the window, a silent command would sit in Waiting forever.
+    const solo = N.noteSent(N.noteSent(p0, 1, 0, NOW), 1, 0, NOW + 700);
+    eq("re-interrogating a silent step records the miss", N.stepResult(solo, 1, 0), N.STALE);
+    ok("...and reopens its window", N.isWaitingStep(solo, 1, 0));
+    eq("...so the chip reads waiting, not stale, while it is out",
+       N.stepCode(solo, 1, 0), N.WAITING);
+
+    // Rule 2: one Step sends once, so the budget is the only thing that can close it.
+    const timedOut = N.noteTimeout(N.noteSent(p0, 1, 3, NOW));
+    ok("the budget running out closes the window", !N.isWaitingStep(timedOut, 1, 3));
+    eq("...and records the miss against that command", N.stepResult(timedOut, 1, 3), N.STALE);
+    eq("...leaving other commands untouched", N.stepResult(timedOut, 1, 0), "");
+
+    const idleTimeout = N.noteTimeout(p0);
+    ok("a timeout with nothing outstanding blames nothing", idleTimeout === p0);
+}
+
+// ── the step key ─────────────────────────────────────────────────────────────
+console.log("step identity");
+{
+    ok("a step is identified by node and cmd together",
+       N.stepKey(1, 2) !== N.stepKey(2, 1));
+    ok("...and consistently", N.stepKey(1, 2) === N.stepKey(1, 2));
+    // Node 1 cmd 12 vs node 11 cmd 2 -- a key built by concatenation without a separator
+    // collides here, and the collision is silent.
+    ok("keys cannot collide by concatenation", N.stepKey(1, 12) !== N.stepKey(11, 2));
+
+    // addStep repeats a group's first slot once its slots run out, so one node can hold two
+    // chips for the same cmd. They send identical bytes to the same address, so one verdict for
+    // both is the truthful reading -- asserted so it stays a decision.
+    const p = N.noteTimeout(N.noteSent(N.initialPoll(), 1, 0, NOW));
+    eq("two chips for the same cmd on one node share one verdict",
+       [N.stepCode(p, 1, 0), N.stepCode(p, 1, 0)], [N.STALE, N.STALE]);
+}
+
+// ── the poll state is replaced, never edited ─────────────────────────────────
+console.log("immutability");
+{
+    const p0 = N.initialPoll();
+    const p1 = N.noteSent(p0, 1, 0, NOW);
+    ok("noteSent returns a new object", p1 !== p0);
+    eq("...and leaves the old one alone", p0.waitKey, "");
+
+    const p2 = N.noteSent(p1, 1, 2, NOW + 700);
+    eq("the miss it records does not appear in the previous state", N.stepResult(p1, 1, 0), "");
+    eq("...only in the new one", N.stepResult(p2, 1, 0), N.STALE);
+
+    const p3 = N.noteReplyAddr(N.noteSent(p2, 1, 0, NOW + 1400), NODES, 1);
+    eq("the old state still holds the miss", N.stepResult(p2, 1, 0), N.STALE);
+    eq("...while the new one has the answer", N.stepResult(p3, 1, 0), N.REPLIED);
+}
+
+// ── replies are matched by ADDRESS, then attributed to the open step ─────────
+console.log("attribution");
+{
+    const p0 = N.noteSent(N.initialPoll(), 1, 5, NOW);
+
+    const other = N.noteReplyAddr(p0, NODES, 2);
+    ok("a reply from a different address does not close the window",
+       N.isWaitingStep(other, 1, 5));
+    const unknown = N.noteReplyAddr(p0, NODES, 7);
+    ok("a reply from an address no node holds changes nothing", unknown === p0);
+    ok("...and a missing node list does not throw",
+       N.noteReplyAddr(p0, null, 1) === p0);
+
+    // Nothing outstanding: the solution still reaches the row's numbers through Dataset, but no
+    // command can honestly be credited with it.
+    const idle = N.noteReplyAddr(N.initialPoll(), NODES, 1);
+    eq("a solution with no window open credits no command", idle.result, {});
+
+    // Address 0 is a legal beacon. Any truthiness test on this path turns it into "no beacon".
+    const zero = N.noteReplyAddr(N.noteSent(N.initialPoll(), 9, 0, NOW), [node(9, 0)], 0);
+    eq("address 0 is matched", N.stepResult(zero, 9, 0), N.REPLIED);
+    ok("...and its solution is found", N.entryFor({ "0": sol(0, 100) }, 0) !== null);
+
+    // Two nodes on one address: the open window says which one it was, so the other is not
+    // credited with an answer it never got.
+    const shared = [node(1, 3), node(2, 3)];
+    const both = N.noteReplyAddr(N.noteSent(N.initialPoll(), 2, 0, NOW), shared, 3);
+    eq("only the node that was asked is credited", N.stepResult(both, 2, 0), N.REPLIED);
+    eq("...not the other one on the same address", N.stepResult(both, 1, 0), "");
+}
+
+// ── what a command chip shows ────────────────────────────────────────────────
+console.log("the command chips");
+{
+    let p = N.initialPoll();
+    eq("never interrogated", N.stepCode(p, 1, 0), N.NONE);
+
+    p = N.noteSent(p, 1, 0, NOW);
+    eq("request out", N.stepCode(p, 1, 0), N.WAITING);
+    eq("...and its neighbours are untouched", N.stepCode(p, 1, 1), N.NONE);
+
+    p = N.noteReplyAddr(p, NODES, 1);
+    eq("answered", N.stepCode(p, 1, 0), N.REPLIED);
+
+    p = N.noteSent(p, 1, 0, NOW + 1000);
+    eq("re-asked: waiting outranks the previous verdict", N.stepCode(p, 1, 0), N.WAITING);
+    p = N.noteTimeout(p);
+    eq("...and the budget running out turns it stale", N.stepCode(p, 1, 0), N.STALE);
+    p = N.noteReplyAddr(N.noteSent(p, 1, 0, NOW + 2000), NODES, 1);
+    eq("...then answering again heals it", N.stepCode(p, 1, 0), N.REPLIED);
+
+    ok("the four chip states are distinct",
+       new Set([N.WAITING, N.REPLIED, N.STALE, N.NONE]).size === 4);
+}
+
+// ── THE CASE THAT PROMPTED THIS: which command failed ───────────────────────
+// One node, four commands, a full cycle in which only cmd 2 goes unanswered. Before the state
+// was per-step the row went stale and nothing said which command it was.
+console.log("scenario: one command out of four goes unanswered");
+{
+    const nodes = [node(1, 1)];
+    const cmds = [0, 1, 2, 3];
+    let poll = N.initialPoll();
+    let t = NOW;
+
+    for (const c of cmds) {
+        poll = N.noteSent(poll, 1, c, t);
+        if (c !== 2) poll = N.noteReplyAddr(poll, nodes, 1);   // cmd 2 never answers
+        t += 700;
+    }
+    // The cycle moved on from cmd 2 when cmd 3 was sent, which is what recorded its miss.
+    poll = N.noteTimeout(poll);
+
+    eq("the chips name the failure exactly",
+       cmds.map((c) => N.stepCode(poll, 1, c)),
+       [N.REPLIED, N.REPLIED, N.STALE, N.REPLIED]);
+    // cmd 3 was interrogated after cmd 2 and answered, so the NODE is answering -- the row says
+    // so and the amber chip says which command is not.
+    eq("the row follows the last exchange, not the worst",
+       N.nodeReplyCode(poll, 1, sol(1, 100)), N.REPLIED);
+
+    // Fix the beacon and run one more cycle: the row clears only once every command does.
+    for (const c of cmds) {
+        poll = N.noteReplyAddr(N.noteSent(poll, 1, c, t), nodes, 1);
+        t += 700;
+    }
+    eq("every command answering clears every chip",
+       cmds.map((c) => N.stepCode(poll, 1, c)),
+       [N.REPLIED, N.REPLIED, N.REPLIED, N.REPLIED]);
+    eq("...and the row stays Replied throughout", N.nodeReplyCode(poll, 1, sol(1, 100)), N.REPLIED);
+}
+
+// ── the row's badge: the LAST interrogation, not the worst one ──────────────
+// Worst-case-over-all-commands was tried and is wrong twice over, and both failures are rules
+// here. It calls a node stale whose last exchange succeeded -- which is not what the row is
+// asked -- and it never clears, because a MUTED command that went stale before it was muted is
+// never interrogated again and would condemn the row for the rest of the session.
+console.log("the row badge");
+{
+    const p0 = N.initialPoll();
+
+    eq("never interrogated and never heard from", N.nodeReplyCode(p0, 1, null), N.NONE);
+    // Heard from without any interrogation of ours resolving: an unsolicited solution, or
+    // another interrogator on the same address. True, and not a fault.
+    eq("heard from, nothing of ours resolved",
+       N.nodeReplyCode(p0, 1, sol(1, 100)), N.REPLIED);
+
+    const oneOk = N.noteReplyAddr(N.noteSent(p0, 1, 0, NOW), NODES, 1);
+    eq("its one interrogation answered", N.nodeReplyCode(oneOk, 1, null), N.REPLIED);
+
+    const thenBad = N.noteTimeout(N.noteSent(oneOk, 1, 1, NOW + 700));
+    eq("the next one missed, so the node reads stale",
+       N.nodeReplyCode(thenBad, 1, null), N.STALE);
+
+    // THE CORRECTION. cmd 1 is still stale as a command, and its chip still says so -- but the
+    // node answered a moment ago, so the row must say Replied.
+    const thenGood = N.noteReplyAddr(N.noteSent(thenBad, 1, 2, NOW + 1400), NODES, 1);
+    eq("a later interrogation answering clears the row",
+       N.nodeReplyCode(thenGood, 1, null), N.REPLIED);
+    eq("...while the command that missed still says so",
+       N.stepCode(thenGood, 1, 1), N.STALE);
+    eq("...and the one that answered too", N.stepCode(thenGood, 1, 2), N.REPLIED);
+
+    // The other half: a stale command that is then MUTED is never asked again, so nothing could
+    // ever lift a worst-case verdict. The row follows the last real exchange instead.
+    const muted = N.noteReplyAddr(N.noteSent(thenBad, 1, 0, NOW + 2000), NODES, 1);
+    eq("a node whose stale command was muted still reads by its last exchange",
+       N.nodeReplyCode(muted, 1, null), N.REPLIED);
+    eq("...and the muted command keeps its own verdict for the chip",
+       N.stepCode(muted, 1, 1), N.STALE);
+
+    // Which command it was does not matter to the row -- only when.
+    const otherNode = N.noteTimeout(N.noteSent(thenGood, 2, 0, NOW + 2100));
+    eq("another node missing does not touch this one's badge",
+       N.nodeReplyCode(otherNode, 1, null), N.REPLIED);
+    eq("...and the other node reads its own", N.nodeReplyCode(otherNode, 2, null), N.STALE);
+
+    ok("nodeReplyCode no longer needs the command list", N.nodeReplyCode.length === 3);
+}
+
+// ── how a miss becomes a loss ────────────────────────────────────────────────
+//
+// THE BUG THIS REPLACES. The escalation used to be "stale AND the last fix is older than
+// AGE_WARN_MS", and it never fired. Dataset::addUsblSolution caches a solution per address the
+// moment it arrives, whether or not a window was open to attribute it to -- so a reply landing
+// just after its window closed is a MISS that still refreshes the age. A node answering slightly
+// too late missed every single interrogation while its age reset every time: permanently MISSED,
+// never LOST. The age of a fix is simply not evidence about whether interrogations are working.
+//
+// So it is COUNTED. It advances only when we ask, which also means a stopped schedule cannot
+// escalate a row on its own, and the threshold means the same thing at any dwell.
+console.log("the loss threshold");
+{
+    const nodes = [node(1, 1)];
+    let p = N.initialPoll();
+    eq("nothing has missed to begin with", N.missStreak(p, 1), 0);
+    ok("...so nothing is lost", !N.isLost(p, 1));
+
+    // Miss them one at a time, by the budget running out.
+    for (let i = 1; i < N.LOST_MISSES; ++i) {
+        p = N.noteTimeout(N.noteSent(p, 1, 0, NOW + i * 1000));
+        eq(`${i} miss(es) counted`, N.missStreak(p, 1), i);
+        ok("...still just a miss", !N.isLost(p, 1));
+    }
+    p = N.noteTimeout(N.noteSent(p, 1, 0, NOW + 9000));
+    eq("the threshold is reached", N.missStreak(p, 1), N.LOST_MISSES);
+    ok("...and the node is lost", N.isLost(p, 1));
+
+    // One answer ends it outright. A node that answers is answering.
+    const healed = N.noteReplyAddr(N.noteSent(p, 1, 0, NOW + 10000), nodes, 1);
+    eq("one answer clears the streak", N.missStreak(healed, 1), 0);
+    ok("...and the node is no longer lost", !N.isLost(healed, 1));
+    eq("...and it reads as replying again", N.nodeReplyCode(healed, 1, null), N.REPLIED);
+
+    // THE CASE THAT PROMPTED THIS. The reply lands, but after its window closed -- so it is a
+    // miss, and the fix it carries is brand new. Age says "fresh", the cycle says "missed", and
+    // only the count can tell them apart.
+    let late = N.initialPoll();
+    for (let i = 0; i < N.LOST_MISSES; ++i) {
+        late = N.noteTimeout(N.noteSent(late, 1, 0, NOW + i * 1000));   // window closes empty
+        late = N.noteReplyAddr(late, nodes, 1);                        // ...then the answer lands
+    }
+    eq("a reply landing after its window still counts as a miss",
+       N.missStreak(late, 1), N.LOST_MISSES);
+    ok("...so a node answering too late is reported lost", N.isLost(late, 1));
+    ok("...even though its fix is brand new",
+       !N.isAged(sol(1, 0), NOW, N.AGE_WARN_MS));
+
+    // The streak is per node, like every other verdict here.
+    const two = N.noteTimeout(N.noteSent(N.initialPoll(), 2, 0, NOW));
+    eq("one node's misses are not another's", N.missStreak(two, 1), 0);
+    eq("...only its own", N.missStreak(two, 2), 1);
+
+    // Moving on to the next step closes the previous window, so that path has to count too --
+    // it is the one the schedule actually takes.
+    const moved = N.noteSent(N.noteSent(N.initialPoll(), 1, 0, NOW), 1, 2, NOW + 700);
+    eq("the cycle moving on counts the miss it caused", N.missStreak(moved, 1), 1);
+
+    // No clock anywhere in it: that is what stops a stopped schedule escalating a row.
+    ok("isLost takes no time argument", N.isLost.length === 3);
+    ok("missStreak takes no time argument", N.missStreak.length === 2);
+    eq("the threshold is a count of interrogations, not a duration", typeof N.LOST_MISSES, "number");
+    ok("...and a small one -- three refusals, not thirty", N.LOST_MISSES <= 5);
+
+    // Immutability, same rule as the rest of the poll state.
+    const before = N.noteTimeout(N.noteSent(N.initialPoll(), 1, 0, NOW));
+    const after = N.noteTimeout(N.noteSent(before, 1, 0, NOW + 1000));
+    eq("counting a miss does not edit the previous state", N.missStreak(before, 1), 1);
+    eq("...only the new one", N.missStreak(after, 1), 2);
+
+    // A missing poll state must not throw on either read.
+    eq("no poll state, no streak", N.missStreak(null, 1), 0);
+    ok("...and nothing is lost", !N.isLost(null, 1));
+}
+
+// ── interrogations asked for by hand ─────────────────────────────────────────
+// The head cannot transmit while it is waiting, so a manual request takes its turn behind
+// whatever window is open. Sending it straight away would abandon an answer still in the water
+// and then blame the beacon for not sending it.
+console.log("the manual queue");
+{
+    let q = [];
+    ok("nothing is queued to begin with", !N.isQueued(q, 1, 0));
+    eq("...and there is nothing to send", N.dequeueEmit(q).step, null);
+    ok("dequeuing an empty queue does not throw", N.dequeueEmit(null).step === null);
+
+    q = N.queueEmit(q, 1, 2);
+    ok("asking for one queues it", N.isQueued(q, 1, 2));
+    ok("...and only it", !N.isQueued(q, 1, 0) && !N.isQueued(q, 2, 2));
+
+    // A double click is a double click, not an instruction to interrogate twice.
+    const twice = N.queueEmit(q, 1, 2);
+    eq("asking twice for the same step is one interrogation", twice.length, 1);
+
+    q = N.queueEmit(q, 2, 0);
+    eq("a different step queues separately", q.length, 2);
+
+    // First asked, first sent: an operator who clicked three things expects them in that order.
+    const first = N.dequeueEmit(q);
+    eq("the first asked goes first", [first.step.nodeId, first.step.cmd], [1, 2]);
+    eq("...and leaves the rest", first.queue.length, 1);
+    const second = N.dequeueEmit(first.queue);
+    eq("then the next", [second.step.nodeId, second.step.cmd], [2, 0]);
+    eq("...and then nothing", N.dequeueEmit(second.queue).step, null);
+
+    // Immutability, same rule as the poll state.
+    ok("queueEmit returns a new array", N.queueEmit(q, 3, 3) !== q);
+    eq("...and leaves the old one alone", q.length, 2);
+    ok("dequeueEmit returns a new array", N.dequeueEmit(q).queue !== q);
+    eq("...and does not shorten the old one", q.length, 2);
+}
+
+// ── the operation axis ───────────────────────────────────────────────────────
+console.log("operation");
+{
+    eq("no window open", N.operationCode(true, false), N.IDLE);
+    eq("window open", N.operationCode(true, true), N.WAITING);
+
+    // A switch that visibly does nothing is worse than no switch.
+    eq("switched off", N.operationCode(false, false), N.OFF);
+    eq("switched off with a window somehow open -- still off",
+       N.operationCode(false, true), N.OFF);
+
+    ok("the three codes are distinct", new Set([N.OFF, N.IDLE, N.WAITING]).size === 3);
+    // There is no Pinging state: emission is milliseconds and the protocol says nothing about
+    // it, so the row pulses instead of claiming to observe the transmission.
+    ok("nothing reports emission",
+       [N.OFF, N.IDLE, N.WAITING].indexOf("pinging") < 0);
+}
+
+// ── results do not move with the clock ──────────────────────────────────────
+console.log("time independence");
+{
+    // THE CORRECTION. An age-driven badge changes while the operator is not asking anything, and
+    // there is no fact behind the change: "Replied" became "Stale" five seconds after the last
+    // fix with the schedule stopped, announcing a beacon had gone quiet when nobody had spoken
+    // to it. No function that produces a verdict takes a clock now, and this is what says so.
+    ok("stepCode takes no time argument", N.stepCode.length === 3);
+    ok("nodeReplyCode takes no time argument", N.nodeReplyCode.length === 3);
+
+    const answered = N.noteReplyAddr(N.noteSent(N.initialPoll(), 1, 0, NOW), NODES, 1);
+    let steady = true;
+    for (const age of [0, 1000, STALE - 1, STALE, STALE + 1, 30000, 3600000]) {
+        if (N.stepCode(answered, 1, 0) !== N.REPLIED) steady = false;
+        if (N.nodeReplyCode(answered, 1, sol(1, age)) !== N.REPLIED) steady = false;
+    }
+    ok("an answered command stays Replied however old the fix gets", steady);
+
+    const missed = N.noteTimeout(N.noteSent(N.initialPoll(), 1, 0, NOW));
+    let steadyStale = true;
+    for (const age of [0, 1000, STALE + 1, 3600000])
+        if (N.nodeReplyCode(missed, 1, sol(1, age)) !== N.STALE) steadyStale = false;
+    ok("...and a missed one stays Stale, rather than healing with time", steadyStale);
+}
+
+// ── age is a separate control ────────────────────────────────────────────────
+console.log("the age chip");
+{
+    ok("a beacon that never answered is not aged -- there is no data to be old",
+       !N.isAged(null, NOW, N.AGE_WARN_MS));
+    ok("a fresh fix is not aged", !N.isAged(sol(1, 100), NOW, N.AGE_WARN_MS));
+    ok("exactly at the threshold is not yet aged",
+       !N.isAged(sol(1, N.AGE_WARN_MS), NOW, N.AGE_WARN_MS));
+    ok("one millisecond past it is",
+       N.isAged(sol(1, N.AGE_WARN_MS + 1), NOW, N.AGE_WARN_MS));
+    ok("a long-gone fix is", N.isAged(sol(1, 600000), NOW, N.AGE_WARN_MS));
+    ok("a missing threshold falls back to the default", N.isAged(sol(1, 600000), NOW, undefined));
+
+    // The two indicators are orthogonal by construction: an aged fix can sit next to Replied
+    // (nobody has asked lately) and a fresh one next to Stale (just asked, nothing came back).
+    const missed = N.noteTimeout(N.noteSent(N.initialPoll(), 1, 0, NOW));
+    ok("aged and Replied can hold at once",
+       N.isAged(sol(1, 60000), NOW, N.AGE_WARN_MS)
+       && N.nodeReplyCode(N.initialPoll(), 1, sol(1, 60000)) === N.REPLIED);
+    ok("...and fresh with Stale",
+       !N.isAged(sol(1, 100), NOW, N.AGE_WARN_MS)
+       && N.nodeReplyCode(missed, 1, sol(1, 100)) === N.STALE);
+}
+
+// ── the age the ROW shows: since the last ANSWER, not the last fix ──────────
+//
+// THE BUG THIS REPLACES, and it is the same root cause as the loss threshold's. Dataset stamps a
+// solution's arrival per ADDRESS, unconditionally -- so a reply landing after its window closed
+// is scored a miss AND refreshes that stamp. The row therefore showed "missed" beside an age
+// that reset on every single miss. The number was telling the truth about a different question.
+console.log("the row's age");
+{
+    const nodes = [node(1, 1)];
+    const fresh = sol(1, 0);          // a fix that landed this instant
+
+    // Nothing attributed yet: fall back to the fix, which covers a node heard from without any
+    // interrogation of ours resolving -- an unsolicited solution, or another interrogator.
+    const p0 = N.initialPoll();
+    eq("with nothing of ours resolved, the age falls back to the fix",
+       N.replyAgeMs(p0, 1, sol(1, 4000), NOW), 4000);
+    eq("...and no fix either means no age at all", N.replyAgeMs(p0, 1, null, NOW), -1);
+
+    // An attributed reply is what the age counts from.
+    const answered = N.noteReplyAddr(N.noteSent(p0, 1, 0, NOW), nodes, 1, NOW + 100);
+    eq("an answer starts the clock", N.replyAgeMs(answered, 1, fresh, NOW + 100), 0);
+    eq("...and it runs", N.replyAgeMs(answered, 1, fresh, NOW + 5100), 5000);
+
+    // THE CASE THAT PROMPTED THIS. The window closes empty -- a miss -- and THEN the reply lands.
+    // Dataset refreshes the fix, so fix-age says "brand new"; nothing was attributed, so the row
+    // must keep counting from the last real answer.
+    let late = N.noteTimeout(N.noteSent(answered, 1, 0, NOW + 6000));
+    late = N.noteReplyAddr(late, nodes, 1, NOW + 7000);   // no window open: attributes nothing
+    // sol(addr, ageMs) stamps relative to NOW, so a fix that is brand new at NOW+7100 is
+    // sol(1, -7100) -- which is exactly what Dataset would hold after that late arrival.
+    const justLanded = sol(1, -7100);
+    eq("a reply landing after its window does not restart the age",
+       N.replyAgeMs(late, 1, justLanded, NOW + 7100), 7000);
+    eq("...even though the fix itself is brand new", N.ageMs(justLanded, NOW + 7100), 0);
+    eq("...and the row still reads as having missed", N.nodeReplyCode(late, 1, justLanded), N.STALE);
+
+    // Answering properly again restarts it.
+    const healed = N.noteReplyAddr(N.noteSent(late, 1, 0, NOW + 8000), nodes, 1, NOW + 8100);
+    eq("an attributed answer restarts the age", N.replyAgeMs(healed, 1, fresh, NOW + 8100), 0);
+
+    // The warning threshold reads the same number the row shows, or the chip warns about one
+    // thing while displaying another.
+    ok("the warning follows the same number",
+       !N.isReplyAged(answered, 1, fresh, NOW + 100 + N.AGE_WARN_MS, N.AGE_WARN_MS)
+       && N.isReplyAged(answered, 1, fresh, NOW + 101 + N.AGE_WARN_MS, N.AGE_WARN_MS));
+    ok("...and a node with nothing to be old about is not aged",
+       !N.isReplyAged(p0, 1, null, NOW + 600000, N.AGE_WARN_MS));
+
+    // Per node, like every other fact in here.
+    const two = N.noteReplyAddr(N.noteSent(p0, 2, 0, NOW), [node(2, 2)], 2, NOW + 50);
+    eq("one node's answer does not restart another's age",
+       N.replyAgeMs(two, 1, null, NOW + 5000), -1);
+    eq("...only its own", N.replyAgeMs(two, 2, null, NOW + 5050), 5000);
+
+    // A host clock that steps backwards must not produce a negative age.
+    eq("a future stamp clamps to zero", N.replyAgeMs(answered, 1, fresh, NOW - 5000), 0);
+
+    // The row a panel draws must carry THIS number, not the fix's -- read past the warning
+    // threshold, where the two answers differ by more than a value: one warns and one does not.
+    const T = NOW + 15100;                       // 15 s since the last real answer
+    const rows = N.panelRows(nodes, { "1": sol(1, -15100) }, late, T);
+    eq("the panel row shows the answer age", rows[0].ageMs, 15000);
+    ok("...and is flagged old on it", rows[0].aged === true);
+    ok("...where the fix age would have said otherwise",
+       N.ageMs(sol(1, -15100), T) === 0 && !N.isAged(sol(1, -15100), T, N.AGE_WARN_MS));
+}
+
+// ── the cursor: where the cycle is ──────────────────────────────────────────
+console.log("the cursor");
+{
+    const sched = [{ nodeId: 5, addr: 1, cmd: 0 }, { nodeId: 5, addr: 1, cmd: 2 },
+                   { nodeId: 6, addr: 2, cmd: 0 }];
+
+    eq("with nothing interrogated yet, the cursor is the next step's node",
+       N.cursorNodeId(null, sched), 5);
+    eq("once a step has run, it follows that step", N.cursorNodeId(sched[2], sched), 6);
+    // The point of deriving it from the step rather than the poll state: a closed window
+    // forgets, a position does not, so the frame stays where the cycle left it.
+    eq("...and keeps following it after the answer window has closed",
+       N.cursorNodeId(sched[2], sched), 6);
+
+    eq("no schedule and nothing run: no cursor", N.cursorNodeId(null, []), -1);
+    eq("a missing schedule does not throw", N.cursorNodeId(null, null), -1);
+    eq("a malformed step falls back to the schedule", N.cursorNodeId({}, sched), 5);
+    // A step for a node that has since been removed still reports that id: the row is gone, so
+    // no frame is drawn, and the next advance moves the cursor. Inventing a fallback here would
+    // move the frame somewhere the cycle is not.
+    eq("a step naming a vanished node is reported as-is",
+       N.cursorNodeId({ nodeId: 99 }, sched), 99);
+
+    // The chip frame is the same idea one level down, and it must pick ONE chip -- two framed
+    // chips on a row say the cycle is in two places.
+    ok("the frame lands on the step that ran", N.isCursorStep(sched[1], sched, 5, 2));
+    ok("...and on no other command of the same node", !N.isCursorStep(sched[1], sched, 5, 0));
+    ok("...nor on the same command of another node", !N.isCursorStep(sched[1], sched, 6, 2));
+    ok("before anything runs it lands on the first scheduled step",
+       N.isCursorStep(null, sched, 5, 0) && !N.isCursorStep(null, sched, 5, 2));
+    ok("with no schedule at all, nothing is framed", !N.isCursorStep(null, [], 5, 0));
+    ok("...and a missing schedule does not throw", !N.isCursorStep(null, null, 5, 0));
+}
+
+// ── the budget ───────────────────────────────────────────────────────────────
+console.log("the wait budget");
+{
+    eq("dwell plus grace", N.waitMs(700, 250), 950);
+    eq("the default grace is used when none is given", N.waitMs(700), 700 + N.GRACE_MS);
+    ok("the grace is smaller than a typical dwell -- it covers host latency, not a second "
+       + "acoustic trip", N.GRACE_MS < 700);
+    // A zero or nonsense dwell must not produce a window that closes instantly, which would
+    // mark every step missed before any reply could arrive.
+    eq("a zero dwell falls back", N.waitMs(0, 250), 950);
+    eq("a missing dwell falls back", N.waitMs(undefined, 250), 950);
+    eq("a negative grace falls back", N.waitMs(700, -5), 700 + N.GRACE_MS);
+}
+
+// ── one press of Step, start to finish ───────────────────────────────────────
+// The regression that prompted the earlier rewrite: the loop is NOT running here, and every
+// state below still has to be reached.
+console.log("scenario: a single Step");
+{
+    const nodes = [node(1, 1)];
+    const sched = [{ nodeId: 1, addr: 1, cmd: 0 }];
+    let poll = N.initialPoll();
+    let step = null;
+    const row = (t, sols) => ({
+        op: N.operationCode(nodes[0].active, N.isWaiting(poll, 1)),
+        reply: N.nodeReplyCode(poll, 1, N.entryFor(sols, 1)),
+        chip: N.stepCode(poll, 1, 0),
+        framed: N.isCursorStep(step, sched, 1, 0),
+        aged: N.isAged(N.entryFor(sols, 1), t, N.AGE_WARN_MS)
+    });
+
+    eq("before: idle, nothing heard, and already framed as the next step",
+       row(NOW, {}), { op: N.IDLE, reply: N.NONE, chip: N.NONE, framed: true, aged: false });
+
+    step = sched[0];
+    poll = N.noteSent(poll, 1, 0, NOW);
+    eq("Step pressed: waiting, on the row and on the chip",
+       row(NOW + 10, {}),
+       { op: N.WAITING, reply: N.NONE, chip: N.WAITING, framed: true, aged: false });
+
+    // 133 ms round trip at 100 m.
+    const answered = { "1": { epochMs: NOW + 133, distance: 100, azimuth: 12, snr: 24 } };
+    poll = N.noteReplyAddr(poll, nodes, 1);
+    eq("reply in: back to idle, it replied, and the frame stays",
+       row(NOW + 140, answered),
+       { op: N.IDLE, reply: N.REPLIED, chip: N.REPLIED, framed: true, aged: false });
+
+    // Leave it alone for a minute. The BADGES must not budge; only the age chip may.
+    eq("a minute later, untouched: still Replied, now aged",
+       row(NOW + 60000, answered),
+       { op: N.IDLE, reply: N.REPLIED, chip: N.REPLIED, framed: true, aged: true });
+
+    // Ask again and get nothing.
+    poll = N.noteSent(poll, 1, 0, NOW + 70000);
+    eq("asked again: waiting, and the chip says so rather than flickering stale",
+       row(NOW + 70010, answered),
+       { op: N.WAITING, reply: N.REPLIED, chip: N.WAITING, framed: true, aged: true });
+
+    poll = N.noteTimeout(poll);
+    eq("budget out: idle, and now stale on both",
+       row(NOW + 70960, answered),
+       { op: N.IDLE, reply: N.STALE, chip: N.STALE, framed: true, aged: true });
+
+    // And it recovers on the next answer rather than staying condemned.
+    const again = { "1": { epochMs: NOW + 74000, distance: 101, azimuth: 12, snr: 23 } };
+    poll = N.noteReplyAddr(N.noteSent(poll, 1, 0, NOW + 73900), nodes, 1);
+    eq("answering again clears everything", row(NOW + 74010, again),
+       { op: N.IDLE, reply: N.REPLIED, chip: N.REPLIED, framed: true, aged: false });
+}
+
+// ── the header count ─────────────────────────────────────────────────────────
+console.log("summary");
+{
+    const sols = { "1": sol(1, 200), "2": sol(2, 60000) };
+    const p0 = N.initialPoll();
+
+    eq("no nodes at all", N.summary([], sols, p0),
+       { total: 0, active: 0, replying: 0 });
+    ok("a missing list does not throw", N.summary(null, sols, p0).total === 0);
+    ok("a missing poll state does not throw", N.summary(NODES, sols, null).total === 2);
+
+    // Outcome-based like the badges, so the header cannot disagree with the rows under it: node
+    // 2's fix is a minute old, and with nobody having asked it anything that is not a failure.
+    eq("both heard from, however old their fixes are", N.summary(NODES, sols, p0),
+       { total: 2, active: 2, replying: 2 });
+
+    // A miss drops it out of the count immediately -- that is the point of the count.
+    eq("a node with a missed command stops counting as replying",
+       N.summary(NODES, sols, N.noteTimeout(N.noteSent(p0, 1, 0, NOW))),
+       { total: 2, active: 2, replying: 1 });
+
+    // A node switched off on purpose must not read as a shortfall: it leaves the denominator as
+    // well as the numerator.
+    eq("a switched-off node is not counted as failing",
+       N.summary([node(1, 1), node(2, 2, false)], sols, p0),
+       { total: 2, active: 1, replying: 1 });
+    eq("everything off", N.summary([node(1, 1, false)], sols, p0),
+       { total: 1, active: 0, replying: 0 });
+
+    eq("an address that never answered does not count",
+       N.summary([node(1, 7)], sols, p0), { total: 1, active: 1, replying: 0 });
+    eq("address 0 counts", N.summary([node(1, 0)], { "0": sol(0, 10) }, p0),
+       { total: 1, active: 1, replying: 1 });
+}
+
+// ── age arithmetic ──────────────────────────────────────────────────────────
+console.log("age");
+{
+    eq("no entry", N.ageMs(null, NOW), -1);
+    eq("an entry with no timestamp counts as never", N.ageMs({ epochMs: 0 }, NOW), -1);
+    eq("a fresh fix", N.ageMs(sol(1, 250), NOW), 250);
+    // Host clock vs arrival order: a fix stamped in the future must read as brand new, not as a
+    // negative age that formats as "-0.3 s ago".
+    eq("a future timestamp clamps to zero", N.ageMs(sol(1, -500), NOW), 0);
+}
+
+// ── the last command asked of a node ────────────────────────────────────────
+// A second fact per node, and it is NOT the one `last` holds. `last` is the verdict of
+// whichever step resolved most recently; this is which command was most recently SENT. They
+// name different commands whenever a request is out, which is exactly when the difference
+// matters: the row's reply badge keeps standing on the previous outcome while the chip says
+// what is happening right now.
+//
+// Written in one place -- the send -- so the chip's state is `stepCode` of it and needs no
+// second bookkeeping. That is what makes "waiting outranks the previous verdict" fall out
+// rather than being re-implemented.
+console.log("the last command asked");
+{
+    const p0 = N.initialPoll();
+    eq("nothing has been asked to begin with", N.lastAskedCmd(p0, 1), -1);
+
+    const p1 = N.noteSent(p0, 1, 3, NOW);
+    eq("sending records which command", N.lastAskedCmd(p1, 1), 3);
+    eq("...for that node only", N.lastAskedCmd(p1, 2), -1);
+    eq("...and its state is the step's own", N.stepCode(p1, 1, N.lastAskedCmd(p1, 1)), N.WAITING);
+
+    const p2 = N.noteReplyAddr(p1, NODES, 1);
+    eq("the answer does not change which command was last asked", N.lastAskedCmd(p2, 1), 3);
+    eq("...only its state", N.stepCode(p2, 1, 3), N.REPLIED);
+
+    const p3 = N.noteTimeout(N.noteSent(p2, 1, 5, NOW + 700));
+    eq("a later command takes over", N.lastAskedCmd(p3, 1), 5);
+    eq("...carrying its own miss", N.stepCode(p3, 1, 5), N.STALE);
+    eq("...and the earlier one keeps its answer", N.stepCode(p3, 1, 3), N.REPLIED);
+
+    // THE CASE THE CHIP EXISTS FOR. cmd 5 has just gone out, so the node's last RESOLVED
+    // verdict (cmd 3, replied) and its last ASKED command (cmd 5, waiting) disagree -- and
+    // both are true. A single fact here would have to pick one and be wrong about the other.
+    const inFlight = N.noteSent(p2, 1, 5, NOW + 700);
+    eq("the reply badge still reports the last resolved outcome",
+       N.nodeReplyCode(inFlight, 1, null), N.REPLIED);
+    eq("...while the chip names the command in flight", N.lastAskedCmd(inFlight, 1), 5);
+    eq("...and reads waiting", N.stepCode(inFlight, 1, 5), N.WAITING);
+
+    // Interrogating another node must not rewrite this one's chip, even though it closes this
+    // one's window.
+    const other = N.noteSent(inFlight, 2, 0, NOW + 1400);
+    eq("another node's turn leaves the chip naming the same command",
+       N.lastAskedCmd(other, 1), 5);
+    eq("...now showing the miss it caused", N.stepCode(other, 1, 5), N.STALE);
+    eq("...and the other node gets its own", N.lastAskedCmd(other, 2), 0);
+
+    // cmd 0 is a real command -- the implicit step a node with no refs contributes. A reader
+    // testing the cmd for truthiness reports "never asked" about the commonest case there is.
+    const zero = N.noteSent(p0, 2, 0, NOW);
+    eq("cmd 0 is a command, not an absence", N.lastAskedCmd(zero, 2), 0);
+    ok("...distinguishable from never having asked", N.lastAskedCmd(zero, 1) === -1);
+}
+
+// ── the row a panel draws ───────────────────────────────────────────────────
+// One composer, used by the pane and by the on-scene panel, so the two cannot disagree about
+// what a node is doing. It returns the four marks and the numbers behind them; everything
+// user-visible stays in QML.
+console.log("panel rows");
+{
+    const sols = { "1": sol(1, 250), "2": sol(2, 60000) };
+    const p0 = N.initialPoll();
+
+    const rows = N.panelRows(NODES, sols, p0, NOW);
+    eq("one row per node, in plan order", rows.map((r) => r.addr), [1, 2]);
+    eq("a row carries its node's identity", rows[0].nodeId, 1);
+
+    // Nothing asked yet: idle, no verdict, no chip -- and the numbers are still there, because
+    // they came from the beacon rather than from us asking.
+    eq("nothing asked yet reads idle", rows[0].op, N.IDLE);
+    eq("...with the node's own heard-from verdict", rows[0].reply, N.REPLIED);
+    eq("...and no command chip at all", rows[0].lastCmd, -1);
+    eq("...which has no state either", rows[0].lastCmdState, "");
+    eq("the numbers come straight from the fix", rows[0].entry.distance, 11);
+    eq("...and the age with them", rows[0].ageMs, 250);
+    ok("...not flagged old", rows[0].aged === false);
+    ok("a minute-old fix is flagged old", rows[1].aged === true);
+
+    // A node nobody has ever heard from: every number absent, and the row still exists.
+    const unheard = N.panelRows([node(9, 7)], sols, p0, NOW);
+    eq("an address that never answered still gets a row", unheard.length, 1);
+    eq("...with no entry", unheard[0].entry, null);
+    eq("...never-answered, not stale", unheard[0].reply, N.NONE);
+    eq("...and no age rather than a zero one", unheard[0].ageMs, -1);
+    ok("...and is not flagged old, because there is nothing to be old", unheard[0].aged === false);
+
+    // Switched off outranks everything, including an open window -- or the switch looks ignored.
+    const off = N.panelRows([node(1, 1, false)], sols, N.noteSent(p0, 1, 2, NOW), NOW);
+    eq("a switched-off node reads off even with a request out", off[0].op, N.OFF);
+    eq("...and keeps the last thing it said", off[0].reply, N.REPLIED);
+
+    // The four marks, all moving at once, on the case that produced them.
+    const mid = N.noteSent(N.noteReplyAddr(N.noteSent(p0, 1, 3, NOW), NODES, 1), 1, 5, NOW + 700);
+    const r = N.panelRows(NODES, sols, mid, NOW + 800)[0];
+    eq("op says a request is out",        r.op, N.WAITING);
+    eq("reply still says what resolved",  r.reply, N.REPLIED);
+    eq("the chip names the live command", r.lastCmd, 5);
+    eq("...and says it is out",           r.lastCmdState, N.WAITING);
+
+    // The composer must not invent a clock of its own: same poll, same solutions, two times.
+    const a = N.panelRows(NODES, sols, mid, NOW);
+    const b = N.panelRows(NODES, sols, mid, NOW + 30000);
+    ok("no verdict moves with time",
+       a[0].op === b[0].op && a[0].reply === b[0].reply
+       && a[0].lastCmdState === b[0].lastCmdState);
+    ok("...only the age does", b[0].ageMs - a[0].ageMs === 30000);
+
+    eq("no nodes, no rows", N.panelRows([], sols, p0, NOW), []);
+    eq("no plan at all is not a crash", N.panelRows(null, null, p0, NOW), []);
+
+    // WHERE THE CYCLE IS is composed here too, so the panel frames the same row the pane does.
+    // A panel deriving it from curStep itself is a second implementation free to disagree.
+    {
+        const sched = [{ nodeId: 1, addr: 1, cmd: 0 }, { nodeId: 2, addr: 2, cmd: 0 }];
+        const before = N.panelRows(NODES, sols, p0, NOW, null, sched);
+        eq("before anything runs, the cursor is the first scheduled node",
+           before.map((r) => r.cursor), [true, false]);
+        const after = N.panelRows(NODES, sols, p0, NOW, sched[1], sched);
+        eq("once a step has run it follows that step", after.map((r) => r.cursor), [false, true]);
+        // The window closing must not move it -- that is the whole reason it is derived from the
+        // step rather than from the poll state.
+        const closed = N.panelRows(NODES, sols, N.noteTimeout(N.noteSent(p0, 2, 0, NOW)),
+                                   NOW, sched[1], sched);
+        eq("...and stays there after the answer window closes",
+           closed.map((r) => r.cursor), [false, true]);
+        // No schedule and nothing run: nothing is framed, rather than row 0 by accident.
+        eq("with no schedule at all, no row is framed",
+           N.panelRows(NODES, sols, p0, NOW, null, []).map((r) => r.cursor), [false, false]);
+        eq("...and an absent schedule does not throw",
+           N.panelRows(NODES, sols, p0, NOW).map((r) => r.cursor), [false, false]);
+        // It must agree with the read the settings pane makes, or the two frame different rows.
+        let agrees = true;
+        for (const row of after)
+            if (row.cursor !== (N.cursorNodeId(sched[1], sched) === row.nodeId)) agrees = false;
+        ok("the row's cursor is exactly the pane's own read", agrees);
+    }
+
+    // The panel and the pane must agree node by node, or one of them is lying about the same
+    // beacon on the same screen.
+    let agrees = true;
+    for (const row of N.panelRows(NODES, sols, mid, NOW)) {
+        const e = N.entryFor(sols, row.addr);
+        if (row.reply !== N.nodeReplyCode(mid, row.nodeId, e)) agrees = false;
+        if (row.op !== N.operationCode(true, N.isWaiting(mid, row.nodeId))) agrees = false;
+    }
+    ok("a row says exactly what the pane's own reads say", agrees);
+}
+
+// ── relationship to the widget module ───────────────────────────────────────
+console.log("relationship to UsblFieldLogic");
+{
+    // These two modules answer DIFFERENT questions and are no longer expected to agree on a
+    // verdict. A widget's `usblState` says whether a fix is usable, which is a fact about age; a
+    // row's badge says what the last interrogations did, which is not. Asserting the old
+    // agreement would now be asserting the bug back into place.
+    const answered = N.noteReplyAddr(N.noteSent(N.initialPoll(), 4, 0, NOW), [node(4, 4)], 4);
+    let independent = true;
+    for (const a of [0, STALE - 1, STALE + 1, 600000])
+        if (N.nodeReplyCode(answered, 4, sol(4, a)) !== N.REPLIED) independent = false;
+    ok("the row badge is independent of the widgets' staleness rule", independent);
+    ok("...and the widget's rule still moves with age, as it should",
+       F.stateCode(sol(4, 100), NOW) === "tracking"
+       && F.stateCode(sol(4, STALE + 1), NOW) === "stale");
+    ok("the row warns later than a widget calls a fix unusable, and that is deliberate",
+       N.AGE_WARN_MS > F.STALE_MS);
+
+    // What they DO still have to agree on: the same beacon and the same arithmetic.
+    let ageAgree = true;
+    for (const a of [0, 1, 100, 999, STALE, STALE + 1, 30000, 600000])
+        if (F.ageMs(sol(4, a), NOW) !== N.ageMs(sol(4, a), NOW)) ageAgree = false;
+    ok("both measure age identically", ageAgree);
+
+    const sols = {};
+    for (let a = 0; a <= F.MAX_ADDR; ++a) sols[String(a)] = sol(a, 100);
+    let pickAgree = true;
+    for (let a = 0; a <= F.MAX_ADDR; ++a)
+        if (j(F.pick(sols, a)) !== j(N.entryFor(sols, a))) pickAgree = false;
+    ok("entryFor agrees with pick for every legal address", pickAgree);
+    ok("...including the ones that are absent",
+       N.entryFor({}, 3) === null && F.pick({}, 3) === null);
+}
+
+// ── the QML says every code, and says nothing else ───────────────────────────
+// Source assertions, not behaviour: a code the row cannot name renders blank, and a word left
+// behind after a rename is dead weight nobody notices. Both are invisible on screen.
+console.log("the row's vocabulary and wiring");
+{
+    const src = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblGroup.qml"), "utf8");
+
+    // ONE VOCABULARY, IN ONE FILE. Both surfaces used to keep a table of state words each,
+    // because qsTr's context is the file and a shared one would have needed a singleton in
+    // kqml_types, which cannot import a module out of qml/app. UsblStateBadge is a plain
+    // component in qml/app, so it owns them -- and one table cannot drift from itself.
+    //
+    // What is still worth defending is that it names exactly the codes the reducer can return,
+    // and that neither surface has quietly grown a second copy.
+    const panel = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblNodesPopup.qml"),
+                               "utf8");
+    const stateBadge = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblStateBadge.qml"),
+                                    "utf8");
+    const opBadge = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblOpBadge.qml"),
+                                 "utf8");
+    {
+        const at = stateBadge.indexOf("property var _text: ({");
+        ok("the verdict badge holds the words", at >= 0);
+        const table = at < 0 ? "" : stateBadge.slice(at, stateBadge.indexOf("})", at));
+        // Every reducer code has a word, no word is orphaned -- plus exactly one key that is
+        // NOT a reducer code: `lost`, the escalation the badge derives from a miss that has
+        // aged out. It is presentation, and the module must stay unaware of it.
+        eq("every reply code has a word, and no word is orphaned",
+           [...table.matchAll(/"([a-z]+)":/g)].map((m) => m[1]).sort(),
+           [N.NONE, N.REPLIED, N.STALE, "lost"].sort());
+        ok("...and the escalation is the badge's, not the reducer's",
+           [N.OFF, N.IDLE, N.WAITING, N.NONE, N.REPLIED, N.STALE].indexOf("lost") < 0);
+        // The WORDS, as distinct from the codes they are keyed by: the code stays `stale`
+        // because that is what the reducer returns, and the prose must not be, because this
+        // axis reports what the last interrogation DID and is deliberately time-independent.
+        // The age chip is a separate control with a separate threshold, sitting on the same
+        // row -- so naming this one after the clock puts two marks there that look like one.
+        const words = [...table.matchAll(/qsTr\("([^"]+)"\)/g)].map((m) => m[1]);
+        eq("all four words are translatable", words.length, 4);
+        ok("the miss is not named after the clock", !words.some((w) => /stale|old|age/i.test(w)));
+        ok("...it uses the module's own word for it", words.indexOf("MISSED") >= 0);
+    }
+    for (const [text, where] of [[src, "the pane"], [panel, "the panel"]]) {
+        ok(`${where} keeps no state vocabulary of its own`,
+           !/property var _opText/.test(text) && !/property var _replyText/.test(text));
+        ok(`${where} draws both state axes through the shared badges`,
+           /UsblOpBadge\s*\{/.test(text) && /UsblStateBadge\s*\{/.test(text));
+        // The drift this replaces: a surface spelling a state out for itself again.
+        ok(`${where} does not re-inline a state word`,
+           !/qsTr\("(Replied|Stale|Missed|Never|Idle|Waiting)"\)/.test(text));
+    }
+    ok("the operation badge takes the reducer's own codes",
+       /"off"/.test(opBadge) && /"waiting"/.test(opBadge));
+
+    // Colour is spent on the fault and nothing else: a healthy row carries no fill, so a panel
+    // of eight has exactly as many coloured things on it as there are problems.
+    ok("only a miss fills the verdict badge",
+       /color:\s*_lost\s*\?\s*AppPalette\.dangerBg\s*:\s*_bad\s*\?\s*AppPalette\.linkIdleBg\s*:\s*"transparent"/
+           .test(stateBadge));
+    ok("...and the neutral states still carry a border",
+       /border\.color:\s*_lost[\s\S]{0,120}AppPalette\.border/.test(stateBadge));
+    ok("...while the tick keeps its own green", /linkOkBorder/.test(stateBadge));
+
+    // THREE SEVERITIES OUT OF TWO CODES. A dropped interrogation is routine; a node that has
+    // refused LOST_MISSES in a row is a different event, and amber meaning both means neither.
+    //
+    // THE ESCALATION IS COUNTED, NOT TIMED, and the badge is told rather than deriving it. It
+    // was derived from the fix age once and could not work -- see the reducer section below.
+    ok("a node that keeps refusing escalates",
+       /_lost:\s*badge\.code === "stale" && badge\.lost/.test(stateBadge)
+       && /_bad:\s*badge\.code === "stale" && !badge\.lost/.test(stateBadge));
+    ok("...and the badge does not decide it from the clock",
+       !/_lost[\s\S]{0,80}aged/.test(stateBadge));
+    ok("...into the danger palette, not a louder amber",
+       /dangerBg/.test(stateBadge) && /dangerBorder/.test(stateBadge)
+       && /dangerText/.test(stateBadge));
+    ok("...under a word of its own", /"lost":\s*qsTr\("LOST"\)/.test(stateBadge));
+    ok("...and the escalated word is measured with the others, or the slot clips",
+       /_mLost\.width/.test(stateBadge));
+    // The escalation must never reach a row that is not stale: a REPLIED node is answering, and
+    // filling its chip would accuse it of a failure it has not had.
+    ok("both severities require a miss",
+       !/_lost:[^\n]*\|\|/.test(stateBadge)
+       && /_lost:\s*badge\.code === "stale"/.test(stateBadge));
+
+    // The amber pair is a bright border colour on a very dark fill in the dark themes, which
+    // glares rather than reads.
+    ok("the filled chip's ink is stepped down from the shared link colour",
+       /_amberInk[\s\S]{0,140}Qt\.darker\(AppPalette\.linkIdleBorder/.test(stateBadge));
+    // Word and age are different sizes, so the hierarchy is in the type rather than in the
+    // colour -- which is already carrying the state.
+    ok("the word leads and the age is a note beside it",
+       /property real fontPixelSize:\s*Tokens\.fontSm/.test(stateBadge)
+       && /property real ageFontPixelSize:\s*Tokens\.fontXxs/.test(stateBadge));
+
+    // The badge sizes itself to the widest of its three words as the LOCALE renders them. A
+    // literal width is right in English and clips the first time someone runs lupdate.
+    ok("the verdict badge measures its own width", /TextMetrics\s*\{/.test(stateBadge));
+    ok("...over every word it can draw, not the current one",
+       /_wordW:\s*Math\.max\(_mReplied\.width,[\s\S]{0,140}_mNever\.width\)/.test(stateBadge));
+    // The word is drawn into a fixed slot rather than centred: with a fixed chip width and a
+    // centred row, the mark shifts sideways every time the verdict changes length.
+    ok("...and draws the word into that slot, so the mark does not move",
+       /id:\s*_label[\s\S]{0,120}width:\s*badge\._wordW/.test(stateBadge));
+
+    // THE AGE RIDES INSIDE THE VERDICT BADGE, and the two must not be confusable. The age is a
+    // number that ticks, so its slot is fixed and the value is drawn into it; and it warns in
+    // INK only, because a node that is answering but has not been asked lately must not look
+    // like one that missed.
+    ok("the age is carried by the verdict badge",
+       /property string age/.test(stateBadge) && /property bool aged/.test(stateBadge));
+    ok("...in a slot sized by a sample rather than by the current value",
+       /property string ageSample/.test(stateBadge)
+       && /_ageW:\s*badge\.ageSample\.length\s*\?\s*_mAge\.width\s*:\s*0/.test(stateBadge));
+    ok("...right-aligned, so the ages line up as a column",
+       /id:\s*_ageLabel[\s\S]{0,200}horizontalAlignment:\s*Text\.AlignRight/.test(stateBadge));
+    // The command chip names what the host is SENDING, so it takes a control's text colour.
+    // Muted made it read as a caption about the row rather than as part of it.
+    ok("the command chip is inked like a control, not like a caption",
+       /_ink:\s*AppPalette\.text\b/.test(panel));
+
+    // ONE SHAPE FOR A COMMAND ID, on both surfaces. The pane spelled the word and the panel drew
+    // a prompt, which is the same drift the address badge exists to prevent.
+    const cmdMark = readFileSync(path.join(here, "..", "..", "qml", "app", "UsblCmdMark.qml"),
+                                 "utf8");
+    ok("the command prompt is a component, not a copy per surface",
+       /Canvas\s*\{/.test(cmdMark) && /property color ink/.test(cmdMark));
+    for (const [text, where] of [[src, "the pane"], [panel, "the panel"]]) {
+        ok(`${where} draws command ids through the shared mark`, /UsblCmdMark\s*\{/.test(text));
+        ok(`...and ${where} no longer spells the word beside one`,
+           !/"cmd " \+ (modelData|_cmdRow)/.test(text));
+    }
+    for (const [text, where] of [[src, "the pane"], [panel, "the panel"]]) {
+        ok(`${where} no longer draws an age chip of its own`,
+           !/AgeBadge/.test(text) && /ageSample:/.test(text));
+        // THE SLOT IS SIZED BY A STATIC SAMPLE, never by live data. A slot measured off the
+        // widest age currently on screen resizes as the ages tick, which moves every chip beside
+        // it -- and on the panel, the whole card.
+        ok(`${where} sizes the age column from a static sample`,
+           /_ageSample:\s*_fmtAge\(\d+\)/.test(text) && !/_widestAge/.test(text));
+        // ...which is only honest if the formatter is bounded. Seconds alone reached "86400 s".
+        const fmt = text.slice(text.indexOf("function _fmtAge("),
+                               text.indexOf("function _num("));
+        ok(`${where}'s age formatter is tiered, so its string cannot grow without bound`,
+           /qsTr\(" m/.test(fmt) && /qsTr\(" h/.test(fmt));
+    }
+
+    const tokens = readFileSync(path.join(here, "..", "..", "qml", "kqml_types", "Tokens.qml"),
+                                "utf8");
+    ok("the state label has a token of its own rather than a literal", /fontXxs/.test(tokens));
+    ok("...and the badge takes it", /Tokens\.fontXxs/.test(stateBadge));
+
+    ok("the row reads its state through the logic module",
+       /import "UsblNodeLogic\.js" as Node/.test(src));
+
+    // The operation axis must NOT be a function of whether the loop is running: one Step opens a
+    // window with the loop stopped, and that is the case that regressed.
+    ok("the operation axis does not consult the run timer",
+       !/operationCode\([^)]*[Rr]unning/.test(src));
+    // Nor may any verdict consult the clock.
+    ok("no verdict is computed from the clock",
+       !/nodeReplyCode\([^)]*_nowMs/.test(src) && !/stepCode\([^)]*_nowMs/.test(src));
+
+    // Item 4 of the rework: the readout moved into the rows, so the standalone stat grid and the
+    // global band are gone rather than merely hidden.
+    ok("the global status band is gone", !/NO SOLUTION/.test(src));
+    ok("the standalone stat grid is gone", !/component StatCell/.test(src));
+    ok("the schedule strip is gone", !/Flickable/.test(src));
+
+    // TWO MARKS ON THE ROW, TWO FACTS. The frame follows the cursor so it survives the window
+    // closing; the background pulses only while a request is out.
+    ok("the row frame follows the cursor, not the open window",
+       /border\.color:\s*nodeCard\._isCursor/.test(src)
+       && !/border\.color:\s*nodeCard\._waiting/.test(src));
+    // The row used to tint blue while a request was out. That made three marks saying "in
+    // flight" on one row -- the badge, the cursor frame and a whole row changing colour -- and
+    // the loudest of them was the one carrying the least information.
+    ok("...and the row itself does not repaint for an open window",
+       !/color:\s*nodeCard\._waiting/.test(src));
+    // NOTHING ON THIS PANE ANIMATES ON A LOOP. Two versions of the waiting mark did -- a fading
+    // opacity, which took the frame with it, then an alternating fill -- and both were noise
+    // against a sub-second window. A colour transition when the state changes is not that.
+    ok("nothing fades, so no frame can vanish with it",
+       !/Behavior on opacity/.test(src) && !/NumberAnimation[^}]*opacity/.test(src));
+    ok("...and nothing blinks: no repeating timer drives an appearance",
+       !/_pulse/.test(src) && !/loops:\s*Animation\.Infinite/.test(src));
+    ok("age is its own control, highlighted past the warning threshold",
+       /aged:\s*nodeCard\._aged/.test(src) && /Node\.AGE_WARN_MS/.test(src));
+    // ...and it is the age of the ANSWER, not of the fix. Dataset refreshes a fix on arrival
+    // whether or not a window was open to attribute it to, so fix-age reset on every miss.
+    ok("the pane ages from the last answer, not the last fix",
+       /Node\.replyAgeMs\(/.test(src) && /Node\.isReplyAged\(/.test(src)
+       && !/_ageMs:\s*Node\.ageMs\(/.test(src));
+    ok("...and the reply's arrival is what stamps it",
+       /Node\.noteReplyAddr\([\s\S]{0,140}Date\.now\(\)/.test(
+           readFileSync(path.join(here, "..", "..", "qml", "app", "UsblEngine.qml"), "utf8")));
+
+    // THREE MARKS ON A CHIP. Frame for position, fill for in-flight, fill for the result -- and
+    // the frame must not be something the result can overwrite.
+    ok("a chip knows its own step's state", /Node\.stepCode\(/.test(src));
+    ok("...is framed when the cycle is on it", /Node\.isCursorStep\(/.test(src));
+    ok("...and the frame outranks the result's outline",
+       /border\.color:\s*_cur\s*\?\s*AppPalette\.accentBorder/.test(src));
+    ok("the row badge aggregates its commands rather than guessing",
+       /Node\.nodeReplyCode\(/.test(src));
+
+    // Compact for scanning, extended for diagnosing -- and the two views must not diverge on
+    // what a state means, which is why both read the same stepCode.
+    ok("rows expand per node", /_toggleExpanded/.test(src) && /DisclosureIndicator/.test(src));
+    ok("the compact view hides the extended one and vice versa",
+       /visible:\s*!nodeCard\._open/.test(src) && /visible:\s*nodeCard\._open/.test(src));
+    ok("a compact chip fires its command", /requestEmit\(nodeCard\._n\.id,\s*modelData\.cmd\)/.test(src));
+    ok("...and no longer deletes it -- delete moved to the extended row",
+       /Remove this command from the node/.test(src));
+    ok("a compact chip shows whether the schedule includes it",
+       /modelData\.on\s*\?/.test(src));
+    ok("the extended row mutes a command without losing it",
+       /plan\.toggleStep\(/.test(src));
+    ok("a queued interrogation says so rather than looking dead",
+       /_queued/.test(src) && /queued —/.test(src));
+    // The collapsed header is the same fact from further away, so it must not have its own,
+    // coarser vocabulary. It was a single boolean once, which made "gone stale" and "never heard
+    // from" identical there and never showed a request in flight.
+    ok("the header chips carry the full result state, not a boolean",
+       /addrChip\._bad/.test(src) && /addrChip\._out/.test(src)
+       && !/_live/.test(src));
+    ok("...on the command chips' precedence: waiting outranks the last verdict",
+       /Node\.isWaiting\(usblGroup\._poll, addrChip\.modelData\.id\)[\s\S]{0,80}"waiting"/.test(src));
+
+    ok("received data is read only for the command the retained frame names",
+       /_modemMatches\(/.test(src));
+    ok("...and the pane says only the newest one is kept",
+       /only the newest received payload is kept/.test(src));
+
+    ok("the copy affordance routes through one seam", /function _copyCoordinate/.test(src));
+    ok("...and says it is not wired up yet",
+       /not wired up|no backend yet|backend later/i.test(src));
+}
+
+// ── the loop outlives the pane ───────────────────────────────────────────────
+// The interrogation loop used to live in UsblGroup, which lives in DeviceSettingsPage, which
+// is a settings SUB-PAGE: its loader destroys it as soon as the operator navigates away. So
+// leaving the page stopped interrogation -- silently, with nothing on screen saying so.
+//
+// Nothing about that is visible in a behaviour test, in a screenshot, or in a geometry dump:
+// the reducer is correct either way and the pane looks identical. What can be checked is WHERE
+// each piece is declared, so that is what is asserted. Put a Timer back in the pane, or a
+// UsblPlanStore back in the settings page, and this section fails.
+console.log("the loop outlives the pane");
+{
+    const read = (...p) => readFileSync(path.join(here, "..", "..", ...p), "utf8");
+    const engine = read("qml", "app", "UsblEngine.qml");
+    const pane   = read("qml", "app", "UsblGroup.qml");
+    const page   = read("qml", "app", "DeviceSettingsPage.qml");
+    const main   = read("qml", "app", "MainWindow.qml");
+
+    // Every transition the reducer defines has to actually be driven, or the state machine is
+    // correct and unreachable -- which is exactly how the single-Step bug shipped. They are
+    // driven from the engine now.
+    ok("the engine reads the rules from the logic module",
+       /import "UsblNodeLogic\.js" as Node/.test(engine));
+    ok("sending a request opens a window for that STEP",
+       /Node\.noteSent\(\s*poll,\s*s\.nodeId,\s*s\.cmd,/.test(engine));
+    ok("the budget running out closes it",     /Node\.noteTimeout\(/.test(engine));
+    ok("an arriving solution closes it",       /Node\.noteReplyAddr\(/.test(engine));
+    ok("...driven by the per-solution signal", /onLastUsblSolutionChanged/.test(engine));
+    ok("the window is timed by dwell plus grace", /Node\.waitMs\(/.test(engine));
+    ok("the manual queue is drained, not just filled",
+       /drainManual\(\)/.test(engine) && /Node\.dequeueEmit\(/.test(engine));
+
+    // The lifetime itself.
+    ok("the engine and the plan are declared in MainWindow, which lives for the session",
+       /UsblEngine\s*\{/.test(main) && /UsblPlanStore\s*\{/.test(main));
+    ok("...and NOT in the settings page, which is destroyed on navigation",
+       !/UsblEngine\s*\{/.test(page) && !/UsblPlanStore\s*\{/.test(page));
+    ok("...which therefore receives them", /property var usblEngine/.test(page));
+    ok("the pane drives no timer of its own",
+       !/Timer\s*\{/.test(pane));
+    ok("...and holds no poll state of its own -- it reads the engine's",
+       /readonly property var _poll:\s*engine/.test(pane));
+    ok("the pane's Start button asks the engine, not a local timer",
+       /engine\.toggleRun\(\)/.test(pane) && !/_runTimer/.test(pane));
+
+    // A loop that resumed on launch with no USBL UI on screen would be a head transmitting
+    // because of a setting nobody remembers making. Dwell persists; running does not.
+    const persisted = engine.slice(engine.indexOf("category: \"main/usblSchedule\""),
+                                   engine.indexOf("category: \"main/usblSchedule\"") + 200);
+    ok("dwell is persisted", /property int dwellMs/.test(persisted));
+    ok("...and whether the loop is running is not", !/property bool running/.test(persisted));
+
+    // A head that has gone away cannot answer, and a loop still ticking at one marks every step
+    // stale for as long as it is unplugged.
+    ok("losing the device stops the loop", /onHasDeviceChanged:[^\n]*stop\(\)/.test(engine));
+
+    // Widget fields whose value is an age need a ticking property; Date.now() in a binding is
+    // evaluated once. DataFieldCatalog reads store.nowMs and nothing used to write it.
+    ok("the widget clock actually ticks",
+       /property real nowMs/.test(read("qml", "app", "WorkspaceStore.qml"))
+       && /nowMs = Date\.now\(\)/.test(read("qml", "app", "WorkspaceStore.qml")));
+}
+
+// ── the on-scene panel ───────────────────────────────────────────────────────
+// Source assertions again, for the things that are invisible in both a behaviour test and a
+// screenshot: where the rows come from, that the panel cannot recompose them its own way, and
+// that its size follows the data instead of a constant.
+console.log("the acoustic-nodes panel");
+{
+    const read = (...p) => readFileSync(path.join(here, "..", "..", ...p), "utf8");
+    const panel = read("qml", "app", "UsblNodesPopup.qml");
+    const store = read("qml", "app", "WorkspaceStore.qml");
+    const main  = read("qml", "app", "MainWindow.qml");
+
+    // The whole reason panelRows exists. A panel that picked entries out of usblSolutions and
+    // judged them itself is a second implementation of the pane, free to disagree with it.
+    ok("the panel does not compose its own rows", !/panelRows\(/.test(panel));
+    ok("...it reads the engine's", /engine\.rows/.test(panel));
+    ok("the engine composes them through the logic module", /Node\.panelRows\(/.test(read("qml", "app", "UsblEngine.qml")));
+
+    // Auto-extension, which is the feature: height is a function of the row count.
+    ok("the panel's height follows the row count",
+       /_contentH[\s\S]{0,200}_rowH/.test(panel) && /expandedHeight\s*=/.test(panel));
+    // WIDTH MUST NOT MOVE WITH THE DATA. Height follows the row count; width follows nothing a
+    // beacon does. This shipped wrong once: the samples were the widest values currently on
+    // screen, so the card resized under the cursor as ages ticked and commands changed.
+    //
+    // It is still measured rather than pinned -- a literal encodes a layout and a locale, and it
+    // has been wrong twice for exactly that reason (348, then 260) -- but measured off STATIC
+    // samples, so the result is a constant for a given theme and language.
+    const widthLine = (panel.match(/^.*_contentW:.*$/m) || [""])[0];
+    ok("...and its width does not",
+       !/(_shown|_rows\b|_rowH)/.test(widthLine));
+    ok("the width is measured off the prototype, not pinned to a literal",
+       /_contentW:[\s\S]{0,160}_protoStatus\.implicitWidth/.test(panel));
+    ok("...and no sample it measures comes from live data",
+       !/_widestCmd|_widestAge|_widestRange/.test(panel)
+       && /_cmdSample:\s*"\d+"/.test(panel) && /_rangeSample:\s*"[\d.]+"/.test(panel));
+    // The bug that made the card too narrow, twice over: the prototype was laid out unscaled and
+    // the result multiplied by _k, and the rows' own side margins were never counted at all.
+    const proto = panel.slice(panel.indexOf("id: _protoStatus"), panel.indexOf("id: _protoRead"));
+    ok("...off a prototype built from the same chips the real row uses",
+       /UsblAddressBadge/.test(proto) && /UsblOpBadge/.test(proto)
+       && /UsblStateBadge/.test(proto) && /CmdChip/.test(proto));
+    ok("...laid out at the sizes the real rows use, not unscaled and multiplied",
+       /_chipH/.test(proto) && !/_uChipH/.test(proto));
+    ok("...and the row's own side margins are in the total",
+       /_contentW:[\s\S]{0,300}_rowPadH\s*\*\s*2/.test(panel));
+    // The readings line is taller than a chip now, so a row height of 2 x chipH clips it.
+    ok("the row height measures the readings line rather than assuming another chip",
+       /_readH[\s\S]{0,120}_protoRead\.implicitHeight/.test(panel));
+    // A Repeater bound to the array itself rebuilds every delegate on every clock tick, because
+    // the composer returns a new array each time. Same rule the widget list already follows.
+    ok("the row Repeater is modelled on the count, not the array",
+       /model:\s*root\._shown/.test(panel));
+
+    // THE ROW IS TURNED OVER: everything that is a state on the top line, everything that is a
+    // reading underneath -- the shape the settings pane's row already had. Asserted because it
+    // is the kind of thing a later edit "tidying" the delegate would quietly put back.
+    {
+        const line1 = panel.slice(panel.indexOf("id: _line1"), panel.indexOf("id: _line2"));
+        const line2 = panel.slice(panel.indexOf("id: _line2"));
+        ok("the top line is the status bar",
+           /UsblOpBadge/.test(line1) && /UsblStateBadge/.test(line1) && /CmdChip/.test(line1));
+        ok("...and carries no readings",
+           !/entry\.distance/.test(line1) && !/entry\.snr/.test(line1));
+        // The command id is a prompt, not the word CMD. A lone chevron was rejected because
+        // DisclosureIndicator draws that exact shape in the pane's own node row.
+        ok("the command chip is a prompt mark, not a word",
+           /component CmdChip/.test(panel) && !/qsTr\("CMD/.test(panel));
+        ok("...with its number in a measured slot, since nothing anchors the bar's right edge",
+           /property string numSample/.test(panel) && /_mNum\.width/.test(panel));
+        ok("the bottom line is the readings, at the size the freed line can carry",
+           /entry\.distance/.test(line2) && /_rangeFont/.test(line2));
+        // A dot-and-ring span was drawn for this and rejected: the operation badge one line
+        // above IS a dot in a ring, and one shape may not mean two things on one row.
+        ok("...with a range mark that shares no shape with the operation badge",
+           /component RangeMark/.test(panel) && !/RangeMark[\s\S]{0,600}ctx\.arc\(/.test(panel));
+    }
+
+    // THE FRAME IS THE CURSOR, on both surfaces and for the same reason: it says where in the
+    // schedule you are, and it outlives the answer window closing. Bordering every row instead
+    // was tried and is worse -- eight outlines are not a mark, they are a table.
+    ok("the panel frames the cursor row and nothing else",
+       /border\.width:\s*\(nodeRow\._r && nodeRow\._r\.cursor\)/.test(panel)
+       && /border\.color:\s*AppPalette\.accentBorder/.test(panel));
+    // ...and the panel is told which row that is, rather than working it out itself: one
+    // composer, or the two surfaces can disagree about where the cycle is.
+    ok("...on the composer's say-so, not its own", !/cursorNodeId|isCursorStep/.test(panel));
+
+    // Read-only. Starting a schedule transmits; a transmit control on a floating card over a
+    // chart is a different feature from a readout.
+    ok("the panel sends nothing", !/requestEmit|acousticPing|\.start\(\)|toggleRun/.test(panel));
+    // Every no-rows case says what is missing rather than leaving an empty card.
+    ok("no device, no nodes and a stopped schedule each say so",
+       /_noDevice/.test(panel) && /_noNodes/.test(panel) && /_stopped/.test(panel));
+    ok("...and more nodes than fit are counted, not dropped silently",
+       /_hidden/.test(panel) && /\+%1 more/.test(panel));
+    ok("nothing on the panel fades or blinks",
+       !/Behavior on opacity/.test(panel) && !/loops:\s*Animation\.Infinite/.test(panel));
+
+    // ONE SHAPE FOR AN ADDRESS. The pane said "addr 2" and the panel said "2"; a bare number
+    // beside other numbers reads as a row index. Both go through the shared badge now, and
+    // neither may re-inline a number -- that is the drift the component exists to prevent.
+    const pane2 = read("qml", "app", "UsblGroup.qml");
+    ok("both surfaces render the address through the shared badge",
+       /UsblAddressBadge\s*\{/.test(panel) && /UsblAddressBadge\s*\{/.test(pane2));
+    ok("...and the pane no longer spells the word in a row",
+       !/qsTr\("addr %1"\)/.test(pane2));
+    // Identity, not state: a fifth mark tinted like the reply chip would say what the reply
+    // chip already says, on a row that has four marks already.
+    const badge = read("qml", "app", "UsblAddressBadge.qml");
+    ok("the badge carries no state colour",
+       !/linkOk|linkIdle|accentBg|waiting|replied|stale/.test(badge));
+    // A SURFACE token cannot be trusted to contrast with a surface: `controlRaised` was tried
+    // and landed within a shade of the pane on several themes, so the badge vanished into the
+    // row. What it is filled with NOW, and why the digit stays readable on it, is asserted in
+    // test_usbl_field_logic.mjs beside the colour table it comes from.
+    const fillLine = (badge.match(/_fill:[^\n]*/) || [""])[0];
+    ok("the badge fill is not a surface token",
+       !/controlRaised|rowRaised|bgDeep|chipRaised|AppPalette\.card/.test(fillLine));
+
+    // HEIGHTS COME FROM THE THEME. Only Tokens.controlH follows theme.controlHeight, so every
+    // literal pixel height stayed the size it was typed at and read as undersized against a
+    // theme asking for taller controls -- which is exactly what these panes were full of.
+    const opB = read("qml", "app", "UsblOpBadge.qml");
+    const stB = read("qml", "app", "UsblStateBadge.qml");
+    ok("chips and badges size from Tokens.chipH",
+       [badge, pane2, panel, opB, stB].every((f) => /Tokens\.chipH/.test(f)));
+    ok("...and no chip or row in the USBL panes hard-codes its height",
+       ![badge, pane2, panel, opB, stB].some((f) => /implicitHeight:\s*Math\.round\(\d/.test(f)));
+    // Both badges take their size from the caller, because the pane and the panel measure in
+    // different scale spaces and a component that assumed one would render short in the other.
+    ok("both state badges are sized by their caller",
+       /property real diameter/.test(opB) && /property real chipHeight/.test(stB));
+    ok("a tappable chip takes the full control height, not the inline-mark height",
+       /implicitHeight:\s*Tokens\.controlH\b/.test(pane2));
+    // Tokens are in AppPalette.scale space, the panel in appScale space; they differ by
+    // appScaleBoost, so a chip taking Tokens.chipH raw is ~11% shorter than the pane's.
+    ok("the panel converts chipH into its own scale space rather than mixing the two",
+       /Tokens\.chipH\s*\/\s*Math\.max\(0\.01,\s*AppPalette\.scale\)/.test(panel));
+
+    // The kind discriminator, and the one thing that must never regress about it: a def written
+    // before kinds existed has no `kind` and has to keep loading as a grid.
+    ok("the store knows both kinds", /widgetKinds:\s*\["grid",\s*"usblNodes"\]/.test(store));
+    ok("...and treats an absent kind as a grid",
+       /kind === "usblNodes"\)\s*\?\s*"usblNodes"\s*:\s*"grid"/.test(store));
+    ok("a nodes def is normalized without a grid",
+       /raw\.kind === "usblNodes"/.test(store));
+    ok("MainWindow picks the popup by kind",
+       /widgetSlot\._wdef\.kind === "usblNodes"\)\s*[\s\S]{0,40}usblNodesPanelComp/.test(main));
+    // A Loader sits between the Repeater and the popup now, and uiStateReapplied walks the
+    // Repeater's items -- so the delegate has to forward syncFromStore or restored layouts
+    // stop reaching the panels.
+    ok("...and forwards the layout re-sync through the Loader",
+       /function syncFromStore\(\)\s*\{\s*if \(slotLoader\.item\) slotLoader\.item\.syncFromStore\(\)/.test(main));
+    // The bug this cost a probe run to find, written down: an object created from a Component
+    // gets that COMPONENT's creation context, so a Component declared beside the Repeater
+    // cannot see the delegate's id and every binding through it is a ReferenceError -- a panel
+    // that loads and paints nothing. Both Components must sit inside the delegate.
+    {
+        const at = main.indexOf("id: widgetSlot");
+        const end = main.indexOf("Connections {", at);
+        const delegateBody = at < 0 ? "" : main.slice(at, end);
+        ok("the panel Components are declared inside the delegate, where its id is in scope",
+           /id: dataWidgetPanelComp/.test(delegateBody)
+           && /id: usblNodesPanelComp/.test(delegateBody));
+    }
+}
+
+// ── what the map is told about the plan ──────────────────────────────────────
+//
+// mapSpec is the whole message from the plan to the 3D layer, and its cost is asymmetric: on the
+// other side of the call, C++ re-projects every remembered fix of every beacon. So the thing
+// being defended here is not the shape of the array -- it is that the array does not change when
+// nothing about the plan changed.
+console.log("map spec");
+{
+    const nodes = [
+        { id: 1, addr: 2, active: true,  refs: [] },
+        { id: 2, addr: 5, active: false, refs: [] }
+    ];
+
+    eq("one entry per node", N.mapSpec(nodes).length, 2);
+    eq("carrying the address", N.mapSpec(nodes)[0].addr, 2);
+    ok("...and the switch, so a muted node can be dimmed rather than dropped",
+       N.mapSpec(nodes)[0].active === true && N.mapSpec(nodes)[1].active === false);
+    eq("an empty plan is an empty spec", N.mapSpec([]).length, 0);
+    eq("...and so is no plan at all", N.mapSpec(null).length, 0);
+
+    // A hand-edited blob, or a node mid-construction. Drawing a beacon at address `undefined`
+    // gives it the fallback colour and a track that can never be matched to a row.
+    eq("a node with no numeric address is not a beacon",
+       N.mapSpec([{ id: 1, active: true }, { id: 2, addr: 3, active: true }]).length, 1);
+
+    // addStep produces this legitimately, and UsblPlanLogic does not forbid it.
+    const dup = N.mapSpec([{ id: 1, addr: 4, active: true }, { id: 2, addr: 4, active: false }]);
+    eq("two nodes on one address are one beacon", dup.length, 1);
+    ok("...and the first named wins", dup[0].active === true);
+
+    // THE ONE THAT MATTERS. panelRows folds in `nowMs`, so it is a different array every clock
+    // tick; if the map push were derived from it, the scene would re-project every beacon's whole
+    // history once a second, forever, for no change. The guarantee is structural -- mapSpec takes
+    // only `nodes` -- so it is asserted against the source rather than by sampling a clock.
+    const src = readFileSync(
+        path.join(here, "..", "..", "qml", "app", "UsblNodeLogic.js"), "utf8");
+    const body = src.slice(src.indexOf("function mapSpec("),
+                           src.indexOf("// Node consumes this via module.exports"));
+    ok("the spec reads no clock", !/Date|nowMs|epochMs|ageMs/.test(body));
+    ok("...and no interrogation state", !/poll|solutions|entry/.test(body));
+    eq("mapSpec takes the plan's nodes and nothing else",
+       /function mapSpec\(([^)]*)\)/.exec(src)[1].trim(), "nodes");
+
+    // The push itself: the scene must be told on an edit, and must NOT be told otherwise.
+    const wv = readFileSync(
+        path.join(here, "..", "..", "qml", "app", "WorkspaceView.qml"), "utf8");
+    ok("WorkspaceView hands the spec to the layer",
+       /usblLayer\.setNodes\(/.test(wv));
+    ok("...with the colour from the one address table",
+       /DataFieldCatalog\.usblAddressColor\(/.test(wv));
+    ok("...and does not re-push an unchanged plan",
+       /_usblPushed/.test(wv));
+    const mw = readFileSync(
+        path.join(here, "..", "..", "qml", "app", "MainWindow.qml"), "utf8");
+    ok("MainWindow gives WorkspaceView the plan to push",
+       /WorkspaceView\s*\{[\s\S]{0,600}?usblPlan:\s*appUsblPlan/.test(mw));
+}
+
+console.log("");
+console.log(`${pass} passed, ${fails.length} failed`);
+for (const f of fails) console.log("  FAILED: " + f);
+process.exit(fails.length ? 1 : 0);

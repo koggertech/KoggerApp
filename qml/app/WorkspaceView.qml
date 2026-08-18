@@ -3,11 +3,16 @@ import SceneGraphRendering 1.0
 import QtCore
 import scene2d
 import kqml_types 1.0
+import "UsblNodeLogic.js" as UsblNode
 
 Item {
     id: workspace
 
     required property var store
+
+    // The USBL plan, for the map layer only. The 3D scene draws the plan's beacons, and this is
+    // the only route from the plan (owned in MainWindow, for the session) to the scene object.
+    property var usblPlan: null
 
     property alias inputState: inputStateObject
     property bool sizeReportPending: false
@@ -563,11 +568,45 @@ Item {
                 function onThreeDLoupeAllowedChanged() { scene3dView._applyLoupeGate() }
             }
 
+            // ── which beacons the map draws ───────────────────────────────────
+            // The plan's nodes, with the identity colour from the one address table, handed to
+            // the C++ layer. It accumulates a track for every address that answers but presents
+            // only what this names, so adding a node reveals a history that was already there.
+            //
+            // GUARDED BY THE LAST PUSHED VALUE, not by the binding. UsblPlanStore commits a deep
+            // clone on every edit, so `nodes` is a new array even when a change touched only the
+            // command groups -- and the receiving end re-projects every remembered fix of every
+            // beacon. A string compare here is cheaper than that by any measure.
+            property string _usblPushed: ""
+
+            function _pushUsblNodes() {
+                if (!usblLayer)
+                    return
+                var spec = UsblNode.mapSpec(workspace.usblPlan ? workspace.usblPlan.nodes : [])
+                var out = []
+                for (var i = 0; i < spec.length; ++i) {
+                    out.push({ "addr":   spec[i].addr,
+                               "active": spec[i].active,
+                               "color":  String(DataFieldCatalog.usblAddressColor(spec[i].addr)) })
+                }
+                var stamp = JSON.stringify(out)
+                if (stamp === _usblPushed)
+                    return
+                _usblPushed = stamp
+                usblLayer.setNodes(out)
+            }
+
+            Connections {
+                target: workspace.usblPlan
+                function onNodesChanged() { scene3dView._pushUsblNodes() }
+            }
+
             // verticalScale persistence (перенесено с develop, где было в qml/main.qml)
             Component.onCompleted: {
                 if (rendererPersist.verticalScale !== scene3dView.verticalScale)
                     scene3dView.setVerticalScale(rendererPersist.verticalScale)
                 _applyLoupeGate()
+                _pushUsblNodes()
             }
 
             onVerticalScaleChanged: rendererPersist.verticalScale = scene3dView.verticalScale

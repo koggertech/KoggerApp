@@ -10,6 +10,12 @@ Column {
 
     property var dev: null
     property var store: null
+    // The USBL plan and the interrogation loop are NOT owned here. This page is a settings
+    // sub-page: its loader destroys it the moment the operator navigates away, which used to
+    // take the schedule down with it. Both now live in MainWindow for the session and arrive
+    // as properties. See UsblEngine.qml.
+    property var usblPlan: null
+    property var usblEngine: null
 
     // Per-device UI memory. This page is one instance whose `dev` changes on switch,
     // so disclosure state is kept per device: on switch, snapshot the leaving device's
@@ -108,7 +114,13 @@ Column {
     readonly property bool _isNanoSSS: !!(dev && dev.devName === "NanoSSS")
     readonly property bool _isBasicSonar: _isBasic2D || _isNanoSSS
     readonly property bool _isRecorder: !!(dev && dev.isRecorder)
-    readonly property bool _hasCut: _isBasicSonar || _isRecorder
+    readonly property bool _isUsbl: !!(dev && (dev.isUSBL || dev.isUSBLBeacon))
+    // Without a cut the panel has no header and advReveal.open is permanently true, so
+    // Actions / Settings file / Upgrade sit open below the operating groups and the
+    // "Advanced settings" row is a zero-height, unclickable ghost. USBL gets the cut for
+    // the same reason the basic sonars do: those three are firmware and maintenance
+    // actions, not operating controls.
+    readonly property bool _hasCut: _isBasicSonar || _isRecorder || _isUsbl
     property bool _engExpanded: false
 
     function _linkUuidOfDev() {
@@ -272,8 +284,7 @@ Column {
     // ── Recorder ──────────────────────────────────────────────────────────
     // Status snapshot + log archive with per-log batched download. Data comes from
     // dev.recorder* (ID_RECORDER_STATUS) and deviceManagerWrapper.streamsList; download
-    // is driven by deviceManagerWrapper.startStreamDownload(id). See
-    // RecorderN/docs/Recorder-Host-Integration-Guide.md.
+    // is driven by deviceManagerWrapper.startStreamDownload(id).
     DeviceSettingsGroup {
         id: recorderGroup
         width: root.groupWidth; preferredWidth: root.groupWidth
@@ -1196,6 +1207,28 @@ Column {
             stacked: true
             FlashButton { width: parent.width }
         }
+    }
+
+    // ── USBL ──────────────────────────────────────────────────────────────
+    // Three groups ordered by how often they are touched: operating (nodes + schedule)
+    // stays open, the command plan and the response gating start collapsed. The plan model
+    // is shared by the first two and persists independently of the device.
+    UsblGroup {
+        width: root.groupWidth; preferredWidth: root.groupWidth
+        dev: root.dev
+        plan: root.usblPlan
+        engine: root.usblEngine
+    }
+
+    UsblPlanGroup {
+        width: root.groupWidth; preferredWidth: root.groupWidth
+        dev: root.dev
+        plan: root.usblPlan
+    }
+
+    UsblResponseGroup {
+        width: root.groupWidth; preferredWidth: root.groupWidth
+        dev: root.dev
     }
 
     // ── Advanced settings ("Расширенные настройки") ────────────────────────

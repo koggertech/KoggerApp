@@ -24,6 +24,7 @@
 #include "qPlot2D.h"
 #include "core.h"
 #include "themes.h"
+#include "ui_probe.h"
 #include "ui_state_serializer.h"
 #include "echogram_state_serializer.h"
 #include "notifications.h"
@@ -344,6 +345,12 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("langController", &langController);
     engine.rootContext()->setContextProperty("appUtils", &appUtils);
 
+    // Machine-readable UI verification. Costs nothing unless KOGGER_UI_PROBE names an
+    // output directory; exposed to QML so an interaction test can dump at a chosen
+    // moment instead of on a timer.
+    UiProbe uiProbe;
+    engine.rootContext()->setContextProperty("uiProbe", &uiProbe);
+
     // Expose compile-time MANUAL_TESTING flag to QML — the Settings panel
     // shows a "Test" group (with developer-only knobs) only when this is true.
 #ifdef MANUAL_TESTING
@@ -408,6 +415,10 @@ int main(int argc, char *argv[])
     if (!rootObjects.isEmpty()) {
         QObject* rootObject = rootObjects.constFirst();
         mainWindow = qobject_cast<QQuickWindow*>(rootObject);
+        if (mainWindow && UiProbe::isEnabled()) {
+            uiProbe.setWindow(mainWindow);
+            uiProbe.armFromEnvironment();
+        }
 #if defined(Q_OS_WIN)
         if (auto* window = qobject_cast<QWindow*>(rootObject)) {
             applyWindowsSystemTitleBarTheme(window);

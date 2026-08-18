@@ -2316,9 +2316,22 @@ Column {
                 }
             }
 
+            ParamCard {
+                width: parent.width
+                label: qsTr("USBL beacons")
+                toolTipText: qsTr("Show the acoustic nodes and their tracks in the 3D scene")
+                checked: render3dSettings.usblLayerCheckButton
+                onToggled: function(v) {
+                    render3dSettings.usblLayerCheckButton = v
+                    if (typeof Scene3dToolBarController !== "undefined")
+                        Scene3dToolBarController.onUsblLayerVisibilityChanged(v)
+                }
+            }
+
             Settings {
                 id: render3dSettings
                 category: "scene3d/view"
+                property bool usblLayerCheckButton: true
                 property bool forceSingleZoomCheckButton: false
                 property bool syncLoupeCheckButton: false
                 property bool isNorthViewButton: false
@@ -2659,6 +2672,7 @@ Column {
                     Scene3dToolBarController.onCompassPosChanged(compassPosSpinBox.value)
                     Scene3dToolBarController.onCompassSizeChanged(compassSizeSpinBox.value)
                     Scene3dToolBarController.onScaleBarButtonChanged(render3dSettings.scaleBarCheckButton)
+                    Scene3dToolBarController.onUsblLayerVisibilityChanged(render3dSettings.usblLayerCheckButton)
                 }
                 if (typeof NavigationArrowControlMenuController !== "undefined") {
                     NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(render3dSettings.navigationArrowCheckButton)

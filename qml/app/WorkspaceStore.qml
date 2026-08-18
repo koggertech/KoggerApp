@@ -412,6 +412,7 @@ property int  widgetEditIndex: -1
 property int  widgetEditStep: 1
 property var  widgetDragLayer: null
 
+property string widgetDraftKind: "grid"
 property int  widgetDraftCols: 1
 property int  widgetDraftRows: 1
 property int  widgetDraftTransparency: 0
@@ -491,7 +492,13 @@ readonly property bool widgetEditorActive: settingsSubPageActive && settingsSubP
 // consumers hide the field and its setting in that case.
 property string systemTimeHms: ""
 readonly property bool systemTimeValid: systemTimeHms.length > 0
+// The same tick as a number, for fields whose value is an AGE. DataFieldCatalog reads it
+// (`_nowMs(store)`) and without it a widget's `usblAge` and the tracking/stale flip in
+// `usblState` freeze: Date.now() inside a binding is evaluated once and never again, so the
+// dependency that moves has to be a property.
+property real nowMs: 0
 function _updateSystemClock() {
+    nowMs = Date.now()
     var d = new Date()
     if (isNaN(d.getTime()) || d.getFullYear() < 2001) { systemTimeHms = ""; return }
     var p = function(n) { return (n < 10 ? "0" : "") + n }
@@ -525,9 +532,36 @@ function generateWidgetId() {
     return id
 }
 
+// The panel KINDS. "grid" is the cols×rows field grid this system was built for; "usblNodes"
+// is a list whose length comes from the USBL plan at runtime.
+//
+// A kind exists because the grid's size is a pure function of cols×rows×84px and that is
+// load-bearing — occupancy validation, the drop maths, the editor overlay's cell grid and the
+// aspect-ray scale snapping all derive from it. A panel whose height depends on how many
+// beacons answered cannot be a cell in that grid without breaking each of them separately, so
+// it is a different kind of panel that happens to reuse everything ELSE a panel has: the
+// position/scale/z instance, the shown map, docking, the list, the limit.
+readonly property var widgetKinds: ["grid", "usblNodes"]
+function widgetKindOf(def) {
+    // Absent means "grid": every blob written before kinds existed is one, and must load
+    // unchanged rather than being dropped as malformed.
+    return (def && def.kind === "usblNodes") ? "usblNodes" : "grid"
+}
+
 function normalizeWidgetDef(raw) {
     if (!raw || typeof raw !== "object")
         return null
+
+    if (raw.kind === "usblNodes") {
+        // No cells, no grid: the rows are the plan's, and there is nothing in the def to
+        // validate against a geometry. What it carries is what a panel carries.
+        return { id: (typeof raw.id === "string" && raw.id.length) ? raw.id : "",
+                 kind: "usblNodes",
+                 name: (typeof raw.name === "string") ? raw.name : "",
+                 transparency: (typeof raw.transparency === "number" && isFinite(raw.transparency))
+                               ? Math.max(0, Math.min(100, Math.round(raw.transparency))) : 0 }
+    }
+
     var cols = Math.round(raw.cols)
     var rows = Math.round(raw.rows)
     if (!(cols >= 1 && cols <= 4) || !(rows >= 1 && rows <= 4))
@@ -563,7 +597,8 @@ function normalizeWidgetDef(raw) {
         cells.push({ row: row, col: col, field: String(c.field), rep: rep, big: cellBig })
     }
     var id = (typeof raw.id === "string" && raw.id.length) ? raw.id : ""
-    return { id: id, name: name, cols: cols, rows: rows, transparency: transparency, cells: cells }
+    return { id: id, kind: "grid", name: name, cols: cols, rows: rows,
+             transparency: transparency, cells: cells }
 }
 
 function saveWidgets() {
@@ -1462,18 +1497,34 @@ function _openSettingsSubPage(kind) {
 
 function openQuickActionsSettings() { _openSettingsSubPage("quickActions") }
 function openWidgetSettings()       { openAppSettingsAtGroup("app.widgets") }
-function openWidgetCreateSettings() { widgetEditIndex = -1; widgetDraftReset(); widgetEditStep = 1; _openSettingsSubPage("widgetEdit") }
-function openWidgetEditSettings(index) { widgetEditIndex = index; widgetDraftReset(); widgetEditStep = 2; _openSettingsSubPage("widgetEdit") }
+// Wizard steps: 0 = which kind, 1 = grid size, 2 = place fields, 3 = the acoustic-nodes panel.
+// Creating starts at the kind choice; editing goes straight to the step that kind is edited on,
+// because the kind of an existing panel is not something you change — you make the other one.
+function openWidgetCreateSettings() { widgetEditIndex = -1; widgetDraftReset(); widgetEditStep = 0; _openSettingsSubPage("widgetEdit") }
+function openWidgetEditSettings(index) {
+    widgetEditIndex = index
+    widgetDraftReset()
+    widgetEditStep = (widgetDraftKind === "usblNodes") ? 3 : 2
+    _openSettingsSubPage("widgetEdit")
+}
+// Chosen on step 0. A grid still has a size to pick; the nodes panel has nothing to lay out,
+// so it goes straight to its own (short) page.
+function widgetDraftSetKind(kind) {
+    widgetDraftKind = (kind === "usblNodes") ? "usblNodes" : "grid"
+    widgetEditStep = (widgetDraftKind === "usblNodes") ? 3 : 1
+}
 
 function widgetDraftReset() {
     if (widgetEditIndex >= 0 && widgetEditIndex < widgets.length) {
         var d = widgets[widgetEditIndex]
-        widgetDraftCols = d.cols
-        widgetDraftRows = d.rows
+        widgetDraftKind = widgetKindOf(d)
+        widgetDraftCols = (typeof d.cols === "number") ? d.cols : 1
+        widgetDraftRows = (typeof d.rows === "number") ? d.rows : 1
         widgetDraftTransparency = (typeof d.transparency === "number") ? d.transparency : 0
         widgetDraftScale = widgetScale(d.id)
-        widgetDraftCells = JSON.parse(JSON.stringify(d.cells))
+        widgetDraftCells = Array.isArray(d.cells) ? JSON.parse(JSON.stringify(d.cells)) : []
     } else {
+        widgetDraftKind = "grid"
         widgetDraftCols = 1
         widgetDraftRows = 1
         widgetDraftTransparency = 0
@@ -1649,8 +1700,11 @@ function widgetDraftClearPreview() {
 
 function widgetDraftSave() {
     var isCreate = widgetEditIndex < 0
-    var id = saveWidget({ cols: widgetDraftCols, rows: widgetDraftRows,
-                          transparency: widgetDraftTransparency, cells: widgetDraftCells })
+    var draft = (widgetDraftKind === "usblNodes")
+        ? { kind: "usblNodes", transparency: widgetDraftTransparency }
+        : { kind: "grid", cols: widgetDraftCols, rows: widgetDraftRows,
+            transparency: widgetDraftTransparency, cells: widgetDraftCells }
+    var id = saveWidget(draft)
     if (id) {
         setWidgetScale(id, widgetDraftScale)
         if (isCreate) {

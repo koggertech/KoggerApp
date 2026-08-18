@@ -1,7 +1,10 @@
 #ifndef IDBINNARY_H
 #define IDBINNARY_H
 
+#include <array>
+
 #include <QObject>
+#include <QByteArray>
 #include <QList>
 #include <QMap>
 #include <QVector>
@@ -856,12 +859,19 @@ public:
     explicit IDBinVersion() : IDBin() {
     }
 
+    enum BootMode : int {
+        BootModeUnknown = -1,
+        BootModeFirmware = 0,
+        BootModeBootloader = 1
+    };
+
     ID id() override { return ID_VERSION; }
     Resp  parsePayload(FrameParser &proto) override;
     uint8_t productName() { return 0; }
 
     BoardVersion boardVersion() { return m_boardVersion; }
     uint8_t boardVersionMinor() { return m_boardVersionMinor; }
+    int bootMode() const { return _bootMode; }
 
     int fwVersion() { return _fwVersion; }
     int fwVersionMinor() { return _fwVersionMinor; }
@@ -872,6 +882,7 @@ public:
         m_boardVersion = BoardNone;
         m_boardVersionMinor = 0;
         m_serialNumber = 0;
+        _bootMode = BootModeUnknown;
     }
 
     QByteArray uid() { return _uid; }
@@ -891,7 +902,7 @@ protected:
     int _fwVersionMinor = 0;
     int _bootVersion = 0;
     int _bootVersionMinor = 0;
-    int _bootMode = 0;
+    int _bootMode = BootModeUnknown;
 };
 
 class IDBinMark : public IDBin
@@ -1304,31 +1315,49 @@ public:
     ID id() override { return ID_USBL_SOLUTION; }
     Resp  parsePayload(FrameParser &proto) override;
 
+    // ID_USBL_SOLUTION multiplexes unrelated payloads onto the same version:
+    // v1 carries either AcousticNavSolution or BeaconActivationResponce, told
+    // apart by payload length. Version alone cannot identify the content.
+    enum class PayloadKind : uint8_t {
+        None = 0,
+        Solution,
+        AcousticNav,
+        BaseToBeacon,
+        BeaconActivation
+    };
+
     struct UsblSolution {
-        uint8_t id = 0;
+        uint8_t id = 0xFF;
         uint8_t role = 0;
-        uint16_t watermark = 0;
+        uint8_t cmd_id = 0xFF;
+        uint8_t reserved = 0;
 
         int64_t timestamp_us = 0;
         uint32_t ping_counter = 0;
         int64_t carrier_counter = 0;
 
-        float distance_m = 0;
+        float distance_m = NAN;
         float distance_unc = 0;
 
-        float azimuth_deg = 0;
+        float azimuth_deg = NAN;
         float azimuth_unc = 0;
 
-        float elevation_deg = 0;
+        float elevation_deg = NAN;
         float elevation_unc = 0;
 
-        float snr = 0;
+        // NAN like its neighbours, and for the same reason: v1/v2 are PROJECTED onto this struct
+        // and projectToSolution assigns no SNR, because neither AcousticNavSolution nor
+        // BaseToBeacon carries one. A 0 default made that absence indistinguishable from a
+        // measured 0 dB, and every consumer -- the node rows, the widget fields, the CSV export --
+        // reported a confident zero for a number the payload never contained. Only v0 reads this
+        // off the wire, where a genuine 0 stays a genuine 0.
+        float snr = NAN;
 
-        float x_m = NAN;
-        float y_m = NAN;
-        double latitude_deg = NAN;
-        double longitude_deg = NAN;
-        float depth_m = NAN;
+        float beacon_x_m = NAN;
+        float beacon_y_m = NAN;
+        double beacon_latitude = NAN;
+        double beacon_longitude = NAN;
+        float beacon_depth = NAN;
 
         float usbl_yaw = NAN;
         float usbl_pitch = NAN;
@@ -1338,8 +1367,67 @@ public:
         double usbl_longitude = NAN;
         uint32_t last_iTOW = 0;
 
-        float beacon_n = NAN;
-        float beacon_e = NAN;
+        float beacon_n_m = NAN;
+        float beacon_e_m = NAN;
+        // Tail-appended: absent from older firmware payloads, left NAN by the
+        // short-payload path in FrameParser::read<T>().
+        float code_snr[8] = {NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN};
+    } __attribute__((packed));
+
+    struct AcousticNavSolution {
+        static constexpr ID getId() { return ID_USBL_SOLUTION; }
+        static constexpr Version getVer() { return v1; }
+
+        uint8_t address = 0xFF;
+        uint8_t cmd_id = 0xFF;
+
+        uint32_t reserved = 0;
+
+        int64_t timestamp_us = 0;
+        int64_t carrier_us = 0;
+        int64_t carrier_counter = 0;
+
+        double lat = NAN;
+        double lon = NAN;
+        float depth = NAN;
+
+        float acousticAzimuth = NAN;
+        float geoAzimuth = NAN;
+        float heading = NAN;
+
+        float distance = NAN;
+
+        double baseLat = NAN;
+        double baseLon = NAN;
+        float baseDepth = NAN;
+    } __attribute__((packed));
+
+    struct BaseToBeacon {
+        static constexpr ID getId() { return ID_USBL_SOLUTION; }
+        static constexpr Version getVer() { return v2; }
+
+        uint8_t address = 0xFF;
+        uint8_t cmd_id = 0xFF;
+
+        uint32_t reserved = 0;
+
+        int64_t timestamp_us = 0;
+        int64_t carrier_us = 0;
+        int64_t carrier_counter = 0;
+
+        float acousticAzimuth = NAN;
+        float geoAzimuth = NAN;
+        float beaconDistance = NAN;
+        float beaconN = NAN;
+        float beaconE = NAN;
+        float beaconD = NAN;
+        double beaconLat = NAN;
+        double beaconLon = NAN;
+
+        float antennaYaw = NAN;
+        float antennaDepth = NAN;
+        double antennaLat = NAN;
+        double antennaLon = NAN;
     } __attribute__((packed));
 
     struct USBLRequestBeacon {
@@ -1368,12 +1456,24 @@ public:
         return _usblSolution;
     }
 
+    AcousticNavSolution acousticNavSolution() const { return _acousticNavSolution; }
+    BaseToBeacon baseToBeacon() const { return _baseToBeacon; }
+    PayloadKind lastPayloadKind() const { return _lastPayloadKind; }
+
     void askBeacon(USBLRequestBeacon ask);
     void enableBeaconOnce(float timeout);
 
 protected:
+    // v1/v2 payloads are projected onto _usblSolution so the 2D/3D views and the
+    // epoch pool keep consuming a single solution type.
+    void projectToSolution(const AcousticNavSolution& src);
+    void projectToSolution(const BaseToBeacon& src);
+
     UsblSolution _usblSolution;
+    AcousticNavSolution _acousticNavSolution;
+    BaseToBeacon _baseToBeacon;
     BeaconActivationResponce _beaconResponcel;
+    PayloadKind _lastPayloadKind = PayloadKind::None;
 };
 
 class IDBinUsblControl : public IDBin
@@ -1396,9 +1496,23 @@ public:
         // 0xFFFFFFFF: trigger always enabled
         // otherwise: enable tx trigger for a certain time after setting the value
 
-        uint32_t timeout_us = 0;
+        uint32_t trigger_timeout_us = 0;
         // 1-8 are addresses, 0: promisc address, 0xFF: disabled address slot
         uint8_t address = 0;
+        uint8_t cmd_id = 0;
+        // 0: Pinger (no waiting for a response), >0: Interrogator (ranging)
+        uint32_t reply_distance_mm = 20000;
+
+        enum Function : uint8_t {
+            FunctionDefault = 0,
+            FunctionBitArray = 1,
+            FunctionLLGeoAzimuth = 2
+        };
+
+        Function function = FunctionDefault;
+        // non-zero only if (function == FunctionBitArray)
+        // Payload bytes count is ((payload_bit_length + 7) / 8)
+        uint16_t payload_bit_length = 0;
     } __attribute__((packed));
 
     // Regular addresses
@@ -1412,6 +1526,7 @@ public:
         uint8_t address[8] = {0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     } __attribute__((packed));
 
+    // Firmware calls this USBLTransponderEnable.
     struct USBLResponseTimeout {
         static constexpr ID getId() { return ID_USBL_CONTROL; }
         static constexpr Version getVer() { return v3; }
@@ -1421,20 +1536,129 @@ public:
         uint32_t timeout_us = 0;
     } __attribute__((packed));
 
-    // Filter for incoming addresses
+    struct USBLMonitorConfig {
+        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr Version getVer() { return v7; }
+
+        uint32_t suppressSelfResponse_us = 0;
+        uint32_t suppressSelfRequest_us = 0;
+        bool receiveResponseInIdle = false;
+    } __attribute__((packed));
+
+    // Filter for incoming request addresses. Firmware calls this USBLRequestAddressFilter.
     struct USBLResponseAddressFilter {
         static constexpr ID getId() { return ID_USBL_CONTROL; }
         static constexpr Version getVer() { return v4; }
-        // 1-8 are addresses, 0: promisc address, 0xFF: disabled address slot
-        uint8_t address = 0;
+        // 0-7 are addresses, 0xFF: disabled address slot
+        uint8_t address[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     } __attribute__((packed));
 
-    void pingRequest(uint32_t timeout_us, uint8_t address);
+    // The one per-command-slot configuration. Firmware dispatches ID_USBL_CONTROL by
+    // VERSION ALONE (a flat isContextVer chain, no length discrimination anywhere), so a
+    // second struct at v6 is unreachable by construction — an earlier USBLCmdSlotConfig
+    // here was silently parsed as this struct and rejected with RespErrorPayload.
+    // One version, one struct.
+    struct USBLCmdConfig  {
+        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr Version getVer() { return v6; }
+
+        uint8_t cmd_id = 0;
+
+        enum EventFilter : uint8_t {
+            EventOnReceiveRequest = 1,
+            EventOnReceiveResponse = 2
+        } eventFilter = EventOnReceiveRequest;
+
+        enum SendBackCmdIdAction : uint8_t {
+            SendBackCmdIdIncoming = 0,
+            SendBackCmdIdReplacement = 1
+        } cmdIdAction = SendBackCmdIdIncoming;
+
+        uint8_t cmd_id_replacement = 0;
+
+        enum SendBackAddressAction : uint8_t {
+            SendBackAddressIncoming = 0,
+            SendBackAddressReplacement = 1,
+        } addressAction = SendBackAddressIncoming;
+
+        uint8_t address_replacement = 0;
+
+        enum SendBackEventAction : uint8_t {
+            SendBackEventSwaping = 0,
+            SendBackEventSame = 1,
+        } eventAction = SendBackEventSwaping;
+
+        uint8_t reserved1 = 0;
+        uint32_t reserved2 = 0;
+
+        enum Function : uint8_t {
+            FunctionDefault = 0,
+            FunctionBitArray = 1,
+            FunctionLLGeoAzimuth = 2
+        };
+
+        Function receiver_function = FunctionDefault;
+        uint16_t receive_bit_length = 0;
+        Function sender_function = FunctionDefault;
+        uint16_t sending_bit_length = 0;
+    } __attribute__((packed));
+
+    void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id = 0);
+    void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id, uint32_t reply_distance_mm, const QByteArray& payload = {});
+    void setTransponderEnable(uint32_t timeout_us);
     void setResponseTimeout(uint32_t timeout_us);
+    void setMonitorConfig(const USBLMonitorConfig& cfg);
+    void setResponseAddressFilter(const std::array<uint8_t, 8>& addresses);
     void setResponseAddressFilter(uint8_t address);
+    // sending_bit_length is derived from the payload actually written, so a truncated
+    // payload can never declare more bits than went on the wire.
+    void setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& sendingPayload = {});
 
 protected:
 
+};
+
+// Receive-only: modem payloads carried back by an acoustic request/response.
+// Transmission is configured through IDBinUsblControl's command slots.
+class IDBinModemSolution : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinModemSolution() : IDBin() {
+    }
+
+    ID id() override { return ID_MODEM_SOLUTION; }
+    Resp  parsePayload(FrameParser &proto) override;
+
+    struct ModemSolutionHeader {
+        static constexpr ID getId() { return ID_MODEM_SOLUTION; }
+        static constexpr Version getVer() { return v0; }
+
+        int64_t timestamp_us = 0;
+        int64_t carrier_us = 0;
+        int64_t carrier_counter = 0;
+
+        uint64_t reserved1 = 0;
+
+        enum EventFilter : uint8_t {
+            EventOnRequest = 1,
+            EventOnResponse = 2,
+        } event = EventOnRequest;
+
+        uint8_t address_from = 0;
+        uint8_t address_to = 0;
+        uint8_t cmd_id_from = 0;
+
+        uint16_t bit_length = 0;
+        // payload bytes follow
+    } __attribute__((packed));
+
+    ModemSolutionHeader header() const { return _header; }
+    QByteArray payload() const { return _payload; }
+
+protected:
+    ModemSolutionHeader _header;
+    QByteArray _payload;
 };
 
 

@@ -65,7 +65,12 @@ Rectangle {
         }
 
         Text {
-            text: root.def ? (root.def.cols + "×" + root.def.rows) : ""
+            // The subtitle is the panel's SHAPE, and a nodes panel does not have one to state —
+            // its row count is the plan's and changes while you are looking at it. So it names
+            // the kind instead of printing a number that would be wrong by the next fix.
+            text: !root.def ? ""
+                : root.def.kind === "usblNodes" ? qsTr("Acoustic nodes")
+                                                : (root.def.cols + "×" + root.def.rows)
             color: AppPalette.textMuted
             font.pixelSize: Tokens.fontSm
             elide: Text.ElideRight

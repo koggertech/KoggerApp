@@ -221,7 +221,13 @@ signals:
     void encoderComplete(float e1, float e2, float e3);
 
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
+    void acousticNavSolutionComplete(IDBinUsblSolution::AcousticNavSolution data);
+    void baseToBeaconComplete(IDBinUsblSolution::BaseToBeacon data);
     void beaconActivationComplete(uint8_t id);
+    void modemSolutionComplete(IDBinModemSolution::ModemSolutionHeader header, QByteArray payload);
+    // Argument-free companion so DevQProperty can use it as a Q_PROPERTY NOTIFY
+    // (same split as recorderStatusChanged).
+    void modemPayloadChanged();
 
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void gnssVelocityComplete(double hSpeed, double course);
@@ -310,8 +316,27 @@ public slots:
     void enableBeaconOnce(float timeout);
 
     void acousticPingRequest(uint8_t address, uint32_t timeout_us = 0xFFFFFFFF);
+    void acousticPingRequestEx(uint8_t address, uint32_t timeout_us, uint8_t cmdId, uint32_t replyDistanceMm, const QByteArray& payload = {});
     void acousticResponceFilter(uint8_t address);
+    void acousticResponceFilterSlots(const QVector<int>& addresses);
     void acousticResponceTimeout(uint32_t timeout_us = 0xFFFFFFFF);
+
+    void setUsblTransponderEnable(bool enabled);
+    void setUsblMonitorConfig(uint32_t suppressSelfResponseUs, uint32_t suppressSelfRequestUs, bool receiveResponseInIdle);
+    // The only per-slot write there is. v6 USBLCmdConfig carries a receiver_function AND a
+    // sender_function, so one frame configures both directions of a command slot.
+    //
+    // There is no "disable" or "stay silent": current firmware dropped those Function
+    // values along with USBLCmdSlotConfig. All-default arguments are the closest thing —
+    // the slot still answers, it just handles no payload. Per-device silence is
+    // setUsblTransponderEnable(false); per-address filtering is acousticResponceFilterSlots().
+    void setUsblCmdConfig(int cmdId, int event,
+                          int receiverFunction, int receiveBitLength,
+                          int senderFunction, const QString& sendHexPayload,
+                          int eventAction = 0,
+                          int cmdIdAction = 0, int cmdIdReplacement = 0,
+                          int addressAction = 0, int addressReplacement = 0);
+    QString modemLastPayload() const;
 
 #ifdef SEPARATE_READING
     Q_INVOKABLE void initProcessTimerConnects();
@@ -356,6 +381,7 @@ protected:
 
     IDBinUsblSolution* idUSBL = nullptr;
     IDBinUsblControl* idUSBLControl = nullptr;
+    IDBinModemSolution* idModemSolution = nullptr;
 
     IDBinServoControl* idServoControl = nullptr;
     IDBinPwmRoute* idPwmRoute = nullptr;
@@ -433,6 +459,14 @@ protected:
     int m_upgrade_status = 0;
     int64_t _lastUpgradeAnswerTime = 0;
     int64_t _timeoutUpgradeAnswerTime = 0;
+    int64_t upgradeStartedTime_ = 0;
+    int64_t rebootAtTime_ = 0;
+    int upgradeResendCount_ = 0;
+
+    static constexpr int64_t staleVersionGuardMsec = 400;
+    static constexpr int64_t bootHandshakeTimeoutMsec = 8000;
+    static constexpr int64_t packetAnswerTimeoutMsec = 2000;
+    static constexpr int upgradeResendLimit = 5;
     bool m_isConsole = false;
 
     int m_busAddress = 0;
@@ -446,6 +480,14 @@ protected:
     void requestSetup();
 
     void fwUpgradeProcess();
+    bool checkUpgradeTimeouts(int64_t curr_time);
+    void abortUpgrade(const QString& reason);
+    bool isStaleVersionAfterReboot() const;
+
+    // Tolerant hex text → bytes: accepts separators and an odd digit count, which is what a
+    // hand-typed payload field produces. Deliberately outside the slots section — it is a
+    // static helper, not something to invoke from a connection.
+    static QByteArray parseHexPayload(const QString& text);
 
 protected slots:
     void receivedTimestamp  (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
@@ -478,6 +520,7 @@ protected slots:
 
     void receivedUSBL       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
     void receivedServoControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedPwmRoute    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);

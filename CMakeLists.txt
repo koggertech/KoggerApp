@@ -95,6 +95,7 @@ qt_add_executable(KoggerApp
     src/mosaic_index_provider.h    src/mosaic_index_provider.cpp
     src/app_utils.h
     src/ui_keepalive.h             src/ui_keepalive.cpp
+    src/ui_probe.h                 src/ui_probe.cpp
 )
 
 target_compile_features(KoggerApp PRIVATE cxx_std_23)

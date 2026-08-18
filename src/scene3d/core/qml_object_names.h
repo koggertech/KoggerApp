@@ -13,7 +13,6 @@ namespace QmlObjectNames{
     inline QString mpcFilterControlMenu             () { return QStringLiteral("mpcFilterControlMenu"); };
     inline QString bottomTrackParamsMenu            () { return QStringLiteral("bottomTrackParamsMenu"); };
     inline QString scene3dToolBar                   () { return QStringLiteral("scene3dToolBar"); };
-    inline QString usblViewControlMenu              () { return QStringLiteral("usblViewControlMenu"); };
 }
 
 #endif // QMLOBJECTNAMES_H

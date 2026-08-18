@@ -54,12 +54,28 @@ qt_add_qml_module(kogger_app
         SplashOverlay.qml
         TgcSettingsTab.qml
         UiSavingSettingsTab.qml
+        UsblAddressBadge.qml
+        UsblButton.qml
+        UsblCmdMark.qml
+        UsblEngine.qml
+        UsblGroup.qml
+        UsblHexField.qml
+        UsblNodesPopup.qml
+        UsblOpBadge.qml
+        UsblPlanGroup.qml
+        UsblPlanStore.qml
+        UsblResponseGroup.qml
+        UsblSpin.qml
+        UsblStateBadge.qml
+        UsblTriggerEditor.qml
         WidgetCard.qml
         WidgetCellContent.qml
         WidgetDragHandle.qml
         WidgetEditOverlay.qml
         WidgetEditPage.qml
         WidgetGridPreview.qml
+        WidgetKindStep.qml
+        WidgetUsblStep.qml
         WidgetPlaceStep.qml
         WidgetSizeStep.qml
         WorkspaceStore.qml
@@ -67,4 +83,6 @@ qt_add_qml_module(kogger_app
         LayoutResize.js
         LayoutRules.js
         LayoutTree.js
-        RecorderStatus.js)
+        RecorderStatus.js
+        UsblNodeLogic.js
+        UsblPlanLogic.js)

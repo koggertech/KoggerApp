@@ -15,13 +15,13 @@
 #include "image_view.h"
 #include "map_view.h"
 #include "contacts.h"
+#include "usbl_layer.h"
 #include "boat_track.h"
 #include "bottom_track.h"
 #include "polygon_group.h"
 #include "point_group.h"
 #include "ray.h"
 #include "navigation_arrow.h"
-#include "usbl_view.h"
 //#include "isobaths_view.h"
 #include "ruler_tool.h"
 #include "geojson_layer.h"
@@ -34,6 +34,7 @@
 class Dataset;
 class GraphicsScene3dRenderer;
 class RulerController;
+class UsblLayerController;
 class QVariantAnimation;
 class QTimer;
 class GraphicsScene3dView : public QQuickFramebufferObject
@@ -43,6 +44,7 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(QObject* ruler READ ruler CONSTANT)
     Q_PROPERTY(bool geoJsonEnabled READ geoJsonEnabled WRITE setGeoJsonEnabled NOTIFY geoJsonEnabledChanged)
     Q_PROPERTY(QObject* geoJsonController READ geoJsonController CONSTANT)
+    Q_PROPERTY(QObject* usblLayer READ usblLayer CONSTANT)
     Q_PROPERTY(bool cameraPerspective READ cameraPerspective NOTIFY cameraPerspectiveChanged)
     Q_PROPERTY(bool updateSurface READ updateSurface NOTIFY updateSurfaceChanged)
     Q_PROPERTY(int dataZoom READ dataZoom NOTIFY sendDataZoom)
@@ -119,6 +121,7 @@ public:
         friend class GraphicsScene3dView;
         friend class GraphicsScene3dRenderer;
         friend class RulerController;
+        friend class UsblLayerController;
 
         Camera* cameraListener_ = nullptr;
 
@@ -225,7 +228,6 @@ public:
     std::shared_ptr<GeoJsonLayer> getGeoJsonLayerPtr() const;
     std::shared_ptr<PointGroup> pointGroup() const;
     std::shared_ptr<PolygonGroup> polygonGroup() const;
-    std::shared_ptr<UsblView> getUsblViewPtr() const;
     std::shared_ptr<NavigationArrow> getNavigationArrowPtr() const;
     std::weak_ptr <Camera> camera() const;
     float verticalScale() const;
@@ -250,6 +252,7 @@ public:
     bool geoJsonEnabled() const;
     QObject* ruler() const;
     QObject* geoJsonController() const;
+    QObject* usblLayer() const;
     bool syncLoupeOverlayVisible() const;
     int syncLoupeEpochIndex() const;
     float syncLoupeDepthFrom() const;
@@ -296,6 +299,7 @@ public:
     void setCompassPos(int val);
     void setCompassSize(int val);
     void setScaleBarState(bool state);
+    void setUsblLayerVisible(bool state);
     void setShadowsEnabled(bool state);
     void setShadowVectorX(float value);
     void setShadowVectorY(float value);
@@ -406,6 +410,7 @@ private:
     friend class BottomTrack;
     friend class BoatTrack;
     friend class RulerController;
+    friend class UsblLayerController;
 
     bool getViewQuadNed(std::array<QPointF, 4>* quad) const;
     std::tuple<float, float, float, float> getFieldViewDim() const;
@@ -430,7 +435,8 @@ private:
     std::shared_ptr<PlaneGrid> m_planeGrid;
     std::shared_ptr<SceneObject> m_vertexSynchroCursour;
     std::shared_ptr<NavigationArrow> navigationArrow_;
-    std::shared_ptr<UsblView> usblView_;
+    std::shared_ptr<UsblLayer> usblLayer_;
+    UsblLayerController* usblLayerController_{nullptr};
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
