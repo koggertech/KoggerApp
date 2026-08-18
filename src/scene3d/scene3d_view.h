@@ -392,6 +392,9 @@ private:
     void refreshSyncLoupePreview();
     bool tryProjectScreenToPlane(qreal x, qreal y, float planeZ, QVector3D& outPoint) const;
     void zoomAroundScreenAnchor(qreal delta, const QPointF& anchorPos);
+    void queueWheelZoom(qreal steps, const QPointF& anchorPos);
+    void stepWheelZoom();
+    void cancelWheelZoom();
     void resetHeadingToNorth();
     void notifyManualCameraInteraction();
     void beginFollowReturn();
@@ -474,6 +477,10 @@ private:
 
     enum AnimCh : std::uint8_t { ChHeading, ChFollow, ChPose, ChVScale };
     Animator animator_;
+    Smoother wheelZoomSmoother_;
+    QTimer* wheelZoomTimer_ = nullptr;
+    qreal wheelZoomResidual_ = 0.0;
+    QPointF wheelZoomAnchor_;
     bool followSuspended_ = false;
     bool positionsLive_ = false;
     QTimer* followResumeTimer_ = nullptr;

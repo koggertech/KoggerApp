@@ -240,6 +240,11 @@ GraphicsScene3dView::GraphicsScene3dView() :
     followResumeTimer_->setInterval(5000);
     QObject::connect(followResumeTimer_, &QTimer::timeout, this, &GraphicsScene3dView::beginFollowReturn);
 
+    wheelZoomTimer_ = new QTimer(this);
+    wheelZoomTimer_->setInterval(16);
+    wheelZoomTimer_->setTimerType(Qt::PreciseTimer);
+    QObject::connect(wheelZoomTimer_, &QTimer::timeout, this, [this]() { stepWheelZoom(); });
+
     followTickTimer_ = new QTimer(this);
     followTickTimer_->setInterval(250);
     QObject::connect(followTickTimer_, &QTimer::timeout, this, [this]() { emit followReturnStateChanged(); });
@@ -584,6 +589,7 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     wasMoved_ = false;
     clearComboSelectionRect();
     cancelCameraPoseAnim();
+    cancelWheelZoom();
 
     compassPressed_ = false;
     if (compass_ && mouseButton.testFlag(Qt::MouseButton::LeftButton) && !compassRect_.isEmpty()) {
@@ -934,12 +940,14 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
     }
 
     if (keyboardKey == Qt::Key_Control) {
+        cancelWheelZoom();
         cancelVScaleAnim();
         float tempVerticalScale = m_verticalScale;
         angleDelta.y() > 0.0f ? tempVerticalScale += 0.3f : tempVerticalScale -= 0.3f;
         setVerticalScale(tempVerticalScale);
     }
     else if (keyboardKey == Qt::Key_Shift) {
+        cancelWheelZoom();
         if (!isNorth_) {
             angleDelta.y() > 0.0f ? shiftCameraZAxis(5) : shiftCameraZAxis(-5);
             cameraWasMoved = true;
@@ -949,8 +957,7 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
         const qreal wheelStepsRaw = angleDelta.y() / kWheelDeltaUnit;
         const qreal wheelSteps = qBound(-kWheelMaxSteps, wheelStepsRaw, kWheelMaxSteps);
         if (std::fabs(wheelSteps) > 1e-6) {
-            zoomAroundScreenAnchor(wheelSteps, QPointF(x, y));
-            cameraWasMoved = true;
+            queueWheelZoom(wheelSteps, QPointF(x, y));
         }
     }
 
@@ -965,6 +972,7 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
 void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta)
 {
     cancelCameraPoseAnim();
+    cancelWheelZoom();
 
     const qreal dx = currCenter.x() - prevCenter.x();
     const qreal dy = currCenter.y() - prevCenter.y();
@@ -2150,6 +2158,7 @@ void GraphicsScene3dView::setMapView() {
 void GraphicsScene3dView::setMapViewAnimated()
 {
     cancelCameraPoseAnim();
+    cancelWheelZoom();
 
     if (!m_camera || !datasetPtr_) {
         return;
@@ -2209,6 +2218,62 @@ void GraphicsScene3dView::cancelCameraPoseAnim()
     animator_.cancel(ChPose);
 }
 
+void GraphicsScene3dView::queueWheelZoom(qreal steps, const QPointF& anchorPos)
+{
+    if (!m_camera || !std::isfinite(steps)) {
+        return;
+    }
+
+    wheelZoomAnchor_ = anchorPos;
+
+    // Same-direction events add up; a reversal cancels what is left instead of
+    // queueing a zoom back and forth. The follower velocity must go with it —
+    // it still points the old way and would overshoot on the first tick back.
+    if (wheelZoomResidual_ * steps < 0.0) {
+        wheelZoomResidual_ = 0.0;
+        wheelZoomSmoother_.reset();
+    }
+    wheelZoomResidual_ = qBound(-kWheelMaxSteps, wheelZoomResidual_ + steps, kWheelMaxSteps);
+
+    if (!wheelZoomTimer_->isActive()) {
+        wheelZoomSmoother_.reset();
+        wheelZoomTimer_->start();
+    }
+}
+
+void GraphicsScene3dView::stepWheelZoom()
+{
+    if (!m_camera) {
+        cancelWheelZoom();
+        return;
+    }
+
+    const qreal before = wheelZoomResidual_;
+    const qreal after = static_cast<qreal>(wheelZoomSmoother_.step(static_cast<float>(before), 0.0f, smooth::WheelZoom));
+    const qreal applied = before - after;
+    wheelZoomResidual_ = after;
+
+    if (std::fabs(applied) > 1e-9) {
+        zoomAroundScreenAnchor(applied, wheelZoomAnchor_);
+        updatePlaneGrid();
+        QQuickFramebufferObject::update();
+        onCameraMoved();
+    }
+
+    if (std::fabs(wheelZoomResidual_) <= smooth::WheelZoom.deadband) {
+        cancelWheelZoom();
+    }
+}
+
+void GraphicsScene3dView::cancelWheelZoom()
+{
+    if (wheelZoomTimer_) {
+        wheelZoomTimer_->stop();
+    }
+    wheelZoomResidual_ = 0.0;
+    wheelZoomSmoother_.reset();
+}
+
 void GraphicsScene3dView::zoomButtonAnimated(qreal steps)
 {
     if (!m_camera || !std::isfinite(steps) || std::fabs(steps) < 1e-6) {
@@ -2216,6 +2281,7 @@ void GraphicsScene3dView::zoomButtonAnimated(qreal steps)
     }
 
     cancelCameraPoseAnim();
+    cancelWheelZoom();
 
     const QPointF anchor(width() * 0.5, height() * 0.5);
     auto prev = std::make_shared<double>(0.0);
