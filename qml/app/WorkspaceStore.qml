@@ -541,22 +541,28 @@ function generateWidgetId() {
 // beacons answered cannot be a cell in that grid without breaking each of them separately, so
 // it is a different kind of panel that happens to reuse everything ELSE a panel has: the
 // position/scale/z instance, the shown map, docking, the list, the limit.
-readonly property var widgetKinds: ["grid", "usblNodes"]
+readonly property var widgetKinds: ["grid", "usblNodes", "servo"]
 function widgetKindOf(def) {
     // Absent means "grid": every blob written before kinds existed is one, and must load
     // unchanged rather than being dropped as malformed.
-    return (def && def.kind === "usblNodes") ? "usblNodes" : "grid"
+    if (!def)
+        return "grid"
+    if (def.kind === "usblNodes" || def.kind === "servo")
+        return def.kind
+    return "grid"
 }
+// Kinds whose content is the bus's to decide, so the def holds no geometry at all.
+function _widgetKindIsFreeform(kind) { return kind === "usblNodes" || kind === "servo" }
 
 function normalizeWidgetDef(raw) {
     if (!raw || typeof raw !== "object")
         return null
 
-    if (raw.kind === "usblNodes") {
-        // No cells, no grid: the rows are the plan's, and there is nothing in the def to
+    if (_widgetKindIsFreeform(raw.kind)) {
+        // No cells, no grid: the content is the bus's, and there is nothing in the def to
         // validate against a geometry. What it carries is what a panel carries.
         return { id: (typeof raw.id === "string" && raw.id.length) ? raw.id : "",
-                 kind: "usblNodes",
+                 kind: raw.kind,
                  name: (typeof raw.name === "string") ? raw.name : "",
                  transparency: (typeof raw.transparency === "number" && isFinite(raw.transparency))
                                ? Math.max(0, Math.min(100, Math.round(raw.transparency))) : 0 }
@@ -1497,21 +1503,27 @@ function _openSettingsSubPage(kind) {
 
 function openQuickActionsSettings() { _openSettingsSubPage("quickActions") }
 function openWidgetSettings()       { openAppSettingsAtGroup("app.widgets") }
-// Wizard steps: 0 = which kind, 1 = grid size, 2 = place fields, 3 = the acoustic-nodes panel.
-// Creating starts at the kind choice; editing goes straight to the step that kind is edited on,
-// because the kind of an existing panel is not something you change — you make the other one.
+// Wizard steps: 0 = which kind, 1 = grid size, 2 = place fields, 3 = the acoustic-nodes panel,
+// 4 = the servo panel. Creating starts at the kind choice; editing goes straight to the step
+// that kind is edited on, because the kind of an existing panel is not something you change —
+// you make the other one.
+function widgetKindEditStep(kind) {
+    if (kind === "usblNodes") return 3
+    if (kind === "servo")     return 4
+    return 2
+}
 function openWidgetCreateSettings() { widgetEditIndex = -1; widgetDraftReset(); widgetEditStep = 0; _openSettingsSubPage("widgetEdit") }
 function openWidgetEditSettings(index) {
     widgetEditIndex = index
     widgetDraftReset()
-    widgetEditStep = (widgetDraftKind === "usblNodes") ? 3 : 2
+    widgetEditStep = widgetKindEditStep(widgetDraftKind)
     _openSettingsSubPage("widgetEdit")
 }
-// Chosen on step 0. A grid still has a size to pick; the nodes panel has nothing to lay out,
-// so it goes straight to its own (short) page.
+// Chosen on step 0. A grid still has a size to pick; the freeform panels have nothing to lay
+// out, so they go straight to their own (short) page.
 function widgetDraftSetKind(kind) {
-    widgetDraftKind = (kind === "usblNodes") ? "usblNodes" : "grid"
-    widgetEditStep = (widgetDraftKind === "usblNodes") ? 3 : 1
+    widgetDraftKind = _widgetKindIsFreeform(kind) ? kind : "grid"
+    widgetEditStep = (widgetDraftKind === "grid") ? 1 : widgetKindEditStep(widgetDraftKind)
 }
 
 function widgetDraftReset() {
@@ -1700,8 +1712,8 @@ function widgetDraftClearPreview() {
 
 function widgetDraftSave() {
     var isCreate = widgetEditIndex < 0
-    var draft = (widgetDraftKind === "usblNodes")
-        ? { kind: "usblNodes", transparency: widgetDraftTransparency }
+    var draft = _widgetKindIsFreeform(widgetDraftKind)
+        ? { kind: widgetDraftKind, transparency: widgetDraftTransparency }
         : { kind: "grid", cols: widgetDraftCols, rows: widgetDraftRows,
             transparency: widgetDraftTransparency, cells: widgetDraftCells }
     var id = saveWidget(draft)

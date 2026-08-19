@@ -7,6 +7,14 @@ Item {
     property var def: null
 
     readonly property bool _isNodes: !!(def && def.kind === "usblNodes")
+    readonly property bool _isServo: !!(def && def.kind === "servo")
+
+    // Same inset the bars take, so the letter shares their top, bottom and left edge.
+    readonly property real _sInset: Tokens.spaceXs
+    readonly property int _sRef: 100
+    readonly property real _sInkRatio: Math.max(0.01, sRefTm.tightBoundingRect.height / _sRef)
+    readonly property real _sTopRatio: (sRefFm.ascent + sRefTm.tightBoundingRect.y) / _sRef
+    readonly property real _sLeftRatio: sRefTm.tightBoundingRect.x / _sRef
     readonly property int _cols: (def && typeof def.cols === "number") ? def.cols : 1
     readonly property int _rows: (def && typeof def.rows === "number") ? def.rows : 1
     readonly property real _gap: Math.round(3 * AppPalette.scale)
@@ -18,11 +26,12 @@ Item {
         border.width: 1
         border.color: AppPalette.border
 
-        // A nodes panel has no grid to preview and no fixed row count to draw honestly, so the
-        // thumbnail is a glyph for "a list": three full-width bars. Drawing three cells of a
-        // grid instead would promise a shape the panel does not have.
+        // Neither freeform panel has a grid to preview or a fixed row count to draw honestly, so
+        // the thumbnail is a glyph for "a list": three full-width bars. Drawing three cells of a
+        // grid instead would promise a shape the panel does not have. The servo panel takes the
+        // same bars with its initial over them -- one glyph, one letter to tell them apart.
         Column {
-            visible: root._isNodes
+            visible: root._isNodes || root._isServo
             anchors.fill: parent
             anchors.margins: Tokens.spaceXs
             spacing: root._gap
@@ -43,9 +52,41 @@ Item {
             }
         }
 
+        // Painted in the card's own background rather than an ink colour, so the letter reads as
+        // cut out of the bars in either theme instead of needing a contrast that holds against
+        // the accent in both.
+        //
+        // INSET BY ITS INK, not by its layout box. A Text item's box carries ascent, descent and
+        // side bearings the glyph does not fill, so anchoring the box to the margin leaves the S
+        // visibly short of the top and bottom the bars reach. The offsets are measured off a
+        // reference-size font (never off the rendered one, which would be a binding loop) and
+        // scaled, so this holds for whatever family the app is running.
+        FontMetrics {
+            id: sRefFm
+            font.bold: true
+            font.pixelSize: root._sRef
+        }
+
+        TextMetrics {
+            id: sRefTm
+            font: sRefFm.font
+            text: "S"
+        }
+
+        Text {
+            id: sGlyph
+            visible: root._isServo
+            text: sRefTm.text
+            x: root._sInset - root._sLeftRatio * font.pixelSize
+            y: root._sInset - root._sTopRatio * font.pixelSize
+            color: AppPalette.bgDeep
+            font.bold: true
+            font.pixelSize: Math.max(8, Math.round((parent.height - root._sInset * 2) / root._sInkRatio))
+        }
+
         Item {
             id: area
-            visible: !root._isNodes
+            visible: !root._isNodes && !root._isServo
             anchors.fill: parent
             anchors.margins: Tokens.spaceXs
 

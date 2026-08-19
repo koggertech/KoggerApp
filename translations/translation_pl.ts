@@ -5587,4 +5587,152 @@
         <translation>Usuń widżet</translation>
     </message>
 </context>
+<context>
+    <name>WidgetKindStep</name>
+    <message>
+        <source>Choose what this panel shows.</source>
+        <translation>Wybierz, co pokazuje ten panel.</translation>
+    </message>
+    <message>
+        <source>Field grid</source>
+        <translation>Siatka pól</translation>
+    </message>
+    <message>
+        <source>A grid of cells you fill with values — depth, speed, coordinates.</source>
+        <translation>Siatka komórek wypełniana wartościami — głębokość, prędkość, współrzędne.</translation>
+    </message>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Węzły akustyczne</translation>
+    </message>
+    <message>
+        <source>Servo control</source>
+        <translation>Sterowanie serwem</translation>
+    </message>
+    <message>
+        <source>Sweep, step, centre and the live angle.</source>
+        <translation>Wychylenie, krok, środek i bieżący kąt.</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetCard</name>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Węzły akustyczne</translation>
+    </message>
+    <message>
+        <source>Servo control</source>
+        <translation>Sterowanie serwem</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetServoStep</name>
+    <message>
+        <source>Controls the servo scanner of the device that has one. The panel finds it itself.</source>
+        <translation>Steruje skanerem serwa urządzenia, które je posiada. Panel sam je znajduje.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Przezroczystość tła</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelBody</name>
+    <message>
+        <source>Off</source>
+        <translation>Wył.</translation>
+    </message>
+    <message>
+        <source>ServoScan</source>
+        <translation>ServoScan</translation>
+    </message>
+    <message>
+        <source>Servo</source>
+        <translation>Serwo</translation>
+    </message>
+    <message>
+        <source>No servo device</source>
+        <translation>Brak urządzenia z serwem</translation>
+    </message>
+    <message>
+        <source>On link %1</source>
+        <translation>Na łączu %1</translation>
+    </message>
+    <message>
+        <source>Device</source>
+        <translation>Urządzenie</translation>
+    </message>
+    <message>
+        <source>Control</source>
+        <translation>Sterowanie</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Włączone</translation>
+    </message>
+    <message>
+        <source>Current angle</source>
+        <translation>Bieżący kąt</translation>
+    </message>
+    <message>
+        <source>Reverse mapping</source>
+        <translation>Odwrócenie</translation>
+    </message>
+    <message>
+        <source>Scan</source>
+        <translation>Skan</translation>
+    </message>
+    <message>
+        <source>Step, °</source>
+        <translation>Krok, °</translation>
+    </message>
+    <message>
+        <source>Scan range, °</source>
+        <translation>Zakres skanu, °</translation>
+    </message>
+    <message>
+        <source>Center, °</source>
+        <translation>Środek, °</translation>
+    </message>
+    <message>
+        <source>More settings</source>
+        <translation>Więcej ustawień</translation>
+    </message>
+    <message>
+        <source>Calibration</source>
+        <translation>Kalibracja</translation>
+    </message>
+    <message>
+        <source>PWM min, µs</source>
+        <translation>PWM min, µs</translation>
+    </message>
+    <message>
+        <source>PWM max, µs</source>
+        <translation>PWM max, µs</translation>
+    </message>
+    <message>
+        <source>Servo angle range, °</source>
+        <translation>Zakres kąta serwa, °</translation>
+    </message>
+    <message>
+        <source>PWM routing</source>
+        <translation>Routing PWM</translation>
+    </message>
+    <message>
+        <source>OUT1 (wired)</source>
+        <translation>OUT1 (podłączone)</translation>
+    </message>
+    <message>
+        <source>OUT2</source>
+        <translation>OUT2</translation>
+    </message>
+    <message>
+        <source>OUT3</source>
+        <translation>OUT3</translation>
+    </message>
+</context>
 </TS>

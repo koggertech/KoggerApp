@@ -5576,4 +5576,152 @@
         <translation>Убрать виджет</translation>
     </message>
 </context>
+<context>
+    <name>WidgetKindStep</name>
+    <message>
+        <source>Choose what this panel shows.</source>
+        <translation>Выберите, что показывает панель.</translation>
+    </message>
+    <message>
+        <source>Field grid</source>
+        <translation>Сетка полей</translation>
+    </message>
+    <message>
+        <source>A grid of cells you fill with values — depth, speed, coordinates.</source>
+        <translation>Сетка ячеек, куда вы кладёте значения — глубину, скорость, координаты.</translation>
+    </message>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Акустические узлы</translation>
+    </message>
+    <message>
+        <source>Servo control</source>
+        <translation>Управление серво</translation>
+    </message>
+    <message>
+        <source>Sweep, step, centre and the live angle.</source>
+        <translation>Развёртка, шаг, центр и текущий угол.</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetCard</name>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Акустические узлы</translation>
+    </message>
+    <message>
+        <source>Servo control</source>
+        <translation>Управление серво</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetServoStep</name>
+    <message>
+        <source>Controls the servo scanner of the device that has one. The panel finds it itself.</source>
+        <translation>Управление серво-сканером устройства, у которого он есть. Панель находит его сама.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Прозрачность фона</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelBody</name>
+    <message>
+        <source>Off</source>
+        <translation>Выкл</translation>
+    </message>
+    <message>
+        <source>ServoScan</source>
+        <translation>ServoScan</translation>
+    </message>
+    <message>
+        <source>Servo</source>
+        <translation>Серво</translation>
+    </message>
+    <message>
+        <source>No servo device</source>
+        <translation>Нет устройства с серво</translation>
+    </message>
+    <message>
+        <source>On link %1</source>
+        <translation>На линке %1</translation>
+    </message>
+    <message>
+        <source>Device</source>
+        <translation>Устройство</translation>
+    </message>
+    <message>
+        <source>Control</source>
+        <translation>Управление</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Включено</translation>
+    </message>
+    <message>
+        <source>Current angle</source>
+        <translation>Текущий угол</translation>
+    </message>
+    <message>
+        <source>Reverse mapping</source>
+        <translation>Инверсия</translation>
+    </message>
+    <message>
+        <source>Scan</source>
+        <translation>Скан</translation>
+    </message>
+    <message>
+        <source>Step, °</source>
+        <translation>Шаг, °</translation>
+    </message>
+    <message>
+        <source>Scan range, °</source>
+        <translation>Диапазон скана, °</translation>
+    </message>
+    <message>
+        <source>Center, °</source>
+        <translation>Центр, °</translation>
+    </message>
+    <message>
+        <source>More settings</source>
+        <translation>Ещё настройки</translation>
+    </message>
+    <message>
+        <source>Calibration</source>
+        <translation>Калибровка</translation>
+    </message>
+    <message>
+        <source>PWM min, µs</source>
+        <translation>PWM min, мкс</translation>
+    </message>
+    <message>
+        <source>PWM max, µs</source>
+        <translation>PWM max, мкс</translation>
+    </message>
+    <message>
+        <source>Servo angle range, °</source>
+        <translation>Ход серво, °</translation>
+    </message>
+    <message>
+        <source>PWM routing</source>
+        <translation>Маршрутизация PWM</translation>
+    </message>
+    <message>
+        <source>OUT1 (wired)</source>
+        <translation>OUT1 (распаян)</translation>
+    </message>
+    <message>
+        <source>OUT2</source>
+        <translation>OUT2</translation>
+    </message>
+    <message>
+        <source>OUT3</source>
+        <translation>OUT3</translation>
+    </message>
+</context>
 </TS>

@@ -1125,6 +1125,12 @@ ApplicationWindow {
             store: workspaceStore
         }
 
+        ServoEditOverlay {
+            anchors.fill: parent
+            z: ZOrder.widgetEditorOverlay
+            store: workspaceStore
+        }
+
         Item {
             id: widgetEditorDragLayer
             anchors.fill: parent
@@ -1209,11 +1215,13 @@ ApplicationWindow {
                 Loader {
                     id: slotLoader
                     anchors.fill: parent
-                    sourceComponent: (widgetSlot._wdef && widgetSlot._wdef.kind === "usblNodes")
-                                     ? usblNodesPanelComp : dataWidgetPanelComp
+                    sourceComponent: !widgetSlot._wdef ? dataWidgetPanelComp
+                                   : widgetSlot._wdef.kind === "usblNodes" ? usblNodesPanelComp
+                                   : widgetSlot._wdef.kind === "servo" ? servoPanelComp
+                                                                       : dataWidgetPanelComp
                 }
 
-                // BOTH COMPONENTS LIVE INSIDE THE DELEGATE, and they have to. An object created
+                // EVERY COMPONENT LIVES INSIDE THE DELEGATE, and they have to. An object created
                 // from a Component gets that Component's creation context; declared beside the
                 // Repeater instead, `widgetSlot` is not in scope and every binding reading it
                 // is a runtime ReferenceError -- a panel that loads and then paints nothing.
@@ -1243,6 +1251,28 @@ ApplicationWindow {
                         // behind, so hiding it while its (text-only) settings page is open
                         // would blank the very thing being configured.
                         popupVisible: !!_wdef && workspaceStore.widgetShown(_wdef.id)
+                        popupId: _wdef ? "widget:" + _wdef.id : ""
+                        siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+                        siblingIdList: ["btEdit", "profiles"]
+                    }
+                }
+
+                Component {
+                    id: servoPanelComp
+                    ServoPanelPopup {
+                        readonly property var _wdef: widgetSlot._wdef
+                        // Hidden while its own editor is open, because ServoEditOverlay puts the
+                        // same panel in the middle of the dimmed scene -- two of it would be one
+                        // too many.
+                        readonly property bool _beingEdited: !!(workspaceStore.widgetEditorActive
+                            && workspaceStore.widgetEditIndex >= 0
+                            && workspaceStore.widgetEditIndex < workspaceStore.widgets.length
+                            && workspaceStore.widgets[workspaceStore.widgetEditIndex] && _wdef
+                            && workspaceStore.widgets[workspaceStore.widgetEditIndex].id === _wdef.id)
+                        anchors.fill: parent
+                        store: workspaceStore
+                        def: _wdef
+                        popupVisible: !!_wdef && !_beingEdited && workspaceStore.widgetShown(_wdef.id)
                         popupId: _wdef ? "widget:" + _wdef.id : ""
                         siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
                         siblingIdList: ["btEdit", "profiles"]
