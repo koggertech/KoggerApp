@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick          // unversioned → Qt 6.8 Rectangle (per-corner radius)
 
 Item {
     id: row
@@ -7,6 +7,7 @@ Item {
     property string caption: ""
     property color labelColor: AppPalette.textStrong
     property int labelPixelSize: island ? island.labelPixelSize : Tokens.fontLg
+    property int labelElide: Text.ElideRight
     property bool stacked: false
     property bool open: true
     property bool interactive: false
@@ -51,6 +52,12 @@ Item {
     property real contentSpacing: Tokens.spaceSm
     property real separatorInset: island ? island.separatorInset : horizontalPadding
 
+    readonly property real cornerRadius: island ? island.cornerRadius : 0
+    readonly property bool firstInIsland: y <= 0.5
+    readonly property bool lastInIsland: parent ? (y + height >= parent.height - 0.5) : false
+    readonly property real topCornerRadius: firstInIsland ? cornerRadius : 0
+    readonly property real bottomCornerRadius: lastInIsland ? cornerRadius : 0
+
     readonly property real chevronSize: Math.round(9 * AppPalette.scale)
     readonly property real trailingWidth: chevron ? chevronSize + Tokens.spaceMd : 0
     readonly property real innerWidth: Math.max(0, width - horizontalPadding * 2)
@@ -81,7 +88,13 @@ Item {
             row.clicked()
     }
 
-    KFocusRing { id: focusRing }
+    KFocusRing {
+        id: focusRing
+        topLeftRadius: row.topCornerRadius
+        topRightRadius: row.topCornerRadius
+        bottomLeftRadius: row.bottomCornerRadius
+        bottomRightRadius: row.bottomCornerRadius
+    }
 
     Behavior on height {
         enabled: row._animReady
@@ -93,6 +106,10 @@ Item {
         color: rowMouse.pressed ? AppPalette.bgHover : AppPalette.cardHover
         opacity: (row.interactive && (rowMouse.containsMouse || rowMouse.pressed)) ? 1 : 0
         visible: opacity > 0
+        topLeftRadius: row.topCornerRadius
+        topRightRadius: row.topCornerRadius
+        bottomLeftRadius: row.bottomCornerRadius
+        bottomRightRadius: row.bottomCornerRadius
         Behavior on opacity { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
     }
 
@@ -132,7 +149,7 @@ Item {
             text: row.label
             color: row.labelColor
             font.pixelSize: row.labelPixelSize
-            elide: Text.ElideRight
+            elide: row.labelElide
         }
 
         Text {
