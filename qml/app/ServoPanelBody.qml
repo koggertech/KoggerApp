@@ -1,9 +1,6 @@
 import QtQuick 2.15
 import kqml_types 1.0
 
-// The servo panel's content, with no panel around it: laid out at real token sizes, sizing
-// itself vertically. Both surfaces that show it -- the panel on the scene and the editor
-// overlay's centred preview -- instantiate this, so neither can drift from the other.
 Column {
     id: body
 
@@ -12,10 +9,6 @@ Column {
 
     readonly property bool _manualTesting: (typeof manualTesting !== "undefined") && manualTesting === true
 
-    // MANUAL_TESTING builds only: one stand-in device so the panel can be laid out and looked at
-    // with nothing on the bench. It is used ONLY while nothing real answers, so plugging a
-    // device in takes over on the spot and the mock can never mask the real bus. Push a second
-    // copy into `_devs` below to see the tabbed picker.
     property QtObject _mockDev: QtObject {
         property bool isMock: true
         property bool isBoardInited: true
@@ -36,8 +29,6 @@ Column {
         property int pwmRouteOut3: 0
     }
 
-    // Sweeps the mock's angle while it is enabled, because a readout that never moves says
-    // nothing about how it renders.
     property Timer _mockSweep: Timer {
         interval: 200
         repeat: true
@@ -67,8 +58,6 @@ Column {
         return out
     }
 
-    // Selection survives the list being rebuilt, which it is on every topology change; an index
-    // would silently move to another device when one ahead of it drops off the bus.
     property int _selSN: -1
     readonly property int _selIndex: {
         for (var i = 0; i < _devs.length; ++i)
@@ -85,9 +74,6 @@ Column {
         return out
     }
 
-    // Tabs while they are still readable, a combo past that. KTabBar splits its width evenly, so
-    // on a panel this narrow the fourth segment is a sliver -- and a picker nobody can read is
-    // worse than one extra tap. Three is the count that still fits at the panel's base width.
     readonly property int _maxTabs: 3
     readonly property bool _tabbedPicker: _devs.length > 1 && _devs.length <= _maxTabs
     readonly property var _devTabs: {
@@ -109,16 +95,38 @@ Column {
     function _devLabel(d) {
         if (!d)
             return ""
-        var n = (d.devName && d.devName.length > 0) ? d.devName : "#"
+        var n = (d.devName && d.devName.length > 0) ? d.devName : ("@" + d.devAddress)
         return d.devSN > 0 ? n + " · " + d.devSN : n
     }
 
-    // Reading `groups` is what makes this re-evaluate: groupForDevice is an invokable, and the
-    // model rebuilds the whole list when the topology changes.
+    readonly property real _sentinelDeg: -245.76
+
+    readonly property var _ds: (typeof dataset !== "undefined") ? dataset : null
+    readonly property real _axYaw: _ds ? _ds.lastYaw : NaN
+    readonly property real _axPitch: _ds ? _ds.lastPitch : NaN
+    readonly property real _axRoll: _ds ? _ds.lastRoll : NaN
+
+    function _axValid(v) {
+        return v !== undefined && v !== null && !isNaN(v) && Math.abs(v - _sentinelDeg) > 0.005
+    }
+
+    readonly property real _angleDeg: {
+        if (dev && dev.isMock === true)
+            return dev.servoCurrentAngleDeg
+        var valid = []
+        if (_axValid(_axYaw))   valid.push(_axYaw)
+        if (_axValid(_axPitch)) valid.push(_axPitch)
+        if (_axValid(_axRoll))  valid.push(_axRoll)
+        if (valid.length === 1)
+            return valid[0]
+        if (_axValid(_axRoll))
+            return _axRoll
+        return NaN
+    }
+
     function _linkLabelFor(d) {
         if (!d)
             return ""
-        // The mock is not a DevQProperty, so it has no group to look up.
         if (d.isMock === true)
             return "COM7 · 115200"
         if (typeof deviceTopology === "undefined" || !deviceTopology)
@@ -138,9 +146,65 @@ Column {
 
     readonly property string _linkLabel: _linkLabelFor(dev)
 
-    // The device pushes its current values back on every ack and after every reconnect, so a
-    // control bound straight to the property would fight the user's next click. Each of these
-    // takes the device value as a WANT and only writes when the user actually moved it.
+    property bool logEnabled: true
+
+    function _log(msg) {
+        if (logEnabled && typeof core !== "undefined" && core && core.consoleInfo)
+            core.consoleInfo("[Servo] " + msg)
+    }
+
+    property int _attCount: 0
+    property string _lastAttLine: ""
+
+    function _fmt(v) { return (v === undefined || v === null || isNaN(v)) ? "—" : v.toFixed(2) }
+
+    Connections {
+        target: body._ds
+        ignoreUnknownSignals: true
+
+        function onAttitudeUpdated() { body._attCount++ }
+    }
+
+    Connections {
+        target: body.dev
+        ignoreUnknownSignals: true
+
+        function onServoControlChanged() {
+            var d = body.dev
+            if (!d)
+                return
+            body._log("device: enabled=" + d.servoEnabled + " reverse=" + d.servoReverse
+                      + "° step=" + d.servoStepDeg.toFixed(2) + "° range=" + d.servoRangeDeg.toFixed(0)
+                      + "° center=" + d.servoCenterDeg.toFixed(0)
+                      + "° angleRange=" + d.servoAngleRangeDeg.toFixed(0)
+                      + "° pwm=" + d.servoPwmMinUs + ".." + d.servoPwmMaxUs + "µs")
+        }
+
+        function onPwmRouteChanged() {
+            var d = body.dev
+            if (!d)
+                return
+            body._log("device: pwm route OUT1=" + d.pwmRouteOut1
+                      + " OUT2=" + d.pwmRouteOut2 + " OUT3=" + d.pwmRouteOut3)
+        }
+    }
+
+    property Timer _attReport: Timer {
+        interval: 2000
+        repeat: true
+        running: !!body.dev && body.logEnabled
+        onTriggered: {
+            var line = "attitude: " + body._attCount + " updates / 2 s, y/p/r = "
+                       + body._fmt(body._axYaw) + " / " + body._fmt(body._axPitch)
+                       + " / " + body._fmt(body._axRoll) + "°"
+            body._attCount = 0
+            if (line !== body._lastAttLine) {
+                body._lastAttLine = line
+                body._log(line)
+            }
+        }
+    }
+
     component DevSpin: Item {
         id: sp
         property int devValue: 0
@@ -241,7 +305,12 @@ Column {
 
             DevSwitch {
                 wantChecked: !!(body.dev && body.dev.servoEnabled)
-                writeBack: function(v) { if (body.dev && body.dev.servoEnabled !== v) body.dev.servoEnabled = v }
+                writeBack: function(v) {
+                    if (body.dev && body.dev.servoEnabled !== v) {
+                        body._log("write enabled = " + v)
+                        body.dev.servoEnabled = v
+                    }
+                }
             }
         }
 
@@ -249,7 +318,7 @@ Column {
             label: qsTr("Current angle")
 
             Text {
-                text: body.dev ? body.dev.servoCurrentAngleDeg.toFixed(2) + "°" : "—"
+                text: body._axValid(body._angleDeg) ? body._angleDeg.toFixed(2) + "°" : "—"
                 color: AppPalette.textStrong
                 font.pixelSize: Tokens.fontLg
                 font.bold: true
@@ -261,7 +330,12 @@ Column {
 
             DevSwitch {
                 wantChecked: !!(body.dev && body.dev.servoReverse)
-                writeBack: function(v) { if (body.dev && body.dev.servoReverse !== v) body.dev.servoReverse = v }
+                writeBack: function(v) {
+                    if (body.dev && body.dev.servoReverse !== v) {
+                        body._log("write reverse = " + v)
+                        body.dev.servoReverse = v
+                    }
+                }
             }
         }
     }
@@ -280,8 +354,10 @@ Column {
                     if (!body.dev)
                         return
                     var deg = v / 10.0
-                    if (Math.abs(body.dev.servoStepDeg - deg) > 0.001)
+                    if (Math.abs(body.dev.servoStepDeg - deg) > 0.001) {
+                        body._log("write step = " + deg.toFixed(1) + "°")
                         body.dev.servoStepDeg = deg
+                    }
                 }
             }
         }
@@ -293,8 +369,10 @@ Column {
                 from: 0; to: 360; stepSize: 1
                 devValue: body.dev ? Math.round(body.dev.servoRangeDeg) : 0
                 writeBack: function(v) {
-                    if (body.dev && Math.round(body.dev.servoRangeDeg) !== v)
+                    if (body.dev && Math.round(body.dev.servoRangeDeg) !== v) {
+                        body._log("write scan range = " + v + "°")
                         body.dev.servoRangeDeg = v
+                    }
                 }
             }
         }
@@ -306,15 +384,15 @@ Column {
                 from: -180; to: 180; stepSize: 1
                 devValue: body.dev ? Math.round(body.dev.servoCenterDeg) : 0
                 writeBack: function(v) {
-                    if (body.dev && Math.round(body.dev.servoCenterDeg) !== v)
+                    if (body.dev && Math.round(body.dev.servoCenterDeg) !== v) {
+                        body._log("write center = " + v + "°")
                         body.dev.servoCenterDeg = v
+                    }
                 }
             }
         }
     }
 
-    // Calibration is the servo model's spec and the routing is wiring: both are set once per
-    // hardware build, and neither belongs in front of an operator steering a survey.
     KIsland {
         visible: !!body.dev
 
@@ -343,8 +421,10 @@ Column {
                 from: 500; to: 2500; stepSize: 10
                 devValue: body.dev ? body.dev.servoPwmMinUs : 500
                 writeBack: function(v) {
-                    if (body.dev && body.dev.servoPwmMinUs !== v)
+                    if (body.dev && body.dev.servoPwmMinUs !== v) {
+                        body._log("write pwm min = " + v + "µs")
                         body.dev.servoPwmMinUs = v
+                    }
                 }
             }
         }
@@ -357,8 +437,10 @@ Column {
                 from: 500; to: 2500; stepSize: 10
                 devValue: body.dev ? body.dev.servoPwmMaxUs : 2500
                 writeBack: function(v) {
-                    if (body.dev && body.dev.servoPwmMaxUs !== v)
+                    if (body.dev && body.dev.servoPwmMaxUs !== v) {
+                        body._log("write pwm max = " + v + "µs")
                         body.dev.servoPwmMaxUs = v
+                    }
                 }
             }
         }
@@ -371,8 +453,10 @@ Column {
                 from: 1; to: 360; stepSize: 1
                 devValue: body.dev ? Math.round(body.dev.servoAngleRangeDeg) : 180
                 writeBack: function(v) {
-                    if (body.dev && Math.round(body.dev.servoAngleRangeDeg) !== v)
+                    if (body.dev && Math.round(body.dev.servoAngleRangeDeg) !== v) {
+                        body._log("write servo angle range = " + v + "°")
                         body.dev.servoAngleRangeDeg = v
+                    }
                 }
             }
         }
@@ -389,7 +473,12 @@ Column {
             DevCombo {
                 model: body._pwmTargets
                 wantIndex: body.dev ? body.dev.pwmRouteOut1 : 0
-                writeBack: function(i) { if (body.dev && body.dev.pwmRouteOut1 !== i) body.dev.pwmRouteOut1 = i }
+                writeBack: function(i) {
+                    if (body.dev && body.dev.pwmRouteOut1 !== i) {
+                        body._log("write pwm route OUT1 = " + i)
+                        body.dev.pwmRouteOut1 = i
+                    }
+                }
             }
         }
 
@@ -400,7 +489,12 @@ Column {
             DevCombo {
                 model: body._pwmTargets
                 wantIndex: body.dev ? body.dev.pwmRouteOut2 : 0
-                writeBack: function(i) { if (body.dev && body.dev.pwmRouteOut2 !== i) body.dev.pwmRouteOut2 = i }
+                writeBack: function(i) {
+                    if (body.dev && body.dev.pwmRouteOut2 !== i) {
+                        body._log("write pwm route OUT2 = " + i)
+                        body.dev.pwmRouteOut2 = i
+                    }
+                }
             }
         }
 
@@ -411,7 +505,12 @@ Column {
             DevCombo {
                 model: body._pwmTargets
                 wantIndex: body.dev ? body.dev.pwmRouteOut3 : 0
-                writeBack: function(i) { if (body.dev && body.dev.pwmRouteOut3 !== i) body.dev.pwmRouteOut3 = i }
+                writeBack: function(i) {
+                    if (body.dev && body.dev.pwmRouteOut3 !== i) {
+                        body._log("write pwm route OUT3 = " + i)
+                        body.dev.pwmRouteOut3 = i
+                    }
+                }
             }
         }
     }

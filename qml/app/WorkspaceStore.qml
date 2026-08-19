@@ -551,7 +551,6 @@ function widgetKindOf(def) {
         return def.kind
     return "grid"
 }
-// Kinds whose content is the bus's to decide, so the def holds no geometry at all.
 function _widgetKindIsFreeform(kind) { return kind === "usblNodes" || kind === "servo" }
 
 function normalizeWidgetDef(raw) {

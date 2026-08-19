@@ -1,9 +1,6 @@
 import QtQuick 2.15
 import kqml_types 1.0
 
-// The servo panel's editor, and like the nodes panel's there is nothing here to lay out: what
-// the panel shows is whichever device on the bus answers the servo command, which is the bus's
-// answer and not a choice to be made in advance.
 Column {
     id: step
 

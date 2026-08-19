@@ -14,25 +14,14 @@ BasePanePopup {
         return Math.max(0, Math.min(1, 1 - t / 100))
     }
 
-    // The content is built out of real controls at their real token sizes, so the panel's own
-    // scale is a transform on the finished layout rather than a factor threaded through every
-    // metric. A KSpinBox rebuilt in _k-space would be a second copy of a control that already
-    // exists, and it would drift from the one in device settings.
     readonly property real _k: widgetScale
 
-    // The cap the content scrolls under. Measured against the workspace the panel floats in,
-    // and in the body's own (unscaled) units, which is why _k divides out.
     readonly property real _maxContentH: Math.max(Math.round(160 * AppPalette.scale),
                                                   height * 0.9 - _contentTopMargin - contentPadding) / Math.max(0.01, _k)
     readonly property real _contentH: scroller.viewHeight
 
     popupVisible: true
     dragEnabled: true
-    // Dragged by the title strip, not by the body: the body scrolls once "More settings" is
-    // open, and a body DragHandler takes the grab off the Flickable, so a scroll gesture would
-    // move the panel instead. Not by the header grip either -- the header band is off
-    // (headerReserved) and the grip hidden (dragHandleOpacity), because a chrome row above a
-    // stack of controls costs height the panel has none to spare.
     dragAnywhere: false
     headerReserved: false
     dragHandleOpacity: 0
@@ -46,8 +35,6 @@ BasePanePopup {
     ghostRadius: Tokens.radiusLg
     snapEdgeCenters: true
 
-    // Imperative, like every other panel: BasePanePopup writes into expandedWidth/Height itself
-    // on drag and snap, and a binding would be broken the first time it did.
     function _applyScale() {
         expandedWidth  = Math.round(scroller.bodyWidth * _k + contentPadding * 2)
         expandedHeight = Math.round(_contentH * _k + _contentTopMargin + contentPadding)
@@ -100,8 +87,6 @@ BasePanePopup {
         scale: root._k
     }
 
-    // The panel's title strip, doubling as its drag handle: it costs no height because the
-    // island's own title already sits there, and it keeps the grab away from the scrolling body.
     Item {
         width: parent.width
         height: Math.round(24 * AppPalette.scale) * root._k

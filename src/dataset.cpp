@@ -616,6 +616,11 @@ void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
 
 void Dataset::addAtt(float yaw, float pitch, float roll)
 {
+    lastYaw_ = yaw;
+    lastPitch_ = pitch;
+    lastRoll_ = roll;
+    emit attitudeUpdated();
+
     if (activeZeroing_) {
         ++testTime_;
 

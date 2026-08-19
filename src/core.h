@@ -93,8 +93,8 @@ public:
 #endif
     void setConsoleOutputEnabled(bool enabled);
     bool isConsoleOutputEnabled() const { return consoleOutputEnabled_; }
-    void consoleInfo(QString msg);
-    void consoleWarning(QString msg);
+    Q_INVOKABLE void consoleInfo(QString msg);
+    Q_INVOKABLE void consoleWarning(QString msg);
     void consoleProto(FrameParser& parser, bool isIn = true);
     void saveLLARefToSettings();
     Q_INVOKABLE void saveCameraViewToSettings();

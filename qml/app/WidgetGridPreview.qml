@@ -9,7 +9,6 @@ Item {
     readonly property bool _isNodes: !!(def && def.kind === "usblNodes")
     readonly property bool _isServo: !!(def && def.kind === "servo")
 
-    // Same inset the bars take, so the letter shares their top, bottom and left edge.
     readonly property real _sInset: Tokens.spaceXs
     readonly property int _sRef: 100
     readonly property real _sInkRatio: Math.max(0.01, sRefTm.tightBoundingRect.height / _sRef)
@@ -52,15 +51,6 @@ Item {
             }
         }
 
-        // Painted in the card's own background rather than an ink colour, so the letter reads as
-        // cut out of the bars in either theme instead of needing a contrast that holds against
-        // the accent in both.
-        //
-        // INSET BY ITS INK, not by its layout box. A Text item's box carries ascent, descent and
-        // side bearings the glyph does not fill, so anchoring the box to the margin leaves the S
-        // visibly short of the top and bottom the bars reach. The offsets are measured off a
-        // reference-size font (never off the rendered one, which would be a binding loop) and
-        // scaled, so this holds for whatever family the app is running.
         FontMetrics {
             id: sRefFm
             font.bold: true

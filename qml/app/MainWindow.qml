@@ -1261,9 +1261,6 @@ ApplicationWindow {
                     id: servoPanelComp
                     ServoPanelPopup {
                         readonly property var _wdef: widgetSlot._wdef
-                        // Hidden while its own editor is open, because ServoEditOverlay puts the
-                        // same panel in the middle of the dimmed scene -- two of it would be one
-                        // too many.
                         readonly property bool _beingEdited: !!(workspaceStore.widgetEditorActive
                             && workspaceStore.widgetEditIndex >= 0
                             && workspaceStore.widgetEditIndex < workspaceStore.widgets.length

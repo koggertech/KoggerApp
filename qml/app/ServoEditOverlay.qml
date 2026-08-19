@@ -1,12 +1,6 @@
 import QtQuick 2.15
 import kqml_types 1.0
 
-// The servo panel's editor overlay: the scene dims and the panel itself sits in the middle,
-// exactly as a grid panel's editor behaves. There is nothing to drop here -- the panel has no
-// cells -- so this is the presentation half of WidgetEditOverlay and none of its DnD.
-//
-// It shows a real ServoPanelBody rather than a mock-up, so the transparency slider is previewed
-// against the panel it will apply to and the controls stay usable while the editor is open.
 Item {
     id: overlay
 
@@ -50,6 +44,7 @@ Item {
             x: overlay._pad
             y: overlay._pad
             maxHeight: Math.max(Math.round(160 * AppPalette.scale), overlay.height * 0.86 - overlay._pad * 2)
+            logEnabled: false
         }
     }
 }
