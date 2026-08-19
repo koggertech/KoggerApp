@@ -16,7 +16,7 @@ Item {
     property bool showSeparator: true
     property bool forceSeparator: false
     property real slotWidth: island ? island.slotWidth : 0
-    property real minHeight: Math.round(44 * AppPalette.scale)
+    property real minHeight: island ? island.rowMinHeight : Tokens.rowH
     property string toolTipText: ""
 
     signal clicked()
@@ -48,7 +48,7 @@ Item {
     }
 
     property real horizontalPadding: island ? island.rowPadding : Tokens.spaceLg
-    property real verticalPadding: Tokens.spaceMd
+    property real verticalPadding: Tokens.spaceXs
     property real contentSpacing: Tokens.spaceSm
     property real separatorInset: island ? island.separatorInset : horizontalPadding
 

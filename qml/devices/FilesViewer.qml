@@ -322,8 +322,6 @@ Column {
 
                     label: filesViewer.urlDisplay(recentRow.filePath)
                     labelElide: Text.ElideLeft
-                    minHeight: 0
-                    verticalPadding: Tokens.spaceXs
                     interactive: true
                     toolTipText: qsTr("Open %1").arg(recentRow.fileName)
                     onClicked: filesViewer.openRecentFile(recentRow.filePath)

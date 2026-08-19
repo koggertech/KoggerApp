@@ -291,26 +291,32 @@ Column {
             }
         }
 
-        NavButton {
-            width: parent.width
-            text: qsTr("Export to CSV")
-            toolTipText: qsTr("Open the CSV export tab")
-            onClicked: if (root.store) root.store.openCsvExportSettings()
-        }
+        KIsland {
+            KIslandRow {
+                label: qsTr("Export to CSV")
+                chevron: true
+                interactive: true
+                toolTipText: qsTr("Open the CSV export tab")
+                onClicked: if (root.store) root.store.openCsvExportSettings()
+            }
 
-        KButton {
-            width: parent.width; text: qsTr("Export to XTF")
-            onClicked: core.exportPlotAsXTF(exportGroup.currentExportPath())
-        }
+            KIslandRow {
+                label: qsTr("Export to XTF")
+                interactive: true
+                onClicked: core.exportPlotAsXTF(exportGroup.currentExportPath())
+            }
 
-        KButton {
-            width: parent.width; text: qsTr("Complex signal to CSV")
-            onClicked: core.exportComplexToCSV(exportGroup.currentExportPath())
-        }
+            KIslandRow {
+                label: qsTr("Complex signal to CSV")
+                interactive: true
+                onClicked: core.exportComplexToCSV(exportGroup.currentExportPath())
+            }
 
-        KButton {
-            width: parent.width; text: qsTr("USBL to CSV")
-            onClicked: core.exportUSBLToCSV(exportGroup.currentExportPath())
+            KIslandRow {
+                label: qsTr("USBL to CSV")
+                interactive: true
+                onClicked: core.exportUSBLToCSV(exportGroup.currentExportPath())
+            }
         }
     }
 

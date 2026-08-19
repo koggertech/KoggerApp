@@ -106,50 +106,45 @@ Column {
         }
     }
 
-    // Dark rounded card around the toggles — same look as SettingsGroup body.
-    Rectangle {
+    Loader {
+        id: fieldsLoader
         width: parent.width
-        height: fieldsLoader.height + 2 * Tokens.spaceMd
-        radius: Tokens.radiusLg
-        color: AppPalette.bgDeep
-        border.color: AppPalette.border
-        border.width: Tokens.cardBorderWidth
+        sourceComponent: fieldsComponent
 
-        Loader {
-            id: fieldsLoader
-            x: Tokens.spaceMd
-            y: Tokens.spaceMd
-            width: parent.width - 2 * Tokens.spaceMd
-            sourceComponent: fieldsComponent
-
-            Connections {
-                target: typeof core !== "undefined" ? core : null
-                ignoreUnknownSignals: true
-                // Rebuild the switches so they re-read Core (binding sever-proof).
-                function onCsvExportFieldsReset() {
-                    fieldsLoader.active = false
-                    fieldsLoader.active = true
-                }
+        Connections {
+            target: typeof core !== "undefined" ? core : null
+            ignoreUnknownSignals: true
+            // Rebuild the switches so they re-read Core (binding sever-proof).
+            function onCsvExportFieldsReset() {
+                fieldsLoader.active = false
+                fieldsLoader.active = true
             }
         }
     }
 
     Component {
         id: fieldsComponent
-        Column {
-            width: fieldsLoader.width
-            spacing: Tokens.spaceMd
+        KIsland {
             Repeater {
                 model: page.fieldDefs
-                delegate: KSwitch {
+                delegate: KIslandRow {
                     required property var modelData
-                    width: parent.width
-                    text: modelData.label
+
+                    label: modelData.label
                     toolTipText: modelData.tip
-                    textColor: page._bright
-                    fontPixelSize: Tokens.fontLg
-                    checked: core.csvExportFieldEnabled(modelData.key)
-                    onToggled: core.setCsvExportField(modelData.key, checked)
+                    interactive: true
+                    onClicked: fieldSwitch.toggle()
+
+                    KSwitch {
+                        id: fieldSwitch
+                        width: trackWidth
+                        height: Tokens.controlHMd
+                        switchHorizontalPadding: 0
+                        backgroundColor: "transparent"
+                        hoverBackgroundColor: "transparent"
+                        checked: core.csvExportFieldEnabled(modelData.key)
+                        onToggled: core.setCsvExportField(modelData.key, checked)
+                    }
                 }
             }
         }

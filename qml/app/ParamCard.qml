@@ -35,7 +35,7 @@ Rectangle {
     readonly property bool _hovered: cardMouseLeft.containsMouse || cardMouseRight.containsMouse
 
     width: parent ? parent.width : implicitWidth
-    height: Math.round(38 * AppPalette.scale)
+    height: Tokens.rowH
     radius: Tokens.radiusLg
     color: pcard._hovered ? AppPalette.cardHover : pcard.fillColor
     border.width: Tokens.cardBorderWidth
