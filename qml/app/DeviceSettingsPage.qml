@@ -1201,14 +1201,6 @@ Column {
         }
     }
 
-    KIsland {
-        visible: root._isRecorder && !root._isBasicSonar
-        KIslandRow {
-            stacked: true
-            FlashButton { width: parent.width }
-        }
-    }
-
     // ── USBL ──────────────────────────────────────────────────────────────
     // Three groups ordered by how often they are touched: operating (nodes + schedule)
     // stays open, the command plan and the response gating start collapsed. The plan model
