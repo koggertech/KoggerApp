@@ -137,11 +137,7 @@ Column {
 
                     KSwitch {
                         id: fieldSwitch
-                        width: trackWidth
-                        height: Tokens.controlHMd
-                        switchHorizontalPadding: 0
-                        backgroundColor: "transparent"
-                        hoverBackgroundColor: "transparent"
+                        flat: true
                         checked: core.csvExportFieldEnabled(modelData.key)
                         onToggled: core.setCsvExportField(modelData.key, checked)
                     }

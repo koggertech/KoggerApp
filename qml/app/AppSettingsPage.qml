@@ -477,49 +477,6 @@ Column {
             }
         }
 
-        // ── Merged from former "Interface" group ──────────────────────────
-
-        KSwitch {
-            width: parent.width
-            text: qsTr("Hide important notifications")
-            toolTipText: qsTr("Auto-hide warning notifications like info ones")
-            checked: root.store ? root.store.hideImportantNotifications : false
-            onToggled: if (root.store) root.store.hideImportantNotifications = checked
-        }
-
-        KSwitch {
-            width: parent.width
-            text: qsTr("Hide UI elements for missing data")
-            toolTipText: qsTr("Hide echogram controls when there is no matching data; off shows everything")
-            checked: root.store ? root.store.hideEmptyEchogramControls : true
-            onToggled: if (root.store) root.store.hideEmptyEchogramControls = checked
-        }
-
-        KSwitch {
-            width: parent.width
-            text: qsTr("Workspace shift")
-            toolTipText: qsTr("Shift the workspace aside when the settings panel opens, instead of overlaying on top")
-            checked: root.store.settingsPushContent
-            onToggled: { root.store.settingsPushContent = checked }
-        }
-
-        KSwitch {
-            visible: Qt.platform.os === "windows"
-            width: parent.width
-            text: qsTr("Bring window to front")
-            toolTipText: qsTr("Raise and focus the app window on key events")
-            checked: core.bringWindowToFrontEnabled
-            onToggled: core.bringWindowToFrontEnabled = checked
-        }
-
-        KSwitch {
-            visible: Qt.platform.os === "android" || Qt.platform.os === "ios"
-            width: parent.width
-            text: qsTr("Rotate layout with device")
-            checked: root.store ? root.store.rotateLayoutEnabled : true
-            onToggled: if (root.store) root.store.rotateLayoutEnabled = checked
-        }
-
         Column {
             width: parent.width
             spacing: Tokens.spaceMd
@@ -538,11 +495,104 @@ Column {
             }
         }
 
-        NavButton {
-            visible: Qt.platform.os !== "android"
-            width: parent.width
-            text: qsTr("Key bindings")
-            onClicked: { hotkeysLoader.active = true; hotkeysLoader.item.open() }
+        // ── Merged from former "Interface" group ──────────────────────────
+
+        KIsland {
+            KIslandRow {
+                label: qsTr("Hide important notifications")
+                toolTipText: qsTr("Auto-hide warning notifications like info ones")
+                interactive: true
+                onClicked: hideNotificationsSwitch.toggle()
+                KSwitch {
+                    id: hideNotificationsSwitch
+                    flat: true
+                    checked: root.store ? root.store.hideImportantNotifications : false
+                    onToggled: if (root.store) root.store.hideImportantNotifications = checked
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Hide UI elements for missing data")
+                toolTipText: qsTr("Hide echogram controls when there is no matching data; off shows everything")
+                interactive: true
+                onClicked: hideEmptyControlsSwitch.toggle()
+                KSwitch {
+                    id: hideEmptyControlsSwitch
+                    flat: true
+                    checked: root.store ? root.store.hideEmptyEchogramControls : true
+                    onToggled: if (root.store) root.store.hideEmptyEchogramControls = checked
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Workspace shift")
+                toolTipText: qsTr("Shift the workspace aside when the settings panel opens, instead of overlaying on top")
+                interactive: true
+                onClicked: workspaceShiftSwitch.toggle()
+                KSwitch {
+                    id: workspaceShiftSwitch
+                    flat: true
+                    checked: root.store.settingsPushContent
+                    onToggled: root.store.settingsPushContent = checked
+                }
+            }
+
+            KIslandRow {
+                visible: Qt.platform.os === "windows"
+                label: qsTr("Bring window to front")
+                toolTipText: qsTr("Raise and focus the app window on key events")
+                interactive: true
+                onClicked: bringToFrontSwitch.toggle()
+                KSwitch {
+                    id: bringToFrontSwitch
+                    flat: true
+                    checked: core.bringWindowToFrontEnabled
+                    onToggled: core.bringWindowToFrontEnabled = checked
+                }
+            }
+
+            KIslandRow {
+                visible: Qt.platform.os === "android" || Qt.platform.os === "ios"
+                label: qsTr("Rotate layout with device")
+                interactive: true
+                onClicked: rotateLayoutSwitch.toggle()
+                KSwitch {
+                    id: rotateLayoutSwitch
+                    flat: true
+                    checked: root.store ? root.store.rotateLayoutEnabled : true
+                    onToggled: if (root.store) root.store.rotateLayoutEnabled = checked
+                }
+            }
+
+            KIslandRow {
+                visible: Qt.platform.os !== "android"
+                label: qsTr("Key bindings")
+                chevron: true
+                interactive: true
+                onClicked: { hotkeysLoader.active = true; hotkeysLoader.item.open() }
+            }
+
+            KIslandRow {
+                label: qsTr("Quick action menu")
+                chevron: true
+                interactive: true
+                onClicked: if (root.store) root.store.openQuickActionsSettings()
+            }
+
+            KIslandRow {
+                label: qsTr("UI Saving")
+                chevron: true
+                interactive: true
+                onClicked: if (root.store) root.store.openUiSavingSettings()
+            }
+
+            KIslandRow {
+                label: qsTr("Console")
+                chevron: true
+                interactive: true
+                toolTipText: qsTr("Colour marking and log buffer size")
+                onClicked: if (root.store) root.store.openConsoleSettings()
+            }
         }
 
         Loader {
@@ -550,25 +600,6 @@ Column {
             active: false
             source: "qrc:/qml/settings/HotkeysDialog.qml"
             onLoaded: { if (item) item.store = root.store }
-        }
-
-        NavButton {
-            width: parent.width
-            text: qsTr("Quick action menu")
-            onClicked: if (root.store) root.store.openQuickActionsSettings()
-        }
-
-        NavButton {
-            width: parent.width
-            text: qsTr("UI Saving")
-            onClicked: if (root.store) root.store.openUiSavingSettings()
-        }
-
-        NavButton {
-            width: parent.width
-            text: qsTr("Console")
-            toolTipText: qsTr("Colour marking and log buffer size")
-            onClicked: if (root.store) root.store.openConsoleSettings()
         }
     }
 

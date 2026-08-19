@@ -1089,13 +1089,9 @@ Column {
 
                     KSwitch {
                         id: periodSwitch
+                        flat: true
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        width: trackWidth
-                        height: parent.height
-                        switchHorizontalPadding: 0
-                        backgroundColor: "transparent"
-                        hoverBackgroundColor: "transparent"
 
                         property bool _g: false
                         function pushFromDev() {
