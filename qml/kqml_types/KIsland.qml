@@ -46,7 +46,6 @@ Item {
             color: island.fillColor
             border.width: Tokens.cardBorderWidth
             border.color: AppPalette.border
-            clip: true
             implicitHeight: rowColumn.implicitHeight
 
             Column {

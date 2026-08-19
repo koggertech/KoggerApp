@@ -29,6 +29,15 @@ QtObject {
     property int controlMs: 110
     readonly property int controlEasing: easingStd
 
+    // ── Hover / press feedback: ONE place for "how alive" every control feels ──
+    // Compact controls (buttons, chips) take the factors; a wide element (an
+    // island row) takes the px lift instead — see the note in qml-controls.md.
+    property real hoverScale: 1.03
+    property real pressScale: 0.98
+    property real hoverLiftPx: 4
+    property real pressDipPx: 2
+    property real hoverLighten: 1.10
+
     // ── Toggles / switches: knob slide, track colour ─────────────────────────
     property int toggleMs: 120
     readonly property int toggleEasing: easingStd

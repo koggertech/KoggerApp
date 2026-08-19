@@ -502,7 +502,7 @@ Column {
                 label: qsTr("Hide important notifications")
                 toolTipText: qsTr("Auto-hide warning notifications like info ones")
                 interactive: true
-                onClicked: hideNotificationsSwitch.toggle()
+                onClicked: hideNotificationsSwitch.click()
                 KSwitch {
                     id: hideNotificationsSwitch
                     flat: true
@@ -515,7 +515,7 @@ Column {
                 label: qsTr("Hide UI elements for missing data")
                 toolTipText: qsTr("Hide echogram controls when there is no matching data; off shows everything")
                 interactive: true
-                onClicked: hideEmptyControlsSwitch.toggle()
+                onClicked: hideEmptyControlsSwitch.click()
                 KSwitch {
                     id: hideEmptyControlsSwitch
                     flat: true
@@ -528,7 +528,7 @@ Column {
                 label: qsTr("Workspace shift")
                 toolTipText: qsTr("Shift the workspace aside when the settings panel opens, instead of overlaying on top")
                 interactive: true
-                onClicked: workspaceShiftSwitch.toggle()
+                onClicked: workspaceShiftSwitch.click()
                 KSwitch {
                     id: workspaceShiftSwitch
                     flat: true
@@ -542,7 +542,7 @@ Column {
                 label: qsTr("Bring window to front")
                 toolTipText: qsTr("Raise and focus the app window on key events")
                 interactive: true
-                onClicked: bringToFrontSwitch.toggle()
+                onClicked: bringToFrontSwitch.click()
                 KSwitch {
                     id: bringToFrontSwitch
                     flat: true
@@ -555,7 +555,7 @@ Column {
                 visible: Qt.platform.os === "android" || Qt.platform.os === "ios"
                 label: qsTr("Rotate layout with device")
                 interactive: true
-                onClicked: rotateLayoutSwitch.toggle()
+                onClicked: rotateLayoutSwitch.click()
                 KSwitch {
                     id: rotateLayoutSwitch
                     flat: true
@@ -613,55 +613,70 @@ Column {
         stateStore: root.store
         stateKey: "app.layoutPlacement"
 
-        KSwitch {
-            width: parent.width
-            text: qsTr("Edit")
-            toolTipText: qsTr("Edit workspace panes")
-            checked: root.store.editableMode
-            onToggled: { root.store.editableMode = checked }
-        }
-
-        KSwitch {
-            width: parent.width
-            text: qsTr("Global pop-up")
-            toolTipText: qsTr("Floating window over the workspace, independent of the layout")
-            checked: root.store.globalPopupEnabled
-            onToggled: { root.store.globalPopupEnabled = checked }
-        }
-
-        Repeater {
-            model: root.store.layouts.length
-            delegate: Item {
-                id: layoutCard
-                required property int index
-                readonly property int layoutIndex: index
-                readonly property var layoutEntry: (layoutIndex >= 0 && layoutIndex < root.store.layouts.length) ? root.store.layouts[layoutIndex] : null
-                readonly property var snapshot: layoutEntry && layoutEntry.layout ? layoutEntry.layout : layoutEntry
-                readonly property var popupLinks: layoutEntry && layoutEntry.popupLinks ? layoutEntry.popupLinks : []
-                readonly property bool selected: layoutIndex === root.store.activeLayoutIndex
-                width: parent.width; height: layoutCardView.implicitHeight
-
-                FavoriteLayoutCard {
-                    id: layoutCardView
-                    anchors.fill: parent
-                    snapshot: layoutCard.snapshot; popupLinks: layoutCard.popupLinks
-                    favoriteIndex: layoutCard.layoutIndex; selected: layoutCard.selected; showText: true
-                    extraHovered: deleteBtn.hovered
-                    onClicked: root.store.applyLayout(layoutCard.layoutIndex)
+        KIsland {
+            KIslandRow {
+                label: qsTr("Edit")
+                toolTipText: qsTr("Edit workspace panes")
+                interactive: true
+                onClicked: editableModeSwitch.click()
+                KSwitch {
+                    id: editableModeSwitch
+                    flat: true
+                    checked: root.store.editableMode
+                    onToggled: { root.store.editableMode = checked }
                 }
+            }
 
-                KCircleIconButton {
-                    id: deleteBtn
-                    visible: root.store.layouts.length > 1
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.right
-                    anchors.rightMargin: Tokens.spaceSm
-                    width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd; iconSource: ""; glyph: "×"
-                    glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
-                    fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
-                    borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
-                    toolTipText: qsTr("Delete layout"); z: 6
-                    onClicked: root.store.deleteLayoutAt(layoutCard.layoutIndex)
+            KIslandRow {
+                label: qsTr("Global pop-up")
+                toolTipText: qsTr("Floating window over the workspace, independent of the layout")
+                interactive: true
+                onClicked: globalPopupSwitch.click()
+                KSwitch {
+                    id: globalPopupSwitch
+                    flat: true
+                    checked: root.store.globalPopupEnabled
+                    onToggled: { root.store.globalPopupEnabled = checked }
+                }
+            }
+        }
+
+        KIsland {
+            Repeater {
+                model: root.store.layouts.length
+                delegate: KIslandRow {
+                    id: layoutRow
+                    required property int index
+
+                    readonly property int layoutIndex: index
+                    readonly property var layoutEntry: (layoutIndex >= 0 && layoutIndex < root.store.layouts.length) ? root.store.layouts[layoutIndex] : null
+                    readonly property bool selected: layoutIndex === root.store.activeLayoutIndex
+
+                    label: qsTr("Layout %1").arg(layoutIndex + 1)
+                    labelColor: selected ? "#FDE68A" : AppPalette.textStrong
+                    caption: selected ? qsTr("Active") : ""
+                    fillColor: selected ? Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20) : "transparent"
+                    verticalPadding: Tokens.spaceSm
+                    interactive: true
+                    onClicked: root.store.applyLayout(layoutIndex)
+
+                    leading: LayoutSnapshotPreview {
+                        width: Math.round(84 * AppPalette.scale)
+                        height: Math.round(64 * AppPalette.scale)
+                        layoutSnapshot: layoutRow.layoutEntry && layoutRow.layoutEntry.layout ? layoutRow.layoutEntry.layout : layoutRow.layoutEntry
+                        popupLinks: layoutRow.layoutEntry && layoutRow.layoutEntry.popupLinks ? layoutRow.layoutEntry.popupLinks : []
+                        redrawDebounceMs: 48
+                    }
+
+                    KCircleIconButton {
+                        visible: root.store.layouts.length > 1
+                        width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd; iconSource: ""; glyph: "×"
+                        glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
+                        fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                        borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
+                        toolTipText: qsTr("Delete layout")
+                        onClicked: root.store.deleteLayoutAt(layoutRow.layoutIndex)
+                    }
                 }
             }
         }

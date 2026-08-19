@@ -133,7 +133,7 @@ Column {
                     label: modelData.label
                     toolTipText: modelData.tip
                     interactive: true
-                    onClicked: fieldSwitch.toggle()
+                    onClicked: fieldSwitch.click()
 
                     KSwitch {
                         id: fieldSwitch
