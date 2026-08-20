@@ -52,6 +52,10 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Servo</source>
+        <translation>Servo</translation>
+    </message>
+    <message>
         <source>Hide important notifications</source>
         <translation>Hide important notifications</translation>
     </message>
@@ -3108,6 +3112,10 @@
 <context>
     <name>MainWindow</name>
     <message>
+        <source>Servo panel</source>
+        <translation>Servo panel</translation>
+    </message>
+    <message>
         <location filename="../qml/app/MainWindow.qml" line="59"/>
         <source>Please choose a file</source>
         <translation>Please choose a file</translation>
@@ -4529,10 +4537,6 @@
         <translation>ServoScan</translation>
     </message>
     <message>
-        <source>Servo</source>
-        <translation>Servo</translation>
-    </message>
-    <message>
         <source>No servo device</source>
         <translation>No servo device</translation>
     </message>
@@ -4611,6 +4615,40 @@
     <message>
         <source>OUT3</source>
         <translation>OUT3</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelPopup</name>
+    <message>
+        <source>Servo</source>
+        <translation>Servo</translation>
+    </message>
+    <message>
+        <source>Panel settings</source>
+        <translation>Panel settings</translation>
+    </message>
+    <message>
+        <source>Hide panel</source>
+        <translation>Hide panel</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelSettingsPage</name>
+    <message>
+        <source>Servo scanner control: sweep, step, centre and the live angle.</source>
+        <translation>Servo scanner control: sweep, step, centre and the live angle.</translation>
+    </message>
+    <message>
+        <source>Show automatically</source>
+        <translation>Show automatically</translation>
+    </message>
+    <message>
+        <source>Brings the panel up when a device with servo firmware connects.</source>
+        <translation>Brings the panel up when a device with servo firmware connects.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Background transparency</translation>
     </message>
 </context>
 </TS>

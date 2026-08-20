@@ -10,11 +10,14 @@ BasePanePopup {
     property real widgetScale: 1.0
 
     readonly property real _bgAlpha: {
-        var t = (def && typeof def.transparency === "number") ? def.transparency : 0
-        return Math.max(0, Math.min(1, 1 - t / 100))
+        var t = store ? store.servoPanelTransparency : 0
+        return Math.max(0.15, Math.min(1, 1 - t / 100))
     }
 
     readonly property real _k: widgetScale
+    readonly property real _barH: headerHeight
+    readonly property real _barPad: contentPadding
+    readonly property real _barBtn: Math.max(Math.round(18 * AppPalette.scale), _barH - _barPad * 2)
 
     readonly property real _maxContentH: Math.max(Math.round(160 * AppPalette.scale),
                                                   height * 0.9 - _contentTopMargin - contentPadding) / Math.max(0.01, _k)
@@ -23,7 +26,7 @@ BasePanePopup {
     popupVisible: true
     dragEnabled: true
     dragAnywhere: false
-    headerReserved: false
+    headerReserved: true
     dragHandleOpacity: 0
     resizeEnabled: false
     collapseButtonVisible: false
@@ -47,7 +50,7 @@ BasePanePopup {
             return
         widgetScale = store.widgetScale(def.id)
         _applyScale()
-        var p = store.widgetPosition(def.id, popupWidth, popupHeight)
+        var p = store.servoPanelPosition(popupWidth, popupHeight)
         var rb = store.widgetRevealBounds(popupWidth, popupHeight)
         var nx = Math.max(rb.minX, Math.min(rb.maxX, p.x))
         var ny = Math.max(rb.minY, Math.min(rb.maxY, p.y))
@@ -82,14 +85,18 @@ BasePanePopup {
 
     ServoPanelScroll {
         id: scroller
+        active: root.popupVisible
         maxHeight: root._maxContentH
+        opacity: root._bgAlpha
         transformOrigin: Item.TopLeft
         scale: root._k
     }
 
     Item {
+        id: titleBar
         width: parent.width
-        height: Math.round(24 * AppPalette.scale) * root._k
+        height: root._barH
+        y: -root._barH
         z: 10
 
         MouseArea {
@@ -106,6 +113,64 @@ BasePanePopup {
             yAxis.enabled: true
             onActiveChanged: active ? root._beginDrag() : root._endDrag()
             onTranslationChanged: if (active) root._updateDrag(translation.x, translation.y)
+        }
+
+        Text {
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            text: qsTr("Servo")
+            color: AppPalette.textStrong
+            font.pixelSize: Tokens.fontBase
+        }
+
+        KDragBar {
+            anchors.centerIn: parent
+            orientation: "horizontal"
+            barColor: AppPalette.controlRaised
+        }
+
+        KCircleIconButton {
+            id: closeBtn
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.topMargin: root._barPad
+            width: root._barBtn
+            height: root._barBtn
+            rounded: false
+            cornerRadius: Tokens.radiusLg
+            z: 1
+            iconSource: ""
+            glyph: "×"
+            showGlyphWithIcon: true
+            glyphPixelSize: Tokens.iconSm
+            glyphColor: AppPalette.textSecond
+            fillColor: AppPalette.controlRaised
+            fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
+            fillPressedColor: AppPalette.bgDeep
+            borderColor: AppPalette.border
+            borderHoverColor: AppPalette.borderHover
+            toolTipText: qsTr("Hide panel")
+            onClicked: root.store.setServoPanelShown(false)
+        }
+
+        KCircleIconButton {
+            anchors.right: closeBtn.left
+            anchors.rightMargin: root._barPad
+            anchors.top: closeBtn.top
+            width: root._barBtn
+            height: root._barBtn
+            rounded: false
+            cornerRadius: Tokens.radiusLg
+            z: 1
+            iconSource: "qrc:/icons/ui/pencil.svg"
+            iconTintColor: AppPalette.textSecond
+            fillColor: AppPalette.controlRaised
+            fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
+            fillPressedColor: AppPalette.bgDeep
+            borderColor: AppPalette.border
+            borderHoverColor: AppPalette.borderHover
+            toolTipText: qsTr("Panel settings")
+            onClicked: root.store.openServoPanelSettings()
         }
     }
 }

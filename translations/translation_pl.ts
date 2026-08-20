@@ -52,6 +52,10 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Servo</source>
+        <translation>Serwo</translation>
+    </message>
+    <message>
         <source>Hide important notifications</source>
         <translation>Ukrywaj ważne powiadomienia</translation>
     </message>
@@ -3955,6 +3959,10 @@
 <context>
     <name>MainWindow</name>
     <message>
+        <source>Servo panel</source>
+        <translation>Panel serwa</translation>
+    </message>
+    <message>
         <location filename="../qml/app/MainWindow.qml" line="920"/>
         <source>Devices</source>
         <translation>Urządzenia</translation>
@@ -5651,10 +5659,6 @@
         <translation>ServoScan</translation>
     </message>
     <message>
-        <source>Servo</source>
-        <translation>Serwo</translation>
-    </message>
-    <message>
         <source>No servo device</source>
         <translation>Brak urządzenia z serwem</translation>
     </message>
@@ -5733,6 +5737,40 @@
     <message>
         <source>OUT3</source>
         <translation>OUT3</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelPopup</name>
+    <message>
+        <source>Servo</source>
+        <translation>Serwo</translation>
+    </message>
+    <message>
+        <source>Panel settings</source>
+        <translation>Ustawienia panelu</translation>
+    </message>
+    <message>
+        <source>Hide panel</source>
+        <translation>Ukryj panel</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelSettingsPage</name>
+    <message>
+        <source>Servo scanner control: sweep, step, centre and the live angle.</source>
+        <translation>Sterowanie skanerem serwa: wychylenie, krok, środek i bieżący kąt.</translation>
+    </message>
+    <message>
+        <source>Show automatically</source>
+        <translation>Pokazuj automatycznie</translation>
+    </message>
+    <message>
+        <source>Brings the panel up when a device with servo firmware connects.</source>
+        <translation>Panel pojawi się po podłączeniu urządzenia z serwem.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Przezroczystość tła</translation>
     </message>
 </context>
 </TS>

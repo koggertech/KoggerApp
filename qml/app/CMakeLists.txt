@@ -47,9 +47,9 @@ qt_add_qml_module(kogger_app
         ProfilesPopup.qml
         QuickActionSettingsTab.qml
         SecondaryWindow.qml
-        ServoEditOverlay.qml
         ServoPanelBody.qml
         ServoPanelPopup.qml
+        ServoPanelSettingsPage.qml
         ServoPanelScroll.qml
         SettingsGearButton.qml
         SettingsGroupBase.qml
@@ -80,7 +80,6 @@ qt_add_qml_module(kogger_app
         WidgetGridPreview.qml
         WidgetKindStep.qml
         WidgetUsblStep.qml
-        WidgetServoStep.qml
         WidgetPlaceStep.qml
         WidgetSizeStep.qml
         WorkspaceStore.qml

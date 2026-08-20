@@ -52,6 +52,10 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Servo</source>
+        <translation>Серво</translation>
+    </message>
+    <message>
         <source>Hide important notifications</source>
         <translation>Скрывать важные уведомления</translation>
     </message>
@@ -3951,6 +3955,10 @@
 <context>
     <name>MainWindow</name>
     <message>
+        <source>Servo panel</source>
+        <translation>Панель серво</translation>
+    </message>
+    <message>
         <location filename="../qml/app/MainWindow.qml" line="920"/>
         <source>Devices</source>
         <translation>Устройства</translation>
@@ -5640,10 +5648,6 @@
         <translation>ServoScan</translation>
     </message>
     <message>
-        <source>Servo</source>
-        <translation>Серво</translation>
-    </message>
-    <message>
         <source>No servo device</source>
         <translation>Нет устройства с серво</translation>
     </message>
@@ -5722,6 +5726,40 @@
     <message>
         <source>OUT3</source>
         <translation>OUT3</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelPopup</name>
+    <message>
+        <source>Servo</source>
+        <translation>Серво</translation>
+    </message>
+    <message>
+        <source>Panel settings</source>
+        <translation>Настройки панели</translation>
+    </message>
+    <message>
+        <source>Hide panel</source>
+        <translation>Скрыть панель</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelSettingsPage</name>
+    <message>
+        <source>Servo scanner control: sweep, step, centre and the live angle.</source>
+        <translation>Управление серво-сканером: развёртка, шаг, центр и текущий угол.</translation>
+    </message>
+    <message>
+        <source>Show automatically</source>
+        <translation>Показывать автоматически</translation>
+    </message>
+    <message>
+        <source>Brings the panel up when a device with servo firmware connects.</source>
+        <translation>Панель появится при подключении устройства с серво.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Прозрачность фона</translation>
     </message>
 </context>
 </TS>

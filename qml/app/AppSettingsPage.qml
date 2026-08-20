@@ -698,6 +698,37 @@ Column {
         stateStore: root.store
         stateKey: "app.widgets"
 
+        Item {
+            width: parent.width
+            height: servoCardView.implicitHeight
+
+            WidgetCard {
+                id: servoCardView
+                anchors.fill: parent
+                def: root.store ? root.store.servoPanelDef : null
+                title: qsTr("Servo")
+                showText: true
+                selectionMode: true
+                selected: !!(root.store && root.store.servoPanelShown)
+                extraHovered: servoEditBtn.hovered
+                onToggled: function(value) { if (root.store) root.store.setServoPanelShown(value) }
+            }
+
+            KCircleIconButton {
+                id: servoEditBtn
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: Tokens.spaceSm
+                width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd
+                iconSource: "qrc:/icons/ui/pencil.svg"; iconTintColor: AppPalette.textSecond
+                fillColor: AppPalette.controlRaised
+                fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover
+                toolTipText: qsTr("Edit panel"); z: 6
+                onClicked: root.store.openServoPanelSettings()
+            }
+        }
+
         Repeater {
             model: root.store.widgets.length
             delegate: Item {

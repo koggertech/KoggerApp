@@ -32,7 +32,7 @@ Column {
     property Timer _mockSweep: Timer {
         interval: 200
         repeat: true
-        running: body._manualTesting && body.dev === body._mockDev && body._mockDev.servoEnabled
+        running: body.active && body._manualTesting && body.dev === body._mockDev && body._mockDev.servoEnabled
         property int dir: 1
         onTriggered: {
             var m = body._mockDev
@@ -146,10 +146,10 @@ Column {
 
     readonly property string _linkLabel: _linkLabelFor(dev)
 
-    property bool logEnabled: true
+    property bool active: true
 
     function _log(msg) {
-        if (logEnabled && typeof core !== "undefined" && core && core.consoleInfo)
+        if (active && typeof core !== "undefined" && core && core.consoleInfo)
             core.consoleInfo("[Servo] " + msg)
     }
 
@@ -192,7 +192,7 @@ Column {
     property Timer _attReport: Timer {
         interval: 2000
         repeat: true
-        running: !!body.dev && body.logEnabled
+        running: body.active && !!body.dev
         onTriggered: {
             var line = "attitude: " + body._attCount + " updates / 2 s, y/p/r = "
                        + body._fmt(body._axYaw) + " / " + body._fmt(body._axPitch)
@@ -259,8 +259,6 @@ Column {
     spacing: Tokens.spaceMd
 
     KIsland {
-        title: qsTr("Servo")
-
         KIslandRow {
             label: body.dev ? body._devLabel(body.dev) : qsTr("No servo device")
             labelColor: body.dev ? AppPalette.textStrong : AppPalette.textMuted

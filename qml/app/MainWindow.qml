@@ -1067,6 +1067,7 @@ ApplicationWindow {
                      ? qsTr("Settings")
                      : workspaceStore.settingsSubPageKind === "quickActions" ? qsTr("Quick action menu")
                      : workspaceStore.settingsSubPageKind === "widgetEdit"   ? (workspaceStore.widgetEditIndex >= 0 ? qsTr("Edit panel") : qsTr("Create panel"))
+                     : workspaceStore.settingsSubPageKind === "servoPanel"   ? qsTr("Servo panel")
                      : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
@@ -1093,6 +1094,7 @@ ApplicationWindow {
 
             subPage: workspaceStore.settingsSubPageKind === "quickActions" ? quickActionsSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "widgetEdit" ? widgetEditTabComponent
+                     : workspaceStore.settingsSubPageKind === "servoPanel" ? servoPanelSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "uiSaving"   ? uiSavingSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
@@ -1120,12 +1122,6 @@ ApplicationWindow {
         }
 
         WidgetEditOverlay {
-            anchors.fill: parent
-            z: ZOrder.widgetEditorOverlay
-            store: workspaceStore
-        }
-
-        ServoEditOverlay {
             anchors.fill: parent
             z: ZOrder.widgetEditorOverlay
             store: workspaceStore
@@ -1215,13 +1211,11 @@ ApplicationWindow {
                 Loader {
                     id: slotLoader
                     anchors.fill: parent
-                    sourceComponent: !widgetSlot._wdef ? dataWidgetPanelComp
-                                   : widgetSlot._wdef.kind === "usblNodes" ? usblNodesPanelComp
-                                   : widgetSlot._wdef.kind === "servo" ? servoPanelComp
-                                                                       : dataWidgetPanelComp
+                    sourceComponent: (widgetSlot._wdef && widgetSlot._wdef.kind === "usblNodes")
+                                     ? usblNodesPanelComp : dataWidgetPanelComp
                 }
 
-                // EVERY COMPONENT LIVES INSIDE THE DELEGATE, and they have to. An object created
+                // BOTH COMPONENTS LIVE INSIDE THE DELEGATE, and they have to. An object created
                 // from a Component gets that Component's creation context; declared beside the
                 // Repeater instead, `widgetSlot` is not in scope and every binding reading it
                 // is a runtime ReferenceError -- a panel that loads and then paints nothing.
@@ -1257,25 +1251,19 @@ ApplicationWindow {
                     }
                 }
 
-                Component {
-                    id: servoPanelComp
-                    ServoPanelPopup {
-                        readonly property var _wdef: widgetSlot._wdef
-                        readonly property bool _beingEdited: !!(workspaceStore.widgetEditorActive
-                            && workspaceStore.widgetEditIndex >= 0
-                            && workspaceStore.widgetEditIndex < workspaceStore.widgets.length
-                            && workspaceStore.widgets[workspaceStore.widgetEditIndex] && _wdef
-                            && workspaceStore.widgets[workspaceStore.widgetEditIndex].id === _wdef.id)
-                        anchors.fill: parent
-                        store: workspaceStore
-                        def: _wdef
-                        popupVisible: !!_wdef && !_beingEdited && workspaceStore.widgetShown(_wdef.id)
-                        popupId: _wdef ? "widget:" + _wdef.id : ""
-                        siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
-                        siblingIdList: ["btEdit", "profiles"]
-                    }
-                }
             }
+        }
+
+        ServoPanelPopup {
+            id: servoPanel
+            anchors.fill: parent
+            z: ZOrder.widgetPopup + workspaceStore.widgetLimit - 1
+            store: workspaceStore
+            def: workspaceStore.servoPanelDef
+            popupVisible: workspaceStore.servoPanelShown
+            popupId: "widget:" + workspaceStore.servoPanelId
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles"]
         }
 
         Connections {
@@ -1285,6 +1273,7 @@ ApplicationWindow {
                 fullscreenPanePopup.syncFromStore()
                 btEditPopup.syncFromStore()
                 profilesPopup.syncFromStore()
+                servoPanel.syncFromStore()
                 for (var i = 0; i < widgetsRepeater.count; ++i) {
                     var it = widgetsRepeater.itemAt(i)
                     if (it) it.syncFromStore()
@@ -1312,6 +1301,14 @@ ApplicationWindow {
             id: widgetEditTabComponent
 
             WidgetEditPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: servoPanelSettingsTabComponent
+
+            ServoPanelSettingsPage {
                 store: workspaceStore
             }
         }

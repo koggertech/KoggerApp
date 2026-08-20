@@ -56,7 +56,7 @@ Item {
     property bool widgetsEnabled: true
     readonly property bool _widgetsRevealOverride: _revealActiveKey === "widgets"
     readonly property bool showWidgets: widgetsEnabled || _widgetsRevealOverride
-    readonly property bool hasWidgets: !!(store && store.widgets && store.widgets.length > 0)
+    readonly property int widgetCardCount: (store && store.widgets ? store.widgets.length : 0) + 1
     property bool widgetsMenuOpen: false
     property var _widgetsSlot: null
     property bool consoleButtonEnabled: true
@@ -375,7 +375,6 @@ Item {
                 clip: true
                 interactive: contentHeight > height
                 boundsBehavior: Flickable.StopAtBounds
-                visible: root.hasWidgets
 
                 ScrollBar.vertical: ScrollBar {
                     id: widgetsScrollBar
@@ -388,6 +387,19 @@ Item {
                     width: widgetsFlick.width
                            - (widgetsFlick.interactive ? widgetsScrollBar.width + Math.round(4 * root._s) : 0)
                     spacing: root.favoriteItemSpacing
+
+                    WidgetCard {
+                        width: widgetsList.width
+                        height: root.favoriteItemHeight
+                        contentMargin: root.favoriteCardMargin
+                        previewWidth: root.favoritePreviewWidth
+                        previewHeight: root.favoritePreviewHeight
+                        def: root.store ? root.store.servoPanelDef : null
+                        showText: false
+                        selectionMode: true
+                        selected: !!(root.store && root.store.servoPanelShown)
+                        onToggled: function(value) { if (root.store) root.store.setServoPanelShown(value) }
+                    }
 
                     Repeater {
                         model: root.store ? root.store.widgets.length : 0
@@ -411,16 +423,6 @@ Item {
                         }
                     }
                 }
-            }
-
-            Text {
-                width: parent.width
-                visible: !root.hasWidgets
-                text: qsTr("No panels yet.")
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
-                wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignHCenter
             }
 
             Item {
@@ -2179,13 +2181,9 @@ Item {
         readonly property int comboW: root.triggerButtonWidth
         readonly property int gap: Math.round(6 * root._s)
         readonly property int sidePad: Math.round(3 * root._s)
-        readonly property int _listContentH: root.hasWidgets
-            ? root.store.widgets.length * root.favoriteItemHeight
-              + Math.max(0, root.store.widgets.length - 1) * root.favoriteItemSpacing
-            : 0
-        readonly property int _bodyContentH: root.hasWidgets
-            ? Math.min(root.favoriteListMaxHeight, _listContentH)
-            : Math.round(40 * root._s)
+        readonly property int _listContentH: root.widgetCardCount * root.favoriteItemHeight
+            + Math.max(0, root.widgetCardCount - 1) * root.favoriteItemSpacing
+        readonly property int _bodyContentH: Math.min(root.favoriteListMaxHeight, _listContentH)
         readonly property int dropBodyH: (widgetsBodyLoader.item ? widgetsBodyLoader.item.implicitHeight
                                                                   : _bodyContentH + root.controlHeight)
                                          + Math.round(14 * root._s)

@@ -2,7 +2,7 @@ import QtQuick 2.15
 import kqml_types 1.0
 
 Column {
-    id: step
+    id: page
 
     required property var store
 
@@ -12,9 +12,17 @@ Column {
     Text {
         width: parent.width
         wrapMode: Text.WordWrap
-        text: qsTr("Controls the servo scanner of the device that has one. The panel finds it itself.")
+        text: qsTr("Servo scanner control: sweep, step, centre and the live angle.")
         color: AppPalette.textMuted
         font.pixelSize: Tokens.fontSm
+    }
+
+    KSwitch {
+        width: parent.width
+        text: qsTr("Show automatically")
+        toolTipText: qsTr("Brings the panel up when a device with servo firmware connects.")
+        checked: !!(page.store && page.store.servoPanelAutoShow)
+        onToggled: if (page.store) page.store.servoPanelAutoShow = checked
     }
 
     Column {
@@ -33,18 +41,9 @@ Column {
             to: 100
             stepSize: 1
             showValueTip: false
-            value: step.store ? step.store.widgetDraftTransparency : 0
+            value: page.store ? page.store.servoPanelTransparency : 0
             valueSuffix: "%"
-            onValueModified: function(v) { if (step.store) step.store.widgetDraftTransparency = Math.round(v) }
+            onValueModified: function(v) { if (page.store) page.store.servoPanelTransparency = Math.round(v) }
         }
-    }
-
-    KButton {
-        width: parent.width
-        text: qsTr("Save")
-        normalBg: AppPalette.accentBg
-        hoverBg: AppPalette.accentBg
-        normalBorder: AppPalette.accentBorder
-        onClicked: if (step.store) step.store.widgetDraftSave()
     }
 }

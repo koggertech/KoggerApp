@@ -7,11 +7,10 @@ Item {
     required property var store
 
     anchors.fill: parent
-    // GRID PANELS ONLY. This overlay exists to be a drop target for cells, and the other kinds
-    // have none -- an acoustic-nodes panel is laid out by the USBL plan and a servo panel by
-    // the device. Without the kind gate it dims the scene and offers a 1x1 grid belonging to no
-    // panel.
-    visible: !!(store && store.widgetEditorActive && store.widgetDraftKind === "grid")
+    // GRID PANELS ONLY. This overlay exists to be a drop target for cells, and the other kind
+    // has none -- an acoustic-nodes panel is laid out by the USBL plan, not here. Without the
+    // kind gate it dims the scene and offers a 1x1 grid belonging to no panel.
+    visible: !!(store && store.widgetEditorActive && store.widgetDraftKind !== "usblNodes")
 
     readonly property real _s: AppPalette.appScale
     readonly property bool _touch: (typeof inputDeviceTracker !== "undefined" && inputDeviceTracker)

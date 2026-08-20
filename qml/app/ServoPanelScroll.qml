@@ -6,7 +6,7 @@ Flickable {
     id: scroll
 
     property real maxHeight: 0
-    property bool logEnabled: true
+    property bool active: true
 
     readonly property alias body: bodyItem
     readonly property real bodyWidth: bodyItem.width
@@ -28,6 +28,6 @@ Flickable {
 
     ServoPanelBody {
         id: bodyItem
-        logEnabled: scroll.logEnabled
+        active: scroll.active
     }
 }

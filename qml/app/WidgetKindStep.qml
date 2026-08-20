@@ -82,10 +82,4 @@ Column {
         subtitle: qsTr("One row per node in the USBL plan, with its range, SNR and state. "
                      + "The panel grows and shrinks with the plan.")
     }
-
-    KindCard {
-        kind: "servo"
-        title: qsTr("Servo control")
-        subtitle: qsTr("Sweep, step, centre and the live angle.")
-    }
 }

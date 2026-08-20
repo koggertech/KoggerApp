@@ -541,17 +541,76 @@ function generateWidgetId() {
 // beacons answered cannot be a cell in that grid without breaking each of them separately, so
 // it is a different kind of panel that happens to reuse everything ELSE a panel has: the
 // position/scale/z instance, the shown map, docking, the list, the limit.
-readonly property var widgetKinds: ["grid", "usblNodes", "servo"]
+readonly property var widgetKinds: ["grid", "usblNodes"]
 function widgetKindOf(def) {
     // Absent means "grid": every blob written before kinds existed is one, and must load
     // unchanged rather than being dropped as malformed.
-    if (!def)
-        return "grid"
-    if (def.kind === "usblNodes" || def.kind === "servo")
-        return def.kind
-    return "grid"
+    return (def && def.kind === "usblNodes") ? "usblNodes" : "grid"
 }
-function _widgetKindIsFreeform(kind) { return kind === "usblNodes" || kind === "servo" }
+function _widgetKindIsFreeform(kind) { return kind === "usblNodes" }
+
+readonly property string servoPanelId: "servo"
+readonly property var servoPanelDef: ({ id: "servo", kind: "servo", name: "" })
+readonly property bool servoPanelShown: widgetShown(servoPanelId)
+
+property int servoPanelTransparency: 0
+property bool servoPanelAutoShow: true
+
+onServoPanelTransparencyChanged: layoutStore.servoPanelTransparencyStored = servoPanelTransparency
+onServoPanelAutoShowChanged: { layoutStore.servoPanelAutoShowStored = servoPanelAutoShow; _syncServoPanelAuto() }
+
+function loadServoPanelPreferences() {
+    servoPanelTransparency = Math.max(0, Math.min(100, layoutStore.servoPanelTransparencyStored))
+    servoPanelAutoShow = layoutStore.servoPanelAutoShowStored
+}
+
+readonly property bool servoDeviceAvailable: {
+    var ds = activeDeviceList
+    for (var i = 0; i < ds.length; ++i)
+        if (ds[i] && ds[i].isBoardInited && ds[i].isServoSupport)
+            return true
+    return false
+}
+
+onServoDeviceAvailableChanged: _syncServoPanelAuto()
+
+function _syncServoPanelAuto() {
+    if (servoPanelAutoShow && servoPanelShown !== servoDeviceAvailable)
+        setWidgetShown(servoPanelId, servoDeviceAvailable)
+}
+
+function setServoPanelShown(shown) { setWidgetShown(servoPanelId, shown) }
+function openServoPanelSettings() { _openSettingsSubPage("servoPanel") }
+
+function servoPanelPosition(popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    var inst = widgetInstance(servoPanelId)
+    var x = (inst.x >= 0) ? inst.x : b.maxX
+    var y = (inst.y >= 0) ? inst.y : b.minY
+    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
+}
+
+property var _legacyServoIds: []
+
+function _migrateServoPanel() {
+    if (_legacyServoIds.length === 0)
+        return
+    var wasShown = servoPanelShown
+    var pos = widgetInstance(servoPanelId)
+    for (var i = 0; i < _legacyServoIds.length; ++i) {
+        var old = _legacyServoIds[i]
+        if (widgetShown(old))
+            wasShown = true
+        var oi = widgetInstance(old)
+        if (pos.x < 0 && pos.y < 0 && oi.x >= 0 && oi.y >= 0)
+            pos = oi
+    }
+    _legacyServoIds = []
+    if (pos.x >= 0 || pos.y >= 0)
+        _writeWidgetInstance(servoPanelId, pos)
+    if (wasShown)
+        setWidgetShown(servoPanelId, true)
+}
 
 function normalizeWidgetDef(raw) {
     if (!raw || typeof raw !== "object")
@@ -616,8 +675,14 @@ function loadWidgets() {
         try { parsed = JSON.parse(layoutStore.widgetsJson) } catch (e) { parsed = [] }
     }
     var next = []
+    var legacyServo = []
     if (Array.isArray(parsed)) {
         for (var i = 0; i < parsed.length; ++i) {
+            if (parsed[i] && parsed[i].kind === "servo") {
+                if (typeof parsed[i].id === "string" && parsed[i].id.length)
+                    legacyServo.push(parsed[i].id)
+                continue
+            }
             var def = normalizeWidgetDef(parsed[i])
             if (!def) continue
             if (!def.id || def.id.length === 0) def.id = generateWidgetId()
@@ -626,6 +691,7 @@ function loadWidgets() {
         }
     }
     widgets = next
+    _legacyServoIds = legacyServo
     saveWidgets()
 }
 
@@ -811,6 +877,7 @@ function loadWidgetShown() {
 
 function _reconcileWidgetMaps() {
     var alive = {}
+    alive[servoPanelId] = true
     for (var i = 0; i < widgets.length; ++i)
         if (widgets[i] && widgets[i].id) alive[widgets[i].id] = true
     var mi = {}, changedI = false
@@ -1238,6 +1305,8 @@ property Settings layoutStore: Settings {
     property string widgetsJson: "[]"
     property string widgetInstancesJson: "{}"
     property string widgetShownJson: "{}"
+    property int servoPanelTransparencyStored: 0
+    property bool servoPanelAutoShowStored: true
     property bool quickActionWidgetsEnabledStored: true
     property bool quickActionConsoleEnabledStored: true
     property bool quickActionSecondWindowEnabledStored: true
@@ -1507,9 +1576,7 @@ function openWidgetSettings()       { openAppSettingsAtGroup("app.widgets") }
 // that kind is edited on, because the kind of an existing panel is not something you change —
 // you make the other one.
 function widgetKindEditStep(kind) {
-    if (kind === "usblNodes") return 3
-    if (kind === "servo")     return 4
-    return 2
+    return (kind === "usblNodes") ? 3 : 2
 }
 function openWidgetCreateSettings() { widgetEditIndex = -1; widgetDraftReset(); widgetEditStep = 0; _openSettingsSubPage("widgetEdit") }
 function openWidgetEditSettings(index) {
@@ -4631,13 +4698,16 @@ function loadPersistedUiState() {
     loadSettingsProfiles()
     loadRememberedLinks()
     loadProfilesPopupPreferences()
+    loadServoPanelPreferences()
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
     bottomTrackEditorOpen = layoutStore.bottomTrackEditorOpenStored
     loadPopupDocks()
     loadWidgets()
     loadWidgetInstances()
     loadWidgetShown()
+    _migrateServoPanel()
     _reconcileWidgetMaps()
+    _syncServoPanelAuto()
     return restoreLayoutState()
 }
 
