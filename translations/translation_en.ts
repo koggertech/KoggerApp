@@ -3001,6 +3001,29 @@
     </message>
 </context>
 <context>
+    <name>InstanceLimitWindow</name>
+    <message>
+        <location filename="../qml/app/InstanceLimitWindow.qml" line="17"/>
+        <source>KoggerApp, KOGGER</source>
+        <translation>KoggerApp, KOGGER</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/InstanceLimitWindow.qml" line="32"/>
+        <source>Application limit reached</source>
+        <translation>Application limit reached</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/InstanceLimitWindow.qml" line="42"/>
+        <source>Only %1 KoggerApp applications can be open at once. Close one of them to open a new one.</source>
+        <translation>Only %1 KoggerApp applications can be open at once. Close one of them to open a new one.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/InstanceLimitWindow.qml" line="50"/>
+        <source>Close</source>
+        <translation>Close</translation>
+    </message>
+</context>
+<context>
     <name>LayoutCreatePage</name>
     <message>
         <source>Create a new layout from the current panes or a preset, then arrange it in edit mode.</source>

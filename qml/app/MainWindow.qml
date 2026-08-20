@@ -21,7 +21,8 @@ ApplicationWindow {
     minimumHeight: isMobilePlatform ? 0 : 560
     visible: true
     visibility: isMobilePlatform ? Window.FullScreen : Window.Windowed
-    title: core.fileTitle !== "" ? (core.fileTitle + " — KoggerApp, KOGGER") : qsTr("KoggerApp, KOGGER")
+    title: (core.fileTitle !== "" ? (core.fileTitle + " — KoggerApp, KOGGER") : qsTr("KoggerApp, KOGGER"))
+           + appUtils.instanceSuffix
     onActiveChanged: if (active) root.lastActiveWindow = root
 
     WorkspaceStore {
@@ -98,7 +99,7 @@ ApplicationWindow {
         width: 1080
         height: 540
         title: (core.fileTitle !== "" ? core.fileTitle + " — KoggerApp, KOGGER" : qsTr("KoggerApp, KOGGER"))
-               + qsTr(" — Second window")
+               + qsTr(" — Second window") + appUtils.instanceSuffix
         visible: workspaceStore.secondaryWindowOpen
         onClosing: function(close) { workspaceStore.closeSecondaryWindow() }
         onActiveChanged: if (active) root.lastActiveWindow = secondWindow

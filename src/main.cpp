@@ -31,6 +31,9 @@
 #include "scene_object.h"
 #include "bottom_track.h"
 #include "input_device_tracker.h"
+#ifndef Q_OS_ANDROID
+#include "instance_lock.h"
+#endif
 #include "system_battery.h"
 #include "language_controller.h"
 #include "app_utils.h"
@@ -47,6 +50,10 @@ Notifications notifications;
 QTranslator translator;
 QVector<QString> availableLanguages{"en", "ru", "pl"};
 // NOLINTEND(bugprone-throwing-static-initialization)
+
+#ifndef Q_OS_ANDROID
+InstanceLock instanceLock;
+#endif
 
 
 void loadLanguage(QGuiApplication &app)
@@ -101,6 +108,24 @@ void setApplicationDisplayName(QGuiApplication& app)
         }
     }
 }
+
+#ifndef Q_OS_ANDROID
+int runInstanceLimitWindow(QGuiApplication& app)
+{
+    QQmlApplicationEngine engine;
+    engine.addImportPath("qrc:/qml");
+    engine.rootContext()->setContextProperty("theme", &theme);
+    engine.setInitialProperties({ { "maxInstances", InstanceLock::kMaxInstances } });
+    engine.loadFromModule("app", "InstanceLimitWindow");
+
+    if (engine.rootObjects().isEmpty()) {
+        qCritical() << "InstanceLimitWindow failed to load";
+        return 1;
+    }
+
+    return app.exec();
+}
+#endif
 
 void registerQmlMetaTypes()
 {
@@ -196,7 +221,7 @@ void applyWindowsFullscreenBorderWorkaround(QWindow* window)
 
 void bringWindowToFront(QWindow* window)
 {
-    if (!window) {
+    if (!window || !instanceLock.isPrimary()) {
         return;
     }
 
@@ -301,6 +326,16 @@ int main(int argc, char *argv[])
     // safe to read QSettings and primaryScreen() for DPI-aware resCoeff.
     theme.initSettings();
 
+    QQuickStyle::setStyle("Basic");
+
+#ifndef Q_OS_ANDROID
+    if (!instanceLock.acquire()) {
+        loadLanguage(app);
+        return runInstanceLimitWindow(app);
+    }
+    appUtils.setInstanceIndex(instanceLock.index());
+#endif
+
     LanguageController langController;
     InputDeviceTracker inputDeviceTracker;
     SystemBattery systemBattery;
@@ -316,8 +351,6 @@ int main(int argc, char *argv[])
     loadLanguage(app);
     langController.setStartupTranslator(&translator);
     core.initStreamList();
-
-    QQuickStyle::setStyle("Basic");
 
     setApplicationDisplayName(app);
     QQmlApplicationEngine engine;

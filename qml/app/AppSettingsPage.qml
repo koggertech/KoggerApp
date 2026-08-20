@@ -540,7 +540,7 @@ Column {
             }
 
             KIslandRow {
-                visible: Qt.platform.os === "windows"
+                visible: Qt.platform.os === "windows" && appUtils.instanceIndex === 1
                 label: qsTr("Bring window to front")
                 toolTipText: qsTr("Raise and focus the app window on key events")
                 interactive: true

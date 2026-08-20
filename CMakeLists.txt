@@ -162,6 +162,12 @@ qt_add_translations(KoggerApp
         translations/translation_pl.ts
     RESOURCE_PREFIX "/translations")
 
+# ── Desktop-only sources ─────────────────────────────────────────────────
+if(NOT ANDROID)
+    target_sources(KoggerApp PRIVATE
+        src/instance_lock.h            src/instance_lock.cpp)
+endif()
+
 # ── Platform branches ────────────────────────────────────────────────────
 if(ANDROID)
     set_target_properties(KoggerApp PROPERTIES
