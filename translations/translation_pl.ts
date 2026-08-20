@@ -52,6 +52,10 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Dataset: with position zeroing on</source>
+        <translation>Zbiór danych: zerowanie pozycji</translation>
+    </message>
+    <message>
         <source>Servo</source>
         <translation>Serwo</translation>
     </message>

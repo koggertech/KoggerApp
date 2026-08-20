@@ -52,6 +52,10 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Dataset: with position zeroing on</source>
+        <translation>Датасет: зануление координат</translation>
+    </message>
+    <message>
         <source>Servo</source>
         <translation>Серво</translation>
     </message>

@@ -1,7 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Dialogs
+import Qt5Compat.GraphicalEffects
 import QtCore
 import kqml_types 1.0
 import controls
@@ -1530,6 +1532,8 @@ Column {
             KChartLevelCapsule {
                 id: mosaicLevelsSlider
                 Layout.fillHeight: true
+                Layout.alignment: Qt.AlignTop
+                Layout.maximumHeight: Math.max(implicitHeight, mosaicControlsColumn.implicitHeight)
                 cornerRadius: Tokens.radiusLg   // settings: rounded rectangle (2D overlay stays a pill)
                 onStartValueChanged: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
                 onStopValueChanged:  MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
@@ -1542,6 +1546,7 @@ Column {
             }
 
             ColumnLayout {
+                id: mosaicControlsColumn
                 Layout.fillWidth: true
                 spacing: Tokens.spaceMd
 
@@ -1772,76 +1777,104 @@ Column {
                         Settings { category: "scene3d/mosaic"; property alias mosaicSource: mosaicSource.currentIndex }
                     }
                 }
+            }
+        }
 
-                Rectangle {
-                    id: fakeCoordsGroup
-                    visible: core.posZeroing
+        Rectangle {
+            id: fakeCoordsGroup
+            visible: core.posZeroing
+            width: parent.width
+            height: fakeCoordsGroupContent.implicitHeight + 2 * Tokens.spaceLg
+            color: "transparent"
+            radius: Tokens.radiusLg
+            border.width: Math.max(1, Math.round(1 * AppPalette.scale))
+            border.color: AppPalette.borderHover
+
+            ColumnLayout {
+                id: fakeCoordsGroupContent
+                anchors.fill: parent
+                anchors.margins: Tokens.spaceLg
+                spacing: Tokens.spaceMd
+
+                RowLayout {
                     Layout.fillWidth: true
-                    Layout.topMargin: Tokens.spaceMd
-                    implicitHeight: fakeCoordsGroupContent.implicitHeight + 2 * Tokens.spaceLg
-                    color: "transparent"
-                    border.color: AppPalette.border
-                    border.width: 1
-                    radius: Tokens.radiusMd
+                    spacing: Tokens.spaceSm
 
-                    ColumnLayout {
-                        id: fakeCoordsGroupContent
-                        anchors.fill: parent
-                        anchors.margins: Tokens.spaceLg
-                        spacing: Tokens.spaceMd
+                    Item {
+                        Layout.preferredWidth: Tokens.iconMd
+                        Layout.preferredHeight: Tokens.iconMd
 
-                        Button {
-                            Layout.alignment: Qt.AlignHCenter
-                            flat: true
-                            enabled: false
-                            padding: 0
-                            background: null
-                            icon.source: "qrc:/icons/ui/route_crossed_out.svg"
-                            icon.color: AppPalette.text
-                            icon.width: Tokens.controlHMd * 1.1
-                            icon.height: Tokens.controlHMd * 1.1
-                            implicitWidth: Tokens.controlHMd * 1.1
-                            implicitHeight: Tokens.controlHMd * 1.1
+                        Image {
+                            id: fakeCoordsIcon
+                            anchors.fill: parent
+                            source: "qrc:/icons/ui/route_crossed_out.svg"
+                            sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                            sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                            visible: false
                         }
-
-                        RowLayout {
-                            spacing: Tokens.spaceMd
-                            Text {
-                                text: qsTr("Calc last N epochs:")
-                                color: AppPalette.textSecond
-                                font.pixelSize: Tokens.fontMd
-                                Layout.fillWidth: true
-                            }
-                            KSlider {
-                                id: fakeCoordsLastNSlider
-                                Layout.preferredWidth: mosaicGroup.ctrlW - Math.round(70 * AppPalette.scale)
-                                from: 10; to: 3000; stepSize: 10; value: 500
-                                readonly property int effectiveN: (core.posZeroing && value < to) ? value : 0
-                                onEffectiveNChanged: core.setMosaicFakeCoordsLastN(effectiveN)
-                                Component.onCompleted: core.setMosaicFakeCoordsLastN(effectiveN)
-                                Settings { category: "main/dataset"; property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value }
-                            }
-                            Text {
-                                Layout.preferredWidth: Math.round(50 * AppPalette.scale)
-                                horizontalAlignment: Text.AlignRight
-                                color: AppPalette.text
-                                font.pixelSize: Tokens.fontMd
-                                text: fakeCoordsLastNSlider.value >= fakeCoordsLastNSlider.to
-                                      ? qsTr("All") : fakeCoordsLastNSlider.value
-                            }
-                        }
-
-                        KSwitch {
-                            id: fakeCoordsClearOldDataCheck
-                            text: qsTr("Clear old data (*)")
-                            checked: true
-                            Layout.fillWidth: true
-                            readonly property bool effectiveClearOldData: checked && core.posZeroing
-                            onEffectiveClearOldDataChanged: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
-                            Component.onCompleted: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
-                            Settings { category: "main/dataset"; property alias fakeCoordsClearOldDataCheck: fakeCoordsClearOldDataCheck.checked }
+                        ColorOverlay {
+                            anchors.fill: fakeCoordsIcon
+                            source: fakeCoordsIcon
+                            color: AppPalette.textStrong
+                            smooth: true
                         }
                     }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: qsTr("Dataset: with position zeroing on")
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
+                        wrapMode: Text.WordWrap
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: fakeCoordsClearOldDataCheck.switchHorizontalPadding
+                    Layout.rightMargin: fakeCoordsClearOldDataCheck.switchHorizontalPadding
+                    spacing: Tokens.spaceMd
+
+                    Text {
+                        Layout.maximumWidth: mosaicGroup.labelW
+                        text: qsTr("Calc last N epochs:")
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
+                        elide: Text.ElideRight
+                    }
+                    KSlider {
+                        id: fakeCoordsLastNSlider
+                        Layout.fillWidth: true
+                        from: 10; to: 3000; stepSize: 10; value: 500
+                        showValueTip: false
+                        readonly property int effectiveN: (core.posZeroing && value < to) ? value : 0
+                        onEffectiveNChanged: core.setMosaicFakeCoordsLastN(effectiveN)
+                        Component.onCompleted: core.setMosaicFakeCoordsLastN(effectiveN)
+                        Settings { category: "main/dataset"; property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value }
+                    }
+                    Text {
+                        id: fakeCoordsValue
+                        Layout.preferredWidth: Math.round(44 * AppPalette.scale)
+                        horizontalAlignment: Text.AlignRight
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
+                        text: fakeCoordsLastNSlider.value >= fakeCoordsLastNSlider.to
+                              ? qsTr("All") : fakeCoordsLastNSlider.value
+                    }
+                }
+
+                KSwitch {
+                    id: fakeCoordsClearOldDataCheck
+                    text: qsTr("Clear old data (*)")
+                    checked: true
+                    Layout.fillWidth: true
+                    readonly property bool effectiveClearOldData: checked && core.posZeroing
+                    onEffectiveClearOldDataChanged: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
+                    Component.onCompleted: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
+                    Settings { category: "main/dataset"; property alias fakeCoordsClearOldDataCheck: fakeCoordsClearOldDataCheck.checked }
                 }
             }
         }

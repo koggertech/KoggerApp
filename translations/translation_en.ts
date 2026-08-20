@@ -52,6 +52,10 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <source>Dataset: with position zeroing on</source>
+        <translation>Dataset: with position zeroing on</translation>
+    </message>
+    <message>
         <source>Servo</source>
         <translation>Servo</translation>
     </message>
