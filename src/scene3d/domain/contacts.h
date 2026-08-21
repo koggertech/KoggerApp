@@ -97,7 +97,7 @@ protected:
     void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) final;
     void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) final;
     void mouseWheelEvent(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta) final;
-    void keyPressEvent(Qt::Key key) final;
+    bool keyPressEvent(Qt::Key key) final;
 
 private:
     void setInterEpIndx(int indx);

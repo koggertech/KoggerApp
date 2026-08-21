@@ -641,6 +641,33 @@ ApplicationWindow {
         return false
     }
 
+    function _itemWithin(item, ancestor) {
+        var walker = item
+        while (walker) {
+            if (walker === ancestor)
+                return true
+            walker = walker.parent
+        }
+        return false
+    }
+
+    function _restartTabTraversal(event) {
+        if (workspaceStore.inputLocked)
+            return
+
+        var current = root.activeFocusItem
+        if (!current || current.activeFocusOnTab || !root._itemWithin(current, workspaceView))
+            return
+
+        var forward = event.key === Qt.Key_Tab && !(event.modifiers & Qt.ShiftModifier)
+        var next = mainLayer.nextItemInFocusChain(forward)
+        if (!next)
+            return
+
+        next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
+        event.accepted = true
+    }
+
     function handleHotkeyKeyEvent(event) {
         if (workspaceStore.inputLocked)
             return false
@@ -748,6 +775,10 @@ ApplicationWindow {
         }
 
         Keys.onPressed: function(event) {
+            if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+                root._restartTabTraversal(event)
+                return
+            }
             if (event.key !== mainLayer.inputLockKey)
                 return
             if (!event.isAutoRepeat) {
@@ -838,6 +869,8 @@ ApplicationWindow {
                     hotActions.expanded = false
                     hotActions.layoutsMenuOpen = false
                     if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
+                } else {
+                    mainLayer.forceActiveFocus()
                 }
             }
             function onModeSettingsPanelOpenChanged() {
@@ -845,6 +878,8 @@ ApplicationWindow {
                     hotActions.expanded = false
                     hotActions.layoutsMenuOpen = false
                     if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
+                } else {
+                    mainLayer.forceActiveFocus()
                 }
             }
             function onActiveLeafIdChanged() {

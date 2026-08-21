@@ -1075,26 +1075,28 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
     onCameraMoved();
 }
 
-void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
+bool GraphicsScene3dView::keyPressTrigger(Qt::Key key)
 {
     if (geoJsonEnabled_) {
         if (key == Qt::Key_Delete || key == Qt::Key_Backspace) {
             geojsonDeleteSelectedFeature();
-            return;
+            return true;
         }
         if (key == Qt::Key_Escape) {
             geojsonCancelDrawing();
-            return;
+            return true;
         }
     }
 
     if (ruler_->onKey(key)) {
-        return;
+        return true;
     }
 
-    m_bottomTrack->keyPressEvent(key);
+    const bool handled = m_bottomTrack->keyPressEvent(key);
 
     QQuickFramebufferObject::update();
+
+    return handled;
 }
 
 void GraphicsScene3dView::zoomStepTrigger(qreal delta)

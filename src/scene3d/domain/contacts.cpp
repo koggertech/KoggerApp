@@ -317,10 +317,11 @@ void Contacts::mouseWheelEvent(Qt::MouseButtons buttons, qreal x, qreal y, QPoin
    // qDebug() << "Contacts::mouseWheelEvent" << buttons << x << y << angleDelta;
 }
 
-void Contacts::keyPressEvent(Qt::Key key)
+bool Contacts::keyPressEvent(Qt::Key key)
 {
     Q_UNUSED(key);
    // qDebug() << "Contacts::keyPressEvent" << key;
+    return false;
 }
 
 void Contacts::setInterEpIndx(int indx)

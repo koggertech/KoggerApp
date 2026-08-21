@@ -94,7 +94,8 @@ Item {
 
     function forwardScene3DKeyPress(key) {
         if (scene3dView && typeof scene3dView.keyPressTrigger === "function")
-            scene3dView.keyPressTrigger(key)
+            return scene3dView.keyPressTrigger(key)
+        return false
     }
 
     function forwardScene3DPinch(prevCenter, currCenter, scaleDelta, angleDelta) {
