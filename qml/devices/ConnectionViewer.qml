@@ -110,8 +110,10 @@ Column {
         color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? Qt.lighter(AppPalette.controlRaised, 1.2) : AppPalette.controlRaised))
         border.width: Tokens.cardBorderWidth
         border.color: (checked || ibMa.containsMouse) ? AppPalette.borderHover : AppPalette.border
+        scale: ibMa.pressed ? Anim.dipScale(ib.width) : (ibMa.containsMouse ? Anim.liftScale(ib.width) : 1.0)
 
         Behavior on color { ColorAnimation { duration: 80 } }
+        Behavior on scale { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
 
         activeFocusOnTab: enabled
         function _activate() {

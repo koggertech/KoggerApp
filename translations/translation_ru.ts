@@ -52,6 +52,16 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="657"/>
+        <source>Layout %1</source>
+        <translation>Компоновка %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="659"/>
+        <source>Active</source>
+        <translation>Активно</translation>
+    </message>
+    <message>
         <source>Dataset: with position zeroing on</source>
         <translation>Датасет: зануление координат</translation>
     </message>
@@ -3834,6 +3844,16 @@
 </context>
 <context>
     <name>LayoutCreatePage</name>
+    <message>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="32"/>
+        <source>Layout %1</source>
+        <translation>Компоновка %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="34"/>
+        <source>Active</source>
+        <translation>Активно</translation>
+    </message>
     <message>
         <source>Create a new layout from the current panes or a preset, then arrange it in edit mode.</source>
         <translation type="vanished">Создайте новую компоновку на основе текущих панелей или пресета, затем настройте её в режиме редактирования.</translation>

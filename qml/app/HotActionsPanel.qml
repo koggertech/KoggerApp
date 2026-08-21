@@ -782,8 +782,8 @@ Item {
         readonly property bool _klf: typeof core !== "undefined" && core && core.loggingKlf
         readonly property bool _csv: typeof core !== "undefined" && core && core.loggingCsv
         property real holdScale: 1.0
-        readonly property real _hoverScale: (badgeMa.pressed ? 0.97
-                                             : (badgeMa.containsMouse ? 1.035 : 1.0))
+        readonly property real _hoverScale: (badgeMa.pressed ? Anim.dipScale(logBadge.width)
+                                             : (badgeMa.containsMouse ? Anim.liftScale(logBadge.width) : 1.0))
                                             * logBadge.holdScale
         readonly property bool _dragHold: root.draggingKey === "logging"
 
@@ -1221,8 +1221,8 @@ Item {
                                            && (lockBadge.pointerHold || root.inputLockKeyHeld)
 
         readonly property real _hoverScale: (lockBadge.holdActive ? 1.0
-                                             : (lockMa.pressed ? 0.97
-                                                : (lockMa.containsMouse ? 1.035 : 1.0)))
+                                             : (lockMa.pressed ? Anim.dipScale(lockBadge.width)
+                                                : (lockMa.containsMouse ? Anim.liftScale(lockBadge.width) : 1.0)))
                                             * lockBadge.holdScale
 
         onHoldActiveChanged: {

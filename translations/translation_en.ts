@@ -52,6 +52,16 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="657"/>
+        <source>Layout %1</source>
+        <translation>Layout %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="659"/>
+        <source>Active</source>
+        <translation>Active</translation>
+    </message>
+    <message>
         <source>Dataset: with position zeroing on</source>
         <translation>Dataset: with position zeroing on</translation>
     </message>
@@ -3025,6 +3035,16 @@
 </context>
 <context>
     <name>LayoutCreatePage</name>
+    <message>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="32"/>
+        <source>Layout %1</source>
+        <translation>Layout %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="34"/>
+        <source>Active</source>
+        <translation>Active</translation>
+    </message>
     <message>
         <source>Create a new layout from the current panes or a preset, then arrange it in edit mode.</source>
         <translation type="vanished">Create a new layout from the current panes or a preset, then arrange it in edit mode.</translation>

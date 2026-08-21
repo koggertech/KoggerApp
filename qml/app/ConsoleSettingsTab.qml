@@ -9,19 +9,41 @@ Column {
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
 
-    KSwitch {
-        width: parent.width
-        text: qsTr("Show console")
-        checked: theme ? theme.consoleVisible : false
-        onToggled: if (theme) theme.consoleVisible = checked
-    }
+    KIsland {
+        KIslandRow {
+            label: qsTr("Show console")
+            interactive: true
+            onClicked: visibleSwitch.click()
 
-    KSwitch {
-        width: parent.width
-        text: qsTr("Colour marking")
-        toolTipText: qsTr("Highlight log syntax with the app theme's colours")
-        checked: page.store ? page.store.consoleColorize : true
-        onToggled: if (page.store) page.store.consoleColorize = checked
+            KSwitch {
+                id: visibleSwitch
+                flat: true
+                checked: theme ? theme.consoleVisible : false
+                onToggled: {
+                    if (theme)
+                        theme.consoleVisible = checked
+                    checked = Qt.binding(function() { return theme ? theme.consoleVisible : false })
+                }
+            }
+        }
+
+        KIslandRow {
+            label: qsTr("Colour marking")
+            toolTipText: qsTr("Highlight log syntax with the app theme's colours")
+            interactive: true
+            onClicked: colorizeSwitch.click()
+
+            KSwitch {
+                id: colorizeSwitch
+                flat: true
+                checked: page.store ? page.store.consoleColorize : true
+                onToggled: {
+                    if (page.store)
+                        page.store.consoleColorize = checked
+                    checked = Qt.binding(function() { return page.store ? page.store.consoleColorize : true })
+                }
+            }
+        }
     }
 
     Column {

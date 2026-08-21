@@ -33,6 +33,7 @@ Rectangle {
 
     readonly property int _knobMargin: Math.max(2, Math.round(2 * AppPalette.scale))
     readonly property bool _hovered: cardMouseLeft.containsMouse || cardMouseRight.containsMouse
+    readonly property bool _pressed: cardMouseLeft.pressed || cardMouseRight.pressed
 
     width: parent ? parent.width : implicitWidth
     height: Tokens.rowH
@@ -40,9 +41,11 @@ Rectangle {
     color: pcard._hovered ? AppPalette.cardHover : pcard.fillColor
     border.width: Tokens.cardBorderWidth
     border.color: pcard._hovered ? AppPalette.borderHover : AppPalette.border
+    scale: pcard._pressed ? Anim.dipScale(width) : (pcard._hovered ? Anim.liftScale(width) : 1.0)
 
     Behavior on color        { ColorAnimation { duration: 110 } }
     Behavior on border.color { ColorAnimation { duration: 110 } }
+    Behavior on scale        { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
 
     function _flip() {
         pcard.checked = !pcard.checked

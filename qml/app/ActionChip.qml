@@ -37,15 +37,15 @@ Rectangle {
     width: chipWidth
     height: chipHeight
     radius: 8
-    scale: chipMouse.pressed ? 0.97 : (chipMouse.containsMouse ? 1.03 : 1.0)
+    scale: chipMouse.pressed ? Anim.dipScale(width) : (chipMouse.containsMouse ? Anim.liftScale(width) : 1.0)
     color: chipMouse.pressed ? chip.fillPressedColor : (chipMouse.containsMouse ? chip.fillHoverColor : chip.fillColor)
     border.width: 1
     border.color: (chipMouse.containsMouse || chipMouse.pressed) ? chip.borderHoverColor : chip.borderColor
 
     Behavior on scale {
         NumberAnimation {
-            duration: 100
-            easing.type: Easing.OutCubic
+            duration: Anim.controlMs
+            easing.type: Anim.controlEasing
         }
     }
 

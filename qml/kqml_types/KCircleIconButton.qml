@@ -50,7 +50,8 @@ Item {
     onPressedChanged: if (pressed) { _tipSuppressed = true; focusRing.suppress() }
     onHoveredChanged: if (!hovered) _tipSuppressed = false
     property bool scaleOnHover: true
-    readonly property real _feedbackScale: root.pressed ? Anim.pressScale : (root.hovered ? Anim.hoverScale : 1.0)
+    readonly property real _feedbackScale: root.pressed ? Anim.dipScale(root.width)
+                                                        : (root.hovered ? Anim.liftScale(root.width) : 1.0)
     readonly property real backgroundScale: (!root.enabled || !root.scaleOnHover) ? 1.0 : root._feedbackScale
     readonly property real contentScale: (!root.enabled || root.scaleOnHover) ? 1.0 : root._feedbackScale
     readonly property bool hasIcon: {

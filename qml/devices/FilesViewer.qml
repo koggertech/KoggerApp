@@ -131,15 +131,19 @@ Column {
         property string toolTipText: ""
         property real iconFillRatio: 0.55
         property color iconColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+        property color fillColor: AppPalette.card
+        property color fillHoverColor: AppPalette.cardHover
         signal clicked()
         signal toggled(bool val)
 
         width: Math.round(28 * AppPalette.scale); height: Math.round(28 * AppPalette.scale); radius: Tokens.radiusSm + 1
-        color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? AppPalette.cardHover : AppPalette.card))
+        color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? ib.fillHoverColor : ib.fillColor))
         border.width: Tokens.cardBorderWidth
         border.color: (checked || ibMa.containsMouse) ? AppPalette.borderHover : AppPalette.border
+        scale: ibMa.pressed ? Anim.dipScale(ib.width) : (ibMa.containsMouse ? Anim.liftScale(ib.width) : 1.0)
 
         Behavior on color { ColorAnimation { duration: 80 } }
+        Behavior on scale { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
 
         activeFocusOnTab: enabled
         function _activate() {
@@ -331,6 +335,8 @@ Column {
                         iconFillRatio: 0.8
                         width: Tokens.controlHMd
                         height: Tokens.controlHMd
+                        fillColor: AppPalette.controlRaised
+                        fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
                         onClicked: filesViewer.removeRecentFile(recentRow.filePath)
                     }
                 }

@@ -33,7 +33,7 @@ Button {
     opacity: enabled ? 1.0 : 0.45
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
-    scale: pressed ? Anim.pressScale : (hovered ? Anim.hoverScale : 1.0)
+    scale: pressed ? Anim.dipScale(width) : (hovered ? Anim.liftScale(width) : 1.0)
 
     Behavior on scale {
         NumberAnimation {
