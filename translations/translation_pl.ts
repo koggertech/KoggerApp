@@ -3824,29 +3824,6 @@
     </message>
 </context>
 <context>
-    <name>InstanceLimitWindow</name>
-    <message>
-        <location filename="../qml/app/InstanceLimitWindow.qml" line="17"/>
-        <source>KoggerApp, KOGGER</source>
-        <translation>KoggerApp, KOGGER</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/InstanceLimitWindow.qml" line="32"/>
-        <source>Application limit reached</source>
-        <translation>Osiągnięto limit otwartych aplikacji</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/InstanceLimitWindow.qml" line="42"/>
-        <source>Only %1 KoggerApp applications can be open at once. Close one of them to open a new one.</source>
-        <translation>Jednocześnie można otworzyć nie więcej niż %1 aplikacje KoggerApp. Zamknij jedną z nich, aby otworzyć nową.</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/InstanceLimitWindow.qml" line="50"/>
-        <source>Close</source>
-        <translation>Zamknij</translation>
-    </message>
-</context>
-<context>
     <name>LayoutCreatePage</name>
     <message>
         <location filename="../qml/app/LayoutCreatePage.qml" line="32"/>

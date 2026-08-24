@@ -110,24 +110,6 @@ void setApplicationDisplayName(QGuiApplication& app)
     }
 }
 
-#ifndef Q_OS_ANDROID
-int runInstanceLimitWindow(QGuiApplication& app)
-{
-    QQmlApplicationEngine engine;
-    engine.addImportPath("qrc:/qml");
-    engine.rootContext()->setContextProperty("theme", &theme);
-    engine.setInitialProperties({ { "maxInstances", InstanceLock::kMaxInstances } });
-    engine.loadFromModule("app", "InstanceLimitWindow");
-
-    if (engine.rootObjects().isEmpty()) {
-        qCritical() << "InstanceLimitWindow failed to load";
-        return 1;
-    }
-
-    return app.exec();
-}
-#endif
-
 void registerQmlMetaTypes()
 {
     qmlRegisterType<GraphicsScene3dView>("SceneGraphRendering", 1, 0,"GraphicsScene3dView");
@@ -330,10 +312,7 @@ int main(int argc, char *argv[])
     QQuickStyle::setStyle("Basic");
 
 #ifndef Q_OS_ANDROID
-    if (!instanceLock.acquire()) {
-        loadLanguage(app);
-        return runInstanceLimitWindow(app);
-    }
+    instanceLock.acquire();
     appUtils.setInstanceIndex(instanceLock.index());
     MosaicDB::setInstanceIndex(instanceLock.index());
 #endif

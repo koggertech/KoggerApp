@@ -27,7 +27,6 @@ qt_add_qml_module(kogger_app
         GlobalPanePopup.qml
         HotActionsPanel.qml
         InputDeviceState.qml
-        InstanceLimitWindow.qml
         LayoutCreatePage.qml
         LayoutSnapshotPreview.qml
         MainWindow.qml

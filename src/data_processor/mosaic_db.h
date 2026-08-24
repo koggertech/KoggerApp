@@ -36,9 +36,6 @@ public:
     explicit MosaicDB(DbRole role, bool deleteOnClose = false, QObject* parent = nullptr);
     ~MosaicDB() override;
 
-    // Call once from main() before the DataProcessor exists — scopes the cache file to
-    // this process so two instances cannot delete each other's DB. Pass 0 when the slot
-    // is unknown: the path then falls back to the PID.
     static void setInstanceIndex(int index);
     static QString surfaceDbPath();
     static bool removeDbFiles(const QString& dbPath);

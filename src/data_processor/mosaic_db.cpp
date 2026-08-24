@@ -10,9 +10,6 @@
 #include <QThread>
 
 
-// Instance slot owned by this process, or 0 when it could not be established.
-// Written once from main() before any worker thread exists, read from the
-// DataProcessor and DB threads afterwards. Stays 1 where there are no slots (Android).
 static int g_instanceIndex = 1;
 
 

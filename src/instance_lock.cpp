@@ -10,8 +10,6 @@
 
 namespace {
 
-constexpr std::chrono::milliseconds kAcquireTimeout{ 100 };
-
 QString slotDirectory()
 {
     const QString runtime = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
@@ -37,24 +35,20 @@ QString InstanceLock::slotPath(int slot)
         .arg(slotDirectory(), userTag(), QString::number(slot));
 }
 
-bool InstanceLock::acquire()
+void InstanceLock::acquire()
 {
-    for (int slot = 1; slot <= kMaxInstances; ++slot) {
+    for (int slot = 1; slot <= kMaxSlots; ++slot) {
         auto candidate = std::make_unique<QLockFile>(slotPath(slot));
         candidate->setStaleLockTime(std::chrono::milliseconds::zero());
 
-        if (candidate->tryLock(kAcquireTimeout)) {
+        if (candidate->tryLock(std::chrono::milliseconds::zero())) {
             lock_ = std::move(candidate);
             index_ = slot;
-            return true;
+            return;
         }
 
-        // Lock file unusable (no permissions / full disk). Never block startup on it,
-        // but do not claim a slot we cannot prove is ours either — index_ stays 0.
         if (candidate->error() != QLockFile::LockFailedError) {
-            return true;
+            return;
         }
     }
-
-    return false;
 }

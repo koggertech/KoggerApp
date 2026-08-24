@@ -9,7 +9,7 @@ class QLockFile;
 class InstanceLock
 {
 public:
-    static constexpr int kMaxInstances = 2;
+    static constexpr int kMaxSlots = 32;
 
     InstanceLock();
     ~InstanceLock();
@@ -17,9 +17,8 @@ public:
     InstanceLock(const InstanceLock&) = delete;
     InstanceLock& operator=(const InstanceLock&) = delete;
 
-    bool acquire();
+    void acquire();
 
-    // 1..kMaxInstances once a slot is owned, 0 when arbitration was impossible.
     int index() const { return index_; }
     bool isPrimary() const { return index_ == 1; }
 
