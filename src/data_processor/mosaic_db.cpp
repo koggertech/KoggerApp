@@ -1,4 +1,5 @@
 #include "mosaic_db.h"
+#include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
@@ -7,6 +8,12 @@
 #include <QDebug>
 #include <QStandardPaths>
 #include <QThread>
+
+
+// Instance slot owned by this process, or 0 when it could not be established.
+// Written once from main() before any worker thread exists, read from the
+// DataProcessor and DB threads afterwards. Stays 1 where there are no slots (Android).
+static int g_instanceIndex = 1;
 
 
 static bool runWalCheckpoint(QSqlDatabase& db, const char* mode, int& busy, int& log, int& ckpt)
@@ -45,6 +52,11 @@ static QString makeXYOrClause(int pairCount) {
     return parts.join(" OR ");
 }
 
+void MosaicDB::setInstanceIndex(int index)
+{
+    g_instanceIndex = index;
+}
+
 QString MosaicDB::surfaceDbPath()
 {
     QString baseDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -60,18 +72,20 @@ QString MosaicDB::surfaceDbPath()
         dir.mkpath(".");
     }
 
-    return dir.filePath(QStringLiteral("surface.db"));
+    if (g_instanceIndex > 0) {
+        return dir.filePath(QStringLiteral("surface-%1.db").arg(g_instanceIndex));
+    }
+
+    return dir.filePath(QStringLiteral("surface-p%1.db").arg(QCoreApplication::applicationPid()));
 }
 
-MosaicDB::MosaicDB(const QString& klfPath, DbRole role, bool deleteOnClose, QObject* parent)
+MosaicDB::MosaicDB(DbRole role, bool deleteOnClose, QObject* parent)
     : QObject(parent),
     dbPath_(surfaceDbPath()),
     role_(role),
     deleteOnClose_(deleteOnClose),
     filesDeleted_(false)
 {
-    Q_UNUSED(klfPath);
-
     qRegisterMetaType<QList<DbTile>>("QList<DbTile>");
     qRegisterMetaType<QHash<TileKey,SurfaceTile>>("QHash<TileKey,SurfaceTile>");
     qRegisterMetaType<QVector<TileKey>>("QVector<TileKey>");

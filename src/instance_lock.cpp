@@ -49,8 +49,9 @@ bool InstanceLock::acquire()
             return true;
         }
 
+        // Lock file unusable (no permissions / full disk). Never block startup on it,
+        // but do not claim a slot we cannot prove is ours either — index_ stays 0.
         if (candidate->error() != QLockFile::LockFailedError) {
-            index_ = slot; // lock file unusable (permissions/disk) — never block startup on it
             return true;
         }
     }

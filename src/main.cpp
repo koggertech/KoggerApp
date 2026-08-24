@@ -35,6 +35,7 @@
 #include "instance_lock.h"
 #endif
 #include "system_battery.h"
+#include "mosaic_db.h"
 #include "language_controller.h"
 #include "app_utils.h"
 #include "settings_migration.h"
@@ -334,6 +335,7 @@ int main(int argc, char *argv[])
         return runInstanceLimitWindow(app);
     }
     appUtils.setInstanceIndex(instanceLock.index());
+    MosaicDB::setInstanceIndex(instanceLock.index());
 #endif
 
     LanguageController langController;

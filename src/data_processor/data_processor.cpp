@@ -1846,7 +1846,7 @@ void DataProcessor::openDB()
     }
 
     // writer
-    dbWriter_ = new MosaicDB(filePath_, DbRole::Writer, true /*delete temp db files*/);
+    dbWriter_ = new MosaicDB(DbRole::Writer, true /*delete temp db files*/);
     MosaicDB* const writer = dbWriter_;
     writer->moveToThread(&dbWriteThread_);
 
@@ -1865,7 +1865,7 @@ void DataProcessor::openDB()
         dbIsReady_.store(true, std::memory_order_relaxed);
 
         // reader
-        dbReader_ = new MosaicDB(filePath_, DbRole::Reader);
+        dbReader_ = new MosaicDB(DbRole::Reader);
         MosaicDB* const reader = dbReader_;
         reader->moveToThread(&dbReadThread_);
         connect(&dbReadThread_, &QThread::started, reader, [reader]() {

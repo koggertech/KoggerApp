@@ -18,6 +18,8 @@ public:
     InstanceLock& operator=(const InstanceLock&) = delete;
 
     bool acquire();
+
+    // 1..kMaxInstances once a slot is owned, 0 when arbitration was impossible.
     int index() const { return index_; }
     bool isPrimary() const { return index_ == 1; }
 
