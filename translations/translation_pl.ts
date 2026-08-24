@@ -3981,6 +3981,14 @@
     </message>
 </context>
 <context>
+    <name>MosaicDB</name>
+    <message>
+        <location filename="../src/data_processor/mosaic_db.cpp" line="66"/>
+        <source>Mosaic cache is unavailable — distant areas may stay incomplete</source>
+        <translation>Pamięć podręczna mozaiki jest niedostępna — odległe obszary mogą pozostać niekompletne</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
         <source>Servo panel</source>

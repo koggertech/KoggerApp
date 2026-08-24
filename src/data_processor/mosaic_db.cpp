@@ -1,4 +1,5 @@
 #include "mosaic_db.h"
+#include "notifications.h"
 #include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
@@ -9,6 +10,8 @@
 #include <QStandardPaths>
 #include <QThread>
 
+
+extern Notifications notifications;
 
 static int g_instanceIndex = 1;
 
@@ -54,6 +57,17 @@ void MosaicDB::setInstanceIndex(int index)
     g_instanceIndex = index;
 }
 
+void MosaicDB::reportFailureOnce()
+{
+    if (failureReported_ || role_ != DbRole::Writer) {
+        return;
+    }
+
+    failureReported_ = true;
+    notifications.warning(tr("Mosaic cache is unavailable — distant areas may stay incomplete"),
+                          QStringLiteral("mosaic-cache"));
+}
+
 QString MosaicDB::surfaceDbPath()
 {
     QString baseDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -81,7 +95,8 @@ MosaicDB::MosaicDB(DbRole role, bool deleteOnClose, QObject* parent)
     dbPath_(surfaceDbPath()),
     role_(role),
     deleteOnClose_(deleteOnClose),
-    filesDeleted_(false)
+    filesDeleted_(false),
+    failureReported_(false)
 {
     qRegisterMetaType<QList<DbTile>>("QList<DbTile>");
     qRegisterMetaType<QHash<TileKey,SurfaceTile>>("QHash<TileKey,SurfaceTile>");
@@ -123,6 +138,7 @@ bool MosaicDB::open()
 
     if (!db_.open()) {
         qWarning() << "MosaicDB open failed:" << db_.lastError();
+        reportFailureOnce();
         return false;
     }
 
@@ -146,7 +162,9 @@ bool MosaicDB::open()
         q.exec("PRAGMA wal_autocheckpoint=1000;");
         q.exec("PRAGMA journal_size_limit=134217728;");
 
-        ensureSchema();
+        if (!ensureSchema()) {
+            reportFailureOnce();
+        }
 
         emit schemaReady(); //
     }
@@ -451,7 +469,10 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
         q.addBindValue(engineVer);
 
         if (!q.exec()) {
-            qWarning() << "saveTiles exec:" << q.lastError() << "key" << k;
+            if (!failureReported_) {
+                qWarning() << "saveTiles exec:" << q.lastError() << "key" << k;
+            }
+            reportFailureOnce();
         }
         else {
             savedKeys.push_back(k);
@@ -465,7 +486,10 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
         return;
     }
 
-    db_.commit();
+    if (!db_.commit()) {
+        qWarning() << "saveTiles commit:" << db_.lastError();
+        reportFailureOnce();
+    }
 
     checkpointIfWalTooBig(128ll * 1024 * 1024); // порог 128
 

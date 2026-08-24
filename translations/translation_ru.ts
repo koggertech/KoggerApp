@@ -3977,6 +3977,14 @@
     </message>
 </context>
 <context>
+    <name>MosaicDB</name>
+    <message>
+        <location filename="../src/data_processor/mosaic_db.cpp" line="66"/>
+        <source>Mosaic cache is unavailable — distant areas may stay incomplete</source>
+        <translation>Кэш мозаики недоступен — дальние участки могут остаться неполными</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
         <source>Servo panel</source>

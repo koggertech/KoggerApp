@@ -74,6 +74,8 @@ private:
     static QByteArray packMarksU8(const QVector<HeightType>& marks);
     static void       unpackMarksU8(const QByteArray& blob, QVector<HeightType>& marks);
 
+    void reportFailureOnce();
+
 private:
     const int    kMaxPairsPerBatch_ = 128; // запись пачками
     const int    busyTimeoutMs_ = 2000;
@@ -83,4 +85,5 @@ private:
     DbRole       role_;
     bool         deleteOnClose_;
     bool         filesDeleted_;
+    bool         failureReported_;
 };
