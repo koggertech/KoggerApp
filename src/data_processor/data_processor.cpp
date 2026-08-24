@@ -323,11 +323,7 @@ void DataProcessor::tryFinalizeResetProcessing()
     QMetaObject::invokeMethod(worker_, "setVisibleTileKeys", Qt::BlockingQueuedConnection,
                               Q_ARG(QSet<TileKey>, QSet<TileKey>()));
 
-    // Recreate temporary tile DB cache.
-    if (!filePath_.isEmpty()) {
-        closeDB();
-        openDB();
-    }
+    closeDB();
 
     state_ = DataProcessorType::kUndefined;
     postState(DataProcessorType::kUndefined);
@@ -1768,7 +1764,6 @@ void DataProcessor::clearAllProcessings()
     nextRunPending_ = false;
     requestedMask_ = 0;
     hotCache_.clear();
-    filePath_.clear();
     dbReaderInWork_ = false;
     lastViewRect_ = QRectF();
     pendingCameraRect_ = QRectF();
@@ -1841,8 +1836,12 @@ void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnreque
 
 void DataProcessor::openDB()
 {
-    if (shuttingDown_.load() || dbReader_ || dbWriter_ || filePath_.isEmpty()) {
+    if (shuttingDown_.load() || dbReader_ || dbWriter_) {
         return;
+    }
+
+    if (const QString dbPath = MosaicDB::surfaceDbPath(); !MosaicDB::removeDbFiles(dbPath)) {
+        qWarning() << "Failed to cleanup previous mosaic cache" << dbPath;
     }
 
     // writer
@@ -1850,7 +1849,7 @@ void DataProcessor::openDB()
     MosaicDB* const writer = dbWriter_;
     writer->moveToThread(&dbWriteThread_);
 
-    connect(&dbWriteThread_, &QThread::started, writer, [writer]() {
+    QMetaObject::invokeMethod(writer, [writer]() {
         if (!writer->open()) {
             qWarning() << "DB Writer open failed";
         }
@@ -1868,7 +1867,7 @@ void DataProcessor::openDB()
         dbReader_ = new MosaicDB(DbRole::Reader);
         MosaicDB* const reader = dbReader_;
         reader->moveToThread(&dbReadThread_);
-        connect(&dbReadThread_, &QThread::started, reader, [reader]() {
+        QMetaObject::invokeMethod(reader, [reader]() {
             if (!reader->open()) {
                 qWarning() << "DB Reader open failed";
             }
@@ -1941,8 +1940,8 @@ void DataProcessor::closeDB()
     dbIsReady_.store(false, std::memory_order_relaxed);
     notifyPrefetchProgress(); // сообщить префетчерам
 
-    if (!filePath_.isEmpty() && !MosaicDB::removeDbFiles(filePath_)) {
-        qWarning() << "Failed to remove mosaic cache" << filePath_;
+    if (const QString dbPath = MosaicDB::surfaceDbPath(); !MosaicDB::removeDbFiles(dbPath)) {
+        qWarning() << "Failed to remove mosaic cache" << dbPath;
     }
 
     //qDebug() << "DB closed";
@@ -2154,15 +2153,6 @@ void DataProcessor::onUpdateDataZoom(int zoom) // calc or db
 void DataProcessor::setFilePath(QString filePath)
 {
     Q_UNUSED(filePath);
-
-    const QString dbPath = MosaicDB::surfaceDbPath();
-    if (!MosaicDB::removeDbFiles(dbPath)) {
-        qWarning() << "Failed to cleanup previous mosaic cache" << dbPath;
-    }
-
-    filePath_ = dbPath;
-
-    openDB();
 }
 
 void DataProcessor::onSendDataRectRequest(float minX, float minY, float maxX, float maxY)
@@ -2614,6 +2604,9 @@ void DataProcessor::onDbSaveTiles(const QHash<TileKey, SurfaceTile> &tiles)
         hotCache_.onSendSavedTiles(ackKeys);
         return;
     }
+
+    openDB();
+
     emit dbSaveTiles(engineVer_, tiles, true, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
 }
 
