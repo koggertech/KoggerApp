@@ -192,6 +192,13 @@ Column {
         store: root.store
     }
 
+    // ── Video ──────────────────────────────────────────────────────────────
+
+    VideoSettingsPage {
+        width: root.groupWidth
+        store: root.store
+    }
+
     // ── Files ──────────────────────────────────────────────────────────────
 
     FilesSettingsPage {

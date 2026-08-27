@@ -41,6 +41,7 @@ qt_add_qml_module(kogger_app
         PaneEditorChrome.qml
         PaneFrame.qml
         PaneInputBridge.qml
+        PaneVideoWindow.qml
         PowerOffConfirmOverlay.qml
         ParamCard.qml
         ParamCardGroup.qml
@@ -72,6 +73,8 @@ qt_add_qml_module(kogger_app
         UsblSpin.qml
         UsblStateBadge.qml
         UsblTriggerEditor.qml
+        VideoLayer.qml
+        VideoSettingsPage.qml
         WidgetCard.qml
         WidgetCellContent.qml
         WidgetDragHandle.qml

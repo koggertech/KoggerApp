@@ -47,8 +47,6 @@ property real edgeResizeGhostCoord: 0       // workspace-axis coord of ghost spl
 property real edgeResizeGhostSplitCoord: 0  // split-coord to apply on commit
 property bool editableMode: false
 property int maximizedLeafId: -1
-property int lastTappedLeafId: -1
-property real lastTapTimestamp: 0
 property bool settingsPanelOpen: false
 property bool filePathFocusRequested: false
 property bool recordingFocusRequested: false
@@ -934,6 +932,19 @@ property alias boatTrackVisible:   scene3dLayerVisibility.boatTrackCheckButton
 property alias bottomTrackVisible: scene3dLayerVisibility.bottomTrackCheckButton
 property alias isobathsVisible:    scene3dLayerVisibility.isobathsCheckButton
 property alias mosaicVisible:      scene3dLayerVisibility.mosaicViewCheckButton
+
+property Settings videoStore: Settings {
+    id: videoStore
+    category: "main/video"
+    property string urlStored: ""
+    property int fillModeStored: 0
+}
+property alias videoUrl: videoStore.urlStored
+property alias videoFillMode: videoStore.fillModeStored
+property string videoActiveUrl: ""
+property string videoStatusText: ""
+property int videoSourceWidth: 0
+property int videoSourceHeight: 0
 
 // Interface pref: hide echogram-settings controls whose data type isn't in the
 // dataset (default on). Toggled from the Interface settings group.
@@ -3399,6 +3410,7 @@ function normalizeAndFixPaneModes(tree, setDefault3D) {
 
     var nextTree = tree
     var threeDLeafIds = []
+    var videoLeafIds = []
     for (var i = 0; i < ids.length; ++i) {
         var leafId = ids[i]
         var pane = paneByLeafId(nextTree, leafId)
@@ -3415,6 +3427,8 @@ function normalizeAndFixPaneModes(tree, setDefault3D) {
 
         if (mode === "3D")
             threeDLeafIds.push(leafId)
+        else if (mode === "Video")
+            videoLeafIds.push(leafId)
     }
 
     if (threeDLeafIds.length > 1) {
@@ -3424,6 +3438,15 @@ function normalizeAndFixPaneModes(tree, setDefault3D) {
                 nextTree = updatePaneInLeaf(nextTree, threeDLeafIds[j], paneWithMode(moveOutPane, "2D"))
         }
         threeDLeafIds = [threeDLeafIds[0]]
+    }
+
+    if (videoLeafIds.length > 1) {
+        for (var v = 1; v < videoLeafIds.length; ++v) {
+            var extraVideoPane = paneByLeafId(nextTree, videoLeafIds[v])
+            if (extraVideoPane)
+                nextTree = updatePaneInLeaf(nextTree, videoLeafIds[v], paneWithMode(extraVideoPane, "2D"))
+        }
+        videoLeafIds = [videoLeafIds[0]]
     }
 
     if (setDefault3D && threeDLeafIds.length === 0) {
@@ -4293,15 +4316,6 @@ function toggleLeafMaximize(leafId) {
 
 function handleLeafTap(leafId) {
     activeLeafId = leafId
-    var now = Date.now()
-    if (!editableMode && lastTappedLeafId === leafId && now - lastTapTimestamp <= doubleTapIntervalMs) {
-        toggleLeafMaximize(leafId)
-        lastTappedLeafId = -1
-        lastTapTimestamp = 0
-        return
-    }
-    lastTappedLeafId = leafId
-    lastTapTimestamp = now
 }
 
 function applyPaneModeSelection(leafId, mode) {
@@ -4321,8 +4335,14 @@ function applyPaneModeSelection(leafId, mode) {
             return
     }
 
+    if (targetMode === "Video") {
+        var currentVideoLeaf = firstLeafIdByMode(nextTree, "Video")
+        if (currentVideoLeaf !== -1 && currentVideoLeaf !== leafId)
+            return
+    }
+
     if (targetMode === "2D") {
-        var currentPaneMode = (targetPane && targetPane.mode === "3D") ? "3D" : "2D"
+        var currentPaneMode = normalizedPaneMode(targetPane.mode)
         if (currentPaneMode !== "2D") {
             var projected = paneCountByMode("2D") + 1
                           + (globalPopupMode === "2D" ? 1 : 0)
@@ -4339,6 +4359,27 @@ function applyPaneModeSelection(leafId, mode) {
     layoutTree = nextTree
     removeModePickerLeafId(leafId)
     rebuildLayoutCaches()
+}
+
+function videoLeafId() {
+    return firstLeafIdByMode(layoutTree, "Video")
+}
+
+function openVideoUrl(url) {
+    var trimmed = ("" + url).trim()
+    if (!trimmed.length)
+        return
+
+    videoStatusText = ""
+    videoUrl = trimmed
+    videoActiveUrl = trimmed
+}
+
+readonly property bool videoPaneExists: videoLeafId() !== -1
+
+function stopVideo() {
+    videoActiveUrl = ""
+    videoStatusText = ""
 }
 
 function swapLeafPanes(leafA, leafB) {

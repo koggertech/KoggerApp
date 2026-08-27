@@ -9,10 +9,16 @@ Item {
     property bool active: true
     property var workspaceRoot: null
 
+    readonly property string paneMode: paneData && paneData.mode === "3D" ? "3D"
+                                     : paneData && paneData.mode === "Video" ? "Video"
+                                     : "2D"
+
     Loader {
         anchors.fill: parent
         active: root.active
-        sourceComponent: root.paneData && root.paneData.mode === "3D" ? pane3DComponent : pane2DComponent
+        sourceComponent: root.paneMode === "3D" ? pane3DComponent
+                       : root.paneMode === "Video" ? paneVideoComponent
+                       : pane2DComponent
     }
 
     Component {
@@ -30,6 +36,17 @@ Item {
         id: pane3DComponent
 
         Pane3DWindow {
+            rotateEnabled: root.rotateEnabled
+            workspaceRoot: root.workspaceRoot
+            leafId: root.leafId
+            paneData: root.paneData
+        }
+    }
+
+    Component {
+        id: paneVideoComponent
+
+        PaneVideoWindow {
             rotateEnabled: root.rotateEnabled
             workspaceRoot: root.workspaceRoot
             leafId: root.leafId

@@ -23,7 +23,20 @@ Item {
     property int active3DLeafId: -1
     onActive3DLeafIdChanged: if (store) store.active3DLeafId = active3DLeafId
     property var active3DPane: null   // current Pane3DWindow, for ESC routing
+    property Item activeVideoHostItem: null
+    property int activeVideoLeafId: -1
     readonly property alias scene3dViewItem: scene3dView
+    readonly property int videoSourceWidth: videoLayer.sourceWidth
+    readonly property int videoSourceHeight: videoLayer.sourceHeight
+    readonly property bool videoHasFrame: videoLayer.hasFrame
+    onVideoSourceWidthChanged: if (store) store.videoSourceWidth = videoSourceWidth
+    onVideoSourceHeightChanged: if (store) store.videoSourceHeight = videoSourceHeight
+    onVideoHasFrameChanged: {
+        if (videoHasFrame)
+            videoLog("first frame " + videoSourceWidth + "x" + videoSourceHeight)
+        else
+            videoLog("no frame")
+    }
 
     property var primaryPlotItem: null
     property var secondaryPlotItem: null
@@ -117,8 +130,13 @@ Item {
         id: inputStateObject
     }
 
+    function videoLog(msg) {
+        if (typeof core !== "undefined" && core)
+            core.consoleInfo("VIDEO: " + msg)
+    }
+
     function normalizedPaneMode(value) {
-        return value === "3D" ? "3D" : "2D"
+        return value === "3D" ? "3D" : value === "Video" ? "Video" : "2D"
     }
 
     function copyArray(values) {
@@ -468,20 +486,31 @@ Item {
                 active3DLeafId = -1
                 active3DHostItem = null
             }
+            if (activeVideoLeafId === leafId) {
+                activeVideoLeafId = -1
+                activeVideoHostItem = null
+            }
             return
         }
 
         var mode = normalizedPaneMode(topEntry.mode)
+
         if (mode === "3D") {
             active3DLeafId = leafId
             active3DHostItem = topEntry.hostItem
-            return
-        }
-
-        if (active3DLeafId === leafId) {
+        } else if (active3DLeafId === leafId) {
             active3DLeafId = -1
             if (active3DHostItem === topEntry.hostItem)
                 active3DHostItem = null
+        }
+
+        if (mode === "Video") {
+            activeVideoLeafId = leafId
+            activeVideoHostItem = topEntry.hostItem
+        } else if (activeVideoLeafId === leafId) {
+            activeVideoLeafId = -1
+            if (activeVideoHostItem === topEntry.hostItem)
+                activeVideoHostItem = null
         }
     }
 
@@ -550,6 +579,12 @@ Item {
         id: renderRoot
         anchors.fill: parent
         z: -10
+
+        VideoLayer {
+            id: videoLayer
+            anchors.fill: parent
+            workspaceItem: workspace
+        }
 
         GraphicsScene3dView {
             id: scene3dView

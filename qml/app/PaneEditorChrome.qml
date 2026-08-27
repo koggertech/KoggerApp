@@ -114,7 +114,7 @@ Item {
                 fillPressedColor: paneFrame.menuButtonPressedColor
                 borderColor: paneFrame.menuButtonBorderColor
                 borderHoverColor: paneFrame.menuButtonHoverBorderColor
-                glyph: paneFrame.paneData.mode === "3D" ? "3D" : "2D"
+                glyph: paneFrame.paneData.mode === "3D" ? "3D" : paneFrame.paneData.mode === "Video" ? "VID" : "2D"
                 glyphPixelSize: Math.round(paneFrame.centerQuickIconSize * 0.34)
                 glyphColor: AppPalette.accentBorder
                 z: 33
@@ -282,6 +282,17 @@ Item {
                     opacity: enabled ? 1.0 : 0.45
                     onClicked: paneFrame.store.applyPaneModeSelection(paneFrame.leafId, "3D")
                 }
+
+                KButton {
+                    readonly property int existingVideoLeaf: paneFrame.store.firstLeafIdByMode(paneFrame.store.layoutTree, "Video")
+                    readonly property bool canChooseVideo: existingVideoLeaf === -1 || existingVideoLeaf === paneFrame.leafId
+                    text: qsTr("Video")
+                    width: Math.max(Math.round(76 * AppPalette.scale), implicitWidth)
+                    height: Math.max(Math.round(40 * AppPalette.scale), implicitHeight)
+                    enabled: canChooseVideo
+                    opacity: enabled ? 1.0 : 0.45
+                    onClicked: paneFrame.store.applyPaneModeSelection(paneFrame.leafId, "Video")
+                }
             }
 
             Text {
@@ -290,6 +301,15 @@ Item {
                          && paneFrame.store.firstLeafIdByMode(paneFrame.store.layoutTree, "3D") !== paneFrame.leafId)
                          || paneFrame.store.globalPopupMode === "3D"
                 text: qsTr("3D is already used in another pane")
+                color: "#C7D2FE"
+                font.pixelSize: Math.round(12 * AppPalette.scale)
+            }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: paneFrame.store.firstLeafIdByMode(paneFrame.store.layoutTree, "Video") !== -1
+                         && paneFrame.store.firstLeafIdByMode(paneFrame.store.layoutTree, "Video") !== paneFrame.leafId
+                text: qsTr("Video is already used in another pane")
                 color: "#C7D2FE"
                 font.pixelSize: Math.round(12 * AppPalette.scale)
             }
