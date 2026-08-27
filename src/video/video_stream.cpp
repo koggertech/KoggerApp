@@ -5,16 +5,21 @@
 #include <QVideoFrameFormat>
 #include <QVideoSink>
 #include <QDebug>
+#include <QStringList>
 
+#include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <thread>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/cpu.h>
 #include <libavutil/imgutils.h>
 #include <libavutil/log.h>
+#include <libavutil/mathematics.h>
 #include <libswscale/swscale.h>
 }
 
@@ -35,6 +40,14 @@ namespace {
 constexpr int kMaxRetries = 5;
 constexpr int kRetryDelayMs = 2000;
 constexpr int kMaxFramesInFlight = 2;
+constexpr qint64 kMaxLagMs = 1000;
+constexpr qint64 kResyncTimeoutMs = 3000;
+constexpr qint64 kResyncClusterMs = 5000;
+constexpr int kResyncBurstToEscalate = 3;
+constexpr int kMaxDecodeThreads = 4;
+
+constexpr const char* kProbeSize = "65536";
+constexpr const char* kAnalyzeDurationUs = "500000";
 
 constexpr const char* kSocketTimeoutUs = "5000000";
 
@@ -48,6 +61,18 @@ QVideoFrameFormat::PixelFormat toQtPixelFormat(AVPixelFormat format)
     case AV_PIX_FMT_BGRA:     return QVideoFrameFormat::Format_BGRA8888;
     default:                  return QVideoFrameFormat::Format_Invalid;
     }
+}
+
+QString threadTypeName(int type)
+{
+    QStringList parts;
+    if (type & FF_THREAD_FRAME) {
+        parts << QStringLiteral("frame");
+    }
+    if (type & FF_THREAD_SLICE) {
+        parts << QStringLiteral("slice");
+    }
+    return parts.isEmpty() ? QStringLiteral("single") : parts.join(QLatin1Char('+'));
 }
 
 QString avError(int code)
@@ -232,6 +257,8 @@ void VideoStream::openStream()
         av_dict_set(&opts, "timeout", kSocketTimeoutUs, 0);
         av_dict_set(&opts, "max_delay", "200000", 0);
         av_dict_set(&opts, "fflags", "nobuffer", 0);
+        av_dict_set(&opts, "probesize", kProbeSize, 0);
+        av_dict_set(&opts, "analyzeduration", kAnalyzeDurationUs, 0);
 
         int rc = avformat_open_input(&fmt, location.constData(), nullptr, &opts);
         av_dict_free(&opts);
@@ -262,20 +289,39 @@ void VideoStream::openStream()
 
         AVStream* stream = fmt->streams[videoIndex];
         const AVCodec* codec = avcodec_find_decoder(stream->codecpar->codec_id);
-        AVCodecContext* dec = codec ? avcodec_alloc_context3(codec) : nullptr;
-        if (!dec || avcodec_parameters_to_context(dec, stream->codecpar) < 0
-                 || avcodec_open2(dec, codec, nullptr) < 0) {
-            if (dec) {
-                avcodec_free_context(&dec);
+        const int decodeThreads = std::min(av_cpu_count(), kMaxDecodeThreads);
+
+        const auto openDecoder = [codec, stream, decodeThreads](int threadType) -> AVCodecContext* {
+            AVCodecContext* ctx = codec ? avcodec_alloc_context3(codec) : nullptr;
+            if (!ctx) {
+                return nullptr;
             }
+            if (avcodec_parameters_to_context(ctx, stream->codecpar) < 0) {
+                avcodec_free_context(&ctx);
+                return nullptr;
+            }
+            ctx->thread_count = decodeThreads;
+            ctx->thread_type = threadType;
+            if (avcodec_open2(ctx, codec, nullptr) < 0) {
+                avcodec_free_context(&ctx);
+                return nullptr;
+            }
+            return ctx;
+        };
+
+        AVCodecContext* dec = openDecoder(FF_THREAD_SLICE);
+        if (!dec) {
             avformat_close_input(&fmt);
             post([this]() { handlePipelineError(tr("no decoder for this stream")); });
             return;
         }
 
-        qInfo().noquote() << QStringLiteral("VIDEO: decoder %1, threads %2")
-                                 .arg(QString::fromUtf8(codec ? codec->name : "?"))
-                                 .arg(dec->thread_count);
+        qInfo().noquote() << QStringLiteral("VIDEO: decoder %1, cores %2, threads %3 (%4)")
+                                 .arg(QString::fromUtf8(codec->name))
+                                 .arg(av_cpu_count())
+                                 .arg(dec->thread_count > 0 ? QString::number(dec->thread_count)
+                                                            : QStringLiteral("auto"))
+                                 .arg(threadTypeName(dec->active_thread_type));
 
         AVPacket* packet = av_packet_alloc();
         AVFrame* frame = av_frame_alloc();
@@ -283,6 +329,25 @@ void VideoStream::openStream()
         SwsContext* scaler = nullptr;
         int postedWidth = 0;
         int postedHeight = 0;
+
+        const AVRational streamTimeBase = stream->time_base;
+        const bool lagGuardEnabled = streamTimeBase.num > 0 && streamTimeBase.den > 0;
+        if (!lagGuardEnabled) {
+            qWarning().noquote()
+                << QStringLiteral("VIDEO: time base %1/%2 unusable, latency guard off")
+                       .arg(streamTimeBase.num)
+                       .arg(streamTimeBase.den);
+        }
+        std::chrono::steady_clock::time_point wallBase{};
+        qint64 streamBaseMs = 0;
+        bool lagBaseValid = false;
+        bool awaitingKeyframe = false;
+        std::chrono::steady_clock::time_point resyncStart{};
+        std::chrono::steady_clock::time_point lastResync{};
+        bool haveLastResync = false;
+        int resyncBurst = 0;
+        bool frameThreading = false;
+        bool revertToLowLatency = false;
 
         while (!backend_->stopRequested.load()) {
             rc = av_read_frame(fmt, packet);
@@ -295,6 +360,99 @@ void VideoStream::openStream()
             if (packet->stream_index != videoIndex) {
                 av_packet_unref(packet);
                 continue;
+            }
+
+            if (revertToLowLatency) {
+                revertToLowLatency = false;
+                AVCodecContext* leaner = openDecoder(FF_THREAD_SLICE);
+                if (leaner) {
+                    avcodec_free_context(&dec);
+                    dec = leaner;
+                    frameThreading = false;
+                    resyncBurst = 0;
+                    haveLastResync = false;
+                    lagBaseValid = false;
+                    awaitingKeyframe = true;
+                    resyncStart = std::chrono::steady_clock::now();
+                    qInfo().noquote()
+                        << QStringLiteral("VIDEO: source now %1x%2, back to slice threading")
+                               .arg(postedWidth)
+                               .arg(postedHeight);
+                }
+            }
+
+            if (awaitingKeyframe) {
+                const qint64 waitedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                            std::chrono::steady_clock::now() - resyncStart).count();
+                const bool giveUp = waitedMs > kResyncTimeoutMs;
+                if (!(packet->flags & AV_PKT_FLAG_KEY) && !giveUp) {
+                    av_packet_unref(packet);
+                    continue;
+                }
+                if (giveUp) {
+                    qWarning().noquote()
+                        << QStringLiteral("VIDEO: no keyframe in %1 ms, resuming without one")
+                               .arg(waitedMs);
+                }
+                avcodec_flush_buffers(dec);
+                awaitingKeyframe = false;
+                lagBaseValid = false;
+            }
+
+            if (lagGuardEnabled && packet->pts != AV_NOPTS_VALUE) {
+                const qint64 ptsMs =
+                    av_rescale_q(packet->pts, streamTimeBase, AVRational{1, 1000});
+                const auto now = std::chrono::steady_clock::now();
+                if (!lagBaseValid) {
+                    wallBase = now;
+                    streamBaseMs = ptsMs;
+                    lagBaseValid = true;
+                }
+                else {
+                    const qint64 wallMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                              now - wallBase).count();
+                    const qint64 lagMs = wallMs - (ptsMs - streamBaseMs);
+                    if (lagMs > kMaxLagMs) {
+                        qInfo().noquote()
+                            << QStringLiteral("VIDEO: behind by %1 ms, resync to keyframe")
+                                   .arg(lagMs);
+                        awaitingKeyframe = true;
+                        resyncStart = now;
+
+                        const qint64 sinceLastMs = haveLastResync
+                            ? std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  now - lastResync).count()
+                            : -1;
+                        resyncBurst = (sinceLastMs >= 0 && sinceLastMs < kResyncClusterMs)
+                                          ? resyncBurst + 1
+                                          : 1;
+                        haveLastResync = true;
+                        lastResync = now;
+
+                        if (!frameThreading && resyncBurst >= kResyncBurstToEscalate) {
+                            AVCodecContext* faster =
+                                openDecoder(FF_THREAD_FRAME | FF_THREAD_SLICE);
+                            if (faster) {
+                                avcodec_free_context(&dec);
+                                dec = faster;
+                                frameThreading = true;
+                                qInfo().noquote()
+                                    << QStringLiteral("VIDEO: %1 resyncs, enabling frame "
+                                                      "threading, %2 threads (%3)")
+                                           .arg(resyncBurst)
+                                           .arg(dec->thread_count)
+                                           .arg(threadTypeName(dec->active_thread_type));
+                            }
+                        }
+
+                        av_packet_unref(packet);
+                        continue;
+                    }
+                    if (lagMs < -kMaxLagMs) {
+                        wallBase = now;
+                        streamBaseMs = ptsMs;
+                    }
+                }
             }
 
             rc = avcodec_send_packet(dec, packet);
@@ -341,6 +499,9 @@ void VideoStream::openStream()
                 }
 
                 if (out->width != postedWidth || out->height != postedHeight) {
+                    if (postedWidth > 0 && frameThreading) {
+                        revertToLowLatency = true;
+                    }
                     postedWidth = out->width;
                     postedHeight = out->height;
                     const int w = postedWidth;
