@@ -1304,13 +1304,20 @@ console.log("the acoustic-nodes panel");
 
     // The kind discriminator, and the one thing that must never regress about it: a def written
     // before kinds existed has no `kind` and has to keep loading as a grid.
-    ok("the store knows both kinds", /widgetKinds:\s*\["grid",\s*"usblNodes"\]/.test(store));
-    ok("...and treats an absent kind as a grid",
-       /kind === "usblNodes"\)\s*\?\s*"usblNodes"\s*:\s*"grid"/.test(store));
+    // Spelled as membership rather than as the exact list: a third kind (stand) has since been
+    // added, and an assertion on the literal two-element list fails for a change that breaks
+    // nothing it was defending.
+    ok("the store knows the nodes kind",
+       /widgetKinds:\s*\[[^\]]*"grid"[^\]]*"usblNodes"[^\]]*\]/.test(store));
+    ok("...and treats an absent kind as a grid", (() => {
+        const fn = store.slice(store.indexOf("function widgetKindOf"));
+        const body = fn.slice(0, fn.indexOf("\n}"));
+        return body.includes('=== "usblNodes"') && /return "grid"\s*$/.test(body.trim());
+    })());
     ok("a nodes def is normalized without a grid",
        /raw\.kind === "usblNodes"/.test(store));
     ok("MainWindow picks the popup by kind",
-       /widgetSlot\._wdef\.kind === "usblNodes"\)\s*[\s\S]{0,40}usblNodesPanelComp/.test(main));
+       /kind === "usblNodes"\s*\?\s*usblNodesPanelComp/.test(main));
     // A Loader sits between the Repeater and the popup now, and uiStateReapplied walks the
     // Repeater's items -- so the delegate has to forward syncFromStore or restored layouts
     // stop reaching the panels.

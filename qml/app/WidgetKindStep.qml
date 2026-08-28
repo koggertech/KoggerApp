@@ -1,9 +1,10 @@
 import QtQuick 2.15
 import kqml_types 1.0
 
-// Step 0 of the panel wizard: which KIND of panel. Two, and they are genuinely different
-// objects rather than two presets of one -- a field grid has a size and cells to lay out, an
-// acoustic-nodes panel has neither, because its rows come from the USBL plan at runtime.
+// Step 0 of the panel wizard: which KIND of panel. Three, and they are genuinely different
+// objects rather than presets of one -- a field grid has a size and cells to lay out, an
+// acoustic-nodes panel has neither because its rows come from the USBL plan at runtime, and a
+// stand panel has no cells either but carries a configuration and takes input.
 //
 // It is the first step and not a toggle inside the others because the two wizards share no
 // page after this one. Editing an existing panel skips it: the kind is not something you
@@ -81,5 +82,16 @@ Column {
         title: qsTr("Acoustic nodes")
         subtitle: qsTr("One row per node in the USBL plan, with its range, SNR and state. "
                      + "The panel grows and shrinks with the plan.")
+    }
+
+    KindCard {
+        // Hidden outright, not disabled: an operator with no stand should not learn that the
+        // kind exists, and a greyed card is an invitation to ask why. Hidden again once one
+        // exists -- the app drives one stand, and two panels would each hold a scan for it.
+        visible: !!(step.store && step.store.standAvailable && !step.store.hasStandPanel)
+        kind: "stand"
+        title: qsTr("Stand")
+        subtitle: qsTr("Configure and run a calibration scan, and see what the stand was last "
+                     + "told. The only place a stand is driven from.")
     }
 }

@@ -740,10 +740,12 @@ Column {
                     readonly property var def: (widgetIndex >= 0 && widgetIndex < root.store.widgets.length) ? root.store.widgets[widgetIndex] : null
                     readonly property bool shown: !!(root.store && widgetRow.def && root.store.widgetShown(widgetRow.def.id))
 
+                    visible: !!(root.store && root.store.widgetListed(widgetRow.def))
                     label: qsTr("Panel %1").arg(widgetRow.widgetIndex + 1)
                     labelColor: shown ? "#FDE68A" : AppPalette.textStrong
                     caption: !widgetRow.def ? ""
                            : widgetRow.def.kind === "usblNodes" ? qsTr("Acoustic nodes")
+                           : widgetRow.def.kind === "stand"     ? qsTr("Stand control")
                                                                 : (widgetRow.def.cols + "×" + widgetRow.def.rows)
                     fillColor: shown ? Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20) : "transparent"
                     verticalPadding: Tokens.spaceSm

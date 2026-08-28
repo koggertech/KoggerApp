@@ -105,6 +105,8 @@ enum ID : uint16_t {
     ID_GFW = 200,
     ID_BOAT_STATUS = 0xC9,
 
+    ID_STAND_SCAN = 240,
+
     sizer = 0xFFFF
 };
 

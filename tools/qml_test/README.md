@@ -4,10 +4,11 @@
 node tools/qml_test/test_usbl_plan_logic.mjs
 node tools/qml_test/test_usbl_node_logic.mjs
 node tools/qml_test/test_usbl_field_logic.mjs
+node tools/qml_test/test_stand_logic.mjs
 ```
 
-521 assertions over the three USBL logic modules — no Qt, no window, no GPU, ~0.3 s for all
-three. Exit 0 = all pass.
+765 assertions over four logic modules — no Qt, no window, no GPU, well under a second for all
+four. Exit 0 = all pass.
 
 **215 Â· [UsblPlanLogic.js](../../qml/app/UsblPlanLogic.js)** â€” what the plan IS. Every UI
 defect the feature shipped is a rule in here, and so is every invariant the model rests on:
@@ -91,6 +92,30 @@ Both USBL suites additionally assert against **UsblGroup.qml's source text**: th
 translation tables name every code the logic can return and nothing more, and that every
 transition the reducer defines is actually driven from the UI. A code with no word renders
 blank and a reducer nothing calls is correct and unreachable â€” both invisible in a screenshot.
+
+**101 · [StandLogic.js](../../qml/app/StandLogic.js)** — what a calibration scan IS, and what
+the panel may say about it. Four groups. **The firmware's own refusals** are met here rather than
+on the wire, because the stand reports nothing: a rejected Start is silence, indistinguishable
+from a stand that is slow to move. **The point count** is what survives of the scan drawing that
+was cut — an indivisible range still shows up as a count that is not what the operator expected.
+**The stale marks** are the whole dirty signal: Start is the only write the stand takes, so
+between an edit and the next Start the form and the device disagree, and with no banner and no
+readback the struck-through marks are the only place the panel says so. One edit must strike
+exactly the marks that depend on it — changing the scan order strikes two, because it renames the
+axes and reshapes the grid.
+
+The fourth group asserts over **source text**, for rules invisible in both a behaviour test and a
+screenshot: that editing a field sends nothing (`_writeCfg` may persist but never transmit),
+that Start is gated on validity and capability but never on a run state the app cannot observe,
+that Pause and Resume are two controls rather than one that changes face, that no progress
+readout has appeared, that every long string in the panel is a tooltip — a line that toggles with
+state changes a floating panel's height while it is being read — and that the panel kind is
+hidden without a stand and refuses a second panel. As in the USBL suites, the badge row's
+translation table must name exactly the mark codes the logic can return and nothing more.
+
+One defect was found by writing them: `validate` normalised its argument before checking it, so
+the clamp repaired every rejectable scan and all four branches were unreachable. It now checks
+the configuration as given.
 
 ## Why the logic is plain JS and not QML
 

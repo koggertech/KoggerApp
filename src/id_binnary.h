@@ -632,6 +632,73 @@ protected:
 
 
 
+// Calibration stand. Control-only: the device answers a command and publishes nothing else, so
+// this class sends and never mirrors device state — unlike every setup command around it.
+//
+// Frames go out through binFrameOut, not hashBinFrameOut. The hash path re-sends until the
+// device acknowledges, which is right for a setting and wrong here: a resent Start restarts a
+// physical scan.
+class IDBinStandScan : public IDBin
+{
+    Q_OBJECT
+public:
+    enum Command : U1 {
+        CmdNop    = 0,
+        CmdStart  = 1,
+        CmdStop   = 2,
+        CmdPause  = 3,
+        CmdResume = 4,
+        CmdHome   = 5
+    };
+
+    enum ScanOrder : U1 {
+        AzimuthToElevation = 0,
+        ElevationToAzimuth = 1
+    };
+
+    enum OptionsBits : U1 {
+        OptReverseInner    = 0x01,
+        OptContinuousInner = 0x02
+    };
+
+    struct Scan {
+        U1 order      = AzimuthToElevation;
+        U1 options    = 0;
+        U2 fires      = 1;
+        U2 cycles     = 1;
+        U2 settleMs   = 0;
+        U2 postFireMs = 0;
+        S4 innerStart = 0;
+        S4 innerEnd   = 0;
+        S4 innerStep  = 0;
+        S4 outerStart = 0;
+        S4 outerEnd   = 0;
+        S4 outerStep  = 0;
+    };
+
+    explicit IDBinStandScan() : IDBin() {}
+
+    ID id() override { return ID_STAND_SCAN; }
+    Resp parsePayload(FrameParser &proto) override;
+
+    // The capability probe. The command does nothing on a device that has a stand and is
+    // answered with an unknown-id response by one that does not — which is the only signal
+    // available, since there is no readback to request.
+    void probe();
+
+    void start(const Scan &scan);
+    void stop()   { command(CmdStop); }
+    void pause()  { command(CmdPause); }
+    void resume() { command(CmdResume); }
+    void home()   { command(CmdHome); }
+
+protected:
+    void command(Command cmd);
+    void writeScan(Command cmd, const Scan &scan);
+};
+
+
+
 class IDBinDevSync : public IDBin
 {
     Q_OBJECT

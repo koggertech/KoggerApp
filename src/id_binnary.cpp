@@ -738,6 +738,50 @@ void IDBinPwmRoute::setRoute(U1 out1, U1 out2, U1 out3) {
 }
 
 
+Resp IDBinStandScan::parsePayload(FrameParser &proto) {
+    Q_UNUSED(proto)
+    // Nothing to read: the stand publishes no state. Everything this class learns arrives as
+    // the response code to a command it sent, which IDBin::parse handles before this point.
+    return respOk;
+}
+
+void IDBinStandScan::command(Command cmd) {
+    Scan idle;
+    idle.innerStep = 1;
+    idle.outerStep = 1;
+    writeScan(cmd, idle);
+}
+
+void IDBinStandScan::probe() {
+    command(CmdNop);
+}
+
+void IDBinStandScan::start(const Scan &scan) {
+    writeScan(CmdStart, scan);
+}
+
+void IDBinStandScan::writeScan(Command cmd, const Scan &scan) {
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v0, id(), m_address);
+    id_out.write<U1>(static_cast<U1>(cmd));
+    id_out.write<U1>(scan.order);
+    id_out.write<U1>(scan.options);
+    id_out.write<U2>(scan.fires);
+    id_out.write<U2>(scan.cycles);
+    id_out.write<U2>(scan.settleMs);
+    id_out.write<U2>(scan.postFireMs);
+    id_out.write<S4>(scan.innerStart);
+    id_out.write<S4>(scan.innerEnd);
+    id_out.write<S4>(scan.innerStep);
+    id_out.write<S4>(scan.outerStart);
+    id_out.write<S4>(scan.outerEnd);
+    id_out.write<S4>(scan.outerStep);
+    id_out.end();
+
+    emit binFrameOut(id_out);
+}
+
+
 Resp IDBinDevSync::parsePayload(FrameParser &proto) {
     if (proto.ver() != v0)         return respErrorVersion;
     if (proto.readAvailable() < 2) return respErrorPayload;
