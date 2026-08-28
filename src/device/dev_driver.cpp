@@ -66,6 +66,9 @@ DevDriver::DevDriver(QObject *parent)
     regID(idModemSolution = new IDBinModemSolution(), &DevDriver::receivedModemSolution);
 
     regID(idServoControl = new IDBinServoControl(), &DevDriver::receivedServoControl, true);
+    // Not a setup command: it is control-only, so it has nothing to answer a cold-start
+    // request with and must not take part in the sweep.
+    regID(idStandScan = new IDBinStandScan(), &DevDriver::receivedStandScan);
     regID(idPwmRoute = new IDBinPwmRoute(), &DevDriver::receivedPwmRoute, true);
     regID(idDevSync = new IDBinDevSync(), &DevDriver::receivedDevSync, true);
 
@@ -490,6 +493,44 @@ void DevDriver::setUartState(bool state) {
     }
 }
 
+void DevDriver::standStart(const QVariantMap& config) {
+    if (!idStandScan) return;
+
+    IDBinStandScan::Scan scan;
+    scan.order = (config.value("order").toString() == QStringLiteral("elAz"))
+                 ? IDBinStandScan::ElevationToAzimuth
+                 : IDBinStandScan::AzimuthToElevation;
+
+    U1 options = 0;
+    if (config.value("reverse").toBool())    options |= IDBinStandScan::OptReverseInner;
+    if (config.value("continuous").toBool()) options |= IDBinStandScan::OptContinuousInner;
+    scan.options = options;
+
+    scan.fires      = static_cast<U2>(config.value("fires", 1).toUInt());
+    scan.cycles     = static_cast<U2>(qMax(1u, config.value("cycles", 1).toUInt()));
+    scan.settleMs   = static_cast<U2>(config.value("settleMs", 0).toUInt());
+    scan.postFireMs = static_cast<U2>(config.value("postFireMs", 0).toUInt());
+
+    scan.innerStart = config.value("innerStart", 0).toInt();
+    scan.innerEnd   = config.value("innerEnd", 0).toInt();
+    scan.innerStep  = config.value("innerStep", 0).toInt();
+    scan.outerStart = config.value("outerStart", 0).toInt();
+    scan.outerEnd   = config.value("outerEnd", 0).toInt();
+    scan.outerStep  = config.value("outerStep", 0).toInt();
+
+    // The device rejects these, and a rejection reaches the operator as nothing at all — the
+    // stand reports no state. Refusing to send is the honest failure.
+    if (scan.innerStep == 0 || scan.outerStep == 0) return;
+    if ((options & IDBinStandScan::OptContinuousInner) && scan.fires > 1) return;
+
+    idStandScan->start(scan);
+}
+
+void DevDriver::standStop()   { if (idStandScan) idStandScan->stop(); }
+void DevDriver::standPause()  { if (idStandScan) idStandScan->pause(); }
+void DevDriver::standResume() { if (idStandScan) idStandScan->resume(); }
+void DevDriver::standHome()   { if (idStandScan) idStandScan->home(); }
+
 void DevDriver::setServoControlState(bool state) {
     if (state != servoControlState_) {
         servoControlState_ = state;
@@ -829,6 +870,11 @@ void DevDriver::stopConnection() {
     m_state.connect = false;
     m_processTimer.stop();
     m_devName = "...";
+    standProbeSent_ = false;
+    if (standSupported_) {
+        standSupported_ = false;
+        emit standChanged();
+    }
     if (idDevSync) {
         idDevSync->reset();
         m_devSyncDebounceTimer.stop();
@@ -1410,6 +1456,22 @@ void DevDriver::receivedServoControl(Parsers::Type type, Parsers::Version ver, P
     if (resp == respNone) { emit servoControlChanged(); }
 }
 
+// The probe's answer, and the only thing the app ever learns about a stand. An unknown-id
+// response is a build without one; anything else means the command reached a parser that owns
+// it — including a rejected payload, which is a stand refusing this particular scan.
+void DevDriver::receivedStandScan(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
+    if (resp == respNone) return;
+
+    const bool supported = (resp != respErrorID);
+    if (supported != standSupported_) {
+        standSupported_ = supported;
+        emit standChanged();
+    }
+}
+
 void DevDriver::receivedPwmRoute(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp) {
     Q_UNUSED(type);
     Q_UNUSED(ver);
@@ -1922,6 +1984,13 @@ void DevDriver::process() {
                     requestStreamList();
                 }
 
+                // Recorders only, once per connection. Every other device would be asked about
+                // a command it has never heard of, and the answer would not change.
+                if(isRecorder() && !standProbeSent_) {
+                    standProbeSent_ = true;
+                    if(idStandScan) idStandScan->probe();
+                }
+
                 if(m_state.in_boot && idVersion->bootMode() == IDBinVersion::BootModeFirmware) {
                     idVersion->requestAll();
                 }
@@ -1952,6 +2021,11 @@ void DevDriver::process() {
         } else {
             restartState();
             streamListRequested_ = false;
+            standProbeSent_ = false;
+            if(standSupported_) {
+                standSupported_ = false;
+                emit standChanged();
+            }
             idMark->setMark();
             idVersion->requestAll();
             //qDebug() << "Reset state";

@@ -653,6 +653,7 @@ Column {
                 required property int index
                 readonly property int widgetIndex: index
                 readonly property var def: (widgetIndex >= 0 && widgetIndex < root.store.widgets.length) ? root.store.widgets[widgetIndex] : null
+                visible: !!(root.store && root.store.widgetListed(def))
                 width: parent.width; height: widgetCardView.implicitHeight
 
                 WidgetCard {

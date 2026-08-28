@@ -4,6 +4,7 @@ import kqml_types 1.0
 import "LayoutRules.js" as Rules
 import "LayoutTree.js" as Tree
 import "LayoutResize.js" as Resize
+import "StandLogic.js" as Stand
 
 QtObject {
     id: store
@@ -369,6 +370,57 @@ readonly property int resolvedDeviceIndex: {
 
 readonly property var activeDevice: (resolvedDeviceIndex >= 0 && resolvedDeviceIndex < activeDeviceList.length) ? activeDeviceList[resolvedDeviceIndex] : null
 
+// Whether ANY connected device has answered the stand probe. The stand panel kind is hidden
+// wherever this is false -- the wizard's kind list, the panel list, the scene -- so an operator
+// without a stand never learns the kind exists. It follows the devices rather than a snapshot:
+// DeviceManager re-emits it when a probe answers and when a device leaves.
+readonly property bool standAvailable: (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper)
+                                       ? deviceManagerWrapper.standAvailable : false
+
+// Whether a panel is offered to the operator at all. A stand panel with no stand behind it is
+// not listed, not shown in the quick-actions menu and not drawn -- it stays in the def list so
+// that plugging the stand back in restores it with its scan intact.
+function widgetListed(def) {
+    if (!def) return false
+    return !(def.kind === "stand" && !standAvailable)
+}
+
+readonly property int listedWidgetCount: {
+    var n = 0
+    for (var i = 0; i < widgets.length; ++i)
+        if (widgetListed(widgets[i])) ++n
+    return n
+}
+
+// A stand panel is only ever drawn on the device that has the stand, not on whichever device is
+// active in the settings pane.
+//
+// FIRST MATCH, DELIBERATELY. The app addresses one stand: a panel carries a scan, not a device,
+// so a second stand-capable Recorder is counted but not driven. The panel says which device it
+// has when there is more than one, rather than picking silently.
+readonly property var standDevice: {
+    var list = activeDeviceList
+    for (var i = 0; i < list.length; ++i)
+        if (list[i] && list[i].isStandSupport) return list[i]
+    return null
+}
+
+readonly property int standDeviceCount: {
+    var n = 0
+    for (var i = 0; i < activeDeviceList.length; ++i)
+        if (activeDeviceList[i] && activeDeviceList[i].isStandSupport) ++n
+    return n
+}
+
+// One stand, one panel. A second would carry its own scan and its own idea of what was last
+// sent, and both would be driving the same device -- so after either one starts a run, the other
+// reports a scan that is not running.
+readonly property bool hasStandPanel: {
+    for (var i = 0; i < widgets.length; ++i)
+        if (widgets[i] && widgets[i].kind === "stand") return true
+    return false
+}
+
 onActiveDeviceListChanged: {
     if (!activeDeviceList || activeDeviceList.length === 0) {
         if (activeDeviceIndex !== -1) setActiveDeviceIndex(-1)
@@ -541,11 +593,13 @@ function generateWidgetId() {
 // beacons answered cannot be a cell in that grid without breaking each of them separately, so
 // it is a different kind of panel that happens to reuse everything ELSE a panel has: the
 // position/scale/z instance, the shown map, docking, the list, the limit.
-readonly property var widgetKinds: ["grid", "usblNodes"]
+readonly property var widgetKinds: ["grid", "usblNodes", "stand"]
 function widgetKindOf(def) {
     // Absent means "grid": every blob written before kinds existed is one, and must load
     // unchanged rather than being dropped as malformed.
-    return (def && def.kind === "usblNodes") ? "usblNodes" : "grid"
+    if (def && def.kind === "usblNodes") return "usblNodes"
+    if (def && def.kind === "stand")     return "stand"
+    return "grid"
 }
 
 function normalizeWidgetDef(raw) {
@@ -560,6 +614,19 @@ function normalizeWidgetDef(raw) {
                  name: (typeof raw.name === "string") ? raw.name : "",
                  transparency: (typeof raw.transparency === "number" && isFinite(raw.transparency))
                                ? Math.max(0, Math.min(100, Math.round(raw.transparency))) : 0 }
+    }
+
+    if (raw.kind === "stand") {
+        // No cells and no grid either, and one thing the others do not carry: the scan itself.
+        // It lives in the def because the panel IS its configuration -- the stand keeps none
+        // between runs, so if the app forgets it the operator retypes it every session.
+        return { id: (typeof raw.id === "string" && raw.id.length) ? raw.id : "",
+                 kind: "stand",
+                 name: (typeof raw.name === "string") ? raw.name : "",
+                 transparency: (typeof raw.transparency === "number" && isFinite(raw.transparency))
+                               ? Math.max(0, Math.min(100, Math.round(raw.transparency))) : 0,
+                 expanded: raw.expanded === true,
+                 config: Stand.normalizeConfig(raw.config) }
     }
 
     var cols = Math.round(raw.cols)
@@ -719,6 +786,29 @@ function setWidgetShown(id, shown) {
 }
 
 function toggleWidgetShown(id) { setWidgetShown(id, !widgetShown(id)) }
+
+// The stand panel writes its own def: the scan is edited on the panel and has to survive a
+// restart, and which regime it was left in is part of how the operator left the scene.
+function _replaceWidgetDef(id, patch) {
+    if (!id) return
+    var next = widgets.slice(0)
+    for (var i = 0; i < next.length; ++i) {
+        if (next[i].id !== id) continue
+        var d = {}
+        for (var k in next[i]) d[k] = next[i][k]
+        for (var k2 in patch) d[k2] = patch[k2]
+        var norm = normalizeWidgetDef(d)
+        if (!norm) return
+        norm.id = id
+        next[i] = norm
+        widgets = next
+        saveWidgets()
+        return
+    }
+}
+
+function setWidgetStandConfig(id, cfg)  { _replaceWidgetDef(id, { config: Stand.normalizeConfig(cfg) }) }
+function setWidgetStandExpanded(id, on) { _replaceWidgetDef(id, { expanded: on === true }) }
 
 function widgetScale(id) { return widgetInstance(id).scale }
 
@@ -1504,14 +1594,16 @@ function openWidgetCreateSettings() { widgetEditIndex = -1; widgetDraftReset(); 
 function openWidgetEditSettings(index) {
     widgetEditIndex = index
     widgetDraftReset()
-    widgetEditStep = (widgetDraftKind === "usblNodes") ? 3 : 2
+    widgetEditStep = (widgetDraftKind === "usblNodes") ? 3
+                   : (widgetDraftKind === "stand")     ? 4 : 2
     _openSettingsSubPage("widgetEdit")
 }
 // Chosen on step 0. A grid still has a size to pick; the nodes panel has nothing to lay out,
 // so it goes straight to its own (short) page.
 function widgetDraftSetKind(kind) {
-    widgetDraftKind = (kind === "usblNodes") ? "usblNodes" : "grid"
-    widgetEditStep = (widgetDraftKind === "usblNodes") ? 3 : 1
+    widgetDraftKind = (kind === "usblNodes" || kind === "stand") ? kind : "grid"
+    widgetEditStep = (widgetDraftKind === "usblNodes") ? 3
+                   : (widgetDraftKind === "stand")     ? 4 : 1
 }
 
 function widgetDraftReset() {
@@ -1700,8 +1792,15 @@ function widgetDraftClearPreview() {
 
 function widgetDraftSave() {
     var isCreate = widgetEditIndex < 0
+    // The stand's scan and its regime are edited on the panel, not in this wizard, so an edit
+    // pass through here must carry them over rather than reset them to defaults.
+    var prev = (widgetEditIndex >= 0 && widgetEditIndex < widgets.length) ? widgets[widgetEditIndex] : null
     var draft = (widgetDraftKind === "usblNodes")
         ? { kind: "usblNodes", transparency: widgetDraftTransparency }
+        : (widgetDraftKind === "stand")
+        ? { kind: "stand", transparency: widgetDraftTransparency,
+            expanded: !!(prev && prev.expanded),
+            config: Stand.normalizeConfig(prev ? prev.config : null) }
         : { kind: "grid", cols: widgetDraftCols, rows: widgetDraftRows,
             transparency: widgetDraftTransparency, cells: widgetDraftCells }
     var id = saveWidget(draft)

@@ -56,7 +56,9 @@ Item {
     property bool widgetsEnabled: true
     readonly property bool _widgetsRevealOverride: _revealActiveKey === "widgets"
     readonly property bool showWidgets: widgetsEnabled || _widgetsRevealOverride
-    readonly property bool hasWidgets: !!(store && store.widgets && store.widgets.length > 0)
+    // Counted, not measured: a stand panel with no stand behind it is in store.widgets but is
+    // not offered, so the menu must not open on it or size itself for it.
+    readonly property bool hasWidgets: !!(store && store.listedWidgetCount > 0)
     property bool widgetsMenuOpen: false
     property var _widgetsSlot: null
     property bool consoleButtonEnabled: true
@@ -401,6 +403,7 @@ Item {
                             previewWidth: root.favoritePreviewWidth
                             previewHeight: root.favoritePreviewHeight
                             def: widgetDef
+                            visible: !!(root.store && root.store.widgetListed(widgetDef))
                             showText: false
                             selectionMode: true
                             selected: !!(root.store && widgetDef && root.store.widgetShown(widgetDef.id))
@@ -2180,8 +2183,8 @@ Item {
         readonly property int gap: Math.round(6 * root._s)
         readonly property int sidePad: Math.round(3 * root._s)
         readonly property int _listContentH: root.hasWidgets
-            ? root.store.widgets.length * root.favoriteItemHeight
-              + Math.max(0, root.store.widgets.length - 1) * root.favoriteItemSpacing
+            ? root.store.listedWidgetCount * root.favoriteItemHeight
+              + Math.max(0, root.store.listedWidgetCount - 1) * root.favoriteItemSpacing
             : 0
         readonly property int _bodyContentH: root.hasWidgets
             ? Math.min(root.favoriteListMaxHeight, _listContentH)

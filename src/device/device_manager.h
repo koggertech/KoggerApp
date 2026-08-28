@@ -30,6 +30,9 @@ public:
     Q_INVOKABLE int pilotArmState();
     Q_INVOKABLE int pilotModeState();
     QList<DevQProperty*> getDevList();
+    // True while any connected device has answered the stand probe. The stand panel kind is
+    // hidden everywhere this is false, so it has to follow the devices rather than a snapshot.
+    bool standAvailable();
     QList<DevQProperty*> getDevList(BoardVersion ver);
     int calcAverageChartLosses();
 
@@ -99,6 +102,7 @@ signals:
     void upgradeProgressChanged(int progressStatus);
     void deviceVersionChanged();
     void devChanged();
+    void standAvailableChanged();
     void streamChanged();
     void vruChanged();
     void writeProxyFrame(Parsers::FrameParser frame);

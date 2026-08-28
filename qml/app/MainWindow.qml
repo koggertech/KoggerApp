@@ -1209,8 +1209,10 @@ ApplicationWindow {
                 Loader {
                     id: slotLoader
                     anchors.fill: parent
-                    sourceComponent: (widgetSlot._wdef && widgetSlot._wdef.kind === "usblNodes")
-                                     ? usblNodesPanelComp : dataWidgetPanelComp
+                    sourceComponent: !widgetSlot._wdef ? dataWidgetPanelComp
+                                     : widgetSlot._wdef.kind === "usblNodes" ? usblNodesPanelComp
+                                     : widgetSlot._wdef.kind === "stand"     ? standPanelComp
+                                                                            : dataWidgetPanelComp
                 }
 
                 // BOTH COMPONENTS LIVE INSIDE THE DELEGATE, and they have to. An object created
@@ -1225,6 +1227,24 @@ ApplicationWindow {
                         store: workspaceStore
                         def: _wdef
                         popupVisible: !!_wdef && !_beingEdited && workspaceStore.widgetShown(_wdef.id)
+                        popupId: _wdef ? "widget:" + _wdef.id : ""
+                        siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+                        siblingIdList: ["btEdit", "profiles"]
+                    }
+                }
+
+                Component {
+                    id: standPanelComp
+                    StandPanelPopup {
+                        readonly property var _wdef: widgetSlot._wdef
+                        anchors.fill: parent
+                        store: workspaceStore
+                        def: _wdef
+                        // The panel acts on ONE device, unlike the other kinds, which read
+                        // device-agnostic caches. Without a stand-capable one it says so.
+                        dev: workspaceStore.standDevice
+                        popupVisible: !!_wdef && workspaceStore.standAvailable
+                                      && workspaceStore.widgetShown(_wdef.id)
                         popupId: _wdef ? "widget:" + _wdef.id : ""
                         siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
                         siblingIdList: ["btEdit", "profiles"]
