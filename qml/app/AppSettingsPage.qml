@@ -2035,6 +2035,7 @@ Column {
         collapsedByDefault: true
 
         Column {
+            id: videoWindowList
             width: parent.width
             spacing: Tokens.spaceMd
 
@@ -2046,71 +2047,29 @@ Column {
 
             Text {
                 width: parent.width
-                visible: parent.surfaces.length === 0
+                visible: videoWindowList.surfaces.length === 0
                 text: qsTr("No video windows displayed")
                 color: AppPalette.textMuted
                 font.pixelSize: Tokens.fontMd
                 wrapMode: Text.WordWrap
             }
 
-            Repeater {
-                model: parent.surfaces
+            KIsland {
+                visible: videoWindowList.surfaces.length > 0
 
-                delegate: Rectangle {
-                    id: videoRow
-                    required property var modelData
-                    width: parent.width
-                    height: Math.round(38 * AppPalette.scale)
-                    radius: Tokens.radiusLg
-                    color: videoMouse.containsMouse ? AppPalette.bgHover : AppPalette.bg
-                    border.width: Tokens.cardBorderWidth
-                    border.color: videoMouse.containsMouse ? AppPalette.borderHover : AppPalette.border
-                    Behavior on color        { ColorAnimation { duration: 110 } }
-                    Behavior on border.color { ColorAnimation { duration: 110 } }
+                Repeater {
+                    model: videoWindowList.surfaces
 
-                    activeFocusOnTab: true
-                    Keys.onReturnPressed: root.store.openVideoPaneSettings(modelData.contentId)
-                    Keys.onEnterPressed:  root.store.openVideoPaneSettings(modelData.contentId)
-                    Keys.onSpacePressed:  root.store.openVideoPaneSettings(modelData.contentId)
+                    delegate: KIslandRow {
+                        required property var modelData
 
-                    Text {
-                        anchors.left: parent.left
-                        anchors.leftMargin: Tokens.spaceMd
-                        anchors.right: videoChevron.left
-                        anchors.rightMargin: Tokens.spaceMd
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.label
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
-                        elide: Text.ElideRight
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    DisclosureIndicator {
-                        id: videoChevron
-                        anchors.right: parent.right
-                        anchors.rightMargin: Tokens.spaceMd
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.round(10 * AppPalette.scale)
-                        height: width
-                        expanded: false
-                        indicatorColor: AppPalette.textSecond
-                    }
-
-                    KFocusRing { id: videoFocusRing }
-
-                    MouseArea {
-                        id: videoMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onContainsMouseChanged: if (containsMouse && root.store && modelData.leafId >= 0)
-                                                    root.store.highlightedLeafId = modelData.leafId
-                        onPressed: videoFocusRing.suppress()
-                        onClicked: {
-                            videoRow.forceActiveFocus()
-                            root.store.openVideoPaneSettings(modelData.contentId)
-                        }
+                        label: modelData.label
+                        labelColor: root._bright
+                        chevron: true
+                        interactive: true
+                        onHoveredChanged: if (hovered && root.store && modelData.leafId >= 0)
+                                              root.store.highlightedLeafId = modelData.leafId
+                        onClicked: root.store.openVideoPaneSettings(modelData.contentId)
                     }
                 }
             }
@@ -2143,144 +2102,143 @@ Column {
                 wrapMode: Text.WordWrap
             }
 
-            Repeater {
-                model: root.echograms
-                delegate: Rectangle {
-                    id: echoRow
-                    required property var modelData
-                    width: parent.width
-                    height: Math.round(38 * AppPalette.scale)
-                    radius: Tokens.radiusLg
-                    color: navMouse.containsMouse ? AppPalette.bgHover : AppPalette.bg
-                    border.width: Tokens.cardBorderWidth
-                    border.color: navMouse.containsMouse ? AppPalette.borderHover : AppPalette.border
-                    Behavior on color       { ColorAnimation { duration: 110 } }
-                    Behavior on border.color { ColorAnimation { duration: 110 } }
+            KIsland {
+                visible: root.echograms.length > 0
 
-                    activeFocusOnTab: true
-                    Keys.onReturnPressed: root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
-                    Keys.onEnterPressed:  root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
-                    Keys.onSpacePressed:  root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
+                Repeater {
+                    model: root.echograms
 
-                    Text {
-                        anchors.left: parent.left
-                        anchors.leftMargin: Tokens.spaceMd
-                        anchors.right: navChevron.left
-                        anchors.rightMargin: Tokens.spaceMd
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.label
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
-                        elide: Text.ElideRight
-                        verticalAlignment: Text.AlignVCenter
-                    }
+                    delegate: KIslandRow {
+                        required property var modelData
 
-                    DisclosureIndicator {
-                        id: navChevron
-                        anchors.right: parent.right
-                        anchors.rightMargin: Tokens.spaceMd
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.round(10 * AppPalette.scale)
-                        height: width
-                        expanded: false
-                        indicatorColor: AppPalette.textSecond
-                    }
-
-                    KFocusRing { id: focusRing }
-
-                    MouseArea {
-                        id: navMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onContainsMouseChanged: if (containsMouse && !root.store.echogramSettingsActive)
-                                                    root.store.highlightedLeafId = modelData.key
-                        onPressed: focusRing.suppress()
-                        onClicked: { echoRow.forceActiveFocus(); root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key) }
+                        label: modelData.label
+                        labelColor: root._bright
+                        chevron: true
+                        interactive: true
+                        onHoveredChanged: if (hovered && !root.store.echogramSettingsActive)
+                                              root.store.highlightedLeafId = modelData.key
+                        onClicked: root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
                     }
                 }
             }
         }
 
-        ParamCardGroup {
-            width: parent.width
-            label: qsTr("Loupe")
-            checked: root.store ? root.store.echogramLoupeVisible : false
-            onToggled: function(v) { if (root.store) root.store.echogramLoupeVisible = v }
+        KIsland {
+            KIslandRow {
+                label: qsTr("Loupe")
+                labelColor: root._bright
+                interactive: true
+                onClicked: echogramLoupeSwitch.click()
 
-            RowLayout {
-                width: parent.width
-                spacing: Tokens.spaceMd
-                Text {
-                    text: qsTr("Size")
-                    color: root._bright
-                    font.pixelSize: Tokens.fontLg
-                    Layout.fillWidth: true
-                    verticalAlignment: Text.AlignVCenter
+                KSwitch {
+                    id: echogramLoupeSwitch
+                    flat: true
+                    checked: root.store ? root.store.echogramLoupeVisible : false
+                    onToggled: if (root.store) root.store.echogramLoupeVisible = checked
                 }
+            }
+
+            KIslandRow {
+                label: qsTr("Size")
+                labelColor: root._bright
+                verticalPadding: Tokens.spaceSm
+                showSeparator: false
+                open: root.store ? root.store.echogramLoupeVisible : false
+
                 KSpinBox {
-                    Layout.preferredWidth: Math.round(120 * AppPalette.scale)
+                    width: Math.round(120 * AppPalette.scale)
+                    height: Tokens.controlHMd
                     from: 1; to: 3; stepSize: 1
                     value: root.store ? root.store.echogramLoupeSize : 1
                     onValueModified: function(val) { if (root.store) root.store.echogramLoupeSize = val }
                 }
             }
 
-            RowLayout {
-                width: parent.width
-                spacing: Tokens.spaceMd
-                Text {
-                    text: qsTr("Zoom")
-                    color: root._bright
-                    font.pixelSize: Tokens.fontLg
-                    verticalAlignment: Text.AlignVCenter
-                }
-                KSlider {
-                    Layout.fillWidth: true
-                    from: 0; to: 300; stepSize: 1
-                    value: root.store ? root.store.echogramLoupeZoom : 100
-                    onValueModified: function(val) {
-                        if (!root.store) return
-                        root.store.echogramLoupeZoom = Math.round(val)
-                        root.store.echogramLoupePreview("update")
+            KIslandRow {
+                id: echogramLoupeZoomRow
+                label: qsTr("Zoom")
+                labelColor: root._bright
+                verticalPadding: Tokens.spaceSm
+                showSeparator: false
+                open: root.store ? root.store.echogramLoupeVisible : false
+                slotWidth: Math.round(240 * AppPalette.scale)
+
+                Item {
+                    width: echogramLoupeZoomRow.slotWidth
+                    height: echogramLoupeZoomLayout.implicitHeight
+
+                    RowLayout {
+                        id: echogramLoupeZoomLayout
+                        anchors.fill: parent
+                        spacing: Tokens.spaceSm
+
+                        KSlider {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            from: 0; to: 300; stepSize: 1
+                            value: root.store ? root.store.echogramLoupeZoom : 100
+                            onValueModified: function(val) {
+                                if (!root.store) return
+                                root.store.echogramLoupeZoom = Math.round(val)
+                                root.store.echogramLoupePreview("update")
+                            }
+                            onPressedChanged: {
+                                if (root.store) root.store.echogramLoupePreview(pressed ? "begin" : "end")
+                            }
+                        }
+                        Text {
+                            text: (root.store ? Math.round(root.store.echogramLoupeZoom) : 0) + "%"
+                            color: root._bright
+                            font.pixelSize: Tokens.fontLg
+                            Layout.preferredWidth: Math.round(52 * AppPalette.scale)
+                            Layout.alignment: Qt.AlignVCenter
+                            horizontalAlignment: Text.AlignRight
+                        }
                     }
-                    onPressedChanged: {
-                        if (root.store) root.store.echogramLoupePreview(pressed ? "begin" : "end")
-                    }
-                }
-                Text {
-                    text: (root.store ? Math.round(root.store.echogramLoupeZoom) : 0) + "%"
-                    color: root._bright
-                    font.pixelSize: Tokens.fontLg
-                    Layout.preferredWidth: Math.round(52 * AppPalette.scale)
-                    horizontalAlignment: Text.AlignRight
                 }
             }
-        }
 
-        ParamCardGroup {
-            width: parent.width
-            label: qsTr("Sync echograms")
-            toolTipText: qsTr("Sync the cursor position across all echograms")
-            checked: root.store ? root.store.echogramSyncCursor : false
-            onToggled: function(v) { if (root.store) root.store.echogramSyncCursor = v }
+            KIslandRow {
+                label: qsTr("Sync echograms")
+                labelColor: root._bright
+                toolTipText: qsTr("Sync the cursor position across all echograms")
+                interactive: true
+                onClicked: echogramSyncCursorSwitch.click()
 
-            KSwitch {
-                width: parent.width
-                text: qsTr("Sync view")
+                KSwitch {
+                    id: echogramSyncCursorSwitch
+                    flat: true
+                    checked: root.store ? root.store.echogramSyncCursor : false
+                    onToggled: if (root.store) root.store.echogramSyncCursor = checked
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Sync view")
+                labelColor: root._bright
+                verticalPadding: Tokens.spaceSm
+                showSeparator: false
                 toolTipText: qsTr("Sync scroll and zoom across echograms")
-                enabled: root.store ? root.store.echogramSyncCursor : false
-                checked: root.store ? root.store.echogramSyncView : false
-                onToggled: if (root.store) root.store.echogramSyncView = checked
-            }
-        }
+                open: root.store ? root.store.echogramSyncCursor : false
+                interactive: true
+                onClicked: echogramSyncViewSwitch.click()
 
-        NavButton {
-            width: parent.width
-            fontPixelSize: Tokens.fontLg
-            text: qsTr("Information panel")
-            toolTipText: qsTr("Configure the information panel")
-            onClicked: if (root.store) root.store.openAimPanelSettings()
+                KSwitch {
+                    id: echogramSyncViewSwitch
+                    flat: true
+                    checked: root.store ? root.store.echogramSyncView : false
+                    onToggled: if (root.store) root.store.echogramSyncView = checked
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Information panel")
+                labelColor: root._bright
+                toolTipText: qsTr("Configure the information panel")
+                chevron: true
+                interactive: true
+                onClicked: if (root.store) root.store.openAimPanelSettings()
+            }
         }
     }
 
