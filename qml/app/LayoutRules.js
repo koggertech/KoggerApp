@@ -5,7 +5,7 @@ function normalizedSettingsSide(value) {
 }
 
 function normalizedPaneMode(value) {
-    return value === "3D" ? "3D" : "2D"
+    return value === "3D" ? "3D" : value === "Video" ? "Video" : "2D"
 }
 
 function normalizedPaneRotate3D(value) {

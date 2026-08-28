@@ -1886,6 +1886,98 @@ Column {
     SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
+        title: qsTr("Video")
+        description: qsTr("Per-window video settings.")
+        stateStore: root.store
+        stateKey: "app.video"
+        collapsedByDefault: true
+
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            readonly property var surfaces: root.store ? root.store.visibleVideoSurfaces : []
+
+            HoverHandler {
+                onHoveredChanged: if (!hovered && root.store) root.store.highlightedLeafId = -1
+            }
+
+            Text {
+                width: parent.width
+                visible: parent.surfaces.length === 0
+                text: qsTr("No video windows displayed")
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontMd
+                wrapMode: Text.WordWrap
+            }
+
+            Repeater {
+                model: parent.surfaces
+
+                delegate: Rectangle {
+                    id: videoRow
+                    required property var modelData
+                    width: parent.width
+                    height: Math.round(38 * AppPalette.scale)
+                    radius: Tokens.radiusLg
+                    color: videoMouse.containsMouse ? AppPalette.bgHover : AppPalette.bg
+                    border.width: Tokens.cardBorderWidth
+                    border.color: videoMouse.containsMouse ? AppPalette.borderHover : AppPalette.border
+                    Behavior on color        { ColorAnimation { duration: 110 } }
+                    Behavior on border.color { ColorAnimation { duration: 110 } }
+
+                    activeFocusOnTab: true
+                    Keys.onReturnPressed: root.store.openVideoPaneSettings(modelData.contentId)
+                    Keys.onEnterPressed:  root.store.openVideoPaneSettings(modelData.contentId)
+                    Keys.onSpacePressed:  root.store.openVideoPaneSettings(modelData.contentId)
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.leftMargin: Tokens.spaceMd
+                        anchors.right: videoChevron.left
+                        anchors.rightMargin: Tokens.spaceMd
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.label
+                        color: root._bright
+                        font.pixelSize: Tokens.fontLg
+                        elide: Text.ElideRight
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    DisclosureIndicator {
+                        id: videoChevron
+                        anchors.right: parent.right
+                        anchors.rightMargin: Tokens.spaceMd
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.round(10 * AppPalette.scale)
+                        height: width
+                        expanded: false
+                        indicatorColor: AppPalette.textSecond
+                    }
+
+                    KFocusRing { id: videoFocusRing }
+
+                    MouseArea {
+                        id: videoMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onContainsMouseChanged: if (containsMouse && root.store && modelData.leafId >= 0)
+                                                    root.store.highlightedLeafId = modelData.leafId
+                        onPressed: videoFocusRing.suppress()
+                        onClicked: {
+                            videoRow.forceActiveFocus()
+                            root.store.openVideoPaneSettings(modelData.contentId)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    SettingsGroup {
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
         title: qsTr("Echograms")
         description: qsTr("Per-echogram display settings.")
         stateStore: root.store

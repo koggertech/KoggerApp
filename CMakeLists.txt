@@ -43,7 +43,7 @@ list(APPEND QT_SKIP_AUTO_PLUGIN_INCLUSION
     QPSQLDriverPlugin)
 
 find_package(Qt6 REQUIRED COMPONENTS
-    Core Gui Qml Quick QuickControls2 Network Sql Concurrent Positioning Svg LinguistTools)
+    Core Gui Qml Quick QuickControls2 Network Sql Concurrent Positioning Svg Multimedia LinguistTools)
 
 qt_standard_project_setup(REQUIRES 6.8)
 
@@ -112,6 +112,7 @@ add_subdirectory(src/scene3d)
 add_subdirectory(src/device)
 add_subdirectory(src/link)
 add_subdirectory(src/tile_engine)
+add_subdirectory(src/video)
 
 # Optional build flags (off by default)
 if(KOGGER_FLASHER)
@@ -132,7 +133,7 @@ endif()
 
 target_link_libraries(KoggerApp PRIVATE
     Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2
-    Qt6::Network Qt6::Sql Qt6::Concurrent Qt6::Positioning Qt6::Svg)
+    Qt6::Network Qt6::Sql Qt6::Concurrent Qt6::Positioning Qt6::Svg Qt6::Multimedia)
 
 target_sources(KoggerApp PRIVATE
     resources/icons.qrc

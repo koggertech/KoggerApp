@@ -47,8 +47,6 @@ property real edgeResizeGhostCoord: 0       // workspace-axis coord of ghost spl
 property real edgeResizeGhostSplitCoord: 0  // split-coord to apply on commit
 property bool editableMode: false
 property int maximizedLeafId: -1
-property int lastTappedLeafId: -1
-property real lastTapTimestamp: 0
 property bool settingsPanelOpen: false
 property bool filePathFocusRequested: false
 property bool recordingFocusRequested: false
@@ -74,6 +72,13 @@ property int active3DLeafId: -1
 readonly property int settingsFocusLeafId: {
     if (echogramSettingsActive && echogramSettingsLeafId !== -1)
         return echogramSettingsLeafId
+    if (settingsSubPageActive && settingsSubPageKind === "videoPane" && videoSettingsContentId.length) {
+        var surfaces = visibleVideoSurfaces
+        for (var s = 0; s < surfaces.length; ++s) {
+            if (surfaces[s].contentId === videoSettingsContentId)
+                return surfaces[s].leafId
+        }
+    }
     if (modeSettingsLeafId !== -1)
         return modeSettingsLeafId
     if (settingsPanelOpen) {
@@ -934,6 +939,39 @@ property alias boatTrackVisible:   scene3dLayerVisibility.boatTrackCheckButton
 property alias bottomTrackVisible: scene3dLayerVisibility.bottomTrackCheckButton
 property alias isobathsVisible:    scene3dLayerVisibility.isobathsCheckButton
 property alias mosaicVisible:      scene3dLayerVisibility.mosaicViewCheckButton
+
+property Settings videoStore: Settings {
+    id: videoStore
+    category: "main/video"
+    property string sourcesJson: ""
+    property string optionsJson: ""
+}
+property var videoSourceByContent: ({})
+property var videoOptionsByContent: ({})
+property string videoSettingsContentId: ""
+property string videoSettingsTitle: ""
+
+readonly property var visibleVideoSurfaces: {
+    var out = []
+    var rects = leafRects || []
+    for (var r = 0; r < rects.length; ++r) {
+        var pane = rects[r].pane
+        if (!pane || normalizedPaneMode(pane.mode) !== "Video" || !pane.contentId)
+            continue
+        out.push({ contentId: String(pane.contentId),
+                   leafId: rects[r].leafId,
+                   label: qsTr("Video") + " " + (out.length + 1) })
+    }
+    if (globalPopupEnabled && normalizedGlobalPopupMode(globalPopupMode) === "Video")
+        out.push({ contentId: globalPopupVideoContentId,
+                   leafId: globalPopupLeafId,
+                   label: qsTr("Global pop-up") })
+    if (effectiveSecondaryMode === "Video")
+        out.push({ contentId: secondaryVideoContentId,
+                   leafId: secondaryEchogramKey,
+                   label: qsTr("Second window") })
+    return out
+}
 
 // Interface pref: hide echogram-settings controls whose data type isn't in the
 // dataset (default on). Toggled from the Interface settings group.
@@ -2028,8 +2066,12 @@ function normalizedGlobalPopupState(rawState) {
 function normalizedGlobalPopupMode(value) {
     return value === "3D" ? "3D"
                          : value === "2D" ? "2D"
-                                          : ""
+                         : value === "Video" ? "Video"
+                                             : ""
 }
+
+readonly property string globalPopupVideoContentId: "globalPopup"
+readonly property string secondaryVideoContentId: "secondaryWindow"
 
 function saveGlobalPopupPreferences() {
     layoutStore.globalPopupEnabledStored = globalPopupEnabled === true
@@ -2118,11 +2160,7 @@ function canGlobalPopupChoose2D() {
 
 function openSecondaryWindow() {
     secondaryWindowOpen = true
-    // Secondary window always hosts a dedicated 2D plot (indx=6).
-    // If 2D slot is available — activate; otherwise leave "" so the window shows
-    // an "echogram limit reached" message and reactivates when a slot frees up.
-    var active = paneCountByMode("2D") + (globalPopupMode === "2D" ? 1 : 0)
-    secondaryWindowMode = (active < 5) ? "2D" : ""
+    secondaryWindowMode = ""
     saveLayoutState()
 }
 
@@ -2131,18 +2169,9 @@ function closeSecondaryWindow() {
     saveLayoutState()
 }
 
-// Auto-activate 2D plot in secondary when a 2D slot frees up (pane removed,
-// popup switched off, etc.). Secondary stays "limit reached" until a slot opens.
-onActiveTwoDCountChanged: {
-    if (secondaryWindowOpen && secondaryWindowMode === "" && activeTwoDCount < 5) {
-        secondaryWindowMode = "2D"
-        saveLayoutState()
-    }
-}
-
 function setSecondaryWindowMode(mode) {
     // 3D in secondary not supported yet — UI keeps the button disabled.
-    var next = (mode === "2D") ? "2D" : ""
+    var next = (mode === "2D") ? "2D" : (mode === "Video") ? "Video" : ""
     if (next === "2D" && !canSecondaryWindowChoose2D())
         return false
     secondaryWindowMode = next
@@ -3507,7 +3536,8 @@ function restoreLayoutState() {
     applyQuickActionOrder((layoutStore.quickActionOrderStored || "").split(","))
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored
-    secondaryWindowMode = (storedSecondaryMode === "2D" || storedSecondaryMode === "3D") ? storedSecondaryMode : ""
+    secondaryWindowMode = (storedSecondaryMode === "2D" || storedSecondaryMode === "3D"
+                           || storedSecondaryMode === "Video") ? storedSecondaryMode : ""
     secondaryWindowOpen = layoutStore.secondaryWindowOpenStored
 
     if (layouts.length === 0)
@@ -4293,15 +4323,6 @@ function toggleLeafMaximize(leafId) {
 
 function handleLeafTap(leafId) {
     activeLeafId = leafId
-    var now = Date.now()
-    if (!editableMode && lastTappedLeafId === leafId && now - lastTapTimestamp <= doubleTapIntervalMs) {
-        toggleLeafMaximize(leafId)
-        lastTappedLeafId = -1
-        lastTapTimestamp = 0
-        return
-    }
-    lastTappedLeafId = leafId
-    lastTapTimestamp = now
 }
 
 function applyPaneModeSelection(leafId, mode) {
@@ -4322,7 +4343,7 @@ function applyPaneModeSelection(leafId, mode) {
     }
 
     if (targetMode === "2D") {
-        var currentPaneMode = (targetPane && targetPane.mode === "3D") ? "3D" : "2D"
+        var currentPaneMode = normalizedPaneMode(targetPane.mode)
         if (currentPaneMode !== "2D") {
             var projected = paneCountByMode("2D") + 1
                           + (globalPopupMode === "2D" ? 1 : 0)
@@ -4339,6 +4360,202 @@ function applyPaneModeSelection(leafId, mode) {
     layoutTree = nextTree
     removeModePickerLeafId(leafId)
     rebuildLayoutCaches()
+}
+
+function loadVideoOptions() {
+    var parsed = {}
+    if (videoStore.optionsJson.length) {
+        try {
+            parsed = JSON.parse(videoStore.optionsJson) || {}
+        } catch (e) {
+            parsed = {}
+        }
+    }
+    videoOptionsByContent = parsed
+}
+
+function videoOptionForContent(contentId, key, fallback) {
+    if (!contentId)
+        return fallback
+    var options = videoOptionsByContent[contentId]
+    if (!options || options[key] === undefined)
+        return fallback
+    return options[key]
+}
+
+function setVideoOptionForContent(contentId, key, value) {
+    if (!contentId)
+        return
+
+    var next = {}
+    for (var outer in videoOptionsByContent) {
+        var source = videoOptionsByContent[outer]
+        var copy = {}
+        for (var inner in source)
+            copy[inner] = source[inner]
+        next[outer] = copy
+    }
+
+    if (!next[contentId])
+        next[contentId] = {}
+    next[contentId][key] = value
+
+    videoOptionsByContent = next
+    videoStore.optionsJson = JSON.stringify(next)
+}
+
+function videoFillForContent(contentId) {
+    var value = Number(videoOptionForContent(contentId, "fill", 0))
+    return (value === 1 || value === 2) ? value : 0
+}
+
+function setVideoFillForContent(contentId, mode) {
+    setVideoOptionForContent(contentId, "fill", Number(mode))
+}
+
+function videoResolutionVisibleForContent(contentId) {
+    return videoOptionForContent(contentId, "resolution", true) !== false
+}
+
+function setVideoResolutionVisibleForContent(contentId, visible) {
+    setVideoOptionForContent(contentId, "resolution", visible === true)
+}
+
+function videoSurfaceLabel(contentId) {
+    var list = visibleVideoSurfaces
+    for (var i = 0; i < list.length; ++i) {
+        if (list[i].contentId === String(contentId))
+            return list[i].label
+    }
+    return qsTr("Video")
+}
+
+function openVideoPaneSettings(contentId) {
+    if (!contentId)
+        return
+
+    _settingsNav = []
+    closeModeSettingsPanel()
+    highlightedLeafId = -1
+    echogramSettingsActive = false
+    videoSettingsContentId = String(contentId)
+    videoSettingsTitle = videoSurfaceLabel(contentId)
+    settingsSubPageKind = "videoPane"
+    settingsSubPageActive = true
+    settingsPanelOpen = true
+    setSettingsGroupExpanded("app.video", true)
+}
+
+function loadVideoSources() {
+    var parsed = {}
+    if (videoStore.sourcesJson.length) {
+        try {
+            parsed = JSON.parse(videoStore.sourcesJson) || {}
+        } catch (e) {
+            parsed = {}
+        }
+    }
+    videoSourceByContent = parsed
+}
+
+function videoSourceForContent(contentId) {
+    if (!contentId)
+        return ""
+    var uuid = videoSourceByContent[contentId]
+    return uuid ? String(uuid) : ""
+}
+
+function setVideoSourceForContent(contentId, uuid) {
+    if (!contentId)
+        return
+
+    var next = {}
+    for (var key in videoSourceByContent)
+        next[key] = videoSourceByContent[key]
+
+    next[contentId] = uuid ? String(uuid) : ""
+
+    videoSourceByContent = next
+    videoStore.sourcesJson = JSON.stringify(next)
+}
+
+function autoAssignVideoSources() {
+    if (typeof videoStreams === "undefined" || !videoStreams)
+        return
+
+    var descriptors = videoStreams.streams || []
+    var known = {}
+    var openUuids = []
+    for (var i = 0; i < descriptors.length; ++i) {
+        var uuid = String(descriptors[i].uuid)
+        known[uuid] = true
+        if (descriptors[i].open)
+            openUuids.push(uuid)
+    }
+
+    var rects = leafRects || []
+    var videoContentIds = []
+    for (var r = 0; r < rects.length; ++r) {
+        var pane = rects[r].pane
+        if (pane && normalizedPaneMode(pane.mode) === "Video" && pane.contentId)
+            videoContentIds.push(String(pane.contentId))
+    }
+    if (globalPopupEnabled && normalizedGlobalPopupMode(globalPopupMode) === "Video")
+        videoContentIds.push(globalPopupVideoContentId)
+    if (effectiveSecondaryMode === "Video")
+        videoContentIds.push(secondaryVideoContentId)
+
+    var next = {}
+    for (var key in videoSourceByContent)
+        next[key] = videoSourceByContent[key]
+
+    var taken = {}
+    for (var c = 0; c < videoContentIds.length; ++c) {
+        var cid = videoContentIds[c]
+        if (!(cid in next))
+            continue
+
+        var assigned = String(next[cid])
+        if (assigned.length === 0)
+            continue
+
+        if (known[assigned]) {
+            taken[assigned] = true
+            continue
+        }
+
+        delete next[cid]
+    }
+
+    var reuseIndex = 0
+    for (var c2 = 0; c2 < videoContentIds.length; ++c2) {
+        var cid2 = videoContentIds[c2]
+        if (cid2 in next)
+            continue
+        if (!openUuids.length)
+            continue
+
+        var picked = ""
+        for (var u = 0; u < openUuids.length; ++u) {
+            if (!taken[openUuids[u]]) {
+                picked = openUuids[u]
+                break
+            }
+        }
+        if (!picked.length) {
+            picked = openUuids[reuseIndex % openUuids.length]
+            ++reuseIndex
+        }
+
+        next[cid2] = picked
+        taken[picked] = true
+    }
+
+    if (JSON.stringify(next) === JSON.stringify(videoSourceByContent))
+        return
+
+    videoSourceByContent = next
+    videoStore.sourcesJson = JSON.stringify(next)
 }
 
 function swapLeafPanes(leafA, leafB) {
@@ -4719,6 +4936,8 @@ function reapplyImportedUiState() {
 }
 
 Component.onCompleted: {
+    loadVideoSources()
+    loadVideoOptions()
     if (!loadPersistedUiState())
         seedDefaultLayouts()
     sanitizeFullscreenPopupConfig()

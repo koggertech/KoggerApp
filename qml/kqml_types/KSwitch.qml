@@ -12,6 +12,18 @@ Switch {
     property color textColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
     property color backgroundColor: flat ? "transparent" : AppPalette.rowRaised
     property color hoverBackgroundColor: flat ? "transparent" : AppPalette.bgHover
+    property bool hoverLift: !flat
+
+    scale: (hoverLift && pressed) ? Anim.dipScale(width)
+         : (hoverLift && hovered) ? Anim.liftScale(width)
+                                  : 1.0
+
+    Behavior on scale {
+        NumberAnimation {
+            duration: Anim.controlMs
+            easing.type: Anim.controlEasing
+        }
+    }
     property color borderColor: AppPalette.border
     property color accentColor: AppPalette.toggleOn
     property color accentBorderColor: AppPalette.toggleOnBorder

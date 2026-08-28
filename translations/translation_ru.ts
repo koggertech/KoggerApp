@@ -52,6 +52,21 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1889"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1890"/>
+        <source>Per-window video settings.</source>
+        <translation>Настройки видео по окнам.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1908"/>
+        <source>No video windows displayed</source>
+        <translation>Видеоокна не отображаются</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="657"/>
         <source>Layout %1</source>
         <translation>Компоновка %1</translation>
@@ -1132,6 +1147,11 @@
 </context>
 <context>
     <name>ConnectionViewer</name>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="768"/>
+        <source>+RTSP</source>
+        <translation>+RTSP</translation>
+    </message>
     <message>
         <source>Choose recording folder</source>
         <translation>Выбор директории для записи</translation>
@@ -3240,6 +3260,11 @@
 <context>
     <name>GlobalPanePopup</name>
     <message>
+        <location filename="../qml/app/GlobalPanePopup.qml" line="167"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
         <location filename="../qml/app/GlobalPanePopup.qml" line="136"/>
         <source>Choose pane type</source>
         <translation>Выберите тип панели</translation>
@@ -4151,6 +4176,11 @@
 <context>
     <name>PaneEditorChrome</name>
     <message>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="287"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
         <location filename="../qml/app/PaneEditorChrome.qml" line="388"/>
         <source>Pane %1</source>
         <translation>Панель %1</translation>
@@ -4217,6 +4247,29 @@
         <location filename="../qml/app/PaneEditorChrome.qml" line="376"/>
         <source>No neighboring panes available</source>
         <translation>Нет доступных соседних панелей</translation>
+    </message>
+</context>
+<context>
+    <name>VideoSurface</name>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="181"/>
+        <source>Video window settings</source>
+        <translation>Настройки окна видеопотока</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="50"/>
+        <source>Not selected</source>
+        <translation>Не выбрано</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="136"/>
+        <source>No video source</source>
+        <translation>Нет источника видео</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="167"/>
+        <source>Video source for this pane</source>
+        <translation>Источник видео для этой панели</translation>
     </message>
 </context>
 <context>
@@ -5038,6 +5091,21 @@
 <context>
     <name>SecondaryWindow</name>
     <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="103"/>
+        <source>Choose pane type</source>
+        <translation>Выберите тип панели</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="131"/>
+        <source>2D</source>
+        <translation>2D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="132"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
         <location filename="../qml/app/SecondaryWindow.qml" line="57"/>
         <source>Second window</source>
         <translation>Второе окно</translation>
@@ -5445,7 +5513,113 @@
     </message>
 </context>
 <context>
+    <name>VideoStream</name>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="232"/>
+        <source>Connecting...</source>
+        <translation>Подключение...</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="277"/>
+        <source>out of memory</source>
+        <translation>недостаточно памяти</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="317"/>
+        <source>no video stream</source>
+        <translation>нет видеопотока</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="346"/>
+        <source>no decoder for this stream</source>
+        <translation>нет декодера для этого потока</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="580"/>
+        <source>Stream ended</source>
+        <translation>Поток завершён</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="649"/>
+        <source>Reconnecting (%1/%2)...</source>
+        <translation>Переподключение (%1/%2)...</translation>
+    </message>
+</context>
+<context>
+    <name>VideoPaneSettingsTab</name>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="35"/>
+        <source>Image:</source>
+        <translation>Изображение:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="45"/>
+        <source>Fit</source>
+        <translation>Вписать</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="46"/>
+        <source>Crop</source>
+        <translation>Заполнить</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="47"/>
+        <source>Stretch</source>
+        <translation>Растянуть</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="58"/>
+        <source>Show resolution</source>
+        <translation>Показывать разрешение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="64"/>
+        <source>Stream:</source>
+        <translation>Поток:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="99"/>
+        <source>Source</source>
+        <translation>Источник</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="100"/>
+        <source>Not selected</source>
+        <translation>Не выбрано</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="104"/>
+        <source>Resolution</source>
+        <translation>Разрешение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="111"/>
+        <source>State</source>
+        <translation>Состояние</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="117"/>
+        <source>Streaming</source>
+        <translation>Идёт передача</translation>
+    </message>
+</context>
+<context>
     <name>WorkspaceStore</name>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="956"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="961"/>
+        <source>Global pop-up</source>
+        <translation>Глобальное всплывающее окно</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="965"/>
+        <source>Second window</source>
+        <translation>Второе окно</translation>
+    </message>
     <message>
         <location filename="../qml/app/WorkspaceStore.qml" line="866"/>
         <source>Echogram</source>

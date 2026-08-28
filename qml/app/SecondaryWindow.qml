@@ -65,9 +65,9 @@ Item {
     }
 
     Rectangle {
-        anchors.fill: plot2DLoader
+        anchors.fill: parent
         color: "#FFFFFF"
-        opacity: (root.mode === "2D" && root.store
+        opacity: (root.mode !== "" && root.store
                   && root.store.highlightedLeafId === root.store.secondaryEchogramKey) ? 0.16 : 0.0
         visible: opacity > 0
         z: 50
@@ -75,7 +75,7 @@ Item {
     }
 
     Rectangle {
-        anchors.fill: plot2DLoader
+        anchors.fill: parent
         color: "black"
         readonly property int _focus: root.store ? root.store.settingsFocusLeafId : -1
         opacity: (_focus !== -1 && root.store && _focus !== root.store.secondaryEchogramKey) ? 0.55 : 0.0
@@ -84,13 +84,87 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
     }
 
-    // ── Empty state: shown only when 2D slot is unavailable (5-echogram limit). ──
-    Text {
-        anchors.centerIn: parent
+
+    Loader {
+        id: videoLoader
+        anchors.fill: parent
+        visible: root.mode === "Video"
+        active: root.mode === "Video"
+        sourceComponent: videoComponent
+    }
+
+    Component {
+        id: videoComponent
+
+        VideoSurface {
+            store: root.store
+            contentId: root.store ? root.store.secondaryVideoContentId : ""
+        }
+    }
+
+    Rectangle {
+        id: modePicker
+        anchors.fill: parent
         visible: root.mode === ""
-        text: qsTr("Echogram limit reached")
-        color: AppPalette.textSecond
-        font.pixelSize: 16
+        z: ZOrder.inputLockOverlay - 1
+        color: "#020617D9"
+
+        MouseArea {
+            anchors.fill: parent
+        }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: Math.round(12 * AppPalette.scale)
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("Choose pane type")
+                color: AppPalette.text
+                font.pixelSize: Math.round(18 * AppPalette.scale)
+                font.bold: true
+            }
+
+            Row {
+                id: secondaryTypeRow
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Math.round(10 * AppPalette.scale)
+
+                readonly property int cellWidth: Math.max(Math.round(96 * AppPalette.scale),
+                                                          secondary2DButton.implicitWidth,
+                                                          secondaryVideoButton.implicitWidth)
+                readonly property int cellHeight: Math.max(Math.round(46 * AppPalette.scale),
+                                                           secondary2DButton.implicitHeight,
+                                                           secondaryVideoButton.implicitHeight)
+
+                KButton {
+                    id: secondary2DButton
+                    readonly property bool canChoose2D: root.store ? root.store.canSecondaryWindowChoose2D() : false
+                    text: qsTr("2D")
+                    width: secondaryTypeRow.cellWidth
+                    height: secondaryTypeRow.cellHeight
+                    enabled: canChoose2D
+                    opacity: enabled ? 1.0 : 0.45
+                    onClicked: if (root.store) root.store.setSecondaryWindowMode("2D")
+                }
+
+                KButton {
+                    id: secondaryVideoButton
+                    text: qsTr("Video")
+                    width: secondaryTypeRow.cellWidth
+                    height: secondaryTypeRow.cellHeight
+                    onClicked: if (root.store) root.store.setSecondaryWindowMode("Video")
+                }
+            }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: !secondary2DButton.canChoose2D
+                text: qsTr("Echogram limit reached")
+                color: "#C7D2FE"
+                font.pixelSize: Math.round(12 * AppPalette.scale)
+            }
+        }
     }
 
     FileOpeningOverlay { }

@@ -1,3 +1,5 @@
+.pragma library
+
 // Node row state: the interrogation cycle, what a row and its command chips report, and the
 // count the group header carries. No QML types, no qsTr -- codes out, sentences in UsblGroup.qml.
 //
