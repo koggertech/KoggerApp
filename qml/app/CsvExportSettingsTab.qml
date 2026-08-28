@@ -14,7 +14,13 @@ Column {
     readonly property color _bright: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
 
     width: parent ? parent.width : implicitWidth
-    spacing: Tokens.spaceLg
+    spacing: Tokens.spaceSm
+
+    component Spacer: Item {
+        property int size: Tokens.spaceMd
+        width: page.width
+        height: size
+    }
 
     // Ordered column list — labels translatable here; keys match Core.
     readonly property var fieldDefs: [
@@ -49,7 +55,18 @@ Column {
         font.pixelSize: Tokens.fontSm
     }
 
-    // ── Decimation + export ───────────────────────────────────────────────
+    // ── Export + decimation ───────────────────────────────────────────────
+    Spacer {}
+
+    KButton {
+        width: parent.width
+        height: Tokens.controlHLg
+        text: qsTr("Export to CSV")
+        onClicked: page.doExport()
+    }
+
+    Spacer { size: Tokens.spaceXl }
+
     ParamCard {
         id: decimationCard
         width: parent.width
@@ -74,16 +91,7 @@ Column {
         }
     }
 
-    KButton {
-        width: parent.width
-        height: Tokens.controlHLg
-        text: qsTr("Export to CSV")
-        onClicked: page.doExport()
-    }
-
     // ── Columns ───────────────────────────────────────────────────────────
-    Item { width: parent.width; height: Math.round(Tokens.spaceSm) }
-
     Row {
         width: parent.width
         spacing: Tokens.spaceMd
