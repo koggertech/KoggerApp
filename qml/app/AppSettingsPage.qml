@@ -1042,191 +1042,297 @@ Column {
 
         Component.onCompleted: refreshParams()
 
-        // Preset
-        Column {
+        Item {
+            id: btPresetHolder
             width: parent.width
-            spacing: Tokens.spaceMd
+            height: presetTabBar.implicitHeight
+            property int selectedIndex: 0
 
-            Text { text: qsTr("Preset:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
+            onSelectedIndexChanged: if (root.targetPlot) root.targetPlot.setPreset(selectedIndex)
 
-            Item {
-                id: btPresetHolder
+            KTabBar {
+                id: presetTabBar
                 width: parent.width
-                height: presetTabBar.implicitHeight
-                property int selectedIndex: 0
+                options: [
+                    { label: qsTr("Normal 2D"), value: 0 },
+                    { label: qsTr("Narrow 2D"), value: 1 },
+                    { label: qsTr("Side-Scan"), value: 2 }
+                ]
+                currentValue: btPresetHolder.selectedIndex
+                onValueSelected: function(v) { btPresetHolder.selectedIndex = v }
+            }
 
-                onSelectedIndexChanged: if (root.targetPlot) root.targetPlot.setPreset(selectedIndex)
+            Settings { category: "scene2d/bottomTrack"; property alias bottomTrackList: btPresetHolder.selectedIndex }
+        }
 
-                KTabBar {
-                    id: presetTabBar
-                    width: parent.width
-                    options: [
-                        { label: qsTr("Normal 2D"), value: 0 },
-                        { label: qsTr("Narrow 2D"), value: 1 },
-                        { label: qsTr("Side-Scan"), value: 2 }
-                    ]
-                    currentValue: btPresetHolder.selectedIndex
-                    onValueSelected: function(v) { btPresetHolder.selectedIndex = v }
+        KIsland {
+            KIslandRow {
+                label: qsTr("Gain slope")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackGainSlope.click()
+
+                Item {
+                    width: gainSlopeSlotRow.width
+                    height: gainSlopeSlotRow.height
+
+                    // Eats clicks landing in the gaps around the spinbox so they
+                    // cannot bubble up to the row and flip the toggle.
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: gainSlopeSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: bottomTrackGainSlopeValue
+                            width: btGroup.spinW
+                            height: Tokens.controlHMd
+                            from: 0; to: 300; stepSize: 10; value: 100; divisor: 100; decimals: 2
+                            onValueModified: function(v) { if (bottomTrackGainSlope.checked && root.targetPlot) root.targetPlot.setGainSlope(v / 100) }
+                        }
+
+                        KSwitch {
+                            id: bottomTrackGainSlope
+                            flat: true
+                            checked: true
+                            onToggled: if (checked && root.targetPlot) root.targetPlot.setGainSlope(bottomTrackGainSlopeValue.value / 100)
+                        }
+                    }
                 }
+            }
 
-                Settings { category: "scene2d/bottomTrack"; property alias bottomTrackList: btPresetHolder.selectedIndex }
+            KIslandRow {
+                label: qsTr("Threshold")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackThreshold.click()
+
+                Item {
+                    width: thresholdSlotRow.width
+                    height: thresholdSlotRow.height
+
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: thresholdSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: bottomTrackThresholdValue
+                            width: btGroup.spinW
+                            height: Tokens.controlHMd
+                            from: 0; to: 200; stepSize: 5; value: 0; divisor: 100; decimals: 2
+                            onValueModified: function(v) { if (bottomTrackThreshold.checked && root.targetPlot) root.targetPlot.setThreshold(v / 100) }
+                        }
+
+                        KSwitch {
+                            id: bottomTrackThreshold
+                            flat: true
+                            onToggled: if (checked && root.targetPlot) root.targetPlot.setThreshold(bottomTrackThresholdValue.value / 100)
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Horizontal window")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackWindow.click()
+
+                Item {
+                    width: windowSlotRow.width
+                    height: windowSlotRow.height
+
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: windowSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: bottomTrackWindowValue
+                            width: btGroup.spinW
+                            height: Tokens.controlHMd
+                            from: 1; to: 100; stepSize: 2; value: 1
+                            onValueModified: function(v) { if (bottomTrackWindow.checked && root.targetPlot) root.targetPlot.setWindowSize(v) }
+                        }
+
+                        KSwitch {
+                            id: bottomTrackWindow
+                            flat: true
+                            onToggled: if (checked && root.targetPlot) root.targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Vertical gap, %")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackVerticalGap.click()
+
+                Item {
+                    width: verticalGapSlotRow.width
+                    height: verticalGapSlotRow.height
+
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: verticalGapSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: bottomTrackVerticalGapValue
+                            width: btGroup.spinW
+                            height: Tokens.controlHMd
+                            from: 0; to: 100; stepSize: 2; value: 10
+                            onValueModified: function(v) { if (bottomTrackVerticalGap.checked && root.targetPlot) root.targetPlot.setVerticalGap(v * 0.01) }
+                        }
+
+                        KSwitch {
+                            id: bottomTrackVerticalGap
+                            flat: true
+                            onToggled: if (checked && root.targetPlot) root.targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Min range, m")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackMinRange.click()
+
+                Item {
+                    width: minRangeSlotRow.width
+                    height: minRangeSlotRow.height
+
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: minRangeSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: bottomTrackMinRangeValue
+                            width: btGroup.spinW
+                            height: Tokens.controlHMd
+                            from: 0; to: 200000; stepSize: 10; value: 0; divisor: 1000; decimals: 2
+                            onValueModified: function(v) { if (bottomTrackMinRange.checked && root.targetPlot) root.targetPlot.setRangeMin(v / 1000) }
+                        }
+
+                        KSwitch {
+                            id: bottomTrackMinRange
+                            flat: true
+                            onToggled: if (checked && root.targetPlot) root.targetPlot.setRangeMin(bottomTrackMinRangeValue.value / 1000)
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Max range, m")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackMaxRange.click()
+
+                Item {
+                    width: maxRangeSlotRow.width
+                    height: maxRangeSlotRow.height
+
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: maxRangeSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: bottomTrackMaxRangeValue
+                            width: btGroup.spinW
+                            height: Tokens.controlHMd
+                            from: 0; to: 200000; stepSize: 1000; value: 100000; divisor: 1000; decimals: 2
+                            onValueModified: function(v) { if (bottomTrackMaxRange.checked && root.targetPlot) root.targetPlot.setRangeMax(v / 1000) }
+                        }
+
+                        KSwitch {
+                            id: bottomTrackMaxRange
+                            flat: true
+                            onToggled: if (checked && root.targetPlot) root.targetPlot.setRangeMax(bottomTrackMaxRangeValue.value / 1000)
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Sonar offset XYZ, mm")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackSensorOffset.click()
+
+                KSwitch {
+                    id: bottomTrackSensorOffset
+                    flat: true
+                    onToggled: {
+                        if (checked && root.targetPlot) {
+                            root.targetPlot.setOffsetX(btOffX.value *  0.001)
+                            root.targetPlot.setOffsetY(btOffY.value *  0.001)
+                            root.targetPlot.setOffsetZ(btOffZ.value *  0.001)
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                visible: bottomTrackSensorOffset.checked
+                stacked: true
+
+                Row {
+                    width: parent.width
+                    height: Tokens.controlHMd
+                    spacing: Tokens.spaceXs
+                    readonly property real sw: (width - 2 * Tokens.spaceXs) / 3
+
+                    KSpinBox {
+                        id: btOffX
+                        width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
+                        onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetX(v * 0.001) }
+                    }
+                    KSpinBox {
+                        id: btOffY
+                        width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
+                        onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetY(v * 0.001) }
+                    }
+                    KSpinBox {
+                        id: btOffZ
+                        width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
+                        onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetZ(v * 0.001) }
+                    }
+                }
             }
         }
 
-        // Gain slope
-        ParamCard {
-            id: bottomTrackGainSlope
-            label: qsTr("Gain slope")
-            checked: true
-            slotWidth: btGroup.spinW
-            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setGainSlope(bottomTrackGainSlopeValue.value / 100) }
-
-            KSpinBox {
-                id: bottomTrackGainSlopeValue
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                from: 0; to: 300; stepSize: 10; value: 100; divisor: 100; decimals: 2
-                onValueModified: function(v) { if (bottomTrackGainSlope.checked && root.targetPlot) root.targetPlot.setGainSlope(v / 100) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackGainSlope: bottomTrackGainSlope.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackGainSlopeValue: bottomTrackGainSlopeValue.value }
 
-        // Threshold
-        ParamCard {
-            id: bottomTrackThreshold
-            label: qsTr("Threshold")
-            slotWidth: btGroup.spinW
-            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setThreshold(bottomTrackThresholdValue.value / 100) }
-
-            KSpinBox {
-                id: bottomTrackThresholdValue
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                from: 0; to: 200; stepSize: 5; value: 0; divisor: 100; decimals: 2
-                onValueModified: function(v) { if (bottomTrackThreshold.checked && root.targetPlot) root.targetPlot.setThreshold(v / 100) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackThreshold: bottomTrackThreshold.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackThresholdValue: bottomTrackThresholdValue.value }
 
-        // Horizontal window
-        ParamCard {
-            id: bottomTrackWindow
-            label: qsTr("Horizontal window")
-            slotWidth: btGroup.spinW
-            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setWindowSize(bottomTrackWindowValue.value) }
-
-            KSpinBox {
-                id: bottomTrackWindowValue
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                from: 1; to: 100; stepSize: 2; value: 1
-                onValueModified: function(v) { if (bottomTrackWindow.checked && root.targetPlot) root.targetPlot.setWindowSize(v) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackWindow: bottomTrackWindow.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackWindowValue: bottomTrackWindowValue.value }
 
-        // Vertical gap
-        ParamCard {
-            id: bottomTrackVerticalGap
-            label: qsTr("Vertical gap, %")
-            slotWidth: btGroup.spinW
-            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01) }
-
-            KSpinBox {
-                id: bottomTrackVerticalGapValue
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                from: 0; to: 100; stepSize: 2; value: 10
-                onValueModified: function(v) { if (bottomTrackVerticalGap.checked && root.targetPlot) root.targetPlot.setVerticalGap(v * 0.01) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackVerticalGap: bottomTrackVerticalGap.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackVerticalGapValue: bottomTrackVerticalGapValue.value }
 
-        // Min range
-        ParamCard {
-            id: bottomTrackMinRange
-            label: qsTr("Min range, m")
-            slotWidth: btGroup.spinW
-            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMin(bottomTrackMinRangeValue.value / 1000) }
-
-            KSpinBox {
-                id: bottomTrackMinRangeValue
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                from: 0; to: 200000; stepSize: 10; value: 0; divisor: 1000; decimals: 2
-                onValueModified: function(v) { if (bottomTrackMinRange.checked && root.targetPlot) root.targetPlot.setRangeMin(v / 1000) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMinRange: bottomTrackMinRange.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMinRangeValue: bottomTrackMinRangeValue.value }
 
-        // Max range
-        ParamCard {
-            id: bottomTrackMaxRange
-            label: qsTr("Max range, m")
-            slotWidth: btGroup.spinW
-            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMax(bottomTrackMaxRangeValue.value / 1000) }
-
-            KSpinBox {
-                id: bottomTrackMaxRangeValue
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                from: 0; to: 200000; stepSize: 1000; value: 100000; divisor: 1000; decimals: 2
-                onValueModified: function(v) { if (bottomTrackMaxRange.checked && root.targetPlot) root.targetPlot.setRangeMax(v / 1000) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMaxRange: bottomTrackMaxRange.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMaxRangeValue: bottomTrackMaxRangeValue.value }
 
-        // Sensor offset (label row + values row)
-        ParamCard {
-            id: bottomTrackSensorOffset
-            label: qsTr("Sonar offset XYZ, mm")
-            onToggled: function(v) {
-                if (v && root.targetPlot) {
-                    root.targetPlot.setOffsetX(btOffX.value *  0.001)
-                    root.targetPlot.setOffsetY(btOffY.value *  0.001)
-                    root.targetPlot.setOffsetZ(btOffZ.value *  0.001)
-                }
-            }
-        }
-        Row {
-            visible: bottomTrackSensorOffset.checked
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceXs
-            readonly property real sw: (width - 2 * Tokens.spaceXs) / 3
-
-            KSpinBox {
-                id: btOffX
-                width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
-                onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetX(v * 0.001) }
-            }
-            KSpinBox {
-                id: btOffY
-                width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
-                onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetY(v * 0.001) }
-            }
-            KSpinBox {
-                id: btOffZ
-                width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
-                onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetZ(v * 0.001) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffset: bottomTrackSensorOffset.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueX: btOffX.value }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueY: btOffY.value }

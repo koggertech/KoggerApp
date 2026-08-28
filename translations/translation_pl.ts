@@ -821,11 +821,6 @@
         <translation type="vanished">Cztery okna</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="807"/>
-        <source>Preset:</source>
-        <translation>Szablon:</translation>
-    </message>
-    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="821"/>
         <source>Normal 2D</source>
         <translation>Normalny 2D</translation>

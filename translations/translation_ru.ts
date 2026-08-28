@@ -821,11 +821,6 @@
         <translation type="vanished">Четыре окна</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="807"/>
-        <source>Preset:</source>
-        <translation>Шаблон:</translation>
-    </message>
-    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="821"/>
         <source>Normal 2D</source>
         <translation>Обычный 2D</translation>

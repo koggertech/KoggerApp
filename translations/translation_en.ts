@@ -385,11 +385,6 @@
         <translation>Bottom detection presets, thresholds and search window.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="807"/>
-        <source>Preset:</source>
-        <translation></translation>
-    </message>
-    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="821"/>
         <source>Normal 2D</source>
         <translation></translation>
