@@ -319,7 +319,6 @@ private:
     MosaicDB*              dbWriter_;
     QThread                dbReadThread_;
     QThread                dbWriteThread_;
-    QString                filePath_;
     int                    engineVer_;
     QRectF                 lastViewRect_;
     QTimer                 cameraRectCoalesceTimer_;

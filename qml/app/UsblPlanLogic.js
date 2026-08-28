@@ -1,3 +1,5 @@
+.pragma library
+
 // Pure logic for the USBL command plan. No QML types, no translations, no side effects.
 //
 // WHY THIS IS A SEPARATE FILE

@@ -85,8 +85,8 @@ Item {
 
     function routeScene3DKey(key) {
         if (!root.workspaceRoot || typeof root.workspaceRoot.forwardScene3DKeyPress !== "function")
-            return
-        root.workspaceRoot.forwardScene3DKeyPress(key)
+            return false
+        return root.workspaceRoot.forwardScene3DKeyPress(key) === true
     }
 
     function routeScene3DPinch(prevCenterX, prevCenterY, currCenterX, currCenterY, scaleDelta, angleDelta) {
@@ -395,10 +395,8 @@ Item {
         Keys.onPressed: function(event) {
             root.markKeyboardInput()
             lastKeyPressed = event.key
-            if (root.paneKind === "3D") {
-                root.routeScene3DKey(event.key)
-                event.accepted = true
-            }
+            if (root.paneKind === "3D")
+                event.accepted = root.routeScene3DKey(event.key)
         }
 
         Keys.onReleased: function(event) {

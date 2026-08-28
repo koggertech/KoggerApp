@@ -1,7 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Dialogs
+import Qt5Compat.GraphicalEffects
 import QtCore
 import kqml_types 1.0
 import controls
@@ -291,26 +293,32 @@ Column {
             }
         }
 
-        NavButton {
-            width: parent.width
-            text: qsTr("Export to CSV")
-            toolTipText: qsTr("Open the CSV export tab")
-            onClicked: if (root.store) root.store.openCsvExportSettings()
-        }
+        KIsland {
+            KIslandRow {
+                label: qsTr("Export to CSV")
+                chevron: true
+                interactive: true
+                toolTipText: qsTr("Open the CSV export tab")
+                onClicked: if (root.store) root.store.openCsvExportSettings()
+            }
 
-        KButton {
-            width: parent.width; text: qsTr("Export to XTF")
-            onClicked: core.exportPlotAsXTF(exportGroup.currentExportPath())
-        }
+            KIslandRow {
+                label: qsTr("Export to XTF")
+                interactive: true
+                onClicked: core.exportPlotAsXTF(exportGroup.currentExportPath())
+            }
 
-        KButton {
-            width: parent.width; text: qsTr("Complex signal to CSV")
-            onClicked: core.exportComplexToCSV(exportGroup.currentExportPath())
-        }
+            KIslandRow {
+                label: qsTr("Complex signal to CSV")
+                interactive: true
+                onClicked: core.exportComplexToCSV(exportGroup.currentExportPath())
+            }
 
-        KButton {
-            width: parent.width; text: qsTr("USBL to CSV")
-            onClicked: core.exportUSBLToCSV(exportGroup.currentExportPath())
+            KIslandRow {
+                label: qsTr("USBL to CSV")
+                interactive: true
+                onClicked: core.exportUSBLToCSV(exportGroup.currentExportPath())
+            }
         }
     }
 
@@ -471,49 +479,6 @@ Column {
             }
         }
 
-        // ── Merged from former "Interface" group ──────────────────────────
-
-        KSwitch {
-            width: parent.width
-            text: qsTr("Hide important notifications")
-            toolTipText: qsTr("Auto-hide warning notifications like info ones")
-            checked: root.store ? root.store.hideImportantNotifications : false
-            onToggled: if (root.store) root.store.hideImportantNotifications = checked
-        }
-
-        KSwitch {
-            width: parent.width
-            text: qsTr("Hide UI elements for missing data")
-            toolTipText: qsTr("Hide echogram controls when there is no matching data; off shows everything")
-            checked: root.store ? root.store.hideEmptyEchogramControls : true
-            onToggled: if (root.store) root.store.hideEmptyEchogramControls = checked
-        }
-
-        KSwitch {
-            width: parent.width
-            text: qsTr("Workspace shift")
-            toolTipText: qsTr("Shift the workspace aside when the settings panel opens, instead of overlaying on top")
-            checked: root.store.settingsPushContent
-            onToggled: { root.store.settingsPushContent = checked }
-        }
-
-        KSwitch {
-            visible: Qt.platform.os === "windows"
-            width: parent.width
-            text: qsTr("Bring window to front")
-            toolTipText: qsTr("Raise and focus the app window on key events")
-            checked: core.bringWindowToFrontEnabled
-            onToggled: core.bringWindowToFrontEnabled = checked
-        }
-
-        KSwitch {
-            visible: Qt.platform.os === "android" || Qt.platform.os === "ios"
-            width: parent.width
-            text: qsTr("Rotate layout with device")
-            checked: root.store ? root.store.rotateLayoutEnabled : true
-            onToggled: if (root.store) root.store.rotateLayoutEnabled = checked
-        }
-
         Column {
             width: parent.width
             spacing: Tokens.spaceMd
@@ -532,11 +497,104 @@ Column {
             }
         }
 
-        NavButton {
-            visible: Qt.platform.os !== "android"
-            width: parent.width
-            text: qsTr("Key bindings")
-            onClicked: { hotkeysLoader.active = true; hotkeysLoader.item.open() }
+        // ── Merged from former "Interface" group ──────────────────────────
+
+        KIsland {
+            KIslandRow {
+                label: qsTr("Hide important notifications")
+                toolTipText: qsTr("Auto-hide warning notifications like info ones")
+                interactive: true
+                onClicked: hideNotificationsSwitch.click()
+                KSwitch {
+                    id: hideNotificationsSwitch
+                    flat: true
+                    checked: root.store ? root.store.hideImportantNotifications : false
+                    onToggled: if (root.store) root.store.hideImportantNotifications = checked
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Hide UI elements for missing data")
+                toolTipText: qsTr("Hide echogram controls when there is no matching data; off shows everything")
+                interactive: true
+                onClicked: hideEmptyControlsSwitch.click()
+                KSwitch {
+                    id: hideEmptyControlsSwitch
+                    flat: true
+                    checked: root.store ? root.store.hideEmptyEchogramControls : true
+                    onToggled: if (root.store) root.store.hideEmptyEchogramControls = checked
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Workspace shift")
+                toolTipText: qsTr("Shift the workspace aside when the settings panel opens, instead of overlaying on top")
+                interactive: true
+                onClicked: workspaceShiftSwitch.click()
+                KSwitch {
+                    id: workspaceShiftSwitch
+                    flat: true
+                    checked: root.store.settingsPushContent
+                    onToggled: root.store.settingsPushContent = checked
+                }
+            }
+
+            KIslandRow {
+                visible: Qt.platform.os === "windows" && appUtils.instanceIndex === 1
+                label: qsTr("Bring window to front")
+                toolTipText: qsTr("Raise and focus the app window on key events")
+                interactive: true
+                onClicked: bringToFrontSwitch.click()
+                KSwitch {
+                    id: bringToFrontSwitch
+                    flat: true
+                    checked: core.bringWindowToFrontEnabled
+                    onToggled: core.bringWindowToFrontEnabled = checked
+                }
+            }
+
+            KIslandRow {
+                visible: Qt.platform.os === "android" || Qt.platform.os === "ios"
+                label: qsTr("Rotate layout with device")
+                interactive: true
+                onClicked: rotateLayoutSwitch.click()
+                KSwitch {
+                    id: rotateLayoutSwitch
+                    flat: true
+                    checked: root.store ? root.store.rotateLayoutEnabled : true
+                    onToggled: if (root.store) root.store.rotateLayoutEnabled = checked
+                }
+            }
+
+            KIslandRow {
+                visible: Qt.platform.os !== "android"
+                label: qsTr("Key bindings")
+                chevron: true
+                interactive: true
+                onClicked: { hotkeysLoader.active = true; hotkeysLoader.item.open() }
+            }
+
+            KIslandRow {
+                label: qsTr("Quick action menu")
+                chevron: true
+                interactive: true
+                onClicked: if (root.store) root.store.openQuickActionsSettings()
+            }
+
+            KIslandRow {
+                label: qsTr("UI Saving")
+                chevron: true
+                interactive: true
+                onClicked: if (root.store) root.store.openUiSavingSettings()
+            }
+
+            KIslandRow {
+                label: qsTr("Console")
+                chevron: true
+                interactive: true
+                toolTipText: qsTr("Colour marking and log buffer size")
+                onClicked: if (root.store) root.store.openConsoleSettings()
+            }
         }
 
         Loader {
@@ -544,25 +602,6 @@ Column {
             active: false
             source: "qrc:/qml/settings/HotkeysDialog.qml"
             onLoaded: { if (item) item.store = root.store }
-        }
-
-        NavButton {
-            width: parent.width
-            text: qsTr("Quick action menu")
-            onClicked: if (root.store) root.store.openQuickActionsSettings()
-        }
-
-        NavButton {
-            width: parent.width
-            text: qsTr("UI Saving")
-            onClicked: if (root.store) root.store.openUiSavingSettings()
-        }
-
-        NavButton {
-            width: parent.width
-            text: qsTr("Console")
-            toolTipText: qsTr("Colour marking and log buffer size")
-            onClicked: if (root.store) root.store.openConsoleSettings()
         }
     }
 
@@ -576,55 +615,70 @@ Column {
         stateStore: root.store
         stateKey: "app.layoutPlacement"
 
-        KSwitch {
-            width: parent.width
-            text: qsTr("Edit")
-            toolTipText: qsTr("Edit workspace panes")
-            checked: root.store.editableMode
-            onToggled: { root.store.editableMode = checked }
-        }
-
-        KSwitch {
-            width: parent.width
-            text: qsTr("Global pop-up")
-            toolTipText: qsTr("Floating window over the workspace, independent of the layout")
-            checked: root.store.globalPopupEnabled
-            onToggled: { root.store.globalPopupEnabled = checked }
-        }
-
-        Repeater {
-            model: root.store.layouts.length
-            delegate: Item {
-                id: layoutCard
-                required property int index
-                readonly property int layoutIndex: index
-                readonly property var layoutEntry: (layoutIndex >= 0 && layoutIndex < root.store.layouts.length) ? root.store.layouts[layoutIndex] : null
-                readonly property var snapshot: layoutEntry && layoutEntry.layout ? layoutEntry.layout : layoutEntry
-                readonly property var popupLinks: layoutEntry && layoutEntry.popupLinks ? layoutEntry.popupLinks : []
-                readonly property bool selected: layoutIndex === root.store.activeLayoutIndex
-                width: parent.width; height: layoutCardView.implicitHeight
-
-                FavoriteLayoutCard {
-                    id: layoutCardView
-                    anchors.fill: parent
-                    snapshot: layoutCard.snapshot; popupLinks: layoutCard.popupLinks
-                    favoriteIndex: layoutCard.layoutIndex; selected: layoutCard.selected; showText: true
-                    extraHovered: deleteBtn.hovered
-                    onClicked: root.store.applyLayout(layoutCard.layoutIndex)
+        KIsland {
+            KIslandRow {
+                label: qsTr("Edit")
+                toolTipText: qsTr("Edit workspace panes")
+                interactive: true
+                onClicked: editableModeSwitch.click()
+                KSwitch {
+                    id: editableModeSwitch
+                    flat: true
+                    checked: root.store.editableMode
+                    onToggled: { root.store.editableMode = checked }
                 }
+            }
 
-                KCircleIconButton {
-                    id: deleteBtn
-                    visible: root.store.layouts.length > 1
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.right
-                    anchors.rightMargin: Tokens.spaceSm
-                    width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd; iconSource: ""; glyph: "×"
-                    glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
-                    fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
-                    borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
-                    toolTipText: qsTr("Delete layout"); z: 6
-                    onClicked: root.store.deleteLayoutAt(layoutCard.layoutIndex)
+            KIslandRow {
+                label: qsTr("Global pop-up")
+                toolTipText: qsTr("Floating window over the workspace, independent of the layout")
+                interactive: true
+                onClicked: globalPopupSwitch.click()
+                KSwitch {
+                    id: globalPopupSwitch
+                    flat: true
+                    checked: root.store.globalPopupEnabled
+                    onToggled: { root.store.globalPopupEnabled = checked }
+                }
+            }
+        }
+
+        KIsland {
+            Repeater {
+                model: root.store.layouts.length
+                delegate: KIslandRow {
+                    id: layoutRow
+                    required property int index
+
+                    readonly property int layoutIndex: index
+                    readonly property var layoutEntry: (layoutIndex >= 0 && layoutIndex < root.store.layouts.length) ? root.store.layouts[layoutIndex] : null
+                    readonly property bool selected: layoutIndex === root.store.activeLayoutIndex
+
+                    label: qsTr("Layout %1").arg(layoutIndex + 1)
+                    labelColor: selected ? "#FDE68A" : AppPalette.textStrong
+                    caption: selected ? qsTr("Active") : ""
+                    fillColor: selected ? Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20) : "transparent"
+                    verticalPadding: Tokens.spaceSm
+                    interactive: true
+                    onClicked: root.store.applyLayout(layoutIndex)
+
+                    leading: LayoutSnapshotPreview {
+                        width: Math.round(84 * AppPalette.scale)
+                        height: Math.round(64 * AppPalette.scale)
+                        layoutSnapshot: layoutRow.layoutEntry && layoutRow.layoutEntry.layout ? layoutRow.layoutEntry.layout : layoutRow.layoutEntry
+                        popupLinks: layoutRow.layoutEntry && layoutRow.layoutEntry.popupLinks ? layoutRow.layoutEntry.popupLinks : []
+                        redrawDebounceMs: 48
+                    }
+
+                    KCircleIconButton {
+                        visible: root.store.layouts.length > 1
+                        width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd; iconSource: ""; glyph: "×"
+                        glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
+                        fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                        borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
+                        toolTipText: qsTr("Delete layout")
+                        onClicked: root.store.deleteLayoutAt(layoutRow.layoutIndex)
+                    }
                 }
             }
         }
@@ -646,56 +700,89 @@ Column {
         stateStore: root.store
         stateKey: "app.widgets"
 
-        Repeater {
-            model: root.store.widgets.length
-            delegate: Item {
-                id: widgetRow
-                required property int index
-                readonly property int widgetIndex: index
-                readonly property var def: (widgetIndex >= 0 && widgetIndex < root.store.widgets.length) ? root.store.widgets[widgetIndex] : null
-                visible: !!(root.store && root.store.widgetListed(def))
-                width: parent.width; height: widgetCardView.implicitHeight
+        KIsland {
+            KIslandRow {
+                id: servoPanelRow
+                readonly property bool shown: !!(root.store && root.store.servoPanelShown)
 
-                WidgetCard {
-                    id: widgetCardView
-                    anchors.fill: parent
-                    def: widgetRow.def
-                    title: qsTr("Panel %1").arg(widgetRow.widgetIndex + 1)
-                    showText: true
-                    selectionMode: true
-                    selected: !!(root.store && widgetRow.def && root.store.widgetShown(widgetRow.def.id))
-                    extraHovered: widgetDeleteBtn.hovered || widgetEditBtn.hovered
-                    onToggled: function(value) {
-                        if (root.store && widgetRow.def)
-                            root.store.setWidgetShown(widgetRow.def.id, value)
-                    }
+                label: qsTr("Servo")
+                labelColor: shown ? "#FDE68A" : AppPalette.textStrong
+                caption: qsTr("Servo control")
+                fillColor: shown ? Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20) : "transparent"
+                verticalPadding: Tokens.spaceSm
+                interactive: true
+                onClicked: if (root.store) root.store.setServoPanelShown(!servoPanelRow.shown)
+
+                leading: WidgetGridPreview {
+                    width: Math.round(84 * AppPalette.scale)
+                    height: Math.round(64 * AppPalette.scale)
+                    def: root.store ? root.store.servoPanelDef : null
                 }
 
                 KCircleIconButton {
-                    id: widgetDeleteBtn
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.right
-                    anchors.rightMargin: Tokens.spaceSm
-                    width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd; iconSource: ""; glyph: "×"
-                    glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
-                    fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
-                    borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
-                    toolTipText: qsTr("Delete panel"); z: 6
-                    onClicked: root.store.deleteWidgetAt(widgetRow.widgetIndex)
-                }
-
-                KCircleIconButton {
-                    id: widgetEditBtn
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: widgetDeleteBtn.left
-                    anchors.rightMargin: Tokens.spaceSm
                     width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd
                     iconSource: "qrc:/icons/ui/pencil.svg"; iconTintColor: AppPalette.textSecond
                     fillColor: AppPalette.controlRaised
                     fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
                     borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover
-                    toolTipText: qsTr("Edit panel"); z: 6
-                    onClicked: root.store.openWidgetEditSettings(widgetRow.widgetIndex)
+                    toolTipText: qsTr("Edit panel")
+                    onClicked: root.store.openServoPanelSettings()
+                }
+            }
+
+            Repeater {
+                model: root.store.widgets.length
+                delegate: KIslandRow {
+                    id: widgetRow
+                    required property int index
+
+                    readonly property int widgetIndex: index
+                    readonly property var def: (widgetIndex >= 0 && widgetIndex < root.store.widgets.length) ? root.store.widgets[widgetIndex] : null
+                    readonly property bool shown: !!(root.store && widgetRow.def && root.store.widgetShown(widgetRow.def.id))
+
+                    visible: !!(root.store && root.store.widgetListed(widgetRow.def))
+                    label: qsTr("Panel %1").arg(widgetRow.widgetIndex + 1)
+                    labelColor: shown ? "#FDE68A" : AppPalette.textStrong
+                    caption: !widgetRow.def ? ""
+                           : widgetRow.def.kind === "usblNodes" ? qsTr("Acoustic nodes")
+                           : widgetRow.def.kind === "stand"     ? qsTr("Stand control")
+                                                                : (widgetRow.def.cols + "×" + widgetRow.def.rows)
+                    fillColor: shown ? Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20) : "transparent"
+                    verticalPadding: Tokens.spaceSm
+                    interactive: true
+                    onClicked: {
+                        if (root.store && widgetRow.def)
+                            root.store.setWidgetShown(widgetRow.def.id, !widgetRow.shown)
+                    }
+
+                    leading: WidgetGridPreview {
+                        width: Math.round(84 * AppPalette.scale)
+                        height: Math.round(64 * AppPalette.scale)
+                        def: widgetRow.def
+                    }
+
+                    Row {
+                        spacing: Tokens.spaceSm
+
+                        KCircleIconButton {
+                            width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd
+                            iconSource: "qrc:/icons/ui/pencil.svg"; iconTintColor: AppPalette.textSecond
+                            fillColor: AppPalette.controlRaised
+                            fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                            borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover
+                            toolTipText: qsTr("Edit panel")
+                            onClicked: root.store.openWidgetEditSettings(widgetRow.widgetIndex)
+                        }
+
+                        KCircleIconButton {
+                            width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd; iconSource: ""; glyph: "×"
+                            glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
+                            fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                            borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
+                            toolTipText: qsTr("Delete panel")
+                            onClicked: root.store.deleteWidgetAt(widgetRow.widgetIndex)
+                        }
+                    }
                 }
             }
         }
@@ -730,39 +817,146 @@ Column {
             core.setBottomTrackZeroing(zeroingBottomTrackButton.checked)
         }
 
-        // FBS row
-        ParamCard {
-            id: fixBlackStripesCheckButton
-            label: qsTr("FBS forward / backward:")
-            labelColor: root._bright
-            labelPixelSize: Tokens.fontLg
-            toolTipText: qsTr("Fills black stripes in the echogram by interpolating the given number of steps forward / backward.")
-            slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
-            onToggled: function(v) { core.setFixBlackStripesState(v) }
+        KIsland {
+            KIslandRow {
+                label: qsTr("FBS forward / backward:")
+                labelColor: root._bright
+                toolTipText: qsTr("Fills black stripes in the echogram by interpolating the given number of steps forward / backward.")
+                interactive: true
+                onClicked: fixBlackStripesCheckButton.click()
 
-            KSpinBox {
-                id: fixBlackStripesForwardStepsSpinBox
-                fontPixelSize: Tokens.fontLg
-                textColor: root._bright
-                width: Math.round(93 * AppPalette.scale)
-                height: Tokens.controlHMd
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                from: 0; to: 100; stepSize: 1; value: 5
-                onValueModified: function(v) { core.setFixBlackStripesForwardSteps(v) }
+                Item {
+                    width: fbsSlotRow.width
+                    height: fbsSlotRow.height
+
+                    // Eats clicks landing in the gaps around the spinboxes so they
+                    // cannot bubble up to the row and flip the toggle.
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: fbsSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: fixBlackStripesForwardStepsSpinBox
+                            fontPixelSize: Tokens.fontLg
+                            textColor: root._bright
+                            width: Math.round(93 * AppPalette.scale)
+                            height: Tokens.controlHMd
+                            from: 0; to: 100; stepSize: 1; value: 5
+                            onValueModified: function(v) { core.setFixBlackStripesForwardSteps(v) }
+                        }
+
+                        KSpinBox {
+                            id: fixBlackStripesBackwardStepsSpinBox
+                            fontPixelSize: Tokens.fontLg
+                            textColor: root._bright
+                            width: Math.round(93 * AppPalette.scale)
+                            height: Tokens.controlHMd
+                            from: 0; to: 100; stepSize: 1; value: 5
+                            onValueModified: function(v) { core.setFixBlackStripesBackwardSteps(v) }
+                        }
+
+                        KSwitch {
+                            id: fixBlackStripesCheckButton
+                            flat: true
+                            onToggled: core.setFixBlackStripesState(checked)
+                        }
+                    }
+                }
             }
 
-            KSpinBox {
-                id: fixBlackStripesBackwardStepsSpinBox
-                fontPixelSize: Tokens.fontLg
-                textColor: root._bright
-                width: Math.round(93 * AppPalette.scale)
-                height: Tokens.controlHMd
-                anchors.left: fixBlackStripesForwardStepsSpinBox.right
-                anchors.leftMargin: Tokens.spaceXs
-                anchors.verticalCenter: parent.verticalCenter
-                from: 0; to: 100; stepSize: 1; value: 5
-                onValueModified: function(v) { core.setFixBlackStripesBackwardSteps(v) }
+            KIslandRow {
+                label: qsTr("S.offset XY, mm:")
+                labelColor: root._bright
+                toolTipText: qsTr("Sonar mount-point offset along the X / Y axes, in millimeters.")
+                interactive: true
+                onClicked: sonarOffsetCheckButton.click()
+
+                Item {
+                    width: sonarOffsetSlotRow.width
+                    height: sonarOffsetSlotRow.height
+
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: sonarOffsetSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: sonarOffsetValueX
+                            fontPixelSize: Tokens.fontLg
+                            textColor: root._bright
+                            width: Math.round(93 * AppPalette.scale)
+                            height: Tokens.controlHMd
+                            from: -9999; to: 9999; stepSize: 50; value: 0
+                            onValueModified: function(v) {
+                                if (sonarOffsetCheckButton.checked)
+                                    dataset.setSonarOffset(v * 0.001, sonarOffsetValueY.value * 0.001, 0)
+                            }
+                        }
+
+                        KSpinBox {
+                            id: sonarOffsetValueY
+                            fontPixelSize: Tokens.fontLg
+                            textColor: root._bright
+                            width: Math.round(93 * AppPalette.scale)
+                            height: Tokens.controlHMd
+                            from: -9999; to: 9999; stepSize: 50; value: 0
+                            onValueModified: function(v) {
+                                if (sonarOffsetCheckButton.checked)
+                                    dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, v * 0.001, 0)
+                            }
+                        }
+
+                        KSwitch {
+                            id: sonarOffsetCheckButton
+                            flat: true
+                            onToggled: {
+                                if (checked) dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, 0)
+                                else         dataset.setSonarOffset(0, 0, 0)
+                                core.setIsAttitudeExpected(checked)
+                            }
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Pos zeroing")
+                labelColor: root._bright
+                toolTipText: qsTr("Zeroes position coordinates relative to the start point.")
+                interactive: true
+                onClicked: zeroingPosButton.click()
+
+                KSwitch {
+                    id: zeroingPosButton
+                    flat: true
+                    onToggled: core.setPosZeroing(checked)
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Bottom track zeroing")
+                labelColor: root._bright
+                toolTipText: qsTr("Zeroes the bottom-track depth reference.")
+                interactive: true
+                onClicked: zeroingBottomTrackButton.click()
+
+                KSwitch {
+                    id: zeroingBottomTrackButton
+                    flat: true
+                    onToggled: core.setBottomTrackZeroing(checked)
+                }
+            }
+
+            KIslandRow {
+                visible: instruments >= 1
+                label: qsTr("TGC")
+                toolTipText: qsTr("Open TGC settings")
+                chevron: true
+                interactive: true
+                onClicked: if (root.store) root.store.openTgcSettings()
             }
         }
 
@@ -770,84 +964,12 @@ Column {
         Settings { category: "main/blackStripes"; property alias fixBlackStripesForwardStepsSpinBox: fixBlackStripesForwardStepsSpinBox.value }
         Settings { category: "main/blackStripes"; property alias fixBlackStripesBackwardStepsSpinBox: fixBlackStripesBackwardStepsSpinBox.value }
 
-        // Sonar offset row
-        ParamCard {
-            id: sonarOffsetCheckButton
-            label: qsTr("S.offset XY, mm:")
-            labelColor: root._bright
-            labelPixelSize: Tokens.fontLg
-            toolTipText: qsTr("Sonar mount-point offset along the X / Y axes, in millimeters.")
-            slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
-            onToggled: function(v) {
-                if (v) dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, 0)
-                else   dataset.setSonarOffset(0, 0, 0)
-                core.setIsAttitudeExpected(v)
-            }
-
-            KSpinBox {
-                id: sonarOffsetValueX
-                fontPixelSize: Tokens.fontLg
-                textColor: root._bright
-                width: Math.round(93 * AppPalette.scale)
-                height: Tokens.controlHMd
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                from: -9999; to: 9999; stepSize: 50; value: 0
-                onValueModified: function(v) {
-                    if (sonarOffsetCheckButton.checked)
-                        dataset.setSonarOffset(v * 0.001, sonarOffsetValueY.value * 0.001, 0)
-                }
-            }
-
-            KSpinBox {
-                id: sonarOffsetValueY
-                fontPixelSize: Tokens.fontLg
-                textColor: root._bright
-                width: Math.round(93 * AppPalette.scale)
-                height: Tokens.controlHMd
-                anchors.left: sonarOffsetValueX.right
-                anchors.leftMargin: Tokens.spaceXs
-                anchors.verticalCenter: parent.verticalCenter
-                from: -9999; to: 9999; stepSize: 50; value: 0
-                onValueModified: function(v) {
-                    if (sonarOffsetCheckButton.checked)
-                        dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, v * 0.001, 0)
-                }
-            }
-        }
-
         Settings { category: "main/sonarOffset"; property alias sonarOffsetCheckButton: sonarOffsetCheckButton.checked }
         Settings { category: "main/sonarOffset"; property alias sonarOffsetValueX: sonarOffsetValueX.value }
         Settings { category: "main/sonarOffset"; property alias sonarOffsetValueY: sonarOffsetValueY.value }
 
-        ParamCard {
-            id: zeroingPosButton
-            label: qsTr("Pos zeroing")
-            labelColor: root._bright
-            labelPixelSize: Tokens.fontLg
-            toolTipText: qsTr("Zeroes position coordinates relative to the start point.")
-            onToggled: function(v) { core.setPosZeroing(v) }
-        }
         Settings { category: "main/dataset"; property alias zeroingPosButtonCheched: zeroingPosButton.checked }
-
-        ParamCard {
-            id: zeroingBottomTrackButton
-            label: qsTr("Bottom track zeroing")
-            labelColor: root._bright
-            labelPixelSize: Tokens.fontLg
-            toolTipText: qsTr("Zeroes the bottom-track depth reference.")
-            onToggled: function(v) { core.setBottomTrackZeroing(v) }
-        }
         Settings { category: "main/dataset"; property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
-
-        NavButton {
-            visible: instruments >= 1
-            width: parent.width
-            height: Math.round(38 * AppPalette.scale)
-            text: qsTr("TGC")
-            toolTipText: qsTr("Open TGC settings")
-            onClicked: if (root.store) root.store.openTgcSettings()
-        }
     }
 
     // Boat Track
@@ -922,191 +1044,297 @@ Column {
 
         Component.onCompleted: refreshParams()
 
-        // Preset
-        Column {
+        Item {
+            id: btPresetHolder
             width: parent.width
-            spacing: Tokens.spaceMd
+            height: presetTabBar.implicitHeight
+            property int selectedIndex: 0
 
-            Text { text: qsTr("Preset:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
+            onSelectedIndexChanged: if (root.targetPlot) root.targetPlot.setPreset(selectedIndex)
 
-            Item {
-                id: btPresetHolder
+            KTabBar {
+                id: presetTabBar
                 width: parent.width
-                height: presetTabBar.implicitHeight
-                property int selectedIndex: 0
+                options: [
+                    { label: qsTr("Normal 2D"), value: 0 },
+                    { label: qsTr("Narrow 2D"), value: 1 },
+                    { label: qsTr("Side-Scan"), value: 2 }
+                ]
+                currentValue: btPresetHolder.selectedIndex
+                onValueSelected: function(v) { btPresetHolder.selectedIndex = v }
+            }
 
-                onSelectedIndexChanged: if (root.targetPlot) root.targetPlot.setPreset(selectedIndex)
+            Settings { category: "scene2d/bottomTrack"; property alias bottomTrackList: btPresetHolder.selectedIndex }
+        }
 
-                KTabBar {
-                    id: presetTabBar
-                    width: parent.width
-                    options: [
-                        { label: qsTr("Normal 2D"), value: 0 },
-                        { label: qsTr("Narrow 2D"), value: 1 },
-                        { label: qsTr("Side-Scan"), value: 2 }
-                    ]
-                    currentValue: btPresetHolder.selectedIndex
-                    onValueSelected: function(v) { btPresetHolder.selectedIndex = v }
+        KIsland {
+            KIslandRow {
+                label: qsTr("Gain slope")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackGainSlope.click()
+
+                Item {
+                    width: gainSlopeSlotRow.width
+                    height: gainSlopeSlotRow.height
+
+                    // Eats clicks landing in the gaps around the spinbox so they
+                    // cannot bubble up to the row and flip the toggle.
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: gainSlopeSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: bottomTrackGainSlopeValue
+                            width: btGroup.spinW
+                            height: Tokens.controlHMd
+                            from: 0; to: 300; stepSize: 10; value: 100; divisor: 100; decimals: 2
+                            onValueModified: function(v) { if (bottomTrackGainSlope.checked && root.targetPlot) root.targetPlot.setGainSlope(v / 100) }
+                        }
+
+                        KSwitch {
+                            id: bottomTrackGainSlope
+                            flat: true
+                            checked: true
+                            onToggled: if (checked && root.targetPlot) root.targetPlot.setGainSlope(bottomTrackGainSlopeValue.value / 100)
+                        }
+                    }
                 }
+            }
 
-                Settings { category: "scene2d/bottomTrack"; property alias bottomTrackList: btPresetHolder.selectedIndex }
+            KIslandRow {
+                label: qsTr("Threshold")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackThreshold.click()
+
+                Item {
+                    width: thresholdSlotRow.width
+                    height: thresholdSlotRow.height
+
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: thresholdSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: bottomTrackThresholdValue
+                            width: btGroup.spinW
+                            height: Tokens.controlHMd
+                            from: 0; to: 200; stepSize: 5; value: 0; divisor: 100; decimals: 2
+                            onValueModified: function(v) { if (bottomTrackThreshold.checked && root.targetPlot) root.targetPlot.setThreshold(v / 100) }
+                        }
+
+                        KSwitch {
+                            id: bottomTrackThreshold
+                            flat: true
+                            onToggled: if (checked && root.targetPlot) root.targetPlot.setThreshold(bottomTrackThresholdValue.value / 100)
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Horizontal window")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackWindow.click()
+
+                Item {
+                    width: windowSlotRow.width
+                    height: windowSlotRow.height
+
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: windowSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: bottomTrackWindowValue
+                            width: btGroup.spinW
+                            height: Tokens.controlHMd
+                            from: 1; to: 100; stepSize: 2; value: 1
+                            onValueModified: function(v) { if (bottomTrackWindow.checked && root.targetPlot) root.targetPlot.setWindowSize(v) }
+                        }
+
+                        KSwitch {
+                            id: bottomTrackWindow
+                            flat: true
+                            onToggled: if (checked && root.targetPlot) root.targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Vertical gap, %")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackVerticalGap.click()
+
+                Item {
+                    width: verticalGapSlotRow.width
+                    height: verticalGapSlotRow.height
+
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: verticalGapSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: bottomTrackVerticalGapValue
+                            width: btGroup.spinW
+                            height: Tokens.controlHMd
+                            from: 0; to: 100; stepSize: 2; value: 10
+                            onValueModified: function(v) { if (bottomTrackVerticalGap.checked && root.targetPlot) root.targetPlot.setVerticalGap(v * 0.01) }
+                        }
+
+                        KSwitch {
+                            id: bottomTrackVerticalGap
+                            flat: true
+                            onToggled: if (checked && root.targetPlot) root.targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Min range, m")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackMinRange.click()
+
+                Item {
+                    width: minRangeSlotRow.width
+                    height: minRangeSlotRow.height
+
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: minRangeSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: bottomTrackMinRangeValue
+                            width: btGroup.spinW
+                            height: Tokens.controlHMd
+                            from: 0; to: 200000; stepSize: 10; value: 0; divisor: 1000; decimals: 2
+                            onValueModified: function(v) { if (bottomTrackMinRange.checked && root.targetPlot) root.targetPlot.setRangeMin(v / 1000) }
+                        }
+
+                        KSwitch {
+                            id: bottomTrackMinRange
+                            flat: true
+                            onToggled: if (checked && root.targetPlot) root.targetPlot.setRangeMin(bottomTrackMinRangeValue.value / 1000)
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Max range, m")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackMaxRange.click()
+
+                Item {
+                    width: maxRangeSlotRow.width
+                    height: maxRangeSlotRow.height
+
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: maxRangeSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: bottomTrackMaxRangeValue
+                            width: btGroup.spinW
+                            height: Tokens.controlHMd
+                            from: 0; to: 200000; stepSize: 1000; value: 100000; divisor: 1000; decimals: 2
+                            onValueModified: function(v) { if (bottomTrackMaxRange.checked && root.targetPlot) root.targetPlot.setRangeMax(v / 1000) }
+                        }
+
+                        KSwitch {
+                            id: bottomTrackMaxRange
+                            flat: true
+                            onToggled: if (checked && root.targetPlot) root.targetPlot.setRangeMax(bottomTrackMaxRangeValue.value / 1000)
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Sonar offset XYZ, mm")
+                labelColor: root._bright
+                interactive: true
+                onClicked: bottomTrackSensorOffset.click()
+
+                KSwitch {
+                    id: bottomTrackSensorOffset
+                    flat: true
+                    onToggled: {
+                        if (checked && root.targetPlot) {
+                            root.targetPlot.setOffsetX(btOffX.value *  0.001)
+                            root.targetPlot.setOffsetY(btOffY.value *  0.001)
+                            root.targetPlot.setOffsetZ(btOffZ.value *  0.001)
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                visible: bottomTrackSensorOffset.checked
+                stacked: true
+
+                Row {
+                    width: parent.width
+                    height: Tokens.controlHMd
+                    spacing: Tokens.spaceXs
+                    readonly property real sw: (width - 2 * Tokens.spaceXs) / 3
+
+                    KSpinBox {
+                        id: btOffX
+                        width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
+                        onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetX(v * 0.001) }
+                    }
+                    KSpinBox {
+                        id: btOffY
+                        width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
+                        onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetY(v * 0.001) }
+                    }
+                    KSpinBox {
+                        id: btOffZ
+                        width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
+                        onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetZ(v * 0.001) }
+                    }
+                }
             }
         }
 
-        // Gain slope
-        ParamCard {
-            id: bottomTrackGainSlope
-            label: qsTr("Gain slope")
-            checked: true
-            slotWidth: btGroup.spinW
-            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setGainSlope(bottomTrackGainSlopeValue.value / 100) }
-
-            KSpinBox {
-                id: bottomTrackGainSlopeValue
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                from: 0; to: 300; stepSize: 10; value: 100; divisor: 100; decimals: 2
-                onValueModified: function(v) { if (bottomTrackGainSlope.checked && root.targetPlot) root.targetPlot.setGainSlope(v / 100) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackGainSlope: bottomTrackGainSlope.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackGainSlopeValue: bottomTrackGainSlopeValue.value }
 
-        // Threshold
-        ParamCard {
-            id: bottomTrackThreshold
-            label: qsTr("Threshold")
-            slotWidth: btGroup.spinW
-            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setThreshold(bottomTrackThresholdValue.value / 100) }
-
-            KSpinBox {
-                id: bottomTrackThresholdValue
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                from: 0; to: 200; stepSize: 5; value: 0; divisor: 100; decimals: 2
-                onValueModified: function(v) { if (bottomTrackThreshold.checked && root.targetPlot) root.targetPlot.setThreshold(v / 100) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackThreshold: bottomTrackThreshold.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackThresholdValue: bottomTrackThresholdValue.value }
 
-        // Horizontal window
-        ParamCard {
-            id: bottomTrackWindow
-            label: qsTr("Horizontal window")
-            slotWidth: btGroup.spinW
-            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setWindowSize(bottomTrackWindowValue.value) }
-
-            KSpinBox {
-                id: bottomTrackWindowValue
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                from: 1; to: 100; stepSize: 2; value: 1
-                onValueModified: function(v) { if (bottomTrackWindow.checked && root.targetPlot) root.targetPlot.setWindowSize(v) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackWindow: bottomTrackWindow.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackWindowValue: bottomTrackWindowValue.value }
 
-        // Vertical gap
-        ParamCard {
-            id: bottomTrackVerticalGap
-            label: qsTr("Vertical gap, %")
-            slotWidth: btGroup.spinW
-            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01) }
-
-            KSpinBox {
-                id: bottomTrackVerticalGapValue
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                from: 0; to: 100; stepSize: 2; value: 10
-                onValueModified: function(v) { if (bottomTrackVerticalGap.checked && root.targetPlot) root.targetPlot.setVerticalGap(v * 0.01) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackVerticalGap: bottomTrackVerticalGap.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackVerticalGapValue: bottomTrackVerticalGapValue.value }
 
-        // Min range
-        ParamCard {
-            id: bottomTrackMinRange
-            label: qsTr("Min range, m")
-            slotWidth: btGroup.spinW
-            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMin(bottomTrackMinRangeValue.value / 1000) }
-
-            KSpinBox {
-                id: bottomTrackMinRangeValue
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                from: 0; to: 200000; stepSize: 10; value: 0; divisor: 1000; decimals: 2
-                onValueModified: function(v) { if (bottomTrackMinRange.checked && root.targetPlot) root.targetPlot.setRangeMin(v / 1000) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMinRange: bottomTrackMinRange.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMinRangeValue: bottomTrackMinRangeValue.value }
 
-        // Max range
-        ParamCard {
-            id: bottomTrackMaxRange
-            label: qsTr("Max range, m")
-            slotWidth: btGroup.spinW
-            onToggled: function(v) { if (v && root.targetPlot) root.targetPlot.setRangeMax(bottomTrackMaxRangeValue.value / 1000) }
-
-            KSpinBox {
-                id: bottomTrackMaxRangeValue
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: Tokens.controlHMd
-                from: 0; to: 200000; stepSize: 1000; value: 100000; divisor: 1000; decimals: 2
-                onValueModified: function(v) { if (bottomTrackMaxRange.checked && root.targetPlot) root.targetPlot.setRangeMax(v / 1000) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMaxRange: bottomTrackMaxRange.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMaxRangeValue: bottomTrackMaxRangeValue.value }
 
-        // Sensor offset (label row + values row)
-        ParamCard {
-            id: bottomTrackSensorOffset
-            label: qsTr("Sonar offset XYZ, mm")
-            onToggled: function(v) {
-                if (v && root.targetPlot) {
-                    root.targetPlot.setOffsetX(btOffX.value *  0.001)
-                    root.targetPlot.setOffsetY(btOffY.value *  0.001)
-                    root.targetPlot.setOffsetZ(btOffZ.value *  0.001)
-                }
-            }
-        }
-        Row {
-            visible: bottomTrackSensorOffset.checked
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceXs
-            readonly property real sw: (width - 2 * Tokens.spaceXs) / 3
-
-            KSpinBox {
-                id: btOffX
-                width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
-                onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetX(v * 0.001) }
-            }
-            KSpinBox {
-                id: btOffY
-                width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
-                onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetY(v * 0.001) }
-            }
-            KSpinBox {
-                id: btOffZ
-                width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
-                onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetZ(v * 0.001) }
-            }
-        }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffset: bottomTrackSensorOffset.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueX: btOffX.value }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueY: btOffY.value }
@@ -1448,6 +1676,8 @@ Column {
             KChartLevelCapsule {
                 id: mosaicLevelsSlider
                 Layout.fillHeight: true
+                Layout.alignment: Qt.AlignTop
+                Layout.maximumHeight: Math.max(implicitHeight, mosaicControlsColumn.implicitHeight)
                 cornerRadius: Tokens.radiusLg   // settings: rounded rectangle (2D overlay stays a pill)
                 onStartValueChanged: MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
                 onStopValueChanged:  MosaicViewControlMenuController.onLevelChanged(startValue, stopValue)
@@ -1460,6 +1690,7 @@ Column {
             }
 
             ColumnLayout {
+                id: mosaicControlsColumn
                 Layout.fillWidth: true
                 spacing: Tokens.spaceMd
 
@@ -1690,76 +1921,104 @@ Column {
                         Settings { category: "scene3d/mosaic"; property alias mosaicSource: mosaicSource.currentIndex }
                     }
                 }
+            }
+        }
 
-                Rectangle {
-                    id: fakeCoordsGroup
-                    visible: core.posZeroing
+        Rectangle {
+            id: fakeCoordsGroup
+            visible: core.posZeroing
+            width: parent.width
+            height: fakeCoordsGroupContent.implicitHeight + 2 * Tokens.spaceLg
+            color: "transparent"
+            radius: Tokens.radiusLg
+            border.width: Math.max(1, Math.round(1 * AppPalette.scale))
+            border.color: AppPalette.borderHover
+
+            ColumnLayout {
+                id: fakeCoordsGroupContent
+                anchors.fill: parent
+                anchors.margins: Tokens.spaceLg
+                spacing: Tokens.spaceMd
+
+                RowLayout {
                     Layout.fillWidth: true
-                    Layout.topMargin: Tokens.spaceMd
-                    implicitHeight: fakeCoordsGroupContent.implicitHeight + 2 * Tokens.spaceLg
-                    color: "transparent"
-                    border.color: AppPalette.border
-                    border.width: 1
-                    radius: Tokens.radiusMd
+                    spacing: Tokens.spaceSm
 
-                    ColumnLayout {
-                        id: fakeCoordsGroupContent
-                        anchors.fill: parent
-                        anchors.margins: Tokens.spaceLg
-                        spacing: Tokens.spaceMd
+                    Item {
+                        Layout.preferredWidth: Tokens.iconMd
+                        Layout.preferredHeight: Tokens.iconMd
 
-                        Button {
-                            Layout.alignment: Qt.AlignHCenter
-                            flat: true
-                            enabled: false
-                            padding: 0
-                            background: null
-                            icon.source: "qrc:/icons/ui/route_crossed_out.svg"
-                            icon.color: AppPalette.text
-                            icon.width: Tokens.controlHMd * 1.1
-                            icon.height: Tokens.controlHMd * 1.1
-                            implicitWidth: Tokens.controlHMd * 1.1
-                            implicitHeight: Tokens.controlHMd * 1.1
+                        Image {
+                            id: fakeCoordsIcon
+                            anchors.fill: parent
+                            source: "qrc:/icons/ui/route_crossed_out.svg"
+                            sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                            sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                            visible: false
                         }
-
-                        RowLayout {
-                            spacing: Tokens.spaceMd
-                            Text {
-                                text: qsTr("Calc last N epochs:")
-                                color: AppPalette.textSecond
-                                font.pixelSize: Tokens.fontMd
-                                Layout.fillWidth: true
-                            }
-                            KSlider {
-                                id: fakeCoordsLastNSlider
-                                Layout.preferredWidth: mosaicGroup.ctrlW - Math.round(70 * AppPalette.scale)
-                                from: 10; to: 3000; stepSize: 10; value: 500
-                                readonly property int effectiveN: (core.posZeroing && value < to) ? value : 0
-                                onEffectiveNChanged: core.setMosaicFakeCoordsLastN(effectiveN)
-                                Component.onCompleted: core.setMosaicFakeCoordsLastN(effectiveN)
-                                Settings { category: "main/dataset"; property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value }
-                            }
-                            Text {
-                                Layout.preferredWidth: Math.round(50 * AppPalette.scale)
-                                horizontalAlignment: Text.AlignRight
-                                color: AppPalette.text
-                                font.pixelSize: Tokens.fontMd
-                                text: fakeCoordsLastNSlider.value >= fakeCoordsLastNSlider.to
-                                      ? qsTr("All") : fakeCoordsLastNSlider.value
-                            }
-                        }
-
-                        KSwitch {
-                            id: fakeCoordsClearOldDataCheck
-                            text: qsTr("Clear old data (*)")
-                            checked: true
-                            Layout.fillWidth: true
-                            readonly property bool effectiveClearOldData: checked && core.posZeroing
-                            onEffectiveClearOldDataChanged: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
-                            Component.onCompleted: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
-                            Settings { category: "main/dataset"; property alias fakeCoordsClearOldDataCheck: fakeCoordsClearOldDataCheck.checked }
+                        ColorOverlay {
+                            anchors.fill: fakeCoordsIcon
+                            source: fakeCoordsIcon
+                            color: AppPalette.textStrong
+                            smooth: true
                         }
                     }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: qsTr("Dataset: with position zeroing on")
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
+                        wrapMode: Text.WordWrap
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: fakeCoordsClearOldDataCheck.switchHorizontalPadding
+                    Layout.rightMargin: fakeCoordsClearOldDataCheck.switchHorizontalPadding
+                    spacing: Tokens.spaceMd
+
+                    Text {
+                        Layout.maximumWidth: mosaicGroup.labelW
+                        text: qsTr("Calc last N epochs:")
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
+                        elide: Text.ElideRight
+                    }
+                    KSlider {
+                        id: fakeCoordsLastNSlider
+                        Layout.fillWidth: true
+                        from: 10; to: 3000; stepSize: 10; value: 500
+                        showValueTip: false
+                        readonly property int effectiveN: (core.posZeroing && value < to) ? value : 0
+                        onEffectiveNChanged: core.setMosaicFakeCoordsLastN(effectiveN)
+                        Component.onCompleted: core.setMosaicFakeCoordsLastN(effectiveN)
+                        Settings { category: "main/dataset"; property alias fakeCoordsLastNSlider: fakeCoordsLastNSlider.value }
+                    }
+                    Text {
+                        id: fakeCoordsValue
+                        Layout.preferredWidth: Math.round(44 * AppPalette.scale)
+                        horizontalAlignment: Text.AlignRight
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontLg
+                        text: fakeCoordsLastNSlider.value >= fakeCoordsLastNSlider.to
+                              ? qsTr("All") : fakeCoordsLastNSlider.value
+                    }
+                }
+
+                KSwitch {
+                    id: fakeCoordsClearOldDataCheck
+                    text: qsTr("Clear old data (*)")
+                    checked: true
+                    Layout.fillWidth: true
+                    readonly property bool effectiveClearOldData: checked && core.posZeroing
+                    onEffectiveClearOldDataChanged: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
+                    Component.onCompleted: core.setMosaicFakeCoordsClearOldData(effectiveClearOldData)
+                    Settings { category: "main/dataset"; property alias fakeCoordsClearOldDataCheck: fakeCoordsClearOldDataCheck.checked }
                 }
             }
         }
@@ -1767,6 +2026,57 @@ Column {
 
 
     // ── 3D scene (map provider) ──────────────────────────────────────────────
+
+    SettingsGroup {
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Video")
+        description: qsTr("Per-window video settings.")
+        stateStore: root.store
+        stateKey: "app.video"
+        collapsedByDefault: true
+
+        Column {
+            id: videoWindowList
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            readonly property var surfaces: root.store ? root.store.visibleVideoSurfaces : []
+
+            HoverHandler {
+                onHoveredChanged: if (!hovered && root.store) root.store.highlightedLeafId = -1
+            }
+
+            Text {
+                width: parent.width
+                visible: videoWindowList.surfaces.length === 0
+                text: qsTr("No video windows displayed")
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontMd
+                wrapMode: Text.WordWrap
+            }
+
+            KIsland {
+                visible: videoWindowList.surfaces.length > 0
+
+                Repeater {
+                    model: videoWindowList.surfaces
+
+                    delegate: KIslandRow {
+                        required property var modelData
+
+                        label: modelData.label
+                        labelColor: root._bright
+                        chevron: true
+                        interactive: true
+                        onHoveredChanged: if (hovered && root.store && modelData.leafId >= 0)
+                                              root.store.highlightedLeafId = modelData.leafId
+                        onClicked: root.store.openVideoPaneSettings(modelData.contentId)
+                    }
+                }
+            }
+        }
+    }
 
     SettingsGroup {
         width: root.groupWidth
@@ -1794,144 +2104,143 @@ Column {
                 wrapMode: Text.WordWrap
             }
 
-            Repeater {
-                model: root.echograms
-                delegate: Rectangle {
-                    id: echoRow
-                    required property var modelData
-                    width: parent.width
-                    height: Math.round(38 * AppPalette.scale)
-                    radius: Tokens.radiusLg
-                    color: navMouse.containsMouse ? AppPalette.bgHover : AppPalette.bg
-                    border.width: Tokens.cardBorderWidth
-                    border.color: navMouse.containsMouse ? AppPalette.borderHover : AppPalette.border
-                    Behavior on color       { ColorAnimation { duration: 110 } }
-                    Behavior on border.color { ColorAnimation { duration: 110 } }
+            KIsland {
+                visible: root.echograms.length > 0
 
-                    activeFocusOnTab: true
-                    Keys.onReturnPressed: root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
-                    Keys.onEnterPressed:  root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
-                    Keys.onSpacePressed:  root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
+                Repeater {
+                    model: root.echograms
 
-                    Text {
-                        anchors.left: parent.left
-                        anchors.leftMargin: Tokens.spaceMd
-                        anchors.right: navChevron.left
-                        anchors.rightMargin: Tokens.spaceMd
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.label
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
-                        elide: Text.ElideRight
-                        verticalAlignment: Text.AlignVCenter
-                    }
+                    delegate: KIslandRow {
+                        required property var modelData
 
-                    DisclosureIndicator {
-                        id: navChevron
-                        anchors.right: parent.right
-                        anchors.rightMargin: Tokens.spaceMd
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.round(10 * AppPalette.scale)
-                        height: width
-                        expanded: false
-                        indicatorColor: AppPalette.textSecond
-                    }
-
-                    KFocusRing { id: focusRing }
-
-                    MouseArea {
-                        id: navMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onContainsMouseChanged: if (containsMouse && !root.store.echogramSettingsActive)
-                                                    root.store.highlightedLeafId = modelData.key
-                        onPressed: focusRing.suppress()
-                        onClicked: { echoRow.forceActiveFocus(); root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key) }
+                        label: modelData.label
+                        labelColor: root._bright
+                        chevron: true
+                        interactive: true
+                        onHoveredChanged: if (hovered && !root.store.echogramSettingsActive)
+                                              root.store.highlightedLeafId = modelData.key
+                        onClicked: root.store.openEchogramSettings(modelData.plot, modelData.label, modelData.key)
                     }
                 }
             }
         }
 
-        ParamCardGroup {
-            width: parent.width
-            label: qsTr("Loupe")
-            checked: root.store ? root.store.echogramLoupeVisible : false
-            onToggled: function(v) { if (root.store) root.store.echogramLoupeVisible = v }
+        KIsland {
+            KIslandRow {
+                label: qsTr("Loupe")
+                labelColor: root._bright
+                interactive: true
+                onClicked: echogramLoupeSwitch.click()
 
-            RowLayout {
-                width: parent.width
-                spacing: Tokens.spaceMd
-                Text {
-                    text: qsTr("Size")
-                    color: root._bright
-                    font.pixelSize: Tokens.fontLg
-                    Layout.fillWidth: true
-                    verticalAlignment: Text.AlignVCenter
+                KSwitch {
+                    id: echogramLoupeSwitch
+                    flat: true
+                    checked: root.store ? root.store.echogramLoupeVisible : false
+                    onToggled: if (root.store) root.store.echogramLoupeVisible = checked
                 }
+            }
+
+            KIslandRow {
+                label: qsTr("Size")
+                labelColor: root._bright
+                verticalPadding: Tokens.spaceSm
+                showSeparator: false
+                open: root.store ? root.store.echogramLoupeVisible : false
+
                 KSpinBox {
-                    Layout.preferredWidth: Math.round(120 * AppPalette.scale)
+                    width: Math.round(120 * AppPalette.scale)
+                    height: Tokens.controlHMd
                     from: 1; to: 3; stepSize: 1
                     value: root.store ? root.store.echogramLoupeSize : 1
                     onValueModified: function(val) { if (root.store) root.store.echogramLoupeSize = val }
                 }
             }
 
-            RowLayout {
-                width: parent.width
-                spacing: Tokens.spaceMd
-                Text {
-                    text: qsTr("Zoom")
-                    color: root._bright
-                    font.pixelSize: Tokens.fontLg
-                    verticalAlignment: Text.AlignVCenter
-                }
-                KSlider {
-                    Layout.fillWidth: true
-                    from: 0; to: 300; stepSize: 1
-                    value: root.store ? root.store.echogramLoupeZoom : 100
-                    onValueModified: function(val) {
-                        if (!root.store) return
-                        root.store.echogramLoupeZoom = Math.round(val)
-                        root.store.echogramLoupePreview("update")
+            KIslandRow {
+                id: echogramLoupeZoomRow
+                label: qsTr("Zoom")
+                labelColor: root._bright
+                verticalPadding: Tokens.spaceSm
+                showSeparator: false
+                open: root.store ? root.store.echogramLoupeVisible : false
+                slotWidth: Math.round(240 * AppPalette.scale)
+
+                Item {
+                    width: echogramLoupeZoomRow.slotWidth
+                    height: echogramLoupeZoomLayout.implicitHeight
+
+                    RowLayout {
+                        id: echogramLoupeZoomLayout
+                        anchors.fill: parent
+                        spacing: Tokens.spaceSm
+
+                        KSlider {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            from: 0; to: 300; stepSize: 1
+                            value: root.store ? root.store.echogramLoupeZoom : 100
+                            onValueModified: function(val) {
+                                if (!root.store) return
+                                root.store.echogramLoupeZoom = Math.round(val)
+                                root.store.echogramLoupePreview("update")
+                            }
+                            onPressedChanged: {
+                                if (root.store) root.store.echogramLoupePreview(pressed ? "begin" : "end")
+                            }
+                        }
+                        Text {
+                            text: (root.store ? Math.round(root.store.echogramLoupeZoom) : 0) + "%"
+                            color: root._bright
+                            font.pixelSize: Tokens.fontLg
+                            Layout.preferredWidth: Math.round(52 * AppPalette.scale)
+                            Layout.alignment: Qt.AlignVCenter
+                            horizontalAlignment: Text.AlignRight
+                        }
                     }
-                    onPressedChanged: {
-                        if (root.store) root.store.echogramLoupePreview(pressed ? "begin" : "end")
-                    }
-                }
-                Text {
-                    text: (root.store ? Math.round(root.store.echogramLoupeZoom) : 0) + "%"
-                    color: root._bright
-                    font.pixelSize: Tokens.fontLg
-                    Layout.preferredWidth: Math.round(52 * AppPalette.scale)
-                    horizontalAlignment: Text.AlignRight
                 }
             }
-        }
 
-        ParamCardGroup {
-            width: parent.width
-            label: qsTr("Sync echograms")
-            toolTipText: qsTr("Sync the cursor position across all echograms")
-            checked: root.store ? root.store.echogramSyncCursor : false
-            onToggled: function(v) { if (root.store) root.store.echogramSyncCursor = v }
+            KIslandRow {
+                label: qsTr("Sync echograms")
+                labelColor: root._bright
+                toolTipText: qsTr("Sync the cursor position across all echograms")
+                interactive: true
+                onClicked: echogramSyncCursorSwitch.click()
 
-            KSwitch {
-                width: parent.width
-                text: qsTr("Sync view")
+                KSwitch {
+                    id: echogramSyncCursorSwitch
+                    flat: true
+                    checked: root.store ? root.store.echogramSyncCursor : false
+                    onToggled: if (root.store) root.store.echogramSyncCursor = checked
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Sync view")
+                labelColor: root._bright
+                verticalPadding: Tokens.spaceSm
+                showSeparator: false
                 toolTipText: qsTr("Sync scroll and zoom across echograms")
-                enabled: root.store ? root.store.echogramSyncCursor : false
-                checked: root.store ? root.store.echogramSyncView : false
-                onToggled: if (root.store) root.store.echogramSyncView = checked
-            }
-        }
+                open: root.store ? root.store.echogramSyncCursor : false
+                interactive: true
+                onClicked: echogramSyncViewSwitch.click()
 
-        NavButton {
-            width: parent.width
-            fontPixelSize: Tokens.fontLg
-            text: qsTr("Information panel")
-            toolTipText: qsTr("Configure the information panel")
-            onClicked: if (root.store) root.store.openAimPanelSettings()
+                KSwitch {
+                    id: echogramSyncViewSwitch
+                    flat: true
+                    checked: root.store ? root.store.echogramSyncView : false
+                    onToggled: if (root.store) root.store.echogramSyncView = checked
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Information panel")
+                labelColor: root._bright
+                toolTipText: qsTr("Configure the information panel")
+                chevron: true
+                interactive: true
+                onClicked: if (root.store) root.store.openAimPanelSettings()
+            }
         }
     }
 
@@ -1945,8 +2254,12 @@ Column {
         collapsedByDefault: true
 
         Column {
+            id: render3dList
             width: parent.width
             spacing: Tokens.spaceMd
+
+            readonly property int spinW: Math.round(120 * AppPalette.scale)
+            readonly property bool circleGridOpen: render3dSettings.gridCheckButton && render3dSettings.gridTypeCheckButton
 
             Text {
                 width: parent.width
@@ -1956,53 +2269,70 @@ Column {
                 topPadding: Tokens.spaceXs
             }
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Show surface quality")
-                toolTipText: qsTr("Show the surface quality label in the 3D scene")
-                checked: root.store ? root.store.showSurfaceQuality : false
-                onToggled: function(v) {
-                    if (root.store)
-                        root.store.showSurfaceQuality = v
-                }
-            }
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Show surface quality")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Show the surface quality label in the 3D scene")
+                    interactive: true
+                    onClicked: showSurfaceQualitySwitch.click()
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Force zoom")
-                visible: core.needForceZooming
-                checked: render3dSettings.forceSingleZoomCheckButton
-                onToggled: function(v) {
-                    render3dSettings.forceSingleZoomCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onForceSingleZoomCheckedChanged(v)
-                }
-            }
-
-            // Loupe — toggle + Size/Zoom row in animated card body.
-            ParamCardGroup {
-                id: loupeCard
-                label: qsTr("Loupe")
-                checked: render3dSettings.syncLoupeCheckButton
-                onToggled: function(v) {
-                    render3dSettings.syncLoupeCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onSyncLoupeVisibleChanged(v)
-                }
-
-                RowLayout {
-                    width: parent.width
-                    spacing: Tokens.spaceMd
-                    Text {
-                        text: qsTr("Size")
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
-                        Layout.fillWidth: true
-                        verticalAlignment: Text.AlignVCenter
+                    KSwitch {
+                        id: showSurfaceQualitySwitch
+                        flat: true
+                        checked: root.store ? root.store.showSurfaceQuality : false
+                        onToggled: if (root.store) root.store.showSurfaceQuality = checked
                     }
+                }
+
+                KIslandRow {
+                    visible: core.needForceZooming
+                    label: qsTr("Force zoom")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: forceSingleZoomSwitch.click()
+
+                    KSwitch {
+                        id: forceSingleZoomSwitch
+                        flat: true
+                        checked: render3dSettings.forceSingleZoomCheckButton
+                        onToggled: {
+                            render3dSettings.forceSingleZoomCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onForceSingleZoomCheckedChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Loupe")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: syncLoupeSwitch.click()
+
+                    KSwitch {
+                        id: syncLoupeSwitch
+                        flat: true
+                        checked: render3dSettings.syncLoupeCheckButton
+                        onToggled: {
+                            render3dSettings.syncLoupeCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onSyncLoupeVisibleChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    open: render3dSettings.syncLoupeCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Size")
+                    labelColor: root._bright
+
                     KSpinBox {
                         id: syncLoupeSizeSpinBox
-                        Layout.preferredWidth: Math.round(120 * AppPalette.scale)
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
                         from: 1; to: 3; stepSize: 1; value: 1
                         onValueModified: function(v) {
                             if (typeof Scene3dToolBarController !== "undefined")
@@ -2011,321 +2341,373 @@ Column {
                     }
                 }
 
-                RowLayout {
-                    width: parent.width
-                    spacing: Tokens.spaceMd
-                    Text {
-                        text: qsTr("Zoom, %:")
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    KSlider {
-                        id: syncLoupeZoomSlider
-                        Layout.fillWidth: true
-                        from: 0; to: 300; stepSize: 1; value: 100
-                        onValueModified: function(val) {
-                            if (typeof Scene3dToolBarController !== "undefined") {
-                                Scene3dToolBarController.onSyncLoupeZoomChanged(Math.round(val))
-                                Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(true)
+                KIslandRow {
+                    id: syncLoupeZoomRow
+                    open: render3dSettings.syncLoupeCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Zoom, %:")
+                    labelColor: root._bright
+                    slotWidth: Math.round(240 * AppPalette.scale)
+
+                    Item {
+                        width: syncLoupeZoomRow.slotWidth
+                        height: syncLoupeZoomLayout.implicitHeight
+
+                        RowLayout {
+                            id: syncLoupeZoomLayout
+                            anchors.fill: parent
+                            spacing: Tokens.spaceSm
+
+                            KSlider {
+                                id: syncLoupeZoomSlider
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                from: 0; to: 300; stepSize: 1; value: 100
+                                onValueModified: function(val) {
+                                    if (typeof Scene3dToolBarController !== "undefined") {
+                                        Scene3dToolBarController.onSyncLoupeZoomChanged(Math.round(val))
+                                        Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(true)
+                                    }
+                                }
+                                onPressedChanged: {
+                                    if (typeof Scene3dToolBarController !== "undefined")
+                                        Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(pressed)
+                                }
+                            }
+                            Text {
+                                text: Math.round(syncLoupeZoomSlider.value) + "%"
+                                color: root._bright
+                                font.pixelSize: Tokens.fontLg
+                                Layout.preferredWidth: Math.round(52 * AppPalette.scale)
+                                Layout.alignment: Qt.AlignVCenter
+                                horizontalAlignment: Text.AlignRight
                             }
                         }
-                        onPressedChanged: {
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("North mode")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Orient the 3D view to north (north stays up)")
+                    interactive: true
+                    onClicked: northViewSwitch.click()
+
+                    KSwitch {
+                        id: northViewSwitch
+                        flat: true
+                        checked: render3dSettings.isNorthViewButton
+                        onToggled: {
+                            render3dSettings.isNorthViewButton = checked
                             if (typeof Scene3dToolBarController !== "undefined")
-                                Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(pressed)
+                                Scene3dToolBarController.onIsNorthLocationButtonChanged(checked)
                         }
                     }
-                    Text {
-                        text: Math.round(syncLoupeZoomSlider.value) + "%"
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
-                        Layout.preferredWidth: Math.round(52 * AppPalette.scale)
-                        horizontalAlignment: Text.AlignRight
+                }
+
+                KIslandRow {
+                    label: qsTr("Sync echogram")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Sync the cursor between the 2D echogram and the 3D scene")
+                    interactive: true
+                    onClicked: selectionToolSwitch.click()
+
+                    KSwitch {
+                        id: selectionToolSwitch
+                        flat: true
+                        checked: render3dSettings.selectionToolButton
+                        onToggled: {
+                            render3dSettings.selectionToolButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
+                        }
                     }
                 }
-            }
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("North mode")
-                toolTipText: qsTr("Orient the 3D view to north (north stays up)")
-                checked: render3dSettings.isNorthViewButton
-                onToggled: function(v) {
-                    render3dSettings.isNorthViewButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onIsNorthLocationButtonChanged(v)
-                }
-            }
+                KIslandRow {
+                    label: qsTr("Grid")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: grid3dSwitch.click()
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Sync echogram")
-                toolTipText: qsTr("Sync the cursor between the 2D echogram and the 3D scene")
-                checked: render3dSettings.selectionToolButton
-                onToggled: function(v) {
-                    render3dSettings.selectionToolButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(v)
-                }
-            }
-
-            // Grid — toggle with nested Circle sub-group (Labels + Size/Step/Angle).
-            ParamCardGroup {
-                id: gridCard
-                label: qsTr("Grid")
-                checked: render3dSettings.gridCheckButton
-                onToggled: function(v) {
-                    render3dSettings.gridCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onGridVisibilityCheckedChanged(v)
+                    KSwitch {
+                        id: grid3dSwitch
+                        flat: true
+                        checked: render3dSettings.gridCheckButton
+                        onToggled: {
+                            render3dSettings.gridCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onGridVisibilityCheckedChanged(checked)
+                        }
+                    }
                 }
 
-                ParamCardGroup {
-                    id: gridTypeCard
+                KIslandRow {
+                    open: render3dSettings.gridCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
                     label: qsTr("Circle")
-                    fillColor: AppPalette.bg
-                    checked: render3dSettings.gridTypeCheckButton
-                    onToggled: function(v) {
-                        render3dSettings.gridTypeCheckButton = v
-                        if (typeof Scene3dToolBarController !== "undefined")
-                            Scene3dToolBarController.onPlaneGridTypeChanged(!v)
-                    }
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: gridTypeSwitch.click()
 
-                    ParamCard {
-                        width: parent.width
-                        label: qsTr("Labels")
-                        checked: render3dSettings.gridLabelsCheckButton
-                        onToggled: function(v) {
-                            render3dSettings.gridLabelsCheckButton = v
+                    KSwitch {
+                        id: gridTypeSwitch
+                        flat: true
+                        checked: render3dSettings.gridTypeCheckButton
+                        onToggled: {
+                            render3dSettings.gridTypeCheckButton = checked
                             if (typeof Scene3dToolBarController !== "undefined")
-                                Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(v)
-                        }
-                    }
-                    KParamGrid {
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd + 2 * Tokens.spaceXs
-                            radius: Tokens.radiusMd
-                            color: AppPalette.rowRaised
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: Tokens.spaceMd
-                                anchors.rightMargin: Tokens.spaceSm
-                                spacing: Tokens.spaceSm
-                                Text {
-                                    text: qsTr("Size")
-                                    color: root._bright
-                                    font.pixelSize: Tokens.fontLg
-                                }
-                                KSpinBox {
-                                    id: circleGridSizeSpinBox
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    from: 1; to: 3; stepSize: 1; value: 1
-                                    onValueModified: function(v) {
-                                        if (typeof Scene3dToolBarController !== "undefined")
-                                            Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(v)
-                                    }
-                                }
-                            }
-                        }
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd + 2 * Tokens.spaceXs
-                            radius: Tokens.radiusMd
-                            color: AppPalette.rowRaised
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: Tokens.spaceMd
-                                anchors.rightMargin: Tokens.spaceSm
-                                spacing: Tokens.spaceSm
-                                Text {
-                                    text: qsTr("Step")
-                                    color: root._bright
-                                    font.pixelSize: Tokens.fontLg
-                                }
-                                KSpinBox {
-                                    id: circleGridStepSpinBox
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    from: 1; to: 20; stepSize: 1; value: 1
-                                    onValueModified: function(v) {
-                                        if (typeof Scene3dToolBarController !== "undefined")
-                                            Scene3dToolBarController.onPlaneGridCircleGridStepChanged(v)
-                                    }
-                                }
-                            }
-                        }
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd + 2 * Tokens.spaceXs
-                            radius: Tokens.radiusMd
-                            color: AppPalette.rowRaised
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: Tokens.spaceMd
-                                anchors.rightMargin: Tokens.spaceSm
-                                spacing: Tokens.spaceSm
-                                Text {
-                                    text: qsTr("Angle")
-                                    color: root._bright
-                                    font.pixelSize: Tokens.fontLg
-                                }
-                                KSpinBox {
-                                    id: circleGridAngleSpinBox
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    from: 1; to: 5; stepSize: 1; value: 1
-                                    onValueModified: function(v) {
-                                        if (typeof Scene3dToolBarController !== "undefined")
-                                            Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(v)
-                                    }
-                                }
-                            }
+                                Scene3dToolBarController.onPlaneGridTypeChanged(!checked)
                         }
                     }
                 }
-            }
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Shadows")
-                checked: render3dSettings.shadowEnabledCheckButton
-                onToggled: function(v) {
-                    render3dSettings.shadowEnabledCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onShadowsEnabledChanged(v)
-                }
-            }
+                KIslandRow {
+                    open: render3dList.circleGridOpen
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Labels")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: gridLabelsSwitch.click()
 
-            // Navigation arrow — toggle + Shape/Size rows in same card.
-            ParamCardGroup {
-                id: boatCard
-                label: qsTr("Navigation arrow")
-                checked: render3dSettings.navigationArrowCheckButton
-                onToggled: function(v) {
-                    render3dSettings.navigationArrowCheckButton = v
-                    if (typeof NavigationArrowControlMenuController !== "undefined")
-                        NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(v)
-                }
-
-                KParamGrid {
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Tokens.spaceSm
-                        Text {
-                            text: qsTr("Shape")
-                            color: root._bright
-                            font.pixelSize: Tokens.fontLg
-                        }
-                        KCombo {
-                            id: navigationArrowShapeCombo
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd
-                            model: [qsTr("Arrow"), qsTr("Boat")]
-                            currentIndex: 0
-                            onActivated: function(idx) {
-                                if (typeof NavigationArrowControlMenuController !== "undefined")
-                                    NavigationArrowControlMenuController.onRepresentationChanged(idx)
-                            }
-                        }
-                    }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Tokens.spaceSm
-                        Text {
-                            text: qsTr("Size")
-                            color: root._bright
-                            font.pixelSize: Tokens.fontLg
-                        }
-                        KSpinBox {
-                            id: navigationArrowSizeSpinBox
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd
-                            from: 1; to: 5; stepSize: 1; value: 1
-                            onValueModified: function(v) {
-                                if (typeof NavigationArrowControlMenuController !== "undefined")
-                                    NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(v)
-                            }
+                    KSwitch {
+                        id: gridLabelsSwitch
+                        flat: true
+                        checked: render3dSettings.gridLabelsCheckButton
+                        onToggled: {
+                            render3dSettings.gridLabelsCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(checked)
                         }
                     }
                 }
-            }
 
-            // Compass — toggle + animated Pos/Size row in same card.
-            ParamCardGroup {
-                id: compassCard
-                label: qsTr("Compass")
-                checked: render3dSettings.compassCheckButton
-                onToggled: function(v) {
-                    render3dSettings.compassCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onCompassButtonChanged(v)
-                }
+                KIslandRow {
+                    open: render3dList.circleGridOpen
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Size")
+                    labelColor: root._bright
 
-                KParamGrid {
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Tokens.spaceSm
-                        Text {
-                            text: qsTr("Pos")
-                            color: root._bright
-                            font.pixelSize: Tokens.fontLg
-                        }
-                        KSpinBox {
-                            id: compassPosSpinBox
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd
-                            from: 1; to: 3; stepSize: 1; value: 2
-                            onValueModified: function(v) {
-                                if (typeof Scene3dToolBarController !== "undefined")
-                                    Scene3dToolBarController.onCompassPosChanged(v)
-                            }
-                        }
-                    }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Tokens.spaceSm
-                        Text {
-                            text: qsTr("Size")
-                            color: root._bright
-                            font.pixelSize: Tokens.fontLg
-                        }
-                        KSpinBox {
-                            id: compassSizeSpinBox
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd
-                            from: 1; to: 5; stepSize: 1; value: 1
-                            onValueModified: function(v) {
-                                if (typeof Scene3dToolBarController !== "undefined")
-                                    Scene3dToolBarController.onCompassSizeChanged(v)
-                            }
+                    KSpinBox {
+                        id: circleGridSizeSpinBox
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 3; stepSize: 1; value: 1
+                        onValueModified: function(v) {
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(v)
                         }
                     }
                 }
-            }
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Scale bar")
-                toolTipText: qsTr("Show the scale bar in the 3D scene")
-                checked: render3dSettings.scaleBarCheckButton
-                onToggled: function(v) {
-                    render3dSettings.scaleBarCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onScaleBarButtonChanged(v)
+                KIslandRow {
+                    open: render3dList.circleGridOpen
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Step")
+                    labelColor: root._bright
+
+                    KSpinBox {
+                        id: circleGridStepSpinBox
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 20; stepSize: 1; value: 1
+                        onValueModified: function(v) {
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onPlaneGridCircleGridStepChanged(v)
+                        }
+                    }
                 }
-            }
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("USBL beacons")
-                toolTipText: qsTr("Show the acoustic nodes and their tracks in the 3D scene")
-                checked: render3dSettings.usblLayerCheckButton
-                onToggled: function(v) {
-                    render3dSettings.usblLayerCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onUsblLayerVisibilityChanged(v)
+                KIslandRow {
+                    open: render3dList.circleGridOpen
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Angle")
+                    labelColor: root._bright
+
+                    KSpinBox {
+                        id: circleGridAngleSpinBox
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 5; stepSize: 1; value: 1
+                        onValueModified: function(v) {
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(v)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Shadows")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: shadowEnabledSwitch.click()
+
+                    KSwitch {
+                        id: shadowEnabledSwitch
+                        flat: true
+                        checked: render3dSettings.shadowEnabledCheckButton
+                        onToggled: {
+                            render3dSettings.shadowEnabledCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onShadowsEnabledChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Navigation arrow")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: navigationArrowSwitch.click()
+
+                    KSwitch {
+                        id: navigationArrowSwitch
+                        flat: true
+                        checked: render3dSettings.navigationArrowCheckButton
+                        onToggled: {
+                            render3dSettings.navigationArrowCheckButton = checked
+                            if (typeof NavigationArrowControlMenuController !== "undefined")
+                                NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    open: render3dSettings.navigationArrowCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Shape")
+                    labelColor: root._bright
+
+                    KCombo {
+                        id: navigationArrowShapeCombo
+                        width: render3dList.spinW
+                        model: [qsTr("Arrow"), qsTr("Boat")]
+                        currentIndex: 0
+                        onActivated: function(idx) {
+                            if (typeof NavigationArrowControlMenuController !== "undefined")
+                                NavigationArrowControlMenuController.onRepresentationChanged(idx)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    open: render3dSettings.navigationArrowCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Size")
+                    labelColor: root._bright
+
+                    KSpinBox {
+                        id: navigationArrowSizeSpinBox
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 5; stepSize: 1; value: 1
+                        onValueModified: function(v) {
+                            if (typeof NavigationArrowControlMenuController !== "undefined")
+                                NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(v)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Compass")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: compassSwitch.click()
+
+                    KSwitch {
+                        id: compassSwitch
+                        flat: true
+                        checked: render3dSettings.compassCheckButton
+                        onToggled: {
+                            render3dSettings.compassCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onCompassButtonChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    open: render3dSettings.compassCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Pos")
+                    labelColor: root._bright
+
+                    KSpinBox {
+                        id: compassPosSpinBox
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 3; stepSize: 1; value: 2
+                        onValueModified: function(v) {
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onCompassPosChanged(v)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    open: render3dSettings.compassCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Size")
+                    labelColor: root._bright
+
+                    KSpinBox {
+                        id: compassSizeSpinBox
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 5; stepSize: 1; value: 1
+                        onValueModified: function(v) {
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onCompassSizeChanged(v)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Scale bar")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Show the scale bar in the 3D scene")
+                    interactive: true
+                    onClicked: scaleBarSwitch.click()
+
+                    KSwitch {
+                        id: scaleBarSwitch
+                        flat: true
+                        checked: render3dSettings.scaleBarCheckButton
+                        onToggled: {
+                            render3dSettings.scaleBarCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onScaleBarButtonChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("USBL beacons")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Show the acoustic nodes and their tracks in the 3D scene")
+                    interactive: true
+                    onClicked: usblLayerSwitch.click()
+
+                    KSwitch {
+                        id: usblLayerSwitch
+                        flat: true
+                        checked: render3dSettings.usblLayerCheckButton
+                        onToggled: {
+                            render3dSettings.usblLayerCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onUsblLayerVisibilityChanged(checked)
+                        }
+                    }
                 }
             }
 
@@ -2363,16 +2745,41 @@ Column {
                 topPadding: Tokens.spaceXs
             }
 
-            // ── Visibility toggle ────────────────────────────────────────
-            ParamCard {
-                width: parent.width
-                label: qsTr("Show map tiles")
-                checked: mapVisibilitySettings.mapViewCheckButton
-                onToggled: function(v) {
-                    mapVisibilitySettings.mapViewCheckButton = v
-                    if (typeof MapViewControlMenuController !== "undefined")
-                        MapViewControlMenuController.onVisibilityChanged(v)
-                    core.setMapTileLoadingEnabled(v)
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Show map tiles")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: mapTilesSwitch.click()
+
+                    KSwitch {
+                        id: mapTilesSwitch
+                        flat: true
+                        checked: mapVisibilitySettings.mapViewCheckButton
+                        onToggled: {
+                            mapVisibilitySettings.mapViewCheckButton = checked
+                            if (typeof MapViewControlMenuController !== "undefined")
+                                MapViewControlMenuController.onVisibilityChanged(checked)
+                            core.setMapTileLoadingEnabled(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Limit downloads on metered networks")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: meteredLimitSwitch.click()
+
+                    KSwitch {
+                        id: meteredLimitSwitch
+                        flat: true
+                        checked: meteredSettings.deferTilesOnMetered
+                        onToggled: {
+                            meteredSettings.deferTilesOnMetered = checked
+                            core.setDeferTilesOnMetered(checked)
+                        }
+                    }
                 }
             }
 
@@ -2383,6 +2790,8 @@ Column {
                 category: "scene3d/map"
                 property bool mapViewCheckButton: true
             }
+
+            Settings { id: meteredSettings; category: "scene3d/map"; property bool deferTilesOnMetered: true }
 
             Row {
                 width: parent.width
@@ -2404,18 +2813,6 @@ Column {
                     text: qsTr("Metered network (limited)")
                     color: AppPalette.textSecond
                     font.pixelSize: Tokens.fontMd
-                }
-            }
-
-            Settings { id: meteredSettings; category: "scene3d/map"; property bool deferTilesOnMetered: true }
-
-            ParamCard {
-                width: parent.width
-                label: qsTr("Limit downloads on metered networks")
-                checked: meteredSettings.deferTilesOnMetered
-                onToggled: function(v) {
-                    meteredSettings.deferTilesOnMetered = v
-                    core.setDeferTilesOnMetered(v)
                 }
             }
 
@@ -2452,107 +2849,54 @@ Column {
             }
 
             // ── Provider selector (single-pick rows) ─────────────────────
-            Repeater {
-                model: core.mapTileProviders
-                delegate: Rectangle {
-                    id: providerRow
-                    width: parent.width
-                    implicitHeight: rowCol.implicitHeight + 2 * Tokens.spaceSm
-                    height: implicitHeight
-                    radius: Tokens.radiusMd
+            KIsland {
+                Repeater {
+                    model: core.mapTileProviders
 
-                    readonly property bool isSelected: modelData.id === core.mapTileProviderId
-                    // Cached once per delegate (providers list is CONSTANT).
-                    // Refreshed on click — see below.
-                    property var dbInfo: core.getMapTileDbInfo(modelData.id)
+                    delegate: KIslandRow {
+                        id: providerRow
+                        required property var modelData
 
-                    activeFocusOnTab: true
-                    function _select() {
-                        core.setMapTileProvider(modelData.id)
-                        dbInfo = core.getMapTileDbInfo(modelData.id)
-                    }
-                    Keys.onReturnPressed: providerRow._select()
-                    Keys.onEnterPressed:  providerRow._select()
-                    Keys.onSpacePressed:  providerRow._select()
+                        readonly property bool isSelected: modelData.id === core.mapTileProviderId
+                        // Cached once per delegate (providers list is CONSTANT).
+                        // Refreshed on click — see below.
+                        property var dbInfo: core.getMapTileDbInfo(modelData.id)
 
-                    color: isSelected
-                           ? AppPalette.accentBg
-                           : (providerMouse.containsMouse ? AppPalette.bgHover : AppPalette.bg)
-                    border.width: Tokens.cardBorderWidth
-                    border.color: isSelected
-                                  ? AppPalette.accentBorder
-                                  : (providerMouse.containsMouse ? AppPalette.borderHover : AppPalette.border)
-                    Behavior on color       { ColorAnimation { duration: 110 } }
-                    Behavior on border.color { ColorAnimation { duration: 110 } }
-
-                    Column {
-                        id: rowCol
-                        anchors.left: parent.left
-                        anchors.leftMargin: Tokens.spaceMd
-                        anchors.right: parent.right
-                        anchors.rightMargin: Tokens.spaceMd
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
-
-                        // ── Top line: name + layer type ────────────────
-                        Item {
-                            width: parent.width
-                            height: nameLabel.implicitHeight
-
-                            Text {
-                                id: nameLabel
-                                anchors.left: parent.left
-                                anchors.right: typeLabel.left
-                                anchors.rightMargin: Tokens.spaceMd
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: modelData.name
-                                color: providerRow.isSelected ? AppPalette.accentText : AppPalette.textStrong
-                                font.pixelSize: Tokens.fontMd
-                                elide: Text.ElideRight
-                            }
-                            Text {
-                                id: typeLabel
-                                anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: modelData.layer_type
-                                color: providerRow.isSelected
-                                       ? Qt.rgba(AppPalette.accentText.r, AppPalette.accentText.g, AppPalette.accentText.b, 0.82)
-                                       : AppPalette.textSecond
-                                font.pixelSize: Tokens.fontSm
-                            }
+                        label: modelData.name
+                        labelPixelSize: Tokens.fontMd
+                        labelColor: isSelected ? AppPalette.accentText : AppPalette.textStrong
+                        caption: {
+                            if (!providerRow.dbInfo || !providerRow.dbInfo.exists)
+                                return qsTr("Cache: empty")
+                            var mb = (providerRow.dbInfo.sizeBytes / (1024 * 1024)).toFixed(1)
+                            var iso = providerRow.dbInfo.created || providerRow.dbInfo.modified || ""
+                            var d = new Date(iso)
+                            var dateStr = isNaN(d.getTime())
+                                          ? iso
+                                          : d.toLocaleDateString(Qt.locale(), Locale.ShortFormat)
+                            return qsTr("Cache since %1  •  %2 MB").arg(dateStr).arg(mb)
+                        }
+                        captionColor: isSelected
+                                      ? Qt.rgba(AppPalette.accentText.r, AppPalette.accentText.g, AppPalette.accentText.b, 0.82)
+                                      : AppPalette.textMuted
+                        fillColor: isSelected ? AppPalette.accentBg : "transparent"
+                        hoverColor: isSelected ? Qt.lighter(AppPalette.accentBg, 1.12) : AppPalette.cardHover
+                        pressedColor: isSelected ? Qt.darker(AppPalette.accentBg, 1.08) : AppPalette.bgHover
+                        labelHoverColor: isSelected ? AppPalette.accentText : Qt.lighter(AppPalette.textStrong, Anim.hoverLighten)
+                        verticalPadding: Tokens.spaceSm
+                        interactive: true
+                        onClicked: {
+                            core.setMapTileProvider(modelData.id)
+                            providerRow.dbInfo = core.getMapTileDbInfo(modelData.id)
                         }
 
-                        // ── Bottom line: cache age + size ──────────────
                         Text {
-                            width: parent.width
-                            text: {
-                                if (!dbInfo || !dbInfo.exists)
-                                    return qsTr("Cache: empty")
-                                var mb = (dbInfo.sizeBytes / (1024 * 1024)).toFixed(1)
-                                var iso = dbInfo.created || dbInfo.modified || ""
-                                var d = new Date(iso)
-                                var dateStr = isNaN(d.getTime())
-                                              ? iso
-                                              : d.toLocaleDateString(Qt.locale(), Locale.ShortFormat)
-                                return qsTr("Cache since %1  •  %2 MB").arg(dateStr).arg(mb)
-                            }
+                            text: providerRow.modelData.layer_type
                             color: providerRow.isSelected
                                    ? Qt.rgba(AppPalette.accentText.r, AppPalette.accentText.g, AppPalette.accentText.b, 0.82)
-                                   : AppPalette.textMuted
-                            font.pixelSize: Tokens.fontXs
-                            elide: Text.ElideRight
+                                   : AppPalette.textSecond
+                            font.pixelSize: Tokens.fontSm
                         }
-                    }
-
-                    KFocusRing { id: focusRing }
-
-                    MouseArea {
-                        id: providerMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onPressed: focusRing.suppress()
-                        onClicked: { providerRow.forceActiveFocus(); providerRow._select() }
                     }
                 }
             }
@@ -2565,25 +2909,41 @@ Column {
                 topPadding: Tokens.spaceXs
             }
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Use angle")
-                checked: root.store.useAngleEnabled
-                onToggled: function(v) {
-                    root.store.useAngleEnabled = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onUseAngleLocationButtonChanged(v)
-                }
-            }
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Use angle")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: useAngleSwitch.click()
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Navigator view")
-                checked: root.store.navigationViewEnabled
-                onToggled: function(v) {
-                    root.store.navigationViewEnabled = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onNavigatorLocationButtonChanged(v)
+                    KSwitch {
+                        id: useAngleSwitch
+                        flat: true
+                        checked: root.store.useAngleEnabled
+                        onToggled: {
+                            root.store.useAngleEnabled = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onUseAngleLocationButtonChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Navigator view")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: navigatorViewSwitch.click()
+
+                    KSwitch {
+                        id: navigatorViewSwitch
+                        flat: true
+                        checked: root.store.navigationViewEnabled
+                        onToggled: {
+                            root.store.navigationViewEnabled = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onNavigatorLocationButtonChanged(checked)
+                        }
+                    }
                 }
             }
 

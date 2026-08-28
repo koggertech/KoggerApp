@@ -57,8 +57,9 @@ Item {
     readonly property bool _widgetsRevealOverride: _revealActiveKey === "widgets"
     readonly property bool showWidgets: widgetsEnabled || _widgetsRevealOverride
     // Counted, not measured: a stand panel with no stand behind it is in store.widgets but is
-    // not offered, so the menu must not open on it or size itself for it.
-    readonly property bool hasWidgets: !!(store && store.listedWidgetCount > 0)
+    // not offered, so the menu must not size itself for it. The +1 is the servo card, which is
+    // always in the list.
+    readonly property int widgetCardCount: (store ? store.listedWidgetCount : 0) + 1
     property bool widgetsMenuOpen: false
     property var _widgetsSlot: null
     property bool consoleButtonEnabled: true
@@ -377,7 +378,6 @@ Item {
                 clip: true
                 interactive: contentHeight > height
                 boundsBehavior: Flickable.StopAtBounds
-                visible: root.hasWidgets
 
                 ScrollBar.vertical: ScrollBar {
                     id: widgetsScrollBar
@@ -390,6 +390,19 @@ Item {
                     width: widgetsFlick.width
                            - (widgetsFlick.interactive ? widgetsScrollBar.width + Math.round(4 * root._s) : 0)
                     spacing: root.favoriteItemSpacing
+
+                    WidgetCard {
+                        width: widgetsList.width
+                        height: root.favoriteItemHeight
+                        contentMargin: root.favoriteCardMargin
+                        previewWidth: root.favoritePreviewWidth
+                        previewHeight: root.favoritePreviewHeight
+                        def: root.store ? root.store.servoPanelDef : null
+                        showText: false
+                        selectionMode: true
+                        selected: !!(root.store && root.store.servoPanelShown)
+                        onToggled: function(value) { if (root.store) root.store.setServoPanelShown(value) }
+                    }
 
                     Repeater {
                         model: root.store ? root.store.widgets.length : 0
@@ -414,16 +427,6 @@ Item {
                         }
                     }
                 }
-            }
-
-            Text {
-                width: parent.width
-                visible: !root.hasWidgets
-                text: qsTr("No panels yet.")
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
-                wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignHCenter
             }
 
             Item {
@@ -783,8 +786,8 @@ Item {
         readonly property bool _klf: typeof core !== "undefined" && core && core.loggingKlf
         readonly property bool _csv: typeof core !== "undefined" && core && core.loggingCsv
         property real holdScale: 1.0
-        readonly property real _hoverScale: (badgeMa.pressed ? 0.97
-                                             : (badgeMa.containsMouse ? 1.035 : 1.0))
+        readonly property real _hoverScale: (badgeMa.pressed ? Anim.dipScale(logBadge.width)
+                                             : (badgeMa.containsMouse ? Anim.liftScale(logBadge.width) : 1.0))
                                             * logBadge.holdScale
         readonly property bool _dragHold: root.draggingKey === "logging"
 
@@ -1222,8 +1225,8 @@ Item {
                                            && (lockBadge.pointerHold || root.inputLockKeyHeld)
 
         readonly property real _hoverScale: (lockBadge.holdActive ? 1.0
-                                             : (lockMa.pressed ? 0.97
-                                                : (lockMa.containsMouse ? 1.035 : 1.0)))
+                                             : (lockMa.pressed ? Anim.dipScale(lockBadge.width)
+                                                : (lockMa.containsMouse ? Anim.liftScale(lockBadge.width) : 1.0)))
                                             * lockBadge.holdScale
 
         onHoldActiveChanged: {
@@ -2182,13 +2185,9 @@ Item {
         readonly property int comboW: root.triggerButtonWidth
         readonly property int gap: Math.round(6 * root._s)
         readonly property int sidePad: Math.round(3 * root._s)
-        readonly property int _listContentH: root.hasWidgets
-            ? root.store.listedWidgetCount * root.favoriteItemHeight
-              + Math.max(0, root.store.listedWidgetCount - 1) * root.favoriteItemSpacing
-            : 0
-        readonly property int _bodyContentH: root.hasWidgets
-            ? Math.min(root.favoriteListMaxHeight, _listContentH)
-            : Math.round(40 * root._s)
+        readonly property int _listContentH: root.widgetCardCount * root.favoriteItemHeight
+            + Math.max(0, root.widgetCardCount - 1) * root.favoriteItemSpacing
+        readonly property int _bodyContentH: Math.min(root.favoriteListMaxHeight, _listContentH)
         readonly property int dropBodyH: (widgetsBodyLoader.item ? widgetsBodyLoader.item.implicitHeight
                                                                   : _bodyContentH + root.controlHeight)
                                          + Math.round(14 * root._s)

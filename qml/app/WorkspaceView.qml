@@ -94,7 +94,8 @@ Item {
 
     function forwardScene3DKeyPress(key) {
         if (scene3dView && typeof scene3dView.keyPressTrigger === "function")
-            scene3dView.keyPressTrigger(key)
+            return scene3dView.keyPressTrigger(key)
+        return false
     }
 
     function forwardScene3DPinch(prevCenter, currCenter, scaleDelta, angleDelta) {
@@ -117,7 +118,7 @@ Item {
     }
 
     function normalizedPaneMode(value) {
-        return value === "3D" ? "3D" : "2D"
+        return value === "3D" ? "3D" : value === "Video" ? "Video" : "2D"
     }
 
     function copyArray(values) {
@@ -471,13 +472,11 @@ Item {
         }
 
         var mode = normalizedPaneMode(topEntry.mode)
+
         if (mode === "3D") {
             active3DLeafId = leafId
             active3DHostItem = topEntry.hostItem
-            return
-        }
-
-        if (active3DLeafId === leafId) {
+        } else if (active3DLeafId === leafId) {
             active3DLeafId = -1
             if (active3DHostItem === topEntry.hostItem)
                 active3DHostItem = null
@@ -549,6 +548,25 @@ Item {
         id: renderRoot
         anchors.fill: parent
         z: -10
+
+        Connections {
+            target: typeof videoStreams !== "undefined" ? videoStreams : null
+            ignoreUnknownSignals: true
+
+            function onStreamsChanged() {
+                if (workspace.store)
+                    workspace.store.autoAssignVideoSources()
+            }
+        }
+
+        Connections {
+            target: workspace.store
+            ignoreUnknownSignals: true
+
+            function onLeafRectsChanged() {
+                workspace.store.autoAssignVideoSources()
+            }
+        }
 
         GraphicsScene3dView {
             id: scene3dView

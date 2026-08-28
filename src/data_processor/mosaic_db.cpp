@@ -1,4 +1,6 @@
 #include "mosaic_db.h"
+#include "notifications.h"
+#include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
@@ -7,6 +9,11 @@
 #include <QDebug>
 #include <QStandardPaths>
 #include <QThread>
+
+
+extern Notifications notifications;
+
+static int g_instanceIndex = 1;
 
 
 static bool runWalCheckpoint(QSqlDatabase& db, const char* mode, int& busy, int& log, int& ckpt)
@@ -45,6 +52,22 @@ static QString makeXYOrClause(int pairCount) {
     return parts.join(" OR ");
 }
 
+void MosaicDB::setInstanceIndex(int index)
+{
+    g_instanceIndex = index;
+}
+
+void MosaicDB::reportFailureOnce()
+{
+    if (failureReported_ || role_ != DbRole::Writer) {
+        return;
+    }
+
+    failureReported_ = true;
+    notifications.warning(tr("Mosaic cache is unavailable — distant areas may stay incomplete"),
+                          QStringLiteral("mosaic-cache"));
+}
+
 QString MosaicDB::surfaceDbPath()
 {
     QString baseDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -60,18 +83,21 @@ QString MosaicDB::surfaceDbPath()
         dir.mkpath(".");
     }
 
-    return dir.filePath(QStringLiteral("surface.db"));
+    if (g_instanceIndex > 0) {
+        return dir.filePath(QStringLiteral("surface-%1.db").arg(g_instanceIndex));
+    }
+
+    return dir.filePath(QStringLiteral("surface-p%1.db").arg(QCoreApplication::applicationPid()));
 }
 
-MosaicDB::MosaicDB(const QString& klfPath, DbRole role, bool deleteOnClose, QObject* parent)
+MosaicDB::MosaicDB(DbRole role, bool deleteOnClose, QObject* parent)
     : QObject(parent),
     dbPath_(surfaceDbPath()),
     role_(role),
     deleteOnClose_(deleteOnClose),
-    filesDeleted_(false)
+    filesDeleted_(false),
+    failureReported_(false)
 {
-    Q_UNUSED(klfPath);
-
     qRegisterMetaType<QList<DbTile>>("QList<DbTile>");
     qRegisterMetaType<QHash<TileKey,SurfaceTile>>("QHash<TileKey,SurfaceTile>");
     qRegisterMetaType<QVector<TileKey>>("QVector<TileKey>");
@@ -112,6 +138,7 @@ bool MosaicDB::open()
 
     if (!db_.open()) {
         qWarning() << "MosaicDB open failed:" << db_.lastError();
+        reportFailureOnce();
         return false;
     }
 
@@ -135,7 +162,9 @@ bool MosaicDB::open()
         q.exec("PRAGMA wal_autocheckpoint=1000;");
         q.exec("PRAGMA journal_size_limit=134217728;");
 
-        ensureSchema();
+        if (!ensureSchema()) {
+            reportFailureOnce();
+        }
 
         emit schemaReady(); //
     }
@@ -440,7 +469,10 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
         q.addBindValue(engineVer);
 
         if (!q.exec()) {
-            qWarning() << "saveTiles exec:" << q.lastError() << "key" << k;
+            if (!failureReported_) {
+                qWarning() << "saveTiles exec:" << q.lastError() << "key" << k;
+            }
+            reportFailureOnce();
         }
         else {
             savedKeys.push_back(k);
@@ -454,7 +486,10 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
         return;
     }
 
-    db_.commit();
+    if (!db_.commit()) {
+        qWarning() << "saveTiles commit:" << db_.lastError();
+        reportFailureOnce();
+    }
 
     checkpointIfWalTooBig(128ll * 1024 * 1024); // порог 128
 

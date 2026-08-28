@@ -31,10 +31,15 @@
 #include "scene_object.h"
 #include "bottom_track.h"
 #include "input_device_tracker.h"
+#ifndef Q_OS_ANDROID
+#include "instance_lock.h"
+#endif
 #include "system_battery.h"
+#include "mosaic_db.h"
 #include "language_controller.h"
 #include "app_utils.h"
 #include "settings_migration.h"
+#include "video_stream_pool.h"
 
 
 // NOLINTBEGIN(bugprone-throwing-static-initialization): application-lifetime singletons; a throw here is a fatal startup failure with nothing to catch
@@ -44,9 +49,14 @@ Themes theme;
 UIStateSerializer uiStateSerializer;
 EchogramStateSerializer echogramStateSerializer;
 Notifications notifications;
+VideoStreamPool videoStreams;
 QTranslator translator;
 QVector<QString> availableLanguages{"en", "ru", "pl"};
 // NOLINTEND(bugprone-throwing-static-initialization)
+
+#ifndef Q_OS_ANDROID
+InstanceLock instanceLock;
+#endif
 
 
 void loadLanguage(QGuiApplication &app)
@@ -87,6 +97,40 @@ void messageHandler(QtMsgType type, const QMessageLogContext& context, const QSt
     Q_UNUSED(type);
     Q_UNUSED(context);
     core.consoleInfo(msg);
+}
+
+
+QtMessageHandler previousMessageHandler = nullptr;
+
+static bool isVideoLogMessage(const QMessageLogContext& context, const QString& msg)
+{
+    if (context.category && QByteArray(context.category).startsWith("qt.multimedia")) {
+        return true;
+    }
+    return msg.startsWith(QStringLiteral("VIDEO:"));
+}
+
+void videoLogHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    static thread_local bool forwarding = false;
+
+    if (!forwarding && isVideoLogMessage(context, msg)) {
+        forwarding = true;
+        const QString line = msg.startsWith(QStringLiteral("VIDEO:"))
+                                 ? msg
+                                 : QStringLiteral("VIDEO: ") + msg;
+        if (type == QtWarningMsg || type == QtCriticalMsg || type == QtFatalMsg) {
+            core.consoleWarning(line);
+        }
+        else {
+            core.consoleInfo(line);
+        }
+        forwarding = false;
+    }
+
+    if (previousMessageHandler && !isVideoLogMessage(context, msg)) {
+        previousMessageHandler(type, context, msg);
+    }
 }
 
 void setApplicationDisplayName(QGuiApplication& app)
@@ -196,7 +240,7 @@ void applyWindowsFullscreenBorderWorkaround(QWindow* window)
 
 void bringWindowToFront(QWindow* window)
 {
-    if (!window) {
+    if (!window || !instanceLock.isPrimary()) {
         return;
     }
 
@@ -276,10 +320,16 @@ int main(int argc, char *argv[])
 #if defined(Q_OS_WIN)
     //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
-    QLoggingCategory::setFilterRules(QStringLiteral(
-        "qt.network.info.netlistmanager.warning=false\n"
-        "qt.qpa.mime=false"));
 #endif
+
+    QString loggingRules;
+#if defined(Q_OS_WIN)
+    loggingRules += QStringLiteral("qt.network.info.netlistmanager.warning=false\n"
+                                   "qt.qpa.mime=false\n");
+#endif
+    QLoggingCategory::setFilterRules(loggingRules);
+
+    previousMessageHandler = qInstallMessageHandler(videoLogHandler);
 
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGLRhi);
 
@@ -301,6 +351,14 @@ int main(int argc, char *argv[])
     // safe to read QSettings and primaryScreen() for DPI-aware resCoeff.
     theme.initSettings();
 
+    QQuickStyle::setStyle("Basic");
+
+#ifndef Q_OS_ANDROID
+    instanceLock.acquire();
+    appUtils.setInstanceIndex(instanceLock.index());
+    MosaicDB::setInstanceIndex(instanceLock.index());
+#endif
+
     LanguageController langController;
     InputDeviceTracker inputDeviceTracker;
     SystemBattery systemBattery;
@@ -316,8 +374,6 @@ int main(int argc, char *argv[])
     loadLanguage(app);
     langController.setStartupTranslator(&translator);
     core.initStreamList();
-
-    QQuickStyle::setStyle("Basic");
 
     setApplicationDisplayName(app);
     QQmlApplicationEngine engine;
@@ -336,6 +392,8 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceTopology", core.getDeviceTopologyModelPtr());
+    videoStreams.setSourceModel(core.getLinkManagerWrapperPtr()->getModelPtr());
+    engine.rootContext()->setContextProperty("videoStreams", &videoStreams);
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
     engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
     engine.rootContext()->setContextProperty("echogramStateSerializer", &echogramStateSerializer);

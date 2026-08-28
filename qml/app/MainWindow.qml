@@ -21,7 +21,8 @@ ApplicationWindow {
     minimumHeight: isMobilePlatform ? 0 : 560
     visible: true
     visibility: isMobilePlatform ? Window.FullScreen : Window.Windowed
-    title: core.fileTitle !== "" ? (core.fileTitle + " — KoggerApp, KOGGER") : qsTr("KoggerApp, KOGGER")
+    title: (core.fileTitle !== "" ? (core.fileTitle + " — KoggerApp, KOGGER") : qsTr("KoggerApp, KOGGER"))
+           + appUtils.instanceSuffix
     onActiveChanged: if (active) root.lastActiveWindow = root
 
     WorkspaceStore {
@@ -98,7 +99,7 @@ ApplicationWindow {
         width: 1080
         height: 540
         title: (core.fileTitle !== "" ? core.fileTitle + " — KoggerApp, KOGGER" : qsTr("KoggerApp, KOGGER"))
-               + qsTr(" — Second window")
+               + qsTr(" — Second window") + appUtils.instanceSuffix
         visible: workspaceStore.secondaryWindowOpen
         onClosing: function(close) { workspaceStore.closeSecondaryWindow() }
         onActiveChanged: if (active) root.lastActiveWindow = secondWindow
@@ -640,6 +641,33 @@ ApplicationWindow {
         return false
     }
 
+    function _itemWithin(item, ancestor) {
+        var walker = item
+        while (walker) {
+            if (walker === ancestor)
+                return true
+            walker = walker.parent
+        }
+        return false
+    }
+
+    function _restartTabTraversal(event) {
+        if (workspaceStore.inputLocked)
+            return
+
+        var current = root.activeFocusItem
+        if (!current || current.activeFocusOnTab || !root._itemWithin(current, workspaceView))
+            return
+
+        var forward = event.key === Qt.Key_Tab && !(event.modifiers & Qt.ShiftModifier)
+        var next = mainLayer.nextItemInFocusChain(forward)
+        if (!next)
+            return
+
+        next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
+        event.accepted = true
+    }
+
     function handleHotkeyKeyEvent(event) {
         if (workspaceStore.inputLocked)
             return false
@@ -747,6 +775,10 @@ ApplicationWindow {
         }
 
         Keys.onPressed: function(event) {
+            if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+                root._restartTabTraversal(event)
+                return
+            }
             if (event.key !== mainLayer.inputLockKey)
                 return
             if (!event.isAutoRepeat) {
@@ -837,6 +869,8 @@ ApplicationWindow {
                     hotActions.expanded = false
                     hotActions.layoutsMenuOpen = false
                     if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
+                } else {
+                    mainLayer.forceActiveFocus()
                 }
             }
             function onModeSettingsPanelOpenChanged() {
@@ -844,6 +878,8 @@ ApplicationWindow {
                     hotActions.expanded = false
                     hotActions.layoutsMenuOpen = false
                     if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
+                } else {
+                    mainLayer.forceActiveFocus()
                 }
             }
             function onActiveLeafIdChanged() {
@@ -1067,6 +1103,7 @@ ApplicationWindow {
                      ? qsTr("Settings")
                      : workspaceStore.settingsSubPageKind === "quickActions" ? qsTr("Quick action menu")
                      : workspaceStore.settingsSubPageKind === "widgetEdit"   ? (workspaceStore.widgetEditIndex >= 0 ? qsTr("Edit panel") : qsTr("Create panel"))
+                     : workspaceStore.settingsSubPageKind === "servoPanel"   ? qsTr("Servo panel")
                      : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
@@ -1074,6 +1111,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "console"      ? qsTr("Console")
                      : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
                      : workspaceStore.settingsSubPageKind === "devices"      ? qsTr("Devices")
+                     : workspaceStore.settingsSubPageKind === "videoPane"    ? workspaceStore.videoSettingsTitle
                      : qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
@@ -1093,6 +1131,7 @@ ApplicationWindow {
 
             subPage: workspaceStore.settingsSubPageKind === "quickActions" ? quickActionsSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "widgetEdit" ? widgetEditTabComponent
+                     : workspaceStore.settingsSubPageKind === "servoPanel" ? servoPanelSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "uiSaving"   ? uiSavingSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
@@ -1100,6 +1139,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "console"    ? consoleSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
                      : workspaceStore.settingsSubPageKind === "devices"      ? deviceSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "videoPane"     ? videoPaneSettingsTabComponent
                      : echogramSettingsTabComponent
             subPageOpen: workspaceStore.anySettingsSubPageActive
 
@@ -1268,7 +1308,20 @@ ApplicationWindow {
                         siblingIdList: ["btEdit", "profiles"]
                     }
                 }
+
             }
+        }
+
+        ServoPanelPopup {
+            id: servoPanel
+            anchors.fill: parent
+            z: ZOrder.widgetPopup + workspaceStore.widgetLimit - 1
+            store: workspaceStore
+            def: workspaceStore.servoPanelDef
+            popupVisible: workspaceStore.servoPanelShown
+            popupId: "widget:" + workspaceStore.servoPanelId
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles"]
         }
 
         Connections {
@@ -1278,6 +1331,7 @@ ApplicationWindow {
                 fullscreenPanePopup.syncFromStore()
                 btEditPopup.syncFromStore()
                 profilesPopup.syncFromStore()
+                servoPanel.syncFromStore()
                 for (var i = 0; i < widgetsRepeater.count; ++i) {
                     var it = widgetsRepeater.itemAt(i)
                     if (it) it.syncFromStore()
@@ -1305,6 +1359,14 @@ ApplicationWindow {
             id: widgetEditTabComponent
 
             WidgetEditPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: servoPanelSettingsTabComponent
+
+            ServoPanelSettingsPage {
                 store: workspaceStore
             }
         }
@@ -1346,6 +1408,14 @@ ApplicationWindow {
             id: aimPanelSettingsTabComponent
 
             AimPanelSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: videoPaneSettingsTabComponent
+
+            VideoPaneSettingsTab {
                 store: workspaceStore
             }
         }

@@ -270,7 +270,7 @@ public:
     Q_INVOKABLE void cancelPointerInteraction();
     Q_INVOKABLE void mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, QPointF angleDelta, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta);
-    Q_INVOKABLE void keyPressTrigger(Qt::Key key);
+    Q_INVOKABLE bool keyPressTrigger(Qt::Key key);
     Q_INVOKABLE void zoomStepTrigger(qreal delta);
     Q_INVOKABLE void panStepTrigger(qreal dx, qreal dy);
     Q_INVOKABLE void zStepTrigger(qreal delta);

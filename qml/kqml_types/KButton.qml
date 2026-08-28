@@ -33,19 +33,19 @@ Button {
     opacity: enabled ? 1.0 : 0.45
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
-    scale: pressed ? 0.985 : (hovered ? 1.02 : 1.0)
+    scale: pressed ? Anim.dipScale(width) : (hovered ? Anim.liftScale(width) : 1.0)
 
     Behavior on scale {
         NumberAnimation {
-            duration: 110
-            easing.type: Easing.OutCubic
+            duration: Anim.controlMs
+            easing.type: Anim.controlEasing
         }
     }
 
     contentItem: Text {
         id: label
         text: control.text
-        color: control.hovered ? Qt.lighter(control.textColor, 1.08) : control.textColor
+        color: control.hovered ? Qt.lighter(control.textColor, Anim.hoverLighten) : control.textColor
         font.pixelSize: control.fontPixelSize
         font.bold: control.bold
         horizontalAlignment: Text.AlignHCenter
@@ -54,8 +54,8 @@ Button {
 
         Behavior on color {
             ColorAnimation {
-                duration: 110
-                easing.type: Easing.OutCubic
+                duration: Anim.controlMs
+                easing.type: Anim.controlEasing
             }
         }
     }
@@ -90,15 +90,15 @@ Button {
 
         Behavior on color {
             ColorAnimation {
-                duration: 110
-                easing.type: Easing.OutCubic
+                duration: Anim.controlMs
+                easing.type: Anim.controlEasing
             }
         }
 
         Behavior on border.color {
             ColorAnimation {
-                duration: 110
-                easing.type: Easing.OutCubic
+                duration: Anim.controlMs
+                easing.type: Anim.controlEasing
             }
         }
 
@@ -110,8 +110,8 @@ Button {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: 110
-                    easing.type: Easing.OutCubic
+                    duration: Anim.controlMs
+                    easing.type: Anim.controlEasing
                 }
             }
         }

@@ -29,6 +29,30 @@ QtObject {
     property int controlMs: 110
     readonly property int controlEasing: easingStd
 
+    // ── Hover / press feedback: ONE place for "how alive" every control feels ──
+    // A pixel lift capped by a factor. Neither half works alone: a plain factor
+    // is sub-pixel on a 30 px icon button and a jump on a 260 px one, while a
+    // plain px lift over-pops small controls — `scale` grows BOTH axes, so 4 px
+    // on a 30×30 square is 13 % in each direction, not just along the width.
+    // So: grow by hoverLiftPx, but never by more than hoverLiftMaxFactor.
+    property real hoverLiftPx: 4
+    property real pressDipPx: 2
+    property real hoverLiftMaxFactor: 0.05
+    property real pressDipMaxFactor: 0.025
+    property real hoverLighten: 1.10
+
+    function liftScale(w) {
+        return w > 1 ? 1 + Math.min(Math.round(hoverLiftPx * AppPalette.scale) / w,
+                                    hoverLiftMaxFactor)
+                     : 1.0
+    }
+
+    function dipScale(w) {
+        return w > 1 ? 1 - Math.min(Math.round(pressDipPx * AppPalette.scale) / w,
+                                    pressDipMaxFactor)
+                     : 1.0
+    }
+
     // ── Toggles / switches: knob slide, track colour ─────────────────────────
     property int toggleMs: 120
     readonly property int toggleEasing: easingStd

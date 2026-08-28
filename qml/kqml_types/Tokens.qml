@@ -40,6 +40,9 @@ QtObject {
     readonly property int controlHLg:  Math.round(36 * s)
     readonly property int controlHXl:  Math.round(48 * s)
 
+    // Settings-row height: one metric for KIslandRow and ParamCard.
+    readonly property int rowH: Math.round(38 * s)
+
     // Inline marks — chips, badges, the compact switches that sit INSIDE a control row rather
     // than being rows of their own. Only `controlH` follows `theme.controlHeight`, so anything
     // written as a literal stayed the size it was written at and read as undersized against

@@ -52,6 +52,39 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1889"/>
+        <source>Video</source>
+        <translation>Wideo</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1890"/>
+        <source>Per-window video settings.</source>
+        <translation>Ustawienia wideo dla okien.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1908"/>
+        <source>No video windows displayed</source>
+        <translation>Brak wyświetlanych okien wideo</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="657"/>
+        <source>Layout %1</source>
+        <translation>Układ %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="659"/>
+        <source>Active</source>
+        <translation>Aktywny</translation>
+    </message>
+    <message>
+        <source>Dataset: with position zeroing on</source>
+        <translation>Zbiór danych: zerowanie pozycji</translation>
+    </message>
+    <message>
+        <source>Servo</source>
+        <translation>Serwo</translation>
+    </message>
+    <message>
         <source>Hide important notifications</source>
         <translation>Ukrywaj ważne powiadomienia</translation>
     </message>
@@ -62,6 +95,14 @@
     <message>
         <source>Show the scale bar in the 3D scene</source>
         <translation>Pokaż podziałkę skali w scenie 3D</translation>
+    </message>
+    <message>
+        <source>USBL beacons</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Show the acoustic nodes and their tracks in the 3D scene</source>
+        <translation></translation>
     </message>
     <message>
         <source>Show the surface quality label in the 3D scene</source>
@@ -788,11 +829,6 @@
         <translation type="vanished">Cztery okna</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="807"/>
-        <source>Preset:</source>
-        <translation>Szablon:</translation>
-    </message>
-    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="821"/>
         <source>Normal 2D</source>
         <translation>Normalny 2D</translation>
@@ -1001,6 +1037,14 @@
         <translation>Panel %1</translation>
     </message>
     <message>
+        <source>Servo control</source>
+        <translation>Sterowanie serwem</translation>
+    </message>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Węzły akustyczne</translation>
+    </message>
+    <message>
         <source>Delete panel</source>
         <translation>Usuń panel</translation>
     </message>
@@ -1114,6 +1158,11 @@
 </context>
 <context>
     <name>ConnectionViewer</name>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="768"/>
+        <source>+RTSP</source>
+        <translation>+RTSP</translation>
+    </message>
     <message>
         <source>Choose recording folder</source>
         <translation>Wybór folderu nagrywania</translation>
@@ -3226,6 +3275,11 @@
 <context>
     <name>GlobalPanePopup</name>
     <message>
+        <location filename="../qml/app/GlobalPanePopup.qml" line="167"/>
+        <source>Video</source>
+        <translation>Wideo</translation>
+    </message>
+    <message>
         <location filename="../qml/app/GlobalPanePopup.qml" line="136"/>
         <source>Choose pane type</source>
         <translation>Wybierz typ panelu</translation>
@@ -3808,6 +3862,16 @@
 <context>
     <name>LayoutCreatePage</name>
     <message>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="32"/>
+        <source>Layout %1</source>
+        <translation>Układ %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="34"/>
+        <source>Active</source>
+        <translation>Aktywny</translation>
+    </message>
+    <message>
         <source>Create a new layout from the current panes or a preset, then arrange it in edit mode.</source>
         <translation type="vanished">Utwórz nowy układ na podstawie bieżących paneli lub presetu, a następnie ułóż go w trybie edycji.</translation>
     </message>
@@ -3877,6 +3941,16 @@
 </context>
 <context>
     <name>LinkManager</name>
+    <message>
+        <location filename="../src/link/link_manager.cpp" line="662"/>
+        <source>Connected: %1</source>
+        <translation>Połączono: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/link/link_manager.cpp" line="665"/>
+        <source>Disconnected: %1</source>
+        <translation>Rozłączono: %1</translation>
+    </message>
     <message>
         <location filename="../src/link/link_manager.cpp" line="685"/>
         <source>Link not available</source>
@@ -3953,7 +4027,19 @@
     </message>
 </context>
 <context>
+    <name>MosaicDB</name>
+    <message>
+        <location filename="../src/data_processor/mosaic_db.cpp" line="66"/>
+        <source>Mosaic cache is unavailable — distant areas may stay incomplete</source>
+        <translation>Pamięć podręczna mozaiki jest niedostępna — odległe obszary mogą pozostać niekompletne</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
+    <message>
+        <source>Servo panel</source>
+        <translation>Panel serwa</translation>
+    </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="920"/>
         <source>Devices</source>
@@ -4115,6 +4201,11 @@
 <context>
     <name>PaneEditorChrome</name>
     <message>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="287"/>
+        <source>Video</source>
+        <translation>Wideo</translation>
+    </message>
+    <message>
         <location filename="../qml/app/PaneEditorChrome.qml" line="388"/>
         <source>Pane %1</source>
         <translation>Panel %1</translation>
@@ -4203,6 +4294,19 @@
         <location filename="../src/scene3d/domain/plane_grid.cpp" line="511"/>
         <source> m</source>
         <translation> m</translation>
+    </message>
+</context>
+<context>
+    <name>VideoSurface</name>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="181"/>
+        <source>Video window settings</source>
+        <translation>Ustawienia okna wideo</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="136"/>
+        <source>No video source</source>
+        <translation>Brak źródła wideo</translation>
     </message>
 </context>
 <context>
@@ -5002,6 +5106,21 @@
 <context>
     <name>SecondaryWindow</name>
     <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="103"/>
+        <source>Choose pane type</source>
+        <translation>Wybierz typ panelu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="131"/>
+        <source>2D</source>
+        <translation>2D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="132"/>
+        <source>Video</source>
+        <translation>Wideo</translation>
+    </message>
+    <message>
         <location filename="../qml/app/SecondaryWindow.qml" line="57"/>
         <source>Second window</source>
         <translation>Drugie okno</translation>
@@ -5416,7 +5535,123 @@
     </message>
 </context>
 <context>
+    <name>VideoStream</name>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="232"/>
+        <source>Connecting...</source>
+        <translation>Łączenie...</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="277"/>
+        <source>out of memory</source>
+        <translation>brak pamięci</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="317"/>
+        <source>no video stream</source>
+        <translation>brak strumienia wideo</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="346"/>
+        <source>no decoder for this stream</source>
+        <translation>brak dekodera dla tego strumienia</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="580"/>
+        <source>Stream ended</source>
+        <translation>Strumień zakończony</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="649"/>
+        <source>Reconnecting (%1/%2)...</source>
+        <translation>Ponowne łączenie (%1/%2)...</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="245"/>
+        <source>Connection failed</source>
+        <translation>Nie udało się połączyć</translation>
+    </message>
+</context>
+<context>
+    <name>VideoPaneSettingsTab</name>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="35"/>
+        <source>Image:</source>
+        <translation>Obraz:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="45"/>
+        <source>Fit</source>
+        <translation>Dopasuj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="46"/>
+        <source>Crop</source>
+        <translation>Wypełnij</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="47"/>
+        <source>Stretch</source>
+        <translation>Rozciągnij</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="58"/>
+        <source>Show resolution</source>
+        <translation>Pokaż rozdzielczość</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="64"/>
+        <source>Stream:</source>
+        <translation>Strumień:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="99"/>
+        <source>Source</source>
+        <translation>Źródło</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="100"/>
+        <source>Not selected</source>
+        <translation>Nie wybrano</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="146"/>
+        <source>Video source for this pane</source>
+        <translation>Źródło wideo dla tego panelu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="104"/>
+        <source>Resolution</source>
+        <translation>Rozdzielczość</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="111"/>
+        <source>State</source>
+        <translation>Stan</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="117"/>
+        <source>Streaming</source>
+        <translation>Transmisja</translation>
+    </message>
+</context>
+<context>
     <name>WorkspaceStore</name>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="956"/>
+        <source>Video</source>
+        <translation>Wideo</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="961"/>
+        <source>Global pop-up</source>
+        <translation>Globalne okno podręczne</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="965"/>
+        <source>Second window</source>
+        <translation>Drugie okno</translation>
+    </message>
     <message>
         <location filename="../qml/app/WorkspaceStore.qml" line="866"/>
         <source>Echogram</source>
@@ -5585,6 +5820,184 @@
     <message>
         <source>Remove widget</source>
         <translation>Usuń widżet</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetKindStep</name>
+    <message>
+        <source>Choose what this panel shows.</source>
+        <translation>Wybierz, co pokazuje ten panel.</translation>
+    </message>
+    <message>
+        <source>Field grid</source>
+        <translation>Siatka pól</translation>
+    </message>
+    <message>
+        <source>A grid of cells you fill with values — depth, speed, coordinates.</source>
+        <translation>Siatka komórek wypełniana wartościami — głębokość, prędkość, współrzędne.</translation>
+    </message>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Węzły akustyczne</translation>
+    </message>
+    <message>
+        <source>Servo control</source>
+        <translation>Sterowanie serwem</translation>
+    </message>
+    <message>
+        <source>Sweep, step, centre and the live angle.</source>
+        <translation>Wychylenie, krok, środek i bieżący kąt.</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetCard</name>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Węzły akustyczne</translation>
+    </message>
+    <message>
+        <source>Servo control</source>
+        <translation>Sterowanie serwem</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetServoStep</name>
+    <message>
+        <source>Controls the servo scanner of the device that has one. The panel finds it itself.</source>
+        <translation>Steruje skanerem serwa urządzenia, które je posiada. Panel sam je znajduje.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Przezroczystość tła</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelBody</name>
+    <message>
+        <source>Off</source>
+        <translation>Wył.</translation>
+    </message>
+    <message>
+        <source>ServoScan</source>
+        <translation>ServoScan</translation>
+    </message>
+    <message>
+        <source>No servo device</source>
+        <translation>Brak urządzenia z serwem</translation>
+    </message>
+    <message>
+        <source>On link %1</source>
+        <translation>Na łączu %1</translation>
+    </message>
+    <message>
+        <source>Device</source>
+        <translation>Urządzenie</translation>
+    </message>
+    <message>
+        <source>Control</source>
+        <translation>Sterowanie</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Włączone</translation>
+    </message>
+    <message>
+        <source>Current angle</source>
+        <translation>Bieżący kąt</translation>
+    </message>
+    <message>
+        <source>Reverse mapping</source>
+        <translation>Odwrócenie</translation>
+    </message>
+    <message>
+        <source>Scan</source>
+        <translation>Skan</translation>
+    </message>
+    <message>
+        <source>Step, °</source>
+        <translation>Krok, °</translation>
+    </message>
+    <message>
+        <source>Scan range, °</source>
+        <translation>Zakres skanu, °</translation>
+    </message>
+    <message>
+        <source>Center, °</source>
+        <translation>Środek, °</translation>
+    </message>
+    <message>
+        <source>More settings</source>
+        <translation>Więcej ustawień</translation>
+    </message>
+    <message>
+        <source>Calibration</source>
+        <translation>Kalibracja</translation>
+    </message>
+    <message>
+        <source>PWM min, µs</source>
+        <translation>PWM min, µs</translation>
+    </message>
+    <message>
+        <source>PWM max, µs</source>
+        <translation>PWM max, µs</translation>
+    </message>
+    <message>
+        <source>Servo angle range, °</source>
+        <translation>Zakres kąta serwa, °</translation>
+    </message>
+    <message>
+        <source>PWM routing</source>
+        <translation>Routing PWM</translation>
+    </message>
+    <message>
+        <source>OUT1 (wired)</source>
+        <translation>OUT1 (podłączone)</translation>
+    </message>
+    <message>
+        <source>OUT2</source>
+        <translation>OUT2</translation>
+    </message>
+    <message>
+        <source>OUT3</source>
+        <translation>OUT3</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelPopup</name>
+    <message>
+        <source>Servo</source>
+        <translation>Serwo</translation>
+    </message>
+    <message>
+        <source>Panel settings</source>
+        <translation>Ustawienia panelu</translation>
+    </message>
+    <message>
+        <source>Hide panel</source>
+        <translation>Ukryj panel</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelSettingsPage</name>
+    <message>
+        <source>Servo scanner control: sweep, step, centre and the live angle.</source>
+        <translation>Sterowanie skanerem serwa: wychylenie, krok, środek i bieżący kąt.</translation>
+    </message>
+    <message>
+        <source>Show automatically</source>
+        <translation>Pokazuj automatycznie</translation>
+    </message>
+    <message>
+        <source>Brings the panel up when a device with servo firmware connects.</source>
+        <translation>Panel pojawi się po podłączeniu urządzenia z serwem.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Przezroczystość tła</translation>
     </message>
 </context>
 </TS>

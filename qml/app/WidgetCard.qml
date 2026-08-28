@@ -70,6 +70,7 @@ Rectangle {
             // the kind instead of printing a number that would be wrong by the next fix.
             text: !root.def ? ""
                 : root.def.kind === "usblNodes" ? qsTr("Acoustic nodes")
+                : root.def.kind === "servo"     ? qsTr("Servo control")
                 : root.def.kind === "stand"     ? qsTr("Stand control")
                                                 : (root.def.cols + "×" + root.def.rows)
             color: AppPalette.textMuted

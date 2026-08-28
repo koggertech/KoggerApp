@@ -1,3 +1,5 @@
+.pragma library
+
 // Pure selection and formatting for the USBL widget fields. No QML types, no qsTr, no
 // property reads -- a solution entry goes in, a string comes out.
 //

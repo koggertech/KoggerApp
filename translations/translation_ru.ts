@@ -52,6 +52,39 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1889"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1890"/>
+        <source>Per-window video settings.</source>
+        <translation>Настройки видео по окнам.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1908"/>
+        <source>No video windows displayed</source>
+        <translation>Видеоокна не отображаются</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="657"/>
+        <source>Layout %1</source>
+        <translation>Компоновка %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="659"/>
+        <source>Active</source>
+        <translation>Активно</translation>
+    </message>
+    <message>
+        <source>Dataset: with position zeroing on</source>
+        <translation>Датасет: зануление координат</translation>
+    </message>
+    <message>
+        <source>Servo</source>
+        <translation>Серво</translation>
+    </message>
+    <message>
         <source>Hide important notifications</source>
         <translation>Скрывать важные уведомления</translation>
     </message>
@@ -62,6 +95,14 @@
     <message>
         <source>Show the scale bar in the 3D scene</source>
         <translation>Показывать масштабную линейку в 3D-сцене</translation>
+    </message>
+    <message>
+        <source>USBL beacons</source>
+        <translation>Акустические маяки</translation>
+    </message>
+    <message>
+        <source>Show the acoustic nodes and their tracks in the 3D scene</source>
+        <translation>Показывать акустические узлы и их треки в 3D-сцене</translation>
     </message>
     <message>
         <source>Show the surface quality label in the 3D scene</source>
@@ -788,11 +829,6 @@
         <translation type="vanished">Четыре окна</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="807"/>
-        <source>Preset:</source>
-        <translation>Шаблон:</translation>
-    </message>
-    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="821"/>
         <source>Normal 2D</source>
         <translation>Обычный 2D</translation>
@@ -1001,6 +1037,14 @@
         <translation>Панель %1</translation>
     </message>
     <message>
+        <source>Servo control</source>
+        <translation>Управление серво</translation>
+    </message>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Акустические узлы</translation>
+    </message>
+    <message>
         <source>Delete panel</source>
         <translation>Удалить панель</translation>
     </message>
@@ -1114,6 +1158,11 @@
 </context>
 <context>
     <name>ConnectionViewer</name>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="768"/>
+        <source>+RTSP</source>
+        <translation>+RTSP</translation>
+    </message>
     <message>
         <source>Choose recording folder</source>
         <translation>Выбор директории для записи</translation>
@@ -3222,6 +3271,11 @@
 <context>
     <name>GlobalPanePopup</name>
     <message>
+        <location filename="../qml/app/GlobalPanePopup.qml" line="167"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
         <location filename="../qml/app/GlobalPanePopup.qml" line="136"/>
         <source>Choose pane type</source>
         <translation>Выберите тип панели</translation>
@@ -3804,6 +3858,16 @@
 <context>
     <name>LayoutCreatePage</name>
     <message>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="32"/>
+        <source>Layout %1</source>
+        <translation>Компоновка %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="34"/>
+        <source>Active</source>
+        <translation>Активно</translation>
+    </message>
+    <message>
         <source>Create a new layout from the current panes or a preset, then arrange it in edit mode.</source>
         <translation type="vanished">Создайте новую компоновку на основе текущих панелей или пресета, затем настройте её в режиме редактирования.</translation>
     </message>
@@ -3873,6 +3937,16 @@
 </context>
 <context>
     <name>LinkManager</name>
+    <message>
+        <location filename="../src/link/link_manager.cpp" line="662"/>
+        <source>Connected: %1</source>
+        <translation>Подключено: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/link/link_manager.cpp" line="665"/>
+        <source>Disconnected: %1</source>
+        <translation>Отключено: %1</translation>
+    </message>
     <message>
         <location filename="../src/link/link_manager.cpp" line="685"/>
         <source>Link not available</source>
@@ -3949,7 +4023,19 @@
     </message>
 </context>
 <context>
+    <name>MosaicDB</name>
+    <message>
+        <location filename="../src/data_processor/mosaic_db.cpp" line="66"/>
+        <source>Mosaic cache is unavailable — distant areas may stay incomplete</source>
+        <translation>Кэш мозаики недоступен — дальние участки могут остаться неполными</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
+    <message>
+        <source>Servo panel</source>
+        <translation>Панель серво</translation>
+    </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="920"/>
         <source>Devices</source>
@@ -4111,6 +4197,11 @@
 <context>
     <name>PaneEditorChrome</name>
     <message>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="287"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
         <location filename="../qml/app/PaneEditorChrome.qml" line="388"/>
         <source>Pane %1</source>
         <translation>Панель %1</translation>
@@ -4177,6 +4268,19 @@
         <location filename="../qml/app/PaneEditorChrome.qml" line="376"/>
         <source>No neighboring panes available</source>
         <translation>Нет доступных соседних панелей</translation>
+    </message>
+</context>
+<context>
+    <name>VideoSurface</name>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="181"/>
+        <source>Video window settings</source>
+        <translation>Настройки окна видеопотока</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="136"/>
+        <source>No video source</source>
+        <translation>Нет источника видео</translation>
     </message>
 </context>
 <context>
@@ -4998,6 +5102,21 @@
 <context>
     <name>SecondaryWindow</name>
     <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="103"/>
+        <source>Choose pane type</source>
+        <translation>Выберите тип панели</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="131"/>
+        <source>2D</source>
+        <translation>2D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="132"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
         <location filename="../qml/app/SecondaryWindow.qml" line="57"/>
         <source>Second window</source>
         <translation>Второе окно</translation>
@@ -5405,7 +5524,123 @@
     </message>
 </context>
 <context>
+    <name>VideoStream</name>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="232"/>
+        <source>Connecting...</source>
+        <translation>Подключение...</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="277"/>
+        <source>out of memory</source>
+        <translation>недостаточно памяти</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="317"/>
+        <source>no video stream</source>
+        <translation>нет видеопотока</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="346"/>
+        <source>no decoder for this stream</source>
+        <translation>нет декодера для этого потока</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="580"/>
+        <source>Stream ended</source>
+        <translation>Поток завершён</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="649"/>
+        <source>Reconnecting (%1/%2)...</source>
+        <translation>Переподключение (%1/%2)...</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="245"/>
+        <source>Connection failed</source>
+        <translation>Не удалось подключиться</translation>
+    </message>
+</context>
+<context>
+    <name>VideoPaneSettingsTab</name>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="35"/>
+        <source>Image:</source>
+        <translation>Изображение:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="45"/>
+        <source>Fit</source>
+        <translation>Вписать</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="46"/>
+        <source>Crop</source>
+        <translation>Заполнить</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="47"/>
+        <source>Stretch</source>
+        <translation>Растянуть</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="58"/>
+        <source>Show resolution</source>
+        <translation>Показывать разрешение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="64"/>
+        <source>Stream:</source>
+        <translation>Поток:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="99"/>
+        <source>Source</source>
+        <translation>Источник</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="100"/>
+        <source>Not selected</source>
+        <translation>Не выбрано</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="146"/>
+        <source>Video source for this pane</source>
+        <translation>Источник видео для этой панели</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="104"/>
+        <source>Resolution</source>
+        <translation>Разрешение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="111"/>
+        <source>State</source>
+        <translation>Состояние</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="117"/>
+        <source>Streaming</source>
+        <translation>Идёт передача</translation>
+    </message>
+</context>
+<context>
     <name>WorkspaceStore</name>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="956"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="961"/>
+        <source>Global pop-up</source>
+        <translation>Глобальное всплывающее окно</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="965"/>
+        <source>Second window</source>
+        <translation>Второе окно</translation>
+    </message>
     <message>
         <location filename="../qml/app/WorkspaceStore.qml" line="866"/>
         <source>Echogram</source>
@@ -5574,6 +5809,184 @@
     <message>
         <source>Remove widget</source>
         <translation>Убрать виджет</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetKindStep</name>
+    <message>
+        <source>Choose what this panel shows.</source>
+        <translation>Выберите, что показывает панель.</translation>
+    </message>
+    <message>
+        <source>Field grid</source>
+        <translation>Сетка полей</translation>
+    </message>
+    <message>
+        <source>A grid of cells you fill with values — depth, speed, coordinates.</source>
+        <translation>Сетка ячеек, куда вы кладёте значения — глубину, скорость, координаты.</translation>
+    </message>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Акустические узлы</translation>
+    </message>
+    <message>
+        <source>Servo control</source>
+        <translation>Управление серво</translation>
+    </message>
+    <message>
+        <source>Sweep, step, centre and the live angle.</source>
+        <translation>Развёртка, шаг, центр и текущий угол.</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetCard</name>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Акустические узлы</translation>
+    </message>
+    <message>
+        <source>Servo control</source>
+        <translation>Управление серво</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetServoStep</name>
+    <message>
+        <source>Controls the servo scanner of the device that has one. The panel finds it itself.</source>
+        <translation>Управление серво-сканером устройства, у которого он есть. Панель находит его сама.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Прозрачность фона</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelBody</name>
+    <message>
+        <source>Off</source>
+        <translation>Выкл</translation>
+    </message>
+    <message>
+        <source>ServoScan</source>
+        <translation>ServoScan</translation>
+    </message>
+    <message>
+        <source>No servo device</source>
+        <translation>Нет устройства с серво</translation>
+    </message>
+    <message>
+        <source>On link %1</source>
+        <translation>На линке %1</translation>
+    </message>
+    <message>
+        <source>Device</source>
+        <translation>Устройство</translation>
+    </message>
+    <message>
+        <source>Control</source>
+        <translation>Управление</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Включено</translation>
+    </message>
+    <message>
+        <source>Current angle</source>
+        <translation>Текущий угол</translation>
+    </message>
+    <message>
+        <source>Reverse mapping</source>
+        <translation>Инверсия</translation>
+    </message>
+    <message>
+        <source>Scan</source>
+        <translation>Скан</translation>
+    </message>
+    <message>
+        <source>Step, °</source>
+        <translation>Шаг, °</translation>
+    </message>
+    <message>
+        <source>Scan range, °</source>
+        <translation>Диапазон скана, °</translation>
+    </message>
+    <message>
+        <source>Center, °</source>
+        <translation>Центр, °</translation>
+    </message>
+    <message>
+        <source>More settings</source>
+        <translation>Ещё настройки</translation>
+    </message>
+    <message>
+        <source>Calibration</source>
+        <translation>Калибровка</translation>
+    </message>
+    <message>
+        <source>PWM min, µs</source>
+        <translation>PWM min, мкс</translation>
+    </message>
+    <message>
+        <source>PWM max, µs</source>
+        <translation>PWM max, мкс</translation>
+    </message>
+    <message>
+        <source>Servo angle range, °</source>
+        <translation>Ход серво, °</translation>
+    </message>
+    <message>
+        <source>PWM routing</source>
+        <translation>Маршрутизация PWM</translation>
+    </message>
+    <message>
+        <source>OUT1 (wired)</source>
+        <translation>OUT1 (распаян)</translation>
+    </message>
+    <message>
+        <source>OUT2</source>
+        <translation>OUT2</translation>
+    </message>
+    <message>
+        <source>OUT3</source>
+        <translation>OUT3</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelPopup</name>
+    <message>
+        <source>Servo</source>
+        <translation>Серво</translation>
+    </message>
+    <message>
+        <source>Panel settings</source>
+        <translation>Настройки панели</translation>
+    </message>
+    <message>
+        <source>Hide panel</source>
+        <translation>Скрыть панель</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelSettingsPage</name>
+    <message>
+        <source>Servo scanner control: sweep, step, centre and the live angle.</source>
+        <translation>Управление серво-сканером: развёртка, шаг, центр и текущий угол.</translation>
+    </message>
+    <message>
+        <source>Show automatically</source>
+        <translation>Показывать автоматически</translation>
+    </message>
+    <message>
+        <source>Brings the panel up when a device with servo firmware connects.</source>
+        <translation>Панель появится при подключении устройства с серво.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Прозрачность фона</translation>
     </message>
 </context>
 </TS>

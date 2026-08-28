@@ -93,8 +93,8 @@ public:
 #endif
     void setConsoleOutputEnabled(bool enabled);
     bool isConsoleOutputEnabled() const { return consoleOutputEnabled_; }
-    void consoleInfo(QString msg);
-    void consoleWarning(QString msg);
+    Q_INVOKABLE void consoleInfo(QString msg);
+    Q_INVOKABLE void consoleWarning(QString msg);
     void consoleProto(FrameParser& parser, bool isIn = true);
     void saveLLARefToSettings();
     Q_INVOKABLE void saveCameraViewToSettings();
@@ -226,7 +226,6 @@ public slots:
     Q_INVOKABLE bool getBringWindowToFrontEnabled() const;
     Q_INVOKABLE void setBringWindowToFrontEnabled(bool enabled);
     Q_INVOKABLE void moveAppToBackground();
-    Q_INVOKABLE void bringWindowToFront(); // raise+activate main window (wired to the OS-level raise in main.cpp), gated by bringWindowToFrontEnabled_
     Q_INVOKABLE void requestDismissTransientUi();
     Q_INVOKABLE void setActiveTransientUi(QObject* who);
 
@@ -272,6 +271,7 @@ private slots:
 
 private:
     /*methods*/
+    void bringWindowToFront();
     void loadCsvExportFields();
     void saveCsvExportFields();
     QHash<QString, bool> csvExportFields_;   // key -> enabled (lazy-loaded from QSettings)

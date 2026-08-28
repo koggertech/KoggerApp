@@ -130,6 +130,13 @@ Column {
                     readonly property bool dragActive: dragArea.drag.active
                     onDragActiveChanged: if (page.store) page.store.quickActionDraggingKey = dragActive ? key : ""
 
+                    readonly property bool _hovered: dragArea.containsMouse || rowSwitch.hovered
+                    scale: dragActive ? 1.0
+                           : ((rowSwitch.pressed || dragArea.pressed) ? Anim.dipScale(width)
+                              : (_hovered ? Anim.liftScale(width) : 1.0))
+
+                    Behavior on scale { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
+
                     Drag.active: dragArea.drag.active
                     Drag.source: rowContent
                     Drag.hotSpot.x: width / 2
@@ -164,6 +171,7 @@ Column {
                             MouseArea {
                                 id: dragArea
                                 anchors.fill: parent
+                                hoverEnabled: true
                                 cursorShape: Qt.SizeVerCursor
                                 drag.target: rowContent
                                 drag.axis: Drag.YAxis
@@ -172,6 +180,7 @@ Column {
                         }
 
                         KSwitch {
+                            id: rowSwitch
                             width: parent.width - page.handleW - parent.spacing
                             text: page._label(key)
                             backgroundColor: "transparent"   // row card provides the fill

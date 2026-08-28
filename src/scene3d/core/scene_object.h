@@ -147,7 +147,7 @@ protected:
     virtual void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y);
     virtual void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y);
     virtual void mouseWheelEvent(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta);
-    virtual void keyPressEvent(Qt::Key key);
+    virtual bool keyPressEvent(Qt::Key key);
 
 public Q_SLOTS:
     /**

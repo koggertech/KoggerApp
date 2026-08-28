@@ -131,15 +131,19 @@ Column {
         property string toolTipText: ""
         property real iconFillRatio: 0.55
         property color iconColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+        property color fillColor: AppPalette.card
+        property color fillHoverColor: AppPalette.cardHover
         signal clicked()
         signal toggled(bool val)
 
         width: Math.round(28 * AppPalette.scale); height: Math.round(28 * AppPalette.scale); radius: Tokens.radiusSm + 1
-        color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? AppPalette.cardHover : AppPalette.card))
+        color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? ib.fillHoverColor : ib.fillColor))
         border.width: Tokens.cardBorderWidth
         border.color: (checked || ibMa.containsMouse) ? AppPalette.borderHover : AppPalette.border
+        scale: ibMa.pressed ? Anim.dipScale(ib.width) : (ibMa.containsMouse ? Anim.liftScale(ib.width) : 1.0)
 
         Behavior on color { ColorAnimation { duration: 80 } }
+        Behavior on scale { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
 
         activeFocusOnTab: enabled
         function _activate() {
@@ -304,68 +308,37 @@ Column {
             leftPadding: Tokens.spaceXxs
         }
 
-        Repeater {
-            model: Math.min(recentOpenedFiles.length, 3)
+        KIsland {
+            rowPadding: Tokens.spaceMd
 
-            Row {
-                id: recentRow
-                width: parent.width
-                spacing: Tokens.spaceXs
+            Repeater {
+                model: Math.min(filesViewer.recentOpenedFiles.length, 3)
 
-                property string filePath: recentOpenedFiles[index] || ""
-                readonly property string fileName: {
-                    var d = filesViewer.urlDisplay(filePath)
-                    var i = Math.max(d.lastIndexOf("/"), d.lastIndexOf("\\"))
-                    return i >= 0 ? d.substring(i + 1) : d
-                }
+                KIslandRow {
+                    id: recentRow
 
-                Rectangle {
-                    id: recentCard
-                    width: parent.width - removeBtn.width - parent.spacing
-                    height: Tokens.controlHMd; radius: Tokens.radiusMd
-                    color: recentMa.containsMouse ? AppPalette.cardHover : AppPalette.card
-                    border.width: Tokens.cardBorderWidth; border.color: AppPalette.border
-                    Behavior on color { ColorAnimation { duration: 80 } }
-
-                    activeFocusOnTab: true
-                    Keys.onReturnPressed: filesViewer.openRecentFile(parent.filePath)
-                    Keys.onEnterPressed:  filesViewer.openRecentFile(parent.filePath)
-                    Keys.onSpacePressed:  filesViewer.openRecentFile(parent.filePath)
-
-                    Text {
-                        anchors.fill: parent
-                        anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
-                        text: filesViewer.urlDisplay(parent.parent.filePath)
-                        color: AppPalette.text; font.pixelSize: Tokens.fontLg
-                        verticalAlignment: Text.AlignVCenter
-                        elide: Text.ElideLeft
+                    readonly property string filePath: filesViewer.recentOpenedFiles[index] || ""
+                    readonly property string fileName: {
+                        var d = filesViewer.urlDisplay(recentRow.filePath)
+                        var i = Math.max(d.lastIndexOf("/"), d.lastIndexOf("\\"))
+                        return i >= 0 ? d.substring(i + 1) : d
                     }
 
-                    KFocusRing { id: focusRing }
+                    label: filesViewer.urlDisplay(recentRow.filePath)
+                    labelElide: Text.ElideLeft
+                    interactive: true
+                    toolTipText: qsTr("Open %1").arg(recentRow.fileName)
+                    onClicked: filesViewer.openRecentFile(recentRow.filePath)
 
-                    MouseArea {
-                        id: recentMa
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onPressed: focusRing.suppress()
-                        onClicked: { recentCard.forceActiveFocus(); filesViewer.openRecentFile(parent.parent.filePath) }
+                    IconBtn {
+                        iconSource: "qrc:/icons/ui/x.svg"
+                        iconFillRatio: 0.8
+                        width: Tokens.controlHMd
+                        height: Tokens.controlHMd
+                        fillColor: AppPalette.controlRaised
+                        fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
+                        onClicked: filesViewer.removeRecentFile(recentRow.filePath)
                     }
-
-                    KToolTip {
-                        text: qsTr("Open %1").arg(recentRow.fileName)
-                        targetItem: recentCard
-                        shown: recentMa.containsMouse
-                    }
-                }
-
-                IconBtn {
-                    id: removeBtn
-                    iconSource: "qrc:/icons/ui/x.svg"
-                    iconFillRatio: 0.8
-                    width: Tokens.controlHMd
-                    height: Tokens.controlHMd
-                    onClicked: filesViewer.removeRecentFile(parent.filePath)
                 }
             }
         }

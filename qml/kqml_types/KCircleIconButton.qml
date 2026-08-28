@@ -50,7 +50,10 @@ Item {
     onPressedChanged: if (pressed) { _tipSuppressed = true; focusRing.suppress() }
     onHoveredChanged: if (!hovered) _tipSuppressed = false
     property bool scaleOnHover: true
-    readonly property real backgroundScale: (!root.enabled || !root.scaleOnHover) ? 1.0 : (root.pressed ? 0.97 : (root.hovered ? 1.035 : 1.0))
+    readonly property real _feedbackScale: root.pressed ? Anim.dipScale(root.width)
+                                                        : (root.hovered ? Anim.liftScale(root.width) : 1.0)
+    readonly property real backgroundScale: (!root.enabled || !root.scaleOnHover) ? 1.0 : root._feedbackScale
+    readonly property real contentScale: (!root.enabled || root.scaleOnHover) ? 1.0 : root._feedbackScale
     readonly property bool hasIcon: {
         var s = iconSource ? iconSource.toString() : ""
         return s !== "" && s.charAt(s.length - 1) !== "/"
@@ -109,22 +112,22 @@ Item {
 
         Behavior on color {
             ColorAnimation {
-                duration: 110
-                easing.type: Easing.OutCubic
+                duration: Anim.controlMs
+                easing.type: Anim.controlEasing
             }
         }
 
         Behavior on border.color {
             ColorAnimation {
-                duration: 110
-                easing.type: Easing.OutCubic
+                duration: Anim.controlMs
+                easing.type: Anim.controlEasing
             }
         }
 
         Behavior on scale {
             NumberAnimation {
-                duration: 120
-                easing.type: Easing.OutCubic
+                duration: Anim.controlMs
+                easing.type: Anim.controlEasing
             }
         }
     }
@@ -142,15 +145,15 @@ Item {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: 110
-                easing.type: Easing.OutCubic
+                duration: Anim.controlMs
+                easing.type: Anim.controlEasing
             }
         }
 
         Behavior on scale {
             NumberAnimation {
-                duration: 120
-                easing.type: Easing.OutCubic
+                duration: Anim.controlMs
+                easing.type: Anim.controlEasing
             }
         }
     }
@@ -180,6 +183,8 @@ Item {
         visible: root.hasIcon
         width: root.iconPixelSize
         height: root.iconPixelSize
+        scale: root.contentScale
+        Behavior on scale { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
         rotation: root.iconRotation
         Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
 
@@ -223,9 +228,11 @@ Item {
         visible: (!root.hasIcon || root.showGlyphWithIcon) && root._isCrossGlyph
         width: root.glyphPixelSize
         height: root.glyphPixelSize
+        scale: root.contentScale
+        Behavior on scale { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
 
         readonly property color _stroke: root.enabled
-                                         ? (root.hovered ? Qt.lighter(root.glyphColor, 1.12) : root.glyphColor)
+                                         ? (root.hovered ? Qt.lighter(root.glyphColor, Anim.hoverLighten) : root.glyphColor)
                                          : AppPalette.textMuted
         readonly property int _thickness: Math.max(2, Math.round(root.glyphPixelSize * 0.15))
 
@@ -247,24 +254,26 @@ Item {
         }
 
         Behavior on opacity {
-            NumberAnimation { duration: 110; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing }
         }
     }
 
     Text {
         anchors.centerIn: parent
         visible: (!root.hasIcon || root.showGlyphWithIcon) && !root._isCrossGlyph
+        scale: root.contentScale
+        Behavior on scale { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
         text: root.glyph
         color: root.enabled
-               ? (root.hovered ? Qt.lighter(root.glyphColor, 1.12) : root.glyphColor)
+               ? (root.hovered ? Qt.lighter(root.glyphColor, Anim.hoverLighten) : root.glyphColor)
                : AppPalette.textMuted
         font.pixelSize: root.glyphPixelSize
         font.bold: true
 
         Behavior on color {
             ColorAnimation {
-                duration: 110
-                easing.type: Easing.OutCubic
+                duration: Anim.controlMs
+                easing.type: Anim.controlEasing
             }
         }
     }

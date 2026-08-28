@@ -41,12 +41,17 @@ qt_add_qml_module(kogger_app
         PaneEditorChrome.qml
         PaneFrame.qml
         PaneInputBridge.qml
+        PaneVideoWindow.qml
         PowerOffConfirmOverlay.qml
         ParamCard.qml
         ParamCardGroup.qml
         ProfilesPopup.qml
         QuickActionSettingsTab.qml
         SecondaryWindow.qml
+        ServoPanelBody.qml
+        ServoPanelPopup.qml
+        ServoPanelSettingsPage.qml
+        ServoPanelScroll.qml
         SettingsGearButton.qml
         SettingsGroupBase.qml
         SettingsGroup.qml
@@ -70,6 +75,8 @@ qt_add_qml_module(kogger_app
         UsblSpin.qml
         UsblStateBadge.qml
         UsblTriggerEditor.qml
+        VideoPaneSettingsTab.qml
+        VideoSurface.qml
         WidgetCard.qml
         WidgetCellContent.qml
         WidgetDragHandle.qml

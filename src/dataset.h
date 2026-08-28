@@ -95,6 +95,9 @@ public:
     Q_PROPERTY(bool hasChartData       READ hasChartData       NOTIFY dataAvailabilityChanged)
     Q_PROPERTY(bool hasRangefinderData READ hasRangefinderData NOTIFY dataAvailabilityChanged)
     Q_PROPERTY(bool hasAttitudeData    READ hasAttitudeData    NOTIFY dataAvailabilityChanged)
+    Q_PROPERTY(float lastYaw           READ lastYaw            NOTIFY attitudeUpdated)
+    Q_PROPERTY(float lastPitch         READ lastPitch          NOTIFY attitudeUpdated)
+    Q_PROPERTY(float lastRoll          READ lastRoll           NOTIFY attitudeUpdated)
     Q_PROPERTY(bool hasTemperatureData READ hasTemperatureData NOTIFY dataAvailabilityChanged)
     Q_PROPERTY(bool hasDopplerBeamData READ hasDopplerBeamData NOTIFY dataAvailabilityChanged)
     Q_PROPERTY(bool hasDvlSolutionData READ hasDvlSolutionData NOTIFY dataAvailabilityChanged)
@@ -343,6 +346,9 @@ public:
     bool hasChartData() const       { return hasChartData_;       };
     bool hasRangefinderData() const { return hasRangefinderData_; };
     bool hasAttitudeData() const    { return hasAttitudeData_;    };
+    float lastYaw() const           { return lastYaw_;            };
+    float lastPitch() const         { return lastPitch_;          };
+    float lastRoll() const          { return lastRoll_;           };
     bool hasTemperatureData() const { return hasTemperatureData_; };
     bool hasDopplerBeamData() const { return hasDopplerBeamData_; };
     bool hasDvlSolutionData() const { return hasDvlSolutionData_; };
@@ -421,6 +427,7 @@ public slots:
     void onDimensionRectCanCalc(uint64_t indx);
 
 signals:
+    void attitudeUpdated();
     // data horizon
     void epochAdded(uint64_t indx);
     void positionAdded(uint64_t indx);
@@ -487,6 +494,9 @@ protected:
     bool hasChartData_       = false;
     bool hasRangefinderData_ = false;
     bool hasAttitudeData_    = false;
+    float lastYaw_           = NAN;
+    float lastPitch_         = NAN;
+    float lastRoll_          = NAN;
     bool hasTemperatureData_ = false;
     bool hasDopplerBeamData_ = false;
     bool hasDvlSolutionData_ = false;

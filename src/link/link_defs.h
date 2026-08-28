@@ -10,6 +10,7 @@ enum class LinkType : uint8_t {
     kLinkSerial,
     kLinkIPUDP, // also is proxy
     kLinkIPTCP,
+    kLinkRtsp,
 };
 
 enum class LinkAttribute : uint16_t {

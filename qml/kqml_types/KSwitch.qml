@@ -4,13 +4,26 @@ import QtQuick.Controls 2.15
 Switch {
     id: control
 
-    property int rowHeight: Math.round(38 * AppPalette.scale)
+    property bool flat: false
+    property int rowHeight: Tokens.rowH
     property string toolTipText: text
-    property int switchHorizontalPadding: Math.round(10 * AppPalette.scale)
+    property int switchHorizontalPadding: flat ? 0 : Math.round(10 * AppPalette.scale)
     property int cornerRadius: Tokens.radiusLg
     property color textColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
-    property color backgroundColor: AppPalette.rowRaised
-    property color hoverBackgroundColor: AppPalette.bgHover
+    property color backgroundColor: flat ? "transparent" : AppPalette.rowRaised
+    property color hoverBackgroundColor: flat ? "transparent" : AppPalette.bgHover
+    property bool hoverLift: !flat
+
+    scale: (hoverLift && pressed) ? Anim.dipScale(width)
+         : (hoverLift && hovered) ? Anim.liftScale(width)
+                                  : 1.0
+
+    Behavior on scale {
+        NumberAnimation {
+            duration: Anim.controlMs
+            easing.type: Anim.controlEasing
+        }
+    }
     property color borderColor: AppPalette.border
     property color accentColor: AppPalette.toggleOn
     property color accentBorderColor: AppPalette.toggleOnBorder
@@ -28,8 +41,8 @@ Switch {
     readonly property int _knobMargin: Math.max(2, Math.round(2 * AppPalette.scale))
     readonly property int _knobSize: Math.max(8, trackHeight - 2 * _knobMargin)
 
-    implicitWidth: Math.round(260 * AppPalette.scale)
-    implicitHeight: rowHeight
+    implicitWidth: flat ? trackWidth : Math.round(260 * AppPalette.scale)
+    implicitHeight: flat ? Tokens.controlHMd : rowHeight
     padding: 0
     spacing: 0
     opacity: enabled ? 1.0 : 0.55

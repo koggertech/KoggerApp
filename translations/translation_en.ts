@@ -52,6 +52,39 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1889"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1890"/>
+        <source>Per-window video settings.</source>
+        <translation>Per-window video settings.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1908"/>
+        <source>No video windows displayed</source>
+        <translation>No video windows displayed</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="657"/>
+        <source>Layout %1</source>
+        <translation>Layout %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="659"/>
+        <source>Active</source>
+        <translation>Active</translation>
+    </message>
+    <message>
+        <source>Dataset: with position zeroing on</source>
+        <translation>Dataset: with position zeroing on</translation>
+    </message>
+    <message>
+        <source>Servo</source>
+        <translation>Servo</translation>
+    </message>
+    <message>
         <source>Hide important notifications</source>
         <translation>Hide important notifications</translation>
     </message>
@@ -62,6 +95,14 @@
     <message>
         <source>Show the scale bar in the 3D scene</source>
         <translation>Show the scale bar in the 3D scene</translation>
+    </message>
+    <message>
+        <source>USBL beacons</source>
+        <translation>USBL beacons</translation>
+    </message>
+    <message>
+        <source>Show the acoustic nodes and their tracks in the 3D scene</source>
+        <translation>Show the acoustic nodes and their tracks in the 3D scene</translation>
     </message>
     <message>
         <source>Show the surface quality label in the 3D scene</source>
@@ -350,11 +391,6 @@
         <location filename="../qml/app/AppSettingsPage.qml" line="756"/>
         <source>Bottom detection presets, thresholds and search window.</source>
         <translation>Bottom detection presets, thresholds and search window.</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="807"/>
-        <source>Preset:</source>
-        <translation></translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="821"/>
@@ -929,6 +965,14 @@
         <translation>Panel %1</translation>
     </message>
     <message>
+        <source>Servo control</source>
+        <translation>Servo control</translation>
+    </message>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Acoustic nodes</translation>
+    </message>
+    <message>
         <source>Delete panel</source>
         <translation>Delete panel</translation>
     </message>
@@ -1008,6 +1052,11 @@
 </context>
 <context>
     <name>ConnectionViewer</name>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="768"/>
+        <source>+RTSP</source>
+        <translation>+RTSP</translation>
+    </message>
     <message>
         <source>Choose recording folder</source>
         <translation>Choose recording folder</translation>
@@ -2418,6 +2467,11 @@
 <context>
     <name>GlobalPanePopup</name>
     <message>
+        <location filename="../qml/app/GlobalPanePopup.qml" line="167"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
         <location filename="../qml/app/GlobalPanePopup.qml" line="20"/>
         <source>Global pop-up</source>
         <translation></translation>
@@ -2995,6 +3049,16 @@
 <context>
     <name>LayoutCreatePage</name>
     <message>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="32"/>
+        <source>Layout %1</source>
+        <translation>Layout %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="34"/>
+        <source>Active</source>
+        <translation>Active</translation>
+    </message>
+    <message>
         <source>Create a new layout from the current panes or a preset, then arrange it in edit mode.</source>
         <translation type="vanished">Create a new layout from the current panes or a preset, then arrange it in edit mode.</translation>
     </message>
@@ -3065,6 +3129,16 @@
 <context>
     <name>LinkManager</name>
     <message>
+        <location filename="../src/link/link_manager.cpp" line="662"/>
+        <source>Connected: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/link/link_manager.cpp" line="665"/>
+        <source>Disconnected: %1</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../src/link/link_manager.cpp" line="685"/>
         <source>Link not available</source>
         <translation></translation>
@@ -3106,7 +3180,19 @@
     </message>
 </context>
 <context>
+    <name>MosaicDB</name>
+    <message>
+        <location filename="../src/data_processor/mosaic_db.cpp" line="66"/>
+        <source>Mosaic cache is unavailable — distant areas may stay incomplete</source>
+        <translation>Mosaic cache is unavailable — distant areas may stay incomplete</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
+    <message>
+        <source>Servo panel</source>
+        <translation>Servo panel</translation>
+    </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="59"/>
         <source>Please choose a file</source>
@@ -3263,6 +3349,11 @@
 <context>
     <name>PaneEditorChrome</name>
     <message>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="287"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
         <location filename="../qml/app/PaneEditorChrome.qml" line="388"/>
         <source>Pane %1</source>
         <translation></translation>
@@ -3337,6 +3428,19 @@
         <location filename="../src/scene3d/domain/plane_grid.cpp" line="511"/>
         <source> m</source>
         <translation></translation>
+    </message>
+</context>
+<context>
+    <name>VideoSurface</name>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="181"/>
+        <source>Video window settings</source>
+        <translation>Video window settings</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="136"/>
+        <source>No video source</source>
+        <translation>No video source</translation>
     </message>
 </context>
 <context>
@@ -4054,6 +4158,21 @@
 <context>
     <name>SecondaryWindow</name>
     <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="103"/>
+        <source>Choose pane type</source>
+        <translation>Choose pane type</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="131"/>
+        <source>2D</source>
+        <translation>2D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="132"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
         <location filename="../qml/app/SecondaryWindow.qml" line="57"/>
         <source>Second window</source>
         <translation>Second window</translation>
@@ -4294,7 +4413,123 @@
     </message>
 </context>
 <context>
+    <name>VideoStream</name>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="232"/>
+        <source>Connecting...</source>
+        <translation>Connecting...</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="277"/>
+        <source>out of memory</source>
+        <translation>out of memory</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="317"/>
+        <source>no video stream</source>
+        <translation>no video stream</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="346"/>
+        <source>no decoder for this stream</source>
+        <translation>no decoder for this stream</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="580"/>
+        <source>Stream ended</source>
+        <translation>Stream ended</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="649"/>
+        <source>Reconnecting (%1/%2)...</source>
+        <translation>Reconnecting (%1/%2)...</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="245"/>
+        <source>Connection failed</source>
+        <translation>Connection failed</translation>
+    </message>
+</context>
+<context>
+    <name>VideoPaneSettingsTab</name>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="35"/>
+        <source>Image:</source>
+        <translation>Image:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="45"/>
+        <source>Fit</source>
+        <translation>Fit</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="46"/>
+        <source>Crop</source>
+        <translation>Crop</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="47"/>
+        <source>Stretch</source>
+        <translation>Stretch</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="58"/>
+        <source>Show resolution</source>
+        <translation>Show resolution</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="64"/>
+        <source>Stream:</source>
+        <translation>Stream:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="99"/>
+        <source>Source</source>
+        <translation>Source</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="100"/>
+        <source>Not selected</source>
+        <translation>Not selected</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="146"/>
+        <source>Video source for this pane</source>
+        <translation>Video source for this pane</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="104"/>
+        <source>Resolution</source>
+        <translation>Resolution</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="111"/>
+        <source>State</source>
+        <translation>State</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="117"/>
+        <source>Streaming</source>
+        <translation>Streaming</translation>
+    </message>
+</context>
+<context>
     <name>WorkspaceStore</name>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="956"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="961"/>
+        <source>Global pop-up</source>
+        <translation>Global pop-up</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="965"/>
+        <source>Second window</source>
+        <translation>Second window</translation>
+    </message>
     <message>
         <location filename="../qml/app/WorkspaceStore.qml" line="866"/>
         <source>Echogram</source>
@@ -4463,6 +4698,184 @@
     <message>
         <source>Remove widget</source>
         <translation>Remove widget</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetKindStep</name>
+    <message>
+        <source>Choose what this panel shows.</source>
+        <translation>Choose what this panel shows.</translation>
+    </message>
+    <message>
+        <source>Field grid</source>
+        <translation>Field grid</translation>
+    </message>
+    <message>
+        <source>A grid of cells you fill with values — depth, speed, coordinates.</source>
+        <translation>A grid of cells you fill with values — depth, speed, coordinates.</translation>
+    </message>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Acoustic nodes</translation>
+    </message>
+    <message>
+        <source>Servo control</source>
+        <translation>Servo control</translation>
+    </message>
+    <message>
+        <source>Sweep, step, centre and the live angle.</source>
+        <translation>Sweep, step, centre and the live angle.</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetCard</name>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Acoustic nodes</translation>
+    </message>
+    <message>
+        <source>Servo control</source>
+        <translation>Servo control</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetServoStep</name>
+    <message>
+        <source>Controls the servo scanner of the device that has one. The panel finds it itself.</source>
+        <translation>Controls the servo scanner of the device that has one. The panel finds it itself.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Background transparency</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Save</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelBody</name>
+    <message>
+        <source>Off</source>
+        <translation>Off</translation>
+    </message>
+    <message>
+        <source>ServoScan</source>
+        <translation>ServoScan</translation>
+    </message>
+    <message>
+        <source>No servo device</source>
+        <translation>No servo device</translation>
+    </message>
+    <message>
+        <source>On link %1</source>
+        <translation>On link %1</translation>
+    </message>
+    <message>
+        <source>Device</source>
+        <translation>Device</translation>
+    </message>
+    <message>
+        <source>Control</source>
+        <translation>Control</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Enabled</translation>
+    </message>
+    <message>
+        <source>Current angle</source>
+        <translation>Current angle</translation>
+    </message>
+    <message>
+        <source>Reverse mapping</source>
+        <translation>Reverse mapping</translation>
+    </message>
+    <message>
+        <source>Scan</source>
+        <translation>Scan</translation>
+    </message>
+    <message>
+        <source>Step, °</source>
+        <translation>Step, °</translation>
+    </message>
+    <message>
+        <source>Scan range, °</source>
+        <translation>Scan range, °</translation>
+    </message>
+    <message>
+        <source>Center, °</source>
+        <translation>Center, °</translation>
+    </message>
+    <message>
+        <source>More settings</source>
+        <translation>More settings</translation>
+    </message>
+    <message>
+        <source>Calibration</source>
+        <translation>Calibration</translation>
+    </message>
+    <message>
+        <source>PWM min, µs</source>
+        <translation>PWM min, µs</translation>
+    </message>
+    <message>
+        <source>PWM max, µs</source>
+        <translation>PWM max, µs</translation>
+    </message>
+    <message>
+        <source>Servo angle range, °</source>
+        <translation>Servo angle range, °</translation>
+    </message>
+    <message>
+        <source>PWM routing</source>
+        <translation>PWM routing</translation>
+    </message>
+    <message>
+        <source>OUT1 (wired)</source>
+        <translation>OUT1 (wired)</translation>
+    </message>
+    <message>
+        <source>OUT2</source>
+        <translation>OUT2</translation>
+    </message>
+    <message>
+        <source>OUT3</source>
+        <translation>OUT3</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelPopup</name>
+    <message>
+        <source>Servo</source>
+        <translation>Servo</translation>
+    </message>
+    <message>
+        <source>Panel settings</source>
+        <translation>Panel settings</translation>
+    </message>
+    <message>
+        <source>Hide panel</source>
+        <translation>Hide panel</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelSettingsPage</name>
+    <message>
+        <source>Servo scanner control: sweep, step, centre and the live angle.</source>
+        <translation>Servo scanner control: sweep, step, centre and the live angle.</translation>
+    </message>
+    <message>
+        <source>Show automatically</source>
+        <translation>Show automatically</translation>
+    </message>
+    <message>
+        <source>Brings the panel up when a device with servo firmware connects.</source>
+        <translation>Brings the panel up when a device with servo firmware connects.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Background transparency</translation>
     </message>
 </context>
 </TS>
