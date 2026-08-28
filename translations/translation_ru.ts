@@ -1034,6 +1034,14 @@
         <translation>Панель %1</translation>
     </message>
     <message>
+        <source>Servo control</source>
+        <translation>Управление серво</translation>
+    </message>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Акустические узлы</translation>
+    </message>
+    <message>
         <source>Delete panel</source>
         <translation>Удалить панель</translation>
     </message>

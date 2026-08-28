@@ -1034,6 +1034,14 @@
         <translation>Panel %1</translation>
     </message>
     <message>
+        <source>Servo control</source>
+        <translation>Sterowanie serwem</translation>
+    </message>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Węzły akustyczne</translation>
+    </message>
+    <message>
         <source>Delete panel</source>
         <translation>Usuń panel</translation>
     </message>

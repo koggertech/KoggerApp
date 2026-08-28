@@ -700,86 +700,87 @@ Column {
         stateStore: root.store
         stateKey: "app.widgets"
 
-        Item {
-            width: parent.width
-            height: servoCardView.implicitHeight
+        KIsland {
+            KIslandRow {
+                id: servoPanelRow
+                readonly property bool shown: !!(root.store && root.store.servoPanelShown)
 
-            WidgetCard {
-                id: servoCardView
-                anchors.fill: parent
-                def: root.store ? root.store.servoPanelDef : null
-                title: qsTr("Servo")
-                showText: true
-                selectionMode: true
-                selected: !!(root.store && root.store.servoPanelShown)
-                extraHovered: servoEditBtn.hovered
-                onToggled: function(value) { if (root.store) root.store.setServoPanelShown(value) }
-            }
+                label: qsTr("Servo")
+                labelColor: shown ? "#FDE68A" : AppPalette.textStrong
+                caption: qsTr("Servo control")
+                fillColor: shown ? Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20) : "transparent"
+                verticalPadding: Tokens.spaceSm
+                interactive: true
+                onClicked: if (root.store) root.store.setServoPanelShown(!servoPanelRow.shown)
 
-            KCircleIconButton {
-                id: servoEditBtn
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                anchors.rightMargin: Tokens.spaceSm
-                width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd
-                iconSource: "qrc:/icons/ui/pencil.svg"; iconTintColor: AppPalette.textSecond
-                fillColor: AppPalette.controlRaised
-                fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
-                borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover
-                toolTipText: qsTr("Edit panel"); z: 6
-                onClicked: root.store.openServoPanelSettings()
-            }
-        }
-
-        Repeater {
-            model: root.store.widgets.length
-            delegate: Item {
-                id: widgetRow
-                required property int index
-                readonly property int widgetIndex: index
-                readonly property var def: (widgetIndex >= 0 && widgetIndex < root.store.widgets.length) ? root.store.widgets[widgetIndex] : null
-                width: parent.width; height: widgetCardView.implicitHeight
-
-                WidgetCard {
-                    id: widgetCardView
-                    anchors.fill: parent
-                    def: widgetRow.def
-                    title: qsTr("Panel %1").arg(widgetRow.widgetIndex + 1)
-                    showText: true
-                    selectionMode: true
-                    selected: !!(root.store && widgetRow.def && root.store.widgetShown(widgetRow.def.id))
-                    extraHovered: widgetDeleteBtn.hovered || widgetEditBtn.hovered
-                    onToggled: function(value) {
-                        if (root.store && widgetRow.def)
-                            root.store.setWidgetShown(widgetRow.def.id, value)
-                    }
+                leading: WidgetGridPreview {
+                    width: Math.round(84 * AppPalette.scale)
+                    height: Math.round(64 * AppPalette.scale)
+                    def: root.store ? root.store.servoPanelDef : null
                 }
 
                 KCircleIconButton {
-                    id: widgetDeleteBtn
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.right
-                    anchors.rightMargin: Tokens.spaceSm
-                    width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd; iconSource: ""; glyph: "×"
-                    glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
-                    fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
-                    borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
-                    toolTipText: qsTr("Delete panel"); z: 6
-                    onClicked: root.store.deleteWidgetAt(widgetRow.widgetIndex)
-                }
-
-                KCircleIconButton {
-                    id: widgetEditBtn
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: widgetDeleteBtn.left
-                    anchors.rightMargin: Tokens.spaceSm
                     width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd
                     iconSource: "qrc:/icons/ui/pencil.svg"; iconTintColor: AppPalette.textSecond
                     fillColor: AppPalette.controlRaised
                     fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
                     borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover
-                    toolTipText: qsTr("Edit panel"); z: 6
-                    onClicked: root.store.openWidgetEditSettings(widgetRow.widgetIndex)
+                    toolTipText: qsTr("Edit panel")
+                    onClicked: root.store.openServoPanelSettings()
+                }
+            }
+
+            Repeater {
+                model: root.store.widgets.length
+                delegate: KIslandRow {
+                    id: widgetRow
+                    required property int index
+
+                    readonly property int widgetIndex: index
+                    readonly property var def: (widgetIndex >= 0 && widgetIndex < root.store.widgets.length) ? root.store.widgets[widgetIndex] : null
+                    readonly property bool shown: !!(root.store && widgetRow.def && root.store.widgetShown(widgetRow.def.id))
+
+                    label: qsTr("Panel %1").arg(widgetRow.widgetIndex + 1)
+                    labelColor: shown ? "#FDE68A" : AppPalette.textStrong
+                    caption: !widgetRow.def ? ""
+                           : widgetRow.def.kind === "usblNodes" ? qsTr("Acoustic nodes")
+                                                                : (widgetRow.def.cols + "×" + widgetRow.def.rows)
+                    fillColor: shown ? Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20) : "transparent"
+                    verticalPadding: Tokens.spaceSm
+                    interactive: true
+                    onClicked: {
+                        if (root.store && widgetRow.def)
+                            root.store.setWidgetShown(widgetRow.def.id, !widgetRow.shown)
+                    }
+
+                    leading: WidgetGridPreview {
+                        width: Math.round(84 * AppPalette.scale)
+                        height: Math.round(64 * AppPalette.scale)
+                        def: widgetRow.def
+                    }
+
+                    Row {
+                        spacing: Tokens.spaceSm
+
+                        KCircleIconButton {
+                            width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd
+                            iconSource: "qrc:/icons/ui/pencil.svg"; iconTintColor: AppPalette.textSecond
+                            fillColor: AppPalette.controlRaised
+                            fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                            borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover
+                            toolTipText: qsTr("Edit panel")
+                            onClicked: root.store.openWidgetEditSettings(widgetRow.widgetIndex)
+                        }
+
+                        KCircleIconButton {
+                            width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd; iconSource: ""; glyph: "×"
+                            glyphPixelSize: Tokens.iconSm; glyphColor: AppPalette.textSecond; fillColor: AppPalette.controlRaised
+                            fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                            borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover; showGlyphWithIcon: true
+                            toolTipText: qsTr("Delete panel")
+                            onClicked: root.store.deleteWidgetAt(widgetRow.widgetIndex)
+                        }
+                    }
                 }
             }
         }
@@ -814,39 +815,146 @@ Column {
             core.setBottomTrackZeroing(zeroingBottomTrackButton.checked)
         }
 
-        // FBS row
-        ParamCard {
-            id: fixBlackStripesCheckButton
-            label: qsTr("FBS forward / backward:")
-            labelColor: root._bright
-            labelPixelSize: Tokens.fontLg
-            toolTipText: qsTr("Fills black stripes in the echogram by interpolating the given number of steps forward / backward.")
-            slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
-            onToggled: function(v) { core.setFixBlackStripesState(v) }
+        KIsland {
+            KIslandRow {
+                label: qsTr("FBS forward / backward:")
+                labelColor: root._bright
+                toolTipText: qsTr("Fills black stripes in the echogram by interpolating the given number of steps forward / backward.")
+                interactive: true
+                onClicked: fixBlackStripesCheckButton.click()
 
-            KSpinBox {
-                id: fixBlackStripesForwardStepsSpinBox
-                fontPixelSize: Tokens.fontLg
-                textColor: root._bright
-                width: Math.round(93 * AppPalette.scale)
-                height: Tokens.controlHMd
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                from: 0; to: 100; stepSize: 1; value: 5
-                onValueModified: function(v) { core.setFixBlackStripesForwardSteps(v) }
+                Item {
+                    width: fbsSlotRow.width
+                    height: fbsSlotRow.height
+
+                    // Eats clicks landing in the gaps around the spinboxes so they
+                    // cannot bubble up to the row and flip the toggle.
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: fbsSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: fixBlackStripesForwardStepsSpinBox
+                            fontPixelSize: Tokens.fontLg
+                            textColor: root._bright
+                            width: Math.round(93 * AppPalette.scale)
+                            height: Tokens.controlHMd
+                            from: 0; to: 100; stepSize: 1; value: 5
+                            onValueModified: function(v) { core.setFixBlackStripesForwardSteps(v) }
+                        }
+
+                        KSpinBox {
+                            id: fixBlackStripesBackwardStepsSpinBox
+                            fontPixelSize: Tokens.fontLg
+                            textColor: root._bright
+                            width: Math.round(93 * AppPalette.scale)
+                            height: Tokens.controlHMd
+                            from: 0; to: 100; stepSize: 1; value: 5
+                            onValueModified: function(v) { core.setFixBlackStripesBackwardSteps(v) }
+                        }
+
+                        KSwitch {
+                            id: fixBlackStripesCheckButton
+                            flat: true
+                            onToggled: core.setFixBlackStripesState(checked)
+                        }
+                    }
+                }
             }
 
-            KSpinBox {
-                id: fixBlackStripesBackwardStepsSpinBox
-                fontPixelSize: Tokens.fontLg
-                textColor: root._bright
-                width: Math.round(93 * AppPalette.scale)
-                height: Tokens.controlHMd
-                anchors.left: fixBlackStripesForwardStepsSpinBox.right
-                anchors.leftMargin: Tokens.spaceXs
-                anchors.verticalCenter: parent.verticalCenter
-                from: 0; to: 100; stepSize: 1; value: 5
-                onValueModified: function(v) { core.setFixBlackStripesBackwardSteps(v) }
+            KIslandRow {
+                label: qsTr("S.offset XY, mm:")
+                labelColor: root._bright
+                toolTipText: qsTr("Sonar mount-point offset along the X / Y axes, in millimeters.")
+                interactive: true
+                onClicked: sonarOffsetCheckButton.click()
+
+                Item {
+                    width: sonarOffsetSlotRow.width
+                    height: sonarOffsetSlotRow.height
+
+                    MouseArea { anchors.fill: parent }
+
+                    Row {
+                        id: sonarOffsetSlotRow
+                        spacing: Tokens.spaceSm
+
+                        KSpinBox {
+                            id: sonarOffsetValueX
+                            fontPixelSize: Tokens.fontLg
+                            textColor: root._bright
+                            width: Math.round(93 * AppPalette.scale)
+                            height: Tokens.controlHMd
+                            from: -9999; to: 9999; stepSize: 50; value: 0
+                            onValueModified: function(v) {
+                                if (sonarOffsetCheckButton.checked)
+                                    dataset.setSonarOffset(v * 0.001, sonarOffsetValueY.value * 0.001, 0)
+                            }
+                        }
+
+                        KSpinBox {
+                            id: sonarOffsetValueY
+                            fontPixelSize: Tokens.fontLg
+                            textColor: root._bright
+                            width: Math.round(93 * AppPalette.scale)
+                            height: Tokens.controlHMd
+                            from: -9999; to: 9999; stepSize: 50; value: 0
+                            onValueModified: function(v) {
+                                if (sonarOffsetCheckButton.checked)
+                                    dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, v * 0.001, 0)
+                            }
+                        }
+
+                        KSwitch {
+                            id: sonarOffsetCheckButton
+                            flat: true
+                            onToggled: {
+                                if (checked) dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, 0)
+                                else         dataset.setSonarOffset(0, 0, 0)
+                                core.setIsAttitudeExpected(checked)
+                            }
+                        }
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Pos zeroing")
+                labelColor: root._bright
+                toolTipText: qsTr("Zeroes position coordinates relative to the start point.")
+                interactive: true
+                onClicked: zeroingPosButton.click()
+
+                KSwitch {
+                    id: zeroingPosButton
+                    flat: true
+                    onToggled: core.setPosZeroing(checked)
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Bottom track zeroing")
+                labelColor: root._bright
+                toolTipText: qsTr("Zeroes the bottom-track depth reference.")
+                interactive: true
+                onClicked: zeroingBottomTrackButton.click()
+
+                KSwitch {
+                    id: zeroingBottomTrackButton
+                    flat: true
+                    onToggled: core.setBottomTrackZeroing(checked)
+                }
+            }
+
+            KIslandRow {
+                visible: instruments >= 1
+                label: qsTr("TGC")
+                toolTipText: qsTr("Open TGC settings")
+                chevron: true
+                interactive: true
+                onClicked: if (root.store) root.store.openTgcSettings()
             }
         }
 
@@ -854,84 +962,12 @@ Column {
         Settings { category: "main/blackStripes"; property alias fixBlackStripesForwardStepsSpinBox: fixBlackStripesForwardStepsSpinBox.value }
         Settings { category: "main/blackStripes"; property alias fixBlackStripesBackwardStepsSpinBox: fixBlackStripesBackwardStepsSpinBox.value }
 
-        // Sonar offset row
-        ParamCard {
-            id: sonarOffsetCheckButton
-            label: qsTr("S.offset XY, mm:")
-            labelColor: root._bright
-            labelPixelSize: Tokens.fontLg
-            toolTipText: qsTr("Sonar mount-point offset along the X / Y axes, in millimeters.")
-            slotWidth: 2 * Math.round(93 * AppPalette.scale) + Tokens.spaceXs
-            onToggled: function(v) {
-                if (v) dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, 0)
-                else   dataset.setSonarOffset(0, 0, 0)
-                core.setIsAttitudeExpected(v)
-            }
-
-            KSpinBox {
-                id: sonarOffsetValueX
-                fontPixelSize: Tokens.fontLg
-                textColor: root._bright
-                width: Math.round(93 * AppPalette.scale)
-                height: Tokens.controlHMd
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                from: -9999; to: 9999; stepSize: 50; value: 0
-                onValueModified: function(v) {
-                    if (sonarOffsetCheckButton.checked)
-                        dataset.setSonarOffset(v * 0.001, sonarOffsetValueY.value * 0.001, 0)
-                }
-            }
-
-            KSpinBox {
-                id: sonarOffsetValueY
-                fontPixelSize: Tokens.fontLg
-                textColor: root._bright
-                width: Math.round(93 * AppPalette.scale)
-                height: Tokens.controlHMd
-                anchors.left: sonarOffsetValueX.right
-                anchors.leftMargin: Tokens.spaceXs
-                anchors.verticalCenter: parent.verticalCenter
-                from: -9999; to: 9999; stepSize: 50; value: 0
-                onValueModified: function(v) {
-                    if (sonarOffsetCheckButton.checked)
-                        dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, v * 0.001, 0)
-                }
-            }
-        }
-
         Settings { category: "main/sonarOffset"; property alias sonarOffsetCheckButton: sonarOffsetCheckButton.checked }
         Settings { category: "main/sonarOffset"; property alias sonarOffsetValueX: sonarOffsetValueX.value }
         Settings { category: "main/sonarOffset"; property alias sonarOffsetValueY: sonarOffsetValueY.value }
 
-        ParamCard {
-            id: zeroingPosButton
-            label: qsTr("Pos zeroing")
-            labelColor: root._bright
-            labelPixelSize: Tokens.fontLg
-            toolTipText: qsTr("Zeroes position coordinates relative to the start point.")
-            onToggled: function(v) { core.setPosZeroing(v) }
-        }
         Settings { category: "main/dataset"; property alias zeroingPosButtonCheched: zeroingPosButton.checked }
-
-        ParamCard {
-            id: zeroingBottomTrackButton
-            label: qsTr("Bottom track zeroing")
-            labelColor: root._bright
-            labelPixelSize: Tokens.fontLg
-            toolTipText: qsTr("Zeroes the bottom-track depth reference.")
-            onToggled: function(v) { core.setBottomTrackZeroing(v) }
-        }
         Settings { category: "main/dataset"; property alias zeroingBottomTrackButtonChecked: zeroingBottomTrackButton.checked }
-
-        NavButton {
-            visible: instruments >= 1
-            width: parent.width
-            height: Math.round(38 * AppPalette.scale)
-            text: qsTr("TGC")
-            toolTipText: qsTr("Open TGC settings")
-            onClicked: if (root.store) root.store.openTgcSettings()
-        }
     }
 
     // Boat Track

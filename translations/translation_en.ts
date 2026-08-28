@@ -962,6 +962,14 @@
         <translation>Panel %1</translation>
     </message>
     <message>
+        <source>Servo control</source>
+        <translation>Servo control</translation>
+    </message>
+    <message>
+        <source>Acoustic nodes</source>
+        <translation>Acoustic nodes</translation>
+    </message>
+    <message>
         <source>Delete panel</source>
         <translation>Delete panel</translation>
     </message>
