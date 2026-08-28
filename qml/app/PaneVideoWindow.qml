@@ -26,7 +26,6 @@ Item {
         workspaceRoot: root.workspaceRoot
         leafId: root.leafId
         paneKind: "Video"
-        focusOnPointer: !videoSurfaceItem.selectorOpen
         active: root.workspaceRoot !== null
                 && root.leafId >= 0
                 && (!root.workspaceRoot.store

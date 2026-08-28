@@ -142,7 +142,7 @@ void VideoStreamPool::rebuild()
                     return;
                 }
                 failedUrls_.insert(uuid, failing->url());
-                failing->stop();
+                failing->stopWithFailure();
                 refresh();
             });
             streams_.insert(uuid, stream);

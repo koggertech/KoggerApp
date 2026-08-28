@@ -4267,19 +4267,9 @@
         <translation>Настройки окна видеопотока</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoSurface.qml" line="50"/>
-        <source>Not selected</source>
-        <translation>Не выбрано</translation>
-    </message>
-    <message>
         <location filename="../qml/app/VideoSurface.qml" line="136"/>
         <source>No video source</source>
         <translation>Нет источника видео</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/VideoSurface.qml" line="167"/>
-        <source>Video source for this pane</source>
-        <translation>Источник видео для этой панели</translation>
     </message>
 </context>
 <context>
@@ -5554,6 +5544,11 @@
         <source>Reconnecting (%1/%2)...</source>
         <translation>Переподключение (%1/%2)...</translation>
     </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="245"/>
+        <source>Connection failed</source>
+        <translation>Не удалось подключиться</translation>
+    </message>
 </context>
 <context>
     <name>VideoPaneSettingsTab</name>
@@ -5596,6 +5591,11 @@
         <location filename="../qml/app/VideoPaneSettingsTab.qml" line="100"/>
         <source>Not selected</source>
         <translation>Не выбрано</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="146"/>
+        <source>Video source for this pane</source>
+        <translation>Источник видео для этой панели</translation>
     </message>
     <message>
         <location filename="../qml/app/VideoPaneSettingsTab.qml" line="104"/>

@@ -4293,19 +4293,9 @@
         <translation>Ustawienia okna wideo</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoSurface.qml" line="50"/>
-        <source>Not selected</source>
-        <translation>Nie wybrano</translation>
-    </message>
-    <message>
         <location filename="../qml/app/VideoSurface.qml" line="136"/>
         <source>No video source</source>
         <translation>Brak źródła wideo</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/VideoSurface.qml" line="167"/>
-        <source>Video source for this pane</source>
-        <translation>Źródło wideo dla tego panelu</translation>
     </message>
 </context>
 <context>
@@ -5565,6 +5555,11 @@
         <source>Reconnecting (%1/%2)...</source>
         <translation>Ponowne łączenie (%1/%2)...</translation>
     </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="245"/>
+        <source>Connection failed</source>
+        <translation>Nie udało się połączyć</translation>
+    </message>
 </context>
 <context>
     <name>VideoPaneSettingsTab</name>
@@ -5607,6 +5602,11 @@
         <location filename="../qml/app/VideoPaneSettingsTab.qml" line="100"/>
         <source>Not selected</source>
         <translation>Nie wybrano</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="146"/>
+        <source>Video source for this pane</source>
+        <translation>Źródło wideo dla tego panelu</translation>
     </message>
     <message>
         <location filename="../qml/app/VideoPaneSettingsTab.qml" line="104"/>

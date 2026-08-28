@@ -9,7 +9,7 @@ Item {
     property string contentId: ""
 
     readonly property real chromeIdleOpacity: 0.45
-    readonly property bool selectorOpen: sourceCombo.popup.visible
+    readonly property real controlButtonSize: Math.round(40 * ((typeof theme !== "undefined" && theme) ? theme.resCoeff : 1.0))
 
     readonly property var descriptors: (typeof videoStreams !== "undefined" && videoStreams)
                                         ? (videoStreams.streams || [])
@@ -48,28 +48,6 @@ Item {
     readonly property int sourceWidth: stream ? stream.sourceWidth : 0
     readonly property int sourceHeight: stream ? stream.sourceHeight : 0
     readonly property string statusText: stream ? stream.statusText : ""
-
-    readonly property var selectableDescriptors: {
-        var out = [{ uuid: "", label: qsTr("Not selected") }]
-        for (var i = 0; i < liveDescriptors.length; ++i)
-            out.push(liveDescriptors[i])
-        return out
-    }
-
-    readonly property var selectorLabels: {
-        var out = []
-        for (var i = 0; i < selectableDescriptors.length; ++i)
-            out.push(String(selectableDescriptors[i].label))
-        return out
-    }
-
-    readonly property int selectorIndex: {
-        for (var i = 0; i < selectableDescriptors.length; ++i) {
-            if (String(selectableDescriptors[i].uuid) === root.sourceUuid)
-                return i
-        }
-        return 0
-    }
 
     property string boundUuid: ""
 
@@ -163,52 +141,21 @@ Item {
         anchors.margins: Tokens.spaceSm
         spacing: Tokens.spaceXs
         visible: root.contentId.length > 0
-        opacity: (overlayHover.hovered || sourceCombo.popup.visible)
-                 ? 1.0
-                 : root.chromeIdleOpacity
+        opacity: overlayHover.hovered ? 1.0 : root.chromeIdleOpacity
         Behavior on opacity { NumberAnimation { duration: Anim.fadeMs } }
 
         HoverHandler { id: overlayHover }
 
         KCircleIconButton {
-            width: Tokens.controlHMd
-            height: Tokens.controlHMd
+            width: root.controlButtonSize
+            height: root.controlButtonSize
             iconSource: "qrc:/icons/ui/settings.svg"
             iconTintColor: AppPalette.text
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            borderWidth: 0
             toolTipText: qsTr("Video window settings")
             onClicked: if (root.store) root.store.openVideoPaneSettings(root.contentId)
-        }
-
-        Item {
-            id: sourceSelector
-
-            readonly property int available: root.width - Tokens.spaceSm * 2
-                                             - Tokens.controlHMd - Tokens.spaceXs
-            width: Math.max(0, Math.min(available, sourceCombo.contentWidth))
-            height: Tokens.controlHMd
-            visible: root.liveDescriptors.length > 0
-
-            KCombo {
-                id: sourceCombo
-                anchors.fill: parent
-                fontPixelSize: Tokens.fontSm
-                bold: false
-                focusHighlight: false
-                toolTipText: qsTr("Video source for this pane")
-                model: root.selectorLabels
-                onActivated: function(index) {
-                    if (!root.store || index < 0 || index >= root.selectableDescriptors.length)
-                        return
-                    var picked = root.selectableDescriptors[index]
-                    root.store.setVideoSourceForContent(root.contentId, String(picked.uuid))
-                }
-            }
-
-            Binding {
-                target: sourceCombo
-                property: "currentIndex"
-                value: root.selectorIndex
-            }
         }
     }
 

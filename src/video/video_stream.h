@@ -41,6 +41,7 @@ public:
 
     Q_INVOKABLE void start(const QString& url);
     Q_INVOKABLE void stop();
+    void stopWithFailure();
     Q_INVOKABLE void addSink(QObject* sink);
     Q_INVOKABLE void removeSink(QObject* sink);
 
@@ -61,6 +62,7 @@ private slots:
 private:
     void openStream();
     void closeStream();
+    void doStop(const QString& finalStatus);
     void setStatusText(const QString& text);
     void deliverFrame(const QVideoFrame& frame);
     void clearSinks();

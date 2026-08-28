@@ -235,6 +235,16 @@ void VideoStream::start(const QString& url)
 
 void VideoStream::stop()
 {
+    doStop(QString());
+}
+
+void VideoStream::stopWithFailure()
+{
+    doStop(tr("Connection failed"));
+}
+
+void VideoStream::doStop(const QString& finalStatus)
+{
     const bool wasActive = isActive();
     const bool hadUrl = !url_.isEmpty();
 
@@ -248,7 +258,7 @@ void VideoStream::stop()
     if (wasActive) {
         emit activeChanged();
     }
-    setStatusText(QString());
+    setStatusText(finalStatus);
 }
 
 void VideoStream::openStream()
@@ -633,7 +643,7 @@ void VideoStream::handlePipelineError(const QString& text)
         return;
     }
     if (retryCount_ >= kMaxRetries) {
-        setStatusText(QString());
+        setStatusText(tr("Connection failed"));
         emit retriesExhausted();
         return;
     }
