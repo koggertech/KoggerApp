@@ -132,8 +132,9 @@ void Link::openAsRtsp()
         return;
     }
 
-    rtspRequested_.store(true);
-    emit connectionStatusChanged(uuid_);
+    if (!rtspRequested_.exchange(true)) {
+        emit connectionStatusChanged(uuid_);
+    }
 }
 
 void Link::createAsTcp(const QString &address, int sourcePort, int destinationPort)

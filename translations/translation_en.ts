@@ -3118,6 +3118,16 @@
 <context>
     <name>LinkManager</name>
     <message>
+        <location filename="../src/link/link_manager.cpp" line="662"/>
+        <source>Connected: %1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/link/link_manager.cpp" line="665"/>
+        <source>Disconnected: %1</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../src/link/link_manager.cpp" line="685"/>
         <source>Link not available</source>
         <translation></translation>

@@ -3927,6 +3927,16 @@
 <context>
     <name>LinkManager</name>
     <message>
+        <location filename="../src/link/link_manager.cpp" line="662"/>
+        <source>Connected: %1</source>
+        <translation>Подключено: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/link/link_manager.cpp" line="665"/>
+        <source>Disconnected: %1</source>
+        <translation>Отключено: %1</translation>
+    </message>
+    <message>
         <location filename="../src/link/link_manager.cpp" line="685"/>
         <source>Link not available</source>
         <translation>Линк недоступен</translation>

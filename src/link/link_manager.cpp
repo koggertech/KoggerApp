@@ -22,6 +22,12 @@ QString linkNotAvailableTag(const QUuid& uuid)
     return QStringLiteral("link-not-available:") + uuid.toString();
 }
 
+QString rtspLinkName(const Link* link)
+{
+    const QString address = link ? link->getAddress().trimmed() : QString();
+    return address.isEmpty() ? QStringLiteral("RTSP") : QStringLiteral("RTSP(%1)").arg(address);
+}
+
 bool xmlBoolValue(const QString& value)
 {
     const QString normalized = value.trimmed().toUpper();
@@ -652,6 +658,16 @@ void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
+
+        if (linkPtr->getLinkType() == LinkType::kLinkRtsp) {
+            const QString name = rtspLinkName(linkPtr);
+            if (linkPtr->getConnectionStatus()) {
+                notifications.info(tr("Connected: %1").arg(name));
+            }
+            else {
+                notifications.info(tr("Disconnected: %1").arg(name));
+            }
+        }
 
         if (shouldPersist(linkPtr) && linkPtr->getConnectionStatus()) {
             exportPinnedLinksToXML();
