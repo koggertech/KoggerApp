@@ -23,20 +23,7 @@ Item {
     property int active3DLeafId: -1
     onActive3DLeafIdChanged: if (store) store.active3DLeafId = active3DLeafId
     property var active3DPane: null   // current Pane3DWindow, for ESC routing
-    property Item activeVideoHostItem: null
-    property int activeVideoLeafId: -1
     readonly property alias scene3dViewItem: scene3dView
-    readonly property int videoSourceWidth: videoLayer.sourceWidth
-    readonly property int videoSourceHeight: videoLayer.sourceHeight
-    readonly property bool videoHasFrame: videoLayer.hasFrame
-    onVideoSourceWidthChanged: if (store) store.videoSourceWidth = videoSourceWidth
-    onVideoSourceHeightChanged: if (store) store.videoSourceHeight = videoSourceHeight
-    onVideoHasFrameChanged: {
-        if (videoHasFrame)
-            videoLog("first frame " + videoSourceWidth + "x" + videoSourceHeight)
-        else
-            videoLog("no frame")
-    }
 
     property var primaryPlotItem: null
     property var secondaryPlotItem: null
@@ -128,11 +115,6 @@ Item {
 
     InputDeviceState {
         id: inputStateObject
-    }
-
-    function videoLog(msg) {
-        if (typeof core !== "undefined" && core)
-            core.consoleInfo("VIDEO: " + msg)
     }
 
     function normalizedPaneMode(value) {
@@ -486,10 +468,6 @@ Item {
                 active3DLeafId = -1
                 active3DHostItem = null
             }
-            if (activeVideoLeafId === leafId) {
-                activeVideoLeafId = -1
-                activeVideoHostItem = null
-            }
             return
         }
 
@@ -502,15 +480,6 @@ Item {
             active3DLeafId = -1
             if (active3DHostItem === topEntry.hostItem)
                 active3DHostItem = null
-        }
-
-        if (mode === "Video") {
-            activeVideoLeafId = leafId
-            activeVideoHostItem = topEntry.hostItem
-        } else if (activeVideoLeafId === leafId) {
-            activeVideoLeafId = -1
-            if (activeVideoHostItem === topEntry.hostItem)
-                activeVideoHostItem = null
         }
     }
 
@@ -580,10 +549,23 @@ Item {
         anchors.fill: parent
         z: -10
 
-        VideoLayer {
-            id: videoLayer
-            anchors.fill: parent
-            workspaceItem: workspace
+        Connections {
+            target: typeof videoStreams !== "undefined" ? videoStreams : null
+            ignoreUnknownSignals: true
+
+            function onStreamsChanged() {
+                if (workspace.store)
+                    workspace.store.autoAssignVideoSources()
+            }
+        }
+
+        Connections {
+            target: workspace.store
+            ignoreUnknownSignals: true
+
+            function onLeafRectsChanged() {
+                workspace.store.autoAssignVideoSources()
+            }
         }
 
         GraphicsScene3dView {

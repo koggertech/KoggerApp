@@ -33,7 +33,7 @@ bool shouldPersist(const Link* link)
     if (!link || link->getIsHided())
         return false;
     const LinkType t = link->getLinkType();
-    if (t == LinkType::kLinkIPUDP || t == LinkType::kLinkIPTCP)
+    if (t == LinkType::kLinkIPUDP || t == LinkType::kLinkIPTCP || t == LinkType::kLinkRtsp)
         return true;
     return link->getIsPinned();
 }
@@ -266,6 +266,7 @@ void LinkManager::openAutoConnections()
                     case LinkType::kLinkSerial: { link->openAsSerial(); break; }
                     case LinkType::kLinkIPUDP:  { link->openAsUdp(); break; }
                     case LinkType::kLinkIPTCP:  { link->openAsTcp(); break; }
+                    case LinkType::kLinkRtsp:   { link->openAsRtsp(); break; }
                     default:                   { break; }
                 }
 
@@ -999,6 +1000,33 @@ void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPo
     doEmitAppendModifyModel(newLinkPtr);
     exportPinnedLinksToXML();
     emit linkCreatedInteractively(newLinkPtr->getUuid());
+}
+
+void LinkManager::createAsRtsp(QString address)
+{
+    const TimerController timerGuard(timer_.get());
+
+    Link* newLinkPtr = createNewLink();
+    newLinkPtr->createAsRtsp(address);
+    list_.append(newLinkPtr);
+
+    doEmitAppendModifyModel(newLinkPtr);
+    exportPinnedLinksToXML();
+    emit linkCreatedInteractively(newLinkPtr->getUuid());
+}
+
+void LinkManager::openAsRtsp(QUuid uuid, QString address)
+{
+    const TimerController timerGuard(timer_.get());
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setIsForceStopped(false);
+        linkPtr->setAddress(address);
+        linkPtr->openAsRtsp();
+
+        doEmitAppendModifyModel(linkPtr);
+        exportPinnedLinksToXML();
+    }
 }
 
 void LinkManager::openFLinks()

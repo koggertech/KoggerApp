@@ -39,7 +39,7 @@
 #include "language_controller.h"
 #include "app_utils.h"
 #include "settings_migration.h"
-#include "video_stream.h"
+#include "video_stream_pool.h"
 
 
 // NOLINTBEGIN(bugprone-throwing-static-initialization): application-lifetime singletons; a throw here is a fatal startup failure with nothing to catch
@@ -49,7 +49,7 @@ Themes theme;
 UIStateSerializer uiStateSerializer;
 EchogramStateSerializer echogramStateSerializer;
 Notifications notifications;
-VideoStream videoStream;
+VideoStreamPool videoStreams;
 QTranslator translator;
 QVector<QString> availableLanguages{"en", "ru", "pl"};
 // NOLINTEND(bugprone-throwing-static-initialization)
@@ -392,7 +392,8 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceTopology", core.getDeviceTopologyModelPtr());
-    engine.rootContext()->setContextProperty("videoStream", &videoStream);
+    videoStreams.setSourceModel(core.getLinkManagerWrapperPtr()->getModelPtr());
+    engine.rootContext()->setContextProperty("videoStreams", &videoStreams);
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
     engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
     engine.rootContext()->setContextProperty("echogramStateSerializer", &echogramStateSerializer);

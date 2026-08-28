@@ -19,7 +19,9 @@ BasePanePopup {
     readonly property var paneData: ({
         title: qsTr("Global pop-up"),
         color: AppPalette.bg,
-        mode: store.globalPopupMode === "3D" ? "3D" : "2D"
+        mode: store.globalPopupMode === "3D" ? "3D"
+            : store.globalPopupMode === "Video" ? "Video"
+                                                : "2D"
     })
 
     function syncFromStore() {
@@ -120,6 +122,7 @@ BasePanePopup {
         leafId: root.store.globalPopupLeafId
         rotateEnabled: false
         workspaceRoot: root.workspaceRoot
+        videoContentIdOverride: root.store.globalPopupVideoContentId
     }
 
     Rectangle {
@@ -140,24 +143,44 @@ BasePanePopup {
             }
 
             Row {
+                id: popupTypeRow
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 10
+                spacing: Math.round(10 * AppPalette.scale)
+
+                readonly property int cellWidth: Math.max(Math.round(96 * AppPalette.scale),
+                                                          popup2DButton.implicitWidth,
+                                                          popup3DButton.implicitWidth,
+                                                          popupVideoButton.implicitWidth)
+                readonly property int cellHeight: Math.max(Math.round(46 * AppPalette.scale),
+                                                           popup2DButton.implicitHeight,
+                                                           popup3DButton.implicitHeight,
+                                                           popupVideoButton.implicitHeight)
 
                 KButton {
+                    id: popup2DButton
                     text: qsTr("2D")
-                    width: 76
-                    height: 40
+                    width: popupTypeRow.cellWidth
+                    height: popupTypeRow.cellHeight
                     onClicked: root.store.setGlobalPopupMode("2D")
                 }
 
                 KButton {
+                    id: popup3DButton
                     readonly property bool canChoose3D: root.store.globalPopupCanChoose3D()
                     text: qsTr("3D")
-                    width: 76
-                    height: 40
+                    width: popupTypeRow.cellWidth
+                    height: popupTypeRow.cellHeight
                     enabled: canChoose3D
                     opacity: enabled ? 1.0 : 0.45
                     onClicked: root.store.setGlobalPopupMode("3D")
+                }
+
+                KButton {
+                    id: popupVideoButton
+                    text: qsTr("Video")
+                    width: popupTypeRow.cellWidth
+                    height: popupTypeRow.cellHeight
+                    onClicked: root.store.setGlobalPopupMode("Video")
                 }
             }
 

@@ -29,7 +29,7 @@ struct VideoStreamBackend
     std::atomic<bool> stopRequested{false};
     std::atomic<bool> running{false};
 
-    std::atomic<QVideoSink*> sink{nullptr};
+    std::atomic<int> sinkCount{0};
 
     std::shared_ptr<std::atomic<int>> framesInFlight{std::make_shared<std::atomic<int>>(0)};
     std::shared_ptr<std::atomic<quint64>> epoch{std::make_shared<std::atomic<quint64>>(0)};
@@ -153,27 +153,58 @@ bool VideoStream::isActive() const
     return backend_->running.load();
 }
 
-QObject* VideoStream::videoSink() const
-{
-    return videoSink_;
-}
-
-void VideoStream::setVideoSink(QObject* sink)
+void VideoStream::addSink(QObject* sink)
 {
     QVideoSink* next = qobject_cast<QVideoSink*>(sink);
-    if (videoSink_ == next) {
+    if (!next || videoSinks_.contains(next)) {
         return;
     }
-    videoSink_ = next;
-    backend_->sink.store(next);
-    if (next) {
-        VideoStreamBackend* backend = backend_;
-        connect(next, &QObject::destroyed, this, [backend, next]() {
-            QVideoSink* expected = next;
-            backend->sink.compare_exchange_strong(expected, nullptr);
-        });
+
+    videoSinks_.append(next);
+    connect(next, &QObject::destroyed, this, [this]() { syncSinkCount(); });
+    syncSinkCount();
+}
+
+void VideoStream::removeSink(QObject* sink)
+{
+    QVideoSink* target = qobject_cast<QVideoSink*>(sink);
+    if (!target) {
+        return;
     }
-    emit videoSinkChanged();
+
+    if (videoSinks_.removeAll(QPointer<QVideoSink>(target)) > 0) {
+        target->disconnect(this);
+        target->setVideoFrame(QVideoFrame());
+    }
+    syncSinkCount();
+}
+
+void VideoStream::syncSinkCount()
+{
+    videoSinks_.removeIf([](const QPointer<QVideoSink>& sink) { return sink.isNull(); });
+
+    const int count = videoSinks_.size();
+    if (backend_->sinkCount.exchange(count) != count) {
+        emit sinkCountChanged();
+    }
+}
+
+void VideoStream::deliverFrame(const QVideoFrame& frame)
+{
+    for (const QPointer<QVideoSink>& sink : videoSinks_) {
+        if (!sink.isNull()) {
+            sink->setVideoFrame(frame);
+        }
+    }
+}
+
+void VideoStream::clearSinks()
+{
+    for (const QPointer<QVideoSink>& sink : videoSinks_) {
+        if (!sink.isNull()) {
+            sink->setVideoFrame(QVideoFrame());
+        }
+    }
 }
 
 void VideoStream::setStatusText(const QString& text)
@@ -509,8 +540,8 @@ void VideoStream::openStream()
                     post([this, w, h]() { applySourceSize(w, h); });
                 }
 
-                QVideoSink* sink = backend_->sink.load();
-                if (!sink || backend_->framesInFlight->load() >= kMaxFramesInFlight) {
+                if (backend_->sinkCount.load() == 0
+                        || backend_->framesInFlight->load() >= kMaxFramesInFlight) {
                     continue;
                 }
 
@@ -523,9 +554,9 @@ void VideoStream::openStream()
 
                 backend_->framesInFlight->fetch_add(1);
                 auto inFlight = backend_->framesInFlight;
-                QMetaObject::invokeMethod(sink, [sink, videoFrame, inFlight, epoch, generation]() {
+                QMetaObject::invokeMethod(this, [this, videoFrame, inFlight, epoch, generation]() {
                     if (epoch->load() == generation) {
-                        sink->setVideoFrame(videoFrame);
+                        deliverFrame(videoFrame);
                     }
                     inFlight->fetch_sub(1);
                 }, Qt::QueuedConnection);
@@ -563,9 +594,7 @@ void VideoStream::closeStream()
     backend_->running.store(false);
     backend_->stopRequested.store(false);
 
-    if (!videoSink_.isNull()) {
-        videoSink_->setVideoFrame(QVideoFrame());
-    }
+    clearSinks();
 
     if (sourceWidth_ != 0 || sourceHeight_ != 0) {
         sourceWidth_ = 0;

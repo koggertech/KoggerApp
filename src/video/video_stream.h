@@ -1,8 +1,11 @@
 #pragma once
 
+#include <QList>
 #include <QObject>
 #include <QPointer>
 #include <QString>
+
+class QVideoFrame;
 
 class QVideoSink;
 
@@ -18,7 +21,7 @@ class VideoStream : public QObject
     Q_PROPERTY(int sourceWidth READ sourceWidth NOTIFY sourceSizeChanged)
     Q_PROPERTY(int sourceHeight READ sourceHeight NOTIFY sourceSizeChanged)
     Q_PROPERTY(QString statusText READ statusText NOTIFY statusTextChanged)
-    Q_PROPERTY(QObject* videoSink READ videoSink WRITE setVideoSink NOTIFY videoSinkChanged)
+    Q_PROPERTY(int sinkCount READ sinkCount NOTIFY sinkCountChanged)
     Q_PROPERTY(bool backendAvailable READ backendAvailable CONSTANT)
     Q_PROPERTY(QString backendName READ backendName CONSTANT)
 
@@ -32,13 +35,14 @@ public:
     int sourceWidth() const { return sourceWidth_; }
     int sourceHeight() const { return sourceHeight_; }
     QString statusText() const { return statusText_; }
-    QObject* videoSink() const;
-    void setVideoSink(QObject* sink);
+    int sinkCount() const { return videoSinks_.size(); }
     bool backendAvailable() const;
     QString backendName() const;
 
     Q_INVOKABLE void start(const QString& url);
     Q_INVOKABLE void stop();
+    Q_INVOKABLE void addSink(QObject* sink);
+    Q_INVOKABLE void removeSink(QObject* sink);
 
 signals:
     void urlChanged();
@@ -46,7 +50,7 @@ signals:
     void hasFrameChanged();
     void sourceSizeChanged();
     void statusTextChanged();
-    void videoSinkChanged();
+    void sinkCountChanged();
     void retriesExhausted();
 
 private slots:
@@ -58,10 +62,13 @@ private:
     void openStream();
     void closeStream();
     void setStatusText(const QString& text);
+    void deliverFrame(const QVideoFrame& frame);
+    void clearSinks();
+    void syncSinkCount();
 
     VideoStreamBackend* backend_ = nullptr;
 
-    QPointer<QVideoSink> videoSink_;
+    QList<QPointer<QVideoSink>> videoSinks_;
     QString url_;
     QString statusText_;
     int sourceWidth_ = 0;

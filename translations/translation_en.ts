@@ -52,6 +52,21 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1889"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1890"/>
+        <source>Per-window video settings.</source>
+        <translation>Per-window video settings.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1908"/>
+        <source>No video windows displayed</source>
+        <translation>No video windows displayed</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="657"/>
         <source>Layout %1</source>
         <translation>Layout %1</translation>
@@ -1026,6 +1041,11 @@
 </context>
 <context>
     <name>ConnectionViewer</name>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="768"/>
+        <source>+RTSP</source>
+        <translation>+RTSP</translation>
+    </message>
     <message>
         <source>Choose recording folder</source>
         <translation>Choose recording folder</translation>
@@ -2436,6 +2456,11 @@
 <context>
     <name>GlobalPanePopup</name>
     <message>
+        <location filename="../qml/app/GlobalPanePopup.qml" line="167"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
         <location filename="../qml/app/GlobalPanePopup.qml" line="20"/>
         <source>Global pop-up</source>
         <translation></translation>
@@ -3303,6 +3328,11 @@
 <context>
     <name>PaneEditorChrome</name>
     <message>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="287"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
         <location filename="../qml/app/PaneEditorChrome.qml" line="388"/>
         <source>Pane %1</source>
         <translation></translation>
@@ -3377,6 +3407,29 @@
         <location filename="../src/scene3d/domain/plane_grid.cpp" line="511"/>
         <source> m</source>
         <translation></translation>
+    </message>
+</context>
+<context>
+    <name>VideoSurface</name>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="181"/>
+        <source>Video window settings</source>
+        <translation>Video window settings</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="50"/>
+        <source>Not selected</source>
+        <translation>Not selected</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="136"/>
+        <source>No video source</source>
+        <translation>No video source</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="167"/>
+        <source>Video source for this pane</source>
+        <translation>Video source for this pane</translation>
     </message>
 </context>
 <context>
@@ -4094,6 +4147,21 @@
 <context>
     <name>SecondaryWindow</name>
     <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="103"/>
+        <source>Choose pane type</source>
+        <translation>Choose pane type</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="131"/>
+        <source>2D</source>
+        <translation>2D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="132"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
         <location filename="../qml/app/SecondaryWindow.qml" line="57"/>
         <source>Second window</source>
         <translation>Second window</translation>
@@ -4334,7 +4402,113 @@
     </message>
 </context>
 <context>
+    <name>VideoStream</name>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="232"/>
+        <source>Connecting...</source>
+        <translation>Connecting...</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="277"/>
+        <source>out of memory</source>
+        <translation>out of memory</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="317"/>
+        <source>no video stream</source>
+        <translation>no video stream</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="346"/>
+        <source>no decoder for this stream</source>
+        <translation>no decoder for this stream</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="580"/>
+        <source>Stream ended</source>
+        <translation>Stream ended</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="649"/>
+        <source>Reconnecting (%1/%2)...</source>
+        <translation>Reconnecting (%1/%2)...</translation>
+    </message>
+</context>
+<context>
+    <name>VideoPaneSettingsTab</name>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="35"/>
+        <source>Image:</source>
+        <translation>Image:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="45"/>
+        <source>Fit</source>
+        <translation>Fit</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="46"/>
+        <source>Crop</source>
+        <translation>Crop</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="47"/>
+        <source>Stretch</source>
+        <translation>Stretch</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="58"/>
+        <source>Show resolution</source>
+        <translation>Show resolution</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="64"/>
+        <source>Stream:</source>
+        <translation>Stream:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="99"/>
+        <source>Source</source>
+        <translation>Source</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="100"/>
+        <source>Not selected</source>
+        <translation>Not selected</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="104"/>
+        <source>Resolution</source>
+        <translation>Resolution</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="111"/>
+        <source>State</source>
+        <translation>State</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="117"/>
+        <source>Streaming</source>
+        <translation>Streaming</translation>
+    </message>
+</context>
+<context>
     <name>WorkspaceStore</name>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="956"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="961"/>
+        <source>Global pop-up</source>
+        <translation>Global pop-up</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="965"/>
+        <source>Second window</source>
+        <translation>Second window</translation>
+    </message>
     <message>
         <location filename="../qml/app/WorkspaceStore.qml" line="866"/>
         <source>Echogram</source>

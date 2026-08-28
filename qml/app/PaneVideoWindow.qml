@@ -12,91 +12,39 @@ Item {
         mode: "Video"
     })
     property bool rotateEnabled: false
+    property string videoContentIdOverride: ""
     property int lastRegisteredLeafId: -1
 
     readonly property var store: workspaceRoot ? workspaceRoot.store : null
-    readonly property string activeUrl: store ? store.videoActiveUrl : ""
-    readonly property string statusText: store ? store.videoStatusText : ""
-    readonly property bool hasFrame: workspaceRoot ? workspaceRoot.videoHasFrame : false
-    readonly property int sourceWidth: workspaceRoot ? workspaceRoot.videoSourceWidth : 0
-    readonly property int sourceHeight: workspaceRoot ? workspaceRoot.videoSourceHeight : 0
+    readonly property string contentId: videoContentIdOverride.length
+                                        ? videoContentIdOverride
+                                        : (paneData && paneData.contentId ? String(paneData.contentId) : "")
 
-    Rectangle {
+    PaneInputBridge {
         anchors.fill: parent
-        color: root.hasFrame ? "black" : AppPalette.headerBg
+        z: -1
+        workspaceRoot: root.workspaceRoot
+        leafId: root.leafId
+        paneKind: "Video"
+        focusOnPointer: !videoSurfaceItem.selectorOpen
+        active: root.workspaceRoot !== null
+                && root.leafId >= 0
+                && (!root.workspaceRoot.store
+                    || (!root.workspaceRoot.store.editableMode
+                        && root.workspaceRoot.store.modePickerLeafId === -1))
     }
 
-    Item {
-        id: placeholder
+    VideoSurface {
+        id: videoSurfaceItem
         anchors.fill: parent
-        visible: !root.hasFrame
-
-        Column {
-            anchors.centerIn: parent
-            spacing: Math.round(12 * AppPalette.scale)
-
-            Image {
-                id: logo
-                anchors.horizontalCenter: parent.horizontalCenter
-                source: "qrc:/icons/app/kogger_app.png"
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-                mipmap: true
-                opacity: 0.75
-
-                readonly property int _side: Math.round(Math.min(root.width, root.height) * 0.32)
-                width: Math.max(Math.round(48 * AppPalette.scale),
-                                Math.min(_side, Math.round(220 * AppPalette.scale)))
-                height: width
-            }
-
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: Math.min(implicitWidth, root.width - Tokens.spaceLg * 2)
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideMiddle
-                text: root.activeUrl.length === 0 ? qsTr("No video source") : root.statusText
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontBase
-                visible: root.height > Math.round(120 * AppPalette.scale)
-            }
-        }
+        store: root.store
+        contentId: root.contentId
     }
 
     Item {
         id: hostSurface
         anchors.fill: parent
         clip: true
-    }
-
-    Rectangle {
-        id: resolutionBadge
-        anchors.left: parent.left
-        anchors.bottom: parent.bottom
-        anchors.margins: Tokens.spaceSm
-        visible: root.hasFrame && root.width > Math.round(180 * AppPalette.scale)
-        radius: Tokens.radiusSm
-        color: "#00000080"
-        width: resolutionText.implicitWidth + Tokens.spaceMd * 2
-        height: resolutionText.implicitHeight + Tokens.spaceXs * 2
-
-        Text {
-            id: resolutionText
-            anchors.centerIn: parent
-            text: root.sourceWidth + "×" + root.sourceHeight
-            color: "#FFFFFF"
-            font.pixelSize: Tokens.fontSm
-        }
-    }
-
-    KButton {
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: Tokens.spaceSm
-        visible: root.activeUrl.length > 0
-        height: Tokens.controlHMd
-        text: qsTr("Stop")
-        onClicked: if (root.store) root.store.stopVideo()
     }
 
     function hostMode() {

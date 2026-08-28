@@ -2,7 +2,8 @@
 # Rationale, provenance and the header trap are documented in docs/, not here.
 
 target_sources(KoggerApp PRIVATE
-    video_stream.h            video_stream.cpp)
+    video_stream.h            video_stream.cpp
+    video_stream_pool.h       video_stream_pool.cpp)
 
 target_include_directories(KoggerApp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

@@ -1111,6 +1111,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "console"      ? qsTr("Console")
                      : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
                      : workspaceStore.settingsSubPageKind === "devices"      ? qsTr("Devices")
+                     : workspaceStore.settingsSubPageKind === "videoPane"    ? workspaceStore.videoSettingsTitle
                      : qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
@@ -1138,6 +1139,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "console"    ? consoleSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
                      : workspaceStore.settingsSubPageKind === "devices"      ? deviceSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "videoPane"     ? videoPaneSettingsTabComponent
                      : echogramSettingsTabComponent
             subPageOpen: workspaceStore.anySettingsSubPageActive
 
@@ -1386,6 +1388,14 @@ ApplicationWindow {
             id: aimPanelSettingsTabComponent
 
             AimPanelSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: videoPaneSettingsTabComponent
+
+            VideoPaneSettingsTab {
                 store: workspaceStore
             }
         }

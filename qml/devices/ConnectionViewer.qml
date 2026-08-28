@@ -313,7 +313,18 @@ Column {
             }
 
             readonly property bool isConnected: ConnectionStatus
-            readonly property bool receivesData: ReceivesData
+            readonly property bool receivesData: {
+                if (LinkType !== 4)
+                    return ReceivesData === true
+                if (typeof videoStreams === "undefined" || !videoStreams)
+                    return false
+                var all = videoStreams.streams || []
+                for (var i = 0; i < all.length; ++i) {
+                    if (String(all[i].uuid) === String(Uuid))
+                        return all[i].hasFrame === true
+                }
+                return false
+            }
             readonly property bool notAvailable: IsNotAvailable
             readonly property bool editing: linkList.expandedUuid === String(Uuid)
             readonly property bool isRemembered: !!(connectionViewer.store
@@ -321,7 +332,10 @@ Column {
                                                     && connectionViewer.store.rememberedLinks.indexOf(String(Uuid)) !== -1)
             readonly property int rowIndex: index
             readonly property int vPad: Tokens.spaceXs   // fixed — no inward shift on expand (matches recRow)
-            readonly property string typeLabel: LinkType === 1 ? PortName : (LinkType === 2 ? "UDP" : "TCP")
+            readonly property string typeLabel: LinkType === 1 ? PortName
+                                             : LinkType === 2 ? "UDP"
+                                             : LinkType === 4 ? "RTSP"
+                                                              : "TCP"
 
             height: content.implicitHeight + 2 * vPad
 
@@ -423,6 +437,8 @@ Column {
                                 if (LinkType === 1)
                                     return '<font color="' + muted + '">' + esc(Baudrate) + '</font>'
                                 var a = esc((Address && Address.length) ? Address : "—")
+                                if (LinkType === 4)
+                                    return a
                                 if (LinkType === 2)
                                     return a + '  <font color="' + muted + '">·  ' + esc(SourcePort) + ' → ' + esc(DestinationPort) + '</font>'
                                 return a + '  <font color="' + muted + '">·  ' + esc(DestinationPort) + '</font>'
@@ -456,7 +472,7 @@ Column {
                             onClicked: if (connectionViewer.store) connectionViewer.store.removeRememberedLink(Uuid)
                         }
                         IconBtn {
-                            visible: connRow.editing && (LinkType === 2 || LinkType === 3)
+                            visible: connRow.editing && (LinkType === 2 || LinkType === 3 || LinkType === 4)
                             iconSource: "qrc:/icons/ui/x.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Delete")
                             Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onClicked: linkManagerWrapper.deleteLink(Uuid)
@@ -487,6 +503,7 @@ Column {
                                     case 1: core.closeLogFile(); linkManagerWrapper.openAsSerial(Uuid); break
                                     case 2: core.closeLogFile(); linkManagerWrapper.openAsUdp(Uuid, Address, Number(SourcePort), Number(DestinationPort)); break
                                     case 3: core.closeLogFile(); linkManagerWrapper.openAsTcp(Uuid, Address, 0, Number(DestinationPort)); break
+                                    case 4: linkManagerWrapper.openAsRtsp(Uuid, Address); break
                                     }
                                 }
                             }
@@ -552,6 +569,38 @@ Column {
                                             ipField._prevLen = text.length
                                             linkManagerWrapper.sendUpdateAddress(Uuid, text)
                                         }
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                visible: LinkType === 4
+                                Layout.fillWidth: true
+                                spacing: Tokens.spaceXs
+                                Text {
+                                    text: "rtsp://"
+                                    color: AppPalette.text
+                                    font.pixelSize: Tokens.fontBase
+                                    horizontalAlignment: Text.AlignRight
+                                }
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    radius: Tokens.radiusMd; color: AppPalette.bg
+                                    border.width: rtspField.activeFocus ? 1 : Tokens.cardBorderWidth
+                                    border.color: rtspField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                    TextInput {
+                                        id: rtspField
+                                        activeFocusOnTab: true
+                                        anchors.fill: parent
+                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
+                                        inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
+                                        text: Address
+                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: rtspField.selectAll() }
+                                        onEditingFinished: linkManagerWrapper.sendUpdateAddress(Uuid, text)
                                     }
                                 }
                             }
@@ -712,6 +761,12 @@ Column {
             width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontBase; horizontalPadding: Math.round(8 * AppPalette.scale)
             text: qsTr("+TCP")
             onClicked: linkManagerWrapper.createAsTcp("", 0, 0)
+        }
+
+        KButton {
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontBase; horizontalPadding: Math.round(8 * AppPalette.scale)
+            text: qsTr("+RTSP")
+            onClicked: linkManagerWrapper.createAsRtsp("")
         }
 
         KButton {

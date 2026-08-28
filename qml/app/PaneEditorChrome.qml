@@ -261,36 +261,45 @@ Item {
             }
 
             Row {
+                id: paneTypeRow
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: Math.round(10 * AppPalette.scale)
 
+                readonly property int cellWidth: Math.max(Math.round(96 * AppPalette.scale),
+                                                          type2DButton.implicitWidth,
+                                                          type3DButton.implicitWidth,
+                                                          typeVideoButton.implicitWidth)
+                readonly property int cellHeight: Math.max(Math.round(46 * AppPalette.scale),
+                                                           type2DButton.implicitHeight,
+                                                           type3DButton.implicitHeight,
+                                                           typeVideoButton.implicitHeight)
+
                 KButton {
+                    id: type2DButton
                     text: qsTr("2D")
-                    width: Math.max(Math.round(76 * AppPalette.scale), implicitWidth)
-                    height: Math.max(Math.round(40 * AppPalette.scale), implicitHeight)
+                    width: paneTypeRow.cellWidth
+                    height: paneTypeRow.cellHeight
                     onClicked: paneFrame.store.applyPaneModeSelection(paneFrame.leafId, "2D")
                 }
 
                 KButton {
+                    id: type3DButton
                     readonly property int existing3DLeaf: paneFrame.store.firstLeafIdByMode(paneFrame.store.layoutTree, "3D")
                     readonly property bool canChoose3D: (existing3DLeaf === -1 || existing3DLeaf === paneFrame.leafId)
                                                          && paneFrame.store.globalPopupMode !== "3D"
                     text: qsTr("3D")
-                    width: Math.max(Math.round(76 * AppPalette.scale), implicitWidth)
-                    height: Math.max(Math.round(40 * AppPalette.scale), implicitHeight)
+                    width: paneTypeRow.cellWidth
+                    height: paneTypeRow.cellHeight
                     enabled: canChoose3D
                     opacity: enabled ? 1.0 : 0.45
                     onClicked: paneFrame.store.applyPaneModeSelection(paneFrame.leafId, "3D")
                 }
 
                 KButton {
-                    readonly property int existingVideoLeaf: paneFrame.store.firstLeafIdByMode(paneFrame.store.layoutTree, "Video")
-                    readonly property bool canChooseVideo: existingVideoLeaf === -1 || existingVideoLeaf === paneFrame.leafId
+                    id: typeVideoButton
                     text: qsTr("Video")
-                    width: Math.max(Math.round(76 * AppPalette.scale), implicitWidth)
-                    height: Math.max(Math.round(40 * AppPalette.scale), implicitHeight)
-                    enabled: canChooseVideo
-                    opacity: enabled ? 1.0 : 0.45
+                    width: paneTypeRow.cellWidth
+                    height: paneTypeRow.cellHeight
                     onClicked: paneFrame.store.applyPaneModeSelection(paneFrame.leafId, "Video")
                 }
             }
@@ -305,14 +314,6 @@ Item {
                 font.pixelSize: Math.round(12 * AppPalette.scale)
             }
 
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: paneFrame.store.firstLeafIdByMode(paneFrame.store.layoutTree, "Video") !== -1
-                         && paneFrame.store.firstLeafIdByMode(paneFrame.store.layoutTree, "Video") !== paneFrame.leafId
-                text: qsTr("Video is already used in another pane")
-                color: "#C7D2FE"
-                font.pixelSize: Math.round(12 * AppPalette.scale)
-            }
         }
     }
 

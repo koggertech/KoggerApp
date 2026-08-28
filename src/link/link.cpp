@@ -28,7 +28,8 @@ Link::Link()
       localGhostIgnoreCount_(0),
       requestCnt_(requestAllCntBig),
       autoConnOnce_(false),
-      autoConnUntilMsecs_(0)
+      autoConnUntilMsecs_(0),
+      rtspRequested_(false)
 {
     frame_.resetComplete();
 
@@ -116,6 +117,25 @@ void Link::openAsUdp()
     }
 }
 
+void Link::createAsRtsp(const QString &address)
+{
+    linkType_ = LinkType::kLinkRtsp;
+    address_ = address;
+    sourcePort_ = 0;
+    destinationPort_ = 0;
+    uuid_ = QUuid::createUuid();
+}
+
+void Link::openAsRtsp()
+{
+    if (address_.trimmed().isEmpty()) {
+        return;
+    }
+
+    rtspRequested_.store(true);
+    emit connectionStatusChanged(uuid_);
+}
+
 void Link::createAsTcp(const QString &address, int sourcePort, int destinationPort)
 {
     linkType_ = LinkType::kLinkIPTCP;
@@ -173,6 +193,9 @@ bool Link::isOpen() const
 {
     bool retVal{ false };
 
+    if (linkType_ == LinkType::kLinkRtsp)
+        return rtspRequested_.load();
+
     if (!ioDevice_)
         return retVal;
 
@@ -204,6 +227,13 @@ bool Link::isOpen() const
 
 void Link::close()
 {
+    if (linkType_ == LinkType::kLinkRtsp) {
+        if (rtspRequested_.exchange(false)) {
+            emit connectionStatusChanged(uuid_);
+        }
+        return;
+    }
+
     deleteDev();
 }
 
@@ -246,6 +276,7 @@ void Link::setConnectionStatus(bool connectionStatus)
         case LinkType::kLinkSerial: { openAsSerial(); break; }
         case LinkType::kLinkIPUDP: { openAsUdp(); break; }
         case LinkType::kLinkIPTCP: { openAsTcp(); break; }
+        case LinkType::kLinkRtsp: { openAsRtsp(); break; }
         default: { break; }
         }
     }
@@ -403,6 +434,10 @@ QUuid Link::getUuid() const
 
 bool Link::getConnectionStatus() const
 {
+    if (linkType_ == LinkType::kLinkRtsp) {
+        return rtspRequested_.load();
+    }
+
     if (ioDevice_) {
         if (ioDevice_->isOpen()) {
             return true;
@@ -556,6 +591,10 @@ void Link::onUpgradingFirmwareDone()
 
 void Link::onCheckedTimerEnd()
 {
+    if (linkType_ == LinkType::kLinkRtsp) {
+        return;
+    }
+
     if (!getConnectionStatus()) {
         return;
     }
