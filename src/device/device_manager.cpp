@@ -904,7 +904,18 @@ void DeviceManager::deleteDevicesByLink(QUuid uuid)
             emit streamChanged();
         }
         emit devChanged();
+        emit standAvailableChanged();
     }
+}
+
+bool DeviceManager::standAvailable()
+{
+    const QList<DevQProperty*> devs = getDevList();
+    for (DevQProperty* dev : devs) {
+        if (dev && dev->getStandState())
+            return true;
+    }
+    return false;
 }
 
 DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
@@ -932,6 +943,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::sendTranscSetup, this, &DeviceManager::sendTranscSetup, connType);
     connect(dev, &DevQProperty::sendSoundSpeed, this, &DeviceManager::sendSoundSpeeed, connType);
     connect(dev, &DevQProperty::averageChartLossesChanged, this, &DeviceManager::chartLossesChanged, connType);
+    connect(dev, &DevQProperty::standChanged, this, &DeviceManager::standAvailableChanged, connType);
 
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete, connType);
     connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved, connType);

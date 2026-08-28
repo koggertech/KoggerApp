@@ -59,6 +59,8 @@ qt_add_qml_module(kogger_app
         SplashOverlay.qml
         TgcSettingsTab.qml
         UiSavingSettingsTab.qml
+        StandBadgeRow.qml
+        StandPanelPopup.qml
         UsblAddressBadge.qml
         UsblButton.qml
         UsblCmdMark.qml
@@ -82,6 +84,7 @@ qt_add_qml_module(kogger_app
         WidgetEditPage.qml
         WidgetGridPreview.qml
         WidgetKindStep.qml
+        WidgetStandStep.qml
         WidgetUsblStep.qml
         WidgetPlaceStep.qml
         WidgetSizeStep.qml
@@ -91,5 +94,6 @@ qt_add_qml_module(kogger_app
         LayoutRules.js
         LayoutTree.js
         RecorderStatus.js
+        StandLogic.js
         UsblNodeLogic.js
         UsblPlanLogic.js)

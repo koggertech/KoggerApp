@@ -5,6 +5,7 @@
 #include <QVector>
 #include <QTimer>
 #include <QUuid>
+#include <QVariantMap>
 #include "proto_binnary.h"
 #include "id_binnary.h"
 
@@ -183,6 +184,7 @@ public:
     bool getSoundSpeedState() { return soundSpeedState_; };
     bool getUartState() { return uartState_; };
     bool getServoControlState() { return servoControlState_; };
+    bool getStandState() { return standSupported_; };
     bool getPwmRouteState() { return pwmRouteState_; };
     bool getDevSyncState() { return devSyncState_; };
     int getAverageChartLosses() const { return averageChartLosses_; };
@@ -252,6 +254,7 @@ signals:
     void soundChanged();
     void UARTChanged();
     void servoControlChanged();
+    void standChanged();
     void pwmRouteChanged();
     void servoCurrentAngleChanged();
     void devSyncChanged();
@@ -303,6 +306,15 @@ public slots:
     void setSoundSpeedState(bool state);
     void setUartState(bool state);
     void setServoControlState(bool state);
+
+    // The stand's whole command surface. Start carries the configuration because the device
+    // takes it no other way; the rest are control-only and read nothing from the map.
+    void standStart(const QVariantMap& config);
+    void standStop();
+    void standPause();
+    void standResume();
+    void standHome();
+
     void setPwmRouteState(bool state);
     void setDevSyncState(bool state);
     void setDevSyncPeriodMs(int ms);
@@ -384,6 +396,7 @@ protected:
     IDBinModemSolution* idModemSolution = nullptr;
 
     IDBinServoControl* idServoControl = nullptr;
+    IDBinStandScan* idStandScan = nullptr;
     IDBinPwmRoute* idPwmRoute = nullptr;
     IDBinDevSync* idDevSync = nullptr;
 
@@ -523,6 +536,7 @@ protected slots:
     void receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
     void receivedServoControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedStandScan   (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedPwmRoute    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
     void receivedDevSync     (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
@@ -537,6 +551,11 @@ private:
     bool soundSpeedState_;
     bool uartState_;
     bool servoControlState_ = false;
+    // The stand is discovered by probing, not declared: the command family is control-only, so
+    // there is no readback to sync and no board version that separates a stand build from a
+    // servo one. Both flags reset with the connection — a device may come back reflashed.
+    bool standSupported_ = false;
+    bool standProbeSent_ = false;
     bool pwmRouteState_ = false;
     bool devSyncState_ = false;
     QTimer m_devSyncDebounceTimer;

@@ -75,6 +75,9 @@ public:
     Q_PROPERTY(bool isUpgradeSupport READ isUpgradeSupport NOTIFY deviceVersionChanged)
 
     Q_PROPERTY(bool isServoSupport READ getServoControlState NOTIFY servoControlChanged)
+    // False until a Recorder answers the stand probe, and false again the moment it goes away.
+    // The panel kind is hidden everywhere this reads false — palette included.
+    Q_PROPERTY(bool isStandSupport READ getStandState NOTIFY standChanged)
     Q_PROPERTY(bool servoEnabled READ servoEnabled WRITE setServoEnabled NOTIFY servoControlChanged)
     Q_PROPERTY(bool servoReverse READ servoReverse WRITE setServoReverse NOTIFY servoControlChanged)
     Q_PROPERTY(int servoPwmMinUs READ servoPwmMinUs WRITE setServoPwmMinUs NOTIFY servoControlChanged)

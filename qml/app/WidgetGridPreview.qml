@@ -8,6 +8,7 @@ Item {
 
     readonly property bool _isNodes: !!(def && def.kind === "usblNodes")
     readonly property bool _isServo: !!(def && def.kind === "servo")
+    readonly property bool _isStand: !!(def && def.kind === "stand")
 
     readonly property real _sInset: Tokens.spaceXs
     readonly property int _sRef: 100
@@ -51,6 +52,35 @@ Item {
             }
         }
 
+        // A stand panel has no grid and no row count either. What it always has is a command
+        // row, so the thumbnail is that: one wide button and three round ones.
+        Row {
+            visible: root._isStand
+            anchors.centerIn: parent
+            spacing: root._gap
+            readonly property real dot: Math.max(3, Math.min(parent.height * 0.34, parent.width * 0.12))
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.dot * 2.4; height: parent.dot
+                radius: height / 2
+                color: AppPalette.accentBg
+                border.width: 1
+                border.color: AppPalette.accentBorder
+            }
+            Repeater {
+                model: 3
+                delegate: Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.dot; height: parent.dot
+                    radius: height / 2
+                    color: AppPalette.rowRaised
+                    border.width: 1
+                    border.color: AppPalette.border
+                }
+            }
+        }
+
         FontMetrics {
             id: sRefFm
             font.bold: true
@@ -76,7 +106,7 @@ Item {
 
         Item {
             id: area
-            visible: !root._isNodes && !root._isServo
+            visible: !root._isNodes && !root._isServo && !root._isStand
             anchors.fill: parent
             anchors.margins: Tokens.spaceXs
 
