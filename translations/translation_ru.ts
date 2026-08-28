@@ -97,6 +97,14 @@
         <translation>Показывать масштабную линейку в 3D-сцене</translation>
     </message>
     <message>
+        <source>USBL beacons</source>
+        <translation>Акустические маяки</translation>
+    </message>
+    <message>
+        <source>Show the acoustic nodes and their tracks in the 3D scene</source>
+        <translation>Показывать акустические узлы и их треки в 3D-сцене</translation>
+    </message>
+    <message>
         <source>Show the surface quality label in the 3D scene</source>
         <translation>Показывать метку качества поверхности в 3D-сцене</translation>
     </message>

@@ -7,6 +7,12 @@ Item {
     property string caption: ""
     property color fillColor: "transparent"
     property color labelColor: AppPalette.textStrong
+    property color captionColor: AppPalette.textSecond
+    // Hover/press wash and the hovered label tint. Rows carrying an opaque
+    // fillColor override these so the wash does not grey out their own colour.
+    property color hoverColor: AppPalette.cardHover
+    property color pressedColor: AppPalette.bgHover
+    property color labelHoverColor: Qt.lighter(labelColor, Anim.hoverLighten)
     property int labelPixelSize: island ? island.labelPixelSize : Tokens.fontLg
     property int labelElide: Text.ElideRight
     property bool stacked: false
@@ -133,7 +139,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: rowMouse.pressed ? AppPalette.bgHover : AppPalette.cardHover
+        color: rowMouse.pressed ? row.pressedColor : row.hoverColor
         opacity: (row.interactive && (rowMouse.containsMouse || rowMouse.pressed)) ? 1 : 0
         visible: opacity > 0
         topLeftRadius: row.topCornerRadius
@@ -185,7 +191,7 @@ Item {
             width: parent.width
             visible: text.length > 0
             text: row.label
-            color: row.hovered ? Qt.lighter(row.labelColor, Anim.hoverLighten) : row.labelColor
+            color: row.hovered ? row.labelHoverColor : row.labelColor
             font.pixelSize: row.labelPixelSize
             elide: row.labelElide
             Behavior on color { ColorAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
@@ -195,7 +201,7 @@ Item {
             width: parent.width
             visible: text.length > 0
             text: row.caption
-            color: AppPalette.textSecond
+            color: row.captionColor
             font.pixelSize: Tokens.fontSm
             wrapMode: Text.Wrap
         }

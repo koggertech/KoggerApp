@@ -2252,8 +2252,12 @@ Column {
         collapsedByDefault: true
 
         Column {
+            id: render3dList
             width: parent.width
             spacing: Tokens.spaceMd
+
+            readonly property int spinW: Math.round(120 * AppPalette.scale)
+            readonly property bool circleGridOpen: render3dSettings.gridCheckButton && render3dSettings.gridTypeCheckButton
 
             Text {
                 width: parent.width
@@ -2263,53 +2267,70 @@ Column {
                 topPadding: Tokens.spaceXs
             }
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Show surface quality")
-                toolTipText: qsTr("Show the surface quality label in the 3D scene")
-                checked: root.store ? root.store.showSurfaceQuality : false
-                onToggled: function(v) {
-                    if (root.store)
-                        root.store.showSurfaceQuality = v
-                }
-            }
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Show surface quality")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Show the surface quality label in the 3D scene")
+                    interactive: true
+                    onClicked: showSurfaceQualitySwitch.click()
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Force zoom")
-                visible: core.needForceZooming
-                checked: render3dSettings.forceSingleZoomCheckButton
-                onToggled: function(v) {
-                    render3dSettings.forceSingleZoomCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onForceSingleZoomCheckedChanged(v)
-                }
-            }
-
-            // Loupe — toggle + Size/Zoom row in animated card body.
-            ParamCardGroup {
-                id: loupeCard
-                label: qsTr("Loupe")
-                checked: render3dSettings.syncLoupeCheckButton
-                onToggled: function(v) {
-                    render3dSettings.syncLoupeCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onSyncLoupeVisibleChanged(v)
-                }
-
-                RowLayout {
-                    width: parent.width
-                    spacing: Tokens.spaceMd
-                    Text {
-                        text: qsTr("Size")
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
-                        Layout.fillWidth: true
-                        verticalAlignment: Text.AlignVCenter
+                    KSwitch {
+                        id: showSurfaceQualitySwitch
+                        flat: true
+                        checked: root.store ? root.store.showSurfaceQuality : false
+                        onToggled: if (root.store) root.store.showSurfaceQuality = checked
                     }
+                }
+
+                KIslandRow {
+                    visible: core.needForceZooming
+                    label: qsTr("Force zoom")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: forceSingleZoomSwitch.click()
+
+                    KSwitch {
+                        id: forceSingleZoomSwitch
+                        flat: true
+                        checked: render3dSettings.forceSingleZoomCheckButton
+                        onToggled: {
+                            render3dSettings.forceSingleZoomCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onForceSingleZoomCheckedChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Loupe")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: syncLoupeSwitch.click()
+
+                    KSwitch {
+                        id: syncLoupeSwitch
+                        flat: true
+                        checked: render3dSettings.syncLoupeCheckButton
+                        onToggled: {
+                            render3dSettings.syncLoupeCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onSyncLoupeVisibleChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    open: render3dSettings.syncLoupeCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Size")
+                    labelColor: root._bright
+
                     KSpinBox {
                         id: syncLoupeSizeSpinBox
-                        Layout.preferredWidth: Math.round(120 * AppPalette.scale)
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
                         from: 1; to: 3; stepSize: 1; value: 1
                         onValueModified: function(v) {
                             if (typeof Scene3dToolBarController !== "undefined")
@@ -2318,321 +2339,373 @@ Column {
                     }
                 }
 
-                RowLayout {
-                    width: parent.width
-                    spacing: Tokens.spaceMd
-                    Text {
-                        text: qsTr("Zoom, %:")
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    KSlider {
-                        id: syncLoupeZoomSlider
-                        Layout.fillWidth: true
-                        from: 0; to: 300; stepSize: 1; value: 100
-                        onValueModified: function(val) {
-                            if (typeof Scene3dToolBarController !== "undefined") {
-                                Scene3dToolBarController.onSyncLoupeZoomChanged(Math.round(val))
-                                Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(true)
+                KIslandRow {
+                    id: syncLoupeZoomRow
+                    open: render3dSettings.syncLoupeCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Zoom, %:")
+                    labelColor: root._bright
+                    slotWidth: Math.round(240 * AppPalette.scale)
+
+                    Item {
+                        width: syncLoupeZoomRow.slotWidth
+                        height: syncLoupeZoomLayout.implicitHeight
+
+                        RowLayout {
+                            id: syncLoupeZoomLayout
+                            anchors.fill: parent
+                            spacing: Tokens.spaceSm
+
+                            KSlider {
+                                id: syncLoupeZoomSlider
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                from: 0; to: 300; stepSize: 1; value: 100
+                                onValueModified: function(val) {
+                                    if (typeof Scene3dToolBarController !== "undefined") {
+                                        Scene3dToolBarController.onSyncLoupeZoomChanged(Math.round(val))
+                                        Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(true)
+                                    }
+                                }
+                                onPressedChanged: {
+                                    if (typeof Scene3dToolBarController !== "undefined")
+                                        Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(pressed)
+                                }
+                            }
+                            Text {
+                                text: Math.round(syncLoupeZoomSlider.value) + "%"
+                                color: root._bright
+                                font.pixelSize: Tokens.fontLg
+                                Layout.preferredWidth: Math.round(52 * AppPalette.scale)
+                                Layout.alignment: Qt.AlignVCenter
+                                horizontalAlignment: Text.AlignRight
                             }
                         }
-                        onPressedChanged: {
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("North mode")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Orient the 3D view to north (north stays up)")
+                    interactive: true
+                    onClicked: northViewSwitch.click()
+
+                    KSwitch {
+                        id: northViewSwitch
+                        flat: true
+                        checked: render3dSettings.isNorthViewButton
+                        onToggled: {
+                            render3dSettings.isNorthViewButton = checked
                             if (typeof Scene3dToolBarController !== "undefined")
-                                Scene3dToolBarController.onSyncLoupeZoomAdjustingChanged(pressed)
+                                Scene3dToolBarController.onIsNorthLocationButtonChanged(checked)
                         }
                     }
-                    Text {
-                        text: Math.round(syncLoupeZoomSlider.value) + "%"
-                        color: root._bright
-                        font.pixelSize: Tokens.fontLg
-                        Layout.preferredWidth: Math.round(52 * AppPalette.scale)
-                        horizontalAlignment: Text.AlignRight
+                }
+
+                KIslandRow {
+                    label: qsTr("Sync echogram")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Sync the cursor between the 2D echogram and the 3D scene")
+                    interactive: true
+                    onClicked: selectionToolSwitch.click()
+
+                    KSwitch {
+                        id: selectionToolSwitch
+                        flat: true
+                        checked: render3dSettings.selectionToolButton
+                        onToggled: {
+                            render3dSettings.selectionToolButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
+                        }
                     }
                 }
-            }
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("North mode")
-                toolTipText: qsTr("Orient the 3D view to north (north stays up)")
-                checked: render3dSettings.isNorthViewButton
-                onToggled: function(v) {
-                    render3dSettings.isNorthViewButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onIsNorthLocationButtonChanged(v)
-                }
-            }
+                KIslandRow {
+                    label: qsTr("Grid")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: grid3dSwitch.click()
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Sync echogram")
-                toolTipText: qsTr("Sync the cursor between the 2D echogram and the 3D scene")
-                checked: render3dSettings.selectionToolButton
-                onToggled: function(v) {
-                    render3dSettings.selectionToolButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(v)
-                }
-            }
-
-            // Grid — toggle with nested Circle sub-group (Labels + Size/Step/Angle).
-            ParamCardGroup {
-                id: gridCard
-                label: qsTr("Grid")
-                checked: render3dSettings.gridCheckButton
-                onToggled: function(v) {
-                    render3dSettings.gridCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onGridVisibilityCheckedChanged(v)
+                    KSwitch {
+                        id: grid3dSwitch
+                        flat: true
+                        checked: render3dSettings.gridCheckButton
+                        onToggled: {
+                            render3dSettings.gridCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onGridVisibilityCheckedChanged(checked)
+                        }
+                    }
                 }
 
-                ParamCardGroup {
-                    id: gridTypeCard
+                KIslandRow {
+                    open: render3dSettings.gridCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
                     label: qsTr("Circle")
-                    fillColor: AppPalette.bg
-                    checked: render3dSettings.gridTypeCheckButton
-                    onToggled: function(v) {
-                        render3dSettings.gridTypeCheckButton = v
-                        if (typeof Scene3dToolBarController !== "undefined")
-                            Scene3dToolBarController.onPlaneGridTypeChanged(!v)
-                    }
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: gridTypeSwitch.click()
 
-                    ParamCard {
-                        width: parent.width
-                        label: qsTr("Labels")
-                        checked: render3dSettings.gridLabelsCheckButton
-                        onToggled: function(v) {
-                            render3dSettings.gridLabelsCheckButton = v
+                    KSwitch {
+                        id: gridTypeSwitch
+                        flat: true
+                        checked: render3dSettings.gridTypeCheckButton
+                        onToggled: {
+                            render3dSettings.gridTypeCheckButton = checked
                             if (typeof Scene3dToolBarController !== "undefined")
-                                Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(v)
-                        }
-                    }
-                    KParamGrid {
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd + 2 * Tokens.spaceXs
-                            radius: Tokens.radiusMd
-                            color: AppPalette.rowRaised
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: Tokens.spaceMd
-                                anchors.rightMargin: Tokens.spaceSm
-                                spacing: Tokens.spaceSm
-                                Text {
-                                    text: qsTr("Size")
-                                    color: root._bright
-                                    font.pixelSize: Tokens.fontLg
-                                }
-                                KSpinBox {
-                                    id: circleGridSizeSpinBox
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    from: 1; to: 3; stepSize: 1; value: 1
-                                    onValueModified: function(v) {
-                                        if (typeof Scene3dToolBarController !== "undefined")
-                                            Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(v)
-                                    }
-                                }
-                            }
-                        }
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd + 2 * Tokens.spaceXs
-                            radius: Tokens.radiusMd
-                            color: AppPalette.rowRaised
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: Tokens.spaceMd
-                                anchors.rightMargin: Tokens.spaceSm
-                                spacing: Tokens.spaceSm
-                                Text {
-                                    text: qsTr("Step")
-                                    color: root._bright
-                                    font.pixelSize: Tokens.fontLg
-                                }
-                                KSpinBox {
-                                    id: circleGridStepSpinBox
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    from: 1; to: 20; stepSize: 1; value: 1
-                                    onValueModified: function(v) {
-                                        if (typeof Scene3dToolBarController !== "undefined")
-                                            Scene3dToolBarController.onPlaneGridCircleGridStepChanged(v)
-                                    }
-                                }
-                            }
-                        }
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd + 2 * Tokens.spaceXs
-                            radius: Tokens.radiusMd
-                            color: AppPalette.rowRaised
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: Tokens.spaceMd
-                                anchors.rightMargin: Tokens.spaceSm
-                                spacing: Tokens.spaceSm
-                                Text {
-                                    text: qsTr("Angle")
-                                    color: root._bright
-                                    font.pixelSize: Tokens.fontLg
-                                }
-                                KSpinBox {
-                                    id: circleGridAngleSpinBox
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    from: 1; to: 5; stepSize: 1; value: 1
-                                    onValueModified: function(v) {
-                                        if (typeof Scene3dToolBarController !== "undefined")
-                                            Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(v)
-                                    }
-                                }
-                            }
+                                Scene3dToolBarController.onPlaneGridTypeChanged(!checked)
                         }
                     }
                 }
-            }
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Shadows")
-                checked: render3dSettings.shadowEnabledCheckButton
-                onToggled: function(v) {
-                    render3dSettings.shadowEnabledCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onShadowsEnabledChanged(v)
-                }
-            }
+                KIslandRow {
+                    open: render3dList.circleGridOpen
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Labels")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: gridLabelsSwitch.click()
 
-            // Navigation arrow — toggle + Shape/Size rows in same card.
-            ParamCardGroup {
-                id: boatCard
-                label: qsTr("Navigation arrow")
-                checked: render3dSettings.navigationArrowCheckButton
-                onToggled: function(v) {
-                    render3dSettings.navigationArrowCheckButton = v
-                    if (typeof NavigationArrowControlMenuController !== "undefined")
-                        NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(v)
-                }
-
-                KParamGrid {
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Tokens.spaceSm
-                        Text {
-                            text: qsTr("Shape")
-                            color: root._bright
-                            font.pixelSize: Tokens.fontLg
-                        }
-                        KCombo {
-                            id: navigationArrowShapeCombo
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd
-                            model: [qsTr("Arrow"), qsTr("Boat")]
-                            currentIndex: 0
-                            onActivated: function(idx) {
-                                if (typeof NavigationArrowControlMenuController !== "undefined")
-                                    NavigationArrowControlMenuController.onRepresentationChanged(idx)
-                            }
-                        }
-                    }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Tokens.spaceSm
-                        Text {
-                            text: qsTr("Size")
-                            color: root._bright
-                            font.pixelSize: Tokens.fontLg
-                        }
-                        KSpinBox {
-                            id: navigationArrowSizeSpinBox
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd
-                            from: 1; to: 5; stepSize: 1; value: 1
-                            onValueModified: function(v) {
-                                if (typeof NavigationArrowControlMenuController !== "undefined")
-                                    NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(v)
-                            }
+                    KSwitch {
+                        id: gridLabelsSwitch
+                        flat: true
+                        checked: render3dSettings.gridLabelsCheckButton
+                        onToggled: {
+                            render3dSettings.gridLabelsCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(checked)
                         }
                     }
                 }
-            }
 
-            // Compass — toggle + animated Pos/Size row in same card.
-            ParamCardGroup {
-                id: compassCard
-                label: qsTr("Compass")
-                checked: render3dSettings.compassCheckButton
-                onToggled: function(v) {
-                    render3dSettings.compassCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onCompassButtonChanged(v)
-                }
+                KIslandRow {
+                    open: render3dList.circleGridOpen
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Size")
+                    labelColor: root._bright
 
-                KParamGrid {
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Tokens.spaceSm
-                        Text {
-                            text: qsTr("Pos")
-                            color: root._bright
-                            font.pixelSize: Tokens.fontLg
-                        }
-                        KSpinBox {
-                            id: compassPosSpinBox
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd
-                            from: 1; to: 3; stepSize: 1; value: 2
-                            onValueModified: function(v) {
-                                if (typeof Scene3dToolBarController !== "undefined")
-                                    Scene3dToolBarController.onCompassPosChanged(v)
-                            }
-                        }
-                    }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Tokens.spaceSm
-                        Text {
-                            text: qsTr("Size")
-                            color: root._bright
-                            font.pixelSize: Tokens.fontLg
-                        }
-                        KSpinBox {
-                            id: compassSizeSpinBox
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Tokens.controlHMd
-                            from: 1; to: 5; stepSize: 1; value: 1
-                            onValueModified: function(v) {
-                                if (typeof Scene3dToolBarController !== "undefined")
-                                    Scene3dToolBarController.onCompassSizeChanged(v)
-                            }
+                    KSpinBox {
+                        id: circleGridSizeSpinBox
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 3; stepSize: 1; value: 1
+                        onValueModified: function(v) {
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(v)
                         }
                     }
                 }
-            }
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Scale bar")
-                toolTipText: qsTr("Show the scale bar in the 3D scene")
-                checked: render3dSettings.scaleBarCheckButton
-                onToggled: function(v) {
-                    render3dSettings.scaleBarCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onScaleBarButtonChanged(v)
+                KIslandRow {
+                    open: render3dList.circleGridOpen
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Step")
+                    labelColor: root._bright
+
+                    KSpinBox {
+                        id: circleGridStepSpinBox
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 20; stepSize: 1; value: 1
+                        onValueModified: function(v) {
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onPlaneGridCircleGridStepChanged(v)
+                        }
+                    }
                 }
-            }
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("USBL beacons")
-                toolTipText: qsTr("Show the acoustic nodes and their tracks in the 3D scene")
-                checked: render3dSettings.usblLayerCheckButton
-                onToggled: function(v) {
-                    render3dSettings.usblLayerCheckButton = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onUsblLayerVisibilityChanged(v)
+                KIslandRow {
+                    open: render3dList.circleGridOpen
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Angle")
+                    labelColor: root._bright
+
+                    KSpinBox {
+                        id: circleGridAngleSpinBox
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 5; stepSize: 1; value: 1
+                        onValueModified: function(v) {
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(v)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Shadows")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: shadowEnabledSwitch.click()
+
+                    KSwitch {
+                        id: shadowEnabledSwitch
+                        flat: true
+                        checked: render3dSettings.shadowEnabledCheckButton
+                        onToggled: {
+                            render3dSettings.shadowEnabledCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onShadowsEnabledChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Navigation arrow")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: navigationArrowSwitch.click()
+
+                    KSwitch {
+                        id: navigationArrowSwitch
+                        flat: true
+                        checked: render3dSettings.navigationArrowCheckButton
+                        onToggled: {
+                            render3dSettings.navigationArrowCheckButton = checked
+                            if (typeof NavigationArrowControlMenuController !== "undefined")
+                                NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    open: render3dSettings.navigationArrowCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Shape")
+                    labelColor: root._bright
+
+                    KCombo {
+                        id: navigationArrowShapeCombo
+                        width: render3dList.spinW
+                        model: [qsTr("Arrow"), qsTr("Boat")]
+                        currentIndex: 0
+                        onActivated: function(idx) {
+                            if (typeof NavigationArrowControlMenuController !== "undefined")
+                                NavigationArrowControlMenuController.onRepresentationChanged(idx)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    open: render3dSettings.navigationArrowCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Size")
+                    labelColor: root._bright
+
+                    KSpinBox {
+                        id: navigationArrowSizeSpinBox
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 5; stepSize: 1; value: 1
+                        onValueModified: function(v) {
+                            if (typeof NavigationArrowControlMenuController !== "undefined")
+                                NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(v)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Compass")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: compassSwitch.click()
+
+                    KSwitch {
+                        id: compassSwitch
+                        flat: true
+                        checked: render3dSettings.compassCheckButton
+                        onToggled: {
+                            render3dSettings.compassCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onCompassButtonChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    open: render3dSettings.compassCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Pos")
+                    labelColor: root._bright
+
+                    KSpinBox {
+                        id: compassPosSpinBox
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 3; stepSize: 1; value: 2
+                        onValueModified: function(v) {
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onCompassPosChanged(v)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    open: render3dSettings.compassCheckButton
+                    showSeparator: false
+                    verticalPadding: Tokens.spaceSm
+                    label: qsTr("Size")
+                    labelColor: root._bright
+
+                    KSpinBox {
+                        id: compassSizeSpinBox
+                        width: render3dList.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 5; stepSize: 1; value: 1
+                        onValueModified: function(v) {
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onCompassSizeChanged(v)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Scale bar")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Show the scale bar in the 3D scene")
+                    interactive: true
+                    onClicked: scaleBarSwitch.click()
+
+                    KSwitch {
+                        id: scaleBarSwitch
+                        flat: true
+                        checked: render3dSettings.scaleBarCheckButton
+                        onToggled: {
+                            render3dSettings.scaleBarCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onScaleBarButtonChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("USBL beacons")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Show the acoustic nodes and their tracks in the 3D scene")
+                    interactive: true
+                    onClicked: usblLayerSwitch.click()
+
+                    KSwitch {
+                        id: usblLayerSwitch
+                        flat: true
+                        checked: render3dSettings.usblLayerCheckButton
+                        onToggled: {
+                            render3dSettings.usblLayerCheckButton = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onUsblLayerVisibilityChanged(checked)
+                        }
+                    }
                 }
             }
 
@@ -2670,16 +2743,41 @@ Column {
                 topPadding: Tokens.spaceXs
             }
 
-            // ── Visibility toggle ────────────────────────────────────────
-            ParamCard {
-                width: parent.width
-                label: qsTr("Show map tiles")
-                checked: mapVisibilitySettings.mapViewCheckButton
-                onToggled: function(v) {
-                    mapVisibilitySettings.mapViewCheckButton = v
-                    if (typeof MapViewControlMenuController !== "undefined")
-                        MapViewControlMenuController.onVisibilityChanged(v)
-                    core.setMapTileLoadingEnabled(v)
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Show map tiles")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: mapTilesSwitch.click()
+
+                    KSwitch {
+                        id: mapTilesSwitch
+                        flat: true
+                        checked: mapVisibilitySettings.mapViewCheckButton
+                        onToggled: {
+                            mapVisibilitySettings.mapViewCheckButton = checked
+                            if (typeof MapViewControlMenuController !== "undefined")
+                                MapViewControlMenuController.onVisibilityChanged(checked)
+                            core.setMapTileLoadingEnabled(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Limit downloads on metered networks")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: meteredLimitSwitch.click()
+
+                    KSwitch {
+                        id: meteredLimitSwitch
+                        flat: true
+                        checked: meteredSettings.deferTilesOnMetered
+                        onToggled: {
+                            meteredSettings.deferTilesOnMetered = checked
+                            core.setDeferTilesOnMetered(checked)
+                        }
+                    }
                 }
             }
 
@@ -2690,6 +2788,8 @@ Column {
                 category: "scene3d/map"
                 property bool mapViewCheckButton: true
             }
+
+            Settings { id: meteredSettings; category: "scene3d/map"; property bool deferTilesOnMetered: true }
 
             Row {
                 width: parent.width
@@ -2711,18 +2811,6 @@ Column {
                     text: qsTr("Metered network (limited)")
                     color: AppPalette.textSecond
                     font.pixelSize: Tokens.fontMd
-                }
-            }
-
-            Settings { id: meteredSettings; category: "scene3d/map"; property bool deferTilesOnMetered: true }
-
-            ParamCard {
-                width: parent.width
-                label: qsTr("Limit downloads on metered networks")
-                checked: meteredSettings.deferTilesOnMetered
-                onToggled: function(v) {
-                    meteredSettings.deferTilesOnMetered = v
-                    core.setDeferTilesOnMetered(v)
                 }
             }
 
@@ -2759,107 +2847,54 @@ Column {
             }
 
             // ── Provider selector (single-pick rows) ─────────────────────
-            Repeater {
-                model: core.mapTileProviders
-                delegate: Rectangle {
-                    id: providerRow
-                    width: parent.width
-                    implicitHeight: rowCol.implicitHeight + 2 * Tokens.spaceSm
-                    height: implicitHeight
-                    radius: Tokens.radiusMd
+            KIsland {
+                Repeater {
+                    model: core.mapTileProviders
 
-                    readonly property bool isSelected: modelData.id === core.mapTileProviderId
-                    // Cached once per delegate (providers list is CONSTANT).
-                    // Refreshed on click — see below.
-                    property var dbInfo: core.getMapTileDbInfo(modelData.id)
+                    delegate: KIslandRow {
+                        id: providerRow
+                        required property var modelData
 
-                    activeFocusOnTab: true
-                    function _select() {
-                        core.setMapTileProvider(modelData.id)
-                        dbInfo = core.getMapTileDbInfo(modelData.id)
-                    }
-                    Keys.onReturnPressed: providerRow._select()
-                    Keys.onEnterPressed:  providerRow._select()
-                    Keys.onSpacePressed:  providerRow._select()
+                        readonly property bool isSelected: modelData.id === core.mapTileProviderId
+                        // Cached once per delegate (providers list is CONSTANT).
+                        // Refreshed on click — see below.
+                        property var dbInfo: core.getMapTileDbInfo(modelData.id)
 
-                    color: isSelected
-                           ? AppPalette.accentBg
-                           : (providerMouse.containsMouse ? AppPalette.bgHover : AppPalette.bg)
-                    border.width: Tokens.cardBorderWidth
-                    border.color: isSelected
-                                  ? AppPalette.accentBorder
-                                  : (providerMouse.containsMouse ? AppPalette.borderHover : AppPalette.border)
-                    Behavior on color       { ColorAnimation { duration: 110 } }
-                    Behavior on border.color { ColorAnimation { duration: 110 } }
-
-                    Column {
-                        id: rowCol
-                        anchors.left: parent.left
-                        anchors.leftMargin: Tokens.spaceMd
-                        anchors.right: parent.right
-                        anchors.rightMargin: Tokens.spaceMd
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
-
-                        // ── Top line: name + layer type ────────────────
-                        Item {
-                            width: parent.width
-                            height: nameLabel.implicitHeight
-
-                            Text {
-                                id: nameLabel
-                                anchors.left: parent.left
-                                anchors.right: typeLabel.left
-                                anchors.rightMargin: Tokens.spaceMd
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: modelData.name
-                                color: providerRow.isSelected ? AppPalette.accentText : AppPalette.textStrong
-                                font.pixelSize: Tokens.fontMd
-                                elide: Text.ElideRight
-                            }
-                            Text {
-                                id: typeLabel
-                                anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: modelData.layer_type
-                                color: providerRow.isSelected
-                                       ? Qt.rgba(AppPalette.accentText.r, AppPalette.accentText.g, AppPalette.accentText.b, 0.82)
-                                       : AppPalette.textSecond
-                                font.pixelSize: Tokens.fontSm
-                            }
+                        label: modelData.name
+                        labelPixelSize: Tokens.fontMd
+                        labelColor: isSelected ? AppPalette.accentText : AppPalette.textStrong
+                        caption: {
+                            if (!providerRow.dbInfo || !providerRow.dbInfo.exists)
+                                return qsTr("Cache: empty")
+                            var mb = (providerRow.dbInfo.sizeBytes / (1024 * 1024)).toFixed(1)
+                            var iso = providerRow.dbInfo.created || providerRow.dbInfo.modified || ""
+                            var d = new Date(iso)
+                            var dateStr = isNaN(d.getTime())
+                                          ? iso
+                                          : d.toLocaleDateString(Qt.locale(), Locale.ShortFormat)
+                            return qsTr("Cache since %1  •  %2 MB").arg(dateStr).arg(mb)
+                        }
+                        captionColor: isSelected
+                                      ? Qt.rgba(AppPalette.accentText.r, AppPalette.accentText.g, AppPalette.accentText.b, 0.82)
+                                      : AppPalette.textMuted
+                        fillColor: isSelected ? AppPalette.accentBg : "transparent"
+                        hoverColor: isSelected ? Qt.lighter(AppPalette.accentBg, 1.12) : AppPalette.cardHover
+                        pressedColor: isSelected ? Qt.darker(AppPalette.accentBg, 1.08) : AppPalette.bgHover
+                        labelHoverColor: isSelected ? AppPalette.accentText : Qt.lighter(AppPalette.textStrong, Anim.hoverLighten)
+                        verticalPadding: Tokens.spaceSm
+                        interactive: true
+                        onClicked: {
+                            core.setMapTileProvider(modelData.id)
+                            providerRow.dbInfo = core.getMapTileDbInfo(modelData.id)
                         }
 
-                        // ── Bottom line: cache age + size ──────────────
                         Text {
-                            width: parent.width
-                            text: {
-                                if (!dbInfo || !dbInfo.exists)
-                                    return qsTr("Cache: empty")
-                                var mb = (dbInfo.sizeBytes / (1024 * 1024)).toFixed(1)
-                                var iso = dbInfo.created || dbInfo.modified || ""
-                                var d = new Date(iso)
-                                var dateStr = isNaN(d.getTime())
-                                              ? iso
-                                              : d.toLocaleDateString(Qt.locale(), Locale.ShortFormat)
-                                return qsTr("Cache since %1  •  %2 MB").arg(dateStr).arg(mb)
-                            }
+                            text: providerRow.modelData.layer_type
                             color: providerRow.isSelected
                                    ? Qt.rgba(AppPalette.accentText.r, AppPalette.accentText.g, AppPalette.accentText.b, 0.82)
-                                   : AppPalette.textMuted
-                            font.pixelSize: Tokens.fontXs
-                            elide: Text.ElideRight
+                                   : AppPalette.textSecond
+                            font.pixelSize: Tokens.fontSm
                         }
-                    }
-
-                    KFocusRing { id: focusRing }
-
-                    MouseArea {
-                        id: providerMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onPressed: focusRing.suppress()
-                        onClicked: { providerRow.forceActiveFocus(); providerRow._select() }
                     }
                 }
             }
@@ -2872,25 +2907,41 @@ Column {
                 topPadding: Tokens.spaceXs
             }
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Use angle")
-                checked: root.store.useAngleEnabled
-                onToggled: function(v) {
-                    root.store.useAngleEnabled = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onUseAngleLocationButtonChanged(v)
-                }
-            }
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Use angle")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: useAngleSwitch.click()
 
-            ParamCard {
-                width: parent.width
-                label: qsTr("Navigator view")
-                checked: root.store.navigationViewEnabled
-                onToggled: function(v) {
-                    root.store.navigationViewEnabled = v
-                    if (typeof Scene3dToolBarController !== "undefined")
-                        Scene3dToolBarController.onNavigatorLocationButtonChanged(v)
+                    KSwitch {
+                        id: useAngleSwitch
+                        flat: true
+                        checked: root.store.useAngleEnabled
+                        onToggled: {
+                            root.store.useAngleEnabled = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onUseAngleLocationButtonChanged(checked)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Navigator view")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: navigatorViewSwitch.click()
+
+                    KSwitch {
+                        id: navigatorViewSwitch
+                        flat: true
+                        checked: root.store.navigationViewEnabled
+                        onToggled: {
+                            root.store.navigationViewEnabled = checked
+                            if (typeof Scene3dToolBarController !== "undefined")
+                                Scene3dToolBarController.onNavigatorLocationButtonChanged(checked)
+                        }
+                    }
                 }
             }
 

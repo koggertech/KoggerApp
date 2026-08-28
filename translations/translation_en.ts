@@ -97,6 +97,14 @@
         <translation>Show the scale bar in the 3D scene</translation>
     </message>
     <message>
+        <source>USBL beacons</source>
+        <translation>USBL beacons</translation>
+    </message>
+    <message>
+        <source>Show the acoustic nodes and their tracks in the 3D scene</source>
+        <translation>Show the acoustic nodes and their tracks in the 3D scene</translation>
+    </message>
+    <message>
         <source>Show the surface quality label in the 3D scene</source>
         <translation>Show the surface quality label in the 3D scene</translation>
     </message>

@@ -97,6 +97,14 @@
         <translation>Pokaż podziałkę skali w scenie 3D</translation>
     </message>
     <message>
+        <source>USBL beacons</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Show the acoustic nodes and their tracks in the 3D scene</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>Show the surface quality label in the 3D scene</source>
         <translation>Pokaż etykietę jakości powierzchni w scenie 3D</translation>
     </message>
