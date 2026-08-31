@@ -48,6 +48,46 @@
         <source>Speed of sound</source>
         <translation>Скорость звука</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="32"/>
+        <source>Panel at the cursor on the echogram. The distance is always in it, the rest is optional.</source>
+        <translation>Плашка у курсора на эхограмме. Дистанция в ней есть всегда, остальное — по выбору.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="50"/>
+        <source>The channel the cursor reads its numbers from.</source>
+        <translation>Канал, с которого курсор читает данные.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="56"/>
+        <source>Number of the ping under the cursor, counted from the start of the recording.</source>
+        <translation>Номер зондирования под курсором, по порядку от начала записи.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="62"/>
+        <source>How many millimetres of depth one echogram sample covers.</source>
+        <translation>Сколько миллиметров глубины приходится на одну точку эхограммы.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="68"/>
+        <source>The frequency this ping was made at, kHz.</source>
+        <translation>Частота, на которой сделано это зондирование, кГц.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="74"/>
+        <source>How many pulses were emitted for one ping.</source>
+        <translation>Сколько импульсов излучено за одно зондирование.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="80"/>
+        <source>Whether the transmit booster was on for this ping.</source>
+        <translation>Был ли включён усилитель излучения при этом зондировании.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="86"/>
+        <source>The speed of sound used to turn this ping into depth, m/s.</source>
+        <translation>Скорость звука, заложенная в расчёт глубины, м/с.</translation>
+    </message>
 </context>
 <context>
     <name>AppSettingsPage</name>
@@ -678,9 +718,9 @@
         <translation>Масштаб</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2114"/>
-        <source>Pos</source>
-        <translation>Поз</translation>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2644"/>
+        <source>Position</source>
+        <translation>Позиция</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2189"/>
@@ -965,11 +1005,6 @@
         <translation>Смещение XY, мм:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="957"/>
-        <source>Sonar offset XYZ, mm</source>
-        <translation>Смещение сонара XYZ, мм</translation>
-    </message>
-    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="421"/>
         <source>Fish Finders</source>
         <translation>Для Рыболова</translation>
@@ -1055,6 +1090,56 @@
     <message>
         <source>Create panel</source>
         <translation>Создать панель</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1062"/>
+        <source>Bottom search settings for an ordinary sounder with one beam pointing down.</source>
+        <translation>Настройки поиска дна для обычного эхолота с одним лучом вниз.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1064"/>
+        <source>For a sounder with a narrow beam: the bottom echo is shorter, so the search is finer.</source>
+        <translation>Для эхолота с узким лучом: эхо от дна короче, поиск ведётся точнее.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
+        <source>For a side-scan sonar: the beam looks sideways, not down.</source>
+        <translation>Для сонара бокового обзора: луч смотрит в сторону, а не вниз.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1078"/>
+        <source>Lifts the weak echo at long range so the bottom is found far out too.</source>
+        <translation>Подтягивает слабое эхо на большой дальности, чтобы дно находилось и вдали.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1115"/>
+        <source>How clear the echo must be to count as bottom. Where it is weaker, the bottom line breaks.</source>
+        <translation>Насколько явным должно быть эхо, чтобы считаться дном. Где эхо слабее — линия дна прерывается.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1149"/>
+        <source>Smooths the bottom line over neighbouring pings. Wider is smoother but lags more.</source>
+        <translation>Сглаживает линию дна по соседним зондированиям. Шире — ровнее, но с большим запаздыванием.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1183"/>
+        <source>Refines the depth near the one already found and rejects false bottoms from re-reflections. 0 is off.</source>
+        <translation>Уточняет глубину рядом с найденной и отсекает ложное дно от переотражений. 0 — выключено.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1217"/>
+        <source>The bottom is not searched for closer than this.</source>
+        <translation>Дно не ищется ближе этой дальности.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1251"/>
+        <source>The bottom is not searched for further than this.</source>
+        <translation>Дно не ищется дальше этой дальности.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1360"/>
+        <source>Recompute the bottom over the whole open file. Manual edits are left alone.</source>
+        <translation>Пересчитать дно по всему открытому файлу. Ручные правки не затрагиваются.</translation>
     </message>
 </context>
 <context>
@@ -1845,6 +1930,16 @@
         <location filename="../qml/app/CsvExportSettingsTab.qml" line="30"/>
         <source>Contact distance</source>
         <translation>Дистанция контакта</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="97"/>
+        <source>Sonar offset XYZ, mm</source>
+        <translation>Смещение сонара XYZ, мм</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="98"/>
+        <source>Mount offset of the transducer, applied to the exported coordinates only.</source>
+        <translation>Смещение установки антенны. Применяется только к выгружаемым координатам.</translation>
     </message>
 </context>
 <context>

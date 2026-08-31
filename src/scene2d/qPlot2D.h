@@ -273,8 +273,8 @@ public slots:
     Q_INVOKABLE bool getLoupeVisible() const { return Plot2D::getLoupeVisible(); }
     Q_INVOKABLE int getLoupeSize() const { return Plot2D::getLoupeSize(); }
     Q_INVOKABLE int getLoupeZoom() const { return Plot2D::getLoupeZoom(); }
-    void doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz, bool manual);
-    void refreshDistParams(int preset, int windowSize, float verticalGap, float rangeMin, float rangeMax, float gainSlope, float threshold, float offsetX, float offsetY, float offsetZ);
+    void doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, bool manual);
+    void refreshDistParams(int preset, int windowSize, float verticalGap, float rangeMin, float rangeMax, float gainSlope, float threshold);
 
     void setPreset(int value);
     void setWindowSize(int value);

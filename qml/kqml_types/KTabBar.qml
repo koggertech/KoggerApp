@@ -52,6 +52,13 @@ Item {
         return option
     }
 
+    function optionTipAt(idx) {
+        var option = optionAt(idx)
+        if (option && option.tip !== undefined)
+            return String(option.tip)
+        return ""
+    }
+
     function indexOfCurrentValue() {
         if (!Array.isArray(options))
             return -1
@@ -268,6 +275,20 @@ Item {
         onCanceled: {
             root.dragPreviewIndex = -1
             dragging = false
+        }
+    }
+
+    Item {
+        id: hoveredSegment
+        x: root.horizontalPadding
+           + Math.max(0, tabMouseArea.hoverIndex) * (root.segmentWidth + root.buttonSpacing)
+        y: root.verticalPadding
+        width: root.segmentWidth
+        height: root.buttonHeight
+
+        KToolTip {
+            text: root.optionTipAt(tabMouseArea.hoverIndex)
+            shown: tabMouseArea.hoverIndex >= 0 && !tabMouseArea.pressed
         }
     }
 }

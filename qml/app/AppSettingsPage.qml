@@ -1020,10 +1020,7 @@ Column {
                 bottomTrackMinRange.checked  ? bottomTrackMinRangeValue.value / 1000 : 0,
                 bottomTrackMaxRange.checked  ? bottomTrackMaxRangeValue.value / 1000 : 1000,
                 bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.value / 100  : 1,
-                bottomTrackThreshold.checked ? bottomTrackThresholdValue.value / 100  : 0,
-                bottomTrackSensorOffset.checked ? btOffX.value *  0.001 : 0,
-                bottomTrackSensorOffset.checked ? btOffY.value *  0.001 : 0,
-                bottomTrackSensorOffset.checked ? btOffZ.value * -0.001 : 0
+                bottomTrackThreshold.checked ? bottomTrackThresholdValue.value / 100  : 0
             )
         }
 
@@ -1037,9 +1034,6 @@ Column {
                 bottomTrackMaxRange.checked  ? bottomTrackMaxRangeValue.value / 1000 : 1000,
                 bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.value / 100  : 1,
                 bottomTrackThreshold.checked ? bottomTrackThresholdValue.value / 100  : 0,
-                bottomTrackSensorOffset.checked ? btOffX.value *  0.001 : 0,
-                bottomTrackSensorOffset.checked ? btOffY.value *  0.001 : 0,
-                bottomTrackSensorOffset.checked ? btOffZ.value * -0.001 : 0,
                 false
             )
         }
@@ -1058,9 +1052,12 @@ Column {
                 id: presetTabBar
                 width: parent.width
                 options: [
-                    { label: qsTr("Normal 2D"), value: 0 },
-                    { label: qsTr("Narrow 2D"), value: 1 },
-                    { label: qsTr("Side-Scan"), value: 2 }
+                    { label: qsTr("Normal 2D"), value: 0,
+                      tip: qsTr("Bottom search settings for an ordinary sounder with one beam pointing down.") },
+                    { label: qsTr("Narrow 2D"), value: 1,
+                      tip: qsTr("For a sounder with a narrow beam: the bottom echo is shorter, so the search is finer.") },
+                    { label: qsTr("Side-Scan"), value: 2,
+                      tip: qsTr("For a side-scan sonar: the beam looks sideways, not down.") }
                 ]
                 currentValue: btPresetHolder.selectedIndex
                 onValueSelected: function(v) { btPresetHolder.selectedIndex = v }
@@ -1072,6 +1069,7 @@ Column {
         KIsland {
             KIslandRow {
                 label: qsTr("Gain slope")
+                toolTipText: qsTr("Lifts the weak echo at long range so the bottom is found far out too.")
                 labelColor: root._bright
                 interactive: true
                 onClicked: bottomTrackGainSlope.click()
@@ -1108,6 +1106,7 @@ Column {
 
             KIslandRow {
                 label: qsTr("Threshold")
+                toolTipText: qsTr("How clear the echo must be to count as bottom. Where it is weaker, the bottom line breaks.")
                 labelColor: root._bright
                 interactive: true
                 onClicked: bottomTrackThreshold.click()
@@ -1141,6 +1140,7 @@ Column {
 
             KIslandRow {
                 label: qsTr("Horizontal window")
+                toolTipText: qsTr("Smooths the bottom line over neighbouring pings. Wider is smoother but lags more.")
                 labelColor: root._bright
                 interactive: true
                 onClicked: bottomTrackWindow.click()
@@ -1174,6 +1174,7 @@ Column {
 
             KIslandRow {
                 label: qsTr("Vertical gap, %")
+                toolTipText: qsTr("Refines the depth near the one already found and rejects false bottoms from re-reflections. 0 is off.")
                 labelColor: root._bright
                 interactive: true
                 onClicked: bottomTrackVerticalGap.click()
@@ -1207,6 +1208,7 @@ Column {
 
             KIslandRow {
                 label: qsTr("Min range, m")
+                toolTipText: qsTr("The bottom is not searched for closer than this.")
                 labelColor: root._bright
                 interactive: true
                 onClicked: bottomTrackMinRange.click()
@@ -1240,6 +1242,7 @@ Column {
 
             KIslandRow {
                 label: qsTr("Max range, m")
+                toolTipText: qsTr("The bottom is not searched for further than this.")
                 labelColor: root._bright
                 interactive: true
                 onClicked: bottomTrackMaxRange.click()
@@ -1270,53 +1273,6 @@ Column {
                     }
                 }
             }
-
-            KIslandRow {
-                label: qsTr("Sonar offset XYZ, mm")
-                labelColor: root._bright
-                interactive: true
-                onClicked: bottomTrackSensorOffset.click()
-
-                KSwitch {
-                    id: bottomTrackSensorOffset
-                    flat: true
-                    onToggled: {
-                        if (checked && root.targetPlot) {
-                            root.targetPlot.setOffsetX(btOffX.value *  0.001)
-                            root.targetPlot.setOffsetY(btOffY.value *  0.001)
-                            root.targetPlot.setOffsetZ(btOffZ.value *  0.001)
-                        }
-                    }
-                }
-            }
-
-            KIslandRow {
-                visible: bottomTrackSensorOffset.checked
-                stacked: true
-
-                Row {
-                    width: parent.width
-                    height: Tokens.controlHMd
-                    spacing: Tokens.spaceXs
-                    readonly property real sw: (width - 2 * Tokens.spaceXs) / 3
-
-                    KSpinBox {
-                        id: btOffX
-                        width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
-                        onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetX(v * 0.001) }
-                    }
-                    KSpinBox {
-                        id: btOffY
-                        width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
-                        onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetY(v * 0.001) }
-                    }
-                    KSpinBox {
-                        id: btOffZ
-                        width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
-                        onValueModified: function(v) { if (bottomTrackSensorOffset.checked && root.targetPlot) root.targetPlot.setOffsetZ(v * 0.001) }
-                    }
-                }
-            }
         }
 
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackGainSlope: bottomTrackGainSlope.checked }
@@ -1337,16 +1293,12 @@ Column {
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMaxRange: bottomTrackMaxRange.checked }
         Settings { category: "scene2d/bottomTrack"; property alias bottomTrackMaxRangeValue: bottomTrackMaxRangeValue.value }
 
-        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffset: bottomTrackSensorOffset.checked }
-        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueX: btOffX.value }
-        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueY: btOffY.value }
-        Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueZ: btOffZ.value }
-
         // Action buttons
         KButton {
             width: parent.width
             fontPixelSize: Tokens.fontLg
             text: qsTr("Processing")
+            toolTipText: qsTr("Recompute the bottom over the whole open file. Manual edits are left alone.")
             onClicked: btGroup.doDistProcessing()
         }
     }
@@ -2030,20 +1982,21 @@ Column {
     // ── 3D scene (map provider) ──────────────────────────────────────────────
 
     SettingsGroup {
+        id: videoGroup
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Video")
-        description: qsTr("Per-window video settings.")
+        description: videoGroup.surfaces.length > 0 ? qsTr("Per-window video settings.") : ""
         stateStore: root.store
         stateKey: "app.video"
         collapsedByDefault: true
+
+        readonly property var surfaces: root.store ? root.store.visibleVideoSurfaces : []
 
         Column {
             id: videoWindowList
             width: parent.width
             spacing: Tokens.spaceMd
-
-            readonly property var surfaces: root.store ? root.store.visibleVideoSurfaces : []
 
             HoverHandler {
                 onHoveredChanged: if (!hovered && root.store) root.store.highlightedLeafId = -1
@@ -2051,18 +2004,18 @@ Column {
 
             Text {
                 width: parent.width
-                visible: videoWindowList.surfaces.length === 0
+                visible: videoGroup.surfaces.length === 0
                 text: qsTr("No video windows displayed")
                 color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontMd
+                font.pixelSize: Tokens.fontSm
                 wrapMode: Text.WordWrap
             }
 
             KIsland {
-                visible: videoWindowList.surfaces.length > 0
+                visible: videoGroup.surfaces.length > 0
 
                 Repeater {
-                    model: videoWindowList.surfaces
+                    model: videoGroup.surfaces
 
                     delegate: KIslandRow {
                         required property var modelData
@@ -2640,7 +2593,7 @@ Column {
                     open: render3dSettings.compassCheckButton
                     showSeparator: false
                     verticalPadding: Tokens.spaceSm
-                    label: qsTr("Pos")
+                    label: qsTr("Position")
                     labelColor: root._bright
 
                     KSpinBox {

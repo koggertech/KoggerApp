@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import QtCore
 import kqml_types 1.0
 
 // Drill-in: CSV export with customizable columns. The destination folder +
@@ -41,6 +42,9 @@ Column {
     function doExport() {
         if (!page.store || !page.targetPlot)
             return
+        page.targetPlot.setOffsetX(sonarOffsetSwitch.checked ? sonarOffsetX.value *  0.001 : 0)
+        page.targetPlot.setOffsetY(sonarOffsetSwitch.checked ? sonarOffsetY.value *  0.001 : 0)
+        page.targetPlot.setOffsetZ(sonarOffsetSwitch.checked ? sonarOffsetZ.value * -0.001 : 0)
         core.exportPlotAsCVS(page.store.exportFolderSource,
                              page.targetPlot.plotDatasetChannel(),
                              page.store.exportDecimationEnabled ? page.store.exportDecimationValue : 0)
@@ -67,29 +71,89 @@ Column {
 
     Spacer { size: Tokens.spaceXl }
 
-    ParamCard {
-        id: decimationCard
-        width: parent.width
-        label: qsTr("Decimation, m:")
-        toolTipText: qsTr("Thin out points: keep one per given distance interval (m); off exports every point")
-        labelColor: page._bright
-        labelPixelSize: Tokens.fontLg
-        slotWidth: Math.round(120 * AppPalette.scale)
-        checked: page.store ? page.store.exportDecimationEnabled : false
-        onToggled: function(v) { if (page.store) page.store.exportDecimationEnabled = v }
+    KIsland {
+        KIslandRow {
+            label: qsTr("Decimation, m:")
+            toolTipText: qsTr("Thin out points: keep one per given distance interval (m); off exports every point")
+            labelColor: page._bright
+            interactive: true
+            onClicked: decimationSwitch.click()
 
-        KSpinBox {
-            width: Math.round(120 * AppPalette.scale)
-            height: Tokens.controlHMd
-            fontPixelSize: Tokens.fontLg
-            textColor: page._bright
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            from: 0; to: 100; stepSize: 1
-            value: page.store ? page.store.exportDecimationValue : 10
-            onValueModified: function(v) { if (page.store) page.store.exportDecimationValue = v }
+            Item {
+                width: decimationSlotRow.width
+                height: decimationSlotRow.height
+
+                MouseArea { anchors.fill: parent }
+
+                Row {
+                    id: decimationSlotRow
+                    spacing: Tokens.spaceSm
+
+                    KSpinBox {
+                        width: Math.round(120 * AppPalette.scale)
+                        height: Tokens.controlHMd
+                        fontPixelSize: Tokens.fontLg
+                        textColor: page._bright
+                        from: 0; to: 100; stepSize: 1
+                        value: page.store ? page.store.exportDecimationValue : 10
+                        onValueModified: function(v) { if (page.store) page.store.exportDecimationValue = v }
+                    }
+
+                    KSwitch {
+                        id: decimationSwitch
+                        flat: true
+                        checked: page.store ? page.store.exportDecimationEnabled : false
+                        onToggled: if (page.store) page.store.exportDecimationEnabled = checked
+                    }
+                }
+            }
+        }
+
+        KIslandRow {
+            label: qsTr("Sonar offset XYZ, mm")
+            toolTipText: qsTr("Mount offset of the transducer, applied to the exported coordinates only.")
+            labelColor: page._bright
+            interactive: true
+            onClicked: sonarOffsetSwitch.click()
+
+            KSwitch {
+                id: sonarOffsetSwitch
+                flat: true
+            }
+        }
+
+        KIslandRow {
+            open: sonarOffsetSwitch.checked
+            showSeparator: false
+            verticalPadding: Tokens.spaceSm
+            stacked: true
+
+            Row {
+                width: parent.width
+                height: Tokens.controlHMd
+                spacing: Tokens.spaceXs
+                readonly property real sw: (width - 2 * Tokens.spaceXs) / 3
+
+                KSpinBox {
+                    id: sonarOffsetX
+                    width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
+                }
+                KSpinBox {
+                    id: sonarOffsetY
+                    width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
+                }
+                KSpinBox {
+                    id: sonarOffsetZ
+                    width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
+                }
+            }
         }
     }
+
+    Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffset: sonarOffsetSwitch.checked }
+    Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueX: sonarOffsetX.value }
+    Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueY: sonarOffsetY.value }
+    Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueZ: sonarOffsetZ.value }
 
     // ── Columns ───────────────────────────────────────────────────────────
     Row {

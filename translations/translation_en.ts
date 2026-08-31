@@ -48,6 +48,46 @@
         <source>Speed of sound</source>
         <translation>Speed of sound</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="32"/>
+        <source>Panel at the cursor on the echogram. The distance is always in it, the rest is optional.</source>
+        <translation>Panel at the cursor on the echogram. The distance is always in it, the rest is optional.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="50"/>
+        <source>The channel the cursor reads its numbers from.</source>
+        <translation>The channel the cursor reads its numbers from.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="56"/>
+        <source>Number of the ping under the cursor, counted from the start of the recording.</source>
+        <translation>Number of the ping under the cursor, counted from the start of the recording.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="62"/>
+        <source>How many millimetres of depth one echogram sample covers.</source>
+        <translation>How many millimetres of depth one echogram sample covers.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="68"/>
+        <source>The frequency this ping was made at, kHz.</source>
+        <translation>The frequency this ping was made at, kHz.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="74"/>
+        <source>How many pulses were emitted for one ping.</source>
+        <translation>How many pulses were emitted for one ping.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="80"/>
+        <source>Whether the transmit booster was on for this ping.</source>
+        <translation>Whether the transmit booster was on for this ping.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="86"/>
+        <source>The speed of sound used to turn this ping into depth, m/s.</source>
+        <translation>The speed of sound used to turn this ping into depth, m/s.</translation>
+    </message>
 </context>
 <context>
     <name>AppSettingsPage</name>
@@ -439,11 +479,6 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="957"/>
-        <source>Sonar offset XYZ, mm</source>
-        <translation></translation>
-    </message>
-    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="995"/>
         <source>Processing</source>
         <translation></translation>
@@ -769,9 +804,9 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2114"/>
-        <source>Pos</source>
-        <translation>Pos</translation>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2644"/>
+        <source>Position</source>
+        <translation>Position</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2189"/>
@@ -871,7 +906,7 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="545"/>
         <source>Colour marking and log buffer size</source>
-        <translation></translation>
+        <translation>Colour marking and log buffer size</translation>
     </message>
     <message>
         <source>Pane editing, favorites and ready-made layout presets.</source>
@@ -895,7 +930,7 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="487"/>
         <source>Raise and focus the app window on key events</source>
-        <translation></translation>
+        <translation>Raise and focus the app window on key events</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="561"/>
@@ -983,6 +1018,56 @@
     <message>
         <source>Create panel</source>
         <translation>Create panel</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1062"/>
+        <source>Bottom search settings for an ordinary sounder with one beam pointing down.</source>
+        <translation>Bottom search settings for an ordinary sounder with one beam pointing down.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1064"/>
+        <source>For a sounder with a narrow beam: the bottom echo is shorter, so the search is finer.</source>
+        <translation>For a sounder with a narrow beam: the bottom echo is shorter, so the search is finer.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
+        <source>For a side-scan sonar: the beam looks sideways, not down.</source>
+        <translation>For a side-scan sonar: the beam looks sideways, not down.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1078"/>
+        <source>Lifts the weak echo at long range so the bottom is found far out too.</source>
+        <translation>Lifts the weak echo at long range so the bottom is found far out too.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1115"/>
+        <source>How clear the echo must be to count as bottom. Where it is weaker, the bottom line breaks.</source>
+        <translation>How clear the echo must be to count as bottom. Where it is weaker, the bottom line breaks.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1149"/>
+        <source>Smooths the bottom line over neighbouring pings. Wider is smoother but lags more.</source>
+        <translation>Smooths the bottom line over neighbouring pings. Wider is smoother but lags more.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1183"/>
+        <source>Refines the depth near the one already found and rejects false bottoms from re-reflections. 0 is off.</source>
+        <translation>Refines the depth near the one already found and rejects false bottoms from re-reflections. 0 is off.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1217"/>
+        <source>The bottom is not searched for closer than this.</source>
+        <translation>The bottom is not searched for closer than this.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1251"/>
+        <source>The bottom is not searched for further than this.</source>
+        <translation>The bottom is not searched for further than this.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1360"/>
+        <source>Recompute the bottom over the whole open file. Manual edits are left alone.</source>
+        <translation>Recompute the bottom over the whole open file. Manual edits are left alone.</translation>
     </message>
 </context>
 <context>
@@ -1710,6 +1795,16 @@
         <location filename="../qml/app/CsvExportSettingsTab.qml" line="30"/>
         <source>Contact distance</source>
         <translation>Contact distance</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="97"/>
+        <source>Sonar offset XYZ, mm</source>
+        <translation>Sonar offset XYZ, mm</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="98"/>
+        <source>Mount offset of the transducer, applied to the exported coordinates only.</source>
+        <translation>Mount offset of the transducer, applied to the exported coordinates only.</translation>
     </message>
 </context>
 <context>

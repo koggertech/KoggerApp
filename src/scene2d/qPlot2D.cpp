@@ -478,7 +478,7 @@ int qPlot2D::getRangefinderThemeId() const
     return Plot2D::getRangefinderTheme();
 }
 
-void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz, bool manual) {
+void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, bool manual) {
     if (datasetPtr_ != nullptr) {
         if (auto btpPtr = datasetPtr_->getBottomTrackParamPtr(); btpPtr) {
             btpPtr->preset = static_cast<BottomTrackPreset>(preset);
@@ -490,9 +490,6 @@ void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, 
             btpPtr->maxDistance = range_max;
             btpPtr->indexFrom = 0;
             btpPtr->indexTo = datasetPtr_->size();
-            btpPtr->offset.x = offsetx;
-            btpPtr->offset.y = offsety;
-            btpPtr->offset.z = offsetz;
 
             QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
                                       Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel1, cursor_.subChannel1)),
@@ -518,16 +515,13 @@ void qPlot2D::updateBottomTrackProcessing()
                          btpPtr->maxDistance,
                          btpPtr->gainSlope,
                          btpPtr->threshold,
-                         btpPtr->offset.x,
-                         btpPtr->offset.y,
-                         btpPtr->offset.z,
                          true);
     }
 }
 
-void qPlot2D::refreshDistParams(int preset, int windowSize, float verticalGap, float rangeMin, float rangeMax, float gainSlope, float threshold, float offsetX, float offsetY, float offsetZ)
+void qPlot2D::refreshDistParams(int preset, int windowSize, float verticalGap, float rangeMin, float rangeMax, float gainSlope, float threshold)
 {
-    auto btPRefreshFunc = [this, preset, windowSize, verticalGap, rangeMin, rangeMax, gainSlope, threshold, offsetX, offsetY, offsetZ]() {
+    auto btPRefreshFunc = [this, preset, windowSize, verticalGap, rangeMin, rangeMax, gainSlope, threshold]() {
         if (datasetPtr_) {
             if (auto btpPtr =datasetPtr_->getBottomTrackParamPtr(); btpPtr) {
                 btpPtr->preset = static_cast<BottomTrackPreset>(preset);
@@ -539,9 +533,6 @@ void qPlot2D::refreshDistParams(int preset, int windowSize, float verticalGap, f
                 btpPtr->maxDistance = rangeMax;
                 btpPtr->indexFrom = 0;
                 btpPtr->indexTo = datasetPtr_->size();
-                btpPtr->offset.x = offsetX;
-                btpPtr->offset.y = offsetY;
-                btpPtr->offset.z = offsetZ;
             }
         }
     };
