@@ -230,6 +230,12 @@ Item {
                         elide: Text.ElideRight
                     }
                 }
+
+                KToolTip {
+                    text: root.optionTipAt(tabButton.optionIndex)
+                    shown: tabMouseArea.hoverIndex === tabButton.optionIndex
+                           && !tabMouseArea.pressed
+                }
             }
         }
     }
@@ -275,20 +281,6 @@ Item {
         onCanceled: {
             root.dragPreviewIndex = -1
             dragging = false
-        }
-    }
-
-    Item {
-        id: hoveredSegment
-        x: root.horizontalPadding
-           + Math.max(0, tabMouseArea.hoverIndex) * (root.segmentWidth + root.buttonSpacing)
-        y: root.verticalPadding
-        width: root.segmentWidth
-        height: root.buttonHeight
-
-        KToolTip {
-            text: root.optionTipAt(tabMouseArea.hoverIndex)
-            shown: tabMouseArea.hoverIndex >= 0 && !tabMouseArea.pressed
         }
     }
 }
