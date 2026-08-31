@@ -123,7 +123,10 @@ public:
     bool getUseGPS() const;
     bool getNeedForceZooming() const { return needForceZooming_; }
 
-public slots:    
+    void deferStartupFileOpen(const QString& filePath);
+    Q_INVOKABLE void notifyUiSettingsApplied();
+
+public slots:
     void setIsGPSAlive(bool state) { qDebug() << "Core::setIsGPSAlive" << state; isGPSAlive_ = state; emit isGPSAliveChanged(); }
 
 #ifdef SEPARATE_READING
@@ -310,6 +313,7 @@ private:
     void resetRealtimeSessionState();
     void restoreRealtimeProcessingFlags();
     void releasePlotCaches();
+    void flushStartupFileOpen();
     QString resolveExportBasePath(const QString& basePath) const;
     QString buildExportFileStem(const QString& openedFilePath) const;
 #ifdef Q_OS_ANDROID
@@ -368,6 +372,8 @@ private:
     QString filePath_;
     QString fChName_;
     QString sChName_;
+    QString startupFilePath_;
+    bool uiSettingsApplied_ = false;
 
     bool isFileOpening_;
     bool isAppendMode_ = false;

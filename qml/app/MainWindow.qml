@@ -1148,6 +1148,7 @@ ApplicationWindow {
                 active: true
                 asynchronous: true
                 sourceComponent: appSettingsPageComponent
+                onLoaded: if (typeof core !== "undefined" && core) core.notifyUiSettingsApplied()
             }
         }
 

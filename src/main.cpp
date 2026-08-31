@@ -462,7 +462,7 @@ int main(int argc, char *argv[])
                                                 if (!obj || url != objUrl) return;
                                                 QObject::disconnect(*startupConn);
                                                 delete startupConn;
-                                                core.openLogFile(startupFilePath, false, true);
+                                                core.deferStartupFileOpen(startupFilePath);
                                             }, Qt::QueuedConnection);
         }
     }

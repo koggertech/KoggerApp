@@ -33,6 +33,8 @@ QString channelDisplayName(const DatasetChannel& channel)
 {
     return channel.portName_.isEmpty() ? channel.channelId_.toShortName() : channel.portName_;
 }
+
+constexpr int kUiSettingsWaitMs = 5000;
 }
 
 Core::Core() :
@@ -441,6 +443,45 @@ void Core::restoreRealtimeProcessingFlags()
     if (scene3dViewPtr_) {
         scene3dViewPtr_->setIsOpeningFile(false);
     }
+}
+
+void Core::deferStartupFileOpen(const QString& filePath)
+{
+    startupFilePath_ = filePath;
+
+    if (uiSettingsApplied_) {
+        flushStartupFileOpen();
+        return;
+    }
+
+    QTimer::singleShot(kUiSettingsWaitMs, this, [this]() -> void {
+        if (!startupFilePath_.isEmpty()) {
+            qWarning() << "Core::deferStartupFileOpen: UI settings were not reported within"
+                       << kUiSettingsWaitMs << "ms, opening with current values";
+        }
+        flushStartupFileOpen();
+    });
+}
+
+void Core::notifyUiSettingsApplied()
+{
+    if (uiSettingsApplied_) {
+        return;
+    }
+
+    uiSettingsApplied_ = true;
+    flushStartupFileOpen();
+}
+
+void Core::flushStartupFileOpen()
+{
+    if (startupFilePath_.isEmpty()) {
+        return;
+    }
+
+    const QString filePath = startupFilePath_;
+    startupFilePath_.clear();
+    openLogFile(filePath, false, true);
 }
 
 

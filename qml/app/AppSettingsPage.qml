@@ -813,6 +813,8 @@ Column {
             core.setFixBlackStripesForwardSteps(fixBlackStripesForwardStepsSpinBox.value)
             core.setFixBlackStripesBackwardSteps(fixBlackStripesBackwardStepsSpinBox.value)
             core.setIsAttitudeExpected(sonarOffsetCheckButton.checked)
+            if (sonarOffsetCheckButton.checked)
+                dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, 0)
             core.setPosZeroing(zeroingPosButton.checked)
             core.setBottomTrackZeroing(zeroingBottomTrackButton.checked)
         }
