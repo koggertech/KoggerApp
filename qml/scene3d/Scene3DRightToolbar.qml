@@ -210,7 +210,8 @@ Item {
                 anchors.fill: parent
                 iconSource: "qrc:/icons/ui/location.svg"
                 iconTintColor: AppPalette.text
-                fillHoverColor: AppPalette.cardHover
+                fillHoverColor: checked ? AppPalette.accentBgHover : AppPalette.cardHover
+                fillPressedColor: checked ? AppPalette.accentBgPressed : AppPalette.bgDeep
                 toolTipText: qsTr("Follow boat")
 
                 readonly property bool checked: root.store ? root.store.trackLastDataEnabled : false
@@ -323,7 +324,8 @@ Item {
                 visible: !rulerControl.menuOpen
                 iconSource: "qrc:/icons/ui/ruler_measure.svg"
                 iconTintColor: AppPalette.text
-                fillHoverColor: AppPalette.cardHover
+                fillHoverColor: rulerControl.hasGeometry ? AppPalette.accentBgHover : AppPalette.cardHover
+                fillPressedColor: rulerControl.hasGeometry ? AppPalette.accentBgPressed : AppPalette.bgDeep
                 fillColor:   rulerControl.hasGeometry ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: rulerControl.hasGeometry ? AppPalette.accentBorder : AppPalette.border
                 borderWidth: rulerControl.hasGeometry ? 2 : 0
@@ -367,7 +369,8 @@ Item {
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/point.svg"
                 iconTintColor: AppPalette.text
-                fillHoverColor: AppPalette.cardHover
+                fillHoverColor: checked ? AppPalette.accentBgHover : AppPalette.cardHover
+                fillPressedColor: checked ? AppPalette.accentBgPressed : AppPalette.bgDeep
                 toolTipText: qsTr("Point")
                 property bool checked: root.geo ? root.geo.tool === 1 : false
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
@@ -383,7 +386,8 @@ Item {
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/line.svg"
                 iconTintColor: AppPalette.text
-                fillHoverColor: AppPalette.cardHover
+                fillHoverColor: checked ? AppPalette.accentBgHover : AppPalette.cardHover
+                fillPressedColor: checked ? AppPalette.accentBgPressed : AppPalette.bgDeep
                 toolTipText: qsTr("Line")
                 property bool checked: root.geo ? root.geo.tool === 2 : false
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
@@ -399,7 +403,8 @@ Item {
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/polygon.svg"
                 iconTintColor: AppPalette.text
-                fillHoverColor: AppPalette.cardHover
+                fillHoverColor: checked ? AppPalette.accentBgHover : AppPalette.cardHover
+                fillPressedColor: checked ? AppPalette.accentBgPressed : AppPalette.bgDeep
                 toolTipText: qsTr("Polygon")
                 property bool checked: root.geo ? root.geo.tool === 3 : false
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card

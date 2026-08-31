@@ -28,6 +28,7 @@ ApplicationWindow {
     WorkspaceStore {
         id: workspaceStore
 
+        usblDeviceAvailable: appUsblEngine.hasDevice
         windowWidth: root.width
         windowHeight: root.height
         layoutPortraitCW: root.deviceOrientation !== Qt.InvertedPortraitOrientation
@@ -1104,6 +1105,8 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "quickActions" ? qsTr("Quick action menu")
                      : workspaceStore.settingsSubPageKind === "widgetEdit"   ? (workspaceStore.widgetEditIndex >= 0 ? qsTr("Edit panel") : qsTr("Create panel"))
                      : workspaceStore.settingsSubPageKind === "servoPanel"   ? qsTr("Servo panel")
+                     : workspaceStore.settingsSubPageKind === "usblPanel"    ? qsTr("USBL panel")
+                     : workspaceStore.settingsSubPageKind === "standPanel"   ? qsTr("Stand panel")
                      : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
@@ -1132,6 +1135,8 @@ ApplicationWindow {
             subPage: workspaceStore.settingsSubPageKind === "quickActions" ? quickActionsSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "widgetEdit" ? widgetEditTabComponent
                      : workspaceStore.settingsSubPageKind === "servoPanel" ? servoPanelSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "usblPanel"  ? usblPanelSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "standPanel" ? standPanelSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "uiSaving"   ? uiSavingSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
@@ -1250,10 +1255,7 @@ ApplicationWindow {
                 Loader {
                     id: slotLoader
                     anchors.fill: parent
-                    sourceComponent: !widgetSlot._wdef ? dataWidgetPanelComp
-                                     : widgetSlot._wdef.kind === "usblNodes" ? usblNodesPanelComp
-                                     : widgetSlot._wdef.kind === "stand"     ? standPanelComp
-                                                                            : dataWidgetPanelComp
+                    sourceComponent: dataWidgetPanelComp
                 }
 
                 // BOTH COMPONENTS LIVE INSIDE THE DELEGATE, and they have to. An object created
@@ -1274,49 +1276,39 @@ ApplicationWindow {
                     }
                 }
 
-                Component {
-                    id: standPanelComp
-                    StandPanelPopup {
-                        readonly property var _wdef: widgetSlot._wdef
-                        anchors.fill: parent
-                        store: workspaceStore
-                        def: _wdef
-                        // The panel acts on ONE device, unlike the other kinds, which read
-                        // device-agnostic caches. Without a stand-capable one it says so.
-                        dev: workspaceStore.standDevice
-                        popupVisible: !!_wdef && workspaceStore.standAvailable
-                                      && workspaceStore.widgetShown(_wdef.id)
-                        popupId: _wdef ? "widget:" + _wdef.id : ""
-                        siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
-                        siblingIdList: ["btEdit", "profiles"]
-                    }
-                }
-
-                Component {
-                    id: usblNodesPanelComp
-                    UsblNodesPopup {
-                        readonly property var _wdef: widgetSlot._wdef
-                        anchors.fill: parent
-                        store: workspaceStore
-                        engine: appUsblEngine
-                        def: _wdef
-                        // No _beingEdited term: this panel has no on-scene editor to hide
-                        // behind, so hiding it while its (text-only) settings page is open
-                        // would blank the very thing being configured.
-                        popupVisible: !!_wdef && workspaceStore.widgetShown(_wdef.id)
-                        popupId: _wdef ? "widget:" + _wdef.id : ""
-                        siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
-                        siblingIdList: ["btEdit", "profiles"]
-                    }
-                }
-
             }
+        }
+
+        StandPanelPopup {
+            id: standPanel
+            anchors.fill: parent
+            z: ZOrder.widgetPopup + workspaceStore.widgetStackRank(workspaceStore.standPanelId)
+            store: workspaceStore
+            def: workspaceStore.standPanelDef
+            dev: workspaceStore.standDevice
+            popupVisible: workspaceStore.standPanelShown
+            popupId: "widget:" + workspaceStore.standPanelId
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles"]
+        }
+
+        UsblNodesPopup {
+            id: usblNodesPanel
+            anchors.fill: parent
+            z: ZOrder.widgetPopup + workspaceStore.widgetStackRank(workspaceStore.usblPanelId)
+            store: workspaceStore
+            engine: appUsblEngine
+            def: workspaceStore.usblPanelDef
+            popupVisible: workspaceStore.usblPanelShown
+            popupId: "widget:" + workspaceStore.usblPanelId
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles"]
         }
 
         ServoPanelPopup {
             id: servoPanel
             anchors.fill: parent
-            z: ZOrder.widgetPopup + workspaceStore.widgetLimit - 1
+            z: ZOrder.widgetPopup + workspaceStore.widgetStackRank(workspaceStore.servoPanelId)
             store: workspaceStore
             def: workspaceStore.servoPanelDef
             popupVisible: workspaceStore.servoPanelShown
@@ -1333,6 +1325,8 @@ ApplicationWindow {
                 btEditPopup.syncFromStore()
                 profilesPopup.syncFromStore()
                 servoPanel.syncFromStore()
+                usblNodesPanel.syncFromStore()
+                standPanel.syncFromStore()
                 for (var i = 0; i < widgetsRepeater.count; ++i) {
                     var it = widgetsRepeater.itemAt(i)
                     if (it) it.syncFromStore()
@@ -1368,6 +1362,22 @@ ApplicationWindow {
             id: servoPanelSettingsTabComponent
 
             ServoPanelSettingsPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: usblPanelSettingsTabComponent
+
+            UsblPanelSettingsPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: standPanelSettingsTabComponent
+
+            StandPanelSettingsPage {
                 store: workspaceStore
             }
         }

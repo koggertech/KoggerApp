@@ -19,6 +19,9 @@ Column {
     readonly property int instruments: theme ? theme.instrumentsGrade : 0
     readonly property real groupWidth: Math.max(0, width)
     readonly property color _bright: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+    readonly property color _shownFill:    Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20)
+    readonly property color _shownHover:   Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.24 : 0.30)
+    readonly property color _shownPressed: Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.32 : 0.38)
 
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
@@ -718,14 +721,77 @@ Column {
 
         KIsland {
             KIslandRow {
+                id: usblPanelRow
+                readonly property bool shown: !!(root.store && root.store.usblPanelShown)
+
+                visible: !!(root.store && root.store.usblPanelListed)
+                label: qsTr("USBL")
+                labelColor: shown ? "#FDE68A" : AppPalette.textStrong
+                fillColor:    shown ? root._shownFill    : "transparent"
+                hoverColor:   shown ? root._shownHover   : AppPalette.cardHover
+                pressedColor: shown ? root._shownPressed : AppPalette.bgHover
+                verticalPadding: Tokens.spaceSm
+                interactive: true
+                onClicked: if (root.store) root.store.setUsblPanelShown(!usblPanelRow.shown)
+
+                leading: WidgetGridPreview {
+                    width: Math.round(84 * AppPalette.scale)
+                    height: Math.round(64 * AppPalette.scale)
+                    def: root.store ? root.store.usblPanelDef : null
+                }
+
+                KCircleIconButton {
+                    width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd
+                    iconSource: "qrc:/icons/ui/pencil.svg"; iconTintColor: AppPalette.textSecond
+                    fillColor: AppPalette.controlRaised
+                    fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                    borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover
+                    toolTipText: qsTr("Edit panel")
+                    onClicked: root.store.openUsblPanelSettings()
+                }
+            }
+
+            KIslandRow {
+                id: standPanelRow
+                readonly property bool shown: !!(root.store && root.store.standPanelShown)
+
+                visible: !!(root.store && root.store.standPanelListed)
+                label: qsTr("Stand")
+                labelColor: shown ? "#FDE68A" : AppPalette.textStrong
+                fillColor:    shown ? root._shownFill    : "transparent"
+                hoverColor:   shown ? root._shownHover   : AppPalette.cardHover
+                pressedColor: shown ? root._shownPressed : AppPalette.bgHover
+                verticalPadding: Tokens.spaceSm
+                interactive: true
+                onClicked: if (root.store) root.store.setStandPanelShown(!standPanelRow.shown)
+
+                leading: WidgetGridPreview {
+                    width: Math.round(84 * AppPalette.scale)
+                    height: Math.round(64 * AppPalette.scale)
+                    def: root.store ? root.store.standPanelDef : null
+                }
+
+                KCircleIconButton {
+                    width: Tokens.controlHMd; height: Tokens.controlHMd; rounded: false; cornerRadius: Tokens.radiusMd
+                    iconSource: "qrc:/icons/ui/pencil.svg"; iconTintColor: AppPalette.textSecond
+                    fillColor: AppPalette.controlRaised
+                    fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2); fillPressedColor: AppPalette.bgDeep
+                    borderColor: AppPalette.border; borderHoverColor: AppPalette.borderHover
+                    toolTipText: qsTr("Edit panel")
+                    onClicked: root.store.openStandPanelSettings()
+                }
+            }
+
+            KIslandRow {
                 id: servoPanelRow
                 readonly property bool shown: !!(root.store && root.store.servoPanelShown)
 
                 visible: !!(root.store && root.store.servoPanelListed)
                 label: qsTr("Servo")
                 labelColor: shown ? "#FDE68A" : AppPalette.textStrong
-                caption: qsTr("Servo control")
-                fillColor: shown ? Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20) : "transparent"
+                fillColor:    shown ? root._shownFill    : "transparent"
+                hoverColor:   shown ? root._shownHover   : AppPalette.cardHover
+                pressedColor: shown ? root._shownPressed : AppPalette.bgHover
                 verticalPadding: Tokens.spaceSm
                 interactive: true
                 onClicked: if (root.store) root.store.setServoPanelShown(!servoPanelRow.shown)
@@ -760,11 +826,10 @@ Column {
                     visible: !!(root.store && root.store.widgetListed(widgetRow.def))
                     label: qsTr("Panel %1").arg(widgetRow.widgetIndex + 1)
                     labelColor: shown ? "#FDE68A" : AppPalette.textStrong
-                    caption: !widgetRow.def ? ""
-                           : widgetRow.def.kind === "usblNodes" ? qsTr("Acoustic nodes")
-                           : widgetRow.def.kind === "stand"     ? qsTr("Stand control")
-                                                                : (widgetRow.def.cols + "×" + widgetRow.def.rows)
-                    fillColor: shown ? Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20) : "transparent"
+                    caption: widgetRow.def ? (widgetRow.def.cols + "×" + widgetRow.def.rows) : ""
+                    fillColor:    shown ? root._shownFill    : "transparent"
+                    hoverColor:   shown ? root._shownHover   : AppPalette.cardHover
+                    pressedColor: shown ? root._shownPressed : AppPalette.bgHover
                     verticalPadding: Tokens.spaceSm
                     interactive: true
                     onClicked: {

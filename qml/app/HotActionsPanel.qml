@@ -60,7 +60,9 @@ Item {
     // not offered, so the menu must not size itself for it. The servo card is not in
     // store.widgets at all and is offered only in developer mode, so it is counted separately.
     readonly property int widgetCardCount: (store ? store.listedWidgetCount : 0)
+                                           + ((store && store.usblPanelListed) ? 1 : 0)
                                            + ((store && store.servoPanelListed) ? 1 : 0)
+                                           + ((store && store.standPanelListed) ? 1 : 0)
     property bool widgetsMenuOpen: false
     property var _widgetsSlot: null
     property bool consoleButtonEnabled: true
@@ -393,6 +395,34 @@ Item {
                     spacing: root.favoriteItemSpacing
 
                     WidgetCard {
+                        visible: !!(root.store && root.store.usblPanelListed)
+                        width: widgetsList.width
+                        height: visible ? root.favoriteItemHeight : 0
+                        contentMargin: root.favoriteCardMargin
+                        previewWidth: root.favoritePreviewWidth
+                        previewHeight: root.favoritePreviewHeight
+                        def: root.store ? root.store.usblPanelDef : null
+                        showText: false
+                        selectionMode: true
+                        selected: !!(root.store && root.store.usblPanelShown)
+                        onToggled: function(value) { if (root.store) root.store.setUsblPanelShown(value) }
+                    }
+
+                    WidgetCard {
+                        visible: !!(root.store && root.store.standPanelListed)
+                        width: widgetsList.width
+                        height: visible ? root.favoriteItemHeight : 0
+                        contentMargin: root.favoriteCardMargin
+                        previewWidth: root.favoritePreviewWidth
+                        previewHeight: root.favoritePreviewHeight
+                        def: root.store ? root.store.standPanelDef : null
+                        showText: false
+                        selectionMode: true
+                        selected: !!(root.store && root.store.standPanelShown)
+                        onToggled: function(value) { if (root.store) root.store.setStandPanelShown(value) }
+                    }
+
+                    WidgetCard {
                         visible: !!(root.store && root.store.servoPanelListed)
                         width: widgetsList.width
                         height: visible ? root.favoriteItemHeight : 0
@@ -418,6 +448,7 @@ Item {
                             previewWidth: root.favoritePreviewWidth
                             previewHeight: root.favoritePreviewHeight
                             def: widgetDef
+                            title: qsTr("Panel %1").arg(index + 1)
                             visible: !!(root.store && root.store.widgetListed(widgetDef))
                             showText: false
                             selectionMode: true
@@ -1573,7 +1604,8 @@ Item {
                             glyphPixelSize: Math.round(11 * root._s)
                             readonly property bool _active: devBadge._dev && devBadge._dev.transFreq === 700
                             fillColor:      _active ? AppPalette.accentBgStrong : AppPalette.card
-                            fillHoverColor: AppPalette.cardHover
+                            fillHoverColor: _active ? AppPalette.accentBgHover : AppPalette.cardHover
+                            fillPressedColor: _active ? AppPalette.accentBgPressed : AppPalette.bgDeep
                             borderColor:    _active ? AppPalette.accentBorder : AppPalette.border
                             toolTipText: qsTr("Set 700 kHz")
                             onClicked: {
@@ -1589,7 +1621,8 @@ Item {
                             glyphPixelSize: Math.round(11 * root._s)
                             readonly property bool _active: devBadge._dev && devBadge._dev.transFreq === 450
                             fillColor:      _active ? AppPalette.accentBgStrong : AppPalette.card
-                            fillHoverColor: AppPalette.cardHover
+                            fillHoverColor: _active ? AppPalette.accentBgHover : AppPalette.cardHover
+                            fillPressedColor: _active ? AppPalette.accentBgPressed : AppPalette.bgDeep
                             borderColor:    _active ? AppPalette.accentBorder : AppPalette.border
                             toolTipText: qsTr("Set 450 kHz")
                             onClicked: {

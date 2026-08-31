@@ -18,16 +18,9 @@ Item {
     Loader {
         id: stepLoader
         width: editPage.width
-        sourceComponent: editPage._step === 0 ? kindComp
-                       : editPage._step === 1 ? sizeComp
-                       : editPage._step === 3 ? usblComp
-                       : editPage._step === 4 ? standComp
-                                              : placeComp
+        sourceComponent: editPage._step === 1 ? sizeComp : placeComp
     }
 
-    Component { id: kindComp;  WidgetKindStep  { store: editPage.store } }
     Component { id: sizeComp;  WidgetSizeStep  { store: editPage.store } }
     Component { id: placeComp; WidgetPlaceStep { store: editPage.store } }
-    Component { id: usblComp;  WidgetUsblStep  { store: editPage.store } }
-    Component { id: standComp; WidgetStandStep { store: editPage.store } }
 }

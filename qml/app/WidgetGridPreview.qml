@@ -10,11 +10,15 @@ Item {
     readonly property bool _isServo: !!(def && def.kind === "servo")
     readonly property bool _isStand: !!(def && def.kind === "stand")
 
-    readonly property real _sInset: Tokens.spaceXs
+    readonly property real _glyphPadX: Math.max(4, Math.round(Math.min(width, height) * 0.12))
+    readonly property real _glyphPadY: Tokens.spaceXs
     readonly property int _sRef: 100
-    readonly property real _sInkRatio: Math.max(0.01, sRefTm.tightBoundingRect.height / _sRef)
-    readonly property real _sTopRatio: (sRefFm.ascent + sRefTm.tightBoundingRect.y) / _sRef
-    readonly property real _sLeftRatio: sRefTm.tightBoundingRect.x / _sRef
+    readonly property real _capHRatio: Math.max(0.01, sCapTm.tightBoundingRect.height / _sRef)
+    readonly property real _capTopRatio: (sRefFm.ascent + sCapTm.tightBoundingRect.y) / _sRef
+    readonly property real _capLeftRatio: sCapTm.tightBoundingRect.x / _sRef
+    readonly property real _sInkRatioW: Math.max(0.01, sRefTm.tightBoundingRect.width / _sRef)
+    readonly property real _glyphFill: 0.86
+    readonly property bool _hasGlyph: _isNodes || _isServo || _isStand
     readonly property int _cols: (def && typeof def.cols === "number") ? def.cols : 1
     readonly property int _rows: (def && typeof def.rows === "number") ? def.rows : 1
     readonly property real _gap: Math.round(3 * AppPalette.scale)
@@ -26,12 +30,8 @@ Item {
         border.width: 1
         border.color: AppPalette.border
 
-        // Neither freeform panel has a grid to preview or a fixed row count to draw honestly, so
-        // the thumbnail is a glyph for "a list": three full-width bars. Drawing three cells of a
-        // grid instead would promise a shape the panel does not have. The servo panel takes the
-        // same bars with its initial over them -- one glyph, one letter to tell them apart.
         Column {
-            visible: root._isNodes || root._isServo
+            visible: root._hasGlyph
             anchors.fill: parent
             anchors.margins: Tokens.spaceXs
             spacing: root._gap
@@ -52,35 +52,6 @@ Item {
             }
         }
 
-        // A stand panel has no grid and no row count either. What it always has is a command
-        // row, so the thumbnail is that: one wide button and three round ones.
-        Row {
-            visible: root._isStand
-            anchors.centerIn: parent
-            spacing: root._gap
-            readonly property real dot: Math.max(3, Math.min(parent.height * 0.34, parent.width * 0.12))
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.dot * 2.4; height: parent.dot
-                radius: height / 2
-                color: AppPalette.accentBg
-                border.width: 1
-                border.color: AppPalette.accentBorder
-            }
-            Repeater {
-                model: 3
-                delegate: Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.dot; height: parent.dot
-                    radius: height / 2
-                    color: AppPalette.rowRaised
-                    border.width: 1
-                    border.color: AppPalette.border
-                }
-            }
-        }
-
         FontMetrics {
             id: sRefFm
             font.bold: true
@@ -88,25 +59,34 @@ Item {
         }
 
         TextMetrics {
+            id: sCapTm
+            font: sRefFm.font
+            text: "H"
+        }
+
+        TextMetrics {
             id: sRefTm
             font: sRefFm.font
-            text: "S"
+            text: root._isNodes ? "U" : root._isStand ? "St" : "Se"
         }
 
         Text {
             id: sGlyph
-            visible: root._isServo
+            visible: root._hasGlyph
             text: sRefTm.text
-            x: root._sInset - root._sLeftRatio * font.pixelSize
-            y: root._sInset - root._sTopRatio * font.pixelSize
+            readonly property real capBoxH: root._capHRatio * font.pixelSize
+            x: root._glyphPadX - root._capLeftRatio * font.pixelSize
+            y: (parent.height - capBoxH) / 2 - root._capTopRatio * font.pixelSize
             color: AppPalette.bgDeep
             font.bold: true
-            font.pixelSize: Math.max(8, Math.round((parent.height - root._sInset * 2) / root._sInkRatio))
+            font.pixelSize: Math.max(8, Math.round(root._glyphFill * Math.min(
+                                (parent.height - root._glyphPadY * 2) / root._capHRatio,
+                                (parent.width  - root._glyphPadX * 2) / root._sInkRatioW)))
         }
 
         Item {
             id: area
-            visible: !root._isNodes && !root._isServo && !root._isStand
+            visible: !root._hasGlyph
             anchors.fill: parent
             anchors.margins: Tokens.spaceXs
 

@@ -1072,12 +1072,8 @@
         <translation>Panel %1</translation>
     </message>
     <message>
-        <source>Servo control</source>
-        <translation>Sterowanie serwem</translation>
-    </message>
-    <message>
-        <source>Acoustic nodes</source>
-        <translation>Węzły akustyczne</translation>
+        <source>USBL</source>
+        <translation>USBL</translation>
     </message>
     <message>
         <source>Delete panel</source>
@@ -1160,6 +1156,11 @@
         <location filename="../qml/app/AppSettingsPage.qml" line="3195"/>
         <source>Developer mode enabled</source>
         <translation>Włączono tryb dla programistów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="724"/>
+        <source>Stand</source>
+        <translation>Stanowisko</translation>
     </message>
 </context>
 <context>
@@ -3578,6 +3579,11 @@
         <source>Widget panels</source>
         <translation>Panele widżetów</translation>
     </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="449"/>
+        <source>Panel %1</source>
+        <translation>Panel %1</translation>
+    </message>
 </context>
 <context>
     <name>HotkeysDialog</name>
@@ -4264,6 +4270,16 @@
     <message>
         <source>Edit panel</source>
         <translation>Edytuj panel</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1108"/>
+        <source>USBL panel</source>
+        <translation>Panel USBL</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1109"/>
+        <source>Stand panel</source>
+        <translation>Panel stanowiska</translation>
     </message>
 </context>
 <context>
@@ -5938,41 +5954,19 @@
     </message>
 </context>
 <context>
-    <name>WidgetKindStep</name>
-    <message>
-        <source>Choose what this panel shows.</source>
-        <translation>Wybierz, co pokazuje ten panel.</translation>
-    </message>
-    <message>
-        <source>Field grid</source>
-        <translation>Siatka pól</translation>
-    </message>
-    <message>
-        <source>A grid of cells you fill with values — depth, speed, coordinates.</source>
-        <translation>Siatka komórek wypełniana wartościami — głębokość, prędkość, współrzędne.</translation>
-    </message>
-    <message>
-        <source>Acoustic nodes</source>
-        <translation>Węzły akustyczne</translation>
-    </message>
-    <message>
-        <source>Servo control</source>
-        <translation>Sterowanie serwem</translation>
-    </message>
-    <message>
-        <source>Sweep, step, centre and the live angle.</source>
-        <translation>Wychylenie, krok, środek i bieżący kąt.</translation>
-    </message>
-</context>
-<context>
     <name>WidgetCard</name>
     <message>
-        <source>Acoustic nodes</source>
-        <translation>Węzły akustyczne</translation>
+        <source>USBL</source>
+        <translation>USBL</translation>
     </message>
     <message>
         <source>Servo control</source>
         <translation>Sterowanie serwem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetCard.qml" line="74"/>
+        <source>Stand control</source>
+        <translation>Sterowanie stanowiskiem</translation>
     </message>
 </context>
 <context>
@@ -6113,6 +6107,228 @@
     <message>
         <source>Background transparency</source>
         <translation>Przezroczystość tła</translation>
+    </message>
+</context>
+<context>
+    <name>UsblPanelSettingsPage</name>
+    <message>
+        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="22"/>
+        <source>This panel shows one row per node in the USBL plan: its address, range and SNR, whether a request is out, how the last interrogation ended, which command that was, and how old the numbers are.</source>
+        <translation>Panel pokazuje jeden wiersz na każdy węzeł z planu USBL: adres, odległość i SNR, czy jest zaległe zapytanie, jak zakończyło się ostatnie odpytanie, jaka to była komenda i jak stare są liczby.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="39"/>
+        <source>Show automatically</source>
+        <translation>Pokazuj automatycznie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="40"/>
+        <source>Brings the panel up when a USBL device or beacon connects.</source>
+        <translation>Wyświetla panel po podłączeniu urządzenia USBL lub bakenu.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="48"/>
+        <source>Background transparency</source>
+        <translation>Przezroczystość tła</translation>
+    </message>
+</context>
+<context>
+    <name>StandPanelSettingsPage</name>
+    <message>
+        <location filename="../qml/app/StandPanelSettingsPage.qml" line="15"/>
+        <source>This panel configures and runs a calibration stand: the scan order, the inner and outer angles, the step and the dwell. The stand takes the whole configuration only as part of Start, so it is set and sent in the panel itself.</source>
+        <translation>Ten panel konfiguruje i uruchamia stanowisko kalibracyjne: kolejność skanu, kąty wewnętrzne i zewnętrzne, krok i czas postoju. Stanowisko przyjmuje całą konfigurację tylko razem ze Startem, dlatego ustawia się ją i wysyła w samym panelu.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelSettingsPage.qml" line="24"/>
+        <source>Show automatically</source>
+        <translation>Pokazuj automatycznie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelSettingsPage.qml" line="25"/>
+        <source>Brings the panel up when a device with a stand connects.</source>
+        <translation>Wyświetla panel po podłączeniu urządzenia ze stanowiskiem.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelSettingsPage.qml" line="35"/>
+        <source>Background transparency</source>
+        <translation>Przezroczystość tła</translation>
+    </message>
+</context>
+<context>
+    <name>StandPanelPopup</name>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="300"/>
+        <source>Stand</source>
+        <translation>Stanowisko</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="300"/>
+        <source>Hide panel</source>
+        <translation>Ukryj panel</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="300"/>
+        <source>Panel settings</source>
+        <translation>Ustawienia panelu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Start</source>
+        <comment>angle range</comment>
+        <translation>Początek</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>End</source>
+        <comment>angle range</comment>
+        <translation>Koniec</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Step</source>
+        <comment>angle range</comment>
+        <translation>Krok</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>device</source>
+        <translation>urządzenie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>not sent</source>
+        <translation>nie wysłano</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Configuration</source>
+        <translation>Konfiguracja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Hide configuration</source>
+        <translation>Ukryj konfigurację</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Pause — takes effect at the end of the motion already commanded</source>
+        <translation>Pauza — zadziała po zakończeniu już zleconego ruchu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Resume</source>
+        <translation>Wznów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Stop</source>
+        <translation>Zatrzymaj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Home</source>
+        <translation>Pozycja wyjściowa</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>No stand-capable device</source>
+        <translation>Brak urządzenia ze stanowiskiem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Scan order</source>
+        <translation>Kolejność skanu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Az → El</source>
+        <translation>Az → El</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>El → Az</source>
+        <translation>El → Az</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Inner</source>
+        <translation>Wewnętrzna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Outer</source>
+        <translation>Zewnętrzna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Motion</source>
+        <translation>Ruch</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Reverse inner</source>
+        <translation>Wewnętrzna tam i z powrotem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>The inner axis sweeps forward then back for each outer step</source>
+        <translation>Oś wewnętrzna przechodzi w przód i w tył na każdym kroku osi zewnętrznej</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Continuous inner</source>
+        <translation>Wewnętrzna bez zatrzymań</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Firing</source>
+        <translation>Nadawanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Fires</source>
+        <translation>Impulsy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Cycles</source>
+        <translation>Cykle</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Timing</source>
+        <translation>Czasy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Settle, ms</source>
+        <translation>Stabilizacja, ms</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Post-fire, ms</source>
+        <translation>Po impulsie, ms</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>elevation</source>
+        <translation>elewacja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>azimuth</source>
+        <translation>azymut</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Start</source>
+        <translation>Start</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>The inner axis sweeps each leg without stopping, firing at every step boundary. At most one fire per point; post-fire wait does not apply.</source>
+        <translation>Oś wewnętrzna przechodzi każdy przebieg bez zatrzymań, nadając na granicy każdego kroku. Najwyżej jeden impuls na punkt; oczekiwanie po impulsie nie obowiązuje.</translation>
     </message>
 </context>
 </TS>

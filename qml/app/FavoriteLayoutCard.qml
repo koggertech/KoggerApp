@@ -23,6 +23,8 @@ Rectangle {
     property bool extraHovered: false
     readonly property bool hovered: hitArea.containsMouse || extraHovered
 
+    readonly property string layoutCaption: qsTr("Layout %1").arg(root.favoriteIndex + 1)
+
     signal clicked()
 
     implicitWidth: showText ? Math.round(230 * AppPalette.scale)
@@ -58,7 +60,7 @@ Rectangle {
         spacing: Tokens.spaceXs
 
         Text {
-            text: qsTr("Layout %1").arg(root.favoriteIndex + 1)
+            text: root.layoutCaption
             color: root.selected ? "#FDE68A" : AppPalette.text
             font.pixelSize: Tokens.fontLg
             font.bold: true
@@ -86,6 +88,11 @@ Rectangle {
     }
 
     KFocusRing { id: focusRing; z: 12 }
+
+    KToolTip {
+        text: root.showText ? "" : root.layoutCaption
+        shown: root.hovered
+    }
 
     // Pulse overlay — fires when flashToken changes while highlighted.
     Rectangle {

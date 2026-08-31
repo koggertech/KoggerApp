@@ -136,6 +136,8 @@ QtObject {
     readonly property color accentBg:       accent
     readonly property color accentBgStrong: accent
     readonly property color accentBorder:   Qt.lighter(accent, 1.25)
+    readonly property color accentBgHover:   Qt.lighter(accent, 1.18)
+    readonly property color accentBgPressed: Qt.darker(accent, 1.12)
     readonly property color accentBar:      accent
 
     readonly property bool _desert: !!theme && theme.themeID === 8

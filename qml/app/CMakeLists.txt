@@ -51,6 +51,7 @@ qt_add_qml_module(kogger_app
         ServoPanelBody.qml
         ServoPanelPopup.qml
         ServoPanelSettingsPage.qml
+        StandPanelSettingsPage.qml
         ServoPanelScroll.qml
         SettingsGearButton.qml
         SettingsGroupBase.qml
@@ -69,6 +70,7 @@ qt_add_qml_module(kogger_app
         UsblHexField.qml
         UsblNodesPopup.qml
         UsblOpBadge.qml
+        UsblPanelSettingsPage.qml
         UsblPlanGroup.qml
         UsblPlanStore.qml
         UsblResponseGroup.qml
@@ -83,9 +85,6 @@ qt_add_qml_module(kogger_app
         WidgetEditOverlay.qml
         WidgetEditPage.qml
         WidgetGridPreview.qml
-        WidgetKindStep.qml
-        WidgetStandStep.qml
-        WidgetUsblStep.qml
         WidgetPlaceStep.qml
         WidgetSizeStep.qml
         WorkspaceStore.qml

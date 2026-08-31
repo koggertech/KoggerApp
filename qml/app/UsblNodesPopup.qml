@@ -32,8 +32,8 @@ BasePanePopup {
     property real widgetScale: 1.0
 
     readonly property real _bgAlpha: {
-        var t = (def && typeof def.transparency === "number") ? def.transparency : 0
-        return Math.max(0, Math.min(1, 1 - t / 100))
+        var t = store ? store.usblPanelTransparency : 0
+        return Math.max(0.15, Math.min(1, 1 - t / 100))
     }
 
     readonly property real _appScale: AppPalette.appScale
@@ -355,8 +355,9 @@ BasePanePopup {
     Rectangle {
         anchors.fill: parent
         radius: root.panelRadius
-        color: Qt.rgba(AppPalette.bg.r, AppPalette.bg.g, AppPalette.bg.b, root._bgAlpha)
+        color: AppPalette.bg
         border.width: 0
+        opacity: root._bgAlpha
 
         Column {
             width: root._contentW

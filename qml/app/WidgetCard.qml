@@ -17,6 +17,12 @@ Rectangle {
 
     readonly property bool hovered: hitArea.containsMouse || extraHovered
 
+    readonly property string kindCaption: !def ? ""
+        : def.kind === "usblNodes" ? qsTr("USBL")
+        : def.kind === "servo"     ? qsTr("Servo control")
+        : def.kind === "stand"     ? qsTr("Stand control")
+                                   : (def.cols + "×" + def.rows)
+
     signal clicked()
     signal toggled(bool value)
 
@@ -68,11 +74,7 @@ Rectangle {
             // The subtitle is the panel's SHAPE, and a nodes panel does not have one to state —
             // its row count is the plan's and changes while you are looking at it. So it names
             // the kind instead of printing a number that would be wrong by the next fix.
-            text: !root.def ? ""
-                : root.def.kind === "usblNodes" ? qsTr("Acoustic nodes")
-                : root.def.kind === "servo"     ? qsTr("Servo control")
-                : root.def.kind === "stand"     ? qsTr("Stand control")
-                                                : (root.def.cols + "×" + root.def.rows)
+            text: root.kindCaption
             color: AppPalette.textMuted
             font.pixelSize: Tokens.fontSm
             elide: Text.ElideRight
@@ -86,5 +88,10 @@ Rectangle {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: { root.forceActiveFocus(); root._activate() }
+    }
+
+    KToolTip {
+        text: root.showText ? "" : (root.title.length > 0 ? root.title : root.kindCaption)
+        shown: root.hovered
     }
 }

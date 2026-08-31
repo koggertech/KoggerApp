@@ -385,10 +385,7 @@ readonly property bool standAvailable: (typeof deviceManagerWrapper !== "undefin
 // Whether a panel is offered to the operator at all. A stand panel with no stand behind it is
 // not listed, not shown in the quick-actions menu and not drawn -- it stays in the def list so
 // that plugging the stand back in restores it with its scan intact.
-function widgetListed(def) {
-    if (!def) return false
-    return !(def.kind === "stand" && !standAvailable)
-}
+function widgetListed(def) { return !!def }
 
 readonly property int listedWidgetCount: {
     var n = 0
@@ -415,15 +412,6 @@ readonly property int standDeviceCount: {
     for (var i = 0; i < activeDeviceList.length; ++i)
         if (activeDeviceList[i] && activeDeviceList[i].isStandSupport) ++n
     return n
-}
-
-// One stand, one panel. A second would carry its own scan and its own idea of what was last
-// sent, and both would be driving the same device -- so after either one starts a run, the other
-// reports a scan that is not running.
-readonly property bool hasStandPanel: {
-    for (var i = 0; i < widgets.length; ++i)
-        if (widgets[i] && widgets[i].kind === "stand") return true
-    return false
 }
 
 onActiveDeviceListChanged: {
@@ -589,24 +577,8 @@ function generateWidgetId() {
     return id
 }
 
-// The panel KINDS. "grid" is the cols×rows field grid this system was built for; "usblNodes"
-// is a list whose length comes from the USBL plan at runtime.
-//
-// A kind exists because the grid's size is a pure function of cols×rows×84px and that is
-// load-bearing — occupancy validation, the drop maths, the editor overlay's cell grid and the
-// aspect-ray scale snapping all derive from it. A panel whose height depends on how many
-// beacons answered cannot be a cell in that grid without breaking each of them separately, so
-// it is a different kind of panel that happens to reuse everything ELSE a panel has: the
-// position/scale/z instance, the shown map, docking, the list, the limit.
-readonly property var widgetKinds: ["grid", "usblNodes", "stand"]
-function widgetKindOf(def) {
-    // Absent means "grid": every blob written before kinds existed is one, and must load
-    // unchanged rather than being dropped as malformed.
-    if (def && def.kind === "usblNodes") return "usblNodes"
-    if (def && def.kind === "stand")     return "stand"
-    return "grid"
-}
-function _widgetKindIsFreeform(kind) { return kind === "usblNodes" || kind === "stand" }
+readonly property var widgetKinds: ["grid"]
+function widgetKindOf(def) { return "grid" }
 
 readonly property string servoPanelId: "servo"
 readonly property var servoPanelDef: ({ id: "servo", kind: "servo", name: "" })
@@ -652,6 +624,135 @@ function servoPanelPosition(popupWidth, popupHeight) {
     return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
 }
 
+readonly property string standPanelId: "stand"
+readonly property var standPanelDef: ({ id: "stand", kind: "stand", name: "",
+                                        transparency: standPanelTransparency,
+                                        config: standPanelConfig,
+                                        expanded: standPanelExpanded })
+readonly property bool standPanelListed: developerMode
+readonly property bool standPanelShown: standPanelListed && widgetShown(standPanelId)
+
+property int standPanelTransparency: 0
+property bool standPanelAutoShow: true
+property var standPanelConfig: Stand.normalizeConfig(null)
+property bool standPanelExpanded: false
+
+onStandPanelTransparencyChanged: layoutStore.standPanelTransparencyStored = standPanelTransparency
+onStandPanelAutoShowChanged: { layoutStore.standPanelAutoShowStored = standPanelAutoShow; _syncStandPanelAuto() }
+onStandPanelConfigChanged: layoutStore.standPanelConfigJson = JSON.stringify(standPanelConfig)
+onStandPanelExpandedChanged: layoutStore.standPanelExpandedStored = standPanelExpanded
+
+function loadStandPanelPreferences() {
+    standPanelTransparency = Math.max(0, Math.min(100, layoutStore.standPanelTransparencyStored))
+    standPanelAutoShow = layoutStore.standPanelAutoShowStored
+    standPanelExpanded = layoutStore.standPanelExpandedStored
+    var raw = null
+    try { raw = JSON.parse(layoutStore.standPanelConfigJson) } catch (e) { raw = null }
+    standPanelConfig = Stand.normalizeConfig(raw)
+}
+
+onStandAvailableChanged: _syncStandPanelAuto()
+
+function _syncStandPanelAuto() {
+    if (!standPanelListed)
+        return
+    if (standPanelAutoShow && widgetShown(standPanelId) !== standAvailable)
+        setWidgetShown(standPanelId, standAvailable)
+}
+
+function setStandPanelShown(shown) { setWidgetShown(standPanelId, standPanelListed && shown) }
+function openStandPanelSettings() { _openSettingsSubPage("standPanel") }
+
+property var _legacyStandIds: []
+
+function _migrateStandPanel() {
+    if (_legacyStandIds.length === 0)
+        return
+    var wasShown = widgetShown(standPanelId)
+    var pos = widgetInstance(standPanelId)
+    var cfg = null
+    var expanded = standPanelExpanded
+    var transparency = -1
+    for (var i = 0; i < _legacyStandIds.length; ++i) {
+        var old = _legacyStandIds[i]
+        if (widgetShown(old))
+            wasShown = true
+        var oi = widgetInstance(old)
+        if (pos.x < 0 && pos.y < 0 && oi.x >= 0 && oi.y >= 0)
+            pos = oi
+        var raw = _legacyStandDefs[old]
+        if (raw && cfg === null) {
+            cfg = raw.config
+            expanded = raw.expanded === true
+            if (typeof raw.transparency === "number")
+                transparency = raw.transparency
+        }
+    }
+    _legacyStandIds = []
+    _legacyStandDefs = ({})
+    if (cfg !== null) {
+        standPanelConfig = Stand.normalizeConfig(cfg)
+        standPanelExpanded = expanded
+    }
+    if (transparency >= 0)
+        standPanelTransparency = Math.max(0, Math.min(100, Math.round(transparency)))
+    if (pos.x >= 0 || pos.y >= 0)
+        _writeWidgetInstance(standPanelId, pos)
+    if (wasShown)
+        setWidgetShown(standPanelId, true)
+}
+
+property var _legacyStandDefs: ({})
+
+readonly property string usblPanelId: "usblNodes"
+readonly property var usblPanelDef: ({ id: "usblNodes", kind: "usblNodes", name: "" })
+readonly property bool usblPanelListed: true
+readonly property bool usblPanelShown: widgetShown(usblPanelId)
+
+property int usblPanelTransparency: 0
+property bool usblPanelAutoShow: true
+
+onUsblPanelTransparencyChanged: layoutStore.usblPanelTransparencyStored = usblPanelTransparency
+onUsblPanelAutoShowChanged: { layoutStore.usblPanelAutoShowStored = usblPanelAutoShow; _syncUsblPanelAuto() }
+
+function loadUsblPanelPreferences() {
+    usblPanelTransparency = Math.max(0, Math.min(100, layoutStore.usblPanelTransparencyStored))
+    usblPanelAutoShow = layoutStore.usblPanelAutoShowStored
+}
+
+property bool usblDeviceAvailable: false
+onUsblDeviceAvailableChanged: _syncUsblPanelAuto()
+
+function _syncUsblPanelAuto() {
+    if (usblPanelAutoShow && usblPanelShown !== usblDeviceAvailable)
+        setWidgetShown(usblPanelId, usblDeviceAvailable)
+}
+
+function setUsblPanelShown(shown) { setWidgetShown(usblPanelId, shown) }
+function openUsblPanelSettings() { _openSettingsSubPage("usblPanel") }
+
+property var _legacyUsblIds: []
+
+function _migrateUsblPanel() {
+    if (_legacyUsblIds.length === 0)
+        return
+    var wasShown = usblPanelShown
+    var pos = widgetInstance(usblPanelId)
+    for (var i = 0; i < _legacyUsblIds.length; ++i) {
+        var old = _legacyUsblIds[i]
+        if (widgetShown(old))
+            wasShown = true
+        var oi = widgetInstance(old)
+        if (pos.x < 0 && pos.y < 0 && oi.x >= 0 && oi.y >= 0)
+            pos = oi
+    }
+    _legacyUsblIds = []
+    if (pos.x >= 0 || pos.y >= 0)
+        _writeWidgetInstance(usblPanelId, pos)
+    if (wasShown)
+        setWidgetShown(usblPanelId, true)
+}
+
 property var _legacyServoIds: []
 
 function _migrateServoPanel() {
@@ -677,29 +778,6 @@ function _migrateServoPanel() {
 function normalizeWidgetDef(raw) {
     if (!raw || typeof raw !== "object")
         return null
-
-    if (raw.kind === "stand") {
-        // No cells and no grid either, and one thing the others do not carry: the scan itself.
-        // It lives in the def because the panel IS its configuration -- the stand keeps none
-        // between runs, so if the app forgets it the operator retypes it every session.
-        return { id: (typeof raw.id === "string" && raw.id.length) ? raw.id : "",
-                 kind: "stand",
-                 name: (typeof raw.name === "string") ? raw.name : "",
-                 transparency: (typeof raw.transparency === "number" && isFinite(raw.transparency))
-                               ? Math.max(0, Math.min(100, Math.round(raw.transparency))) : 0,
-                 expanded: raw.expanded === true,
-                 config: Stand.normalizeConfig(raw.config) }
-    }
-
-    if (_widgetKindIsFreeform(raw.kind)) {
-        // No cells, no grid: the content is the bus's, and there is nothing in the def to
-        // validate against a geometry. What it carries is what a panel carries.
-        return { id: (typeof raw.id === "string" && raw.id.length) ? raw.id : "",
-                 kind: raw.kind,
-                 name: (typeof raw.name === "string") ? raw.name : "",
-                 transparency: (typeof raw.transparency === "number" && isFinite(raw.transparency))
-                               ? Math.max(0, Math.min(100, Math.round(raw.transparency))) : 0 }
-    }
 
     var cols = Math.round(raw.cols)
     var rows = Math.round(raw.rows)
@@ -751,11 +829,26 @@ function loadWidgets() {
     }
     var next = []
     var legacyServo = []
+    var legacyUsbl = []
+    var legacyStand = []
+    var legacyStandDefs = {}
     if (Array.isArray(parsed)) {
         for (var i = 0; i < parsed.length; ++i) {
             if (parsed[i] && parsed[i].kind === "servo") {
                 if (typeof parsed[i].id === "string" && parsed[i].id.length)
                     legacyServo.push(parsed[i].id)
+                continue
+            }
+            if (parsed[i] && parsed[i].kind === "usblNodes") {
+                if (typeof parsed[i].id === "string" && parsed[i].id.length)
+                    legacyUsbl.push(parsed[i].id)
+                continue
+            }
+            if (parsed[i] && parsed[i].kind === "stand") {
+                if (typeof parsed[i].id === "string" && parsed[i].id.length) {
+                    legacyStand.push(parsed[i].id)
+                    legacyStandDefs[parsed[i].id] = parsed[i]
+                }
                 continue
             }
             var def = normalizeWidgetDef(parsed[i])
@@ -767,6 +860,9 @@ function loadWidgets() {
     }
     widgets = next
     _legacyServoIds = legacyServo
+    _legacyUsblIds = legacyUsbl
+    _legacyStandIds = legacyStand
+    _legacyStandDefs = legacyStandDefs
     saveWidgets()
 }
 
@@ -820,15 +916,23 @@ function widgetInstance(id) {
     }
 }
 
+readonly property var pinnedPanelIds: [usblPanelId, servoPanelId, standPanelId]
+readonly property int widgetStackSlots: widgetLimit + pinnedPanelIds.length
+
+function widgetStackIds() {
+    var ids = pinnedPanelIds.slice(0)
+    for (var i = 0; i < widgets.length; ++i)
+        if (widgets[i] && widgets[i].id) ids.push(widgets[i].id)
+    return ids
+}
+
 function widgetStackRank(id) {
-    return Math.max(0, Math.min(widgetLimit - 1, widgetInstance(id).z))
+    return Math.max(0, Math.min(widgetStackSlots - 1, widgetInstance(id).z))
 }
 
 function widgetBringToFront(id) {
     if (!id) return
-    var ids = []
-    for (var i = 0; i < widgets.length; ++i)
-        if (widgets[i] && widgets[i].id) ids.push(widgets[i].id)
+    var ids = widgetStackIds()
     if (ids.indexOf(id) < 0) return
     ids.sort(function(a, b) { return widgetInstance(a).z - widgetInstance(b).z })
     if (ids[ids.length - 1] === id) return
@@ -886,8 +990,8 @@ function _replaceWidgetDef(id, patch) {
     }
 }
 
-function setWidgetStandConfig(id, cfg)  { _replaceWidgetDef(id, { config: Stand.normalizeConfig(cfg) }) }
-function setWidgetStandExpanded(id, on) { _replaceWidgetDef(id, { expanded: on === true }) }
+function setWidgetStandConfig(id, cfg)  { standPanelConfig = Stand.normalizeConfig(cfg) }
+function setWidgetStandExpanded(id, on) { standPanelExpanded = on === true }
 
 function widgetScale(id) { return widgetInstance(id).scale }
 
@@ -976,6 +1080,8 @@ function loadWidgetShown() {
 function _reconcileWidgetMaps() {
     var alive = {}
     alive[servoPanelId] = true
+    alive[usblPanelId] = true
+    alive[standPanelId] = true
     for (var i = 0; i < widgets.length; ++i)
         if (widgets[i] && widgets[i].id) alive[widgets[i].id] = true
     var mi = {}, changedI = false
@@ -1103,10 +1209,14 @@ onDeveloperModeChanged: {
     if (!developerMode) {
         if (widgetShown(servoPanelId))
             setWidgetShown(servoPanelId, false)
-        if (settingsSubPageActive && settingsSubPageKind === "servoPanel")
+        if (widgetShown(standPanelId))
+            setWidgetShown(standPanelId, false)
+        if (settingsSubPageActive
+                && (settingsSubPageKind === "servoPanel" || settingsSubPageKind === "standPanel"))
             closeActiveSettingsSubPage()
     }
     _syncServoPanelAuto()
+    _syncStandPanelAuto()
 }
 
 property Settings echogramLoupePrefs: Settings {
@@ -1457,6 +1567,12 @@ property Settings layoutStore: Settings {
     property string widgetShownJson: "{}"
     property int servoPanelTransparencyStored: 0
     property bool servoPanelAutoShowStored: true
+    property int usblPanelTransparencyStored: 0
+    property bool usblPanelAutoShowStored: true
+    property int standPanelTransparencyStored: 0
+    property bool standPanelAutoShowStored: true
+    property bool standPanelExpandedStored: false
+    property string standPanelConfigJson: ""
     property bool quickActionWidgetsEnabledStored: true
     property bool quickActionConsoleEnabledStored: true
     property bool quickActionSecondWindowEnabledStored: true
@@ -1721,28 +1837,20 @@ function _openSettingsSubPage(kind) {
 
 function openQuickActionsSettings() { _openSettingsSubPage("quickActions") }
 function openWidgetSettings()       { openAppSettingsAtGroup("app.widgets") }
-// Wizard steps: 0 = which kind, 1 = grid size, 2 = place fields, 3 = the acoustic-nodes panel,
-// 4 = the stand panel. Creating starts at the kind choice; editing goes straight to the step
-// that kind is edited on, because the kind of an existing panel is not something you change —
-// you make the other one.
-function widgetKindEditStep(kind) {
-    return (kind === "usblNodes") ? 3
-         : (kind === "stand")     ? 4 : 2
+function openWidgetCreateSettings() {
+    widgetEditIndex = -1
+    widgetDraftReset()
+    widgetEditStep = 1
+    _openSettingsSubPage("widgetEdit")
 }
-function openWidgetCreateSettings() { widgetEditIndex = -1; widgetDraftReset(); widgetEditStep = 0; _openSettingsSubPage("widgetEdit") }
 function openWidgetEditSettings(index) {
     widgetEditIndex = index
     widgetDraftReset()
-    widgetEditStep = widgetKindEditStep(widgetDraftKind)
+    widgetEditStep = 2
     _openSettingsSubPage("widgetEdit")
 }
 // Chosen on step 0. A grid still has a size to pick; the freeform panels have nothing to lay
 // out, so they go straight to their own (short) page.
-function widgetDraftSetKind(kind) {
-    widgetDraftKind = _widgetKindIsFreeform(kind) ? kind : "grid"
-    widgetEditStep = (widgetDraftKind === "grid") ? 1 : widgetKindEditStep(widgetDraftKind)
-}
-
 function widgetDraftReset() {
     if (widgetEditIndex >= 0 && widgetEditIndex < widgets.length) {
         var d = widgets[widgetEditIndex]
@@ -1931,15 +2039,8 @@ function widgetDraftSave() {
     var isCreate = widgetEditIndex < 0
     // The stand's scan and its regime are edited on the panel, not in this wizard, so an edit
     // pass through here must carry them over rather than reset them to defaults.
-    var prev = (widgetEditIndex >= 0 && widgetEditIndex < widgets.length) ? widgets[widgetEditIndex] : null
-    var draft = (widgetDraftKind === "stand")
-        ? { kind: "stand", transparency: widgetDraftTransparency,
-            expanded: !!(prev && prev.expanded),
-            config: Stand.normalizeConfig(prev ? prev.config : null) }
-        : _widgetKindIsFreeform(widgetDraftKind)
-        ? { kind: widgetDraftKind, transparency: widgetDraftTransparency }
-        : { kind: "grid", cols: widgetDraftCols, rows: widgetDraftRows,
-            transparency: widgetDraftTransparency, cells: widgetDraftCells }
+    var draft = { kind: "grid", cols: widgetDraftCols, rows: widgetDraftRows,
+                  transparency: widgetDraftTransparency, cells: widgetDraftCells }
     var id = saveWidget(draft)
     if (id) {
         setWidgetScale(id, widgetDraftScale)
@@ -5036,6 +5137,8 @@ function loadPersistedUiState() {
     loadRememberedLinks()
     loadProfilesPopupPreferences()
     loadServoPanelPreferences()
+    loadUsblPanelPreferences()
+    loadStandPanelPreferences()
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
     bottomTrackEditorOpen = layoutStore.bottomTrackEditorOpenStored
     loadPopupDocks()
@@ -5043,8 +5146,12 @@ function loadPersistedUiState() {
     loadWidgetInstances()
     loadWidgetShown()
     _migrateServoPanel()
+    _migrateUsblPanel()
+    _migrateStandPanel()
     _reconcileWidgetMaps()
     _syncServoPanelAuto()
+    _syncUsblPanelAuto()
+    _syncStandPanelAuto()
     return restoreLayoutState()
 }
 
@@ -5064,6 +5171,7 @@ Component.onCompleted: {
     applyTgcToCore()
     applyLayerThemesToControllers()
     applyBottomTrackRealtimeToCore()
+    uiStateReapplied()
 }
 
 }
