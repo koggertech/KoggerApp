@@ -24,6 +24,7 @@ QtObject {
     readonly property int easingStd:       Easing.OutCubic
     readonly property int easingSmooth:    easingStd
     readonly property int easingInOutQuad: easingStd
+    readonly property int easingBack:      Easing.OutBack
 
     // ── Controls: button hover/press (fill, border, scale, white overlay) ─────
     property int controlMs: 110
@@ -60,6 +61,14 @@ QtObject {
     // ── Generic fade: opacity in/out (icons, overlays) ───────────────────────
     property int fadeMs: 120
     readonly property int fadeEasing: easingStd
+
+    property int tooltipMs: 170
+    property int tooltipExitMs: 90
+    property real tooltipEnterScale: 1.08
+    property real tooltipExitScale: 0.94
+    property real tooltipOvershoot: 0.9
+    readonly property int tooltipEnterEasing: easingBack
+    readonly property int tooltipEasing: easingStd
 
     // ── Toolbars: 3D scene idle-transparency fade ────────────────────────────
     property int toolbarFadeMs: 150

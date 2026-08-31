@@ -14,6 +14,43 @@ ToolTip {
     y: parent ? -implicitHeight - Math.round(8 * AppPalette.scale) : 0
     padding: Math.round(8 * AppPalette.scale)
 
+    transformOrigin: y < 0 ? Item.Bottom : Item.Top
+
+    enter: Transition {
+        ParallelAnimation {
+            NumberAnimation {
+                property: "opacity"
+                from: 0.0; to: 1.0
+                duration: Anim.tooltipMs
+                easing.type: Anim.tooltipEasing
+            }
+            NumberAnimation {
+                property: "scale"
+                from: Anim.tooltipEnterScale; to: 1.0
+                duration: Anim.tooltipMs
+                easing.type: Anim.tooltipEnterEasing
+                easing.overshoot: Anim.tooltipOvershoot
+            }
+        }
+    }
+
+    exit: Transition {
+        ParallelAnimation {
+            NumberAnimation {
+                property: "opacity"
+                from: 1.0; to: 0.0
+                duration: Anim.tooltipExitMs
+                easing.type: Anim.tooltipEasing
+            }
+            NumberAnimation {
+                property: "scale"
+                from: 1.0; to: Anim.tooltipExitScale
+                duration: Anim.tooltipExitMs
+                easing.type: Anim.tooltipEasing
+            }
+        }
+    }
+
     contentItem: Text {
         text: root.text
         color: AppPalette.tooltipText
