@@ -257,7 +257,7 @@ BasePanePopup {
                 color: chip._ink
                 font.pixelSize: chip.fontPixelSize
                 font.bold: true
-                font.letterSpacing: font.pixelSize * 0.05
+                font.letterSpacing: chip.fontPixelSize * 0.05
             }
         }
 
