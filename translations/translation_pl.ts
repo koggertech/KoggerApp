@@ -1141,6 +1141,26 @@
         <source>Recompute the bottom over the whole open file. Manual edits are left alone.</source>
         <translation>Przelicz dno na całym otwartym pliku. Ręczne edycje pozostają nietknięte.</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="600"/>
+        <source>Developer mode</source>
+        <translation>Tryb dla programistów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="602"/>
+        <source>Unlocks panels and controls meant for development. Turning it off hides this row again.</source>
+        <translation>Odblokowuje panele i kontrolki przeznaczone dla programistów. Wyłączenie ukryje ten wiersz ponownie.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3190"/>
+        <source>Tap once more to unlock developer features</source>
+        <translation>Naciśnij jeszcze raz, aby odblokować funkcje dla programistów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3195"/>
+        <source>Developer mode enabled</source>
+        <translation>Włączono tryb dla programistów</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>

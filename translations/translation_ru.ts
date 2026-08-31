@@ -1141,6 +1141,26 @@
         <source>Recompute the bottom over the whole open file. Manual edits are left alone.</source>
         <translation>Пересчитать дно по всему открытому файлу. Ручные правки не затрагиваются.</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="600"/>
+        <source>Developer mode</source>
+        <translation>Режим разработчика</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="602"/>
+        <source>Unlocks panels and controls meant for development. Turning it off hides this row again.</source>
+        <translation>Открывает панели и органы управления для разработки. Выключение скроет эту строку снова.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3190"/>
+        <source>Tap once more to unlock developer features</source>
+        <translation>Нажмите ещё 1 раз для разблокировки функций разработчика</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3195"/>
+        <source>Developer mode enabled</source>
+        <translation>Вы включили режим разработчика</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>

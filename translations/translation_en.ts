@@ -1069,6 +1069,26 @@
         <source>Recompute the bottom over the whole open file. Manual edits are left alone.</source>
         <translation>Recompute the bottom over the whole open file. Manual edits are left alone.</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="600"/>
+        <source>Developer mode</source>
+        <translation>Developer mode</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="602"/>
+        <source>Unlocks panels and controls meant for development. Turning it off hides this row again.</source>
+        <translation>Unlocks panels and controls meant for development. Turning it off hides this row again.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3190"/>
+        <source>Tap once more to unlock developer features</source>
+        <translation>Tap once more to unlock developer features</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3195"/>
+        <source>Developer mode enabled</source>
+        <translation>Developer mode enabled</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>

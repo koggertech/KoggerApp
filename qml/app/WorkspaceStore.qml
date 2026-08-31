@@ -610,7 +610,8 @@ function _widgetKindIsFreeform(kind) { return kind === "usblNodes" || kind === "
 
 readonly property string servoPanelId: "servo"
 readonly property var servoPanelDef: ({ id: "servo", kind: "servo", name: "" })
-readonly property bool servoPanelShown: widgetShown(servoPanelId)
+readonly property bool servoPanelListed: developerMode
+readonly property bool servoPanelShown: developerMode && widgetShown(servoPanelId)
 
 property int servoPanelTransparency: 0
 property bool servoPanelAutoShow: true
@@ -634,11 +635,13 @@ readonly property bool servoDeviceAvailable: {
 onServoDeviceAvailableChanged: _syncServoPanelAuto()
 
 function _syncServoPanelAuto() {
+    if (!developerMode)
+        return
     if (servoPanelAutoShow && servoPanelShown !== servoDeviceAvailable)
         setWidgetShown(servoPanelId, servoDeviceAvailable)
 }
 
-function setServoPanelShown(shown) { setWidgetShown(servoPanelId, shown) }
+function setServoPanelShown(shown) { setWidgetShown(servoPanelId, developerMode && shown) }
 function openServoPanelSettings() { _openSettingsSubPage("servoPanel") }
 
 function servoPanelPosition(popupWidth, popupHeight) {
@@ -1086,6 +1089,25 @@ property Settings notificationPrefs: Settings {
     property bool hideImportantNotifications: false
 }
 property alias hideImportantNotifications: notificationPrefs.hideImportantNotifications
+
+property Settings developerPrefs: Settings {
+    id: developerPrefs
+    category: "main/ui"
+    property bool developerMode: false
+}
+property alias developerMode: developerPrefs.developerMode
+
+readonly property int developerUnlockTaps: 5
+
+onDeveloperModeChanged: {
+    if (!developerMode) {
+        if (widgetShown(servoPanelId))
+            setWidgetShown(servoPanelId, false)
+        if (settingsSubPageActive && settingsSubPageKind === "servoPanel")
+            closeActiveSettingsSubPage()
+    }
+    _syncServoPanelAuto()
+}
 
 property Settings echogramLoupePrefs: Settings {
     id: echogramLoupePrefs

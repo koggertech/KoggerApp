@@ -57,9 +57,10 @@ Item {
     readonly property bool _widgetsRevealOverride: _revealActiveKey === "widgets"
     readonly property bool showWidgets: widgetsEnabled || _widgetsRevealOverride
     // Counted, not measured: a stand panel with no stand behind it is in store.widgets but is
-    // not offered, so the menu must not size itself for it. The +1 is the servo card, which is
-    // always in the list.
-    readonly property int widgetCardCount: (store ? store.listedWidgetCount : 0) + 1
+    // not offered, so the menu must not size itself for it. The servo card is not in
+    // store.widgets at all and is offered only in developer mode, so it is counted separately.
+    readonly property int widgetCardCount: (store ? store.listedWidgetCount : 0)
+                                           + ((store && store.servoPanelListed) ? 1 : 0)
     property bool widgetsMenuOpen: false
     property var _widgetsSlot: null
     property bool consoleButtonEnabled: true
@@ -392,8 +393,9 @@ Item {
                     spacing: root.favoriteItemSpacing
 
                     WidgetCard {
+                        visible: !!(root.store && root.store.servoPanelListed)
                         width: widgetsList.width
-                        height: root.favoriteItemHeight
+                        height: visible ? root.favoriteItemHeight : 0
                         contentMargin: root.favoriteCardMargin
                         previewWidth: root.favoritePreviewWidth
                         previewHeight: root.favoritePreviewHeight

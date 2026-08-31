@@ -595,6 +595,22 @@ Column {
                 toolTipText: qsTr("Colour marking and log buffer size")
                 onClicked: if (root.store) root.store.openConsoleSettings()
             }
+
+            KIslandRow {
+                visible: !!(root.store && root.store.developerMode)
+                label: qsTr("Developer mode")
+                labelColor: root._bright
+                toolTipText: qsTr("Unlocks panels and controls meant for development. Turning it off hides this row again.")
+                interactive: true
+                onClicked: developerModeSwitch.click()
+
+                KSwitch {
+                    id: developerModeSwitch
+                    flat: true
+                    checked: !!(root.store && root.store.developerMode)
+                    onToggled: if (root.store) root.store.developerMode = checked
+                }
+            }
         }
 
         Loader {
@@ -705,6 +721,7 @@ Column {
                 id: servoPanelRow
                 readonly property bool shown: !!(root.store && root.store.servoPanelShown)
 
+                visible: !!(root.store && root.store.servoPanelListed)
                 label: qsTr("Servo")
                 labelColor: shown ? "#FDE68A" : AppPalette.textStrong
                 caption: qsTr("Servo control")
@@ -3162,10 +3179,41 @@ Column {
             }
 
             Text {
+                id: versionLabel
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: Qt.application.displayName
                 color: AppPalette.textMuted
                 font.pixelSize: Tokens.fontSm
+
+                property int taps: 0
+
+                Timer {
+                    id: versionTapReset
+                    interval: 2500
+                    onTriggered: versionLabel.taps = 0
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -Tokens.spaceSm
+                    onClicked: {
+                        if (!root.store || root.store.developerMode)
+                            return
+
+                        versionLabel.taps++
+                        versionTapReset.restart()
+
+                        var left = root.store.developerUnlockTaps - versionLabel.taps
+                        if (left === 1) {
+                            notifications.info(qsTr("Tap once more to unlock developer features"))
+                        } else if (left <= 0) {
+                            versionTapReset.stop()
+                            versionLabel.taps = 0
+                            root.store.developerMode = true
+                            notifications.info(qsTr("Developer mode enabled"))
+                        }
+                    }
+                }
             }
 
             Text {
