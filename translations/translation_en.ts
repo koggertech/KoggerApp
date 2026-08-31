@@ -103,8 +103,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1908"/>
-        <source>No video windows displayed</source>
-        <translation>No video windows displayed</translation>
+        <source>No video windows displayed. You can add one while editing the workspace.</source>
+        <translation>No video windows displayed. You can add one while editing the workspace.</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="657"/>

@@ -2005,7 +2005,7 @@ Column {
             Text {
                 width: parent.width
                 visible: videoGroup.surfaces.length === 0
-                text: qsTr("No video windows displayed")
+                text: qsTr("No video windows displayed. You can add one while editing the workspace.")
                 color: AppPalette.textMuted
                 font.pixelSize: Tokens.fontSm
                 wrapMode: Text.WordWrap

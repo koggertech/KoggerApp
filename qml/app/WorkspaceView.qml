@@ -798,7 +798,7 @@ Item {
             readonly property bool isActiveResizeSplit: workspace.store.edgeResizeMovingSplitId === handleData.splitId
             property bool barRevealed: false
             readonly property int barHideMs: 1600
-            readonly property bool barShown: barRevealed || barGrab.resizing || isActiveResizeSplit || workspace.store.editableMode
+            readonly property bool barShown: barRevealed || barGrab.containsMouse || barGrab.resizing || isActiveResizeSplit || workspace.store.editableMode
 
             readonly property int barLength: Math.round(AppPalette.dragBarLengthPx * AppPalette.scale)
             readonly property int barThickness: Math.round(AppPalette.dragBarThicknessPx * AppPalette.scale)
@@ -873,6 +873,8 @@ Item {
 
                 readonly property bool tracking: barGrab.pressed
 
+                hovered: barGrab.containsMouse || barGrab.resizing
+
                 x: splitDragZone.vertical
                    ? (tracking ? splitDragZone.cursorInZone.x - width / 2
                                : (splitDragZone.width - width) / 2)
@@ -896,6 +898,7 @@ Item {
 
                 enabled: splitDragZone.barShown && workspace.store.modePickerLeafId === -1
                 acceptedButtons: Qt.LeftButton
+                hoverEnabled: true
                 preventStealing: true
                 cursorShape: resizing
                              ? Qt.ClosedHandCursor

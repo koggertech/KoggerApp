@@ -103,8 +103,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1908"/>
-        <source>No video windows displayed</source>
-        <translation>Видеоокна не отображаются</translation>
+        <source>No video windows displayed. You can add one while editing the workspace.</source>
+        <translation>Видеоокна не отображаются. Добавить видеоокно можно при редактировании рабочего пространства.</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="657"/>

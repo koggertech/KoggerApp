@@ -22,6 +22,10 @@ Item {
     property color borderColor: AppPalette.border
     property color dotColor: AppPalette.text
 
+    property bool hovered: false
+    property color barHoverColor: Qt.lighter(barColor, 1.2)
+    property color dotHoverColor: AppPalette.textStrong
+
     readonly property int _dotSpacing: Math.max(2, Math.round(3 * AppPalette.scale))
     readonly property int _dotLong:  Math.max(2, Math.round(5 * AppPalette.scale))
     readonly property int _dotShort: Math.max(1, Math.round(2 * AppPalette.scale))
@@ -35,8 +39,10 @@ Item {
         anchors.fill: parent
         visible: root.showCapsule
         radius: Math.min(width, height) / 2
-        color: root.barColor
+        color: root.hovered ? root.barHoverColor : root.barColor
         border.width: 0
+
+        Behavior on color { ColorAnimation { duration: Anim.controlMs } }
     }
 
     Grid {
@@ -52,7 +58,9 @@ Item {
                 width:  root._vertical ? root._dotLong : root._dotShort
                 height: root._vertical ? root._dotShort : root._dotLong
                 radius: Math.min(width, height) / 2
-                color: root.dotColor
+                color: root.hovered ? root.dotHoverColor : root.dotColor
+
+                Behavior on color { ColorAnimation { duration: Anim.controlMs } }
             }
         }
     }
