@@ -2,7 +2,9 @@ add_library(kogger_app STATIC)
 qt_add_qml_module(kogger_app
     URI app VERSION 1.0 RESOURCE_PREFIX /qml
     QML_FILES
+        AboutPage.qml
         ActionChip.qml
+        AppIdentityCard.qml
         AppSettingsPage.qml
         BasePanePopup.qml
         BottomTrackEditPopup.qml
@@ -29,6 +31,7 @@ qt_add_qml_module(kogger_app
         InputDeviceState.qml
         LayoutCreatePage.qml
         LayoutSnapshotPreview.qml
+        LicensePage.qml
         MainWindow.qml
         ModeSettingsPanel.qml
         NavButton.qml

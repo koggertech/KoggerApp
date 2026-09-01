@@ -1,0 +1,3 @@
+#pragma once
+
+#define KOGGER_GIT_REVISION "@KOGGER_GIT_REVISION@"

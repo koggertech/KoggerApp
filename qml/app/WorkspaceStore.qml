@@ -64,6 +64,8 @@ property bool settingsSubPageActive: false
 // open; kept sticky on close so the component doesn't reload mid slide-out.
 property string settingsSubPageKind: "echogram"
 readonly property bool anySettingsSubPageActive: echogramSettingsActive || settingsSubPageActive
+property string licenseViewTitle: ""
+property string licenseViewFile: ""
 
 // Leaf of the active 3D pane; mirrored from WorkspaceView for focus dimming.
 property int active3DLeafId: -1
@@ -2056,6 +2058,12 @@ function openUiSavingSettings()     { _openSettingsSubPage("uiSaving") }
 function openTgcSettings()          { _openSettingsSubPage("tgc") }
 function openCsvExportSettings()    { _openSettingsSubPage("csvExport") }
 function openConsoleSettings()      { _openSettingsSubPage("console") }
+function openAboutSettings()        { _openSettingsSubPage("about") }
+function openLicenseView(title, file) {
+    licenseViewTitle = title
+    licenseViewFile = file
+    _openSettingsSubPage("license")
+}
 
 function closeActiveSettingsSubPage() {
     if (_settingsNav.length > 0) {

@@ -1112,6 +1112,8 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
                      : workspaceStore.settingsSubPageKind === "aimPanel"     ? qsTr("Information panel")
                      : workspaceStore.settingsSubPageKind === "console"      ? qsTr("Console")
+                     : workspaceStore.settingsSubPageKind === "about"        ? qsTr("About")
+                     : workspaceStore.settingsSubPageKind === "license"      ? workspaceStore.licenseViewTitle
                      : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
                      : workspaceStore.settingsSubPageKind === "devices"      ? qsTr("Devices")
                      : workspaceStore.settingsSubPageKind === "videoPane"    ? workspaceStore.videoSettingsTitle
@@ -1142,6 +1144,8 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "aimPanel"   ? aimPanelSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "console"    ? consoleSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "about"      ? aboutPageComponent
+                     : workspaceStore.settingsSubPageKind === "license"    ? licensePageComponent
                      : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
                      : workspaceStore.settingsSubPageKind === "devices"      ? deviceSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "videoPane"     ? videoPaneSettingsTabComponent
@@ -1411,6 +1415,22 @@ ApplicationWindow {
             id: consoleSettingsTabComponent
 
             ConsoleSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: aboutPageComponent
+
+            AboutPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: licensePageComponent
+
+            LicensePage {
                 store: workspaceStore
             }
         }

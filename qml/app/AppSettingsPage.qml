@@ -600,6 +600,13 @@ Column {
             }
 
             KIslandRow {
+                label: qsTr("About")
+                chevron: true
+                interactive: true
+                onClicked: if (root.store) root.store.openAboutSettings()
+            }
+
+            KIslandRow {
                 visible: !!(root.store && root.store.developerMode)
                 label: qsTr("Developer mode")
                 labelColor: root._bright
@@ -3226,67 +3233,12 @@ Column {
         width: parent.width
         height: footerCol.implicitHeight + Tokens.spaceXl
 
-        Column {
+        AppIdentityCard {
             id: footerCol
             anchors.top: parent.top
             anchors.topMargin: Tokens.spaceMd
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: Tokens.spaceXs
-
-            Image {
-                anchors.horizontalCenter: parent.horizontalCenter
-                source: "qrc:/kogger_app_logo.png"
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-                width: Math.round(150 * AppPalette.scale)
-                sourceSize.width: Math.round(360 * AppPalette.scale)
-                opacity: 0.85
-            }
-
-            Text {
-                id: versionLabel
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: Qt.application.displayName
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
-
-                property int taps: 0
-
-                Timer {
-                    id: versionTapReset
-                    interval: 2500
-                    onTriggered: versionLabel.taps = 0
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -Tokens.spaceSm
-                    onClicked: {
-                        if (!root.store || root.store.developerMode)
-                            return
-
-                        versionLabel.taps++
-                        versionTapReset.restart()
-
-                        var left = root.store.developerUnlockTaps - versionLabel.taps
-                        if (left === 1) {
-                            notifications.info(qsTr("Tap once more to unlock developer features"))
-                        } else if (left <= 0) {
-                            versionTapReset.stop()
-                            versionLabel.taps = 0
-                            root.store.developerMode = true
-                            notifications.info(qsTr("Developer mode enabled"))
-                        }
-                    }
-                }
-            }
-
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "KOGGER LLC"
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
-            }
+            store: root.store
         }
 
         KCircleIconButton {

@@ -16,6 +16,30 @@ math(EXPR KOGGER_VERSION_CODE "${_kvmaj} * 10000 + ${_kvmin} * 100 + ${_kvpat}")
 
 project(KoggerApp VERSION ${KOGGER_VERSION} LANGUAGES CXX)
 
+# Build revision, best effort: empty outside a git checkout
+set(KOGGER_GIT_REVISION "")
+find_package(Git QUIET)
+if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" rev-parse --short=10 HEAD
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE KOGGER_GIT_REVISION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/.git/HEAD")
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" symbolic-ref -q --short HEAD
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE _kbranch
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+    if(_kbranch AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git/refs/heads/${_kbranch}")
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/.git/refs/heads/${_kbranch}")
+    endif()
+endif()
+
 if(ANDROID)
     set(QT_ANDROID_ABIS "armeabi-v7a;arm64-v8a" CACHE STRING "Android target ABIs" FORCE)
 endif()
@@ -100,7 +124,11 @@ qt_add_executable(KoggerApp
 
 target_compile_features(KoggerApp PRIVATE cxx_std_23)
 
+configure_file(src/kogger_revision.h.in
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/kogger_revision.h" @ONLY)
+
 target_include_directories(KoggerApp PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/generated
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/freetype/include)
 

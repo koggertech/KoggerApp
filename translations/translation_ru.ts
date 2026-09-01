@@ -92,6 +92,11 @@
 <context>
     <name>AppSettingsPage</name>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1"/>
+        <source>About</source>
+        <translation>О программе</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1889"/>
         <source>Video</source>
         <translation>Видео</translation>
@@ -1146,16 +1151,6 @@
         <location filename="../qml/app/AppSettingsPage.qml" line="602"/>
         <source>Unlocks panels and controls meant for development. Turning it off hides this row again.</source>
         <translation>Открывает панели и органы управления для разработки. Выключение скроет эту строку снова.</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3190"/>
-        <source>Tap once more to unlock developer features</source>
-        <translation>Нажмите ещё 1 раз для разблокировки функций разработчика</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3195"/>
-        <source>Developer mode enabled</source>
-        <translation>Вы включили режим разработчика</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="724"/>
@@ -4154,6 +4149,11 @@
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../qml/app/MainWindow.qml" line="1"/>
+        <source>About</source>
+        <translation>О программе</translation>
+    </message>
+    <message>
         <source>Servo panel</source>
         <translation>Панель серво</translation>
     </message>
@@ -6318,6 +6318,65 @@
         <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
         <source>The inner axis sweeps each leg without stopping, firing at every step boundary. At most one fire per point; post-fire wait does not apply.</source>
         <translation>Внутренняя ось проходит каждый ход без остановок, излучая на границе каждого шага. Не более одного импульса на точку; ожидание после импульса не применяется.</translation>
+    </message>
+</context>
+<context>
+    <name>AboutPage</name>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>Full notices, component provenance and where to obtain the sources are in THIRD_PARTY_NOTICES.md in the source tree.</source>
+        <translation>Полные уведомления, происхождение компонентов и адреса исходников — в файле THIRD_PARTY_NOTICES.md в дереве исходников.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>Third-party components</source>
+        <translation>Сторонние компоненты</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>Application license</source>
+        <translation>Лицензия приложения</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>KoggerApp is distributed under the GNU General Public License v3.</source>
+        <translation>KoggerApp распространяется по лицензии GNU General Public License v3.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>License</source>
+        <translation>Лицензия</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>The FreeType License (FTL)</source>
+        <translation>Лицензия FreeType (FTL)</translation>
+    </message>
+</context>
+<context>
+    <name>LicensePage</name>
+    <message>
+        <location filename="../qml/app/LicensePage.qml" line="1"/>
+        <source>The license text could not be read from the application resources.</source>
+        <translation>Не удалось прочитать текст лицензии из ресурсов приложения.</translation>
+    </message>
+</context>
+<context>
+    <name>AppIdentityCard</name>
+    <message>
+        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
+        <source>Revision %1</source>
+        <translation>Ревизия %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
+        <source>Developer mode enabled</source>
+        <translation>Вы включили режим разработчика</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
+        <source>Tap once more to unlock developer features</source>
+        <translation>Нажмите ещё 1 раз для разблокировки функций разработчика</translation>
     </message>
 </context>
 </TS>
