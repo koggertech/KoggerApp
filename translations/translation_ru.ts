@@ -6352,6 +6352,11 @@
         <source>The FreeType License (FTL)</source>
         <translation>Лицензия FreeType (FTL)</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>Revision %1</source>
+        <translation>Ревизия %1</translation>
+    </message>
 </context>
 <context>
     <name>LicensePage</name>
@@ -6365,11 +6370,6 @@
     <name>AppIdentityCard</name>
     <message>
         <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
-        <source>Revision %1</source>
-        <translation>Ревизия %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
         <source>Developer mode enabled</source>
         <translation>Вы включили режим разработчика</translation>
     </message>
@@ -6377,6 +6377,11 @@
         <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
         <source>Tap once more to unlock developer features</source>
         <translation>Нажмите ещё 1 раз для разблокировки функций разработчика</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
+        <source>Developer mode is already enabled</source>
+        <translation>Вы уже в режиме разработчика</translation>
     </message>
 </context>
 </TS>

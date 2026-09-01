@@ -6363,6 +6363,11 @@
         <source>The FreeType License (FTL)</source>
         <translation>Licencja FreeType (FTL)</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>Revision %1</source>
+        <translation>Rewizja %1</translation>
+    </message>
 </context>
 <context>
     <name>LicensePage</name>
@@ -6376,11 +6381,6 @@
     <name>AppIdentityCard</name>
     <message>
         <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
-        <source>Revision %1</source>
-        <translation>Rewizja %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
         <source>Developer mode enabled</source>
         <translation>Włączono tryb dla programistów</translation>
     </message>
@@ -6388,6 +6388,11 @@
         <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
         <source>Tap once more to unlock developer features</source>
         <translation>Naciśnij jeszcze raz, aby odblokować funkcje dla programistów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
+        <source>Developer mode is already enabled</source>
+        <translation>Tryb dla programistów jest już włączony</translation>
     </message>
 </context>
 </TS>

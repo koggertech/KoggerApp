@@ -33,12 +33,25 @@ Column {
             onTriggered: versionLabel.taps = 0
         }
 
+        Timer {
+            id: devModeNoticeCooldown
+            interval: 3000
+        }
+
         MouseArea {
             anchors.fill: parent
             anchors.margins: -Tokens.spaceSm
             onClicked: {
-                if (!card.store || card.store.developerMode)
+                if (!card.store)
                     return
+
+                if (card.store.developerMode) {
+                    if (!devModeNoticeCooldown.running) {
+                        notifications.info(qsTr("Developer mode is already enabled"))
+                        devModeNoticeCooldown.restart()
+                    }
+                    return
+                }
 
                 versionLabel.taps++
                 versionTapReset.restart()
@@ -61,14 +74,5 @@ Column {
         text: "KOGGER LLC"
         color: AppPalette.textMuted
         font.pixelSize: Tokens.fontSm
-    }
-
-    Text {
-        anchors.horizontalCenter: parent.horizontalCenter
-        visible: appUtils.gitRevision.length > 0
-        topPadding: Tokens.spaceSm
-        text: qsTr("Revision %1").arg(appUtils.gitRevision)
-        color: AppPalette.textSecond
-        font.pixelSize: Tokens.fontXs
     }
 }

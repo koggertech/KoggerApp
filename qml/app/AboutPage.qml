@@ -20,6 +20,14 @@ Column {
         store: page.store
     }
 
+    Text {
+        anchors.horizontalCenter: parent.horizontalCenter
+        visible: appUtils.gitRevision.length > 0
+        text: qsTr("Revision %1").arg(appUtils.gitRevision)
+        color: AppPalette.textSecond
+        font.pixelSize: Tokens.fontXs
+    }
+
     KIsland {
         title: qsTr("License")
         footer: qsTr("KoggerApp is distributed under the GNU General Public License v3.")
