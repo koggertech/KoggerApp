@@ -32,8 +32,35 @@ Column {
     }
 
     function isPinnable(paramKey) {
+        if (paramKey.indexOf("action.") === 0)
+            return _isBasicSonar
         return DeviceParamCatalog.supported(dev, paramKey)
                && compactParamKeys.indexOf(paramKey) < 0
+    }
+
+    readonly property var baudrateOptions: [9600, 19200, 38400, 57600, 115200,
+                                            230400, 460800, 921600, 1200000, 2000000]
+    property int baudrateIndex: baudrateOptions.indexOf(115200)
+
+    function applyBaudrate() {
+        if (!dev)
+            return
+        var b = baudrateOptions[baudrateIndex]
+        var uuid = _linkUuidOfDev()
+        dev.baudrate = b
+        notifications.info(qsTr("Baudrate set: %1").arg(b))
+        if (uuid.length > 0)
+            Qt.callLater(_applyLinkBaudrate, uuid, b)
+    }
+
+    function openImportSettingsFile() {
+        importXmlDialog.currentFolder = devSettingsGroup.importFolder
+        importXmlDialog.open()
+    }
+
+    function openExportSettingsFile() {
+        exportXmlDialog.currentFolder = devSettingsGroup.exportFolder
+        exportXmlDialog.open()
     }
 
     readonly property bool hasPinnableParams: {
@@ -1224,6 +1251,7 @@ Column {
 
             KIslandRow {
                 label: qsTr("Distance, m")
+                slotWidth: root.spinW
                 DevSpin {
                     from: 1; to: 150; divisor: 1; decimals: 0
                     stepValues: root.distanceStepsM
@@ -1238,6 +1266,7 @@ Column {
             KIslandRow {
                 label: qsTr("Frequency, kHz")
                 visible: root._isNanoSSS
+                slotWidth: root.spinW
                 DevSpin { from: 40; to: 6000; stepSize: 5; divisor: 1; decimals: 0; devValue: dev ? (dev.transFreq || 0) : 0; writeBack: function(v) { if (dev) dev.transFreq = v } }
             }
 
@@ -1259,6 +1288,7 @@ Column {
             KIslandRow {
                 label: qsTr("Resolution, cm")
                 open: b2ChartTab.currentValue === 1
+                slotWidth: root.spinW
                 DevSpin {
                     from: 10; to: 100; stepSize: 10; divisor: 10; decimals: 1; trimZeros: true
                     devValue: dev ? (dev.chartResolution || 0) : 0
@@ -1295,6 +1325,7 @@ Column {
             KIslandRow {
                 label: qsTr("Confidence threshold, %")
                 open: b2DistTab.currentValue !== 0
+                slotWidth: root.spinW
                 DevSpin { from: 0; to: 100; stepSize: 1; devValue: dev ? (dev.distConfidence || 0) : 0; writeBack: function(v) { if (dev) dev.distConfidence = v } }
             }
 
@@ -1344,6 +1375,7 @@ Column {
                 delegate: DeviceParamRow {
                     page: root
                     paramKey: modelData
+                    favorite: true
                 }
             }
 
@@ -1558,11 +1590,7 @@ Column {
     }
 
     DevIsland {
-        id: devActionsGroup
         unconfirmed: !!(dev && dev.uartState === false)
-
-        readonly property var baudrateOptions: [9600, 19200, 38400, 57600, 115200,
-                                                230400, 460800, 921600, 1200000, 2000000]
 
         DevIslandTitle { label: qsTr("Actions") }
 
@@ -1586,34 +1614,7 @@ Column {
             }
         }
 
-        DevStackedRow {
-            Row {
-                width: parent.width; spacing: Tokens.spaceMd
-                readonly property real setW: Math.round(120 * AppPalette.scale)
-                KCombo {
-                    id: baudrateCombo
-                    width: parent.width - parent.setW - Tokens.spaceMd
-                    height: Tokens.controlHMd
-                    model: devActionsGroup.baudrateOptions
-                    currentIndex: devActionsGroup.baudrateOptions.indexOf(115200)
-                }
-                DevButton {
-                    width: parent.setW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                    text: qsTr("Set baudrate")
-                    toolTipText: qsTr("Apply the selected baud rate")
-                    onClicked: {
-                        if (!dev)
-                            return
-                        var b = devActionsGroup.baudrateOptions[baudrateCombo.currentIndex]
-                        var uuid = root._linkUuidOfDev()
-                        dev.baudrate = b
-                        notifications.info(qsTr("Baudrate set: %1").arg(b))
-                        if (uuid.length > 0)
-                            Qt.callLater(root._applyLinkBaudrate, uuid, b)
-                    }
-                }
-            }
-        }
+        DeviceParamRow { page: root; paramKey: "action.baudrate" }
     }
 
     DevIsland {
@@ -1671,24 +1672,7 @@ Column {
             }
         }
 
-        DevStackedRow {
-            Row {
-                width: parent.width; spacing: Tokens.spaceMd
-                readonly property real bw: (width - Tokens.spaceMd) / 2
-                DevButton {
-                    width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                    text: qsTr("Import")
-                    toolTipText: qsTr("Load all device settings from an XML file")
-                    onClicked: { importXmlDialog.currentFolder = devSettingsGroup.importFolder; importXmlDialog.open() }
-                }
-                DevButton {
-                    width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                    text: qsTr("Export")
-                    toolTipText: qsTr("Save all device settings to an XML file")
-                    onClicked: { exportXmlDialog.currentFolder = devSettingsGroup.exportFolder; exportXmlDialog.open() }
-                }
-            }
-        }
+        DeviceParamRow { page: root; paramKey: "action.settingsFile" }
     }
 
     DevIsland {

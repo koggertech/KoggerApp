@@ -66,7 +66,12 @@ QtObject {
         { key: "dataset.temperature", group: "dataset", support: "isDatasetSupport",
           label: qsTr("Temperature"), kind: "switch", prop: "datasetTemp", mask: 1 },
         { key: "dataset.timestamp", group: "dataset", support: "isDatasetSupport",
-          label: qsTr("Timestamp"), kind: "switch", prop: "datasetTimestamp", mask: 1 }
+          label: qsTr("Timestamp"), kind: "switch", prop: "datasetTimestamp", mask: 1 },
+
+        { key: "action.baudrate", group: "actions", labelInFavoritesOnly: true,
+          label: qsTr("Baudrate"), kind: "baudrate", stacked: true },
+        { key: "action.settingsFile", group: "actions", labelInFavoritesOnly: true,
+          label: qsTr("Settings file"), kind: "settingsFile", stacked: true }
     ]
 
     function meta(key) {
@@ -89,6 +94,7 @@ QtObject {
         var m = meta(key)
         if (!dev || !m) return 0
         if (m.read) return m.read(dev)
+        if (!m.prop) return 0
         var raw = dev[m.prop]
         if (m.kind === "switch")
             return m.mask !== undefined ? ((raw & m.mask) !== 0) : (raw === m.onValue)
@@ -100,6 +106,7 @@ QtObject {
         var m = meta(key)
         if (!dev || !m) return
         if (m.write) { m.write(dev, value); return }
+        if (!m.prop) return
         if (m.kind === "switch") {
             dev[m.prop] = value ? (m.mask !== undefined ? m.mask : m.onValue) : 0
             return

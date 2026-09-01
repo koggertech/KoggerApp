@@ -2112,18 +2112,6 @@
         <translation>Uruchom ponownie urządzenie</translation>
     </message>
     <message>
-        <source>Apply the selected baud rate</source>
-        <translation>Ustaw wybraną prędkość transmisji</translation>
-    </message>
-    <message>
-        <source>Load all device settings from an XML file</source>
-        <translation>Wczytaj wszystkie ustawienia urządzenia z pliku XML</translation>
-    </message>
-    <message>
-        <source>Save all device settings to an XML file</source>
-        <translation>Zapisz wszystkie ustawienia urządzenia do pliku XML</translation>
-    </message>
-    <message>
         <source>Choose firmware</source>
         <translation>Wybierz oprogramowanie układowe</translation>
     </message>
@@ -2176,11 +2164,6 @@
         <location filename="../qml/app/DeviceSettingsPage.qml" line="276"/>
         <source>Reboot</source>
         <translation>Restart</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="292"/>
-        <source>Set baudrate</source>
-        <translation>Ustaw</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="307"/>
@@ -2287,16 +2270,6 @@
         <location filename="../qml/app/DeviceSettingsPage.qml" line="186"/>
         <source>Period, ms</source>
         <translation>Okres, ms</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="370"/>
-        <source>Export</source>
-        <translation>Eksport</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="365"/>
-        <source>Import</source>
-        <translation>Import</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="335"/>
@@ -6472,6 +6445,16 @@
         <source>Timestamp</source>
         <translation>Znacznik czasu</translation>
     </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Baudrate</source>
+        <translation>Prędkość transmisji</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Settings file</source>
+        <translation>Plik ustawień</translation>
+    </message>
 </context>
 <context>
     <name>DeviceParamRow</name>
@@ -6484,6 +6467,36 @@
         <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
         <source>Unpin from favourites</source>
         <translation>Odepnij z ulubionych</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Set baudrate</source>
+        <translation>Ustaw</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Apply the selected baud rate</source>
+        <translation>Ustaw wybraną prędkość transmisji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Import</source>
+        <translation>Import</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Export</source>
+        <translation>Eksport</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Load all device settings from an XML file</source>
+        <translation>Wczytaj wszystkie ustawienia urządzenia z pliku XML</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Save all device settings to an XML file</source>
+        <translation>Zapisz wszystkie ustawienia urządzenia do pliku XML</translation>
     </message>
 </context>
 </TS>

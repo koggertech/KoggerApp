@@ -6,6 +6,7 @@ KIslandRow {
 
     property var page: null
     property string paramKey: ""
+    property bool favorite: false
 
     readonly property var dev: page ? page.dev : null
     readonly property bool editMode: !!(page && page.favEditMode)
@@ -26,8 +27,11 @@ KIslandRow {
             DeviceParamCatalog.write(paramRow.dev, paramRow.paramKey, v)
     }
 
-    label: meta ? meta.label : paramKey
-    stacked: !!meta && meta.kind === "tabs"
+    label: !meta ? paramKey
+         : (meta.labelInFavoritesOnly === true && !favorite) ? ""
+                                                             : meta.label
+    stacked: !!meta && (meta.stacked === true || meta.kind === "tabs")
+    verticalPadding: stacked ? Tokens.spaceMd : Tokens.spaceXs
     visible: DeviceParamCatalog.supported(dev, paramKey)
 
     leading: KCircleIconButton {
@@ -53,9 +57,11 @@ KIslandRow {
     Loader {
         width: paramRow.stacked ? parent.width : implicitWidth
         sourceComponent: !paramRow.meta ? null
-                       : paramRow.meta.kind === "spin"   ? spinComponent
-                       : paramRow.meta.kind === "switch" ? switchComponent
-                                                         : tabsComponent
+                       : paramRow.meta.kind === "spin"         ? spinComponent
+                       : paramRow.meta.kind === "switch"       ? switchComponent
+                       : paramRow.meta.kind === "baudrate"     ? baudrateComponent
+                       : paramRow.meta.kind === "settingsFile" ? settingsFileComponent
+                                                               : tabsComponent
     }
 
     Component {
@@ -79,6 +85,49 @@ KIslandRow {
             onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
             Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
             onToggled: { if (!_g) paramRow.writeParam(checked) }
+        }
+    }
+
+    Component {
+        id: baudrateComponent
+        Row {
+            width: parent ? parent.width : implicitWidth
+            spacing: Tokens.spaceMd
+            readonly property real setW: Math.round(120 * AppPalette.scale)
+            KCombo {
+                width: parent.width - parent.setW - Tokens.spaceMd
+                height: Tokens.controlHMd
+                model: paramRow.page ? paramRow.page.baudrateOptions : []
+                currentIndex: paramRow.page ? paramRow.page.baudrateIndex : 0
+                onActivated: function(index) { if (paramRow.page) paramRow.page.baudrateIndex = index }
+            }
+            UsblButton {
+                width: parent.setW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                text: qsTr("Set baudrate")
+                toolTipText: qsTr("Apply the selected baud rate")
+                onClicked: if (paramRow.page) paramRow.page.applyBaudrate()
+            }
+        }
+    }
+
+    Component {
+        id: settingsFileComponent
+        Row {
+            width: parent ? parent.width : implicitWidth
+            spacing: Tokens.spaceMd
+            readonly property real bw: (width - Tokens.spaceMd) / 2
+            UsblButton {
+                width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                text: qsTr("Import")
+                toolTipText: qsTr("Load all device settings from an XML file")
+                onClicked: if (paramRow.page) paramRow.page.openImportSettingsFile()
+            }
+            UsblButton {
+                width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                text: qsTr("Export")
+                toolTipText: qsTr("Save all device settings to an XML file")
+                onClicked: if (paramRow.page) paramRow.page.openExportSettingsFile()
+            }
         }
     }
 
