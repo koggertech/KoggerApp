@@ -79,6 +79,7 @@ Item {
             store: page.store
             usblPlan: page.usblPlan
             usblEngine: page.usblEngine
+            scrollTopInset: topoWrap.height + Tokens.spaceMd
         }
     }
 

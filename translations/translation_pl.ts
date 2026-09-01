@@ -2121,12 +2121,12 @@
         <translation>Ustaw wybraną prędkość transmisji</translation>
     </message>
     <message>
-        <source>Load all sonar settings from an XML file</source>
-        <translation>Wczytaj wszystkie ustawienia sonaru z pliku XML</translation>
+        <source>Load all device settings from an XML file</source>
+        <translation>Wczytaj wszystkie ustawienia urządzenia z pliku XML</translation>
     </message>
     <message>
-        <source>Save all sonar settings to an XML file</source>
-        <translation>Zapisz wszystkie ustawienia sonaru do pliku XML</translation>
+        <source>Save all device settings to an XML file</source>
+        <translation>Zapisz wszystkie ustawienia urządzenia do pliku XML</translation>
     </message>
     <message>
         <source>Choose firmware</source>

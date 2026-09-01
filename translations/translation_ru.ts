@@ -2121,12 +2121,12 @@
         <translation>Установить выбранную скорость передачи</translation>
     </message>
     <message>
-        <source>Load all sonar settings from an XML file</source>
-        <translation>Загрузить все настройки сонара из XML-файла</translation>
+        <source>Load all device settings from an XML file</source>
+        <translation>Загрузить все настройки устройства из XML-файла</translation>
     </message>
     <message>
-        <source>Save all sonar settings to an XML file</source>
-        <translation>Сохранить все настройки сонара в XML-файл</translation>
+        <source>Save all device settings to an XML file</source>
+        <translation>Сохранить все настройки устройства в XML-файл</translation>
     </message>
     <message>
         <source>Choose firmware</source>

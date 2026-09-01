@@ -8,6 +8,7 @@ Item {
     property string title: ""
     property string footer: ""
     property color fillColor: AppPalette.card
+    property color borderColor: AppPalette.border
     property color titleColor: AppPalette.textStrong
     property color footerColor: AppPalette.textSecond
     property color separatorColor: AppPalette.separator
@@ -45,7 +46,7 @@ Item {
             radius: island.cornerRadius
             color: island.fillColor
             border.width: Tokens.cardBorderWidth
-            border.color: AppPalette.border
+            border.color: island.borderColor
             implicitHeight: rowColumn.implicitHeight
 
             Column {

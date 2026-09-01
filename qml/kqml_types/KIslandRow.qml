@@ -14,6 +14,7 @@ Item {
     property color pressedColor: AppPalette.bgHover
     property color labelHoverColor: Qt.lighter(labelColor, Anim.hoverLighten)
     property int labelPixelSize: island ? island.labelPixelSize : Tokens.fontLg
+    property bool labelBold: false
     property int labelElide: Text.ElideRight
     property bool stacked: false
     property bool open: true
@@ -193,6 +194,7 @@ Item {
             text: row.label
             color: row.hovered ? row.labelHoverColor : row.labelColor
             font.pixelSize: row.labelPixelSize
+            font.bold: row.labelBold
             elide: row.labelElide
             Behavior on color { ColorAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
         }

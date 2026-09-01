@@ -1871,12 +1871,12 @@
         <translation>Apply the selected baud rate</translation>
     </message>
     <message>
-        <source>Load all sonar settings from an XML file</source>
-        <translation>Load all sonar settings from an XML file</translation>
+        <source>Load all device settings from an XML file</source>
+        <translation>Load all device settings from an XML file</translation>
     </message>
     <message>
-        <source>Save all sonar settings to an XML file</source>
-        <translation>Save all sonar settings to an XML file</translation>
+        <source>Save all device settings to an XML file</source>
+        <translation>Save all device settings to an XML file</translation>
     </message>
     <message>
         <source>Choose firmware</source>

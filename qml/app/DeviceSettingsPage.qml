@@ -16,6 +16,7 @@ Column {
     // as properties. See UsblEngine.qml.
     property var usblPlan: null
     property var usblEngine: null
+    property real scrollTopInset: 0
 
     // Per-device UI memory. This page is one instance whose `dev` changes on switch,
     // so disclosure state is kept per device: on switch, snapshot the leaving device's
@@ -182,11 +183,12 @@ Column {
         var topInContent = advancedPanel.mapToItem(flick.contentItem, 0, 0).y
         var bottomInContent = topInContent + advancedPanel.height
         var vpH = flick.height
+        var inset = Math.max(0, root.scrollTopInset)
         var cy = flick.contentY
-        if (topInContent >= cy - 0.5 && bottomInContent <= cy + vpH + 0.5)
+        if (topInContent >= cy + inset - 0.5 && bottomInContent <= cy + vpH + 0.5)
             return
         var target = bottomInContent - vpH + Tokens.spaceLg
-        target = Math.min(target, topInContent)
+        target = Math.min(target, topInContent - inset)
         target = Math.max(0, Math.min(target, flick.contentHeight - vpH))
         if (Math.abs(target - cy) < 0.5) return
         advScrollAnim.target = flick
@@ -240,6 +242,24 @@ Column {
             divisor: ds.divisor; decimals: ds.decimals; trimZeros: ds.trimZeros
             onValueModified: function(v) { if (!ds._in && ds.writeBack) ds.writeBack(v) }
         }
+    }
+
+    component DevIsland: KIsland {
+        property bool unconfirmed: false
+        fillColor: unconfirmed ? AppPalette.dangerBg : AppPalette.card
+        borderColor: unconfirmed ? AppPalette.dangerBorder : AppPalette.border
+    }
+
+    component DevStackedRow: KIslandRow {
+        stacked: true
+        verticalPadding: Tokens.spaceMd
+    }
+
+    component DevIslandTitle: KIslandRow {
+        labelBold: true
+        labelPixelSize: Math.max(Math.round(16 * AppPalette.scale), 13)
+        minHeight: 0
+        verticalPadding: Tokens.spaceSm
     }
 
     component DevButton: KButton {
@@ -1132,8 +1152,7 @@ Column {
 
             KIslandSection { label: qsTr("Echogram") }
 
-            KIslandRow {
-                stacked: true
+            DevStackedRow {
                 KTabBar {
                     id: b2ChartTab; width: parent.width
                     trackColor: AppPalette.bgDeep
@@ -1164,8 +1183,7 @@ Column {
 
             KIslandSection { label: qsTr("Rangefinder") }
 
-            KIslandRow {
-                stacked: true
+            DevStackedRow {
                 KTabBar {
                     id: b2DistTab; width: parent.width
                     trackColor: AppPalette.bgDeep
@@ -1189,8 +1207,7 @@ Column {
                 DevSpin { from: 0; to: 100; stepSize: 1; devValue: dev ? (dev.distConfidence || 0) : 0; writeBack: function(v) { if (dev) dev.distConfidence = v } }
             }
 
-            KIslandRow {
-                stacked: true
+            DevStackedRow {
                 forceSeparator: true
                 FlashButton { width: parent.width }
             }
@@ -1332,134 +1349,114 @@ Column {
 
     // ── Эхограмма ─────────────────────────────────────────────────────────
 
-    DeviceSettingsGroup {
-        width: advGroups.width; preferredWidth: advGroups.width
-        title: qsTr("Echogram"); titlePixelSize: 13
-        stateKey: "dev.echogram"; collapsedByDefault: root._hasCut
+    DevIsland {
         visible: !!(dev && dev.isChartSupport)
-        confirmed: !(dev && dev.chartSetupState === false)
+        unconfirmed: !!(dev && dev.chartSetupState === false)
 
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Resolution, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-            DevSpin { from: 10; to: 100; stepSize: 10; devValue: dev ? (dev.chartResolution || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartResolution = v } }
+        DevIslandTitle { label: qsTr("Echogram") }
+
+        KIslandRow {
+            label: qsTr("Resolution, mm")
+            DevSpin { from: 10; to: 100; stepSize: 10; devValue: dev ? (dev.chartResolution || 0) : 0; writeBack: function(v) { if (dev) dev.chartResolution = v } }
         }
-
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Sample count"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-            DevSpin { from: root.chartSamplesMin; to: root.chartSamplesMax; stepSize: 100; devValue: dev ? (dev.chartSamples || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartSamples = v } }
+        KIslandRow {
+            label: qsTr("Sample count")
+            DevSpin { from: root.chartSamplesMin; to: root.chartSamplesMax; stepSize: 100; devValue: dev ? (dev.chartSamples || 0) : 0; writeBack: function(v) { if (dev) dev.chartSamples = v } }
         }
-
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Offset"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-            DevSpin { from: 0; to: 10000; stepSize: 100; devValue: dev ? (dev.chartOffset || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.chartOffset = v } }
+        KIslandRow {
+            label: qsTr("Offset")
+            DevSpin { from: 0; to: 10000; stepSize: 100; devValue: dev ? (dev.chartOffset || 0) : 0; writeBack: function(v) { if (dev) dev.chartOffset = v } }
         }
     }
 
     // ── Дальномер ─────────────────────────────────────────────────────────
 
-    DeviceSettingsGroup {
-        width: advGroups.width; preferredWidth: advGroups.width
-        title: qsTr("Rangefinder"); titlePixelSize: 13
-        stateKey: "dev.rangefinder"; collapsedByDefault: root._hasCut
+    DevIsland {
         visible: !!(dev && dev.isDistSupport)
-        confirmed: !(dev && dev.distSetupState === false)
+        unconfirmed: !!(dev && dev.distSetupState === false)
 
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Max distance, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-            DevSpin { from: 0; to: 50000; stepSize: 1000; devValue: dev ? (dev.distMax || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distMax = v } }
+        DevIslandTitle { label: qsTr("Rangefinder") }
+
+        KIslandRow {
+            label: qsTr("Max distance, mm")
+            DevSpin { from: 0; to: 50000; stepSize: 1000; devValue: dev ? (dev.distMax || 0) : 0; writeBack: function(v) { if (dev) dev.distMax = v } }
         }
-
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Dead zone, mm"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-            DevSpin { from: 0; to: 50000; stepSize: 100; devValue: dev ? (dev.distDeadZone || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distDeadZone = v } }
+        KIslandRow {
+            label: qsTr("Dead zone, mm")
+            DevSpin { from: 0; to: 50000; stepSize: 100; devValue: dev ? (dev.distDeadZone || 0) : 0; writeBack: function(v) { if (dev) dev.distDeadZone = v } }
         }
-
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Confidence threshold, %"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-            DevSpin { from: 0; to: 100; stepSize: 1; devValue: dev ? (dev.distConfidence || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.distConfidence = v } }
+        KIslandRow {
+            label: qsTr("Confidence threshold, %")
+            DevSpin { from: 0; to: 100; stepSize: 1; devValue: dev ? (dev.distConfidence || 0) : 0; writeBack: function(v) { if (dev) dev.distConfidence = v } }
         }
     }
 
     // ── Преобразователь ───────────────────────────────────────────────────
 
-    DeviceSettingsGroup {
-        width: advGroups.width; preferredWidth: advGroups.width
-        title: qsTr("Transducer"); titlePixelSize: 13
-        stateKey: "dev.transducer"; collapsedByDefault: root._hasCut
+    DevIsland {
         visible: !!(dev && dev.isTransducerSupport)
-        confirmed: !(dev && dev.transcState === false)
+        unconfirmed: !!(dev && dev.transcState === false)
 
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Pulse count"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-            DevSpin { from: 0; to: 5000; stepSize: 1; devValue: dev ? (dev.transPulse || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transPulse = v } }
+        DevIslandTitle { label: qsTr("Transducer") }
+
+        KIslandRow {
+            label: qsTr("Pulse count")
+            DevSpin { from: 0; to: 5000; stepSize: 1; devValue: dev ? (dev.transPulse || 0) : 0; writeBack: function(v) { if (dev) dev.transPulse = v } }
         }
-
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Frequency, kHz"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-            DevSpin { from: 40; to: 6000; stepSize: 5; devValue: dev ? (dev.transFreq || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.transFreq = v } }
+        KIslandRow {
+            label: qsTr("Frequency, kHz")
+            DevSpin { from: 40; to: 6000; stepSize: 5; devValue: dev ? (dev.transFreq || 0) : 0; writeBack: function(v) { if (dev) dev.transFreq = v } }
         }
-
-        KSwitch {
-            id: boosterSwitch
-            width: parent.width; text: qsTr("Booster")
-            property bool wantChecked: !!(dev && dev.transBoost === 1)
-            property bool _g: false
-            onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
-            Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
-            onToggled: { if (!_g && dev) dev.transBoost = checked ? 1 : 0 }
+        KIslandRow {
+            label: qsTr("Booster")
+            KSwitch {
+                id: boosterSwitch
+                flat: true
+                property bool wantChecked: !!(dev && dev.transBoost === 1)
+                property bool _g: false
+                onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
+                Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
+                onToggled: { if (!_g && dev) dev.transBoost = checked ? 1 : 0 }
+            }
         }
     }
 
     // ── DSP ───────────────────────────────────────────────────────────────
 
-    DeviceSettingsGroup {
-        width: advGroups.width; preferredWidth: advGroups.width
-        title: qsTr("DSP"); titlePixelSize: 13
-        stateKey: "dev.dsp"; collapsedByDefault: root._hasCut
+    DevIsland {
         visible: !!(dev && dev.isDSPSupport)
-        confirmed: !(dev && (dev.dspState === false || dev.soundState === false))
+        unconfirmed: !!(dev && (dev.dspState === false || dev.soundState === false))
 
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Horizontal smoothing"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-            DevSpin { from: 0; to: 4; stepSize: 1; devValue: dev ? (dev.dspHorSmooth || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.dspHorSmooth = v } }
+        DevIslandTitle { label: qsTr("DSP") }
+
+        KIslandRow {
+            label: qsTr("Horizontal smoothing")
+            DevSpin { from: 0; to: 4; stepSize: 1; devValue: dev ? (dev.dspHorSmooth || 0) : 0; writeBack: function(v) { if (dev) dev.dspHorSmooth = v } }
         }
-
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Sound speed, m/s"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-            DevSpin { from: 300; to: 6000; stepSize: 5; devValue: dev ? Math.round((dev.soundSpeed || 0) / 1000) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.soundSpeed = v * 1000 } }
+        KIslandRow {
+            label: qsTr("Sound speed, m/s")
+            DevSpin { from: 300; to: 6000; stepSize: 5; devValue: dev ? Math.round((dev.soundSpeed || 0) / 1000) : 0; writeBack: function(v) { if (dev) dev.soundSpeed = v * 1000 } }
         }
     }
 
     // ── Датасет ───────────────────────────────────────────────────────────
 
-    DeviceSettingsGroup {
-        width: advGroups.width; preferredWidth: advGroups.width
-        title: qsTr("Dataset"); titlePixelSize: 13
-        stateKey: "dev.dataset"; collapsedByDefault: root._hasCut
+    DevIsland {
         visible: !!(dev && dev.isDatasetSupport)
-        confirmed: !(dev && dev.datasetState === false)
+        unconfirmed: !!(dev && dev.datasetState === false)
 
-        Row {
-            width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceMd
-            Text { text: qsTr("Period, ms"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg; width: Math.max(0, parent.width - parent.spacing - root.spinW); anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight}
-            DevSpin { from: 0; to: 2000; stepSize: 50; devValue: dev ? (dev.ch1Period || 0) : 0; anchors.verticalCenter: parent.verticalCenter; writeBack: function(v) { if (dev) dev.ch1Period = v } }
+        DevIslandTitle { label: qsTr("Dataset") }
+
+        KIslandRow {
+            label: qsTr("Period, ms")
+            DevSpin { from: 0; to: 2000; stepSize: 50; devValue: dev ? (dev.ch1Period || 0) : 0; writeBack: function(v) { if (dev) dev.ch1Period = v } }
         }
 
-        Column {
-            width: parent.width; spacing: Tokens.spaceSm
-            Text { text: qsTr("Echogram"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg }
+        DevStackedRow {
+            label: qsTr("Echogram")
             KTabBar {
                 id: datasetChartTab; width: parent.width
+                trackColor: AppPalette.bgDeep
                 options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("8-bit"), value: 1 }]
                 property int chartModel: dev ? (dev.datasetChart === 1 ? 1 : 0) : 0
                 property bool _g: false
@@ -1469,11 +1466,11 @@ Column {
             }
         }
 
-        Column {
-            width: parent.width; spacing: Tokens.spaceSm
-            Text { text: qsTr("Rangefinder"); color: AppPalette.textStrong; font.pixelSize: Tokens.fontLg }
+        DevStackedRow {
+            label: qsTr("Rangefinder")
             KTabBar {
                 id: datasetDistTab; width: parent.width
+                trackColor: AppPalette.bgDeep
                 options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("On"), value: 1 }, { label: qsTr("NMEA"), value: 2 }]
                 property int distModel: dev ? (dev.datasetDist === 1 ? 1 : (dev.datasetSDDBT === 1 ? 2 : 0)) : 0
                 property bool _g: false
@@ -1488,95 +1485,109 @@ Column {
             }
         }
 
-        KSwitch {
-            id: ahrsSwitch; width: parent.width; text: qsTr("AHRS")
-            property bool wantChecked: !!(dev && (dev.datasetEuler & 1))
-            property bool _g: false
-            onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
-            Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
-            onToggled: { if (!_g && dev) dev.datasetEuler = checked ? 1 : 0 }
+        KIslandRow {
+            label: qsTr("AHRS")
+            KSwitch {
+                id: ahrsSwitch
+                flat: true
+                property bool wantChecked: !!(dev && (dev.datasetEuler & 1))
+                property bool _g: false
+                onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
+                Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
+                onToggled: { if (!_g && dev) dev.datasetEuler = checked ? 1 : 0 }
+            }
         }
 
-        KSwitch {
-            id: tempSwitch; width: parent.width; text: qsTr("Temperature")
-            property bool wantChecked: !!(dev && (dev.datasetTemp & 1))
-            property bool _g: false
-            onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
-            Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
-            onToggled: { if (!_g && dev) dev.datasetTemp = checked ? 1 : 0 }
+        KIslandRow {
+            label: qsTr("Temperature")
+            KSwitch {
+                id: tempSwitch
+                flat: true
+                property bool wantChecked: !!(dev && (dev.datasetTemp & 1))
+                property bool _g: false
+                onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
+                Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
+                onToggled: { if (!_g && dev) dev.datasetTemp = checked ? 1 : 0 }
+            }
         }
 
-        KSwitch {
-            id: tsSwitch; width: parent.width; text: qsTr("Timestamp")
-            property bool wantChecked: !!(dev && (dev.datasetTimestamp & 1))
-            property bool _g: false
-            onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
-            Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
-            onToggled: { if (!_g && dev) dev.datasetTimestamp = checked ? 1 : 0 }
+        KIslandRow {
+            label: qsTr("Timestamp")
+            KSwitch {
+                id: tsSwitch
+                flat: true
+                property bool wantChecked: !!(dev && (dev.datasetTimestamp & 1))
+                property bool _g: false
+                onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
+                Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
+                onToggled: { if (!_g && dev) dev.datasetTimestamp = checked ? 1 : 0 }
+            }
         }
     }
 
-    DeviceSettingsGroup {
+    DevIsland {
         id: devActionsGroup
-        width: advGroups.width; preferredWidth: advGroups.width
-        title: qsTr("Actions"); titlePixelSize: 13
-        stateKey: "dev.actions"; collapsedByDefault: root._hasCut
-        confirmed: !(dev && dev.uartState === false)
+        unconfirmed: !!(dev && dev.uartState === false)
 
         readonly property var baudrateOptions: [9600, 19200, 38400, 57600, 115200,
                                                 230400, 460800, 921600, 1200000, 2000000]
 
-        Row {
-            width: parent.width; spacing: Tokens.spaceSm
-            readonly property real bw: (width - 2 * Tokens.spaceSm) / 3
-            FlashButton { width: parent.bw }
-            DevButton {
-                width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                text: qsTr("Erase settings"); danger: true
-                toolTipText: qsTr("Erase device settings (reset)")
-                onClicked: { if (dev) { dev.resetSettings(); notifications.info(qsTr("Settings erased on device: %1").arg(dev.devName)) } }
-            }
-            DevButton {
-                width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                text: qsTr("Reboot")
-                toolTipText: qsTr("Reboot the device")
-                onClicked: { if (dev) { dev.reboot(); notifications.info(qsTr("Reboot command sent: %1").arg(dev.devName)) } }
+        DevIslandTitle { label: qsTr("Actions") }
+
+        DevStackedRow {
+            Row {
+                width: parent.width; spacing: Tokens.spaceMd
+                readonly property real bw: (width - 2 * Tokens.spaceMd) / 3
+                FlashButton { width: parent.bw }
+                DevButton {
+                    width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                    text: qsTr("Erase settings"); danger: true
+                    toolTipText: qsTr("Erase device settings (reset)")
+                    onClicked: { if (dev) { dev.resetSettings(); notifications.info(qsTr("Settings erased on device: %1").arg(dev.devName)) } }
+                }
+                DevButton {
+                    width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                    text: qsTr("Reboot")
+                    toolTipText: qsTr("Reboot the device")
+                    onClicked: { if (dev) { dev.reboot(); notifications.info(qsTr("Reboot command sent: %1").arg(dev.devName)) } }
+                }
             }
         }
 
-        Row {
-            width: parent.width; spacing: Tokens.spaceSm
-            readonly property real setW: Math.round(120 * AppPalette.scale)
-            KCombo {
-                id: baudrateCombo
-                width: parent.width - parent.setW - Tokens.spaceSm
-                height: Tokens.controlHMd
-                model: devActionsGroup.baudrateOptions
-                currentIndex: devActionsGroup.baudrateOptions.indexOf(115200)
-            }
-            DevButton {
-                width: parent.setW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                text: qsTr("Set baudrate")
-                toolTipText: qsTr("Apply the selected baud rate")
-                onClicked: {
-                    if (!dev)
-                        return
-                    var b = devActionsGroup.baudrateOptions[baudrateCombo.currentIndex]
-                    var uuid = root._linkUuidOfDev()
-                    dev.baudrate = b
-                    notifications.info(qsTr("Baudrate set: %1").arg(b))
-                    if (uuid.length > 0)
-                        Qt.callLater(root._applyLinkBaudrate, uuid, b)
+        DevStackedRow {
+            Row {
+                width: parent.width; spacing: Tokens.spaceMd
+                readonly property real setW: Math.round(120 * AppPalette.scale)
+                KCombo {
+                    id: baudrateCombo
+                    width: parent.width - parent.setW - Tokens.spaceMd
+                    height: Tokens.controlHMd
+                    model: devActionsGroup.baudrateOptions
+                    currentIndex: devActionsGroup.baudrateOptions.indexOf(115200)
+                }
+                DevButton {
+                    width: parent.setW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                    text: qsTr("Set baudrate")
+                    toolTipText: qsTr("Apply the selected baud rate")
+                    onClicked: {
+                        if (!dev)
+                            return
+                        var b = devActionsGroup.baudrateOptions[baudrateCombo.currentIndex]
+                        var uuid = root._linkUuidOfDev()
+                        dev.baudrate = b
+                        notifications.info(qsTr("Baudrate set: %1").arg(b))
+                        if (uuid.length > 0)
+                            Qt.callLater(root._applyLinkBaudrate, uuid, b)
+                    }
                 }
             }
         }
     }
 
-    DeviceSettingsGroup {
+    DevIsland {
         id: devSettingsGroup
-        width: advGroups.width; preferredWidth: advGroups.width
-        title: qsTr("Settings file"); titlePixelSize: 13
-        stateKey: "dev.settingsFile"; collapsedByDefault: root._hasCut
+
+        DevIslandTitle { label: qsTr("Settings file") }
 
         property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property var exportFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
@@ -1628,30 +1639,31 @@ Column {
             }
         }
 
-        Row {
-            width: parent.width; spacing: Tokens.spaceSm
-            readonly property real bw: (width - Tokens.spaceSm) / 2
-            DevButton {
-                width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                text: qsTr("Import")
-                toolTipText: qsTr("Load all sonar settings from an XML file")
-                onClicked: { importXmlDialog.currentFolder = devSettingsGroup.importFolder; importXmlDialog.open() }
-            }
-            DevButton {
-                width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-                text: qsTr("Export")
-                toolTipText: qsTr("Save all sonar settings to an XML file")
-                onClicked: { exportXmlDialog.currentFolder = devSettingsGroup.exportFolder; exportXmlDialog.open() }
+        DevStackedRow {
+            Row {
+                width: parent.width; spacing: Tokens.spaceMd
+                readonly property real bw: (width - Tokens.spaceMd) / 2
+                DevButton {
+                    width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                    text: qsTr("Import")
+                    toolTipText: qsTr("Load all device settings from an XML file")
+                    onClicked: { importXmlDialog.currentFolder = devSettingsGroup.importFolder; importXmlDialog.open() }
+                }
+                DevButton {
+                    width: parent.bw; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                    text: qsTr("Export")
+                    toolTipText: qsTr("Save all device settings to an XML file")
+                    onClicked: { exportXmlDialog.currentFolder = devSettingsGroup.exportFolder; exportXmlDialog.open() }
+                }
             }
         }
     }
 
-    DeviceSettingsGroup {
+    DevIsland {
         id: devUpgradeGroup
         visible: !!(dev && dev.isUpgradeSupport)
-        width: advGroups.width; preferredWidth: advGroups.width
-        title: qsTr("Upgrade"); titlePixelSize: 13
-        stateKey: "dev.upgrade"; collapsedByDefault: root._hasCut
+
+        DevIslandTitle { label: qsTr("Upgrade") }
 
         property var upgradeFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         property string selectedUpgradePathSource: ""
@@ -1714,67 +1726,76 @@ Column {
             }
         }
 
-        // Прогресс прошивки (0..100).
-        Rectangle {
-            width: parent.width; height: Math.round(4 * AppPalette.scale); radius: height / 2
-            color: AppPalette.trackOff
-            readonly property int pct: dev && dev.upgradeFWStatus !== undefined
-                                       ? Math.max(0, Math.min(100, dev.upgradeFWStatus)) : 0
-            visible: pct > 0 && pct < 100
+        KIslandRow {
+            stacked: true
+            minHeight: 0
+            open: upgradeProgress.pct > 0 && upgradeProgress.pct < 100
             Rectangle {
-                height: parent.height; radius: parent.radius; color: AppPalette.accentBar
-                width: parent.width * parent.pct / 100
+                id: upgradeProgress
+                width: parent.width; height: Math.round(4 * AppPalette.scale); radius: height / 2
+                color: AppPalette.trackOff
+                readonly property int pct: dev && dev.upgradeFWStatus !== undefined
+                                           ? Math.max(0, Math.min(100, dev.upgradeFWStatus)) : 0
+                Rectangle {
+                    height: parent.height; radius: parent.radius; color: AppPalette.accentBar
+                    width: parent.width * upgradeProgress.pct / 100
+                }
             }
         }
 
-        Row {
-            width: parent.width; spacing: Tokens.spaceSm
-            readonly property real browseW: Tokens.controlHMd
-            Rectangle {
-                width: parent.width - parent.browseW - Tokens.spaceSm
-                height: Tokens.controlHMd; radius: Tokens.radiusMd
-                color: AppPalette.bg
-                border.width: upgradePathInput.activeFocus ? 1 : Tokens.cardBorderWidth
-                border.color: upgradePathInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                TextInput {
-                    id: upgradePathInput
-                    activeFocusOnTab: true
-                    anchors.fill: parent; anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
-                    verticalAlignment: TextInput.AlignVCenter
-                    color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
-                    TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: upgradePathInput.selectAll() }
-                    Text {
-                        visible: !upgradePathInput.text.length; text: qsTr("Enter path")
-                        color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
-                        anchors.verticalCenter: parent.verticalCenter
+        DevStackedRow {
+            Row {
+                width: parent.width; spacing: Tokens.spaceMd
+                readonly property real browseW: Tokens.controlHMd
+                Rectangle {
+                    width: parent.width - parent.browseW - Tokens.spaceMd
+                    height: Tokens.controlHMd; radius: Tokens.radiusMd
+                    color: AppPalette.bg
+                    border.width: upgradePathInput.activeFocus ? 1 : Tokens.cardBorderWidth
+                    border.color: upgradePathInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                    TextInput {
+                        id: upgradePathInput
+                        activeFocusOnTab: true
+                        anchors.fill: parent; anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
+                        verticalAlignment: TextInput.AlignVCenter
+                        color: AppPalette.text; font.pixelSize: Tokens.fontSm; clip: true
+                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: upgradePathInput.selectAll() }
+                        Text {
+                            visible: !upgradePathInput.text.length; text: qsTr("Enter path")
+                            color: AppPalette.textMuted; font.pixelSize: Tokens.fontSm
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
                     }
                 }
-            }
-            DevButton {
-                width: Tokens.controlHMd; height: Tokens.controlHMd; text: "..."
-                fontPixelSize: Tokens.fontLg; bold: false
-                horizontalPadding: 0; verticalPadding: 0
-                toolTipText: qsTr("Choose firmware")
-                onClicked: { upgradeFileDialog.currentFolder = devUpgradeGroup.upgradeFolder; upgradeFileDialog.open() }
+                DevButton {
+                    width: Tokens.controlHMd; height: Tokens.controlHMd; text: "..."
+                    fontPixelSize: Tokens.fontLg; bold: false
+                    horizontalPadding: 0; verticalPadding: 0
+                    toolTipText: qsTr("Choose firmware")
+                    onClicked: { upgradeFileDialog.currentFolder = devUpgradeGroup.upgradeFolder; upgradeFileDialog.open() }
+                }
             }
         }
-        DevButton {
-            width: parent.width; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
-            text: qsTr("UPGRADE")
-            visible: upgradePathInput.text !== ""
-            onClicked: {
-                if (!dev) return
-                var path = devUpgradeGroup.currentUpgradePath()
-                var fw = devUpgradeGroup._baseName(path)
-                var label = devUpgradeGroup._devLabel()
-                var tag = "fw-upgrade-" + (dev.devSN || 0)
-                if (core.upgradeFW(path, dev)) {
-                    devUpgradeGroup._activeTag = tag
-                    devUpgradeGroup._activeLabel = label
-                    devUpgradeGroup._activeFw = fw
-                    notifications.warning(qsTr("Flashing device %1 with file %2").arg(label).arg(fw), tag)
-                } else {
-                    notifications.warning(qsTr("Failed to open firmware file: %1").arg(fw))
+
+        DevStackedRow {
+            open: upgradePathInput.text !== ""
+            DevButton {
+                width: parent.width; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd
+                text: qsTr("UPGRADE")
+                onClicked: {
+                    if (!dev) return
+                    var path = devUpgradeGroup.currentUpgradePath()
+                    var fw = devUpgradeGroup._baseName(path)
+                    var label = devUpgradeGroup._devLabel()
+                    var tag = "fw-upgrade-" + (dev.devSN || 0)
+                    if (core.upgradeFW(path, dev)) {
+                        devUpgradeGroup._activeTag = tag
+                        devUpgradeGroup._activeLabel = label
+                        devUpgradeGroup._activeFw = fw
+                        notifications.warning(qsTr("Flashing device %1 with file %2").arg(label).arg(fw), tag)
+                    } else {
+                        notifications.warning(qsTr("Failed to open firmware file: %1").arg(fw))
+                    }
                 }
             }
         }
