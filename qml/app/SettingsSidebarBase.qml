@@ -387,12 +387,46 @@ Item {
                     }
 
                     KButton {
+                        id: scrollTopButton
+                        readonly property Item _target: panelRoot.subPageOpen ? subFlick : contentFlick
+                        readonly property bool _canReturn: !!_target && _target.contentY > panel._fadeHeight
+                        property real _slotW: _canReturn ? Tokens.controlHLg : 0
+                        Behavior on _slotW { NumberAnimation { duration: Anim.fadeMs; easing.type: Easing.OutCubic } }
+
+                        text: ""
+                        opacity: _canReturn ? 1.0 : 0.0
+                        visible: opacity > 0.01
+                        Behavior on opacity { NumberAnimation { duration: Anim.fadeMs; easing.type: Easing.OutCubic } }
+                        normalBg: AppPalette.controlRaised
+                        hoverBg:  Qt.lighter(AppPalette.controlRaised, 1.2)
+                        toolTipText: qsTr("Scroll to top")
+                        Layout.preferredWidth: scrollTopButton._slotW
+                        Layout.maximumWidth:   scrollTopButton._slotW
+                        Layout.preferredHeight: Tokens.controlHLg
+                        Layout.minimumHeight:   Tokens.controlHLg
+                        Layout.maximumHeight:   Tokens.controlHLg
+                        Layout.alignment: Qt.AlignVCenter
+                        onClicked: panelRoot.kbdScroll("top")
+
+                        DisclosureIndicator {
+                            anchors.centerIn: parent
+                            width: Math.round(12 * AppPalette.scale)
+                            height: width
+                            expanded: true
+                            rotation: 180
+                            indicatorColor: scrollTopButton.hovered ? Qt.lighter(AppPalette.text, 1.08)
+                                                                    : AppPalette.text
+                        }
+                    }
+
+                    KButton {
                         text: "\u2715"
                         width: Tokens.controlHLg
                         height: Tokens.controlHLg
                         fontPixelSize: Tokens.fontXxl
                         normalBg: AppPalette.controlRaised
                         hoverBg:  Qt.lighter(AppPalette.controlRaised, 1.2)
+                        toolTipText: qsTr("Close")
                         Layout.preferredWidth: width
                         Layout.preferredHeight: height
                         Layout.minimumWidth: width

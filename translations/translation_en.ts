@@ -588,11 +588,6 @@
         <translation>Select folder and set .csv file name</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2666"/>
-        <source>Scroll to top</source>
-        <translation>Scroll to top</translation>
-    </message>
-    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="283"/>
         <location filename="../qml/app/AppSettingsPage.qml" line="1224"/>
         <source>Export to CSV</source>
@@ -4338,6 +4333,16 @@
         <location filename="../qml/app/SettingsSidebarBase.qml" line="13"/>
         <source>Settings</source>
         <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SettingsSidebarBase.qml" line="402"/>
+        <source>Scroll to top</source>
+        <translation>Scroll to top</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SettingsSidebarBase.qml" line="424"/>
+        <source>Close</source>
+        <translation>Close</translation>
     </message>
 </context>
 <context>
