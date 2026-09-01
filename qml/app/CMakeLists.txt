@@ -14,6 +14,7 @@ qt_add_qml_module(kogger_app
         ConsoleSettingsTab.qml
         CsvExportSettingsTab.qml
         DataWidgetPopup.qml
+        DeviceParamRow.qml
         DeviceSettingsGroup.qml
         DeviceSettingsPage.qml
         DeviceSettingsTab.qml
@@ -27,6 +28,7 @@ qt_add_qml_module(kogger_app
         FilesSettingsPage.qml
         FullscreenPanePopup.qml
         GlobalPanePopup.qml
+        HeaderActionChip.qml
         HotActionsPanel.qml
         InputDeviceState.qml
         LayoutCreatePage.qml

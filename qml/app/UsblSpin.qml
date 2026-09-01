@@ -12,6 +12,7 @@ Item {
     property int to: 100
     property int stepSize: 1
     property var writeBack: null
+    property int fontPixelSize: Tokens.fontSm
 
     implicitWidth: Math.round(115 * AppPalette.scale)
     implicitHeight: Tokens.controlHMd
@@ -27,7 +28,7 @@ Item {
         id: spin
         anchors.fill: parent
         from: root.from; to: root.to; stepSize: root.stepSize
-        fontPixelSize: Tokens.fontSm
+        fontPixelSize: root.fontPixelSize
         onValueModified: function (v) { if (!root._in && root.writeBack) root.writeBack(v) }
     }
 }

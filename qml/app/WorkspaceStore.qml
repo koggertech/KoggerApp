@@ -450,6 +450,8 @@ property var settingsProfiles: []
 property var profilesPopupState: ({ x: -1, y: -1 })
 
 property var  widgets: []
+property var  deviceFavoriteParams: ({})
+readonly property int deviceFavoriteParamLimit: 12
 readonly property bool hasWidgets: widgets.length > 0
 readonly property int widgetLimit: 10
 readonly property bool canCreateWidget: widgets.length < widgetLimit
@@ -866,6 +868,83 @@ function loadWidgets() {
     _legacyStandIds = legacyStand
     _legacyStandDefs = legacyStandDefs
     saveWidgets()
+}
+
+property Settings deviceStore: Settings {
+    category: "main/devices"
+    property string favoriteParamsJson: "{}"
+}
+
+function saveDeviceFavoriteParams() {
+    deviceStore.favoriteParamsJson = JSON.stringify(deviceFavoriteParams)
+}
+
+function loadDeviceFavoriteParams() {
+    var raw = deviceStore.favoriteParamsJson
+    if (!raw || raw === "")
+        return
+    var parsed = null
+    try { parsed = JSON.parse(raw) } catch (e) { parsed = null }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+        return
+
+    var next = {}
+    var keys = Object.keys(parsed)
+    for (var i = 0; i < keys.length; ++i) {
+        var devName = String(keys[i])
+        if (devName.length === 0) continue
+        var entry = parsed[devName]
+        if (!Array.isArray(entry)) continue
+        var list = []
+        for (var j = 0; j < entry.length; ++j) {
+            var key = String(entry[j])
+            if (!DeviceParamCatalog.has(key)) continue
+            if (list.indexOf(key) >= 0) continue
+            list.push(key)
+            if (list.length >= deviceFavoriteParamLimit) break
+        }
+        if (list.length > 0)
+            next[devName] = list
+    }
+    deviceFavoriteParams = next
+    saveDeviceFavoriteParams()
+}
+
+function favoriteParamsFor(devName) {
+    if (!devName || devName.length === 0) return []
+    var list = deviceFavoriteParams[devName]
+    return Array.isArray(list) ? list : []
+}
+
+function isFavoriteParam(devName, key) {
+    return favoriteParamsFor(devName).indexOf(key) >= 0
+}
+
+function favoriteParamsFull(devName) {
+    return favoriteParamsFor(devName).length >= deviceFavoriteParamLimit
+}
+
+function toggleFavoriteParam(devName, key) {
+    if (!devName || devName.length === 0 || !DeviceParamCatalog.has(key))
+        return false
+    var list = favoriteParamsFor(devName).slice(0)
+    var at = list.indexOf(key)
+    if (at >= 0) {
+        list.splice(at, 1)
+    } else {
+        if (list.length >= deviceFavoriteParamLimit)
+            return false
+        list.push(key)
+    }
+    var next = {}
+    var keys = Object.keys(deviceFavoriteParams)
+    for (var i = 0; i < keys.length; ++i)
+        next[keys[i]] = deviceFavoriteParams[keys[i]]
+    if (list.length > 0) next[devName] = list
+    else delete next[devName]
+    deviceFavoriteParams = next
+    saveDeviceFavoriteParams()
+    return true
 }
 
 function saveWidget(def) {
@@ -5151,6 +5230,7 @@ function loadPersistedUiState() {
     bottomTrackEditorOpen = layoutStore.bottomTrackEditorOpenStored
     loadPopupDocks()
     loadWidgets()
+    loadDeviceFavoriteParams()
     loadWidgetInstances()
     loadWidgetShown()
     _migrateServoPanel()

@@ -2264,29 +2264,9 @@
         <translation>CPS</translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="224"/>
-        <source>AHRS</source>
-        <translation>AHRS</translation>
-    </message>
-    <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="209"/>
         <source>NMEA</source>
         <translation>NMEA</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="233"/>
-        <source>Temperature</source>
-        <translation>Temperatura</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="242"/>
-        <source>Timestamp</source>
-        <translation>Znacznik czasu</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="144"/>
-        <source>Booster</source>
-        <translation>Wzmacniacz</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="195"/>
@@ -2299,49 +2279,9 @@
         <translation>Częstotliwość, kHz</translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="132"/>
-        <source>Pulse count</source>
-        <translation>Liczba impulsów</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="82"/>
-        <source>Sample count</source>
-        <translation>Liczba próbek</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="76"/>
-        <source>Resolution, mm</source>
-        <translation>Rozdzielczość, mm</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="88"/>
-        <source>Offset</source>
-        <translation>Offset próbek</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="110"/>
-        <source>Dead zone, mm</source>
-        <translation>Strefa martwa, mm</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="104"/>
-        <source>Max distance, mm</source>
-        <translation>Maks. odległość, mm</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="164"/>
-        <source>Horizontal smoothing</source>
-        <translation>Wygładzanie poziome</translation>
-    </message>
-    <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="116"/>
         <source>Confidence threshold, %</source>
         <translation>Próg pewności, %</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="170"/>
-        <source>Sound speed, m/s</source>
-        <translation>Prędkość dźwięku, m/s</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="186"/>
@@ -2603,6 +2543,31 @@
     <message>
         <source>Group "%1" settings were not applied</source>
         <translation>Ustawienia grupy "%1" nie zostały zastosowane</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
+        <source>Favourites:</source>
+        <translation>Ulubione:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
+        <source>Favourites are full: up to %1 settings</source>
+        <translation>Ulubione są pełne: maksymalnie %1 ustawień</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
+        <source>Finish pinning settings</source>
+        <translation>Zakończ przypinanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
+        <source>Pin settings to favourites</source>
+        <translation>Przypnij ustawienia do ulubionych</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
+        <source>Tap a star next to a setting to pin it here</source>
+        <translation>Naciśnij gwiazdkę obok ustawienia, aby przypiąć je tutaj</translation>
     </message>
 </context>
 <context>
@@ -6398,6 +6363,127 @@
         <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
         <source>Developer mode is already enabled</source>
         <translation>Tryb dla programistów jest już włączony</translation>
+    </message>
+</context>
+<context>
+    <name>DeviceParamCatalog</name>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Resolution, mm</source>
+        <translation>Rozdzielczość, mm</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Sample count</source>
+        <translation>Liczba próbek</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Offset</source>
+        <translation>Offset próbek</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Max distance, mm</source>
+        <translation>Maks. odległość, mm</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Dead zone, mm</source>
+        <translation>Strefa martwa, mm</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Confidence threshold, %</source>
+        <translation>Próg pewności, %</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Pulse count</source>
+        <translation>Liczba impulsów</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Frequency, kHz</source>
+        <translation>Częstotliwość, kHz</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Booster</source>
+        <translation>Wzmacniacz</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Horizontal smoothing</source>
+        <translation>Wygładzanie poziome</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Sound speed, m/s</source>
+        <translation>Prędkość dźwięku, m/s</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Period, ms</source>
+        <translation>Okres, ms</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Echogram</source>
+        <translation>Echogram</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Off</source>
+        <translation>Wyłącz</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>8-bit</source>
+        <translation>8-bitowy</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Rangefinder</source>
+        <translation>Głębokościomierz</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>On</source>
+        <translation>Włącz</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>NMEA</source>
+        <translation>NMEA</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>AHRS</source>
+        <translation>AHRS</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Temperature</source>
+        <translation>Temperatura</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Timestamp</source>
+        <translation>Znacznik czasu</translation>
+    </message>
+</context>
+<context>
+    <name>DeviceParamRow</name>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Pin to favourites</source>
+        <translation>Przypnij do ulubionych</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Unpin from favourites</source>
+        <translation>Odepnij z ulubionych</translation>
     </message>
 </context>
 </TS>

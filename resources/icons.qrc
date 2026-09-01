@@ -183,5 +183,7 @@
         <file>icons/ui/double_route_crossed_out.svg</file>
         <file>icons/ui/lock.svg</file>
         <file>icons/ui/lock-open.svg</file>
+        <file>icons/ui/star.svg</file>
+        <file>icons/ui/star-filled.svg</file>
     </qresource>
 </RCC>

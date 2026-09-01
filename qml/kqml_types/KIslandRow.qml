@@ -211,7 +211,7 @@ Item {
 
     Item {
         id: slot
-        width: row.stacked ? row.innerWidth
+        width: row.stacked ? Math.max(0, row.innerWidth - row.leadingWidth)
                            : (row.slotWidth > 0 ? row.slotWidth : childrenRect.width)
         height: childrenRect.height
         x: row.stacked ? row.horizontalPadding + row.leadingWidth

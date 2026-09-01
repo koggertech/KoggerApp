@@ -18,6 +18,96 @@ Column {
     property var usblEngine: null
     property real scrollTopInset: 0
 
+    property bool favEditMode: false
+    readonly property string devTypeKey: dev ? (dev.devName || "") : ""
+
+    readonly property var compactParamKeys: {
+        if (!_isBasicSonar)
+            return []
+        var keys = ["dataset.period", "dataset.chart", "dataset.dist",
+                    "chart.resolution", "chart.samples", "dist.confidence"]
+        if (_isNanoSSS)
+            keys.push("trans.freq")
+        return keys
+    }
+
+    function isPinnable(paramKey) {
+        return DeviceParamCatalog.supported(dev, paramKey)
+               && compactParamKeys.indexOf(paramKey) < 0
+    }
+
+    readonly property bool hasPinnableParams: {
+        var list = DeviceParamCatalog.params
+        var found = false
+        for (var i = 0; i < list.length; ++i)
+            if (isPinnable(list[i].key))
+                found = true
+        return found
+    }
+    onHasPinnableParamsChanged: if (!hasPinnableParams) favEditMode = false
+
+    readonly property var favoriteKeys: {
+        var map = store ? store.deviceFavoriteParams : null
+        var key = devTypeKey
+        if (!map || key.length === 0)
+            return []
+        var list = map[key]
+        if (!Array.isArray(list))
+            return []
+        var out = []
+        for (var i = 0; i < list.length; ++i)
+            if (isPinnable(list[i]))
+                out.push(list[i])
+        return out
+    }
+
+    function _hitTest(item, pos) {
+        if (!item || !item.visible)
+            return false
+        var local = root.mapToItem(item, pos.x, pos.y)
+        return local.x >= 0 && local.y >= 0 && local.x <= item.width && local.y <= item.height
+    }
+
+    function _pressedOutsideAdvanced(pos) {
+        if (!favEditMode)
+            return
+        if (_hitTest(advancedPanel, pos) || _hitTest(favoritesReveal, pos))
+            return
+        favEditMode = false
+    }
+
+    on_EngExpandedChanged: if (!_engExpanded) favEditMode = false
+
+    TapHandler {
+        acceptedButtons: Qt.AllButtons
+        gesturePolicy: TapHandler.DragThreshold
+        onPressedChanged: if (pressed) root._pressedOutsideAdvanced(point.position)
+    }
+
+    onVisibleChanged: if (!visible) favEditMode = false
+
+    Connections {
+        target: root.store
+        ignoreUnknownSignals: true
+        function onSettingsPanelOpenChanged() {
+            if (root.store && !root.store.settingsPanelOpen)
+                root.favEditMode = false
+        }
+        function onSettingsSubPageKindChanged() { root.favEditMode = false }
+        function onAnySettingsSubPageActiveChanged() { root.favEditMode = false }
+        function onActiveDeviceChanged() { root.favEditMode = false }
+    }
+
+    function toggleFavorite(paramKey) {
+        if (!store || devTypeKey.length === 0)
+            return
+        if (!store.isFavoriteParam(devTypeKey, paramKey) && store.favoriteParamsFull(devTypeKey)) {
+            notifications.info(qsTr("Favourites are full: up to %1 settings").arg(store.deviceFavoriteParamLimit))
+            return
+        }
+        store.toggleFavoriteParam(devTypeKey, paramKey)
+    }
+
     // Per-device UI memory. This page is one instance whose `dev` changes on switch,
     // so disclosure state is kept per device: on switch, snapshot the leaving device's
     // group expansions + advanced-cut state, restore the entering device's (all
@@ -34,6 +124,7 @@ Column {
         }
         _pruneGroupStates()
         _applyForCurrentDev()
+        favEditMode = false
         _prevDev = dev
     }
 
@@ -1236,11 +1327,43 @@ Column {
         dev: root.dev
     }
 
+    Reveal {
+        id: favoritesReveal
+        open: root.hasPinnableParams && (root.favoriteKeys.length > 0 || root.favEditMode)
+        contentHeight: favoritesIsland.implicitHeight
+        visible: height > 0.5
+
+        DevIsland {
+            id: favoritesIsland
+            title: qsTr("Favourites:")
+            titleColor: AppPalette.textSecond
+            titleInset: Tokens.spaceXxs
+
+            Repeater {
+                model: root.favoriteKeys
+                delegate: DeviceParamRow {
+                    page: root
+                    paramKey: modelData
+                }
+            }
+
+            KIslandRow {
+                open: root.favEditMode && root.favoriteKeys.length === 0
+                minHeight: 0
+                verticalPadding: Tokens.spaceMd
+                label: qsTr("Tap a star next to a setting to pin it here")
+                labelPixelSize: Tokens.fontSm
+                labelColor: AppPalette.textMuted
+            }
+        }
+    }
+
     // ── Advanced settings ("Расширенные настройки") ────────────────────────
     Rectangle {
         id: advancedPanel
         width: root.groupWidth
         radius: Tokens.radiusLg
+        clip: true
 
         readonly property bool _panel: root._hasCut
         readonly property real pad: _panel ? Tokens.spaceMd : 0
@@ -1250,9 +1373,6 @@ Column {
         readonly property color _bodyColor: (_panel && root._engExpanded) ? AppPalette.bgDeep : _headerColor
 
         implicitHeight: headerH + advReveal.height
-
-        border.width: (_panel && root._engExpanded) ? 1 : 0
-        border.color: AppPalette.groupBorder
 
         readonly property real _seamStart: Math.min(1, headerH / Math.max(1, height))
         readonly property real _seamEnd: Math.min(1, (headerH + Tokens.spaceMd) / Math.max(1, height))
@@ -1272,12 +1392,23 @@ Column {
             GradientStop { position: 1.0; color: advancedPanel._bodyColor }
         }
 
+        Rectangle {
+            z: 10
+            anchors.fill: parent
+            color: "transparent"
+            radius: advancedPanel.radius
+            border.width: (advancedPanel._panel && root._engExpanded) ? 1 : 0
+            border.color: AppPalette.groupBorder
+        }
+
         Item {
             id: cutHeader
             visible: advancedPanel._panel
             x: 0; y: 0
             width: parent.width
             height: advancedPanel.headerH
+
+            readonly property real lockSlot: advancedPanel.headerH
 
             Row {
                 anchors.fill: parent
@@ -1293,7 +1424,8 @@ Column {
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Math.max(0, parent.width - Math.round(10 * AppPalette.scale) - parent.spacing)
+                    width: Math.max(0, parent.width - Math.round(10 * AppPalette.scale) - parent.spacing
+                                       - (root.hasPinnableParams ? cutHeader.lockSlot + Tokens.spaceMd : 0))
                     text: qsTr("Advanced settings")
                     color: AppPalette.text
                     font.pixelSize: Math.max(Math.round(16 * AppPalette.scale), 13)
@@ -1310,6 +1442,17 @@ Column {
                     root._engExpanded = !root._engExpanded
                     advScrollTimer.restart()
                 }
+            }
+            HeaderActionChip {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.hasPinnableParams
+                size: cutHeader.lockSlot
+                active: root.favEditMode
+                iconSource: root.favEditMode ? "qrc:/icons/ui/lock-open.svg" : "qrc:/icons/ui/lock.svg"
+                toolTipText: root.favEditMode ? qsTr("Finish pinning settings")
+                                              : qsTr("Pin settings to favourites")
+                onClicked: root.favEditMode = !root.favEditMode
             }
         }
 
@@ -1355,18 +1498,9 @@ Column {
 
         DevIslandTitle { label: qsTr("Echogram") }
 
-        KIslandRow {
-            label: qsTr("Resolution, mm")
-            DevSpin { from: 10; to: 100; stepSize: 10; devValue: dev ? (dev.chartResolution || 0) : 0; writeBack: function(v) { if (dev) dev.chartResolution = v } }
-        }
-        KIslandRow {
-            label: qsTr("Sample count")
-            DevSpin { from: root.chartSamplesMin; to: root.chartSamplesMax; stepSize: 100; devValue: dev ? (dev.chartSamples || 0) : 0; writeBack: function(v) { if (dev) dev.chartSamples = v } }
-        }
-        KIslandRow {
-            label: qsTr("Offset")
-            DevSpin { from: 0; to: 10000; stepSize: 100; devValue: dev ? (dev.chartOffset || 0) : 0; writeBack: function(v) { if (dev) dev.chartOffset = v } }
-        }
+        DeviceParamRow { page: root; paramKey: "chart.resolution" }
+        DeviceParamRow { page: root; paramKey: "chart.samples" }
+        DeviceParamRow { page: root; paramKey: "chart.offset" }
     }
 
     // ── Дальномер ─────────────────────────────────────────────────────────
@@ -1377,18 +1511,9 @@ Column {
 
         DevIslandTitle { label: qsTr("Rangefinder") }
 
-        KIslandRow {
-            label: qsTr("Max distance, mm")
-            DevSpin { from: 0; to: 50000; stepSize: 1000; devValue: dev ? (dev.distMax || 0) : 0; writeBack: function(v) { if (dev) dev.distMax = v } }
-        }
-        KIslandRow {
-            label: qsTr("Dead zone, mm")
-            DevSpin { from: 0; to: 50000; stepSize: 100; devValue: dev ? (dev.distDeadZone || 0) : 0; writeBack: function(v) { if (dev) dev.distDeadZone = v } }
-        }
-        KIslandRow {
-            label: qsTr("Confidence threshold, %")
-            DevSpin { from: 0; to: 100; stepSize: 1; devValue: dev ? (dev.distConfidence || 0) : 0; writeBack: function(v) { if (dev) dev.distConfidence = v } }
-        }
+        DeviceParamRow { page: root; paramKey: "dist.max" }
+        DeviceParamRow { page: root; paramKey: "dist.deadZone" }
+        DeviceParamRow { page: root; paramKey: "dist.confidence" }
     }
 
     // ── Преобразователь ───────────────────────────────────────────────────
@@ -1399,26 +1524,9 @@ Column {
 
         DevIslandTitle { label: qsTr("Transducer") }
 
-        KIslandRow {
-            label: qsTr("Pulse count")
-            DevSpin { from: 0; to: 5000; stepSize: 1; devValue: dev ? (dev.transPulse || 0) : 0; writeBack: function(v) { if (dev) dev.transPulse = v } }
-        }
-        KIslandRow {
-            label: qsTr("Frequency, kHz")
-            DevSpin { from: 40; to: 6000; stepSize: 5; devValue: dev ? (dev.transFreq || 0) : 0; writeBack: function(v) { if (dev) dev.transFreq = v } }
-        }
-        KIslandRow {
-            label: qsTr("Booster")
-            KSwitch {
-                id: boosterSwitch
-                flat: true
-                property bool wantChecked: !!(dev && dev.transBoost === 1)
-                property bool _g: false
-                onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
-                Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
-                onToggled: { if (!_g && dev) dev.transBoost = checked ? 1 : 0 }
-            }
-        }
+        DeviceParamRow { page: root; paramKey: "trans.pulse" }
+        DeviceParamRow { page: root; paramKey: "trans.freq" }
+        DeviceParamRow { page: root; paramKey: "trans.boost" }
     }
 
     // ── DSP ───────────────────────────────────────────────────────────────
@@ -1429,14 +1537,8 @@ Column {
 
         DevIslandTitle { label: qsTr("DSP") }
 
-        KIslandRow {
-            label: qsTr("Horizontal smoothing")
-            DevSpin { from: 0; to: 4; stepSize: 1; devValue: dev ? (dev.dspHorSmooth || 0) : 0; writeBack: function(v) { if (dev) dev.dspHorSmooth = v } }
-        }
-        KIslandRow {
-            label: qsTr("Sound speed, m/s")
-            DevSpin { from: 300; to: 6000; stepSize: 5; devValue: dev ? Math.round((dev.soundSpeed || 0) / 1000) : 0; writeBack: function(v) { if (dev) dev.soundSpeed = v * 1000 } }
-        }
+        DeviceParamRow { page: root; paramKey: "dsp.horSmooth" }
+        DeviceParamRow { page: root; paramKey: "dsp.soundSpeed" }
     }
 
     // ── Датасет ───────────────────────────────────────────────────────────
@@ -1447,82 +1549,12 @@ Column {
 
         DevIslandTitle { label: qsTr("Dataset") }
 
-        KIslandRow {
-            label: qsTr("Period, ms")
-            DevSpin { from: 0; to: 2000; stepSize: 50; devValue: dev ? (dev.ch1Period || 0) : 0; writeBack: function(v) { if (dev) dev.ch1Period = v } }
-        }
-
-        DevStackedRow {
-            label: qsTr("Echogram")
-            KTabBar {
-                id: datasetChartTab; width: parent.width
-                trackColor: AppPalette.bgDeep
-                options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("8-bit"), value: 1 }]
-                property int chartModel: dev ? (dev.datasetChart === 1 ? 1 : 0) : 0
-                property bool _g: false
-                onChartModelChanged: { if (currentValue !== chartModel) { _g = true; currentValue = chartModel; _g = false } }
-                Component.onCompleted: { _g = true; currentValue = chartModel; _g = false }
-                onValueSelected: function(v) { if (!_g && dev) dev.datasetChart = v }
-            }
-        }
-
-        DevStackedRow {
-            label: qsTr("Rangefinder")
-            KTabBar {
-                id: datasetDistTab; width: parent.width
-                trackColor: AppPalette.bgDeep
-                options: [{ label: qsTr("Off"), value: 0 }, { label: qsTr("On"), value: 1 }, { label: qsTr("NMEA"), value: 2 }]
-                property int distModel: dev ? (dev.datasetDist === 1 ? 1 : (dev.datasetSDDBT === 1 ? 2 : 0)) : 0
-                property bool _g: false
-                onDistModelChanged: { if (currentValue !== distModel) { _g = true; currentValue = distModel; _g = false } }
-                Component.onCompleted: { _g = true; currentValue = distModel; _g = false }
-                onValueSelected: function(v) {
-                    if (_g || !dev) return
-                    if (v === 1)      { dev.datasetDist = 1 }
-                    else if (v === 2) { dev.datasetSDDBT = 1 }
-                    else              { dev.datasetDist = 0; dev.datasetSDDBT = 0 }
-                }
-            }
-        }
-
-        KIslandRow {
-            label: qsTr("AHRS")
-            KSwitch {
-                id: ahrsSwitch
-                flat: true
-                property bool wantChecked: !!(dev && (dev.datasetEuler & 1))
-                property bool _g: false
-                onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
-                Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
-                onToggled: { if (!_g && dev) dev.datasetEuler = checked ? 1 : 0 }
-            }
-        }
-
-        KIslandRow {
-            label: qsTr("Temperature")
-            KSwitch {
-                id: tempSwitch
-                flat: true
-                property bool wantChecked: !!(dev && (dev.datasetTemp & 1))
-                property bool _g: false
-                onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
-                Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
-                onToggled: { if (!_g && dev) dev.datasetTemp = checked ? 1 : 0 }
-            }
-        }
-
-        KIslandRow {
-            label: qsTr("Timestamp")
-            KSwitch {
-                id: tsSwitch
-                flat: true
-                property bool wantChecked: !!(dev && (dev.datasetTimestamp & 1))
-                property bool _g: false
-                onWantCheckedChanged: { if (checked !== wantChecked) { _g = true; checked = wantChecked; _g = false } }
-                Component.onCompleted: { _g = true; checked = wantChecked; _g = false }
-                onToggled: { if (!_g && dev) dev.datasetTimestamp = checked ? 1 : 0 }
-            }
-        }
+        DeviceParamRow { page: root; paramKey: "dataset.period" }
+        DeviceParamRow { page: root; paramKey: "dataset.chart" }
+        DeviceParamRow { page: root; paramKey: "dataset.dist" }
+        DeviceParamRow { page: root; paramKey: "dataset.ahrs" }
+        DeviceParamRow { page: root; paramKey: "dataset.temperature" }
+        DeviceParamRow { page: root; paramKey: "dataset.timestamp" }
     }
 
     DevIsland {

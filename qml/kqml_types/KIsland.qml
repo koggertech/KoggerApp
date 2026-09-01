@@ -14,6 +14,7 @@ Item {
     property color separatorColor: AppPalette.separator
     property real cornerRadius: Tokens.radiusLg
     property real rowPadding: Tokens.spaceLg
+    property real titleInset: rowPadding
     property real separatorInset: rowPadding
     property real slotWidth: 0
     property real rowMinHeight: Tokens.rowH
@@ -32,8 +33,8 @@ Item {
         spacing: Tokens.spaceSm
 
         Text {
-            x: island.rowPadding
-            width: Math.max(0, parent.width - island.rowPadding * 2)
+            x: island.titleInset
+            width: Math.max(0, parent.width - island.titleInset * 2)
             visible: island.title.length > 0
             text: island.title
             color: island.titleColor
