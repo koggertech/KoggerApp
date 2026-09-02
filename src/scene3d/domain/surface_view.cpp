@@ -1208,7 +1208,20 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         const float baseScale = (std::isfinite(cameraDist_) && cameraDist_ > 0.0f)
                                 ? cameraDist_ * 0.0015f
                                 : surfaceStep_ * 0.20f;
-        const float scale = qBound(0.12f, baseScale, 0.45f) / static_cast<float>(renderScale());
+        const float fallbackScale = qBound(0.12f, baseScale, 0.45f) / static_cast<float>(renderScale());
+
+        constexpr float labelTargetPx = 16.0f;
+        const QRectF vport = DrawUtils::viewportRect(ctx);
+        const float halfVpW = static_cast<float>(vport.width()) * 0.5f;
+        const float halfVpH = static_cast<float>(vport.height()) * 0.5f;
+        const QVector4D axisXClip = mvp * QVector4D(1.0f, 0.0f, 0.0f, 0.0f);
+        const QVector4D axisYClip = mvp * QVector4D(0.0f, 1.0f, 0.0f, 0.0f);
+        const float pxPerMetreX = QVector2D(axisXClip.x() * halfVpW, axisXClip.y() * halfVpH).length();
+        const float pxPerMetreY = QVector2D(axisYClip.x() * halfVpW, axisYClip.y() * halfVpH).length();
+        const float pxPerMetreW = qMax(pxPerMetreX, pxPerMetreY);
+        const float glyphPx = static_cast<float>(TextRenderer::instance().getCharPixelHeight());
+        const float targetPx = labelTargetPx * static_cast<float>(renderScale());
+        const bool screenSized = std::isfinite(pxPerMetreW) && pxPerMetreW > kmath::fltEps && glyphPx > 0.0f;
 
         QVector<TextRenderer::Text3DItem> labelBatch;
         labelBatch.reserve(isoLabels_.size());
@@ -1229,6 +1242,9 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
                 z < -1.0f - ndcMargin || z > 1.0f + ndcMargin) {
                 continue;
             }
+
+            const float scale = screenSized ? (targetPx * std::fabs(w) / pxPerMetreW) / glyphPx
+                                            : fallbackScale;
 
             labelBatch.append(TextRenderer::Text3DItem{QStringView{lbl.text}, scale, lbl.pos, lbl.dir});
         }
