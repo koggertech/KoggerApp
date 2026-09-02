@@ -2150,6 +2150,66 @@
 <context>
     <name>DeviceSettingsPage</name>
     <message>
+        <source>Information</source>
+        <translation>Informacje</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+    <message>
+        <source>Board type</source>
+        <translation>Typ płytki</translation>
+    </message>
+    <message>
+        <source>Serial number</source>
+        <translation>Numer seryjny</translation>
+    </message>
+    <message>
+        <source>not set</source>
+        <translation>nie ustawiono</translation>
+    </message>
+    <message>
+        <source>Firmware version</source>
+        <translation>Wersja firmware</translation>
+    </message>
+    <message>
+        <source>Bootloader version</source>
+        <translation>Wersja bootloadera</translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation>Tryb</translation>
+    </message>
+    <message>
+        <source>Bootloader</source>
+        <translation>Bootloader</translation>
+    </message>
+    <message>
+        <source>Firmware</source>
+        <translation>Firmware</translation>
+    </message>
+    <message>
+        <source>Bus address</source>
+        <translation>Adres na magistrali</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Połączenie</translation>
+    </message>
+    <message>
+        <source>Chip UID</source>
+        <translation>UID układu</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Device info copied to clipboard</source>
+        <translation>Informacje o urządzeniu skopiowane do schowka</translation>
+    </message>
+    <message>
         <source>Write current settings to device memory</source>
         <translation>Zapisz bieżące ustawienia do pamięci urządzenia</translation>
     </message>

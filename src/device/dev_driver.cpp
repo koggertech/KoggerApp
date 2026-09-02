@@ -1614,9 +1614,14 @@ void DevDriver::receivedVersion(Parsers::Type type, Parsers::Version ver, Parser
             emit deviceVersionChanged();
         } else if(ver == v1) {
             emit deviceIDChanged(idVersion->uid());
+            emit deviceVersionChanged();
         } else if(ver == v2) {
             if(idVersion->fwVersion() != 0) {
                 m_fwVer = QString("%1.%2").arg(idVersion->fwVersion()).arg(idVersion->fwVersionMinor());
+            }
+
+            if(idVersion->bootVersion() != 0) {
+                m_bootVer = QString("%1.%2").arg(idVersion->bootVersion()).arg(idVersion->bootVersionMinor());
             }
 
             emit deviceVersionChanged();

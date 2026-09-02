@@ -943,6 +943,9 @@ public:
     int fwVersion() { return _fwVersion; }
     int fwVersionMinor() { return _fwVersionMinor; }
 
+    int bootVersion() { return _bootVersion; }
+    int bootVersionMinor() { return _bootVersionMinor; }
+
     uint32_t serialNumber() { return m_serialNumber; }
 
     void reset() {

@@ -1888,6 +1888,66 @@
 <context>
     <name>DeviceSettingsPage</name>
     <message>
+        <source>Information</source>
+        <translation>Information</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+    <message>
+        <source>Board type</source>
+        <translation>Board type</translation>
+    </message>
+    <message>
+        <source>Serial number</source>
+        <translation>Serial number</translation>
+    </message>
+    <message>
+        <source>not set</source>
+        <translation>not set</translation>
+    </message>
+    <message>
+        <source>Firmware version</source>
+        <translation>Firmware version</translation>
+    </message>
+    <message>
+        <source>Bootloader version</source>
+        <translation>Bootloader version</translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation>Running</translation>
+    </message>
+    <message>
+        <source>Bootloader</source>
+        <translation>Bootloader</translation>
+    </message>
+    <message>
+        <source>Firmware</source>
+        <translation>Firmware</translation>
+    </message>
+    <message>
+        <source>Bus address</source>
+        <translation>Bus address</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Connection</translation>
+    </message>
+    <message>
+        <source>Chip UID</source>
+        <translation>Chip UID</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Copy</translation>
+    </message>
+    <message>
+        <source>Device info copied to clipboard</source>
+        <translation>Device info copied to clipboard</translation>
+    </message>
+    <message>
         <source>Write current settings to device memory</source>
         <translation>Write current settings to device memory</translation>
     </message>

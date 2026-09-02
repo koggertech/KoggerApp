@@ -2150,6 +2150,66 @@
 <context>
     <name>DeviceSettingsPage</name>
     <message>
+        <source>Information</source>
+        <translation>Информация</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Модель</translation>
+    </message>
+    <message>
+        <source>Board type</source>
+        <translation>Тип платы</translation>
+    </message>
+    <message>
+        <source>Serial number</source>
+        <translation>Серийный номер</translation>
+    </message>
+    <message>
+        <source>not set</source>
+        <translation>не задан</translation>
+    </message>
+    <message>
+        <source>Firmware version</source>
+        <translation>Версия прошивки</translation>
+    </message>
+    <message>
+        <source>Bootloader version</source>
+        <translation>Версия загрузчика</translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation>Режим</translation>
+    </message>
+    <message>
+        <source>Bootloader</source>
+        <translation>Загрузчик</translation>
+    </message>
+    <message>
+        <source>Firmware</source>
+        <translation>Прошивка</translation>
+    </message>
+    <message>
+        <source>Bus address</source>
+        <translation>Адрес на шине</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Подключение</translation>
+    </message>
+    <message>
+        <source>Chip UID</source>
+        <translation>UID чипа</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Скопировать</translation>
+    </message>
+    <message>
+        <source>Device info copied to clipboard</source>
+        <translation>Информация об устройстве скопирована в буфер обмена</translation>
+    </message>
+    <message>
         <source>Write current settings to device memory</source>
         <translation>Записать текущие настройки в память устройства</translation>
     </message>

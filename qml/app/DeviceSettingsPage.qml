@@ -388,6 +388,20 @@ Column {
         borderWidth: danger ? Math.max(1, Math.round(1.5 * AppPalette.scale)) : Tokens.cardBorderWidth
     }
 
+    component DevInfoRow: KIslandRow {
+        id: infoRow
+        property string value: ""
+        visible: value.length > 0
+        Text {
+            width: infoRow.stacked ? parent.width
+                                   : Math.min(implicitWidth, Math.round(infoRow.innerWidth * 0.75))
+            text: infoRow.value
+            color: AppPalette.textSecond
+            font.pixelSize: Tokens.fontMd
+            elide: Text.ElideRight
+        }
+    }
+
     component FlashButton: DevButton {
         height: Tokens.controlHMd
         fontPixelSize: Tokens.fontMd
@@ -1831,6 +1845,138 @@ Column {
                                           .arg(dev ? dev.upgradeFWStatus : -1))
                 devUpgradeGroup._activeTag = ""
             }
+        }
+    }
+
+    // ── Информация ────────────────────────────────────────────────────────
+
+    DevIsland {
+        id: devInfoGroup
+        visible: !!(dev && dev.isBoardInited)
+        rowMinHeight: Tokens.controlHMd + Tokens.spaceXs
+
+        readonly property bool appAnswering: !!(dev && (dev.uartState === true
+                                                        || dev.recorderStatusValid === true))
+
+        readonly property var linkMeta: {
+            if (!dev || typeof deviceTopology === "undefined" || !deviceTopology)
+                return null
+            var groups = deviceTopology.groups
+            if (!groups || !groups.length)
+                return null
+            var meta = deviceTopology.groupForDevice(dev)
+            return (meta && meta.linkPresent) ? meta : null
+        }
+
+        readonly property string connectionText: {
+            var m = devInfoGroup.linkMeta
+            if (!m)
+                return ""
+            switch (m.linkType) {
+            case 1: return m.baudrate > 0 ? (m.portName + " · " + m.baudrate) : m.portName
+            case 2: return "UDP " + m.address + ":" + m.destinationPort
+            case 3: return "TCP " + m.address + ":" + m.destinationPort
+            case 4: return "RTSP " + m.address
+            }
+            return ""
+        }
+
+        function infoText() {
+            var lines = []
+            var items = devInfoGroup.rows
+            for (var i = 0; i < items.length; ++i) {
+                var it = items[i]
+                if (it && it.value !== undefined && it.visible && String(it.value).length)
+                    lines.push(it.label + ": " + it.value)
+            }
+            return lines.join("\n")
+        }
+
+        DevIslandTitle {
+            label: qsTr("Information")
+            minHeight: Tokens.rowH
+            verticalPadding: 0
+
+            KCircleIconButton {
+                implicitWidth: Tokens.controlHMd
+                implicitHeight: Tokens.controlHMd
+                rounded: false
+                cornerRadius: Tokens.radiusMd
+                iconSource: "qrc:/icons/ui/copy.svg"
+                iconTintColor: AppPalette.text
+                fillColor: AppPalette.controlRaised
+                fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
+                fillPressedColor: AppPalette.controlRaised
+                borderWidth: Tokens.cardBorderWidth
+                borderColor: AppPalette.border
+                borderHoverColor: AppPalette.borderHover
+                toolTipText: qsTr("Copy")
+                onClicked: {
+                    var text = devInfoGroup.infoText()
+                    if (!text.length)
+                        return
+                    core.copyToClipboard(text)
+                    notifications.info(qsTr("Device info copied to clipboard"))
+                }
+            }
+        }
+
+        DevInfoRow {
+            label: qsTr("Model")
+            value: dev ? (dev.devName || "") : ""
+        }
+
+        DevInfoRow {
+            label: qsTr("Board type")
+            value: dev ? (dev.devType + "." + dev.devTypeMinor) : ""
+        }
+
+        DevInfoRow {
+            label: qsTr("Serial number")
+            value: {
+                if (!dev)
+                    return ""
+                var sn = dev.devSN >>> 0
+                if (sn === 0)
+                    return ""
+                return sn === 0xFFFFFFFF ? qsTr("not set") : String(sn)
+            }
+        }
+
+        DevInfoRow {
+            label: qsTr("Firmware version")
+            value: dev ? (dev.fwVersion || "") : ""
+        }
+
+        DevInfoRow {
+            label: qsTr("Bootloader version")
+            value: dev ? (dev.bootVersion || "") : ""
+        }
+
+        DevInfoRow {
+            label: qsTr("Running")
+            value: {
+                if (!dev || dev.bootMode < 0)
+                    return ""
+                if (dev.bootMode === 1)
+                    return devInfoGroup.appAnswering ? "" : qsTr("Bootloader")
+                return qsTr("Firmware")
+            }
+        }
+
+        DevInfoRow {
+            label: qsTr("Bus address")
+            value: (dev && dev.uartState === true) ? String(dev.devAddress) : ""
+        }
+
+        DevInfoRow {
+            label: qsTr("Connection")
+            value: devInfoGroup.connectionText
+        }
+
+        DevInfoRow {
+            label: qsTr("Chip UID")
+            value: dev ? (dev.devUID || "") : ""
         }
     }
 

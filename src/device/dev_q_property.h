@@ -56,8 +56,12 @@ public:
 
     Q_PROPERTY(QString devName READ devName NOTIFY deviceVersionChanged)
     Q_PROPERTY(int devType READ devType NOTIFY deviceVersionChanged)
+    Q_PROPERTY(int devTypeMinor READ devTypeMinor NOTIFY deviceVersionChanged)
     Q_PROPERTY(int devSN READ devSerialNumber NOTIFY deviceVersionChanged)
+    Q_PROPERTY(QString devUID READ devUID NOTIFY deviceVersionChanged)
     Q_PROPERTY(QString fwVersion READ fwVersion NOTIFY deviceVersionChanged)
+    Q_PROPERTY(QString bootVersion READ bootVersion NOTIFY deviceVersionChanged)
+    Q_PROPERTY(int bootMode READ bootMode NOTIFY deviceVersionChanged)
 
     Q_PROPERTY(bool isBoardInited READ isBoardInited NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isSonar READ isSonar NOTIFY deviceVersionChanged)

@@ -115,10 +115,14 @@ public:
 
     QString devName() { return m_devName; }
     int devType() const { return static_cast<int>(idVersion->boardVersion()); }
+    int devTypeMinor() const { return static_cast<int>(idVersion->boardVersionMinor()); }
     uint32_t devSerialNumber();
     QString devPN();
 
     QString fwVersion() { return m_fwVer; }
+    QString bootVersion() { return m_bootVer; }
+    int bootMode() const { return idVersion->bootMode(); }
+    QString devUID() const { return QString::fromLatin1(idVersion->uid().toHex()).toUpper(); }
 
     // Recorder status (ID_RECORDER_STATUS 0x26 / RecorderStatusV0). See docs
     // Recorder-Host-Integration-Guide.md for field meaning.
@@ -488,6 +492,7 @@ protected:
 
     QString m_devName = "...";
     QString m_fwVer = "";
+    QString m_bootVer = "";
 
     void regID(IDBin* id_bin, ParseCallback method, bool is_setup = false);
     void requestSetup();
