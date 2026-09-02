@@ -318,6 +318,14 @@ void Core::consoleWarning(QString msg)
     getConsolePtr()->put(QtMsgType::QtWarningMsg, msg);
 }
 
+void Core::consoleProtoText(const QString& msg)
+{
+    if (!consoleOutputEnabled_) {
+        return;
+    }
+    getConsolePtr()->put(QtMsgType::QtInfoMsg, msg, ConsoleSource::Proto);
+}
+
 void Core::consoleProto(FrameParser &parser, bool isIn)
 {
     if (!consoleOutputEnabled_) {
@@ -386,7 +394,7 @@ void Core::consoleProto(FrameParser &parser, bool isIn)
             str_data += QString("...(+%1B)").arg(frameLen - bytesToDump);
         }
 
-        consoleInfo(
+        consoleProtoText(
             str_dir % "KG[" % QString::number(route) % "]: id "
             % QString::number(id)
             % " v" % QString::number(ver)
@@ -2651,6 +2659,21 @@ void Core::setMosaicFakeCoordsClearOldData(bool state)
 ConsoleListModel* Core::consoleList()
 {
     return consolePtr_->listModel();
+}
+
+ConsoleListModel* Core::consoleListApp()
+{
+    return consolePtr_->appModel();
+}
+
+ConsoleListModel* Core::consoleListProto()
+{
+    return consolePtr_->protoModel();
+}
+
+void Core::setConsoleMaxRows(int rows)
+{
+    consolePtr_->setMaxRows(rows);
 }
 
 void Core::createControllers()

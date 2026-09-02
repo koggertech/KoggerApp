@@ -199,7 +199,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
             QString str_data = QByteArray((char*)prot_nmea.frame(), prot_nmea.frameLen() - 2);
 #ifndef SEPARATE_READING
             if (nmeaConsoled_) {
-                core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
+                core.consoleProtoText(QString(">> NMEA: %5").arg(str_data));
             }
 #endif
             if (prot_nmea.isEqualId("DBT")) {
@@ -418,7 +418,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     }
                 }
 #ifndef SEPARATE_READING
-                core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+                core.consoleProtoText(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
 #endif
             }
             else {

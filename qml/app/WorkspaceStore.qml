@@ -1456,17 +1456,30 @@ property Settings consolePersist: Settings {
     category: "main/console"
     property bool consColorize: true
     property int consMaxRows: 500
+    property bool protoBinConsoled: false
+    property bool nmeaConsoled: true
 }
 
 property alias consoleColorize: consolePersist.consColorize
 property alias consoleMaxRows: consolePersist.consMaxRows
+property alias consoleProtoBin: consolePersist.protoBinConsoled
+property alias consoleNmea: consolePersist.nmeaConsoled
 
 function applyConsoleMaxRows() {
-    if (typeof core !== "undefined" && core && core.consoleList)
-        core.consoleList.setMaxRows(consoleMaxRows)
+    if (typeof core !== "undefined" && core)
+        core.setConsoleMaxRows(consoleMaxRows)
+}
+
+function applyConsoleProtoToggles() {
+    if (typeof deviceManagerWrapper === "undefined" || !deviceManagerWrapper)
+        return
+    deviceManagerWrapper.setProtoBinConsoled(consoleProtoBin)
+    deviceManagerWrapper.setNmeaConsoled(consoleNmea)
 }
 
 onConsoleMaxRowsChanged: applyConsoleMaxRows()
+onConsoleProtoBinChanged: applyConsoleProtoToggles()
+onConsoleNmeaChanged: applyConsoleProtoToggles()
 
 property Settings exportPersist: Settings {
     id: exportPersist
@@ -5257,6 +5270,7 @@ Component.onCompleted: {
         seedDefaultLayouts()
     sanitizeFullscreenPopupConfig()
     applyTgcToCore()
+    applyConsoleProtoToggles()
     applyLayerThemesToControllers()
     applyBottomTrackRealtimeToCore()
     uiStateReapplied()

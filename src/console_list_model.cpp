@@ -15,12 +15,12 @@ void ConsoleListModel::init() {
 QVariant ConsoleListModel::data(const QModelIndex &index, int role) const{
     const int indexRow = index.row();
     if (indexRow < 0 || indexRow >= _size) {
-        return {"No data"};
+        return {};
     }
 
     const auto it = _vectors.constFind(role);
     if (it == _vectors.cend() || it.value().size() <= indexRow) {
-        return {"No data"};
+        return {};
     }
 
     return it.value().at(indexRow);
@@ -34,16 +34,14 @@ void ConsoleListModel::doAppend(const QString& time, int category, const QString
 {
     trimHeadIfNeeded();
 
-    bool visible = category & _categories;
     const int line = rowCount();
     beginInsertRows(QModelIndex(), line, line);
 
-    _vectors[ConsoleListModel::Visibility].append(visible);
     _vectors[ConsoleListModel::Time].append(time);
     _vectors[ConsoleListModel::Category].append(category);
     _vectors[ConsoleListModel::Payload].append(data);
+    ++_size;
 
-    _size++;
     endInsertRows();
 }
 
@@ -91,20 +89,7 @@ void ConsoleListModel::setMaxRows(int rows)
     }
     _maxRows = rows;
 
-    const int removeCount = _size - _maxRows;
-    if (removeCount <= 0) {
-        return;
-    }
-
-    beginRemoveRows(QModelIndex(), 0, removeCount - 1);
-    _vectors[ConsoleListModel::Visibility].remove(0, removeCount);
-    _vectors[ConsoleListModel::Time].remove(0, removeCount);
-    _vectors[ConsoleListModel::Category].remove(0, removeCount);
-    _vectors[ConsoleListModel::Payload].remove(0, removeCount);
-    _size -= removeCount;
-    endRemoveRows();
-
-    emit rowsTrimmed(removeCount);
+    removeHead(_size - _maxRows);
 }
 
 void ConsoleListModel::trimHeadIfNeeded(int incomingCount)
@@ -115,18 +100,20 @@ void ConsoleListModel::trimHeadIfNeeded(int incomingCount)
     }
 
     const int batch = qBound(1, _maxRows / 10, kTrimBatch);
-    const int removeCount = qMin(_size, qMax(overflow, batch));
+    removeHead(qMin(_size, qMax(overflow, batch)));
+}
+
+void ConsoleListModel::removeHead(int removeCount)
+{
     if (removeCount <= 0) {
         return;
     }
 
     beginRemoveRows(QModelIndex(), 0, removeCount - 1);
 
-    _vectors[ConsoleListModel::Visibility].remove(0, removeCount);
-    _vectors[ConsoleListModel::Time].remove(0, removeCount);
-    _vectors[ConsoleListModel::Category].remove(0, removeCount);
-    _vectors[ConsoleListModel::Payload].remove(0, removeCount);
-
+    for (auto it = _vectors.begin(); it != _vectors.end(); ++it) {
+        it.value().remove(0, removeCount);
+    }
     _size -= removeCount;
 
     endRemoveRows();

@@ -52,6 +52,8 @@ public:
     Q_PROPERTY(bool              isGPSAlive                   READ getIsGPSAlive                   NOTIFY isGPSAliveChanged)
     Q_PROPERTY(bool              isFactoryMode                READ isFactoryMode                   CONSTANT)
     Q_PROPERTY(ConsoleListModel* consoleList                  READ consoleList                     CONSTANT)
+    Q_PROPERTY(ConsoleListModel* consoleListApp               READ consoleListApp                  CONSTANT)
+    Q_PROPERTY(ConsoleListModel* consoleListProto             READ consoleListProto                CONSTANT)
     Q_PROPERTY(bool              loggingKlf                   READ getKlfLogging                   WRITE setKlfLogging                   NOTIFY loggingKlfChanged)
     Q_PROPERTY(bool              isKlfLogging                 READ getKlfLogging                   NOTIFY loggingKlfChanged)
     Q_PROPERTY(bool              loggingCsv                   READ getCsvLogging                   WRITE setCsvLogging                   NOTIFY loggingCsvChanged)
@@ -95,7 +97,9 @@ public:
     bool isConsoleOutputEnabled() const { return consoleOutputEnabled_; }
     Q_INVOKABLE void consoleInfo(QString msg);
     Q_INVOKABLE void consoleWarning(QString msg);
+    void consoleProtoText(const QString& msg);
     void consoleProto(FrameParser& parser, bool isIn = true);
+    Q_INVOKABLE void setConsoleMaxRows(int rows);
     void saveLLARefToSettings();
     Q_INVOKABLE void saveCameraViewToSettings();
     void removeLinkManagerConnections();
@@ -297,6 +301,8 @@ private:
     void resetDataProcessorConnections();
 
     ConsoleListModel* consoleList();
+    ConsoleListModel* consoleListApp();
+    ConsoleListModel* consoleListProto();
     void createControllers();
     void createDeviceManagerConnections();
     void createLinkManagerConnections();

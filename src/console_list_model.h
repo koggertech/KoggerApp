@@ -26,7 +26,6 @@ public:
     Q_INVOKABLE QString rangeText(int from, int to) const;
 
     enum Roles : uint8_t {
-        Visibility,
         Time,
         Category,
         Payload,
@@ -45,18 +44,15 @@ private:
 
     int _size = 0;
     int _maxRows = kMaxRows;
-    int _categories = 0;
 
-    QVector<int> _roles;
     QHash<int, QByteArray> _roleNames {
-        {{ConsoleListModel::Visibility}, {"visibity"}},
         {{ConsoleListModel::Time}, {"time"}},
         {{ConsoleListModel::Category}, {"category"}},
         {{ConsoleListModel::Payload}, {"payload"}},
     };
     QHash<int, QVector<QVariant>> _vectors;
 
-
+    void removeHead(int removeCount);
     void trimHeadIfNeeded(int incomingCount = 1);
     void doAppend(const QString& time, int category, const QString& data);
 };

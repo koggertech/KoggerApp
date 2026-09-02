@@ -1436,49 +1436,64 @@
 <context>
     <name>ConsolePanelDrawer</name>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="178"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="508"/>
         <source>Maximize</source>
         <translation>Maximize</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="178"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="508"/>
         <source>Restore</source>
         <translation>Restore</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="144"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="420"/>
         <source>Console</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="154"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="448"/>
         <source>Auto scroll</source>
-        <translation></translation>
+        <translation>Auto scroll</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="161"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="455"/>
         <source>Binary</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="291"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="523"/>
         <source>Settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="399"/>
-        <source>Selected: %1</source>
-        <translation>Selected: %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="417"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="501"/>
         <source>Copy selected lines (Ctrl+C)</source>
         <translation>Copy selected lines (Ctrl+C)</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="418"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="502"/>
         <source>Copy the whole log (Ctrl+C)</source>
         <translation>Copy the whole log (Ctrl+C)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="34"/>
+        <source>All</source>
+        <translation>All</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="35"/>
+        <source>App</source>
+        <translation>App</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="36"/>
+        <source>Protocol</source>
+        <translation>Protocol</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="467"/>
+        <source>NMEA</source>
+        <translation>NMEA</translation>
     </message>
 </context>
 <context>
@@ -1507,6 +1522,26 @@
         <location filename="../qml/app/ConsoleSettingsTab.qml" line="53"/>
         <source>Ring buffer — the console keeps only the newest lines; older ones are dropped.</source>
         <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="51"/>
+        <source>Binary protocol</source>
+        <translation>Binary protocol</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="52"/>
+        <source>Log KP1/KP2 frames of the device protocol</source>
+        <translation>Log KP1/KP2 frames of the device protocol</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="69"/>
+        <source>NMEA sentences</source>
+        <translation>NMEA sentences</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="70"/>
+        <source>Log NMEA sentences received from the device</source>
+        <translation>Log NMEA sentences received from the device</translation>
     </message>
 </context>
 <context>

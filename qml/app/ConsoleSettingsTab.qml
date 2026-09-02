@@ -46,6 +46,44 @@ Column {
         }
     }
 
+    KIsland {
+        KIslandRow {
+            label: qsTr("Binary protocol")
+            toolTipText: qsTr("Log KP1/KP2 frames of the device protocol")
+            interactive: true
+            onClicked: protoBinSwitch.click()
+
+            KSwitch {
+                id: protoBinSwitch
+                flat: true
+                checked: page.store ? page.store.consoleProtoBin : false
+                onToggled: {
+                    if (page.store)
+                        page.store.consoleProtoBin = checked
+                    checked = Qt.binding(function() { return page.store ? page.store.consoleProtoBin : false })
+                }
+            }
+        }
+
+        KIslandRow {
+            label: qsTr("NMEA sentences")
+            toolTipText: qsTr("Log NMEA sentences received from the device")
+            interactive: true
+            onClicked: nmeaSwitch.click()
+
+            KSwitch {
+                id: nmeaSwitch
+                flat: true
+                checked: page.store ? page.store.consoleNmea : true
+                onToggled: {
+                    if (page.store)
+                        page.store.consoleNmea = checked
+                    checked = Qt.binding(function() { return page.store ? page.store.consoleNmea : true })
+                }
+            }
+        }
+    }
+
     Column {
         width: parent.width
         spacing: Tokens.spaceSm

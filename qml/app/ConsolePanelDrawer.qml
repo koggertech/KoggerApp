@@ -27,6 +27,34 @@ Item {
     readonly property int _btnSize: Math.round(34 * _s)
     readonly property bool _colorize: !!store && store.consoleColorize
 
+    readonly property int srcAll: 0
+    readonly property int srcApp: 1
+    readonly property int srcProto: 2
+
+    readonly property string tabLabelAll: qsTr("All")
+    readonly property string tabLabelApp: qsTr("App")
+    readonly property string tabLabelProto: qsTr("Protocol")
+    readonly property int _tabBarWidth: {
+        var textW = Math.max(tabTextAll.width, tabTextApp.width, tabTextProto.width)
+        var segment = textW + Math.round(22 * _s)
+        return Math.ceil(3 * segment + 2 * Math.round(6 * _s) + 2 * Math.round(4 * _s))
+    }
+
+    property int sourceTab: srcAll
+    readonly property int _headerRest: Math.round(570 * _s)
+    readonly property bool _headerFits: width >= _tabBarWidth + _headerRest
+    readonly property bool _headerRoomy: width >= _tabBarWidth + _headerRest + Math.round(90 * _s)
+    readonly property bool protoTogglesVisible: sourceTab !== srcApp && _headerFits
+    readonly property var sourceModel: {
+        if (!core)
+            return null
+        if (sourceTab === srcApp)
+            return core.consoleListApp
+        if (sourceTab === srcProto)
+            return core.consoleListProto
+        return core.consoleList
+    }
+
     property int selAnchor: -1
     property int selCursor: -1
     property bool _pressToggles: false
@@ -40,6 +68,29 @@ Item {
         selCursor = -1
     }
 
+    onSourceModelChanged: {
+        clearSelection()
+        if (logList && consScrollEnable && consScrollEnable.checked)
+            tailPin.restart()
+    }
+
+    Timer {
+        id: tailPin
+        interval: 16
+        repeat: true
+        triggeredOnStart: true
+        property int ticks: 0
+
+        onRunningChanged: if (running) ticks = 0
+
+        onTriggered: {
+            if (logList)
+                logList.positionViewAtEnd()
+            if (++ticks >= 4)
+                stop()
+        }
+    }
+
     function selectAll() {
         var n = logList.count
         if (n <= 0)
@@ -49,9 +100,9 @@ Item {
     }
 
     function _copyRange(from, to) {
-        if (!core || !core.consoleList || from < 0)
+        if (!core || !sourceModel || from < 0)
             return
-        var text = core.consoleList.rangeText(from, to)
+        var text = sourceModel.rangeText(from, to)
         if (text.length)
             core.copyToClipboard(text)
     }
@@ -130,6 +181,10 @@ Item {
         kbdConsoleAnim.to = y
         kbdConsoleAnim.start()
     }
+
+    TextMetrics { id: tabTextAll;   font.pixelSize: Tokens.fontBase; font.bold: true; text: root.tabLabelAll }
+    TextMetrics { id: tabTextApp;   font.pixelSize: Tokens.fontBase; font.bold: true; text: root.tabLabelApp }
+    TextMetrics { id: tabTextProto; font.pixelSize: Tokens.fontBase; font.bold: true; text: root.tabLabelProto }
 
     NumberAnimation {
         id: kbdConsoleAnim
@@ -230,12 +285,13 @@ Item {
     Settings {
         category: "main/console"
         property alias consoleOpenRatio: root.openRatio
+        property alias consoleSourceTab: root.sourceTab
     }
 
     Component.onCompleted: if (root.store) root.store.applyConsoleMaxRows()
 
     Connections {
-        target: core && core.consoleList ? core.consoleList : null
+        target: root.sourceModel
 
         function onRowsTrimmed(count) {
             if (root.selFirst < 0)
@@ -310,7 +366,7 @@ Item {
 
     DelegateModel {
         id: visualModel
-        model: core.consoleList
+        model: root.sourceModel
         groups: [ DelegateModelGroup { name: "selected" } ]
         delegate: Rectangle {
             width: logList.width
@@ -360,11 +416,30 @@ Item {
                 spacing: Tokens.spaceLg
 
                 Text {
+                    visible: root._headerRoomy
                     text: qsTr("Console")
                     color: AppPalette.textStrong
                     font.pixelSize: Tokens.fontBase
                     font.bold: true
                     Layout.alignment: Qt.AlignVCenter
+                }
+
+                KTabBar {
+                    id: sourceTabs
+                    Layout.preferredWidth: root._tabBarWidth
+                    Layout.minimumWidth: root._tabBarWidth
+                    Layout.preferredHeight: root._btnSize
+                    Layout.alignment: Qt.AlignVCenter
+                    buttonHeight: root._btnSize - 2 * verticalPadding
+                    fontPixelSize: Tokens.fontBase
+                    trackColor: AppPalette.bgDeep
+                    options: [
+                        { label: root.tabLabelAll,   value: root.srcAll },
+                        { label: root.tabLabelApp,   value: root.srcApp },
+                        { label: root.tabLabelProto, value: root.srcProto }
+                    ]
+                    currentValue: root.sourceTab
+                    onValueSelected: function(v) { root.sourceTab = v }
                 }
 
                 Toggle {
@@ -376,31 +451,29 @@ Item {
 
                 Toggle {
                     id: protoBinConsoled
-                    checked: false
+                    visible: root.protoTogglesVisible
                     label: qsTr("Binary")
-                    onToggled: deviceManagerWrapper.setProtoBinConsoled(protoBinConsoled.checked)
-                    Component.onCompleted: deviceManagerWrapper.setProtoBinConsoled(protoBinConsoled.checked)
-                    Settings { category: "main/console"; property alias protoBinConsoled: protoBinConsoled.checked }
+                    checked: !!root.store && root.store.consoleProtoBin
+                    onToggled: function(value) {
+                        if (root.store)
+                            root.store.consoleProtoBin = value
+                        checked = Qt.binding(function() { return !!root.store && root.store.consoleProtoBin })
+                    }
                 }
 
                 Toggle {
                     id: nmeaConsoled
-                    checked: true
+                    visible: root.protoTogglesVisible
                     label: qsTr("NMEA")
-                    onToggled: deviceManagerWrapper.setNmeaConsoled(nmeaConsoled.checked)
-                    Component.onCompleted: deviceManagerWrapper.setNmeaConsoled(nmeaConsoled.checked)
-                    Settings { category: "main/console"; property alias nmeaConsoled: nmeaConsoled.checked }
+                    checked: !!root.store && root.store.consoleNmea
+                    onToggled: function(value) {
+                        if (root.store)
+                            root.store.consoleNmea = value
+                        checked = Qt.binding(function() { return !!root.store && root.store.consoleNmea })
+                    }
                 }
 
                 Item { Layout.fillWidth: true }
-
-                Text {
-                    visible: root.selCount > 0
-                    text: qsTr("Selected: %1").arg(root.selCount)
-                    color: AppPalette.textSecond
-                    font.pixelSize: Tokens.fontBase
-                    Layout.alignment: Qt.AlignVCenter
-                }
 
                 KCircleIconButton {
                     implicitWidth: root._btnSize
