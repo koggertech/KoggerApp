@@ -1588,13 +1588,13 @@
     </message>
     <message>
         <location filename="../qml/app/ConsolePanelDrawer.qml" line="501"/>
-        <source>Copy selected lines (Ctrl+C)</source>
-        <translation>Kopiuj zaznaczone wiersze (Ctrl+C)</translation>
+        <source>Copy selected lines</source>
+        <translation>Kopiuj zaznaczone wiersze</translation>
     </message>
     <message>
         <location filename="../qml/app/ConsolePanelDrawer.qml" line="502"/>
-        <source>Copy the whole log (Ctrl+C)</source>
-        <translation>Kopiuj cały log (Ctrl+C)</translation>
+        <source>Copy the whole log</source>
+        <translation>Kopiuj cały log</translation>
     </message>
     <message>
         <location filename="../qml/app/ConsolePanelDrawer.qml" line="34"/>

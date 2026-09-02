@@ -487,8 +487,8 @@ Item {
                     borderWidth: 0
                     enabled: logList.count > 0
                     toolTipText: root.selCount > 0
-                                 ? qsTr("Copy selected lines (Ctrl+C)")
-                                 : qsTr("Copy the whole log (Ctrl+C)")
+                                 ? qsTr("Copy selected lines")
+                                 : qsTr("Copy the whole log")
                     Layout.alignment: Qt.AlignVCenter
                     onClicked: root.selCount > 0 ? root.copySelection() : root.copyAll()
                 }

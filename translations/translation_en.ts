@@ -1467,13 +1467,13 @@
     </message>
     <message>
         <location filename="../qml/app/ConsolePanelDrawer.qml" line="501"/>
-        <source>Copy selected lines (Ctrl+C)</source>
-        <translation>Copy selected lines (Ctrl+C)</translation>
+        <source>Copy selected lines</source>
+        <translation>Copy selected lines</translation>
     </message>
     <message>
         <location filename="../qml/app/ConsolePanelDrawer.qml" line="502"/>
-        <source>Copy the whole log (Ctrl+C)</source>
-        <translation>Copy the whole log (Ctrl+C)</translation>
+        <source>Copy the whole log</source>
+        <translation>Copy the whole log</translation>
     </message>
     <message>
         <location filename="../qml/app/ConsolePanelDrawer.qml" line="34"/>
