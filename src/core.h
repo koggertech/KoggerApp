@@ -97,6 +97,7 @@ public:
     bool isConsoleOutputEnabled() const { return consoleOutputEnabled_; }
     Q_INVOKABLE void consoleInfo(QString msg);
     Q_INVOKABLE void consoleWarning(QString msg);
+    void consoleNotification(const QString& msg, bool isWarning);
     void consoleProtoText(const QString& msg);
     void consoleProto(FrameParser& parser, bool isIn = true);
     Q_INVOKABLE void setConsoleMaxRows(int rows);

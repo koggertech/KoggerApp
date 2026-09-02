@@ -26,10 +26,13 @@ ConsoleListModel *Console::protoModel() const {
 void Console::put(QtMsgType type, const QString &msg, ConsoleSource source) {
     const QString time = QTime::currentTime().toString(QStringLiteral("hh:mm:ss:zzz"));
 
-    Q_EMIT m_list->appendEvent(time, type, msg);
+    const bool multiline = msg.contains(QLatin1Char('\n')) || msg.contains(QLatin1Char('\r'));
+    const QString line = multiline ? msg.simplified() : msg;
+
+    Q_EMIT m_list->appendEvent(time, type, line);
 
     ConsoleListModel* sourceList = source == ConsoleSource::Proto ? m_proto : m_app;
-    Q_EMIT sourceList->appendEvent(time, type, msg);
+    Q_EMIT sourceList->appendEvent(time, type, line);
 }
 
 void Console::setMaxRows(int rows) {

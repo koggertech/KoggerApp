@@ -318,6 +318,11 @@ void Core::consoleWarning(QString msg)
     getConsolePtr()->put(QtMsgType::QtWarningMsg, msg);
 }
 
+void Core::consoleNotification(const QString& msg, bool isWarning)
+{
+    getConsolePtr()->put(isWarning ? QtMsgType::QtWarningMsg : QtMsgType::QtInfoMsg, msg, ConsoleSource::App);
+}
+
 void Core::consoleProtoText(const QString& msg)
 {
     if (!consoleOutputEnabled_) {

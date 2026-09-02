@@ -14,7 +14,7 @@ void Notifications::info(const QString& text, const QString& actionPath)
     if (trimmed.isEmpty()) {
         return;
     }
-    core.consoleInfo(trimmed);
+    core.consoleNotification(trimmed, false);
     emit messageRequested(0, trimmed, QString(), actionPath);
 }
 
@@ -24,7 +24,7 @@ void Notifications::warning(const QString& text, const QString& tag, const QStri
     if (trimmed.isEmpty()) {
         return;
     }
-    core.consoleWarning(trimmed);
+    core.consoleNotification(trimmed, true);
     emit messageRequested(1, trimmed, tag, actionPath);
 }
 
