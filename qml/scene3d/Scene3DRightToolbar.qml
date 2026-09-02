@@ -15,12 +15,15 @@ Item {
     property bool geometryOpen: false
     property real buttonSize: Math.round(40 * (theme ? theme.resCoeff : 1.0))
     property bool toolbarHovered: buttonColumnHoverHandler.hovered
-    property bool toolbarPressed: rulerToolButton.pressed || navArrowButton.pressed
-    property bool menuOpened: root.geometryOpen
+    property bool toolbarPressed: rulerToolButton.pressed || navArrowButton.pressed || vScaleToolButton.pressed
+    property bool menuOpened: root.geometryOpen || vScaleControl.menuOpen
 
     property bool layersOpen: false
     function toggleLayers() { layersOpen = false }
     function toggleGeometry() { geometryOpen = !geometryOpen }
+
+    readonly property bool anyPillOpen: vScaleControl.menuOpen
+    function closePills() { vScaleControl._setOpen(false) }
 
     function dismissRuler() {
         if (!rulerControl.menuOpen) return
@@ -31,7 +34,12 @@ Item {
 
     Connections {
         target: core
-        function onActiveTransientUiChanged(who) { if (who !== root) root.dismissRuler() }
+        function onActiveTransientUiChanged(who) {
+            if (who === root)
+                return
+            root.dismissRuler()
+            root.closePills()
+        }
     }
 
     width: buttonColumn.width + 8
@@ -82,30 +90,132 @@ Item {
 
         opacity: buttonColumnFade.value
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
-        IdleFade { id: buttonColumnFade; hovered: buttonColumnHoverHandler.hovered || rulerControl.menuOpen || (root.view && root.view.followReturnPending) }
+        IdleFade { id: buttonColumnFade; hovered: buttonColumnHoverHandler.hovered || rulerControl.menuOpen || vScaleControl.menuOpen || (root.view && root.view.followReturnPending) }
 
         HoverHandler {
             id: buttonColumnHoverHandler
         }
 
-        KCircleIconButton {
-            id: resetZoomButton
-            readonly property bool shown: root.view && Math.abs(root.view.verticalScale - 1.0) > 0.001
+        Item {
+            id: vScaleControl
             width: root.buttonSize
+            height: root.buttonSize
             Layout.preferredWidth: root.buttonSize
-            Layout.preferredHeight: shown ? root.buttonSize : 0
-            visible: Layout.preferredHeight > 1
-            opacity: shown ? 1.0 : 0.0
-            clip: true
-            Behavior on Layout.preferredHeight { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            iconSource: "qrc:/icons/ui/zoom_cancel.svg"
-            iconTintColor: AppPalette.text
-            fillColor: AppPalette.card
-            fillHoverColor: AppPalette.cardHover
-            borderColor: AppPalette.border
-            toolTipText: qsTr("Reset scaling coefficient")
-            onClicked: if (root.view) root.view.resetVerticalScale()
+            Layout.preferredHeight: root.buttonSize
+
+            property bool menuOpen: false
+
+            readonly property real _s: theme ? theme.resCoeff : 1.0
+            readonly property int _pad: Math.round(5 * _s)
+            readonly property int _gap: Math.round(6 * AppPalette.scale)
+            readonly property int _sliderW: Math.round(180 * AppPalette.scale)
+            readonly property int _valueW: Math.round(48 * AppPalette.scale)
+            readonly property real _openW: _pad * 2 + root.buttonSize * 2 + _gap * 3 + _sliderW + _valueW
+            readonly property real vScale: root.view ? root.view.verticalScale : 1.0
+            readonly property bool active: Math.abs(vScale - 1.0) > 0.001
+
+            function _setOpen(open) {
+                if (menuOpen === open)
+                    return
+                menuOpen = open
+                if (!open)
+                    return
+                root.dismissRuler()
+                if (typeof core !== "undefined" && core)
+                    core.setActiveTransientUi(root)
+            }
+
+            Rectangle {
+                id: vScaleBacking
+                z: -1
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.rightMargin: -vScaleControl._pad
+                height: root.buttonSize + vScaleControl._pad * 2
+                width: vScaleControl.menuOpen ? vScaleControl._openW : 0
+                radius: height / 2
+                color: AppPalette.bg
+                border.width: 0
+                opacity: vScaleControl.menuOpen ? 1 : 0
+                visible: opacity > 0.01
+                clip: true
+
+                Behavior on width   { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.AllButtons
+                    hoverEnabled: true
+                }
+
+                Row {
+                    anchors.right: parent.right
+                    anchors.rightMargin: vScaleControl._pad + root.buttonSize + vScaleControl._gap
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: vScaleControl._gap
+
+                    KCircleIconButton {
+                        width: root.buttonSize
+                        height: root.buttonSize
+                        iconSource: "qrc:/icons/ui/zoom_cancel.svg"
+                        iconTintColor: AppPalette.text
+                        fillColor: AppPalette.card
+                        fillHoverColor: AppPalette.cardHover
+                        borderColor: AppPalette.border
+                        toolTipText: qsTr("Reset scaling coefficient")
+                        enabled: vScaleControl.active
+                        onClicked: if (root.view) root.view.resetVerticalScale()
+                    }
+
+                    KSlider {
+                        id: vScaleSlider
+                        width: vScaleControl._sliderW
+                        height: root.buttonSize
+                        showValueTip: false
+                        from: Math.log(0.05)
+                        to: Math.log(10.0)
+                        stepSize: 0.01
+                        value: Math.log(vScaleControl.vScale)
+                        onValueModified: function(v) { if (root.view) root.view.setVerticalScale(Math.exp(v)) }
+                        onPressedChanged: if (!pressed && root.view) value = Math.log(root.view.verticalScale)
+
+                        Connections {
+                            target: root.view
+                            function onVerticalScaleChanged() {
+                                if (!vScaleSlider.pressed)
+                                    vScaleSlider.value = Math.log(root.view.verticalScale)
+                            }
+                        }
+                    }
+
+                    Text {
+                        width: vScaleControl._valueW
+                        height: root.buttonSize
+                        horizontalAlignment: Text.AlignRight
+                        verticalAlignment: Text.AlignVCenter
+                        text: (vScaleControl.vScale < 10 ? vScaleControl.vScale.toFixed(2)
+                                                         : vScaleControl.vScale.toFixed(1)) + "×"
+                        color: AppPalette.text
+                        font: theme.textFont
+                    }
+                }
+            }
+
+            KCircleIconButton {
+                id: vScaleToolButton
+                objectName: "verticalScaleToolButton"
+                anchors.fill: parent
+                iconSource: "qrc:/icons/ui/line-height.svg"
+                iconTintColor: AppPalette.text
+                fillHoverColor: vScaleControl.active ? AppPalette.accentBgHover : AppPalette.cardHover
+                fillPressedColor: vScaleControl.active ? AppPalette.accentBgPressed : AppPalette.bgDeep
+                fillColor: vScaleControl.active ? AppPalette.accentBgStrong : AppPalette.card
+                borderColor: vScaleControl.active ? AppPalette.accentBorder : AppPalette.border
+                borderWidth: vScaleControl.active ? 2 : 0
+                toolTipText: qsTr("Vertical scale")
+                onClicked: vScaleControl._setOpen(!vScaleControl.menuOpen)
+            }
         }
 
         KCircleIconButton {
@@ -120,7 +230,7 @@ Item {
             fillHoverColor: AppPalette.cardHover
             borderColor: AppPalette.border
             toolTipText: qsTr("Zoom in")
-            onClicked: { root.cancelRuler(); root._zoom(+4) }
+            onClicked: { root.cancelRuler(); root.closePills(); root._zoom(+4) }
         }
 
         KCircleIconButton {
@@ -135,7 +245,7 @@ Item {
             fillHoverColor: AppPalette.cardHover
             borderColor: AppPalette.border
             toolTipText: qsTr("Zoom out")
-            onClicked: { root.cancelRuler(); root._zoom(-4) }
+            onClicked: { root.cancelRuler(); root.closePills(); root._zoom(-4) }
         }
 
         Item { Layout.preferredHeight: Tokens.spaceLg; Layout.preferredWidth: 1 }
@@ -220,7 +330,7 @@ Item {
                 borderWidth: checked ? 2 : 0
 
                 onClicked: {
-                    root.cancelRuler()
+                    root.cancelRuler(); root.closePills()
                     if (!root.store) return
                     root.store.trackLastDataEnabled = !root.store.trackLastDataEnabled
                     Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(root.store.trackLastDataEnabled)
@@ -252,7 +362,13 @@ Item {
                 Scene3dToolBarController.onRulerModeChanged(open)
             }
 
-            onMenuOpenChanged: if (menuOpen && typeof core !== "undefined" && core) core.setActiveTransientUi(root)
+            onMenuOpenChanged: {
+                if (!menuOpen)
+                    return
+                root.closePills()
+                if (typeof core !== "undefined" && core)
+                    core.setActiveTransientUi(root)
+            }
 
             Rectangle {
                 id: rulerBacking
@@ -352,7 +468,7 @@ Item {
             visible: root.store !== null
 
             onClicked: {
-                root.cancelRuler()
+                root.cancelRuler(); root.closePills()
                 if (root.store && typeof root.store.openAppSettingsAtGroup === "function")
                     root.store.toggleAppSettingsAtGroup("app.scene3d")
             }
@@ -376,7 +492,7 @@ Item {
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
                 borderWidth: checked ? 2 : 0
-                onClicked: { root.cancelRuler(); if (root.geo) root.geo.tool = (root.geo.tool === 1 ? 0 : 1) }
+                onClicked: { root.cancelRuler(); root.closePills(); if (root.geo) root.geo.tool = (root.geo.tool === 1 ? 0 : 1) }
             }
 
             KCircleIconButton {
@@ -393,7 +509,7 @@ Item {
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
                 borderWidth: checked ? 2 : 0
-                onClicked: { root.cancelRuler(); if (root.geo) root.geo.tool = (root.geo.tool === 2 ? 0 : 2) }
+                onClicked: { root.cancelRuler(); root.closePills(); if (root.geo) root.geo.tool = (root.geo.tool === 2 ? 0 : 2) }
             }
 
             KCircleIconButton {
@@ -410,7 +526,7 @@ Item {
                 fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
                 borderWidth: checked ? 2 : 0
-                onClicked: { root.cancelRuler(); if (root.geo) root.geo.tool = (root.geo.tool === 3 ? 0 : 3) }
+                onClicked: { root.cancelRuler(); root.closePills(); if (root.geo) root.geo.tool = (root.geo.tool === 3 ? 0 : 3) }
             }
         }
 

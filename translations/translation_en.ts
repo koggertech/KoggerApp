@@ -4102,6 +4102,11 @@
 <context>
     <name>Scene3DRightToolbar</name>
     <message>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="216"/>
+        <source>Vertical scale</source>
+        <translation>Vertical scale</translation>
+    </message>
+    <message>
         <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="107"/>
         <source>Reset scaling coefficient</source>
         <translation>Reset scaling coefficient</translation>
