@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtQml.Models 2.15
@@ -26,6 +26,83 @@ Item {
     readonly property int _pad: Tokens.spaceLg
     readonly property int _btnSize: Math.round(34 * _s)
     readonly property bool _colorize: !!store && store.consoleColorize
+
+    property int selAnchor: -1
+    property int selCursor: -1
+    property bool _pressToggles: false
+    readonly property int selFirst: (selAnchor < 0 || selCursor < 0) ? -1 : Math.min(selAnchor, selCursor)
+    readonly property int selLast:  (selAnchor < 0 || selCursor < 0) ? -1 : Math.max(selAnchor, selCursor)
+    readonly property int selCount: selFirst < 0 ? 0 : (selLast - selFirst + 1)
+    readonly property color _selBg: Qt.rgba(AppPalette.accent.r, AppPalette.accent.g, AppPalette.accent.b, 0.30)
+
+    function clearSelection() {
+        selAnchor = -1
+        selCursor = -1
+    }
+
+    function selectAll() {
+        var n = logList.count
+        if (n <= 0)
+            return
+        selAnchor = 0
+        selCursor = n - 1
+    }
+
+    function _copyRange(from, to) {
+        if (!core || !core.consoleList || from < 0)
+            return
+        var text = core.consoleList.rangeText(from, to)
+        if (text.length)
+            core.copyToClipboard(text)
+    }
+
+    function copySelection() {
+        _copyRange(selFirst, selLast)
+    }
+
+    function copyAll() {
+        if (logList.count > 0)
+            _copyRange(0, logList.count - 1)
+    }
+
+    function _rowAt(viewportY) {
+        var n = logList.count
+        if (n <= 0)
+            return -1
+
+        var y = Math.max(0, Math.min(logList.height - 1, viewportY))
+        var idx = logList.indexAt(logList.contentX + 1, logList.contentY + y)
+        if (idx < 0 && logList.contentHeight > 0) {
+            var rowH = logList.contentHeight / n
+            idx = Math.floor((logList.contentY - logList.originY + y) / rowH)
+        }
+        return Math.max(0, Math.min(n - 1, idx))
+    }
+
+    function _selectTo(viewportY) {
+        var idx = _rowAt(viewportY)
+        if (idx < 0)
+            return
+        if (selAnchor < 0)
+            selAnchor = idx
+        selCursor = idx
+    }
+
+    function _tapRow(viewportY, modifiers) {
+        var idx = _rowAt(viewportY)
+        if (idx < 0)
+            return
+        if (modifiers & Qt.ShiftModifier) {
+            _selectTo(viewportY)
+            return
+        }
+        if (selCount === 1 && selFirst === idx) {
+            clearSelection()
+            return
+        }
+        selAnchor = idx
+        selCursor = idx
+    }
 
     // Observes any press inside the drawer (passive — doesn't steal from the
     // log/controls) to mark the console as the last-active scroll surface.
@@ -157,6 +234,23 @@ Item {
 
     Component.onCompleted: if (root.store) root.store.applyConsoleMaxRows()
 
+    Connections {
+        target: core && core.consoleList ? core.consoleList : null
+
+        function onRowsTrimmed(count) {
+            if (root.selFirst < 0)
+                return
+            var a = root.selAnchor - count
+            var c = root.selCursor - count
+            if (Math.max(a, c) < 0) {
+                root.clearSelection()
+                return
+            }
+            root.selAnchor = Math.max(0, a)
+            root.selCursor = Math.max(0, c)
+        }
+    }
+
     component Toggle: MouseArea {
         id: tgRoot
         property string label: ""
@@ -218,20 +312,22 @@ Item {
         id: visualModel
         model: core.consoleList
         groups: [ DelegateModelGroup { name: "selected" } ]
-        delegate: RowLayout {
+        delegate: Rectangle {
             width: logList.width
+            height: rowText.implicitHeight
+            color: (index >= root.selFirst && index <= root.selLast) ? root._selBg : "transparent"
 
-            TextEdit {
-                Layout.fillWidth: true
-                textFormat: root._colorize ? TextEdit.RichText : TextEdit.PlainText
+            Text {
+                id: rowText
+                anchors.left: parent.left
+                anchors.right: parent.right
+                textFormat: root._colorize ? Text.RichText : Text.PlainText
                 text: root._colorize ? root.buildLogHtml(time, payload, category)
                                      : (time + "  " + payload)
                 font.pixelSize: Math.round(13 * root._s)
                 font.family: "Consolas"
                 color: AppPalette.text
-                readOnly: true
-                selectByMouse: true
-                wrapMode: TextEdit.NoWrap
+                wrapMode: Text.NoWrap
             }
         }
     }
@@ -298,6 +394,32 @@ Item {
 
                 Item { Layout.fillWidth: true }
 
+                Text {
+                    visible: root.selCount > 0
+                    text: qsTr("Selected: %1").arg(root.selCount)
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontBase
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                KCircleIconButton {
+                    implicitWidth: root._btnSize
+                    implicitHeight: root._btnSize
+                    rounded: false
+                    cornerRadius: Tokens.radiusMd
+                    iconSource: "qrc:/icons/ui/copy.svg"
+                    iconTintColor: AppPalette.textStrong
+                    fillColor: AppPalette.bgDeep
+                    fillHoverColor: AppPalette.bgHover
+                    borderWidth: 0
+                    enabled: logList.count > 0
+                    toolTipText: root.selCount > 0
+                                 ? qsTr("Copy selected lines (Ctrl+C)")
+                                 : qsTr("Copy the whole log (Ctrl+C)")
+                    Layout.alignment: Qt.AlignVCenter
+                    onClicked: root.selCount > 0 ? root.copySelection() : root.copyAll()
+                }
+
                 KCircleIconButton {
                     implicitWidth: root._btnSize
                     implicitHeight: root._btnSize
@@ -346,23 +468,118 @@ Item {
                 }
             }
 
-            ListView {
-                id: logList
-                model: visualModel
+            Item {
                 Layout.leftMargin: root._pad
                 Layout.rightMargin: Tokens.spaceMd
                 Layout.bottomMargin: Tokens.spaceSm
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                clip: true
 
-                onCountChanged: {
-                    if (consScrollEnable.checked)
-                        Qt.callLater(positionViewAtEnd)
+                ListView {
+                    id: logList
+                    anchors.fill: parent
+                    model: visualModel
+                    clip: true
+
+                    onCountChanged: {
+                        if (consScrollEnable.checked && !selArea.pressed)
+                            Qt.callLater(positionViewAtEnd)
+                    }
+
+                    TapHandler {
+                        id: touchTap
+                        acceptedDevices: PointerDevice.TouchScreen
+                        gesturePolicy: TapHandler.DragThreshold
+                        onSingleTapped: function(point) {
+                            if (point.timeHeld < touchExtend.longPressThreshold)
+                                root._tapRow(point.position.y, Qt.NoModifier)
+                        }
+                    }
+
+                    TapHandler {
+                        id: touchExtend
+                        acceptedDevices: PointerDevice.TouchScreen
+                        longPressThreshold: 0.45
+                        onLongPressed: root._selectTo(touchExtend.point.position.y)
+                    }
+
+                    ScrollBar.vertical: ScrollBar {
+                        id: logScroll
+                        policy: ScrollBar.AsNeeded
+                    }
                 }
 
-                ScrollBar.vertical: ScrollBar {
-                    policy: ScrollBar.AsNeeded
+                HoverHandler {
+                    id: pointerHover
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                }
+
+                MouseArea {
+                    id: selArea
+                    anchors.fill: parent
+                    anchors.rightMargin: logScroll.visible ? logScroll.width : 0
+                    enabled: pointerHover.hovered
+                    preventStealing: true
+                    acceptedButtons: Qt.LeftButton
+                    cursorShape: Qt.IBeamCursor
+
+                    onPressed: function(mouse) {
+                        var row = root._rowAt(mouse.y)
+                        root._pressToggles = (root.selCount === 1 && root.selFirst === row)
+                        if (mouse.modifiers & Qt.ShiftModifier) {
+                            root._pressToggles = false
+                            if (root.selAnchor < 0)
+                                root.selAnchor = row
+                            root.selCursor = row
+                        } else {
+                            root.selAnchor = row
+                            root.selCursor = row
+                        }
+                        selEdgeScroll.start()
+                    }
+
+                    onPositionChanged: function(mouse) {
+                        if (!pressed)
+                            return
+                        var row = root._rowAt(mouse.y)
+                        if (row !== root.selCursor) {
+                            root._pressToggles = false
+                            root.selCursor = row
+                        }
+                    }
+
+                    onReleased: {
+                        selEdgeScroll.stop()
+                        if (root._pressToggles)
+                            root.clearSelection()
+                        root._pressToggles = false
+                    }
+
+                    onCanceled: {
+                        selEdgeScroll.stop()
+                        root._pressToggles = false
+                    }
+                }
+
+                Timer {
+                    id: selEdgeScroll
+                    interval: 30
+                    repeat: true
+
+                    onTriggered: {
+                        if (!selArea.pressed) {
+                            stop()
+                            return
+                        }
+                        var y = selArea.mouseY
+                        var step = y < 0 ? Math.max(-60, y)
+                                         : (y > selArea.height ? Math.min(60, y - selArea.height) : 0)
+                        if (step !== 0) {
+                            var maxY = logList.originY + Math.max(0, logList.contentHeight - logList.height)
+                            logList.contentY = Math.max(logList.originY, Math.min(maxY, logList.contentY + step))
+                            root.selCursor = root._rowAt(y)
+                        }
+                    }
                 }
             }
         }

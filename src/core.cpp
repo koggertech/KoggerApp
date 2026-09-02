@@ -13,6 +13,8 @@
 #include <QDateTime>
 #include <QProcess>
 #include <QDesktopServices>
+#include <QClipboard>
+#include <QGuiApplication>
 #include <QPointer>
 #include <QThreadPool>
 #include "bottom_track.h"
@@ -1062,6 +1064,15 @@ void Core::setKlfLogging(bool isLogging)
 QString Core::klfLogFilePath() const
 {
     return logger_.klfLogFilePath();
+}
+
+void Core::copyToClipboard(const QString& text)
+{
+    QClipboard* clipboard = QGuiApplication::clipboard();
+    if (!clipboard)
+        return;
+
+    clipboard->setText(text);
 }
 
 void Core::revealInFolder(const QString& path)

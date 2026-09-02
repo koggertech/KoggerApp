@@ -22,6 +22,9 @@ public:
     Q_INVOKABLE void setMaxRows(int rows);
     Q_INVOKABLE int maxRows() const { return _maxRows; }
 
+    Q_INVOKABLE QString rowText(int row) const;
+    Q_INVOKABLE QString rangeText(int from, int to) const;
+
     enum Roles : uint8_t {
         Visibility,
         Time,
@@ -31,6 +34,7 @@ public:
 
 signals:
     void appendEvent(const QString& time, int category, const QString& data);
+    void rowsTrimmed(int count);
 
 private:
     Q_DISABLE_COPY(ConsoleListModel)

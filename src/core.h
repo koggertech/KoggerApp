@@ -112,6 +112,7 @@ public:
     bool getCsvLogging() const;
     Q_INVOKABLE QString klfLogFilePath() const;
     Q_INVOKABLE void    revealInFolder(const QString& path);
+    Q_INVOKABLE void    copyToClipboard(const QString& text);
     Q_INVOKABLE QString csvLogFilePath() const;
     Q_INVOKABLE qint64  activeLogSizeBytes() const;
     Q_INVOKABLE int     activeLogDurationSecs() const;

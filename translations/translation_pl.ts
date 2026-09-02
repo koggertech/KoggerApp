@@ -1586,6 +1586,21 @@
         <source>Settings</source>
         <translation>Ustawienia</translation>
     </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="399"/>
+        <source>Selected: %1</source>
+        <translation>Zaznaczono: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="417"/>
+        <source>Copy selected lines (Ctrl+C)</source>
+        <translation>Kopiuj zaznaczone wiersze (Ctrl+C)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="418"/>
+        <source>Copy the whole log (Ctrl+C)</source>
+        <translation>Kopiuj cały log (Ctrl+C)</translation>
+    </message>
 </context>
 <context>
     <name>ConsoleSettingsTab</name>

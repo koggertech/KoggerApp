@@ -1586,6 +1586,21 @@
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="399"/>
+        <source>Selected: %1</source>
+        <translation>Выделено: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="417"/>
+        <source>Copy selected lines (Ctrl+C)</source>
+        <translation>Копировать выделенные строки (Ctrl+C)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="418"/>
+        <source>Copy the whole log (Ctrl+C)</source>
+        <translation>Копировать весь лог (Ctrl+C)</translation>
+    </message>
 </context>
 <context>
     <name>ConsoleSettingsTab</name>

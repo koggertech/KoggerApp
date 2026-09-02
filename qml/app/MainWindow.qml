@@ -531,6 +531,24 @@ ApplicationWindow {
         onActivated: root._kbdScroll("bottom")
     }
 
+    readonly property bool _consoleKeysActive: root._kbdScrollActive
+                                               && consoleDrawer.consoleOpen
+                                               && !(workspaceStore.settingsPanelOpen
+                                                    && root._lastScrollSurface === "settings")
+
+    Shortcut {
+        sequences: [ StandardKey.Copy ]
+        context: Qt.ApplicationShortcut
+        enabled: root._consoleKeysActive
+        onActivated: consoleDrawer.copySelection()
+    }
+    Shortcut {
+        sequences: [ StandardKey.SelectAll ]
+        context: Qt.ApplicationShortcut
+        enabled: root._consoleKeysActive
+        onActivated: consoleDrawer.selectAll()
+    }
+
     function openSelectedFile() {
         var filePath = workspaceStore.selectedConnectionFilePath
         if (!filePath && core && core.filePath && core.filePath.length > 0)

@@ -1,5 +1,7 @@
 #include "console_list_model.h"
 
+#include <QStringList>
+
 ConsoleListModel::ConsoleListModel(QObject* parent)
     : QAbstractListModel(parent)
 {
@@ -45,6 +47,42 @@ void ConsoleListModel::doAppend(const QString& time, int category, const QString
     endInsertRows();
 }
 
+QString ConsoleListModel::rowText(int row) const
+{
+    if (row < 0 || row >= _size) {
+        return {};
+    }
+
+    const auto timeIt = _vectors.constFind(ConsoleListModel::Time);
+    const auto payloadIt = _vectors.constFind(ConsoleListModel::Payload);
+    if (timeIt == _vectors.cend() || payloadIt == _vectors.cend()) {
+        return {};
+    }
+    if (timeIt.value().size() <= row || payloadIt.value().size() <= row) {
+        return {};
+    }
+
+    return timeIt.value().at(row).toString() + QStringLiteral("  ") + payloadIt.value().at(row).toString();
+}
+
+QString ConsoleListModel::rangeText(int from, int to) const
+{
+    if (_size == 0) {
+        return {};
+    }
+
+    const int first = qBound(0, qMin(from, to), _size - 1);
+    const int last = qBound(0, qMax(from, to), _size - 1);
+
+    QStringList lines;
+    lines.reserve(last - first + 1);
+    for (int row = first; row <= last; ++row) {
+        lines.append(rowText(row));
+    }
+
+    return lines.join(QLatin1Char('\n'));
+}
+
 void ConsoleListModel::setMaxRows(int rows)
 {
     rows = qBound(kMinRows, rows, kMaxRows);
@@ -65,6 +103,8 @@ void ConsoleListModel::setMaxRows(int rows)
     _vectors[ConsoleListModel::Payload].remove(0, removeCount);
     _size -= removeCount;
     endRemoveRows();
+
+    emit rowsTrimmed(removeCount);
 }
 
 void ConsoleListModel::trimHeadIfNeeded(int incomingCount)
@@ -90,4 +130,6 @@ void ConsoleListModel::trimHeadIfNeeded(int incomingCount)
     _size -= removeCount;
 
     endRemoveRows();
+
+    emit rowsTrimmed(removeCount);
 }
