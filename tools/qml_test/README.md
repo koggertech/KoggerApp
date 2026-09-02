@@ -125,7 +125,31 @@ edited **in place** with a `rev` counter as the only change signal. Every bindin
 from every mutator, so `UsblPlanStore.qml` reassigns one property and QML re-evaluates
 everything by itself.
 
-Plain JS also means `node` can load it. Two approaches that do **not** work, both verified,
+Plain JS also means `node` can load it — through `load_qml_js.mjs`, never `require()` directly.
+
+⚠️ **`.pragma library` and `require()` are mutually exclusive.** The pragma is a QML directive, not
+JavaScript: a leading `.pragma library` makes `require()` fail with `SyntaxError: Unexpected token '.'`.
+Dropping the pragma is not an option either — without it CMake warns and the script is re-evaluated in
+every QML document that imports the module. This clash silently disabled three of the four suites: they
+aborted on load, reported nothing, and stayed that way from the commit that added the pragmas until
+2026-09-02. `loadQmlJs()` blanks the directive lines (keeping line numbers, so stack traces stay honest),
+evaluates the rest through `vm.Script`, and **throws if the file exported nothing** — the silent `{}`
+is what let the breakage hide. Use the helpers, not `createRequire`:
+
+```js
+import { loadAppJs, loadTypesJs } from "./load_qml_js.mjs";
+const S = loadAppJs(import.meta.url, "StandLogic.js");
+const U = loadTypesJs(import.meta.url, "UsblFieldLogic.js");
+```
+
+A second lesson from the same outage: a suite that reads QML **source** to assert structure breaks when
+a file is renamed or deleted, and while the suites were dead those assertions rotted. The domain-widget
+rework (073bf0c7) deleted `WidgetKindStep.qml`, so `test_stand_logic.mjs` died on `ENOENT`, and the
+kind-based panel selection it and `test_usbl_node_logic.mjs` asserted no longer exists — both panels are
+now fixed under reserved ids. Those assertions were re-pointed at the invariants that replaced them, not
+deleted. Run the suites after any rework that moves QML files.
+
+Two approaches that do **not** work, both verified,
 so nobody repeats them:
 
 1. **Standalone `qml.exe` cannot load the app's QML modules.** The generated

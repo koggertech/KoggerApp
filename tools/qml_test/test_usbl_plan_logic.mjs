@@ -11,13 +11,12 @@
 // that makes that possible is the definition: same settings, same group. Duplicates are
 // legal (collapsing them mid-edit would fight the operator); the plan check offers a join.
 
-import { createRequire } from "node:module";
+import { loadAppJs } from "./load_qml_js.mjs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
-const require = createRequire(import.meta.url);
 const here = path.dirname(fileURLToPath(import.meta.url));
-const L = require(path.join(here, "..", "..", "qml", "app", "UsblPlanLogic.js"));
+const L = loadAppJs(import.meta.url, "UsblPlanLogic.js");
 
 let pass = 0;
 const fails = [];

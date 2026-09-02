@@ -21,15 +21,14 @@
 // Fourth, TIME INDEPENDENCE. A result badge must not change while nothing is being asked. Age is
 // a separate control with a separate threshold.
 
-import { createRequire } from "node:module";
+import { loadAppJs, loadTypesJs } from "./load_qml_js.mjs";
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-const require = createRequire(import.meta.url);
 const here = path.dirname(fileURLToPath(import.meta.url));
-const N = require(path.join(here, "..", "..", "qml", "app", "UsblNodeLogic.js"));
-const F = require(path.join(here, "..", "..", "qml", "kqml_types", "UsblFieldLogic.js"));
+const N = loadAppJs(import.meta.url, "UsblNodeLogic.js");
+const F = loadTypesJs(import.meta.url, "UsblFieldLogic.js");
 
 let pass = 0;
 const fails = [];
@@ -1302,22 +1301,25 @@ console.log("the acoustic-nodes panel");
     ok("the panel converts chipH into its own scale space rather than mixing the two",
        /Tokens\.chipH\s*\/\s*Math\.max\(0\.01,\s*AppPalette\.scale\)/.test(panel));
 
-    // The kind discriminator, and the one thing that must never regress about it: a def written
-    // before kinds existed has no `kind` and has to keep loading as a grid.
-    // Spelled as membership rather than as the exact list: a third kind (stand) has since been
-    // added, and an assertion on the literal two-element list fails for a change that breaks
-    // nothing it was defending.
-    ok("the store knows the nodes kind",
-       /widgetKinds:\s*\[[^\]]*"grid"[^\]]*"usblNodes"[^\]]*\]/.test(store));
-    ok("...and treats an absent kind as a grid", (() => {
-        const fn = store.slice(store.indexOf("function widgetKindOf"));
-        const body = fn.slice(0, fn.indexOf("\n}"));
-        return body.includes('=== "usblNodes"') && /return "grid"\s*$/.test(body.trim());
-    })());
-    ok("a nodes def is normalized without a grid",
-       /raw\.kind === "usblNodes"/.test(store));
-    ok("MainWindow picks the popup by kind",
-       /kind === "usblNodes"\s*\?\s*usblNodesPanelComp/.test(main));
+    // The nodes panel used to be a widget KIND the user picked in the add-widget wizard, with
+    // MainWindow choosing a Component by that kind. It is now ONE fixed panel under a reserved
+    // id, and "grid" is the only kind a user-made widget can carry. Three things still have to
+    // hold, so the assertions moved rather than went away: the reserved id exists and is what
+    // the panel binds to, a user widget cannot become a nodes panel, and layouts saved under
+    // the old model do not come back as empty grids.
+    ok("the nodes panel owns a reserved id",
+       /usblPanelId:\s*"usblNodes"/.test(store)
+       && /usblPanelDef:[^\n]*kind: "usblNodes"/.test(store));
+    ok("...so a user widget can only ever be a grid",
+       /widgetKinds:\s*\[\s*"grid"\s*\]/.test(store)
+       && /function widgetKindOf\(def\)\s*\{\s*return "grid" \}/.test(store));
+    ok("a legacy nodes def is collected, not restored as a grid",
+       /parsed\[i\]\.kind === "usblNodes"/.test(store)
+       && /legacyUsbl\.push/.test(store));
+    ok("MainWindow declares the panel once, bound to the store",
+       /id: usblNodesPanel/.test(main)
+       && /def: workspaceStore\.usblPanelDef/.test(main)
+       && /popupVisible: workspaceStore\.usblPanelShown/.test(main));
     // A Loader sits between the Repeater and the popup now, and uiStateReapplied walks the
     // Repeater's items -- so the delegate has to forward syncFromStore or restored layouts
     // stop reaching the panels.
@@ -1326,14 +1328,14 @@ console.log("the acoustic-nodes panel");
     // The bug this cost a probe run to find, written down: an object created from a Component
     // gets that COMPONENT's creation context, so a Component declared beside the Repeater
     // cannot see the delegate's id and every binding through it is a ReferenceError -- a panel
-    // that loads and paints nothing. Both Components must sit inside the delegate.
+    // that loads and paints nothing. The Component must sit inside the delegate. Only the grid
+    // panel is reached through the Repeater now; the nodes panel is declared directly.
     {
         const at = main.indexOf("id: widgetSlot");
         const end = main.indexOf("Connections {", at);
         const delegateBody = at < 0 ? "" : main.slice(at, end);
-        ok("the panel Components are declared inside the delegate, where its id is in scope",
-           /id: dataWidgetPanelComp/.test(delegateBody)
-           && /id: usblNodesPanelComp/.test(delegateBody));
+        ok("the panel Component is declared inside the delegate, where its id is in scope",
+           /id: dataWidgetPanelComp/.test(delegateBody));
     }
 }
 

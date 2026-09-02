@@ -1,9 +1,11 @@
+.pragma library
+
 // Scan configuration: what it is, what it counts to, what has changed since it was sent, and
 // what the firmware would refuse. No QML types and no qsTr -- codes and numbers out, words in
 // StandBadgeRow.qml, so the vocabulary exists once.
 //
-// No `.pragma library`: node has to be able to require this, which is what makes the rules
-// testable. Nothing here holds state, so a copy per component costs nothing.
+// Stateless library: one shared instance for every importer. The node suites read this file
+// through tools/qml_test/load_qml_js.mjs, which strips the directive above.
 
 var ORDER_AZ_EL = "azEl"
 var ORDER_EL_AZ = "elAz"

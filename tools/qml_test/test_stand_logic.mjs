@@ -23,19 +23,17 @@
 // device, and that no explanatory prose has crept back into a panel that must not change height
 // while it is being read.
 
-import { createRequire } from "node:module";
+import { loadAppJs } from "./load_qml_js.mjs";
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-const require = createRequire(import.meta.url);
 const here = path.dirname(fileURLToPath(import.meta.url));
-const S = require(path.join(here, "..", "..", "qml", "app", "StandLogic.js"));
+const S = loadAppJs(import.meta.url, "StandLogic.js");
 
 const src = (...p) => readFileSync(path.join(here, "..", "..", ...p), "utf8");
 const BADGE_ROW = src("qml", "app", "StandBadgeRow.qml");
 const PANEL     = src("qml", "app", "StandPanelPopup.qml");
-const KIND_STEP = src("qml", "app", "WidgetKindStep.qml");
 const STORE     = src("qml", "app", "WorkspaceStore.qml");
 const MAIN      = src("qml", "app", "MainWindow.qml");
 
@@ -303,29 +301,41 @@ console.log("what the panel must not do");
     ok("the panel declares no hint element", !/class="hint"|id:\s*hint/.test(PANEL));
 }
 
-// ── source rules: the kind is invisible without a stand ──────────────────────
-console.log("the kind hides itself");
+// ── source rules: the panel follows the stand ────────────────────────────────
+// The panel used to be a widget the operator added from a wizard, and the wizard's kind card
+// carried the two gates: no stand, no card; one panel already there, no second card. The wizard
+// is gone (WidgetKindStep.qml was deleted with the domain-widget rework) and the panel is now
+// fixed under a reserved id, which is what makes a second one impossible — by construction
+// rather than by a check. The gates therefore moved, and so do these assertions: presence
+// follows the device layer, and the panel visible on the scene follows presence.
+console.log("the panel follows the stand");
 {
     ok("the store asks the device layer, not a snapshot",
        STORE.includes("deviceManagerWrapper.standAvailable"));
     ok("the store counts stand-capable devices", STORE.includes("standDeviceCount"));
-    ok("the store knows whether a stand panel exists", STORE.includes("hasStandPanel"));
 
-    const card = KIND_STEP.slice(KIND_STEP.indexOf('kind: "stand"') - 700,
-                                 KIND_STEP.indexOf('kind: "stand"'));
-    ok("the kind card requires a stand", card.includes("standAvailable"));
-    ok("the kind card refuses a second panel", card.includes("!step.store.hasStandPanel"));
+    ok("the panel owns a reserved id, so there can only be one",
+       /standPanelId:\s*"stand"/.test(STORE)
+       && /standPanelDef:[^\n]*kind: "stand"/.test(STORE));
+    ok("the panel appears and hides with the stand",
+       /onStandAvailableChanged:\s*_syncStandPanelAuto\(\)/.test(STORE)
+       && /standPanelAutoShow && widgetShown\(standPanelId\) !== standAvailable/.test(STORE));
 
     ok("the panel binds to the stand's device, not the active one",
        MAIN.includes("dev: workspaceStore.standDevice"));
-    ok("the on-scene panel hides with the stand",
-       /popupVisible:[^\n]*standAvailable/.test(MAIN));
+    ok("the on-scene panel takes its visibility from the store",
+       /popupVisible: workspaceStore\.standPanelShown/.test(MAIN)
+       && /standPanelShown:[^\n]*widgetShown\(standPanelId\)/.test(STORE));
 
     // A hidden panel is still a panel: its scan has to survive the stand being unplugged, or
     // every reconnection costs the operator a re-entry.
     ok("hiding a panel does not delete it", STORE.includes("function widgetListed"));
-    ok("a stand def carries its scan", STORE.includes("config: Stand.normalizeConfig(raw.config)"));
-    ok("a stand def carries its regime", STORE.includes("expanded: raw.expanded === true"));
+    ok("the scan is persisted and restored through the normalizer",
+       /standPanelConfigJson = JSON\.stringify\(standPanelConfig\)/.test(STORE)
+       && /standPanelConfig = Stand\.normalizeConfig\(raw\)/.test(STORE));
+    ok("the regime is persisted too",
+       /standPanelExpandedStored = standPanelExpanded/.test(STORE)
+       && /standPanelExpanded = layoutStore\.standPanelExpandedStored/.test(STORE));
 }
 
 console.log(`\n${pass} passed, ${fails.length} failed`);

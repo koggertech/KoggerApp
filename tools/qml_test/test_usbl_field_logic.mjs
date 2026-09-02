@@ -5,14 +5,13 @@
 // Exit 0 = all pass. The thing being defended: a widget labelled "beacon 2" must never
 // show beacon 1's number. That failure looks completely correct on screen.
 
-import { createRequire } from "node:module";
+import { loadTypesJs } from "./load_qml_js.mjs";
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-const require = createRequire(import.meta.url);
 const here = path.dirname(fileURLToPath(import.meta.url));
-const U = require(path.join(here, "..", "..", "qml", "kqml_types", "UsblFieldLogic.js"));
+const U = loadTypesJs(import.meta.url, "UsblFieldLogic.js");
 
 let pass = 0;
 const fails = [];
