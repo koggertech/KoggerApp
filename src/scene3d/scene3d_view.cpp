@@ -27,9 +27,8 @@
 extern Core core;
 
 namespace {
-constexpr float kVerticalScaleMin  = 0.05f;
-constexpr float kVerticalScaleMax  = 10.0f;
-constexpr float kVerticalScaleStep = 1.1f;
+constexpr float kVerticalScaleMin = 0.05f;
+constexpr float kVerticalScaleMax = 10.0f;
 
 struct ZoomDistanceRange {
     float min;
@@ -942,8 +941,9 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
     if (keyboardKey == Qt::Key_Control) {
         cancelWheelZoom();
         cancelVScaleAnim();
-        const float factor = angleDelta.y() > 0.0f ? kVerticalScaleStep : 1.0f / kVerticalScaleStep;
-        setVerticalScale(m_verticalScale * factor);
+        float tempVerticalScale = m_verticalScale;
+        angleDelta.y() > 0.0f ? tempVerticalScale += 0.3f : tempVerticalScale -= 0.3f;
+        setVerticalScale(tempVerticalScale);
     }
     else if (keyboardKey == Qt::Key_Shift) {
         cancelWheelZoom();
@@ -1139,7 +1139,7 @@ void GraphicsScene3dView::zStepTrigger(qreal delta)
     }
 
     cancelVScaleAnim();
-    setVerticalScale(m_verticalScale * std::pow(kVerticalScaleStep, static_cast<float>(delta)));
+    setVerticalScale(m_verticalScale + static_cast<float>(delta * 0.3f));
 }
 void GraphicsScene3dView::resetCameraAngleTrigger()
 {

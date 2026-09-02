@@ -114,6 +114,21 @@ Item {
             readonly property real vScale: root.view ? root.view.verticalScale : 1.0
             readonly property bool active: Math.abs(vScale - 1.0) > 0.001
 
+            readonly property real _vMin: 0.05
+            readonly property real _vMax: 10.0
+            readonly property real _onePos: 1.0 / 3.0
+            readonly property real _span: Math.log(_vMax / _vMin)
+            readonly property real _warp: Math.log(Math.log(1.0 / _vMin) / _span) / Math.log(_onePos)
+
+            function _posToScale(p) {
+                return _vMin * Math.exp(Math.pow(Math.max(0, Math.min(1, p)), _warp) * _span)
+            }
+
+            function _scaleToPos(v) {
+                var g = Math.log(v / _vMin) / _span
+                return Math.pow(Math.max(0, Math.min(1, g)), 1.0 / _warp)
+            }
+
             function _setOpen(open) {
                 if (menuOpen === open)
                     return
@@ -173,18 +188,18 @@ Item {
                         width: vScaleControl._sliderW
                         height: root.buttonSize
                         showValueTip: false
-                        from: Math.log(0.05)
-                        to: Math.log(10.0)
-                        stepSize: 0.01
-                        value: Math.log(vScaleControl.vScale)
-                        onValueModified: function(v) { if (root.view) root.view.setVerticalScale(Math.exp(v)) }
-                        onPressedChanged: if (!pressed && root.view) value = Math.log(root.view.verticalScale)
+                        from: 0.0
+                        to: 1.0
+                        stepSize: 0.002
+                        value: vScaleControl._scaleToPos(vScaleControl.vScale)
+                        onValueModified: function(v) { if (root.view) root.view.setVerticalScale(vScaleControl._posToScale(v)) }
+                        onPressedChanged: if (!pressed && root.view) value = vScaleControl._scaleToPos(root.view.verticalScale)
 
                         Connections {
                             target: root.view
                             function onVerticalScaleChanged() {
                                 if (!vScaleSlider.pressed)
-                                    vScaleSlider.value = Math.log(root.view.verticalScale)
+                                    vScaleSlider.value = vScaleControl._scaleToPos(root.view.verticalScale)
                             }
                         }
                     }
