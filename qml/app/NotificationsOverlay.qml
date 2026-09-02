@@ -9,7 +9,6 @@ Item {
 
     readonly property int maxVisible: 5
     readonly property int infoLifetimeMs: 3000
-    readonly property int exitMs: 220
     readonly property real maxCardWidth: Math.min(480 * AppPalette.scale, width - 2 * Tokens.spaceXl)
     property int nextNotificationId: 0
 
@@ -17,19 +16,36 @@ Item {
 
     signal tagDismissRequested(string tag)
 
+    readonly property int burstSlack: 2
+
     function push(kind, text, tag, actionPath) {
         if (notificationsModel.count >= maxVisible)
             evictOldestInfo()
-        notificationsModel.append({ notificationId: nextNotificationId++, kind: kind, text: text, tag: tag || "", actionPath: actionPath || "" })
+        while (notificationsModel.count >= maxVisible + burstSlack && dropOldestInfo())
+            ;
+        notificationsModel.append({ notificationId: nextNotificationId++, kind: kind, text: text,
+                                    tag: tag || "", actionPath: actionPath || "", closing: false })
     }
 
     function evictOldestInfo() {
         for (var i = 0; i < notificationsModel.count; ++i) {
-            if (notificationsModel.get(i).kind === 0) {
-                notificationsModel.remove(i)
+            var item = notificationsModel.get(i)
+            if (item.kind === 0 && !item.closing) {
+                notificationsModel.setProperty(i, "closing", true)
                 return
             }
         }
+        dropOldestInfo()
+    }
+
+    function dropOldestInfo() {
+        for (var i = 0; i < notificationsModel.count; ++i) {
+            if (notificationsModel.get(i).kind === 0) {
+                notificationsModel.remove(i)
+                return true
+            }
+        }
+        return false
     }
 
     function reveal(path) {
@@ -62,7 +78,7 @@ Item {
         spacing: Tokens.spaceMd
 
         move: Transition {
-            NumberAnimation { properties: "y"; duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { properties: "y"; duration: Anim.toastReflowMs; easing.type: Anim.toastReflowEasing }
         }
 
         Repeater {
@@ -83,12 +99,56 @@ Item {
             readonly property bool showClose: isWarning && !root.hideImportant
             property bool closing: false
 
+            readonly property bool modelClosing: model.closing === true
+            onModelClosingChanged: if (modelClosing) dismiss()
+
             opacity: 0
+            clip: true
+            transformOrigin: Item.Top
+
+            transform: [
+                Scale {
+                    id: pop
+                    origin.x: card.width / 2
+                    origin.y: 0
+                    xScale: Anim.toastEnterScale
+                    yScale: Anim.toastEnterScale
+                },
+                Translate {
+                    id: slide
+                    y: -Math.round(Anim.toastSlidePx * AppPalette.scale)
+                }
+            ]
+
+            scale: pressArea.pressed ? Anim.dipScale(width)
+                 : (pressArea.containsMouse ? Anim.liftScale(width) : 1.0)
+            Behavior on scale {
+                NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing }
+            }
+
             Component.onCompleted: enterAnim.start()
-            NumberAnimation {
+
+            ParallelAnimation {
                 id: enterAnim
-                target: card; property: "opacity"; from: 0.0; to: 1.0
-                duration: 200; easing.type: Easing.OutCubic
+
+                NumberAnimation {
+                    target: card; property: "opacity"; from: 0.0; to: 1.0
+                    duration: Anim.fadeMs; easing.type: Anim.fadeEasing
+                }
+                NumberAnimation {
+                    target: pop; properties: "xScale,yScale"
+                    from: Anim.toastEnterScale; to: 1.0
+                    duration: Anim.toastEnterMs
+                    easing.type: Anim.toastEnterEasing
+                    easing.overshoot: Anim.toastOvershoot
+                }
+                NumberAnimation {
+                    target: slide; property: "y"
+                    from: -Math.round(Anim.toastSlidePx * AppPalette.scale); to: 0
+                    duration: Anim.toastEnterMs
+                    easing.type: Anim.toastEnterEasing
+                    easing.overshoot: Anim.toastOvershoot
+                }
             }
 
             anchors.horizontalCenter: parent.horizontalCenter
@@ -127,18 +187,28 @@ Item {
 
             SequentialAnimation {
                 id: exitAnim
-                NumberAnimation {
-                    target: card
-                    property: "opacity"
-                    to: 0
-                    duration: root.exitMs
-                    easing.type: Easing.OutCubic
+
+                ParallelAnimation {
+                    NumberAnimation {
+                        target: card; property: "opacity"; to: 0
+                        duration: Anim.toastExitMs; easing.type: Anim.toastExitEasing
+                    }
+                    NumberAnimation {
+                        target: pop; properties: "xScale,yScale"; to: Anim.toastExitScale
+                        duration: Anim.toastExitMs; easing.type: Anim.toastExitEasing
+                    }
+                    NumberAnimation {
+                        target: card; property: "height"; to: 0
+                        duration: Anim.toastExitMs; easing.type: Anim.toastExitEasing
+                    }
                 }
                 ScriptAction { script: root.removeById(model.notificationId) }
             }
 
             MouseArea {
+                id: pressArea
                 anchors.fill: parent
+                enabled: !card.closing
                 hoverEnabled: true
                 acceptedButtons: Qt.AllButtons
                 cursorShape: card.autoDismiss ? Qt.PointingHandCursor : Qt.ArrowCursor

@@ -70,6 +70,18 @@ QtObject {
     readonly property int tooltipEnterEasing: easingBack
     readonly property int tooltipEasing: easingStd
 
+    // ── Toasts (NotificationsOverlay): spring in, collapse out ───────────────
+    property int toastEnterMs: 420
+    property int toastExitMs: 200
+    property int toastReflowMs: 260
+    property real toastEnterScale: 0.90
+    property real toastExitScale: 0.94
+    property real toastSlidePx: 14
+    property real toastOvershoot: 1.6
+    readonly property int toastEnterEasing: easingBack
+    readonly property int toastExitEasing: Easing.InCubic
+    readonly property int toastReflowEasing: easingStd
+
     // ── Toolbars: 3D scene idle-transparency fade ────────────────────────────
     property int toolbarFadeMs: 150
     readonly property int toolbarFadeEasing: easingStd
