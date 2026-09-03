@@ -1848,10 +1848,15 @@ Column {
         }
     }
 
+                }
+            }
+        }
+
     // ── Информация ────────────────────────────────────────────────────────
 
     DevIsland {
         id: devInfoGroup
+        width: root.groupWidth
         visible: !!(dev && dev.isBoardInited)
         rowMinHeight: Tokens.controlHMd + Tokens.spaceXs
 
@@ -1979,8 +1984,4 @@ Column {
             value: dev ? (dev.devUID || "") : ""
         }
     }
-
-                }
-            }
-        }
 }
