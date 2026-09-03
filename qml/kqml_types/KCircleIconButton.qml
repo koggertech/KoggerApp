@@ -21,7 +21,7 @@ Item {
     property color borderHoverColor: AppPalette.borderHover
     property real borderWidth: Tokens.cardBorderWidth   // borderless by default; set per-instance for active/accent state
     property bool enabled: true
-    activeFocusOnTab: enabled
+    activeFocusOnTab: enabled || activeFocus
     Keys.onReturnPressed: if (root.enabled) root.clicked()
     Keys.onEnterPressed:  if (root.enabled) root.clicked()
     Keys.onSpacePressed:  if (root.enabled) root.clicked()
