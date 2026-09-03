@@ -295,6 +295,21 @@ bool Epoch::chartAvail(const ChannelId &channelId, uint8_t subChannelId) const
     return hasIndex(echograms, subChannelId) && !echograms.at(subChannelId).amplitude.isEmpty();
 }
 
+float Epoch::chartBottomDistance(const ChannelId &channelId, uint8_t subChannelId) const
+{
+    auto it = charts_.constFind(channelId);
+    if (it == charts_.cend()) {
+        return NAN;
+    }
+
+    const auto& echograms = it.value();
+    if (!hasIndex(echograms, subChannelId)) {
+        return NAN;
+    }
+
+    return static_cast<float>(echograms.at(subChannelId).bottomProcessing.getDistance());
+}
+
 QList<ChannelId> Epoch::chartChannels()
 {
     return charts_.keys();

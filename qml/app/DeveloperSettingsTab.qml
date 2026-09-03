@@ -47,5 +47,23 @@ Column {
                 }
             }
         }
+
+        KIslandRow {
+            label: qsTr("Mosaic pipeline status")
+            toolTipText: qsTr("Shows the mosaic pipeline state in the Mosaic group. Polling adds load to the pipeline — keep it off unless diagnosing.")
+            interactive: true
+            onClicked: mosaicStatusSwitch.click()
+
+            KSwitch {
+                id: mosaicStatusSwitch
+                flat: true
+                checked: page.store ? page.store.mosaicStatusMonitor : true
+                onToggled: {
+                    if (page.store)
+                        page.store.mosaicStatusMonitor = checked
+                    checked = Qt.binding(function() { return page.store ? page.store.mosaicStatusMonitor : true })
+                }
+            }
+        }
     }
 }

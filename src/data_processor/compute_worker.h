@@ -76,6 +76,7 @@ public slots:
 
     // diagnostics
     void reportPipelineStats();
+    void reportMosaicStats(int probeWindow);
 
 signals:
     void jobFinished(); // для dataProcessor (нормально, отмена)

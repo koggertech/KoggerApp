@@ -2033,6 +2033,24 @@ Column {
                 }
             }
         }
+
+        Loader {
+            readonly property bool windowShown: Window.window
+                                                ? Window.window.visibility !== Window.Hidden
+                                                  && Window.window.visibility !== Window.Minimized
+                                                : true
+
+            width: parent.width
+            active: mosaicGroup.expanded
+                    && windowShown
+                    && !!(root.store
+                          && root.store.mosaicStatusActive
+                          && root.store.settingsPanelOpen
+                          && !root.store.anySettingsSubPageActive)
+            sourceComponent: Component {
+                MosaicPipelineStatus { active: true }
+            }
+        }
     }
 
 

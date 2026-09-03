@@ -38,6 +38,7 @@ qt_add_qml_module(kogger_app
         LicensePage.qml
         MainWindow.qml
         ModeSettingsPanel.qml
+        MosaicPipelineStatus.qml
         NavButton.qml
         NotificationsOverlay.qml
         Pane2DSettingsPage.qml
@@ -49,6 +50,7 @@ qt_add_qml_module(kogger_app
         PaneFrame.qml
         PaneInputBridge.qml
         PaneVideoWindow.qml
+        PipelineStatusGroup.qml
         PowerOffConfirmOverlay.qml
         ParamCard.qml
         ParamCardGroup.qml

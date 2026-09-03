@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <QVariantMap>
 
 #include "dataset_defs.h"
 #include "epoch.h"
@@ -42,6 +43,8 @@ public:
 
     QPair<ChannelId, uint8_t> getFirstChannelId()  const { return qMakePair(segFChannelId_, segFSubChannelId_); };
     QPair<ChannelId, uint8_t> getSecondChannelId() const { return qMakePair(segSChannelId_, segSSubChannelId_); };
+
+    void fillDiagnostics(QVariantMap& stats, int probeWindow) const;
 
 private:
     void postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<SurfaceTile*>& changedOut);

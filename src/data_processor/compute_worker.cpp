@@ -245,3 +245,18 @@ void ComputeWorker::reportPipelineStats()
 
     QMetaObject::invokeMethod(dp_, "postPipelineStats", Qt::QueuedConnection, Q_ARG(QVariantMap, stats));
 }
+
+void ComputeWorker::reportMosaicStats(int probeWindow)
+{
+    QVariantMap stats;
+
+    stats["meshInited"]      = surfaceMesh_.getIsInited();
+    stats["meshHasData"]     = surfaceMesh_.hasData();
+    stats["meshTilesInited"] = surfaceMesh_.currentInitedTiles();
+    stats["meshZoom"]        = surfaceMesh_.getCurrentZoom();
+    stats["visibleTileKeys"] = visibleTileKeys_.size();
+
+    mosaic_.fillDiagnostics(stats, probeWindow);
+
+    QMetaObject::invokeMethod(dp_, "postMosaicStats", Qt::QueuedConnection, Q_ARG(QVariantMap, stats));
+}

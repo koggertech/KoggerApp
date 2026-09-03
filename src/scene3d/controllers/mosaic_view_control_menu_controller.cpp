@@ -6,6 +6,14 @@
 #include <QColor>
 #include <QVariantMap>
 
+namespace {
+
+constexpr int kStatusPollMs = 700;
+constexpr int kStatusCollapsedPollMs = 3000;
+constexpr int kStatusProbeWindow = 256;
+
+} // namespace
+
 
 MosaicViewControlMenuController::MosaicViewControlMenuController(QObject *parent)
     : QmlComponentController(parent),
@@ -22,8 +30,13 @@ MosaicViewControlMenuController::MosaicViewControlMenuController(QObject *parent
       lowLevel_(10.0f),
       highLevel_(90.0f),
       lAngleOffset_(0.0f),
-      rAngleOffset_(0.0f)
+      rAngleOffset_(0.0f),
+      statusMonitorEnabled_(false),
+      statusRequestPending_(false),
+      statusDetailedPolling_(false)
 {
+    statusTimer_.setInterval(kStatusPollMs);
+    QObject::connect(&statusTimer_, &QTimer::timeout, this, &MosaicViewControlMenuController::refreshPipelineStatus);
 }
 
 void MosaicViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
@@ -41,6 +54,113 @@ void MosaicViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView *
 void MosaicViewControlMenuController::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
 {
     dataProcessorPtr_ = dataProcessorPtr;
+
+    if (dataProcessorPtr_) {
+        QObject::connect(dataProcessorPtr_, &DataProcessor::mosaicStats,
+                         this, &MosaicViewControlMenuController::onMosaicStats,
+                         Qt::UniqueConnection);
+    }
+}
+
+QVariantMap MosaicViewControlMenuController::pipelineStatus() const
+{
+    return pipelineStatus_;
+}
+
+bool MosaicViewControlMenuController::statusMonitorEnabled() const
+{
+    return statusMonitorEnabled_;
+}
+
+void MosaicViewControlMenuController::setStatusMonitorEnabled(bool state)
+{
+    if (statusMonitorEnabled_ == state) {
+        return;
+    }
+
+    statusMonitorEnabled_ = state;
+
+    if (statusMonitorEnabled_) {
+        statusTimer_.setInterval(statusDetailedPolling_ ? kStatusPollMs : kStatusCollapsedPollMs);
+        statusTimer_.start();
+        refreshPipelineStatus();
+    }
+    else {
+        statusTimer_.stop();
+        statusRequestPending_ = false;
+        pipelineStatus_.clear();
+        emit pipelineStatusChanged();
+    }
+
+    emit statusMonitorEnabledChanged();
+}
+
+bool MosaicViewControlMenuController::statusDetailedPolling() const
+{
+    return statusDetailedPolling_;
+}
+
+void MosaicViewControlMenuController::setStatusDetailedPolling(bool state)
+{
+    if (statusDetailedPolling_ == state) {
+        return;
+    }
+
+    statusDetailedPolling_ = state;
+
+    if (statusMonitorEnabled_) {
+        statusTimer_.setInterval(statusDetailedPolling_ ? kStatusPollMs : kStatusCollapsedPollMs);
+
+        if (statusDetailedPolling_) {
+            refreshPipelineStatus();
+        }
+    }
+
+    emit statusDetailedPollingChanged();
+}
+
+void MosaicViewControlMenuController::refreshPipelineStatus()
+{
+    if (!dataProcessorPtr_ || statusRequestPending_) {
+        return;
+    }
+
+    statusRequestPending_ = true;
+    QMetaObject::invokeMethod(dataProcessorPtr_, "requestMosaicStats", Qt::QueuedConnection,
+                              Q_ARG(int, kStatusProbeWindow));
+}
+
+void MosaicViewControlMenuController::onMosaicStats(const QVariantMap& stats)
+{
+    statusRequestPending_ = false;
+
+    if (!statusMonitorEnabled_) {
+        return;
+    }
+
+    QVariantMap next = stats;
+    next["mosaicRequested"] = visibility_;
+    next["probeWindow"]     = kStatusProbeWindow;
+    next["levelLow"]        = lowLevel_;
+    next["levelHigh"]       = highLevel_;
+    next["gridVisible"]     = gridVisible_;
+    next["measLineVisible"] = measLineVisible_;
+
+    if (graphicsSceneViewPtr_) {
+        if (auto surfacePtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfacePtr) {
+            next["renderTiles"]      = surfacePtr->getRenderTilesCount();
+            next["renderMosaicOn"]   = surfacePtr->getMVisible();
+            next["renderIsobathsOn"] = surfacePtr->getIVisible();
+        }
+    }
+
+    if (next == pipelineStatus_) {
+        return;
+    }
+
+    pipelineStatus_ = next;
+
+    emit pipelineStatusChanged();
 }
 
 void MosaicViewControlMenuController::onVisibilityChanged(bool state)

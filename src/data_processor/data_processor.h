@@ -126,6 +126,7 @@ public slots:
 
     // diagnostics
     void requestPipelineStats();
+    void requestMosaicStats(int probeWindow);
 
 private slots:
     //db
@@ -171,6 +172,7 @@ signals:
 
     // diagnostics
     void pipelineStats(const QVariantMap& stats);
+    void mosaicStats(const QVariantMap& stats);
 
 private slots:
     void postTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd, int epochIndex);
@@ -200,6 +202,7 @@ private slots:
     void postIsobathsLineSegments(const QVector<QVector3D>& lineSegments);
     // diagnostics
     void postPipelineStats(const QVariantMap& stats);
+    void postMosaicStats(const QVariantMap& stats);
 
     void onBottomTrackStarted();
     void onBottomTrackFinished();

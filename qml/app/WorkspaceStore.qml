@@ -1282,10 +1282,13 @@ property Settings developerPrefs: Settings {
     category: "main/ui"
     property bool developerMode: false
     property bool isobathsStatusMonitor: true
+    property bool mosaicStatusMonitor: true
 }
 property alias developerMode: developerPrefs.developerMode
 property alias isobathsStatusMonitor: developerPrefs.isobathsStatusMonitor
+property alias mosaicStatusMonitor: developerPrefs.mosaicStatusMonitor
 readonly property bool isobathsStatusActive: developerMode && isobathsStatusMonitor
+readonly property bool mosaicStatusActive: developerMode && mosaicStatusMonitor
 
 readonly property int developerUnlockTaps: 5
 

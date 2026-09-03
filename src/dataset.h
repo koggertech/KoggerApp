@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stdint.h>
 #include <time.h>
+#include <algorithm>
+#include <cmath>
 #include <QObject>
 #include <QMap>
 #include <QSet>
@@ -144,6 +146,62 @@ public:
         Epoch copy = src;
 
         return copy;
+    }
+
+    struct MosaicEpochProbe {
+        bool valid = false;
+        bool posFinite = false;
+        bool yawFinite = false;
+        bool firstBeam = false;
+        bool secondBeam = false;
+        bool firstBottom = false;
+        bool secondBottom = false;
+    };
+
+    QVector<MosaicEpochProbe> probeMosaicEpochs(int lastN,
+                                                const ChannelId& firstChId, uint8_t firstSubChId,
+                                                const ChannelId& secondChId, uint8_t secondSubChId) const {
+        QReadLocker rl(&poolMtx_);
+
+        QVector<MosaicEpochProbe> out;
+        const int poolSize = pool_.size();
+        if (poolSize == 0 || lastN <= 0) {
+            return out;
+        }
+
+        const int from = std::max(0, poolSize - lastN);
+        out.reserve(poolSize - from);
+
+        const bool firstValid = firstChId.isValid();
+        const bool secondValid = secondChId.isValid();
+
+        for (int i = from; i < poolSize; ++i) {
+            const Epoch& epoch = pool_.at(i);
+
+            MosaicEpochProbe probe;
+            probe.valid = epoch.isValid();
+
+            if (probe.valid) {
+                const auto& ned = epoch.getSonarPositionCRef().ned;
+                probe.posFinite = std::isfinite(ned.n) && std::isfinite(ned.e);
+                probe.yawFinite = std::isfinite(epoch.tryRetValidYaw());
+
+                if (firstValid) {
+                    probe.firstBeam = epoch.chartAvail(firstChId, firstSubChId);
+                    probe.firstBottom = probe.firstBeam
+                                        && std::isfinite(epoch.chartBottomDistance(firstChId, firstSubChId));
+                }
+                if (secondValid) {
+                    probe.secondBeam = epoch.chartAvail(secondChId, secondSubChId);
+                    probe.secondBottom = probe.secondBeam
+                                         && std::isfinite(epoch.chartBottomDistance(secondChId, secondSubChId));
+                }
+            }
+
+            out.append(probe);
+        }
+
+        return out;
     }
 
     Epoch fromIndexMosaicCopy(int index_offset = 0) {

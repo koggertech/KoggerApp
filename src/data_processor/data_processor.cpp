@@ -1520,6 +1520,32 @@ void DataProcessor::postPipelineStats(const QVariantMap& stats)
     emit pipelineStats(out);
 }
 
+void DataProcessor::requestMosaicStats(int probeWindow)
+{
+    if (!worker_) {
+        return;
+    }
+
+    QMetaObject::invokeMethod(worker_, "reportMosaicStats", Qt::QueuedConnection, Q_ARG(int, probeWindow));
+}
+
+void DataProcessor::postMosaicStats(const QVariantMap& stats)
+{
+    QVariantMap out = stats;
+
+    out["state"]            = static_cast<int>(state_);
+    out["updateMosaic"]     = updateMosaic_;
+    out["updateBottomTrack"]= updateBottomTrack_;
+    out["openingFile"]      = isOpeningFile_;
+    out["dbReady"]          = isDbReady();
+    out["zeroing"]          = activeZeroing_;
+    out["fakeCoordsLastN"]  = mosaicFakeCoordsLastN_;
+    out["lastMosaicIndx"]   = mosaicCounter_;
+    out["queuedMosaic"]     = pendingMosaicIndxs_.size();
+
+    emit mosaicStats(out);
+}
+
 void DataProcessor::onBottomTrackStarted()
 {
     btBusy_ = true;

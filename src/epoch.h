@@ -342,6 +342,7 @@ public:
     int chartSize(const ChannelId& channelId = channelNone(), uint8_t subChannelId = 0);
     bool chartAvail();
     bool chartAvail(const ChannelId& channelId, uint8_t subChannelId = 0) const;
+    float chartBottomDistance(const ChannelId& channelId, uint8_t subChannelId = 0) const;
     Echogram* chart(const ChannelId& channelId = channelNone(), uint8_t subChannelId = 0);
     Echogram chartCopy(const ChannelId &channelId = channelNone(), uint8_t subChannelId = 0) const;
     Epoch deepCopyForMosaic() const;
@@ -499,6 +500,7 @@ public:
     Position getPositionGNSS() { return _positionGNSS; }
     Position getExternalPosition() { return _positionExternal; }
     Position getSonarPosition() { return sonarPosition_; }
+    const Position& getSonarPositionCRef() const { return sonarPosition_; }
 
     uint32_t positionTimeUnix() { return _positionGNSS.time.sec; }
     uint32_t positionTimeNano() { return _positionGNSS.time.nanoSec; }
