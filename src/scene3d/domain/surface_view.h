@@ -22,6 +22,7 @@ public:
         QVector3D dir;
         float depth;
         QString text;
+        int level = 0;
     };
 
     class SurfaceViewRenderImplementation : public SceneObject::RenderImplementation
@@ -63,6 +64,7 @@ public:
         QHash<TileKey, QVector<QVector3D>> tileNormals_;
         QVector<IsoLabel> isoLabels_;
         float labelStep_;
+        float labelBaseSpacing_;
         float cameraDist_;
         QVector<QVector3D> lastLeftLine_;
         QVector<QVector3D> lastRightLine_;
@@ -121,7 +123,7 @@ private:
     void rebuildIsobathLabels();
     // isobaths
     void edgeIntersection(const QVector3D& a, const QVector3D& b, float level, QVector<QVector3D>& out);
-    void filterLabelsBySpacing(const QVector<SurfaceView::IsoLabel>& in, QVector<SurfaceView::IsoLabel>& out, float minDist);
+    void assignLabelLevels(const QVector<SurfaceView::IsoLabel>& in, QVector<SurfaceView::IsoLabel>& out, float baseSpacing);
 
 private:
     QMutex mosaicTexTasksMutex_;
