@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import Qt5Compat.GraphicalEffects
 import kqml_types 1.0
 
 Item {
@@ -36,7 +37,7 @@ Item {
     property real ghostRadius: panelRadius        // corner radius for drag/snap/resize ghosts
 
     readonly property real headerHeight: Math.round(32 * AppPalette.scale)
-    readonly property real contentPadding: Tokens.spaceXs
+    property real contentPadding: Tokens.spaceXs
 
     readonly property real _contentTopMargin: (overlayChrome || !headerReserved) ? contentPadding : headerHeight
     readonly property real _ghostLeft:   ghostFollowsContent ? contentPadding : 0
@@ -664,11 +665,26 @@ Item {
         Item {
             id: contentHost
 
+            readonly property real cornerRadius: Math.max(0, panel.radius - root.contentPadding)
+
             anchors.fill: parent
             anchors.leftMargin: root.fullscreenMode ? 0 : root.contentPadding
             anchors.rightMargin: root.fullscreenMode ? 0 : root.contentPadding
             anchors.topMargin: root.fullscreenMode ? 0 : root._contentTopMargin
             anchors.bottomMargin: root.fullscreenMode ? 0 : root.contentPadding
+
+            layer.enabled: contentHost.cornerRadius > 0
+            layer.smooth: true
+            layer.effect: OpacityMask {
+                maskSource: ShaderEffectSource {
+                    hideSource: true
+                    sourceItem: Rectangle {
+                        width: contentHost.width
+                        height: contentHost.height
+                        radius: contentHost.cornerRadius
+                    }
+                }
+            }
             visible: !root.collapsed
             z: 2
 

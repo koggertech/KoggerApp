@@ -33,6 +33,9 @@ QtObject {
     readonly property int spaceXl:  Math.round(16 * s)
     readonly property int spaceXxl: Math.round(24 * s)
 
+    readonly property int paneGapPx: 2
+    readonly property int paneRadiusPx: 8
+
     // Control heights. controlH mirrors theme.controlHeight for legacy alignment.
     readonly property int controlH:    theme ? theme.controlHeight : Math.round(26 * s)
     readonly property int controlHSm:  Math.round(24 * s)

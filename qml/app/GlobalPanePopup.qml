@@ -9,6 +9,7 @@ BasePanePopup {
     property var workspaceRoot: null
 
     popupVisible: store.globalPopupEnabled
+    contentPadding: Tokens.paneGapPx
     overlayChrome: true
     fullscreenMode: store.globalPopupFullscreen
     dragEnabled: !store.globalPopupFullscreen

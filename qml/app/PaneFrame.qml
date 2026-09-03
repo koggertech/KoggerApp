@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import Qt5Compat.GraphicalEffects
 import kqml_types 1.0
 
 Item {
@@ -35,6 +36,18 @@ Item {
     property bool popupChooserOpen: false
     property int popupSourceLeafId: store.popupSourceLeafIdForHost(paneItem.leafId)
     property var popupCandidates: store.popupCandidateItemsForHost(paneItem.leafId)
+    readonly property bool _editing: !!store.editableMode
+    readonly property real cornerRadius: _editing ? 0 : Tokens.paneRadiusPx
+    readonly property real paneGap: _editing ? 0 : Tokens.paneGapPx
+    readonly property real dimBleed: Math.max(2, Math.round(2 * AppPalette.scale))
+    readonly property bool _outerRight: (x + width) >= (workspaceItem.width - 0.5)
+    readonly property bool _outerBottom: (y + height) >= (workspaceItem.height - 0.5)
+    readonly property real _leftInset: _editing ? 0 : (Math.floor(x) - x)
+    readonly property real _topInset: _editing ? 0 : (Math.floor(y) - y)
+    readonly property real _rightInset: (_editing || _outerRight) ? 0
+                                        : ((x + width) - Math.floor(x + width) + paneGap)
+    readonly property real _bottomInset: (_editing || _outerBottom) ? 0
+                                         : ((y + height) - Math.floor(y + height) + paneGap)
     readonly property int centerQuickIconSize: Math.round(66 * AppPalette.scale)
     readonly property int edgeAddButtonSize: Math.round(42 * AppPalette.scale)
     readonly property real edgeSafetyMargin: AppPalette.splitHitSizePx / 2
@@ -101,9 +114,13 @@ Item {
     }
 
     Rectangle {
+            id: paneSurface
             anchors.fill: parent
-            anchors.margins: 0
-            radius: 0
+            anchors.leftMargin: paneItem._leftInset
+            anchors.topMargin: paneItem._topInset
+            anchors.rightMargin: paneItem._rightInset
+            anchors.bottomMargin: paneItem._bottomInset
+            radius: paneItem.cornerRadius
             color: paneItem.isModeSelecting ? "#111827" : "#09111F"
             border.width: store.editableMode ? 1 : 0
             border.color: paneItem.isModeSelecting ? AppPalette.text : paneItem.paneData.color
@@ -117,6 +134,19 @@ Item {
                 visible: !paneItem.isModeSelecting
                 active: paneItem.visible && !paneItem.isModeSelecting
                 z: 3
+
+                layer.enabled: paneItem.cornerRadius > 0
+                layer.smooth: true
+                layer.effect: OpacityMask {
+                    maskSource: ShaderEffectSource {
+                        hideSource: true
+                        sourceItem: Rectangle {
+                            width: paneSurface.width
+                            height: paneSurface.height
+                            radius: paneItem.cornerRadius
+                        }
+                    }
+                }
             }
 
             Rectangle {
@@ -149,27 +179,6 @@ Item {
                         font.bold: true
                         font.pixelSize: 14
                     }
-                }
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                color: "#020617"
-                opacity: store.editableMode ? 0.72 : 0.0
-                visible: opacity > 0.001
-                z: 35
-                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            }
-
-            Loader {
-                id: paneEditorChromeLoader
-                anchors.fill: parent
-                z: 40
-                active: paneItem.visible
-                        && !store.layoutTransitionSuspended
-                        && (store.editableMode || paneItem.isModeSelecting || paneItem.popupChooserOpen)
-                sourceComponent: PaneEditorChrome {
-                    paneFrame: paneItem
                 }
             }
 
@@ -212,9 +221,68 @@ Item {
             }
         }
 
+    Item {
+        anchors.fill: parent
+        clip: true
+        z: 35
+        visible: editDimOverlay.opacity > 0.001
+
+        Rectangle {
+            id: editDimOverlay
+            anchors.fill: parent
+            anchors.margins: -paneItem.dimBleed
+            radius: paneItem.cornerRadius + paneItem.dimBleed
+            color: "#020617"
+            opacity: store.editableMode ? 0.72 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        }
+    }
+
+    Item {
+        id: editSeams
+
+        readonly property color lineColor: paneItem.isModeSelecting ? AppPalette.text : AppPalette.accentBorder
+        readonly property real lineWidth: Math.max(2, Math.round(2 * AppPalette.scale))
+
+        anchors.fill: paneSurface
+        visible: store.editableMode || paneItem.isModeSelecting
+        z: 36
+
+        Rectangle {
+            visible: !paneItem._outerRight
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: editSeams.lineWidth
+            color: editSeams.lineColor
+        }
+
+        Rectangle {
+            visible: !paneItem._outerBottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: editSeams.lineWidth
+            color: editSeams.lineColor
+        }
+    }
+
+    Loader {
+        id: paneEditorChromeLoader
+        anchors.fill: paneSurface
+        z: 40
+        active: paneItem.visible
+                && !store.layoutTransitionSuspended
+                && (store.editableMode || paneItem.isModeSelecting || paneItem.popupChooserOpen)
+        sourceComponent: PaneEditorChrome {
+            paneFrame: paneItem
+        }
+    }
+
     Rectangle {
         id: flashOverlay
-        anchors.fill: parent
+        anchors.fill: paneSurface
+        radius: paneItem.cornerRadius
         color: paneItem.paneData.color
         opacity: 0
         z: 53
@@ -230,7 +298,8 @@ Item {
 
     Rectangle {
         id: highlightOverlay
-        anchors.fill: parent
+        anchors.fill: paneSurface
+        radius: paneItem.cornerRadius
         color: "#FFFFFF"
         opacity: (paneItem.store.highlightedLeafId === paneItem.leafId
                   || paneItem.store.hoveredPopupCandidateLeafId === paneItem.leafId
@@ -242,7 +311,8 @@ Item {
 
     Rectangle {
         id: settingsDimOverlay
-        anchors.fill: parent
+        anchors.fill: paneSurface
+        radius: paneItem.cornerRadius
         color: "black"
         readonly property int _focus: paneItem.store.settingsFocusLeafId
         opacity: (_focus !== -1 && _focus !== paneItem.leafId) ? 0.55 : 0.0
