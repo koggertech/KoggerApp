@@ -1131,6 +1131,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "aimPanel"     ? qsTr("Information panel")
                      : workspaceStore.settingsSubPageKind === "console"      ? qsTr("Console")
                      : workspaceStore.settingsSubPageKind === "about"        ? qsTr("About")
+                     : workspaceStore.settingsSubPageKind === "developer"    ? qsTr("Developer mode")
                      : workspaceStore.settingsSubPageKind === "license"      ? workspaceStore.licenseViewTitle
                      : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
                      : workspaceStore.settingsSubPageKind === "devices"      ? qsTr("Devices")
@@ -1163,6 +1164,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "aimPanel"   ? aimPanelSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "console"    ? consoleSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "about"      ? aboutPageComponent
+                     : workspaceStore.settingsSubPageKind === "developer"  ? developerSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "license"    ? licensePageComponent
                      : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
                      : workspaceStore.settingsSubPageKind === "devices"      ? deviceSettingsTabComponent
@@ -1441,6 +1443,14 @@ ApplicationWindow {
             id: aboutPageComponent
 
             AboutPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: developerSettingsTabComponent
+
+            DeveloperSettingsTab {
                 store: workspaceStore
             }
         }

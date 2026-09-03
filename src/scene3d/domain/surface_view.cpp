@@ -446,6 +446,24 @@ bool SurfaceView::getIVisible() const
     return r->iVis_;
 }
 
+int SurfaceView::getRenderTilesCount() const
+{
+    auto* r = RENDER_IMPL(SurfaceView);
+    return r ? r->tiles_.size() : 0;
+}
+
+int SurfaceView::getRenderIsoLabelsCount() const
+{
+    auto* r = RENDER_IMPL(SurfaceView);
+    return r ? r->isoLabels_.size() : 0;
+}
+
+float SurfaceView::getRenderSurfaceStep() const
+{
+    auto* r = RENDER_IMPL(SurfaceView);
+    return r ? r->surfaceStep_ : 0.0f;
+}
+
 void SurfaceView::setSurfaceColorTableTextureId(GLuint textureId)
 {
     if (auto* r = RENDER_IMPL(SurfaceView); r) {

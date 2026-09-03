@@ -19,6 +19,7 @@ qt_add_qml_module(kogger_app
         DeviceSettingsPage.qml
         DeviceSettingsTab.qml
         DeviceTopologyView.qml
+        DeveloperSettingsTab.qml
         DisclosureIndicator.qml
         EchogramSettingsPanel.qml
         EchogramSettingsTab.qml
@@ -31,6 +32,7 @@ qt_add_qml_module(kogger_app
         HeaderActionChip.qml
         HotActionsPanel.qml
         InputDeviceState.qml
+        IsobathsPipelineStatus.qml
         LayoutCreatePage.qml
         LayoutSnapshotPreview.qml
         LicensePage.qml

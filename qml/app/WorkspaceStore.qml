@@ -1281,8 +1281,11 @@ property Settings developerPrefs: Settings {
     id: developerPrefs
     category: "main/ui"
     property bool developerMode: false
+    property bool isobathsStatusMonitor: true
 }
 property alias developerMode: developerPrefs.developerMode
+property alias isobathsStatusMonitor: developerPrefs.isobathsStatusMonitor
+readonly property bool isobathsStatusActive: developerMode && isobathsStatusMonitor
 
 readonly property int developerUnlockTaps: 5
 
@@ -1293,7 +1296,9 @@ onDeveloperModeChanged: {
         if (widgetShown(standPanelId))
             setWidgetShown(standPanelId, false)
         if (settingsSubPageActive
-                && (settingsSubPageKind === "servoPanel" || settingsSubPageKind === "standPanel"))
+                && (settingsSubPageKind === "servoPanel"
+                    || settingsSubPageKind === "standPanel"
+                    || settingsSubPageKind === "developer"))
             closeActiveSettingsSubPage()
     }
     _syncServoPanelAuto()
@@ -2151,6 +2156,7 @@ function openTgcSettings()          { _openSettingsSubPage("tgc") }
 function openCsvExportSettings()    { _openSettingsSubPage("csvExport") }
 function openConsoleSettings()      { _openSettingsSubPage("console") }
 function openAboutSettings()        { _openSettingsSubPage("about") }
+function openDeveloperSettings()    { _openSettingsSubPage("developer") }
 function openLicenseView(title, file) {
     licenseViewTitle = title
     licenseViewFile = file

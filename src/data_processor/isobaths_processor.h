@@ -25,6 +25,9 @@ public:
     void  setLabelStepSize(float v);
     float getLineStepSize()  const;
     float getLabelStepSize() const;
+    int   getLineSegmentsCount() const;
+    int   getLabelsCount() const;
+    bool  hasSurfaceMesh() const;
 
 private:
     void fullRebuildLinesLabels();

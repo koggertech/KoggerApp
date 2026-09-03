@@ -23,6 +23,7 @@ Item {
     // When false, the group header turns red — used to signal that a setting in
     // the group has been changed locally but the device hasn't acked yet.
     property bool confirmed: true
+    property color headerTint: "transparent"
     property bool showAccentBar: true
     property bool uniformBody: false
     property bool scrollIntoViewOnExpand: true
@@ -340,7 +341,9 @@ Item {
         // Header colour flows down into the content background — one island.
         readonly property color _headerColor: !root.confirmed
                 ? AppPalette.dangerBg
-                : (headerMouse.containsMouse ? AppPalette.cardHover : AppPalette.card)
+                : root.headerTint.a > 0
+                  ? (headerMouse.containsMouse ? Qt.lighter(root.headerTint, 1.15) : root.headerTint)
+                  : (headerMouse.containsMouse ? AppPalette.cardHover : AppPalette.card)
         readonly property color _bottomColor: !root.confirmed
                 ? AppPalette.dangerBg
                 : (root.uniformBody ? island._headerColor

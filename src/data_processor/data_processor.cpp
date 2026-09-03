@@ -1491,6 +1491,35 @@ void DataProcessor::postIsobathsLineSegments(const QVector<QVector3D>& lineSegme
     emit sendIsobathsLineSegments(lineSegments);
 }
 
+void DataProcessor::requestPipelineStats()
+{
+    if (!worker_) {
+        return;
+    }
+
+    QMetaObject::invokeMethod(worker_, "reportPipelineStats", Qt::QueuedConnection);
+}
+
+void DataProcessor::postPipelineStats(const QVariantMap& stats)
+{
+    QVariantMap out = stats;
+
+    out["state"]             = static_cast<int>(state_);
+    out["updateSurface"]     = updateSurface_;
+    out["updateIsobaths"]    = updateIsobaths_;
+    out["updateBottomTrack"] = updateBottomTrack_;
+    out["updateMosaic"]      = updateMosaic_;
+    out["openingFile"]       = isOpeningFile_;
+    out["bottomTrackBusy"]   = btBusy_;
+    out["dbReady"]           = isDbReady();
+    out["lastEpochIndx"]     = static_cast<qulonglong>(epochCounter_);
+    out["lastChartIndx"]     = static_cast<qulonglong>(chartsCounter_);
+    out["queuedSurface"]     = pendingSurfaceIndxs_.size();
+    out["queuedBtVertices"]  = epIndxsFromBottomTrack_.size();
+
+    emit pipelineStats(out);
+}
+
 void DataProcessor::onBottomTrackStarted()
 {
     btBusy_ = true;

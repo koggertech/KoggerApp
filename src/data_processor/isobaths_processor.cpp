@@ -64,6 +64,21 @@ float IsobathsProcessor::getLabelStepSize() const
     return labelStepSize_;
 }
 
+int IsobathsProcessor::getLineSegmentsCount() const
+{
+    return lineSegments_.size();
+}
+
+int IsobathsProcessor::getLabelsCount() const
+{
+    return labels_.size();
+}
+
+bool IsobathsProcessor::hasSurfaceMesh() const
+{
+    return surfaceMeshPtr_ != nullptr;
+}
+
 void IsobathsProcessor::edgeIntersection(const QVector3D& a,const QVector3D& b, float L, QVector<QVector3D>& out) const
 {
     const float zA = a.z();

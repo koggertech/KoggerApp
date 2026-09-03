@@ -11,6 +11,7 @@
 #include <QVector3D>
 #include <QPair>
 #include <QThread>
+#include <QVariantMap>
 #include <QWaitCondition>
 
 #include "dataset_defs.h"
@@ -123,6 +124,9 @@ public slots:
     void onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
     void onDatasetStateChanged(int state);
 
+    // diagnostics
+    void requestPipelineStats();
+
 private slots:
     //db
     void onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles);
@@ -165,6 +169,9 @@ signals:
 
     void sendSurfaceTilesIncremental(const TileMap& upserts, const QSet<TileKey>& fullVisibleNow);
 
+    // diagnostics
+    void pipelineStats(const QVariantMap& stats);
+
 private slots:
     void postTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd, int epochIndex);
 
@@ -191,6 +198,8 @@ private slots:
     // Isobaths
     void postIsobathsLabels(const QVector<IsobathUtils::LabelParameters>& labels);
     void postIsobathsLineSegments(const QVector<QVector3D>& lineSegments);
+    // diagnostics
+    void postPipelineStats(const QVariantMap& stats);
 
     void onBottomTrackStarted();
     void onBottomTrackFinished();

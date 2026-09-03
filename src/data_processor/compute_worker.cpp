@@ -3,6 +3,7 @@
 #include "dataset.h"
 #include "surface_mesh.h"
 #include <QMetaType>
+#include <QVariantMap>
 #include <QDebug>
 
 namespace {
@@ -212,4 +213,35 @@ void ComputeWorker::setVisibleTileKeys(const QSet<TileKey>& val)
 {
     visibleTileKeys_ = val;
     surface_.setVisibleTileKeys(val);
+}
+
+void ComputeWorker::reportPipelineStats()
+{
+    QVariantMap stats;
+
+    stats["meshInited"]         = surfaceMesh_.getIsInited();
+    stats["meshHasData"]        = surfaceMesh_.hasData();
+    stats["meshTilesInited"]    = surfaceMesh_.currentInitedTiles();
+    stats["meshZoom"]           = surfaceMesh_.getCurrentZoom();
+    stats["meshTilesWide"]      = surfaceMesh_.getNumWidthTiles();
+    stats["meshTilesHigh"]      = surfaceMesh_.getNumHeightTiles();
+
+    stats["triPoints"]          = surface_.getTriangulationPointCount();
+    stats["triTriangles"]       = surface_.getTriangleCount();
+    stats["meshPoints"]         = surface_.getMeshPointCount();
+    stats["surfaceStep"]        = surface_.getSurfaceStepSize();
+    stats["surfaceEdgeLimit"]   = surface_.getEdgeLimit();
+    stats["surfaceExtraWidth"]  = surface_.getExtraWidth();
+    stats["colorIntervals"]     = surface_.getColorIntervalsCount();
+    stats["surfaceMinZ"]        = surface_.getMinZ();
+    stats["surfaceMaxZ"]        = surface_.getMaxZ();
+
+    stats["isoHasMesh"]         = isobaths_.hasSurfaceMesh();
+    stats["isoLineSegments"]    = isobaths_.getLineSegmentsCount();
+    stats["isoLabels"]          = isobaths_.getLabelsCount();
+    stats["isoLineStep"]        = isobaths_.getLineStepSize();
+
+    stats["visibleTileKeys"]    = visibleTileKeys_.size();
+
+    QMetaObject::invokeMethod(dp_, "postPipelineStats", Qt::QueuedConnection, Q_ARG(QVariantMap, stats));
 }

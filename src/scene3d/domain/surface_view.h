@@ -89,6 +89,9 @@ public:
     GLuint getSurfaceColorTableTextureId() const;
     bool   getMVisible() const;
     bool   getIVisible() const;
+    int    getRenderTilesCount() const;
+    int    getRenderIsoLabelsCount() const;
+    float  getRenderSurfaceStep() const;
 
     QVector<GLuint>                                   takeMosaicTileTextureToDelete();
     QVector<std::pair<TileKey, std::vector<uint8_t>>> takeMosaicTileTextureToAppend();

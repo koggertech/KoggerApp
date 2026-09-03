@@ -566,16 +566,10 @@ Column {
                 visible: !!(root.store && root.store.developerMode)
                 label: qsTr("Developer mode")
                 labelColor: root._bright
-                toolTipText: qsTr("Unlocks panels and controls meant for development. Turning it off hides this row again.")
+                chevron: true
+                toolTipText: qsTr("Developer switches and diagnostics. Turning the mode off hides this row again.")
                 interactive: true
-                onClicked: developerModeSwitch.click()
-
-                KSwitch {
-                    id: developerModeSwitch
-                    flat: true
-                    checked: !!(root.store && root.store.developerMode)
-                    onToggled: if (root.store) root.store.developerMode = checked
-                }
+                onClicked: if (root.store) root.store.openDeveloperSettings()
             }
         }
 
@@ -1612,6 +1606,24 @@ Column {
 
             Settings { category: "main/export"; property alias exportSurfaceFolder:     isobathsGroup.exportSurfaceFolder }
             Settings { category: "main/export"; property alias exportSurfaceFolderText: isobathsGroup.exportSurfacePathSource }
+        }
+
+        Loader {
+            readonly property bool windowShown: Window.window
+                                                ? Window.window.visibility !== Window.Hidden
+                                                  && Window.window.visibility !== Window.Minimized
+                                                : true
+
+            width: parent.width
+            active: isobathsGroup.expanded
+                    && windowShown
+                    && !!(root.store
+                          && root.store.isobathsStatusActive
+                          && root.store.settingsPanelOpen
+                          && !root.store.anySettingsSubPageActive)
+            sourceComponent: Component {
+                IsobathsPipelineStatus { active: true }
+            }
         }
     }
 

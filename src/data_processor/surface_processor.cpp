@@ -1267,6 +1267,37 @@ int SurfaceProcessor::getExtraWidth() const
     return extraWidth_;
 }
 
+int SurfaceProcessor::getTriangulationPointCount() const
+{
+    const int total = static_cast<int>(delaunayProc_.getPoints().size());
+    return qMax(0, total - 4);
+}
+
+int SurfaceProcessor::getTriangleCount() const
+{
+    return static_cast<int>(delaunayProc_.getTriangles().size());
+}
+
+int SurfaceProcessor::getMeshPointCount() const
+{
+    return pointToTris_.size();
+}
+
+int SurfaceProcessor::getColorIntervalsCount() const
+{
+    return colorIntervals_.size();
+}
+
+float SurfaceProcessor::getMinZ() const
+{
+    return minZ_;
+}
+
+float SurfaceProcessor::getMaxZ() const
+{
+    return maxZ_;
+}
+
 void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &B, const QVector3D &C, QSet<SurfaceTile*> &updatedTiles)
 {
     if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited()) {
