@@ -38,6 +38,7 @@
 #include "mosaic_db.h"
 #include "language_controller.h"
 #include "app_utils.h"
+#include "app_log.h"
 #include "settings_migration.h"
 #include "video_stream_pool.h"
 
@@ -113,6 +114,10 @@ static bool isVideoLogMessage(const QMessageLogContext& context, const QString& 
 void videoLogHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
     static thread_local bool forwarding = false;
+
+    if (!isVideoLogMessage(context, msg)) {
+        AppLog::instance().write(type, context, msg);
+    }
 
     if (!forwarding && isVideoLogMessage(context, msg)) {
         forwarding = true;
@@ -329,6 +334,12 @@ int main(int argc, char *argv[])
 #endif
     QLoggingCategory::setFilterRules(loggingRules);
 
+#if defined(Q_OS_ANDROID)
+    AppLog::instance().start(AppLog::fallbackDirectory(), QStringLiteral("kogger"), 4 * 1024 * 1024, 3);
+#else
+    AppLog::instance().start(AppLog::defaultDirectory(), QStringLiteral("kogger"), 8 * 1024 * 1024, 5);
+#endif
+
     previousMessageHandler = qInstallMessageHandler(videoLogHandler);
 
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGLRhi);
@@ -513,6 +524,8 @@ int main(int argc, char *argv[])
 #ifdef SEPARATE_READING
     core.stopDeviceManagerThread();
 #endif
+
+    AppLog::instance().stop();
 
     return retCode;
 }

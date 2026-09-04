@@ -17,6 +17,7 @@
 #include <QGuiApplication>
 #include <QPointer>
 #include <QThreadPool>
+#include "app_log.h"
 #include "bottom_track.h"
 #include "tile_provider_ids.h"
 #include "notifications.h"
@@ -304,6 +305,8 @@ void Core::setConsoleOutputEnabled(bool enabled)
 
 void Core::consoleInfo(QString msg)
 {
+    AppLog::instance().writeRaw(QtMsgType::QtInfoMsg, QStringLiteral("app"), msg);
+
     if (!consoleOutputEnabled_) {
         return;
     }
@@ -312,15 +315,29 @@ void Core::consoleInfo(QString msg)
 
 void Core::consoleWarning(QString msg)
 {
+    AppLog::instance().writeRaw(QtMsgType::QtWarningMsg, QStringLiteral("app"), msg);
+
     if (!consoleOutputEnabled_) {
         return;
     }
     getConsolePtr()->put(QtMsgType::QtWarningMsg, msg);
 }
 
+void Core::consoleStreamInfo(const QString& msg)
+{
+    if (!consoleOutputEnabled_) {
+        return;
+    }
+
+    getConsolePtr()->put(QtMsgType::QtInfoMsg, msg, ConsoleSource::App);
+}
+
 void Core::consoleNotification(const QString& msg, bool isWarning)
 {
-    getConsolePtr()->put(isWarning ? QtMsgType::QtWarningMsg : QtMsgType::QtInfoMsg, msg, ConsoleSource::App);
+    const QtMsgType type = isWarning ? QtMsgType::QtWarningMsg : QtMsgType::QtInfoMsg;
+    AppLog::instance().writeRaw(type, QStringLiteral("notify"), msg);
+
+    getConsolePtr()->put(type, msg, ConsoleSource::App);
 }
 
 void Core::consoleProtoText(const QString& msg)
@@ -328,6 +345,7 @@ void Core::consoleProtoText(const QString& msg)
     if (!consoleOutputEnabled_) {
         return;
     }
+
     getConsolePtr()->put(QtMsgType::QtInfoMsg, msg, ConsoleSource::Proto);
 }
 
@@ -399,14 +417,16 @@ void Core::consoleProto(FrameParser &parser, bool isIn)
             str_data += QString("...(+%1B)").arg(frameLen - bytesToDump);
         }
 
-        consoleProtoText(
+        getConsolePtr()->put(
+            QtMsgType::QtInfoMsg,
             str_dir % "KG[" % QString::number(route) % "]: id "
             % QString::number(id)
             % " v" % QString::number(ver)
             % ", " % str_mode
             % ", len " % QString::number(payloadLen)
             % "; " % comment
-            % " [ " % str_data % " ]"
+            % " [ " % str_data % " ]",
+            ConsoleSource::Proto
             );
     }
     catch(std::bad_alloc& ex) {
@@ -485,6 +505,8 @@ void Core::notifyUiSettingsApplied()
     }
 
     uiSettingsApplied_ = true;
+    installAppLogStoragePromotion();
+    promoteAppLogStorage();
     flushStartupFileOpen();
 }
 
@@ -1144,6 +1166,63 @@ void Core::revealInFolder(const QString& path)
 QString Core::csvLogFilePath() const
 {
     return logger_.csvLogFilePath();
+}
+
+QString Core::appLogDirectory() const
+{
+    return AppLog::instance().directory();
+}
+
+bool Core::promoteAppLogStorage()
+{
+#ifdef Q_OS_ANDROID
+    if (AppLog::instance().directory() == AppLog::defaultDirectory()) {
+        return true;
+    }
+
+    if (!AndroidInterface::checkStoragePermissions()) {
+        return false;
+    }
+
+    if (!AppLog::instance().relocate(AppLog::defaultDirectory())) {
+        return false;
+    }
+
+    emit appLogPathChanged();
+    return true;
+#else
+    return true;
+#endif
+}
+
+void Core::installAppLogStoragePromotion()
+{
+#ifdef Q_OS_ANDROID
+    AndroidInterface::setStoragePermissionHandler(this, [this](bool granted) -> void {
+        if (!granted) {
+            consoleWarning(QStringLiteral("Application log stays in private storage: access to Documents denied"));
+            return;
+        }
+
+        promoteAppLogStorage();
+    });
+#endif
+}
+
+QString Core::appLogFilePath() const
+{
+    return AppLog::instance().currentFilePath();
+}
+
+void Core::revealAppLogFolder()
+{
+    const QString path = AppLog::instance().currentFilePath();
+    if (path.isEmpty()) {
+        consoleWarning(QStringLiteral("App log is not active"));
+        return;
+    }
+
+    revealInFolder(path);
 }
 
 qint64 Core::activeLogSizeBytes() const

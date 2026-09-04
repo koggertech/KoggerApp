@@ -6,8 +6,24 @@ Column {
 
     required property var store
 
+    readonly property bool hasCore: typeof core !== "undefined" && core
+    property string appLogPath: hasCore ? core.appLogFilePath() : ""
+
+    Connections {
+        target: page.hasCore ? core : null
+        function onAppLogPathChanged() { page.appLogPath = core.appLogFilePath() }
+    }
+
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceLg
+
+    component LogButton: KButton {
+        width: Math.round(124 * AppPalette.scale)
+        height: Tokens.controlHMd
+        fontPixelSize: Tokens.fontMd
+        normalBg: AppPalette.controlRaised
+        hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
+    }
 
     KIsland {
         KIslandRow {
@@ -62,6 +78,32 @@ Column {
                     if (page.store)
                         page.store.mosaicStatusMonitor = checked
                     checked = Qt.binding(function() { return page.store ? page.store.mosaicStatusMonitor : true })
+                }
+            }
+        }
+    }
+
+    KIsland {
+        KIslandRow {
+            label: qsTr("Application log")
+            caption: page.appLogPath.length ? page.appLogPath : qsTr("Log file is not active")
+            stacked: true
+            verticalPadding: Tokens.spaceMd
+
+            Row {
+                spacing: Tokens.spaceSm
+
+                LogButton {
+                    text: qsTr("Open folder")
+                    visible: Qt.platform.os !== "android"
+                    enabled: page.appLogPath.length > 0
+                    onClicked: core.revealAppLogFolder()
+                }
+
+                LogButton {
+                    text: qsTr("Copy path")
+                    enabled: page.appLogPath.length > 0
+                    onClicked: core.copyToClipboard(page.appLogPath)
                 }
             }
         }

@@ -97,6 +97,7 @@ public:
     bool isConsoleOutputEnabled() const { return consoleOutputEnabled_; }
     Q_INVOKABLE void consoleInfo(QString msg);
     Q_INVOKABLE void consoleWarning(QString msg);
+    void consoleStreamInfo(const QString& msg);
     void consoleNotification(const QString& msg, bool isWarning);
     void consoleProtoText(const QString& msg);
     void consoleProto(FrameParser& parser, bool isIn = true);
@@ -125,6 +126,10 @@ public:
     Q_INVOKABLE QString logDirectory() const;
     Q_INVOKABLE QString logDirectoryUrl() const;
     Q_INVOKABLE bool    prepareLogDirectory(const QString& dir);
+    Q_INVOKABLE QString appLogDirectory() const;
+    Q_INVOKABLE bool    promoteAppLogStorage();
+    Q_INVOKABLE QString appLogFilePath() const;
+    Q_INVOKABLE void    revealAppLogFolder();
     Q_INVOKABLE void    powerOffSystem();
     bool getUseGPS() const;
     bool getNeedForceZooming() const { return needForceZooming_; }
@@ -239,6 +244,7 @@ public slots:
     Q_INVOKABLE void setActiveTransientUi(QObject* who);
 
 signals:
+    void appLogPathChanged();
     void bringWindowToFrontRequested();
     void bringWindowToFrontEnabledChanged();
     void activeTransientUiChanged(QObject* who);
@@ -322,6 +328,7 @@ private:
     void restoreRealtimeProcessingFlags();
     void releasePlotCaches();
     void flushStartupFileOpen();
+    void installAppLogStoragePromotion();
     QString resolveExportBasePath(const QString& basePath) const;
     QString buildExportFileStem(const QString& openedFilePath) const;
 #ifdef Q_OS_ANDROID

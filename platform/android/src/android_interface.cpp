@@ -13,8 +13,21 @@
 
 #include <QtCore/QJniObject>
 #include <QtCore/QJniEnvironment>
+#include <QtCore/QMetaObject>
+#include <QtCore/QMutex>
+#include <QtCore/QMutexLocker>
+#include <QtCore/QObject>
+#include <QtCore/QPointer>
 
 KOGGER_LOGGING_CATEGORY(AndroidInterfaceLog, "kogger.android.src.androidinterface")
+
+namespace {
+
+QMutex storagePermissionMutex;
+QPointer<QObject> storagePermissionContext;
+std::function<void(bool)> storagePermissionHandler;
+
+}
 
 namespace AndroidInterface
 {
@@ -60,7 +73,8 @@ void setNativeMethods()
 
     JNINativeMethod javaMethods[] {
         {"koggerLogDebug",   "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniLogDebug)},
-        {"koggerLogWarning", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniLogWarning)}
+        {"koggerLogWarning", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniLogWarning)},
+        {"koggerStoragePermissionResult", "(Z)V", reinterpret_cast<void *>(jniStoragePermissionResult)}
     };
 
     (void) AndroidInterface::cleanJavaException();
@@ -103,6 +117,34 @@ void jniLogWarning(JNIEnv *envA, jobject thizA, jstring messageA)
     envA->ReleaseStringUTFChars(messageA, stringL);
     (void) QJniEnvironment::checkAndClearExceptions(envA);
     qCWarning(AndroidInterfaceLog) << logMessage;
+}
+
+void jniStoragePermissionResult(JNIEnv *envA, jobject thizA, jboolean grantedA)
+{
+    Q_UNUSED(envA);
+    Q_UNUSED(thizA);
+
+    const bool granted = grantedA == JNI_TRUE;
+
+    QMutexLocker locker(&storagePermissionMutex);
+
+    if (!storagePermissionContext || !storagePermissionHandler) {
+        qCWarning(AndroidInterfaceLog) << "Storage permission result dropped, no handler:" << granted;
+        return;
+    }
+
+    QObject* const context = storagePermissionContext.data();
+    const std::function<void(bool)> handler = storagePermissionHandler;
+
+    QMetaObject::invokeMethod(context, [handler, granted]() -> void { handler(granted); }, Qt::QueuedConnection);
+}
+
+void setStoragePermissionHandler(QObject *context, std::function<void(bool)> handler)
+{
+    QMutexLocker locker(&storagePermissionMutex);
+
+    storagePermissionContext = context;
+    storagePermissionHandler = std::move(handler);
 }
 
 bool checkStoragePermissions()

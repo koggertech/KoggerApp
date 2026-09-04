@@ -82,6 +82,7 @@ qt_add_executable(KoggerApp
     src/main.cpp
     src/settings_migration.h       src/settings_migration.cpp
 
+    src/app_log.h                  src/app_log.cpp
     src/black_stripes_processor.h  src/black_stripes_processor.cpp
     src/console.h                  src/console.cpp
     src/console_list_model.h       src/console_list_model.cpp
