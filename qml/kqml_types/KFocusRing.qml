@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick          // unversioned → Qt 6.8 Rectangle (per-corner radius)
 
 // Reusable keyboard focus ring for Item-based controls. Encapsulates both the
 // ring visual and the "show only on keyboard focus" suppression (mouse click

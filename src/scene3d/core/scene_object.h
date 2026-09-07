@@ -109,7 +109,7 @@ public:
         Polygon      = 4,
         PointGroup   = 5,
         PolygonGroup = 6,
-        UsblView     = 7,
+        UsblLayer    = 7,
         SurfaceView  = 8,
         ImageView    = 9,
         MapView      = 10,
@@ -147,7 +147,7 @@ protected:
     virtual void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y);
     virtual void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y);
     virtual void mouseWheelEvent(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta);
-    virtual void keyPressEvent(Qt::Key key);
+    virtual bool keyPressEvent(Qt::Key key);
 
 public Q_SLOTS:
     /**

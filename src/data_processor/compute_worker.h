@@ -74,6 +74,10 @@ public slots:
     void processBundle(const WorkBundle& wb); // выполнить пачку задач последовательно
     void setVisibleTileKeys(const QSet<TileKey>& val);
 
+    // diagnostics
+    void reportPipelineStats();
+    void reportMosaicStats(int probeWindow);
+
 signals:
     void jobFinished(); // для dataProcessor (нормально, отмена)
 

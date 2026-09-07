@@ -21,18 +21,37 @@ ApplicationWindow {
     minimumHeight: isMobilePlatform ? 0 : 560
     visible: true
     visibility: isMobilePlatform ? Window.FullScreen : Window.Windowed
-    title: core.fileTitle !== "" ? (core.fileTitle + " — KoggerApp, KOGGER") : qsTr("KoggerApp, KOGGER")
+    title: (core.fileTitle !== "" ? (core.fileTitle + " — KoggerApp, KOGGER") : qsTr("KoggerApp, KOGGER"))
+           + appUtils.instanceSuffix
     onActiveChanged: if (active) root.lastActiveWindow = root
 
     WorkspaceStore {
         id: workspaceStore
 
+        usblDeviceAvailable: appUsblEngine.hasDevice
         windowWidth: root.width
         windowHeight: root.height
         layoutPortraitCW: root.deviceOrientation !== Qt.InvertedPortraitOrientation
 
         onSurfaceLayersRefreshRequested: updateBottomTrackForRegisteredPlots()
         Component.onCompleted: initLayerVisibilityControllers()
+    }
+
+    // The USBL command plan and the interrogation loop, for the session.
+    //
+    // They used to be declared inside DeviceSettingsPage, which is a settings SUB-PAGE — the
+    // loader swaps its component out as soon as the operator navigates elsewhere, so leaving
+    // the page destroyed the schedule timer and the poll state and interrogation just stopped.
+    // An on-scene panel reporting the plan is read precisely when that panel is closed, so
+    // they belong here. The device settings page now receives both as properties.
+    UsblPlanStore {
+        id: appUsblPlan
+        Component.onCompleted: load()
+    }
+    UsblEngine {
+        id: appUsblEngine
+        plan: appUsblPlan
+        preferredDev: workspaceStore.activeDevice
     }
 
     // Читаем глобальные настройки при запуске (те же ключи, что сохраняет AppSettingsPage)
@@ -81,7 +100,7 @@ ApplicationWindow {
         width: 1080
         height: 540
         title: (core.fileTitle !== "" ? core.fileTitle + " — KoggerApp, KOGGER" : qsTr("KoggerApp, KOGGER"))
-               + qsTr(" — Second window")
+               + qsTr(" — Second window") + appUtils.instanceSuffix
         visible: workspaceStore.secondaryWindowOpen
         onClosing: function(close) { workspaceStore.closeSecondaryWindow() }
         onActiveChanged: if (active) root.lastActiveWindow = secondWindow
@@ -384,6 +403,24 @@ ApplicationWindow {
         return handled
     }
 
+    function closeAllTransientUi() {
+        if (_closingTransientUi)
+            return
+        _closingTransientUi = true
+
+        for (var pass = 0; pass < _transientUiLayers.length; ++pass) {
+            var handled = false
+            for (var i = 0; i < _transientUiLayers.length; ++i) {
+                if (_transientUiLayers[i]())
+                    handled = true
+            }
+            if (!handled)
+                break
+        }
+
+        _closingTransientUi = false
+    }
+
     function toggleFullScreenMode() {
         if (root.isMobilePlatform)
             return false
@@ -398,6 +435,7 @@ ApplicationWindow {
     Shortcut {
         sequence: "F11"
         context: Qt.ApplicationShortcut
+        enabled: !workspaceStore.inputLocked
         onActivated: {
             if (root.lastActiveWindow === secondWindow && secondWindow.visible) {
                 secondWindow.visibility = secondWindow.visibility === Window.FullScreen
@@ -414,6 +452,7 @@ ApplicationWindow {
         sequence: "Esc"
         context: Qt.ApplicationShortcut
         autoRepeat: false
+        enabled: !workspaceStore.inputLocked
         onActivated: {
             if (root.isTextInputFocused())
                 return
@@ -439,6 +478,7 @@ ApplicationWindow {
                                              && (workspaceStore.settingsPanelOpen
                                                  || consoleDrawer.consoleOpen)
                                              && !workspaceStore.activeHotkeysDialog
+                                             && !workspaceStore.inputLocked
                                              && !root._textInputFocused
 
     // "settings" | "console" — the surface most recently opened or clicked into.
@@ -489,6 +529,24 @@ ApplicationWindow {
         context: Qt.ApplicationShortcut
         enabled: root._kbdScrollActive
         onActivated: root._kbdScroll("bottom")
+    }
+
+    readonly property bool _consoleKeysActive: root._kbdScrollActive
+                                               && consoleDrawer.consoleOpen
+                                               && !(workspaceStore.settingsPanelOpen
+                                                    && root._lastScrollSurface === "settings")
+
+    Shortcut {
+        sequences: [ StandardKey.Copy ]
+        context: Qt.ApplicationShortcut
+        enabled: root._consoleKeysActive
+        onActivated: consoleDrawer.copySelection()
+    }
+    Shortcut {
+        sequences: [ StandardKey.SelectAll ]
+        context: Qt.ApplicationShortcut
+        enabled: root._consoleKeysActive
+        onActivated: consoleDrawer.selectAll()
     }
 
     function openSelectedFile() {
@@ -602,9 +660,42 @@ ApplicationWindow {
         return false
     }
 
+    function _itemWithin(item, ancestor) {
+        var walker = item
+        while (walker) {
+            if (walker === ancestor)
+                return true
+            walker = walker.parent
+        }
+        return false
+    }
+
+    function _restartTabTraversal(event) {
+        if (workspaceStore.inputLocked)
+            return
+
+        var current = root.activeFocusItem
+        if (!current || current.activeFocusOnTab || !root._itemWithin(current, workspaceView))
+            return
+
+        var forward = event.key === Qt.Key_Tab && !(event.modifiers & Qt.ShiftModifier)
+        var next = mainLayer.nextItemInFocusChain(forward)
+        if (!next)
+            return
+
+        next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
+        event.accepted = true
+    }
+
     function handleHotkeyKeyEvent(event) {
+        if (workspaceStore.inputLocked)
+            return false
+
         // Esc handled by ApplicationShortcut — skip legacy hotkey (scanCode 1 → "closeSettings").
         if (event && event.key === Qt.Key_Escape)
+            return false
+
+        if (event && (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
             return false
 
         var scanCode = event && typeof event.nativeScanCode === "number" && event.nativeScanCode > 0
@@ -686,7 +777,49 @@ ApplicationWindow {
 
         Component.onCompleted: forceActiveFocus()
 
+        readonly property int inputLockKey: Qt.Key_F8
+        property bool inputLockHoldConsumed: false
+        property bool inputLockKeyDown: false
+
+        Timer {
+            id: inputLockHoldTimer
+            interval: 500
+            repeat: false
+            onTriggered: {
+                if (!workspaceStore.inputLocked)
+                    return
+                workspaceStore.setInputLocked(false)
+                mainLayer.inputLockHoldConsumed = true
+            }
+        }
+
+        Keys.onPressed: function(event) {
+            if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+                root._restartTabTraversal(event)
+                return
+            }
+            if (event.key !== mainLayer.inputLockKey)
+                return
+            if (!event.isAutoRepeat) {
+                mainLayer.inputLockHoldConsumed = false
+                mainLayer.inputLockKeyDown = true
+                inputLockHoldTimer.restart()
+            }
+            event.accepted = true
+        }
+
         Keys.onReleased: function(event) {
+            if (event.key === mainLayer.inputLockKey) {
+                if (!event.isAutoRepeat) {
+                    inputLockHoldTimer.stop()
+                    mainLayer.inputLockKeyDown = false
+                    if (!mainLayer.inputLockHoldConsumed && !workspaceStore.inputLocked)
+                        workspaceStore.setInputLocked(true)
+                    mainLayer.inputLockHoldConsumed = false
+                }
+                event.accepted = true
+                return
+            }
             if (handleHotkeyKeyEvent(event)) {
                 event.accepted = true
             }
@@ -755,6 +888,8 @@ ApplicationWindow {
                     hotActions.expanded = false
                     hotActions.layoutsMenuOpen = false
                     if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
+                } else {
+                    mainLayer.forceActiveFocus()
                 }
             }
             function onModeSettingsPanelOpenChanged() {
@@ -762,10 +897,18 @@ ApplicationWindow {
                     hotActions.expanded = false
                     hotActions.layoutsMenuOpen = false
                     if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
+                } else {
+                    mainLayer.forceActiveFocus()
                 }
             }
             function onActiveLeafIdChanged() {
                 if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
+            }
+            function onInputLockedChanged() {
+                if (workspaceStore.inputLocked)
+                    root.closeAllTransientUi()
+                mainLayer.inputLockKeyDown = false
+                mainLayer.forceActiveFocus()
             }
         }
 
@@ -791,6 +934,7 @@ ApplicationWindow {
                      || hotkeysPreviewMode
                      || hotkeysPreviewPinned
                      || hotkeysPreviewSticky
+                     || workspaceStore.inputLocked
 
             anchors.left: parent.left
             anchors.top: parent.top
@@ -798,7 +942,9 @@ ApplicationWindow {
                                 ? Math.round(workspaceStore.settingsPanelSizePx * settingsSidebar.progress) + root.hotkeysPreviewGap
                                 : 8
             anchors.topMargin: 8
-            z: hotkeysPreviewMode || hotkeysPreviewSticky || (workspaceStore.settingsPanelOpen && hotActions.expanded)
+            z: workspaceStore.inputLocked
+               ? ZOrder.inputLockPanel
+               : hotkeysPreviewMode || hotkeysPreviewSticky || (workspaceStore.settingsPanelOpen && hotActions.expanded)
                ? ZOrder.hotActionsActive
                : ZOrder.hotActions
 
@@ -814,6 +960,9 @@ ApplicationWindow {
             consoleButtonEnabled: workspaceStore.quickActionConsoleEnabled
             powerOffEnabled: workspaceStore.quickActionPowerOffEnabled
             onPowerOffTriggered: powerOffOverlay.active = true
+            inputLockEnabled: workspaceStore.quickActionInputLockEnabled
+            inputLocked: workspaceStore.inputLocked
+            inputLockKeyHeld: mainLayer.inputLockKeyDown
             inputDeviceLabel: workspaceView.inputDeviceLabel
             inputDeviceColor: workspaceView.inputDeviceColor
             showToggleButton: !workspaceStore.settingsPanelOpen && !workspaceStore.modeSettingsPanelOpen
@@ -973,13 +1122,20 @@ ApplicationWindow {
                      ? qsTr("Settings")
                      : workspaceStore.settingsSubPageKind === "quickActions" ? qsTr("Quick action menu")
                      : workspaceStore.settingsSubPageKind === "widgetEdit"   ? (workspaceStore.widgetEditIndex >= 0 ? qsTr("Edit panel") : qsTr("Create panel"))
+                     : workspaceStore.settingsSubPageKind === "servoPanel"   ? qsTr("Servo panel")
+                     : workspaceStore.settingsSubPageKind === "usblPanel"    ? qsTr("USBL panel")
+                     : workspaceStore.settingsSubPageKind === "standPanel"   ? qsTr("Stand panel")
                      : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
                      : workspaceStore.settingsSubPageKind === "aimPanel"     ? qsTr("Information panel")
                      : workspaceStore.settingsSubPageKind === "console"      ? qsTr("Console")
+                     : workspaceStore.settingsSubPageKind === "about"        ? qsTr("About")
+                     : workspaceStore.settingsSubPageKind === "developer"    ? qsTr("Developer mode")
+                     : workspaceStore.settingsSubPageKind === "license"      ? workspaceStore.licenseViewTitle
                      : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
                      : workspaceStore.settingsSubPageKind === "devices"      ? qsTr("Devices")
+                     : workspaceStore.settingsSubPageKind === "videoPane"    ? workspaceStore.videoSettingsTitle
                      : qsTr("Settings")
             side: workspaceStore.settingsSide
             gearMode: "app"
@@ -999,13 +1155,20 @@ ApplicationWindow {
 
             subPage: workspaceStore.settingsSubPageKind === "quickActions" ? quickActionsSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "widgetEdit" ? widgetEditTabComponent
+                     : workspaceStore.settingsSubPageKind === "servoPanel" ? servoPanelSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "usblPanel"  ? usblPanelSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "standPanel" ? standPanelSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "uiSaving"   ? uiSavingSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "aimPanel"   ? aimPanelSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "console"    ? consoleSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "about"      ? aboutPageComponent
+                     : workspaceStore.settingsSubPageKind === "developer"  ? developerSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "license"    ? licensePageComponent
                      : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
                      : workspaceStore.settingsSubPageKind === "devices"      ? deviceSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "videoPane"     ? videoPaneSettingsTabComponent
                      : echogramSettingsTabComponent
             subPageOpen: workspaceStore.anySettingsSubPageActive
 
@@ -1014,6 +1177,7 @@ ApplicationWindow {
                 active: true
                 asynchronous: true
                 sourceComponent: appSettingsPageComponent
+                onLoaded: if (typeof core !== "undefined" && core) core.notifyUiSettingsApplied()
             }
         }
 
@@ -1094,21 +1258,87 @@ ApplicationWindow {
             siblingIdList: ["btEdit"]
         }
 
+        // One delegate per panel, of whichever KIND the def names. The Loader is the branch: a
+        // field grid and an acoustic-nodes list are different popups that happen to share the
+        // whole of the panel machinery around them — position, scale, z-rank, docking, the
+        // shown map — which is exactly why the branch is here and not inside either of them.
         Repeater {
             id: widgetsRepeater
             model: workspaceStore.widgets.length
-            delegate: DataWidgetPopup {
+            delegate: Item {
+                id: widgetSlot
                 required property int index
                 readonly property var _wdef: workspaceStore.widgets[index] || null
                 anchors.fill: parent
                 z: ZOrder.widgetPopup + (_wdef ? workspaceStore.widgetStackRank(_wdef.id) : 0)
-                store: workspaceStore
-                def: _wdef
-                popupVisible: !!_wdef && !_beingEdited && workspaceStore.widgetShown(_wdef.id)
-                popupId: _wdef ? "widget:" + _wdef.id : ""
-                siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
-                siblingIdList: ["btEdit", "profiles"]
+
+                // uiStateReapplied re-syncs every panel by walking the Repeater's items; the
+                // Loader now sits between, so this has to forward rather than swallow the call.
+                function syncFromStore() { if (slotLoader.item) slotLoader.item.syncFromStore() }
+
+                Loader {
+                    id: slotLoader
+                    anchors.fill: parent
+                    sourceComponent: dataWidgetPanelComp
+                }
+
+                // BOTH COMPONENTS LIVE INSIDE THE DELEGATE, and they have to. An object created
+                // from a Component gets that Component's creation context; declared beside the
+                // Repeater instead, `widgetSlot` is not in scope and every binding reading it
+                // is a runtime ReferenceError -- a panel that loads and then paints nothing.
+                Component {
+                    id: dataWidgetPanelComp
+                    DataWidgetPopup {
+                        readonly property var _wdef: widgetSlot._wdef
+                        anchors.fill: parent
+                        store: workspaceStore
+                        def: _wdef
+                        popupVisible: !!_wdef && !_beingEdited && workspaceStore.widgetShown(_wdef.id)
+                        popupId: _wdef ? "widget:" + _wdef.id : ""
+                        siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+                        siblingIdList: ["btEdit", "profiles"]
+                    }
+                }
+
             }
+        }
+
+        StandPanelPopup {
+            id: standPanel
+            anchors.fill: parent
+            z: ZOrder.widgetPopup + workspaceStore.widgetStackRank(workspaceStore.standPanelId)
+            store: workspaceStore
+            def: workspaceStore.standPanelDef
+            dev: workspaceStore.standDevice
+            popupVisible: workspaceStore.standPanelShown
+            popupId: "widget:" + workspaceStore.standPanelId
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles"]
+        }
+
+        UsblNodesPopup {
+            id: usblNodesPanel
+            anchors.fill: parent
+            z: ZOrder.widgetPopup + workspaceStore.widgetStackRank(workspaceStore.usblPanelId)
+            store: workspaceStore
+            engine: appUsblEngine
+            def: workspaceStore.usblPanelDef
+            popupVisible: workspaceStore.usblPanelShown
+            popupId: "widget:" + workspaceStore.usblPanelId
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles"]
+        }
+
+        ServoPanelPopup {
+            id: servoPanel
+            anchors.fill: parent
+            z: ZOrder.widgetPopup + workspaceStore.widgetStackRank(workspaceStore.servoPanelId)
+            store: workspaceStore
+            def: workspaceStore.servoPanelDef
+            popupVisible: workspaceStore.servoPanelShown
+            popupId: "widget:" + workspaceStore.servoPanelId
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles"]
         }
 
         Connections {
@@ -1118,6 +1348,9 @@ ApplicationWindow {
                 fullscreenPanePopup.syncFromStore()
                 btEditPopup.syncFromStore()
                 profilesPopup.syncFromStore()
+                servoPanel.syncFromStore()
+                usblNodesPanel.syncFromStore()
+                standPanel.syncFromStore()
                 for (var i = 0; i < widgetsRepeater.count; ++i) {
                     var it = widgetsRepeater.itemAt(i)
                     if (it) it.syncFromStore()
@@ -1145,6 +1378,30 @@ ApplicationWindow {
             id: widgetEditTabComponent
 
             WidgetEditPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: servoPanelSettingsTabComponent
+
+            ServoPanelSettingsPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: usblPanelSettingsTabComponent
+
+            UsblPanelSettingsPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: standPanelSettingsTabComponent
+
+            StandPanelSettingsPage {
                 store: workspaceStore
             }
         }
@@ -1183,9 +1440,41 @@ ApplicationWindow {
         }
 
         Component {
+            id: aboutPageComponent
+
+            AboutPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: developerSettingsTabComponent
+
+            DeveloperSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: licensePageComponent
+
+            LicensePage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
             id: aimPanelSettingsTabComponent
 
             AimPanelSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: videoPaneSettingsTabComponent
+
+            VideoPaneSettingsTab {
                 store: workspaceStore
             }
         }
@@ -1203,6 +1492,11 @@ ApplicationWindow {
 
             DeviceSettingsTab {
                 store: workspaceStore
+                // NOT `usblPlan: usblPlan` -- property lookup finds the object's OWN property
+                // before any id, so that binds the property to itself. Hence the app- prefix
+                // on the ids.
+                usblPlan: appUsblPlan
+                usblEngine: appUsblEngine
             }
         }
 
@@ -1226,6 +1520,7 @@ ApplicationWindow {
             anchors.rightMargin: root.settingsInsetRight
             anchors.bottomMargin: consoleDrawer.height
             store: workspaceStore
+            usblPlan: appUsblPlan
             secondaryPlotItem: secondaryContent ? secondaryContent.plot2DInstance : null
         }
 
@@ -1256,6 +1551,24 @@ ApplicationWindow {
         PowerOffConfirmOverlay {
             id: powerOffOverlay
             onConfirmed: if (typeof core !== "undefined" && core) core.powerOffSystem()
+        }
+
+        MouseArea {
+            id: inputLockSwallower
+            anchors.fill: parent
+            z: ZOrder.inputLockOverlay
+            visible: workspaceStore.inputLocked
+            enabled: visible
+            acceptedButtons: Qt.AllButtons
+            hoverEnabled: true
+            preventStealing: true
+            propagateComposedEvents: false
+            onPressed:       function(mouse) { mouse.accepted = true }
+            onReleased:      function(mouse) { mouse.accepted = true }
+            onClicked:       function(mouse) { mouse.accepted = true }
+            onDoubleClicked: function(mouse) { mouse.accepted = true }
+            onPressAndHold:  function(mouse) { mouse.accepted = true }
+            onWheel:         function(wheel) { wheel.accepted = true }
         }
 
         Rectangle {

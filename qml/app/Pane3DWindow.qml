@@ -34,10 +34,11 @@ Item {
 
         MouseArea {
             anchors.fill: parent
-            enabled: scene3dToolbar.anyLayerMenuOpen
+            enabled: scene3dToolbar.anyLayerMenuOpen || rightToolbar.anyPillOpen
             acceptedButtons: Qt.LeftButton
             onPressed: function(mouse) {
                 scene3dToolbar.closeLayerMenus()
+                rightToolbar.closePills()
                 mouse.accepted = true
             }
         }

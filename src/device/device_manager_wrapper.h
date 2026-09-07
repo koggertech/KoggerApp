@@ -17,6 +17,7 @@ public:
     ~DeviceManagerWrapper() override;
 
     Q_PROPERTY(QList<DevQProperty*> devs READ getDevList NOTIFY devChanged)
+    Q_PROPERTY(bool standAvailable READ standAvailable NOTIFY standAvailableChanged)
     Q_PROPERTY(bool protoBinConsoled READ getProtoBinConsoled WRITE setProtoBinConsoled NOTIFY protoBinConsoledChanged)
     Q_PROPERTY(bool nmeaConsoled READ getNmeaConsoled WRITE setNmeaConsoled NOTIFY nmeaConsoledChanged)
     Q_PROPERTY(StreamListModel* streamsList READ streamsList NOTIFY streamChanged)
@@ -33,6 +34,7 @@ public:
 
     /*QML*/
     QList<DevQProperty*> getDevList     () { return getWorker()->getDevList();     }
+    bool                 standAvailable () { return getWorker()->standAvailable(); }
     StreamListModel*     streamsList    () { return getWorker()->streamsList();    }
     float                vruVoltage     () { return getWorker()->vruVoltage();     }
     float                vruCurrent     () { return getWorker()->vruCurrent();     }
@@ -93,6 +95,7 @@ signals:
 #endif
 
     void devChanged();
+    void standAvailableChanged();
     void streamChanged();
     void vruChanged();
     void chartLossesChanged();

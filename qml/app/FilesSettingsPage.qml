@@ -23,19 +23,12 @@ Column {
         collapsedByDefault: false
         contentSpacing: Tokens.spaceMd
 
-        headerActions: KCircleIconButton {
+        headerActions: HeaderActionChip {
             readonly property string _last: root.store ? root.store.selectedConnectionFilePath : ""
-            width: filesGroup.headerActionSize
-            height: filesGroup.headerActionSize
-            cornerRadius: Tokens.radiusLg   // uniform rounded chip, full header height
-            borderWidth: 0
-            scaleOnHover: false
+            size: filesGroup.headerActionSize
             visible: _last.length > 0
             iconSource: "qrc:/icons/ui/folder-open.svg"
-            iconPixelSize: Math.round(width * 0.80)
-            iconTintColor: AppPalette.text
-            fillColor:      AppPalette.chipRaised
-            fillHoverColor: AppPalette.chipRaisedHover
+            iconPixelSize: Math.round(size * 0.80)
             toolTipText: qsTr("Open last file")
             onClicked: if (typeof core !== "undefined" && core && _last.length > 0)
                            core.openLogFile(_last, false, false)

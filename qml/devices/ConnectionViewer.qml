@@ -110,8 +110,10 @@ Column {
         color: checked ? AppPalette.accentBg : (ibMa.pressed ? AppPalette.bgDeep : (ibMa.containsMouse ? Qt.lighter(AppPalette.controlRaised, 1.2) : AppPalette.controlRaised))
         border.width: Tokens.cardBorderWidth
         border.color: (checked || ibMa.containsMouse) ? AppPalette.borderHover : AppPalette.border
+        scale: ibMa.pressed ? Anim.dipScale(ib.width) : (ibMa.containsMouse ? Anim.liftScale(ib.width) : 1.0)
 
         Behavior on color { ColorAnimation { duration: 80 } }
+        Behavior on scale { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
 
         activeFocusOnTab: enabled
         function _activate() {
@@ -311,7 +313,18 @@ Column {
             }
 
             readonly property bool isConnected: ConnectionStatus
-            readonly property bool receivesData: ReceivesData
+            readonly property bool receivesData: {
+                if (LinkType !== 4)
+                    return ReceivesData === true
+                if (typeof videoStreams === "undefined" || !videoStreams)
+                    return false
+                var all = videoStreams.streams || []
+                for (var i = 0; i < all.length; ++i) {
+                    if (String(all[i].uuid) === String(Uuid))
+                        return all[i].hasFrame === true
+                }
+                return false
+            }
             readonly property bool notAvailable: IsNotAvailable
             readonly property bool editing: linkList.expandedUuid === String(Uuid)
             readonly property bool isRemembered: !!(connectionViewer.store
@@ -319,7 +332,10 @@ Column {
                                                     && connectionViewer.store.rememberedLinks.indexOf(String(Uuid)) !== -1)
             readonly property int rowIndex: index
             readonly property int vPad: Tokens.spaceXs   // fixed — no inward shift on expand (matches recRow)
-            readonly property string typeLabel: LinkType === 1 ? PortName : (LinkType === 2 ? "UDP" : "TCP")
+            readonly property string typeLabel: LinkType === 1 ? PortName
+                                             : LinkType === 2 ? "UDP"
+                                             : LinkType === 4 ? "RTSP"
+                                                              : "TCP"
 
             height: content.implicitHeight + 2 * vPad
 
@@ -421,6 +437,8 @@ Column {
                                 if (LinkType === 1)
                                     return '<font color="' + muted + '">' + esc(Baudrate) + '</font>'
                                 var a = esc((Address && Address.length) ? Address : "—")
+                                if (LinkType === 4)
+                                    return a
                                 if (LinkType === 2)
                                     return a + '  <font color="' + muted + '">·  ' + esc(SourcePort) + ' → ' + esc(DestinationPort) + '</font>'
                                 return a + '  <font color="' + muted + '">·  ' + esc(DestinationPort) + '</font>'
@@ -454,7 +472,7 @@ Column {
                             onClicked: if (connectionViewer.store) connectionViewer.store.removeRememberedLink(Uuid)
                         }
                         IconBtn {
-                            visible: connRow.editing && (LinkType === 2 || LinkType === 3)
+                            visible: connRow.editing && (LinkType === 2 || LinkType === 3 || LinkType === 4)
                             iconSource: "qrc:/icons/ui/x.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Delete")
                             Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
                             onClicked: linkManagerWrapper.deleteLink(Uuid)
@@ -485,6 +503,7 @@ Column {
                                     case 1: core.closeLogFile(); linkManagerWrapper.openAsSerial(Uuid); break
                                     case 2: core.closeLogFile(); linkManagerWrapper.openAsUdp(Uuid, Address, Number(SourcePort), Number(DestinationPort)); break
                                     case 3: core.closeLogFile(); linkManagerWrapper.openAsTcp(Uuid, Address, 0, Number(DestinationPort)); break
+                                    case 4: linkManagerWrapper.openAsRtsp(Uuid, Address); break
                                     }
                                 }
                             }
@@ -550,6 +569,38 @@ Column {
                                             ipField._prevLen = text.length
                                             linkManagerWrapper.sendUpdateAddress(Uuid, text)
                                         }
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                visible: LinkType === 4
+                                Layout.fillWidth: true
+                                spacing: Tokens.spaceXs
+                                Text {
+                                    text: "rtsp://"
+                                    color: AppPalette.text
+                                    font.pixelSize: Tokens.fontBase
+                                    horizontalAlignment: Text.AlignRight
+                                }
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    radius: Tokens.radiusMd; color: AppPalette.bg
+                                    border.width: rtspField.activeFocus ? 1 : Tokens.cardBorderWidth
+                                    border.color: rtspField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                    TextInput {
+                                        id: rtspField
+                                        activeFocusOnTab: true
+                                        anchors.fill: parent
+                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
+                                        inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
+                                        text: Address
+                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: rtspField.selectAll() }
+                                        onEditingFinished: linkManagerWrapper.sendUpdateAddress(Uuid, text)
                                     }
                                 }
                             }
@@ -710,6 +761,12 @@ Column {
             width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontBase; horizontalPadding: Math.round(8 * AppPalette.scale)
             text: qsTr("+TCP")
             onClicked: linkManagerWrapper.createAsTcp("", 0, 0)
+        }
+
+        KButton {
+            width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontBase; horizontalPadding: Math.round(8 * AppPalette.scale)
+            text: qsTr("+RTSP")
+            onClicked: linkManagerWrapper.createAsRtsp("")
         }
 
         KButton {
@@ -900,66 +957,113 @@ Column {
                 width: parent.width
                 spacing: Tokens.spaceXs
 
-                Text {
-                    text: qsTr("Log folder:")
-                    color: AppPalette.textMuted
-                    font.pixelSize: Tokens.fontXs
-                }
+                KIsland {
+                    fillColor: AppPalette.bg
+                    rowPadding: Tokens.spaceSm
+                    labelPixelSize: Tokens.fontBase
 
-                Row {
-                    width: parent.width
-                    spacing: Tokens.spaceXs
+                    KIslandRow {
+                        label: qsTr("Log folder:")
+                        stacked: true
+                        minHeight: 0
+                        verticalPadding: Tokens.spaceSm
 
-                    Rectangle {
-                        width: logBrowseBtn.visible ? parent.width - logBrowseBtn.width - parent.spacing : parent.width
-                        height: Tokens.controlHMd
-                        radius: Tokens.radiusSm
-                        color: AppPalette.bg
-                        border.width: logPathInput.activeFocus ? 1 : Tokens.cardBorderWidth
-                        border.color: logPathInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                        TextInput {
-                            id: logPathInput
-                            anchors.fill: parent
-                            anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceSm
-                            verticalAlignment: TextInput.AlignVCenter
-                            clip: true
-                            readOnly: Qt.platform.os === "android"   // Android: fixed default dir, no manual path
-                            activeFocusOnTab: !readOnly
-                            selectByMouse: !readOnly
-                            color: AppPalette.text
-                            font.pixelSize: Tokens.fontBase
-                            // Show the effective save location — the custom path, or the
-                            // default (Documents/KoggerApp/logs) when none is set.
-                            function syncFromStore() {
-                                if (activeFocus) return
-                                var def = (typeof core !== "undefined" && core) ? core.logDirectory() : ""
-                                text = (store && store.recordFolder && store.recordFolder.length) ? store.recordFolder : def
+                        Row {
+                            width: parent.width
+                            spacing: Tokens.spaceXs
+
+                            Rectangle {
+                                width: logBrowseBtn.visible ? parent.width - logBrowseBtn.width - parent.spacing : parent.width
+                                height: Tokens.controlHMd
+                                radius: Tokens.radiusSm
+                                color: AppPalette.bgDeep
+                                border.width: logPathInput.activeFocus ? 1 : Tokens.cardBorderWidth
+                                border.color: logPathInput.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                TextInput {
+                                    id: logPathInput
+                                    anchors.fill: parent
+                                    anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceSm
+                                    verticalAlignment: TextInput.AlignVCenter
+                                    clip: true
+                                    readOnly: Qt.platform.os === "android"   // Android: fixed default dir, no manual path
+                                    activeFocusOnTab: !readOnly
+                                    selectByMouse: !readOnly
+                                    color: AppPalette.text
+                                    font.pixelSize: Tokens.fontBase
+                                    // Show the effective save location — the custom path, or the
+                                    // default (Documents/KoggerApp/logs) when none is set.
+                                    function syncFromStore() {
+                                        if (activeFocus) return
+                                        var def = (typeof core !== "undefined" && core) ? core.logDirectory() : ""
+                                        text = (store && store.recordFolder && store.recordFolder.length) ? store.recordFolder : def
+                                    }
+                                    Component.onCompleted: syncFromStore()
+                                    onEditingFinished: if (store) store.recordFolder = text.trim()
+                                    TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: logPathInput.selectAll() }
+                                    Connections {
+                                        target: store
+                                        function onRecordFolderChanged() { logPathInput.syncFromStore() }
+                                    }
+                                }
                             }
-                            Component.onCompleted: syncFromStore()
-                            onEditingFinished: if (store) store.recordFolder = text.trim()
-                            TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: logPathInput.selectAll() }
-                            Connections {
-                                target: store
-                                function onRecordFolderChanged() { logPathInput.syncFromStore() }
+
+                            KButton {
+                                id: logBrowseBtn
+                                visible: Qt.platform.os !== "android"   // Android: fixed default dir, no folder picker
+                                text: "..."
+                                toolTipText: qsTr("Choose recording folder")
+                                normalBg: AppPalette.controlRaised
+                                hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
+                                fontPixelSize: Tokens.fontLg; bold: false
+                                horizontalPadding: 0; verticalPadding: 0
+                                height: Tokens.controlHMd
+                                width: Tokens.controlHMd
+                                onClicked: {
+                                    core.setLogDirectory(store.recordFolder)            // sync selection (empty = default)
+                                    logFolderDialog.currentFolder = core.logDirectoryUrl()  // existing dir as start location
+                                    logFolderDialog.open()
+                                }
                             }
                         }
                     }
 
-                    KButton {
-                        id: logBrowseBtn
-                        visible: Qt.platform.os !== "android"   // Android: fixed default dir, no folder picker
-                        text: "..."
-                        toolTipText: qsTr("Choose recording folder")
-                        normalBg: AppPalette.controlRaised
-                        hoverBg: Qt.lighter(AppPalette.controlRaised, 1.2)
-                        fontPixelSize: Tokens.fontLg; bold: false
-                        horizontalPadding: 0; verticalPadding: 0
-                        height: Tokens.controlHMd
-                        width: Tokens.controlHMd
-                        onClicked: {
-                            core.setLogDirectory(store.recordFolder)            // sync selection (empty = default)
-                            logFolderDialog.currentFolder = core.logDirectoryUrl()  // existing dir as start location
-                            logFolderDialog.open()
+                    KIslandRow {
+                        stacked: true
+                        minHeight: 0
+                        verticalPadding: Tokens.spaceSm
+
+                        KTabBar {
+                            id: recFormatTab
+                            width: parent.width
+                            trackColor: AppPalette.bgDeep
+                            fontPixelSize: Tokens.fontBase
+                            options: [{ label: qsTr("KLF"), value: 1 },
+                                      { label: qsTr("CSV"), value: 2 },
+                                      { label: qsTr("KLF") + " + " + qsTr("CSV"), value: 3 }]
+
+                            readonly property int storeMask: (store && store.recordKlf ? 1 : 0)
+                                                           | (store && store.recordCsv ? 2 : 0)
+                            property bool _g: false
+                            function pushFromStore() {
+                                if (!store)
+                                    return
+                                if (storeMask === 0) {   // legacy settings: no type at all maps to no tab
+                                    store.recordKlf = true
+                                    return
+                                }
+                                if (currentValue === storeMask)
+                                    return
+                                _g = true; currentValue = storeMask; _g = false
+                            }
+                            readonly property var storeRef: store
+                            onStoreRefChanged: pushFromStore()
+                            onStoreMaskChanged: pushFromStore()
+                            Component.onCompleted: pushFromStore()
+                            onValueSelected: function(v) {
+                                if (_g || !store) return
+                                store.recordKlf = (v & 1) !== 0
+                                store.recordCsv = (v & 2) !== 0
+                            }
                         }
                     }
                 }
@@ -971,27 +1075,6 @@ Column {
                         var p = connectionViewer.urlSource("" + selectedFolder)   // url → local path (strips file://)
                         store.recordFolder = p
                         core.setLogDirectory(p)
-                    }
-                }
-
-                KSwitch {
-                    width: parent.width
-                    text: qsTr("KLF")
-                    backgroundColor: AppPalette.bg   // recessed on the card recording strip
-                    checked: store.recordKlf
-                    onToggled: {
-                        if (!checked && !store.recordCsv) { checked = Qt.binding(function() { return store.recordKlf }); return }   // keep at least one type
-                        store.recordKlf = checked
-                    }
-                }
-                KSwitch {
-                    width: parent.width
-                    text: qsTr("CSV")
-                    backgroundColor: AppPalette.bg   // recessed on the card recording strip
-                    checked: store.recordCsv
-                    onToggled: {
-                        if (!checked && !store.recordKlf) { checked = Qt.binding(function() { return store.recordCsv }); return }
-                        store.recordCsv = checked
                     }
                 }
             }

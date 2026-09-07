@@ -365,10 +365,12 @@ void BottomTrack::mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y)
     m_view->setSyncEpochIndex(-1);
 }
 
-void BottomTrack::keyPressEvent(Qt::Key key)
+bool BottomTrack::keyPressEvent(Qt::Key key)
 {
     if (!m_view || !visibleChannel_.channelId_.isValid())
-        return;
+        return false;
+
+    bool handled{ false };
 
     if (m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode && key == Qt::Key_Delete) {
         const auto indices{ RENDER_IMPL(BottomTrack)->selectedVertexIndices_ };
@@ -390,6 +392,7 @@ void BottomTrack::keyPressEvent(Qt::Key key)
             RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
             updateRenderData(0, 0, false, true);
             emit datasetPtr_->dataUpdate();
+            handled = true;
         }
     }
 
@@ -412,9 +415,12 @@ void BottomTrack::keyPressEvent(Qt::Key key)
                 RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
                 updateRenderData(0, 0, false, true);
                 emit datasetPtr_->dataUpdate();
+                handled = true;
             }
         }
     }
+
+    return handled;
 }
 
 void BottomTrack::updateRenderData(int lEpIndx, int rEpIndx, bool redraw, bool manually) //

@@ -2,7 +2,9 @@ add_library(kogger_app STATIC)
 qt_add_qml_module(kogger_app
     URI app VERSION 1.0 RESOURCE_PREFIX /qml
     QML_FILES
+        AboutPage.qml
         ActionChip.qml
+        AppIdentityCard.qml
         AppSettingsPage.qml
         BasePanePopup.qml
         BottomTrackEditPopup.qml
@@ -12,10 +14,12 @@ qt_add_qml_module(kogger_app
         ConsoleSettingsTab.qml
         CsvExportSettingsTab.qml
         DataWidgetPopup.qml
+        DeviceParamRow.qml
         DeviceSettingsGroup.qml
         DeviceSettingsPage.qml
         DeviceSettingsTab.qml
         DeviceTopologyView.qml
+        DeveloperSettingsTab.qml
         DisclosureIndicator.qml
         EchogramSettingsPanel.qml
         EchogramSettingsTab.qml
@@ -25,12 +29,16 @@ qt_add_qml_module(kogger_app
         FilesSettingsPage.qml
         FullscreenPanePopup.qml
         GlobalPanePopup.qml
+        HeaderActionChip.qml
         HotActionsPanel.qml
         InputDeviceState.qml
+        IsobathsPipelineStatus.qml
         LayoutCreatePage.qml
         LayoutSnapshotPreview.qml
+        LicensePage.qml
         MainWindow.qml
         ModeSettingsPanel.qml
+        MosaicPipelineStatus.qml
         NavButton.qml
         NotificationsOverlay.qml
         Pane2DSettingsPage.qml
@@ -41,12 +49,19 @@ qt_add_qml_module(kogger_app
         PaneEditorChrome.qml
         PaneFrame.qml
         PaneInputBridge.qml
+        PaneVideoWindow.qml
+        PipelineStatusGroup.qml
         PowerOffConfirmOverlay.qml
         ParamCard.qml
         ParamCardGroup.qml
         ProfilesPopup.qml
         QuickActionSettingsTab.qml
         SecondaryWindow.qml
+        ServoPanelBody.qml
+        ServoPanelPopup.qml
+        ServoPanelSettingsPage.qml
+        StandPanelSettingsPage.qml
+        ServoPanelScroll.qml
         SettingsGearButton.qml
         SettingsGroupBase.qml
         SettingsGroup.qml
@@ -54,6 +69,25 @@ qt_add_qml_module(kogger_app
         SplashOverlay.qml
         TgcSettingsTab.qml
         UiSavingSettingsTab.qml
+        StandBadgeRow.qml
+        StandPanelPopup.qml
+        UsblAddressBadge.qml
+        UsblButton.qml
+        UsblCmdMark.qml
+        UsblEngine.qml
+        UsblGroup.qml
+        UsblHexField.qml
+        UsblNodesPopup.qml
+        UsblOpBadge.qml
+        UsblPanelSettingsPage.qml
+        UsblPlanGroup.qml
+        UsblPlanStore.qml
+        UsblResponseGroup.qml
+        UsblSpin.qml
+        UsblStateBadge.qml
+        UsblTriggerEditor.qml
+        VideoPaneSettingsTab.qml
+        VideoSurface.qml
         WidgetCard.qml
         WidgetCellContent.qml
         WidgetDragHandle.qml
@@ -67,4 +101,7 @@ qt_add_qml_module(kogger_app
         LayoutResize.js
         LayoutRules.js
         LayoutTree.js
-        RecorderStatus.js)
+        RecorderStatus.js
+        StandLogic.js
+        UsblNodeLogic.js
+        UsblPlanLogic.js)

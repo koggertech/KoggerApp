@@ -4,6 +4,7 @@ import kqml_types 1.0
 import "LayoutRules.js" as Rules
 import "LayoutTree.js" as Tree
 import "LayoutResize.js" as Resize
+import "StandLogic.js" as Stand
 
 QtObject {
     id: store
@@ -47,8 +48,6 @@ property real edgeResizeGhostCoord: 0       // workspace-axis coord of ghost spl
 property real edgeResizeGhostSplitCoord: 0  // split-coord to apply on commit
 property bool editableMode: false
 property int maximizedLeafId: -1
-property int lastTappedLeafId: -1
-property real lastTapTimestamp: 0
 property bool settingsPanelOpen: false
 property bool filePathFocusRequested: false
 property bool recordingFocusRequested: false
@@ -65,6 +64,8 @@ property bool settingsSubPageActive: false
 // open; kept sticky on close so the component doesn't reload mid slide-out.
 property string settingsSubPageKind: "echogram"
 readonly property bool anySettingsSubPageActive: echogramSettingsActive || settingsSubPageActive
+property string licenseViewTitle: ""
+property string licenseViewFile: ""
 
 // Leaf of the active 3D pane; mirrored from WorkspaceView for focus dimming.
 property int active3DLeafId: -1
@@ -74,6 +75,13 @@ property int active3DLeafId: -1
 readonly property int settingsFocusLeafId: {
     if (echogramSettingsActive && echogramSettingsLeafId !== -1)
         return echogramSettingsLeafId
+    if (settingsSubPageActive && settingsSubPageKind === "videoPane" && videoSettingsContentId.length) {
+        var surfaces = visibleVideoSurfaces
+        for (var s = 0; s < surfaces.length; ++s) {
+            if (surfaces[s].contentId === videoSettingsContentId)
+                return surfaces[s].leafId
+        }
+    }
     if (modeSettingsLeafId !== -1)
         return modeSettingsLeafId
     if (settingsPanelOpen) {
@@ -105,11 +113,22 @@ property bool quickActionWidgetsEnabled: true
 property bool quickActionConsoleEnabled: true
 property bool quickActionSecondWindowEnabled: true
 property bool quickActionPowerOffEnabled: false
+property bool quickActionInputLockEnabled: true
+
+property bool inputLocked: false
+
+function setInputLocked(on) {
+    inputLocked = !!on
+    if (inputLocked && typeof core !== "undefined" && core)
+        core.requestDismissTransientUi()
+}
+
+function toggleInputLock() { setInputLocked(!inputLocked) }
 
 property string quickActionDraggingKey: ""
 
 readonly property var quickActionKeys: {
-    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "profiles"]
+    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "profiles", "inputLock"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
     if (Qt.platform.os === "linux" || (typeof manualTesting !== "undefined" && manualTesting === true))
@@ -125,6 +144,7 @@ property var quickActionOrderModel: ListModel {
     ListElement { key: "console" }
     ListElement { key: "bottomTrack" }
     ListElement { key: "profiles" }
+    ListElement { key: "inputLock" }
     ListElement { key: "secondWindow" }
     ListElement { key: "powerOff" }
 }
@@ -144,6 +164,8 @@ function normalizeQuickActionOrder(list) {
                 out.splice(out.indexOf("connections") + 1, 0, "logging")   // keep logging right after devices
             else if (quickActionKeys[j] === "console" && out.indexOf("widgets") !== -1)
                 out.splice(out.indexOf("widgets") + 1, 0, "console")   // keep console right after widgets
+            else if (quickActionKeys[j] === "inputLock" && out.indexOf("secondWindow") !== -1)
+                out.splice(out.indexOf("secondWindow"), 0, "inputLock") // keep the lock right before the second window
             else
                 out.push(quickActionKeys[j])
         }
@@ -355,6 +377,45 @@ readonly property int resolvedDeviceIndex: {
 
 readonly property var activeDevice: (resolvedDeviceIndex >= 0 && resolvedDeviceIndex < activeDeviceList.length) ? activeDeviceList[resolvedDeviceIndex] : null
 
+// Whether ANY connected device has answered the stand probe. The stand panel kind is hidden
+// wherever this is false -- the wizard's kind list, the panel list, the scene -- so an operator
+// without a stand never learns the kind exists. It follows the devices rather than a snapshot:
+// DeviceManager re-emits it when a probe answers and when a device leaves.
+readonly property bool standAvailable: (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper)
+                                       ? deviceManagerWrapper.standAvailable : false
+
+// Whether a panel is offered to the operator at all. A stand panel with no stand behind it is
+// not listed, not shown in the quick-actions menu and not drawn -- it stays in the def list so
+// that plugging the stand back in restores it with its scan intact.
+function widgetListed(def) { return !!def }
+
+readonly property int listedWidgetCount: {
+    var n = 0
+    for (var i = 0; i < widgets.length; ++i)
+        if (widgetListed(widgets[i])) ++n
+    return n
+}
+
+// A stand panel is only ever drawn on the device that has the stand, not on whichever device is
+// active in the settings pane.
+//
+// FIRST MATCH, DELIBERATELY. The app addresses one stand: a panel carries a scan, not a device,
+// so a second stand-capable Recorder is counted but not driven. The panel says which device it
+// has when there is more than one, rather than picking silently.
+readonly property var standDevice: {
+    var list = activeDeviceList
+    for (var i = 0; i < list.length; ++i)
+        if (list[i] && list[i].isStandSupport) return list[i]
+    return null
+}
+
+readonly property int standDeviceCount: {
+    var n = 0
+    for (var i = 0; i < activeDeviceList.length; ++i)
+        if (activeDeviceList[i] && activeDeviceList[i].isStandSupport) ++n
+    return n
+}
+
 onActiveDeviceListChanged: {
     if (!activeDeviceList || activeDeviceList.length === 0) {
         if (activeDeviceIndex !== -1) setActiveDeviceIndex(-1)
@@ -389,6 +450,8 @@ property var settingsProfiles: []
 property var profilesPopupState: ({ x: -1, y: -1 })
 
 property var  widgets: []
+property var  deviceFavoriteParams: ({})
+readonly property int deviceFavoriteParamLimit: 12
 readonly property bool hasWidgets: widgets.length > 0
 readonly property int widgetLimit: 10
 readonly property bool canCreateWidget: widgets.length < widgetLimit
@@ -398,6 +461,7 @@ property int  widgetEditIndex: -1
 property int  widgetEditStep: 1
 property var  widgetDragLayer: null
 
+property string widgetDraftKind: "grid"
 property int  widgetDraftCols: 1
 property int  widgetDraftRows: 1
 property int  widgetDraftTransparency: 0
@@ -477,7 +541,13 @@ readonly property bool widgetEditorActive: settingsSubPageActive && settingsSubP
 // consumers hide the field and its setting in that case.
 property string systemTimeHms: ""
 readonly property bool systemTimeValid: systemTimeHms.length > 0
+// The same tick as a number, for fields whose value is an AGE. DataFieldCatalog reads it
+// (`_nowMs(store)`) and without it a widget's `usblAge` and the tracking/stale flip in
+// `usblState` freeze: Date.now() inside a binding is evaluated once and never again, so the
+// dependency that moves has to be a property.
+property real nowMs: 0
 function _updateSystemClock() {
+    nowMs = Date.now()
     var d = new Date()
     if (isNaN(d.getTime()) || d.getFullYear() < 2001) { systemTimeHms = ""; return }
     var p = function(n) { return (n < 10 ? "0" : "") + n }
@@ -511,9 +581,208 @@ function generateWidgetId() {
     return id
 }
 
+readonly property var widgetKinds: ["grid"]
+function widgetKindOf(def) { return "grid" }
+
+readonly property string servoPanelId: "servo"
+readonly property var servoPanelDef: ({ id: "servo", kind: "servo", name: "" })
+readonly property bool servoPanelListed: developerMode
+readonly property bool servoPanelShown: developerMode && widgetShown(servoPanelId)
+
+property int servoPanelTransparency: 0
+property bool servoPanelAutoShow: true
+
+onServoPanelTransparencyChanged: layoutStore.servoPanelTransparencyStored = servoPanelTransparency
+onServoPanelAutoShowChanged: { layoutStore.servoPanelAutoShowStored = servoPanelAutoShow; _syncServoPanelAuto() }
+
+function loadServoPanelPreferences() {
+    servoPanelTransparency = Math.max(0, Math.min(100, layoutStore.servoPanelTransparencyStored))
+    servoPanelAutoShow = layoutStore.servoPanelAutoShowStored
+}
+
+readonly property bool servoDeviceAvailable: {
+    var ds = activeDeviceList
+    for (var i = 0; i < ds.length; ++i)
+        if (ds[i] && ds[i].isBoardInited && ds[i].isServoSupport)
+            return true
+    return false
+}
+
+onServoDeviceAvailableChanged: _syncServoPanelAuto()
+
+function _syncServoPanelAuto() {
+    if (!developerMode)
+        return
+    if (servoPanelAutoShow && servoPanelShown !== servoDeviceAvailable)
+        setWidgetShown(servoPanelId, servoDeviceAvailable)
+}
+
+function setServoPanelShown(shown) { setWidgetShown(servoPanelId, developerMode && shown) }
+function openServoPanelSettings() { _openSettingsSubPage("servoPanel") }
+
+function servoPanelPosition(popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    var inst = widgetInstance(servoPanelId)
+    var x = (inst.x >= 0) ? inst.x : b.maxX
+    var y = (inst.y >= 0) ? inst.y : b.minY
+    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
+}
+
+readonly property string standPanelId: "stand"
+readonly property var standPanelDef: ({ id: "stand", kind: "stand", name: "",
+                                        transparency: standPanelTransparency,
+                                        config: standPanelConfig,
+                                        expanded: standPanelExpanded })
+readonly property bool standPanelListed: developerMode
+readonly property bool standPanelShown: standPanelListed && widgetShown(standPanelId)
+
+property int standPanelTransparency: 0
+property bool standPanelAutoShow: true
+property var standPanelConfig: Stand.normalizeConfig(null)
+property bool standPanelExpanded: false
+
+onStandPanelTransparencyChanged: layoutStore.standPanelTransparencyStored = standPanelTransparency
+onStandPanelAutoShowChanged: { layoutStore.standPanelAutoShowStored = standPanelAutoShow; _syncStandPanelAuto() }
+onStandPanelConfigChanged: layoutStore.standPanelConfigJson = JSON.stringify(standPanelConfig)
+onStandPanelExpandedChanged: layoutStore.standPanelExpandedStored = standPanelExpanded
+
+function loadStandPanelPreferences() {
+    standPanelTransparency = Math.max(0, Math.min(100, layoutStore.standPanelTransparencyStored))
+    standPanelAutoShow = layoutStore.standPanelAutoShowStored
+    standPanelExpanded = layoutStore.standPanelExpandedStored
+    var raw = null
+    try { raw = JSON.parse(layoutStore.standPanelConfigJson) } catch (e) { raw = null }
+    standPanelConfig = Stand.normalizeConfig(raw)
+}
+
+onStandAvailableChanged: _syncStandPanelAuto()
+
+function _syncStandPanelAuto() {
+    if (!standPanelListed)
+        return
+    if (standPanelAutoShow && widgetShown(standPanelId) !== standAvailable)
+        setWidgetShown(standPanelId, standAvailable)
+}
+
+function setStandPanelShown(shown) { setWidgetShown(standPanelId, standPanelListed && shown) }
+function openStandPanelSettings() { _openSettingsSubPage("standPanel") }
+
+property var _legacyStandIds: []
+
+function _migrateStandPanel() {
+    if (_legacyStandIds.length === 0)
+        return
+    var wasShown = widgetShown(standPanelId)
+    var pos = widgetInstance(standPanelId)
+    var cfg = null
+    var expanded = standPanelExpanded
+    var transparency = -1
+    for (var i = 0; i < _legacyStandIds.length; ++i) {
+        var old = _legacyStandIds[i]
+        if (widgetShown(old))
+            wasShown = true
+        var oi = widgetInstance(old)
+        if (pos.x < 0 && pos.y < 0 && oi.x >= 0 && oi.y >= 0)
+            pos = oi
+        var raw = _legacyStandDefs[old]
+        if (raw && cfg === null) {
+            cfg = raw.config
+            expanded = raw.expanded === true
+            if (typeof raw.transparency === "number")
+                transparency = raw.transparency
+        }
+    }
+    _legacyStandIds = []
+    _legacyStandDefs = ({})
+    if (cfg !== null) {
+        standPanelConfig = Stand.normalizeConfig(cfg)
+        standPanelExpanded = expanded
+    }
+    if (transparency >= 0)
+        standPanelTransparency = Math.max(0, Math.min(100, Math.round(transparency)))
+    if (pos.x >= 0 || pos.y >= 0)
+        _writeWidgetInstance(standPanelId, pos)
+    if (wasShown)
+        setWidgetShown(standPanelId, true)
+}
+
+property var _legacyStandDefs: ({})
+
+readonly property string usblPanelId: "usblNodes"
+readonly property var usblPanelDef: ({ id: "usblNodes", kind: "usblNodes", name: "" })
+readonly property bool usblPanelListed: true
+readonly property bool usblPanelShown: widgetShown(usblPanelId)
+
+property int usblPanelTransparency: 0
+property bool usblPanelAutoShow: true
+
+onUsblPanelTransparencyChanged: layoutStore.usblPanelTransparencyStored = usblPanelTransparency
+onUsblPanelAutoShowChanged: { layoutStore.usblPanelAutoShowStored = usblPanelAutoShow; _syncUsblPanelAuto() }
+
+function loadUsblPanelPreferences() {
+    usblPanelTransparency = Math.max(0, Math.min(100, layoutStore.usblPanelTransparencyStored))
+    usblPanelAutoShow = layoutStore.usblPanelAutoShowStored
+}
+
+property bool usblDeviceAvailable: false
+onUsblDeviceAvailableChanged: _syncUsblPanelAuto()
+
+function _syncUsblPanelAuto() {
+    if (usblPanelAutoShow && usblPanelShown !== usblDeviceAvailable)
+        setWidgetShown(usblPanelId, usblDeviceAvailable)
+}
+
+function setUsblPanelShown(shown) { setWidgetShown(usblPanelId, shown) }
+function openUsblPanelSettings() { _openSettingsSubPage("usblPanel") }
+
+property var _legacyUsblIds: []
+
+function _migrateUsblPanel() {
+    if (_legacyUsblIds.length === 0)
+        return
+    var wasShown = usblPanelShown
+    var pos = widgetInstance(usblPanelId)
+    for (var i = 0; i < _legacyUsblIds.length; ++i) {
+        var old = _legacyUsblIds[i]
+        if (widgetShown(old))
+            wasShown = true
+        var oi = widgetInstance(old)
+        if (pos.x < 0 && pos.y < 0 && oi.x >= 0 && oi.y >= 0)
+            pos = oi
+    }
+    _legacyUsblIds = []
+    if (pos.x >= 0 || pos.y >= 0)
+        _writeWidgetInstance(usblPanelId, pos)
+    if (wasShown)
+        setWidgetShown(usblPanelId, true)
+}
+
+property var _legacyServoIds: []
+
+function _migrateServoPanel() {
+    if (_legacyServoIds.length === 0)
+        return
+    var wasShown = servoPanelShown
+    var pos = widgetInstance(servoPanelId)
+    for (var i = 0; i < _legacyServoIds.length; ++i) {
+        var old = _legacyServoIds[i]
+        if (widgetShown(old))
+            wasShown = true
+        var oi = widgetInstance(old)
+        if (pos.x < 0 && pos.y < 0 && oi.x >= 0 && oi.y >= 0)
+            pos = oi
+    }
+    _legacyServoIds = []
+    if (pos.x >= 0 || pos.y >= 0)
+        _writeWidgetInstance(servoPanelId, pos)
+    if (wasShown)
+        setWidgetShown(servoPanelId, true)
+}
+
 function normalizeWidgetDef(raw) {
     if (!raw || typeof raw !== "object")
         return null
+
     var cols = Math.round(raw.cols)
     var rows = Math.round(raw.rows)
     if (!(cols >= 1 && cols <= 4) || !(rows >= 1 && rows <= 4))
@@ -549,7 +818,8 @@ function normalizeWidgetDef(raw) {
         cells.push({ row: row, col: col, field: String(c.field), rep: rep, big: cellBig })
     }
     var id = (typeof raw.id === "string" && raw.id.length) ? raw.id : ""
-    return { id: id, name: name, cols: cols, rows: rows, transparency: transparency, cells: cells }
+    return { id: id, kind: "grid", name: name, cols: cols, rows: rows,
+             transparency: transparency, cells: cells }
 }
 
 function saveWidgets() {
@@ -562,8 +832,29 @@ function loadWidgets() {
         try { parsed = JSON.parse(layoutStore.widgetsJson) } catch (e) { parsed = [] }
     }
     var next = []
+    var legacyServo = []
+    var legacyUsbl = []
+    var legacyStand = []
+    var legacyStandDefs = {}
     if (Array.isArray(parsed)) {
         for (var i = 0; i < parsed.length; ++i) {
+            if (parsed[i] && parsed[i].kind === "servo") {
+                if (typeof parsed[i].id === "string" && parsed[i].id.length)
+                    legacyServo.push(parsed[i].id)
+                continue
+            }
+            if (parsed[i] && parsed[i].kind === "usblNodes") {
+                if (typeof parsed[i].id === "string" && parsed[i].id.length)
+                    legacyUsbl.push(parsed[i].id)
+                continue
+            }
+            if (parsed[i] && parsed[i].kind === "stand") {
+                if (typeof parsed[i].id === "string" && parsed[i].id.length) {
+                    legacyStand.push(parsed[i].id)
+                    legacyStandDefs[parsed[i].id] = parsed[i]
+                }
+                continue
+            }
             var def = normalizeWidgetDef(parsed[i])
             if (!def) continue
             if (!def.id || def.id.length === 0) def.id = generateWidgetId()
@@ -572,7 +863,88 @@ function loadWidgets() {
         }
     }
     widgets = next
+    _legacyServoIds = legacyServo
+    _legacyUsblIds = legacyUsbl
+    _legacyStandIds = legacyStand
+    _legacyStandDefs = legacyStandDefs
     saveWidgets()
+}
+
+property Settings deviceStore: Settings {
+    category: "main/devices"
+    property string favoriteParamsJson: "{}"
+}
+
+function saveDeviceFavoriteParams() {
+    deviceStore.favoriteParamsJson = JSON.stringify(deviceFavoriteParams)
+}
+
+function loadDeviceFavoriteParams() {
+    var raw = deviceStore.favoriteParamsJson
+    if (!raw || raw === "")
+        return
+    var parsed = null
+    try { parsed = JSON.parse(raw) } catch (e) { parsed = null }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+        return
+
+    var next = {}
+    var keys = Object.keys(parsed)
+    for (var i = 0; i < keys.length; ++i) {
+        var devName = String(keys[i])
+        if (devName.length === 0) continue
+        var entry = parsed[devName]
+        if (!Array.isArray(entry)) continue
+        var list = []
+        for (var j = 0; j < entry.length; ++j) {
+            var key = String(entry[j])
+            if (!DeviceParamCatalog.has(key)) continue
+            if (list.indexOf(key) >= 0) continue
+            list.push(key)
+            if (list.length >= deviceFavoriteParamLimit) break
+        }
+        if (list.length > 0)
+            next[devName] = list
+    }
+    deviceFavoriteParams = next
+    saveDeviceFavoriteParams()
+}
+
+function favoriteParamsFor(devName) {
+    if (!devName || devName.length === 0) return []
+    var list = deviceFavoriteParams[devName]
+    return Array.isArray(list) ? list : []
+}
+
+function isFavoriteParam(devName, key) {
+    return favoriteParamsFor(devName).indexOf(key) >= 0
+}
+
+function favoriteParamsFull(devName) {
+    return favoriteParamsFor(devName).length >= deviceFavoriteParamLimit
+}
+
+function toggleFavoriteParam(devName, key) {
+    if (!devName || devName.length === 0 || !DeviceParamCatalog.has(key))
+        return false
+    var list = favoriteParamsFor(devName).slice(0)
+    var at = list.indexOf(key)
+    if (at >= 0) {
+        list.splice(at, 1)
+    } else {
+        if (list.length >= deviceFavoriteParamLimit)
+            return false
+        list.push(key)
+    }
+    var next = {}
+    var keys = Object.keys(deviceFavoriteParams)
+    for (var i = 0; i < keys.length; ++i)
+        next[keys[i]] = deviceFavoriteParams[keys[i]]
+    if (list.length > 0) next[devName] = list
+    else delete next[devName]
+    deviceFavoriteParams = next
+    saveDeviceFavoriteParams()
+    return true
 }
 
 function saveWidget(def) {
@@ -625,15 +997,23 @@ function widgetInstance(id) {
     }
 }
 
+readonly property var pinnedPanelIds: [usblPanelId, servoPanelId, standPanelId]
+readonly property int widgetStackSlots: widgetLimit + pinnedPanelIds.length
+
+function widgetStackIds() {
+    var ids = pinnedPanelIds.slice(0)
+    for (var i = 0; i < widgets.length; ++i)
+        if (widgets[i] && widgets[i].id) ids.push(widgets[i].id)
+    return ids
+}
+
 function widgetStackRank(id) {
-    return Math.max(0, Math.min(widgetLimit - 1, widgetInstance(id).z))
+    return Math.max(0, Math.min(widgetStackSlots - 1, widgetInstance(id).z))
 }
 
 function widgetBringToFront(id) {
     if (!id) return
-    var ids = []
-    for (var i = 0; i < widgets.length; ++i)
-        if (widgets[i] && widgets[i].id) ids.push(widgets[i].id)
+    var ids = widgetStackIds()
     if (ids.indexOf(id) < 0) return
     ids.sort(function(a, b) { return widgetInstance(a).z - widgetInstance(b).z })
     if (ids[ids.length - 1] === id) return
@@ -670,6 +1050,29 @@ function setWidgetShown(id, shown) {
 }
 
 function toggleWidgetShown(id) { setWidgetShown(id, !widgetShown(id)) }
+
+// The stand panel writes its own def: the scan is edited on the panel and has to survive a
+// restart, and which regime it was left in is part of how the operator left the scene.
+function _replaceWidgetDef(id, patch) {
+    if (!id) return
+    var next = widgets.slice(0)
+    for (var i = 0; i < next.length; ++i) {
+        if (next[i].id !== id) continue
+        var d = {}
+        for (var k in next[i]) d[k] = next[i][k]
+        for (var k2 in patch) d[k2] = patch[k2]
+        var norm = normalizeWidgetDef(d)
+        if (!norm) return
+        norm.id = id
+        next[i] = norm
+        widgets = next
+        saveWidgets()
+        return
+    }
+}
+
+function setWidgetStandConfig(id, cfg)  { standPanelConfig = Stand.normalizeConfig(cfg) }
+function setWidgetStandExpanded(id, on) { standPanelExpanded = on === true }
 
 function widgetScale(id) { return widgetInstance(id).scale }
 
@@ -757,6 +1160,9 @@ function loadWidgetShown() {
 
 function _reconcileWidgetMaps() {
     var alive = {}
+    alive[servoPanelId] = true
+    alive[usblPanelId] = true
+    alive[standPanelId] = true
     for (var i = 0; i < widgets.length; ++i)
         if (widgets[i] && widgets[i].id) alive[widgets[i].id] = true
     var mi = {}, changedI = false
@@ -814,6 +1220,39 @@ property alias bottomTrackVisible: scene3dLayerVisibility.bottomTrackCheckButton
 property alias isobathsVisible:    scene3dLayerVisibility.isobathsCheckButton
 property alias mosaicVisible:      scene3dLayerVisibility.mosaicViewCheckButton
 
+property Settings videoStore: Settings {
+    id: videoStore
+    category: "main/video"
+    property string sourcesJson: ""
+    property string optionsJson: ""
+}
+property var videoSourceByContent: ({})
+property var videoOptionsByContent: ({})
+property string videoSettingsContentId: ""
+property string videoSettingsTitle: ""
+
+readonly property var visibleVideoSurfaces: {
+    var out = []
+    var rects = leafRects || []
+    for (var r = 0; r < rects.length; ++r) {
+        var pane = rects[r].pane
+        if (!pane || normalizedPaneMode(pane.mode) !== "Video" || !pane.contentId)
+            continue
+        out.push({ contentId: String(pane.contentId),
+                   leafId: rects[r].leafId,
+                   label: qsTr("Video") + " " + (out.length + 1) })
+    }
+    if (globalPopupEnabled && normalizedGlobalPopupMode(globalPopupMode) === "Video")
+        out.push({ contentId: globalPopupVideoContentId,
+                   leafId: globalPopupLeafId,
+                   label: qsTr("Global pop-up") })
+    if (effectiveSecondaryMode === "Video")
+        out.push({ contentId: secondaryVideoContentId,
+                   leafId: secondaryEchogramKey,
+                   label: qsTr("Second window") })
+    return out
+}
+
 // Interface pref: hide echogram-settings controls whose data type isn't in the
 // dataset (default on). Toggled from the Interface settings group.
 property Settings echogramUiPrefs: Settings {
@@ -837,6 +1276,37 @@ property Settings notificationPrefs: Settings {
     property bool hideImportantNotifications: false
 }
 property alias hideImportantNotifications: notificationPrefs.hideImportantNotifications
+
+property Settings developerPrefs: Settings {
+    id: developerPrefs
+    category: "main/ui"
+    property bool developerMode: false
+    property bool isobathsStatusMonitor: true
+    property bool mosaicStatusMonitor: true
+}
+property alias developerMode: developerPrefs.developerMode
+property alias isobathsStatusMonitor: developerPrefs.isobathsStatusMonitor
+property alias mosaicStatusMonitor: developerPrefs.mosaicStatusMonitor
+readonly property bool isobathsStatusActive: developerMode && isobathsStatusMonitor
+readonly property bool mosaicStatusActive: developerMode && mosaicStatusMonitor
+
+readonly property int developerUnlockTaps: 5
+
+onDeveloperModeChanged: {
+    if (!developerMode) {
+        if (widgetShown(servoPanelId))
+            setWidgetShown(servoPanelId, false)
+        if (widgetShown(standPanelId))
+            setWidgetShown(standPanelId, false)
+        if (settingsSubPageActive
+                && (settingsSubPageKind === "servoPanel"
+                    || settingsSubPageKind === "standPanel"
+                    || settingsSubPageKind === "developer"))
+            closeActiveSettingsSubPage()
+    }
+    _syncServoPanelAuto()
+    _syncStandPanelAuto()
+}
 
 property Settings echogramLoupePrefs: Settings {
     id: echogramLoupePrefs
@@ -993,18 +1463,39 @@ property Settings consolePersist: Settings {
     id: consolePersist
     category: "main/console"
     property bool consColorize: true
-    property int consMaxRows: 500
+    property int consMaxRows: 1500
+    property int consFontSize: 13
+    property bool protoBinConsoled: false
+    property bool nmeaConsoled: true
 }
 
 property alias consoleColorize: consolePersist.consColorize
 property alias consoleMaxRows: consolePersist.consMaxRows
+property alias consoleFontSize: consolePersist.consFontSize
+readonly property int consoleFontSizeMin: 9
+readonly property int consoleFontSizeMax: 22
+readonly property int consoleFontSizeDefault: 13
+readonly property int consoleMaxRowsMin: 50
+readonly property int consoleMaxRowsMax: 4000
+readonly property int consoleMaxRowsDefault: 1500
+property alias consoleProtoBin: consolePersist.protoBinConsoled
+property alias consoleNmea: consolePersist.nmeaConsoled
 
 function applyConsoleMaxRows() {
-    if (typeof core !== "undefined" && core && core.consoleList)
-        core.consoleList.setMaxRows(consoleMaxRows)
+    if (typeof core !== "undefined" && core)
+        core.setConsoleMaxRows(consoleMaxRows)
+}
+
+function applyConsoleProtoToggles() {
+    if (typeof deviceManagerWrapper === "undefined" || !deviceManagerWrapper)
+        return
+    deviceManagerWrapper.setProtoBinConsoled(consoleProtoBin)
+    deviceManagerWrapper.setNmeaConsoled(consoleNmea)
 }
 
 onConsoleMaxRowsChanged: applyConsoleMaxRows()
+onConsoleProtoBinChanged: applyConsoleProtoToggles()
+onConsoleNmeaChanged: applyConsoleProtoToggles()
 
 property Settings exportPersist: Settings {
     id: exportPersist
@@ -1163,7 +1654,7 @@ property Settings layoutStore: Settings {
     property bool quickActionLoggingEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
-    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,widgets,console,profiles,secondWindow,powerOff"
+    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,widgets,console,profiles,inputLock,secondWindow,powerOff"
     property string rememberedLinksJson: "[]"
     property string selectedConnectionFilePathStored: ""
     property string layoutsJson: "[]"
@@ -1184,10 +1675,19 @@ property Settings layoutStore: Settings {
     property string widgetsJson: "[]"
     property string widgetInstancesJson: "{}"
     property string widgetShownJson: "{}"
+    property int servoPanelTransparencyStored: 0
+    property bool servoPanelAutoShowStored: true
+    property int usblPanelTransparencyStored: 0
+    property bool usblPanelAutoShowStored: true
+    property int standPanelTransparencyStored: 0
+    property bool standPanelAutoShowStored: true
+    property bool standPanelExpandedStored: false
+    property string standPanelConfigJson: ""
     property bool quickActionWidgetsEnabledStored: true
     property bool quickActionConsoleEnabledStored: true
     property bool quickActionSecondWindowEnabledStored: true
     property bool quickActionPowerOffEnabledStored: false
+    property bool quickActionInputLockEnabledStored: true
     property bool secondaryWindowOpenStored: false
     property string secondaryWindowModeStored: ""
     property string liveEchogramStatesJson: "{}"
@@ -1447,18 +1947,31 @@ function _openSettingsSubPage(kind) {
 
 function openQuickActionsSettings() { _openSettingsSubPage("quickActions") }
 function openWidgetSettings()       { openAppSettingsAtGroup("app.widgets") }
-function openWidgetCreateSettings() { widgetEditIndex = -1; widgetDraftReset(); widgetEditStep = 1; _openSettingsSubPage("widgetEdit") }
-function openWidgetEditSettings(index) { widgetEditIndex = index; widgetDraftReset(); widgetEditStep = 2; _openSettingsSubPage("widgetEdit") }
-
+function openWidgetCreateSettings() {
+    widgetEditIndex = -1
+    widgetDraftReset()
+    widgetEditStep = 1
+    _openSettingsSubPage("widgetEdit")
+}
+function openWidgetEditSettings(index) {
+    widgetEditIndex = index
+    widgetDraftReset()
+    widgetEditStep = 2
+    _openSettingsSubPage("widgetEdit")
+}
+// Chosen on step 0. A grid still has a size to pick; the freeform panels have nothing to lay
+// out, so they go straight to their own (short) page.
 function widgetDraftReset() {
     if (widgetEditIndex >= 0 && widgetEditIndex < widgets.length) {
         var d = widgets[widgetEditIndex]
-        widgetDraftCols = d.cols
-        widgetDraftRows = d.rows
+        widgetDraftKind = widgetKindOf(d)
+        widgetDraftCols = (typeof d.cols === "number") ? d.cols : 1
+        widgetDraftRows = (typeof d.rows === "number") ? d.rows : 1
         widgetDraftTransparency = (typeof d.transparency === "number") ? d.transparency : 0
         widgetDraftScale = widgetScale(d.id)
-        widgetDraftCells = JSON.parse(JSON.stringify(d.cells))
+        widgetDraftCells = Array.isArray(d.cells) ? JSON.parse(JSON.stringify(d.cells)) : []
     } else {
+        widgetDraftKind = "grid"
         widgetDraftCols = 1
         widgetDraftRows = 1
         widgetDraftTransparency = 0
@@ -1634,8 +2147,11 @@ function widgetDraftClearPreview() {
 
 function widgetDraftSave() {
     var isCreate = widgetEditIndex < 0
-    var id = saveWidget({ cols: widgetDraftCols, rows: widgetDraftRows,
-                          transparency: widgetDraftTransparency, cells: widgetDraftCells })
+    // The stand's scan and its regime are edited on the panel, not in this wizard, so an edit
+    // pass through here must carry them over rather than reset them to defaults.
+    var draft = { kind: "grid", cols: widgetDraftCols, rows: widgetDraftRows,
+                  transparency: widgetDraftTransparency, cells: widgetDraftCells }
+    var id = saveWidget(draft)
     if (id) {
         setWidgetScale(id, widgetDraftScale)
         if (isCreate) {
@@ -1650,6 +2166,13 @@ function openUiSavingSettings()     { _openSettingsSubPage("uiSaving") }
 function openTgcSettings()          { _openSettingsSubPage("tgc") }
 function openCsvExportSettings()    { _openSettingsSubPage("csvExport") }
 function openConsoleSettings()      { _openSettingsSubPage("console") }
+function openAboutSettings()        { _openSettingsSubPage("about") }
+function openDeveloperSettings()    { _openSettingsSubPage("developer") }
+function openLicenseView(title, file) {
+    licenseViewTitle = title
+    licenseViewFile = file
+    _openSettingsSubPage("license")
+}
 
 function closeActiveSettingsSubPage() {
     if (_settingsNav.length > 0) {
@@ -1881,8 +2404,12 @@ function normalizedGlobalPopupState(rawState) {
 function normalizedGlobalPopupMode(value) {
     return value === "3D" ? "3D"
                          : value === "2D" ? "2D"
-                                          : ""
+                         : value === "Video" ? "Video"
+                                             : ""
 }
+
+readonly property string globalPopupVideoContentId: "globalPopup"
+readonly property string secondaryVideoContentId: "secondaryWindow"
 
 function saveGlobalPopupPreferences() {
     layoutStore.globalPopupEnabledStored = globalPopupEnabled === true
@@ -1971,11 +2498,7 @@ function canGlobalPopupChoose2D() {
 
 function openSecondaryWindow() {
     secondaryWindowOpen = true
-    // Secondary window always hosts a dedicated 2D plot (indx=6).
-    // If 2D slot is available — activate; otherwise leave "" so the window shows
-    // an "echogram limit reached" message and reactivates when a slot frees up.
-    var active = paneCountByMode("2D") + (globalPopupMode === "2D" ? 1 : 0)
-    secondaryWindowMode = (active < 5) ? "2D" : ""
+    secondaryWindowMode = ""
     saveLayoutState()
 }
 
@@ -1984,18 +2507,9 @@ function closeSecondaryWindow() {
     saveLayoutState()
 }
 
-// Auto-activate 2D plot in secondary when a 2D slot frees up (pane removed,
-// popup switched off, etc.). Secondary stays "limit reached" until a slot opens.
-onActiveTwoDCountChanged: {
-    if (secondaryWindowOpen && secondaryWindowMode === "" && activeTwoDCount < 5) {
-        secondaryWindowMode = "2D"
-        saveLayoutState()
-    }
-}
-
 function setSecondaryWindowMode(mode) {
     // 3D in secondary not supported yet — UI keeps the button disabled.
-    var next = (mode === "2D") ? "2D" : ""
+    var next = (mode === "2D") ? "2D" : (mode === "Video") ? "Video" : ""
     if (next === "2D" && !canSecondaryWindowChoose2D())
         return false
     secondaryWindowMode = next
@@ -3336,6 +3850,7 @@ function saveLayoutState() {
     layoutStore.quickActionConsoleEnabledStored = quickActionConsoleEnabled
     layoutStore.quickActionSecondWindowEnabledStored = quickActionSecondWindowEnabled
     layoutStore.quickActionPowerOffEnabledStored = quickActionPowerOffEnabled
+    layoutStore.quickActionInputLockEnabledStored = quickActionInputLockEnabled
     layoutStore.quickActionOrderStored = quickActionOrderCsv()
     layoutStore.selectedConnectionFilePathStored = selectedConnectionFilePath
     layoutStore.secondaryWindowOpenStored = secondaryWindowOpen
@@ -3355,10 +3870,12 @@ function restoreLayoutState() {
     quickActionConsoleEnabled = layoutStore.quickActionConsoleEnabledStored
     quickActionSecondWindowEnabled = layoutStore.quickActionSecondWindowEnabledStored
     quickActionPowerOffEnabled = layoutStore.quickActionPowerOffEnabledStored
+    quickActionInputLockEnabled = layoutStore.quickActionInputLockEnabledStored
     applyQuickActionOrder((layoutStore.quickActionOrderStored || "").split(","))
     selectedConnectionFilePath = layoutStore.selectedConnectionFilePathStored
     var storedSecondaryMode = layoutStore.secondaryWindowModeStored
-    secondaryWindowMode = (storedSecondaryMode === "2D" || storedSecondaryMode === "3D") ? storedSecondaryMode : ""
+    secondaryWindowMode = (storedSecondaryMode === "2D" || storedSecondaryMode === "3D"
+                           || storedSecondaryMode === "Video") ? storedSecondaryMode : ""
     secondaryWindowOpen = layoutStore.secondaryWindowOpenStored
 
     if (layouts.length === 0)
@@ -4144,15 +4661,6 @@ function toggleLeafMaximize(leafId) {
 
 function handleLeafTap(leafId) {
     activeLeafId = leafId
-    var now = Date.now()
-    if (!editableMode && lastTappedLeafId === leafId && now - lastTapTimestamp <= doubleTapIntervalMs) {
-        toggleLeafMaximize(leafId)
-        lastTappedLeafId = -1
-        lastTapTimestamp = 0
-        return
-    }
-    lastTappedLeafId = leafId
-    lastTapTimestamp = now
 }
 
 function applyPaneModeSelection(leafId, mode) {
@@ -4173,7 +4681,7 @@ function applyPaneModeSelection(leafId, mode) {
     }
 
     if (targetMode === "2D") {
-        var currentPaneMode = (targetPane && targetPane.mode === "3D") ? "3D" : "2D"
+        var currentPaneMode = normalizedPaneMode(targetPane.mode)
         if (currentPaneMode !== "2D") {
             var projected = paneCountByMode("2D") + 1
                           + (globalPopupMode === "2D" ? 1 : 0)
@@ -4190,6 +4698,202 @@ function applyPaneModeSelection(leafId, mode) {
     layoutTree = nextTree
     removeModePickerLeafId(leafId)
     rebuildLayoutCaches()
+}
+
+function loadVideoOptions() {
+    var parsed = {}
+    if (videoStore.optionsJson.length) {
+        try {
+            parsed = JSON.parse(videoStore.optionsJson) || {}
+        } catch (e) {
+            parsed = {}
+        }
+    }
+    videoOptionsByContent = parsed
+}
+
+function videoOptionForContent(contentId, key, fallback) {
+    if (!contentId)
+        return fallback
+    var options = videoOptionsByContent[contentId]
+    if (!options || options[key] === undefined)
+        return fallback
+    return options[key]
+}
+
+function setVideoOptionForContent(contentId, key, value) {
+    if (!contentId)
+        return
+
+    var next = {}
+    for (var outer in videoOptionsByContent) {
+        var source = videoOptionsByContent[outer]
+        var copy = {}
+        for (var inner in source)
+            copy[inner] = source[inner]
+        next[outer] = copy
+    }
+
+    if (!next[contentId])
+        next[contentId] = {}
+    next[contentId][key] = value
+
+    videoOptionsByContent = next
+    videoStore.optionsJson = JSON.stringify(next)
+}
+
+function videoFillForContent(contentId) {
+    var value = Number(videoOptionForContent(contentId, "fill", 0))
+    return (value === 1 || value === 2) ? value : 0
+}
+
+function setVideoFillForContent(contentId, mode) {
+    setVideoOptionForContent(contentId, "fill", Number(mode))
+}
+
+function videoResolutionVisibleForContent(contentId) {
+    return videoOptionForContent(contentId, "resolution", true) !== false
+}
+
+function setVideoResolutionVisibleForContent(contentId, visible) {
+    setVideoOptionForContent(contentId, "resolution", visible === true)
+}
+
+function videoSurfaceLabel(contentId) {
+    var list = visibleVideoSurfaces
+    for (var i = 0; i < list.length; ++i) {
+        if (list[i].contentId === String(contentId))
+            return list[i].label
+    }
+    return qsTr("Video")
+}
+
+function openVideoPaneSettings(contentId) {
+    if (!contentId)
+        return
+
+    _settingsNav = []
+    closeModeSettingsPanel()
+    highlightedLeafId = -1
+    echogramSettingsActive = false
+    videoSettingsContentId = String(contentId)
+    videoSettingsTitle = videoSurfaceLabel(contentId)
+    settingsSubPageKind = "videoPane"
+    settingsSubPageActive = true
+    settingsPanelOpen = true
+    setSettingsGroupExpanded("app.video", true)
+}
+
+function loadVideoSources() {
+    var parsed = {}
+    if (videoStore.sourcesJson.length) {
+        try {
+            parsed = JSON.parse(videoStore.sourcesJson) || {}
+        } catch (e) {
+            parsed = {}
+        }
+    }
+    videoSourceByContent = parsed
+}
+
+function videoSourceForContent(contentId) {
+    if (!contentId)
+        return ""
+    var uuid = videoSourceByContent[contentId]
+    return uuid ? String(uuid) : ""
+}
+
+function setVideoSourceForContent(contentId, uuid) {
+    if (!contentId)
+        return
+
+    var next = {}
+    for (var key in videoSourceByContent)
+        next[key] = videoSourceByContent[key]
+
+    next[contentId] = uuid ? String(uuid) : ""
+
+    videoSourceByContent = next
+    videoStore.sourcesJson = JSON.stringify(next)
+}
+
+function autoAssignVideoSources() {
+    if (typeof videoStreams === "undefined" || !videoStreams)
+        return
+
+    var descriptors = videoStreams.streams || []
+    var known = {}
+    var openUuids = []
+    for (var i = 0; i < descriptors.length; ++i) {
+        var uuid = String(descriptors[i].uuid)
+        known[uuid] = true
+        if (descriptors[i].open)
+            openUuids.push(uuid)
+    }
+
+    var rects = leafRects || []
+    var videoContentIds = []
+    for (var r = 0; r < rects.length; ++r) {
+        var pane = rects[r].pane
+        if (pane && normalizedPaneMode(pane.mode) === "Video" && pane.contentId)
+            videoContentIds.push(String(pane.contentId))
+    }
+    if (globalPopupEnabled && normalizedGlobalPopupMode(globalPopupMode) === "Video")
+        videoContentIds.push(globalPopupVideoContentId)
+    if (effectiveSecondaryMode === "Video")
+        videoContentIds.push(secondaryVideoContentId)
+
+    var next = {}
+    for (var key in videoSourceByContent)
+        next[key] = videoSourceByContent[key]
+
+    var taken = {}
+    for (var c = 0; c < videoContentIds.length; ++c) {
+        var cid = videoContentIds[c]
+        if (!(cid in next))
+            continue
+
+        var assigned = String(next[cid])
+        if (assigned.length === 0)
+            continue
+
+        if (known[assigned]) {
+            taken[assigned] = true
+            continue
+        }
+
+        delete next[cid]
+    }
+
+    var reuseIndex = 0
+    for (var c2 = 0; c2 < videoContentIds.length; ++c2) {
+        var cid2 = videoContentIds[c2]
+        if (cid2 in next)
+            continue
+        if (!openUuids.length)
+            continue
+
+        var picked = ""
+        for (var u = 0; u < openUuids.length; ++u) {
+            if (!taken[openUuids[u]]) {
+                picked = openUuids[u]
+                break
+            }
+        }
+        if (!picked.length) {
+            picked = openUuids[reuseIndex % openUuids.length]
+            ++reuseIndex
+        }
+
+        next[cid2] = picked
+        taken[picked] = true
+    }
+
+    if (JSON.stringify(next) === JSON.stringify(videoSourceByContent))
+        return
+
+    videoSourceByContent = next
+    videoStore.sourcesJson = JSON.stringify(next)
 }
 
 function swapLeafPanes(leafA, leafB) {
@@ -4549,13 +5253,23 @@ function loadPersistedUiState() {
     loadSettingsProfiles()
     loadRememberedLinks()
     loadProfilesPopupPreferences()
+    loadServoPanelPreferences()
+    loadUsblPanelPreferences()
+    loadStandPanelPreferences()
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
     bottomTrackEditorOpen = layoutStore.bottomTrackEditorOpenStored
     loadPopupDocks()
     loadWidgets()
+    loadDeviceFavoriteParams()
     loadWidgetInstances()
     loadWidgetShown()
+    _migrateServoPanel()
+    _migrateUsblPanel()
+    _migrateStandPanel()
     _reconcileWidgetMaps()
+    _syncServoPanelAuto()
+    _syncUsblPanelAuto()
+    _syncStandPanelAuto()
     return restoreLayoutState()
 }
 
@@ -4567,12 +5281,16 @@ function reapplyImportedUiState() {
 }
 
 Component.onCompleted: {
+    loadVideoSources()
+    loadVideoOptions()
     if (!loadPersistedUiState())
         seedDefaultLayouts()
     sanitizeFullscreenPopupConfig()
     applyTgcToCore()
+    applyConsoleProtoToggles()
     applyLayerThemesToControllers()
     applyBottomTrackRealtimeToCore()
+    uiStateReapplied()
 }
 
 }

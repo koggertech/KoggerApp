@@ -3,12 +3,15 @@
 #include <math.h>
 #include <stdint.h>
 #include <time.h>
+#include <algorithm>
+#include <cmath>
 #include <QObject>
 #include <QMap>
 #include <QSet>
 #include <QPair>
 #include <QVector>
 #include <QVector3D>
+#include <QVariantMap>
 #include <QReadWriteLock>
 
 #include "black_stripes_processor.h"
@@ -16,7 +19,6 @@
 #include "data_interpolator.h"
 #include "epoch.h"
 #include "id_binnary.h"
-#include "usbl_view.h"
 
 
 class Dataset : public QObject
@@ -53,6 +55,26 @@ public:
     Q_PROPERTY(float lastRangefinderDepth         READ getLastRangefinderDepth      NOTIFY lastRangefinderDepthChanged)
     Q_PROPERTY(bool  isLastBottomTrackDepthValid  READ isValidLastBottomTrackDepth  NOTIFY lastBottomTrackDepthChanged)
     Q_PROPERTY(float lastBottomTrackDepth         READ getLastBottomTrackDepth      NOTIFY lastBottomTrackDepthChanged)
+    // Last USBL solution, flattened for QML. Per-field absence is NAN (checked with
+    // isNaN in QML, as the autopilot fields are); isLastUsblSolutionValid only says a
+    // solution was ever received. lastUsblFixEpochMs is HOST arrival time, not the
+    // device clock in UsblSolution::timestamp_us — it is what fix age is measured from,
+    // and it is a double because QML int is 32-bit and epoch ms would wrap.
+    Q_PROPERTY(bool   isLastUsblSolutionValid          READ isValidLastUsblSolution        NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(double lastUsblFixEpochMs               READ getLastUsblFixEpochMs          NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(int    lastUsblAddress                  READ getLastUsblAddress             NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(float  lastUsblDistance                 READ getLastUsblDistance            NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(float  lastUsblAzimuth                  READ getLastUsblAzimuth             NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(float  lastUsblElevation                READ getLastUsblElevation           NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(float  lastUsblSnr                      READ getLastUsblSnr                 NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(bool   isLastUsblBeaconCoordinateValid  READ isValidLastUsblBeaconCoordinate NOTIFY lastUsblSolutionChanged)
+    // address (as a string key) -> one solution object. A single property rather than a
+    // Q_INVOKABLE per address, because a function call in a QML binding is not a tracked
+    // dependency -- the value would render once and then never update.
+    Q_PROPERTY(QVariantMap usblSolutions                READ getUsblSolutions               NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(double lastUsblBeaconLatitude           READ getLastUsblBeaconLatitude      NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(double lastUsblBeaconLongitude          READ getLastUsblBeaconLongitude     NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(float  lastUsblBeaconDepth              READ getLastUsblBeaconDepth         NOTIFY lastUsblSolutionChanged)
     Q_PROPERTY(bool isSimpleNavV2Valid                  READ isValidSimpleNavV2                   NOTIFY simpleNavV2Changed)
     Q_PROPERTY(int simpleNavV2GnssFixType               READ simpleNavV2GnssFixType               NOTIFY simpleNavV2Changed)
     Q_PROPERTY(int simpleNavV2NumSats                   READ simpleNavV2NumSats                   NOTIFY simpleNavV2Changed)
@@ -75,6 +97,9 @@ public:
     Q_PROPERTY(bool hasChartData       READ hasChartData       NOTIFY dataAvailabilityChanged)
     Q_PROPERTY(bool hasRangefinderData READ hasRangefinderData NOTIFY dataAvailabilityChanged)
     Q_PROPERTY(bool hasAttitudeData    READ hasAttitudeData    NOTIFY dataAvailabilityChanged)
+    Q_PROPERTY(float lastYaw           READ lastYaw            NOTIFY attitudeUpdated)
+    Q_PROPERTY(float lastPitch         READ lastPitch          NOTIFY attitudeUpdated)
+    Q_PROPERTY(float lastRoll          READ lastRoll           NOTIFY attitudeUpdated)
     Q_PROPERTY(bool hasTemperatureData READ hasTemperatureData NOTIFY dataAvailabilityChanged)
     Q_PROPERTY(bool hasDopplerBeamData READ hasDopplerBeamData NOTIFY dataAvailabilityChanged)
     Q_PROPERTY(bool hasDvlSolutionData READ hasDvlSolutionData NOTIFY dataAvailabilityChanged)
@@ -121,6 +146,62 @@ public:
         Epoch copy = src;
 
         return copy;
+    }
+
+    struct MosaicEpochProbe {
+        bool valid = false;
+        bool posFinite = false;
+        bool yawFinite = false;
+        bool firstBeam = false;
+        bool secondBeam = false;
+        bool firstBottom = false;
+        bool secondBottom = false;
+    };
+
+    QVector<MosaicEpochProbe> probeMosaicEpochs(int lastN,
+                                                const ChannelId& firstChId, uint8_t firstSubChId,
+                                                const ChannelId& secondChId, uint8_t secondSubChId) const {
+        QReadLocker rl(&poolMtx_);
+
+        QVector<MosaicEpochProbe> out;
+        const int poolSize = pool_.size();
+        if (poolSize == 0 || lastN <= 0) {
+            return out;
+        }
+
+        const int from = std::max(0, poolSize - lastN);
+        out.reserve(poolSize - from);
+
+        const bool firstValid = firstChId.isValid();
+        const bool secondValid = secondChId.isValid();
+
+        for (int i = from; i < poolSize; ++i) {
+            const Epoch& epoch = pool_.at(i);
+
+            MosaicEpochProbe probe;
+            probe.valid = epoch.isValid();
+
+            if (probe.valid) {
+                const auto& ned = epoch.getSonarPositionCRef().ned;
+                probe.posFinite = std::isfinite(ned.n) && std::isfinite(ned.e);
+                probe.yawFinite = std::isfinite(epoch.tryRetValidYaw());
+
+                if (firstValid) {
+                    probe.firstBeam = epoch.chartAvail(firstChId, firstSubChId);
+                    probe.firstBottom = probe.firstBeam
+                                        && std::isfinite(epoch.chartBottomDistance(firstChId, firstSubChId));
+                }
+                if (secondValid) {
+                    probe.secondBeam = epoch.chartAvail(secondChId, secondSubChId);
+                    probe.secondBottom = probe.secondBeam
+                                         && std::isfinite(epoch.chartBottomDistance(secondChId, secondSubChId));
+                }
+            }
+
+            out.append(probe);
+        }
+
+        return out;
     }
 
     Epoch fromIndexMosaicCopy(int index_offset = 0) {
@@ -246,6 +327,21 @@ public:
     float getLastRangefinderDepth() const { return lastRangefinderDepth_; }
     float getLastBottomTrackDepth() const { return lastBottomTrackDepth_; }
 
+    bool   isValidLastUsblSolution() const { return lastUsblFixEpochMs_ > 0.0; }
+    double getLastUsblFixEpochMs() const { return lastUsblFixEpochMs_; }
+    int    getLastUsblAddress() const { return lastUsblSolution_.id; }
+    float  getLastUsblDistance() const { return lastUsblSolution_.distance_m; }
+    float  getLastUsblAzimuth() const { return lastUsblSolution_.azimuth_deg; }
+    float  getLastUsblElevation() const { return lastUsblSolution_.elevation_deg; }
+    float  getLastUsblSnr() const { return lastUsblSolution_.snr; }
+    double getLastUsblBeaconLatitude() const { return lastUsblSolution_.beacon_latitude; }
+    double getLastUsblBeaconLongitude() const { return lastUsblSolution_.beacon_longitude; }
+    float  getLastUsblBeaconDepth() const { return lastUsblSolution_.beacon_depth; }
+    bool   isValidLastUsblBeaconCoordinate() const {
+        return LLA(lastUsblSolution_.beacon_latitude, lastUsblSolution_.beacon_longitude).isCoordinatesValid();
+    }
+    QVariantMap getUsblSolutions() const;
+
     BottomTrackParam getBottomTrackParam() {
         QReadLocker rl(&lock_);
 
@@ -308,6 +404,9 @@ public:
     bool hasChartData() const       { return hasChartData_;       };
     bool hasRangefinderData() const { return hasRangefinderData_; };
     bool hasAttitudeData() const    { return hasAttitudeData_;    };
+    float lastYaw() const           { return lastYaw_;            };
+    float lastPitch() const         { return lastPitch_;          };
+    float lastRoll() const          { return lastRoll_;           };
     bool hasTemperatureData() const { return hasTemperatureData_; };
     bool hasDopplerBeamData() const { return hasDopplerBeamData_; };
     bool hasDvlSolutionData() const { return hasDvlSolutionData_; };
@@ -369,17 +468,6 @@ public slots:
     void setChannelOffset(const ChannelId& channelId, float x, float y, float z);
     void spatialProcessing();
 
-    void usblProcessing();
-    QVector<QVector3D> beaconTrack() {
-        return _beaconTrack;
-    }
-
-    QVector<QVector3D> beaconTrack1() {
-        return _beaconTrack1;
-    }
-
-    void setScene3D(GraphicsScene3dView* scene3dViewPtr) { scene3dViewPtr_ = scene3dViewPtr; };
-
     void setRefPosition(int epoch_index);
     void setRefPosition(Epoch* ref_epoch);
     void setRefPosition(Position position);
@@ -397,6 +485,7 @@ public slots:
     void onDimensionRectCanCalc(uint64_t indx);
 
 signals:
+    void attitudeUpdated();
     // data horizon
     void epochAdded(uint64_t indx);
     void positionAdded(uint64_t indx);
@@ -419,6 +508,11 @@ signals:
     void lastTempChanged();
     void lastRangefinderDepthChanged();
     void lastBottomTrackDepthChanged();
+    void lastUsblSolutionChanged();
+    // The solution itself, for consumers that need more than the QML-facing flattening --
+    // usbl_yaw and the head's own position are not in `usblSolutions`, and a map track needs both.
+    // Emitted on the LINK thread, so anything on the GUI side must connect queued.
+    void usblSolutionAdded(IDBinUsblSolution::UsblSolution solution);
     void simpleNavV2Changed();
     void boatStatusChanged();
     void spatialPreparingChanged();
@@ -441,11 +535,6 @@ protected:
 
     void validateChannelList(const ChannelId& channelId, uint8_t subChannelId);
 
-    QVector<QVector3D> _beaconTrack;
-    QVector<QVector3D> _beaconTrack1;
-
-    QMap<int, UsblView::UsblObjectParams> tracks;
-
     //enum {
     //    AutoRangeNone,
     //    AutoRangeLast,
@@ -463,6 +552,9 @@ protected:
     bool hasChartData_       = false;
     bool hasRangefinderData_ = false;
     bool hasAttitudeData_    = false;
+    float lastYaw_           = NAN;
+    float lastPitch_         = NAN;
+    float lastRoll_          = NAN;
     bool hasTemperatureData_ = false;
     bool hasDopplerBeamData_ = false;
     bool hasDvlSolutionData_ = false;
@@ -477,8 +569,6 @@ protected:
     }
 
     Epoch* addNewEpoch();
-
-    GraphicsScene3dView* scene3dViewPtr_ = nullptr;
 
 private:
     friend class DataInterpolator;
@@ -526,6 +616,18 @@ private:
     float lastRangefinderDepth_ = NAN;
     float lastBottomTrackDepth_ = NAN;
     float speed_                = 0.0f;
+    IDBinUsblSolution::UsblSolution lastUsblSolution_;
+    double lastUsblFixEpochMs_  = 0.0;
+    // One entry per beacon address. `lastUsblSolution_` above is whichever answered most
+    // recently, which is ambiguous the moment a schedule interrogates more than one
+    // beacon -- a "range" reading flickers between them with nothing saying whose it is.
+    // Entries are never expired: the fix age tells the operator it is stale, and dropping
+    // it would blank a widget instead of marking it old.
+    QMap<int, IDBinUsblSolution::UsblSolution> usblByAddr_;
+    QMap<int, double> usblEpochMsByAddr_;
+    // Written from the data thread, read from the QML thread. A torn read of the POD
+    // above is a wrong number; a torn read of a QMap is a crash, so this one is locked.
+    mutable QReadWriteLock usblAddrLock_;
     bool simpleNavV2Valid_ = false;
     uint8_t simpleNavV2GnssFixType_ = 0;
     uint8_t simpleNavV2NumSats_ = 0;

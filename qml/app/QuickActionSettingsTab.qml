@@ -22,6 +22,7 @@ Column {
              : key === "widgets"     ? qsTr("Widget panels")
              : key === "console"     ? qsTr("Console")
              : key === "profiles"    ? qsTr("Profiles")
+             : key === "inputLock"   ? qsTr("Lock input")
              : key === "secondWindow" ? qsTr("Second window")
              : key === "powerOff"    ? qsTr("Power off")
              : key
@@ -35,6 +36,7 @@ Column {
              : key === "widgets"     ? store.quickActionWidgetsEnabled
              : key === "console"     ? store.quickActionConsoleEnabled
              : key === "profiles"    ? store.quickActionProfilesEnabled
+             : key === "inputLock"   ? store.quickActionInputLockEnabled
              : key === "secondWindow" ? store.quickActionSecondWindowEnabled
              : key === "powerOff"    ? store.quickActionPowerOffEnabled
              : false
@@ -63,6 +65,9 @@ Column {
         } else if (key === "profiles") {
             store.quickActionProfilesEnabled = v
             store.requestHotkeysReveal("profiles")
+        } else if (key === "inputLock") {
+            store.quickActionInputLockEnabled = v
+            store.requestHotkeysReveal("inputLock")
         } else if (key === "secondWindow") {
             store.quickActionSecondWindowEnabled = v
             store.requestHotkeysReveal("secondWindow")
@@ -125,6 +130,13 @@ Column {
                     readonly property bool dragActive: dragArea.drag.active
                     onDragActiveChanged: if (page.store) page.store.quickActionDraggingKey = dragActive ? key : ""
 
+                    readonly property bool _hovered: dragArea.containsMouse || rowSwitch.hovered
+                    scale: dragActive ? 1.0
+                           : ((rowSwitch.pressed || dragArea.pressed) ? Anim.dipScale(width)
+                              : (_hovered ? Anim.liftScale(width) : 1.0))
+
+                    Behavior on scale { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
+
                     Drag.active: dragArea.drag.active
                     Drag.source: rowContent
                     Drag.hotSpot.x: width / 2
@@ -159,6 +171,7 @@ Column {
                             MouseArea {
                                 id: dragArea
                                 anchors.fill: parent
+                                hoverEnabled: true
                                 cursorShape: Qt.SizeVerCursor
                                 drag.target: rowContent
                                 drag.axis: Drag.YAxis
@@ -167,6 +180,7 @@ Column {
                         }
 
                         KSwitch {
+                            id: rowSwitch
                             width: parent.width - page.handleW - parent.spacing
                             text: page._label(key)
                             backgroundColor: "transparent"   // row card provides the fill

@@ -311,6 +311,101 @@ void MosaicProcessor::setSource(Source source)
     source_ = source;
 }
 
+void MosaicProcessor::fillDiagnostics(QVariantMap& stats, int probeWindow) const
+{
+    stats["mosaicFirstChannel"]  = segFChannelId_.isValid() ? segFChannelId_.toShortName() : QString();
+    stats["mosaicFirstSub"]      = static_cast<int>(segFSubChannelId_);
+    stats["mosaicSecondChannel"] = segSChannelId_.isValid() ? segSChannelId_.toShortName() : QString();
+    stats["mosaicSecondSub"]     = static_cast<int>(segSSubChannelId_);
+    stats["mosaicSource"]        = static_cast<int>(source_);
+    stats["mosaicLAngleOffset"]  = lAngleOffset_;
+    stats["mosaicRAngleOffset"]  = rAngleOffset_;
+    stats["mosaicTileResolution"] = tileResolution_;
+    stats["mosaicLastCalcEpoch"] = lastCalcEpoch_;
+    stats["mosaicLastAccepted"]  = lastAcceptedEpoch_;
+    stats["mosaicLastTraceLine"] = lastTraceLineEpoch_;
+
+    if (!datasetPtr_) {
+        stats["probeChecked"] = 0;
+        return;
+    }
+
+    const auto probes = datasetPtr_->probeMosaicEpochs(probeWindow,
+                                                       segFChannelId_, segFSubChannelId_,
+                                                       segSChannelId_, segSSubChannelId_);
+
+    int valid = 0;
+    int withPos = 0;
+    int withYaw = 0;
+    int firstBeam = 0;
+    int secondBeam = 0;
+    int firstBottom = 0;
+    int secondBottom = 0;
+    int usableFirst = 0;
+    int usableSecond = 0;
+    int pairsFirst = 0;
+    int pairsSecond = 0;
+    bool prevUsableFirst = false;
+    bool prevUsableSecond = false;
+
+    for (const auto& probe : probes) {
+        if (probe.valid) {
+            ++valid;
+        }
+        if (probe.posFinite) {
+            ++withPos;
+        }
+        if (probe.yawFinite) {
+            ++withYaw;
+        }
+        if (probe.firstBeam) {
+            ++firstBeam;
+        }
+        if (probe.secondBeam) {
+            ++secondBeam;
+        }
+        if (probe.firstBottom) {
+            ++firstBottom;
+        }
+        if (probe.secondBottom) {
+            ++secondBottom;
+        }
+
+        const bool geoOk = probe.valid && probe.posFinite && probe.yawFinite;
+        const bool okFirst = geoOk && probe.firstBottom;
+        const bool okSecond = geoOk && probe.secondBottom;
+
+        if (okFirst) {
+            ++usableFirst;
+            if (prevUsableFirst) {
+                ++pairsFirst;
+            }
+        }
+        if (okSecond) {
+            ++usableSecond;
+            if (prevUsableSecond) {
+                ++pairsSecond;
+            }
+        }
+
+        prevUsableFirst = okFirst;
+        prevUsableSecond = okSecond;
+    }
+
+    stats["probeChecked"]      = probes.size();
+    stats["probeValid"]        = valid;
+    stats["probeWithPos"]      = withPos;
+    stats["probeWithYaw"]      = withYaw;
+    stats["probeFirstBeam"]    = firstBeam;
+    stats["probeSecondBeam"]   = secondBeam;
+    stats["probeFirstBottom"]  = firstBottom;
+    stats["probeSecondBottom"] = secondBottom;
+    stats["probeUsableFirst"]  = usableFirst;
+    stats["probeUsableSecond"] = usableSecond;
+    stats["probePairsFirst"]   = pairsFirst;
+    stats["probePairsSecond"]  = pairsSecond;
+}
+
 void MosaicProcessor::setGenerageGridContour(bool state)
 {
     generateGridContour_ = state;

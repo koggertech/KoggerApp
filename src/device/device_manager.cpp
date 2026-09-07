@@ -26,6 +26,9 @@ DeviceManager::DeviceManager()
     qRegisterMetaType<QVector<uint8_t>>("QVector<uint8_t>");
     qRegisterMetaType<QByteArray>("QByteArray");
     qRegisterMetaType<IDBinUsblSolution::UsblSolution>("IDBinUsblSolution::UsblSolution");
+    qRegisterMetaType<IDBinUsblSolution::AcousticNavSolution>("IDBinUsblSolution::AcousticNavSolution");
+    qRegisterMetaType<IDBinUsblSolution::BaseToBeacon>("IDBinUsblSolution::BaseToBeacon");
+    qRegisterMetaType<IDBinModemSolution::ModemSolutionHeader>("IDBinModemSolution::ModemSolutionHeader");
     qRegisterMetaType<IDBinDVL::BeamSolution>("IDBinDVL::BeamSolution");
     qRegisterMetaType<uint16_t>("uint16_t");
     qRegisterMetaType<IDBinDVL::DVLSolution>("IDBinDVL::DVLSolution");
@@ -196,7 +199,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
             QString str_data = QByteArray((char*)prot_nmea.frame(), prot_nmea.frameLen() - 2);
 #ifndef SEPARATE_READING
             if (nmeaConsoled_) {
-                core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
+                core.consoleProtoText(QString(">> NMEA: %5").arg(str_data));
             }
 #endif
             if (prot_nmea.isEqualId("DBT")) {
@@ -335,7 +338,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
                 // if (isConsoled_) {
 #ifndef SEPARATE_READING
-                    core.consoleInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4, time %5:%6:%7.%8")
+                    core.consoleStreamInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4, time %5:%6:%7.%8")
                                          .arg(fix_type).arg(satellites_in_used).arg(double(lat_int)*0.0000001).arg(double(lon_int)*0.0000001).arg(h).arg(m).arg(s).arg(nanosec/1000));
 #endif
                     // }
@@ -343,7 +346,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
             else {
                 // if (isConsoled_)
 #ifndef SEPARATE_READING
-                    core.consoleInfo(QString(">> UBX: class/id 0x%1 0x%2, len %3").arg(ubx_frame.msgClass(), 2, 16, QLatin1Char('0')).arg(ubx_frame.msgId(), 2, 16, QLatin1Char('0')).arg(ubx_frame.frameLen()));
+                    core.consoleStreamInfo(QString(">> UBX: class/id 0x%1 0x%2, len %3").arg(ubx_frame.msgClass(), 2, 16, QLatin1Char('0')).arg(ubx_frame.msgId(), 2, 16, QLatin1Char('0')).arg(ubx_frame.frameLen()));
 #endif
             }
         }
@@ -389,7 +392,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     int flight_mode = (int)heartbeat.customMode();
                     if (flight_mode != vru_.flightMode) {
 #ifndef SEPARATE_READING
-                        core.consoleInfo(QString(">> FC: Flight mode %1").arg(flight_mode));
+                        core.consoleStreamInfo(QString(">> FC: Flight mode %1").arg(flight_mode));
 #endif
                     }
                     vru_.flightMode = flight_mode;
@@ -415,7 +418,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     }
                 }
 #ifndef SEPARATE_READING
-                core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+                core.consoleProtoText(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
 #endif
             }
             else {
@@ -901,7 +904,18 @@ void DeviceManager::deleteDevicesByLink(QUuid uuid)
             emit streamChanged();
         }
         emit devChanged();
+        emit standAvailableChanged();
     }
+}
+
+bool DeviceManager::standAvailable()
+{
+    const QList<DevQProperty*> devs = getDevList();
+    for (DevQProperty* dev : devs) {
+        if (dev && dev->getStandState())
+            return true;
+    }
+    return false;
 }
 
 DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
@@ -910,11 +924,6 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     devTree_[uuid][addr] = dev;
     dev->setBusAddress(addr);
     dev->setLinkUuid(uuid);
-
-    if (upgradeUuid_ == uuid && upgradeAddr_ == addr) {
-        dev->setFirmware(upgradeData_);
-        upgradeUuid_ = QUuid();
-    }
 
 #ifdef SEPARATE_READING
     auto connType = Qt::AutoConnection;
@@ -934,6 +943,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::sendTranscSetup, this, &DeviceManager::sendTranscSetup, connType);
     connect(dev, &DevQProperty::sendSoundSpeed, this, &DeviceManager::sendSoundSpeeed, connType);
     connect(dev, &DevQProperty::averageChartLossesChanged, this, &DeviceManager::chartLossesChanged, connType);
+    connect(dev, &DevQProperty::standChanged, this, &DeviceManager::standAvailableChanged, connType);
 
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete, connType);
     connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved, connType);
@@ -1009,6 +1019,13 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
         connect(link, &Link::isReceivesDataChanged,   dev, syncStatus);
         connect(link, &Link::isNotAvailableChanged,   dev, syncStatus);
         syncStatus();
+    }
+
+    if (upgradeUuid_ == uuid && upgradeAddr_ == addr) {
+        upgradeUuid_ = QUuid();
+        QMetaObject::invokeMethod(dev, [dev, firmware = upgradeData_]() {
+            dev->setFirmware(firmware);
+        }, Qt::QueuedConnection);
     }
 
     emit devChanged();

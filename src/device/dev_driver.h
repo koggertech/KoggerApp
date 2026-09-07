@@ -5,6 +5,7 @@
 #include <QVector>
 #include <QTimer>
 #include <QUuid>
+#include <QVariantMap>
 #include "proto_binnary.h"
 #include "id_binnary.h"
 
@@ -114,10 +115,14 @@ public:
 
     QString devName() { return m_devName; }
     int devType() const { return static_cast<int>(idVersion->boardVersion()); }
+    int devTypeMinor() const { return static_cast<int>(idVersion->boardVersionMinor()); }
     uint32_t devSerialNumber();
     QString devPN();
 
     QString fwVersion() { return m_fwVer; }
+    QString bootVersion() { return m_bootVer; }
+    int bootMode() const { return idVersion->bootMode(); }
+    QString devUID() const { return QString::fromLatin1(idVersion->uid().toHex()).toUpper(); }
 
     // Recorder status (ID_RECORDER_STATUS 0x26 / RecorderStatusV0). See docs
     // Recorder-Host-Integration-Guide.md for field meaning.
@@ -183,6 +188,7 @@ public:
     bool getSoundSpeedState() { return soundSpeedState_; };
     bool getUartState() { return uartState_; };
     bool getServoControlState() { return servoControlState_; };
+    bool getStandState() { return standSupported_; };
     bool getPwmRouteState() { return pwmRouteState_; };
     bool getDevSyncState() { return devSyncState_; };
     int getAverageChartLosses() const { return averageChartLosses_; };
@@ -221,7 +227,13 @@ signals:
     void encoderComplete(float e1, float e2, float e3);
 
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
+    void acousticNavSolutionComplete(IDBinUsblSolution::AcousticNavSolution data);
+    void baseToBeaconComplete(IDBinUsblSolution::BaseToBeacon data);
     void beaconActivationComplete(uint8_t id);
+    void modemSolutionComplete(IDBinModemSolution::ModemSolutionHeader header, QByteArray payload);
+    // Argument-free companion so DevQProperty can use it as a Q_PROPERTY NOTIFY
+    // (same split as recorderStatusChanged).
+    void modemPayloadChanged();
 
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void gnssVelocityComplete(double hSpeed, double course);
@@ -246,6 +258,7 @@ signals:
     void soundChanged();
     void UARTChanged();
     void servoControlChanged();
+    void standChanged();
     void pwmRouteChanged();
     void servoCurrentAngleChanged();
     void devSyncChanged();
@@ -297,6 +310,15 @@ public slots:
     void setSoundSpeedState(bool state);
     void setUartState(bool state);
     void setServoControlState(bool state);
+
+    // The stand's whole command surface. Start carries the configuration because the device
+    // takes it no other way; the rest are control-only and read nothing from the map.
+    void standStart(const QVariantMap& config);
+    void standStop();
+    void standPause();
+    void standResume();
+    void standHome();
+
     void setPwmRouteState(bool state);
     void setDevSyncState(bool state);
     void setDevSyncPeriodMs(int ms);
@@ -310,8 +332,27 @@ public slots:
     void enableBeaconOnce(float timeout);
 
     void acousticPingRequest(uint8_t address, uint32_t timeout_us = 0xFFFFFFFF);
+    void acousticPingRequestEx(uint8_t address, uint32_t timeout_us, uint8_t cmdId, uint32_t replyDistanceMm, const QByteArray& payload = {});
     void acousticResponceFilter(uint8_t address);
+    void acousticResponceFilterSlots(const QVector<int>& addresses);
     void acousticResponceTimeout(uint32_t timeout_us = 0xFFFFFFFF);
+
+    void setUsblTransponderEnable(bool enabled);
+    void setUsblMonitorConfig(uint32_t suppressSelfResponseUs, uint32_t suppressSelfRequestUs, bool receiveResponseInIdle);
+    // The only per-slot write there is. v6 USBLCmdConfig carries a receiver_function AND a
+    // sender_function, so one frame configures both directions of a command slot.
+    //
+    // There is no "disable" or "stay silent": current firmware dropped those Function
+    // values along with USBLCmdSlotConfig. All-default arguments are the closest thing —
+    // the slot still answers, it just handles no payload. Per-device silence is
+    // setUsblTransponderEnable(false); per-address filtering is acousticResponceFilterSlots().
+    void setUsblCmdConfig(int cmdId, int event,
+                          int receiverFunction, int receiveBitLength,
+                          int senderFunction, const QString& sendHexPayload,
+                          int eventAction = 0,
+                          int cmdIdAction = 0, int cmdIdReplacement = 0,
+                          int addressAction = 0, int addressReplacement = 0);
+    QString modemLastPayload() const;
 
 #ifdef SEPARATE_READING
     Q_INVOKABLE void initProcessTimerConnects();
@@ -356,8 +397,10 @@ protected:
 
     IDBinUsblSolution* idUSBL = nullptr;
     IDBinUsblControl* idUSBLControl = nullptr;
+    IDBinModemSolution* idModemSolution = nullptr;
 
     IDBinServoControl* idServoControl = nullptr;
+    IDBinStandScan* idStandScan = nullptr;
     IDBinPwmRoute* idPwmRoute = nullptr;
     IDBinDevSync* idDevSync = nullptr;
 
@@ -433,6 +476,14 @@ protected:
     int m_upgrade_status = 0;
     int64_t _lastUpgradeAnswerTime = 0;
     int64_t _timeoutUpgradeAnswerTime = 0;
+    int64_t upgradeStartedTime_ = 0;
+    int64_t rebootAtTime_ = 0;
+    int upgradeResendCount_ = 0;
+
+    static constexpr int64_t staleVersionGuardMsec = 400;
+    static constexpr int64_t bootHandshakeTimeoutMsec = 8000;
+    static constexpr int64_t packetAnswerTimeoutMsec = 2000;
+    static constexpr int upgradeResendLimit = 5;
     bool m_isConsole = false;
 
     int m_busAddress = 0;
@@ -441,11 +492,20 @@ protected:
 
     QString m_devName = "...";
     QString m_fwVer = "";
+    QString m_bootVer = "";
 
     void regID(IDBin* id_bin, ParseCallback method, bool is_setup = false);
     void requestSetup();
 
     void fwUpgradeProcess();
+    bool checkUpgradeTimeouts(int64_t curr_time);
+    void abortUpgrade(const QString& reason);
+    bool isStaleVersionAfterReboot() const;
+
+    // Tolerant hex text → bytes: accepts separators and an odd digit count, which is what a
+    // hand-typed payload field produces. Deliberately outside the slots section — it is a
+    // static helper, not something to invoke from a connection.
+    static QByteArray parseHexPayload(const QString& text);
 
 protected slots:
     void receivedTimestamp  (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
@@ -478,8 +538,10 @@ protected slots:
 
     void receivedUSBL       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
     void receivedServoControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedStandScan   (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedPwmRoute    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
     void receivedDevSync     (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
@@ -494,6 +556,11 @@ private:
     bool soundSpeedState_;
     bool uartState_;
     bool servoControlState_ = false;
+    // The stand is discovered by probing, not declared: the command family is control-only, so
+    // there is no readback to sync and no board version that separates a stand build from a
+    // servo one. Both flags reset with the connection — a device may come back reflashed.
+    bool standSupported_ = false;
+    bool standProbeSent_ = false;
     bool pwmRouteState_ = false;
     bool devSyncState_ = false;
     QTimer m_devSyncDebounceTimer;

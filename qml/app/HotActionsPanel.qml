@@ -1,5 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
+import Qt5Compat.GraphicalEffects
 import kqml_types 1.0
 import "RecorderStatus.js" as RecorderStatus
 
@@ -54,7 +56,13 @@ Item {
     property bool widgetsEnabled: true
     readonly property bool _widgetsRevealOverride: _revealActiveKey === "widgets"
     readonly property bool showWidgets: widgetsEnabled || _widgetsRevealOverride
-    readonly property bool hasWidgets: !!(store && store.widgets && store.widgets.length > 0)
+    // Counted, not measured: a stand panel with no stand behind it is in store.widgets but is
+    // not offered, so the menu must not size itself for it. The servo card is not in
+    // store.widgets at all and is offered only in developer mode, so it is counted separately.
+    readonly property int widgetCardCount: (store ? store.listedWidgetCount : 0)
+                                           + ((store && store.usblPanelListed) ? 1 : 0)
+                                           + ((store && store.servoPanelListed) ? 1 : 0)
+                                           + ((store && store.standPanelListed) ? 1 : 0)
     property bool widgetsMenuOpen: false
     property var _widgetsSlot: null
     property bool consoleButtonEnabled: true
@@ -107,6 +115,12 @@ Item {
     readonly property bool _secondWindowAvailable: Qt.platform.os !== "android" && Qt.platform.os !== "ios"
     readonly property bool _secondWindowRevealOverride: _revealActiveKey === "secondWindow"
     readonly property bool _showSecondWindow: _secondWindowAvailable && (secondWindowButtonEnabled || _secondWindowRevealOverride)
+
+    property bool inputLocked: false
+    property bool inputLockEnabled: true
+    property bool inputLockKeyHeld: false
+    readonly property bool _inputLockRevealOverride: _revealActiveKey === "inputLock"
+    readonly property bool _showInputLock: inputLockEnabled || _inputLockRevealOverride
 
     property bool powerOffEnabled: false
     signal powerOffTriggered()
@@ -367,7 +381,6 @@ Item {
                 clip: true
                 interactive: contentHeight > height
                 boundsBehavior: Flickable.StopAtBounds
-                visible: root.hasWidgets
 
                 ScrollBar.vertical: ScrollBar {
                     id: widgetsScrollBar
@@ -381,6 +394,48 @@ Item {
                            - (widgetsFlick.interactive ? widgetsScrollBar.width + Math.round(4 * root._s) : 0)
                     spacing: root.favoriteItemSpacing
 
+                    WidgetCard {
+                        visible: !!(root.store && root.store.usblPanelListed)
+                        width: widgetsList.width
+                        height: visible ? root.favoriteItemHeight : 0
+                        contentMargin: root.favoriteCardMargin
+                        previewWidth: root.favoritePreviewWidth
+                        previewHeight: root.favoritePreviewHeight
+                        def: root.store ? root.store.usblPanelDef : null
+                        showText: false
+                        selectionMode: true
+                        selected: !!(root.store && root.store.usblPanelShown)
+                        onToggled: function(value) { if (root.store) root.store.setUsblPanelShown(value) }
+                    }
+
+                    WidgetCard {
+                        visible: !!(root.store && root.store.standPanelListed)
+                        width: widgetsList.width
+                        height: visible ? root.favoriteItemHeight : 0
+                        contentMargin: root.favoriteCardMargin
+                        previewWidth: root.favoritePreviewWidth
+                        previewHeight: root.favoritePreviewHeight
+                        def: root.store ? root.store.standPanelDef : null
+                        showText: false
+                        selectionMode: true
+                        selected: !!(root.store && root.store.standPanelShown)
+                        onToggled: function(value) { if (root.store) root.store.setStandPanelShown(value) }
+                    }
+
+                    WidgetCard {
+                        visible: !!(root.store && root.store.servoPanelListed)
+                        width: widgetsList.width
+                        height: visible ? root.favoriteItemHeight : 0
+                        contentMargin: root.favoriteCardMargin
+                        previewWidth: root.favoritePreviewWidth
+                        previewHeight: root.favoritePreviewHeight
+                        def: root.store ? root.store.servoPanelDef : null
+                        showText: false
+                        selectionMode: true
+                        selected: !!(root.store && root.store.servoPanelShown)
+                        onToggled: function(value) { if (root.store) root.store.setServoPanelShown(value) }
+                    }
+
                     Repeater {
                         model: root.store ? root.store.widgets.length : 0
                         delegate: WidgetCard {
@@ -393,6 +448,8 @@ Item {
                             previewWidth: root.favoritePreviewWidth
                             previewHeight: root.favoritePreviewHeight
                             def: widgetDef
+                            title: qsTr("Panel %1").arg(index + 1)
+                            visible: !!(root.store && root.store.widgetListed(widgetDef))
                             showText: false
                             selectionMode: true
                             selected: !!(root.store && widgetDef && root.store.widgetShown(widgetDef.id))
@@ -403,16 +460,6 @@ Item {
                         }
                     }
                 }
-            }
-
-            Text {
-                width: parent.width
-                visible: !root.hasWidgets
-                text: qsTr("No panels yet.")
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
-                wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignHCenter
             }
 
             Item {
@@ -470,6 +517,8 @@ Item {
             _revealActiveKey = ""
         }
     }
+
+    onInputLockedChanged: if (inputLocked) expanded = false
 
     onHasFavoriteLayoutsChanged: {
         if (!hasFavoriteLayouts)
@@ -754,14 +803,25 @@ Item {
         height: root.controlHeight
 
         activeFocusOnTab: true
-        Keys.onReturnPressed: pill.opened ? pill.close() : pill.open()
-        Keys.onEnterPressed:  pill.opened ? pill.close() : pill.open()
-        Keys.onSpacePressed:  pill.opened ? pill.close() : pill.open()
+        Keys.onReturnPressed: logBadge.toggleRecording()
+        Keys.onEnterPressed:  logBadge.toggleRecording()
+        Keys.onSpacePressed:  logBadge.toggleRecording()
+        Keys.onDownPressed:   pill.opened ? pill.close() : pill.open()
+
+        readonly property int _holdMs: 500
+
+        function toggleRecording() {
+            if (root.store)
+                root.store.setRecording(!logBadge._active)
+        }
 
         readonly property bool _active: root._loggingActive
         readonly property bool _klf: typeof core !== "undefined" && core && core.loggingKlf
         readonly property bool _csv: typeof core !== "undefined" && core && core.loggingCsv
-        readonly property real _hoverScale: badgeMa.pressed ? 0.97 : (badgeMa.containsMouse ? 1.035 : 1.0)
+        property real holdScale: 1.0
+        readonly property real _hoverScale: (badgeMa.pressed ? Anim.dipScale(logBadge.width)
+                                             : (badgeMa.containsMouse ? Anim.liftScale(logBadge.width) : 1.0))
+                                            * logBadge.holdScale
         readonly property bool _dragHold: root.draggingKey === "logging"
 
         onVisibleChanged: if (!visible && pill.opened) pill.close()
@@ -783,7 +843,38 @@ Item {
                           : "transparent"
             Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
             Behavior on border.color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
-            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            Behavior on scale { enabled: !holdRingAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        }
+
+        Rectangle {
+            id: holdRing
+            anchors.fill: parent
+            radius: width / 2
+            scale: logBadge._hoverScale
+            color: "transparent"
+            border.width: Math.max(2, Math.round(2 * root._s))
+            border.color: AppPalette.accentBorder
+            opacity: 0
+
+            ParallelAnimation {
+                id: holdRingAnim
+                NumberAnimation {
+                    target: holdRing; property: "opacity"
+                    from: 0; to: 0.9
+                    duration: logBadge._holdMs; easing.type: Easing.InQuad
+                }
+                NumberAnimation {
+                    target: logBadge; property: "holdScale"
+                    from: 1.0; to: 1.14
+                    duration: logBadge._holdMs; easing.type: Easing.InQuad
+                }
+            }
+
+            function reset() {
+                holdRingAnim.stop()
+                holdRing.opacity = 0
+                logBadge.holdScale = 1.0
+            }
         }
 
         Column {
@@ -791,7 +882,7 @@ Item {
             visible: logBadge._active
             scale: logBadge._hoverScale
             spacing: Math.round(1 * root._s)
-            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            Behavior on scale { enabled: !holdRingAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
             Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -843,7 +934,7 @@ Item {
             color: AppPalette.textSecond
             font.pixelSize: Math.round(10 * root._s)
             font.bold: true
-            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            Behavior on scale { enabled: !holdRingAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         }
 
         MouseArea {
@@ -852,13 +943,30 @@ Item {
             enabled: logBadge.visible
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onPressed: logFocusRing.suppress()
-            onClicked: { logBadge.forceActiveFocus(); pill.opened ? pill.close() : pill.open() }
+            pressAndHoldInterval: logBadge._holdMs
+            onPressed: { logFocusRing.suppress(); holdRingAnim.restart() }
+            onReleased: holdRing.reset()
+            onCanceled: holdRing.reset()
+            onPressAndHold: {
+                holdRing.reset()
+                logBadge.forceActiveFocus()
+                pill.opened ? pill.close() : pill.open()
+            }
+            onClicked: function(mouse) {
+                logBadge.forceActiveFocus()
+                if (mouse.wasHeld)
+                    return
+                logBadge.toggleRecording()
+            }
         }
 
         KFocusRing { id: logFocusRing; target: badgeCircle; focusItem: logBadge }
 
-        KToolTip { text: logBadge._active ? qsTr("Recording") : qsTr("Start recording"); shown: badgeMa.containsMouse && !pill.opened }
+        KToolTip {
+            text: logBadge._active ? qsTr("Stop recording · hold for options")
+                                   : qsTr("Start recording · hold for options")
+            shown: badgeMa.containsMouse && !pill.opened
+        }
 
         readonly property bool _highlighted: root.highlightedQuickActionKey === "logging"
 
@@ -936,6 +1044,7 @@ Item {
                 spacing: Math.round(5 * root._s)
 
                 Rectangle {
+                    id: pillHead
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: logBadge.width; height: width
                     radius: width / 2
@@ -987,10 +1096,60 @@ Item {
                         font.pixelSize: Math.round(10 * root._s); font.bold: true
                     }
 
-                    MouseArea {
+                    Rectangle {
+                        id: pillHeadHoldRing
                         anchors.fill: parent
+                        radius: width / 2
+                        color: "transparent"
+                        border.width: Math.max(2, Math.round(2 * root._s))
+                        border.color: AppPalette.accentBorder
+                        opacity: 0
+
+                        ParallelAnimation {
+                            id: pillHeadHoldAnim
+                            NumberAnimation {
+                                target: pillHeadHoldRing; property: "opacity"
+                                from: 0; to: 0.9
+                                duration: logBadge._holdMs; easing.type: Easing.InQuad
+                            }
+                            NumberAnimation {
+                                target: pillHead; property: "scale"
+                                from: 1.0; to: 1.14
+                                duration: logBadge._holdMs; easing.type: Easing.InQuad
+                            }
+                        }
+
+                        function reset() {
+                            pillHeadHoldAnim.stop()
+                            pillHeadHoldRing.opacity = 0
+                            pillHead.scale = 1.0
+                        }
+                    }
+
+                    MouseArea {
+                        id: pillHeadMa
+                        anchors.fill: parent
+                        hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: pill.close()
+                        pressAndHoldInterval: logBadge._holdMs
+                        onPressed: pillHeadHoldAnim.restart()
+                        onReleased: pillHeadHoldRing.reset()
+                        onCanceled: pillHeadHoldRing.reset()
+                        onPressAndHold: {
+                            pillHeadHoldRing.reset()
+                            pill.close()
+                        }
+                        onClicked: function(mouse) {
+                            if (mouse.wasHeld)
+                                return
+                            logBadge.toggleRecording()
+                        }
+                    }
+
+                    KToolTip {
+                        text: logBadge._active ? qsTr("Stop recording · hold to collapse")
+                                               : qsTr("Start recording · hold to collapse")
+                        shown: pillHeadMa.containsMouse
                     }
                 }
 
@@ -1077,6 +1236,191 @@ Item {
         }
     }
 
+    component InputLockBadge: Item {
+        id: lockBadge
+        width: root.controlHeight
+        height: root.controlHeight
+
+        activeFocusOnTab: true
+        Keys.onReturnPressed: lockBadge.lock()
+        Keys.onEnterPressed:  lockBadge.lock()
+        Keys.onSpacePressed:  lockBadge.lock()
+
+        readonly property int _holdMs: 500
+        readonly property bool _locked: root.inputLocked
+        readonly property bool _dragHold: root.draggingKey === "inputLock"
+        readonly property bool _highlighted: root.highlightedQuickActionKey === "inputLock"
+        property bool _holdHandled: false
+
+        property bool pointerHold: false
+        property real holdScale: 1.0
+        readonly property bool holdActive: lockBadge._locked
+                                           && (lockBadge.pointerHold || root.inputLockKeyHeld)
+
+        readonly property real _hoverScale: (lockBadge.holdActive ? 1.0
+                                             : (lockMa.pressed ? Anim.dipScale(lockBadge.width)
+                                                : (lockMa.containsMouse ? Anim.liftScale(lockBadge.width) : 1.0)))
+                                            * lockBadge.holdScale
+
+        onHoldActiveChanged: {
+            if (lockBadge.holdActive)
+                lockHoldAnim.restart()
+            else
+                lockBadge.resetHold()
+        }
+
+        function resetHold() {
+            lockHoldAnim.stop()
+            lockHintAnim.stop()
+            lockHoldRing.opacity = 0
+            lockBadge.holdScale = 1.0
+        }
+
+        function lock() {
+            if (root.store && !lockBadge._locked)
+                root.store.setInputLocked(true)
+        }
+
+        Rectangle {
+            id: lockCircle
+            anchors.fill: parent
+            radius: width / 2
+            scale: lockBadge._hoverScale
+            color: lockBadge._locked || lockBadge._dragHold ? AppPalette.accentBgStrong
+                   : (lockMa.containsMouse ? root.buttonHoverColor : root.buttonFillColor)
+            border.width: lockBadge._locked || lockBadge._dragHold ? 1 : 0
+            border.color: AppPalette.accentBorder
+            Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+            Behavior on scale { enabled: !lockHoldAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        }
+
+        Rectangle {
+            id: lockHoldRing
+            anchors.fill: parent
+            radius: width / 2
+            scale: lockBadge._hoverScale
+            color: "transparent"
+            border.width: Math.max(2, Math.round(2.5 * root._s))
+            border.color: "#FFFFFF"
+            opacity: 0
+            z: 5
+
+            ParallelAnimation {
+                id: lockHoldAnim
+                NumberAnimation {
+                    target: lockHoldRing; property: "opacity"
+                    from: 0; to: 0.9
+                    duration: lockBadge._holdMs; easing.type: Easing.InQuad
+                }
+                NumberAnimation {
+                    target: lockBadge; property: "holdScale"
+                    from: 1.0; to: 1.14
+                    duration: lockBadge._holdMs; easing.type: Easing.InQuad
+                }
+            }
+
+            SequentialAnimation {
+                id: lockHintAnim
+                NumberAnimation { target: lockHoldRing; property: "opacity"; to: 0.9; duration: 90;  easing.type: Easing.OutCubic }
+                NumberAnimation { target: lockHoldRing; property: "opacity"; to: 0.0; duration: 260; easing.type: Easing.OutCubic }
+            }
+        }
+
+        Item {
+            anchors.centerIn: parent
+            width: Math.round(lockBadge.width * 0.52)
+            height: width
+            scale: lockBadge._hoverScale
+            Behavior on scale { enabled: !lockHoldAnim.running; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+
+            Image {
+                id: lockIcon
+                anchors.fill: parent
+                source: lockBadge._locked ? "qrc:/icons/ui/lock.svg" : "qrc:/icons/ui/lock-open.svg"
+                sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                fillMode: Image.PreserveAspectFit
+                visible: false
+                layer.enabled: true
+                layer.smooth: true
+            }
+
+            ColorOverlay {
+                anchors.fill: lockIcon
+                source: lockIcon
+                color: AppPalette.text
+                smooth: true
+                cached: true
+            }
+        }
+
+        MouseArea {
+            id: lockMa
+            anchors.fill: parent
+            enabled: lockBadge.visible
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            pressAndHoldInterval: lockBadge._holdMs
+            onPressed: {
+                lockFocusRing.suppress()
+                lockBadge._holdHandled = false
+                lockBadge.pointerHold = true
+            }
+            onReleased: lockBadge.pointerHold = false
+            onCanceled: lockBadge.pointerHold = false
+            onPressAndHold: {
+                if (!lockBadge._locked)
+                    return
+                lockBadge._holdHandled = true
+                lockBadge.forceActiveFocus()
+                if (root.store)
+                    root.store.setInputLocked(false)
+            }
+            onClicked: {
+                lockBadge.forceActiveFocus()
+                if (lockBadge._holdHandled)
+                    return
+                if (lockBadge._locked) {
+                    lockHintAnim.restart()
+                    return
+                }
+                lockBadge.lock()
+            }
+        }
+
+        KFocusRing { id: lockFocusRing; target: lockCircle; focusItem: lockBadge }
+
+        KToolTip {
+            text: lockBadge._locked ? qsTr("Input locked · hold to unlock")
+                                    : qsTr("Lock input")
+            shown: lockMa.containsMouse
+        }
+
+        Rectangle {
+            id: lockPulse
+            anchors.fill: parent
+            radius: width / 2
+            color: "transparent"
+            border.width: Math.max(2, Math.round(2 * root._s))
+            border.color: AppPalette.accentBorder
+            opacity: 0
+            visible: lockBadge._highlighted
+            z: 10
+        }
+
+        SequentialAnimation {
+            id: lockPulseAnim
+            NumberAnimation { target: lockPulse; property: "opacity"; to: 0.95; duration: 90;  easing.type: Easing.OutCubic }
+            NumberAnimation { target: lockPulse; property: "opacity"; to: 0.30; duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { target: lockPulse; property: "opacity"; to: 0.0;  duration: 280; easing.type: Easing.OutCubic }
+        }
+
+        Connections {
+            target: root
+            function onHighlightPulseTokenChanged() { if (lockBadge._highlighted) lockPulseAnim.restart() }
+        }
+    }
+
     Component {
         id: deviceShortcutDelegate
 
@@ -1099,7 +1443,7 @@ Item {
                     anchors.centerIn: parent
                     width: parent.width
                     height: Math.max(2, Math.round(2 * root._s))
-                    color: root.buttonFillColor
+                    color: AppPalette.textMuted
                 }
             }
 
@@ -1260,7 +1604,8 @@ Item {
                             glyphPixelSize: Math.round(11 * root._s)
                             readonly property bool _active: devBadge._dev && devBadge._dev.transFreq === 700
                             fillColor:      _active ? AppPalette.accentBgStrong : AppPalette.card
-                            fillHoverColor: AppPalette.cardHover
+                            fillHoverColor: _active ? AppPalette.accentBgHover : AppPalette.cardHover
+                            fillPressedColor: _active ? AppPalette.accentBgPressed : AppPalette.bgDeep
                             borderColor:    _active ? AppPalette.accentBorder : AppPalette.border
                             toolTipText: qsTr("Set 700 kHz")
                             onClicked: {
@@ -1276,7 +1621,8 @@ Item {
                             glyphPixelSize: Math.round(11 * root._s)
                             readonly property bool _active: devBadge._dev && devBadge._dev.transFreq === 450
                             fillColor:      _active ? AppPalette.accentBgStrong : AppPalette.card
-                            fillHoverColor: AppPalette.cardHover
+                            fillHoverColor: _active ? AppPalette.accentBgHover : AppPalette.cardHover
+                            fillPressedColor: _active ? AppPalette.accentBgPressed : AppPalette.bgDeep
                             borderColor:    _active ? AppPalette.accentBorder : AppPalette.border
                             toolTipText: qsTr("Set 450 kHz")
                             onClicked: {
@@ -1320,6 +1666,11 @@ Item {
     Component {
         id: qaLoggingComp
         LoggingBadge {}
+    }
+
+    Component {
+        id: qaInputLockComp
+        InputLockBadge {}
     }
 
     Component {
@@ -1545,6 +1896,32 @@ Item {
         }
     }
 
+    MouseArea {
+        id: panelInputBlocker
+        anchors.fill: parent
+        z: 99
+        visible: root.inputLocked
+        enabled: visible
+        acceptedButtons: Qt.AllButtons
+        hoverEnabled: true
+        preventStealing: true
+        propagateComposedEvents: false
+        onPressed:       function(mouse) { mouse.accepted = true }
+        onReleased:      function(mouse) { mouse.accepted = true }
+        onClicked:       function(mouse) { mouse.accepted = true }
+        onDoubleClicked: function(mouse) { mouse.accepted = true }
+        onPressAndHold:  function(mouse) { mouse.accepted = true }
+        onWheel:         function(wheel) { wheel.accepted = true }
+    }
+
+    InputLockBadge {
+        id: lockedBadge
+        x: collapsedDeviceRow.x
+        y: collapsedDeviceRow.y
+        z: 100
+        visible: root.inputLocked
+    }
+
     Item {
         id: inputDeviceBadge
         anchors.left: parent.left
@@ -1595,11 +1972,18 @@ Item {
         anchors.leftMargin: root.panelPaddingX + 2 * root.toggleButtonSize + 2 * Math.round(8 * root._s)
         anchors.verticalCenter: toggleButton.verticalCenter
         spacing: root.quickActionSpacing
-        visible: root.showToggleButton && !root.expanded && (root.connectionStatusToolVisible || root._loggingBadgeVisibleCollapsed)
+        visible: root.showToggleButton && !root.expanded
+                 && (root.connectionStatusToolVisible || root._loggingBadgeVisibleCollapsed || root.inputLocked)
         opacity: visible ? 1 : 0
 
         Behavior on opacity {
             NumberAnimation { duration: 170; easing.type: Easing.OutCubic }
+        }
+
+        Item {
+            width: visible ? root.controlHeight : 0
+            height: root.controlHeight
+            visible: root.inputLocked
         }
 
         Repeater {
@@ -1697,6 +2081,7 @@ Item {
                            : key === "widgets"     ? root.showWidgets
                            : key === "console"      ? root.showConsole
                            : key === "profiles"     ? root.showProfiles
+                           : key === "inputLock"    ? root._showInputLock
                            : key === "secondWindow" ? root._showSecondWindow
                            : key === "powerOff"     ? root._showPowerOff
                            : false
@@ -1708,6 +2093,7 @@ Item {
                                    : key === "widgets"      ? qaWidgetsComp
                                    : key === "console"      ? qaConsoleComp
                                    : key === "profiles"     ? qaProfilesComp
+                                   : key === "inputLock"    ? qaInputLockComp
                                    : key === "secondWindow" ? qaSecondWindowComp
                                    : key === "powerOff"     ? qaPowerOffComp
                                    : null
@@ -1834,13 +2220,9 @@ Item {
         readonly property int comboW: root.triggerButtonWidth
         readonly property int gap: Math.round(6 * root._s)
         readonly property int sidePad: Math.round(3 * root._s)
-        readonly property int _listContentH: root.hasWidgets
-            ? root.store.widgets.length * root.favoriteItemHeight
-              + Math.max(0, root.store.widgets.length - 1) * root.favoriteItemSpacing
-            : 0
-        readonly property int _bodyContentH: root.hasWidgets
-            ? Math.min(root.favoriteListMaxHeight, _listContentH)
-            : Math.round(40 * root._s)
+        readonly property int _listContentH: root.widgetCardCount * root.favoriteItemHeight
+            + Math.max(0, root.widgetCardCount - 1) * root.favoriteItemSpacing
+        readonly property int _bodyContentH: Math.min(root.favoriteListMaxHeight, _listContentH)
         readonly property int dropBodyH: (widgetsBodyLoader.item ? widgetsBodyLoader.item.implicitHeight
                                                                   : _bodyContentH + root.controlHeight)
                                          + Math.round(14 * root._s)

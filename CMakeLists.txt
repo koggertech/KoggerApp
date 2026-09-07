@@ -16,6 +16,30 @@ math(EXPR KOGGER_VERSION_CODE "${_kvmaj} * 10000 + ${_kvmin} * 100 + ${_kvpat}")
 
 project(KoggerApp VERSION ${KOGGER_VERSION} LANGUAGES CXX)
 
+# Build revision, best effort: empty outside a git checkout
+set(KOGGER_GIT_REVISION "")
+find_package(Git QUIET)
+if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" rev-parse --short=10 HEAD
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE KOGGER_GIT_REVISION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/.git/HEAD")
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" symbolic-ref -q --short HEAD
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE _kbranch
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+    if(_kbranch AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git/refs/heads/${_kbranch}")
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/.git/refs/heads/${_kbranch}")
+    endif()
+endif()
+
 if(ANDROID)
     set(QT_ANDROID_ABIS "armeabi-v7a;arm64-v8a" CACHE STRING "Android target ABIs" FORCE)
 endif()
@@ -43,7 +67,7 @@ list(APPEND QT_SKIP_AUTO_PLUGIN_INCLUSION
     QPSQLDriverPlugin)
 
 find_package(Qt6 REQUIRED COMPONENTS
-    Core Gui Qml Quick QuickControls2 Network Sql Concurrent Positioning Svg LinguistTools)
+    Core Gui Qml Quick QuickControls2 Network Sql Concurrent Positioning Svg Multimedia LinguistTools)
 
 qt_standard_project_setup(REQUIRES 6.8)
 
@@ -58,6 +82,7 @@ qt_add_executable(KoggerApp
     src/main.cpp
     src/settings_migration.h       src/settings_migration.cpp
 
+    src/app_log.h                  src/app_log.cpp
     src/black_stripes_processor.h  src/black_stripes_processor.cpp
     src/console.h                  src/console.cpp
     src/console_list_model.h       src/console_list_model.cpp
@@ -95,11 +120,16 @@ qt_add_executable(KoggerApp
     src/mosaic_index_provider.h    src/mosaic_index_provider.cpp
     src/app_utils.h
     src/ui_keepalive.h             src/ui_keepalive.cpp
+    src/ui_probe.h                 src/ui_probe.cpp
 )
 
 target_compile_features(KoggerApp PRIVATE cxx_std_23)
 
+configure_file(src/kogger_revision.h.in
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/kogger_revision.h" @ONLY)
+
 target_include_directories(KoggerApp PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/generated
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/freetype/include)
 
@@ -111,6 +141,7 @@ add_subdirectory(src/scene3d)
 add_subdirectory(src/device)
 add_subdirectory(src/link)
 add_subdirectory(src/tile_engine)
+add_subdirectory(src/video)
 
 # Optional build flags (off by default)
 if(KOGGER_FLASHER)
@@ -131,7 +162,7 @@ endif()
 
 target_link_libraries(KoggerApp PRIVATE
     Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2
-    Qt6::Network Qt6::Sql Qt6::Concurrent Qt6::Positioning Qt6::Svg)
+    Qt6::Network Qt6::Sql Qt6::Concurrent Qt6::Positioning Qt6::Svg Qt6::Multimedia)
 
 target_sources(KoggerApp PRIVATE
     resources/icons.qrc
@@ -160,6 +191,12 @@ qt_add_translations(KoggerApp
         translations/translation_ru.ts
         translations/translation_pl.ts
     RESOURCE_PREFIX "/translations")
+
+# ── Desktop-only sources ─────────────────────────────────────────────────
+if(NOT ANDROID)
+    target_sources(KoggerApp PRIVATE
+        src/instance_lock.h            src/instance_lock.cpp)
+endif()
 
 # ── Platform branches ────────────────────────────────────────────────────
 if(ANDROID)

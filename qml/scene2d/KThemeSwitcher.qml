@@ -80,6 +80,14 @@ Item {
         Rectangle {
             anchors.fill: parent
             radius: width / 2
+            color: "#FFFFFF"
+            opacity: sw.hovered ? 0.14 : 0
+            Behavior on opacity { NumberAnimation { duration: Anim.controlMs } }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: width / 2
             color: "transparent"
             // Ring only on the selected swatch (selection cue); others borderless.
             border.width: sw.selected ? Math.max(2, Math.round(2 * root._s))

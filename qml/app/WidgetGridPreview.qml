@@ -6,8 +6,21 @@ Item {
 
     property var def: null
 
-    readonly property int _cols: def ? def.cols : 1
-    readonly property int _rows: def ? def.rows : 1
+    readonly property bool _isNodes: !!(def && def.kind === "usblNodes")
+    readonly property bool _isServo: !!(def && def.kind === "servo")
+    readonly property bool _isStand: !!(def && def.kind === "stand")
+
+    readonly property real _glyphPadX: Math.max(4, Math.round(Math.min(width, height) * 0.12))
+    readonly property real _glyphPadY: Tokens.spaceXs
+    readonly property int _sRef: 100
+    readonly property real _capHRatio: Math.max(0.01, sCapTm.tightBoundingRect.height / _sRef)
+    readonly property real _capTopRatio: (sRefFm.ascent + sCapTm.tightBoundingRect.y) / _sRef
+    readonly property real _capLeftRatio: sCapTm.tightBoundingRect.x / _sRef
+    readonly property real _sInkRatioW: Math.max(0.01, sRefTm.tightBoundingRect.width / _sRef)
+    readonly property real _glyphFill: 0.86
+    readonly property bool _hasGlyph: _isNodes || _isServo || _isStand
+    readonly property int _cols: (def && typeof def.cols === "number") ? def.cols : 1
+    readonly property int _rows: (def && typeof def.rows === "number") ? def.rows : 1
     readonly property real _gap: Math.round(3 * AppPalette.scale)
 
     Rectangle {
@@ -17,8 +30,63 @@ Item {
         border.width: 1
         border.color: AppPalette.border
 
+        Column {
+            visible: root._hasGlyph
+            anchors.fill: parent
+            anchors.margins: Tokens.spaceXs
+            spacing: root._gap
+            Repeater {
+                model: 3
+                delegate: Rectangle {
+                    required property int index
+                    width: parent.width
+                    height: Math.max(2, (parent.height - 2 * root._gap) / 3)
+                    radius: 2
+                    color: AppPalette.accentBg
+                    border.width: 1
+                    border.color: AppPalette.accentBorder
+                    // Fading down the list says "and however many more", which is the one thing
+                    // a fixed-count thumbnail has to get across.
+                    opacity: 1.0 - index * 0.28
+                }
+            }
+        }
+
+        FontMetrics {
+            id: sRefFm
+            font.bold: true
+            font.pixelSize: root._sRef
+        }
+
+        TextMetrics {
+            id: sCapTm
+            font: sRefFm.font
+            text: "H"
+        }
+
+        TextMetrics {
+            id: sRefTm
+            font: sRefFm.font
+            text: root._isNodes ? "U" : root._isStand ? "St" : "Se"
+        }
+
+        Text {
+            id: sGlyph
+            visible: root._hasGlyph
+            text: sRefTm.text
+            readonly property real capBoxH: root._capHRatio * font.pixelSize
+            x: root._glyphPadX - root._capLeftRatio * font.pixelSize
+            y: (parent.height - capBoxH) / 2 - root._capTopRatio * font.pixelSize
+            color: AppPalette.bgDeep
+            font.bold: true
+            font.pixelSize: Math.max(8, Math.round(root._glyphFill * Math.min(
+                                (parent.height - root._glyphPadY * 2) / root._capHRatio,
+                                (parent.width  - root._glyphPadX * 2) / root._sInkRatioW)))
+        }
+
         Item {
             id: area
+            visible: !root._hasGlyph
             anchors.fill: parent
             anchors.margins: Tokens.spaceXs
 

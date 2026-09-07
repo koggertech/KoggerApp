@@ -2,7 +2,9 @@
 
 #include <functional>
 #include <QThread>
+#include <QTimer>
 #include <QVariantList>
+#include <QVariantMap>
 
 #include "qml_component_controller.h"
 #include "data_processor.h"
@@ -12,6 +14,10 @@ class GraphicsScene3dView;
 class IsobathsViewControlMenuController : public QmlComponentController
 {
     Q_OBJECT
+
+    Q_PROPERTY(QVariantMap pipelineStatus READ pipelineStatus NOTIFY pipelineStatusChanged)
+    Q_PROPERTY(bool statusMonitorEnabled READ statusMonitorEnabled WRITE setStatusMonitorEnabled NOTIFY statusMonitorEnabledChanged)
+    Q_PROPERTY(bool statusDetailedPolling READ statusDetailedPolling WRITE setStatusDetailedPolling NOTIFY statusDetailedPollingChanged)
 
 public:
     explicit IsobathsViewControlMenuController(QObject* parent = nullptr);
@@ -34,8 +40,23 @@ public:
     // Colormap gradient stops [{pos, color}] for the theme swatch (QML picker).
     Q_INVOKABLE QVariantList themeStops(int index) const;
 
+    QVariantMap pipelineStatus() const;
+    bool statusMonitorEnabled() const;
+    void setStatusMonitorEnabled(bool state);
+    bool statusDetailedPolling() const;
+    void setStatusDetailedPolling(bool state);
+    Q_INVOKABLE void refreshPipelineStatus();
+
+signals:
+    void pipelineStatusChanged();
+    void statusMonitorEnabledChanged();
+    void statusDetailedPollingChanged();
+
 protected:
     void findComponent() override;
+
+private slots:
+    void onPipelineStats(const QVariantMap& stats);
 
 private:
     void tryInitPendingLambda();
@@ -45,6 +66,8 @@ private:
     DataProcessor* dataProcessorPtr_;
     std::function<void()> pendingLambda_;
     QThread thread_;
+    QTimer statusTimer_;
+    QVariantMap pipelineStatus_;
     float surfaceLineStepSize_;
     int themeId_;
     int labelStepSize_;
@@ -55,4 +78,7 @@ private:
     bool trianglesVisible_;
     bool debugModeView_;
     bool processState_;
+    bool statusMonitorEnabled_;
+    bool statusRequestPending_;
+    bool statusDetailedPolling_;
 };

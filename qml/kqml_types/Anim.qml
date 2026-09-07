@@ -24,10 +24,35 @@ QtObject {
     readonly property int easingStd:       Easing.OutCubic
     readonly property int easingSmooth:    easingStd
     readonly property int easingInOutQuad: easingStd
+    readonly property int easingBack:      Easing.OutBack
 
     // ── Controls: button hover/press (fill, border, scale, white overlay) ─────
     property int controlMs: 110
     readonly property int controlEasing: easingStd
+
+    // ── Hover / press feedback: ONE place for "how alive" every control feels ──
+    // A pixel lift capped by a factor. Neither half works alone: a plain factor
+    // is sub-pixel on a 30 px icon button and a jump on a 260 px one, while a
+    // plain px lift over-pops small controls — `scale` grows BOTH axes, so 4 px
+    // on a 30×30 square is 13 % in each direction, not just along the width.
+    // So: grow by hoverLiftPx, but never by more than hoverLiftMaxFactor.
+    property real hoverLiftPx: 4
+    property real pressDipPx: 2
+    property real hoverLiftMaxFactor: 0.05
+    property real pressDipMaxFactor: 0.025
+    property real hoverLighten: 1.10
+
+    function liftScale(w) {
+        return w > 1 ? 1 + Math.min(Math.round(hoverLiftPx * AppPalette.scale) / w,
+                                    hoverLiftMaxFactor)
+                     : 1.0
+    }
+
+    function dipScale(w) {
+        return w > 1 ? 1 - Math.min(Math.round(pressDipPx * AppPalette.scale) / w,
+                                    pressDipMaxFactor)
+                     : 1.0
+    }
 
     // ── Toggles / switches: knob slide, track colour ─────────────────────────
     property int toggleMs: 120
@@ -36,6 +61,26 @@ QtObject {
     // ── Generic fade: opacity in/out (icons, overlays) ───────────────────────
     property int fadeMs: 120
     readonly property int fadeEasing: easingStd
+
+    property int tooltipMs: 170
+    property int tooltipExitMs: 90
+    property real tooltipEnterScale: 1.08
+    property real tooltipExitScale: 0.94
+    property real tooltipOvershoot: 0.9
+    readonly property int tooltipEnterEasing: easingBack
+    readonly property int tooltipEasing: easingStd
+
+    // ── Toasts (NotificationsOverlay): spring in, collapse out ───────────────
+    property int toastEnterMs: 420
+    property int toastExitMs: 200
+    property int toastReflowMs: 260
+    property real toastEnterScale: 0.90
+    property real toastExitScale: 0.94
+    property real toastSlidePx: 14
+    property real toastOvershoot: 1.6
+    readonly property int toastEnterEasing: easingBack
+    readonly property int toastExitEasing: Easing.InCubic
+    readonly property int toastReflowEasing: easingStd
 
     // ── Toolbars: 3D scene idle-transparency fade ────────────────────────────
     property int toolbarFadeMs: 150

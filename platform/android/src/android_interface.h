@@ -12,7 +12,10 @@
 #include <QtCore/QString>
 #include <QtCore/QLoggingCategory>
 
+#include <functional>
 #include <jni.h>
+
+class QObject;
 
 Q_DECLARE_LOGGING_CATEGORY(AndroidInterfaceLog)
 
@@ -23,7 +26,9 @@ namespace AndroidInterface
     void setNativeMethods();
     void jniLogDebug(JNIEnv *envA, jobject thizA, jstring messageA);
     void jniLogWarning(JNIEnv *envA, jobject thizA, jstring messageA);
+    void jniStoragePermissionResult(JNIEnv *envA, jobject thizA, jboolean grantedA);
     bool checkStoragePermissions();
+    void setStoragePermissionHandler(QObject *context, std::function<void(bool)> handler);
     QString getSDCardPath();
     void setKeepScreenOn(bool on);
     void moveTaskToBack();

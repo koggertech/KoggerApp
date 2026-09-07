@@ -24,7 +24,6 @@
 #include "mosaic_view_control_menu_controller.h"
 #include "image_view_control_menu_controller.h"
 #include "map_view_control_menu_controller.h"
-#include "usbl_view_control_menu_controller.h"
 #include "point_group_control_menu_controller.h"
 #include "polygon_group_control_menu_controller.h"
 #include "mpc_filter_control_menu_controller.h"
@@ -53,6 +52,8 @@ public:
     Q_PROPERTY(bool              isGPSAlive                   READ getIsGPSAlive                   NOTIFY isGPSAliveChanged)
     Q_PROPERTY(bool              isFactoryMode                READ isFactoryMode                   CONSTANT)
     Q_PROPERTY(ConsoleListModel* consoleList                  READ consoleList                     CONSTANT)
+    Q_PROPERTY(ConsoleListModel* consoleListApp               READ consoleListApp                  CONSTANT)
+    Q_PROPERTY(ConsoleListModel* consoleListProto             READ consoleListProto                CONSTANT)
     Q_PROPERTY(bool              loggingKlf                   READ getKlfLogging                   WRITE setKlfLogging                   NOTIFY loggingKlfChanged)
     Q_PROPERTY(bool              isKlfLogging                 READ getKlfLogging                   NOTIFY loggingKlfChanged)
     Q_PROPERTY(bool              loggingCsv                   READ getCsvLogging                   WRITE setCsvLogging                   NOTIFY loggingCsvChanged)
@@ -94,9 +95,13 @@ public:
 #endif
     void setConsoleOutputEnabled(bool enabled);
     bool isConsoleOutputEnabled() const { return consoleOutputEnabled_; }
-    void consoleInfo(QString msg);
-    void consoleWarning(QString msg);
+    Q_INVOKABLE void consoleInfo(QString msg);
+    Q_INVOKABLE void consoleWarning(QString msg);
+    void consoleStreamInfo(const QString& msg);
+    void consoleNotification(const QString& msg, bool isWarning);
+    void consoleProtoText(const QString& msg);
     void consoleProto(FrameParser& parser, bool isIn = true);
+    Q_INVOKABLE void setConsoleMaxRows(int rows);
     void saveLLARefToSettings();
     Q_INVOKABLE void saveCameraViewToSettings();
     void removeLinkManagerConnections();
@@ -113,6 +118,7 @@ public:
     bool getCsvLogging() const;
     Q_INVOKABLE QString klfLogFilePath() const;
     Q_INVOKABLE void    revealInFolder(const QString& path);
+    Q_INVOKABLE void    copyToClipboard(const QString& text);
     Q_INVOKABLE QString csvLogFilePath() const;
     Q_INVOKABLE qint64  activeLogSizeBytes() const;
     Q_INVOKABLE int     activeLogDurationSecs() const;
@@ -120,11 +126,18 @@ public:
     Q_INVOKABLE QString logDirectory() const;
     Q_INVOKABLE QString logDirectoryUrl() const;
     Q_INVOKABLE bool    prepareLogDirectory(const QString& dir);
+    Q_INVOKABLE QString appLogDirectory() const;
+    Q_INVOKABLE bool    promoteAppLogStorage();
+    Q_INVOKABLE QString appLogFilePath() const;
+    Q_INVOKABLE void    revealAppLogFolder();
     Q_INVOKABLE void    powerOffSystem();
     bool getUseGPS() const;
     bool getNeedForceZooming() const { return needForceZooming_; }
 
-public slots:    
+    void deferStartupFileOpen(const QString& filePath);
+    Q_INVOKABLE void notifyUiSettingsApplied();
+
+public slots:
     void setIsGPSAlive(bool state) { qDebug() << "Core::setIsGPSAlive" << state; isGPSAlive_ = state; emit isGPSAliveChanged(); }
 
 #ifdef SEPARATE_READING
@@ -227,11 +240,11 @@ public slots:
     Q_INVOKABLE bool getBringWindowToFrontEnabled() const;
     Q_INVOKABLE void setBringWindowToFrontEnabled(bool enabled);
     Q_INVOKABLE void moveAppToBackground();
-    Q_INVOKABLE void bringWindowToFront(); // raise+activate main window (wired to the OS-level raise in main.cpp), gated by bringWindowToFrontEnabled_
     Q_INVOKABLE void requestDismissTransientUi();
     Q_INVOKABLE void setActiveTransientUi(QObject* who);
 
 signals:
+    void appLogPathChanged();
     void bringWindowToFrontRequested();
     void bringWindowToFrontEnabledChanged();
     void activeTransientUiChanged(QObject* who);
@@ -273,6 +286,7 @@ private slots:
 
 private:
     /*methods*/
+    void bringWindowToFront();
     void loadCsvExportFields();
     void saveCsvExportFields();
     QHash<QString, bool> csvExportFields_;   // key -> enabled (lazy-loaded from QSettings)
@@ -294,6 +308,8 @@ private:
     void resetDataProcessorConnections();
 
     ConsoleListModel* consoleList();
+    ConsoleListModel* consoleListApp();
+    ConsoleListModel* consoleListProto();
     void createControllers();
     void createDeviceManagerConnections();
     void createLinkManagerConnections();
@@ -311,6 +327,8 @@ private:
     void resetRealtimeSessionState();
     void restoreRealtimeProcessingFlags();
     void releasePlotCaches();
+    void flushStartupFileOpen();
+    void installAppLogStoragePromotion();
     QString resolveExportBasePath(const QString& basePath) const;
     QString buildExportFileStem(const QString& openedFilePath) const;
 #ifdef Q_OS_ANDROID
@@ -333,7 +351,6 @@ private:
     std::shared_ptr<PolygonGroupControlMenuController> polygonGroupControlMenuController_;
     std::shared_ptr<Scene3DControlMenuController> scene3dControlMenuController_;
     std::shared_ptr<Scene3dToolBarController> scene3dToolBarController_;
-    std::shared_ptr<UsblViewControlMenuController> usblViewControlMenuController_;
     std::unique_ptr<HotkeysController> hotkeysController_;
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
@@ -370,6 +387,8 @@ private:
     QString filePath_;
     QString fChName_;
     QString sChName_;
+    QString startupFilePath_;
+    bool uiSettingsApplied_ = false;
 
     bool isFileOpening_;
     bool isAppendMode_ = false;

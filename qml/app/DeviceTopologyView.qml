@@ -292,7 +292,7 @@ Item {
                             anchors.centerIn: parent
                             width: parent.width
                             height: Math.max(2, Math.round(2 * AppPalette.scale))
-                            color: AppPalette.borderHover
+                            color: AppPalette.textMuted
                             visible: parent.cell.kind === "conn"
                         }
                     }

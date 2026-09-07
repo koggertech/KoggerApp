@@ -18,6 +18,8 @@
 #endif
 #include <QTimer>
 
+#include <atomic>
+
 #include "link_defs.h"
 #include "proto_binnary.h"
 
@@ -37,6 +39,8 @@ public:
     void createAsTcp(const QString& address, int sourcePort, int destinationPort);
     void updateTcpParameters(const QString& address, int sourcePort, int destinationPort);
     void openAsTcp();
+    void createAsRtsp(const QString& address);
+    void openAsRtsp();
     bool isOpen() const;
     void close();
     bool parse();
@@ -62,6 +66,8 @@ public:
     void setAutoSpeedSelection(bool autoSpeedSelection);
     void setIsUpgradingState(bool state);
     void setAutoConnOnce(bool state);
+    void armAutoConn(int windowMs);
+    bool isAutoConnExpired(qint64 nowMsecs) const;
     QUuid       getUuid() const;
     bool        getConnectionStatus() const;
     bool        getIsRecievesData() const;
@@ -145,6 +151,8 @@ private:
     int localGhostIgnoreCount_;
     int requestCnt_;
     bool autoConnOnce_;
+    qint64 autoConnUntilMsecs_;
+    std::atomic<bool> rtspRequested_;
 
 private slots:
     void readyRead();

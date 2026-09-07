@@ -48,9 +48,87 @@
         <source>Speed of sound</source>
         <translation>Скорость звука</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="32"/>
+        <source>Panel at the cursor on the echogram. The distance is always in it, the rest is optional.</source>
+        <translation>Плашка у курсора на эхограмме. Дистанция в ней есть всегда, остальное — по выбору.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="50"/>
+        <source>The channel the cursor reads its numbers from.</source>
+        <translation>Канал, с которого курсор читает данные.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="56"/>
+        <source>Number of the ping under the cursor, counted from the start of the recording.</source>
+        <translation>Номер зондирования под курсором, по порядку от начала записи.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="62"/>
+        <source>How many millimetres of depth one echogram sample covers.</source>
+        <translation>Сколько миллиметров глубины приходится на одну точку эхограммы.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="68"/>
+        <source>The frequency this ping was made at, kHz.</source>
+        <translation>Частота, на которой сделано это зондирование, кГц.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="74"/>
+        <source>How many pulses were emitted for one ping.</source>
+        <translation>Сколько импульсов излучено за одно зондирование.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="80"/>
+        <source>Whether the transmit booster was on for this ping.</source>
+        <translation>Был ли включён усилитель излучения при этом зондировании.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="86"/>
+        <source>The speed of sound used to turn this ping into depth, m/s.</source>
+        <translation>Скорость звука, заложенная в расчёт глубины, м/с.</translation>
+    </message>
 </context>
 <context>
     <name>AppSettingsPage</name>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1"/>
+        <source>About</source>
+        <translation>О программе</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1889"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1890"/>
+        <source>Per-window video settings.</source>
+        <translation>Настройки видео по окнам.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1908"/>
+        <source>No video windows displayed. You can add one while editing the workspace.</source>
+        <translation>Видеоокна не отображаются. Добавить видеоокно можно при редактировании рабочего пространства.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="657"/>
+        <source>Layout %1</source>
+        <translation>Компоновка %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="659"/>
+        <source>Active</source>
+        <translation>Активно</translation>
+    </message>
+    <message>
+        <source>Dataset: with position zeroing on</source>
+        <translation>Датасет: зануление координат</translation>
+    </message>
+    <message>
+        <source>Servo</source>
+        <translation>Серво</translation>
+    </message>
     <message>
         <source>Hide important notifications</source>
         <translation>Скрывать важные уведомления</translation>
@@ -62,6 +140,14 @@
     <message>
         <source>Show the scale bar in the 3D scene</source>
         <translation>Показывать масштабную линейку в 3D-сцене</translation>
+    </message>
+    <message>
+        <source>USBL beacons</source>
+        <translation>Акустические маяки</translation>
+    </message>
+    <message>
+        <source>Show the acoustic nodes and their tracks in the 3D scene</source>
+        <translation>Показывать акустические узлы и их треки в 3D-сцене</translation>
     </message>
     <message>
         <source>Show the surface quality label in the 3D scene</source>
@@ -431,11 +517,6 @@
         <translation>Выберите папку и установите имя файла.csv</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2666"/>
-        <source>Scroll to top</source>
-        <translation>Наверх</translation>
-    </message>
-    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="283"/>
         <location filename="../qml/app/AppSettingsPage.qml" line="1224"/>
         <source>Export to CSV</source>
@@ -637,9 +718,9 @@
         <translation>Масштаб</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2114"/>
-        <source>Pos</source>
-        <translation>Поз</translation>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2644"/>
+        <source>Position</source>
+        <translation>Позиция</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2189"/>
@@ -788,11 +869,6 @@
         <translation type="vanished">Четыре окна</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="807"/>
-        <source>Preset:</source>
-        <translation>Шаблон:</translation>
-    </message>
-    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="821"/>
         <source>Normal 2D</source>
         <translation>Обычный 2D</translation>
@@ -929,11 +1005,6 @@
         <translation>Смещение XY, мм:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="957"/>
-        <source>Sonar offset XYZ, mm</source>
-        <translation>Смещение сонара XYZ, мм</translation>
-    </message>
-    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="421"/>
         <source>Fish Finders</source>
         <translation>Для Рыболова</translation>
@@ -1001,6 +1072,10 @@
         <translation>Панель %1</translation>
     </message>
     <message>
+        <source>USBL</source>
+        <translation>USBL</translation>
+    </message>
+    <message>
         <source>Delete panel</source>
         <translation>Удалить панель</translation>
     </message>
@@ -1011,6 +1086,71 @@
     <message>
         <source>Create panel</source>
         <translation>Создать панель</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1062"/>
+        <source>Bottom search settings for an ordinary sounder with one beam pointing down.</source>
+        <translation>Настройки поиска дна для обычного эхолота с одним лучом вниз.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1064"/>
+        <source>For a sounder with a narrow beam: the bottom echo is shorter, so the search is finer.</source>
+        <translation>Для эхолота с узким лучом: эхо от дна короче, поиск ведётся точнее.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
+        <source>For a side-scan sonar: the beam looks sideways, not down.</source>
+        <translation>Для сонара бокового обзора: луч смотрит в сторону, а не вниз.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1078"/>
+        <source>Lifts the weak echo at long range so the bottom is found far out too.</source>
+        <translation>Подтягивает слабое эхо на большой дальности, чтобы дно находилось и вдали.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1115"/>
+        <source>How clear the echo must be to count as bottom. Where it is weaker, the bottom line breaks.</source>
+        <translation>Насколько явным должно быть эхо, чтобы считаться дном. Где эхо слабее — линия дна прерывается.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1149"/>
+        <source>Smooths the bottom line over neighbouring pings. Wider is smoother but lags more.</source>
+        <translation>Сглаживает линию дна по соседним зондированиям. Шире — ровнее, но с большим запаздыванием.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1183"/>
+        <source>Refines the depth near the one already found and rejects false bottoms from re-reflections. 0 is off.</source>
+        <translation>Уточняет глубину рядом с найденной и отсекает ложное дно от переотражений. 0 — выключено.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1217"/>
+        <source>The bottom is not searched for closer than this.</source>
+        <translation>Дно не ищется ближе этой дальности.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1251"/>
+        <source>The bottom is not searched for further than this.</source>
+        <translation>Дно не ищется дальше этой дальности.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1360"/>
+        <source>Recompute the bottom over the whole open file. Manual edits are left alone.</source>
+        <translation>Пересчитать дно по всему открытому файлу. Ручные правки не затрагиваются.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="600"/>
+        <source>Developer mode</source>
+        <translation>Режим разработчика</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="602"/>
+        <source>Unlocks panels and controls meant for development. Turning it off hides this row again.</source>
+        <translation>Открывает панели и органы управления для разработки. Выключение скроет эту строку снова.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="724"/>
+        <source>Stand</source>
+        <translation>Стенд</translation>
     </message>
 </context>
 <context>
@@ -1114,6 +1254,11 @@
 </context>
 <context>
     <name>ConnectionViewer</name>
+    <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="768"/>
+        <source>+RTSP</source>
+        <translation>+RTSP</translation>
+    </message>
     <message>
         <source>Choose recording folder</source>
         <translation>Выбор директории для записи</translation>
@@ -1412,62 +1557,127 @@
 <context>
     <name>ConsolePanelDrawer</name>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="178"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="508"/>
         <source>Maximize</source>
         <translation>Развернуть</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="178"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="508"/>
         <source>Restore</source>
         <translation>Свернуть</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="144"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="420"/>
         <source>Console</source>
         <translation>Консоль</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="154"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="448"/>
         <source>Auto scroll</source>
-        <translation>Автоматический скролл</translation>
+        <translation>Авто скролл</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="161"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="455"/>
         <source>Binary</source>
         <translation>Бинарный</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="291"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="523"/>
         <source>Settings</source>
         <translation>Настройки</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="501"/>
+        <source>Copy selected lines</source>
+        <translation>Копировать выделенные строки</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="502"/>
+        <source>Copy the whole log</source>
+        <translation>Копировать весь лог</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="34"/>
+        <source>All</source>
+        <translation>Всё</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="35"/>
+        <source>App</source>
+        <translation>Приложение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="36"/>
+        <source>Protocol</source>
+        <translation>Протокол</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="467"/>
+        <source>NMEA</source>
+        <translation>NMEA</translation>
     </message>
 </context>
 <context>
     <name>ConsoleSettingsTab</name>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="14"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="19"/>
         <source>Show console</source>
         <translation>Показать консоль</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="20"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="36"/>
         <source>Colour marking</source>
         <translation>Маркировка цветом</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="15"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="37"/>
         <source>Highlight log syntax with the app theme's colours</source>
         <translation>Подсветка синтаксиса лога цветами темы приложения</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="29"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="155"/>
         <source>Keep last lines:</source>
         <translation>Хранить последние строки:</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="53"/>
-        <source>Ring buffer — the console keeps only the newest lines; older ones are dropped.</source>
-        <translation>Кольцевой буфер — консоль хранит только последние строки; старые отбрасываются.</translation>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="56"/>
+        <source>Binary protocol</source>
+        <translation>Бинарный протокол</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="57"/>
+        <source>Log KP1/KP2 frames of the device protocol</source>
+        <translation>Писать в лог кадры KP1/KP2 протокола устройства</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="74"/>
+        <source>NMEA sentences</source>
+        <translation>NMEA-сообщения</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="75"/>
+        <source>Log NMEA sentences received from the device</source>
+        <translation>Писать в лог NMEA-сообщения от устройства</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="106"/>
+        <source>Log text size:</source>
+        <translation>Размер текста лога:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="116"/>
+        <source>%1 px</source>
+        <translation>%1 px</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="14"/>
+        <source>Reset to default</source>
+        <translation>Вернуть значение по умолчанию</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="13"/>
+        <source>Default</source>
+        <translation>По умолчанию</translation>
     </message>
 </context>
 <context>
@@ -1797,6 +2007,16 @@
         <source>Contact distance</source>
         <translation>Дистанция контакта</translation>
     </message>
+    <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="97"/>
+        <source>Sonar offset XYZ, mm</source>
+        <translation>Смещение сонара XYZ, мм</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="98"/>
+        <source>Mount offset of the transducer, applied to the exported coordinates only.</source>
+        <translation>Смещение установки антенны. Применяется только к выгружаемым координатам.</translation>
+    </message>
 </context>
 <context>
     <name>Dataset</name>
@@ -1945,6 +2165,66 @@
 <context>
     <name>DeviceSettingsPage</name>
     <message>
+        <source>Information</source>
+        <translation>Информация</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Модель</translation>
+    </message>
+    <message>
+        <source>Board type</source>
+        <translation>Тип платы</translation>
+    </message>
+    <message>
+        <source>Serial number</source>
+        <translation>Серийный номер</translation>
+    </message>
+    <message>
+        <source>not set</source>
+        <translation>не задан</translation>
+    </message>
+    <message>
+        <source>Firmware version</source>
+        <translation>Версия прошивки</translation>
+    </message>
+    <message>
+        <source>Bootloader version</source>
+        <translation>Версия загрузчика</translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation>Режим</translation>
+    </message>
+    <message>
+        <source>Bootloader</source>
+        <translation>Загрузчик</translation>
+    </message>
+    <message>
+        <source>Firmware</source>
+        <translation>Прошивка</translation>
+    </message>
+    <message>
+        <source>Bus address</source>
+        <translation>Адрес на шине</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Подключение</translation>
+    </message>
+    <message>
+        <source>Chip UID</source>
+        <translation>UID чипа</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Скопировать</translation>
+    </message>
+    <message>
+        <source>Device info copied to clipboard</source>
+        <translation>Информация об устройстве скопирована в буфер обмена</translation>
+    </message>
+    <message>
         <source>Write current settings to device memory</source>
         <translation>Записать текущие настройки в память устройства</translation>
     </message>
@@ -1955,18 +2235,6 @@
     <message>
         <source>Reboot the device</source>
         <translation>Перезагрузить устройство</translation>
-    </message>
-    <message>
-        <source>Apply the selected baud rate</source>
-        <translation>Установить выбранную скорость передачи</translation>
-    </message>
-    <message>
-        <source>Load all sonar settings from an XML file</source>
-        <translation>Загрузить все настройки сонара из XML-файла</translation>
-    </message>
-    <message>
-        <source>Save all sonar settings to an XML file</source>
-        <translation>Сохранить все настройки сонара в XML-файл</translation>
     </message>
     <message>
         <source>Choose firmware</source>
@@ -2021,11 +2289,6 @@
         <location filename="../qml/app/DeviceSettingsPage.qml" line="276"/>
         <source>Reboot</source>
         <translation>Перезагрузка</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="292"/>
-        <source>Set baudrate</source>
-        <translation>Задать</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="307"/>
@@ -2109,29 +2372,9 @@
         <translation>ЦОС</translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="224"/>
-        <source>AHRS</source>
-        <translation>AHRS</translation>
-    </message>
-    <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="209"/>
         <source>NMEA</source>
         <translation>NMEA</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="233"/>
-        <source>Temperature</source>
-        <translation>Температура</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="242"/>
-        <source>Timestamp</source>
-        <translation>Временная метка</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="144"/>
-        <source>Booster</source>
-        <translation>Усилитель</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="195"/>
@@ -2144,64 +2387,14 @@
         <translation>Частота, кГц</translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="132"/>
-        <source>Pulse count</source>
-        <translation>Количество импульсов</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="82"/>
-        <source>Sample count</source>
-        <translation>Количество отсчётов</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="76"/>
-        <source>Resolution, mm</source>
-        <translation>Разрешение, мм</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="88"/>
-        <source>Offset</source>
-        <translation>Оффсет отсчётов</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="110"/>
-        <source>Dead zone, mm</source>
-        <translation>Мертвая зона, мм</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="104"/>
-        <source>Max distance, mm</source>
-        <translation>Макс. дистанция, мм</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="164"/>
-        <source>Horizontal smoothing</source>
-        <translation>Гор. сглаживание</translation>
-    </message>
-    <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="116"/>
         <source>Confidence threshold, %</source>
         <translation>Порог уверенности, %</translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="170"/>
-        <source>Sound speed, m/s</source>
-        <translation>Скорость звука, м/с</translation>
-    </message>
-    <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="186"/>
         <source>Period, ms</source>
         <translation>Период, мс</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="370"/>
-        <source>Export</source>
-        <translation>Экспорт</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="365"/>
-        <source>Import</source>
-        <translation>Импорт</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="335"/>
@@ -2448,6 +2641,31 @@
     <message>
         <source>Group "%1" settings were not applied</source>
         <translation>настройки группы "%1" не применены</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
+        <source>Favourites:</source>
+        <translation>Избранное:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
+        <source>Favourites are full: up to %1 settings</source>
+        <translation>В избранном не больше %1 настроек</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
+        <source>Finish pinning settings</source>
+        <translation>Завершить закрепление</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
+        <source>Pin settings to favourites</source>
+        <translation>Закрепить настройки в избранном</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
+        <source>Tap a star next to a setting to pin it here</source>
+        <translation>Нажмите звезду рядом с настройкой, чтобы закрепить её здесь</translation>
     </message>
 </context>
 <context>
@@ -3222,6 +3440,11 @@
 <context>
     <name>GlobalPanePopup</name>
     <message>
+        <location filename="../qml/app/GlobalPanePopup.qml" line="167"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
         <location filename="../qml/app/GlobalPanePopup.qml" line="136"/>
         <source>Choose pane type</source>
         <translation>Выберите тип панели</translation>
@@ -3305,6 +3528,30 @@
         <translation>Остановить запись</translation>
     </message>
     <message>
+        <source>Lock input</source>
+        <translation>Заблокировать нажатия</translation>
+    </message>
+    <message>
+        <source>Input locked · hold to unlock</source>
+        <translation>Нажатия заблокированы · удерживайте для разблокировки</translation>
+    </message>
+    <message>
+        <source>Start recording · hold for options</source>
+        <translation>Начать запись · удерживайте для опций</translation>
+    </message>
+    <message>
+        <source>Stop recording · hold for options</source>
+        <translation>Остановить запись · удерживайте для опций</translation>
+    </message>
+    <message>
+        <source>Start recording · hold to collapse</source>
+        <translation>Начать запись · удерживайте, чтобы свернуть</translation>
+    </message>
+    <message>
+        <source>Stop recording · hold to collapse</source>
+        <translation>Остановить запись · удерживайте, чтобы свернуть</translation>
+    </message>
+    <message>
         <location filename="../qml/app/HotActionsPanel.qml" line="827"/>
         <source>Recording settings</source>
         <translation>Настройки записи</translation>
@@ -3380,6 +3627,11 @@
     <message>
         <source>Open panel settings</source>
         <translation>Открыть настройки панелей</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="449"/>
+        <source>Panel %1</source>
+        <translation>Панель %1</translation>
     </message>
 </context>
 <context>
@@ -3780,6 +4032,16 @@
 <context>
     <name>LayoutCreatePage</name>
     <message>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="32"/>
+        <source>Layout %1</source>
+        <translation>Компоновка %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="34"/>
+        <source>Active</source>
+        <translation>Активно</translation>
+    </message>
+    <message>
         <source>Create a new layout from the current panes or a preset, then arrange it in edit mode.</source>
         <translation type="vanished">Создайте новую компоновку на основе текущих панелей или пресета, затем настройте её в режиме редактирования.</translation>
     </message>
@@ -3849,6 +4111,16 @@
 </context>
 <context>
     <name>LinkManager</name>
+    <message>
+        <location filename="../src/link/link_manager.cpp" line="662"/>
+        <source>Connected: %1</source>
+        <translation>Подключено: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/link/link_manager.cpp" line="665"/>
+        <source>Disconnected: %1</source>
+        <translation>Отключено: %1</translation>
+    </message>
     <message>
         <location filename="../src/link/link_manager.cpp" line="685"/>
         <source>Link not available</source>
@@ -3925,7 +4197,24 @@
     </message>
 </context>
 <context>
+    <name>MosaicDB</name>
+    <message>
+        <location filename="../src/data_processor/mosaic_db.cpp" line="66"/>
+        <source>Mosaic cache is unavailable — distant areas may stay incomplete</source>
+        <translation>Кэш мозаики недоступен — дальние участки могут остаться неполными</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1"/>
+        <source>About</source>
+        <translation>О программе</translation>
+    </message>
+    <message>
+        <source>Servo panel</source>
+        <translation>Панель серво</translation>
+    </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="920"/>
         <source>Devices</source>
@@ -4036,6 +4325,16 @@
         <source>Edit panel</source>
         <translation>Редактировать панель</translation>
     </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1108"/>
+        <source>USBL panel</source>
+        <translation>Панель USBL</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1109"/>
+        <source>Stand panel</source>
+        <translation>Панель стенда</translation>
+    </message>
 </context>
 <context>
     <name>ModeSettingsPanel</name>
@@ -4086,6 +4385,11 @@
 </context>
 <context>
     <name>PaneEditorChrome</name>
+    <message>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="287"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
     <message>
         <location filename="../qml/app/PaneEditorChrome.qml" line="388"/>
         <source>Pane %1</source>
@@ -4153,6 +4457,19 @@
         <location filename="../qml/app/PaneEditorChrome.qml" line="376"/>
         <source>No neighboring panes available</source>
         <translation>Нет доступных соседних панелей</translation>
+    </message>
+</context>
+<context>
+    <name>VideoSurface</name>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="181"/>
+        <source>Video window settings</source>
+        <translation>Настройки окна видеопотока</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="136"/>
+        <source>No video source</source>
+        <translation>Нет источника видео</translation>
     </message>
 </context>
 <context>
@@ -4638,6 +4955,10 @@
         <translation>Второе окно</translation>
     </message>
     <message>
+        <source>Lock input</source>
+        <translation>Блокировка нажатий</translation>
+    </message>
+    <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="27"/>
         <source>Power off</source>
         <translation>Выключить питание</translation>
@@ -4799,6 +5120,11 @@
 </context>
 <context>
     <name>Scene3DRightToolbar</name>
+    <message>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="216"/>
+        <source>Vertical scale</source>
+        <translation>Вертикальный масштаб</translation>
+    </message>
     <message>
         <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="107"/>
         <source>Reset scaling coefficient</source>
@@ -4970,6 +5296,21 @@
 <context>
     <name>SecondaryWindow</name>
     <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="103"/>
+        <source>Choose pane type</source>
+        <translation>Выберите тип панели</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="131"/>
+        <source>2D</source>
+        <translation>2D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SecondaryWindow.qml" line="132"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
         <location filename="../qml/app/SecondaryWindow.qml" line="57"/>
         <source>Second window</source>
         <translation>Второе окно</translation>
@@ -5083,6 +5424,16 @@
         <location filename="../qml/app/SettingsSidebarBase.qml" line="13"/>
         <source>Settings</source>
         <translation>Настройки</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SettingsSidebarBase.qml" line="402"/>
+        <source>Scroll to top</source>
+        <translation>Наверх</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SettingsSidebarBase.qml" line="424"/>
+        <source>Close</source>
+        <translation>Закрыть</translation>
     </message>
 </context>
 <context>
@@ -5377,7 +5728,123 @@
     </message>
 </context>
 <context>
+    <name>VideoStream</name>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="232"/>
+        <source>Connecting...</source>
+        <translation>Подключение...</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="277"/>
+        <source>out of memory</source>
+        <translation>недостаточно памяти</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="317"/>
+        <source>no video stream</source>
+        <translation>нет видеопотока</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="346"/>
+        <source>no decoder for this stream</source>
+        <translation>нет декодера для этого потока</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="580"/>
+        <source>Stream ended</source>
+        <translation>Поток завершён</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="649"/>
+        <source>Reconnecting (%1/%2)...</source>
+        <translation>Переподключение (%1/%2)...</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="245"/>
+        <source>Connection failed</source>
+        <translation>Не удалось подключиться</translation>
+    </message>
+</context>
+<context>
+    <name>VideoPaneSettingsTab</name>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="35"/>
+        <source>Image:</source>
+        <translation>Изображение:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="45"/>
+        <source>Fit</source>
+        <translation>Вписать</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="46"/>
+        <source>Crop</source>
+        <translation>Заполнить</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="47"/>
+        <source>Stretch</source>
+        <translation>Растянуть</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="58"/>
+        <source>Show resolution</source>
+        <translation>Показывать разрешение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="64"/>
+        <source>Stream:</source>
+        <translation>Поток:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="99"/>
+        <source>Source</source>
+        <translation>Источник</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="100"/>
+        <source>Not selected</source>
+        <translation>Не выбрано</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="146"/>
+        <source>Video source for this pane</source>
+        <translation>Источник видео для этой панели</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="104"/>
+        <source>Resolution</source>
+        <translation>Разрешение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="111"/>
+        <source>State</source>
+        <translation>Состояние</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="117"/>
+        <source>Streaming</source>
+        <translation>Идёт передача</translation>
+    </message>
+</context>
+<context>
     <name>WorkspaceStore</name>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="956"/>
+        <source>Video</source>
+        <translation>Видео</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="961"/>
+        <source>Global pop-up</source>
+        <translation>Глобальное всплывающее окно</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="965"/>
+        <source>Second window</source>
+        <translation>Второе окно</translation>
+    </message>
     <message>
         <location filename="../qml/app/WorkspaceStore.qml" line="866"/>
         <source>Echogram</source>
@@ -5546,6 +6013,609 @@
     <message>
         <source>Remove widget</source>
         <translation>Убрать виджет</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetCard</name>
+    <message>
+        <source>USBL</source>
+        <translation>USBL</translation>
+    </message>
+    <message>
+        <source>Servo control</source>
+        <translation>Управление серво</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetCard.qml" line="74"/>
+        <source>Stand control</source>
+        <translation>Управление стендом</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetServoStep</name>
+    <message>
+        <source>Controls the servo scanner of the device that has one. The panel finds it itself.</source>
+        <translation>Управление серво-сканером устройства, у которого он есть. Панель находит его сама.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Прозрачность фона</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelBody</name>
+    <message>
+        <source>Off</source>
+        <translation>Выкл</translation>
+    </message>
+    <message>
+        <source>ServoScan</source>
+        <translation>ServoScan</translation>
+    </message>
+    <message>
+        <source>No servo device</source>
+        <translation>Нет устройства с серво</translation>
+    </message>
+    <message>
+        <source>On link %1</source>
+        <translation>На линке %1</translation>
+    </message>
+    <message>
+        <source>Device</source>
+        <translation>Устройство</translation>
+    </message>
+    <message>
+        <source>Control</source>
+        <translation>Управление</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Включено</translation>
+    </message>
+    <message>
+        <source>Current angle</source>
+        <translation>Текущий угол</translation>
+    </message>
+    <message>
+        <source>Reverse mapping</source>
+        <translation>Инверсия</translation>
+    </message>
+    <message>
+        <source>Scan</source>
+        <translation>Скан</translation>
+    </message>
+    <message>
+        <source>Step, °</source>
+        <translation>Шаг, °</translation>
+    </message>
+    <message>
+        <source>Scan range, °</source>
+        <translation>Диапазон скана, °</translation>
+    </message>
+    <message>
+        <source>Center, °</source>
+        <translation>Центр, °</translation>
+    </message>
+    <message>
+        <source>More settings</source>
+        <translation>Ещё настройки</translation>
+    </message>
+    <message>
+        <source>Calibration</source>
+        <translation>Калибровка</translation>
+    </message>
+    <message>
+        <source>PWM min, µs</source>
+        <translation>PWM min, мкс</translation>
+    </message>
+    <message>
+        <source>PWM max, µs</source>
+        <translation>PWM max, мкс</translation>
+    </message>
+    <message>
+        <source>Servo angle range, °</source>
+        <translation>Ход серво, °</translation>
+    </message>
+    <message>
+        <source>PWM routing</source>
+        <translation>Маршрутизация PWM</translation>
+    </message>
+    <message>
+        <source>OUT1 (wired)</source>
+        <translation>OUT1 (распаян)</translation>
+    </message>
+    <message>
+        <source>OUT2</source>
+        <translation>OUT2</translation>
+    </message>
+    <message>
+        <source>OUT3</source>
+        <translation>OUT3</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelPopup</name>
+    <message>
+        <source>Servo</source>
+        <translation>Серво</translation>
+    </message>
+    <message>
+        <source>Panel settings</source>
+        <translation>Настройки панели</translation>
+    </message>
+    <message>
+        <source>Hide panel</source>
+        <translation>Скрыть панель</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelSettingsPage</name>
+    <message>
+        <source>Servo scanner control: sweep, step, centre and the live angle.</source>
+        <translation>Управление серво-сканером: развёртка, шаг, центр и текущий угол.</translation>
+    </message>
+    <message>
+        <source>Show automatically</source>
+        <translation>Показывать автоматически</translation>
+    </message>
+    <message>
+        <source>Brings the panel up when a device with servo firmware connects.</source>
+        <translation>Панель появится при подключении устройства с серво.</translation>
+    </message>
+    <message>
+        <source>Background transparency</source>
+        <translation>Прозрачность фона</translation>
+    </message>
+</context>
+<context>
+    <name>UsblPanelSettingsPage</name>
+    <message>
+        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="22"/>
+        <source>This panel shows one row per node in the USBL plan: its address, range and SNR, whether a request is out, how the last interrogation ended, which command that was, and how old the numbers are.</source>
+        <translation>Панель показывает по строке на каждый узел из плана USBL: адрес, дистанцию и SNR, есть ли незавершённый запрос, чем закончился последний опрос, какой это была команда и насколько стары числа.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="39"/>
+        <source>Show automatically</source>
+        <translation>Показывать автоматически</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="40"/>
+        <source>Brings the panel up when a USBL device or beacon connects.</source>
+        <translation>Поднимает панель при подключении USBL-устройства или маяка.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="48"/>
+        <source>Background transparency</source>
+        <translation>Прозрачность фона</translation>
+    </message>
+</context>
+<context>
+    <name>StandPanelSettingsPage</name>
+    <message>
+        <location filename="../qml/app/StandPanelSettingsPage.qml" line="15"/>
+        <source>This panel configures and runs a calibration stand: the scan order, the inner and outer angles, the step and the dwell. The stand takes the whole configuration only as part of Start, so it is set and sent in the panel itself.</source>
+        <translation>Панель настраивает и запускает калибровочный стенд: порядок скана, внутренние и внешние углы, шаг и выдержку. Стенд принимает всю конфигурацию только вместе с пуском, поэтому задаётся и отправляется она в самой панели.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelSettingsPage.qml" line="24"/>
+        <source>Show automatically</source>
+        <translation>Показывать автоматически</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelSettingsPage.qml" line="25"/>
+        <source>Brings the panel up when a device with a stand connects.</source>
+        <translation>Поднимает панель при подключении устройства со стендом.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelSettingsPage.qml" line="35"/>
+        <source>Background transparency</source>
+        <translation>Прозрачность фона</translation>
+    </message>
+</context>
+<context>
+    <name>StandPanelPopup</name>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="300"/>
+        <source>Stand</source>
+        <translation>Стенд</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="300"/>
+        <source>Hide panel</source>
+        <translation>Скрыть панель</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="300"/>
+        <source>Panel settings</source>
+        <translation>Настройки панели</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Start</source>
+        <comment>angle range</comment>
+        <translation>Начало</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>End</source>
+        <comment>angle range</comment>
+        <translation>Конец</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Step</source>
+        <comment>angle range</comment>
+        <translation>Шаг</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>device</source>
+        <translation>устройство</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>not sent</source>
+        <translation>не отправлено</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Configuration</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Hide configuration</source>
+        <translation>Скрыть настройки</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Pause — takes effect at the end of the motion already commanded</source>
+        <translation>Пауза — вступит в силу по окончании уже заданного движения</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Resume</source>
+        <translation>Продолжить</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Stop</source>
+        <translation>Стоп</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Home</source>
+        <translation>В исходное</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>No stand-capable device</source>
+        <translation>Нет устройства со стендом</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Scan order</source>
+        <translation>Порядок скана</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Az → El</source>
+        <translation>Az → El</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>El → Az</source>
+        <translation>El → Az</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Inner</source>
+        <translation>Внутренняя</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Outer</source>
+        <translation>Внешняя</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Motion</source>
+        <translation>Движение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Reverse inner</source>
+        <translation>Внутренняя туда-обратно</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>The inner axis sweeps forward then back for each outer step</source>
+        <translation>Внутренняя ось проходит вперёд и обратно на каждом шаге внешней</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Continuous inner</source>
+        <translation>Внутренняя без остановок</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Firing</source>
+        <translation>Излучение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Fires</source>
+        <translation>Импульсов</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Cycles</source>
+        <translation>Циклов</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Timing</source>
+        <translation>Тайминги</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Settle, ms</source>
+        <translation>Успокоение, мс</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Post-fire, ms</source>
+        <translation>После импульса, мс</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>elevation</source>
+        <translation>угол места</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>azimuth</source>
+        <translation>азимут</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>Start</source>
+        <translation>Пуск</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <source>The inner axis sweeps each leg without stopping, firing at every step boundary. At most one fire per point; post-fire wait does not apply.</source>
+        <translation>Внутренняя ось проходит каждый ход без остановок, излучая на границе каждого шага. Не более одного импульса на точку; ожидание после импульса не применяется.</translation>
+    </message>
+</context>
+<context>
+    <name>AboutPage</name>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>Full notices, component provenance and where to obtain the sources are in THIRD_PARTY_NOTICES.md in the source tree.</source>
+        <translation>Полные уведомления, происхождение компонентов и адреса исходников — в файле THIRD_PARTY_NOTICES.md в дереве исходников.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>Third-party components</source>
+        <translation>Сторонние компоненты</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>Application license</source>
+        <translation>Лицензия приложения</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>KoggerApp is distributed under the GNU General Public License v3.</source>
+        <translation>KoggerApp распространяется по лицензии GNU General Public License v3.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>License</source>
+        <translation>Лицензия</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>The FreeType License (FTL)</source>
+        <translation>Лицензия FreeType (FTL)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="1"/>
+        <source>Revision %1</source>
+        <translation>Ревизия %1</translation>
+    </message>
+</context>
+<context>
+    <name>LicensePage</name>
+    <message>
+        <location filename="../qml/app/LicensePage.qml" line="1"/>
+        <source>The license text could not be read from the application resources.</source>
+        <translation>Не удалось прочитать текст лицензии из ресурсов приложения.</translation>
+    </message>
+</context>
+<context>
+    <name>AppIdentityCard</name>
+    <message>
+        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
+        <source>Developer mode enabled</source>
+        <translation>Вы включили режим разработчика</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
+        <source>Tap once more to unlock developer features</source>
+        <translation>Нажмите ещё 1 раз для разблокировки функций разработчика</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
+        <source>Developer mode is already enabled</source>
+        <translation>Вы уже в режиме разработчика</translation>
+    </message>
+</context>
+<context>
+    <name>DeviceParamCatalog</name>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Resolution, mm</source>
+        <translation>Разрешение, мм</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Sample count</source>
+        <translation>Количество отсчётов</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Offset</source>
+        <translation>Оффсет отсчётов</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Max distance, mm</source>
+        <translation>Макс. дистанция, мм</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Dead zone, mm</source>
+        <translation>Мертвая зона, мм</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Confidence threshold, %</source>
+        <translation>Порог уверенности, %</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Pulse count</source>
+        <translation>Количество импульсов</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Frequency, kHz</source>
+        <translation>Частота, кГц</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Booster</source>
+        <translation>Усилитель</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Horizontal smoothing</source>
+        <translation>Гор. сглаживание</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Sound speed, m/s</source>
+        <translation>Скорость звука, м/с</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Period, ms</source>
+        <translation>Период, мс</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Echogram</source>
+        <translation>Эхограмма</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Off</source>
+        <translation>Выкл</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>8-bit</source>
+        <translation>8-бит</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Rangefinder</source>
+        <translation>Глубиномер</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>On</source>
+        <translation>Вкл</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>NMEA</source>
+        <translation>NMEA</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>AHRS</source>
+        <translation>AHRS</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Temperature</source>
+        <translation>Температура</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Timestamp</source>
+        <translation>Временная метка</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Baudrate</source>
+        <translation>Скорость передачи</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
+        <source>Settings file</source>
+        <translation>Файл настроек</translation>
+    </message>
+</context>
+<context>
+    <name>DeviceParamRow</name>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Pin to favourites</source>
+        <translation>Закрепить в избранном</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Unpin from favourites</source>
+        <translation>Убрать из избранного</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Set baudrate</source>
+        <translation>Задать</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Apply the selected baud rate</source>
+        <translation>Установить выбранную скорость передачи</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Import</source>
+        <translation>Импорт</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Export</source>
+        <translation>Экспорт</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Load all device settings from an XML file</source>
+        <translation>Загрузить все настройки устройства из XML-файла</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
+        <source>Save all device settings to an XML file</source>
+        <translation>Сохранить все настройки устройства в XML-файл</translation>
     </message>
 </context>
 </TS>

@@ -5,5 +5,9 @@
 	<file>fonts/Roboto-VariableFont_wdth,wght.ttf</file>
         <file>version.txt</file>
         <file alias="kogger_app_logo.png">images/readme_md/kogger_app_logo.png</file>
+        <file alias="licenses/COPYING.GPLv3">../LICENSE</file>
+        <file>licenses/COPYING.LGPLv3</file>
+        <file alias="licenses/COPYING.LGPLv2.1">../third_party/ffmpeg/COPYING.LGPLv2.1</file>
+        <file alias="licenses/FTL.TXT">../third_party/freetype/FTL.TXT</file>
     </qresource>
 </RCC>

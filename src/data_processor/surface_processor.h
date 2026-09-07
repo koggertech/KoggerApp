@@ -41,6 +41,12 @@ public:
     float getSurfaceStepSize() const;
     int getThemeId() const;
     int getExtraWidth() const;
+    int getTriangulationPointCount() const;
+    int getTriangleCount() const;
+    int getMeshPointCount() const;
+    int getColorIntervalsCount() const;
+    float getMinZ() const;
+    float getMaxZ() const;
 
 private:
     void writeTriangleToMesh(const QVector3D& A, const QVector3D& B, const QVector3D& C, QSet<SurfaceTile*>& updatedTiles);

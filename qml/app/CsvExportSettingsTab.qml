@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import QtCore
 import kqml_types 1.0
 
 // Drill-in: CSV export with customizable columns. The destination folder +
@@ -14,7 +15,13 @@ Column {
     readonly property color _bright: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
 
     width: parent ? parent.width : implicitWidth
-    spacing: Tokens.spaceLg
+    spacing: Tokens.spaceSm
+
+    component Spacer: Item {
+        property int size: Tokens.spaceMd
+        width: page.width
+        height: size
+    }
 
     // Ordered column list — labels translatable here; keys match Core.
     readonly property var fieldDefs: [
@@ -35,6 +42,9 @@ Column {
     function doExport() {
         if (!page.store || !page.targetPlot)
             return
+        page.targetPlot.setOffsetX(sonarOffsetSwitch.checked ? sonarOffsetX.value *  0.001 : 0)
+        page.targetPlot.setOffsetY(sonarOffsetSwitch.checked ? sonarOffsetY.value *  0.001 : 0)
+        page.targetPlot.setOffsetZ(sonarOffsetSwitch.checked ? sonarOffsetZ.value * -0.001 : 0)
         core.exportPlotAsCVS(page.store.exportFolderSource,
                              page.targetPlot.plotDatasetChannel(),
                              page.store.exportDecimationEnabled ? page.store.exportDecimationValue : 0)
@@ -49,30 +59,8 @@ Column {
         font.pixelSize: Tokens.fontSm
     }
 
-    // ── Decimation + export ───────────────────────────────────────────────
-    ParamCard {
-        id: decimationCard
-        width: parent.width
-        label: qsTr("Decimation, m:")
-        toolTipText: qsTr("Thin out points: keep one per given distance interval (m); off exports every point")
-        labelColor: page._bright
-        labelPixelSize: Tokens.fontLg
-        slotWidth: Math.round(120 * AppPalette.scale)
-        checked: page.store ? page.store.exportDecimationEnabled : false
-        onToggled: function(v) { if (page.store) page.store.exportDecimationEnabled = v }
-
-        KSpinBox {
-            width: Math.round(120 * AppPalette.scale)
-            height: Tokens.controlHMd
-            fontPixelSize: Tokens.fontLg
-            textColor: page._bright
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            from: 0; to: 100; stepSize: 1
-            value: page.store ? page.store.exportDecimationValue : 10
-            onValueModified: function(v) { if (page.store) page.store.exportDecimationValue = v }
-        }
-    }
+    // ── Export + decimation ───────────────────────────────────────────────
+    Spacer {}
 
     KButton {
         width: parent.width
@@ -81,9 +69,93 @@ Column {
         onClicked: page.doExport()
     }
 
-    // ── Columns ───────────────────────────────────────────────────────────
-    Item { width: parent.width; height: Math.round(Tokens.spaceSm) }
+    Spacer { size: Tokens.spaceXl }
 
+    KIsland {
+        KIslandRow {
+            label: qsTr("Decimation, m:")
+            toolTipText: qsTr("Thin out points: keep one per given distance interval (m); off exports every point")
+            labelColor: page._bright
+            interactive: true
+            onClicked: decimationSwitch.click()
+
+            Item {
+                width: decimationSlotRow.width
+                height: decimationSlotRow.height
+
+                MouseArea { anchors.fill: parent }
+
+                Row {
+                    id: decimationSlotRow
+                    spacing: Tokens.spaceSm
+
+                    KSpinBox {
+                        width: Math.round(120 * AppPalette.scale)
+                        height: Tokens.controlHMd
+                        fontPixelSize: Tokens.fontLg
+                        textColor: page._bright
+                        from: 0; to: 100; stepSize: 1
+                        value: page.store ? page.store.exportDecimationValue : 10
+                        onValueModified: function(v) { if (page.store) page.store.exportDecimationValue = v }
+                    }
+
+                    KSwitch {
+                        id: decimationSwitch
+                        flat: true
+                        checked: page.store ? page.store.exportDecimationEnabled : false
+                        onToggled: if (page.store) page.store.exportDecimationEnabled = checked
+                    }
+                }
+            }
+        }
+
+        KIslandRow {
+            label: qsTr("Sonar offset XYZ, mm")
+            toolTipText: qsTr("Mount offset of the transducer, applied to the exported coordinates only.")
+            labelColor: page._bright
+            interactive: true
+            onClicked: sonarOffsetSwitch.click()
+
+            KSwitch {
+                id: sonarOffsetSwitch
+                flat: true
+            }
+        }
+
+        KIslandRow {
+            open: sonarOffsetSwitch.checked
+            showSeparator: false
+            verticalPadding: Tokens.spaceSm
+            stacked: true
+
+            Row {
+                width: parent.width
+                height: Tokens.controlHMd
+                spacing: Tokens.spaceXs
+                readonly property real sw: (width - 2 * Tokens.spaceXs) / 3
+
+                KSpinBox {
+                    id: sonarOffsetX
+                    width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
+                }
+                KSpinBox {
+                    id: sonarOffsetY
+                    width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
+                }
+                KSpinBox {
+                    id: sonarOffsetZ
+                    width: parent.sw; from: -9999; to: 9999; stepSize: 50; value: 0
+                }
+            }
+        }
+    }
+
+    Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffset: sonarOffsetSwitch.checked }
+    Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueX: sonarOffsetX.value }
+    Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueY: sonarOffsetY.value }
+    Settings { category: "scene2d/bottomTrack"; property alias bottomTrackSensorOffsetValueZ: sonarOffsetZ.value }
+
+    // ── Columns ───────────────────────────────────────────────────────────
     Row {
         width: parent.width
         spacing: Tokens.spaceMd
@@ -106,50 +178,41 @@ Column {
         }
     }
 
-    // Dark rounded card around the toggles — same look as SettingsGroup body.
-    Rectangle {
+    Loader {
+        id: fieldsLoader
         width: parent.width
-        height: fieldsLoader.height + 2 * Tokens.spaceMd
-        radius: Tokens.radiusLg
-        color: AppPalette.bgDeep
-        border.color: AppPalette.border
-        border.width: Tokens.cardBorderWidth
+        sourceComponent: fieldsComponent
 
-        Loader {
-            id: fieldsLoader
-            x: Tokens.spaceMd
-            y: Tokens.spaceMd
-            width: parent.width - 2 * Tokens.spaceMd
-            sourceComponent: fieldsComponent
-
-            Connections {
-                target: typeof core !== "undefined" ? core : null
-                ignoreUnknownSignals: true
-                // Rebuild the switches so they re-read Core (binding sever-proof).
-                function onCsvExportFieldsReset() {
-                    fieldsLoader.active = false
-                    fieldsLoader.active = true
-                }
+        Connections {
+            target: typeof core !== "undefined" ? core : null
+            ignoreUnknownSignals: true
+            // Rebuild the switches so they re-read Core (binding sever-proof).
+            function onCsvExportFieldsReset() {
+                fieldsLoader.active = false
+                fieldsLoader.active = true
             }
         }
     }
 
     Component {
         id: fieldsComponent
-        Column {
-            width: fieldsLoader.width
-            spacing: Tokens.spaceMd
+        KIsland {
             Repeater {
                 model: page.fieldDefs
-                delegate: KSwitch {
+                delegate: KIslandRow {
                     required property var modelData
-                    width: parent.width
-                    text: modelData.label
+
+                    label: modelData.label
                     toolTipText: modelData.tip
-                    textColor: page._bright
-                    fontPixelSize: Tokens.fontLg
-                    checked: core.csvExportFieldEnabled(modelData.key)
-                    onToggled: core.setCsvExportField(modelData.key, checked)
+                    interactive: true
+                    onClicked: fieldSwitch.click()
+
+                    KSwitch {
+                        id: fieldSwitch
+                        flat: true
+                        checked: core.csvExportFieldEnabled(modelData.key)
+                        onToggled: core.setCsvExportField(modelData.key, checked)
+                    }
                 }
             }
         }

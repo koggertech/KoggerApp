@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import kqml_types 1.0
@@ -35,6 +36,154 @@ Item {
 
     property Component subPage: null
     property bool subPageOpen: false
+
+    readonly property bool subPageCovers: subPageOpen && subPageHost.x > -0.5
+    property Item _mainFocusMemo: null
+
+    function _isWithin(item, ancestor) {
+        var walker = item
+        while (walker) {
+            if (walker === ancestor)
+                return true
+            walker = walker.parent
+        }
+        return false
+    }
+
+    function _focusSubPage() {
+        if (!subPageOpen || !subLoader.item)
+            return
+        subFlick.contentY = 0
+        subLoader.item.forceActiveFocus(Qt.TabFocusReason)
+    }
+
+    function _restoreMainFocus() {
+        var memo = panelRoot._mainFocusMemo
+        panelRoot._mainFocusMemo = null
+        if (subPageOpen || !open)
+            return
+        if (memo && memo.visible && memo.enabled)
+            memo.forceActiveFocus(Qt.TabFocusReason)
+        else
+            contentColumn.forceActiveFocus(Qt.TabFocusReason)
+    }
+
+    onSubPageOpenChanged: {
+        if (subPageOpen) {
+            var focused = panelRoot.Window.activeFocusItem
+            panelRoot._mainFocusMemo = (focused && panelRoot._isWithin(focused, contentFlick))
+                                       ? focused : null
+            Qt.callLater(panelRoot._focusSubPage)
+        } else {
+            Qt.callLater(panelRoot._restoreMainFocus)
+        }
+    }
+
+    readonly property Item focusFollowTarget: panelRoot.Window.activeFocusItem
+    onFocusFollowTargetChanged: focusFollowTimer.restart()
+
+    Timer {
+        id: focusFollowTimer
+        interval: 16
+        repeat: false
+        onTriggered: panelRoot._ensureFocusVisible()
+    }
+
+    NumberAnimation {
+        id: focusScrollAnim
+        property: "contentY"
+        duration: 180
+        easing.type: Easing.OutCubic
+    }
+
+    function _groupScrollBusy() {
+        if (!store || !store._settingsGroupInstances)
+            return false
+        var arr = store._settingsGroupInstances
+        for (var i = 0; i < arr.length; ++i) {
+            if (arr[i] && arr[i]._pinningToTop)
+                return true
+        }
+        return false
+    }
+
+    function _ensureFocusVisible() {
+        var item = panelRoot.focusFollowTarget
+        if (!item || !open)
+            return
+
+        var flick = subPageOpen ? subFlick : contentFlick
+        if (!panelRoot._isWithin(item, flick)
+                || panelRoot._groupScrollBusy()
+                || scrollToTopAnim.running)
+            return
+
+        var maxY = Math.max(0, flick.contentHeight - flick.height)
+        if (maxY <= 0)
+            return
+
+        var pad = panel._fadeHeight
+        var top = item.mapToItem(flick.contentItem, 0, 0).y
+        var bottom = top + item.height
+        var cy = flick.contentY
+        var viewTop = cy + pad
+        var viewBottom = cy + flick.height - pad
+
+        if (top >= viewTop - 0.5 && bottom <= viewBottom + 0.5)
+            return
+
+        var target = (item.height + pad * 2 >= flick.height || top < viewTop)
+                     ? top - pad
+                     : bottom + pad - flick.height
+
+        target = Math.max(0, Math.min(maxY, target))
+        if (Math.abs(target - cy) < 0.5)
+            return
+
+        kbdScrollAnim.stop()
+        focusScrollAnim.stop()
+        focusScrollAnim.target = flick
+        focusScrollAnim.from = cy
+        focusScrollAnim.to = target
+        focusScrollAnim.start()
+    }
+
+    property bool focusTrapped: dimEnabled
+
+    function _wrapFocusInto(from, forward) {
+        var walker = from
+        for (var i = 0; i < 512; ++i) {
+            walker = walker.nextItemInFocusChain(forward)
+            if (!walker || walker === from)
+                return null
+            if (panelRoot._isWithin(walker, panel))
+                return walker
+        }
+        return null
+    }
+
+    Keys.onPressed: function(event) {
+        if (!focusTrapped || !open)
+            return
+        if (event.key !== Qt.Key_Tab && event.key !== Qt.Key_Backtab)
+            return
+
+        var current = panelRoot.Window.activeFocusItem
+        if (!current || !panelRoot._isWithin(current, panel))
+            return
+
+        var forward = event.key === Qt.Key_Tab && !(event.modifiers & Qt.ShiftModifier)
+        var next = current.nextItemInFocusChain(forward)
+        if (next && panelRoot._isWithin(next, panel))
+            return
+
+        var wrapped = panelRoot._wrapFocusInto(current, forward)
+        if (!wrapped)
+            return
+
+        wrapped.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
+        event.accepted = true
+    }
 
     default property alias contentData: contentColumn.data
 
@@ -81,6 +230,7 @@ Item {
               : kind === "bottom" ? maxY
               : kind === "down"   ? Math.min(maxY, f.contentY + f.height * 0.9)
               :                     Math.max(0, f.contentY - f.height * 0.9)
+        focusScrollAnim.stop()
         kbdScrollAnim.stop()
         kbdScrollAnim.target = f
         kbdScrollAnim.from = f.contentY
@@ -96,8 +246,13 @@ Item {
     }
 
     onOpenChanged: {
-        if (open)
-            contentFlick.contentY = 0
+        if (!open)
+            return
+        contentFlick.contentY = 0
+        if (subPageOpen)
+            Qt.callLater(panelRoot._focusSubPage)
+        else
+            contentColumn.forceActiveFocus(Qt.TabFocusReason)
     }
 
     visible: progress > 0.01
@@ -232,12 +387,46 @@ Item {
                     }
 
                     KButton {
+                        id: scrollTopButton
+                        readonly property Item _target: panelRoot.subPageOpen ? subFlick : contentFlick
+                        readonly property bool _canReturn: !!_target && _target.contentY > panel._fadeHeight
+                        property real _slotW: _canReturn ? Tokens.controlHLg : 0
+                        Behavior on _slotW { NumberAnimation { duration: Anim.fadeMs; easing.type: Easing.OutCubic } }
+
+                        text: ""
+                        opacity: _canReturn ? 1.0 : 0.0
+                        visible: opacity > 0.01
+                        Behavior on opacity { NumberAnimation { duration: Anim.fadeMs; easing.type: Easing.OutCubic } }
+                        normalBg: AppPalette.controlRaised
+                        hoverBg:  Qt.lighter(AppPalette.controlRaised, 1.2)
+                        toolTipText: qsTr("Scroll to top")
+                        Layout.preferredWidth: scrollTopButton._slotW
+                        Layout.maximumWidth:   scrollTopButton._slotW
+                        Layout.preferredHeight: Tokens.controlHLg
+                        Layout.minimumHeight:   Tokens.controlHLg
+                        Layout.maximumHeight:   Tokens.controlHLg
+                        Layout.alignment: Qt.AlignVCenter
+                        onClicked: panelRoot.kbdScroll("top")
+
+                        DisclosureIndicator {
+                            anchors.centerIn: parent
+                            width: Math.round(12 * AppPalette.scale)
+                            height: width
+                            expanded: true
+                            rotation: 180
+                            indicatorColor: scrollTopButton.hovered ? Qt.lighter(AppPalette.text, 1.08)
+                                                                    : AppPalette.text
+                        }
+                    }
+
+                    KButton {
                         text: "\u2715"
                         width: Tokens.controlHLg
                         height: Tokens.controlHLg
                         fontPixelSize: Tokens.fontXxl
                         normalBg: AppPalette.controlRaised
                         hoverBg:  Qt.lighter(AppPalette.controlRaised, 1.2)
+                        toolTipText: qsTr("Close")
                         Layout.preferredWidth: width
                         Layout.preferredHeight: height
                         Layout.minimumWidth: width
@@ -274,6 +463,7 @@ Item {
             contentWidth: Math.max(0, width - panelRoot.scrollBarReservePx)
             contentHeight: Math.max(height, contentColumn.implicitHeight)
             interactive: contentHeight > height + 1
+            enabled: !panelRoot.subPageCovers
             z: 2
 
             // Attached ScrollBar.vertical: positioning intentionally NOT
@@ -465,6 +655,7 @@ Item {
                     width: Math.max(0, subFlick.contentWidth - panelRoot._hoverPopPad)
                     active: panelRoot.subPage !== null
                     sourceComponent: panelRoot.subPage
+                    onItemChanged: if (panelRoot.subPageOpen) Qt.callLater(panelRoot._focusSubPage)
                 }
             }
 

@@ -28,8 +28,10 @@ public class KoggerActivity extends QtActivity {
     private static final String TAG = KoggerActivity.class.getSimpleName();
     private static final String SCREEN_BRIGHT_WAKE_LOCK_TAG = "KoggerApp";
     private static final String MULTICAST_LOCK_TAG = "KoggerApp";
+    private static final int STORAGE_PERMISSION_REQUEST_CODE = 1;
 
     private static KoggerActivity m_instance = null;
+    private static boolean m_storagePermissionPending = false;
 
     private PowerManager.WakeLock m_wakeLock;
     private WifiManager.MulticastLock m_wifiMulticastLock;
@@ -58,6 +60,58 @@ public class KoggerActivity extends QtActivity {
         setupMulticastLock();
 
         KoggerUsbSerialManager.initialize(this);
+    }
+
+    /**
+     * Delivers the outcome of a runtime storage permission request (API 23-29).
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode != STORAGE_PERMISSION_REQUEST_CODE) {
+            return;
+        }
+
+        boolean granted = grantResults.length > 0;
+        for (int result : grantResults) {
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                granted = false;
+                break;
+            }
+        }
+
+        m_storagePermissionPending = false;
+        notifyStoragePermissionResult(granted);
+    }
+
+    /**
+     * MANAGE_EXTERNAL_STORAGE (API 30+) is granted in system settings, not in a
+     * runtime dialog, so its outcome is only observable when the user comes back.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (!m_storagePermissionPending || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return;
+        }
+
+        final boolean granted = Environment.isExternalStorageManager();
+        if (granted) {
+            m_storagePermissionPending = false;
+            notifyStoragePermissionResult(true);
+        }
+    }
+
+    private void notifyStoragePermissionResult(boolean granted) {
+        Log.i(TAG, "Storage permission result: " + granted);
+
+        try {
+            koggerStoragePermissionResult(granted);
+        } catch (final UnsatisfiedLinkError e) {
+            Log.e(TAG, "Native storage permission callback is not registered", e);
+        }
     }
 
     @Override
@@ -192,6 +246,7 @@ public class KoggerActivity extends QtActivity {
             // Android 11+ (API 30+) requires MANAGE_EXTERNAL_STORAGE for full SD card access
             if (!Environment.isExternalStorageManager()) {
                 Log.i(TAG, "MANAGE_EXTERNAL_STORAGE not granted, requesting...");
+                m_storagePermissionPending = true;
                 try {
                     Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                     intent.setData(Uri.parse("package:" + m_instance.getPackageName()));
@@ -225,7 +280,8 @@ public class KoggerActivity extends QtActivity {
 
             if (!allGranted) {
                 Log.i(TAG, "Storage permissions not granted, requesting...");
-                ActivityCompat.requestPermissions(m_instance, permissions, 1);
+                m_storagePermissionPending = true;
+                ActivityCompat.requestPermissions(m_instance, permissions, STORAGE_PERMISSION_REQUEST_CODE);
                 return false;
             }
 
@@ -241,4 +297,5 @@ public class KoggerActivity extends QtActivity {
     public native boolean nativeInit();
     public native void koggerLogDebug(final String message);
     public native void koggerLogWarning(final String message);
+    public native void koggerStoragePermissionResult(final boolean granted);
 }

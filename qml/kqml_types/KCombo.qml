@@ -22,30 +22,40 @@ Item {
     property var swatchFor: null
     readonly property int swatchSize: Math.round(18 * AppPalette.scale)
     property string toolTipText: ""
+    property bool focusHighlight: true
 
-    Item {
-        id: _sizer
-        visible: false
-        Repeater {
-            id: _sizerRep
-            model: root.model
-            Text {
-                text: modelData !== undefined ? String(modelData) : ""
-                font.pixelSize: root.fontPixelSize
-                font.bold: root.bold
-            }
-        }
+    property int _measuredTextWidth: 0
+
+    TextMetrics {
+        id: _metrics
+        font.family: combo.font.family
+        font.pixelSize: root.fontPixelSize
+        font.bold: root.bold
     }
-    readonly property int _popupContentWidth: {
-        var mw = 0
-        for (var i = 0; i < _sizerRep.count; ++i) {
-            var it = _sizerRep.itemAt(i)
-            if (it && it.implicitWidth > mw) mw = it.implicitWidth
+
+    function _remeasure() {
+        var items = root.model
+        var count = (items && items.length !== undefined) ? items.length : 0
+        var widest = 0
+        for (var i = 0; i < count; ++i) {
+            _metrics.text = (items[i] === undefined) ? "" : String(items[i])
+            if (_metrics.advanceWidth > widest)
+                widest = _metrics.advanceWidth
         }
+        root._measuredTextWidth = Math.ceil(widest)
+    }
+
+    onFontPixelSizeChanged: _remeasure()
+    onBoldChanged: _remeasure()
+    Component.onCompleted: _remeasure()
+
+    readonly property int _popupContentWidth: {
         var leftInset = root.swatchFor ? (Tokens.spaceSm + root.swatchSize + Tokens.spaceXs) : Tokens.spaceSm
         var rightReserve = Math.round(12 * AppPalette.scale) + 2 * Tokens.spaceXs
-        return Math.ceil(mw) + leftInset + rightReserve + Tokens.spaceSm
+        return root._measuredTextWidth + leftInset + rightReserve + Tokens.spaceSm + Tokens.spaceMd
     }
+
+    readonly property int contentWidth: _popupContentWidth
 
     readonly property string currentText: combo.currentText
     readonly property alias hovered: combo.hovered
@@ -78,7 +88,7 @@ Item {
         }
     }
 
-    implicitWidth: Math.round(120 * AppPalette.scale)
+    implicitWidth: Math.max(Math.round(120 * AppPalette.scale), _popupContentWidth)
     implicitHeight: Tokens.controlHMd
 
     function syncFromExternalIndex() {
@@ -87,14 +97,18 @@ Item {
     }
 
     onCurrentIndexChanged: syncFromExternalIndex()
-    onModelChanged: Qt.callLater(syncFromExternalIndex)
+    onModelChanged: {
+        _remeasure()
+        Qt.callLater(syncFromExternalIndex)
+    }
 
     Rectangle {
         anchors.fill: parent
         radius: root.radius
         color: root.fillColor
-        border.width: combo.activeFocus ? 1 : Tokens.cardBorderWidth
-        border.color: combo.activeFocus
+        readonly property bool focused: root.focusHighlight && combo.activeFocus
+        border.width: focused ? 1 : Tokens.cardBorderWidth
+        border.color: focused
                       ? AppPalette.accentBorder
                       : (combo.hovered ? AppPalette.borderHover : AppPalette.border)
 
@@ -150,6 +164,7 @@ Item {
             delegate: ItemDelegate {
                 width: combo.popup.width - 2 * Tokens.spaceXs
                 height: Tokens.controlHMd
+                padding: 0
                 contentItem: Item {
                     ThemeDot {
                         id: itemDot
@@ -185,7 +200,7 @@ Item {
                 readonly property int itemHeight: Tokens.controlHMd
 
                 y: combo.height + Tokens.spaceXxs
-                width: Math.max(combo.width, root._popupContentWidth)
+                width: Math.max(combo.width, root._popupContentWidth + 2 * Tokens.spaceXs)
                 implicitHeight: Math.min(contentItem.implicitHeight,
                                          itemHeight * root.maxVisibleItems)
                                 + 2 * Tokens.spaceXs

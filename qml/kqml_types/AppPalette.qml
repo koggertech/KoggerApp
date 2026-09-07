@@ -88,6 +88,7 @@ QtObject {
     readonly property color border:      theme ? theme.controlBorderColor       : (isDark ? "#334155" : "#E2E8F0")
     readonly property color borderHover: theme ? theme.controlSolidBorderColor  : (isDark ? "#475569" : "#CBD5E1")
     readonly property color borderFocus: theme ? theme.controlSolidBorderColor  : (isDark ? "#64748B" : "#94A3B8")
+    readonly property color separator: Qt.rgba(text.r, text.g, text.b, isDark ? 0.18 : 0.22)
 
     // ── Text ──────────────────────────────────────────────────────────────────
     readonly property color text:       theme ? theme.textColor : (isDark ? "#E2E8F0" : "#0F172A")
@@ -135,6 +136,8 @@ QtObject {
     readonly property color accentBg:       accent
     readonly property color accentBgStrong: accent
     readonly property color accentBorder:   Qt.lighter(accent, 1.25)
+    readonly property color accentBgHover:   Qt.lighter(accent, 1.18)
+    readonly property color accentBgPressed: Qt.darker(accent, 1.12)
     readonly property color accentBar:      accent
 
     readonly property bool _desert: !!theme && theme.themeID === 8

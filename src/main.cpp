@@ -24,16 +24,23 @@
 #include "qPlot2D.h"
 #include "core.h"
 #include "themes.h"
+#include "ui_probe.h"
 #include "ui_state_serializer.h"
 #include "echogram_state_serializer.h"
 #include "notifications.h"
 #include "scene_object.h"
 #include "bottom_track.h"
 #include "input_device_tracker.h"
+#ifndef Q_OS_ANDROID
+#include "instance_lock.h"
+#endif
 #include "system_battery.h"
+#include "mosaic_db.h"
 #include "language_controller.h"
 #include "app_utils.h"
+#include "app_log.h"
 #include "settings_migration.h"
+#include "video_stream_pool.h"
 
 
 // NOLINTBEGIN(bugprone-throwing-static-initialization): application-lifetime singletons; a throw here is a fatal startup failure with nothing to catch
@@ -43,9 +50,14 @@ Themes theme;
 UIStateSerializer uiStateSerializer;
 EchogramStateSerializer echogramStateSerializer;
 Notifications notifications;
+VideoStreamPool videoStreams;
 QTranslator translator;
 QVector<QString> availableLanguages{"en", "ru", "pl"};
 // NOLINTEND(bugprone-throwing-static-initialization)
+
+#ifndef Q_OS_ANDROID
+InstanceLock instanceLock;
+#endif
 
 
 void loadLanguage(QGuiApplication &app)
@@ -86,6 +98,44 @@ void messageHandler(QtMsgType type, const QMessageLogContext& context, const QSt
     Q_UNUSED(type);
     Q_UNUSED(context);
     core.consoleInfo(msg);
+}
+
+
+QtMessageHandler previousMessageHandler = nullptr;
+
+static bool isVideoLogMessage(const QMessageLogContext& context, const QString& msg)
+{
+    if (context.category && QByteArray(context.category).startsWith("qt.multimedia")) {
+        return true;
+    }
+    return msg.startsWith(QStringLiteral("VIDEO:"));
+}
+
+void videoLogHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    static thread_local bool forwarding = false;
+
+    if (!isVideoLogMessage(context, msg)) {
+        AppLog::instance().write(type, context, msg);
+    }
+
+    if (!forwarding && isVideoLogMessage(context, msg)) {
+        forwarding = true;
+        const QString line = msg.startsWith(QStringLiteral("VIDEO:"))
+                                 ? msg
+                                 : QStringLiteral("VIDEO: ") + msg;
+        if (type == QtWarningMsg || type == QtCriticalMsg || type == QtFatalMsg) {
+            core.consoleWarning(line);
+        }
+        else {
+            core.consoleInfo(line);
+        }
+        forwarding = false;
+    }
+
+    if (previousMessageHandler && !isVideoLogMessage(context, msg)) {
+        previousMessageHandler(type, context, msg);
+    }
 }
 
 void setApplicationDisplayName(QGuiApplication& app)
@@ -195,7 +245,7 @@ void applyWindowsFullscreenBorderWorkaround(QWindow* window)
 
 void bringWindowToFront(QWindow* window)
 {
-    if (!window) {
+    if (!window || !instanceLock.isPrimary()) {
         return;
     }
 
@@ -275,10 +325,22 @@ int main(int argc, char *argv[])
 #if defined(Q_OS_WIN)
     //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
-    QLoggingCategory::setFilterRules(QStringLiteral(
-        "qt.network.info.netlistmanager.warning=false\n"
-        "qt.qpa.mime=false"));
 #endif
+
+    QString loggingRules;
+#if defined(Q_OS_WIN)
+    loggingRules += QStringLiteral("qt.network.info.netlistmanager.warning=false\n"
+                                   "qt.qpa.mime=false\n");
+#endif
+    QLoggingCategory::setFilterRules(loggingRules);
+
+#if defined(Q_OS_ANDROID)
+    AppLog::instance().start(AppLog::fallbackDirectory(), QStringLiteral("kogger"), 4 * 1024 * 1024, 3);
+#else
+    AppLog::instance().start(AppLog::defaultDirectory(), QStringLiteral("kogger"), 8 * 1024 * 1024, 5);
+#endif
+
+    previousMessageHandler = qInstallMessageHandler(videoLogHandler);
 
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGLRhi);
 
@@ -300,6 +362,14 @@ int main(int argc, char *argv[])
     // safe to read QSettings and primaryScreen() for DPI-aware resCoeff.
     theme.initSettings();
 
+    QQuickStyle::setStyle("Basic");
+
+#ifndef Q_OS_ANDROID
+    instanceLock.acquire();
+    appUtils.setInstanceIndex(instanceLock.index());
+    MosaicDB::setInstanceIndex(instanceLock.index());
+#endif
+
     LanguageController langController;
     InputDeviceTracker inputDeviceTracker;
     SystemBattery systemBattery;
@@ -315,8 +385,6 @@ int main(int argc, char *argv[])
     loadLanguage(app);
     langController.setStartupTranslator(&translator);
     core.initStreamList();
-
-    QQuickStyle::setStyle("Basic");
 
     setApplicationDisplayName(app);
     QQmlApplicationEngine engine;
@@ -335,6 +403,8 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceTopology", core.getDeviceTopologyModelPtr());
+    videoStreams.setSourceModel(core.getLinkManagerWrapperPtr()->getModelPtr());
+    engine.rootContext()->setContextProperty("videoStreams", &videoStreams);
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
     engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
     engine.rootContext()->setContextProperty("echogramStateSerializer", &echogramStateSerializer);
@@ -343,6 +413,12 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("systemBattery", &systemBattery);
     engine.rootContext()->setContextProperty("langController", &langController);
     engine.rootContext()->setContextProperty("appUtils", &appUtils);
+
+    // Machine-readable UI verification. Costs nothing unless KOGGER_UI_PROBE names an
+    // output directory; exposed to QML so an interaction test can dump at a chosen
+    // moment instead of on a timer.
+    UiProbe uiProbe;
+    engine.rootContext()->setContextProperty("uiProbe", &uiProbe);
 
     // Expose compile-time MANUAL_TESTING flag to QML — the Settings panel
     // shows a "Test" group (with developer-only knobs) only when this is true.
@@ -397,7 +473,7 @@ int main(int argc, char *argv[])
                                                 if (!obj || url != objUrl) return;
                                                 QObject::disconnect(*startupConn);
                                                 delete startupConn;
-                                                core.openLogFile(startupFilePath, false, true);
+                                                core.deferStartupFileOpen(startupFilePath);
                                             }, Qt::QueuedConnection);
         }
     }
@@ -408,6 +484,10 @@ int main(int argc, char *argv[])
     if (!rootObjects.isEmpty()) {
         QObject* rootObject = rootObjects.constFirst();
         mainWindow = qobject_cast<QQuickWindow*>(rootObject);
+        if (mainWindow && UiProbe::isEnabled()) {
+            uiProbe.setWindow(mainWindow);
+            uiProbe.armFromEnvironment();
+        }
 #if defined(Q_OS_WIN)
         if (auto* window = qobject_cast<QWindow*>(rootObject)) {
             applyWindowsSystemTitleBarTheme(window);
@@ -444,6 +524,8 @@ int main(int argc, char *argv[])
 #ifdef SEPARATE_READING
     core.stopDeviceManagerThread();
 #endif
+
+    AppLog::instance().stop();
 
     return retCode;
 }

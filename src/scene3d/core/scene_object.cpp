@@ -51,9 +51,10 @@ void SceneObject::mouseWheelEvent(Qt::MouseButtons buttons, qreal x, qreal y, QP
     Q_UNUSED(angleDelta)
 }
 
-void SceneObject::keyPressEvent(Qt::Key key)
+bool SceneObject::keyPressEvent(Qt::Key key)
 {
     Q_UNUSED(key)
+    return false;
 }
 
 SceneObject::~SceneObject()

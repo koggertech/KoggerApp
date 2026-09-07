@@ -133,6 +133,13 @@ KoggerApp is open-source, meaning you have the power to shape it! Whether you're
 
 ---
 
+### 📜 *License*
+KoggerApp is released under the **GNU General Public License v3** — full text in [LICENSE](LICENSE).
+
+Third-party components: [Qt](https://www.qt.io/) 6.8.3 (GNU LGPL v3), [FFmpeg](https://ffmpeg.org/) 7.1 (GNU LGPL v2.1 or later), [FreeType](https://freetype.org/) 2.13.2 (FreeType License). Provenance and sources: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). All license texts also ship in the app — *Settings → Interface → About*.
+
+---
+
 ### 🔗 *Useful links*
 - 🌐 [Official Website](https://kogger.tech/)
 - 📄 [KoggerApp Product Page](https://kogger.tech/koggerapp/)

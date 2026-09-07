@@ -60,7 +60,7 @@ function firstLeafIdByMode(node, mode) {
     if (!node)
         return -1
     if (node.type === "leaf")
-        return ((node.pane && node.pane.mode === "3D") ? "3D" : "2D") === mode ? node.leafId : -1
+        return ((node.pane && (node.pane.mode === "3D" || node.pane.mode === "Video")) ? node.pane.mode : "2D") === mode ? node.leafId : -1
 
     var left = firstLeafIdByMode(node.first, mode)
     if (left !== -1)

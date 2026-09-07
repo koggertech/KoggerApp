@@ -12,6 +12,7 @@
 #include <QtGlobal>
 #include "scene3d_renderer.h"
 #include "controllers/ruler_controller.h"
+#include "controllers/usbl_layer_controller.h"
 #include "dataset.h"
 #include "map_defs.h"
 #include "data_processor_defs.h"
@@ -26,6 +27,9 @@
 extern Core core;
 
 namespace {
+constexpr float kVerticalScaleMin = 0.05f;
+constexpr float kVerticalScaleMax = 10.0f;
+
 struct ZoomDistanceRange {
     float min;
     float max;
@@ -111,7 +115,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_coordAxes(std::make_shared<CoordinateAxes>()),
     m_planeGrid(std::make_shared<PlaneGrid>()),
     navigationArrow_(std::make_shared<NavigationArrow>()),
-    usblView_(std::make_shared<UsblView>()),
+    usblLayer_(std::make_shared<UsblLayer>()),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     qmlRootObject_(nullptr),
@@ -162,6 +166,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(rulerTool_.get(), &RulerTool::changed, this, &QQuickFramebufferObject::update);
     ruler_ = new RulerController(this, rulerTool_.get(), this);
+    usblLayerController_ = new UsblLayerController(this, usblLayer_.get(), this);
     QObject::connect(geoJsonLayer_.get(), &GeoJsonLayer::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(&core, &Core::languageChanged, this, &QQuickFramebufferObject::update);
     QObject::connect(geoJsonController_, &GeoJsonController::documentChanged, this, [this]() {
@@ -217,7 +222,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_coordAxes.get(), &CoordinateAxes::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_planeGrid.get(), &PlaneGrid::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::changed, this, &QQuickFramebufferObject::update);
-    QObject::connect(usblView_.get(), &UsblView::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(usblLayer_.get(), &UsblLayer::changed, this, &QQuickFramebufferObject::update);
 
     //QObject::connect(isobathsView_.get(), &IsobathsView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(surfaceView_.get(), &SurfaceView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -230,7 +235,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_coordAxes.get(), &CoordinateAxes::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(boatTrack_.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-    QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
     applyShadowSettingsToSceneRenderObjects();
     updatePlaneGrid();
@@ -239,6 +243,11 @@ GraphicsScene3dView::GraphicsScene3dView() :
     followResumeTimer_->setSingleShot(true);
     followResumeTimer_->setInterval(5000);
     QObject::connect(followResumeTimer_, &QTimer::timeout, this, &GraphicsScene3dView::beginFollowReturn);
+
+    wheelZoomTimer_ = new QTimer(this);
+    wheelZoomTimer_->setInterval(16);
+    wheelZoomTimer_->setTimerType(Qt::PreciseTimer);
+    QObject::connect(wheelZoomTimer_, &QTimer::timeout, this, [this]() { stepWheelZoom(); });
 
     followTickTimer_ = new QTimer(this);
     followTickTimer_->setInterval(250);
@@ -327,11 +336,6 @@ std::shared_ptr<PolygonGroup> GraphicsScene3dView::polygonGroup() const
     return m_polygonGroup;
 }
 
-std::shared_ptr<UsblView> GraphicsScene3dView::getUsblViewPtr() const
-{
-    return usblView_;
-}
-
 std::shared_ptr<NavigationArrow> GraphicsScene3dView::getNavigationArrowPtr() const
 {
     return navigationArrow_;
@@ -373,6 +377,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
     surfaceView_->clear();
     contacts_->clear();
     ruler_->clear();
+    usblLayerController_->clear();
     imageView_->clear();//
     if (cleanMap) {
         mapView_->clear();
@@ -382,7 +387,6 @@ void GraphicsScene3dView::clear(bool cleanMap)
     m_polygonGroup->clearData();
     m_pointGroup->clearData();
     navigationArrow_->clearData();
-    usblView_->clearTracks();
     m_planeGrid->clear();
     m_bounds = Cube();
 
@@ -584,6 +588,7 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     wasMoved_ = false;
     clearComboSelectionRect();
     cancelCameraPoseAnim();
+    cancelWheelZoom();
 
     compassPressed_ = false;
     if (compass_ && mouseButton.testFlag(Qt::MouseButton::LeftButton) && !compassRect_.isEmpty()) {
@@ -934,12 +939,14 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
     }
 
     if (keyboardKey == Qt::Key_Control) {
+        cancelWheelZoom();
         cancelVScaleAnim();
         float tempVerticalScale = m_verticalScale;
         angleDelta.y() > 0.0f ? tempVerticalScale += 0.3f : tempVerticalScale -= 0.3f;
         setVerticalScale(tempVerticalScale);
     }
     else if (keyboardKey == Qt::Key_Shift) {
+        cancelWheelZoom();
         if (!isNorth_) {
             angleDelta.y() > 0.0f ? shiftCameraZAxis(5) : shiftCameraZAxis(-5);
             cameraWasMoved = true;
@@ -949,8 +956,7 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
         const qreal wheelStepsRaw = angleDelta.y() / kWheelDeltaUnit;
         const qreal wheelSteps = qBound(-kWheelMaxSteps, wheelStepsRaw, kWheelMaxSteps);
         if (std::fabs(wheelSteps) > 1e-6) {
-            zoomAroundScreenAnchor(wheelSteps, QPointF(x, y));
-            cameraWasMoved = true;
+            queueWheelZoom(wheelSteps, QPointF(x, y));
         }
     }
 
@@ -965,6 +971,7 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
 void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta)
 {
     cancelCameraPoseAnim();
+    cancelWheelZoom();
 
     const qreal dx = currCenter.x() - prevCenter.x();
     const qreal dy = currCenter.y() - prevCenter.y();
@@ -1071,26 +1078,28 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
     onCameraMoved();
 }
 
-void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
+bool GraphicsScene3dView::keyPressTrigger(Qt::Key key)
 {
     if (geoJsonEnabled_) {
         if (key == Qt::Key_Delete || key == Qt::Key_Backspace) {
             geojsonDeleteSelectedFeature();
-            return;
+            return true;
         }
         if (key == Qt::Key_Escape) {
             geojsonCancelDrawing();
-            return;
+            return true;
         }
     }
 
     if (ruler_->onKey(key)) {
-        return;
+        return true;
     }
 
-    m_bottomTrack->keyPressEvent(key);
+    const bool handled = m_bottomTrack->keyPressEvent(key);
 
     QQuickFramebufferObject::update();
+
+    return handled;
 }
 
 void GraphicsScene3dView::zoomStepTrigger(qreal delta)
@@ -1334,6 +1343,17 @@ void GraphicsScene3dView::setCompassSize(int val)
 void GraphicsScene3dView::setScaleBarState(bool state)
 {
     scaleBar_ = state;
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setUsblLayerVisible(bool state)
+{
+    // Through the controller rather than straight at the layer: it owns the history, and hiding
+    // the layer must not be a reason to forget where a beacon has been.
+    if (usblLayerController_) {
+        usblLayerController_->setEnabled(state);
+    }
 
     QQuickFramebufferObject::update();
 }
@@ -2025,6 +2045,11 @@ QObject* GraphicsScene3dView::geoJsonController() const
     return geoJsonController_;
 }
 
+QObject* GraphicsScene3dView::usblLayer() const
+{
+    return usblLayerController_;
+}
+
 bool GraphicsScene3dView::syncLoupeOverlayVisible() const
 {
     return syncLoupeOverlayVisible_;
@@ -2150,6 +2175,7 @@ void GraphicsScene3dView::setMapView() {
 void GraphicsScene3dView::setMapViewAnimated()
 {
     cancelCameraPoseAnim();
+    cancelWheelZoom();
 
     if (!m_camera || !datasetPtr_) {
         return;
@@ -2209,6 +2235,62 @@ void GraphicsScene3dView::cancelCameraPoseAnim()
     animator_.cancel(ChPose);
 }
 
+void GraphicsScene3dView::queueWheelZoom(qreal steps, const QPointF& anchorPos)
+{
+    if (!m_camera || !std::isfinite(steps)) {
+        return;
+    }
+
+    wheelZoomAnchor_ = anchorPos;
+
+    // Same-direction events add up; a reversal cancels what is left instead of
+    // queueing a zoom back and forth. The follower velocity must go with it —
+    // it still points the old way and would overshoot on the first tick back.
+    if (wheelZoomResidual_ * steps < 0.0) {
+        wheelZoomResidual_ = 0.0;
+        wheelZoomSmoother_.reset();
+    }
+    wheelZoomResidual_ = qBound(-kWheelMaxSteps, wheelZoomResidual_ + steps, kWheelMaxSteps);
+
+    if (!wheelZoomTimer_->isActive()) {
+        wheelZoomSmoother_.reset();
+        wheelZoomTimer_->start();
+    }
+}
+
+void GraphicsScene3dView::stepWheelZoom()
+{
+    if (!m_camera) {
+        cancelWheelZoom();
+        return;
+    }
+
+    const qreal before = wheelZoomResidual_;
+    const qreal after = static_cast<qreal>(wheelZoomSmoother_.step(static_cast<float>(before), 0.0f, smooth::WheelZoom));
+    const qreal applied = before - after;
+    wheelZoomResidual_ = after;
+
+    if (std::fabs(applied) > 1e-9) {
+        zoomAroundScreenAnchor(applied, wheelZoomAnchor_);
+        updatePlaneGrid();
+        QQuickFramebufferObject::update();
+        onCameraMoved();
+    }
+
+    if (std::fabs(wheelZoomResidual_) <= smooth::WheelZoom.deadband) {
+        cancelWheelZoom();
+    }
+}
+
+void GraphicsScene3dView::cancelWheelZoom()
+{
+    if (wheelZoomTimer_) {
+        wheelZoomTimer_->stop();
+    }
+    wheelZoomResidual_ = 0.0;
+    wheelZoomSmoother_.reset();
+}
+
 void GraphicsScene3dView::zoomButtonAnimated(qreal steps)
 {
     if (!m_camera || !std::isfinite(steps) || std::fabs(steps) < 1e-6) {
@@ -2216,6 +2298,7 @@ void GraphicsScene3dView::zoomButtonAnimated(qreal steps)
     }
 
     cancelCameraPoseAnim();
+    cancelWheelZoom();
 
     const QPointF anchor(width() * 0.5, height() * 0.5);
     auto prev = std::make_shared<double>(0.0);
@@ -2312,14 +2395,11 @@ void GraphicsScene3dView::setIdleMode()
 
 void GraphicsScene3dView::setVerticalScale(float scale)
 {
-    if(m_verticalScale == scale)
+    const float clamped = qBound(kVerticalScaleMin, scale, kVerticalScaleMax);
+    if (m_verticalScale == clamped)
         return;
-    else if(scale < 0.05f)
-        m_verticalScale = 0.05f;
-    else if(scale > 10.f)
-        m_verticalScale = 10.0f;
-    else
-        m_verticalScale = scale;
+
+    m_verticalScale = clamped;
 
     if (auto* impl = dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(surfaceView_->m_renderImpl); impl) {
         impl->setVerticalScale(m_verticalScale);
@@ -2426,6 +2506,13 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                          }
                      }, Qt::QueuedConnection);
 
+    // QUEUED, and not by preference: addUsblSolution runs on the link thread (the device
+    // connections are Direct unless SEPARATE_READING), while the controller re-projects against
+    // the camera and writes into a render impl the GUI thread owns.
+    QObject::connect(datasetPtr_, &Dataset::usblSolutionAdded,
+                     usblLayerController_, &UsblLayerController::onUsblSolution,
+                     Qt::QueuedConnection);
+
     QObject::connect(datasetPtr_, &Dataset::updatedLlaRef,
                      this,      [this]() -> void {
                          surfaceView_->setLlaRef(datasetPtr_->getLlaRef());
@@ -2507,8 +2594,7 @@ void GraphicsScene3dView::updateBounds()
                    .merge(m_polygonGroup->bounds())
                    .merge(m_pointGroup->bounds())
                    .merge(surfaceView_->bounds())
-                   .merge(imageView_->bounds())
-                   .merge(usblView_->bounds());
+                   .merge(imageView_->bounds());
 
     updatePlaneGrid();
 
@@ -3455,10 +3541,13 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->geoJsonLayerRenderImpl_     = *(dynamic_cast<GeoJsonLayer::GeoJsonLayerRenderImplementation*>(view->geoJsonLayer_->m_renderImpl));
     view->ruler_->rebuildIfNeeded();
     m_renderer->rulerToolRenderImpl_        = *(dynamic_cast<RulerTool::RulerToolRenderImplementation*>(view->rulerTool_->m_renderImpl));
+    // Re-projected BEFORE the copy, for the same reason the ruler is: a frame change this frame
+    // must reach the renderer this frame, or the layer lags the camera by one.
+    view->usblLayerController_->rebuildIfNeeded();
+    m_renderer->usblLayerRenderImpl_        = *(dynamic_cast<UsblLayer::UsblLayerRenderImplementation*>(view->usblLayer_->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
     m_renderer->navigationArrowRenderImpl_  = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->navigationArrow_->m_renderImpl));
-    m_renderer->usblViewRenderImpl_         = *(dynamic_cast<UsblView::UsblViewRenderImplementation*>(view->usblView_->m_renderImpl));
     m_renderer->m_viewSize                  = view->size();
     m_renderer->m_camera                    = *view->m_camera;
     m_renderer->m_axesThumbnailCamera       = *view->m_axesThumbnailCamera;

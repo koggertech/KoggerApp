@@ -3,11 +3,16 @@ import SceneGraphRendering 1.0
 import QtCore
 import scene2d
 import kqml_types 1.0
+import "UsblNodeLogic.js" as UsblNode
 
 Item {
     id: workspace
 
     required property var store
+
+    // The USBL plan, for the map layer only. The 3D scene draws the plan's beacons, and this is
+    // the only route from the plan (owned in MainWindow, for the session) to the scene object.
+    property var usblPlan: null
 
     property alias inputState: inputStateObject
     property bool sizeReportPending: false
@@ -89,7 +94,8 @@ Item {
 
     function forwardScene3DKeyPress(key) {
         if (scene3dView && typeof scene3dView.keyPressTrigger === "function")
-            scene3dView.keyPressTrigger(key)
+            return scene3dView.keyPressTrigger(key)
+        return false
     }
 
     function forwardScene3DPinch(prevCenter, currCenter, scaleDelta, angleDelta) {
@@ -112,7 +118,7 @@ Item {
     }
 
     function normalizedPaneMode(value) {
-        return value === "3D" ? "3D" : "2D"
+        return value === "3D" ? "3D" : value === "Video" ? "Video" : "2D"
     }
 
     function copyArray(values) {
@@ -466,13 +472,11 @@ Item {
         }
 
         var mode = normalizedPaneMode(topEntry.mode)
+
         if (mode === "3D") {
             active3DLeafId = leafId
             active3DHostItem = topEntry.hostItem
-            return
-        }
-
-        if (active3DLeafId === leafId) {
+        } else if (active3DLeafId === leafId) {
             active3DLeafId = -1
             if (active3DHostItem === topEntry.hostItem)
                 active3DHostItem = null
@@ -545,6 +549,25 @@ Item {
         anchors.fill: parent
         z: -10
 
+        Connections {
+            target: typeof videoStreams !== "undefined" ? videoStreams : null
+            ignoreUnknownSignals: true
+
+            function onStreamsChanged() {
+                if (workspace.store)
+                    workspace.store.autoAssignVideoSources()
+            }
+        }
+
+        Connections {
+            target: workspace.store
+            ignoreUnknownSignals: true
+
+            function onLeafRectsChanged() {
+                workspace.store.autoAssignVideoSources()
+            }
+        }
+
         GraphicsScene3dView {
             id: scene3dView
             objectName: "GraphicsScene3dView"
@@ -563,11 +586,45 @@ Item {
                 function onThreeDLoupeAllowedChanged() { scene3dView._applyLoupeGate() }
             }
 
+            // ── which beacons the map draws ───────────────────────────────────
+            // The plan's nodes, with the identity colour from the one address table, handed to
+            // the C++ layer. It accumulates a track for every address that answers but presents
+            // only what this names, so adding a node reveals a history that was already there.
+            //
+            // GUARDED BY THE LAST PUSHED VALUE, not by the binding. UsblPlanStore commits a deep
+            // clone on every edit, so `nodes` is a new array even when a change touched only the
+            // command groups -- and the receiving end re-projects every remembered fix of every
+            // beacon. A string compare here is cheaper than that by any measure.
+            property string _usblPushed: ""
+
+            function _pushUsblNodes() {
+                if (!usblLayer)
+                    return
+                var spec = UsblNode.mapSpec(workspace.usblPlan ? workspace.usblPlan.nodes : [])
+                var out = []
+                for (var i = 0; i < spec.length; ++i) {
+                    out.push({ "addr":   spec[i].addr,
+                               "active": spec[i].active,
+                               "color":  String(DataFieldCatalog.usblAddressColor(spec[i].addr)) })
+                }
+                var stamp = JSON.stringify(out)
+                if (stamp === _usblPushed)
+                    return
+                _usblPushed = stamp
+                usblLayer.setNodes(out)
+            }
+
+            Connections {
+                target: workspace.usblPlan
+                function onNodesChanged() { scene3dView._pushUsblNodes() }
+            }
+
             // verticalScale persistence (перенесено с develop, где было в qml/main.qml)
             Component.onCompleted: {
                 if (rendererPersist.verticalScale !== scene3dView.verticalScale)
                     scene3dView.setVerticalScale(rendererPersist.verticalScale)
                 _applyLoupeGate()
+                _pushUsblNodes()
             }
 
             onVerticalScaleChanged: rendererPersist.verticalScale = scene3dView.verticalScale
@@ -741,7 +798,7 @@ Item {
             readonly property bool isActiveResizeSplit: workspace.store.edgeResizeMovingSplitId === handleData.splitId
             property bool barRevealed: false
             readonly property int barHideMs: 1600
-            readonly property bool barShown: barRevealed || barGrab.resizing || isActiveResizeSplit || workspace.store.editableMode
+            readonly property bool barShown: barRevealed || barGrab.containsMouse || barGrab.resizing || isActiveResizeSplit || workspace.store.editableMode
 
             readonly property int barLength: Math.round(AppPalette.dragBarLengthPx * AppPalette.scale)
             readonly property int barThickness: Math.round(AppPalette.dragBarThicknessPx * AppPalette.scale)
@@ -816,6 +873,8 @@ Item {
 
                 readonly property bool tracking: barGrab.pressed
 
+                hovered: barGrab.containsMouse || barGrab.resizing
+
                 x: splitDragZone.vertical
                    ? (tracking ? splitDragZone.cursorInZone.x - width / 2
                                : (splitDragZone.width - width) / 2)
@@ -839,6 +898,7 @@ Item {
 
                 enabled: splitDragZone.barShown && workspace.store.modePickerLeafId === -1
                 acceptedButtons: Qt.LeftButton
+                hoverEnabled: true
                 preventStealing: true
                 cursorShape: resizing
                              ? Qt.ClosedHandCursor

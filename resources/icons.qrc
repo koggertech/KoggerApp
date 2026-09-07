@@ -125,6 +125,7 @@
         <file>icons/ui/square-chevron-down.svg</file>
         <file>icons/ui/square-chevron-right.svg</file>
         <file>icons/ui/chevron-up.svg</file>
+        <file>icons/ui/copy.svg</file>
         <file>icons/ui/chevron-right.svg</file>
         <file>icons/ui/chevron-down.svg</file>
         <file>icons/ui/point.svg</file>
@@ -181,5 +182,9 @@
         <file>icons/ui/fit-in-view.svg</file>
         <file>icons/ui/route_crossed_out.svg</file>
         <file>icons/ui/double_route_crossed_out.svg</file>
+        <file>icons/ui/lock.svg</file>
+        <file>icons/ui/lock-open.svg</file>
+        <file>icons/ui/star.svg</file>
+        <file>icons/ui/star-filled.svg</file>
     </qresource>
 </RCC>

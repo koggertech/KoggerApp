@@ -146,10 +146,12 @@ Item {
         anchors.fill: parent
         iconSource: root.iconSource
         iconTintColor: AppPalette.text
-        fillHoverColor: AppPalette.cardHover
-        fillColor:   root.menuOpen ? "transparent" : (root.active ? AppPalette.accentBgStrong : AppPalette.card)
+        fillHoverColor: root.active ? AppPalette.accentBgHover : AppPalette.cardHover
+        fillPressedColor: root.active ? AppPalette.accentBgPressed : AppPalette.bgDeep
+        fillColor:   root.active ? AppPalette.accentBgStrong
+                                 : (root.menuOpen ? "transparent" : AppPalette.card)
         borderColor: root.active ? AppPalette.accentBorder : AppPalette.border
-        borderWidth: root.menuOpen ? 0 : (root.active ? 2 : 0)
+        borderWidth: root.active ? 2 : 0
         toolTipText: root.toolTipText
         onClicked: root.menuOpen = !root.menuOpen
 

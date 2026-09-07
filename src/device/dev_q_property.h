@@ -56,8 +56,12 @@ public:
 
     Q_PROPERTY(QString devName READ devName NOTIFY deviceVersionChanged)
     Q_PROPERTY(int devType READ devType NOTIFY deviceVersionChanged)
+    Q_PROPERTY(int devTypeMinor READ devTypeMinor NOTIFY deviceVersionChanged)
     Q_PROPERTY(int devSN READ devSerialNumber NOTIFY deviceVersionChanged)
+    Q_PROPERTY(QString devUID READ devUID NOTIFY deviceVersionChanged)
     Q_PROPERTY(QString fwVersion READ fwVersion NOTIFY deviceVersionChanged)
+    Q_PROPERTY(QString bootVersion READ bootVersion NOTIFY deviceVersionChanged)
+    Q_PROPERTY(int bootMode READ bootMode NOTIFY deviceVersionChanged)
 
     Q_PROPERTY(bool isBoardInited READ isBoardInited NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isSonar READ isSonar NOTIFY deviceVersionChanged)
@@ -75,6 +79,9 @@ public:
     Q_PROPERTY(bool isUpgradeSupport READ isUpgradeSupport NOTIFY deviceVersionChanged)
 
     Q_PROPERTY(bool isServoSupport READ getServoControlState NOTIFY servoControlChanged)
+    // False until a Recorder answers the stand probe, and false again the moment it goes away.
+    // The panel kind is hidden everywhere this reads false — palette included.
+    Q_PROPERTY(bool isStandSupport READ getStandState NOTIFY standChanged)
     Q_PROPERTY(bool servoEnabled READ servoEnabled WRITE setServoEnabled NOTIFY servoControlChanged)
     Q_PROPERTY(bool servoReverse READ servoReverse WRITE setServoReverse NOTIFY servoControlChanged)
     Q_PROPERTY(int servoPwmMinUs READ servoPwmMinUs WRITE setServoPwmMinUs NOTIFY servoControlChanged)
@@ -112,6 +119,22 @@ public:
     Q_PROPERTY(int  recorderDurationSeconds       READ recorderDurationSeconds       NOTIFY recorderStatusChanged)
     Q_PROPERTY(int  recorderSecondsSinceLastWrite READ recorderSecondsSinceLastWrite NOTIFY recorderStatusChanged)
 #endif
+
+    // Last modem payload received over ID_MODEM_SOLUTION. Device-scoped (a per-device
+    // test tool), unlike the USBL solution readout, which is scene telemetry and comes
+    // from Dataset.
+    Q_PROPERTY(QString modemLastPayload     READ modemLastPayload     NOTIFY modemPayloadChanged)
+    Q_PROPERTY(int modemLastAddressFrom     READ modemLastAddressFrom NOTIFY modemPayloadChanged)
+    Q_PROPERTY(int modemLastAddressTo       READ modemLastAddressTo   NOTIFY modemPayloadChanged)
+    Q_PROPERTY(int modemLastCmdId           READ modemLastCmdId       NOTIFY modemPayloadChanged)
+    Q_PROPERTY(int modemLastBitLength       READ modemLastBitLength   NOTIFY modemPayloadChanged)
+    Q_PROPERTY(int modemLastEvent           READ modemLastEvent       NOTIFY modemPayloadChanged)
+
+    int modemLastAddressFrom() const { return idModemSolution ? idModemSolution->header().address_from : 0; }
+    int modemLastAddressTo() const   { return idModemSolution ? idModemSolution->header().address_to : 0; }
+    int modemLastCmdId() const       { return idModemSolution ? idModemSolution->header().cmd_id_from : 0; }
+    int modemLastBitLength() const   { return idModemSolution ? idModemSolution->header().bit_length : 0; }
+    int modemLastEvent() const       { return idModemSolution ? (int)idModemSolution->header().event : 0; }
 
     int devSyncPeriodMs() const { return idDevSync ? idDevSync->periodMs() : 0; }
 

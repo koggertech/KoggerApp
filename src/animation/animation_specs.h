@@ -24,5 +24,8 @@ namespace smooth {
 
 inline constexpr SmoothSpec FollowYaw  { 0.50f, 0.0f, 0.5f * kDegToRad };
 inline constexpr SmoothSpec FollowPitch{ 0.40f, 0.0f, 0.0f };
+// Mouse-wheel zoom: the accumulated wheel steps drain toward 0 (units = wheel
+// steps). smoothTime is the lever between "instant/harsh" and "laggy".
+inline constexpr SmoothSpec WheelZoom  { 0.09f, 0.0f, 0.002f };
 
 } // namespace smooth

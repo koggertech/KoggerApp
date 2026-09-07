@@ -25,9 +25,14 @@ Rectangle {
     implicitWidth: capsuleWidth
     implicitHeight: col.implicitHeight + Math.round(20 * AppPalette.scale)
     radius: cornerRadius
-    color: AppPalette.card
+    color: capsuleHover.hovered ? AppPalette.cardHover : AppPalette.card
     border.width: Tokens.cardBorderWidth
-    border.color: AppPalette.border
+    border.color: capsuleHover.hovered ? AppPalette.borderHover : AppPalette.border
+
+    Behavior on color        { ColorAnimation { duration: Anim.controlMs } }
+    Behavior on border.color { ColorAnimation { duration: Anim.controlMs } }
+
+    HoverHandler { id: capsuleHover }
 
     ColumnLayout {
         id: col

@@ -71,7 +71,7 @@ protected:
     void mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
-    void keyPressEvent(Qt::Key key) override;
+    bool keyPressEvent(Qt::Key key) override;
     void updateRenderData(int lEpoch = 0, int rEpoch = 0, bool redrawAll = false, bool manually = false);
 
 private:

@@ -22,67 +22,10 @@ Column {
     function dataGate(present) { return !panel.hideEmpty || present }
 
     readonly property int comboW: Math.round(150 * AppPalette.scale)
+    readonly property color labelInk: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
 
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceXs
-
-    // ── Reusable label + combo row (card, matches toggle rows) ─────────────────
-    component ComboRow: Rectangle {
-        id: crow
-        property string label: ""
-        property var comboModel: []
-        property int currentIndex: 0
-        property bool enabledRow: true
-        property var swatchFor: null   // function(index)->[{pos,color}] colormap dot
-        property int tgcLinkAtIndex: -1
-        property bool recessed: false   // nested in a card group: dark row + lighter combo
-        signal picked(int index)
-        signal tgcLinkClicked()
-        width: parent ? parent.width : implicitWidth
-        implicitHeight: Math.round(38 * AppPalette.scale)
-        radius: Tokens.radiusLg
-        color: crow.recessed ? AppPalette.bg : AppPalette.rowRaised
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: Math.round(10 * AppPalette.scale)
-            anchors.rightMargin: Math.round(10 * AppPalette.scale)
-            spacing: Tokens.spaceXs
-            Text {
-                text: crow.label
-                color: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
-                font.pixelSize: Tokens.fontLg
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                verticalAlignment: Text.AlignVCenter
-                elide: Text.ElideRight
-            }
-            KCircleIconButton {
-                visible: crow.tgcLinkAtIndex >= 0 && crow.currentIndex === crow.tgcLinkAtIndex
-                Layout.preferredWidth: Tokens.controlHMd
-                Layout.preferredHeight: Tokens.controlHMd
-                iconSource: "qrc:/icons/ui/settings.svg"
-                iconTintColor: AppPalette.accentBar
-                cornerRadius: Tokens.radiusSm   // square, not a circle
-                fillColor: AppPalette.controlRaised
-                fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
-                borderWidth: 0
-                borderColor: "transparent"
-                toolTipText: qsTr("Open TGC settings")
-                onClicked: crow.tgcLinkClicked()
-            }
-            KCombo {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                enabled: crow.enabledRow
-                model: crow.comboModel
-                currentIndex: crow.currentIndex
-                swatchFor: crow.swatchFor
-                fillColor: crow.recessed ? AppPalette.rowRaised : AppPalette.bg
-                onActivated: function(index) { crow.picked(index) }
-            }
-        }
-    }
 
     // ── Section header label ──────────────────────────────────────────────────
     component SectionLabel: Text {
@@ -129,29 +72,71 @@ Column {
     SectionLabel { text: qsTr("Echogram") + ":" }
 
     // ══ Echogram + theme + compensation ════════════════════════════════════════
-    ParamCardGroup {
-        width: parent.width
-        bodySpacing: Tokens.spaceXs
-        label: qsTr("Visibility")
-        checked: panel.vs ? panel.vs.echogramVisible : false
-        onToggled: function(v) { if (panel.vs) panel.vs.echogramVisible = v }
+    KIsland {
+        KIslandRow {
+            label: qsTr("Visibility")
+            labelColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+            interactive: true
+            onClicked: echogramVisibleSwitch.click()
 
-        ComboRow {
-            label: qsTr("Theme")
-            recessed: true
-            comboModel: [qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green"), qsTr("Midnight")]
-            currentIndex: panel.vs ? panel.vs.echoThemeIndex : 0
-            swatchFor: panel.plot ? function(i) { return panel.plot.echogramThemeStops(i) } : null
-            onPicked: function(index) { if (panel.vs) panel.vs.echoThemeIndex = index }
+            KSwitch {
+                id: echogramVisibleSwitch
+                flat: true
+                checked: panel.vs ? panel.vs.echogramVisible : false
+                onToggled: if (panel.vs) panel.vs.echogramVisible = checked
+            }
         }
-        ComboRow {
+
+        KIslandRow {
+            label: qsTr("Theme")
+            labelColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+            verticalPadding: Tokens.spaceSm
+            showSeparator: false
+            open: panel.vs ? panel.vs.echogramVisible : false
+
+            KCombo {
+                width: panel.comboW
+                model: [qsTr("Blue"), qsTr("Sepia"), qsTr("Sepia New"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite"), qsTr("DeepBlue"), qsTr("Ice"), qsTr("Green"), qsTr("Midnight")]
+                currentIndex: panel.vs ? panel.vs.echoThemeIndex : 0
+                swatchFor: panel.plot ? function(i) { return panel.plot.echogramThemeStops(i) } : null
+                onActivated: function(index) { if (panel.vs) panel.vs.echoThemeIndex = index }
+            }
+        }
+
+        KIslandRow {
             label: qsTr("Source data")
-            recessed: true
-            comboModel: [qsTr("Raw"), qsTr("Side-Scan"), qsTr("TGC")]
-            currentIndex: panel.vs ? panel.vs.compensationIndex : 0
-            onPicked: function(index) { if (panel.vs) panel.vs.compensationIndex = index }
-            tgcLinkAtIndex: 2
-            onTgcLinkClicked: if (panel.store) panel.store.openTgcSettings()
+            labelColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+            verticalPadding: Tokens.spaceSm
+            showSeparator: false
+            open: panel.vs ? panel.vs.echogramVisible : false
+
+            Row {
+                spacing: Tokens.spaceXs
+
+                KCircleIconButton {
+                    visible: sourceDataCombo.currentIndex === 2
+                    width: Tokens.controlHMd
+                    height: Tokens.controlHMd
+                    iconSource: "qrc:/icons/ui/settings.svg"
+                    iconTintColor: AppPalette.accentBar
+                    rounded: false
+                    cornerRadius: Tokens.radiusSm
+                    fillColor: AppPalette.controlRaised
+                    fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
+                    borderWidth: 0
+                    borderColor: "transparent"
+                    toolTipText: qsTr("Open TGC settings")
+                    onClicked: if (panel.store) panel.store.openTgcSettings()
+                }
+
+                KCombo {
+                    id: sourceDataCombo
+                    width: panel.comboW
+                    model: [qsTr("Raw"), qsTr("Side-Scan"), qsTr("TGC")]
+                    currentIndex: panel.vs ? panel.vs.compensationIndex : 0
+                    onActivated: function(index) { if (panel.vs) panel.vs.compensationIndex = index }
+                }
+            }
         }
     }
 
@@ -163,19 +148,34 @@ Column {
 
         SectionLabel { text: qsTr("Bottom-Track") + ":" }
 
-        ParamCardGroup {
-            width: parent.width
-            bodySpacing: Tokens.spaceXs
-            label: qsTr("Visibility")
-            checked: panel.vs ? panel.vs.bottomTrackLine : false
-            onToggled: function(v) { if (panel.vs) panel.vs.bottomTrackLine = v }
+        KIsland {
+            KIslandRow {
+                label: qsTr("Visibility")
+                labelColor: panel.labelInk
+                interactive: true
+                onClicked: bottomTrackVisibleSwitch.click()
 
-            ComboRow {
+                KSwitch {
+                    id: bottomTrackVisibleSwitch
+                    flat: true
+                    checked: panel.vs ? panel.vs.bottomTrackLine : false
+                    onToggled: if (panel.vs) panel.vs.bottomTrackLine = checked
+                }
+            }
+
+            KIslandRow {
                 label: qsTr("Type")
-                recessed: true
-                comboModel: [qsTr("Line"), qsTr("Points")]
-                currentIndex: panel.vs ? panel.vs.bottomTrackTheme : 0
-                onPicked: function(index) { if (panel.vs) panel.vs.bottomTrackTheme = index }
+                labelColor: panel.labelInk
+                verticalPadding: Tokens.spaceSm
+                showSeparator: false
+                open: panel.vs ? panel.vs.bottomTrackLine : false
+
+                KCombo {
+                    width: panel.comboW
+                    model: [qsTr("Line"), qsTr("Points")]
+                    currentIndex: panel.vs ? panel.vs.bottomTrackTheme : 0
+                    onActivated: function(index) { if (panel.vs) panel.vs.bottomTrackTheme = index }
+                }
             }
         }
     }
@@ -188,19 +188,34 @@ Column {
 
         SectionLabel { text: qsTr("Rangefinder") + ":" }
 
-        ParamCardGroup {
-            width: parent.width
-            bodySpacing: Tokens.spaceXs
-            label: qsTr("Visibility")
-            checked: panel.vs ? panel.vs.rangefinderLine : false
-            onToggled: function(v) { if (panel.vs) panel.vs.rangefinderLine = v }
+        KIsland {
+            KIslandRow {
+                label: qsTr("Visibility")
+                labelColor: panel.labelInk
+                interactive: true
+                onClicked: rangefinderVisibleSwitch.click()
 
-            ComboRow {
+                KSwitch {
+                    id: rangefinderVisibleSwitch
+                    flat: true
+                    checked: panel.vs ? panel.vs.rangefinderLine : false
+                    onToggled: if (panel.vs) panel.vs.rangefinderLine = checked
+                }
+            }
+
+            KIslandRow {
                 label: qsTr("Type")
-                recessed: true
-                comboModel: [qsTr("Line"), qsTr("Points")]
-                currentIndex: panel.vs ? panel.vs.rangefinderTheme : 0
-                onPicked: function(index) { if (panel.vs) panel.vs.rangefinderTheme = index }
+                labelColor: panel.labelInk
+                verticalPadding: Tokens.spaceSm
+                showSeparator: false
+                open: panel.vs ? panel.vs.rangefinderLine : false
+
+                KCombo {
+                    width: panel.comboW
+                    model: [qsTr("Line"), qsTr("Points")]
+                    currentIndex: panel.vs ? panel.vs.rangefinderTheme : 0
+                    onActivated: function(index) { if (panel.vs) panel.vs.rangefinderTheme = index }
+                }
             }
         }
     }
@@ -215,22 +230,45 @@ Column {
                   || panel.dataGate(panel.ds && panel.ds.hasPositionData))
     }
 
-    // ══ Attitude / Temperature (instruments > 1) ════════════════════════════════
-    KSwitch {
-        width: parent.width
-        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasAttitudeData)
-        text: qsTr("Attitude")
-        checked: panel.vs ? panel.vs.ahrsVisible : false
-        onToggled: if (panel.vs) panel.vs.ahrsVisible = checked
-    }
-    // ══ Doppler Beams (instruments > 1) ══════════════════════════════════════════
-    ParamCardGroup {
-        width: parent.width
-        bodySpacing: Tokens.spaceXs
-        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasDopplerBeamData)
-        label: qsTr("Doppler Beams")
-        checked: panel.vs ? panel.vs.dopplerBeamVisible : false
-        onToggled: function(v) { if (panel.vs) panel.vs.dopplerBeamVisible = v }
+    // ══ Attitude / Doppler / DVL / GNSS (instruments > 1) ═══════════════════════
+    KIsland {
+        visible: panel.instruments > 1 && (
+                     panel.dataGate(panel.ds && panel.ds.hasAttitudeData)
+                  || panel.dataGate(panel.ds && panel.ds.hasDopplerBeamData)
+                  || panel.dataGate(panel.ds && panel.ds.hasDvlSolutionData)
+                  || panel.dataGate(panel.ds && panel.ds.hasUsblData)
+                  || panel.dataGate(panel.ds && panel.ds.hasPositionData))
+
+        KIslandRow {
+            visible: panel.dataGate(panel.ds && panel.ds.hasAttitudeData)
+            label: qsTr("Attitude")
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: attitudeSwitch.click()
+
+            KSwitch {
+                id: attitudeSwitch
+                flat: true
+                checked: panel.vs ? panel.vs.ahrsVisible : false
+                onToggled: if (panel.vs) panel.vs.ahrsVisible = checked
+            }
+        }
+
+        KIslandRow {
+            id: dopplerBeamsRow
+            visible: panel.dataGate(panel.ds && panel.ds.hasDopplerBeamData)
+            label: qsTr("Doppler Beams")
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: dopplerBeamsSwitch.click()
+
+            KSwitch {
+                id: dopplerBeamsSwitch
+                flat: true
+                checked: panel.vs ? panel.vs.dopplerBeamVisible : false
+                onToggled: if (panel.vs) panel.vs.dopplerBeamVisible = checked
+            }
+        }
 
         Repeater {
             model: [
@@ -247,192 +285,330 @@ Column {
                 { lbl: "4 " + qsTr("Velocity"), key: "dopplerBeam4V" },
                 { lbl: "4 " + qsTr("Mode"),     key: "dopplerBeam4M" }
             ]
-            delegate: KSwitch {
+            delegate: KIslandRow {
                 required property var modelData
-                width: parent ? parent.width : implicitWidth
-                backgroundColor: AppPalette.bg
-                text: modelData.lbl
-                checked: panel.vs ? panel.vs[modelData.key] : false
-                onToggled: if (panel.vs) panel.vs[modelData.key] = checked
+
+                visible: dopplerBeamsRow.visible
+                open: panel.vs ? panel.vs.dopplerBeamVisible : false
+                showSeparator: false
+                verticalPadding: Tokens.spaceSm
+                label: modelData.lbl
+                labelColor: panel.labelInk
+                interactive: true
+                onClicked: dopplerBeamSwitch.click()
+
+                KSwitch {
+                    id: dopplerBeamSwitch
+                    flat: true
+                    checked: panel.vs ? panel.vs[modelData.key] : false
+                    onToggled: if (panel.vs) panel.vs[modelData.key] = checked
+                }
             }
         }
-    }
 
-    // ══ Doppler Instrument (instruments > 1) ═════════════════════════════════════
-    ParamCardGroup {
-        width: parent.width
-        bodySpacing: Tokens.spaceXs
-        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasDvlSolutionData)
-        label: qsTr("Doppler Instrument")
-        checked: panel.vs ? panel.vs.dopplerInstrumentVisible : false
-        onToggled: function(v) { if (panel.vs) panel.vs.dopplerInstrumentVisible = v }
+        KIslandRow {
+            id: dopplerInstrumentRow
+            visible: panel.dataGate(panel.ds && panel.ds.hasDvlSolutionData)
+            label: qsTr("Doppler Instrument")
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: dopplerInstrumentSwitch.click()
+
+            KSwitch {
+                id: dopplerInstrumentSwitch
+                flat: true
+                checked: panel.vs ? panel.vs.dopplerInstrumentVisible : false
+                onToggled: if (panel.vs) panel.vs.dopplerInstrumentVisible = checked
+            }
+        }
 
         Repeater {
             model: [
-                { lbl: "X",                  key: "dopplerInstrumentX" },
-                { lbl: "Y",                  key: "dopplerInstrumentY" },
-                { lbl: "Z",                  key: "dopplerInstrumentZ" },
+                { lbl: "X",                   key: "dopplerInstrumentX" },
+                { lbl: "Y",                   key: "dopplerInstrumentY" },
+                { lbl: "Z",                   key: "dopplerInstrumentZ" },
                 { lbl: qsTr("Abs. Velocity"), key: "dopplerInstrumentA" },
                 { lbl: qsTr("Depth"),         key: "dopplerInstrumentDst" }
             ]
-            delegate: KSwitch {
+            delegate: KIslandRow {
                 required property var modelData
-                width: parent ? parent.width : implicitWidth
-                backgroundColor: AppPalette.bg
-                text: modelData.lbl
-                checked: panel.vs ? panel.vs[modelData.key] : false
-                onToggled: if (panel.vs) panel.vs[modelData.key] = checked
+
+                visible: dopplerInstrumentRow.visible
+                open: panel.vs ? panel.vs.dopplerInstrumentVisible : false
+                showSeparator: false
+                verticalPadding: Tokens.spaceSm
+                label: modelData.lbl
+                labelColor: panel.labelInk
+                interactive: true
+                onClicked: dopplerInstrumentValueSwitch.click()
+
+                KSwitch {
+                    id: dopplerInstrumentValueSwitch
+                    flat: true
+                    checked: panel.vs ? panel.vs[modelData.key] : false
+                    onToggled: if (panel.vs) panel.vs[modelData.key] = checked
+                }
             }
         }
-    }
 
-    // ══ DVL Legend (instruments > 1) ═════════════════════════════════════════════
-    ParamCardGroup {
-        width: parent.width
-        bodySpacing: Tokens.spaceXs
-        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasDvlSolutionData)
-        label: qsTr("DVL Legend")
-        checked: panel.vs ? panel.vs.dvlLegendVisible : false
-        onToggled: function(v) { if (panel.vs) panel.vs.dvlLegendVisible = v }
+        KIslandRow {
+            id: dvlLegendRow
+            visible: panel.dataGate(panel.ds && panel.ds.hasDvlSolutionData)
+            label: qsTr("DVL Legend")
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: dvlLegendSwitch.click()
 
-        ComboRow {
-            label: qsTr("Position")
-            recessed: true
-            comboModel: [qsTr("Top"), qsTr("Center"), qsTr("Bottom")]
-            currentIndex: panel.vs ? panel.vs.dvlLegendPosition : 0
-            onPicked: function(index) { if (panel.vs) panel.vs.dvlLegendPosition = index }
+            KSwitch {
+                id: dvlLegendSwitch
+                flat: true
+                checked: panel.vs ? panel.vs.dvlLegendVisible : false
+                onToggled: if (panel.vs) panel.vs.dvlLegendVisible = checked
+            }
         }
-    }
 
-    // ══ Acoustic angle / Doppler Profiler / GNSS (instruments > 1) ═══════════════
-    KSwitch {
-        width: parent.width
-        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasUsblData)
-        text: qsTr("Acoustic angle")
-        checked: panel.vs ? panel.vs.acousticAngleVisible : false
-        onToggled: if (panel.vs) panel.vs.acousticAngleVisible = checked
-    }
-    KSwitch {
-        width: parent.width
-        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasDopplerBeamData)
-        enabled: false
-        text: qsTr("Doppler Profiler")
-    }
-    KSwitch {
-        width: parent.width
-        visible: panel.instruments > 1 && panel.dataGate(panel.ds && panel.ds.hasPositionData)
-        text: qsTr("GNSS data")
-        checked: panel.vs ? panel.vs.gnssVisible : false
-        onToggled: if (panel.vs) panel.vs.gnssVisible = checked
+        KIslandRow {
+            visible: dvlLegendRow.visible
+            open: panel.vs ? panel.vs.dvlLegendVisible : false
+            showSeparator: false
+            verticalPadding: Tokens.spaceSm
+            label: qsTr("Position")
+            labelColor: panel.labelInk
+
+            KCombo {
+                width: panel.comboW
+                model: [qsTr("Top"), qsTr("Center"), qsTr("Bottom")]
+                currentIndex: panel.vs ? panel.vs.dvlLegendPosition : 0
+                onActivated: function(index) { if (panel.vs) panel.vs.dvlLegendPosition = index }
+            }
+        }
+
+        KIslandRow {
+            visible: panel.dataGate(panel.ds && panel.ds.hasUsblData)
+            label: qsTr("Acoustic angle")
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: acousticAngleSwitch.click()
+
+            KSwitch {
+                id: acousticAngleSwitch
+                flat: true
+                checked: panel.vs ? panel.vs.acousticAngleVisible : false
+                onToggled: if (panel.vs) panel.vs.acousticAngleVisible = checked
+            }
+        }
+
+        KIslandRow {
+            visible: panel.dataGate(panel.ds && panel.ds.hasDopplerBeamData)
+            enabled: false
+            label: qsTr("Doppler Profiler")
+            labelColor: AppPalette.textMuted
+
+            KSwitch { flat: true }
+        }
+
+        KIslandRow {
+            visible: panel.dataGate(panel.ds && panel.ds.hasPositionData)
+            label: qsTr("GNSS data")
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: gnssSwitch.click()
+
+            KSwitch {
+                id: gnssSwitch
+                flat: true
+                checked: panel.vs ? panel.vs.gnssVisible : false
+                onToggled: if (panel.vs) panel.vs.gnssVisible = checked
+            }
+        }
     }
 
     SectionLabel { text: qsTr("Display parameters") + ":" }
 
-    // ══ Grid + fill/invert/number ════════════════════════════════════════════════
-    ParamCardGroup {
-        width: parent.width
-        bodySpacing: Tokens.spaceXs
-        label: qsTr("Grid")
-        checked: panel.vs ? panel.vs.gridVisible : false
-        onToggled: function(v) { if (panel.vs) panel.vs.gridVisible = v }
+    // ══ Grid / distance auto range / horizontal mode ════════════════════════════
+    KIsland {
+        KIslandRow {
+            label: qsTr("Grid")
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: gridSwitch.click()
 
-        KSwitch {
-            width: parent.width
-            backgroundColor: AppPalette.bg
-            text: qsTr("Fill width")
-            checked: panel.vs ? panel.vs.gridFill : false
-            onToggled: if (panel.vs) panel.vs.gridFill = checked
-        }
-        KSwitch {
-            width: parent.width
-            backgroundColor: AppPalette.bg
-            text: qsTr("Invert")
-            checked: panel.vs ? panel.vs.gridInvert : false
-            onToggled: if (panel.vs) panel.vs.gridInvert = checked
-        }
-        Rectangle {
-            width: parent.width
-            implicitHeight: Math.round(38 * AppPalette.scale)
-            radius: Tokens.radiusLg
-            color: AppPalette.bg
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Tokens.spaceMd
-                anchors.rightMargin: Tokens.spaceMd
-                spacing: Tokens.spaceMd
-                Text {
-                    text: qsTr("Vertical lines")
-                    color: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
-                    font.pixelSize: Tokens.fontLg
-                    Layout.fillWidth: true
-                    verticalAlignment: Text.AlignVCenter
-                }
-                KSpinBox {
-                    Layout.preferredWidth: panel.comboW
-                    from: 1; to: 24; stepSize: 1
-                    value: panel.vs ? panel.vs.gridNumber : 5
-                    onValueModified: function(val) { if (panel.vs) panel.vs.gridNumber = val }
-                }
+            KSwitch {
+                id: gridSwitch
+                flat: true
+                checked: panel.vs ? panel.vs.gridVisible : false
+                onToggled: if (panel.vs) panel.vs.gridVisible = checked
             }
         }
 
-        ParamCard {
-            width: parent.width
+        KIslandRow {
+            open: panel.vs ? panel.vs.gridVisible : false
+            showSeparator: false
+            verticalPadding: Tokens.spaceSm
+            label: qsTr("Fill width")
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: gridFillSwitch.click()
+
+            KSwitch {
+                id: gridFillSwitch
+                flat: true
+                checked: panel.vs ? panel.vs.gridFill : false
+                onToggled: if (panel.vs) panel.vs.gridFill = checked
+            }
+        }
+
+        KIslandRow {
+            open: panel.vs ? panel.vs.gridVisible : false
+            showSeparator: false
+            verticalPadding: Tokens.spaceSm
+            label: qsTr("Invert")
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: gridInvertSwitch.click()
+
+            KSwitch {
+                id: gridInvertSwitch
+                flat: true
+                checked: panel.vs ? panel.vs.gridInvert : false
+                onToggled: if (panel.vs) panel.vs.gridInvert = checked
+            }
+        }
+
+        KIslandRow {
+            open: panel.vs ? panel.vs.gridVisible : false
+            showSeparator: false
+            verticalPadding: Tokens.spaceSm
+            label: qsTr("Vertical lines")
+            labelColor: panel.labelInk
+
+            KSpinBox {
+                width: panel.comboW
+                height: Tokens.controlHMd
+                from: 1; to: 24; stepSize: 1
+                value: panel.vs ? panel.vs.gridNumber : 5
+                onValueModified: function(val) { if (panel.vs) panel.vs.gridNumber = val }
+            }
+        }
+
+        KIslandRow {
+            open: panel.vs ? panel.vs.gridVisible : false
+            showSeparator: false
+            verticalPadding: Tokens.spaceSm
             label: qsTr("Angle range, °")
-            slotWidth: panel.comboW
-            fillColor: AppPalette.bg
-            checked: panel.vs ? panel.vs.angleVisible : false
-            onToggled: function(v) { if (panel.vs) panel.vs.angleVisible = v }
-            KSpinBox {
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: panel.comboW
-                from: 1; to: 360; stepSize: 1
-                value: panel.vs ? panel.vs.angleRange : 45
-                onValueModified: function(val) { if (panel.vs) panel.vs.angleRange = val }
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: angleRangeSwitch.click()
+
+            Item {
+                width: angleRangeSlotRow.width
+                height: angleRangeSlotRow.height
+
+                // Eats clicks landing in the gaps around the spinbox so they
+                // cannot bubble up to the row and flip the toggle.
+                MouseArea { anchors.fill: parent }
+
+                Row {
+                    id: angleRangeSlotRow
+                    spacing: Tokens.spaceSm
+
+                    KSpinBox {
+                        width: panel.comboW
+                        height: Tokens.controlHMd
+                        from: 1; to: 360; stepSize: 1
+                        value: panel.vs ? panel.vs.angleRange : 45
+                        onValueModified: function(val) { if (panel.vs) panel.vs.angleRange = val }
+                    }
+
+                    KSwitch {
+                        id: angleRangeSwitch
+                        flat: true
+                        checked: panel.vs ? panel.vs.angleVisible : false
+                        onToggled: if (panel.vs) panel.vs.angleVisible = checked
+                    }
+                }
             }
         }
-        ParamCard {
-            width: parent.width
+
+        KIslandRow {
+            open: panel.vs ? panel.vs.gridVisible : false
+            showSeparator: false
+            verticalPadding: Tokens.spaceSm
             label: qsTr("Velocity range, m/s")
-            slotWidth: panel.comboW
-            fillColor: AppPalette.bg
-            checked: panel.vs ? panel.vs.velocityVisible : false
-            onToggled: function(v) { if (panel.vs) panel.vs.velocityVisible = v }
-            KSpinBox {
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: panel.comboW
-                from: 500; to: 8000; stepSize: 500; divisor: 1000; decimals: 1
-                value: panel.vs ? panel.vs.velocityRange : 5000
-                onValueModified: function(val) { if (panel.vs) panel.vs.velocityRange = val }
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: velocityRangeSwitch.click()
+
+            Item {
+                width: velocityRangeSlotRow.width
+                height: velocityRangeSlotRow.height
+
+                MouseArea { anchors.fill: parent }
+
+                Row {
+                    id: velocityRangeSlotRow
+                    spacing: Tokens.spaceSm
+
+                    KSpinBox {
+                        width: panel.comboW
+                        height: Tokens.controlHMd
+                        from: 500; to: 8000; stepSize: 500; divisor: 1000; decimals: 1
+                        value: panel.vs ? panel.vs.velocityRange : 5000
+                        onValueModified: function(val) { if (panel.vs) panel.vs.velocityRange = val }
+                    }
+
+                    KSwitch {
+                        id: velocityRangeSwitch
+                        flat: true
+                        checked: panel.vs ? panel.vs.velocityVisible : false
+                        onToggled: if (panel.vs) panel.vs.velocityVisible = checked
+                    }
+                }
             }
         }
-    }
 
-    // ══ Distance auto range + mode ════════════════════════════════════════════════
-    ParamCardGroup {
-        width: parent.width
-        bodySpacing: Tokens.spaceXs
-        label: qsTr("Distance auto range")
-        checked: panel.vs ? panel.vs.distanceAutoRange : false
-        onToggled: function(v) { if (panel.vs) panel.vs.distanceAutoRange = v }
+        KIslandRow {
+            label: qsTr("Distance auto range")
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: distanceAutoRangeSwitch.click()
 
-        ComboRow {
-            label: qsTr("Mode")
-            recessed: true
-            comboModel: [qsTr("Last data"), qsTr("Last on screen"), qsTr("Max on screen")]
-            currentIndex: panel.vs ? panel.vs.distanceAutoRangeIndex : 0
-            onPicked: function(index) { if (panel.vs) panel.vs.distanceAutoRangeIndex = index }
+            KSwitch {
+                id: distanceAutoRangeSwitch
+                flat: true
+                checked: panel.vs ? panel.vs.distanceAutoRange : false
+                onToggled: if (panel.vs) panel.vs.distanceAutoRange = checked
+            }
         }
-    }
 
-    // ══ Horizontal mode ═══════════════════════════════════════════════════════════
-    KSwitch {
-        width: parent.width
-        text: qsTr("Horizontal")
-        checked: panel.vs ? panel.vs.horizontalMode : false
-        onToggled: if (panel.vs) panel.vs.horizontalMode = checked
+        KIslandRow {
+            open: panel.vs ? panel.vs.distanceAutoRange : false
+            showSeparator: false
+            verticalPadding: Tokens.spaceSm
+            label: qsTr("Mode")
+            labelColor: panel.labelInk
+
+            KCombo {
+                width: panel.comboW
+                model: [qsTr("Last data"), qsTr("Last on screen"), qsTr("Max on screen")]
+                currentIndex: panel.vs ? panel.vs.distanceAutoRangeIndex : 0
+                onActivated: function(index) { if (panel.vs) panel.vs.distanceAutoRangeIndex = index }
+            }
+        }
+
+        KIslandRow {
+            label: qsTr("Horizontal")
+            labelColor: panel.labelInk
+            interactive: true
+            onClicked: horizontalModeSwitch.click()
+
+            KSwitch {
+                id: horizontalModeSwitch
+                flat: true
+                checked: panel.vs ? panel.vs.horizontalMode : false
+                onToggled: if (panel.vs) panel.vs.horizontalMode = checked
+            }
+        }
     }
 
 }

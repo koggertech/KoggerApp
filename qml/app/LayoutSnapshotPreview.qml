@@ -16,6 +16,8 @@ Rectangle {
     property color pane2DStroke: "#93C5FD"
     property color pane3DFill: "#16A34A"
     property color pane3DStroke: "#86EFAC"
+    property color paneVideoFill: "#B39A55"
+    property color paneVideoStroke: "#EFE0AC"
     property color popupFill: "#EF4444"
     property color popupStroke: "#FCA5A5"
     property real popupMinPaneSize: 8
@@ -74,9 +76,12 @@ Rectangle {
             }
 
             function pane(x, y, w, h, mode) {
-                var is3D = mode === "3D"
-                ctx.fillStyle = is3D ? root.pane3DFill : root.pane2DFill
-                ctx.strokeStyle = is3D ? root.pane3DStroke : root.pane2DStroke
+                ctx.fillStyle = mode === "3D" ? root.pane3DFill
+                              : mode === "Video" ? root.paneVideoFill
+                                                 : root.pane2DFill
+                ctx.strokeStyle = mode === "3D" ? root.pane3DStroke
+                                : mode === "Video" ? root.paneVideoStroke
+                                                   : root.pane2DStroke
                 ctx.lineWidth = 1
                 ctx.fillRect(x, y, w, h)
                 if (w > 1 && h > 1)
@@ -101,7 +106,9 @@ Rectangle {
                     return
 
                 if (node.type === "leaf") {
-                    pane(x, y, w, h, node.mode === "3D" ? "3D" : "2D")
+                    pane(x, y, w, h, node.mode === "3D" ? "3D"
+                                   : node.mode === "Video" ? "Video"
+                                                           : "2D")
                     var paneId = typeof node.paneId === "number" ? Math.round(node.paneId) : -1
                     if (paneId > 0 && popupHosts[paneId] === true)
                         popupMark(x, y, w, h)
