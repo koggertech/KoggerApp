@@ -26,6 +26,13 @@ Item {
     readonly property int _pad: Tokens.spaceLg
     readonly property int _btnSize: Math.round(34 * _s)
     readonly property bool _colorize: !!store && store.consoleColorize
+    readonly property int _logFontPx: {
+        if (!store)
+            return Math.round(13 * _s)
+        var px = Math.max(store.consoleFontSizeMin,
+                          Math.min(store.consoleFontSizeMax, store.consoleFontSize))
+        return Math.round(px * _s)
+    }
 
     readonly property int srcAll: 0
     readonly property int srcApp: 1
@@ -380,7 +387,7 @@ Item {
                 textFormat: root._colorize ? Text.RichText : Text.PlainText
                 text: root._colorize ? root.buildLogHtml(time, payload, category)
                                      : (time + "  " + payload)
-                font.pixelSize: Math.round(13 * root._s)
+                font.pixelSize: root._logFontPx
                 font.family: "Consolas"
                 color: AppPalette.text
                 wrapMode: Text.NoWrap

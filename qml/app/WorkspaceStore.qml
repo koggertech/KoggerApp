@@ -1463,13 +1463,21 @@ property Settings consolePersist: Settings {
     id: consolePersist
     category: "main/console"
     property bool consColorize: true
-    property int consMaxRows: 500
+    property int consMaxRows: 1500
+    property int consFontSize: 13
     property bool protoBinConsoled: false
     property bool nmeaConsoled: true
 }
 
 property alias consoleColorize: consolePersist.consColorize
 property alias consoleMaxRows: consolePersist.consMaxRows
+property alias consoleFontSize: consolePersist.consFontSize
+readonly property int consoleFontSizeMin: 9
+readonly property int consoleFontSizeMax: 22
+readonly property int consoleFontSizeDefault: 13
+readonly property int consoleMaxRowsMin: 50
+readonly property int consoleMaxRowsMax: 4000
+readonly property int consoleMaxRowsDefault: 1500
 property alias consoleProtoBin: consolePersist.protoBinConsoled
 property alias consoleNmea: consolePersist.nmeaConsoled
 

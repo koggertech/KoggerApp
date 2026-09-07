@@ -1499,49 +1499,64 @@
 <context>
     <name>ConsoleSettingsTab</name>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="14"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="19"/>
         <source>Show console</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="20"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="36"/>
         <source>Colour marking</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="15"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="37"/>
         <source>Highlight log syntax with the app theme's colours</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="29"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="155"/>
         <source>Keep last lines:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="53"/>
-        <source>Ring buffer — the console keeps only the newest lines; older ones are dropped.</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="51"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="56"/>
         <source>Binary protocol</source>
         <translation>Binary protocol</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="52"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="57"/>
         <source>Log KP1/KP2 frames of the device protocol</source>
         <translation>Log KP1/KP2 frames of the device protocol</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="69"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="74"/>
         <source>NMEA sentences</source>
         <translation>NMEA sentences</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="70"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="75"/>
         <source>Log NMEA sentences received from the device</source>
         <translation>Log NMEA sentences received from the device</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="106"/>
+        <source>Log text size:</source>
+        <translation>Log text size:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="116"/>
+        <source>%1 px</source>
+        <translation>%1 px</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="14"/>
+        <source>Reset to default</source>
+        <translation>Reset to default</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="13"/>
+        <source>Default</source>
+        <translation>Default</translation>
     </message>
 </context>
 <context>

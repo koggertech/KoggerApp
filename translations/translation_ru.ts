@@ -1620,49 +1620,64 @@
 <context>
     <name>ConsoleSettingsTab</name>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="14"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="19"/>
         <source>Show console</source>
         <translation>Показать консоль</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="20"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="36"/>
         <source>Colour marking</source>
         <translation>Маркировка цветом</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="15"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="37"/>
         <source>Highlight log syntax with the app theme's colours</source>
         <translation>Подсветка синтаксиса лога цветами темы приложения</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="29"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="155"/>
         <source>Keep last lines:</source>
         <translation>Хранить последние строки:</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="53"/>
-        <source>Ring buffer — the console keeps only the newest lines; older ones are dropped.</source>
-        <translation>Кольцевой буфер — консоль хранит только последние строки; старые отбрасываются.</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="51"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="56"/>
         <source>Binary protocol</source>
         <translation>Бинарный протокол</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="52"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="57"/>
         <source>Log KP1/KP2 frames of the device protocol</source>
         <translation>Писать в лог кадры KP1/KP2 протокола устройства</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="69"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="74"/>
         <source>NMEA sentences</source>
         <translation>NMEA-сообщения</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsoleSettingsTab.qml" line="70"/>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="75"/>
         <source>Log NMEA sentences received from the device</source>
         <translation>Писать в лог NMEA-сообщения от устройства</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="106"/>
+        <source>Log text size:</source>
+        <translation>Размер текста лога:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="116"/>
+        <source>%1 px</source>
+        <translation>%1 px</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="14"/>
+        <source>Reset to default</source>
+        <translation>Вернуть значение по умолчанию</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ConsoleSettingsTab.qml" line="13"/>
+        <source>Default</source>
+        <translation>По умолчанию</translation>
     </message>
 </context>
 <context>

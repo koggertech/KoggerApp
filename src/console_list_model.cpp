@@ -94,13 +94,12 @@ void ConsoleListModel::setMaxRows(int rows)
 
 void ConsoleListModel::trimHeadIfNeeded(int incomingCount)
 {
-    const int overflow = (_size + incomingCount) - _maxRows;
-    if (overflow <= 0) {
+    const int batch = qBound(1, _maxRows / 10, kTrimBatch);
+    if ((_size + incomingCount) <= (_maxRows + batch)) {
         return;
     }
 
-    const int batch = qBound(1, _maxRows / 10, kTrimBatch);
-    removeHead(qMin(_size, qMax(overflow, batch)));
+    removeHead(qMin(_size, (_size + incomingCount) - _maxRows));
 }
 
 void ConsoleListModel::removeHead(int removeCount)
