@@ -29,6 +29,7 @@ extern Core core;
 namespace {
 constexpr float kVerticalScaleMin = 0.05f;
 constexpr float kVerticalScaleMax = 10.0f;
+constexpr float kMaxPitchDeg = 40.0f;
 
 struct ZoomDistanceRange {
     float min;
@@ -1490,7 +1491,7 @@ void GraphicsScene3dView::beginFollowReturn()
     targetDist = std::min(targetDist, perspectiveEdge_ * 0.9f);
 
     const float targetRotX = startRot.x();
-    const float targetRotY = navigatorViewLocation_ ? qDegreesToRadians(30.0f) : startRot.y();
+    const float targetRotY = navigatorViewLocation_ ? qDegreesToRadians(kMaxPitchDeg) : startRot.y();
 
     emit followReturnStateChanged();
 
@@ -2366,7 +2367,7 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
         focusPoint += forwardXY * offset;
 
         // тангаж
-        const float targetPitchRad = isNorth_ ? 0.0f : qDegreesToRadians(30.0f);
+        const float targetPitchRad = isNorth_ ? 0.0f : qDegreesToRadians(kMaxPitchDeg);
         float next = m_camera->pitchSmoother_.step(m_camera->m_rotAngle.y(), targetPitchRad, smooth::FollowPitch);
         next = std::clamp(next, 0.0f, float(M_PI_2));
         m_camera->m_rotAngle.setY(next);
@@ -3882,9 +3883,9 @@ void GraphicsScene3dView::Camera::rotate(const QVector2D& lastMouse, const QVect
 
     m_rotAngle += r;
 
-    const float kMinPitchRad = qDegreesToRadians(30.0f); // angle limit
-    if (m_rotAngle.y() > kMinPitchRad) {
-        m_rotAngle.setY(kMinPitchRad);
+    const float maxPitchRad = qDegreesToRadians(kMaxPitchDeg);
+    if (m_rotAngle.y() > maxPitchRad) {
+        m_rotAngle.setY(maxPitchRad);
     }
 
     tryResetRotateAngle();
@@ -3901,9 +3902,9 @@ void GraphicsScene3dView::Camera::rotate(const QPointF& prevCenter, const QPoint
     m_rotAngle.setX(m_rotAngle.x() - qDegreesToRadians(angleDelta));
     m_rotAngle.setY(m_rotAngle.y() + qDegreesToRadians(angleDeltaY * increaseCoeff));
 
-    const float kMinPitchRad = qDegreesToRadians(30.0f); // angle limit
-    if (m_rotAngle.y() > kMinPitchRad) {
-        m_rotAngle.setY(kMinPitchRad);
+    const float maxPitchRad = qDegreesToRadians(kMaxPitchDeg);
+    if (m_rotAngle.y() > maxPitchRad) {
+        m_rotAngle.setY(maxPitchRad);
     }
 
     tryResetRotateAngle();
