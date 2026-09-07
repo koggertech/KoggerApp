@@ -70,7 +70,8 @@ private:
     friend class SurfaceView;
 
     /*methods*/
-    inline bool checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const;
+    inline bool isVertexDefined(int indx) const;
+    inline void appendTriangle(int i0, int i1, int i2);
 
     /*data*/
     TileKey   key_;

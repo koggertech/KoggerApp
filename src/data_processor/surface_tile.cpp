@@ -98,23 +98,43 @@ void SurfaceTile::updateHeightIndices()
     const int side = int(std::sqrt(double(heightVertices_.size())));
     if (side <= 1) return;
 
+    heightIndices_.reserve((side - 1) * (side - 1) * 6);
+
     for (int i = 0; i < side - 1; ++i) { // -1 для норм прохода
         for (int j = 0; j < side - 1; ++j) {
-            int topLeft = i * side + j;
-            int topRight = topLeft + 1;
-            int bottomLeft = (i + 1) * side + j;
-            int bottomRight = bottomLeft + 1;
+            const int topLeft = i * side + j;
+            const int topRight = topLeft + 1;
+            const int bottomLeft = (i + 1) * side + j;
+            const int bottomRight = bottomLeft + 1;
 
-            if (!checkVerticesDepth(topLeft, topRight, bottomLeft, bottomRight)) {
+            const bool tl = isVertexDefined(topLeft);
+            const bool tr = isVertexDefined(topRight);
+            const bool bl = isVertexDefined(bottomLeft);
+            const bool br = isVertexDefined(bottomRight);
+            const int definedCount = int(tl) + int(tr) + int(bl) + int(br);
+
+            if (definedCount == 4) {
+                appendTriangle(topLeft, bottomLeft, topRight);
+                appendTriangle(topRight, bottomLeft, bottomRight);
                 continue;
             }
 
-            heightIndices_.append(topLeft);     // 1--3
-            heightIndices_.append(bottomLeft);  // | /
-            heightIndices_.append(topRight);    // 2
-            heightIndices_.append(topRight);    //    1
-            heightIndices_.append(bottomLeft);  //  / |
-            heightIndices_.append(bottomRight); // 2--3
+            if (definedCount != 3) {
+                continue;
+            }
+
+            if (!br) {
+                appendTriangle(topLeft, bottomLeft, topRight);
+            }
+            else if (!tl) {
+                appendTriangle(topRight, bottomLeft, bottomRight);
+            }
+            else if (!tr) {
+                appendTriangle(topLeft, bottomLeft, bottomRight);
+            }
+            else {
+                appendTriangle(topLeft, bottomRight, topRight);
+            }
         }
     }
 }
@@ -275,10 +295,14 @@ void SurfaceTile::footprint(float &x0, float &x1, float &y0, float &y1) const
     if (y0 > y1) std::swap(y0, y1);
 }
 
-bool SurfaceTile::checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const
+bool SurfaceTile::isVertexDefined(int indx) const
 {
-    return !qFuzzyIsNull(heightVertices_[topLeft].z()) &&
-           !qFuzzyIsNull(heightVertices_[topRight].z()) &&
-           !qFuzzyIsNull(heightVertices_[bottomLeft].z()) &&
-           !qFuzzyIsNull(heightVertices_[bottomRight].z());
+    return !qFuzzyIsNull(heightVertices_[indx].z());
+}
+
+void SurfaceTile::appendTriangle(int i0, int i1, int i2)
+{
+    heightIndices_.append(i0);
+    heightIndices_.append(i1);
+    heightIndices_.append(i2);
 }
