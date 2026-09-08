@@ -2,6 +2,8 @@
 
 #include "plot2D_plot_layer.h"
 
+#include <QImage>
+
 
 class Plot2DAim : public PlotLayer {
 public:
@@ -14,5 +16,6 @@ protected:
     int lineWidth_;
     QColor lineColor_;
     qreal scaleFactor_;
+    QImage loupeBuffer_;
 };
 

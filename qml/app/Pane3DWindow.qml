@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
+import Qt5Compat.GraphicalEffects
 import WaterFall 1.0
 import kqml_types 1.0
 import scene3d
@@ -269,8 +270,7 @@ Item {
             color: "black"
             border.color: "#545E84"
             border.width: Math.max(1, Math.round(2 * theme.resCoeff))
-            radius: Math.max(1, Math.round(2 * theme.resCoeff))
-            clip: true
+            radius: Math.max(2, Math.round(8 * theme.resCoeff))
 
             WaterFall {
                 id: syncLoupePlot3D
@@ -279,6 +279,19 @@ Item {
                 anchors.margins: syncLoupeFrame.border.width
                 horizontal: true
                 enabled: false
+
+                layer.enabled: true
+                layer.smooth: true
+                layer.effect: OpacityMask {
+                    maskSource: ShaderEffectSource {
+                        hideSource: true
+                        sourceItem: Rectangle {
+                            width: syncLoupePlot3D.width
+                            height: syncLoupePlot3D.height
+                            radius: Math.max(1, syncLoupeFrame.radius - syncLoupeFrame.border.width)
+                        }
+                    }
+                }
 
                 Component.onCompleted: {
                     setZoomPreviewMode(true)
