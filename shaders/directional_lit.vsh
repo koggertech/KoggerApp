@@ -29,8 +29,8 @@ void main()
     float ndlRef = clamp(l.z, 0.0, 1.0);
     float invRef = 1.0 / max(ndlRef, 1e-4);
     float invRefToOne = 1.0 / max(1.0 - ndlRef, 1e-4);
-    float shadowTerm = smoothstep(0.0, 1.0, clamp((ndl - ndlRef) * invRefToOne, 0.0, 1.0));
-    float highlightTerm = smoothstep(0.0, 1.0, clamp((ndlRef - ndl) * invRef, 0.0, 1.0));
+    float shadowTerm = smoothstep(0.0, 1.0, clamp((ndlRef - ndl) * invRef, 0.0, 1.0));
+    float highlightTerm = smoothstep(0.0, 1.0, clamp((ndl - ndlRef) * invRefToOne, 0.0, 1.0));
     float baseShade = ambient + (1.0 - ambient) * (1.0 - intensity * shadowTerm);
     vBaseShade = clamp(baseShade, 0.0, 1.0);
     vHighlight = clamp((1.0 - ambient) * highlightIntensity * highlightTerm, 0.0, 1.0);

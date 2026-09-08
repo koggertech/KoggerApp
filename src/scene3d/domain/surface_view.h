@@ -46,6 +46,7 @@ public:
         QVector<QVector3D> buildTileNormalSums(const SurfaceTile& tile) const;
         QVector<QVector3D> normalizeNormals(const QVector<QVector3D>& normalSums) const;
         QVector<QVector3D> buildTileNormals(const SurfaceTile& tile) const;
+        QVector3D samplePalette(float norm) const;
         void rebuildSeamlessTileNormals(const QHash<TileKey, SurfaceTile>& tiles,
                                         QHash<TileKey, QVector<QVector3D>>& outNormals) const;
         void updateBounds() final;
@@ -59,6 +60,7 @@ public:
         float maxZ_; // from dataprocessor
         float surfaceStep_; // from dataprocessor
         int colorIntervalsSize_; // from dataprocessor
+        std::vector<uint8_t> isoPalette_;
         bool iVis_;
         bool mVis_;
         QHash<TileKey, QVector<QVector3D>> tileNormals_;
@@ -131,7 +133,7 @@ private:
 private:
     QMutex mosaicTexTasksMutex_;
 
-    const float kLabelZShift = 0.03f;
+    static constexpr float kLabelZShift = 0.03f;
 
     std::vector<uint8_t>                            mosaicColorTableToAppend_;
     GLuint                                          mosaicColorTableToDelete_;

@@ -18,6 +18,40 @@ constexpr float kIsoLabelTargetPx = 16.0f;
 constexpr float kIsoLabelSpacingPx = 160.0f;
 constexpr float kIsoLabelAdvanceRatio = 0.80f;
 constexpr float kIsoLabelOverlapGapPx = 2.0f;
+constexpr float kIsoLineWidthPx = 1.0f;
+constexpr float kIsoCasingWidthPx = 1.0f;
+constexpr float kIsoCasingTint = 0.30f;
+constexpr float kIsoLabelCasingRatio = 0.07f;
+
+const QVector3D kIsoInkColor(0.10f, 0.11f, 0.13f);
+const QVector3D kIsoCasingColor(1.0f, 1.0f, 1.0f);
+
+const QVector2D kIsoLabelCasingOffsets[] = {
+    QVector2D( 1.0f,  0.0f),
+    QVector2D(-1.0f,  0.0f),
+    QVector2D( 0.0f,  1.0f),
+    QVector2D( 0.0f, -1.0f)
+};
+
+QVector<TextRenderer::Text3DItem> offsetLabelBatch(const QVector<TextRenderer::Text3DItem>& src,
+                                                   const QVector2D& localOffset,
+                                                   float unit)
+{
+    QVector<TextRenderer::Text3DItem> out;
+    out.reserve(src.size());
+
+    for (const auto& item : src) {
+        const QVector3D along = item.dir.normalized();
+        const QVector3D across(-along.y(), along.x(), 0.0f);
+        const float amount = item.scale * unit;
+
+        TextRenderer::Text3DItem shifted = item;
+        shifted.pos += along * (localOffset.x() * amount) + across * (localOffset.y() * amount);
+        out.append(shifted);
+    }
+
+    return out;
+}
 
 } // namespace
 
@@ -102,6 +136,32 @@ QVector<QVector3D> SurfaceView::SurfaceViewRenderImplementation::normalizeNormal
 QVector<QVector3D> SurfaceView::SurfaceViewRenderImplementation::buildTileNormals(const SurfaceTile& tile) const
 {
     return normalizeNormals(buildTileNormalSums(tile));
+}
+
+QVector3D SurfaceView::SurfaceViewRenderImplementation::samplePalette(float norm) const
+{
+    constexpr size_t kStride = 4;
+    const int entryCount = static_cast<int>(isoPalette_.size() / kStride);
+    if (entryCount <= 0) {
+        return kIsoCasingColor;
+    }
+
+    const float texel = qBound(0.0f,
+                               qBound(0.0f, norm, 1.0f) * static_cast<float>(entryCount) - 0.5f,
+                               static_cast<float>(entryCount - 1));
+    const float base = std::floor(texel);
+    const int i0 = static_cast<int>(base);
+    const int i1 = qMin(i0 + 1, entryCount - 1);
+    const float t = texel - base;
+
+    auto entryAt = [this](int i) {
+        const size_t offset = static_cast<size_t>(i) * kStride;
+        return QVector3D(float(isoPalette_[offset])     / 255.0f,
+                         float(isoPalette_[offset + 1]) / 255.0f,
+                         float(isoPalette_[offset + 2]) / 255.0f);
+    };
+
+    return entryAt(i0) * (1.0f - t) + entryAt(i1) * t;
 }
 
 void SurfaceView::SurfaceViewRenderImplementation::rebuildSeamlessTileNormals(const QHash<TileKey, SurfaceTile>& tiles,
@@ -718,6 +778,10 @@ void SurfaceView::setTextureTask(const std::vector<uint8_t> &textureTask)
 {
     surfaceColorTableToAppend_ = textureTask;
 
+    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+        r->isoPalette_ = textureTask;
+    }
+
     Q_EMIT changed();
 }
 
@@ -1153,8 +1217,11 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
             shP->setUniformValue("levelStep", surfaceStep_);
             shP->setUniformValue("levelCount", colorIntervalsSize_);
             shP->setUniformValue("linePass", false);
-            shP->setUniformValue("lineColor", QVector3D(1.0f, 1.0f, 1.0f));
-            shP->setUniformValue("lineWidth", 1.0f);
+            shP->setUniformValue("lineColor", kIsoInkColor);
+            shP->setUniformValue("casingColor", kIsoCasingColor);
+            shP->setUniformValue("casingWidth", kIsoCasingWidthPx);
+            shP->setUniformValue("casingTint", kIsoCasingTint);
+            shP->setUniformValue("lineWidth", kIsoLineWidthPx);
             shP->setUniformValue("lightDir", shadow.lightDir);
             shP->setUniformValue("shadowAmbient", shadow.ambient);
             shP->setUniformValue("shadowIntensity", shadow.intensity);
@@ -1265,7 +1332,6 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
     if (iVis_ && !mVis_ && !isoLabels_.isEmpty()) {
         glDisable(GL_DEPTH_TEST);
         const QColor oldCol = TextRenderer::instance().getColor();
-        TextRenderer::instance().setColor(QColor::fromRgbF(1.0f, 1.0f, 1.0f));
 
         const float baseScale = (std::isfinite(cameraDist_) && cameraDist_ > 0.0f)
                                 ? cameraDist_ * 0.0015f
@@ -1365,6 +1431,7 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
 
         QVector<TextRenderer::Text3DItem> labelBatch;
         labelBatch.reserve(placed.size());
+        QMap<int, QVector<TextRenderer::Text3DItem>> casingByLevel;
 
         for (const auto& item : placed) {
             const int cx = int(std::floor(item.screenPos.x() * overlapInv));
@@ -1392,13 +1459,39 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
             }
 
             overlapGrid[qMakePair(cx, cy)].append(qMakePair(item.screenPos, item.radiusPx));
-            labelBatch.append(TextRenderer::Text3DItem{QStringView{item.label->text},
-                                                       item.scale,
-                                                       item.label->pos,
-                                                       item.label->dir});
+
+            const TextRenderer::Text3DItem entry{QStringView{item.label->text},
+                                                 item.scale,
+                                                 item.label->pos,
+                                                 item.label->dir};
+            labelBatch.append(entry);
+
+            const int levelKey = (surfaceStep_ > 0.0f)
+                                 ? static_cast<int>(std::lround((item.label->pos.z() - kLabelZShift - minZ_) / surfaceStep_))
+                                 : 0;
+            casingByLevel[levelKey].append(entry);
         }
 
         if (!labelBatch.isEmpty()) {
+            const float casingUnit = static_cast<float>(TextRenderer::instance().getCharPixelHeight()) *
+                                     kIsoLabelCasingRatio;
+            const float levelDenom = static_cast<float>(qMax(colorIntervalsSize_, 1));
+
+            for (auto it = casingByLevel.cbegin(); it != casingByLevel.cend(); ++it) {
+                const float norm = qBound(0.0f, static_cast<float>(it.key()) / levelDenom, 1.0f);
+                const QVector3D under = samplePalette(norm);
+                const QVector3D casingInk = kIsoCasingColor * (1.0f - kIsoCasingTint) + under * kIsoCasingTint;
+
+                TextRenderer::instance().setColor(QColor::fromRgbF(casingInk.x(), casingInk.y(), casingInk.z()));
+                for (const auto& offset : kIsoLabelCasingOffsets) {
+                    TextRenderer::instance().render3DBatch(offsetLabelBatch(it.value(), offset, casingUnit),
+                                                           ctx, mvp, shaderProgramMap);
+                }
+            }
+
+            TextRenderer::instance().setColor(QColor::fromRgbF(kIsoInkColor.x(),
+                                                               kIsoInkColor.y(),
+                                                               kIsoInkColor.z()));
             TextRenderer::instance().render3DBatch(labelBatch, ctx, mvp, shaderProgramMap);
         }
 
