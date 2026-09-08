@@ -2973,6 +2973,21 @@
 <context>
     <name>EchogramSettingsPanel</name>
     <message>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="482"/>
+        <source>Labels</source>
+        <translation>Подписи</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="490"/>
+        <source>Outline</source>
+        <translation>Обводка</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="491"/>
+        <source>Plate</source>
+        <translation>Плашка</translation>
+    </message>
+    <message>
         <source>Data</source>
         <translation>Данные</translation>
     </message>
@@ -5121,77 +5136,77 @@
 <context>
     <name>Scene3DRightToolbar</name>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="216"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="231"/>
         <source>Vertical scale</source>
         <translation>Вертикальный масштаб</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="107"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="181"/>
         <source>Reset scaling coefficient</source>
         <translation>Сбросить коэффициент масштабирования</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="214"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="340"/>
         <source>Follow boat</source>
         <translation>Слежение за лодкой</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="122"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="247"/>
         <source>Zoom in</source>
         <translation>Приблизить</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="137"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="262"/>
         <source>Zoom out</source>
         <translation>Отдалить</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="294"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="426"/>
         <source>Save ruler</source>
         <translation>Сохранить линейку</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="310"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="442"/>
         <source>Delete ruler</source>
         <translation>Удалить линейку</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="330"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="463"/>
         <source>Ruler</source>
         <translation>Линейка</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="349"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="482"/>
         <source>3D scene settings</source>
         <translation>Настройки 3D-сцены</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="371"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="505"/>
         <source>Point</source>
         <translation>Точка</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="387"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="522"/>
         <source>Line</source>
         <translation>Линия</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="403"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="539"/>
         <source>Polygon</source>
         <translation>Полигон</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="425"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="561"/>
         <source>Finish drawing</source>
         <translation>Закончить рисование</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="439"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="575"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="453"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="589"/>
         <source>Cancel drawing</source>
         <translation>Отменить рисование</translation>
     </message>

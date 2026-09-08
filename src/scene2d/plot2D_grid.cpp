@@ -3,12 +3,35 @@
 #include "math_defs.h"
 #include "themes.h"
 #include <QFontMetrics>
+#include <QPainterPath>
 #include <QStringList>
+
+namespace {
+
+const QColor kLabelCasingColor(0, 0, 0);
+const QColor kLabelPlateColor(0, 0, 0, 115);
+constexpr double kLabelCasingBasePx = 2.0;
+constexpr double kLabelPlatePadXPx = 8.0;
+constexpr double kLabelPlatePadYPx = 4.0;
+constexpr double kLabelPlateRadiusPx = 5.0;
+
+double labelCasingWidth(double scale)
+{
+    return qMax(kLabelCasingBasePx, kLabelCasingBasePx * scale);
+}
+
+} // namespace
 
 Plot2DGrid::Plot2DGrid() : angleVisibility_(false)
 {}
 
-void Plot2DGrid::drawTextWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text, bool vertical, bool rightAlign) const
+int Plot2DGrid::labelLeftBleed(double scale) const
+{
+    return labelCasing_ ? qRound(labelCasingWidth(scale) * 0.5)
+                        : qRound(kLabelPlatePadXPx * scale);
+}
+
+void Plot2DGrid::drawLabel(QPainter* painter, int x, int baselineY, const QString& text, bool vertical, bool rightAlign) const
 {
     if (!painter || text.isEmpty()) {
         return;
@@ -16,45 +39,65 @@ void Plot2DGrid::drawTextWithBackdrop(QPainter* painter, int x, int baselineY, c
 
     const QFontMetrics fm(painter->font());
     const double s = renderScale();
-    const int padX = qRound(8 * s);
-    const int padY = qRound(4 * s);
-    const int radius = qRound(5 * s);
     const QStringList lines = text.split(QChar('\n'));
     const int lineH = fm.height();
     int textW = 0;
     for (const QString& ln : lines) {
         textW = qMax(textW, fm.horizontalAdvance(ln));
     }
-    const int blockH = lineH * lines.size();
 
-    const auto prevMode = painter->compositionMode();
-    const auto prevPen = painter->pen();
+    const QColor coreColor = painter->pen().color();
+    const bool prevAntialias = painter->testRenderHint(QPainter::Antialiasing);
+
+    painter->save();
     painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
 
     // Vertical mode: the canvas is globally rotated -90 (Plot2D::getImage), so
     // counter-rotate +90 around the anchor to keep the label upright/readable.
-    painter->save();
     if (vertical) {
         painter->translate(x, baselineY);
         painter->rotate(90);
     }
     const int ax = vertical ? (rightAlign ? -textW : 0) : x;
     const int ay = vertical ? 0 : baselineY;
-    const QRect bgRect(ax - padX,
-                       ay - fm.ascent() - padY,
-                       textW + padX * 2,
-                       blockH + padY * 2);
-    painter->setPen(Qt::NoPen);
-    painter->setBrush(QColor(0, 0, 0, 115));
-    painter->drawRoundedRect(bgRect, radius, radius);
-    painter->setPen(prevPen);
-    for (int li = 0; li < lines.size(); ++li) {
-        painter->drawText(ax, ay + li * lineH, lines[li]);
-    }
-    painter->restore();
 
-    painter->setPen(prevPen);
-    painter->setCompositionMode(prevMode);
+    if (labelCasing_) {
+        painter->setRenderHint(QPainter::Antialiasing, true);
+
+        QPainterPath glyphs;
+        for (int li = 0; li < lines.size(); ++li) {
+            glyphs.addText(ax, ay + li * lineH, painter->font(), lines[li]);
+        }
+
+        painter->setBrush(Qt::NoBrush);
+        painter->setPen(QPen(kLabelCasingColor, labelCasingWidth(s), Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        painter->drawPath(glyphs);
+
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(coreColor);
+        painter->drawPath(glyphs);
+    }
+    else {
+        const int padX = qRound(kLabelPlatePadXPx * s);
+        const int padY = qRound(kLabelPlatePadYPx * s);
+        const int radius = qRound(kLabelPlateRadiusPx * s);
+        const QRect plateRect(ax - padX,
+                              ay - fm.ascent() - padY,
+                              textW + padX * 2,
+                              lineH * lines.size() + padY * 2);
+
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(kLabelPlateColor);
+        painter->drawRoundedRect(plateRect, radius, radius);
+
+        painter->setPen(coreColor);
+        for (int li = 0; li < lines.size(); ++li) {
+            painter->drawText(ax, ay + li * lineH, lines[li]);
+        }
+    }
+
+    painter->restore();
+    painter->setRenderHint(QPainter::Antialiasing, prevAntialias);
 }
 
 bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
@@ -144,8 +187,8 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
                 ? (invert_ ? (qRound(15 * s) + (nLines - 1) * fm.height()) : (imageWidth - textXOffset))
                 : (invert_ ? textXOffset : (imageWidth - textW - textXOffset));
             if (!invert_)
-                lastRightTextX_ = qMin(lastRightTextX_, textX - qRound(8 * s)); // 8 = padX from backdrop
-            drawTextWithBackdrop(p, textX, vertical ? (posY + textYOffset) : (posY - textYOffset), lineText, vertical);
+                lastRightTextX_ = qMin(lastRightTextX_, textX - labelLeftBleed(s));
+            drawLabel(p, textX, vertical ? (posY + textYOffset) : (posY - textYOffset), lineText, vertical);
         }
     }
 
@@ -163,7 +206,7 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
         } else {
             x = imageWidth - textXOffset / 2 - w;
         }
-        drawTextWithBackdrop(p, x, imageHeight - qRound(15 * s), rangeText, vertical, true);
+        drawLabel(p, x, imageHeight - qRound(15 * s), rangeText, vertical, true);
     }
 
     return true;

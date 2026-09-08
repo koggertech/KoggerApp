@@ -172,6 +172,7 @@ void Plot2D::copyVisualConfigTo(Plot2D& dst) const
 
     dst.setGridVetricalNumber(getGridVerticalNumber());
     dst.setGridFillWidth(getGridFillWidth());
+    dst.setGridLabelCasing(getGridLabelCasing());
     dst.setGridInvert(getGridInvert());
     dst.setAngleVisibility(getAngleVisibility());
     dst.setAngleRange(getAngleRange());
@@ -835,6 +836,12 @@ void Plot2D::setGridFillWidth(bool state)
 void Plot2D::setGridInvert(bool state)
 {
     grid_.setInvert(state);
+    plotUpdate();
+}
+
+void Plot2D::setGridLabelCasing(bool state)
+{
+    grid_.setLabelCasing(state);
     plotUpdate();
 }
 

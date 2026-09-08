@@ -70,6 +70,7 @@ QString EchogramStateSerializer::serialize(QObject* echogram) const
 
     o[QStringLiteral("gridNum")]  = p->getGridVerticalNumber();
     o[QStringLiteral("gridFill")] = p->getGridFillWidth();
+    o[QStringLiteral("gridLabelCasing")] = p->getGridLabelCasing();
     o[QStringLiteral("gridInv")]  = p->getGridInvert();
 
     o[QStringLiteral("angVis")]   = p->getAngleVisibility();
@@ -159,6 +160,7 @@ bool EchogramStateSerializer::deserialize(QObject* echogram, const QString& stat
 
     p->plotGridVerticalNumber(getI("gridNum", p->getGridVerticalNumber()));
     p->plotGridFillWidth(getB("gridFill", p->getGridFillWidth()));
+    p->plotGridLabelCasing(getB("gridLabelCasing", p->getGridLabelCasing()));
     p->plotGridInvert(getB("gridInv", p->getGridInvert()));
 
     p->plotAngleVisibility(getB("angVis", p->getAngleVisibility()));

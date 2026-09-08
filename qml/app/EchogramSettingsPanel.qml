@@ -479,6 +479,25 @@ Column {
             open: panel.vs ? panel.vs.gridVisible : false
             showSeparator: false
             verticalPadding: Tokens.spaceSm
+            label: qsTr("Labels")
+            labelColor: panel.labelInk
+
+            KTabBar {
+                width: panel.comboW
+                buttonHeight: Tokens.controlHMd
+                fontPixelSize: Tokens.fontBase
+                trackColor: AppPalette.bgDeep
+                options: [{ label: qsTr("Outline"), value: true },
+                          { label: qsTr("Plate"), value: false }]
+                currentValue: panel.vs ? panel.vs.gridLabelCasing : true
+                onValueSelected: function(value) { if (panel.vs) panel.vs.gridLabelCasing = value }
+            }
+        }
+
+        KIslandRow {
+            open: panel.vs ? panel.vs.gridVisible : false
+            showSeparator: false
+            verticalPadding: Tokens.spaceSm
             label: qsTr("Vertical lines")
             labelColor: panel.labelInk
 

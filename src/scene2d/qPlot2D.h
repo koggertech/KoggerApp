@@ -222,6 +222,7 @@ public slots:
     void plotGridVerticalNumber(int grids) { setGridVetricalNumber(grids); }
     void plotGridFillWidth(bool state) { setGridFillWidth(state); };
     void plotGridInvert(bool state) { setGridInvert(state); };
+    void plotGridLabelCasing(bool state) { setGridLabelCasing(state); };
     void plotAngleVisibility(bool state)   { setAngleVisibility(state); }
     void plotAngleRange(int angleRange) { setAngleRange(angleRange); }
     void plotVelocityVisible(bool visible) { setVelocityVisible(visible); }
@@ -265,6 +266,7 @@ public slots:
     Q_INVOKABLE int getGridVerticalNumber() const { return Plot2D::getGridVerticalNumber(); }
     Q_INVOKABLE bool getGridFillWidth() const { return Plot2D::getGridFillWidth(); }
     Q_INVOKABLE bool getGridInvert() const { return Plot2D::getGridInvert(); }
+    Q_INVOKABLE bool getGridLabelCasing() const { return Plot2D::getGridLabelCasing(); }
     Q_INVOKABLE bool getAngleVisibility() const { return Plot2D::getAngleVisibility(); }
     Q_INVOKABLE int getAngleRange() const { return Plot2D::getAngleRange(); }
     Q_INVOKABLE bool getVelocityVisible() const { return Plot2D::getVelocityVisible(); }

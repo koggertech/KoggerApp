@@ -2238,6 +2238,21 @@
 <context>
     <name>EchogramSettingsPanel</name>
     <message>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="482"/>
+        <source>Labels</source>
+        <translation>Labels</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="490"/>
+        <source>Outline</source>
+        <translation>Outline</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="491"/>
+        <source>Plate</source>
+        <translation>Plate</translation>
+    </message>
+    <message>
         <source>Data</source>
         <translation>Data</translation>
     </message>
@@ -4177,77 +4192,77 @@
 <context>
     <name>Scene3DRightToolbar</name>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="216"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="231"/>
         <source>Vertical scale</source>
         <translation>Vertical scale</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="107"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="181"/>
         <source>Reset scaling coefficient</source>
         <translation>Reset scaling coefficient</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="214"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="340"/>
         <source>Follow boat</source>
         <translation>Follow boat</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="122"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="247"/>
         <source>Zoom in</source>
         <translation>Zoom in</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="137"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="262"/>
         <source>Zoom out</source>
         <translation>Zoom out</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="294"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="426"/>
         <source>Save ruler</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="310"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="442"/>
         <source>Delete ruler</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="330"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="463"/>
         <source>Ruler</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="349"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="482"/>
         <source>3D scene settings</source>
         <translation>3D scene settings</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="371"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="505"/>
         <source>Point</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="387"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="522"/>
         <source>Line</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="403"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="539"/>
         <source>Polygon</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="425"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="561"/>
         <source>Finish drawing</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="439"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="575"/>
         <source>Undo</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="453"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="589"/>
         <source>Cancel drawing</source>
         <translation></translation>
     </message>

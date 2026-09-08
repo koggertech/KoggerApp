@@ -21,10 +21,13 @@ public:
     void setFillWidth(bool state) { fillWidth_ = state; }
     bool isInvert() const { return invert_; }
     void setInvert(bool state) { invert_ = state; }
+    bool isLabelCasing() const { return labelCasing_; }
+    void setLabelCasing(bool state) { labelCasing_ = state; }
     int lastRightTextX() const { return lastRightTextX_; }
 
 protected:
-    void drawTextWithBackdrop(QPainter* painter, int x, int baselineY, const QString& text, bool vertical = false, bool rightAlign = false) const;
+    void drawLabel(QPainter* painter, int x, int baselineY, const QString& text, bool vertical = false, bool rightAlign = false) const;
+    int labelLeftBleed(double scale) const;
 
     bool angleVisibility_;
     bool _velocityVisible = true;
@@ -33,5 +36,6 @@ protected:
     QColor _lineColor = QColor(255, 255, 255, 255);
     bool fillWidth_ = false;
     bool invert_ = false;
+    bool labelCasing_ = true;
     int lastRightTextX_ = 0;
 };

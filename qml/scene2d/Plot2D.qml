@@ -800,6 +800,7 @@ WaterFall {
         property alias gridVisible:        gridVisible.checked
         property alias gridFill:           fillWidthGrid.checked
         property alias gridInvert:         invertGrid.checked
+        property alias gridLabelCasing:    labelCasingGrid.checked
         property alias gridNumber:         gridNumber.value
         property alias angleVisible:       angleVisible.checked
         property alias angleRange:         angleRange.value
@@ -824,7 +825,7 @@ WaterFall {
             dopplerInstrumentVisible, dopplerInstrumentX, dopplerInstrumentY,
             dopplerInstrumentZ, dopplerInstrumentA, dopplerInstrumentDst,
             dvlLegendVisible, dvlLegendPosition, acousticAngleVisible, gnssVisible,
-            gridVisible, gridFill, gridInvert, gridNumber,
+            gridVisible, gridFill, gridInvert, gridLabelCasing, gridNumber,
             angleVisible, angleRange, velocityVisible, velocityRange,
             distanceAutoRange, distanceAutoRangeIndex, horizontalMode,
             settingsRow.levelStart, settingsRow.levelStop
@@ -887,6 +888,7 @@ WaterFall {
                 if (gn > 0) gridNumber.value = gn
                 fillWidthGrid.checked = plot.getGridFillWidth()
                 invertGrid.checked    = plot.getGridInvert()
+                labelCasingGrid.checked = plot.getGridLabelCasing()
 
                 angleVisible.checked    = plot.getAngleVisibility()
                 angleRange.value        = plot.getAngleRange()
@@ -1390,6 +1392,22 @@ WaterFall {
                                 Settings {
                                     category: "scene2d/plot2d/" + plot.indx
                                     property alias invertGrid: invertGrid.checked
+                                }
+                            }
+                            CCheck {
+                                id: labelCasingGrid
+                                Layout.fillWidth: true
+                                checked: true
+                                visible: false
+
+                                onCheckedChanged: plotGridLabelCasing(checked)
+
+                                Component.onCompleted: {
+                                    plotGridLabelCasing(checked)
+                                }
+                                Settings {
+                                    category: "scene2d/plot2d/" + plot.indx
+                                    property alias labelCasingGrid: labelCasingGrid.checked
                                 }
                             }
                         }

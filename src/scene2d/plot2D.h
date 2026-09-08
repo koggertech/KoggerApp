@@ -138,6 +138,7 @@ public:
 
     void setGridVetricalNumber(int grids);
     void setGridFillWidth(bool state);
+    void setGridLabelCasing(bool state);
     void setGridInvert(bool state);
     void setAngleVisibility(bool state);
     void setAngleRange(int angleRange);
@@ -161,6 +162,7 @@ public:
     int  getDVLLegendPosition() const { return dvlLegendPosIndex_; }
     int  getGridVerticalNumber() const { return grid_.getVetricalNumber(); }
     bool getGridFillWidth() const { return grid_.isFillWidth(); }
+    bool getGridLabelCasing() const { return grid_.isLabelCasing(); }
     bool getGridInvert() const { return grid_.isInvert(); }
     bool getAngleVisibility() const { return grid_.getAngleVisibility(); }
     bool getVelocityVisible() const { return grid_.getVelocityVisible(); }
