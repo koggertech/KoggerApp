@@ -2,6 +2,28 @@
 #include "plot2D.h"
 #include "themes.h"
 
+#include <QPainterPath>
+
+namespace {
+
+QPainterPath squarePointerCornerBox(const QRectF& r, qreal radius)
+{
+    const qreal rad = qBound(0.0, radius, qMin(r.width(), r.height()) * 0.5);
+    const qreal d = rad * 2.0;
+    QPainterPath path;
+    path.moveTo(r.topLeft());
+    path.lineTo(r.right() - rad, r.top());
+    path.arcTo(QRectF(r.right() - d, r.top(), d, d), 90.0, -90.0);
+    path.lineTo(r.right(), r.bottom() - rad);
+    path.arcTo(QRectF(r.right() - d, r.bottom() - d, d, d), 0.0, -90.0);
+    path.lineTo(r.left() + rad, r.bottom());
+    path.arcTo(QRectF(r.left(), r.bottom() - d, d, d), 270.0, -90.0);
+    path.closeSubpath();
+    return path;
+}
+
+} // namespace
+
 bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
 {    
     auto& canvas = parent->canvas();
@@ -95,20 +117,27 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
 
                 // Counter-rotate +90 in vertical so the label stays upright; lower the box
                 // by 2*adjPix so its corner lands on the pointer corner (left unmoved).
+                const bool prevAntialias = p->testRenderHint(QPainter::Antialiasing);
                 p->save();
                 if (vertical) {
                     p->translate(textRect.topLeft() - QPointF(2 * adjPix - qMax(1, qRound(2 * s)), 0));
                     p->rotate(90);
                 }
                 const QRectF boxRect = vertical ? QRectF(0, 0, textRect.width(), textRect.height()) : textRect;
+                const qreal outerRadius = qMax(2.0, 5.0 * s);
+                const qreal innerRadius = qMax(1.0, outerRadius - (adjPix - 3.0 * s));
+                p->setRenderHint(QPainter::Antialiasing, true);
                 p->setPen(Qt::NoPen);
                 p->setBrush(linesColor);
-                p->drawRect(boxRect.adjusted(-adjPix, -adjPix, adjPix, adjPix));
+                p->drawPath(squarePointerCornerBox(boxRect.adjusted(-adjPix, -adjPix, adjPix, adjPix),
+                                                   outerRadius));
                 p->setBrush(QColor(45, 45, 45));
-                p->drawRect(boxRect.adjusted(-3 * s, -3 * s, 3 * s, 3 * s));
+                p->drawPath(squarePointerCornerBox(boxRect.adjusted(-3 * s, -3 * s, 3 * s, 3 * s),
+                                                   innerRadius));
                 p->setPen(QColor(255, 255, 255));
                 p->drawText(boxRect, Qt::AlignLeft | Qt::AlignTop, infoText);
                 p->restore();
+                p->setRenderHint(QPainter::Antialiasing, prevAntialias);
 
                 QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
                 p->setPen(QPen(linesColor, qMax(1, qRound(2 * s))));

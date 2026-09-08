@@ -4,11 +4,17 @@
 #include <QFile>
 #include <QOpenGLContext>
 #include <QtGlobal>
+#include <cmath>
 #include <cstring>
 #include <utility>
 
 #include <ft2build.h> // NOLINT
 #include FT_FREETYPE_H
+
+namespace {
+constexpr int kBgFloatsPerVertex = 7;
+constexpr float kBgCornerRadiusPx = 6.0f;
+} // namespace
 
 
 TextRenderer& TextRenderer::instance()
@@ -92,11 +98,17 @@ void TextRenderer::render2DBatch(const QVector<Text2DItem> &items, QOpenGLFuncti
         }
 
         QVector<float> bgVertices;
-        bgVertices.reserve(items.size() * 6 * 3);
-        auto appendBgVertex = [&bgVertices](float x, float y) {
+        bgVertices.reserve(items.size() * 6 * kBgFloatsPerVertex);
+        QVector2D bgCenter;
+        QVector2D bgHalf;
+        auto appendBgVertex = [&bgVertices, &bgCenter, &bgHalf](float x, float y) {
             bgVertices.append(x);
             bgVertices.append(y);
             bgVertices.append(0.0f);
+            bgVertices.append(x - bgCenter.x());
+            bgVertices.append(y - bgCenter.y());
+            bgVertices.append(bgHalf.x());
+            bgVertices.append(bgHalf.y());
         };
 
         for (const auto& item : items) {
@@ -122,6 +134,10 @@ void TextRenderer::render2DBatch(const QVector<Text2DItem> &items, QOpenGLFuncti
             bgBottomRight.setY(item.pos.y() - maxHeight);
             bgBottomRight += QVector2D(padding, -padding);
 
+            bgCenter = (bgTopLeft + bgBottomRight) * 0.5f;
+            bgHalf = QVector2D(std::abs(bgBottomRight.x() - bgTopLeft.x()) * 0.5f,
+                               std::abs(bgBottomRight.y() - bgTopLeft.y()) * 0.5f);
+
             appendBgVertex(bgTopLeft.x(), bgTopLeft.y());
             appendBgVertex(bgTopLeft.x(), bgBottomRight.y());
             appendBgVertex(bgBottomRight.x(), bgBottomRight.y());
@@ -139,13 +155,26 @@ void TextRenderer::render2DBatch(const QVector<Text2DItem> &items, QOpenGLFuncti
                 m_arrayBuffer.write(0, bgVertices.constData(), bytes);
             }
 
+            ctx->glEnable(GL_BLEND);
+            ctx->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
             backgroundShader->setUniformValue("mvp_matrix", projection);
             backgroundShader->setUniformValue("color", QVector4D(0.18f, 0.18f, 0.18f, 1.0f));
+            backgroundShader->setUniformValue("radius", kBgCornerRadiusPx);
 
+            const int stride = kBgFloatsPerVertex * int(sizeof(float));
             const int vertexLocation = backgroundShader->attributeLocation("a_position");
+            const int boxLocation = backgroundShader->attributeLocation("a_box");
             backgroundShader->enableAttributeArray(vertexLocation);
-            backgroundShader->setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
-            ctx->glDrawArrays(GL_TRIANGLES, 0, bgVertices.size() / 3);
+            backgroundShader->setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3, stride);
+            if (boxLocation >= 0) {
+                backgroundShader->enableAttributeArray(boxLocation);
+                backgroundShader->setAttributeBuffer(boxLocation, GL_FLOAT, 3 * int(sizeof(float)), 4, stride);
+            }
+            ctx->glDrawArrays(GL_TRIANGLES, 0, bgVertices.size() / kBgFloatsPerVertex);
+            if (boxLocation >= 0) {
+                backgroundShader->disableAttributeArray(boxLocation);
+            }
             backgroundShader->disableAttributeArray(vertexLocation);
         }
 
