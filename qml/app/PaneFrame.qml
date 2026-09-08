@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
 import Qt5Compat.GraphicalEffects
 import kqml_types 1.0
 
@@ -37,7 +38,12 @@ Item {
     property int popupSourceLeafId: store.popupSourceLeafIdForHost(paneItem.leafId)
     property var popupCandidates: store.popupCandidateItemsForHost(paneItem.leafId)
     readonly property bool _editing: !!store.editableMode
-    readonly property real cornerRadius: _editing ? 0 : Tokens.paneRadiusPx
+    readonly property bool _solePane: paneItem.isMaximized
+                                      || (store.leafRectModel && store.leafRectModel.count === 1)
+    readonly property bool _workspaceFillsWindow: workspaceItem.width >= Window.width - 0.5
+                                                  && workspaceItem.height >= Window.height - 0.5
+    readonly property bool _edgeToEdge: _solePane && _workspaceFillsWindow
+    readonly property real cornerRadius: (_editing || _edgeToEdge) ? 0 : Tokens.paneRadiusPx
     readonly property real paneGap: _editing ? 0 : Tokens.paneGapPx
     readonly property real dimBleed: Math.max(2, Math.round(2 * AppPalette.scale))
     readonly property bool _outerRight: (x + width) >= (workspaceItem.width - 0.5)
@@ -121,18 +127,13 @@ Item {
             anchors.rightMargin: paneItem._rightInset
             anchors.bottomMargin: paneItem._bottomInset
             radius: paneItem.cornerRadius
-            color: paneItem.isModeSelecting ? "#111827" : "#09111F"
+            color: "transparent"
             border.width: store.editableMode ? 1 : 0
             border.color: paneItem.isModeSelecting ? AppPalette.text : paneItem.paneData.color
 
-            PaneContentLoader {
+            Item {
+                id: paneCanvas
                 anchors.fill: parent
-                paneData: paneItem.paneData
-                leafId: paneItem.leafId
-                rotateEnabled: paneItem.paneRotateEnabled
-                workspaceRoot: paneItem.workspaceItem
-                visible: !paneItem.isModeSelecting
-                active: paneItem.visible && !paneItem.isModeSelecting
                 z: 3
 
                 layer.enabled: paneItem.cornerRadius > 0
@@ -146,6 +147,21 @@ Item {
                             radius: paneItem.cornerRadius
                         }
                     }
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: paneItem.isModeSelecting ? "#111827" : "#09111F"
+                }
+
+                PaneContentLoader {
+                    anchors.fill: parent
+                    paneData: paneItem.paneData
+                    leafId: paneItem.leafId
+                    rotateEnabled: paneItem.paneRotateEnabled
+                    workspaceRoot: paneItem.workspaceItem
+                    visible: !paneItem.isModeSelecting
+                    active: paneItem.visible && !paneItem.isModeSelecting
                 }
             }
 

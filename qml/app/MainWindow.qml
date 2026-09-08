@@ -830,7 +830,7 @@ ApplicationWindow {
             // shift so the area being uncovered during sidebar close
             // doesn't flash the ApplicationWindow default background.
             anchors.fill: parent
-            color: "#0B1220"
+            color: AppPalette.headerBg
         }
 
         DropArea {
