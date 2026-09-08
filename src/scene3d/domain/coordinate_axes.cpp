@@ -1,8 +1,26 @@
 #include "coordinate_axes.h"
 #include "draw_utils.h"
 #include "text_renderer.h"
+#include "themes.h"
 #include <cmath>
 
+namespace {
+
+constexpr float kCompassLabelCasingPx = 1.0f;
+const QColor kCompassLabelCasingColor(26, 28, 33);
+
+const QVector2D kCompassLabelCasingOffsets[] = {
+    QVector2D( 1.000f,  0.000f),
+    QVector2D(-1.000f,  0.000f),
+    QVector2D( 0.000f,  1.000f),
+    QVector2D( 0.000f, -1.000f),
+    QVector2D( 0.707f,  0.707f),
+    QVector2D( 0.707f, -0.707f),
+    QVector2D(-0.707f,  0.707f),
+    QVector2D(-0.707f, -0.707f)
+};
+
+} // namespace
 
 QVector<QVector3D> CoordinateAxes::CoordinateAxesRenderImplementation::buildSmoothTriangleNormals(const QVector<QVector3D>& tris) const
 {
@@ -308,7 +326,22 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
     nLabelPos.setY(nLabelPos.y() - 4.0f);
     sLabelPos.setY(sLabelPos.y() - 4.0f);
 
-    TextRenderer::instance().render("N", scale, nLabelPos, false, ctx, textProjection, shaderProgramMap);
-    TextRenderer::instance().render("S", scale, sLabelPos, false, ctx, textProjection, shaderProgramMap);
+    const QColor labelColor = TextRenderer::instance().getColor();
+
+    const float casingPx = qMax(1.0f, std::round(kCompassLabelCasingPx * static_cast<float>(renderScale())));
+
+    auto renderCasedLabel = [&](const QString& text, const QVector2D& pos) {
+        TextRenderer::instance().setColor(kCompassLabelCasingColor);
+        for (const auto& offset : kCompassLabelCasingOffsets) {
+            TextRenderer::instance().render(text, scale, pos + offset * casingPx,
+                                            false, ctx, textProjection, shaderProgramMap);
+        }
+
+        TextRenderer::instance().setColor(labelColor);
+        TextRenderer::instance().render(text, scale, pos, false, ctx, textProjection, shaderProgramMap);
+    };
+
+    renderCasedLabel(QStringLiteral("N"), nLabelPos);
+    renderCasedLabel(QStringLiteral("S"), sLabelPos);
 }
 

@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import WaterFall 1.0
+import kqml_types 1.0
 import scene3d
 import scene2d
 import controls
@@ -90,19 +91,43 @@ Item {
                 width: qualityText.implicitWidth + Math.round(16 * theme.resCoeff)
                 height: qualityText.implicitHeight + Math.round(8 * theme.resCoeff)
 
+                readonly property string labelText: {
+                    var parts = []
+                    if (surfaceQualityBadge.heightMatrixOn)
+                        parts.push(qsTr("Surface: ") + surfaceQualityBadge.surfaceCmPerCell + qsTr(" cm/cell"))
+                    if (surfaceQualityBadge.mosaicOn)
+                        parts.push(qsTr("Mosaic: ") + surfaceQualityBadge.mosaicCmPerPix + qsTr(" cm/pix"))
+                    return parts.join("\n")
+                }
+                readonly property real casingOffset: Math.max(1, Math.round(theme.resCoeff))
+
+                Repeater {
+                    model: [Qt.point( 1.000,  0.000), Qt.point(-1.000,  0.000),
+                            Qt.point( 0.000,  1.000), Qt.point( 0.000, -1.000),
+                            Qt.point( 0.707,  0.707), Qt.point( 0.707, -0.707),
+                            Qt.point(-0.707,  0.707), Qt.point(-0.707, -0.707)]
+
+                    delegate: Text {
+                        required property point modelData
+
+                        anchors.centerIn: parent
+                        anchors.horizontalCenterOffset: modelData.x * qualityRect.casingOffset
+                        anchors.verticalCenterOffset: modelData.y * qualityRect.casingOffset
+                        text: qualityRect.labelText
+                        color: "#000000"
+                        font.family: theme.textFont.family
+                        font.pixelSize: Tokens.fontXl
+                        horizontalAlignment: Text.AlignLeft
+                    }
+                }
+
                 Text {
                     id: qualityText
                     anchors.centerIn: parent
-                    text: {
-                        var parts = []
-                        if (surfaceQualityBadge.heightMatrixOn)
-                            parts.push(qsTr("Surface: ") + surfaceQualityBadge.surfaceCmPerCell + qsTr(" cm/cell"))
-                        if (surfaceQualityBadge.mosaicOn)
-                            parts.push(qsTr("Mosaic: ") + surfaceQualityBadge.mosaicCmPerPix + qsTr(" cm/pix"))
-                        return parts.join("\n")
-                    }
+                    text: qualityRect.labelText
                     color: "#ffffff"
-                    font: theme.textFont
+                    font.family: theme.textFont.family
+                    font.pixelSize: Tokens.fontXl
                     horizontalAlignment: Text.AlignLeft
                 }
             }
