@@ -1259,10 +1259,6 @@
         <translation>URL</translation>
     </message>
     <message>
-        <source>rtsp:// · http:// · udp:// · file</source>
-        <translation>rtsp:// · http:// · udp:// · file</translation>
-    </message>
-    <message>
         <source>Any URL that FFmpeg can open:
 rtsp://192.168.1.10:554/stream
 http://camera.local/video.cgi  (MJPEG, HLS, DASH)

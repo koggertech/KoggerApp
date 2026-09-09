@@ -621,14 +621,6 @@ Column {
                                         text: Address
                                         TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: urlField.selectAll() }
                                         onEditingFinished: linkManagerWrapper.sendUpdateAddress(Uuid, text)
-
-                                        Text {
-                                            anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
-                                            visible: !urlField.text.length && !urlField.activeFocus
-                                            text: qsTr("rtsp:// · http:// · udp:// · file")
-                                            color: AppPalette.textMuted
-                                            font.pixelSize: Tokens.fontBase
-                                        }
                                     }
                                 }
                             }
