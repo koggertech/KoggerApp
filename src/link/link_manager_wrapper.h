@@ -44,8 +44,9 @@ public slots:
     void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
     void createAsTcp(QString address, int sourcePort, int destinationPort);
     void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
-    void createAsRtsp(QString address);
-    void openAsRtsp(QUuid uuid, QString address);
+    void createAsVideo(QString address);
+    void openAsVideo(QUuid uuid, QString address);
+    void setVideoStreaming(QString uuidStr, bool streaming);
     void closeLink(QUuid uuid);
     void closeFLink(QUuid uuid);
     void deleteLink(QUuid uuid);
@@ -61,10 +62,10 @@ public slots:
     QUuid getFirstOpened() { return getWorker()->getFirstOpend(); }
 
     Q_INVOKABLE int  linkState(const QString& uuidStr) const; // -1 absent, 0 closed, 1 ok, 2 idle, 3 unavailable
+    Q_INVOKABLE int  linkTypeOf(const QString& uuidStr) const; // LinkType as int, -1 when absent
     Q_INVOKABLE void reopenLink(const QString& uuidStr);
     Q_INVOKABLE void updateBaudrateFor(const QString& uuidStr, int baudrate); // callers holding a uuid string (topology meta), not a model QUuid
-    Q_INVOKABLE QStringList pinnedUuids() const; // uuids of pinned links present in the model
-    Q_INVOKABLE QStringList serialUuids() const; // uuids of serial links present in the model
+    Q_INVOKABLE QStringList rememberableUuids() const; // uuids whose link is restored on the next run, so a remembered entry stays valid
 
 public:
     Link* getLinkPtr(QUuid uuid) { return getWorker()->getLinkPtr(uuid); }
@@ -78,8 +79,9 @@ signals:
     void sendCreateAsUdp(QString address, int sourcePort, int destinationPort);
     void sendOpenAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
     void sendCreateAsTcp(QString address, int sourcePort, int destinationPort);
-    void sendCreateAsRtsp(QString address);
-    void sendOpenAsRtsp(QUuid uuid, QString address);
+    void sendCreateAsVideo(QString address);
+    void sendOpenAsVideo(QUuid uuid, QString address);
+    void sendSetVideoStreaming(QUuid uuid, bool streaming);
     void sendOpenAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
     void sendCloseLink(QUuid uuid);
     void sendFCloseLink(QUuid uuid);

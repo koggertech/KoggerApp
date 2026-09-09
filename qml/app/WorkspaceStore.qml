@@ -220,7 +220,7 @@ property Connections _reconnectLinkConn: Connections {
     target: (typeof linkManagerWrapper !== "undefined") ? linkManagerWrapper : null
     ignoreUnknownSignals: true
     function onLinkOpened(uuid) { store.addRememberedLink(uuid) }
-    function onLinkRemoved(uuid) { store.removeRememberedLink(uuid) }
+    function onLinkRemoved(uuid) { store.removeRememberedLink(uuid); store.forgetVideoSource(uuid) }
 }
 
 property Connections _reconnectModelConn: Connections {
@@ -258,10 +258,8 @@ function saveRememberedLinks() {
     var arr = rememberedLinks || []
     var keepSet = {}
     if (typeof linkManagerWrapper !== "undefined" && linkManagerWrapper) {
-        var pinned = linkManagerWrapper.pinnedUuids()
-        for (var i = 0; i < pinned.length; ++i) keepSet[pinned[i]] = true
-        var serial = linkManagerWrapper.serialUuids()
-        for (var k = 0; k < serial.length; ++k) keepSet[serial[k]] = true
+        var rememberable = linkManagerWrapper.rememberableUuids()
+        for (var i = 0; i < rememberable.length; ++i) keepSet[rememberable[i]] = true
     }
     var keep = []
     for (var j = 0; j < arr.length; ++j)
@@ -281,21 +279,26 @@ function toggleRememberedLinks() {
     if (typeof linkManagerWrapper === "undefined" || !linkManagerWrapper) return
     var arr = rememberedLinks || []
 
-    var closed = [], open = []
+    var closedDevices = [], closedVideo = [], open = []
     for (var i = 0; i < arr.length; ++i) {
         var s = linkManagerWrapper.linkState(arr[i])
-        if (s === 0) closed.push(arr[i])
+        if (s === 0) {
+            if (linkManagerWrapper.linkTypeOf(arr[i]) === 4) closedVideo.push(arr[i])
+            else closedDevices.push(arr[i])
+        }
         else if (s === 1 || s === 2) open.push(arr[i])
     }
-    if (!closed.length && !open.length) return
+    if (!closedDevices.length && !closedVideo.length && !open.length) return
 
-    if (closed.length) {
+    if (closedDevices.length || closedVideo.length) {
         var hadFile = typeof core !== "undefined" && core && core.openedFilePath && core.openedFilePath.length > 0
-        if (!open.length && typeof core !== "undefined" && core && typeof core.closeLogFile === "function")
+        if (closedDevices.length && !open.length && typeof core !== "undefined" && core && typeof core.closeLogFile === "function")
             core.closeLogFile()
         if (!hadFile)
-            for (var j = 0; j < closed.length; ++j)
-                linkManagerWrapper.reopenLink(closed[j])
+            for (var j = 0; j < closedDevices.length; ++j)
+                linkManagerWrapper.reopenLink(closedDevices[j])
+        for (var v = 0; v < closedVideo.length; ++v)
+            linkManagerWrapper.reopenLink(closedVideo[v])
     } else {
         for (var k = 0; k < open.length; ++k)
             linkManagerWrapper.closeLink(open[k])
@@ -3116,10 +3119,13 @@ function favoriteLayoutSnapshotFromNode(node, state) {
         if (leafId !== -1)
             snapshotState.leafIdToPaneId[String(leafId)] = paneId
 
+        var snapshotContentId = node.pane && node.pane.contentId ? String(node.pane.contentId) : ""
+
         return {
             type: "leaf",
             mode: normalizedPaneMode(node.pane ? node.pane.mode : node.mode),
-            paneId: paneId
+            paneId: paneId,
+            contentId: snapshotContentId
         }
     }
 
@@ -3165,7 +3171,8 @@ function normalizeFavoriteLayoutSnapshot(node, state) {
         return {
             type: "leaf",
             mode: normalizedPaneMode(node.mode),
-            paneId: snapshotState.nextPaneId
+            paneId: snapshotState.nextPaneId,
+            contentId: node.contentId ? String(node.contentId) : ""
         }
     }
 
@@ -3308,10 +3315,21 @@ function normalizeFavoriteLayoutEntry(rawEntry) {
                 normalizedStates[String(pk)] = v
         }
     }
+    var normalizedVideo = {}
+    if (rawEntry.videoOptions && typeof rawEntry.videoOptions === "object") {
+        for (var vk in rawEntry.videoOptions) {
+            if (!rawEntry.videoOptions.hasOwnProperty(vk))
+                continue
+            var opts = normalizedVideoOptions(rawEntry.videoOptions[vk])
+            if (opts)
+                normalizedVideo[String(vk)] = opts
+        }
+    }
     return {
         layout: normalizedLayout,
         popupLinks: normalizedLinks,
-        echogramStates: normalizedStates
+        echogramStates: normalizedStates,
+        videoOptions: normalizedVideo
     }
 }
 
@@ -3330,7 +3348,8 @@ function favoriteLayoutEntryFromCurrent() {
     return {
         layout: layoutSnapshot,
         popupLinks: favoritePopupLinksFromLeafMapping(snapshotState.leafIdToPaneId, fullscreenPopupSourceByHost),
-        echogramStates: echogramStatesForCurrentTree(snapshotState.leafIdToPaneId)
+        echogramStates: echogramStatesForCurrentTree(snapshotState.leafIdToPaneId),
+        videoOptions: videoOptionsForCurrentTree(snapshotState.leafIdToPaneId)
     }
 }
 
@@ -3370,9 +3389,71 @@ function writeActiveFavoriteEchogramState(paneId, s) {
     var states = (entry.echogramStates && typeof entry.echogramStates === "object")
         ? Object.assign({}, entry.echogramStates) : ({})
     states[String(paneId)] = s
-    next[idx] = { layout: entry.layout, popupLinks: entry.popupLinks, echogramStates: states }
+    next[idx] = { layout: entry.layout, popupLinks: entry.popupLinks, echogramStates: states,
+                  videoOptions: entry.videoOptions }
     layouts = next
     favoriteStateSaveTimer.restart()
+}
+
+function normalizedVideoOptions(raw) {
+    if (!raw || typeof raw !== "object")
+        return null
+
+    var out = {}
+    if (raw.fill !== undefined) {
+        var fill = Number(raw.fill)
+        out.fill = (fill === 1 || fill === 2) ? fill : 0
+    }
+    if (raw.resolution !== undefined)
+        out.resolution = raw.resolution === true
+
+    return Object.keys(out).length > 0 ? out : null
+}
+
+function videoOptionsForCurrentTree(leafIdToPaneId) {
+    var out = {}
+    if (!leafIdToPaneId)
+        return out
+    for (var leafKey in leafIdToPaneId) {
+        if (!leafIdToPaneId.hasOwnProperty(leafKey))
+            continue
+        var pane = paneByLeafId(layoutTree, parseInt(leafKey))
+        if (!pane || !pane.contentId)
+            continue
+        var opts = normalizedVideoOptions(videoOptionsByContent[pane.contentId])
+        if (opts)
+            out[String(leafIdToPaneId[leafKey])] = opts
+    }
+    return out
+}
+
+function seedVideoOptionsFromFavorite(entry, tree) {
+    if (!entry || !entry.videoOptions || !tree)
+        return
+
+    var panes = []
+    allLeafPanes(tree, panes)
+
+    var next = {}
+    for (var key in videoOptionsByContent)
+        next[key] = videoOptionsByContent[key]
+
+    var changed = false
+    for (var i = 0; i < panes.length; ++i) {
+        var pane = panes[i]
+        if (!pane || !pane.contentId)
+            continue
+        var opts = normalizedVideoOptions(entry.videoOptions[String(pane.paneId)])
+        if (!opts)
+            continue
+        next[pane.contentId] = opts
+        changed = true
+    }
+
+    if (changed) {
+        videoOptionsByContent = next
+        videoStore.optionsJson = JSON.stringify(next)
+    }
 }
 
 function captureEchogramState(plot, leafId, includeFavorite) {
@@ -3926,7 +4007,16 @@ function buildTreeFromFavoriteSnapshot(snapshot, state) {
 
     if (snapshot.type === "leaf") {
         state.paneNumber += 1
-        return makeLeaf(makePane(state.paneNumber, normalizedPaneMode(snapshot.mode)))
+        if (!state.usedContentIds)
+            state.usedContentIds = {}
+
+        var pane = makePane(state.paneNumber, normalizedPaneMode(snapshot.mode))
+        var reused = snapshot.contentId ? String(snapshot.contentId) : ""
+        if (reused.length && !state.usedContentIds[reused]) {
+            state.usedContentIds[reused] = true
+            pane.contentId = reused
+        }
+        return makeLeaf(pane)
     }
 
     if (snapshot.type === "split") {
@@ -4010,6 +4100,7 @@ function applyLayout(favoriteIndex) {
     var normalizedTree = normalizeAndFixPaneModes(renumberPanes(tree), false)
     layoutTree = normalizedTree
     seedLiveEchogramStatesFromFavorite(entry, normalizedTree)
+    seedVideoOptionsFromFavorite(entry, normalizedTree)
     fullscreenPopupSourceByHost = popupSourceMapFromFavoriteEntry(entry, normalizedTree)
     fullscreenPopupStateByHost = ({})
     sanitizeFullscreenPopupConfig()
@@ -4070,7 +4161,7 @@ function createLayoutFromPreset(presetId) {
     var snapshot = favoriteLayoutSnapshotFromNode(tree, snapState)
     if (!snapshot)
         return
-    _appendLayoutAndEdit({ layout: snapshot, popupLinks: [], echogramStates: {} })
+    _appendLayoutAndEdit({ layout: snapshot, popupLinks: [], echogramStates: {}, videoOptions: {} })
 }
 
 function _appendLayoutAndEdit(entry) {
@@ -4102,7 +4193,7 @@ function seedDefaultLayouts() {
             first:  { type: "leaf", mode: "3D", paneId: 1 },
             second: { type: "leaf", mode: "2D", paneId: 2 }
         },
-        popupLinks: [], echogramStates: {}
+        popupLinks: [], echogramStates: {}, videoOptions: {}
     }
     var l2 = {
         layout: {
@@ -4114,7 +4205,7 @@ function seedDefaultLayouts() {
             },
             second: { type: "leaf", mode: "2D", paneId: 3 }
         },
-        popupLinks: [], echogramStates: {}
+        popupLinks: [], echogramStates: {}, videoOptions: {}
     }
     layouts = [l1, l2]
     saveFavoriteLayoutsState()
@@ -4740,6 +4831,8 @@ function setVideoOptionForContent(contentId, key, value) {
 
     videoOptionsByContent = next
     videoStore.optionsJson = JSON.stringify(next)
+
+    syncActiveLayout()
 }
 
 function videoFillForContent(contentId) {
@@ -4817,6 +4910,78 @@ function setVideoSourceForContent(contentId, uuid) {
     videoStore.sourcesJson = JSON.stringify(next)
 }
 
+function collectContentIds(node, out) {
+    if (!node)
+        return
+    if (node.type === "leaf") {
+        var id = node.pane ? node.pane.contentId : node.contentId
+        if (id)
+            out[String(id)] = true
+        return
+    }
+    collectContentIds(node.first, out)
+    collectContentIds(node.second, out)
+}
+
+function pruneVideoMaps() {
+    if (!layouts.length)
+        return
+
+    var live = {}
+    live[globalPopupVideoContentId] = true
+    live[secondaryVideoContentId] = true
+    collectContentIds(layoutTree, live)
+    for (var i = 0; i < layouts.length; ++i)
+        collectContentIds(favoriteLayoutSnapshotFromEntry(layouts[i]), live)
+
+    var sources = {}
+    var sourcesDropped = false
+    for (var s in videoSourceByContent) {
+        if (live[s])
+            sources[s] = videoSourceByContent[s]
+        else
+            sourcesDropped = true
+    }
+    if (sourcesDropped) {
+        videoSourceByContent = sources
+        videoStore.sourcesJson = JSON.stringify(sources)
+    }
+
+    var options = {}
+    var optionsDropped = false
+    for (var o in videoOptionsByContent) {
+        if (live[o])
+            options[o] = videoOptionsByContent[o]
+        else
+            optionsDropped = true
+    }
+    if (optionsDropped) {
+        videoOptionsByContent = options
+        videoStore.optionsJson = JSON.stringify(options)
+    }
+}
+
+function forgetVideoSource(uuid) {
+    var target = uuid ? String(uuid) : ""
+    if (!target.length)
+        return
+
+    var next = {}
+    var dropped = false
+    for (var key in videoSourceByContent) {
+        if (String(videoSourceByContent[key]) === target) {
+            dropped = true
+            continue
+        }
+        next[key] = videoSourceByContent[key]
+    }
+    if (!dropped)
+        return
+
+    videoSourceByContent = next
+    videoStore.sourcesJson = JSON.stringify(next)
+}
+
 function autoAssignVideoSources() {
     if (typeof videoStreams === "undefined" || !videoStreams)
         return
@@ -4857,12 +5022,8 @@ function autoAssignVideoSources() {
         if (assigned.length === 0)
             continue
 
-        if (known[assigned]) {
+        if (known[assigned])
             taken[assigned] = true
-            continue
-        }
-
-        delete next[cid]
     }
 
     var reuseIndex = 0
@@ -5277,6 +5438,7 @@ function reapplyImportedUiState() {
     if (!loadPersistedUiState())
         seedDefaultLayouts()
     sanitizeFullscreenPopupConfig()
+    pruneVideoMaps()
     uiStateReapplied()
 }
 
@@ -5286,6 +5448,7 @@ Component.onCompleted: {
     if (!loadPersistedUiState())
         seedDefaultLayouts()
     sanitizeFullscreenPopupConfig()
+    pruneVideoMaps()
     applyTgcToCore()
     applyConsoleProtoToggles()
     applyLayerThemesToControllers()

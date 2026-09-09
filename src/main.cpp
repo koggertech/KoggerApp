@@ -404,6 +404,8 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceTopology", core.getDeviceTopologyModelPtr());
     videoStreams.setSourceModel(core.getLinkManagerWrapperPtr()->getModelPtr());
+    QObject::connect(&videoStreams, &VideoStreamPool::streamingChanged,
+                     core.getLinkManagerWrapperPtr(), &LinkManagerWrapper::setVideoStreaming);
     engine.rootContext()->setContextProperty("videoStreams", &videoStreams);
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
     engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);

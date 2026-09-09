@@ -20,6 +20,35 @@ int roleByName(const QAbstractItemModel* model, const char* name)
     return -1;
 }
 
+bool looksLocal(const QString& unified)
+{
+    if (unified.startsWith(QLatin1Char('/'))) {
+        return true;
+    }
+    return unified.size() >= 3 && unified.at(0).isLetter() && unified.at(1) == QLatin1Char(':')
+        && unified.at(2) == QLatin1Char('/');
+}
+
+QString toLocalSpec(QString path)
+{
+    path.replace(QLatin1Char('\\'), QLatin1Char('/'));
+
+    int slashes = 0;
+    while (slashes < path.size() && path.at(slashes) == QLatin1Char('/')) {
+        ++slashes;
+    }
+
+    const bool driveFollows = path.size() >= slashes + 2 && path.at(slashes).isLetter()
+                           && path.at(slashes + 1) == QLatin1Char(':');
+    if (driveFollows) {
+        return path.mid(slashes);
+    }
+    if (slashes >= 3) {
+        return path.mid(slashes - 1);
+    }
+    return path;
+}
+
 } // namespace
 
 VideoStreamPool::VideoStreamPool(QObject* parent)
@@ -58,6 +87,17 @@ QString VideoStreamPool::buildUrl(const QString& address)
     if (trimmed.isEmpty()) {
         return QString();
     }
+
+    if (trimmed.startsWith(QStringLiteral("file:"), Qt::CaseInsensitive)) {
+        return QStringLiteral("file:") + toLocalSpec(trimmed.mid(5));
+    }
+
+    QString unified = trimmed;
+    unified.replace(QLatin1Char('\\'), QLatin1Char('/'));
+    if (looksLocal(unified)) {
+        return QStringLiteral("file:") + toLocalSpec(unified);
+    }
+
     if (trimmed.contains(QStringLiteral("://"))) {
         return trimmed;
     }
@@ -103,7 +143,7 @@ void VideoStreamPool::rebuild()
     for (int row = 0; row < rows; ++row) {
         const QModelIndex index = model_->index(row, 0);
         const int linkType = model_->data(index, typeRole).toInt();
-        if (linkType != static_cast<int>(LinkType::kLinkRtsp)) {
+        if (linkType != static_cast<int>(LinkType::kLinkVideo)) {
             continue;
         }
 
@@ -162,6 +202,12 @@ void VideoStreamPool::rebuild()
             }
         }
 
+        const bool streaming = wanted && stream->hasFrame();
+        if (reportedStreaming_.value(uuid, false) != streaming) {
+            reportedStreaming_.insert(uuid, streaming);
+            emit streamingChanged(uuid, streaming);
+        }
+
         QVariantMap descriptor;
         descriptor[QStringLiteral("uuid")] = uuid;
         descriptor[QStringLiteral("label")] = address.isEmpty() ? url : address;
@@ -191,6 +237,9 @@ void VideoStreamPool::rebuild()
         it.value()->stop();
         it.value()->deleteLater();
         failedUrls_.remove(it.key());
+        if (reportedStreaming_.take(it.key())) {
+            emit streamingChanged(it.key(), false);
+        }
         it = streams_.erase(it);
     }
 

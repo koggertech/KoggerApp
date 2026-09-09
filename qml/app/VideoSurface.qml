@@ -49,29 +49,30 @@ Item {
     readonly property int sourceHeight: stream ? stream.sourceHeight : 0
     readonly property string statusText: stream ? stream.statusText : ""
 
+    property var boundStream: null
     property string boundUuid: ""
 
     function releaseSink() {
-        if (!boundUuid.length)
-            return
-        if (typeof videoStreams !== "undefined" && videoStreams) {
-            var previous = videoStreams.streamFor(boundUuid)
-            if (previous)
-                previous.removeSink(videoOutputItem.videoSink)
-        }
+        if (boundStream)
+            boundStream.removeSink(videoOutputItem.videoSink)
+        boundStream = null
         boundUuid = ""
     }
 
     function rebindSink() {
-        var wanted = root.stream ? root.sourceUuid : ""
-        if (boundUuid === wanted)
+        var wantedUuid = root.sourceUuid
+        var wanted = (wantedUuid.length && typeof videoStreams !== "undefined" && videoStreams)
+                     ? videoStreams.streamFor(wantedUuid)
+                     : null
+        if (boundUuid === wantedUuid && boundStream === wanted)
             return
 
         releaseSink()
 
-        if (wanted.length && root.stream) {
-            root.stream.addSink(videoOutputItem.videoSink)
-            boundUuid = wanted
+        if (wanted) {
+            wanted.addSink(videoOutputItem.videoSink)
+            boundStream = wanted
+            boundUuid = wantedUuid
         }
     }
 

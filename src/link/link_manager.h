@@ -64,8 +64,9 @@ public slots:
     void frameInput(Link* link, Parsers::FrameParser frame);
     void createAsUdp(QString address, int sourcePort, int destinationPort);
     void createAsTcp(QString address, int sourcePort, int destinationPort);
-    void createAsRtsp(QString address);
-    void openAsRtsp(QUuid uuid, QString address);
+    void createAsVideo(QString address);
+    void openAsVideo(QUuid uuid, QString address);
+    void setVideoStreaming(QUuid uuid, bool streaming);
     void importPinnedLinksFromXML();
     void openFLinks();
     void createAndOpenAsUdpProxy(QString address, int sourcePort, int destinationPort);

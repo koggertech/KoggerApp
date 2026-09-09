@@ -100,23 +100,21 @@ int LinkListModel::rowForUuid(const QUuid& uuid) const
     return it == index_.constEnd() ? -1 : it.value();
 }
 
-QList<QUuid> LinkListModel::pinnedUuids() const
+QList<QUuid> LinkListModel::rememberableUuids() const
 {
     QList<QUuid> retVal;
     for (auto it = index_.cbegin(); it != index_.cend(); ++it) {
         const int line = it.value();
-        if (vectors_[static_cast<int>(LinkListModel::Roles::IsPinned)][line].toBool())
-            retVal.append(it.key());
-    }
-    return retVal;
-}
+        if (vectors_[static_cast<int>(LinkListModel::Roles::IsHided)][line].toBool())
+            continue;
 
-QList<QUuid> LinkListModel::serialUuids() const
-{
-    QList<QUuid> retVal;
-    for (auto it = index_.cbegin(); it != index_.cend(); ++it) {
-        const int line = it.value();
-        if (vectors_[static_cast<int>(LinkListModel::Roles::LinkType)][line].toInt() == static_cast<int>(::LinkType::kLinkSerial))
+        const auto linkType = static_cast<::LinkType>(vectors_[static_cast<int>(LinkListModel::Roles::LinkType)][line].toInt());
+        const bool survivesRestart = linkType == ::LinkType::kLinkSerial
+                                  || linkType == ::LinkType::kLinkIPUDP
+                                  || linkType == ::LinkType::kLinkIPTCP
+                                  || linkType == ::LinkType::kLinkVideo;
+
+        if (survivesRestart || vectors_[static_cast<int>(LinkListModel::Roles::IsPinned)][line].toBool())
             retVal.append(it.key());
     }
     return retVal;

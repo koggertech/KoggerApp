@@ -39,8 +39,9 @@ public:
     void createAsTcp(const QString& address, int sourcePort, int destinationPort);
     void updateTcpParameters(const QString& address, int sourcePort, int destinationPort);
     void openAsTcp();
-    void createAsRtsp(const QString& address);
-    void openAsRtsp();
+    void createAsVideo(const QString& address);
+    void openAsVideo();
+    void setVideoStreaming(bool streaming);
     bool isOpen() const;
     void close();
     bool parse();
@@ -152,7 +153,7 @@ private:
     int requestCnt_;
     bool autoConnOnce_;
     qint64 autoConnUntilMsecs_;
-    std::atomic<bool> rtspRequested_;
+    std::atomic<bool> videoRequested_;
 
 private slots:
     void readyRead();

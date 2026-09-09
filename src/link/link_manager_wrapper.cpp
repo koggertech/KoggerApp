@@ -25,8 +25,9 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     QObject::connect(this,                &LinkManagerWrapper::sendCreateAsUdp,             workerObject_.get(), &LinkManager::createAsUdp,                  connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsUdp,               workerObject_.get(), &LinkManager::openAsUdp,                    connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendCreateAsTcp,             workerObject_.get(), &LinkManager::createAsTcp,                  connectionType);
-    QObject::connect(this,                &LinkManagerWrapper::sendCreateAsRtsp,            workerObject_.get(), &LinkManager::createAsRtsp,                 connectionType);
-    QObject::connect(this,                &LinkManagerWrapper::sendOpenAsRtsp,              workerObject_.get(), &LinkManager::openAsRtsp,                   connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendCreateAsVideo,           workerObject_.get(), &LinkManager::createAsVideo,                connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendOpenAsVideo,             workerObject_.get(), &LinkManager::openAsVideo,                  connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendSetVideoStreaming,       workerObject_.get(), &LinkManager::setVideoStreaming,            connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsTcp,               workerObject_.get(), &LinkManager::openAsTcp,                    connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendCloseLink,               workerObject_.get(), &LinkManager::closeLink,                    connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendFCloseLink,              workerObject_.get(), &LinkManager::closeFLink,                   connectionType);
@@ -115,6 +116,9 @@ void LinkManagerWrapper::shutdownWorkerThread()
 void LinkManagerWrapper::closeOpenedLinks()
 {
     for (auto& itm : model_.getOpenedUuids()) {
+        if (itm.second == LinkType::kLinkVideo) {
+            continue;
+        }
         emit sendFCloseLink(itm.first);
     }
 }
@@ -234,14 +238,23 @@ void LinkManagerWrapper::openAsTcp(QUuid uuid, QString address, int sourcePort, 
     emit sendOpenAsTcp(uuid, address, sourcePort, destinationPort, attribute);
 }
 
-void LinkManagerWrapper::createAsRtsp(QString address)
+void LinkManagerWrapper::createAsVideo(QString address)
 {
-    emit sendCreateAsRtsp(address);
+    emit sendCreateAsVideo(address);
 }
 
-void LinkManagerWrapper::openAsRtsp(QUuid uuid, QString address)
+void LinkManagerWrapper::openAsVideo(QUuid uuid, QString address)
 {
-    emit sendOpenAsRtsp(uuid, address);
+    emit sendOpenAsVideo(uuid, address);
+}
+
+void LinkManagerWrapper::setVideoStreaming(QString uuidStr, bool streaming)
+{
+    const QUuid uuid(uuidStr);
+    if (uuid.isNull()) {
+        return;
+    }
+    emit sendSetVideoStreaming(uuid, streaming);
 }
 
 
@@ -293,8 +306,15 @@ void LinkManagerWrapper::appendModifyModelData(QUuid uuid, bool connectionStatus
                                                int baudrate, bool parity, LinkType linkType, QString address, int sourcePort, int destinationPort,
                                                bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState)
 {
+    const bool wasOpen = model_.containsUuid(uuid)
+                      && model_.valueForUuid(uuid, LinkListModel::Roles::ConnectionStatus).toBool();
+
     emit model_.appendModifyEvent(uuid, connectionStatus, receivesData, controlType, portName, baudrate, parity,
                                   linkType, address, sourcePort, destinationPort, isPinned, isHided, isNotAvailable, autoSpeedSelection, isUpgradingState);
+
+    if (linkType == LinkType::kLinkVideo && connectionStatus && !wasOpen && !isHided) {
+        emit linkOpened(uuid.toString());
+    }
 }
 
 void LinkManagerWrapper::deleteModelData(QUuid uuid)
@@ -302,19 +322,10 @@ void LinkManagerWrapper::deleteModelData(QUuid uuid)
     emit model_.removeEvent(uuid);
 }
 
-QStringList LinkManagerWrapper::pinnedUuids() const
+QStringList LinkManagerWrapper::rememberableUuids() const
 {
     QStringList retVal;
-    const auto uuids = model_.pinnedUuids();
-    for (const auto& u : uuids)
-        retVal.append(u.toString());
-    return retVal;
-}
-
-QStringList LinkManagerWrapper::serialUuids() const
-{
-    QStringList retVal;
-    const auto uuids = model_.serialUuids();
+    const auto uuids = model_.rememberableUuids();
     for (const auto& u : uuids)
         retVal.append(u.toString());
     return retVal;
@@ -330,6 +341,14 @@ int LinkManagerWrapper::linkState(const QString& uuidStr) const
     if (!model_.valueForUuid(uuid, LinkListModel::Roles::ConnectionStatus).toBool())
         return 0;
     return model_.valueForUuid(uuid, LinkListModel::Roles::ReceivesData).toBool() ? 1 : 2;
+}
+
+int LinkManagerWrapper::linkTypeOf(const QString& uuidStr) const
+{
+    const QUuid uuid(uuidStr);
+    if (!model_.containsUuid(uuid))
+        return -1;
+    return model_.valueForUuid(uuid, LinkListModel::Roles::LinkType).toInt();
 }
 
 void LinkManagerWrapper::reopenLink(const QString& uuidStr)
@@ -354,6 +373,11 @@ void LinkManagerWrapper::reopenLink(const QString& uuidStr)
         const QString address = model_.valueForUuid(uuid, LinkListModel::Roles::Address).toString();
         const int dst = model_.valueForUuid(uuid, LinkListModel::Roles::DestinationPort).toInt();
         emit sendOpenAsTcp(uuid, address, 0, dst, LinkAttribute::kLinkAttributeNone);
+        break;
+    }
+    case LinkType::kLinkVideo: {
+        const QString address = model_.valueForUuid(uuid, LinkListModel::Roles::Address).toString();
+        emit sendOpenAsVideo(uuid, address);
         break;
     }
     default:

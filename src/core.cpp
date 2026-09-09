@@ -2897,8 +2897,12 @@ void Core::createLinkManagerConnections()
                                                                                                                                  }, linkManagerConnection));
 
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::appendModifyModel, this,
-                                          [this](QUuid uuid, bool connectionStatus, bool receivesData) {
-        // global trigger: when data starts flowing from ANY link
+                                          [this](QUuid uuid, bool connectionStatus, bool receivesData, ControlType,
+                                                 QString, int, bool, LinkType linkType) {
+        // global trigger: when data starts flowing from ANY link; a video stream is not data
+        if (linkType == LinkType::kLinkVideo) {
+            return;
+        }
         if (connectionStatus && receivesData) {
             const bool wasAnyReceiving = !receivingLinks_.isEmpty();
             receivingLinks_.insert(uuid);

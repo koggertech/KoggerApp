@@ -1,4 +1,4 @@
-# ── RTSP video: libavformat/libavcodec from the Qt installation ──────────────
+# ── Network video: libavformat/libavcodec from the Qt installation ───────────
 # Rationale, provenance and the header trap are documented in docs/, not here.
 
 target_sources(KoggerApp PRIVATE

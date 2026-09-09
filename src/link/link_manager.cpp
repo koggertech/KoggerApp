@@ -22,10 +22,10 @@ QString linkNotAvailableTag(const QUuid& uuid)
     return QStringLiteral("link-not-available:") + uuid.toString();
 }
 
-QString rtspLinkName(const Link* link)
+QString videoLinkName(const Link* link)
 {
     const QString address = link ? link->getAddress().trimmed() : QString();
-    return address.isEmpty() ? QStringLiteral("RTSP") : QStringLiteral("RTSP(%1)").arg(address);
+    return address.isEmpty() ? QStringLiteral("Video") : QStringLiteral("Video(%1)").arg(address);
 }
 
 bool xmlBoolValue(const QString& value)
@@ -39,7 +39,7 @@ bool shouldPersist(const Link* link)
     if (!link || link->getIsHided())
         return false;
     const LinkType t = link->getLinkType();
-    if (t == LinkType::kLinkIPUDP || t == LinkType::kLinkIPTCP || t == LinkType::kLinkRtsp)
+    if (t == LinkType::kLinkIPUDP || t == LinkType::kLinkIPTCP || t == LinkType::kLinkVideo)
         return true;
     return link->getIsPinned();
 }
@@ -272,7 +272,7 @@ void LinkManager::openAutoConnections()
                     case LinkType::kLinkSerial: { link->openAsSerial(); break; }
                     case LinkType::kLinkIPUDP:  { link->openAsUdp(); break; }
                     case LinkType::kLinkIPTCP:  { link->openAsTcp(); break; }
-                    case LinkType::kLinkRtsp:   { link->openAsRtsp(); break; }
+                    case LinkType::kLinkVideo:  { link->openAsVideo(); break; }
                     default:                   { break; }
                 }
 
@@ -659,8 +659,8 @@ void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
 
-        if (linkPtr->getLinkType() == LinkType::kLinkRtsp) {
-            const QString name = rtspLinkName(linkPtr);
+        if (linkPtr->getLinkType() == LinkType::kLinkVideo) {
+            const QString name = videoLinkName(linkPtr);
             if (linkPtr->getConnectionStatus()) {
                 notifications.info(tr("Connected: %1").arg(name));
             }
@@ -710,6 +710,9 @@ void LinkManager::onLinkDataFlowNotify(QUuid uuid)
 {
     const auto linkPtr = getLinkPtr(uuid);
     if (!linkPtr || !linkPtr->getConnectionStatus()) {
+        return;
+    }
+    if (linkPtr->getLinkType() == LinkType::kLinkVideo) {
         return;
     }
 
@@ -866,7 +869,8 @@ void LinkManager::deleteLink(QUuid uuid)
 
         // manual deleting
         if (linkType == LinkType::kLinkIPTCP ||
-            linkType == LinkType::kLinkIPUDP)
+            linkType == LinkType::kLinkIPUDP ||
+            linkType == LinkType::kLinkVideo)
             exportPinnedLinksToXML();
     }
 }
@@ -1018,12 +1022,12 @@ void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPo
     emit linkCreatedInteractively(newLinkPtr->getUuid());
 }
 
-void LinkManager::createAsRtsp(QString address)
+void LinkManager::createAsVideo(QString address)
 {
     const TimerController timerGuard(timer_.get());
 
     Link* newLinkPtr = createNewLink();
-    newLinkPtr->createAsRtsp(address);
+    newLinkPtr->createAsVideo(address);
     list_.append(newLinkPtr);
 
     doEmitAppendModifyModel(newLinkPtr);
@@ -1031,17 +1035,26 @@ void LinkManager::createAsRtsp(QString address)
     emit linkCreatedInteractively(newLinkPtr->getUuid());
 }
 
-void LinkManager::openAsRtsp(QUuid uuid, QString address)
+void LinkManager::openAsVideo(QUuid uuid, QString address)
 {
     const TimerController timerGuard(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setIsForceStopped(false);
         linkPtr->setAddress(address);
-        linkPtr->openAsRtsp();
+        linkPtr->openAsVideo();
 
         doEmitAppendModifyModel(linkPtr);
         exportPinnedLinksToXML();
+    }
+}
+
+void LinkManager::setVideoStreaming(QUuid uuid, bool streaming)
+{
+    const TimerController timerGuard(timer_.get());
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setVideoStreaming(streaming);
     }
 }
 
@@ -1064,6 +1077,10 @@ void LinkManager::openFLinks()
             }
             case LinkType::kLinkIPUDP: {
                 itm->openAsUdp();
+                break;
+            }
+            case LinkType::kLinkVideo: {
+                itm->openAsVideo();
                 break;
             }
             default:

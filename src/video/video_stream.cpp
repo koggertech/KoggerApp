@@ -45,6 +45,9 @@ constexpr qint64 kResyncTimeoutMs = 3000;
 constexpr qint64 kResyncClusterMs = 5000;
 constexpr int kResyncBurstToEscalate = 3;
 constexpr int kMaxDecodeThreads = 4;
+constexpr qint64 kPaceSliceMs = 10;
+constexpr qint64 kPaceResetMs = 5000;
+constexpr int kMaxEmptyLoops = 3;
 
 constexpr const char* kProbeSize = "65536";
 constexpr const char* kAnalyzeDurationUs = "500000";
@@ -371,9 +374,22 @@ void VideoStream::openStream()
         int postedWidth = 0;
         int postedHeight = 0;
 
+        const bool seekableIo = fmt->pb && (fmt->pb->seekable & AVIO_SEEKABLE_NORMAL);
+        const bool knownDuration = fmt->duration != AV_NOPTS_VALUE && fmt->duration > 0;
+        const bool liveSource = !(seekableIo && knownDuration);
+
         const AVRational streamTimeBase = stream->time_base;
-        const bool lagGuardEnabled = streamTimeBase.num > 0 && streamTimeBase.den > 0;
-        if (!lagGuardEnabled) {
+        const bool timeBaseUsable = streamTimeBase.num > 0 && streamTimeBase.den > 0;
+        const bool lagGuardEnabled = timeBaseUsable && liveSource;
+        const bool paceToTimeline = timeBaseUsable && !liveSource;
+
+        if (!liveSource) {
+            qInfo().noquote() << QStringLiteral("VIDEO: recorded source, %1, looping at end")
+                                     .arg(paceToTimeline ? QStringLiteral("paced to its own timeline")
+                                                         : QStringLiteral("no usable time base, decoding free-run"));
+        }
+
+        if (!timeBaseUsable) {
             qWarning().noquote()
                 << QStringLiteral("VIDEO: time base %1/%2 unusable, latency guard off")
                        .arg(streamTimeBase.num)
@@ -382,6 +398,9 @@ void VideoStream::openStream()
         std::chrono::steady_clock::time_point wallBase{};
         qint64 streamBaseMs = 0;
         bool lagBaseValid = false;
+        std::chrono::steady_clock::time_point paceWallBase{};
+        qint64 paceStreamBaseMs = 0;
+        bool paceBaseValid = false;
         bool awaitingKeyframe = false;
         std::chrono::steady_clock::time_point resyncStart{};
         std::chrono::steady_clock::time_point lastResync{};
@@ -389,11 +408,22 @@ void VideoStream::openStream()
         int resyncBurst = 0;
         bool frameThreading = false;
         bool revertToLowLatency = false;
+        int emptyLoops = 0;
 
         while (!backend_->stopRequested.load()) {
             rc = av_read_frame(fmt, packet);
             if (rc < 0) {
                 if (rc == AVERROR(EAGAIN)) {
+                    continue;
+                }
+                if (rc == AVERROR_EOF && !liveSource && !backend_->stopRequested.load()
+                        && emptyLoops < kMaxEmptyLoops
+                        && av_seek_frame(fmt, videoIndex, 0, AVSEEK_FLAG_BACKWARD) >= 0) {
+                    ++emptyLoops;
+                    avcodec_flush_buffers(dec);
+                    paceBaseValid = false;
+                    lagBaseValid = false;
+                    awaitingKeyframe = false;
                     continue;
                 }
                 break;
@@ -503,6 +533,38 @@ void VideoStream::openStream()
             }
 
             while (avcodec_receive_frame(dec, frame) == 0) {
+                emptyLoops = 0;
+
+                if (paceToTimeline) {
+                    const int64_t ts = frame->best_effort_timestamp != AV_NOPTS_VALUE
+                                           ? frame->best_effort_timestamp
+                                           : frame->pts;
+                    if (ts != AV_NOPTS_VALUE) {
+                        const qint64 ptsMs = av_rescale_q(ts, streamTimeBase, AVRational{1, 1000});
+                        if (!paceBaseValid) {
+                            paceWallBase = std::chrono::steady_clock::now();
+                            paceStreamBaseMs = ptsMs;
+                            paceBaseValid = true;
+                        }
+                        while (!backend_->stopRequested.load()) {
+                            const qint64 elapsedMs =
+                                std::chrono::duration_cast<std::chrono::milliseconds>(
+                                    std::chrono::steady_clock::now() - paceWallBase).count();
+                            const qint64 aheadMs = (ptsMs - paceStreamBaseMs) - elapsedMs;
+                            if (aheadMs <= 0) {
+                                break;
+                            }
+                            if (aheadMs > kPaceResetMs) {
+                                paceWallBase = std::chrono::steady_clock::now();
+                                paceStreamBaseMs = ptsMs;
+                                break;
+                            }
+                            std::this_thread::sleep_for(
+                                std::chrono::milliseconds(std::min(aheadMs, kPaceSliceMs)));
+                        }
+                    }
+                }
+
                 const AVFrame* out = frame;
                 QVideoFrameFormat::PixelFormat qtFormat =
                     toQtPixelFormat(static_cast<AVPixelFormat>(frame->format));

@@ -1881,7 +1881,7 @@ Column {
             case 1: return m.baudrate > 0 ? (m.portName + " · " + m.baudrate) : m.portName
             case 2: return "UDP " + m.address + ":" + m.destinationPort
             case 3: return "TCP " + m.address + ":" + m.destinationPort
-            case 4: return "RTSP " + m.address
+            case 4: return "Video " + m.address
             }
             return ""
         }

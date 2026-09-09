@@ -334,7 +334,7 @@ Column {
             readonly property int vPad: Tokens.spaceXs   // fixed — no inward shift on expand (matches recRow)
             readonly property string typeLabel: LinkType === 1 ? PortName
                                              : LinkType === 2 ? "UDP"
-                                             : LinkType === 4 ? "RTSP"
+                                             : LinkType === 4 ? "VIDEO"
                                                               : "TCP"
 
             height: content.implicitHeight + 2 * vPad
@@ -391,10 +391,10 @@ Column {
                             color: AppPalette.text
                             font.pixelSize: Tokens.fontXl; font.bold: true
                             textFormat: Text.StyledText
-                            elide: Text.ElideRight
+                            elide: LinkType === 1 ? Text.ElideRight : Text.ElideNone
                             Layout.fillHeight: true
                             verticalAlignment: Text.AlignVCenter
-                            Layout.maximumWidth: Math.round((LinkType === 1 ? 80 : 44) * AppPalette.scale)
+                            Layout.maximumWidth: LinkType === 1 ? Math.round(80 * AppPalette.scale) : -1
                         }
 
                         Item {
@@ -503,7 +503,7 @@ Column {
                                     case 1: core.closeLogFile(); linkManagerWrapper.openAsSerial(Uuid); break
                                     case 2: core.closeLogFile(); linkManagerWrapper.openAsUdp(Uuid, Address, Number(SourcePort), Number(DestinationPort)); break
                                     case 3: core.closeLogFile(); linkManagerWrapper.openAsTcp(Uuid, Address, 0, Number(DestinationPort)); break
-                                    case 4: linkManagerWrapper.openAsRtsp(Uuid, Address); break
+                                    case 4: linkManagerWrapper.openAsVideo(Uuid, Address); break
                                     }
                                 }
                             }
@@ -578,19 +578,39 @@ Column {
                                 Layout.fillWidth: true
                                 spacing: Tokens.spaceXs
                                 Text {
-                                    text: "rtsp://"
-                                    color: AppPalette.text
+                                    id: urlLabel
+                                    text: qsTr("URL")
+                                    color: AppPalette.textMuted
                                     font.pixelSize: Tokens.fontBase
                                     horizontalAlignment: Text.AlignRight
+                                    Layout.fillHeight: true
+                                    verticalAlignment: Text.AlignVCenter
+
+                                    MouseArea {
+                                        id: urlLabelMa
+                                        anchors.fill: parent
+                                        acceptedButtons: Qt.NoButton
+                                        hoverEnabled: true
+                                    }
+
+                                    KToolTip {
+                                        readonly property string fileExample: Qt.platform.os === "windows" ? "C:\\clip.mp4"
+                                                                            : Qt.platform.os === "android" ? "/storage/emulated/0/Movies/clip.mp4"
+                                                                                                           : "/home/user/clip.mp4"
+                                        text: qsTr("Any URL that FFmpeg can open:\nrtsp://192.168.1.10:554/stream\nhttp://camera.local/video.cgi  (MJPEG, HLS, DASH)\nrtmp://server/live/key\nudp://@:1234\n%1  (a local file)").arg(fileExample)
+                                        targetItem: urlLabel
+                                        shown: urlLabelMa.containsMouse
+                                        x: 0
+                                    }
                                 }
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: Tokens.controlHMd
                                     radius: Tokens.radiusMd; color: AppPalette.bg
-                                    border.width: rtspField.activeFocus ? 1 : Tokens.cardBorderWidth
-                                    border.color: rtspField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                    border.width: urlField.activeFocus ? 1 : Tokens.cardBorderWidth
+                                    border.color: urlField.activeFocus ? AppPalette.accentBorder : AppPalette.border
                                     TextInput {
-                                        id: rtspField
+                                        id: urlField
                                         activeFocusOnTab: true
                                         anchors.fill: parent
                                         anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
@@ -599,8 +619,16 @@ Column {
                                         color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
                                         inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
                                         text: Address
-                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: rtspField.selectAll() }
+                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: urlField.selectAll() }
                                         onEditingFinished: linkManagerWrapper.sendUpdateAddress(Uuid, text)
+
+                                        Text {
+                                            anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
+                                            visible: !urlField.text.length && !urlField.activeFocus
+                                            text: qsTr("rtsp:// · http:// · udp:// · file")
+                                            color: AppPalette.textMuted
+                                            font.pixelSize: Tokens.fontBase
+                                        }
                                     }
                                 }
                             }
@@ -765,8 +793,8 @@ Column {
 
         KButton {
             width: actionsGrid.cellW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontBase; horizontalPadding: Math.round(8 * AppPalette.scale)
-            text: qsTr("+RTSP")
-            onClicked: linkManagerWrapper.createAsRtsp("")
+            text: qsTr("+Video")
+            onClicked: linkManagerWrapper.createAsVideo("")
         }
 
         KButton {

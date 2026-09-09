@@ -1255,9 +1255,31 @@
 <context>
     <name>ConnectionViewer</name>
     <message>
+        <source>URL</source>
+        <translation>URL</translation>
+    </message>
+    <message>
+        <source>rtsp:// · http:// · udp:// · file</source>
+        <translation>rtsp:// · http:// · udp:// · file</translation>
+    </message>
+    <message>
+        <source>Any URL that FFmpeg can open:
+rtsp://192.168.1.10:554/stream
+http://camera.local/video.cgi  (MJPEG, HLS, DASH)
+rtmp://server/live/key
+udp://@:1234
+%1  (a local file)</source>
+        <translation>Любой URL, который умеет открывать FFmpeg:
+rtsp://192.168.1.10:554/stream
+http://camera.local/video.cgi  (MJPEG, HLS, DASH)
+rtmp://server/live/key
+udp://@:1234
+%1  (локальный файл)</translation>
+    </message>
+    <message>
         <location filename="../qml/devices/ConnectionViewer.qml" line="768"/>
-        <source>+RTSP</source>
-        <translation>+RTSP</translation>
+        <source>+Video</source>
+        <translation>+Видео</translation>
     </message>
     <message>
         <source>Choose recording folder</source>

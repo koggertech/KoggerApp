@@ -29,7 +29,7 @@ Link::Link()
       requestCnt_(requestAllCntBig),
       autoConnOnce_(false),
       autoConnUntilMsecs_(0),
-      rtspRequested_(false)
+      videoRequested_(false)
 {
     frame_.resetComplete();
 
@@ -117,24 +117,39 @@ void Link::openAsUdp()
     }
 }
 
-void Link::createAsRtsp(const QString &address)
+void Link::createAsVideo(const QString &address)
 {
-    linkType_ = LinkType::kLinkRtsp;
+    linkType_ = LinkType::kLinkVideo;
     address_ = address;
     sourcePort_ = 0;
     destinationPort_ = 0;
     uuid_ = QUuid::createUuid();
 }
 
-void Link::openAsRtsp()
+void Link::openAsVideo()
 {
     if (address_.trimmed().isEmpty()) {
         return;
     }
 
-    if (!rtspRequested_.exchange(true)) {
+    if (!videoRequested_.exchange(true)) {
         emit connectionStatusChanged(uuid_);
     }
+}
+
+void Link::setVideoStreaming(bool streaming)
+{
+    if (linkType_ != LinkType::kLinkVideo) {
+        return;
+    }
+
+    const bool wanted = streaming && videoRequested_.load();
+    if (isReceivesData_ == wanted) {
+        return;
+    }
+
+    isReceivesData_ = wanted;
+    emit isReceivesDataChanged(uuid_);
 }
 
 void Link::createAsTcp(const QString &address, int sourcePort, int destinationPort)
@@ -194,8 +209,8 @@ bool Link::isOpen() const
 {
     bool retVal{ false };
 
-    if (linkType_ == LinkType::kLinkRtsp)
-        return rtspRequested_.load();
+    if (linkType_ == LinkType::kLinkVideo)
+        return videoRequested_.load();
 
     if (!ioDevice_)
         return retVal;
@@ -228,8 +243,12 @@ bool Link::isOpen() const
 
 void Link::close()
 {
-    if (linkType_ == LinkType::kLinkRtsp) {
-        if (rtspRequested_.exchange(false)) {
+    if (linkType_ == LinkType::kLinkVideo) {
+        if (videoRequested_.exchange(false)) {
+            if (isReceivesData_) {
+                isReceivesData_ = false;
+                emit isReceivesDataChanged(uuid_);
+            }
             emit connectionStatusChanged(uuid_);
         }
         return;
@@ -277,7 +296,7 @@ void Link::setConnectionStatus(bool connectionStatus)
         case LinkType::kLinkSerial: { openAsSerial(); break; }
         case LinkType::kLinkIPUDP: { openAsUdp(); break; }
         case LinkType::kLinkIPTCP: { openAsTcp(); break; }
-        case LinkType::kLinkRtsp: { openAsRtsp(); break; }
+        case LinkType::kLinkVideo: { openAsVideo(); break; }
         default: { break; }
         }
     }
@@ -435,8 +454,8 @@ QUuid Link::getUuid() const
 
 bool Link::getConnectionStatus() const
 {
-    if (linkType_ == LinkType::kLinkRtsp) {
-        return rtspRequested_.load();
+    if (linkType_ == LinkType::kLinkVideo) {
+        return videoRequested_.load();
     }
 
     if (ioDevice_) {
@@ -592,7 +611,7 @@ void Link::onUpgradingFirmwareDone()
 
 void Link::onCheckedTimerEnd()
 {
-    if (linkType_ == LinkType::kLinkRtsp) {
+    if (linkType_ == LinkType::kLinkVideo) {
         return;
     }
 

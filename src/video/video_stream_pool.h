@@ -32,6 +32,7 @@ public:
 
 signals:
     void streamsChanged();
+    void streamingChanged(QString uuid, bool streaming);
 
 private slots:
     void refresh();
@@ -47,5 +48,6 @@ private:
     QPointer<QAbstractItemModel> model_;
     QHash<QString, VideoStream*> streams_;
     QHash<QString, QString> failedUrls_;
+    QHash<QString, bool> reportedStreaming_;
     QVariantList descriptors_;
 };
