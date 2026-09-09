@@ -733,7 +733,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     };
 
     // --- добавление/обновление центральных точек (по клеткам) ---
-    auto processOneCenter = [&](const QVector3D& pnt, bool queueTriangleWrites) -> void {
+    auto processOneCenter = [&](const QVector3D& pnt, bool requeueUnchangedTriangles) -> void {
         if (!originSet_) {
             origin_    = { pnt.x(), pnt.y() };
             originSet_ = true;
@@ -746,22 +746,14 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         if (auto it = cellPointsInTri_.find(cid); it != cellPointsInTri_.end()) { // обновление Z координаты у центральной точки
             const int pIdx = it.value();
             auto& dp = delaunayProc_.getPointsRef()[pIdx];
-            if (!qFuzzyCompare(static_cast<float>(dp.z), pnt.z())) {
+            const bool zChanged = !qFuzzyCompare(static_cast<float>(dp.z), pnt.z());
+            if (zChanged) {
                 dp.z = pnt.z();
                 beenManualChanged = true;
-                if (queueTriangleWrites) {
-                    const auto triIt = pointToTris_.constFind(pIdx);
-                    if (triIt != pointToTris_.cend()) {
-                        const auto& triIndices = triIt.value();
-                        for (int triIdx : triIndices) {
-                            updsTrIndx.insert(triIdx);
-                        }
-                    }
-                }
             }
-            else if (queueTriangleWrites) {
-                // Point already exists with same Z. Re-queue adjacent triangles so newly visible tiles
-                // can be painted without rebuilding triangulation.
+            // Unchanged points are re-queued only for '0'/'1' seeds: that path exists to paint
+            // tiles that just became visible, not to carry new data.
+            if (zChanged || requeueUnchangedTriangles) {
                 const auto triIt = pointToTris_.constFind(pIdx);
                 if (triIt != pointToTris_.cend()) {
                     const auto& triIndices = triIt.value();
@@ -775,9 +767,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
             const auto res = delaunayProc_.addPoint({ pnt.x(), pnt.y(), pnt.z() });
             for (int triIdx : res.newTriIdx) {
                 registerTriangle(triIdx);
-                if (queueTriangleWrites) {
-                    updsTrIndx.insert(triIdx);
-                }
+                updsTrIndx.insert(triIdx);
             }
             cellPointsInTri_[cid] = res.pointIdx;
         }

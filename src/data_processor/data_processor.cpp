@@ -728,7 +728,7 @@ void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVec
     }
 
     for (int itm : vertIndxs) {
-        // '2' = triangulation-only update (no immediate raster write).
+        // '2' = realtime update: raster only the triangles triangulation actually changed.
         pendingSurfaceIndxs_.insert(qMakePair(isManual ? '1' : '2', itm));
     }
 
