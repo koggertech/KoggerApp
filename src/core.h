@@ -394,6 +394,7 @@ private:
     bool isAppendMode_ = false;
     QStringList appendedFiles_;
     QList<QUuid> openLinkOrder_;
+    QString lastFileTitle_; // guards fileTitleChanged against the link model's periodic row touches
     QSet<QUuid> receivingLinks_; // links currently receiving data; window is raised on the empty→non-empty edge
 
     bool isGPSAlive_;

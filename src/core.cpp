@@ -2919,6 +2919,16 @@ void Core::createLinkManagerConnections()
                                                                                                                                  }, linkManagerConnection));
 
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::sendDoRequestAll, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onSendRequestAll, linkManagerConnection));
+
+    if (LinkListModel* linkModel = linkManagerWrapperPtr_->getModelPtr()) {
+        lastFileTitle_ = getFileTitle();
+        linkManagerWrapperConnections_.append(QObject::connect(linkModel, &QAbstractItemModel::dataChanged, this, [this]() {
+                                                                                                                     const QString title = getFileTitle();
+                                                                                                                     if (title == lastFileTitle_) return;
+                                                                                                                     lastFileTitle_ = title;
+                                                                                                                     emit fileTitleChanged();
+                                                                                                                 }));
+    }
 }
 
 void Core::removeLinkManagerConnections()
