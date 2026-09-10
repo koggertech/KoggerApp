@@ -401,27 +401,56 @@ Column {
                                                                 : -1
                         }
 
-                        Item {
-                            visible: !!IsPinned && !connRow.editing
-                            Layout.preferredWidth: Math.round(13 * AppPalette.scale)
-                            Layout.preferredHeight: Math.round(13 * AppPalette.scale)
+                        Row {
+                            readonly property int dotSize: Math.round(13 * AppPalette.scale)
+                            visible: (!!IsPinned || connRow.isRemembered) && !connRow.editing
+                            spacing: Math.round(2 * AppPalette.scale)
                             Layout.alignment: Qt.AlignVCenter
-                            Image {
-                                id: pinInfoIcon
-                                anchors.fill: parent
-                                source: "qrc:/icons/ui/pin.svg"
-                                sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
-                                sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
-                                fillMode: Image.PreserveAspectFit
-                                smooth: true
-                                visible: false
-                                layer.enabled: true
+
+                            Item {
+                                visible: !!IsPinned
+                                width: parent.dotSize
+                                height: parent.dotSize
+                                Image {
+                                    id: pinInfoIcon
+                                    anchors.fill: parent
+                                    source: "qrc:/icons/ui/pin.svg"
+                                    sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                                    sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                                    fillMode: Image.PreserveAspectFit
+                                    smooth: true
+                                    visible: false
+                                    layer.enabled: true
+                                }
+                                ColorOverlay {
+                                    anchors.fill: pinInfoIcon
+                                    source: pinInfoIcon
+                                    color: AppPalette.textMuted
+                                    smooth: true
+                                }
                             }
-                            ColorOverlay {
-                                anchors.fill: pinInfoIcon
-                                source: pinInfoIcon
-                                color: AppPalette.textMuted
-                                smooth: true
+
+                            Item {
+                                visible: connRow.isRemembered
+                                width: parent.dotSize
+                                height: parent.dotSize
+                                Image {
+                                    id: recentInfoIcon
+                                    anchors.fill: parent
+                                    source: "qrc:/icons/ui/plug.svg"
+                                    sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                                    sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                                    fillMode: Image.PreserveAspectFit
+                                    smooth: true
+                                    visible: false
+                                    layer.enabled: true
+                                }
+                                ColorOverlay {
+                                    anchors.fill: recentInfoIcon
+                                    source: recentInfoIcon
+                                    color: AppPalette.textMuted
+                                    smooth: true
+                                }
                             }
                         }
 
