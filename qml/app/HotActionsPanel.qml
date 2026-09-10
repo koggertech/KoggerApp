@@ -1433,6 +1433,7 @@ Item {
             required property int index
             readonly property var _dev: modelData ? modelData.device : null
             spacing: 0
+            z: -index
 
             Item {
                 visible: devCell.index > 0
@@ -1442,11 +1443,25 @@ Item {
                 height: root.controlHeight
 
                 Rectangle {
+                    id: connBar
+                    readonly property int hairline: Math.max(1, Math.round(root._s))
+                    readonly property int over: Math.max(2, Math.round(2 * root._s))
                     visible: !!(devCell.modelData && !devCell.modelData.groupFirst)
                     anchors.centerIn: parent
-                    width: parent.width
+                    width: parent.width + 2 * over
                     height: Math.max(2, Math.round(2 * root._s))
                     color: AppPalette.textMuted
+
+                    Rectangle {
+                        anchors { left: parent.left; right: parent.right; bottom: parent.top }
+                        height: connBar.hairline
+                        color: "#000000"
+                    }
+                    Rectangle {
+                        anchors { left: parent.left; right: parent.right; top: parent.bottom }
+                        height: connBar.hairline
+                        color: "#000000"
+                    }
                 }
             }
 
