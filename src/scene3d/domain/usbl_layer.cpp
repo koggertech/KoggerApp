@@ -1,5 +1,7 @@
 #include "usbl_layer.h"
 
+#include <utility>
+
 #include "themes.h"
 
 
@@ -302,7 +304,7 @@ void UsblLayer::UsblLayerRenderImplementation::updateBounds()
         zMin = std::min(zMin, p.z()); zMax = std::max(zMax, p.z());
     };
 
-    for (const auto& b : data_.beacons) {
+    for (const auto& b : std::as_const(data_.beacons)) {
         for (const auto& p : b.track) {
             take(p);
         }
@@ -310,7 +312,7 @@ void UsblLayer::UsblLayerRenderImplementation::updateBounds()
             take(b.deep);
         }
     }
-    for (const auto& p : data_.head.track) {
+    for (const auto& p : std::as_const(data_.head.track)) {
         take(p);
     }
 

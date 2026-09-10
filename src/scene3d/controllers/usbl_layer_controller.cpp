@@ -1,6 +1,7 @@
 #include "usbl_layer_controller.h"
 
 #include <cmath>
+#include <utility>
 
 #include "scene3d_view.h"
 #include "usbl_layer.h"
@@ -203,7 +204,7 @@ void UsblLayerController::rebuild()
     }
 
     out.head.track.reserve(head_.size());
-    for (const Fix& f : head_) {
+    for (const Fix& f : std::as_const(head_)) {
         out.head.track.append(toSurface(f.lat, f.lon));
     }
     if (!out.head.track.isEmpty()) {

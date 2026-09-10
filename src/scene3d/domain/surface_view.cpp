@@ -4,6 +4,7 @@
 #include "text_renderer.h"
 #include <cmath>
 #include <algorithm>
+#include <utility>
 #include <QFile>
 #include <QDir>
 #include <QFileInfo>
@@ -1042,7 +1043,7 @@ void SurfaceView::assignLabelLevels(const QVector<IsoLabel> &in, QVector<IsoLabe
         QVector<int> rejected;
         rejected.reserve(pending.size());
 
-        for (const int idx : pending) {
+        for (const int idx : std::as_const(pending)) {
             const IsoLabel& lbl = in[idx];
             const int isoKey = isoKeyOf(lbl);
             const int cx = int(std::floor(lbl.pos.x() * inv));

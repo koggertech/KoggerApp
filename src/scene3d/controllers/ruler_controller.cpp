@@ -1,6 +1,7 @@
 #include "ruler_controller.h"
 
 #include <cmath>
+#include <utility>
 #include <QtMath>
 #include <QLineF>
 
@@ -367,7 +368,7 @@ void RulerController::rebuildCommitted()
 
     const bool persp = view_->m_camera->getIsPerspective();
     committedVertices_.reserve(geoPoints_.size());
-    for (const auto& v : geoPoints_) {
+    for (const auto& v : std::as_const(geoPoints_)) {
         committedVertices_.push_back(toScene(v.lat, wrapLon180(v.lon)));
     }
     for (int i = 1; i < geoPoints_.size(); ++i) {

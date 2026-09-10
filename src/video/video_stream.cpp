@@ -12,6 +12,7 @@
 #include <chrono>
 #include <memory>
 #include <thread>
+#include <utility>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -194,7 +195,7 @@ void VideoStream::syncSinkCount()
 
 void VideoStream::deliverFrame(const QVideoFrame& frame)
 {
-    for (const QPointer<QVideoSink>& sink : videoSinks_) {
+    for (const QPointer<QVideoSink>& sink : std::as_const(videoSinks_)) {
         if (!sink.isNull()) {
             sink->setVideoFrame(frame);
         }
@@ -203,7 +204,7 @@ void VideoStream::deliverFrame(const QVideoFrame& frame)
 
 void VideoStream::clearSinks()
 {
-    for (const QPointer<QVideoSink>& sink : videoSinks_) {
+    for (const QPointer<QVideoSink>& sink : std::as_const(videoSinks_)) {
         if (!sink.isNull()) {
             sink->setVideoFrame(QVideoFrame());
         }
@@ -364,8 +365,8 @@ void VideoStream::openStream()
                                  .arg(QString::fromUtf8(codec->name))
                                  .arg(av_cpu_count())
                                  .arg(dec->thread_count > 0 ? QString::number(dec->thread_count)
-                                                            : QStringLiteral("auto"))
-                                 .arg(threadTypeName(dec->active_thread_type));
+                                                            : QStringLiteral("auto"),
+                                      threadTypeName(dec->active_thread_type));
 
         AVPacket* packet = av_packet_alloc();
         AVFrame* frame = av_frame_alloc();
