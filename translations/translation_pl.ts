@@ -1255,6 +1255,14 @@
 <context>
     <name>ConnectionViewer</name>
     <message>
+        <source>Name</source>
+        <translation>Nazwa</translation>
+    </message>
+    <message>
+        <source>Clear name</source>
+        <translation>Wyczyść nazwę</translation>
+    </message>
+    <message>
         <source>URL</source>
         <translation>URL</translation>
     </message>

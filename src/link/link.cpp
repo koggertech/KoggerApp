@@ -8,6 +8,7 @@ Link::Link()
       controlType_(ControlType::kManual),
       linkType_(LinkType::kLinkNone),
       portName_(""),
+      customName_(""),
       baudrate_(0),
       parity_(false),
       address_(""),
@@ -312,6 +313,11 @@ void Link::setPortName(const QString &portName)
     portName_ = portName;
 }
 
+void Link::setCustomName(const QString &customName)
+{
+    customName_ = customName.trimmed();
+}
+
 void Link::setBaudrate(int baudrate)
 {
     int lastBaudRate = baudrate_;
@@ -479,6 +485,11 @@ ControlType Link::getControlType() const
 QString Link::getPortName() const
 {
     return portName_;
+}
+
+QString Link::getCustomName() const
+{
+    return customName_;
 }
 
 int Link::getBaudrate() const

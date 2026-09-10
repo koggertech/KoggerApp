@@ -336,6 +336,8 @@ Column {
                                              : LinkType === 2 ? "UDP"
                                              : LinkType === 4 ? "VIDEO"
                                                               : "TCP"
+            readonly property string customName: (CustomName && String(CustomName).length) ? String(CustomName) : ""
+            readonly property string headLabel: connRow.customName.length ? connRow.customName : connRow.typeLabel
 
             height: content.implicitHeight + 2 * vPad
 
@@ -387,14 +389,16 @@ Column {
                         }
 
                         Text {
-                            text: connectionViewer.escapeHtml(connRow.typeLabel)
+                            text: connectionViewer.escapeHtml(connRow.headLabel)
                             color: AppPalette.text
                             font.pixelSize: Tokens.fontXl; font.bold: true
                             textFormat: Text.StyledText
-                            elide: LinkType === 1 ? Text.ElideRight : Text.ElideNone
+                            elide: (LinkType === 1 || connRow.customName.length) ? Text.ElideRight : Text.ElideNone
                             Layout.fillHeight: true
                             verticalAlignment: Text.AlignVCenter
-                            Layout.maximumWidth: LinkType === 1 ? Math.round(80 * AppPalette.scale) : -1
+                            Layout.maximumWidth: connRow.customName.length ? Math.round(150 * AppPalette.scale)
+                                               : LinkType === 1 ? Math.round(80 * AppPalette.scale)
+                                                                : -1
                         }
 
                         Item {
@@ -428,20 +432,27 @@ Column {
                             Layout.fillHeight: true
                             verticalAlignment: Text.AlignVCenter
                             elide: Text.ElideRight
-                            color: AppPalette.text
+                            color: connRow.customName.length ? AppPalette.textMuted : AppPalette.text
                             font.pixelSize: Tokens.fontLg
                             textFormat: Text.StyledText
                             text: {
                                 var muted = AppPalette.textMuted
                                 var esc = connectionViewer.escapeHtml
-                                if (LinkType === 1)
-                                    return '<font color="' + muted + '">' + esc(Baudrate) + '</font>'
-                                var a = esc((Address && Address.length) ? Address : "—")
-                                if (LinkType === 4)
-                                    return a
-                                if (LinkType === 2)
-                                    return a + '  <font color="' + muted + '">·  ' + esc(SourcePort) + ' → ' + esc(DestinationPort) + '</font>'
-                                return a + '  <font color="' + muted + '">·  ' + esc(DestinationPort) + '</font>'
+                                var body
+                                if (LinkType === 1) {
+                                    body = '<font color="' + muted + '">' + esc(Baudrate) + '</font>'
+                                } else {
+                                    var a = esc((Address && Address.length) ? Address : "—")
+                                    if (LinkType === 4)
+                                        body = a
+                                    else if (LinkType === 2)
+                                        body = a + '  <font color="' + muted + '">·  ' + esc(SourcePort) + ' → ' + esc(DestinationPort) + '</font>'
+                                    else
+                                        body = a + '  <font color="' + muted + '">·  ' + esc(DestinationPort) + '</font>'
+                                }
+                                if (!connRow.customName.length)
+                                    return body
+                                return '<font color="' + muted + '">' + esc(connRow.typeLabel) + '  ·  </font>' + body
                             }
                         }
 
@@ -526,6 +537,56 @@ Column {
                             y: connRow.vPad
                             width: parent.width
                             spacing: Tokens.spaceXs
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: Tokens.spaceXs
+                                Text {
+                                    text: qsTr("Name")
+                                    color: AppPalette.textMuted
+                                    font.pixelSize: Tokens.fontBase
+                                    Layout.preferredWidth: LinkType === 1 ? Math.round(70 * AppPalette.scale) : Math.round(34 * AppPalette.scale)
+                                }
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Tokens.controlHMd
+                                    radius: Tokens.radiusMd; color: AppPalette.bg
+                                    border.width: nameField.activeFocus ? 1 : Tokens.cardBorderWidth
+                                    border.color: nameField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                    TextInput {
+                                        id: nameField
+                                        activeFocusOnTab: true
+                                        anchors.fill: parent
+                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
+                                        maximumLength: 32
+                                        inputMethodHints: Qt.ImhNoPredictiveText
+                                        text: connRow.customName
+                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: nameField.selectAll() }
+                                        onEditingFinished: linkManagerWrapper.sendUpdateCustomName(Uuid, text)
+
+                                        Text {
+                                            visible: !nameField.text.length && !nameField.activeFocus
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: connRow.typeLabel
+                                            color: AppPalette.textMuted
+                                            font: nameField.font
+                                        }
+                                    }
+                                }
+                                IconBtn {
+                                    visible: connRow.customName.length > 0
+                                    iconSource: "qrc:/icons/ui/eraser.svg"; iconFillRatio: 0.8
+                                    toolTipText: qsTr("Clear name")
+                                    Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                                    onClicked: {
+                                        nameField.text = ""
+                                        linkManagerWrapper.sendUpdateCustomName(Uuid, "")
+                                    }
+                                }
+                            }
 
                             // UDP/TCP — адрес
                             RowLayout {

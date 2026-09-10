@@ -26,7 +26,8 @@ public:
         IsHided,
         IsNotAvailable,
         AutoSpeedSelection,
-        IsUpgradingState
+        IsUpgradingState,
+        CustomName
     };
 
     /*methods*/
@@ -53,7 +54,8 @@ private:
     /*methods*/
     void doAppendModify(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName,
                         int baudrate, bool parity, ::LinkType linkType, const QString& address, int sourcePort, int destinationPort,
-                        bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState);
+                        bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState,
+                        const QString& customName);
     void doRemove(QUuid uuid);
     void moveRow(int from, int to);
     int pinnedCount() const;
@@ -75,7 +77,8 @@ private:
         {{ static_cast<int>(LinkListModel::Roles::IsHided) },           {"IsHided"}},
         {{ static_cast<int>(LinkListModel::Roles::IsNotAvailable) },    {"IsNotAvailable"}},
         {{ static_cast<int>(LinkListModel::Roles::AutoSpeedSelection) },{"AutoSpeedSelection"}},
-        {{ static_cast<int>(LinkListModel::Roles::IsUpgradingState) },  {"IsUpgradingState"}}
+        {{ static_cast<int>(LinkListModel::Roles::IsUpgradingState) },  {"IsUpgradingState"}},
+        {{ static_cast<int>(LinkListModel::Roles::CustomName) },        {"CustomName"}}
     };
     QHash<int, QVector<QVariant>> vectors_; // first - roleName, second - vec of vals
     QHash<QUuid, int> index_; // first - uuid, second - row
@@ -84,6 +87,7 @@ private:
 signals:
     void appendModifyEvent(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, const QString& portName,
                         int baudrate, bool parity, LinkType linkType, const QString& address, int sourcePort, int destinationPort,
-                        bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingSate);
+                        bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingSate,
+                        const QString& customName);
     void removeEvent(QUuid uuid);
 };

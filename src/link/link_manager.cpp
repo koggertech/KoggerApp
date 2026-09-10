@@ -24,6 +24,10 @@ QString linkNotAvailableTag(const QUuid& uuid)
 
 QString videoLinkName(const Link* link)
 {
+    const QString customName = link ? link->getCustomName() : QString();
+    if (!customName.isEmpty())
+        return customName;
+
     const QString address = link ? link->getAddress().trimmed() : QString();
     return address.isEmpty() ? QStringLiteral("Video") : QStringLiteral("Video(%1)").arg(address);
 }
@@ -66,6 +70,7 @@ QByteArray buildPinnedLinksXmlData(const QList<Link*>& links)
         xmlWriter.writeTextElement("uuid", link->getUuid().toString());
         xmlWriter.writeTextElement("control_type", QString::number(static_cast<int>(link->getControlType())));
         xmlWriter.writeTextElement("port_name", link->getPortName());
+        xmlWriter.writeTextElement("custom_name", link->getCustomName());
         xmlWriter.writeTextElement("baudrate", QString::number(link->getBaudrate()));
         xmlWriter.writeTextElement("parity", QVariant(static_cast<bool>(link->getParity())).toString());
         xmlWriter.writeTextElement("link_type", QString::number(static_cast<int>(link->getLinkType())));
@@ -331,7 +336,8 @@ void LinkManager::doEmitAppendModifyModel(Link* linkPtr)
                            linkPtr->getIsHided(),
                            linkPtr->getIsNotAvailable(),
                            linkPtr->getAutoSpeedSelection(),
-                           linkPtr->getIsUpgradingState());
+                           linkPtr->getIsUpgradingState(),
+                           linkPtr->getCustomName());
 }
 
 void LinkManager::exportPinnedLinksToXML()
@@ -424,6 +430,9 @@ bool LinkManager::parsePinnedLinksXmlData(const QByteArray& xmlData, QList<Pinne
             else if (tag == QStringLiteral("port_name")) {
                 record.portName = xmlReader.readElementText();
             }
+            else if (tag == QStringLiteral("custom_name")) {
+                record.customName = xmlReader.readElementText().trimmed();
+            }
             else if (tag == QStringLiteral("baudrate")) {
                 record.baudrate = xmlReader.readElementText().toInt();
             }
@@ -500,6 +509,7 @@ void LinkManager::appendPinnedLinkRecords(const QList<PinnedLinkRecord>& records
         link->setUuid(record.uuid);
         link->setControlType(record.controlType);
         link->setPortName(record.portName);
+        link->setCustomName(record.customName);
         link->setBaudrate(record.baudrate);
         link->setParity(record.parity);
         link->setLinkType(record.linkType);
@@ -919,6 +929,22 @@ void LinkManager::updateAddress(QUuid uuid, const QString &address)
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAddress(address);
+
+        doEmitAppendModifyModel(linkPtr);
+        if (shouldPersist(linkPtr))
+            exportPinnedLinksToXML();
+    }
+}
+
+void LinkManager::updateCustomName(QUuid uuid, const QString& customName)
+{
+    const TimerController timerGuard(timer_.get());
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        if (linkPtr->getCustomName() == customName.trimmed())
+            return;
+
+        linkPtr->setCustomName(customName);
 
         doEmitAppendModifyModel(linkPtr);
         if (shouldPersist(linkPtr))

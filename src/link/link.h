@@ -51,6 +51,7 @@ public:
     void setConnectionStatus(bool connectionStatus);
     void setControlType(ControlType controlType);
     void setPortName(const QString& portName);
+    void setCustomName(const QString& customName);
     void setBaudrate(int baudrate);
     void setRequestToSend(bool rts);
     void setDataTerminalReady(bool dtr);
@@ -74,6 +75,7 @@ public:
     bool        getIsRecievesData() const;
     ControlType getControlType() const;
     QString     getPortName() const;
+    QString     getCustomName() const;
     int         getBaudrate() const;
     bool        getParity() const;
     LinkType    getLinkType() const;
@@ -130,6 +132,7 @@ private:
     ControlType controlType_;
     LinkType linkType_;
     QString portName_;
+    QString customName_;
     int baudrate_;
     bool parity_;
     QString address_;

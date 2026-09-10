@@ -50,6 +50,12 @@ QHash<QUuid, QString> LinkListModel::getLinkNames() const
         if (vectors_[static_cast<int>(LinkListModel::Roles::ConnectionStatus)][line].toBool()) {
             auto linkType = vectors_[static_cast<int>(LinkListModel::Roles::LinkType)][line].toUInt();
 
+            const QString customName = vectors_[static_cast<int>(LinkListModel::Roles::CustomName)][line].toString();
+            if (!customName.isEmpty()) {
+                retVal[it.key()] = customName;
+                continue;
+            }
+
             if (linkType == 1) { // uart
                 retVal[it.key()] = vectors_[static_cast<int>(LinkListModel::Roles::PortName)][line].toString();
             }
@@ -141,7 +147,8 @@ int LinkListModel::getSize() const
 
 void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, const QString& portName,
                                    int baudrate, bool parity, LinkType linkType, const QString& address, int sourcePort, int destinationPort,
-                                   bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState)
+                                   bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState,
+                                   const QString& customName)
 {
     if (isHided)
         return;
@@ -168,6 +175,7 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool recei
         vectors_[static_cast<int>(LinkListModel::Roles::IsNotAvailable)].append(isNotAvailable);
         vectors_[static_cast<int>(LinkListModel::Roles::AutoSpeedSelection)].append(autoSpeedSelection);
         vectors_[static_cast<int>(LinkListModel::Roles::IsUpgradingState)].append(isUpgradingState);
+        vectors_[static_cast<int>(LinkListModel::Roles::CustomName)].append(customName);
 
         ++size_;
         endInsertRows();
@@ -195,6 +203,7 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool recei
         vectors_[static_cast<int>(LinkListModel::Roles::IsNotAvailable)][line] = isNotAvailable;
         vectors_[static_cast<int>(LinkListModel::Roles::AutoSpeedSelection)][line] = autoSpeedSelection;
         vectors_[static_cast<int>(LinkListModel::Roles::IsUpgradingState)][line] = isUpgradingState;
+        vectors_[static_cast<int>(LinkListModel::Roles::CustomName)][line] = customName;
 
         emit dataChanged(index(line, 0), index(line, 0));
 
@@ -260,6 +269,7 @@ void LinkListModel::doRemove(QUuid uuid)
         vectors_[static_cast<int>(LinkListModel::Roles::IsNotAvailable)].erase(     vectors_[static_cast<int>(LinkListModel::Roles::IsNotAvailable)].begin() + line);
         vectors_[static_cast<int>(LinkListModel::Roles::AutoSpeedSelection)].erase( vectors_[static_cast<int>(LinkListModel::Roles::AutoSpeedSelection)].begin() + line);
         vectors_[static_cast<int>(LinkListModel::Roles::IsUpgradingState)].erase(   vectors_[static_cast<int>(LinkListModel::Roles::IsUpgradingState)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::CustomName)].erase(         vectors_[static_cast<int>(LinkListModel::Roles::CustomName)].begin() + line);
 
         index_.remove(uuid);
         for (auto it = index_.begin(); it != index_.end(); ++it) {

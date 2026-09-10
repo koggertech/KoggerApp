@@ -25,11 +25,14 @@ Item {
     function _linkLabel(g) {
         if (!g)
             return ""
+        var detail = ""
         if (g.portName && g.portName.length > 0)
-            return g.baudrate > 0 ? g.portName + " " + g.baudrate : g.portName
-        if (g.address && g.address.length > 0)
-            return g.destinationPort > 0 ? g.address + ":" + g.destinationPort : g.address
-        return ""
+            detail = g.baudrate > 0 ? g.portName + " " + g.baudrate : g.portName
+        else if (g.address && g.address.length > 0)
+            detail = g.destinationPort > 0 ? g.address + ":" + g.destinationPort : g.address
+        if (!g.customName || !g.customName.length)
+            return detail
+        return detail.length > 0 ? g.customName + " · " + detail : g.customName
     }
 
     // Same mapping as HotActionsPanel.iconForDevice (the hot-actions/"hotkey" panel).
@@ -192,6 +195,8 @@ Item {
                             font.pixelSize: Tokens.fontXs
                             readonly property bool overflow: width > subClip.width
                             readonly property real leftEnd: subClip.width - width   // negative: scrolled so the tail shows
+                            readonly property int pauseMs: 2500
+                            readonly property int glideMs: Math.max(2500, Math.round(width * 10))
                             onOverflowChanged: _resync()
                             onLeftEndChanged: if (overflow) _resync()
                             Component.onCompleted: _resync()
@@ -204,10 +209,10 @@ Item {
                             SequentialAnimation {
                                 id: subMarquee
                                 loops: Animation.Infinite
-                                PauseAnimation { duration: 1500 }
-                                NumberAnimation { target: subText; property: "x"; to: subText.leftEnd; duration: Math.max(1500, subText.width * 6); easing.type: Easing.InOutSine }
-                                PauseAnimation { duration: 1500 }
-                                NumberAnimation { target: subText; property: "x"; to: 0; duration: Math.max(1500, subText.width * 6); easing.type: Easing.InOutSine }
+                                PauseAnimation { duration: subText.pauseMs }
+                                NumberAnimation { target: subText; property: "x"; to: subText.leftEnd; duration: subText.glideMs; easing.type: Easing.InOutSine }
+                                PauseAnimation { duration: subText.pauseMs }
+                                NumberAnimation { target: subText; property: "x"; to: 0; duration: subText.glideMs; easing.type: Easing.InOutSine }
                             }
                         }
                     }

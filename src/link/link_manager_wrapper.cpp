@@ -39,6 +39,7 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     QObject::connect(this,                &LinkManagerWrapper::sendSetPatity,               workerObject_.get(), &LinkManager::setParity,                    connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendSetAttribut,             workerObject_.get(), &LinkManager::setAttribute,                 connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateAddress,           workerObject_.get(), &LinkManager::updateAddress,                connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendUpdateCustomName,        workerObject_.get(), &LinkManager::updateCustomName,             connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateSourcePort,        workerObject_.get(), &LinkManager::updateSourcePort,             connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateDestinationPort,   workerObject_.get(), &LinkManager::updateDestinationPort,        connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdatePinnedState,       workerObject_.get(), &LinkManager::updatePinnedState,            connectionType);
@@ -304,13 +305,15 @@ void LinkManagerWrapper::setAttribute(QUuid uuid, LinkAttribute attribute) {
 
 void LinkManagerWrapper::appendModifyModelData(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, QString portName,
                                                int baudrate, bool parity, LinkType linkType, QString address, int sourcePort, int destinationPort,
-                                               bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState)
+                                               bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState,
+                                               QString customName)
 {
     const bool wasOpen = model_.containsUuid(uuid)
                       && model_.valueForUuid(uuid, LinkListModel::Roles::ConnectionStatus).toBool();
 
     emit model_.appendModifyEvent(uuid, connectionStatus, receivesData, controlType, portName, baudrate, parity,
-                                  linkType, address, sourcePort, destinationPort, isPinned, isHided, isNotAvailable, autoSpeedSelection, isUpgradingState);
+                                  linkType, address, sourcePort, destinationPort, isPinned, isHided, isNotAvailable, autoSpeedSelection, isUpgradingState,
+                                  customName);
 
     if (linkType == LinkType::kLinkVideo && connectionStatus && !wasOpen && !isHided) {
         emit linkOpened(uuid.toString());

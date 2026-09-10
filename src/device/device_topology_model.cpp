@@ -85,6 +85,7 @@ DeviceTopologyModel::DeviceTopologyModel(DeviceManagerWrapper* deviceWrapper,
         // Manual baudrate edit (UI emits sendUpdateBaudrate; auto-search never does) —
         // patch the snapshot directly so the pill label refreshes without a rebuild.
         connect(linkWrapper_, &LinkManagerWrapper::sendUpdateBaudrate, this, &DeviceTopologyModel::onLinkBaudrateEdited);
+        connect(linkWrapper_, &LinkManagerWrapper::sendUpdateCustomName, this, &DeviceTopologyModel::onLinkCustomNameEdited);
         if (LinkListModel* m = linkWrapper_->getModelPtr()) {
             connect(m, &QAbstractItemModel::rowsInserted, this, &DeviceTopologyModel::scheduleRebuild);
             connect(m, &QAbstractItemModel::rowsRemoved,  this, &DeviceTopologyModel::scheduleRebuild);
@@ -111,6 +112,23 @@ void DeviceTopologyModel::onLinkBaudrateEdited(QUuid uuid, int baudrate)
         if (g.value("linkUuid").toString() == key) {
             if (g.value("baudrate").toInt() != baudrate) {
                 g["baudrate"] = baudrate;
+                groups_[i] = g;
+                emit changed();
+            }
+            return;
+        }
+    }
+}
+
+void DeviceTopologyModel::onLinkCustomNameEdited(QUuid uuid, QString customName)
+{
+    const QString key = uuid.toString(QUuid::WithoutBraces);
+    const QString trimmed = customName.trimmed();
+    for (int i = 0; i < groups_.size(); ++i) {
+        QVariantMap g = groups_[i].toMap();
+        if (g.value("linkUuid").toString() == key) {
+            if (g.value("customName").toString() != trimmed) {
+                g["customName"] = trimmed;
                 groups_[i] = g;
                 emit changed();
             }
@@ -211,6 +229,7 @@ QVariantMap DeviceTopologyModel::buildLinkMeta(const QUuid& linkUuid) const
     meta["linkUuid"]        = linkUuid.toString(QUuid::WithoutBraces);
     meta["linkType"]        = -1;
     meta["portName"]        = QString();
+    meta["customName"]      = QString();
     meta["address"]         = QString();
     meta["baudrate"]        = 0;
     meta["sourcePort"]      = 0;
@@ -227,6 +246,7 @@ QVariantMap DeviceTopologyModel::buildLinkMeta(const QUuid& linkUuid) const
     using R = LinkListModel::Roles;
     meta["linkType"]        = m->valueForUuid(linkUuid, R::LinkType).toInt();
     meta["portName"]        = m->valueForUuid(linkUuid, R::PortName).toString();
+    meta["customName"]      = m->valueForUuid(linkUuid, R::CustomName).toString();
     meta["address"]         = m->valueForUuid(linkUuid, R::Address).toString();
     meta["baudrate"]        = m->valueForUuid(linkUuid, R::Baudrate).toInt();
     meta["sourcePort"]      = m->valueForUuid(linkUuid, R::SourcePort).toInt();

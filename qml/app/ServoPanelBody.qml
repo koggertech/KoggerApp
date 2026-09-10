@@ -137,11 +137,14 @@ Column {
         var g = deviceTopology.groupForDevice(d)
         if (!g)
             return ""
+        var detail = ""
         if (g.portName && g.portName.length > 0)
-            return g.baudrate > 0 ? g.portName + " · " + g.baudrate : g.portName
-        if (g.address && g.address.length > 0)
-            return g.destinationPort > 0 ? g.address + ":" + g.destinationPort : g.address
-        return ""
+            detail = g.baudrate > 0 ? g.portName + " · " + g.baudrate : g.portName
+        else if (g.address && g.address.length > 0)
+            detail = g.destinationPort > 0 ? g.address + ":" + g.destinationPort : g.address
+        if (!g.customName || !g.customName.length)
+            return detail
+        return detail.length > 0 ? g.customName + " · " + detail : g.customName
     }
 
     readonly property string _linkLabel: _linkLabelFor(dev)

@@ -34,6 +34,7 @@ private slots:
     void scheduleRebuild();
     void rebuild();
     void onLinkBaudrateEdited(QUuid uuid, int baudrate);
+    void onLinkCustomNameEdited(QUuid uuid, QString customName);
 
 private:
     QVariantMap buildLinkMeta(const QUuid& linkUuid) const;

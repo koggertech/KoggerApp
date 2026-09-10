@@ -1877,13 +1877,16 @@ Column {
             var m = devInfoGroup.linkMeta
             if (!m)
                 return ""
+            var detail = ""
             switch (m.linkType) {
-            case 1: return m.baudrate > 0 ? (m.portName + " · " + m.baudrate) : m.portName
-            case 2: return "UDP " + m.address + ":" + m.destinationPort
-            case 3: return "TCP " + m.address + ":" + m.destinationPort
-            case 4: return "Video " + m.address
+            case 1: detail = m.baudrate > 0 ? (m.portName + " · " + m.baudrate) : m.portName; break
+            case 2: detail = "UDP " + m.address + ":" + m.destinationPort; break
+            case 3: detail = "TCP " + m.address + ":" + m.destinationPort; break
+            case 4: detail = "Video " + m.address; break
             }
-            return ""
+            if (!m.customName || !m.customName.length)
+                return detail
+            return detail.length ? m.customName + " · " + detail : m.customName
         }
 
         function infoText() {

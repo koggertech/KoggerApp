@@ -57,7 +57,7 @@ public slots:
     void setAttribute(QUuid uuid, LinkAttribute attribute);
     void appendModifyModelData(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, QString portName, int baudrate, bool parity,
                                LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
-                               bool autoSpeedSelection, bool isUpgradingState);
+                               bool autoSpeedSelection, bool isUpgradingState, QString customName);
     void deleteModelData(QUuid uuid);
     QUuid getFirstOpened() { return getWorker()->getFirstOpend(); }
 
@@ -92,6 +92,7 @@ signals:
     void sendSetPatity(QUuid uuid, bool parity);
     void sendSetAttribut(QUuid uuid, LinkAttribute attribute);
     void sendUpdateAddress(QUuid uuid, QString address);
+    void sendUpdateCustomName(QUuid uuid, QString customName);
     void sendAutoSpeedSelection(QUuid uuid, bool state);
     void sendUpdateSourcePort(QUuid uuid, int sourcePort);
     void sendUpdateDestinationPort(QUuid uuid, int destinationPort);

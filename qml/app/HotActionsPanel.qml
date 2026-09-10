@@ -199,11 +199,14 @@ Item {
 
     function _linkLabelOf(g) {
         if (!g) return ""
+        var detail = ""
         if (g.portName && g.portName.length > 0)
-            return g.baudrate > 0 ? g.portName + " " + g.baudrate : g.portName
-        if (g.address && g.address.length > 0)
-            return g.address
-        return ""
+            detail = g.baudrate > 0 ? g.portName + " " + g.baudrate : g.portName
+        else if (g.address && g.address.length > 0)
+            detail = g.address
+        if (!g.customName || !g.customName.length)
+            return detail
+        return detail.length > 0 ? g.customName + " · " + detail : g.customName
     }
 
     function _devIndex(dev) {
