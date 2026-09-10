@@ -24,7 +24,7 @@ QString linkNotAvailableTag(const QUuid& uuid)
 
 QString videoLinkName(const Link* link)
 {
-    const QString customName = link ? link->getCustomName() : QString();
+    QString customName = link ? link->getCustomName() : QString();
     if (!customName.isEmpty())
         return customName;
 

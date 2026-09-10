@@ -76,7 +76,7 @@ private:
     static constexpr int minTilesCapacity_{ 400 };
     static constexpr int maxConcurrentDownloads_{ 10 };
     static constexpr int versionFailureThreshold_{ 6 };
-    static constexpr qint64 versionResolveCooldownMs_{ 60 * 60 * 1000 };
+    static constexpr qint64 versionResolveCooldownMs_{ 60LL * 60 * 1000 };
     static constexpr int versionProbeSpan_{ 32 };
     static constexpr int versionJitterMaxMs_{ 30 * 1000 };
     static constexpr int versionRequestTimeoutMs_{ 15 * 1000 };

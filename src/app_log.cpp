@@ -39,7 +39,7 @@ bool appendFileTo(const QString& sourcePath, const QString& targetPath)
         return false;
     }
 
-    constexpr qint64 kChunkBytes = 64 * 1024;
+    constexpr qint64 kChunkBytes = 64LL * 1024;
     while (!source.atEnd()) {
         const QByteArray chunk = source.read(kChunkBytes);
         if (chunk.isEmpty() || target.write(chunk) != chunk.size()) {

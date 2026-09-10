@@ -53,11 +53,11 @@ Notifications notifications;
 VideoStreamPool videoStreams;
 QTranslator translator;
 QVector<QString> availableLanguages{"en", "ru", "pl"};
-// NOLINTEND(bugprone-throwing-static-initialization)
 
 #ifndef Q_OS_ANDROID
 InstanceLock instanceLock;
 #endif
+// NOLINTEND(bugprone-throwing-static-initialization)
 
 
 void loadLanguage(QGuiApplication &app)
@@ -335,9 +335,9 @@ int main(int argc, char *argv[])
     QLoggingCategory::setFilterRules(loggingRules);
 
 #if defined(Q_OS_ANDROID)
-    AppLog::instance().start(AppLog::fallbackDirectory(), QStringLiteral("kogger"), 4 * 1024 * 1024, 3);
+    AppLog::instance().start(AppLog::fallbackDirectory(), QStringLiteral("kogger"), 4LL * 1024 * 1024, 3);
 #else
-    AppLog::instance().start(AppLog::defaultDirectory(), QStringLiteral("kogger"), 8 * 1024 * 1024, 5);
+    AppLog::instance().start(AppLog::defaultDirectory(), QStringLiteral("kogger"), 8LL * 1024 * 1024, 5);
 #endif
 
     previousMessageHandler = qInstallMessageHandler(videoLogHandler);

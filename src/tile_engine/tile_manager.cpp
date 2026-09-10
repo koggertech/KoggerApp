@@ -21,7 +21,7 @@
 
 
 namespace {
-const QString kTileManifestUrl = QStringLiteral("https://raw.githubusercontent.com/KoggerTech/koggerapp/master/resources/tile_manifest.json");
+constexpr QLatin1StringView kTileManifestUrl("https://raw.githubusercontent.com/KoggerTech/koggerapp/master/resources/tile_manifest.json");
 }
 
 
@@ -303,7 +303,7 @@ void TileManager::fetchManifest()
     const QString key = tileProvider_->manifestKey();
     const int current = tileProvider_->imageryVersion();
 
-    QNetworkRequest req{ QUrl(kTileManifestUrl) };
+    QNetworkRequest req{ QUrl(QString(kTileManifestUrl)) };
     req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
     req.setTransferTimeout(versionRequestTimeoutMs_);
     QNetworkReply* reply = versionNam_->get(req);

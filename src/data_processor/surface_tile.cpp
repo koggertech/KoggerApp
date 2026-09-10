@@ -98,7 +98,7 @@ void SurfaceTile::updateHeightIndices()
     const int side = int(std::sqrt(double(heightVertices_.size())));
     if (side <= 1) return;
 
-    heightIndices_.reserve((side - 1) * (side - 1) * 6);
+    heightIndices_.reserve(qsizetype(side - 1) * (side - 1) * 6);
 
     for (int i = 0; i < side - 1; ++i) { // -1 для норм прохода
         for (int j = 0; j < side - 1; ++j) {

@@ -83,7 +83,7 @@ void VideoStreamPool::setSourceModel(QAbstractItemModel* model)
 
 QString VideoStreamPool::buildUrl(const QString& address)
 {
-    const QString trimmed = address.trimmed();
+    QString trimmed = address.trimmed();
     if (trimmed.isEmpty()) {
         return QString();
     }

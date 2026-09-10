@@ -58,7 +58,7 @@ constexpr const char* kSocketTimeoutUs = "5000000";
 QVideoFrameFormat::PixelFormat toQtPixelFormat(AVPixelFormat format)
 {
     switch (format) {
-    case AV_PIX_FMT_YUV420P:  return QVideoFrameFormat::Format_YUV420P;
+    case AV_PIX_FMT_YUV420P:
     case AV_PIX_FMT_YUVJ420P: return QVideoFrameFormat::Format_YUV420P;
     case AV_PIX_FMT_NV12:     return QVideoFrameFormat::Format_NV12;
     case AV_PIX_FMT_RGBA:     return QVideoFrameFormat::Format_RGBA8888;
@@ -122,8 +122,8 @@ void copyPlanes(QVideoFrame& frame, const AVFrame* src)
         }
         const int rowBytes = qMin(srcStride, dstStride);
         const int rows = frame.mappedBytes(plane) / dstStride;
-        for (int row = 0; row < rows; ++row) {
-            memcpy(to + row * dstStride, from + row * srcStride, rowBytes);
+        for (int row = 0; row < rows; ++row, to += dstStride, from += srcStride) {
+            memcpy(to, from, rowBytes);
         }
     }
 }

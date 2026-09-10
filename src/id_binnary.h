@@ -926,7 +926,7 @@ public:
     explicit IDBinVersion() : IDBin() {
     }
 
-    enum BootMode : int {
+    enum BootMode : int8_t {
         BootModeUnknown = -1,
         BootModeFirmware = 0,
         BootModeBootloader = 1

@@ -302,8 +302,9 @@ void StreamList::process() {
         qInfo("Recorder download round: log=%d frontier=%u recv=%d internalGaps=%d tail=%d actualSize=%u",
               _activeDownloadId, s->frontier, cnt, internal, tail ? 1 : 0, s->actualFileSize);
     }
-    if(gaps.size() > 2 * kMaxRangesPerRequest) {
-        gaps.resize(2 * kMaxRangesPerRequest);    // remaining gaps fill on later rounds
+    constexpr qsizetype kMaxGapEntries = qsizetype{2} * kMaxRangesPerRequest;
+    if(gaps.size() > kMaxGapEntries) {
+        gaps.resize(kMaxGapEntries);    // remaining gaps fill on later rounds
     }
 
     s->lastRecvCount = cnt;

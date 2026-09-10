@@ -84,7 +84,7 @@ void Plot2DGrid::drawLabel(QPainter* painter, int x, int baselineY, const QStrin
         const QRect plateRect(ax - padX,
                               ay - fm.ascent() - padY,
                               textW + padX * 2,
-                              lineH * lines.size() + padY * 2);
+                              lineH * int(lines.size()) + padY * 2);
 
         painter->setPen(Qt::NoPen);
         painter->setBrush(kLabelPlateColor);
