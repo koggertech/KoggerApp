@@ -24,7 +24,22 @@ Item {
         while (notificationsModel.count >= maxVisible + burstSlack && dropOldestInfo())
             ;
         notificationsModel.append({ notificationId: nextNotificationId++, kind: kind, text: text,
-                                    tag: tag || "", actionPath: actionPath || "", closing: false })
+                                    tag: tag || "", actionPath: actionPath || "", closing: false,
+                                    percent: -2 })
+    }
+
+    function pushProgress(text, tag, percent) {
+        for (var i = 0; i < notificationsModel.count; ++i) {
+            if (notificationsModel.get(i).kind === 2 && notificationsModel.get(i).tag === tag) {
+                notificationsModel.setProperty(i, "text", text)
+                notificationsModel.setProperty(i, "percent", percent)
+                return
+            }
+        }
+        if (notificationsModel.count >= maxVisible)
+            evictOldestInfo()
+        notificationsModel.insert(0, { notificationId: nextNotificationId++, kind: 2, text: text,
+                                       tag: tag, actionPath: "", closing: false, percent: percent })
     }
 
     function evictOldestInfo() {
@@ -66,6 +81,7 @@ Item {
         target: typeof notifications !== "undefined" ? notifications : null
         ignoreUnknownSignals: true
         function onMessageRequested(kind, text, tag, actionPath) { root.push(kind, text, tag, actionPath) }
+        function onProgressRequested(text, tag, percent) { root.pushProgress(text, tag, percent) }
         function onDismissRequested(tag) { root.tagDismissRequested(tag) }
     }
 
@@ -94,9 +110,11 @@ Item {
             id: card
 
             readonly property bool isWarning: model.kind === 1
+            readonly property bool isProgress: model.kind === 2
             readonly property bool hasAction: model.actionPath !== undefined && model.actionPath.length > 0
-            readonly property bool autoDismiss: !isWarning || root.hideImportant
-            readonly property bool showClose: isWarning && !root.hideImportant
+            readonly property bool autoDismiss: !isProgress && (!isWarning || root.hideImportant)
+            readonly property bool showClose: !isProgress && isWarning && !root.hideImportant
+            readonly property real headerOffset: isProgress ? -(progressTrack.height + Tokens.spaceMd) / 2 : 0
             property bool closing: false
 
             readonly property bool modelClosing: model.closing === true
@@ -152,14 +170,18 @@ Item {
             }
 
             anchors.horizontalCenter: parent.horizontalCenter
-            width: Math.min(root.maxCardWidth,
-                            Tokens.spaceLg + iconBadge.width + Tokens.spaceMd + messageText.implicitWidth
-                            + Tokens.spaceMd + closeButton.width + Tokens.spaceLg)
+            width: card.isProgress
+                   ? root.maxCardWidth
+                   : Math.min(root.maxCardWidth,
+                              Tokens.spaceLg + iconBadge.width + Tokens.spaceMd + messageText.implicitWidth
+                              + Tokens.spaceMd + closeButton.width + Tokens.spaceLg)
             height: Math.max(Tokens.controlHLg, messageText.height + 2 * Tokens.spaceLg)
+                    + (card.isProgress ? progressTrack.height + Tokens.spaceMd : 0)
             radius: Tokens.radiusLg
             color: AppPalette.card
             border.width: 1
-            border.color: isWarning ? AppPalette.dangerBorder : AppPalette.border
+            border.color: isProgress ? AppPalette.accentBorder
+                                     : (isWarning ? AppPalette.dangerBorder : AppPalette.border)
 
             function dismiss() {
                 if (closing)
@@ -228,15 +250,16 @@ Item {
                 anchors.left: parent.left
                 anchors.leftMargin: Tokens.spaceLg
                 anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: card.headerOffset
                 width: Math.round(20 * AppPalette.scale)
                 height: width
                 radius: width / 2
-                // info → green "i", warning → yellow "!"
-                color: card.isWarning ? "#EAB308" : "#22C55E"
+                // info → green "i", warning → yellow "!", progress → accent "↑"
+                color: card.isProgress ? AppPalette.accentBar : (card.isWarning ? "#EAB308" : "#22C55E")
 
                 Text {
                     anchors.centerIn: parent
-                    text: card.isWarning ? "!" : "i"
+                    text: card.isProgress ? "↑" : (card.isWarning ? "!" : "i")
                     color: "#10171F"
                     font.pixelSize: Math.round(13 * AppPalette.scale)
                     font.bold: true
@@ -250,10 +273,54 @@ Item {
                 anchors.right: closeButton.left
                 anchors.rightMargin: card.showClose ? Tokens.spaceMd : Tokens.spaceLg
                 anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: card.headerOffset
                 text: model.text
                 color: AppPalette.text
                 font.pixelSize: Tokens.fontBase
                 wrapMode: Text.Wrap
+            }
+
+            Rectangle {
+                id: progressTrack
+                visible: card.isProgress
+                anchors.left: iconBadge.left
+                anchors.right: parent.right
+                anchors.rightMargin: Tokens.spaceLg
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: Tokens.spaceLg
+                height: card.isProgress ? Math.round(4 * AppPalette.scale) : 0
+                radius: height / 2
+                color: AppPalette.trackOff
+                clip: true
+
+                readonly property bool indeterminate: model.percent < 0
+
+                Rectangle {
+                    visible: !progressTrack.indeterminate
+                    width: progressTrack.width * Math.max(0, Math.min(100, model.percent)) / 100
+                    height: parent.height
+                    radius: parent.radius
+                    color: AppPalette.accentBar
+                    Behavior on width { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
+                }
+
+                Rectangle {
+                    id: busyChip
+                    visible: progressTrack.indeterminate
+                    width: Math.round(progressTrack.width * 0.3)
+                    height: parent.height
+                    radius: parent.radius
+                    color: AppPalette.accentBar
+
+                    SequentialAnimation on x {
+                        running: busyChip.visible
+                        loops: Animation.Infinite
+                        NumberAnimation { from: 0; to: progressTrack.width - busyChip.width
+                                          duration: 900; easing.type: Easing.InOutQuad }
+                        NumberAnimation { from: progressTrack.width - busyChip.width; to: 0
+                                          duration: 900; easing.type: Easing.InOutQuad }
+                    }
+                }
             }
 
             KCircleIconButton {

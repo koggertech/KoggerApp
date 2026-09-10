@@ -32,6 +32,7 @@
 #include "scene3d_control_menu_controller.h"
 #include "hotkeys_controller.h"
 #include "device_manager_wrapper.h"
+#include "firmware_upgrade_session.h"
 #include "link_manager_wrapper.h"
 #include "device_topology_model.h"
 #include "tile_manager.h"
@@ -438,6 +439,8 @@ signals:
 #endif
 
 private:   // reset access after the (signals-terminated) FLASHER block — else these leak into signals: under -DFLASHER
+    FirmwareUpgradeSession upgradeSession_;
+
     QVector<QMetaObject::Connection> dataProcessorConnections_;
     QVector<QMetaObject::Connection> dataHorizonConnections_;
 

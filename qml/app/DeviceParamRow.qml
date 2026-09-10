@@ -99,7 +99,7 @@ KIslandRow {
                 height: Tokens.controlHMd
                 model: paramRow.page ? paramRow.page.baudrateOptions : []
                 currentIndex: paramRow.page ? paramRow.page.baudrateIndex : 0
-                onActivated: function(index) { if (paramRow.page) paramRow.page.baudrateIndex = index }
+                onActivated: function(index) { if (paramRow.page) paramRow.page.setBaudrateIndex(index) }
             }
             UsblButton {
                 width: parent.setW; height: Tokens.controlHMd; fontPixelSize: Tokens.fontMd

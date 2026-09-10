@@ -1042,24 +1042,14 @@ bool Core::closeProxy()
 
 bool Core::upgradeFW(const QString& name, QObject* dev)
 {
-    QUrl url(name);
-    QFile file(url.isLocalFile() ? url.toLocalFile() : name);
-
-    if (!file.open(QIODevice::ReadOnly)) {
-        return false;
-    }
-
-    if (auto* devQProp = dynamic_cast<DevQProperty*>(dev); devQProp) {
-        devQProp->sendUpdateFW(file.readAll());
-    }
-
-    return true;
+    return upgradeSession_.start(name, dynamic_cast<DevQProperty*>(dev));
 }
 
 void Core::upgradeChanged(int progressStatus)
 {
-    if(progressStatus == DevDriver::successUpgrade) {
-        //        restoreBaudrate();
+    upgradeSession_.handleStatus(progressStatus);
+
+    if (progressStatus == DevDriver::successUpgrade) {
         bringWindowToFront();
     }
 }

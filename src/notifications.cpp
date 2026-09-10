@@ -28,6 +28,15 @@ void Notifications::warning(const QString& text, const QString& tag, const QStri
     emit messageRequested(1, trimmed, tag, actionPath);
 }
 
+void Notifications::progress(const QString& text, const QString& tag, int percent)
+{
+    const QString trimmed = text.trimmed();
+    if (trimmed.isEmpty() || tag.isEmpty()) {
+        return;
+    }
+    emit progressRequested(trimmed, tag, percent < 0 ? -1 : qMin(percent, 100));
+}
+
 void Notifications::dismiss(const QString& tag)
 {
     if (tag.isEmpty()) {

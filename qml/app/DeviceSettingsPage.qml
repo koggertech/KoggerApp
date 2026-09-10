@@ -41,6 +41,26 @@ Column {
     readonly property var baudrateOptions: [9600, 19200, 38400, 57600, 115200,
                                             230400, 460800, 921600, 1200000, 2000000]
     property int baudrateIndex: baudrateOptions.indexOf(115200)
+    property bool baudratePicked: false
+
+    function setBaudrateIndex(index) {
+        baudrateIndex = index
+        baudratePicked = true
+    }
+
+    function _syncBaudrateIndex(devObj) {
+        var i = baudrateOptions.indexOf(devObj ? devObj.baudrate : 0)
+        baudrateIndex = i >= 0 ? i : baudrateOptions.indexOf(115200)
+    }
+
+    Connections {
+        target: root.dev
+        ignoreUnknownSignals: true
+        function onUARTChanged() {
+            if (!root.baudratePicked)
+                root._syncBaudrateIndex(root.dev)
+        }
+    }
 
     function applyBaudrate() {
         if (!dev)
@@ -151,11 +171,16 @@ Column {
         }
         _pruneGroupStates()
         _applyForCurrentDev()
+        baudratePicked = false
+        _syncBaudrateIndex(dev)
         favEditMode = false
         _prevDev = dev
     }
 
-    Component.onCompleted: _applyForCurrentDev()
+    Component.onCompleted: {
+        _applyForCurrentDev()
+        _syncBaudrateIndex(dev)
+    }
 
     function _applyForCurrentDev() {
         var cur = dev ? _groupStateFor(dev) : null
@@ -1728,21 +1753,23 @@ Column {
             upgradePathInput.text = devUpgradeGroup._disp(devUpgradeGroup.selectedUpgradePathSource)
         }
 
-        readonly property int _fwOk: 101
-        property string _activeTag: ""
-        property string _activeLabel: ""
-        property string _activeFw: ""
-        function _devLabel() {
-            if (!dev) return ""
-            var n = dev.devName ? dev.devName : ""
-            return dev.devSN ? (n + " (SN " + dev.devSN + ")") : n
+        property var pathByDevName: ({})
+        readonly property string devKey: root.devTypeKey
+        property string _prevDevKey: ""
+
+        onDevKeyChanged: {
+            if (devUpgradeGroup._prevDevKey.length > 0) {
+                var map = devUpgradeGroup.pathByDevName
+                map[devUpgradeGroup._prevDevKey] = devUpgradeGroup.currentUpgradePath()
+                devUpgradeGroup.pathByDevName = map
+            }
+            devUpgradeGroup.setUpgradePath(devUpgradeGroup.devKey.length > 0
+                                           ? (devUpgradeGroup.pathByDevName[devUpgradeGroup.devKey] || "")
+                                           : "")
+            devUpgradeGroup._prevDevKey = devUpgradeGroup.devKey
         }
-        function _baseName(p) {
-            if (!p) return ""
-            var s = String(p).replace(/\\/g, "/")
-            var i = s.lastIndexOf("/")
-            return i >= 0 ? s.slice(i + 1) : s
-        }
+
+        Component.onCompleted: devUpgradeGroup._prevDevKey = devUpgradeGroup.devKey
 
         FileDialog {
             id: upgradeFileDialog
@@ -1753,23 +1780,6 @@ Column {
             onAccepted: {
                 devUpgradeGroup.upgradeFolder = upgradeFileDialog.currentFolder
                 devUpgradeGroup.setUpgradePath(upgradeFileDialog.selectedFile)
-            }
-        }
-
-        KIslandRow {
-            stacked: true
-            minHeight: 0
-            open: upgradeProgress.pct > 0 && upgradeProgress.pct < 100
-            Rectangle {
-                id: upgradeProgress
-                width: parent.width; height: Math.round(4 * AppPalette.scale); radius: height / 2
-                color: AppPalette.trackOff
-                readonly property int pct: dev && dev.upgradeFWStatus !== undefined
-                                           ? Math.max(0, Math.min(100, dev.upgradeFWStatus)) : 0
-                Rectangle {
-                    height: parent.height; radius: parent.radius; color: AppPalette.accentBar
-                    width: parent.width * upgradeProgress.pct / 100
-                }
             }
         }
 
@@ -1814,36 +1824,8 @@ Column {
                 text: qsTr("UPGRADE")
                 onClicked: {
                     if (!dev) return
-                    var path = devUpgradeGroup.currentUpgradePath()
-                    var fw = devUpgradeGroup._baseName(path)
-                    var label = devUpgradeGroup._devLabel()
-                    var tag = "fw-upgrade-" + (dev.devSN || 0)
-                    if (core.upgradeFW(path, dev)) {
-                        devUpgradeGroup._activeTag = tag
-                        devUpgradeGroup._activeLabel = label
-                        devUpgradeGroup._activeFw = fw
-                        notifications.warning(qsTr("Flashing device %1 with file %2").arg(label).arg(fw), tag)
-                    } else {
-                        notifications.warning(qsTr("Failed to open firmware file: %1").arg(fw))
-                    }
+                    core.upgradeFW(devUpgradeGroup.currentUpgradePath(), dev)
                 }
-            }
-        }
-
-        Connections {
-            target: dev
-            ignoreUnknownSignals: true
-            function onUpgradingFirmwareDone() {
-                if (!devUpgradeGroup._activeTag.length) return
-                notifications.dismiss(devUpgradeGroup._activeTag)
-                if (dev && dev.upgradeFWStatus === devUpgradeGroup._fwOk)
-                    notifications.info(qsTr("Device %1 successfully flashed with file %2")
-                                       .arg(devUpgradeGroup._activeLabel).arg(devUpgradeGroup._activeFw))
-                else
-                    notifications.warning(qsTr("Failed to flash device %1 with file %2 (error code %3)")
-                                          .arg(devUpgradeGroup._activeLabel).arg(devUpgradeGroup._activeFw)
-                                          .arg(dev ? dev.upgradeFWStatus : -1))
-                devUpgradeGroup._activeTag = ""
             }
         }
     }

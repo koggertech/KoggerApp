@@ -1707,6 +1707,44 @@ udp://@:1234
     </message>
 </context>
 <context>
+    <name>FirmwareUpgradeSession</name>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="49"/>
+        <source>Failed to open firmware file: %1</source>
+        <translation>Не удалось открыть файл прошивки: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="54"/>
+        <source>No device to flash with file %1</source>
+        <translation>Нет устройства для прошивки файлом %1</translation>
+    </message>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="112"/>
+        <source>Flashing %1 with %2: waiting for the device</source>
+        <translation>Прошивка %1 файлом %2: ожидание устройства</translation>
+    </message>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="117"/>
+        <source>Flashing %1 with %2: %3%</source>
+        <translation>Прошивка %1 файлом %2: %3%</translation>
+    </message>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="135"/>
+        <source>Device %1 successfully flashed with file %2</source>
+        <translation>Устройство %1 успешно прошито файлом %2</translation>
+    </message>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="139"/>
+        <source>Flashing device %1 with file %2 interrupted: the device did not come back</source>
+        <translation>Прошивка устройства %1 файлом %2 прервана: устройство не вернулось на связь</translation>
+    </message>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="143"/>
+        <source>Failed to flash device %1 with file %2 (error code %3)</source>
+        <translation>Не удалось прошить устройство %1 файлом %2 (код ошибки: %3)</translation>
+    </message>
+</context>
+<context>
     <name>Core</name>
     <message>
         <location filename="../src/core.cpp" line="3012"/>
@@ -2340,26 +2378,6 @@ udp://@:1234
         <location filename="../qml/app/DeviceSettingsPage.qml" line="434"/>
         <source>Please choose a file</source>
         <translation>Выберите файл</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="499"/>
-        <source>Flashing device %1 with file %2</source>
-        <translation>Идёт прошивка устройства %1 файлом %2</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="501"/>
-        <source>Failed to open firmware file: %1</source>
-        <translation>Не удалось открыть файл прошивки: %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="513"/>
-        <source>Device %1 successfully flashed with file %2</source>
-        <translation>Устройство %1 успешно прошито файлом %2</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="516"/>
-        <source>Failed to flash device %1 with file %2 (error code %3)</source>
-        <translation>Не удалось прошить устройство %1 файлом %2 (код ошибки: %3)</translation>
     </message>
     <message>
         <location filename="../qml/app/DeviceSettingsPage.qml" line="267"/>
