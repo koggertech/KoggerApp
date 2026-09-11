@@ -68,9 +68,6 @@ void IsobathsViewControlMenuController::setDataProcessorPtr(DataProcessor *dataP
         QObject::connect(dataProcessorPtr_, &DataProcessor::sendSurfaceMaxZ,
                          this, &IsobathsViewControlMenuController::onSurfaceMaxZ,
                          Qt::UniqueConnection);
-        QObject::connect(dataProcessorPtr_, &DataProcessor::surfaceProcessingCleared,
-                         this, &IsobathsViewControlMenuController::onSurfaceCleared,
-                         Qt::UniqueConnection);
         QObject::connect(dataProcessorPtr_, &DataProcessor::allProcessingCleared,
                          this, &IsobathsViewControlMenuController::onSurfaceCleared,
                          Qt::UniqueConnection);
