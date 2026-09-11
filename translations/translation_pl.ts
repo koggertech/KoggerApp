@@ -93,6 +93,16 @@
     <name>AppSettingsPage</name>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="1"/>
+        <source>Controls</source>
+        <translation>Sterowanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1"/>
+        <source>Navigation hints for the application</source>
+        <translation>Wskazówki dotyczące nawigacji w aplikacji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1"/>
         <source>About</source>
         <translation>O programie</translation>
     </message>
@@ -4271,6 +4281,11 @@ udp://@:1234
     <name>MainWindow</name>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="1"/>
+        <source>Controls</source>
+        <translation>Sterowanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1"/>
         <source>About</source>
         <translation>O programie</translation>
     </message>
@@ -6686,6 +6701,169 @@ udp://@:1234
         <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
         <source>Save all device settings to an XML file</source>
         <translation>Zapisz wszystkie ustawienia urządzenia do pliku XML</translation>
+    </message>
+</context>
+<context>
+    <name>ControlsHelpPage</name>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Workspace</source>
+        <translation>Obszar roboczy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Maximise or restore a pane</source>
+        <translation>Powiększ lub przywróć okno</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Double-tap the pane — 2D, 3D, video, popups</source>
+        <translation>Dwukrotne dotknięcie okna — 2D, 3D, wideo, okna wyskakujące</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Double-click the pane — 2D, 3D, video, popups</source>
+        <translation>Dwukrotne kliknięcie okna — 2D, 3D, wideo, okna wyskakujące</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Reset a splitter to the middle</source>
+        <translation>Przywróć separator na środek</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Double-tap the splitter between panes</source>
+        <translation>Dwukrotne dotknięcie separatora między oknami</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Double-click the splitter between panes</source>
+        <translation>Dwukrotne kliknięcie separatora między oknami</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>2D echogram</source>
+        <translation>Echogram 2D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Pick a sounding</source>
+        <translation>Wybierz pomiar</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Drag one finger — shows the loupe and the sounding details</source>
+        <translation>Przeciągnij jednym palcem — pokazuje lupę i dane pomiaru</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Drag with the left button — shows the loupe and the sounding details</source>
+        <translation>Przeciągnij lewym przyciskiem — pokazuje lupę i dane pomiaru</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Place a point of interest</source>
+        <translation>Ustaw punkt zainteresowania</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Press and hold — opens the context menu</source>
+        <translation>Naciśnij i przytrzymaj — otwiera menu kontekstowe</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Right-click — opens the context menu</source>
+        <translation>Kliknięcie prawym przyciskiem — otwiera menu kontekstowe</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Scroll the echogram</source>
+        <translation>Przewiń echogram</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Horizontal pinch</source>
+        <translation>Poziomy gest szczypania</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Wheel</source>
+        <translation>Kółko myszy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Move the echogram up and down</source>
+        <translation>Przesuń echogram w górę i w dół</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Vertical pinch</source>
+        <translation>Pionowy gest szczypania</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Shift + wheel</source>
+        <translation>Shift + kółko myszy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Change the vertical scale</source>
+        <translation>Zmień skalę pionową</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Stretch the pinch vertically</source>
+        <translation>Rozciągnij gest szczypania w pionie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Ctrl + wheel</source>
+        <translation>Ctrl + kółko myszy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>3D scene</source>
+        <translation>Scena 3D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Move the camera</source>
+        <translation>Przesuwaj kamerę</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Drag one finger</source>
+        <translation>Przeciągnij jednym palcem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Drag with the left button</source>
+        <translation>Przeciągnij lewym przyciskiem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Rotate the camera</source>
+        <translation>Obracaj kamerę</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Rotate the pinch</source>
+        <translation>Obrót gestu szczypania</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Ctrl + drag sideways</source>
+        <translation>Ctrl + przeciąganie w poziomie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Tilt the camera</source>
+        <translation>Pochylaj kamerę</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
+        <source>Ctrl + drag up or down</source>
+        <translation>Ctrl + przeciąganie w pionie</translation>
     </message>
 </context>
 </TS>

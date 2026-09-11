@@ -526,6 +526,14 @@ Column {
             }
 
             KIslandRow {
+                label: qsTr("Controls")
+                chevron: true
+                interactive: true
+                toolTipText: qsTr("Navigation hints for the application")
+                onClicked: if (root.store) root.store.openControlsHelp()
+            }
+
+            KIslandRow {
                 visible: Qt.platform.os !== "android"
                 label: qsTr("Key bindings")
                 chevron: true
