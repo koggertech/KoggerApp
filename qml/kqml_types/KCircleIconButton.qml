@@ -31,6 +31,10 @@ Item {
     property real topRightRadius: -1
     property real bottomLeftRadius: -1
     property real bottomRightRadius: -1
+    readonly property real _tlRadius: topLeftRadius >= 0 ? topLeftRadius : cornerRadius
+    readonly property real _trRadius: topRightRadius >= 0 ? topRightRadius : cornerRadius
+    readonly property real _blRadius: bottomLeftRadius >= 0 ? bottomLeftRadius : cornerRadius
+    readonly property real _brRadius: bottomRightRadius >= 0 ? bottomRightRadius : cornerRadius
     property int cursorShape: Qt.PointingHandCursor
     property int focusPolicy: Qt.NoFocus
     property real padding: 0
@@ -91,10 +95,10 @@ Item {
         id: backgroundRect
         anchors.fill: parent
         radius: root.cornerRadius
-        topLeftRadius: root.topLeftRadius
-        topRightRadius: root.topRightRadius
-        bottomLeftRadius: root.bottomLeftRadius
-        bottomRightRadius: root.bottomRightRadius
+        topLeftRadius: root._tlRadius
+        topRightRadius: root._trRadius
+        bottomLeftRadius: root._blRadius
+        bottomRightRadius: root._brRadius
         scale: root.backgroundScale
         color: !root.enabled
                ? "#0F172A55"
@@ -135,10 +139,10 @@ Item {
     Rectangle {
         anchors.fill: backgroundRect
         radius: root.cornerRadius
-        topLeftRadius: root.topLeftRadius
-        topRightRadius: root.topRightRadius
-        bottomLeftRadius: root.bottomLeftRadius
-        bottomRightRadius: root.bottomRightRadius
+        topLeftRadius: root._tlRadius
+        topRightRadius: root._trRadius
+        bottomLeftRadius: root._blRadius
+        bottomRightRadius: root._brRadius
         scale: root.backgroundScale
         color: "#FFFFFF"
         opacity: !root.enabled ? 0.0 : (root.pressed ? 0.02 : (root.hovered ? root.hoverWhiteness : 0.0))
@@ -161,10 +165,10 @@ Item {
     Rectangle {
         anchors.fill: backgroundRect
         radius: root.cornerRadius
-        topLeftRadius: root.topLeftRadius
-        topRightRadius: root.topRightRadius
-        bottomLeftRadius: root.bottomLeftRadius
-        bottomRightRadius: root.bottomRightRadius
+        topLeftRadius: root._tlRadius
+        topRightRadius: root._trRadius
+        bottomLeftRadius: root._blRadius
+        bottomRightRadius: root._brRadius
         color: AppPalette.accentBgStrong
         opacity: highlightOverlay.opacity
         visible: root.highlighted
