@@ -1454,6 +1454,37 @@ Column {
             }
         }
 
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            Text { text: qsTr("Surface colouring:"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontBase }
+            KTabBar {
+                id: isobathsColorModeTabBar
+                width: parent.width
+                fontPixelSize: Tokens.fontLg
+                property int mode: 0
+                options: [
+                    { label: qsTr("Gradient"), value: 0 },
+                    { label: qsTr("Bands"),    value: 1 }
+                ]
+                currentValue: mode
+                onValueSelected: function(v) { mode = v }
+                onModeChanged: IsobathsViewControlMenuController.setBandedColors(mode === 1)
+                Component.onCompleted: IsobathsViewControlMenuController.setBandedColors(mode === 1)
+                Settings { category: "scene3d/isobaths"; property alias isobathsColorMode: isobathsColorModeTabBar.mode }
+            }
+        }
+
+        KSwitch {
+            id: isobathsLegendSwitch
+            text: qsTr("Depth legend")
+            toolTipText: qsTr("Show the depth colour scale over the 3D scene")
+            width: parent.width
+            checked: root.store ? root.store.isobathsLegendVisible : true
+            onToggled: if (root.store) root.store.isobathsLegendVisible = checked
+        }
+
         RowLayout {
             width: parent.width
             spacing: Tokens.spaceMd
@@ -1490,7 +1521,7 @@ Column {
                 id: isobathsSurfaceLineStepSizeSpinBox
                 toolTipText: qsTr("Isobath interval — spacing between depth lines")
                 Layout.preferredWidth: isobathsGroup.ctrlW
-                from: 1; to: 200; stepSize: 1; value: 10
+                from: 2; to: 200; stepSize: 1; value: 10
                 divisor: 10; decimals: 1
                 editable: false
                 readonly property real realValue: value / 10

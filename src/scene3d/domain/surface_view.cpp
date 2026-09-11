@@ -139,6 +139,16 @@ QVector<QVector3D> SurfaceView::SurfaceViewRenderImplementation::buildTileNormal
     return normalizeNormals(buildTileNormalSums(tile));
 }
 
+float SurfaceView::SurfaceViewRenderImplementation::depthRangeMin() const
+{
+    return std::isfinite(maxZ_) && std::isfinite(minZ_) && maxZ_ >= minZ_ ? -maxZ_ : 0.0f;
+}
+
+float SurfaceView::SurfaceViewRenderImplementation::depthRangeMax() const
+{
+    return std::isfinite(maxZ_) && std::isfinite(minZ_) && maxZ_ >= minZ_ ? -minZ_ : 0.0f;
+}
+
 QVector3D SurfaceView::SurfaceViewRenderImplementation::samplePalette(float norm) const
 {
     constexpr size_t kStride = 4;
@@ -533,6 +543,14 @@ void SurfaceView::setSurfaceColorTableTextureId(GLuint textureId)
     }
 }
 
+void SurfaceView::setBandedColors(bool state)
+{
+    if (auto* r = RENDER_IMPL(SurfaceView); r && r->bandedColors_ != state) {
+        r->bandedColors_ = state;
+        Q_EMIT changed();
+    }
+}
+
 void SurfaceView::setIVisible(bool state)
 {
     auto* r = RENDER_IMPL(SurfaceView);
@@ -606,7 +624,7 @@ void SurfaceView::clear()
     //r->maxZ_ = std::numeric_limits<float>::lowest();
     //r->colorIntervalsSize_ = -1;
 
-    surfaceColorTableToAppend_.clear();
+    surfaceColorTableToAppend_ = r->isoPalette_;
 
     r->lastLeftLine_.clear();
     r->lastRightLine_.clear();
@@ -751,7 +769,6 @@ void SurfaceView::setMinZ(float minZ)
 {
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
         r->minZ_ = minZ;
-        rebuildIsobathLabels();
         Q_EMIT changed();
     }
 }
@@ -858,9 +875,6 @@ void SurfaceView::rebuildIsobathLabels()
     if (!std::isfinite(r->surfaceStep_) || r->surfaceStep_ <= 1e-6f) {
         return;
     }
-    if (!std::isfinite(r->minZ_)) {
-        return;
-    }
     if (r->tiles_.isEmpty()) {
         return;
     }
@@ -869,9 +883,6 @@ void SurfaceView::rebuildIsobathLabels()
     }
 
     const float lineStep = r->surfaceStep_;
-    const int levelCount = r->colorIntervalsSize_;
-    const float minZ = r->minZ_;
-    const float maxZ = minZ + (levelCount - 1) * lineStep;
 
     QVector<IsoLabel> candidates;
     candidates.reserve(r->tiles_.size() * 4);
@@ -897,19 +908,17 @@ void SurfaceView::rebuildIsobathLabels()
             return;
         }
 
-        const float triMin = std::min(A.z(), std::min(B.z(), C.z()));
-        const float triMax = std::max(A.z(), std::max(B.z(), C.z()));
-        if (triMax < minZ - kmath::fltEps || triMin > maxZ + kmath::fltEps) {
+        const float depthMin = -std::max(A.z(), std::max(B.z(), C.z()));
+        const float depthMax = -std::min(A.z(), std::min(B.z(), C.z()));
+        if (depthMax < 0.0f) {
             return;
         }
 
-        int lvlStart = int(std::floor((triMin - minZ) / lineStep));
-        int lvlEnd   = int(std::ceil((triMax - minZ) / lineStep));
-        if (lvlStart < 0) lvlStart = 0;
-        if (lvlEnd > levelCount - 1) lvlEnd = levelCount - 1;
+        const int lvlStart = std::max(0, int(std::ceil(depthMin / lineStep)));
+        const int lvlEnd   = int(std::floor(depthMax / lineStep));
 
         for (int lvl = lvlStart; lvl <= lvlEnd; ++lvl) {
-            const float level = minZ + lvl * lineStep;
+            const float level = -lvl * lineStep;
             QVector<QVector3D> ip;
             edgeIntersection(A, B, level, ip);
             edgeIntersection(B, C, level, ip);
@@ -1094,6 +1103,7 @@ SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
     colorIntervalsSize_(-1),
     iVis_(false),
     mVis_(false),
+    bandedColors_(false),
     labelStep_(100.0f),
     labelBaseSpacing_(6.0f),
     cameraDist_(10.0f),
@@ -1214,9 +1224,10 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         if (shP->bind()) {
             shP->setUniformValue("matrix", mvp);
             shP->setUniformValue("shadowsEnabled", shadowsOn);
-            shP->setUniformValue("depthMin", minZ_);
+            shP->setUniformValue("depthMin", depthRangeMin());
+            shP->setUniformValue("depthMax", depthRangeMax());
+            shP->setUniformValue("bandedColors", bandedColors_);
             shP->setUniformValue("levelStep", surfaceStep_);
-            shP->setUniformValue("levelCount", colorIntervalsSize_);
             shP->setUniformValue("linePass", false);
             shP->setUniformValue("lineColor", kIsoInkColor);
             shP->setUniformValue("casingColor", kIsoCasingColor);
@@ -1468,7 +1479,7 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
             labelBatch.append(entry);
 
             const int levelKey = (surfaceStep_ > 0.0f)
-                                 ? static_cast<int>(std::lround((item.label->pos.z() - kLabelZShift - minZ_) / surfaceStep_))
+                                 ? static_cast<int>(std::lround(-(item.label->pos.z() - kLabelZShift) / surfaceStep_))
                                  : 0;
             casingByLevel[levelKey].append(entry);
         }
@@ -1476,10 +1487,12 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         if (!labelBatch.isEmpty()) {
             const float casingUnit = static_cast<float>(TextRenderer::instance().getCharPixelHeight()) *
                                      kIsoLabelCasingRatio;
-            const float levelDenom = static_cast<float>(qMax(colorIntervalsSize_, 1));
+            const float depthMin = depthRangeMin();
+            const float depthSpan = qMax(depthRangeMax() - depthMin, 1e-4f);
 
             for (auto it = casingByLevel.cbegin(); it != casingByLevel.cend(); ++it) {
-                const float norm = qBound(0.0f, static_cast<float>(it.key()) / levelDenom, 1.0f);
+                const float depth = static_cast<float>(it.key()) * surfaceStep_;
+                const float norm = qBound(0.0f, (depth - depthMin) / depthSpan, 1.0f);
                 const QVector3D under = samplePalette(norm);
                 const QVector3D casingInk = kIsoCasingColor * (1.0f - kIsoCasingTint) + under * kIsoCasingTint;
 

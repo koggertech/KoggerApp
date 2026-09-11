@@ -46,6 +46,8 @@ public:
         QVector<QVector3D> buildTileNormalSums(const SurfaceTile& tile) const;
         QVector<QVector3D> normalizeNormals(const QVector<QVector3D>& normalSums) const;
         QVector<QVector3D> buildTileNormals(const SurfaceTile& tile) const;
+        float depthRangeMin() const;
+        float depthRangeMax() const;
         QVector3D samplePalette(float norm) const;
         void rebuildSeamlessTileNormals(const QHash<TileKey, SurfaceTile>& tiles,
                                         QHash<TileKey, QVector<QVector3D>>& outNormals) const;
@@ -63,6 +65,7 @@ public:
         std::vector<uint8_t> isoPalette_;
         bool iVis_;
         bool mVis_;
+        bool bandedColors_;
         QHash<TileKey, QVector<QVector3D>> tileNormals_;
         QVector<IsoLabel> isoLabels_;
         float labelStep_;
@@ -84,6 +87,7 @@ public:
     void   setSurfaceColorTableTextureId(GLuint textureId);
     void   setIVisible(bool state);
     void   setMVisible(bool state);
+    void   setBandedColors(bool state);
     void   setIsobathsLabelStepSize(float val);
     void   setCameraDistToFocusPoint(float val);
     GLuint getMosaicTextureIdByTileId(const TileKey& tileId) const;

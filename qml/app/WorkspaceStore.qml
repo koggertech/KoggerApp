@@ -1528,8 +1528,14 @@ property Settings mosaicThemePersist: Settings {
     category: "scene3d/mosaic"
     property int mosaicTheme: 0
 }
+property Settings isobathsLegendPersist: Settings {
+    id: isobathsLegendPersist
+    category: "scene3d/isobaths"
+    property bool isobathsLegendVisible: true
+}
 property alias isobathsThemeIndex: isobathsThemePersist.isobathsTheme
 property alias mosaicThemeIndex: mosaicThemePersist.mosaicTheme
+property alias isobathsLegendVisible: isobathsLegendPersist.isobathsLegendVisible
 
 function applyLayerThemesToControllers() {
     if (typeof IsobathsViewControlMenuController !== "undefined" && IsobathsViewControlMenuController)

@@ -1162,6 +1162,26 @@
         <source>Stand</source>
         <translation>Stanowisko</translation>
     </message>
+    <message>
+        <source>Surface colouring:</source>
+        <translation>Kolorowanie powierzchni:</translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation>Gradient</translation>
+    </message>
+    <message>
+        <source>Bands</source>
+        <translation>Przedziały</translation>
+    </message>
+    <message>
+        <source>Depth legend</source>
+        <translation>Legenda głębokości</translation>
+    </message>
+    <message>
+        <source>Show the depth colour scale over the 3D scene</source>
+        <translation>Pokazuj skalę kolorów głębokości nad sceną 3D</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>

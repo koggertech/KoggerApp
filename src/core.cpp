@@ -2107,6 +2107,7 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     createMapTileManagerConnections();
     createScene3dConnections();
+    QMetaObject::invokeMethod(dataProcessor_, "resendSurfaceColorTable", Qt::QueuedConnection);
 
     scene3dViewPtr_->forceRefresh();
 

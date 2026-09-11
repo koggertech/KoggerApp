@@ -34,6 +34,7 @@ public:
     void restoreTilesFromCache(const TileMap& tiles);
     void setEdgeLimit(float val);
     void rebuildColorIntervals();
+    void ensureColorIntervals();
     void setSurfaceStepSize(float val);
     void setThemeId(int val);
     void setExtraWidth(int val);
@@ -52,7 +53,6 @@ private:
     void writeTriangleToMesh(const QVector3D& A, const QVector3D& B, const QVector3D& C, QSet<SurfaceTile*>& updatedTiles);
     void ensureTileInited(SurfaceTile* tile, int tileSidePix);
     void ensureTilesInitedBatch(const QHash<TileKey, SurfaceTile*>& tiles, int tileSidePix);
-    QVector<QVector3D> generateExpandedPalette(int totalColors) const;
     void updateTexture() const;
     void propagateBorderHeights(QSet<SurfaceTile*>& changedTiles);
     void refreshAfterEdgeLimitChange();

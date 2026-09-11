@@ -6,8 +6,9 @@ out vec4 fragColor;
 
 uniform sampler2D paletteSampler;
 uniform float  depthMin;
+uniform float  depthMax;
+uniform bool   bandedColors;
 uniform float  levelStep;
-uniform int    levelCount;
 uniform bool  linePass;
 uniform vec3  lineColor;
 uniform vec3  casingColor;
@@ -59,14 +60,14 @@ void main()
         return;
     }
 
-    float relDepth = vertice.z - depthMin;
-    float levelIdx = relDepth / levelStep;
-    float stepIdx = floor(levelIdx);
-    float denom = max(float(levelCount), 1.0);
-    float norm = clamp(levelIdx / denom, 0.0, 1.0);
+    float depth = -vertice.z;
+    float levelIdx = depth / levelStep;
+    float depthSpan = max(depthMax - depthMin, 1e-4);
+    float colorDepth = bandedColors ? (floor(levelIdx) + 0.5) * levelStep : depth;
+    float norm = clamp((colorDepth - depthMin) / depthSpan, 0.0, 1.0);
     vec3 color = texture2D(paletteSampler, vec2(norm, 0.5)).rgb;
 
-    float inRange = step(0.0, stepIdx) * step(stepIdx, float(levelCount - 1));
+    float inRange = step(0.0, levelIdx);
     float frac = fract(levelIdx);
     float edgeDist = min(frac, 1.0 - frac);
     const float gradEps = 1e-5;

@@ -175,6 +175,33 @@ inline const QVector<QVector3D>& colorPalette(int themeId)
     return palettes[std::clamp(themeId, 0, static_cast<int>(palettes.size() - 1))];
 }
 
+inline constexpr int kSurfacePaletteSize = 16;
+
+inline QVector<QVector3D> surfacePalette(int themeId)
+{
+    const auto& palette = colorPalette(themeId);
+    const int paletteSize = palette.size();
+
+    QVector<QVector3D> entries;
+    entries.reserve(kSurfacePaletteSize);
+
+    if (paletteSize == 0) {
+        entries.fill(QVector3D(1.0f, 1.0f, 1.0f), kSurfacePaletteSize);
+        return entries;
+    }
+
+    for (int i = 0; i < kSurfacePaletteSize; ++i) {
+        const float t = 1.0f - static_cast<float>(i) / static_cast<float>(kSurfacePaletteSize - 1);
+        const float ft = t * static_cast<float>(paletteSize - 1);
+        const int i0 = static_cast<int>(ft);
+        const int i1 = std::min(i0 + 1, paletteSize - 1);
+        const float l = ft - static_cast<float>(i0);
+        entries.append((1.f - l) * palette[i0] + l * palette[i1]);
+    }
+
+    return entries;
+}
+
 inline bool fuzzyEq(const QVector3D& a, const QVector3D& b, float eps = kmath::fltEps)
 {
     return (a - b).lengthSquared() < eps * eps;
@@ -214,10 +241,10 @@ struct LabelParameters
 
 struct ColorInterval
 {
-    float depth = 0.0f;
+    float pos = 0.0f;
     QVector3D color;
     ColorInterval() = default;
-    ColorInterval(float d, const QVector3D &c) : depth(d), color(c) {}
+    ColorInterval(float p, const QVector3D &c) : pos(p), color(c) {}
 };
 
 struct PendingWork {

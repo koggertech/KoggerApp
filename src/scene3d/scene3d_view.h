@@ -48,6 +48,7 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(bool cameraPerspective READ cameraPerspective NOTIFY cameraPerspectiveChanged)
     Q_PROPERTY(bool updateSurface READ updateSurface NOTIFY updateSurfaceChanged)
     Q_PROPERTY(int dataZoom READ dataZoom NOTIFY sendDataZoom)
+    Q_PROPERTY(bool sceneContentVisible READ sceneContentVisible NOTIFY sceneContentVisibleChanged)
     Q_PROPERTY(bool followReturnPending READ followReturnPending NOTIFY followReturnStateChanged)
     Q_PROPERTY(int followReturnSeconds READ followReturnSeconds NOTIFY followReturnStateChanged)
     Q_PROPERTY(bool syncLoupeOverlayVisible READ syncLoupeOverlayVisible NOTIFY syncLoupeStateChanged)
@@ -235,6 +236,7 @@ public:
     bool cameraPerspective() const;
     bool updateSurface() const;
     int dataZoom() const { return dataZoomIndx_; }
+    bool sceneContentVisible() const { return sceneContentVisible_; }
     bool followReturnPending() const;
     int followReturnSeconds() const;
     Dataset* dataset() const;
@@ -242,6 +244,7 @@ public:
     void clearSurfaceViewRender();
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ) const;
     void updateProjection();
+    void refreshSceneContentVisible();
     void setNeedToResetStartPos(bool state);
     void forceUpdateDatasetLlaRef();
 
@@ -370,6 +373,7 @@ signals:
     void sendDataRectRequest(float minX, float minY, float maxX, float maxY);
     void sendLlaRef(LLARef viewLlaRef);
     void sendDataZoom(int zoom);
+    void sceneContentVisibleChanged();
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
     void geoJsonEnabledChanged();
     void sendCameraEpIndxs(const QVector<QPair<int, QSet<TileKey>>>& epIndxs);
@@ -525,6 +529,7 @@ private:
     int datasetState_ = -1;
 
     int dataZoomIndx_;
+    bool sceneContentVisible_ = true;
     bool cameraIsMoveUp_;
     float lastMinX_;
     float lastMaxX_;

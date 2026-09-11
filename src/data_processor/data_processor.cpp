@@ -1728,17 +1728,33 @@ void DataProcessor::postMaxZ(float val)
 
 void DataProcessor::postSurfaceColorTable(const std::vector<uint8_t> &t)
 {
+    lastSurfaceColorTable_ = t;
     emit sendSurfaceTextureTask(t);
 }
 
 void DataProcessor::postSurfaceColorIntervalsSize(int size)
 {
+    lastSurfaceColorIntervalsSize_ = size;
     emit sendSurfaceColorIntervalsSize(size);
 }
 
 void DataProcessor::postSurfaceStepSize(float lineStepSize)
 {
+    lastSurfaceStepSize_ = lineStepSize;
     emit sendSurfaceStepSize(lineStepSize);
+}
+
+void DataProcessor::resendSurfaceColorTable()
+{
+    if (!lastSurfaceColorTable_.empty()) {
+        emit sendSurfaceTextureTask(lastSurfaceColorTable_);
+    }
+    if (lastSurfaceColorIntervalsSize_ > 0) {
+        emit sendSurfaceColorIntervalsSize(lastSurfaceColorIntervalsSize_);
+    }
+    if (lastSurfaceStepSize_ > 0.0f) {
+        emit sendSurfaceStepSize(lastSurfaceStepSize_);
+    }
 }
 
 void DataProcessor::changeState(const DataProcessorType& state)

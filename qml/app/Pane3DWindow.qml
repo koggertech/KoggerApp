@@ -61,6 +61,24 @@ Item {
             store: root.workspaceRoot ? root.workspaceRoot.store : null
         }
 
+        Scene3DDepthLegend {
+            id: depthLegend
+            readonly property var v: root.scene3dView
+            readonly property var store: root.workspaceRoot ? root.workspaceRoot.store : null
+
+            controller: (typeof IsobathsViewControlMenuController !== "undefined") ? IsobathsViewControlMenuController : null
+            maxTotalHeight: toolbarLayer.height * 0.7
+
+            visible: v !== null && v.visible && hasData
+                     && store && store.isobathsVisible && !store.mosaicVisible && store.isobathsLegendVisible
+                     && v.updateSurface && v.sceneContentVisible
+                     && root.workspaceRoot.active3DPane === root
+
+            anchors.left: parent.left
+            anchors.leftMargin: 12 + AppPalette.splitHitSizePx / 2
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
         // Surface-quality label: right of the dataset toolbar, left of the scale bar.
         Item {
             id: surfaceQualityBadge

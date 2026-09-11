@@ -195,6 +195,7 @@ private slots:
     void postSurfaceColorTable(const std::vector<uint8_t>& t);
     void postSurfaceColorIntervalsSize(int size);
     void postSurfaceStepSize(float lineStepSize);
+    void resendSurfaceColorTable();
     // Mosaic
     void postMosaicColorTable(const std::vector<uint8_t>& t);
     // Isobaths
@@ -297,6 +298,9 @@ private:
     mosaic::PlotColorTable mosaicColorTable_;
     // Surface
     float tileResolution_;
+    std::vector<uint8_t> lastSurfaceColorTable_;
+    int lastSurfaceColorIntervalsSize_ = -1;
+    float lastSurfaceStepSize_ = -1.0f;
 
     // processing (scheduling/interrupt)
     QSet<int>              epIndxsFromBottomTrack_;

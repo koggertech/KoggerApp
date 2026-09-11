@@ -1090,6 +1090,26 @@
         <source>Stand</source>
         <translation>Stand</translation>
     </message>
+    <message>
+        <source>Surface colouring:</source>
+        <translation>Surface colouring:</translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation>Gradient</translation>
+    </message>
+    <message>
+        <source>Bands</source>
+        <translation>Bands</translation>
+    </message>
+    <message>
+        <source>Depth legend</source>
+        <translation>Depth legend</translation>
+    </message>
+    <message>
+        <source>Show the depth colour scale over the 3D scene</source>
+        <translation>Show the depth colour scale over the 3D scene</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>

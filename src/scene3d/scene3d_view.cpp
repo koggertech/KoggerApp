@@ -205,6 +205,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
                 LLARef ref(lla);
                 m_camera->datasetLlaRef_ = ref;
                 m_camera->viewLlaRef_ = ref;
+                refreshSceneContentVisible();
                 qDebug() << "[GeoJSON] set view/dataset LLARef to" << lla.latitude << lla.longitude;
                 break;
             }
@@ -1992,6 +1993,7 @@ void GraphicsScene3dView::forceUpdateDatasetLlaRef()
     }
 
     m_camera->viewLlaRef_ = m_camera->datasetLlaRef_;
+    refreshSceneContentVisible();
 
     QQuickFramebufferObject::update();
 }
@@ -3229,6 +3231,15 @@ std::tuple<float, float, float, float> GraphicsScene3dView::getFieldViewDim() co
     return { minX, maxX, minY, maxY };
 }
 
+void GraphicsScene3dView::refreshSceneContentVisible()
+{
+    const bool visible = m_camera && !m_camera->getIsFarAwayFromOriginLla();
+    if (sceneContentVisible_ != visible) {
+        sceneContentVisible_ = visible;
+        emit sceneContentVisibleChanged();
+    }
+}
+
 void GraphicsScene3dView::onCameraMoved()
 {    
     const bool forceSingleZoom = core.getNeedForceZooming() && forceSingleZoomEnabled_;
@@ -3258,6 +3269,7 @@ void GraphicsScene3dView::onCameraMoved()
     forceSingleZoomWasActive_ = forceSingleZoom;
 
     updateProjection();
+    refreshSceneContentVisible();
 
     int currZoom = pickZoomByDistance(m_camera->distForMapView());
 
@@ -4132,6 +4144,7 @@ void GraphicsScene3dView::Camera::updateCameraParams()
     isPerspective_ = resolvePerspectiveByGround(distToGround_, perspEdge, prevPerspective);
     if (viewPtr_ && prevPerspective != isPerspective_) {
         emit viewPtr_->cameraPerspectiveChanged(isPerspective_);
+        viewPtr_->refreshSceneContentVisible();
     }
 }
 
@@ -4157,6 +4170,9 @@ void GraphicsScene3dView::Camera::tryToChangeViewLlaRef()
             viewLlaRef_ = lookAtLlaRef;
             m_lookAt = QVector3D(0.0f, 0.0f, 0.0f);
         }
+    }
+    if (viewPtr_) {
+        viewPtr_->refreshSceneContentVisible();
     }
 }
 
