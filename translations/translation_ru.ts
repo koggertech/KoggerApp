@@ -1594,6 +1594,14 @@ udp://@:1234
         <source>Open last link</source>
         <translation>Открыть последнее подключение</translation>
     </message>
+    <message>
+        <source>Searching the local network…</source>
+        <translation>Поиск в локальной сети…</translation>
+    </message>
+    <message>
+        <source>Find KOGGER devices in the local network</source>
+        <translation>Найти устройства KOGGER в локальной сети</translation>
+    </message>
 </context>
 <context>
     <name>Console</name>
@@ -5943,6 +5951,14 @@ udp://@:1234
         <location filename="../qml/app/WorkspaceStore.qml" line="866"/>
         <source>Echogram</source>
         <translation>Эхограмма</translation>
+    </message>
+    <message>
+        <source>No KOGGER devices found in the local network</source>
+        <translation>Устройства KOGGER в локальной сети не найдены</translation>
+    </message>
+    <message>
+        <source>Found %1: %2</source>
+        <translation>Найдено %1: %2</translation>
     </message>
 </context>
 <context>

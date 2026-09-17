@@ -64,6 +64,7 @@ public slots:
     void updateControlType(QUuid uuid, ControlType controlType);
     void frameInput(Link* link, Parsers::FrameParser frame);
     void createAsUdp(QString address, int sourcePort, int destinationPort);
+    void adoptDiscoveredUdp(QString address, int sourcePort, int destinationPort, QString customName, bool open);
     void createAsTcp(QString address, int sourcePort, int destinationPort);
     void createAsVideo(QString address);
     void openAsVideo(QUuid uuid, QString address);

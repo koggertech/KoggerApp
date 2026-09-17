@@ -44,6 +44,7 @@
 #include "app_log.h"
 #include "settings_migration.h"
 #include "video_stream_pool.h"
+#include "link_discovery.h"
 #include "control_server.h"
 
 
@@ -473,6 +474,7 @@ int main(int argc, char *argv[])
     InputDeviceTracker inputDeviceTracker;
     SystemBattery systemBattery;
     core.initAfterApp();
+    LinkDiscovery linkDiscovery(core.getLinkManagerWrapperPtr());
 
     //qDebug() << "Lib paths:" << QCoreApplication::libraryPaths();
     //qDebug() << "SQL drivers:" << QSqlDatabase::drivers();
@@ -506,6 +508,7 @@ int main(int argc, char *argv[])
     QObject::connect(&videoStreams, &VideoStreamPool::streamingChanged,
                      core.getLinkManagerWrapperPtr(), &LinkManagerWrapper::setVideoStreaming);
     engine.rootContext()->setContextProperty("videoStreams", &videoStreams);
+    engine.rootContext()->setContextProperty("linkDiscovery", &linkDiscovery);
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
     engine.rootContext()->setContextProperty("uiStateSerializer", &uiStateSerializer);
     engine.rootContext()->setContextProperty("echogramStateSerializer", &echogramStateSerializer);
@@ -610,6 +613,7 @@ int main(int argc, char *argv[])
                 controlServer.registerObject(QStringLiteral("deviceManagerWrapper"), core.getDeviceManagerWrapperPtr());
                 controlServer.registerObject(QStringLiteral("deviceTopology"),       core.getDeviceTopologyModelPtr());
                 controlServer.registerObject(QStringLiteral("videoStreams"),         &videoStreams);
+                controlServer.registerObject(QStringLiteral("linkDiscovery"),        &linkDiscovery);
                 controlServer.registerObject(QStringLiteral("logViewer"),            core.getConsolePtr());
                 controlServer.registerObject(QStringLiteral("uiStateSerializer"),    &uiStateSerializer);
                 controlServer.registerObject(QStringLiteral("echogramStateSerializer"), &echogramStateSerializer);

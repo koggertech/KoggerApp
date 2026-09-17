@@ -1488,6 +1488,14 @@ udp://@:1234
         <source>Open last link</source>
         <translation>Open last link</translation>
     </message>
+    <message>
+        <source>Searching the local network…</source>
+        <translation>Searching the local network…</translation>
+    </message>
+    <message>
+        <source>Find KOGGER devices in the local network</source>
+        <translation>Find KOGGER devices in the local network</translation>
+    </message>
 </context>
 <context>
     <name>ConsolePanelDrawer</name>
@@ -4832,6 +4840,14 @@ udp://@:1234
         <location filename="../qml/app/WorkspaceStore.qml" line="866"/>
         <source>Echogram</source>
         <translation>Echogram</translation>
+    </message>
+    <message>
+        <source>No KOGGER devices found in the local network</source>
+        <translation>No KOGGER devices found in the local network</translation>
+    </message>
+    <message>
+        <source>Found %1: %2</source>
+        <translation>Found %1: %2</translation>
     </message>
 </context>
 <context>

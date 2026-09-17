@@ -58,6 +58,31 @@ Column {
 
         headerActions: [
             KCircleIconButton {
+                id: discoverBtn
+                readonly property bool _busy: typeof linkDiscovery !== "undefined" && linkDiscovery && linkDiscovery.running
+                width: connGroup.headerActionSize
+                height: connGroup.headerActionSize
+                cornerRadius: Tokens.radiusLg
+                borderWidth: 0
+                scaleOnHover: false
+                enabled: !_busy
+                iconSource: "qrc:/icons/ui/radar.svg"
+                iconTintColor: AppPalette.text
+                iconPixelSize: Math.round(connGroup.headerActionSize * 0.5)
+                toolTipText: _busy ? qsTr("Searching the local network…") : qsTr("Find KOGGER devices in the local network")
+                fillColor:      _busy ? AppPalette.linkIdleBg : AppPalette.chipRaised
+                fillHoverColor: _busy ? AppPalette.linkIdleBg : AppPalette.chipRaisedHover
+                onClicked: if (root.store) root.store.discoverLanDevices()
+
+                RotationAnimation on iconRotation {
+                    running: discoverBtn._busy
+                    from: 0; to: 360
+                    duration: 1200
+                    loops: Animation.Infinite
+                    onRunningChanged: if (!running) discoverBtn.iconRotation = 0
+                }
+            },
+            KCircleIconButton {
                 readonly property bool _rec: typeof core !== "undefined" && core && (core.loggingKlf || core.loggingCsv)
                 width: connGroup.headerActionSize
                 height: connGroup.headerActionSize

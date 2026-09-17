@@ -23,6 +23,7 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     }, connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsSerial,            workerObject_.get(), &LinkManager::openAsSerial,                 connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendCreateAsUdp,             workerObject_.get(), &LinkManager::createAsUdp,                  connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendAdoptDiscoveredUdp,      workerObject_.get(), &LinkManager::adoptDiscoveredUdp,           connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsUdp,               workerObject_.get(), &LinkManager::openAsUdp,                    connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendCreateAsTcp,             workerObject_.get(), &LinkManager::createAsTcp,                  connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendCreateAsVideo,           workerObject_.get(), &LinkManager::createAsVideo,                connectionType);
@@ -222,6 +223,11 @@ void LinkManagerWrapper::openAsSerial(QUuid uuid, LinkAttribute attribute)
 void LinkManagerWrapper::createAsUdp(QString address, int sourcePort, int destinationPort)
 {
     emit sendCreateAsUdp(address, sourcePort, destinationPort);
+}
+
+void LinkManagerWrapper::adoptDiscoveredUdp(QString address, int sourcePort, int destinationPort, QString customName, bool open)
+{
+    emit sendAdoptDiscoveredUdp(address, sourcePort, destinationPort, customName, open);
 }
 
 void LinkManagerWrapper::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute)

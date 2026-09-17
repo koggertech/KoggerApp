@@ -9,6 +9,44 @@ extern Core core;
 template < typename T, size_t N >
 size_t _countof( T const (&array)[ N ] ) { Q_UNUSED(array); return N; }
 #endif
+
+QString boardVersionName(BoardVersion version, uint8_t versionMinor)
+{
+    switch (version) {
+    case BoardNone:
+        if (versionMinor == BoardAssist)
+            return QStringLiteral("Assist");
+        break;
+    case BoardEnhanced:
+    case BoardNEnhanced:
+        return QStringLiteral("2D-Enhanced");
+    case BoardChirp:
+        return QStringLiteral("2D-Chirp");
+    case BoardBase:
+    case BoardNBase:
+        return QStringLiteral("2D-Base");
+    case BoardAssist:
+    case BoardRecorderMini:
+        return QStringLiteral("Recorder");
+    case BoardSideEnhanced:
+        return QStringLiteral("Side-Enhanced");
+    case BoardDVL:
+        return QStringLiteral("DVL");
+    case BoardBasic2D:
+        return QStringLiteral("Basic2D");
+    case BoardNanoSSS:
+        return QStringLiteral("NanoSSS");
+    case BoardUSBL:
+        return QStringLiteral("USBL");
+    case BoardUSBLBeacon:
+        return QStringLiteral("Beacon");
+    case BoardPULSEred_2D:
+        return QStringLiteral("PULSEred 2D DSP");
+    case BoardPULSEblue_DSS:
+        return QStringLiteral("PULSEblue DSS");
+    }
+    return QStringLiteral("Device ID: %1.%2").arg(static_cast<int>(version)).arg(versionMinor);
+}
 IDBin::IDBin(QObject *parent) :
     QObject(parent),
     setTimerCount_(0),

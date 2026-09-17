@@ -1550,66 +1550,7 @@ void DevDriver::receivedVersion(Parsers::Type type, Parsers::Version ver, Parser
 
     if(resp == respNone) {
         if(ver == v0) {
-            switch (idVersion->boardVersion()) {
-            case BoardNone:
-                if(idVersion->boardVersionMinor() == BoardAssist) {
-                    m_devName = "Assist";
-                } else {
-                    m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());
-                }
-                break;
-            case BoardEnhanced:
-                m_devName = "2D-Enhanced";
-                break;
-            case BoardChirp:
-                m_devName = "2D-Chirp";
-                break;
-            case BoardBase:
-                [[fallthrough]];
-            case BoardNBase:
-                m_devName = "2D-Base";
-                break;
-
-            case BoardAssist:
-            case BoardRecorderMini:
-                m_devName = "Recorder";
-                break;
-
-            case BoardNEnhanced:
-                m_devName = "2D-Enhanced";
-                break;
-            case BoardSideEnhanced:
-                m_devName = "Side-Enhanced";
-                break;
-            case BoardDVL:
-                m_devName = "DVL";
-                break;
-            case BoardBasic2D:
-                m_devName = "Basic2D";
-                break;
-
-            case BoardNanoSSS:
-                m_devName = "NanoSSS";
-                break;
-
-            case BoardUSBL:
-                m_devName = "USBL";
-                break;
-
-            case BoardUSBLBeacon:
-                m_devName = "Beacon";
-                break;
-
-            case BoardPULSEred_2D:
-                m_devName = "PULSEred 2D DSP";
-                break;
-
-            case BoardPULSEblue_DSS:
-                m_devName = "PULSEblue DSS";
-                break;
-            default:
-                m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());
-            }
+            m_devName = boardVersionName(idVersion->boardVersion(), idVersion->boardVersionMinor());
 
             emit deviceVersionChanged();
         } else if(ver == v1) {

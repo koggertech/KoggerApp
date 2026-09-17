@@ -41,6 +41,7 @@ public:
 public slots:
     void openAsSerial(QUuid uuid, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
     void createAsUdp(QString address, int sourcePort, int destinationPort);
+    void adoptDiscoveredUdp(QString address, int sourcePort, int destinationPort, QString customName, bool open);
     void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
     void createAsTcp(QString address, int sourcePort, int destinationPort);
     void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
@@ -77,6 +78,7 @@ signals:
     void linkRemoved(QString uuid);
     void sendOpenAsSerial(QUuid uuid, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
     void sendCreateAsUdp(QString address, int sourcePort, int destinationPort);
+    void sendAdoptDiscoveredUdp(QString address, int sourcePort, int destinationPort, QString customName, bool open);
     void sendOpenAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
     void sendCreateAsTcp(QString address, int sourcePort, int destinationPort);
     void sendCreateAsVideo(QString address);

@@ -1035,6 +1035,50 @@ void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPo
     emit linkCreatedInteractively(newLinkPtr->getUuid());
 }
 
+void LinkManager::adoptDiscoveredUdp(QString address, int sourcePort, int destinationPort, QString customName, bool open)
+{
+    const TimerController timerGuard(timer_.get());
+
+    const QHostAddress wanted(address.trimmed());
+    Link* linkPtr = nullptr;
+    for (auto& itm : list_) {
+        if (itm->getLinkType() != LinkType::kLinkIPUDP || itm->getIsProxy() || itm->getIsHided())
+            continue;
+        if (QHostAddress(itm->getAddress().trimmed()) != wanted)
+            continue;
+        const bool exact = itm->getDestinationPort() == destinationPort && itm->getSourcePort() == sourcePort;
+        if (exact) {
+            linkPtr = itm;
+            break;
+        }
+        if (!linkPtr)
+            linkPtr = itm;
+    }
+
+    bool wantOpen = open;
+    if (!linkPtr) {
+        linkPtr = createNewLink();
+        linkPtr->createAsUdp(address, sourcePort, destinationPort);
+        list_.append(linkPtr);
+    } else if (linkPtr->getDestinationPort() != destinationPort || linkPtr->getSourcePort() != sourcePort) {
+        wantOpen = open || linkPtr->isOpen();
+        if (linkPtr->isOpen())
+            linkPtr->close();
+        linkPtr->updateUdpParameters(address, sourcePort, destinationPort);
+    }
+
+    if (linkPtr->getCustomName().isEmpty())
+        linkPtr->setCustomName(customName);
+
+    if (wantOpen && !linkPtr->isOpen()) {
+        linkPtr->setIsForceStopped(false);
+        linkPtr->openAsUdp();
+    }
+
+    doEmitAppendModifyModel(linkPtr);
+    exportPinnedLinksToXML();
+}
+
 void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPort)
 {
     const TimerController timerGuard(timer_.get());

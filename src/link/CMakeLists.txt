@@ -1,6 +1,7 @@
 target_sources(KoggerApp PRIVATE
     link.h                    link.cpp
     link_defs.h
+    link_discovery.h          link_discovery.cpp
     link_list_model.h         link_list_model.cpp
     link_manager.h            link_manager.cpp
     link_manager_wrapper.h    link_manager_wrapper.cpp)

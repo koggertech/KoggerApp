@@ -35,6 +35,8 @@ enum BoardVersion : int16_t {
     BoardPULSEblue_DSS = 129
 };
 
+QString boardVersionName(BoardVersion version, uint8_t versionMinor);
+
 struct LastReadInfo {
     LastReadInfo() : version(), checkSum(0), address(0), isReaded(true) {};
     LastReadInfo(Version _version, uint16_t _checkSum, uint8_t _address, bool _isReaded) :

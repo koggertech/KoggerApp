@@ -304,6 +304,28 @@ function toggleRememberedLinks() {
             linkManagerWrapper.closeLink(open[k])
     }
 }
+function discoverLanDevices() {
+    if (typeof linkDiscovery === "undefined" || !linkDiscovery || linkDiscovery.running) return
+    linkDiscovery.start()
+}
+
+property Connections _lanDiscoveryConn: Connections {
+    target: (typeof linkDiscovery !== "undefined") ? linkDiscovery : null
+    ignoreUnknownSignals: true
+    function onFinished(deviceCount) {
+        if (deviceCount <= 0) {
+            notifications.info(qsTr("No KOGGER devices found in the local network"))
+            return
+        }
+        linkDiscovery.adoptAll(false)
+        var names = []
+        var found = linkDiscovery.found || []
+        for (var i = 0; i < found.length; ++i)
+            names.push(found[i].label + " @ " + found[i].address)
+        notifications.info(qsTr("Found %1: %2").arg(names.length).arg(names.join(", ")))
+    }
+}
+
 property string hotkeysRevealKey: ""
 property int hotkeysRevealNonce: 0
 // Live reference to the HotkeysDialog while it's open (set by the dialog
