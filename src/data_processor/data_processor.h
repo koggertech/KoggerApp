@@ -143,6 +143,8 @@ signals:
 
     // this
     void sendState(DataProcessorType state);
+    void idleChanged(bool idle);
+    void activityChanged(const QVariantMap& activity);
     void bottomTrackProcessingCleared();
     void isobathsProcessingCleared();
     void mosaicProcessingCleared();
@@ -247,6 +249,7 @@ private:
     QSet<int> collectSurfaceEpochsForTilesSet(int zoom, const QSet<TileKey>& tiles) const;
     QSet<int> collectVisibleSurfaceEpochsSet(int zoom) const;
     void updateDataProcType();
+    void updateIdle();
     void emitMosaicColorTable();
     void updateDatasetSpatialIndexingState();
     void setUpdateBottomTrackSourceState(bool state, bool fromSettings);
@@ -327,6 +330,8 @@ private:
     std::atomic_bool       nextRunPending_;
     std::atomic<uint32_t>  requestedMask_;
     bool                   btBusy_;
+    bool                   lastIdle_ = true;
+    QVariantMap            lastActivity_;
     bool                   forceVisibleRefreshAfterBottomTrack_ = false;
     // hot cache/db
     HotTileCache           hotCache_; // LRU

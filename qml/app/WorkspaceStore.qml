@@ -4757,6 +4757,21 @@ function toggleLeafMaximize(leafId) {
     maximizedLeafId = maximizedLeafId === leafId ? -1 : leafId
 }
 
+function maximizePaneOfMode(mode) {
+    var wanted = normalizedPaneMode(mode)
+    var leafId = firstLeafIdByMode(layoutTree, wanted)
+    if (leafId === -1) {
+        leafId = firstLeafId()
+        if (leafId === -1)
+            return -1
+        applyPaneModeSelection(leafId, wanted)
+        if (firstLeafIdByMode(layoutTree, wanted) !== leafId)
+            return -1
+    }
+    maximizedLeafId = leafId
+    return leafId
+}
+
 function handleLeafTap(leafId) {
     activeLeafId = leafId
 }

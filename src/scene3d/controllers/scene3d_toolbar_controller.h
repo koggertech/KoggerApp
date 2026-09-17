@@ -18,6 +18,7 @@ public:
     Q_INVOKABLE void onFitAllInViewButtonClicked();
     Q_INVOKABLE void onSetCameraIsometricViewButtonClicked();
     Q_INVOKABLE void onSetCameraMapViewButtonClicked();
+    Q_INVOKABLE void onSetCameraAngles(qreal yawDeg, qreal pitchDeg);
     Q_INVOKABLE void onBottomTrackVertexEditingModeButtonChecked(bool checked);
     Q_INVOKABLE void onResetProcessingButtonClicked();
     Q_INVOKABLE void onCancelZoomButtonClicked();

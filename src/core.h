@@ -8,6 +8,7 @@
 #include <QThread>
 #include <QVariantList>
 #include <QHash>
+#include <atomic>
 #ifdef FLASHER
 #include "flasher/deviceflasher.h"
 #endif
@@ -72,6 +73,9 @@ public:
     Q_PROPERTY(QString           ch1Name                      READ getChannel1Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(QString           ch2Name                      READ getChannel2Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(int               dataProcessorState           READ getDataProcessorState           NOTIFY dataProcessorStateChanged)
+    Q_PROPERTY(bool              processingIdle               READ getProcessingIdle               NOTIFY processingIdleChanged)
+    Q_PROPERTY(QVariantMap       processingActivity           READ getProcessingActivity           NOTIFY processingActivityChanged)
+    Q_PROPERTY(bool              fileOpened                   READ getIsFileOpened                 NOTIFY fileOpenedChanged)
     Q_PROPERTY(int               mapTileProviderId            READ getMapTileProviderId            NOTIFY mapTileProviderChanged)
     Q_PROPERTY(QString           mapTileProviderName          READ getMapTileProviderName          NOTIFY mapTileProviderChanged)
     Q_PROPERTY(QVariantList      mapTileProviders             READ getMapTileProviders             CONSTANT)
@@ -211,6 +215,9 @@ public slots:
     Q_INVOKABLE QString getFileTitle() const;
     Q_INVOKABLE bool getIsSeparateReading() const;
     Q_INVOKABLE int getDataProcessorState() const;
+    bool getProcessingIdle() const { return processingIdle_.load(); }
+    QVariantMap getProcessingActivity() const { return processingActivity_; }
+    bool getIsFileOpened() const;
     Q_INVOKABLE QString getChannel1Name() const;
     Q_INVOKABLE QString getChannel2Name() const;
     Q_INVOKABLE void registerPlot2D(QObject* plotObj);
@@ -259,6 +266,9 @@ signals:
     void sendIsFileOpening();
     void channelListUpdated();
     void dataProcessorStateChanged();
+    void processingIdleChanged();
+    void processingActivityChanged();
+    void fileOpenedChanged();
     void needForceZoomingChanged();
     void isGPSAliveChanged();
     void loggingKlfChanged();
@@ -283,6 +293,8 @@ private slots:
     void onFileStopsOpening();
     void onSendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId); // TODO: maybe store map texture id in mapView
     void onDataProcesstorStateChanged(const DataProcessorType& state);
+    void onProcessingIdleChanged(bool idle);
+    void onProcessingActivityChanged(const QVariantMap& activity);
     void onSendFrameInputToLogger(QUuid uuid, Link* link, const Parsers::FrameParser& frame);
 
 private:
@@ -445,6 +457,8 @@ private:   // reset access after the (signals-terminated) FLASHER block — else
     QVector<QMetaObject::Connection> dataHorizonConnections_;
 
     DataProcessorType dataProcessorState_ = DataProcessorType::kUndefined;
+    std::atomic<bool> processingIdle_{true};
+    QVariantMap processingActivity_;
 
     ChannelId lastCh1_;
     uint8_t   lastSub1_;

@@ -336,6 +336,7 @@ public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);
     void fitAllInView();
     void setIsometricView();
+    void setCameraAngles(qreal yawDeg, qreal pitchDeg);
     void setCancelZoomView();
     void setMapView();
     void setMapViewAnimated();

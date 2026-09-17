@@ -143,6 +143,7 @@ add_subdirectory(src/device)
 add_subdirectory(src/link)
 add_subdirectory(src/tile_engine)
 add_subdirectory(src/video)
+add_subdirectory(src/control)
 
 # Optional build flags (off by default)
 if(KOGGER_FLASHER)

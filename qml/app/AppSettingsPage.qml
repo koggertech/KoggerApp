@@ -893,7 +893,7 @@ Column {
                             width: Math.round(93 * AppPalette.scale)
                             height: Tokens.controlHMd
                             from: 0; to: 100; stepSize: 1; value: 5
-                            onValueModified: function(v) { core.setFixBlackStripesForwardSteps(v) }
+                            onValueChanged: core.setFixBlackStripesForwardSteps(value)
                         }
 
                         KSpinBox {
@@ -903,13 +903,13 @@ Column {
                             width: Math.round(93 * AppPalette.scale)
                             height: Tokens.controlHMd
                             from: 0; to: 100; stepSize: 1; value: 5
-                            onValueModified: function(v) { core.setFixBlackStripesBackwardSteps(v) }
+                            onValueChanged: core.setFixBlackStripesBackwardSteps(value)
                         }
 
                         KSwitch {
                             id: fixBlackStripesCheckButton
                             flat: true
-                            onToggled: core.setFixBlackStripesState(checked)
+                            onCheckedChanged: core.setFixBlackStripesState(checked)
                         }
                     }
                 }
@@ -939,9 +939,9 @@ Column {
                             width: Math.round(93 * AppPalette.scale)
                             height: Tokens.controlHMd
                             from: -9999; to: 9999; stepSize: 50; value: 0
-                            onValueModified: function(v) {
+                            onValueChanged: {
                                 if (sonarOffsetCheckButton.checked)
-                                    dataset.setSonarOffset(v * 0.001, sonarOffsetValueY.value * 0.001, 0)
+                                    dataset.setSonarOffset(value * 0.001, sonarOffsetValueY.value * 0.001, 0)
                             }
                         }
 
@@ -952,16 +952,16 @@ Column {
                             width: Math.round(93 * AppPalette.scale)
                             height: Tokens.controlHMd
                             from: -9999; to: 9999; stepSize: 50; value: 0
-                            onValueModified: function(v) {
+                            onValueChanged: {
                                 if (sonarOffsetCheckButton.checked)
-                                    dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, v * 0.001, 0)
+                                    dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, value * 0.001, 0)
                             }
                         }
 
                         KSwitch {
                             id: sonarOffsetCheckButton
                             flat: true
-                            onToggled: {
+                            onCheckedChanged: {
                                 if (checked) dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, 0)
                                 else         dataset.setSonarOffset(0, 0, 0)
                                 core.setIsAttitudeExpected(checked)
@@ -981,7 +981,7 @@ Column {
                 KSwitch {
                     id: zeroingPosButton
                     flat: true
-                    onToggled: core.setPosZeroing(checked)
+                    onCheckedChanged: core.setPosZeroing(checked)
                 }
             }
 
@@ -995,7 +995,7 @@ Column {
                 KSwitch {
                     id: zeroingBottomTrackButton
                     flat: true
-                    onToggled: core.setBottomTrackZeroing(checked)
+                    onCheckedChanged: core.setBottomTrackZeroing(checked)
                 }
             }
 
@@ -1087,6 +1087,11 @@ Column {
 
         Component.onCompleted: refreshParams()
 
+        Connections {
+            target: root
+            function onTargetPlotChanged() { btGroup.refreshParams() }
+        }
+
         Item {
             id: btPresetHolder
             width: parent.width
@@ -1138,14 +1143,14 @@ Column {
                             width: btGroup.spinW
                             height: Tokens.controlHMd
                             from: 0; to: 300; stepSize: 10; value: 100; divisor: 100; decimals: 2
-                            onValueModified: function(v) { if (bottomTrackGainSlope.checked && root.targetPlot) root.targetPlot.setGainSlope(v / 100) }
+                            onValueChanged: btGroup.refreshParams()
                         }
 
                         KSwitch {
                             id: bottomTrackGainSlope
                             flat: true
                             checked: true
-                            onToggled: if (checked && root.targetPlot) root.targetPlot.setGainSlope(bottomTrackGainSlopeValue.value / 100)
+                            onCheckedChanged: btGroup.refreshParams()
                         }
                     }
                 }
@@ -1173,13 +1178,13 @@ Column {
                             width: btGroup.spinW
                             height: Tokens.controlHMd
                             from: 0; to: 200; stepSize: 5; value: 0; divisor: 100; decimals: 2
-                            onValueModified: function(v) { if (bottomTrackThreshold.checked && root.targetPlot) root.targetPlot.setThreshold(v / 100) }
+                            onValueChanged: btGroup.refreshParams()
                         }
 
                         KSwitch {
                             id: bottomTrackThreshold
                             flat: true
-                            onToggled: if (checked && root.targetPlot) root.targetPlot.setThreshold(bottomTrackThresholdValue.value / 100)
+                            onCheckedChanged: btGroup.refreshParams()
                         }
                     }
                 }
@@ -1207,13 +1212,13 @@ Column {
                             width: btGroup.spinW
                             height: Tokens.controlHMd
                             from: 1; to: 100; stepSize: 2; value: 1
-                            onValueModified: function(v) { if (bottomTrackWindow.checked && root.targetPlot) root.targetPlot.setWindowSize(v) }
+                            onValueChanged: btGroup.refreshParams()
                         }
 
                         KSwitch {
                             id: bottomTrackWindow
                             flat: true
-                            onToggled: if (checked && root.targetPlot) root.targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                            onCheckedChanged: btGroup.refreshParams()
                         }
                     }
                 }
@@ -1241,13 +1246,13 @@ Column {
                             width: btGroup.spinW
                             height: Tokens.controlHMd
                             from: 0; to: 100; stepSize: 2; value: 10
-                            onValueModified: function(v) { if (bottomTrackVerticalGap.checked && root.targetPlot) root.targetPlot.setVerticalGap(v * 0.01) }
+                            onValueChanged: btGroup.refreshParams()
                         }
 
                         KSwitch {
                             id: bottomTrackVerticalGap
                             flat: true
-                            onToggled: if (checked && root.targetPlot) root.targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                            onCheckedChanged: btGroup.refreshParams()
                         }
                     }
                 }
@@ -1275,13 +1280,13 @@ Column {
                             width: btGroup.spinW
                             height: Tokens.controlHMd
                             from: 0; to: 200000; stepSize: 10; value: 0; divisor: 1000; decimals: 2
-                            onValueModified: function(v) { if (bottomTrackMinRange.checked && root.targetPlot) root.targetPlot.setRangeMin(v / 1000) }
+                            onValueChanged: btGroup.refreshParams()
                         }
 
                         KSwitch {
                             id: bottomTrackMinRange
                             flat: true
-                            onToggled: if (checked && root.targetPlot) root.targetPlot.setRangeMin(bottomTrackMinRangeValue.value / 1000)
+                            onCheckedChanged: btGroup.refreshParams()
                         }
                     }
                 }
@@ -1309,13 +1314,13 @@ Column {
                             width: btGroup.spinW
                             height: Tokens.controlHMd
                             from: 0; to: 200000; stepSize: 1000; value: 100000; divisor: 1000; decimals: 2
-                            onValueModified: function(v) { if (bottomTrackMaxRange.checked && root.targetPlot) root.targetPlot.setRangeMax(v / 1000) }
+                            onValueChanged: btGroup.refreshParams()
                         }
 
                         KSwitch {
                             id: bottomTrackMaxRange
                             flat: true
-                            onToggled: if (checked && root.targetPlot) root.targetPlot.setRangeMax(bottomTrackMaxRangeValue.value / 1000)
+                            onCheckedChanged: btGroup.refreshParams()
                         }
                     }
                 }
@@ -1501,7 +1506,7 @@ Column {
                 Layout.preferredWidth: isobathsGroup.ctrlW
                 from: 10; to: 1000; stepSize: 5; value: 100
                 editable: false
-                onValueModified: function(v) { IsobathsViewControlMenuController.onEdgeLimitChanged(v) }
+                onValueChanged: IsobathsViewControlMenuController.onEdgeLimitChanged(value)
                 Component.onCompleted: IsobathsViewControlMenuController.onEdgeLimitChanged(value)
                 Settings { category: "scene3d/isobaths"; property alias isobathsEdgeLimitSpinBox: isobathsEdgeLimitSpinBox.value }
             }
@@ -1525,7 +1530,7 @@ Column {
                 divisor: 10; decimals: 1
                 editable: false
                 readonly property real realValue: value / 10
-                onValueModified: function(v) { IsobathsViewControlMenuController.onSetSurfaceLineStepSize(v / 10) }
+                onValueChanged: IsobathsViewControlMenuController.onSetSurfaceLineStepSize(value / 10)
                 Component.onCompleted: IsobathsViewControlMenuController.onSetSurfaceLineStepSize(realValue)
                 Settings { category: "scene3d/isobaths"; property alias isobathsSurfaceLineStepSizeSpinBox: isobathsSurfaceLineStepSizeSpinBox.value }
             }
@@ -1547,7 +1552,7 @@ Column {
                 Layout.preferredWidth: isobathsGroup.ctrlW
                 from: 5; to: 100; stepSize: 5; value: 10
                 editable: false
-                onValueModified: function(v) { IsobathsViewControlMenuController.onSetExtraWidth(v) }
+                onValueChanged: IsobathsViewControlMenuController.onSetExtraWidth(value)
                 Component.onCompleted: IsobathsViewControlMenuController.onSetExtraWidth(value)
                 Settings { category: "scene3d/isobaths"; property alias extraWidthSpinBox: extraWidthSpinBox.value }
             }
@@ -1898,9 +1903,9 @@ Column {
                             toolTipText: qsTr("Left-side beam angle offset for the mosaic, °")
                             Layout.preferredWidth: mosaicGroup.ctrlW
                             from: -90; to: 90; stepSize: 1; value: 0
-                            onValueModified: function(v) {
-                                MosaicViewControlMenuController.onSetLAngleOffset(v)
-                                dataset.onSetLAngleOffset(v)
+                            onValueChanged: {
+                                MosaicViewControlMenuController.onSetLAngleOffset(value)
+                                dataset.onSetLAngleOffset(value)
                             }
                             Component.onCompleted: {
                                 MosaicViewControlMenuController.onSetLAngleOffset(value)
@@ -1914,9 +1919,9 @@ Column {
                             toolTipText: qsTr("Right-side beam angle offset for the mosaic, °")
                             Layout.preferredWidth: mosaicGroup.ctrlW
                             from: -90; to: 90; stepSize: 1; value: 0
-                            onValueModified: function(v) {
-                                MosaicViewControlMenuController.onSetRAngleOffset(v)
-                                dataset.onSetRAngleOffset(v)
+                            onValueChanged: {
+                                MosaicViewControlMenuController.onSetRAngleOffset(value)
+                                dataset.onSetRAngleOffset(value)
                             }
                             Component.onCompleted: {
                                 MosaicViewControlMenuController.onSetRAngleOffset(value)
@@ -1933,7 +1938,7 @@ Column {
                     toolTipText: qsTr("Show the current mosaic trace line")
                     checked: true
                     Layout.fillWidth: true
-                    onToggled: MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
+                    onCheckedChanged: MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
                     Component.onCompleted: MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
                     Settings { category: "scene3d/mosaic"; property alias mosaicTraceLine: mosaicTraceLine.checked }
                 }

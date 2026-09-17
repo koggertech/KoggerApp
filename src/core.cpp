@@ -82,6 +82,9 @@ Core::Core() :
     createDatasetConnections();
     createDataHorizonConnections();
 
+    connect(this, &Core::sendIsFileOpening,     this, &Core::fileOpenedChanged);
+    connect(this, &Core::openedFilePathChanged, this, &Core::fileOpenedChanged);
+
 #ifdef FLASHER
     connect(&dev_flasher_, &DeviceFlasher::sendStepInfo, this, &Core::dev_flasher_rcv);
     connect(&dev_flasher_, &DeviceFlasher::productsChanged, this, &Core::flasherProductsChanged);
@@ -3218,6 +3221,25 @@ void Core::onDataProcesstorStateChanged(const DataProcessorType& state)
     emit dataProcessorStateChanged();
 }
 
+void Core::onProcessingIdleChanged(bool idle)
+{
+    if (processingIdle_.exchange(idle) == idle) {
+        return;
+    }
+    emit processingIdleChanged();
+}
+
+void Core::onProcessingActivityChanged(const QVariantMap& activity)
+{
+    processingActivity_ = activity;
+    emit processingActivityChanged();
+}
+
+bool Core::getIsFileOpened() const
+{
+    return !isFileOpening_ && !openedfilePath_.isEmpty();
+}
+
 void Core::onSendFrameInputToLogger(QUuid uuid, Link *link, const Parsers::FrameParser& frame)
 {
     // qDebug() << "Core::onSendFrameInputToLogger" << frame.availContext();
@@ -3384,6 +3406,7 @@ void Core::createDataProcessor()
 
     dataProcThread_ = new QThread(this);
     dataProcessor_  = new DataProcessor(nullptr, datasetPtr_);
+    onProcessingIdleChanged(true);
 
     dataProcessor_->moveToThread(dataProcThread_);
 
@@ -3401,6 +3424,7 @@ void Core::destroyDataProcessor()
     }
 
     resetDataProcessorConnections();
+    onProcessingIdleChanged(true);
 
     if (dataProcessor_) {
         if (dataProcThread_ && dataProcThread_->isRunning()) {
@@ -3501,6 +3525,8 @@ void Core::setDataProcessorConnections()
     dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::distCompletedByProcessingBatch, datasetPtr_,    &Dataset::onDistCompletedBatch,          connType));
     dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_,    &Dataset::onLastBottomTrackEpochChanged, connType));
     dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::sendState,                   this,           &Core::onDataProcesstorStateChanged,     connType));
+    dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::idleChanged,                 this,           &Core::onProcessingIdleChanged,          connType));
+    dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::activityChanged,             this,           &Core::onProcessingActivityChanged,      connType));
 }
 
 void Core::resetDataProcessorConnections()

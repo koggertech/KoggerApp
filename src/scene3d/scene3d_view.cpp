@@ -2150,6 +2150,31 @@ void GraphicsScene3dView::setIsometricView()
     onCameraMoved();
 }
 
+void GraphicsScene3dView::setCameraAngles(qreal yawDeg, qreal pitchDeg)
+{
+    if (!m_camera || !m_axesThumbnailCamera) {
+        return;
+    }
+
+    if (!qIsFinite(yawDeg) || !qIsFinite(pitchDeg)) {
+        return;
+    }
+
+    cancelCameraPoseAnim();
+    cancelWheelZoom();
+
+    const qreal yawNorm = std::fmod(std::fmod(yawDeg, 360.0) + 360.0, 360.0);
+    const qreal pitchClamped = std::clamp(pitchDeg, 0.0, 90.0);
+    const QVector2D angles(static_cast<float>(qDegreesToRadians(yawNorm)),
+                           static_cast<float>(qDegreesToRadians(pitchClamped)));
+    m_camera->setRotAngle(angles);
+    m_axesThumbnailCamera->setRotAngle(angles);
+
+    updatePlaneGrid();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
+
 void GraphicsScene3dView::setCancelZoomView()
 {
     setVerticalScale(1.0f);

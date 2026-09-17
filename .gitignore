@@ -29,4 +29,5 @@ AGENTS.md
 .codeium/
 .claude/
 docs/KoggerApp-Docs/
+tests/KoggerApp-Tests/
 *.py

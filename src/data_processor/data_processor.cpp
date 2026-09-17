@@ -4,6 +4,7 @@
 #include <QtConcurrent/QtConcurrentRun>
 #include <QMetaObject>
 #include <QEventLoop>
+#include <QScopeGuard>
 #include <QDebug>
 #include <QtGlobal>
 #include <cmath>
@@ -199,8 +200,36 @@ void DataProcessor::setSuppressResults(bool state) noexcept
     }
 }
 
+void DataProcessor::updateIdle()
+{
+    const bool job   = jobRunning_.load();
+    const bool timer = pendingWorkTimer_.isActive();
+    const bool idle  = !job && !btBusy_ && !timer;
+
+    QVariantMap activity;
+    activity[QStringLiteral("idle")]            = idle;
+    activity[QStringLiteral("jobRunning")]      = job;
+    activity[QStringLiteral("btBusy")]          = btBusy_;
+    activity[QStringLiteral("timerActive")]     = timer;
+    activity[QStringLiteral("nextRunPending")]  = nextRunPending_.load();
+    activity[QStringLiteral("suppressResults")] = suppressResults_.load();
+    activity[QStringLiteral("resetInProgress")] = resetInProgress_.load();
+    activity[QStringLiteral("state")]           = static_cast<int>(state_);
+    if (activity != lastActivity_) {
+        lastActivity_ = activity;
+        emit activityChanged(activity);
+    }
+
+    if (idle == lastIdle_) {
+        return;
+    }
+    lastIdle_ = idle;
+    emit idleChanged(idle);
+}
+
 void DataProcessor::prepareForFileClose(int timeoutMs)
 {
+    auto idleGuard = qScopeGuard([this] { updateIdle(); });
     if (timeoutMs < 0) {
         timeoutMs = 0;
     }
@@ -270,6 +299,7 @@ void DataProcessor::clearProcessing(DataProcessorType procType)
 
 void DataProcessor::resetProcessingPipeline()
 {
+    auto idleGuard = qScopeGuard([this] { updateIdle(); });
     if (resetInProgress_.exchange(true)) {
         return;
     }
@@ -288,6 +318,7 @@ void DataProcessor::resetProcessingPipeline()
 
 void DataProcessor::tryFinalizeResetProcessing()
 {
+    auto idleGuard = qScopeGuard([this] { updateIdle(); });
     if (!resetInProgress_.load()) {
         return;
     }
@@ -655,6 +686,7 @@ void DataProcessor::tryScheduleAutoBottomTrack(uint64_t indx)
     const DatasetChannel ch2 = (channels.size() >= 2) ? channels[1] : DatasetChannel();
 
     btBusy_ = true;
+    updateIdle();
 
     QMetaObject::invokeMethod(btWorker_, "bottomTrackProcessing", Qt::QueuedConnection,
                               Q_ARG(DatasetChannel, ch1),
@@ -1110,7 +1142,7 @@ void DataProcessor::onMosaicEpochsProcessed(const QVector<int>& indxs, int zoom)
 
 void DataProcessor::runCoalescedWork()
 {
-    //qDebug() << "DataProcessor::runCoalescedWork";
+    auto idleGuard = qScopeGuard([this] { updateIdle(); });
 
     if (resetInProgress_.load()) {
         return;
@@ -1317,6 +1349,7 @@ void DataProcessor::startTimerIfNeeded()
         auto startOrRestart = [this]() {
             pendingWorkTimer_.stop();
             pendingWorkTimer_.start();
+            updateIdle();
         };
 
         if (QThread::currentThread() == this->thread()) {
@@ -1329,10 +1362,12 @@ void DataProcessor::startTimerIfNeeded()
     else {
         if (QThread::currentThread() == this->thread()) {
             if (!pendingWorkTimer_.isActive()) pendingWorkTimer_.start();
+            updateIdle();
         }
         else {
             QMetaObject::invokeMethod(this, [this](){
                 if (!pendingWorkTimer_.isActive()) pendingWorkTimer_.start();
+                updateIdle();
             }, Qt::QueuedConnection);
         }
     }
@@ -1340,6 +1375,7 @@ void DataProcessor::startTimerIfNeeded()
 
 void DataProcessor::onWorkerFinished()
 {
+    auto idleGuard = qScopeGuard([this] { updateIdle(); });
     const bool wasCanceled = cancelRequested_.load();
 
     jobRunning_.store(false);
@@ -1549,10 +1585,12 @@ void DataProcessor::postMosaicStats(const QVariantMap& stats)
 void DataProcessor::onBottomTrackStarted()
 {
     btBusy_ = true;
+    updateIdle();
 }
 
 void DataProcessor::onBottomTrackFinished()
 {
+    auto idleGuard = qScopeGuard([this] { updateIdle(); });
     btBusy_ = false;
 
     if (resetInProgress_.load()) {
@@ -1767,6 +1805,7 @@ void DataProcessor::clearBottomTrackProcessing()
     bottomTrackWindowCounter_ = 0;
     btBusy_ = false;
     forceVisibleRefreshAfterBottomTrack_ = false;
+    updateIdle();
 
     QMetaObject::invokeMethod(btWorker_, "clearBottomTrack", Qt::QueuedConnection);
 }
@@ -1800,6 +1839,7 @@ void DataProcessor::clearSurfaceProcessing()
 
 void DataProcessor::clearAllProcessings()
 {
+    auto idleGuard = qScopeGuard([this] { updateIdle(); });
     closeDB();
     pendingWorkTimer_.stop();
     cameraRectCoalesceTimer_.stop();

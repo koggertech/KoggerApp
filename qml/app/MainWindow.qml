@@ -27,6 +27,7 @@ ApplicationWindow {
 
     WorkspaceStore {
         id: workspaceStore
+        objectName: "workspaceStore"
 
         usblDeviceAvailable: appUsblEngine.hasDevice
         windowWidth: root.width

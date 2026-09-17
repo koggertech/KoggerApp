@@ -16,6 +16,7 @@ class IsobathsViewControlMenuController : public QmlComponentController
     Q_OBJECT
 
     Q_PROPERTY(QVariantMap pipelineStatus READ pipelineStatus NOTIFY pipelineStatusChanged)
+    Q_PROPERTY(int pipelineStatusSeq READ pipelineStatusSeq NOTIFY pipelineStatusSeqChanged)
     Q_PROPERTY(bool statusMonitorEnabled READ statusMonitorEnabled WRITE setStatusMonitorEnabled NOTIFY statusMonitorEnabledChanged)
     Q_PROPERTY(bool statusDetailedPolling READ statusDetailedPolling WRITE setStatusDetailedPolling NOTIFY statusDetailedPollingChanged)
     Q_PROPERTY(float isobathStep READ isobathStep NOTIFY isobathStepChanged)
@@ -52,6 +53,7 @@ public:
     bool statusDetailedPolling() const;
     void setStatusDetailedPolling(bool state);
     Q_INVOKABLE void refreshPipelineStatus();
+    int pipelineStatusSeq() const { return pipelineStatusSeq_; }
 
     float isobathStep() const;
     bool bandedColors() const;
@@ -61,6 +63,7 @@ public:
 
 signals:
     void pipelineStatusChanged();
+    void pipelineStatusSeqChanged();
     void statusMonitorEnabledChanged();
     void statusDetailedPollingChanged();
     void isobathStepChanged();
@@ -87,6 +90,10 @@ private:
     QThread thread_;
     QTimer statusTimer_;
     QVariantMap pipelineStatus_;
+    int pipelineStatusSeq_ = 0;
+    bool edgeLimitApplied_ = false;
+    bool surfaceLineStepApplied_ = false;
+    bool extraWidthApplied_ = false;
     float surfaceDepthMin_;
     float surfaceDepthMax_;
     float surfaceLineStepSize_;

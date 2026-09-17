@@ -71,6 +71,13 @@ void Scene3dToolBarController::onSetCameraMapViewButtonClicked()
     }
 }
 
+void Scene3dToolBarController::onSetCameraAngles(qreal yawDeg, qreal pitchDeg)
+{
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setCameraAngles(yawDeg, pitchDeg);
+    }
+}
+
 void Scene3dToolBarController::onBottomTrackVertexEditingModeButtonChecked(bool checked)
 {
     isVertexEditingMode_ = checked;

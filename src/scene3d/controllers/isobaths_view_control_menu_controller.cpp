@@ -239,6 +239,8 @@ void IsobathsViewControlMenuController::refreshPipelineStatus()
 void IsobathsViewControlMenuController::onPipelineStats(const QVariantMap& stats)
 {
     statusRequestPending_ = false;
+    ++pipelineStatusSeq_;
+    emit pipelineStatusSeqChanged();
 
     if (!statusMonitorEnabled_) {
         return;
@@ -361,11 +363,15 @@ void IsobathsViewControlMenuController::onEdgesVisible(bool state)
 void IsobathsViewControlMenuController::onSetSurfaceLineStepSize(float val)
 {
     const bool changed = !qFuzzyCompare(1.0f + val, 1.0f + surfaceLineStepSize_);
+    if (surfaceLineStepApplied_ && !changed) {
+        return;
+    }
     surfaceLineStepSize_ = val;
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceIsobathsStepSize", Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
+            surfaceLineStepApplied_ = true;
         }
     }
     else {
@@ -458,11 +464,15 @@ void IsobathsViewControlMenuController::onResetIsobathsButtonClicked()
 
 void IsobathsViewControlMenuController::onEdgeLimitChanged(int val)
 {
+    if (edgeLimitApplied_ && edgeLimit_ == val) {
+        return;
+    }
     edgeLimit_ = val;
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceEdgeLimit", Qt::QueuedConnection, Q_ARG(int, edgeLimit_));
+            edgeLimitApplied_ = true;
         }
     }
     else {
@@ -472,11 +482,15 @@ void IsobathsViewControlMenuController::onEdgeLimitChanged(int val)
 
 void IsobathsViewControlMenuController::onSetExtraWidth(int val)
 {
+    if (extraWidthApplied_ && extraWidth_ == val) {
+        return;
+    }
     extraWidth_ = val;
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "setExtraWidth", Qt::QueuedConnection, Q_ARG(int, extraWidth_));
+            extraWidthApplied_ = true;
         }
     }
     else {

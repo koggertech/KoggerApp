@@ -5,6 +5,7 @@
 #include <cmath>
 #include <algorithm>
 #include <utility>
+#include <tuple>
 #include <QFile>
 #include <QDir>
 #include <QFileInfo>
@@ -629,6 +630,7 @@ void SurfaceView::clear()
     r->lastLeftLine_.clear();
     r->lastRightLine_.clear();
     r->lastTraceEpoch_ = -1;
+    r->updateBounds();
 
     Q_EMIT changed();
     Q_EMIT boundsChanged();
@@ -938,8 +940,17 @@ void SurfaceView::rebuildIsobathLabels()
         }
     };
 
+    QVector<TileKey> orderedKeys;
+    orderedKeys.reserve(r->tiles_.size());
     for (auto it = r->tiles_.cbegin(); it != r->tiles_.cend(); ++it) {
-        const SurfaceTile& tile = it.value();
+        orderedKeys.append(it.key());
+    }
+    std::sort(orderedKeys.begin(), orderedKeys.end(), [](const TileKey& a, const TileKey& b) {
+        return std::tie(a.zoom, a.y, a.x) < std::tie(b.zoom, b.y, b.x);
+    });
+
+    for (const TileKey& key : std::as_const(orderedKeys)) {
+        const SurfaceTile& tile = *r->tiles_.constFind(key);
         if (!tile.getIsInited()) {
             continue;
         }
