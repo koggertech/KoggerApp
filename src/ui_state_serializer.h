@@ -30,6 +30,7 @@ public:
 signals:
     void lastErrorChanged();
     void lastStatusChanged();
+    void settingsImported();
 
 private:
     static QString normalizePath(const QString& path);

@@ -247,6 +247,7 @@ public slots:
     Q_INVOKABLE void setMapTileLoadingEnabled(bool enabled);
     Q_INVOKABLE bool getBringWindowToFrontEnabled() const;
     Q_INVOKABLE void setBringWindowToFrontEnabled(bool enabled);
+    Q_INVOKABLE void reloadStartupSettings();
     Q_INVOKABLE void moveAppToBackground();
     Q_INVOKABLE void requestDismissTransientUi();
     Q_INVOKABLE void setActiveTransientUi(QObject* who);

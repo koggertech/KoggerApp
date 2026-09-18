@@ -30,6 +30,11 @@ public:
     // Call once after loadLanguage() so we can remove the startup translator on first switch
     void setStartupTranslator(QTranslator* t) { startupTranslator_ = t; }
 
+    Q_INVOKABLE void reloadFromSettings() {
+        QSettings s;
+        apply(s.value("main/appLanguage", index_).toInt());
+    }
+
     Q_INVOKABLE void apply(int i) {
         if (i < 0 || i >= langs_.size() || i == index_) return;
         index_ = i;

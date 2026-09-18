@@ -567,6 +567,7 @@ bool UIStateSerializer::importFromJsonFile(const QString& path)
     }
 
     const int appliedCount = applyImportedSettingsToQml(importedValues);
+    emit settingsImported();
     setLastStatus(tr("Imported %1 keys. Applied %2 in live UI. Skipped path keys: %3. "
                      "Skipped serial links: %4.%5")
                       .arg(importedValues.size())

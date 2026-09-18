@@ -535,6 +535,9 @@ int main(int argc, char *argv[])
 #endif
 
     uiStateSerializer.setLinkManagerWrapper(core.getLinkManagerWrapperPtr());
+    QObject::connect(&uiStateSerializer, &UIStateSerializer::settingsImported, &langController, &LanguageController::reloadFromSettings);
+    QObject::connect(&uiStateSerializer, &UIStateSerializer::settingsImported, &theme,          &Themes::reloadFromSettings);
+    QObject::connect(&uiStateSerializer, &UIStateSerializer::settingsImported, &core,           &Core::reloadStartupSettings);
 
     QObject::connect(&langController, &LanguageController::currentIndexChanged, &engine, [&engine, &app, &langController, &inputDeviceTracker]() {
         emit langController.aboutToRetranslate();

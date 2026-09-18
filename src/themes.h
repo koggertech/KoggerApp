@@ -108,6 +108,12 @@ public:
     qreal getResolutionCoeff() const { return resolutionCoeff_; };
 
     qreal manualScale() const { return manualScale_; }
+
+    Q_INVOKABLE void reloadFromSettings() {
+        QSettings settings;
+        setManualScale(settings.value("main/ui/manualScale", manualScale_).toReal());
+    }
+
     void setManualScale(qreal s) {
         s = qBound(0.5, s, 2.5);
         if (qFuzzyCompare(s + 1.0, manualScale_ + 1.0)) return;

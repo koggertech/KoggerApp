@@ -2584,6 +2584,12 @@ bool Core::getBringWindowToFrontEnabled() const
     return bringWindowToFrontEnabled_;
 }
 
+void Core::reloadStartupSettings()
+{
+    QSettings settings("KOGGER", "KoggerApp");
+    setBringWindowToFrontEnabled(settings.value("main/bringWindowToFrontEnabled", bringWindowToFrontEnabled_).toBool());
+}
+
 void Core::setBringWindowToFrontEnabled(bool enabled)
 {
     if (bringWindowToFrontEnabled_ == enabled) {
