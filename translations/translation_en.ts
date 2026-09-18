@@ -1493,8 +1493,8 @@ udp://@:1234
         <translation>Searching the local network…</translation>
     </message>
     <message>
-        <source>Find KOGGER devices in the local network</source>
-        <translation>Find KOGGER devices in the local network</translation>
+        <source>Find KOGGER devices in the local network (UDP)</source>
+        <translation>Find KOGGER devices in the local network (UDP)</translation>
     </message>
 </context>
 <context>

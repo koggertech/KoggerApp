@@ -1599,8 +1599,8 @@ udp://@:1234
         <translation>Wyszukiwanie w sieci lokalnej…</translation>
     </message>
     <message>
-        <source>Find KOGGER devices in the local network</source>
-        <translation>Znajdź urządzenia KOGGER w sieci lokalnej</translation>
+        <source>Find KOGGER devices in the local network (UDP)</source>
+        <translation>Znajdź urządzenia KOGGER w sieci lokalnej (UDP)</translation>
     </message>
 </context>
 <context>

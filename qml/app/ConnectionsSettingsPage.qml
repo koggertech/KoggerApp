@@ -71,7 +71,7 @@ Column {
                 iconTintColor: _busy ? Qt.rgba(AppPalette.text.r, AppPalette.text.g, AppPalette.text.b, 0.35 + 0.65 * pulse)
                                      : AppPalette.text
                 iconPixelSize: Math.round(connGroup.headerActionSize * 0.5)
-                toolTipText: _busy ? qsTr("Searching the local network…") : qsTr("Find KOGGER devices in the local network")
+                toolTipText: _busy ? qsTr("Searching the local network…") : qsTr("Find KOGGER devices in the local network (UDP)")
                 fillColor:      _busy ? Qt.tint(AppPalette.chipRaised, Qt.rgba(_accent.r, _accent.g, _accent.b, 0.45 * pulse))
                                       : AppPalette.chipRaised
                 fillHoverColor: _busy ? fillColor : AppPalette.chipRaisedHover
