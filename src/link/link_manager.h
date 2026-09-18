@@ -40,6 +40,7 @@ public slots:
     void onLinkIsReceivesDataChanged(QUuid uuid);
     void onLinkDataFlowNotify(QUuid uuid);
     void onLinkAvailabilityNotify(QUuid uuid);
+    void onLinkOpenFailed(QUuid uuid, QString reason);
     void createAndStartTimer();
     void stopTimer();
     void onExpiredTimer();

@@ -104,6 +104,7 @@ signals:
     void connectionStatusChanged(QUuid uuid);
     void frameReady(QUuid uuid, Link* link, Parsers::FrameParser frame);
     void opened(QUuid uuid, Link* linkPtr);
+    void openFailed(QUuid uuid, QString reason);
     void closed(QUuid uuid, Link* link);
     void baudrateChanged(QUuid uuid);
     void isReceivesDataChanged(QUuid uuid);
@@ -148,6 +149,7 @@ private:
     std::unique_ptr<QTimer> checkTimer_;
     int timeoutCnt_;
     uint32_t lastTotalCnt_;
+    uint32_t acceptedFrameCnt_;
     bool isReceivesData_;
     QList<uint32_t> baudrateSearchList_;
     int lastSearchIndx_;

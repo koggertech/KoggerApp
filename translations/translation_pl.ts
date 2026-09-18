@@ -4262,6 +4262,10 @@ udp://@:1234
         <source>Receiving data from link: %1</source>
         <translation>Odbieranie danych z łącza: %1</translation>
     </message>
+    <message>
+        <source>Link &quot;%1&quot; not opened: %2</source>
+        <translation>Połączenie „%1” nie zostało otwarte: %2</translation>
+    </message>
 </context>
 <context>
     <name>LocationExtraSettings</name>
@@ -6900,6 +6904,17 @@ udp://@:1234
         <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
         <source>Ctrl + drag up or down</source>
         <translation>Ctrl + przeciąganie w pionie</translation>
+    </message>
+</context>
+<context>
+    <name>Link</name>
+    <message>
+        <source>local UDP port (src) %1 is already in use by another link or program</source>
+        <translation>lokalny port UDP (src) %1 jest już zajęty przez inne połączenie lub program</translation>
+    </message>
+    <message>
+        <source>cannot bind local UDP port (src) %1: %2</source>
+        <translation>nie można zająć lokalnego portu UDP (src) %1: %2</translation>
     </message>
 </context>
 </TS>

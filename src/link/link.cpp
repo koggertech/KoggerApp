@@ -23,6 +23,7 @@ Link::Link()
       autoSpeedSelection_(false),
       timeoutCnt_(linkNumTimeoutsSmall),
       lastTotalCnt_(0),
+      acceptedFrameCnt_(0),
       isReceivesData_(false),
       lastSearchIndx_(0),
       onUpgradingFirmware_(false),
@@ -100,7 +101,11 @@ void Link::openAsUdp()
     bool isBinded = socketUdp->bind(QHostAddress::AnyIPv4, sourcePort_); // , QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress
 
     if (!isBinded) {
+        const QString reason = socketUdp->error() == QAbstractSocket::AddressInUseError
+                                   ? tr("local UDP port (src) %1 is already in use by another link or program").arg(sourcePort_)
+                                   : tr("cannot bind local UDP port (src) %1: %2").arg(sourcePort_).arg(socketUdp->errorString());
         delete socketUdp;
+        emit openFailed(uuid_, reason);
         return;
     }
 
@@ -630,7 +635,7 @@ void Link::onCheckedTimerEnd()
         return;
     }
 
-    auto currTotalCnt       = frame_.getCompleteTotal();
+    auto currTotalCnt       = acceptedFrameCnt_;
     bool lastIsReceivesData = isReceivesData_;
     bool newDataReceived    = (currTotalCnt != lastTotalCnt_);
 
@@ -741,9 +746,16 @@ void Link::toParser(const QByteArray data)
 
     while (frame_.availContext() > 0) {
         frame_.process();
-        if (frame_.isComplete()) {
-            emit frameReady(uuid_, this, frame_);
+        if (!frame_.isComplete()) {
+            continue;
         }
+        const bool hostToDevice = (frame_.completeAsKBP() || frame_.completeAsKBP2())
+                                  && (frame_.type() == GETTING || frame_.type() == SETTING);
+        if (hostToDevice) {
+            continue;
+        }
+        ++acceptedFrameCnt_;
+        emit frameReady(uuid_, this, frame_);
     }
 }
 

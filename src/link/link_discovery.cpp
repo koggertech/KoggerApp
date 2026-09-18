@@ -121,8 +121,7 @@ void LinkDiscovery::start()
         auto* probe = new Probe;
         probe->port = static_cast<quint16>(port);
         probe->socket = std::make_unique<QUdpSocket>(this);
-        bool bound = probe->socket->bind(QHostAddress::AnyIPv4, probe->port,
-                                         QAbstractSocket::ShareAddress | QAbstractSocket::ReuseAddressHint);
+        bool bound = probe->socket->bind(QHostAddress::AnyIPv4, probe->port, QAbstractSocket::DontShareAddress);
         if (!bound)
             bound = probe->socket->bind(QHostAddress::AnyIPv4, 0);
         if (!bound) {

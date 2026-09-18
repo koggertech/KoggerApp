@@ -4258,6 +4258,10 @@ udp://@:1234
         <source>Receiving data from link: %1</source>
         <translation>Данные с линка пошли: %1</translation>
     </message>
+    <message>
+        <source>Link &quot;%1&quot; not opened: %2</source>
+        <translation>Подключение «%1» не открыто: %2</translation>
+    </message>
 </context>
 <context>
     <name>LocationExtraSettings</name>
@@ -6889,6 +6893,17 @@ udp://@:1234
         <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
         <source>Ctrl + drag up or down</source>
         <translation>Ctrl + движение по вертикали</translation>
+    </message>
+</context>
+<context>
+    <name>Link</name>
+    <message>
+        <source>local UDP port (src) %1 is already in use by another link or program</source>
+        <translation>локальный UDP-порт (src) %1 уже занят другим подключением или программой</translation>
+    </message>
+    <message>
+        <source>cannot bind local UDP port (src) %1: %2</source>
+        <translation>не удалось занять локальный UDP-порт (src) %1: %2</translation>
     </message>
 </context>
 </TS>

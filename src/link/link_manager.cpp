@@ -620,6 +620,7 @@ Link *LinkManager::createNewLink() const
     QObject::connect(retVal, &Link::frameReady, this, &LinkManager::frameReady);
     QObject::connect(retVal, &Link::closed, this, &LinkManager::linkClosed);
     QObject::connect(retVal, &Link::opened, this, &LinkManager::linkOpened);
+    QObject::connect(retVal, &Link::openFailed, this, &LinkManager::onLinkOpenFailed);
     QObject::connect(retVal, &Link::baudrateChanged, this, &LinkManager::onLinkIsReceivesDataChanged);
     QObject::connect(retVal, &Link::isReceivesDataChanged, this, &LinkManager::onLinkIsReceivesDataChanged);
     QObject::connect(retVal, &Link::isReceivesDataChanged, this, &LinkManager::onLinkDataFlowNotify);
@@ -756,6 +757,22 @@ void LinkManager::onLinkAvailabilityNotify(QUuid uuid)
         notifications.info(name.isEmpty() ? tr("Link available")
                                           : tr("Link available: %1").arg(name));
     }
+}
+
+void LinkManager::onLinkOpenFailed(QUuid uuid, QString reason)
+{
+    const auto linkPtr = getLinkPtr(uuid);
+    if (!linkPtr) {
+        return;
+    }
+
+    QString name = linkPtr->getCustomName();
+    if (name.isEmpty()) {
+        name = QStringLiteral("%1:%2").arg(linkPtr->getAddress().trimmed()).arg(linkPtr->getDestinationPort());
+    }
+
+    notifications.warning(tr("Link \"%1\" not opened: %2").arg(name).arg(reason),
+                          QStringLiteral("link-open-failed:") + uuid.toString());
 }
 
 void LinkManager::createAndStartTimer()

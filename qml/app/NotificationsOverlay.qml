@@ -8,7 +8,7 @@ Item {
     z: ZOrder.notificationsOverlay
 
     readonly property int maxVisible: 5
-    readonly property int infoLifetimeMs: 3000
+    readonly property int infoLifetimeMs: 7000
     readonly property real maxCardWidth: Math.min(480 * AppPalette.scale, width - 2 * Tokens.spaceXl)
     property int nextNotificationId: 0
 
