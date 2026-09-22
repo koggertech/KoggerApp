@@ -1243,11 +1243,17 @@ property Settings scene3dLayerVisibility: Settings {
     property bool bottomTrackCheckButton: false
     property bool isobathsCheckButton: false
     property bool mosaicViewCheckButton: false
+    property bool usblCheckButton: false
 }
 property alias boatTrackVisible:   scene3dLayerVisibility.boatTrackCheckButton
 property alias bottomTrackVisible: scene3dLayerVisibility.bottomTrackCheckButton
 property alias isobathsVisible:    scene3dLayerVisibility.isobathsCheckButton
 property alias mosaicVisible:      scene3dLayerVisibility.mosaicViewCheckButton
+property alias usblVisible:        scene3dLayerVisibility.usblCheckButton
+
+// The USBL layer is developer-only. The toggle above keeps what the user chose; this decides what
+// the scene actually draws, so leaving developer mode hides the layer without forgetting it.
+readonly property bool usblLayerActive: developerMode && usblVisible
 
 property Settings videoStore: Settings {
     id: videoStore
@@ -1604,6 +1610,9 @@ onMosaicVisibleChanged: {
     MosaicViewControlMenuController.onUpdateStateChanged(mosaicVisible)
     MosaicViewControlMenuController.onVisibilityChanged(mosaicVisible)
 }
+onUsblLayerActiveChanged: {
+    Scene3dToolBarController.onUsblLayerVisibilityChanged(usblLayerActive)
+}
 
 function initLayerVisibilityControllers() {
     BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(boatTrackVisible)
@@ -1613,6 +1622,7 @@ function initLayerVisibilityControllers() {
     IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(isobathsVisible)
     MosaicViewControlMenuController.onVisibilityChanged(mosaicVisible)
     MosaicViewControlMenuController.onUpdateStateChanged(mosaicVisible)
+    Scene3dToolBarController.onUsblLayerVisibilityChanged(usblLayerActive)
     pushMosaicChannelsFromCore()
 }
 

@@ -2098,6 +2098,26 @@ Column {
     }
 
 
+    // USBL — developer-only. One layer draws both the acoustic head track and the beacons; this
+    // is where the gear on its toolbar control lands.
+    SettingsGroup {
+        id: usblLayerGroup
+        visible: !!(root.store && root.store.developerMode)
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("USBL")
+        description: qsTr("Acoustic nodes and their tracks displayed in the 3D scene.")
+        stateStore: root.store
+        stateKey: "app.usbl"
+        headerActions: ShowIn3DAction {
+            active: root.store ? root.store.usblVisible : false
+            onClicked: if (root.store) root.store.usblVisible = !root.store.usblVisible
+        }
+        expandable: false   // no body controls — header + description only
+        collapsedByDefault: true
+
+    }
+
     // ── 3D scene (map provider) ──────────────────────────────────────────────
 
     SettingsGroup {
@@ -2764,31 +2784,11 @@ Column {
                         }
                     }
                 }
-
-                KIslandRow {
-                    label: qsTr("USBL beacons")
-                    labelColor: root._bright
-                    toolTipText: qsTr("Show the acoustic nodes and their tracks in the 3D scene")
-                    interactive: true
-                    onClicked: usblLayerSwitch.click()
-
-                    KSwitch {
-                        id: usblLayerSwitch
-                        flat: true
-                        checked: render3dSettings.usblLayerCheckButton
-                        onToggled: {
-                            render3dSettings.usblLayerCheckButton = checked
-                            if (typeof Scene3dToolBarController !== "undefined")
-                                Scene3dToolBarController.onUsblLayerVisibilityChanged(checked)
-                        }
-                    }
-                }
             }
 
             Settings {
                 id: render3dSettings
                 category: "scene3d/view"
-                property bool usblLayerCheckButton: true
                 property bool forceSingleZoomCheckButton: false
                 property bool syncLoupeCheckButton: false
                 property bool isNorthViewButton: false
@@ -3107,7 +3107,7 @@ Column {
                     Scene3dToolBarController.onCompassPosChanged(compassPosSpinBox.value)
                     Scene3dToolBarController.onCompassSizeChanged(compassSizeSpinBox.value)
                     Scene3dToolBarController.onScaleBarButtonChanged(render3dSettings.scaleBarCheckButton)
-                    Scene3dToolBarController.onUsblLayerVisibilityChanged(render3dSettings.usblLayerCheckButton)
+                    Scene3dToolBarController.onUsblLayerVisibilityChanged(root.store ? root.store.usblLayerActive : false)
                 }
                 if (typeof NavigationArrowControlMenuController !== "undefined") {
                     NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(render3dSettings.navigationArrowCheckButton)
