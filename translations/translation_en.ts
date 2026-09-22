@@ -1882,12 +1882,8 @@ udp://@:1234
         <translation>Absolute height of the bottom</translation>
     </message>
     <message>
-        <source>Title of the marked contact</source>
-        <translation>Title of the marked contact</translation>
-    </message>
-    <message>
-        <source>Distance to the marked contact</source>
-        <translation>Distance to the marked contact</translation>
+        <source>Title, coordinates, depth and origin (2D/3D) of the marked contact</source>
+        <translation>Title, coordinates, depth and origin (2D/3D) of the marked contact</translation>
     </message>
     <message>
         <location filename="../qml/app/CsvExportSettingsTab.qml" line="54"/>
@@ -1965,14 +1961,9 @@ udp://@:1234
         <translation>Bottom height</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="29"/>
-        <source>Contact title</source>
-        <translation>Contact title</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="30"/>
-        <source>Contact distance</source>
-        <translation>Contact distance</translation>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="35"/>
+        <source>Contact</source>
+        <translation>Contact</translation>
     </message>
     <message>
         <location filename="../qml/app/CsvExportSettingsTab.qml" line="97"/>
@@ -2765,6 +2756,16 @@ udp://@:1234
 </context>
 <context>
     <name>HotActionsPanel</name>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1836"/>
+        <source>Set contact</source>
+        <translation>Set contact</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1836"/>
+        <source>Cancel contact</source>
+        <translation>Cancel contact</translation>
+    </message>
     <message>
         <source>Open settings</source>
         <translation>Open settings</translation>
@@ -4006,11 +4007,6 @@ udp://@:1234
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1954"/>
-        <source>Set point of interest</source>
-        <translation>Set point of interest</translation>
-    </message>
-    <message>
         <location filename="../qml/scene2d/Plot2D.qml" line="1973"/>
         <source>Close</source>
         <translation>Close</translation>
@@ -4159,6 +4155,11 @@ udp://@:1234
 </context>
 <context>
     <name>QuickActionSettingsTab</name>
+    <message>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="22"/>
+        <source>Contact</source>
+        <translation>Contact</translation>
+    </message>
     <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="82"/>
         <source>Toggle which items appear and drag to reorder them.</source>
@@ -5680,18 +5681,18 @@ udp://@:1234
     </message>
     <message>
         <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Place a point of interest</source>
-        <translation>Place a point of interest</translation>
+        <source>Place a contact</source>
+        <translation>Place a contact</translation>
     </message>
     <message>
         <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Press and hold — opens the context menu</source>
-        <translation>Press and hold — opens the context menu</translation>
+        <source>Contact quick action, then tap the echogram or the 3D scene</source>
+        <translation>Contact quick action, then tap the echogram or the 3D scene</translation>
     </message>
     <message>
         <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Right-click — opens the context menu</source>
-        <translation>Right-click — opens the context menu</translation>
+        <source>Contact quick action, then left-click the echogram or the 3D scene</source>
+        <translation>Contact quick action, then left-click the echogram or the 3D scene</translation>
     </message>
     <message>
         <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>

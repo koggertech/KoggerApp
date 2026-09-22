@@ -108,6 +108,7 @@ property bool quickActionLayoutsEnabled: true
 property bool quickActionConnectionStatusEnabled: true
 property bool quickActionLoggingEnabled: true
 property bool quickActionBottomTrackEnabled: true
+property bool quickActionContactEnabled: true
 property bool quickActionProfilesEnabled: true
 property bool quickActionWidgetsEnabled: true
 property bool quickActionConsoleEnabled: true
@@ -128,7 +129,7 @@ function toggleInputLock() { setInputLocked(!inputLocked) }
 property string quickActionDraggingKey: ""
 
 readonly property var quickActionKeys: {
-    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "profiles", "inputLock"]
+    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "contact", "profiles", "inputLock"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
     if (Qt.platform.os === "linux" || (typeof manualTesting !== "undefined" && manualTesting === true))
@@ -143,6 +144,7 @@ property var quickActionOrderModel: ListModel {
     ListElement { key: "widgets" }
     ListElement { key: "console" }
     ListElement { key: "bottomTrack" }
+    ListElement { key: "contact" }
     ListElement { key: "profiles" }
     ListElement { key: "inputLock" }
     ListElement { key: "secondWindow" }
@@ -164,6 +166,8 @@ function normalizeQuickActionOrder(list) {
                 out.splice(out.indexOf("connections") + 1, 0, "logging")   // keep logging right after devices
             else if (quickActionKeys[j] === "console" && out.indexOf("widgets") !== -1)
                 out.splice(out.indexOf("widgets") + 1, 0, "console")   // keep console right after widgets
+            else if (quickActionKeys[j] === "contact" && out.indexOf("bottomTrack") !== -1)
+                out.splice(out.indexOf("bottomTrack") + 1, 0, "contact")   // keep the contact pin right after bottom-track editing
             else if (quickActionKeys[j] === "inputLock" && out.indexOf("secondWindow") !== -1)
                 out.splice(out.indexOf("secondWindow"), 0, "inputLock") // keep the lock right before the second window
             else
@@ -1684,8 +1688,9 @@ property Settings layoutStore: Settings {
     property bool quickActionConnectionStatusEnabledStored: true
     property bool quickActionLoggingEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
+    property bool quickActionContactEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
-    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,widgets,console,profiles,inputLock,secondWindow,powerOff"
+    property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,contact,widgets,console,profiles,inputLock,secondWindow,powerOff"
     property string rememberedLinksJson: "[]"
     property string selectedConnectionFilePathStored: ""
     property string layoutsJson: "[]"
@@ -3955,6 +3960,7 @@ function saveLayoutState() {
     layoutStore.quickActionConnectionStatusEnabledStored = quickActionConnectionStatusEnabled
     layoutStore.quickActionLoggingEnabledStored = quickActionLoggingEnabled
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
+    layoutStore.quickActionContactEnabledStored = quickActionContactEnabled
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
     layoutStore.quickActionWidgetsEnabledStored = quickActionWidgetsEnabled
     layoutStore.quickActionConsoleEnabledStored = quickActionConsoleEnabled
@@ -3975,6 +3981,7 @@ function restoreLayoutState() {
     quickActionConnectionStatusEnabled = layoutStore.quickActionConnectionStatusEnabledStored
     quickActionLoggingEnabled = layoutStore.quickActionLoggingEnabledStored
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
+    quickActionContactEnabled = layoutStore.quickActionContactEnabledStored
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
     quickActionWidgetsEnabled = layoutStore.quickActionWidgetsEnabledStored
     quickActionConsoleEnabled = layoutStore.quickActionConsoleEnabledStored

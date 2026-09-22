@@ -300,7 +300,7 @@ ApplicationWindow {
             }
             return false
         },
-        function() {  // 2D-only: Plot2D right-click menu + contact dialog
+        function() {  // 2D-only: Plot2D contact dialog
             if (root._activeLeafMode() !== "2D") return false
             var p = root._activePlot2D()
             if (!p || !p.hasTransientUi) return false
@@ -329,6 +329,11 @@ ApplicationWindow {
         function() {  // pane mode settings
             if (!workspaceStore.modeSettingsPanelOpen) return false
             workspaceStore.closeModeSettingsPanel()
+            return true
+        },
+        function() {  // armed "set contact" mode — Esc disarms it
+            if (typeof core === "undefined" || !core || !core.contactPlacementArmed) return false
+            core.setContactPlacementArmed(false)
             return true
         },
         function() {  // bottom-track edit palette — Esc closes it (resets tool)
@@ -956,6 +961,7 @@ ApplicationWindow {
             secondWindowButtonEnabled: workspaceStore.quickActionSecondWindowEnabled
             layoutEditing: root.hotkeysPreviewSticky
             bottomTrackEditorEnabled: workspaceStore.quickActionBottomTrackEnabled
+            contactEnabled: workspaceStore.quickActionContactEnabled
             profilesEnabled: workspaceStore.quickActionProfilesEnabled
             widgetsEnabled: workspaceStore.quickActionWidgetsEnabled
             consoleButtonEnabled: workspaceStore.quickActionConsoleEnabled

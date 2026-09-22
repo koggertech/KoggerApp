@@ -52,7 +52,7 @@ WaterFall {
                               : ((instrumentsGradeList && typeof instrumentsGradeList.currentIndex === "number")
                                  ? instrumentsGradeList.currentIndex : 0)
     property bool settingsOpen: plotCheckButton.checked
-    property bool hasTransientUi: menuBlock.visible || contactDialog.visible
+    property bool hasTransientUi: contactDialog.visible
     property bool loupeZoomAdjusting: false
     property bool loupeZoomWasVisibleBeforeAdjust: false
     property int loupeZoomSavedAimEpoch: -1
@@ -71,11 +71,6 @@ WaterFall {
     property bool externalInputRouting: false
     property int pointerLastMouseX: -1
     property int pointerLastMouseY: -1
-    property bool pointerWasMoved: false
-    property point pointerStartMousePos: Qt.point(-1, -1)
-    property real pointerMouseThreshold: 15
-    property int pointerContactMouseX: -1
-    property int pointerContactMouseY: -1
     property int pinchThresholdXAxis: 15
     property int pinchThresholdYAxis: 15
     property double pinchZoomThreshold: 0.1
@@ -190,11 +185,6 @@ WaterFall {
     function closeTransientUi() {
         let handled = false
 
-        if (menuBlock.visible) {
-            menuBlock.visible = false
-            handled = true
-        }
-
         if (contactDialog.visible) {
             contactDialog.visible = false
             handled = true
@@ -237,17 +227,14 @@ WaterFall {
         pointerLastMouseY = y
         forceActiveFocus()
 
-        if (mouseButton === Qt.RightButton) {
-            pointerContactMouseX = x
-            pointerContactMouseY = y
+        if (mouseButton === Qt.LeftButton && typeof core !== "undefined" && core && core.contactPlacementArmed) {
             plot.simplePlotMousePosition(x, y)
-
-            if (theme.instrumentsGrade !== 0) {
-                menuBlock.position(x, y)
-            }
+            contactDialog.x = x
+            contactDialog.y = y
+            contactDialog.indx = -1
+            contactDialog.isActive = false
+            contactDialog.visible = true
         }
-
-        pointerWasMoved = false
     }
 
     function handlePointerPress(mouseButton, buttons, x, y, keyboardKey) {
@@ -258,39 +245,16 @@ WaterFall {
         pointerLastMouseY = y
         forceActiveFocus()
 
-        if (Qt.platform.os === "android") {
-            pointerStartMousePos = Qt.point(x, y)
-            longPressTimer.start()
-        }
-
         if (mouseButton === Qt.LeftButton) {
-            menuBlock.visible = false
             plot.plotMousePosition(x, y)
             plotPressed(indx, x, y)
             if (typeof core !== "undefined" && core) core.requestDismissTransientUi()
         }
-
-        if (mouseButton === Qt.RightButton) {
-            pointerContactMouseX = x
-            pointerContactMouseY = y
-            plot.simplePlotMousePosition(x, y)
-        }
-
-        pointerWasMoved = false
     }
 
     function handlePointerMove(buttons, x, y, keyboardKey) {
         markMouseKeyboardInput()
         plot.onCursorMoved(x, y)
-
-        if (Qt.platform.os === "android") {
-            if (!pointerWasMoved) {
-                var currDelta = Math.sqrt(Math.pow((x - pointerStartMousePos.x), 2) + Math.pow((y - pointerStartMousePos.y), 2))
-                if (currDelta > pointerMouseThreshold) {
-                    pointerWasMoved = true
-                }
-            }
-        }
 
         pointerLastMouseX = x
         pointerLastMouseY = y
@@ -299,12 +263,6 @@ WaterFall {
             plot.plotMousePosition(x, y)
             plotPressed(indx, x, y)
         }
-
-        if (buttons & Qt.RightButton) {
-            pointerContactMouseX = x
-            pointerContactMouseY = y
-            plot.simplePlotMousePosition(x, y)
-        }
     }
 
     function handlePointerRelease(mouseButton, buttons, x, y, keyboardKey) {
@@ -312,22 +270,10 @@ WaterFall {
         pointerLastMouseX = -1
         pointerLastMouseY = -1
 
-        if (Qt.platform.os === "android") {
-            longPressTimer.stop()
-        }
-
         if (mouseButton === Qt.LeftButton) {
             plot.plotMousePosition(-1, -1)
         }
 
-        if (mouseButton === Qt.RightButton) {
-            pointerContactMouseX = x
-            pointerContactMouseY = y
-            plot.simplePlotMousePosition(x, y)
-        }
-
-        pointerWasMoved = false
-        pointerStartMousePos = Qt.point(-1, -1)
         plotReleased(indx)
     }
 
@@ -336,12 +282,6 @@ WaterFall {
         pointerLastMouseX = -1
         pointerLastMouseY = -1
 
-        if (Qt.platform.os === "android") {
-            longPressTimer.stop()
-        }
-
-        pointerWasMoved = false
-        pointerStartMousePos = Qt.point(-1, -1)
         plotReleased(indx)
     }
 
@@ -381,7 +321,6 @@ WaterFall {
     function handlePinchStarted(centerX, centerY) {
         markTouchInput()
         pinchActive = true
-        menuBlock.visible = false
         plot.plotMousePosition(-1, -1)
         clearPinchMovementState()
         pinchStartPos = Qt.point(centerX, centerY)
@@ -492,41 +431,19 @@ WaterFall {
 
             hoverEnabled: true
 
-            Timer {
-                id: longPressTimer
-                interval: 500
-                repeat: false
-                onTriggered: {
-                    if (Qt.platform.os === "android" && theme.instrumentsGrade !== 0 && !plot.pointerWasMoved) {
-                        plot.onCursorMoved(plot.pointerLastMouseX, plot.pointerLastMouseY)
-                        plot.pointerContactMouseX = plot.pointerLastMouseX
-                        plot.pointerContactMouseY = plot.pointerLastMouseY
-                        plot.simplePlotMousePosition(plot.pointerLastMouseX, plot.pointerLastMouseY)
-
-                        menuBlock.position(plot.pointerLastMouseX, plot.pointerLastMouseY)
-                    }
-                }
-            }
-
             onClicked: function(mouse) {
                 plot.handlePointerClick(mouse.button, mouse.buttons, mouse.x, mouse.y, Qt.Key_unknown)
             }
 
             onPressed: function(mouse) {
                 plot.handlePointerPress(mouse.button, mouse.buttons, mouse.x, mouse.y, Qt.Key_unknown)
-                if (Qt.platform.os === "android")
-                    longPressTimer.start()
             }
 
             onReleased: function(mouse) {
-                if (Qt.platform.os === "android")
-                    longPressTimer.stop()
                 plot.handlePointerRelease(mouse.button, mouse.buttons, mouse.x, mouse.y, Qt.Key_unknown)
             }
 
             onCanceled: {
-                if (Qt.platform.os === "android")
-                    longPressTimer.stop()
                 plot.handlePointerCancel()
             }
 
@@ -537,18 +454,6 @@ WaterFall {
             onWheel: function(wheel) {
                 plot.handlePointerWheel(wheel.buttons, wheel.x, wheel.y, wheel.angleDelta, wheel.modifiers, Qt.Key_unknown)
             }
-        }
-    }
-
-    onHeightChanged: {
-        if(menuBlock.visible) {
-            menuBlock.position(menuBlock.x, menuBlock.y)
-        }
-    }
-
-    onWidthChanged: {
-        if(menuBlock.visible) {
-            menuBlock.position(menuBlock.x, menuBlock.y)
         }
     }
 
@@ -1700,6 +1605,8 @@ WaterFall {
                 }
                 contactDialog.info = ""
                 contactDialog.inputFieldText = ""
+                if (contactDialog.indx === -1 && typeof core !== "undefined" && core && core.contactPlacementArmed)
+                    core.setContactPlacementArmed(false)
             }
         }
 
@@ -2058,79 +1965,6 @@ WaterFall {
                 plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
                 updateOtherPlot(indx)
                 syncTimeToOthers()
-            }
-        }
-    }
-
-    Rectangle {
-        id: menuBlock
-        visible: false
-        z: 60
-        width: menuRow.implicitWidth + 2 * Tokens.spaceXs
-        height: menuRow.implicitHeight + 2 * Tokens.spaceXs
-        radius: height / 2
-        color: AppPalette.bg
-        border.width: 0
-
-        function position(mx, my) {
-            var oy = plot.height - (my + height)
-            if (oy < 0)
-                my = my + oy
-            if (my < 0)
-                my = 0
-
-            var ox = plot.width - (mx + width)
-            if (ox < 0)
-                mx = mx + ox
-            if (mx < 0)
-                mx = 0
-
-            x = mx
-            y = my
-            visible = true
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.AllButtons
-            onPressed: function(mouse) { mouse.accepted = true }
-            onWheel: function(wheel) { wheel.accepted = true }
-        }
-
-        RowLayout {
-            id: menuRow
-            anchors.centerIn: parent
-            spacing: Tokens.spaceXs
-
-            KCircleIconButton {
-                Layout.preferredWidth: Tokens.controlHMd
-                Layout.preferredHeight: Tokens.controlHMd
-                iconSource: "qrc:/icons/ui/anchor.svg"
-                iconTintColor: AppPalette.text
-                fillColor: AppPalette.card
-                fillHoverColor: AppPalette.cardHover
-                borderColor: AppPalette.border
-                toolTipText: qsTr("Set point of interest")
-                onClicked: {
-                    contactDialog.x = plot.pointerContactMouseX
-                    contactDialog.y = plot.pointerContactMouseY
-                    contactDialog.indx = -1
-                    contactDialog.isActive = false
-                    contactDialog.visible = true
-                    menuBlock.visible = false
-                }
-            }
-
-            KCircleIconButton {
-                Layout.preferredWidth: Tokens.controlHMd
-                Layout.preferredHeight: Tokens.controlHMd
-                iconSource: "qrc:/icons/ui/x.svg"
-                iconTintColor: AppPalette.text
-                fillColor: AppPalette.card
-                fillHoverColor: AppPalette.cardHover
-                borderColor: AppPalette.border
-                onClicked: menuBlock.visible = false
             }
         }
     }

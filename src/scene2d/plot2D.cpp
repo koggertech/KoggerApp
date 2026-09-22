@@ -1160,6 +1160,7 @@ bool Plot2D::setContact(int indx, const QString& text)
     ep->contact_.info = text;
 
     if (primary) {
+        ep->contact_.source = Epoch::Contact::Source::Echogram2D;
         ep->contact_.cursorX = cursor_.contactX;
         ep->contact_.cursorY = cursor_.contactY;
 

@@ -31,10 +31,20 @@ public:
 
     struct ContactInfo {
         QString info;
-        float lat = 0.0f;
-        float lon = 0.0f;
+        double lat = 0.0;
+        double lon = 0.0;
         float depth = 0.0f;
         QVector3D nedPos;
+        Epoch::Contact::Source source = Epoch::Contact::Source::None;
+    };
+
+    struct PendingPlacement {
+        bool valid = false;
+        int epochIndx = -1;
+        QVector3D ned;
+        float depth = 0.0f;
+        double lat = 0.0;
+        double lon = 0.0;
     };
 
     /*structures*/
@@ -77,6 +87,7 @@ public:
     void setContactVisible(bool state);
     void clear();
     void setDatasetPtr(Dataset* datasetPtr);
+    void beginPlacement(int epochIndx, const QVector3D& ned, float depth, double lat, double lon, qreal screenX, qreal screenY);
 
     /*QObject*/
     bool eventFilter(QObject *watched, QEvent *event) final;
@@ -86,6 +97,8 @@ public slots:
     Q_INVOKABLE bool deleteContact(int indx);
     Q_INVOKABLE bool setActiveContact(int indx);
     Q_INVOKABLE void update();
+    Q_INVOKABLE void cancelPlacement();
+    void onContactsDepthUpdated(const QVector<int>& epochIndices);
 
 signals:
     void contactChanged();
@@ -101,10 +114,12 @@ protected:
 
 private:
     void setInterEpIndx(int indx);
+    bool commitPlacement(const QString& text);
 
     /*data*/
     QHash<int, QRectF> contactBounds_;
     Dataset* datasetPtr_;
+    PendingPlacement pending_;
 
     // qproperty
     bool contactVisible_ = false;

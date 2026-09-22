@@ -75,6 +75,7 @@ void Contacts::clear()
     depth_ = 0.0;
 
     contactBounds_.clear();
+    cancelPlacement();
     //datasetPtr_ = nullptr;
 
     auto* r = RENDER_IMPL(Contacts);
@@ -87,7 +88,130 @@ void Contacts::clear()
 
 void Contacts::setDatasetPtr(Dataset* datasetPtr)
 {
+    if (datasetPtr_ == datasetPtr) {
+        return;
+    }
+
+    if (datasetPtr_) {
+        disconnect(datasetPtr_, &Dataset::contactsDepthUpdated, this, &Contacts::onContactsDepthUpdated);
+    }
+
     datasetPtr_ = datasetPtr;
+
+    if (datasetPtr_) {
+        connect(datasetPtr_, &Dataset::contactsDepthUpdated, this, &Contacts::onContactsDepthUpdated);
+    }
+}
+
+void Contacts::beginPlacement(int epochIndx, const QVector3D& ned, float depth, double lat, double lon, qreal screenX, qreal screenY)
+{
+    pending_.valid = true;
+    pending_.epochIndx = epochIndx;
+    pending_.ned = ned;
+    pending_.depth = depth;
+    pending_.lat = lat;
+    pending_.lon = lon;
+
+    indx_ = -1;
+    positionX_ = static_cast<int>(screenX);
+    positionY_ = static_cast<int>(screenY);
+    info_.clear();
+    lat_ = lat;
+    lon_ = lon;
+    depth_ = depth;
+    contactVisible_ = true;
+
+    Q_EMIT contactChanged();
+}
+
+void Contacts::cancelPlacement()
+{
+    if (!pending_.valid) {
+        return;
+    }
+
+    pending_ = PendingPlacement();
+    contactVisible_ = false;
+    indx_ = -1;
+    info_.clear();
+
+    Q_EMIT contactChanged();
+}
+
+bool Contacts::commitPlacement(const QString& text)
+{
+    if (!pending_.valid || !datasetPtr_) {
+        return false;
+    }
+
+    auto* ep = datasetPtr_->fromIndex(pending_.epochIndx);
+    if (!ep) {
+        cancelPlacement();
+        return false;
+    }
+
+    auto& contact = ep->contact_;
+    contact.info = text;
+    contact.source = Epoch::Contact::Source::Scene3D;
+    contact.lat = pending_.lat;
+    contact.lon = pending_.lon;
+    contact.depth = pending_.depth;
+    contact.nedX = pending_.ned.x();
+    contact.nedY = pending_.ned.y();
+    contact.echogramDistance = datasetPtr_->contactEchogramDistance(*ep, contact.nedX, contact.nedY, contact.depth);
+    contact.rectEcho = QRectF();
+
+    ContactInfo cInfo;
+    cInfo.info = text;
+    cInfo.nedPos = { pending_.ned.x(), pending_.ned.y(), -pending_.depth };
+    cInfo.lat = contact.lat;
+    cInfo.lon = contact.lon;
+    cInfo.depth = contact.depth;
+    cInfo.source = contact.source;
+
+    auto* r = RENDER_IMPL(Contacts);
+    r->points_.insert(pending_.epochIndx, cInfo);
+
+    pending_ = PendingPlacement();
+    contactVisible_ = false;
+    indx_ = -1;
+    info_.clear();
+
+    emit datasetPtr_->dataUpdate();
+
+    Q_EMIT contactChanged();
+    Q_EMIT changed();
+
+    return true;
+}
+
+void Contacts::onContactsDepthUpdated(const QVector<int>& epochIndices)
+{
+    if (!datasetPtr_) {
+        return;
+    }
+
+    auto* r = RENDER_IMPL(Contacts);
+    bool updated = false;
+    for (int epIndx : epochIndices) {
+        auto it = r->points_.find(epIndx);
+        if (it == r->points_.end()) {
+            continue;
+        }
+
+        auto* ep = datasetPtr_->fromIndex(epIndx);
+        if (!ep || !ep->contact_.isValid()) {
+            continue;
+        }
+
+        it.value().depth = ep->contact_.depth;
+        it.value().nedPos.setZ(-ep->contact_.depth);
+        updated = true;
+    }
+
+    if (updated) {
+        Q_EMIT changed();
+    }
 }
 
 bool Contacts::eventFilter(QObject *watched, QEvent *event)
@@ -118,6 +242,7 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
                 cInfo.lat = contact.lat;
                 cInfo.lon = contact.lon;
                 cInfo.depth = contact.depth;
+                cInfo.source = contact.source;
 
                 r->points_.insert(epIndx, cInfo);
                 beenUpdated = true;
@@ -154,6 +279,10 @@ bool Contacts::setContact(int indx, const QString& text)
     if (text.isEmpty()) {
         qDebug() << "Contacts::setContact returned: text.isEmpty()";
         return false;
+    }
+
+    if (indx == -1) {
+        return commitPlacement(text);
     }
 
     auto* ep = datasetPtr_->fromIndex(indx);
@@ -251,6 +380,10 @@ void Contacts::update()
 void Contacts::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 {
     Q_UNUSED(buttons);
+
+    if (pending_.valid) {
+        return;
+    }
 
     int intersectedEpochIndx = -1;
     QPointF cursorPos(x, y);

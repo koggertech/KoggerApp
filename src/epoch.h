@@ -19,15 +19,20 @@ class Epoch
 {
 public:
     struct Contact {
+        enum class Source : uint8_t {
+            None = 0,
+            Echogram2D = 1,
+            Scene3D = 2,
+        };
+
         bool isValid() const {
             return !info.isEmpty() &&
-                   cursorX != -1 &&
-                   cursorY != -1;
+                   source != Source::None;
         }
         void clear() {
             info.clear();
-            lat      = 0.0f;
-            lon      = 0.0f;
+            lat      = 0.0;
+            lon      = 0.0;
             echogramDistance = 0.0f;
             depth    = 0.0f;
             nedX     = 0.0f;
@@ -35,11 +40,13 @@ public:
             cursorX  = -1;
             cursorY  = -1;
             rectEcho = QRectF();
+            source   = Source::None;
         }        
 
         QString info;
-        float   lat = 0.0f;
-        float   lon = 0.0f;
+        Source  source = Source::None;
+        double  lat = 0.0;
+        double  lon = 0.0;
         float   echogramDistance = 0.0f;
         float   depth = 0.0f;
         float   nedX = 0.0f;

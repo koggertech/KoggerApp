@@ -326,6 +326,7 @@ public:
     void setSyncEpochIndex(int epochIndex);
     void setEpochSyncEnabled(bool state);
     bool isEpochSyncEnabled() const { return epochSyncEnabled_; }
+    void setContactPlacementArmed(bool armed);
 
     void setActiveZeroing(bool state);
 
@@ -400,6 +401,7 @@ private:
     void updateForceSingleZoomAutoState();
     void refreshSyncLoupePreview();
     bool tryProjectScreenToPlane(qreal x, qreal y, float planeZ, QVector3D& outPoint) const;
+    bool placeContactAt(qreal x, qreal y);
     void zoomAroundScreenAnchor(qreal delta, const QPointF& anchorPos);
     void queueWheelZoom(qreal steps, const QPointF& anchorPos);
     void stepWheelZoom();
@@ -450,6 +452,7 @@ private:
     ActiveMode lastMode_ = ActiveMode::BottomTrackVertexSelectionMode;
     QRect m_comboSelectionRect = { 0, 0, 0, 0 };
     Ray m_ray;
+    bool contactPlacementArmed_ = false;
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* datasetPtr_ = nullptr;

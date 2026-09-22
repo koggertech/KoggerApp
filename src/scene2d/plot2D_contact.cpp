@@ -4,6 +4,8 @@
 
 #include <QPainterPath>
 
+#include <cmath>
+
 namespace {
 
 QPainterPath squarePointerCornerBox(const QRectF& r, qreal radius)
@@ -61,7 +63,9 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
             const float canvasHeight = canvas.height();
             float valueRange = cursor.distance.to - cursor.distance.from;
             float valueScale = canvasHeight / valueRange;
-            float yPos = (epoch->contact_.echogramDistance - cursor.distance.from) * valueScale;
+            const float echogramDistance = cursor.isChannelDoubled() ? epoch->contact_.echogramDistance
+                                                                     : std::fabs(epoch->contact_.echogramDistance);
+            float yPos = (echogramDistance - cursor.distance.from) * valueScale;
             bool intersects = false;
 
             auto& epRect = epoch->contact_.rectEcho;

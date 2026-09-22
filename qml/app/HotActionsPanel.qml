@@ -50,6 +50,16 @@ Item {
     readonly property bool _btEditRevealOverride: _revealActiveKey === "bottomTrack"
     readonly property bool showBtEdit: bottomTrackEditorEnabled || _btEditRevealOverride
     readonly property int btTool: (typeof core !== "undefined" && core) ? core.bottomTrackEditTool : 0
+    property bool contactEnabled: true
+    readonly property bool _contactRevealOverride: _revealActiveKey === "contact"
+    readonly property bool showContact: contactEnabled || _contactRevealOverride
+    readonly property bool contactArmed: (typeof core !== "undefined" && core) ? core.contactPlacementArmed : false
+    readonly property bool contactAvailable: _hasConnectedDevice
+                                             || (typeof core !== "undefined" && core && core.fileOpened)
+    onContactAvailableChanged: {
+        if (!contactAvailable && contactArmed && typeof core !== "undefined" && core)
+            core.setContactPlacementArmed(false)
+    }
     property bool profilesEnabled: true
     readonly property bool _profilesRevealOverride: _revealActiveKey === "profiles"
     readonly property bool showProfiles: profilesEnabled || _profilesRevealOverride
@@ -1821,6 +1831,31 @@ Item {
     }
 
     Component {
+        id: qaContactComp
+        KCircleIconButton {
+            id: contactBtn
+            readonly property bool _armed: root.contactArmed
+            width: root.controlHeight
+            height: root.controlHeight
+            iconSource: "qrc:/icons/ui/map-pin-plus.svg"
+            iconTintColor: AppPalette.text
+            enabled: _armed || root.contactAvailable
+            toolTipText: _armed ? qsTr("Cancel contact") : qsTr("Set contact")
+            fillColor:        _armed ? AppPalette.accentBgStrong : root.buttonFillColor
+            fillHoverColor:   _armed ? AppPalette.accentBorder : root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      _armed ? AppPalette.accentBorder : root.buttonBorderColor
+            borderHoverColor: _armed ? AppPalette.accentBorder : root.buttonHoverBorderColor
+            highlighted: root.highlightedQuickActionKey === "contact"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "contact"
+            onClicked: if (typeof core !== "undefined" && core) core.setContactPlacementArmed(!core.contactPlacementArmed)
+
+            KCloseBadge { visible: contactBtn._armed }
+        }
+    }
+
+    Component {
         id: qaProfilesComp
         KCircleIconButton {
             id: profilesBtn
@@ -2096,6 +2131,7 @@ Item {
                            : key === "logging"     ? root._loggingBadgeVisibleExpanded
                            : key === "layouts"   ? root.hasFavoriteLayouts
                            : key === "bottomTrack" ? root.showBtEdit
+                           : key === "contact"     ? root.showContact
                            : key === "widgets"     ? root.showWidgets
                            : key === "console"      ? root.showConsole
                            : key === "profiles"     ? root.showProfiles
@@ -2108,6 +2144,7 @@ Item {
                                    : key === "logging"      ? qaLoggingComp
                                    : key === "layouts"    ? qaFavoritesComp
                                    : key === "bottomTrack"  ? qaBottomTrackComp
+                                   : key === "contact"      ? qaContactComp
                                    : key === "widgets"      ? qaWidgetsComp
                                    : key === "console"      ? qaConsoleComp
                                    : key === "profiles"     ? qaProfilesComp

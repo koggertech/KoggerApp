@@ -178,7 +178,8 @@ Item {
             hoverEnabled: true
             preventStealing: false
             enabled: root.active && !overlay.pinchActive
-            cursorShape: Qt.ArrowCursor
+            cursorShape: ((root.paneKind === "2D" || root.paneKind === "3D")
+                          && typeof core !== "undefined" && core && core.contactPlacementArmed) ? Qt.CrossCursor : Qt.ArrowCursor
 
             onEntered: if (root.focusOnPointer) overlay.forceActiveFocus()
 

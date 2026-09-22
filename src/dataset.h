@@ -360,6 +360,9 @@ public:
 
     void setActiveContactIndx(int64_t indx);
     int64_t getActiveContactIndx() const;
+    Q_INVOKABLE QVariantList contactIndices() const;
+    Q_INVOKABLE QVariantMap contactAt(int epochIndx) const;
+    float contactEchogramDistance(Epoch& ep, float nedX, float nedY, float depth) const;
     void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
     QMap<int, QSet<TileKey>> traceTileKeysForEpoch(int epochIndx) const;
     friend class DataProcessor;
@@ -503,6 +506,7 @@ signals:
     void redrawEpochs(const QSet<int>& indxs);
     void lastPositionChanged();
     void activeContactChanged();
+    void contactsDepthUpdated(const QVector<int>& epochIndices);
     void lastDepthChanged();
     void speedChanged();
     void lastTempChanged();
@@ -571,6 +575,7 @@ protected:
     Epoch* addNewEpoch();
 
 private:
+    bool followContactDepth(Epoch& ep, float dist);
     friend class DataInterpolator;
 
     /*methods*/

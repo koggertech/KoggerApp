@@ -166,6 +166,11 @@ Item {
                 }
                 info = ""
                 inputFieldText = ""
+                if (indx === -1) {
+                    contacts.cancelPlacement()
+                    if (typeof core !== "undefined" && core && core.contactPlacementArmed)
+                        core.setContactPlacementArmed(false)
+                }
             }
         }
         onDeleteButtonClicked: contacts.deleteContact(indx)
@@ -332,6 +337,7 @@ Item {
     }
 
     readonly property bool hasTransientUi: contextMenu3D.visible
+                                         || contact3dPopup.visible
                                          || (root.scene3dView !== null && root.scene3dView.ruler
                                              && (root.scene3dView.ruler.drawing || root.scene3dView.ruler.enabled))
                                          || rightToolbar.geometryOpen
@@ -340,6 +346,10 @@ Item {
         // Context menu wins alone — ephemeral right-click popup.
         if (contextMenu3D.visible) {
             contextMenu3D.visible = false
+            return true
+        }
+        if (contact3dPopup.visible) {
+            contact3dPopup.visible = false
             return true
         }
         // Tools/panels — ruler reset + geometry collapse together. The

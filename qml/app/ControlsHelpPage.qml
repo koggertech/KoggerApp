@@ -38,9 +38,9 @@ Column {
         }
 
         KIslandRow {
-            label: qsTr("Place a point of interest")
-            caption: page.touch ? qsTr("Press and hold — opens the context menu")
-                                : qsTr("Right-click — opens the context menu")
+            label: qsTr("Place a contact")
+            caption: page.touch ? qsTr("Contact quick action, then tap the echogram or the 3D scene")
+                                : qsTr("Contact quick action, then left-click the echogram or the 3D scene")
         }
 
         KIslandRow {

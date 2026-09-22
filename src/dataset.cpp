@@ -1312,6 +1312,7 @@ QStringList Dataset::channelsNameList()
 void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist)
 {
     bool settedChart = false;
+    bool contactUpdated = false;
 
     {
         QWriteLocker wl(&poolMtx_);
@@ -1333,6 +1334,14 @@ void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist
                 }
             }
         }
+
+        if (settedChart && firstChannelId_.channelId_ == channelId) {
+            contactUpdated = followContactDepth(ep, dist);
+        }
+    }
+
+    if (contactUpdated) {
+        emit contactsDepthUpdated(QVector<int>{ epIndx });
     }
 
     if (settedChart) {
@@ -1358,6 +1367,7 @@ void Dataset::onDistCompletedBatch(const QVector<BottomTrackUpdate>& updates)
     bool haveDepth = false;
     float lastDepth = NAN;
     int maxCompIndx = -1;
+    QVector<int> contactIndices;
 
     {
         QWriteLocker wl(&poolMtx_);
@@ -1393,12 +1403,20 @@ void Dataset::onDistCompletedBatch(const QVector<BottomTrackUpdate>& updates)
                 continue;
             }
 
+            if (followContactDepth(ep, update.distance)) {
+                contactIndices.append(update.epochIndex);
+            }
+
             const int guardInterval = bottomTrackParam_.windowSize;
             const int compIndx = update.epochIndex > guardInterval ? update.epochIndex - guardInterval : update.epochIndex;
             if (compIndx > maxCompIndx) {
                 maxCompIndx = compIndx;
             }
         }
+    }
+
+    if (!contactIndices.isEmpty()) {
+        emit contactsDepthUpdated(contactIndices);
     }
 
     if (haveDepth) {
@@ -1410,6 +1428,92 @@ void Dataset::onDistCompletedBatch(const QVector<BottomTrackUpdate>& updates)
         emit bottomTrackAdded(maxCompIndx);
     }
 }
+
+bool Dataset::followContactDepth(Epoch& ep, float dist)
+{
+    auto& contact = ep.contact_;
+    if (!contact.isValid() || contact.source != Epoch::Contact::Source::Scene3D || !std::isfinite(dist)) {
+        return false;
+    }
+
+    contact.depth = dist;
+    contact.echogramDistance = contactEchogramDistance(ep, contact.nedX, contact.nedY, dist);
+    return true;
+}
+
+float Dataset::contactEchogramDistance(Epoch& ep, float nedX, float nedY, float depth) const
+{
+    const auto& sonarNed = ep.getSonarPositionCRef().ned;
+    const auto gnssNed = ep.getPositionGNSS().ned;
+    const double originN = std::isfinite(sonarNed.n) ? sonarNed.n : gnssNed.n;
+    const double originE = std::isfinite(sonarNed.e) ? sonarNed.e : gnssNed.e;
+    if (!std::isfinite(originN) || !std::isfinite(originE) || !std::isfinite(nedX) || !std::isfinite(nedY)) {
+        return depth;
+    }
+
+    const double dN = static_cast<double>(nedX) - originN;
+    const double dE = static_cast<double>(nedY) - originE;
+    const double horizontal = std::hypot(dN, dE);
+    if (horizontal < 1e-3) {
+        return depth;
+    }
+
+    const float yawDeg = ep.tryRetValidYaw();
+    double range = horizontal;
+    bool goRight = true;
+    if (std::isfinite(yawDeg)) {
+        const double yawRad = qDegreesToRadians(static_cast<double>(yawDeg));
+        goRight = (std::cos(yawRad) * dE - std::sin(yawRad) * dN) > 0.0;
+        const double beamAz = goRight ? yawRad + M_PI_2 - qDegreesToRadians(static_cast<double>(rAngleOffset_))
+                                      : yawRad - M_PI_2 + qDegreesToRadians(static_cast<double>(lAngleOffset_));
+        const double projected = dN * std::cos(beamAz) + dE * std::sin(beamAz);
+        if (projected > 0.0) {
+            range = projected;
+        }
+    }
+
+    const double slant = std::hypot(range, static_cast<double>(std::isfinite(depth) ? depth : 0.0f));
+    return static_cast<float>(goRight ? slant : -slant);
+}
+
+QVariantList Dataset::contactIndices() const
+{
+    QVariantList result;
+    QReadLocker rl(&poolMtx_);
+    for (int i = 0; i < pool_.size(); ++i) {
+        if (pool_[i].contact_.isValid()) {
+            result.append(i);
+        }
+    }
+    return result;
+}
+
+QVariantMap Dataset::contactAt(int epochIndx) const
+{
+    QVariantMap result;
+    QReadLocker rl(&poolMtx_);
+    if (epochIndx < 0 || epochIndx >= pool_.size()) {
+        return result;
+    }
+
+    const auto& contact = pool_[epochIndx].contact_;
+    if (!contact.isValid()) {
+        return result;
+    }
+
+    result.insert(QStringLiteral("epoch"), epochIndx);
+    result.insert(QStringLiteral("info"), contact.info);
+    result.insert(QStringLiteral("lat"), contact.lat);
+    result.insert(QStringLiteral("lon"), contact.lon);
+    result.insert(QStringLiteral("depth"), static_cast<double>(contact.depth));
+    result.insert(QStringLiteral("echogramDistance"), static_cast<double>(contact.echogramDistance));
+    result.insert(QStringLiteral("nedX"), static_cast<double>(contact.nedX));
+    result.insert(QStringLiteral("nedY"), static_cast<double>(contact.nedY));
+    result.insert(QStringLiteral("source"), static_cast<int>(contact.source));
+    result.insert(QStringLiteral("active"), activeContactIndx_ == epochIndx);
+    return result;
+}
+
 void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll)
 {
     bottomTrackParam_ = btP;

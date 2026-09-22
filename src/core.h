@@ -85,6 +85,7 @@ public:
     Q_PROPERTY(bool              needForceZooming             READ getNeedForceZooming             WRITE setNeedForceZooming NOTIFY needForceZoomingChanged)
     Q_PROPERTY(bool              posZeroing                   READ getPosZeroing                   NOTIFY posZeroingChanged)
     Q_PROPERTY(int               bottomTrackEditTool          READ getBottomTrackEditTool          WRITE setBottomTrackEditTool          NOTIFY bottomTrackEditToolChanged)
+    Q_PROPERTY(bool              contactPlacementArmed        READ getContactPlacementArmed        WRITE setContactPlacementArmed        NOTIFY contactPlacementArmedChanged)
 
     MosaicIndexProvider* getMosaicIndexProviderPtr();
     void setEngine(QQmlApplicationEngine *engine);
@@ -210,6 +211,8 @@ public slots:
     bool getPosZeroing() const { return isActiveZeroing_; }
     int  getBottomTrackEditTool() const { return bottomTrackEditTool_; }
     Q_INVOKABLE void setBottomTrackEditTool(int tool);
+    bool getContactPlacementArmed() const { return contactPlacementArmed_; }
+    Q_INVOKABLE void setContactPlacementArmed(bool armed);
     Q_INVOKABLE bool getIsFileOpening() const;
     Q_INVOKABLE bool getIsAppendMode() const;
     Q_INVOKABLE QString getFileTitle() const;
@@ -284,6 +287,7 @@ signals:
     void mapTileLoadingEnabledChanged();
     void posZeroingChanged();
     void bottomTrackEditToolChanged();
+    void contactPlacementArmedChanged();
     void languageChanged();
 
 #ifdef SEPARATE_READING
@@ -428,6 +432,7 @@ private:
     bool isActiveZeroing_;
     bool isBottomTrackZeroing_;
     int  bottomTrackEditTool_ = 0;
+    bool contactPlacementArmed_ = false;
 
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)

@@ -880,6 +880,17 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
         return;
     }
 
+    if (contactPlacementArmed_) {
+        if (!wasMoved_ && mouseButton.testFlag(Qt::LeftButton)) {
+            placeContactAt(x, y);
+        }
+
+        switchedToBottomTrackVertexComboSelectionMode_ = false;
+        wasMoved_ = false;
+        wasMovedMouseButton_ = Qt::MouseButton::NoButton;
+        return;
+    }
+
     if (switchedToBottomTrackVertexComboSelectionMode_) {
         m_mode = lastMode_;
         m_bottomTrack->mouseReleaseEvent(mouseButton, x, y);
@@ -1173,6 +1184,85 @@ QObject* GraphicsScene3dView::ruler() const
 void GraphicsScene3dView::setRulerEnabled(bool enabled)
 {
     ruler_->setEnabled(enabled);
+}
+
+void GraphicsScene3dView::setContactPlacementArmed(bool armed)
+{
+    if (contactPlacementArmed_ == armed) {
+        return;
+    }
+
+    contactPlacementArmed_ = armed;
+    if (!armed && contacts_) {
+        contacts_->cancelPlacement();
+    }
+
+    QQuickFramebufferObject::update();
+}
+
+bool GraphicsScene3dView::placeContactAt(qreal x, qreal y)
+{
+    if (!contacts_ || !datasetPtr_ || !m_camera) {
+        return false;
+    }
+
+    const QRect viewport = boundingRect().toRect();
+    const auto rayOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, viewport);
+    const auto rayEnd = QVector3D(x, height() - y, 1.0f).unproject(m_camera->m_view * m_model, m_projection, viewport);
+    Ray ray;
+    ray.setOrigin(rayOrig);
+    ray.setDirection((rayEnd - rayOrig).normalized());
+
+    int epochIndx = -1;
+    float depth = 0.0f;
+    QVector3D fallback;
+    bool haveFallback = false;
+
+    if (m_bottomTrack && !m_bottomTrack->cdata().isEmpty()) {
+        const auto hits = ray.hitObject(m_bottomTrack, Ray::HittingMode::Vertex);
+        if (!hits.isEmpty()) {
+            epochIndx = m_bottomTrack->vertex2Epoch_.value(hits.first().indices().first, -1);
+            fallback = hits.first().worldIntersection();
+            haveFallback = true;
+            if (std::isfinite(fallback.z()) && fallback.z() < 0.0f) {
+                depth = -fallback.z();
+            }
+        }
+    }
+
+    if (epochIndx < 0 && boatTrack_ && !boatTrack_->cdata().isEmpty()) {
+        const auto hits = ray.hitObject(boatTrack_, Ray::HittingMode::Vertex);
+        if (!hits.isEmpty()) {
+            epochIndx = hits.first().indices().first;
+            fallback = hits.first().worldIntersection();
+            haveFallback = true;
+        }
+    }
+
+    auto* epoch = datasetPtr_->fromIndex(epochIndx);
+    if (!epoch) {
+        return false;
+    }
+
+    if (depth <= 0.0f) {
+        const double bottomDepth = epoch->distProccesing();
+        depth = std::isfinite(bottomDepth) ? static_cast<float>(bottomDepth) : 0.0f;
+    }
+
+    QVector3D ned;
+    if (!tryProjectScreenToPlane(x, y, -depth, ned)) {
+        if (!haveFallback) {
+            return false;
+        }
+        ned = fallback;
+    }
+    ned.setZ(-depth);
+
+    const GeoJsonCoord geo = sceneToGeojson(ned);
+    contacts_->beginPlacement(epochIndx, ned, depth, geo.lat, geo.lon, x, y);
+    QQuickFramebufferObject::update();
+
+    return true;
 }
 
 void GraphicsScene3dView::setGeoJsonEnabled(bool enabled)

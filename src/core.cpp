@@ -1530,7 +1530,6 @@ static const CsvFieldDef kCsvFieldDefs[] = {
     {"sonar_height",     true},
     {"bottom_height",    true},
     {"contact_info",     true},
-    {"contact_distance", true},
 };
 }
 
@@ -1621,7 +1620,6 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     bool ext_pos_ned_find = false;
 
     bool contactInfo     = csvExportFieldEnabled("contact_info");
-    bool contactDistance = csvExportFieldEnabled("contact_distance");
 
     int row_cnt = datasetPtr_->size();
 
@@ -1677,14 +1675,17 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     if (bottom_height)
         logger_.dataExport("BottomHeight,");
 
+    QStringList tailHeader;
     if (contactInfo) {
-        logger_.dataExport("ContactTitle,");
-    }
-    if (contactDistance) {
-        logger_.dataExport(rangefinder ? "ContactDistance," : "ContactDistance");
+        tailHeader << QStringLiteral("ContactTitle")
+                   << QStringLiteral("ContactLatitude") << QStringLiteral("ContactLongitude")
+                   << QStringLiteral("ContactDepth") << QStringLiteral("ContactSource");
     }
     if (rangefinder) {
-        logger_.dataExport("Rangefinder");
+        tailHeader << QStringLiteral("Rangefinder");
+    }
+    if (!tailHeader.isEmpty()) {
+        logger_.dataExport(tailHeader.join(QLatin1Char(',')));
     }
 
     logger_.dataExport("\n");
@@ -1831,29 +1832,25 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
             row_data.append(",");
         }
 
-        auto& contact = epoch->contact_;
-        if (contact.isValid()) {
-            if (contactInfo) {
-                row_data.append(contact.info);
-                row_data.append(",");
-            }
-            if (contactDistance) {
-                row_data.append(QString::number(contact.echogramDistance, 'f', 4));
-                if (rangefinder) {
-                    row_data.append(",");
-                }
-            }
-        } else if (rangefinder) {
-            if (contactInfo) row_data.append(",");
-            if (contactDistance) row_data.append(",");
-        }
-
-        if (rangefinder) {
-            if (epoch->distAvail()) {
-                row_data.append(QString::number((float)epoch->rangeFinder()));
+        const auto& contact = epoch->contact_;
+        const bool hasContact = contact.isValid();
+        QStringList tailRow;
+        if (contactInfo) {
+            if (hasContact) {
+                tailRow << contact.info
+                        << QString::number(contact.lat, 'f', 8)
+                        << QString::number(contact.lon, 'f', 8)
+                        << QString::number(contact.depth, 'f', 3)
+                        << (contact.source == Epoch::Contact::Source::Scene3D ? QStringLiteral("3D") : QStringLiteral("2D"));
             } else {
-                row_data.append("0");
+                tailRow << QString() << QString() << QString() << QString() << QString();
             }
+        }
+        if (rangefinder) {
+            tailRow << (epoch->distAvail() ? QString::number((float)epoch->rangeFinder()) : QStringLiteral("0"));
+        }
+        if (!tailRow.isEmpty()) {
+            row_data.append(tailRow.join(QLatin1Char(',')));
         }
 
         row_data.append("\n");
@@ -2676,6 +2673,27 @@ void Core::setBottomTrackEditTool(int tool)
     }
     bottomTrackEditTool_ = tool;
     emit bottomTrackEditToolChanged();
+}
+
+void Core::setContactPlacementArmed(bool armed)
+{
+    if (contactPlacementArmed_ == armed) {
+        return;
+    }
+    contactPlacementArmed_ = armed;
+
+    if (armed) {
+        setBottomTrackEditTool(0);
+        if (scene3dViewPtr_) {
+            scene3dViewPtr_->setRulerEnabled(false);
+        }
+    }
+
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setContactPlacementArmed(armed);
+    }
+
+    emit contactPlacementArmedChanged();
 }
 
 void Core::setBottomTrackZeroing(bool state)

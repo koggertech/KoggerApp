@@ -637,7 +637,7 @@ int main(int argc, char *argv[])
                     "MapViewControlMenuController", "PointGroupControlMenuController",
                     "PolygonGroupControlMenuController", "MpcFilterControlMenuController",
                     "NpdFilterControlMenuController", "Scene3DControlMenuController",
-                    "Scene3dToolBarController", "hotkeysController"};
+                    "Scene3dToolBarController", "hotkeysController", "contacts"};
                 for (const char* name : kSceneControllerRoots) {
                     const QString key = QString::fromLatin1(name);
                     if (auto* obj = engine.rootContext()->contextProperty(key).value<QObject*>()) {
