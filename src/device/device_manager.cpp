@@ -15,6 +15,7 @@ DeviceManager::DeviceManager()
       progress_(0),
       isConsoled_(false),
       nmeaConsoled_(true),
+      mavlinkConsoled_(false),
       break_(false),
       upgradeUuid_(QUuid()),
       upgradeAddr_(0)
@@ -418,7 +419,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     }
                 }
 #ifndef SEPARATE_READING
-                core.consoleProtoText(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+                if (mavlinkConsoled_) {
+                    core.consoleProtoText(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+                }
 #endif
             }
             else {
@@ -636,6 +639,11 @@ void DeviceManager::setProtoBinConsoled(bool isConsoled)
 void DeviceManager::setNmeaConsoled(bool isConsoled)
 {
     nmeaConsoled_ = isConsoled;
+}
+
+void DeviceManager::setMavlinkConsoled(bool isConsoled)
+{
+    mavlinkConsoled_ = isConsoled;
 }
 
 void DeviceManager::upgradeLastDev(QByteArray data)

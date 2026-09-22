@@ -57,6 +57,7 @@ public slots:
     void binFrameOut(Parsers::ProtoBinOut protoOut);
     void setProtoBinConsoled(bool isConsoled);
     void setNmeaConsoled(bool isConsoled);
+    void setMavlinkConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
 
     void beaconActivationReceive(uint8_t id);
@@ -189,6 +190,7 @@ private:
     int progress_;
     bool isConsoled_;
     bool nmeaConsoled_;
+    bool mavlinkConsoled_;
     volatile bool break_;
 #ifdef SEPARATE_READING
     bool onOpen_{ false };

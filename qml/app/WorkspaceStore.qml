@@ -1496,6 +1496,7 @@ property Settings consolePersist: Settings {
     property int consFontSize: 13
     property bool protoBinConsoled: false
     property bool nmeaConsoled: true
+    property bool mavlinkConsoled: false
 }
 
 property alias consoleColorize: consolePersist.consColorize
@@ -1509,6 +1510,7 @@ readonly property int consoleMaxRowsMax: 4000
 readonly property int consoleMaxRowsDefault: 1500
 property alias consoleProtoBin: consolePersist.protoBinConsoled
 property alias consoleNmea: consolePersist.nmeaConsoled
+property alias consoleMavlink: consolePersist.mavlinkConsoled
 
 function applyConsoleMaxRows() {
     if (typeof core !== "undefined" && core)
@@ -1520,11 +1522,13 @@ function applyConsoleProtoToggles() {
         return
     deviceManagerWrapper.setProtoBinConsoled(consoleProtoBin)
     deviceManagerWrapper.setNmeaConsoled(consoleNmea)
+    deviceManagerWrapper.setMavlinkConsoled(consoleMavlink)
 }
 
 onConsoleMaxRowsChanged: applyConsoleMaxRows()
 onConsoleProtoBinChanged: applyConsoleProtoToggles()
 onConsoleNmeaChanged: applyConsoleProtoToggles()
+onConsoleMavlinkChanged: applyConsoleProtoToggles()
 
 property Settings exportPersist: Settings {
     id: exportPersist

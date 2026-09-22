@@ -87,6 +87,24 @@ Column {
                 }
             }
         }
+
+        KIslandRow {
+            label: qsTr("MAVLink frames")
+            toolTipText: qsTr("Log MAVLink frames received from the device")
+            interactive: true
+            onClicked: mavlinkSwitch.click()
+
+            KSwitch {
+                id: mavlinkSwitch
+                flat: true
+                checked: page.store ? page.store.consoleMavlink : false
+                onToggled: {
+                    if (page.store)
+                        page.store.consoleMavlink = checked
+                    checked = Qt.binding(function() { return page.store ? page.store.consoleMavlink : false })
+                }
+            }
+        }
     }
 
     Column {
