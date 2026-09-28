@@ -34,6 +34,8 @@ public:
     Q_INVOKABLE void onScaleBarButtonChanged(bool state);
     Q_INVOKABLE void onShadowsEnabledChanged(bool state);
     Q_INVOKABLE void onUsblLayerVisibilityChanged(bool state);
+    Q_INVOKABLE void onUsblBeaconTrackDotsChanged(bool state);
+    Q_INVOKABLE void onUsblHeadTrackDotsChanged(bool state);
     Q_INVOKABLE void onShadowVectorXChanged(float value);
     Q_INVOKABLE void onShadowVectorYChanged(float value);
     Q_INVOKABLE void onShadowVectorZChanged(float value);
@@ -83,6 +85,8 @@ private:
     bool scaleBar_;
     bool shadowsEnabled_;
     bool usblLayerVisible_;
+    bool usblBeaconTrackDots_;
+    bool usblHeadTrackDots_;
     float shadowVectorX_;
     float shadowVectorY_;
     float shadowVectorZ_;

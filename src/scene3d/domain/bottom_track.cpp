@@ -32,7 +32,12 @@ bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
     }
     auto* epochEvent = dynamic_cast<EpochEvent*>(event);
     if (epochEvent && epochEvent->eventTypeId() == static_cast<int>(EpochSelected2d)) {
-        resetVertexSelection();
+        // Only the highlight, NOT the scene's synced epoch. selectEpoch() below returns early on
+        // four separate conditions -- no bottom-track vertex for that epoch, a channel other than
+        // the visible one, and so on -- and this filter runs LAST of the three installed on the
+        // plot, so clearing the shared epoch here made this layer's inability to show a selection
+        // cancel everyone else's. With the bottom track empty that is every selection there is.
+        clearVertexHighlight();
         selectEpoch(epochEvent->epochIndex(), epochEvent->channel().channelId_);
     }
     return false;
@@ -214,10 +219,15 @@ void BottomTrack::clearData()
 
 void BottomTrack::resetVertexSelection()
 {
-    RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
+    clearVertexHighlight();
     if (m_view) {
         m_view->setSyncEpochIndex(-1);
     }
+}
+
+void BottomTrack::clearVertexHighlight()
+{
+    RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
 }
 
 //void BottomTrack::setVisibleChannel(const ChannelId& channelId)

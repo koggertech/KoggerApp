@@ -15,6 +15,8 @@ Column {
     required property var store
     property var targetPlot: null
     property var echograms: []
+    // The USBL plan, for the layer's node list. Owned in MainWindow for the session.
+    property var usblPlan: null
 
     readonly property int instruments: theme ? theme.instrumentsGrade : 0
     readonly property real groupWidth: Math.max(0, width)
@@ -184,6 +186,22 @@ Column {
             return root.store ? root.store.exportFolderSource : ""
         }
 
+        // How many epochs of the opened .klf can be cut on. 0 hides the fragment block entirely:
+        // with no file open there is nothing to cut, and a permanently disabled row would only be
+        // something to wonder about.
+        readonly property int klfEpochCount: (typeof core !== "undefined" && core) ? core.klfEpochIndexSize : 0
+        readonly property real klfSpinWidth: Math.round(104 * AppPalette.scale)
+        readonly property real klfSlotWidth: Math.round(120 * AppPalette.scale)
+
+        // Deferred, because `to` on both spin boxes is bound to the same count: setting a value
+        // in the same pass that grows the range can be clamped by a bound that has not updated
+        // yet, which would silently reset the bounds to 0.
+        onKlfEpochCountChanged: Qt.callLater(exportGroup.resetKlfFragmentBounds)
+        function resetKlfFragmentBounds() {
+            klfFragmentFrom.value = 0
+            klfFragmentTo.value = Math.max(0, exportGroup.klfEpochCount - 1)
+        }
+
         // Path row
         Row {
             width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
@@ -277,6 +295,69 @@ Column {
                 label: qsTr("USBL to CSV")
                 interactive: true
                 onClicked: core.exportUSBLToCSV(exportGroup.currentExportPath())
+            }
+        }
+
+        // Cutting a stretch of epochs out of the opened .klf into a .klf of its own. A log is a
+        // plain run of frames, so the fragment is the byte range those epochs occupy, preceded by
+        // the last setup frame of each kind from before it -- the frames themselves are the
+        // device's originals, nothing is re-encoded and no checksum is recomputed.
+        KIsland {
+            visible: exportGroup.klfEpochCount > 0
+
+            KIslandRow {
+                label: qsTr("Fragment: first epoch")
+                slotWidth: exportGroup.klfSlotWidth
+
+                KSpinBox {
+                    id: klfFragmentFrom
+                    width: exportGroup.klfSpinWidth
+                    height: Tokens.controlHMd
+                    from: 0
+                    to: Math.max(0, exportGroup.klfEpochCount - 1)
+                    stepSize: 1
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Fragment: last epoch")
+                slotWidth: exportGroup.klfSlotWidth
+
+                KSpinBox {
+                    id: klfFragmentTo
+                    width: exportGroup.klfSpinWidth
+                    height: Tokens.controlHMd
+                    from: 0
+                    to: Math.max(0, exportGroup.klfEpochCount - 1)
+                    stepSize: 1
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Take the echogram's visible range")
+                toolTipText: qsTr("Fill the bounds with the first and last epoch the echogram is showing")
+                interactive: true
+                enabled: !!root.targetPlot
+                onClicked: {
+                    if (!root.targetPlot)
+                        return
+                    var a = root.targetPlot.firstVisibleEpochIndex()
+                    var b = root.targetPlot.lastVisibleEpochIndex()
+                    if (a < 0 || b < 0)
+                        return
+                    klfFragmentFrom.value = Math.min(a, b)
+                    klfFragmentTo.value = Math.max(a, b)
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Save KLF fragment")
+                caption: qsTr("%1 of %2 epochs")
+                            .arg(Math.max(0, klfFragmentTo.value - klfFragmentFrom.value + 1))
+                            .arg(exportGroup.klfEpochCount)
+                interactive: true
+                onClicked: core.exportKlfFragment(klfFragmentFrom.value, klfFragmentTo.value,
+                                                  exportGroup.currentExportPath())
             }
         }
     }
@@ -2113,9 +2194,163 @@ Column {
             active: root.store ? root.store.usblVisible : false
             onClicked: if (root.store) root.store.usblVisible = !root.store.usblVisible
         }
-        expandable: false   // no body controls — header + description only
         collapsedByDefault: true
 
+        // Two choices about the SAME tracks, kept apart because the two things they describe move
+        // differently: a beacon that mostly sits still reads better as dots, a boat as a line.
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceSm
+
+            KIslandRow {
+                label: qsTr("Beacon tracks")
+                toolTipText: qsTr("Draw each beacon's track as a continuous line, or as a dot at every fix")
+                slotWidth: Math.round(190 * AppPalette.scale)
+
+                KTabBar {
+                    buttonHeight: Tokens.controlHSm
+                    fontPixelSize: Tokens.fontSm
+                    trackColor: AppPalette.bgDeep
+                    options: [
+                        { label: qsTr("Line"), value: false },
+                        { label: qsTr("Dots"), value: true }
+                    ]
+                    currentValue: !!(root.store && root.store.usblBeaconTrackDots)
+                    onValueSelected: function(v) { if (root.store) root.store.usblBeaconTrackDots = v }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("USBL track")
+                toolTipText: qsTr("Draw the acoustic head's own track as a continuous line, or as a dot at every fix")
+                slotWidth: Math.round(190 * AppPalette.scale)
+
+                KTabBar {
+                    buttonHeight: Tokens.controlHSm
+                    fontPixelSize: Tokens.fontSm
+                    trackColor: AppPalette.bgDeep
+                    options: [
+                        { label: qsTr("Line"), value: false },
+                        { label: qsTr("Dots"), value: true }
+                    ]
+                    currentValue: !!(root.store && root.store.usblHeadTrackDots)
+                    onValueSelected: function(v) { if (root.store) root.store.usblHeadTrackDots = v }
+                }
+            }
+        }
+
+        // One row per node the layer could draw: the plan's own, plus the addresses adopted from
+        // an opened file. The switch is the node's `active`, which is what mapSpec() already
+        // filters on -- so this list IS what the map shows, not a second opinion about it.
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceSm
+
+            Text {
+                width: parent.width
+                visible: usblNodeRows.count === 0
+                // Not "they appear when a beacon answers": a live session's plan is deliberately
+                // never grown by an answer, and saying otherwise sends the operator away to wait
+                // for something that will not happen.
+                text: qsTr("No acoustic nodes yet. Open a file containing beacon fixes, or add an address below.")
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontSm
+                wrapMode: Text.WordWrap
+            }
+
+            Repeater {
+                id: usblNodeRows
+                model: root.usblPlan ? root.usblPlan.nodes : []
+
+                KIslandRow {
+                    required property var modelData
+                    label: qsTr("Address %1").arg(modelData.addr)
+                    // The identity colour, the same one the beacon is drawn with on the map.
+                    labelColor: DataFieldCatalog.usblAddressColor(modelData.addr)
+                    caption: modelData.fromFile ? qsTr("detected in the opened file")
+                                                : qsTr("from the interrogation plan")
+                    interactive: true
+                    onClicked: usblNodeSwitch.click()
+
+                    KSwitch {
+                        id: usblNodeSwitch
+                        flat: true
+                        checked: modelData.active !== false
+                        onToggled: {
+                            if (root.usblPlan)
+                                root.usblPlan.toggleNode(modelData.id)
+                            checked = Qt.binding(function() { return modelData.active !== false })
+                        }
+                    }
+                }
+            }
+
+            // Addresses no node carries yet. Beacon 0 is the case that forced this: a file's
+            // addresses are adopted on open, but a live session's plan is the operator's own and
+            // is deliberately never grown by a beacon answering -- so with a device connected the
+            // only node at 0 is one somebody put there, and until now the only way to put it there
+            // was the USBL panel's add-then-retype.
+            //
+            // This adds a plan node and nothing else. No byte reaches the device until Apply, and
+            // no address is interrogated until the schedule is started; both live in the USBL
+            // panel. What changes here is what the map is allowed to draw.
+            Column {
+                width: parent.width
+                spacing: Tokens.spaceXs
+                visible: usblAddableChips.count > 0
+
+                Text {
+                    width: parent.width
+                    text: qsTr("Add an address the plan does not name yet")
+                    color: AppPalette.textMuted
+                    font.pixelSize: Tokens.fontXs
+                    wrapMode: Text.WordWrap
+                }
+
+                Flow {
+                    width: parent.width
+                    spacing: Tokens.spaceSm
+
+                    Repeater {
+                        id: usblAddableChips
+                        model: root.usblPlan ? root.usblPlan.addableAddresses : []
+
+                        Rectangle {
+                            id: usblAddChip
+                            required property var modelData
+
+                            implicitWidth: Math.round(44 * AppPalette.scale)
+                            implicitHeight: Tokens.controlHSm
+                            radius: Tokens.radiusSm
+                            color: usblAddChipArea.containsMouse ? AppPalette.cardHover : "transparent"
+                            border.width: Math.max(1, Math.round(1 * AppPalette.scale))
+                            border.color: AppPalette.border
+
+                            Text {
+                                anchors.centerIn: parent
+                                // The identity colour the beacon will be drawn in, so the chip
+                                // already looks like the thing it creates.
+                                text: "+ " + usblAddChip.modelData
+                                color: DataFieldCatalog.usblAddressColor(usblAddChip.modelData)
+                                font.pixelSize: Tokens.fontSm
+                                font.bold: true
+                            }
+
+                            MouseArea {
+                                id: usblAddChipArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (root.usblPlan)
+                                        root.usblPlan.addNodeAt(usblAddChip.modelData)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // ── 3D scene (map provider) ──────────────────────────────────────────────

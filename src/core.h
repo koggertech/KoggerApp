@@ -86,6 +86,10 @@ public:
     Q_PROPERTY(bool              posZeroing                   READ getPosZeroing                   NOTIFY posZeroingChanged)
     Q_PROPERTY(int               bottomTrackEditTool          READ getBottomTrackEditTool          WRITE setBottomTrackEditTool          NOTIFY bottomTrackEditToolChanged)
     Q_PROPERTY(bool              contactPlacementArmed        READ getContactPlacementArmed        WRITE setContactPlacementArmed        NOTIFY contactPlacementArmedChanged)
+    // How many epochs of the opened .klf can be addressed by byte offset, i.e. how many the
+    // fragment export can cut on. 0 means there is nothing to cut: no file, or a build that
+    // cannot index one.
+    Q_PROPERTY(int               klfEpochIndexSize            READ klfEpochIndexSize                                                     NOTIFY klfEpochIndexSizeChanged)
 
     MosaicIndexProvider* getMosaicIndexProviderPtr();
     void setEngine(QQmlApplicationEngine *engine);
@@ -213,6 +217,13 @@ public slots:
     Q_INVOKABLE void setBottomTrackEditTool(int tool);
     bool getContactPlacementArmed() const { return contactPlacementArmed_; }
     Q_INVOKABLE void setContactPlacementArmed(bool armed);
+
+    int klfEpochIndexSize() const;
+    // Writes epochs [firstEpoch, lastEpoch] of the opened .klf to a new .klf in `filePath`.
+    // The frames are copied byte for byte -- nothing is re-encoded, so every checksum in the
+    // fragment is the one the device wrote -- preceded by the last setup frame of each kind from
+    // before the fragment, without which the cut would not say how to read itself.
+    Q_INVOKABLE bool exportKlfFragment(int firstEpoch, int lastEpoch, QString filePath);
     Q_INVOKABLE bool getIsFileOpening() const;
     Q_INVOKABLE bool getIsAppendMode() const;
     Q_INVOKABLE QString getFileTitle() const;
@@ -231,6 +242,10 @@ public slots:
     bool echogramSyncView() const { return echogramSyncView_; }
     void broadcastEpochCursor(qPlot2D* source, int epoch, float depth, int channel);
     void broadcastCursorClear(qPlot2D* source);
+    // Deliberate release of every echogram's pinned epoch, unlike broadcastCursorClear, which is
+    // passive sync and therefore gated by the echogramSyncCursor_ preference. Asking to go back
+    // to live is an instruction, not a side effect, so it is not gated by anything.
+    void clearEpochCursors();
     Q_INVOKABLE void broadcastEchogramTime(QObject* source, double timelinePos);        // time/scroll → gated by echogramSyncCursor_
     Q_INVOKABLE void broadcastEchogramVertical(QObject* source, double from, double to); // vertical zoom+offset → gated by echogramSyncView_
     Q_INVOKABLE void registerSyncLoupePlot(QObject* plotObj);
@@ -288,6 +303,7 @@ signals:
     void posZeroingChanged();
     void bottomTrackEditToolChanged();
     void contactPlacementArmedChanged();
+    void klfEpochIndexSizeChanged();
     void languageChanged();
 
 #ifdef SEPARATE_READING

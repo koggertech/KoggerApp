@@ -550,6 +550,24 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     emit dataUpdate();
 }
 
+QVector<QPair<int, IDBinUsblSolution::UsblSolution>> Dataset::usblSolutionsFromEpoch(int firstEpoch) const
+{
+    QVector<QPair<int, IDBinUsblSolution::UsblSolution>> out;
+
+    QReadLocker rl(&poolMtx_);
+
+    const int total = pool_.size();
+    for (int i = std::max(0, firstEpoch); i < total; ++i) {
+        Epoch& epoch = const_cast<Epoch&>(pool_.at(i));
+        if (!epoch.isUsblSolutionAvailable()) {
+            continue;
+        }
+        out.append(qMakePair(i, epoch.usblSolution()));
+    }
+
+    return out;
+}
+
 QVariantMap Dataset::getUsblSolutions() const {
     QReadLocker rl(&usblAddrLock_);
 

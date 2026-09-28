@@ -61,6 +61,61 @@ Item {
             store: root.workspaceRoot ? root.workspaceRoot.store : null
         }
 
+        // The scene is showing a MOMENT, not now. Nothing else on screen says so, and while data
+        // is still arriving that is the difference between "the beacon stopped moving" and "you
+        // are looking at where it was". Visible only while pinned, so it costs nothing the rest
+        // of the time -- and it is the way out as well as the notice, because a notice you cannot
+        // act on is just a nag.
+        Rectangle {
+            id: livePill
+
+            readonly property var v: root.scene3dView
+            readonly property bool pinned: !!(v && v.syncEpochIndex >= 0)
+
+            visible: opacity > 0.01
+            opacity: pinned ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: Tokens.spaceLg
+
+            width: pillRow.implicitWidth + Tokens.spaceLg * 2
+            height: Tokens.controlHMd
+            radius: height / 2
+            color: pillHover.hovered ? AppPalette.accentBgHover : AppPalette.accentBgStrong
+            border.width: Math.max(1, Math.round(1 * AppPalette.scale))
+            border.color: AppPalette.accentBorder
+
+            HoverHandler { id: pillHover; cursorShape: Qt.PointingHandCursor }
+
+            TapHandler {
+                onTapped: if (livePill.v) livePill.v.clearEpochSync()
+            }
+
+            Row {
+                id: pillRow
+                anchors.centerIn: parent
+                spacing: Tokens.spaceSm
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Viewing a past moment")
+                    color: AppPalette.accentText
+                    font.pixelSize: Tokens.fontSm
+                }
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Back to live")
+                    color: AppPalette.accentText
+                    font.pixelSize: Tokens.fontSm
+                    font.bold: true
+                    font.underline: pillHover.hovered
+                }
+            }
+        }
+
         Scene3DDepthLegend {
             id: depthLegend
             readonly property var v: root.scene3dView

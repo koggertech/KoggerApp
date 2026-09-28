@@ -1522,6 +1522,7 @@ ApplicationWindow {
 
             AppSettingsPage {
                 store: workspaceStore
+                usblPlan: appUsblPlan
                 targetPlot: workspaceView.primaryPlotItem
                 echograms: workspaceView.visibleEchograms
             }

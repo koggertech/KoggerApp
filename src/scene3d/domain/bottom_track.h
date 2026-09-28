@@ -54,6 +54,9 @@ public Q_SLOTS:
     void clearData() override;
     void isEpochsChanged(int lEpoch, int rEpoch, bool manual, bool redrawAll);
     void resetVertexSelection();
+    // Drops only THIS layer's highlight. resetVertexSelection() additionally clears the epoch the
+    // whole scene is synced to, which is shared state and not this layer's to throw away.
+    void clearVertexHighlight();
     void selectEpoch(int epochIndex, const ChannelId& channelId);
     void setVisibleState(bool state);
 

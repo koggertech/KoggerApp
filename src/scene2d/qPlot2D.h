@@ -78,6 +78,25 @@ public:
     Q_INVOKABLE float cursorTo() const { return Plot2D::cursor_.distance.to; }
     Q_INVOKABLE void setCursorFromTo(float from, float to) { cursor_.distance.mode = AutoRangeNone; Plot2D::cursor_.distance.from = from; Plot2D::cursor_.distance.to = to; }
     Q_INVOKABLE int getAimEpochIndex() const { return cursor_.selectEpochIndx; }
+    // First and last epoch currently on screen, or -1 when nothing is. Each column already
+    // carries its epoch (reindexingCursor fills cursor_.indexes), so this reads what is drawn
+    // rather than working it out a second time and disagreeing.
+    Q_INVOKABLE int firstVisibleEpochIndex() const {
+        for (int i = 0; i < static_cast<int>(cursor_.indexes.size()); ++i) {
+            if (cursor_.indexes[i] >= 0) {
+                return cursor_.indexes[i];
+            }
+        }
+        return -1;
+    }
+    Q_INVOKABLE int lastVisibleEpochIndex() const {
+        for (int i = static_cast<int>(cursor_.indexes.size()) - 1; i >= 0; --i) {
+            if (cursor_.indexes[i] >= 0) {
+                return cursor_.indexes[i];
+            }
+        }
+        return -1;
+    }
     Q_INVOKABLE void setAimEpochIndex(int epochIndx) {
         if (!datasetPtr_ || datasetPtr_->size() <= 0 || epochIndx < 0) {
             cursor_.selectEpochIndx = -1;

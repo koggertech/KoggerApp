@@ -1450,6 +1450,28 @@ void GraphicsScene3dView::setUsblLayerVisible(bool state)
     QQuickFramebufferObject::update();
 }
 
+// Straight at the layer, unlike visibility: a track style is a drawing choice and touches
+// neither the accumulated history nor what the controller projects.
+void GraphicsScene3dView::setUsblBeaconTrackDots(bool state)
+{
+    if (usblLayer_) {
+        usblLayer_->setBeaconTrackStyle(state ? UsblLayer::TrackStyle::Dots
+                                              : UsblLayer::TrackStyle::Line);
+    }
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setUsblHeadTrackDots(bool state)
+{
+    if (usblLayer_) {
+        usblLayer_->setHeadTrackStyle(state ? UsblLayer::TrackStyle::Dots
+                                            : UsblLayer::TrackStyle::Line);
+    }
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::resetHeadingToNorth()
 {
     if (!m_camera) {
@@ -1892,12 +1914,41 @@ void GraphicsScene3dView::setSyncEpochIndex(int epochIndex)
 
     syncEpochIndex_ = epochIndex;
 
+    // Ahead of the loupe's own early return: the USBL marks follow the synced moment whether or
+    // not the loupe is the thing showing it, and so does the indicator that says the scene is
+    // pinned at all.
+    if (usblLayerController_) {
+        usblLayerController_->setSyncEpochIndex(syncEpochIndex_);
+    }
+
+    emit syncEpochIndexChanged();
+
     if (!syncLoupeUiAllowed_ && !syncLoupeZoomAdjusting_) {
         return;
     }
 
     refreshSyncLoupePreview();
     emit syncLoupeStateChanged();
+}
+
+int GraphicsScene3dView::syncEpochIndex() const
+{
+    return syncEpochIndex_;
+}
+
+// Both halves, because the pin has two: the scene's marks and marker, and wherever the echogram
+// was scrolled to when the moment was picked. Releasing one and not the other leaves the two
+// views disagreeing about what "now" is, which is the confusion this exists to end.
+void GraphicsScene3dView::clearEpochSync()
+{
+    if (boatTrack_) {
+        boatTrack_->clearSelectedEpoch();
+    }
+    else {
+        setSyncEpochIndex(-1);
+    }
+
+    core.clearEpochCursors();
 }
 
 void GraphicsScene3dView::setEpochSyncEnabled(bool state)

@@ -1244,12 +1244,18 @@ property Settings scene3dLayerVisibility: Settings {
     property bool isobathsCheckButton: false
     property bool mosaicViewCheckButton: false
     property bool usblCheckButton: false
+    // false = a continuous line, true = a dot at every fix. Kept apart for the beacons and for
+    // the acoustic head: one is a beacon that mostly sits still, the other is the boat.
+    property bool usblBeaconTrackDots: false
+    property bool usblHeadTrackDots: false
 }
 property alias boatTrackVisible:   scene3dLayerVisibility.boatTrackCheckButton
 property alias bottomTrackVisible: scene3dLayerVisibility.bottomTrackCheckButton
 property alias isobathsVisible:    scene3dLayerVisibility.isobathsCheckButton
 property alias mosaicVisible:      scene3dLayerVisibility.mosaicViewCheckButton
 property alias usblVisible:        scene3dLayerVisibility.usblCheckButton
+property alias usblBeaconTrackDots: scene3dLayerVisibility.usblBeaconTrackDots
+property alias usblHeadTrackDots:   scene3dLayerVisibility.usblHeadTrackDots
 
 // The USBL layer is developer-only. The toggle above keeps what the user chose; this decides what
 // the scene actually draws, so leaving developer mode hides the layer without forgetting it.
@@ -1613,6 +1619,8 @@ onMosaicVisibleChanged: {
 onUsblLayerActiveChanged: {
     Scene3dToolBarController.onUsblLayerVisibilityChanged(usblLayerActive)
 }
+onUsblBeaconTrackDotsChanged: Scene3dToolBarController.onUsblBeaconTrackDotsChanged(usblBeaconTrackDots)
+onUsblHeadTrackDotsChanged:   Scene3dToolBarController.onUsblHeadTrackDotsChanged(usblHeadTrackDots)
 
 function initLayerVisibilityControllers() {
     BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(boatTrackVisible)
@@ -1623,6 +1631,8 @@ function initLayerVisibilityControllers() {
     MosaicViewControlMenuController.onVisibilityChanged(mosaicVisible)
     MosaicViewControlMenuController.onUpdateStateChanged(mosaicVisible)
     Scene3dToolBarController.onUsblLayerVisibilityChanged(usblLayerActive)
+    Scene3dToolBarController.onUsblBeaconTrackDotsChanged(usblBeaconTrackDots)
+    Scene3dToolBarController.onUsblHeadTrackDotsChanged(usblHeadTrackDots)
     pushMosaicChannelsFromCore()
 }
 

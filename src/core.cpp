@@ -788,6 +788,9 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
 
         openedfilePath_ = fileOpenedOk ? localfilePath : "";
         emit openedFilePathChanged();
+        // The byte index was built while the file was read; the fragment export appears only
+        // once there is something to cut.
+        emit klfEpochIndexSizeChanged();
         if (fileOpenedOk) {
             if (!isAppend) appendedFiles_.clear();
             appendedFiles_.append(localfilePath);
@@ -850,6 +853,7 @@ bool Core::closeLogFile()
     createLinkManagerConnections();
     openedfilePath_.clear();
     emit openedFilePathChanged();
+    emit klfEpochIndexSizeChanged();
     appendedFiles_.clear();
     if (isAppendMode_) {
         isAppendMode_ = false;
@@ -1866,6 +1870,207 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     return true;
 }
 
+namespace {
+
+// What a fragment has to carry from before its first byte: the frames that say how everything
+// after them is to be read. Only the LAST of each is kept, because these are state rather than
+// events -- an older copy is not history, it is a wrong answer.
+bool isKlfPrologueId(int id)
+{
+    switch (id) {
+    case Parsers::ID_VERSION:
+    case Parsers::ID_DATASET:
+    case Parsers::ID_DIST_SETUP:
+    case Parsers::ID_CHART_SETUP:
+    case Parsers::ID_DSP:
+    case Parsers::ID_TRANSC:
+    case Parsers::ID_SND_SPEED:
+    case Parsers::ID_UART:
+    case Parsers::ID_DEV_SYNC:
+        return true;
+    default:
+        return false;
+    }
+}
+
+// The newest setup frame of each kind in `head`, in the order the device first sent them.
+//
+// Walked with the app's OWN parser, so a frame here is a frame exactly as it will be when the
+// fragment is opened -- checksum included, which is why the bytes can simply be copied out
+// rather than rebuilt. Proxy wrappers are skipped: their id field belongs to the frame nested
+// inside them and decodes to nonsense.
+QByteArray klfPrologue(QFile& src, qint64 limit)
+{
+    constexpr qint64 kBlock = static_cast<qint64>(1) << 20;
+
+    QMap<quint32, QByteArray> newest;
+    QVector<quint32> order;
+
+    Parsers::FrameParser parser;
+
+    // Block by block, never the whole head at once: a survey log runs to gigabytes and the
+    // fragment cut out of it is usually a small part. The parser carries a frame across a block
+    // boundary itself, which is what lets this be read in pieces at all.
+    for (qint64 left = limit; left > 0; ) {
+        QByteArray block = src.read(qMin(left, kBlock));
+        if (block.isEmpty()) {
+            break;
+        }
+        left -= block.size();
+
+        parser.setContext(reinterpret_cast<uint8_t*>(block.data()),
+                          static_cast<uint32_t>(block.size()));
+
+        while (parser.availContext() > 0) {
+            parser.process();
+
+            if (!parser.isComplete() || parser.isNested() || parser.isProxy()) {
+                continue;
+            }
+            if (!parser.completeAsKBP() && !parser.completeAsKBP2()) {
+                continue;
+            }
+            if (!isKlfPrologueId(static_cast<int>(parser.id()))) {
+                continue;
+            }
+
+            // ONLY what the app would actually learn a value from. IDBin::parse reads a payload
+            // when the frame is CONTENT without the resp bit, or a SETTING; everything else is a
+            // request for a value or an acknowledgement that one was set, and carries nothing.
+            //
+            // Keeping those was worse than useless. A log is full of them -- in a measured hour
+            // of survey, five sixths of the setup-id frames before the cut were requests and
+            // acks -- and since the newest frame per id wins, an empty GETTING sent later
+            // REPLACED the answer that actually held the setting.
+            if (!((parser.type() == Parsers::CONTENT && !parser.resp())
+                  || parser.type() == Parsers::SETTING)) {
+                continue;
+            }
+
+            // Per device, per version, per protocol: two boards on one link are two devices to
+            // set up, a v1 setup frame does not replace the v0 one the reader may also be
+            // waiting for, and the same board reached over KP1 and over KP2 answers on both.
+            const quint32 key = (static_cast<quint32>(parser.completeAsKBP2() ? 1 : 0) << 24)
+                              | (static_cast<quint32>(parser.route()) << 16)
+                              | (static_cast<quint32>(parser.id()) << 3)
+                              | (static_cast<quint32>(parser.ver()) & 0x7u);
+
+            if (!newest.contains(key)) {
+                order.append(key);
+            }
+            newest.insert(key, QByteArray(reinterpret_cast<const char*>(parser.frame()),
+                                          static_cast<int>(parser.frameLen())));
+        }
+    }
+
+    QByteArray out;
+    for (const quint32 key : std::as_const(order)) {
+        out.append(newest.value(key));
+    }
+
+    return out;
+}
+
+} // namespace
+
+int Core::klfEpochIndexSize() const
+{
+    DeviceManager* worker = deviceManagerWrapperPtr_ ? deviceManagerWrapperPtr_->getWorker()
+                                                     : nullptr;
+    return worker ? worker->epochFileOffsets().size() : 0;
+}
+
+bool Core::exportKlfFragment(int firstEpoch, int lastEpoch, QString filePath)
+{
+    if (openedfilePath_.isEmpty()) {
+        notifications.warning(tr("Export failed: no log file is open"));
+        return false;
+    }
+
+    DeviceManager* worker = deviceManagerWrapperPtr_ ? deviceManagerWrapperPtr_->getWorker()
+                                                     : nullptr;
+    if (!worker) {
+        notifications.warning(tr("Export failed"));
+        return false;
+    }
+
+    // By reference: this is one entry per epoch, and a property read is not worth a copy of it.
+    const QVector<qint64>& offsets = worker->epochFileOffsets();
+    if (offsets.isEmpty()) {
+        notifications.warning(tr("Export failed: this file has no epoch index"));
+        return false;
+    }
+
+    const int lastIndex = offsets.size() - 1;
+    const int from = qBound(0, firstEpoch, lastIndex);
+    const int to   = qBound(from, lastEpoch, lastIndex);
+
+    QFile src;
+    const QUrl srcUrl(openedfilePath_);
+    srcUrl.isLocalFile() ? src.setFileName(srcUrl.toLocalFile())
+                         : src.setFileName(srcUrl.toString());
+
+    if (!src.open(QIODevice::ReadOnly)) {
+        notifications.warning(tr("Export failed: cannot read %1").arg(openedfilePath_));
+        return false;
+    }
+
+    const qint64 total = src.size();
+    const qint64 fromByte = qBound<qint64>(0, offsets.at(from), total);
+    // Up to the first byte of the epoch AFTER the range -- or the end of the file, when the range
+    // runs to the last one.
+    const qint64 toByte = (to + 1 <= lastIndex) ? qBound<qint64>(fromByte, offsets.at(to + 1), total)
+                                                : total;
+
+    // Leaves the file positioned at the fragment's first byte, which is where the copy starts.
+    const QByteArray prologue = klfPrologue(src, fromByte);
+    if (src.pos() != fromByte && !src.seek(fromByte)) {
+        notifications.warning(tr("Export failed: cannot read %1").arg(openedfilePath_));
+        return false;
+    }
+
+    const QString resolvedBasePath = this->resolveExportBasePath(filePath);
+    const QString exportPath = QString("%1/%2_epochs_%3-%4.klf")
+                                   .arg(resolvedBasePath)
+                                   .arg(buildExportFileStem(openedfilePath_))
+                                   .arg(from)
+                                   .arg(to);
+
+    if (!logger_.creatExportStream(exportPath)) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
+        return false;
+    }
+
+    bool writeOk = logger_.dataByteExport(prologue);
+
+    constexpr qint64 kBlock = static_cast<qint64>(1) << 20;
+    qint64 copied = 0;
+    for (qint64 left = toByte - fromByte; writeOk && left > 0; ) {
+        const QByteArray block = src.read(qMin(left, kBlock));
+        if (block.isEmpty()) {
+            break;
+        }
+        left -= block.size();
+        copied += block.size();
+        writeOk = logger_.dataByteExport(block);
+    }
+
+    const bool closedOk = logger_.endExportStream();
+
+    if (!writeOk || !closedOk || copied == 0) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
+        return false;
+    }
+
+    notifications.info(tr("KLF fragment saved: %1 (%2 epochs, %3 MB)")
+                           .arg(exportPath)
+                           .arg(to - from + 1)
+                           .arg(QString::number((prologue.size() + copied) / 1048576.0, 'f', 1)),
+                       exportPath);
+
+    return true;
+}
+
 bool Core::exportPlotAsXTF(QString filePath)
 {
     if (plot2dList_.empty()) {
@@ -1958,6 +2163,15 @@ void Core::broadcastEpochCursor(qPlot2D* source, int epoch, float depth, int cha
         auto* plot = plot2dList_.at(i);
         if (plot != nullptr && plot != source) {
             plot->setSyncCursor(epoch, depth, channel);
+        }
+    }
+}
+
+void Core::clearEpochCursors()
+{
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        if (auto* plot = plot2dList_.at(i); plot != nullptr) {
+            plot->clearSyncCursor();
         }
     }
 }

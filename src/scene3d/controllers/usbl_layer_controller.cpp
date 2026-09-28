@@ -3,6 +3,8 @@
 #include <cmath>
 #include <utility>
 
+#include "dataset.h"
+#include "epoch.h"
 #include "scene3d_view.h"
 #include "usbl_layer.h"
 
@@ -66,7 +68,149 @@ void UsblLayerController::clear()
     beacons_.clear();
     head_.clear();
     headYaw_ = NAN;
+    beaconMarks_.clear();
+    headMarks_.clear();
+    indexedEpochs_ = 0;
+    syncEpoch_ = -1;
     rebuild();
+}
+
+void UsblLayerController::setSyncEpochIndex(int epochIndex)
+{
+    if (syncEpoch_ == epochIndex) {
+        return;
+    }
+
+    syncEpoch_ = epochIndex;
+    indexEpochs();
+    applyMarks();
+}
+
+void UsblLayerController::indexEpochs()
+{
+    Dataset* dataset = view_ ? view_->dataset() : nullptr;
+    if (!dataset) {
+        return;
+    }
+
+    const int total = dataset->size();
+    // A shorter pool than last time is a new file, not a rewind: start the index over rather
+    // than binary-searching epochs that now mean something else.
+    if (total < indexedEpochs_) {
+        beaconMarks_.clear();
+        headMarks_.clear();
+        indexedEpochs_ = 0;
+    }
+
+    // One locked pass, not a walk of raw pointers: the pool is a QVector the device thread
+    // resizes, and a reallocation mid-walk is a read of memory that has moved.
+    const auto fresh = dataset->usblSolutionsFromEpoch(indexedEpochs_);
+
+    for (const auto& entry : fresh) {
+        const int i = entry.first;
+        const IDBinUsblSolution::UsblSolution& solution = entry.second;
+
+        // Same two independent presences as onUsblSolution: a payload can carry one position
+        // without the other, and a mark must not be invented for the one that is missing.
+        const int addr = static_cast<int>(solution.id);
+        if (addr >= 0 && addr <= 8 &&
+            LLA(solution.beacon_latitude, solution.beacon_longitude).isCoordinatesValid()) {
+            beaconMarks_[addr].append(EpochFix{ i, solution.beacon_latitude,
+                                                solution.beacon_longitude,
+                                                solution.beacon_depth, NAN });
+        }
+
+        if (LLA(solution.usbl_latitude, solution.usbl_longitude).isCoordinatesValid()) {
+            headMarks_.append(EpochFix{ i, solution.usbl_latitude, solution.usbl_longitude,
+                                        NAN, solution.usbl_yaw });
+        }
+    }
+
+    indexedEpochs_ = total;
+}
+
+int UsblLayerController::lastAtOrBefore(const QVector<EpochFix>& marks, int epoch)
+{
+    int lo = 0;
+    int hi = marks.size() - 1;
+    int found = -1;
+
+    while (lo <= hi) {
+        const int mid = lo + (hi - lo) / 2;
+        if (marks.at(mid).epoch <= epoch) {
+            found = mid;
+            lo = mid + 1;
+        }
+        else {
+            hi = mid - 1;
+        }
+    }
+
+    return found;
+}
+
+void UsblLayerController::applyMarks()
+{
+    if (!view_ || !layer_) {
+        return;
+    }
+
+    // No selection: the end of the track, which is where a file that was just opened and a live
+    // run both belong.
+    if (syncEpoch_ < 0) {
+        for (auto& beacon : scene_.beacons) {
+            const auto it = beacons_.constFind(beacon.addr);
+            if (it == beacons_.constEnd() || it.value().isEmpty()) {
+                beacon.hasFix = false;
+                beacon.hasDeep = false;
+                continue;
+            }
+            const Fix& fix = it.value().last();
+            applyFix(beacon, toSurface(fix.lat, fix.lon), fix.depth);
+        }
+
+        scene_.head.hasFix = !head_.isEmpty();
+        if (scene_.head.hasFix) {
+            scene_.head.pos = toSurface(head_.last().lat, head_.last().lon);
+        }
+        scene_.head.yawDeg = headYaw_;
+        scene_.head.hasYaw = std::isfinite(headYaw_);
+
+        push();
+        return;
+    }
+
+    // A node with nothing measured by this moment is not drawn -- an absent mark is the honest
+    // drawing of "not located yet", and a mark left at a later estimate would be a lie about
+    // what was known when the boat was here.
+    for (auto& beacon : scene_.beacons) {
+        const auto it = beaconMarks_.constFind(beacon.addr);
+        const int at = (it == beaconMarks_.constEnd()) ? -1
+                                                       : lastAtOrBefore(it.value(), syncEpoch_);
+        if (at < 0) {
+            beacon.hasFix = false;
+            beacon.hasDeep = false;
+            continue;
+        }
+
+        const EpochFix& fix = it.value().at(at);
+        applyFix(beacon, toSurface(fix.lat, fix.lon), fix.depth);
+    }
+
+    const int headAt = lastAtOrBefore(headMarks_, syncEpoch_);
+    if (headAt < 0) {
+        scene_.head.hasFix = false;
+        scene_.head.hasYaw = false;
+    }
+    else {
+        const EpochFix& fix = headMarks_.at(headAt);
+        scene_.head.pos = toSurface(fix.lat, fix.lon);
+        scene_.head.hasFix = true;
+        scene_.head.yawDeg = fix.yaw;
+        scene_.head.hasYaw = std::isfinite(fix.yaw);
+    }
+
+    push();
 }
 
 void UsblLayerController::onUsblSolution(const IDBinUsblSolution::UsblSolution& solution)
@@ -117,6 +261,10 @@ void UsblLayerController::onUsblSolution(const IDBinUsblSolution::UsblSolution& 
     // Appending one projected point, rather than re-projecting the history behind it. The frame
     // this point is projected into is the same one every earlier point used -- rebuildIfNeeded
     // is what notices when that stops being true.
+    // The track grows either way; the MARK only follows the newest fix while nothing is pinned.
+    // A selection is a question about one moment, and new data arriving is not an answer to it.
+    const bool pinned = (syncEpoch_ >= 0);
+
     if (gotBeacon) {
         const auto it = sceneIndex_.constFind(addr);
         if (it != sceneIndex_.constEnd()) {
@@ -124,18 +272,23 @@ void UsblLayerController::onUsblSolution(const IDBinUsblSolution::UsblSolution& 
             const Fix& last = beacons_[addr].last();
             const QVector3D surface = toSurface(last.lat, last.lon);
             b.track.append(surface);
-            applyFix(b, surface, last.depth);
+            if (!pinned) {
+                applyFix(b, surface, last.depth);
+            }
         }
     }
 
     if (gotHead) {
         const Fix& last = head_.last();
-        scene_.head.pos = toSurface(last.lat, last.lon);
-        scene_.head.track.append(scene_.head.pos);
-        scene_.head.hasFix = true;
+        const QVector3D at = toSurface(last.lat, last.lon);
+        scene_.head.track.append(at);
+        if (!pinned) {
+            scene_.head.pos = at;
+            scene_.head.hasFix = true;
+        }
     }
 
-    if (gotYaw) {
+    if (gotYaw && !pinned) {
         scene_.head.yawDeg = headYaw_;
         scene_.head.hasYaw = true;
     }
@@ -194,9 +347,6 @@ void UsblLayerController::rebuild()
             for (const Fix& f : it.value()) {
                 b.track.append(toSurface(f.lat, f.lon));
             }
-            if (!b.track.isEmpty()) {
-                applyFix(b, b.track.last(), it.value().last().depth);
-            }
         }
 
         sceneIndex_.insert(addr, out.beacons.size());
@@ -207,15 +357,11 @@ void UsblLayerController::rebuild()
     for (const Fix& f : std::as_const(head_)) {
         out.head.track.append(toSurface(f.lat, f.lon));
     }
-    if (!out.head.track.isEmpty()) {
-        out.head.pos = out.head.track.last();
-        out.head.hasFix = true;
-    }
-    out.head.yawDeg = headYaw_;
-    out.head.hasYaw = std::isfinite(headYaw_);
 
     scene_ = std::move(out);
-    push();
+    // The tracks are rebuilt; where the marks sit is a separate question, and the answer is the
+    // same one whether we got here from a camera rebase or from a new plan.
+    applyMarks();
 }
 
 void UsblLayerController::push()
