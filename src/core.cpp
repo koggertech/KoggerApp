@@ -34,6 +34,7 @@ extern Notifications notifications;
 namespace {
 QString channelDisplayName(const DatasetChannel& channel)
 {
+
     return channel.portName_.isEmpty() ? channel.channelId_.toShortName() : channel.portName_;
 }
 
