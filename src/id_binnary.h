@@ -31,8 +31,12 @@ enum BoardVersion : int16_t {
     BoardUSBL = 15,
     BoardUSBLBeacon = 16,
     BoardNanoSSS = 17,
+    // From 128 up the value is the firmware's PRODUCT_ID, which the board reports as the high
+    // byte of PCB_VER. A board absent from this enum is named "Device ID: <n>.<m>" and, missing
+    // from DevDriver::isSonar(), is recognised without ever rendering an echogram.
     BoardPULSEred_2D = 128,
-    BoardPULSEblue_DSS = 129
+    BoardPULSEblue_DSS = 129,
+    BoardGODIO_SS = 130
 };
 
 QString boardVersionName(BoardVersion version, uint8_t versionMinor);
