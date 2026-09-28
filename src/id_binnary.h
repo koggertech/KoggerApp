@@ -36,7 +36,8 @@ enum BoardVersion : int16_t {
     // from DevDriver::isSonar(), is recognised without ever rendering an echogram.
     BoardPULSEred_2D = 128,
     BoardPULSEblue_DSS = 129,
-    BoardGODIO_SS = 130
+    BoardGODIO_SS = 130,
+    BoardDDF100 = 131
 };
 
 QString boardVersionName(BoardVersion version, uint8_t versionMinor);

@@ -46,6 +46,8 @@ QString boardVersionName(BoardVersion version, uint8_t versionMinor)
         return QStringLiteral("PULSEblue DSS");
     case BoardGODIO_SS:
         return QStringLiteral("GODIO_SS");
+    case BoardDDF100:
+        return QStringLiteral("Dynasso");
     }
     return QStringLiteral("Device ID: %1.%2").arg(static_cast<int>(version)).arg(versionMinor);
 }
