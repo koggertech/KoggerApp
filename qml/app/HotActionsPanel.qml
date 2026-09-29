@@ -50,6 +50,9 @@ Item {
     readonly property bool _btEditRevealOverride: _revealActiveKey === "bottomTrack"
     readonly property bool showBtEdit: bottomTrackEditorEnabled || _btEditRevealOverride
     readonly property int btTool: (typeof core !== "undefined" && core) ? core.bottomTrackEditTool : 0
+    property bool missionEnabled: true
+    readonly property bool _missionRevealOverride: _revealActiveKey === "mission"
+    readonly property bool showMission: missionEnabled || _missionRevealOverride
     property bool contactEnabled: true
     readonly property bool _contactRevealOverride: _revealActiveKey === "contact"
     readonly property bool showContact: contactEnabled || _contactRevealOverride
@@ -1856,6 +1859,26 @@ Item {
     }
 
     Component {
+        id: qaMissionComp
+        KCircleIconButton {
+            width: root.controlHeight
+            height: root.controlHeight
+            iconSource: "qrc:/icons/ui/map_route.svg"
+            iconTintColor: AppPalette.text
+            toolTipText: qsTr("Mission planner")
+            fillColor:        root.buttonFillColor
+            fillHoverColor:   root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      root.buttonBorderColor
+            borderHoverColor: root.buttonHoverBorderColor
+            highlighted: root.highlightedQuickActionKey === "mission"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "mission"
+            onClicked: if (typeof core !== "undefined" && core) core.setMissionEditorActive(true)
+        }
+    }
+
+    Component {
         id: qaProfilesComp
         KCircleIconButton {
             id: profilesBtn
@@ -2132,6 +2155,7 @@ Item {
                            : key === "layouts"   ? root.hasFavoriteLayouts
                            : key === "bottomTrack" ? root.showBtEdit
                            : key === "contact"     ? root.showContact
+                           : key === "mission"     ? root.showMission
                            : key === "widgets"     ? root.showWidgets
                            : key === "console"      ? root.showConsole
                            : key === "profiles"     ? root.showProfiles
@@ -2145,6 +2169,7 @@ Item {
                                    : key === "layouts"    ? qaFavoritesComp
                                    : key === "bottomTrack"  ? qaBottomTrackComp
                                    : key === "contact"      ? qaContactComp
+                                   : key === "mission"      ? qaMissionComp
                                    : key === "widgets"      ? qaWidgetsComp
                                    : key === "console"      ? qaConsoleComp
                                    : key === "profiles"     ? qaProfilesComp

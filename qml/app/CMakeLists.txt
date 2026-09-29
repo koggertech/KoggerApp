@@ -38,6 +38,10 @@ qt_add_qml_module(kogger_app
         LayoutSnapshotPreview.qml
         LicensePage.qml
         MainWindow.qml
+        MissionAngleDial.qml
+        MissionEditorOverlay.qml
+        MissionItemCard.qml
+        MissionSliderRow.qml
         ModeSettingsPanel.qml
         MosaicPipelineStatus.qml
         NavButton.qml

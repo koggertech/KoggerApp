@@ -9,9 +9,11 @@ Item {
     property int leafId: -1
     property string paneKind: "2D"
     property bool active: true
+    property bool doubleTapEnabled: true
 
     signal scene3dRightReleased(real x, real y, bool wasDrag)
     property bool focusOnPointer: true
+    property bool focusOnPress: focusOnPointer
     property int lastKeyPressed: Qt.Key_unknown
     property int lastMouseButtons: Qt.NoButton
     property bool suppressNextClickAfterDoubleClick: false
@@ -200,7 +202,7 @@ Item {
             property point _rmbPressPos: Qt.point(-10000, -10000)
 
             onPressed: function(mouse) {
-                if (root.focusOnPointer)
+                if (root.focusOnPress)
                     overlay.forceActiveFocus()
                 root.markMouseKeyboardInput()
                 root.markActiveLeaf()
@@ -213,7 +215,7 @@ Item {
 
                 // Manual double-tap recognizer (touch-friendly distance via
                 // AppPalette.doubleTapDistancePx; interval = canonical 320ms).
-                if (mouse.button === Qt.LeftButton) {
+                if (mouse.button === Qt.LeftButton && root.doubleTapEnabled) {
                     var now = Date.now()
                     var dx = mouse.x - pointerArea._lastPressPos.x
                     var dy = mouse.y - pointerArea._lastPressPos.y
@@ -306,7 +308,7 @@ Item {
                 // both paths toggle and cancel each other (stationary cursor
                 // hits both Qt's tight 5 px / 400 ms threshold AND our wider
                 // doubleTapDistancePx / 500 ms threshold).
-                if (root.suppressNextClickAfterDoubleClick) {
+                if (root.suppressNextClickAfterDoubleClick || !root.doubleTapEnabled) {
                     mouse.accepted = true
                     return
                 }

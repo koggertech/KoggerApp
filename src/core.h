@@ -41,6 +41,7 @@
 #include "data_horizon.h"
 #include "mosaic_index_provider.h"
 #include "ui_keepalive.h"
+#include "mission_plan_controller.h"
 
 
 class Core : public QObject
@@ -86,6 +87,7 @@ public:
     Q_PROPERTY(bool              posZeroing                   READ getPosZeroing                   NOTIFY posZeroingChanged)
     Q_PROPERTY(int               bottomTrackEditTool          READ getBottomTrackEditTool          WRITE setBottomTrackEditTool          NOTIFY bottomTrackEditToolChanged)
     Q_PROPERTY(bool              contactPlacementArmed        READ getContactPlacementArmed        WRITE setContactPlacementArmed        NOTIFY contactPlacementArmedChanged)
+    Q_PROPERTY(bool              missionEditorActive          READ getMissionEditorActive          WRITE setMissionEditorActive          NOTIFY missionEditorActiveChanged)
 
     MosaicIndexProvider* getMosaicIndexProviderPtr();
     void setEngine(QQmlApplicationEngine *engine);
@@ -95,6 +97,7 @@ public:
     DeviceManagerWrapper* getDeviceManagerWrapperPtr() const;
     LinkManagerWrapper* getLinkManagerWrapperPtr() const;
     DeviceTopologyModel* getDeviceTopologyModelPtr() const;
+    mission::MissionPlanController* getMissionPlanControllerPtr() const;
 #ifdef SEPARATE_READING
     QString getTryOpenedfilePath() const;
     void stopDeviceManagerThread() const;
@@ -213,6 +216,9 @@ public slots:
     Q_INVOKABLE void setBottomTrackEditTool(int tool);
     bool getContactPlacementArmed() const { return contactPlacementArmed_; }
     Q_INVOKABLE void setContactPlacementArmed(bool armed);
+    bool getMissionEditorActive() const { return missionEditorActive_; }
+    Q_INVOKABLE void setMissionEditorActive(bool active);
+    QString missionDirectoryFor(const QString& logDir) const;
     Q_INVOKABLE bool getIsFileOpening() const;
     Q_INVOKABLE bool getIsAppendMode() const;
     Q_INVOKABLE QString getFileTitle() const;
@@ -239,6 +245,7 @@ public slots:
     Q_INVOKABLE void setIsAttitudeExpected(bool state);
     Q_INVOKABLE void setMapTileProvider(int providerId);
     Q_INVOKABLE void toggleMapTileProvider();
+    Q_INVOKABLE void switchToPreviousMapTileProvider();
     Q_INVOKABLE int getMapTileProviderId() const;
     Q_INVOKABLE QString getMapTileProviderName() const;
     Q_INVOKABLE QVariantList getMapTileProviders() const;
@@ -288,6 +295,7 @@ signals:
     void posZeroingChanged();
     void bottomTrackEditToolChanged();
     void contactPlacementArmedChanged();
+    void missionEditorActiveChanged();
     void languageChanged();
 
 #ifdef SEPARATE_READING
@@ -342,6 +350,7 @@ private:
     void loadCameraViewFromSettings();
     void onTgcParamsChanged();
     int loadSavedMapTileProviderId() const;
+    void rememberPreviousMapTileProvider(int providerId);
     void resetRealtimeSessionState();
     void restoreRealtimeProcessingFlags();
     void releasePlotCaches();
@@ -373,6 +382,7 @@ private:
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
     std::unique_ptr<DeviceTopologyModel> deviceTopologyModelPtr_;
+    std::unique_ptr<mission::MissionPlanController> missionPlanControllerPtr_;
     InternetManager* internetManager_;
     QThread* internetThread_;
     std::unique_ptr<map::TileManager> tileManager_;
@@ -433,6 +443,8 @@ private:
     bool isBottomTrackZeroing_;
     int  bottomTrackEditTool_ = 0;
     bool contactPlacementArmed_ = false;
+    bool missionEditorActive_ = false;
+    int  previousMapTileProviderId_ = -1;
 
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)

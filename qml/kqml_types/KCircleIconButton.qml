@@ -38,6 +38,7 @@ Item {
     property int cursorShape: Qt.PointingHandCursor
     property int focusPolicy: Qt.NoFocus
     property real padding: 0
+    property real hitPadding: 0
     property string toolTipText: ""
     property bool autoToolTip: true
     property bool toolTipSuppressed: false   // external gate (e.g. hide while a pill/popup is open)
@@ -183,7 +184,8 @@ Item {
 
     Item {
         id: iconWrap
-        anchors.centerIn: parent
+        x: Math.round((root.width - width) / 2)
+        y: Math.round((root.height - height) / 2)
         visible: root.hasIcon
         width: root.iconPixelSize
         height: root.iconPixelSize
@@ -323,6 +325,7 @@ Item {
     MouseArea {
         id: hitArea
         anchors.fill: parent
+        anchors.margins: -root.hitPadding
         enabled: root.enabled
         hoverEnabled: true
         cursorShape: root.enabled ? root.cursorShape : Qt.ArrowCursor

@@ -331,6 +331,10 @@ ApplicationWindow {
             workspaceStore.closeModeSettingsPanel()
             return true
         },
+        function() {  // mission planner scenario owns Esc while active
+            if (typeof core === "undefined" || !core || !core.missionEditorActive) return false
+            return missionEditorOverlay.handleEscape(root._transientSweep)
+        },
         function() {  // armed "set contact" mode — Esc disarms it
             if (typeof core === "undefined" || !core || !core.contactPlacementArmed) return false
             core.setContactPlacementArmed(false)
@@ -409,10 +413,13 @@ ApplicationWindow {
         return handled
     }
 
+    property bool _transientSweep: false
+
     function closeAllTransientUi() {
         if (_closingTransientUi)
             return
         _closingTransientUi = true
+        _transientSweep = true
 
         for (var pass = 0; pass < _transientUiLayers.length; ++pass) {
             var handled = false
@@ -424,6 +431,7 @@ ApplicationWindow {
                 break
         }
 
+        _transientSweep = false
         _closingTransientUi = false
     }
 
@@ -935,12 +943,13 @@ ApplicationWindow {
         HotActionsPanel {
             id: hotActions
 
-            visible: !workspaceStore.settingsPanelOpen
-                     && !workspaceStore.modeSettingsPanelOpen
-                     || hotkeysPreviewMode
-                     || hotkeysPreviewPinned
-                     || hotkeysPreviewSticky
-                     || workspaceStore.inputLocked
+            visible: (!workspaceStore.settingsPanelOpen
+                      && !workspaceStore.modeSettingsPanelOpen
+                      || hotkeysPreviewMode
+                      || hotkeysPreviewPinned
+                      || hotkeysPreviewSticky
+                      || workspaceStore.inputLocked)
+                     && !(typeof core !== "undefined" && core && core.missionEditorActive)
 
             anchors.left: parent.left
             anchors.top: parent.top
@@ -962,6 +971,7 @@ ApplicationWindow {
             layoutEditing: root.hotkeysPreviewSticky
             bottomTrackEditorEnabled: workspaceStore.quickActionBottomTrackEnabled
             contactEnabled: workspaceStore.quickActionContactEnabled
+            missionEnabled: workspaceStore.quickActionMissionEnabled
             profilesEnabled: workspaceStore.quickActionProfilesEnabled
             widgetsEnabled: workspaceStore.quickActionWidgetsEnabled
             consoleButtonEnabled: workspaceStore.quickActionConsoleEnabled
@@ -1529,6 +1539,7 @@ ApplicationWindow {
 
         WorkspaceView {
             id: workspaceView
+            visible: !(typeof core !== "undefined" && core && core.missionEditorActive)
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
@@ -1568,6 +1579,13 @@ ApplicationWindow {
         PowerOffConfirmOverlay {
             id: powerOffOverlay
             onConfirmed: if (typeof core !== "undefined" && core) core.powerOffSystem()
+        }
+
+        MissionEditorOverlay {
+            id: missionEditorOverlay
+            anchors.fill: parent
+            z: ZOrder.missionEditor
+            workspaceRoot: workspaceView
         }
 
         MouseArea {

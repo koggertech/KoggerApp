@@ -62,6 +62,7 @@ public slots:
     void setUpdateSurface(bool state);
     void setUpdateIsobaths (bool state);
     void setUpdateMosaic (bool state);
+    void setRealtimePaused(bool paused);
 
     void setIsOpeningFile (bool state);
     //
@@ -253,6 +254,10 @@ private:
     void emitMosaicColorTable();
     void updateDatasetSpatialIndexingState();
     void setUpdateBottomTrackSourceState(bool state, bool fromSettings);
+    void applyUpdateBottomTrackSourceState(bool state, bool fromSettings);
+    void applyUpdateSurface(bool state);
+    void applyUpdateIsobaths(bool state);
+    void applyUpdateMosaic(bool state);
 
 private:
     friend class SurfaceProcessor;
@@ -286,6 +291,12 @@ private:
     bool updateSurface_;
     bool updateIsobaths_;
     bool updateMosaic_;
+    bool realtimePaused_ = false;
+    bool wantedBottomTrackScene3d_ = false;
+    bool wantedBottomTrackSettings_ = false;
+    bool wantedSurface_ = false;
+    bool wantedIsobaths_ = false;
+    bool wantedMosaic_ = false;
     bool isOpeningFile_;
     // BottomTrackProcessor
     int bottomTrackWindowCounter_;

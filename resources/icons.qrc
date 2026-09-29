@@ -41,6 +41,8 @@
         <file>icons/ui/map_pin.svg</file>
         <file>icons/ui/map_pin_cog.svg</file>
         <file>icons/ui/map_route.svg</file>
+        <file>icons/ui/lasso-polygon.svg</file>
+        <file>icons/ui/vector-bezier-arc.svg</file>
         <file>icons/ui/overline.svg</file>
         <file>icons/ui/pencil.svg</file>
         <file>icons/ui/photo.svg</file>

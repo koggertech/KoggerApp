@@ -144,6 +144,7 @@ add_subdirectory(src/link)
 add_subdirectory(src/tile_engine)
 add_subdirectory(src/video)
 add_subdirectory(src/control)
+add_subdirectory(src/mission)
 
 # Optional build flags (off by default)
 if(KOGGER_FLASHER)
