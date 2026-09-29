@@ -146,7 +146,9 @@ QtObject {
     readonly property color missionWaypoint: isDark ? "#94A3B8" : "#64748B"
     readonly property color missionSurvey:   isDark ? "#3B82F6" : "#2563EB"
     readonly property color missionCorridor: isDark ? "#A855F7" : "#9333EA"
-    readonly property color missionRally:    isDark ? "#22C55E" : "#16A34A"
+    readonly property color missionRally:    isDark ? "#14B8A6" : "#0D9488"
+    readonly property color missionFenceInclusion: isDark ? "#22C55E" : "#16A34A"
+    readonly property color missionFenceExclusion: isDark ? "#EF4444" : "#DC2626"
     function textOn(c) { return luminance(c) < 0.55 ? "#FFFFFF" : "#15202B" }
 
     // ── Danger ────────────────────────────────────────────────────────────────

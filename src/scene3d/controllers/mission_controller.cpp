@@ -41,14 +41,18 @@ constexpr double kCorridorSpacingDivisor = 4.0;
 constexpr int kCircleTemplateSegments = 16;
 
 const QColor kRouteColor(59, 130, 246, 235);
-const QColor kReturnColor(245, 158, 11, 200);
+const QColor kFenceInclusion(34, 197, 94, 230);
+const QColor kFenceExclusion(239, 68, 68, 230);
+const QColor kFenceExclusionFill(239, 68, 68, 45);
+constexpr float kTemplateFenceFraction = 0.85f;
+constexpr float kTemplateExclusionFraction = 0.25f;
 const QColor kSurveyFill(59, 130, 246, 40);
 const QColor kSurveyStroke(37, 99, 235, 230);
 const QColor kCorridorFill(168, 85, 247, 40);
 const QColor kCorridorStroke(147, 51, 234, 230);
 const QColor kWaypointColor(255, 255, 255, 240);
 const QColor kHomeColor(245, 158, 11, 240);
-const QColor kRallyColor(34, 197, 94, 240);
+const QColor kRallyColor(20, 184, 166, 240);
 const QColor kSelectedColor(250, 204, 21, 240);
 const QColor kHandleColor(255, 255, 255, 235);
 const QColor kErrorStroke(248, 113, 113, 235);
@@ -132,6 +136,11 @@ struct BoundsAccumulator
     }
 };
 
+bool isTraceTool(int tool)
+{
+    return tool == MissionController::ToolSurveyTrace || tool == MissionController::ToolCorridorTrace || tool == MissionController::ToolFenceTrace;
+}
+
 float distPointSegment(const QPointF& p, const QPointF& a, const QPointF& b)
 {
     const QPointF ab = b - a;
@@ -188,7 +197,7 @@ void MissionController::setPlan(mission::MissionPlanController* plan)
     plan_ = plan;
     if (plan_) {
         connect(plan_, &mission::MissionPlanController::planChanged, this, [this]() {
-            if (!selectedId_.isEmpty() && selectedId_ != kHomeId && plan_->indexOfItem(selectedId_) < 0 && !plan_->rallyIds().contains(selectedId_)) {
+            if (!selectedId_.isEmpty() && selectedId_ != kHomeId && plan_->indexOfItem(selectedId_) < 0 && plan_->indexOfFence(selectedId_) < 0 && !plan_->rallyIds().contains(selectedId_)) {
                 selectedId_.clear();
                 selectedVertex_ = -1;
                 emit selectionChanged();
@@ -221,10 +230,10 @@ void MissionController::setEditing(bool editing)
 
 void MissionController::setTool(int tool)
 {
-    if (tool < ToolNone || tool > ToolCorridorTrace || tool == ToolSurvey || tool == ToolCorridor) {
+    if (tool < ToolNone || tool > ToolFenceTrace || tool == ToolSurvey || tool == ToolCorridor || tool == ToolFence) {
         tool = ToolNone;
     }
-    const bool leavingTrace = (tool_ == ToolSurveyTrace || tool_ == ToolCorridorTrace) && tool != tool_;
+    const bool leavingTrace = isTraceTool(tool_) && tool != tool_;
     if (leavingTrace && !draft_.isEmpty()) {
         draft_.clear();
         emit draftChanged();
@@ -322,7 +331,7 @@ void MissionController::onDrag(const QVector3D& scenePoint)
         }
         const QString type = itemType(dragHit_.id);
         QVariantMap patch;
-        patch.insert(type == QStringLiteral("survey") ? QStringLiteral("polygon") : QStringLiteral("axis"), QVariant(mission::pointsToVariant(moved)));
+        patch.insert(type == QStringLiteral("corridor") ? QStringLiteral("axis") : QStringLiteral("polygon"), QVariant(mission::pointsToVariant(moved)));
         plan_->updateItem(dragHit_.id, patch);
         return;
     }
@@ -375,6 +384,7 @@ void MissionController::onRelease(const QVector3D& scenePoint, bool hasPoint, bo
     }
     case ToolSurveyTrace:
     case ToolCorridorTrace:
+    case ToolFenceTrace:
         draft_.append(g);
         emit draftChanged();
         markDirty();
@@ -394,13 +404,23 @@ void MissionController::onRelease(const QVector3D& scenePoint, bool hasPoint, bo
 
 bool MissionController::draftReady() const
 {
-    if (tool_ == ToolSurveyTrace) {
+    if (tool_ == ToolSurveyTrace || tool_ == ToolFenceTrace) {
         return draft_.size() >= 3;
     }
     if (tool_ == ToolCorridorTrace) {
         return draft_.size() >= 2;
     }
     return false;
+}
+
+void MissionController::setDraftFenceInclusion(bool inclusion)
+{
+    if (draftFenceInclusion_ == inclusion) {
+        return;
+    }
+    draftFenceInclusion_ = inclusion;
+    emit draftChanged();
+    markDirty();
 }
 
 void MissionController::finishDraft()
@@ -412,6 +432,12 @@ void MissionController::finishDraft()
     const QVector<mission::GeoPoint> pts = draft_;
     draft_.clear();
     emit draftChanged();
+
+    if (tool_ == ToolFenceTrace) {
+        setTool(ToolNone);
+        addFenceShape(pts, draftFenceInclusion_);
+        return;
+    }
 
     const int insertIndex = -1;
 
@@ -475,7 +501,7 @@ bool MissionController::onKey(Qt::Key key)
     if (!editing_) {
         return false;
     }
-    const bool tracing = tool_ == ToolSurveyTrace || tool_ == ToolCorridorTrace;
+    const bool tracing = isTraceTool(tool_);
     if (tracing && (key == Qt::Key_Return || key == Qt::Key_Enter)) {
         finishDraft();
         return true;
@@ -557,6 +583,11 @@ bool MissionController::sceneBounds(QVector3D& minOut, QVector3D& maxOut) const
             consider(p);
         }
     }
+    for (const auto& f : plan_->plan().fence) {
+        for (const auto& p : f.ring) {
+            consider(p);
+        }
+    }
     minOut = acc.min;
     maxOut = acc.max;
     return acc.init;
@@ -590,6 +621,10 @@ bool MissionController::itemBounds(const QString& id, QVector3D& minOut, QVector
                 consider(mission::GeoPoint(f.lat, f.lon));
             }
         }
+    } else if (const int fenceIdx = plan_->indexOfFence(id); fenceIdx >= 0) {
+        for (const auto& p : plan.fence[fenceIdx].ring) {
+            consider(p);
+        }
     } else {
         for (const auto& r : plan.rally) {
             if (r.id == id) {
@@ -620,7 +655,8 @@ MissionController::ShapeHandles MissionController::selectedShapeHandles() const
         return h;
     }
     h.verts = itemVertices(selectedId_);
-    h.closed = itemType(selectedId_) == QStringLiteral("survey");
+    const QString type = itemType(selectedId_);
+    h.closed = type == QStringLiteral("survey") || type == QStringLiteral("fence");
     h.scene.reserve(h.verts.size());
     for (const auto& v : std::as_const(h.verts)) {
         h.scene.append(toScene(v));
@@ -706,6 +742,24 @@ void MissionController::addSurveyShape(const QVector<mission::GeoPoint>& polygon
     }
 }
 
+QVector<mission::GeoPoint> MissionController::viewRectangle(float fraction) const
+{
+    QVector3D center;
+    float halfX = 0.0f;
+    float halfY = 0.0f;
+    if (!viewExtent(center, halfX, halfY)) {
+        return {};
+    }
+    const float hx = halfX * fraction;
+    const float hy = halfY * fraction;
+    return {
+        toGeo(center + QVector3D(hx, -hy, 0.0f)),
+        toGeo(center + QVector3D(hx, hy, 0.0f)),
+        toGeo(center + QVector3D(-hx, hy, 0.0f)),
+        toGeo(center + QVector3D(-hx, -hy, 0.0f))
+    };
+}
+
 void MissionController::placeSurveyTemplate()
 {
     if (!plan_) {
@@ -717,15 +771,53 @@ void MissionController::placeSurveyTemplate()
     if (!viewExtent(center, halfX, halfY)) {
         return;
     }
+    const QVector<mission::GeoPoint> polygon = viewRectangle(kTemplateSurveyFraction);
+    if (polygon.isEmpty()) {
+        return;
+    }
     const float hx = halfX * kTemplateSurveyFraction;
     const float hy = halfY * kTemplateSurveyFraction;
-    const QVector<mission::GeoPoint> polygon = {
-        toGeo(center + QVector3D(hx, -hy, 0.0f)),
-        toGeo(center + QVector3D(hx, hy, 0.0f)),
-        toGeo(center + QVector3D(-hx, hy, 0.0f)),
-        toGeo(center + QVector3D(-hx, -hy, 0.0f))
-    };
     addSurveyShape(polygon, static_cast<double>(std::min(hx, hy)) / kTemplateSpacingDivisor);
+}
+
+void MissionController::addFenceShape(const QVector<mission::GeoPoint>& polygon, bool inclusion)
+{
+    if (!plan_) {
+        return;
+    }
+    const QString id = plan_->addFence(mission::pointsToVariant(polygon), inclusion);
+    if (!id.isEmpty()) {
+        select(id, -1);
+    }
+}
+
+void MissionController::placeFenceTemplate(bool inclusion)
+{
+    const QVector<mission::GeoPoint> polygon = viewRectangle(inclusion ? kTemplateFenceFraction : kTemplateExclusionFraction);
+    if (!polygon.isEmpty()) {
+        addFenceShape(polygon, inclusion);
+    }
+}
+
+void MissionController::placeFenceCircle(bool inclusion)
+{
+    if (!plan_) {
+        return;
+    }
+    QVector3D center;
+    float halfX = 0.0f;
+    float halfY = 0.0f;
+    if (!viewExtent(center, halfX, halfY)) {
+        return;
+    }
+    const float r = std::min(halfX, halfY) * (inclusion ? kTemplateFenceFraction : kTemplateExclusionFraction);
+    QVector<mission::GeoPoint> polygon;
+    polygon.reserve(kCircleTemplateSegments);
+    for (int i = 0; i < kCircleTemplateSegments; ++i) {
+        const float a = static_cast<float>(i) * 2.0f * static_cast<float>(M_PI) / static_cast<float>(kCircleTemplateSegments);
+        polygon.append(toGeo(center + QVector3D(std::cos(a) * r, std::sin(a) * r, 0.0f)));
+    }
+    addFenceShape(polygon, inclusion);
 }
 
 void MissionController::placeSurveyCircle()
@@ -1067,26 +1159,36 @@ mission::GeoPoint MissionController::toGeo(const QVector3D& p) const
 
 QVector<mission::GeoPoint> MissionController::itemVertices(const QString& id) const
 {
-    const int idx = plan_ ? plan_->indexOfItem(id) : -1;
-    if (idx < 0) {
+    if (!plan_) {
         return {};
     }
-    return shapeVertices(plan_->plan().items[idx]);
+    if (const int idx = plan_->indexOfItem(id); idx >= 0) {
+        return shapeVertices(plan_->plan().items[idx]);
+    }
+    if (const int fenceIdx = plan_->indexOfFence(id); fenceIdx >= 0) {
+        return plan_->plan().fence[fenceIdx].ring;
+    }
+    return {};
 }
 
 bool MissionController::itemHasVertices(const QString& id) const
 {
     const QString type = itemType(id);
-    return type == QStringLiteral("survey") || type == QStringLiteral("corridor");
+    return type == QStringLiteral("survey") || type == QStringLiteral("corridor") || type == QStringLiteral("fence");
 }
 
 QString MissionController::itemType(const QString& id) const
 {
-    const int idx = plan_ ? plan_->indexOfItem(id) : -1;
-    if (idx < 0) {
+    if (!plan_) {
         return QString();
     }
-    return QString::fromLatin1(mission::itemTypeName(plan_->plan().items[idx]));
+    if (const int idx = plan_->indexOfItem(id); idx >= 0) {
+        return QString::fromLatin1(mission::itemTypeName(plan_->plan().items[idx]));
+    }
+    if (plan_->indexOfFence(id) >= 0) {
+        return QStringLiteral("fence");
+    }
+    return QString();
 }
 
 double MissionController::hitRadius() const
@@ -1185,7 +1287,7 @@ void MissionController::rebuild()
 
     const auto& plan = plan_->plan();
     const auto& expanded = plan_->expanded();
-    const bool hasContent = plan.home.has_value() || !plan.items.isEmpty() || !plan.rally.isEmpty() || !draft_.isEmpty();
+    const bool hasContent = plan.home.has_value() || !plan.items.isEmpty() || !plan.rally.isEmpty() || !plan.fence.isEmpty() || !draft_.isEmpty();
     rd.enabled = editing_ && hasContent;
     if (!rd.enabled) {
         layer_->setRenderData(rd);
@@ -1196,9 +1298,6 @@ void MissionController::rebuild()
     const bool selectedIsHome = selectedId_ == kHomeId;
 
     QVector<mission::GeoPoint> routeGeo;
-    if (plan.home && plan.home->isValid()) {
-        routeGeo.append(*plan.home);
-    }
     for (const auto& f : expanded.mission.items) {
         if (f.isNavigation()) {
             routeGeo.append(mission::GeoPoint(f.lat, f.lon));
@@ -1206,10 +1305,6 @@ void MissionController::rebuild()
     }
     for (int i = 0; i + 1 < routeGeo.size(); ++i) {
         appendGeodesic(rd, routeGeo[i], routeGeo[i + 1], kRouteColor, 2.5f, true);
-    }
-    const bool returnsHome = !expanded.mission.items.isEmpty() && expanded.mission.items.last().command == mission::MavCmd::NavReturnToLaunch;
-    if (returnsHome && plan.home && plan.home->isValid() && routeGeo.size() >= 2) {
-        appendGeodesic(rd, routeGeo.last(), *plan.home, kReturnColor, 2.0f, true);
     }
 
     float flashWave = 0.0f;
@@ -1306,6 +1401,31 @@ void MissionController::rebuild()
         dimFrom(r.id, rd.fills.size(), rd.lines.size(), rd.arrows.size(), markersFrom);
     }
 
+    for (const auto& f : plan.fence) {
+        if (f.ring.size() < mission::kFenceMinVertices) {
+            continue;
+        }
+        const bool selected = f.id == selectedId_;
+        const int fillsFrom = rd.fills.size();
+        const int linesFrom = rd.lines.size();
+        const int arrowsFrom = rd.arrows.size();
+        const int markersFrom = rd.markers.size();
+        if (!f.inclusion) {
+            MissionLayer::Fill fill;
+            fill.ring.reserve(f.ring.size());
+            for (const auto& p : f.ring) {
+                fill.ring.append(toScene(p));
+            }
+            fill.color = kFenceExclusionFill;
+            rd.fills.append(fill);
+        }
+        const QColor outline = selected ? kSelectedColor : (f.inclusion ? kFenceInclusion : kFenceExclusion);
+        for (int i = 0; i < f.ring.size(); ++i) {
+            appendGeodesic(rd, f.ring[i], f.ring[(i + 1) % f.ring.size()], outline, selected ? 3.0f : 2.0f, false);
+        }
+        dimFrom(f.id, fillsFrom, linesFrom, arrowsFrom, markersFrom);
+    }
+
     if (editing_) {
         const ShapeHandles handles = selectedShapeHandles();
         if (handles.valid) {
@@ -1360,8 +1480,9 @@ void MissionController::rebuild()
     }
 
     if (editing_ && !draft_.isEmpty()) {
-        const bool closed = tool_ == ToolSurveyTrace;
-        const QColor draftColor = closed ? kSurveyStroke : kCorridorStroke;
+        const bool closed = tool_ == ToolSurveyTrace || tool_ == ToolFenceTrace;
+        const QColor draftColor = tool_ == ToolFenceTrace ? (draftFenceInclusion_ ? kFenceInclusion : kFenceExclusion)
+                                : closed ? kSurveyStroke : kCorridorStroke;
         const int edgeCount = closed && draft_.size() >= 3 ? draft_.size() : draft_.size() - 1;
         for (int i = 0; i < edgeCount; ++i) {
             appendGeodesic(rd, draft_[i], draft_[(i + 1) % draft_.size()], draftColor, 2.0f, false);
@@ -1377,10 +1498,10 @@ void MissionController::rebuild()
             maxLon = std::max(maxLon, g.lon);
         }
         const bool compact = (maxLat - minLat) < kDraftCompactDeg && (maxLon - minLon) < kDraftCompactDeg;
-        if (closed && draftScene.size() >= 3 && compact) {
+        if (closed && draftScene.size() >= 3 && compact && !(tool_ == ToolFenceTrace && draftFenceInclusion_)) {
             MissionLayer::Fill f;
             f.ring = draftScene;
-            f.color = kSurveyFill;
+            f.color = tool_ == ToolFenceTrace ? kFenceExclusionFill : kSurveyFill;
             rd.fills.append(f);
         }
         for (int i = 0; i < draftScene.size(); ++i) {

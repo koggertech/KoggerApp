@@ -25,6 +25,9 @@ class MissionPlanController : public QObject
     Q_PROPERTY(int          itemCount         READ itemCount                                   NOTIFY planChanged)
     Q_PROPERTY(int          rallyCount        READ rallyCount                                  NOTIFY planChanged)
     Q_PROPERTY(bool         hasHome           READ hasHome                                     NOTIFY planChanged)
+    Q_PROPERTY(double       homeLat           READ homeLat                                     NOTIFY planChanged)
+    Q_PROPERTY(double       homeLon           READ homeLon                                     NOTIFY planChanged)
+    Q_PROPERTY(int          fenceCount        READ fenceCount                                  NOTIFY planChanged)
     Q_PROPERTY(double       cruiseSpeed       READ cruiseSpeed       WRITE setCruiseSpeed      NOTIFY planChanged)
     Q_PROPERTY(int          endAction         READ endAction         WRITE setEndAction        NOTIFY planChanged)
     Q_PROPERTY(QVariantMap  estimates         READ estimates                                   NOTIFY planChanged)
@@ -51,6 +54,9 @@ public:
     int         itemCount() const { return plan_.items.size(); }
     int         rallyCount() const { return plan_.rally.size(); }
     bool        hasHome() const { return plan_.home.has_value(); }
+    double      homeLat() const { return plan_.home ? plan_.home->lat : NAN; }
+    double      homeLon() const { return plan_.home ? plan_.home->lon : NAN; }
+    int         fenceCount() const { return plan_.fence.size(); }
     double      cruiseSpeed() const { return plan_.settings.cruiseSpeed; }
     int         endAction() const { return static_cast<int>(plan_.settings.endAction); }
     QVariantMap estimates() const;
@@ -92,7 +98,9 @@ public:
     Q_INVOKABLE QVariantList generatedLines(const QString& id) const;
     Q_INVOKABLE QStringList itemIds() const;
     Q_INVOKABLE QStringList rallyIds() const;
+    Q_INVOKABLE QStringList fenceIds() const;
     Q_INVOKABLE int     indexOfItem(const QString& id) const;
+    Q_INVOKABLE int     indexOfFence(const QString& id) const;
 
     Q_INVOKABLE void    setHome(double lat, double lon);
     Q_INVOKABLE void    clearHome();
@@ -100,6 +108,7 @@ public:
     Q_INVOKABLE QString addSurvey(const QVariantList& polygon, int insertIndex = -1);
     Q_INVOKABLE QString addCorridor(const QVariantList& axis, int insertIndex = -1);
     Q_INVOKABLE QString addRally(double lat, double lon);
+    Q_INVOKABLE QString addFence(const QVariantList& polygon, bool inclusion);
     Q_INVOKABLE bool    removeItem(const QString& id);
     Q_INVOKABLE bool    moveItem(const QString& id, int newIndex);
     Q_INVOKABLE bool    updateItem(const QString& id, const QVariantMap& patch);
@@ -142,6 +151,9 @@ private:
     void        markClean();
     MissionItem*  findItem(const QString& id);
     RallyItem*  findRally(const QString& id);
+    FencePolygon* findFence(const QString& id);
+    QVector<GeoPoint>* vertexListById(const QString& id, int* minCount);
+    bool        idTaken(const QString& id) const;
     bool        parsePoints(const QVariantList& list, QVector<GeoPoint>* out, int minCount);
     int         clampInsertIndex(int index) const;
 

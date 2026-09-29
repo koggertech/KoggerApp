@@ -35,6 +35,7 @@ class MissionController : public QObject
     Q_PROPERTY(bool    dragging       READ dragging                         NOTIFY draggingChanged)
     Q_PROPERTY(int     draftCount     READ draftCount                       NOTIFY draftChanged)
     Q_PROPERTY(bool    draftReady     READ draftReady                       NOTIFY draftChanged)
+    Q_PROPERTY(bool    draftFenceInclusion READ draftFenceInclusion WRITE setDraftFenceInclusion NOTIFY draftChanged)
 
 public:
     enum Tool : int
@@ -46,7 +47,9 @@ public:
         ToolCorridor = 4,
         ToolRally = 5,
         ToolSurveyTrace = 6,
-        ToolCorridorTrace = 7
+        ToolCorridorTrace = 7,
+        ToolFence = 8,
+        ToolFenceTrace = 9
     };
     Q_ENUM(Tool)
 
@@ -64,6 +67,8 @@ public:
     bool dragging() const { return dragging_; }
     int draftCount() const { return draft_.size(); }
     bool draftReady() const;
+    bool draftFenceInclusion() const { return draftFenceInclusion_; }
+    void setDraftFenceInclusion(bool inclusion);
 
     bool onPress(qreal x, qreal y);
     void onDrag(const QVector3D& scenePoint);
@@ -81,6 +86,8 @@ public:
     Q_INVOKABLE void placeSurveyTemplate();
     Q_INVOKABLE void placeSurveyCircle();
     Q_INVOKABLE void placeCorridorTemplate();
+    Q_INVOKABLE void placeFenceTemplate(bool inclusion);
+    Q_INVOKABLE void placeFenceCircle(bool inclusion);
     Q_INVOKABLE void fitToPlan();
     Q_INVOKABLE void finishDraft();
     Q_INVOKABLE void cancelDraft();
@@ -152,6 +159,8 @@ private:
     void setDragging(bool dragging);
     bool viewExtent(QVector3D& center, float& halfX, float& halfY) const;
     void addSurveyShape(const QVector<mission::GeoPoint>& polygon, double spacing);
+    void addFenceShape(const QVector<mission::GeoPoint>& polygon, bool inclusion);
+    QVector<mission::GeoPoint> viewRectangle(float fraction) const;
 
     GraphicsScene3dView* view_{nullptr};
     MissionLayer* layer_{nullptr};
@@ -164,6 +173,7 @@ private:
     int selectedVertex_{-1};
 
     QVector<mission::GeoPoint> draft_;
+    bool draftFenceInclusion_{true};
     bool dragging_{false};
     bool dragMoved_{false};
     Hit dragHit_;

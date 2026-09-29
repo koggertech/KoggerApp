@@ -31,6 +31,7 @@ struct SurveyItem {
     std::optional<int> entryCorner;
     bool     crosshatch = false;
     std::optional<double> crosshatchSpacing;
+    std::optional<double> speed;
     QJsonObject extra;
 };
 
@@ -41,6 +42,7 @@ struct CorridorItem {
     double   lineSpacing = 10.0;
     double   turnaround = 0.0;
     std::optional<int> entryEnd;
+    std::optional<double> speed;
     QJsonObject extra;
 };
 
@@ -50,11 +52,18 @@ struct RallyItem {
     QJsonObject extra;
 };
 
+struct FencePolygon {
+    QString  id;
+    QVector<GeoPoint> ring;
+    bool     inclusion = true;
+    QJsonObject extra;
+};
+
 using MissionItem = std::variant<WaypointItem, SurveyItem, CorridorItem>;
 
 struct PlanSettings {
     double    cruiseSpeed = 1.5;
-    EndAction endAction = EndAction::Rtl;
+    EndAction endAction = EndAction::ReturnToStart;
 };
 
 struct MissionPlan {
@@ -65,8 +74,12 @@ struct MissionPlan {
     std::optional<GeoPoint> home;
     QVector<MissionItem> items;
     QVector<RallyItem> rally;
+    QVector<FencePolygon> fence;
     QJsonObject extra;
 };
+
+constexpr int kFenceMinVertices = 3;
+inline const QString kHomeItemId = QStringLiteral("home");
 
 inline const QString& itemId(const MissionItem& item)
 {
@@ -116,6 +129,7 @@ struct FlatMission {
     std::optional<GeoPoint> home;
     QVector<FlatItem> items;
     QVector<GeoPoint> rally;
+    QVector<FencePolygon> fence;
 };
 
 struct MissionEstimates {

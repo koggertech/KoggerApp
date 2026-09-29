@@ -15,13 +15,14 @@ Rectangle {
     readonly property real _s: AppPalette.scale
     readonly property int toolSize: Tokens.controlHXl
     readonly property int headerBtn: toolSize
-    readonly property bool tracing: ctl ? (ctl.tool === 6 || ctl.tool === 7) : false
+    readonly property bool tracing: ctl ? (ctl.tool === 6 || ctl.tool === 7 || ctl.tool === 9) : false
     readonly property int panelWidth: Math.min(Math.round(340 * _s), Math.round(width * 0.42))
 
     property int rev: 0
     property string draggingItemId: ""
     property var itemIds: []
     property var rallyIds: []
+    property var fenceIds: []
     property var estimates: ({})
     property var groupedIssues: []
     property string _issuesKey: ""
@@ -51,6 +52,8 @@ Rectangle {
         if (ids.join(",") !== itemIds.join(",")) itemIds = ids
         var rally = plan.rallyIds()
         if (rally.join(",") !== rallyIds.join(",")) rallyIds = rally
+        var fences = plan.fenceIds()
+        if (fences.join(",") !== fenceIds.join(",")) fenceIds = fences
         estimates = plan.estimates
         var issues = groupIssues(plan.issues)
         var key = JSON.stringify(issues)
@@ -183,6 +186,7 @@ Rectangle {
              : t === "survey"   ? qsTr("Survey")
              : t === "corridor" ? qsTr("Corridor")
              : t === "rally"    ? qsTr("Rally point")
+             : t === "fence"    ? qsTr("Geofence")
              : t
     }
 
@@ -300,15 +304,10 @@ Rectangle {
         }
     }
 
-    Connections {
-        target: root.ctl
-        ignoreUnknownSignals: true
-        function onSelectionChanged() { if (root.active) revealTimer.restart() }
-    }
 
     Timer {
         id: revealTimer
-        interval: 60
+        interval: 30
         onTriggered: root.revealSelected()
     }
 
@@ -321,6 +320,8 @@ Rectangle {
         else {
             var r = rallyIds.indexOf(id)
             if (r >= 0) item = rallyRepeater.itemAt(r)
+            var f = fenceIds.indexOf(id)
+            if (f >= 0) item = fenceRepeater.itemAt(f)
         }
         if (!item) return
         var top = item.mapToItem(panelFlick.contentItem, 0, 0).y
@@ -328,7 +329,7 @@ Rectangle {
         var margin = Tokens.spaceLg
         var maxY = Math.max(0, panelFlick.contentHeight - panelFlick.height)
         var y = panelFlick.contentY
-        if (top - margin < y) y = top - margin
+        if (top - margin < y || item.height + 2 * margin > panelFlick.height) y = top - margin
         else if (bottom + margin > y + panelFlick.height) y = bottom + margin - panelFlick.height
         var target = Math.max(0, Math.min(maxY, y))
         if (Math.abs(target - panelFlick.contentY) < 1) return
@@ -578,14 +579,15 @@ Rectangle {
                                 { tool: 2, icon: "qrc:/icons/ui/map-pin-plus.svg",      tip: qsTr("Waypoint") },
                                 { tool: 3, icon: "qrc:/icons/ui/lasso-polygon.svg",     tip: qsTr("Survey area") },
                                 { tool: 4, icon: "qrc:/icons/ui/vector-bezier-arc.svg", tip: qsTr("Corridor") },
-                                { tool: 5, icon: "qrc:/icons/ui/pennant.svg",           tip: qsTr("Rally point") }
+                                { tool: 5, icon: "qrc:/icons/ui/pennant.svg",           tip: qsTr("Rally point") },
+                                { tool: 8, icon: "qrc:/icons/ui/shield.svg",            tip: qsTr("Geofence") }
                             ]
                             delegate: ToolButton {
                                 id: toolBtn
                                 required property var modelData
                                 readonly property bool attention: modelData.tool === 1 && root.plan && !root.plan.hasHome && !armed
-                                readonly property bool shapeTool: modelData.tool === 3 || modelData.tool === 4
-                                readonly property int traceTool: modelData.tool === 3 ? 6 : 7
+                                readonly property bool shapeTool: modelData.tool === 3 || modelData.tool === 4 || modelData.tool === 8
+                                readonly property int traceTool: modelData.tool === 3 ? 6 : modelData.tool === 4 ? 7 : 9
                                 armed: root.ctl && (root.ctl.tool === modelData.tool || (shapeTool && root.ctl.tool === traceTool))
                                 iconSource: modelData.icon
                                 toolTipText: modelData.tip
@@ -797,6 +799,7 @@ Rectangle {
                             : root.ctl.tool === 5 ? qsTr("Tap the map to add rally points")
                             : root.ctl.tool === 6 ? (root.ctl.draftReady ? qsTr("Tap to add corners, ✓ finishes the area") : qsTr("Tap the map to outline the area (3 corners or more)"))
                             : root.ctl.tool === 7 ? (root.ctl.draftReady ? qsTr("Tap to extend the axis, ✓ finishes the corridor") : qsTr("Tap the map along the corridor axis (2 points or more)"))
+                            : root.ctl.tool === 9 ? (root.ctl.draftReady ? qsTr("Tap to add corners, ✓ finishes the zone") : qsTr("Tap the map to outline the zone (3 corners or more)"))
                             : root.ctl.selectedId.length ? qsTr("Drag handles to edit, + inserts a vertex")
                             : qsTr("Pick a tool on the left or tap an item to select it")
                     }
@@ -966,15 +969,22 @@ Rectangle {
                                 label: qsTr("At the end")
                                 KCombo {
                                     id: endActionCombo
-                                    width: Math.round(150 * root._s)
-                                    model: [qsTr("Return to start"), qsTr("Hold position")]
-                                    onActivated: function(i) { if (root.plan) root.plan.endAction = i }
+                                    readonly property var actions: [2, 0, 1]
+                                    width: Math.round(190 * root._s)
+                                    model: [qsTr("Return to start point"), qsTr("Return to launch (RTL)"), qsTr("Hold position")]
+                                    onActivated: function(i) { if (root.plan) root.plan.endAction = actions[i] }
                                 }
                                 Binding {
                                     target: endActionCombo
                                     property: "currentIndex"
-                                    value: root.plan ? root.plan.endAction : 0
+                                    value: root.plan ? Math.max(0, endActionCombo.actions.indexOf(root.plan.endAction)) : 0
                                 }
+                            }
+                            KIslandRow {
+                                visible: root.plan && root.plan.endAction === 0
+                                caption: qsTr("RTL goes to the autopilot's arming position, which may differ from the start point")
+                                captionColor: AppPalette.linkIdleText
+                                stacked: true
                             }
                             KIslandRow {
                                 id: homeRow
@@ -1013,6 +1023,21 @@ Rectangle {
                                     iconSource: "qrc:/icons/ui/current-location.svg"
                                     toolTipText: qsTr("Show on map")
                                     onClicked: if (root.ctl) root.ctl.showItem("home")
+                                }
+                            }
+                            Item {
+                                visible: root.plan && root.plan.hasHome
+                                width: parent.width
+                                height: homeCoords.implicitHeight + Tokens.spaceSm * 2
+                                MissionCoordFields {
+                                    id: homeCoords
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.margins: Tokens.spaceMd
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    lat: root.plan ? root.plan.homeLat : NaN
+                                    lon: root.plan ? root.plan.homeLon : NaN
+                                    onCommitted: function(la, lo) { if (root.plan) root.plan.setHome(la, lo) }
                                 }
                             }
                         }
@@ -1060,6 +1085,7 @@ Rectangle {
                                             isRally: false
                                             dragLayer: routeDragLayer
                                             visualIndex: routeSlot.visualIndex
+                                            onExpanded: revealTimer.restart()
                                             onHandlePressChanged: function(pressed) { panelFlick.interactive = !pressed }
                                             onDragStarted: { root.draggingItemId = routeSlot.itemId; if (root.plan) root.plan.beginTransaction() }
                                             onDragMoved: root.updateDragOrder(routeCard)
@@ -1093,6 +1119,28 @@ Rectangle {
                                     itemId: modelData
                                     ordinal: index + 1
                                     isRally: true
+                                    onExpanded: revealTimer.restart()
+                                }
+                            }
+                        }
+
+                        KIsland {
+                            title: qsTr("Geofence")
+                            width: parent.width
+                            visible: root.fenceIds.length > 0
+
+                            Repeater {
+                                id: fenceRepeater
+                                model: root.fenceIds
+                                delegate: MissionItemCard {
+                                    required property string modelData
+                                    required property int index
+                                    width: parent ? parent.width : 0
+                                    editor: root
+                                    itemId: modelData
+                                    ordinal: index + 1
+                                    isRally: false
+                                    onExpanded: revealTimer.restart()
                                 }
                             }
                         }
@@ -1185,7 +1233,7 @@ Rectangle {
                 leftPadding: Tokens.spaceMd
                 topPadding: Tokens.spaceXs
                 bottomPadding: Tokens.spaceXs
-                text: shapeChooser.tool === 3 ? qsTr("Survey area") : qsTr("Corridor")
+                text: shapeChooser.tool === 3 ? qsTr("Survey area") : shapeChooser.tool === 4 ? qsTr("Corridor") : qsTr("Geofence")
                 color: AppPalette.textMuted
                 font.pixelSize: Tokens.fontSm
             }
@@ -1195,8 +1243,14 @@ Rectangle {
                        ? [ { label: qsTr("Rectangle here, then drag the corners"), mode: "template" },
                            { label: qsTr("Circle here, then drag the handles"),     mode: "circle" },
                            { label: qsTr("Outline it point by point"),              mode: "trace" } ]
-                       : [ { label: qsTr("Axis here, then drag the ends"),          mode: "template" },
+                       : shapeChooser.tool === 4
+                       ? [ { label: qsTr("Axis here, then drag the ends"),          mode: "template" },
                            { label: qsTr("Draw the axis point by point"),           mode: "trace" } ]
+                       : [ { label: qsTr("Inclusion zone: rectangle here"),         mode: "template", inclusion: true },
+                           { label: qsTr("Inclusion zone: outline point by point"), mode: "trace",    inclusion: true },
+                           { label: qsTr("Exclusion zone: rectangle here"),         mode: "template", inclusion: false },
+                           { label: qsTr("Exclusion zone: circle here"),            mode: "circle",   inclusion: false },
+                           { label: qsTr("Exclusion zone: outline point by point"), mode: "trace",    inclusion: false } ]
                 delegate: Rectangle {
                     required property var modelData
                     width: chooserColumn.width
@@ -1223,6 +1277,12 @@ Rectangle {
                         onClicked: {
                             shapeChooser.visible = false
                             if (!root.ctl) return
+                            if (shapeChooser.tool === 8) {
+                                if (modelData.mode === "template") root.ctl.placeFenceTemplate(modelData.inclusion)
+                                else if (modelData.mode === "circle") root.ctl.placeFenceCircle(modelData.inclusion)
+                                else { root.ctl.draftFenceInclusion = modelData.inclusion; root.ctl.tool = 9 }
+                                return
+                            }
                             if (modelData.mode === "template") {
                                 if (shapeChooser.tool === 3) root.ctl.placeSurveyTemplate()
                                 else root.ctl.placeCorridorTemplate()

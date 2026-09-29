@@ -203,7 +203,9 @@ void MissionPlanController::setCruiseSpeed(double speed)
 
 void MissionPlanController::setEndAction(int action)
 {
-    const EndAction a = action == static_cast<int>(EndAction::Hold) ? EndAction::Hold : EndAction::Rtl;
+    const EndAction a = action == static_cast<int>(EndAction::Hold) ? EndAction::Hold
+                      : action == static_cast<int>(EndAction::ReturnToStart) ? EndAction::ReturnToStart
+                      : EndAction::Rtl;
     if (plan_.settings.endAction == a) {
         return;
     }
@@ -433,6 +435,11 @@ QString MissionPlanController::itemJson(const QString& id) const
             return QString::fromUtf8(QJsonDocument(o).toJson(QJsonDocument::Compact));
         }
     }
+    for (const auto& f : plan_.fence) {
+        if (f.id == id) {
+            return QString::fromUtf8(QJsonDocument(FileIo::fenceToJson(f)).toJson(QJsonDocument::Compact));
+        }
+    }
     return QString();
 }
 
@@ -466,6 +473,14 @@ QVariantMap MissionPlanController::itemInfo(const QString& id) const
     for (const auto& r : plan_.rally) {
         if (r.id == id) {
             m.insert(QStringLiteral("type"), QStringLiteral("rally"));
+            return m;
+        }
+    }
+    for (const auto& f : plan_.fence) {
+        if (f.id == id) {
+            m.insert(QStringLiteral("type"), QStringLiteral("fence"));
+            m.insert(QStringLiteral("inclusion"), f.inclusion);
+            m.insert(QStringLiteral("vertexCount"), f.ring.size());
             return m;
         }
     }
@@ -517,6 +532,43 @@ int MissionPlanController::indexOfItem(const QString& id) const
         }
     }
     return -1;
+}
+
+QStringList MissionPlanController::fenceIds() const
+{
+    QStringList ids;
+    for (const auto& f : plan_.fence) {
+        ids.append(f.id);
+    }
+    return ids;
+}
+
+int MissionPlanController::indexOfFence(const QString& id) const
+{
+    for (int i = 0; i < plan_.fence.size(); ++i) {
+        if (plan_.fence[i].id == id) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+QString MissionPlanController::addFence(const QVariantList& polygon, bool inclusion)
+{
+    FencePolygon f;
+    if (!parsePoints(polygon, &f.ring, kFenceMinVertices)) {
+        return QString();
+    }
+    if (plan_.fence.size() >= kMaxFencePolygons) {
+        setLastError(tr("fence: no more than %1 polygons").arg(kMaxFencePolygons));
+        return QString();
+    }
+    pushUndo();
+    f.id = newId();
+    f.inclusion = inclusion;
+    plan_.fence.append(f);
+    afterChange();
+    return f.id;
 }
 
 void MissionPlanController::setHome(double lat, double lon)
@@ -616,6 +668,14 @@ bool MissionPlanController::removeItem(const QString& id)
             return true;
         }
     }
+    for (int i = 0; i < plan_.fence.size(); ++i) {
+        if (plan_.fence[i].id == id) {
+            pushUndo();
+            plan_.fence.removeAt(i);
+            afterChange();
+            return true;
+        }
+    }
     setLastError(tr("remove: unknown id"));
     return false;
 }
@@ -692,6 +752,31 @@ bool MissionPlanController::updateItem(const QString& id, const QVariantMap& pat
         afterChange();
         return true;
     }
+    FencePolygon* fence = findFence(id);
+    if (fence) {
+        QJsonObject obj = FileIo::fenceToJson(*fence);
+        const QJsonObject p = QJsonObject::fromVariantMap(patch);
+        for (auto it = p.constBegin(); it != p.constEnd(); ++it) {
+            if (it.key() == QStringLiteral("id") || it.key() == QStringLiteral("type")) {
+                continue;
+            }
+            if (!FileIo::knownItemKey(QStringLiteral("fence"), it.key())) {
+                setLastError(tr("update: unknown field %1").arg(it.key()));
+                return false;
+            }
+            obj.insert(it.key(), it.value());
+        }
+        FencePolygon updated;
+        QString err;
+        if (!FileIo::fenceFromJson(obj, &updated, &err)) {
+            setLastError(err);
+            return false;
+        }
+        pushUndo();
+        *fence = updated;
+        afterChange();
+        return true;
+    }
     setLastError(tr("update: unknown id"));
     return false;
 }
@@ -726,6 +811,17 @@ bool MissionPlanController::moveVertex(const QString& id, int index, double lat,
         afterChange();
         return true;
     }
+    int minCount = 0;
+    if (QVector<GeoPoint>* ring = vertexListById(id, &minCount)) {
+        if (index < 0 || index >= ring->size()) {
+            setLastError(tr("vertex: index out of range"));
+            return false;
+        }
+        pushUndo();
+        (*ring)[index] = p;
+        afterChange();
+        return true;
+    }
     setLastError(tr("vertex: unknown id"));
     return false;
 }
@@ -737,10 +833,14 @@ bool MissionPlanController::insertVertex(const QString& id, int index, double la
         setLastError(tr("vertex: invalid position"));
         return false;
     }
-    MissionItem* item = findItem(id);
-    QVector<GeoPoint>* pts = item ? vertexList(*item) : nullptr;
+    int minCount = 0;
+    QVector<GeoPoint>* pts = vertexListById(id, &minCount);
     if (!pts) {
         setLastError(tr("vertex: item has no vertex list"));
+        return false;
+    }
+    if (pts->size() >= kMaxShapeVertices) {
+        setLastError(tr("vertex: no more than %1 vertices").arg(kMaxShapeVertices));
         return false;
     }
     pushUndo();
@@ -751,13 +851,12 @@ bool MissionPlanController::insertVertex(const QString& id, int index, double la
 
 bool MissionPlanController::removeVertex(const QString& id, int index)
 {
-    MissionItem* item = findItem(id);
-    QVector<GeoPoint>* pts = item ? vertexList(*item) : nullptr;
+    int minCount = 0;
+    QVector<GeoPoint>* pts = vertexListById(id, &minCount);
     if (!pts) {
         setLastError(tr("vertex: item has no vertex list"));
         return false;
     }
-    const int minCount = std::holds_alternative<SurveyItem>(*item) ? 3 : 2;
     if (index < 0 || index >= pts->size() || pts->size() <= minCount) {
         setLastError(tr("vertex: cannot remove"));
         return false;
@@ -849,11 +948,7 @@ QString MissionPlanController::newId()
         for (int i = 0; i < kIdLength; ++i) {
             id.append(QLatin1Char(kIdAlphabet[rng_.bounded(alphabetSize)]));
         }
-        bool taken = indexOfItem(id) >= 0;
-        for (const auto& r : plan_.rally) {
-            taken = taken || r.id == id;
-        }
-        if (!taken) {
+        if (!idTaken(id)) {
             return id;
         }
     }
@@ -952,6 +1047,38 @@ RallyItem* MissionPlanController::findRally(const QString& id)
         }
     }
     return nullptr;
+}
+
+FencePolygon* MissionPlanController::findFence(const QString& id)
+{
+    const int idx = indexOfFence(id);
+    return idx >= 0 ? &plan_.fence[idx] : nullptr;
+}
+
+QVector<GeoPoint>* MissionPlanController::vertexListById(const QString& id, int* minCount)
+{
+    if (MissionItem* item = findItem(id)) {
+        *minCount = std::holds_alternative<SurveyItem>(*item) ? 3 : 2;
+        return vertexList(*item);
+    }
+    if (FencePolygon* f = findFence(id)) {
+        *minCount = kFenceMinVertices;
+        return &f->ring;
+    }
+    return nullptr;
+}
+
+bool MissionPlanController::idTaken(const QString& id) const
+{
+    if (id == kHomeItemId || indexOfItem(id) >= 0 || indexOfFence(id) >= 0) {
+        return true;
+    }
+    for (const auto& r : plan_.rally) {
+        if (r.id == id) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool MissionPlanController::parsePoints(const QVariantList& list, QVector<GeoPoint>* out, int minCount)

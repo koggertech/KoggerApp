@@ -2,8 +2,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 
 #include <QCoreApplication>
+#include <QPointF>
 
 #include "mission_geometry.h"
 
@@ -24,6 +26,21 @@ FlatItem waypointAt(const GeoPoint& p, const QString& sourceId, double hold = 0.
     f.alt = 0.0;
     f.sourceId = sourceId;
     return f;
+}
+
+bool pointInLocalPolygon(const QPointF& p, const QVector<QPointF>& poly)
+{
+    bool inside = false;
+    for (int i = 0, j = poly.size() - 1; i < poly.size(); j = i++) {
+        const QPointF& a = poly[i];
+        const QPointF& b = poly[j];
+        const bool crosses = ((a.y() > p.y()) != (b.y() > p.y()))
+                             && (p.x() < (b.x() - a.x()) * (p.y() - a.y()) / (b.y() - a.y() + 1e-12) + a.x());
+        if (crosses) {
+            inside = !inside;
+        }
+    }
+    return inside;
 }
 
 FlatItem changeSpeed(double speed, const QString& sourceId)
@@ -51,6 +68,7 @@ ExpandResult expandPlan(const MissionPlan& plan)
     if (!plan.items.isEmpty() && plan.settings.cruiseSpeed > 0.0) {
         m.items.append(changeSpeed(plan.settings.cruiseSpeed, QString()));
     }
+    const bool homeValid = plan.home && plan.home->isValid();
 
     auto pushNav = [&](FlatItem f) {
         m.items.append(f);
@@ -67,6 +85,20 @@ ExpandResult expandPlan(const MissionPlan& plan)
             pushNav(waypointAt(p, id));
         }
     };
+
+    auto withShapeSpeed = [&](const std::optional<double>& speed, const QString& id, const std::function<void()>& body) {
+        if (speed && *speed > 0.0) {
+            m.items.append(changeSpeed(*speed, id));
+        }
+        body();
+        if (speed && *speed > 0.0 && plan.settings.cruiseSpeed > 0.0) {
+            m.items.append(changeSpeed(plan.settings.cruiseSpeed, id));
+        }
+    };
+
+    if (homeValid && !plan.items.isEmpty()) {
+        pushNav(waypointAt(*plan.home, kHomeItemId));
+    }
 
     for (const auto& item : plan.items) {
         std::visit([&](const auto& it) {
@@ -91,7 +123,7 @@ ExpandResult expandPlan(const MissionPlan& plan)
                     if (g.areaSquareMeters > kWarnSurveyAreaKm2 * 1.0e6) {
                         res.issues.append(PlanIssue{it.id, QCoreApplication::translate("MissionPlan", "Survey area %1 km² is unusually large").arg(g.areaSquareMeters / 1.0e6, 0, 'f', 1), IssueLevel::Warning});
                     }
-                    pushGenerated(g, it.id);
+                    withShapeSpeed(it.speed, it.id, [&]() { pushGenerated(g, it.id); });
                 }
                 res.generated.insert(it.id, g);
             } else {
@@ -105,16 +137,20 @@ ExpandResult expandPlan(const MissionPlan& plan)
                     for (const auto& w : g.warnings) {
                         res.issues.append(PlanIssue{it.id, w, IssueLevel::Warning});
                     }
-                    pushGenerated(g, it.id);
+                    withShapeSpeed(it.speed, it.id, [&]() { pushGenerated(g, it.id); });
                 }
                 res.generated.insert(it.id, g);
             }
         }, item);
     }
 
-    const bool hasNav = std::any_of(m.items.cbegin(), m.items.cend(), [](const FlatItem& f) { return f.isNavigation(); });
+    const bool hasNav = std::any_of(m.items.cbegin(), m.items.cend(), [](const FlatItem& f) { return f.isNavigation() && f.sourceId != kHomeItemId; });
     if (!hasNav) {
         m.items.clear();
+    } else if (plan.settings.endAction == EndAction::ReturnToStart) {
+        if (homeValid) {
+            pushNav(waypointAt(*plan.home, kHomeItemId));
+        }
     } else {
         FlatItem end;
         end.frame = MavFrame::GlobalRelativeAltInt;
@@ -132,6 +168,66 @@ ExpandResult expandPlan(const MissionPlan& plan)
         if (r.pos.isValid()) {
             m.rally.append(r.pos);
         }
+    }
+
+    m.fence = plan.fence;
+    int outsideInclusion = 0;
+    int insideExclusion = 0;
+    bool anyInclusion = false;
+    QVector<QVector<QPointF>> inclusionLocal;
+    QVector<LocalPlane> inclusionPlanes;
+    QVector<QVector<QPointF>> exclusionLocal;
+    QVector<LocalPlane> exclusionPlanes;
+    for (const auto& f : plan.fence) {
+        if (f.ring.size() < kFenceMinVertices) {
+            res.issues.append(PlanIssue{f.id, QCoreApplication::translate("MissionPlan", "Fence needs at least %1 vertices").arg(kFenceMinVertices), IssueLevel::Error});
+            continue;
+        }
+        LocalPlane plane(centroid(f.ring));
+        QVector<QPointF> local;
+        local.reserve(f.ring.size());
+        for (const auto& p : f.ring) {
+            local.append(plane.toLocal(p));
+        }
+        if (polygonSelfIntersects(local)) {
+            res.issues.append(PlanIssue{f.id, QCoreApplication::translate("MissionPlan", "Fence polygon is self-intersecting"), IssueLevel::Error});
+            continue;
+        }
+        if (f.inclusion) {
+            anyInclusion = true;
+            inclusionLocal.append(local);
+            inclusionPlanes.append(plane);
+        } else {
+            exclusionLocal.append(local);
+            exclusionPlanes.append(plane);
+        }
+    }
+    for (const auto& f : m.items) {
+        if (!f.isNavigation()) {
+            continue;
+        }
+        const GeoPoint p(f.lat, f.lon);
+        if (anyInclusion) {
+            bool inside = false;
+            for (int i = 0; i < inclusionLocal.size() && !inside; ++i) {
+                inside = pointInLocalPolygon(inclusionPlanes[i].toLocal(p), inclusionLocal[i]);
+            }
+            if (!inside) {
+                ++outsideInclusion;
+            }
+        }
+        for (int i = 0; i < exclusionLocal.size(); ++i) {
+            if (pointInLocalPolygon(exclusionPlanes[i].toLocal(p), exclusionLocal[i])) {
+                ++insideExclusion;
+                break;
+            }
+        }
+    }
+    if (outsideInclusion > 0) {
+        res.issues.append(PlanIssue{QString(), QCoreApplication::translate("MissionPlan", "%1 waypoints lie outside the inclusion fence").arg(outsideInclusion), IssueLevel::Warning});
+    }
+    if (insideExclusion > 0) {
+        res.issues.append(PlanIssue{QString(), QCoreApplication::translate("MissionPlan", "%1 waypoints lie inside an exclusion zone").arg(insideExclusion), IssueLevel::Warning});
     }
 
     res.estimates = estimateMission(m, plan.settings);
@@ -183,11 +279,13 @@ MissionEstimates estimateMission(const FlatMission& mission, const PlanSettings&
         }
         ++e.waypointCount;
         const GeoPoint here(f.lat, f.lon);
+        bool advanced = true;
         if (prev && prev->isValid()) {
             const double d = geoDistance(*prev, here);
+            advanced = d > 0.0;
             e.lengthMeters += d;
             e.timeSeconds += d / speed;
-            if (prevPrev && prevPrev->isValid()) {
+            if (advanced && prevPrev && prevPrev->isValid()) {
                 double turn = std::fabs(bearingDeg(*prev, here) - bearingDeg(*prevPrev, *prev));
                 if (turn > 180.0) {
                     turn = 360.0 - turn;
@@ -200,16 +298,12 @@ MissionEstimates estimateMission(const FlatMission& mission, const PlanSettings&
         if (f.param1 > 0.0) {
             e.timeSeconds += f.param1;
         }
-        prevPrev = prev;
-        prev = here;
+        if (advanced) {
+            prevPrev = prev;
+            prev = here;
+        }
     }
 
-    const bool rtl = !mission.items.isEmpty() && mission.items.last().command == MavCmd::NavReturnToLaunch;
-    if (rtl && mission.home && prev && prev->isValid()) {
-        const double d = geoDistance(*prev, *mission.home);
-        e.lengthMeters += d;
-        e.timeSeconds += d / speed;
-    }
     return e;
 }
 

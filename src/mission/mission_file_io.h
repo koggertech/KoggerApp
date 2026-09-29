@@ -23,6 +23,8 @@ bool saveToFile(const QString& path, const MissionPlan& plan, const QString& app
 QJsonObject itemToJson(const MissionItem& item);
 bool itemFromJson(const QJsonObject& obj, MissionItem* outItem, QString* outError);
 QJsonObject rallyToJson(const RallyItem& item);
+QJsonObject fenceToJson(const FencePolygon& fence);
+bool fenceFromJson(const QJsonObject& obj, FencePolygon* out, QString* outError);
 bool knownItemKey(const QString& type, const QString& key);
 bool isOpaqueUri(const QString& pathOrUri);
 

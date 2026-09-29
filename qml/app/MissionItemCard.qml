@@ -22,11 +22,15 @@ Rectangle {
     readonly property int btnSize: Tokens.controlHLg
     readonly property int handleW: Math.round(32 * _s)
     readonly property bool isPoint: type === "waypoint" || isRally
-    readonly property int actionsW: (isRally ? 1 : 3) * (btnSize + Tokens.spaceXs) + Tokens.spaceMd
-    readonly property int actionsRightMargin: isRally ? 0 : handleW + Tokens.spaceMd
+    readonly property bool isFence: type === "fence"
+    readonly property bool isShape: type === "survey" || type === "corridor"
+    readonly property bool isRoute: !isRally && !isFence
+    readonly property int actionsW: (isRoute ? 3 : 1) * (btnSize + Tokens.spaceXs) + Tokens.spaceMd
+    readonly property int actionsRightMargin: isRoute ? handleW + Tokens.spaceMd : 0
     readonly property bool dragActive: dragArea.drag.active
     readonly property color typeColor: shapeError ? AppPalette.dangerBorder
                                      : isRally ? AppPalette.missionRally
+                                     : isFence ? (card.d && card.d.inclusion === true ? AppPalette.missionFenceInclusion : AppPalette.missionFenceExclusion)
                                      : type === "survey" ? AppPalette.missionSurvey
                                      : type === "corridor" ? AppPalette.missionCorridor
                                      : AppPalette.missionWaypoint
@@ -54,6 +58,7 @@ Rectangle {
     signal dragMoved()
     signal dragFinished()
     signal handlePressChanged(bool pressed)
+    signal expanded()
 
     height: column.implicitHeight + Tokens.spaceMd * 2
     radius: Tokens.radiusMd
@@ -69,6 +74,8 @@ Rectangle {
         when: card.dragActive && card.dragLayer !== null
         ParentChange { target: card; parent: card.dragLayer }
     }
+
+    onSelectedChanged: editorSlot.announced = false
 
     onDragActiveChanged: {
         if (dragActive) dragStarted()
@@ -155,7 +162,7 @@ Rectangle {
             }
 
             Column {
-                width: parent.width - Tokens.controlHSm - Tokens.spaceMd - card.actionsW - (card.isRally ? 0 : card.handleW + Tokens.spaceMd)
+                width: parent.width - Tokens.controlHSm - Tokens.spaceMd - card.actionsW - (card.isRoute ? card.handleW + Tokens.spaceMd : 0)
                 Text {
                     text: card.editor ? card.editor.typeLabel(card.isRally ? "rally" : card.type) : card.type
                     color: card.selected ? AppPalette.accentText : AppPalette.textStrong
@@ -170,6 +177,7 @@ Rectangle {
                     font.pixelSize: Tokens.fontSm
                     text: !card.d ? ""
                         : card.isPoint ? (card.selected ? "" : card.coordString(6))
+                        : card.isFence ? (card.d.inclusion ? qsTr("Inclusion zone") : qsTr("Exclusion zone"))
                         : card.shapeError ? qsTr("Not generated")
                         : qsTr("%1 lines, %2 waypoints").arg(card.info.lineCount || 0).arg(card.info.waypointCount || 0)
                 }
@@ -181,14 +189,14 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
 
                 HeaderButton {
-                    visible: !card.isRally
+                    visible: card.isRoute
                     iconSource: "qrc:/icons/ui/chevron-up.svg"
                     toolTipText: qsTr("Move up")
                     enabled: card.ordinal > 1
                     onClicked: if (card.editor) card.editor.moveRouteItem(card.itemId, -1)
                 }
                 HeaderButton {
-                    visible: !card.isRally
+                    visible: card.isRoute
                     iconSource: "qrc:/icons/ui/chevron-down.svg"
                     toolTipText: qsTr("Move down")
                     enabled: card.editor && card.ordinal < card.editor.itemIds.length
@@ -207,7 +215,7 @@ Rectangle {
 
             Item {
                 id: dragHandle
-                visible: !card.isRally
+                visible: card.isRoute
                 width: card.handleW
                 height: card.btnSize
                 anchors.verticalCenter: parent.verticalCenter
@@ -267,12 +275,33 @@ Rectangle {
             }
         }
 
-        Loader {
-            id: editorLoader
+        Item {
+            id: editorSlot
             width: parent.width
-            active: card.selected && card.d !== null && !card.dragActive && !(card.editor && card.editor.draggingItemId.length > 0)
-            visible: active
-            sourceComponent: editorComponent
+            readonly property bool open: card.selected && card.d !== null && !card.dragActive && !(card.editor && card.editor.draggingItemId.length > 0)
+            readonly property real targetHeight: open ? editorLoader.implicitHeight : 0
+            property bool announced: false
+            height: targetHeight
+            visible: open || height > 0
+            clip: true
+            opacity: open ? 1 : 0
+
+            onHeightChanged: {
+                if (open && !announced && targetHeight > 0 && height === targetHeight) {
+                    announced = true
+                    card.expanded()
+                }
+            }
+
+            Behavior on height { NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
+            Behavior on opacity { NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
+
+            Loader {
+                id: editorLoader
+                width: parent.width
+                active: editorSlot.open || editorSlot.height > 0
+                sourceComponent: editorComponent
+            }
         }
     }
 
@@ -295,7 +324,7 @@ Rectangle {
                     color: AppPalette.accentText
                     font.pixelSize: Tokens.fontSm
                     text: card.isPoint ? card.coordString(6)
-                        : card.d && card.type === "survey" ? qsTr("%1 corners").arg(card.d.polygon ? card.d.polygon.length : 0)
+                        : card.d && (card.type === "survey" || card.isFence) ? qsTr("%1 corners").arg(card.d.polygon ? card.d.polygon.length : 0)
                         : card.d ? qsTr("%1 axis points").arg(card.d.axis ? card.d.axis.length : 0) : ""
                 }
                 HeaderButton {
@@ -316,6 +345,23 @@ Rectangle {
                     toolTipText: qsTr("Show on map")
                     onClicked: if (card.editor && card.editor.ctl) card.editor.ctl.showItem(card.itemId)
                 }
+            }
+
+            MissionCoordFields {
+                visible: card.isPoint
+                width: parent.width
+                lat: card.d && isFinite(card.d.lat) ? card.d.lat : NaN
+                lon: card.d && isFinite(card.d.lon) ? card.d.lon : NaN
+                onCommitted: function(la, lo) { card.patch({ lat: la, lon: lo }) }
+            }
+
+            KSwitch {
+                visible: card.isFence
+                flat: true
+                width: parent.width
+                text: qsTr("Inclusion zone")
+                checked: card.d && card.d.inclusion === true
+                onToggled: card.patch({ inclusion: checked })
             }
 
             Item {
@@ -357,6 +403,48 @@ Rectangle {
                     target: speedSpin
                     property: "value"
                     value: card.d && card.type === "waypoint" && card.d.speed !== null && card.d.speed !== undefined ? Math.round(card.d.speed * 10) : 0
+                }
+            }
+            Item {
+                visible: card.type === "waypoint"
+                width: parent.width
+                height: Tokens.controlHMd
+                FieldLabel { text: qsTr("Accept radius, m") }
+                KSpinBox {
+                    id: radiusSpin
+                    anchors.right: parent.right
+                    anchors.rightMargin: card.actionsRightMargin
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: card.spinW; height: Tokens.controlHMd
+                    from: 0; to: 200; stepSize: 1
+                    toolTipText: qsTr("0 = autopilot default (WP_RADIUS)")
+                    onValueModified: function(v) { card.patch({ acceptRadius: v }) }
+                }
+                Binding {
+                    target: radiusSpin
+                    property: "value"
+                    value: card.d && card.type === "waypoint" ? Math.round(card.d.acceptRadius || 0) : 0
+                }
+            }
+            Item {
+                visible: card.isShape
+                width: parent.width
+                height: Tokens.controlHMd
+                FieldLabel { text: qsTr("Survey speed, m/s") }
+                KSpinBox {
+                    id: shapeSpeedSpin
+                    anchors.right: parent.right
+                    anchors.rightMargin: card.actionsRightMargin
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: card.spinW; height: Tokens.controlHMd
+                    from: 0; to: 300; stepSize: 1; divisor: 10; decimals: 1
+                    toolTipText: qsTr("0 = plan cruise speed")
+                    onValueModified: function(v) { card.patch({ speed: v > 0 ? v / 10 : null }) }
+                }
+                Binding {
+                    target: shapeSpeedSpin
+                    property: "value"
+                    value: card.d && card.isShape && card.d.speed !== null && card.d.speed !== undefined ? Math.round(card.d.speed * 10) : 0
                 }
             }
 

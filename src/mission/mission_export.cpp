@@ -87,10 +87,25 @@ QJsonObject toPlanJson(const FlatMission& mission, const PlanSettings& settings,
     }
     missionObj.insert(QStringLiteral("items"), items);
 
+    QJsonArray fencePolygons;
+    for (const auto& f : mission.fence) {
+        if (f.ring.size() < kFenceMinVertices) {
+            continue;
+        }
+        QJsonArray ring;
+        for (const auto& p : f.ring) {
+            ring.append(QJsonArray{p.lat, p.lon});
+        }
+        QJsonObject poly;
+        poly.insert(QStringLiteral("inclusion"), f.inclusion);
+        poly.insert(QStringLiteral("polygon"), ring);
+        poly.insert(QStringLiteral("version"), 1);
+        fencePolygons.append(poly);
+    }
     QJsonObject fence;
     fence.insert(QStringLiteral("version"), 2);
     fence.insert(QStringLiteral("circles"), QJsonArray());
-    fence.insert(QStringLiteral("polygons"), QJsonArray());
+    fence.insert(QStringLiteral("polygons"), fencePolygons);
 
     QJsonArray rallyPts;
     for (const auto& r : mission.rally) {

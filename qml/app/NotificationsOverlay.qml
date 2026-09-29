@@ -19,6 +19,11 @@ Item {
     readonly property int burstSlack: 2
 
     function push(kind, text, tag, actionPath) {
+        for (var i = 0; i < notificationsModel.count; ++i) {
+            var same = notificationsModel.get(i)
+            if (same.kind === kind && same.text === text && !same.closing)
+                return
+        }
         if (notificationsModel.count >= maxVisible)
             evictOldestInfo()
         while (notificationsModel.count >= maxVisible + burstSlack && dropOldestInfo())
@@ -187,6 +192,8 @@ Item {
                 if (closing)
                     return
                 closing = true
+                if (index >= 0 && index < notificationsModel.count)
+                    notificationsModel.setProperty(index, "closing", true)
                 lifeTimer.stop()
                 enterAnim.stop()
                 exitAnim.start()

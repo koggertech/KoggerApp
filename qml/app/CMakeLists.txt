@@ -39,6 +39,7 @@ qt_add_qml_module(kogger_app
         LicensePage.qml
         MainWindow.qml
         MissionAngleDial.qml
+        MissionCoordFields.qml
         MissionEditorOverlay.qml
         MissionItemCard.qml
         MissionSliderRow.qml

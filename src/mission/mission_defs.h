@@ -20,8 +20,9 @@ enum class MavFrame : int {
 };
 
 enum class EndAction : int {
-    Rtl  = 0,
-    Hold = 1
+    Rtl           = 0,
+    Hold          = 1,
+    ReturnToStart = 2
 };
 
 struct GeoPoint {
@@ -34,7 +35,7 @@ struct GeoPoint {
     bool isValid() const { return std::isfinite(lat) && std::isfinite(lon) && std::fabs(lat) <= 90.0 && std::fabs(lon) <= 180.0; }
 };
 
-constexpr int    kFormatVersion       = 1;
+constexpr int    kFormatVersion       = 2;
 constexpr int    kMaxSurveyLines      = 500;
 constexpr int    kMaxCorridorLines    = 200;
 constexpr double kMinLineSpacing      = 0.5;
@@ -50,6 +51,7 @@ constexpr double kWarnSurveyAreaKm2     = 10.0;
 constexpr double kMinPolygonAreaM2      = 1.0;
 constexpr int    kMaxPlanItems          = 2000;
 constexpr int    kMaxRallyPoints        = 500;
+constexpr int    kMaxFencePolygons      = 100;
 constexpr int    kMaxShapeVertices      = 10000;
 constexpr qint64 kMaxMissionFileBytes   = 16 * 1024 * 1024;
 
