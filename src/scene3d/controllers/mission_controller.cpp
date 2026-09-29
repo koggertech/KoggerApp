@@ -22,6 +22,7 @@ const QString kHomeId = QStringLiteral("home");
 constexpr qint64 kFlashMs = 1200;
 constexpr int kFlashPulses = 2;
 constexpr double kGeodesicStepMeters = 2000.0;
+constexpr double kArrowAlongSegment = 0.75;
 constexpr int kGeodesicMaxSteps = 256;
 constexpr double kLatClampDeg = 85.0;
 constexpr double kHitRadiusPx = 16.0;
@@ -91,12 +92,12 @@ void appendHandle(MissionLayer::RenderData& rd, const QVector3D& world, const QC
 
 void appendDeleteBadge(MissionLayer::RenderData& rd, const QVector3D& world, float handlePx, const QColor& badgeColor, const QVector2D& offsetPx)
 {
-    appendHandle(rd, world, badgeColor, handlePx + 3.0f, QString(), false, offsetPx, 1.2f);
+    appendHandle(rd, world, badgeColor, handlePx + 5.0f, QString(), false, offsetPx, 1.2f);
     MissionLayer::Marker x;
     x.world = world;
     x.offsetPx = offsetPx;
     x.color = QColor(255, 255, 255, 245);
-    x.sizePx = handlePx * 0.7f;
+    x.sizePx = handlePx * 0.85f;
     x.shape = MissionLayer::Marker::Shape::Cross;
     x.topmost = true;
     x.halo = false;
@@ -274,7 +275,7 @@ bool MissionController::onPress(qreal x, qreal y)
             drag.kind = HitKind::Vertex;
             drag.index = hit.insertIndex;
             select(hit.id, hit.insertIndex);
-            beginDrag(drag, scenePoint);
+            beginDrag(drag, scenePoint, true);
         } else {
             plan_->endTransaction(true);
         }
@@ -291,7 +292,7 @@ bool MissionController::onPress(qreal x, qreal y)
             drag.index = 0;
             drag.world = hit.world;
             select(id, -1);
-            beginDrag(drag, scenePoint);
+            beginDrag(drag, scenePoint, true);
         } else {
             plan_->endTransaction(true);
         }
@@ -935,10 +936,9 @@ void MissionController::appendGeodesic(MissionLayer::RenderData& rd, const missi
     if (!arrow) {
         return;
     }
-    const mission::GeoPoint m0 = mission::greatCirclePoint(a, b, 0.5);
-    const mission::GeoPoint m1 = mission::greatCirclePoint(a, b, std::min(1.0, 0.5 + 0.5 / steps));
-    if (perspective || std::fabs(m1.lon - m0.lon) <= 180.0) {
-        rd.arrows.append({toScene(m0), toScene(m1)});
+    const mission::GeoPoint m0 = mission::greatCirclePoint(a, b, kArrowAlongSegment);
+    if (perspective || std::fabs(b.lon - m0.lon) <= 180.0) {
+        rd.arrows.append({toScene(m0), toScene(b)});
     }
 }
 
@@ -1094,7 +1094,7 @@ double MissionController::hitRadius() const
     return kHitRadiusPx * renderScale();
 }
 
-void MissionController::beginDrag(const Hit& hit, const QVector3D& scenePoint)
+void MissionController::beginDrag(const Hit& hit, const QVector3D& scenePoint, bool transactionOpen)
 {
     dragHit_ = hit;
     dragStartScene_ = scenePoint;
@@ -1118,7 +1118,9 @@ void MissionController::beginDrag(const Hit& hit, const QVector3D& scenePoint)
         dragStartVertices_.append(hit.world);
     }
 
-    plan_->beginTransaction();
+    if (!transactionOpen) {
+        plan_->beginTransaction();
+    }
     setDragging(true);
 }
 

@@ -145,7 +145,7 @@ private:
     bool itemHasVertices(const QString& id) const;
     QString itemType(const QString& id) const;
     double hitRadius() const;
-    void beginDrag(const Hit& hit, const QVector3D& scenePoint);
+    void beginDrag(const Hit& hit, const QVector3D& scenePoint, bool transactionOpen = false);
     void endDrag();
     void rebuild();
     void markDirty();

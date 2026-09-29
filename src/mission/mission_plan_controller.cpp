@@ -125,6 +125,24 @@ void MissionPlanController::retranslate()
     emit planChanged();
 }
 
+QString MissionPlanController::suggestedFilePath() const
+{
+    const QString dir = directory();
+    if (dir.isEmpty() || FileIo::isOpaqueUri(dir)) {
+        return defaultFileName();
+    }
+    QDir().mkpath(dir);
+    const QString name = defaultFileName();
+    const int dot = name.lastIndexOf(QLatin1Char('.'));
+    const QString stem = dot > 0 ? name.left(dot) : name;
+    const QString ext = dot > 0 ? name.mid(dot) : QString();
+    QString candidate = QDir(dir).filePath(name);
+    for (int n = 2; QFileInfo::exists(candidate); ++n) {
+        candidate = QDir(dir).filePath(QStringLiteral("%1 (%2)%3").arg(stem).arg(n).arg(ext));
+    }
+    return candidate;
+}
+
 void MissionPlanController::rememberDirectoryOf(const QString& fileOrUrl)
 {
     const QString clean = localPath(fileOrUrl);

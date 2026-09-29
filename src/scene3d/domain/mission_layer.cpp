@@ -16,8 +16,7 @@ constexpr float kLineZ = -1.0f;
 constexpr float kHaloWidthPx = 2.0f;
 constexpr float kHaloExtendPx = 1.0f;
 constexpr float kArrowLenPx = 7.0f;
-constexpr float kArrowMinSegmentFactor = 4.0f;
-constexpr float kArrowAlongSegment = 0.75f;
+constexpr float kArrowMinSegmentFactor = 2.0f;
 constexpr float kMarkerLineWidthPx = 2.0f;
 constexpr float kLabelOffsetPx = 4.0f;
 constexpr float kCos30 = 0.866f;
@@ -413,7 +412,7 @@ void MissionLayer::MissionLayerRenderImplementation::render(
                 continue;
             }
             const QVector2D dir = d / segLen;
-            const QVector2D mid = a + d * kArrowAlongSegment + dir * (len * 0.5f);
+            const QVector2D mid = a + dir * (len * 0.5f);
             const QVector2D left(-dir.x() * kCos30 + dir.y() * kSin30, -dir.y() * kCos30 - dir.x() * kSin30);
             const QVector2D right(-dir.x() * kCos30 - dir.y() * kSin30, -dir.y() * kCos30 + dir.x() * kSin30);
             arrowVerts.push_back(ss.toNdc(mid));

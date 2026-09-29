@@ -80,6 +80,7 @@ public:
     Q_INVOKABLE bool    exportWplFile(const QString& path);
     Q_INVOKABLE QString defaultFileName() const;
     Q_INVOKABLE QString directoryUrl() const;
+    Q_INVOKABLE QString suggestedFilePath() const;
     Q_INVOKABLE void    rememberDirectoryOf(const QString& fileOrUrl);
 
     Q_INVOKABLE QString planJson() const;

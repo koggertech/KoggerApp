@@ -14,7 +14,7 @@ Rectangle {
     readonly property var plan: typeof missionPlan !== "undefined" ? missionPlan : null
     readonly property real _s: AppPalette.scale
     readonly property int toolSize: Tokens.controlHXl
-    readonly property int headerBtn: 2 * Math.round(Tokens.controlHLg / 2)
+    readonly property int headerBtn: toolSize
     readonly property bool tracing: ctl ? (ctl.tool === 6 || ctl.tool === 7) : false
     readonly property int panelWidth: Math.min(Math.round(340 * _s), Math.round(width * 0.42))
 
@@ -118,7 +118,11 @@ Rectangle {
         if (count < 2) return
         var probeY = card.y + card.height / 2 + routeListView.contentY
         var target = routeListView.indexAt(1, probeY)
-        if (target < 0) target = probeY < 0 ? 0 : count - 1
+        if (target < 0) {
+            if (probeY < 0) target = 0
+            else if (probeY > routeListView.contentHeight) target = count - 1
+            else return
+        }
         target = Math.max(0, Math.min(count - 1, target))
         var from = card.visualIndex
         if (target === from) return
@@ -183,8 +187,26 @@ Rectangle {
     }
 
     function fileBaseName(path) {
-        var p = String(path).replace(/\\/g, "/")
-        return p.substring(p.lastIndexOf("/") + 1)
+        var p = String(path)
+        try { p = decodeURIComponent(p) } catch (e) {}
+        p = p.replace(/\\/g, "/")
+        var cut = Math.max(p.lastIndexOf("/"), p.lastIndexOf(":"))
+        return p.substring(cut + 1)
+    }
+
+    function saveNew(after) {
+        if (!plan) return
+        if (Qt.platform.os === "android") {
+            var target = plan.suggestedFilePath()
+            if (plan.saveFileAs(target)) {
+                if (typeof notifications !== "undefined" && notifications) notifications.info(qsTr("Saved to %1").arg(target))
+                if (after) after()
+            }
+            return
+        }
+        pendingAfterSave = after
+        _prepareDialog(saveDialog)
+        saveDialog.open()
     }
 
     function directoryUrl() {
@@ -331,7 +353,7 @@ Rectangle {
     function saveAction() {
         if (!plan) return
         if (plan.filePath && plan.filePath.length) plan.saveFile()
-        else saveDialog.open()
+        else saveNew(null)
     }
 
     MouseArea {
@@ -468,21 +490,21 @@ Rectangle {
                 }
 
                 KCircleIconButton {
-                    width: root.headerBtn; height: root.headerBtn; iconPixelSize: 2 * Math.round(Tokens.iconMd / 2)
+                    Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/file_plus.svg"; iconTintColor: AppPalette.text
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("New mission")
                     onClicked: root.guardUnsaved(function() { if (root.plan) root.plan.newPlan() })
                 }
                 KCircleIconButton {
-                    width: root.headerBtn; height: root.headerBtn; iconPixelSize: 2 * Math.round(Tokens.iconMd / 2)
+                    Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/folder-open.svg"; iconTintColor: AppPalette.text
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Open mission")
                     onClicked: root.guardUnsaved(function() { root._prepareDialog(openDialog); openDialog.open() })
                 }
                 KCircleIconButton {
-                    width: root.headerBtn; height: root.headerBtn; iconPixelSize: 2 * Math.round(Tokens.iconMd / 2)
+                    Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/file-check.svg"; iconTintColor: AppPalette.text
                     borderWidth: 1
                     fillColor: root.plan && root.plan.dirty ? AppPalette.accentBgStrong : AppPalette.card
@@ -493,7 +515,7 @@ Rectangle {
                 }
                 KCircleIconButton {
                     id: moreBtn
-                    width: root.headerBtn; height: root.headerBtn; iconPixelSize: 2 * Math.round(Tokens.iconMd / 2)
+                    Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/menu-2.svg"; iconTintColor: AppPalette.text
                     fillColor: moreMenu.visible ? AppPalette.accentBgStrong : AppPalette.card
                     fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
@@ -508,8 +530,8 @@ Rectangle {
                 }
 
                 KCircleIconButton {
-                    width: root.headerBtn
-                    height: root.headerBtn
+                    Layout.preferredWidth: root.headerBtn; Layout.minimumWidth: root.headerBtn
+                    Layout.preferredHeight: root.headerBtn; Layout.minimumHeight: root.headerBtn
                     glyph: "✕"
                     glyphPixelSize: Tokens.fontXl
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
@@ -618,13 +640,13 @@ Rectangle {
                         Item { width: 1; height: Tokens.spaceLg }
 
                         ToolButton {
-                            glyph: "↶"; glyphPixelSize: Tokens.fontXxl
+                            iconSource: "qrc:/icons/ui/arrow-back-up.svg"
                             toolTipText: qsTr("Undo")
                             enabled: root.plan && root.plan.canUndo
                             onClicked: if (root.plan) root.plan.undo()
                         }
                         ToolButton {
-                            glyph: "↷"; glyphPixelSize: Tokens.fontXxl
+                            iconSource: "qrc:/icons/ui/arrow-forward-up.svg"
                             toolTipText: qsTr("Redo")
                             enabled: root.plan && root.plan.canRedo
                             onClicked: if (root.plan) root.plan.redo()
@@ -645,6 +667,23 @@ Rectangle {
                             iconSource: "qrc:/icons/ui/minus.svg"
                             toolTipText: qsTr("Zoom out")
                             onClicked: if (root.view && root.view.zoomButtonAnimated) root.view.zoomButtonAnimated(-4)
+                        }
+
+                        Item { width: 1; height: Tokens.spaceLg }
+
+                        ToolButton {
+                            id: layerBtn
+                            iconSource: "qrc:/icons/ui/layers-selected.svg"
+                            toolTipText: (typeof core !== "undefined" && core) ? core.mapTileProviderName : ""
+                            toolTipSuppressed: layerSwitch.listShown || layerSwitch.listPinned
+                            onPressStarted: holdTimer.restart()
+                            onPressEnded: { holdTimer.stop(); Qt.callLater(function() { layerSwitch.swallowClick = false }) }
+                            onPressCanceled: { holdTimer.stop(); Qt.callLater(function() { layerSwitch.swallowClick = false }) }
+                            onClicked: {
+                                if (layerSwitch.swallowClick) { layerSwitch.swallowClick = false; return }
+                                if (layerSwitch.listPinned) { layerSwitch.listPinned = false; layerSwitch.listShown = false; return }
+                                layerSwitch.quickSwitch()
+                            }
                         }
                     }
                 }
@@ -765,11 +804,7 @@ Rectangle {
 
                 Item {
                     id: layerSwitch
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    anchors.margins: Tokens.spaceLg
-                    width: layerBtn.width
-                    height: layerBtn.height
+                    anchors.fill: parent
                     z: 2
 
                     readonly property var providers: (typeof core !== "undefined" && core) ? core.mapTileProviders : []
@@ -778,10 +813,19 @@ Rectangle {
                     property bool listPinned: false
                     property bool swallowClick: false
                     readonly property bool hoverAny: layerBtn.hovered || listHover.hovered
+                    readonly property bool listOpen: listShown || listPinned
 
                     onHoverAnyChanged: {
                         if (hoverAny) { closeTimer.stop(); listShown = true }
                         else closeTimer.restart()
+                    }
+
+                    onListOpenChanged: if (listOpen) placeList()
+
+                    function placeList() {
+                        var p = layerBtn.mapToItem(layerSwitch, layerBtn.width, layerBtn.height)
+                        layerList.x = Math.max(0, p.x + Tokens.spaceSm)
+                        layerList.y = Math.max(Tokens.spaceMd, Math.min(layerSwitch.height - layerList.height - Tokens.spaceMd, p.y - layerList.height))
                     }
 
                     function switchTo(id) {
@@ -810,33 +854,16 @@ Rectangle {
                         }
                     }
 
-                    ToolButton {
-                        id: layerBtn
-                        iconSource: "qrc:/icons/ui/layers-selected.svg"
-                        toolTipText: (typeof core !== "undefined" && core) ? core.mapTileProviderName : ""
-                        toolTipSuppressed: layerSwitch.listShown || layerSwitch.listPinned
-                        onPressStarted: holdTimer.restart()
-                        onPressEnded: { holdTimer.stop(); Qt.callLater(function() { layerSwitch.swallowClick = false }) }
-                        onPressCanceled: { holdTimer.stop(); Qt.callLater(function() { layerSwitch.swallowClick = false }) }
-                        onClicked: {
-                            if (layerSwitch.swallowClick) { layerSwitch.swallowClick = false; return }
-                            if (layerSwitch.listPinned) { layerSwitch.listPinned = false; layerSwitch.listShown = false; return }
-                            layerSwitch.quickSwitch()
-                        }
-                    }
-
                     Rectangle {
                         id: layerList
-                        anchors.right: parent.right
-                        anchors.bottom: parent.top
-                        anchors.bottomMargin: Tokens.spaceSm
                         width: Math.round(200 * root._s)
                         height: layerColumn.implicitHeight + Tokens.spaceSm * 2
                         radius: Tokens.radiusMd
                         color: AppPalette.card
                         border.color: AppPalette.border
                         border.width: 1
-                        visible: layerSwitch.listShown || layerSwitch.listPinned
+                        visible: layerSwitch.listOpen
+                        onHeightChanged: if (visible) layerSwitch.placeList()
 
                         HoverHandler { id: listHover }
 
@@ -1033,6 +1060,7 @@ Rectangle {
                                             isRally: false
                                             dragLayer: routeDragLayer
                                             visualIndex: routeSlot.visualIndex
+                                            onHandlePressChanged: function(pressed) { panelFlick.interactive = !pressed }
                                             onDragStarted: { root.draggingItemId = routeSlot.itemId; if (root.plan) root.plan.beginTransaction() }
                                             onDragMoved: root.updateDragOrder(routeCard)
                                             onDragFinished: {
@@ -1041,6 +1069,7 @@ Rectangle {
                                                 root.commitRouteOrder(id)
                                                 if (root.plan) root.plan.endTransaction(true)
                                                 root.syncRouteModel()
+                                                Qt.callLater(function() { routeCard.width = Qt.binding(function() { return routeSlot.width }) })
                                             }
                                         }
                                     }
@@ -1321,9 +1350,7 @@ Rectangle {
                                 next()
                             } else {
                                 closePrompt.visible = false
-                                root.pendingAfterSave = next
-                                root._prepareDialog(saveDialog)
-                                saveDialog.open()
+                                root.saveNew(function() { closePrompt.afterAction = null; next() })
                             }
                         }
                     }

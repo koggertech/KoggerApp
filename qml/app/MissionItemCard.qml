@@ -19,9 +19,10 @@ Rectangle {
 
     property Item dragLayer: null
     property int visualIndex: ordinal - 1
-    readonly property int handleW: Math.round(28 * _s)
+    readonly property int btnSize: Tokens.controlHLg
+    readonly property int handleW: Math.round(32 * _s)
     readonly property bool isPoint: type === "waypoint" || isRally
-    readonly property int actionsW: (isRally ? 1 : 3) * (Tokens.controlHMd + Tokens.spaceXs) + Tokens.spaceMd
+    readonly property int actionsW: (isRally ? 1 : 3) * (btnSize + Tokens.spaceXs) + Tokens.spaceMd
     readonly property int actionsRightMargin: isRally ? 0 : handleW + Tokens.spaceMd
     readonly property bool dragActive: dragArea.drag.active
     readonly property color typeColor: shapeError ? AppPalette.dangerBorder
@@ -31,10 +32,10 @@ Rectangle {
                                      : AppPalette.missionWaypoint
 
     component HeaderButton: KCircleIconButton {
-        width: Tokens.controlHMd
-        height: Tokens.controlHMd
-        hitPadding: Math.round(6 * card._s)
-        iconPixelSize: Tokens.iconSm
+        width: card.btnSize
+        height: card.btnSize
+        hitPadding: Math.round(3 * card._s)
+        iconPixelSize: Tokens.iconMd
         iconTintColor: enabled ? (card.selected ? AppPalette.accentText : AppPalette.text) : AppPalette.textMuted
         fillColor: card.selected ? Qt.rgba(0, 0, 0, 0.18) : AppPalette.card
         fillHoverColor: card.selected ? Qt.rgba(0, 0, 0, 0.28) : AppPalette.cardHover
@@ -52,6 +53,7 @@ Rectangle {
     signal dragStarted()
     signal dragMoved()
     signal dragFinished()
+    signal handlePressChanged(bool pressed)
 
     height: column.implicitHeight + Tokens.spaceMd * 2
     radius: Tokens.radiusMd
@@ -72,8 +74,15 @@ Rectangle {
         if (dragActive) dragStarted()
         else {
             dragFinished()
-            Qt.callLater(function() { if (!card.dragActive && card.dragLayer !== null) { card.x = 0; card.y = 0 } })
+            Qt.callLater(card.restoreGeometry)
         }
+    }
+
+    function restoreGeometry() {
+        if (dragActive || dragLayer === null) return
+        x = 0
+        y = 0
+        height = Qt.binding(function() { return column.implicitHeight + Tokens.spaceMd * 2 })
     }
 
     function fmtCoord(v, digits) { return isFinite(v) ? Number(v).toFixed(digits) : "—" }
@@ -187,10 +196,10 @@ Rectangle {
                 }
                 HeaderButton {
                     iconSource: "qrc:/icons/ui/x.svg"
-                    iconTintColor: card.selected ? AppPalette.accentText : AppPalette.dangerText
-                    fillColor: card.selected ? Qt.rgba(0, 0, 0, 0.18) : AppPalette.dangerBg
-                    fillHoverColor: card.selected ? Qt.rgba(0, 0, 0, 0.28) : AppPalette.dangerHover
-                    borderColor: card.selected ? Qt.rgba(0, 0, 0, 0.25) : AppPalette.dangerBorder
+                    iconTintColor: "#FFFFFF"
+                    fillColor: AppPalette.dangerBorder
+                    fillHoverColor: Qt.lighter(AppPalette.dangerBorder, 1.15)
+                    borderColor: Qt.darker(AppPalette.dangerBorder, 1.2)
                     toolTipText: qsTr("Delete")
                     onClicked: if (card.editor && card.editor.plan) card.editor.plan.removeItem(card.itemId)
                 }
@@ -200,7 +209,7 @@ Rectangle {
                 id: dragHandle
                 visible: !card.isRally
                 width: card.handleW
-                height: Tokens.controlHMd
+                height: card.btnSize
                 anchors.verticalCenter: parent.verticalCenter
 
                 Column {
@@ -209,7 +218,7 @@ Rectangle {
                     Repeater {
                         model: 3
                         Rectangle {
-                            width: Math.round(14 * card._s)
+                            width: Math.round(18 * card._s)
                             height: Math.max(2, Math.round(2 * card._s))
                             radius: height / 2
                             color: card.dragActive ? AppPalette.accentBar : (card.selected ? AppPalette.accentText : AppPalette.textMuted)
@@ -226,8 +235,11 @@ Rectangle {
                     cursorShape: Qt.SizeVerCursor
                     drag.target: card
                     drag.axis: Drag.YAxis
-                    drag.minimumY: 0
-                    drag.maximumY: card.dragLayer ? Math.max(0, card.dragLayer.height - card.height) : 0
+                    drag.minimumY: card.dragActive ? 0 : -1e6
+                    drag.maximumY: card.dragActive && card.dragLayer ? Math.max(0, card.dragLayer.height - card.height) : 1e6
+                    onPressed: card.handlePressChanged(true)
+                    onReleased: card.handlePressChanged(false)
+                    onCanceled: card.handlePressChanged(false)
                     onPositionChanged: if (drag.active) card.dragMoved()
                 }
             }
@@ -273,12 +285,12 @@ Rectangle {
 
             Item {
                 width: parent.width
-                height: Tokens.controlHMd
+                height: card.btnSize
                 Text {
                     id: coordText
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Math.min(implicitWidth, parent.width - (Tokens.controlHMd + Tokens.spaceSm) * (card.isPoint ? 2 : 1))
+                    width: Math.min(implicitWidth, parent.width - (card.btnSize + Tokens.spaceSm) * (card.isPoint ? 2 : 1))
                     elide: Text.ElideRight
                     color: AppPalette.accentText
                     font.pixelSize: Tokens.fontSm
