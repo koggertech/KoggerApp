@@ -180,7 +180,7 @@ QtObject {
         case "apCurrent":
             return (dmw && !isNaN(dmw.vruCurrent)) ? (dmw.vruCurrent.toFixed(1) + " A") : "—"
         case "apMode":
-            return (dmw && dmw.pilotModeState >= 0) ? String(dmw.pilotModeState) : "—"
+            return (dmw && dmw.pilotModeState >= 0) ? dmw.autopilotModeName : "—"
         case "apArm":
             return (dmw && dmw.pilotArmState >= 0) ? (dmw.pilotArmState > 0 ? "ARMED" : "DISARMED") : "—"
         }
@@ -231,7 +231,7 @@ QtObject {
         case "sysBattery": return "87 %"
         case "apVoltage": return "12.4 V"
         case "apCurrent": return "3.2 A"
-        case "apMode":    return "3"
+        case "apMode":    return "Auto"
         case "apArm":     return "ARMED"
         case "usblRange":       return "18.3 " + qsTr("m")
         case "usblAzimuth":     return "127.4°"

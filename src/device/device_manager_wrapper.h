@@ -24,8 +24,11 @@ public:
     Q_PROPERTY(float vruVoltage READ vruVoltage NOTIFY vruChanged)
     Q_PROPERTY(float vruCurrent READ vruCurrent NOTIFY vruChanged)
     Q_PROPERTY(float vruVelocityH READ vruVelocityH NOTIFY vruChanged)
+    Q_PROPERTY(int vruBatteryPercent READ vruBatteryPercent NOTIFY vruChanged)
     Q_PROPERTY(int pilotArmState READ pilotArmState NOTIFY vruChanged)
     Q_PROPERTY(int pilotModeState READ pilotModeState NOTIFY vruChanged)
+    Q_PROPERTY(bool autopilotOnline READ autopilotOnline NOTIFY vruChanged)
+    Q_PROPERTY(QString autopilotModeName READ currentAutopilotModeName NOTIFY vruChanged)
     Q_PROPERTY(int averageChartLosses READ getAverageChartLosses NOTIFY chartLossesChanged)
     Q_PROPERTY(bool isbeaconDirectQueueAsk READ getUSBLBeaconDirectAsk WRITE setUSBLBeaconDirectAsk NOTIFY USBLBeaconDirectAskChanged)
 
@@ -39,8 +42,17 @@ public:
     float                vruVoltage     () { return getWorker()->vruVoltage();     }
     float                vruCurrent     () { return getWorker()->vruCurrent();     }
     float                vruVelocityH   () { return getWorker()->vruVelocityH();   }
+    int                  vruBatteryPercent() { return getWorker()->vruBatteryPercent(); }
     int                  pilotArmState  () { return getWorker()->pilotArmState();  }
     int                  pilotModeState () { return getWorker()->pilotModeState(); }
+    bool                 autopilotOnline() { return getWorker()->autopilotOnline(); }
+    QString              currentAutopilotModeName() { return modeNameFor(pilotModeState()); }
+
+    Q_INVOKABLE static QString modeNameFor(int mode);
+    Q_INVOKABLE void autopilotArm(bool arm);
+    Q_INVOKABLE void autopilotArmForce(bool arm);
+    Q_INVOKABLE void autopilotSetMode(int customMode);
+    Q_INVOKABLE void autopilotStartMission();
 
     void startWorkerThread();
     void initStreamList();
@@ -98,6 +110,7 @@ signals:
     void standAvailableChanged();
     void streamChanged();
     void vruChanged();
+    void autopilotCommandAcked(int command, int result);
     void chartLossesChanged();
     void protoBinConsoledChanged();
     void nmeaConsoledChanged();

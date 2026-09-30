@@ -7,6 +7,8 @@
 #include <QHash>
 #include <QGeoPositionInfoSource>
 #include <QUuid>
+#include <QTimer>
+#include <QElapsedTimer>
 #include "link.h"
 #include "stream_list.h"
 #include "dev_q_property.h"
@@ -29,6 +31,9 @@ public:
     Q_INVOKABLE float vruVelocityH();
     Q_INVOKABLE int pilotArmState();
     Q_INVOKABLE int pilotModeState();
+    Q_INVOKABLE int vruBatteryPercent();
+    Q_INVOKABLE bool autopilotOnline();
+    Q_INVOKABLE int autopilotSystemId();
     QList<DevQProperty*> getDevList();
     // True while any connected device has answered the stand probe. The stand panel kind is
     // hidden everywhere this is false, so it has to follow the devices rather than a snapshot.
@@ -78,8 +83,14 @@ public slots:
 
     void setUseGPS(bool state);
 
+    void autopilotArm(bool arm, bool force);
+    void autopilotSetMode(int customMode);
+    void autopilotStartMission();
+
 signals:
     void sendFrameInputToLogger(QUuid uuid, Link* link, Parsers::FrameParser frame);
+    void writeMavlinkBytes(QByteArray data);
+    void autopilotCommandAcked(int command, int result);
 
     //
     void sendChartSetup (const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset);
@@ -147,6 +158,11 @@ private:
     void delAllDev();
     void deleteDevicesByLink(QUuid uuid);
     DevQProperty* createDev(QUuid uuid, Link* link, uint8_t addr);
+    void sendCommandLong(uint16_t command, float p1 = 0.0f, float p2 = 0.0f, float p3 = 0.0f, float p4 = 0.0f, float p5 = 0.0f, float p6 = 0.0f, float p7 = 0.0f);
+    void checkAutopilotOnline();
+    void bindAutopilotLink(QUuid uuid, Link* link);
+    void unbindAutopilotLink();
+    void resetAutopilot();
 
     /*data*/
     struct VruData {
@@ -154,8 +170,14 @@ private:
             voltage(NAN),
             current(NAN),
             velocityH(NAN),
+            batteryPercent(-1),
             armState(-1),
-            flightMode(-1)
+            flightMode(-1),
+            systemId(-1),
+            componentId(-1),
+            mavlinkVersion(2),
+            online(false),
+            lastHeartbeatMs(0)
         {};
 
         void cleanVru()
@@ -163,21 +185,35 @@ private:
             voltage = NAN;
             current = NAN;
             velocityH = NAN;
+            batteryPercent = -1;
             armState = -1;
             flightMode = -1;
+            systemId = -1;
+            componentId = -1;
+            mavlinkVersion = 2;
+            online = false;
+            lastHeartbeatMs = 0;
         };
 
         float voltage;
         float current;
         float velocityH;
+        int batteryPercent;
         int armState;
         int flightMode;
+        int systemId;
+        int componentId;
+        int mavlinkVersion;
+        bool online;
+        qint64 lastHeartbeatMs;
     };
 
     VruData vru_;
     DevQProperty* lastDevs_;
     DevQProperty* lastDevice_;
     Link* mavlinkLink_;
+    Link* autopilotLink_ = nullptr;
+    QUuid autopilotLinkUuid_;
     QList<DevQProperty*> devList_;
     QHash<QUuid, QHash<int, DevQProperty*>> devTree_;
     QHash<QUuid, int> otherProtocolStat_;
@@ -196,6 +232,9 @@ private:
 
     bool isUSBLBeaconDirectAsk = false;
     QTimer beacon_timer;
+    QTimer autopilotTimer_{ this };
+    QElapsedTimer heartbeatClock_;
+    uint8_t mavlinkSeq_ = 0;
     QUuid upgradeUuid_;
     uint8_t upgradeAddr_;
     QByteArray upgradeData_;

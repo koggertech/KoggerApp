@@ -20,6 +20,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::standAvailableChanged, this,                &DeviceManagerWrapper::standAvailableChanged,   ct));
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::streamChanged,        this,                &DeviceManagerWrapper::streamChanged,          ct));
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::vruChanged,             ct));
+    deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::autopilotCommandAcked, this,               &DeviceManagerWrapper::autopilotCommandAcked,  ct));
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::chartLossesChanged,   this,                &DeviceManagerWrapper::calcAverageChartLosses, ct));
 
     workerObject_->moveToThread(workerThread_.get());
@@ -32,6 +33,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(workerObject_.get(), &DeviceManager::standAvailableChanged, this,                &DeviceManagerWrapper::standAvailableChanged,   ct);
     QObject::connect(workerObject_.get(), &DeviceManager::streamChanged,        this,                &DeviceManagerWrapper::streamChanged,          ct);
     QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::vruChanged,             ct);
+    QObject::connect(workerObject_.get(), &DeviceManager::autopilotCommandAcked, this,               &DeviceManagerWrapper::autopilotCommandAcked,  ct);
     QObject::connect(workerObject_.get(), &DeviceManager::chartLossesChanged,   this,                &DeviceManagerWrapper::calcAverageChartLosses, ct);
 #endif
 }
@@ -109,6 +111,64 @@ void DeviceManagerWrapper::refreshStreamList()
     QMetaObject::invokeMethod(workerObject_.get(), "refreshStreamList", Qt::QueuedConnection);
 #else
     workerObject_->refreshStreamList();
+#endif
+}
+
+QString DeviceManagerWrapper::modeNameFor(int mode)
+{
+    switch (mode) {
+    case 0:  return QStringLiteral("Manual");
+    case 1:  return QStringLiteral("Acro");
+    case 3:  return QStringLiteral("Steering");
+    case 4:  return QStringLiteral("Hold");
+    case 5:  return QStringLiteral("Loiter");
+    case 6:  return QStringLiteral("Follow");
+    case 7:  return QStringLiteral("Simple");
+    case 8:  return QStringLiteral("Dock");
+    case 9:  return QStringLiteral("Circle");
+    case 10: return QStringLiteral("Auto");
+    case 11: return QStringLiteral("RTL");
+    case 12: return QStringLiteral("SmartRTL");
+    case 15: return QStringLiteral("Guided");
+    case 16: return QStringLiteral("Initialising");
+    default: break;
+    }
+    return mode < 0 ? QString() : QStringLiteral("Mode %1").arg(mode);
+}
+
+void DeviceManagerWrapper::autopilotArm(bool arm)
+{
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(workerObject_.get(), "autopilotArm", Qt::QueuedConnection, Q_ARG(bool, arm), Q_ARG(bool, false));
+#else
+    workerObject_->autopilotArm(arm, false);
+#endif
+}
+
+void DeviceManagerWrapper::autopilotArmForce(bool arm)
+{
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(workerObject_.get(), "autopilotArm", Qt::QueuedConnection, Q_ARG(bool, arm), Q_ARG(bool, true));
+#else
+    workerObject_->autopilotArm(arm, true);
+#endif
+}
+
+void DeviceManagerWrapper::autopilotSetMode(int customMode)
+{
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(workerObject_.get(), "autopilotSetMode", Qt::QueuedConnection, Q_ARG(int, customMode));
+#else
+    workerObject_->autopilotSetMode(customMode);
+#endif
+}
+
+void DeviceManagerWrapper::autopilotStartMission()
+{
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(workerObject_.get(), "autopilotStartMission", Qt::QueuedConnection);
+#else
+    workerObject_->autopilotStartMission();
 #endif
 }
 

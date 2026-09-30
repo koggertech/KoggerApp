@@ -53,6 +53,9 @@ Item {
     property bool missionEnabled: true
     readonly property bool _missionRevealOverride: _revealActiveKey === "mission"
     readonly property bool showMission: missionEnabled || _missionRevealOverride
+    property bool autopilotEnabled: true
+    readonly property bool _autopilotRevealOverride: _revealActiveKey === "autopilot"
+    readonly property bool showAutopilot: autopilotEnabled || _autopilotRevealOverride
     property bool contactEnabled: true
     readonly property bool _contactRevealOverride: _revealActiveKey === "contact"
     readonly property bool showContact: contactEnabled || _contactRevealOverride
@@ -1879,6 +1882,31 @@ Item {
     }
 
     Component {
+        id: qaAutopilotComp
+        KCircleIconButton {
+            id: autopilotBtn
+            readonly property bool _open: root.store && root.store.autopilotPopupOpen
+            readonly property bool _online: (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) ? deviceManagerWrapper.autopilotOnline : false
+            width: root.controlHeight
+            height: root.controlHeight
+            iconSource: "qrc:/icons/ui/speedboat.svg"
+            iconTintColor: _online ? AppPalette.missionRally : AppPalette.text
+            toolTipText: _open ? qsTr("Close autopilot") : qsTr("Autopilot")
+            fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
+            fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
+            borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
+            highlighted: root.highlightedQuickActionKey === "autopilot"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "autopilot"
+            onClicked: if (root.store) root.store.autopilotPopupOpen = !root.store.autopilotPopupOpen
+
+            KCloseBadge { visible: autopilotBtn._open }
+        }
+    }
+
+    Component {
         id: qaProfilesComp
         KCircleIconButton {
             id: profilesBtn
@@ -2156,6 +2184,7 @@ Item {
                            : key === "bottomTrack" ? root.showBtEdit
                            : key === "contact"     ? root.showContact
                            : key === "mission"     ? root.showMission
+                           : key === "autopilot"   ? root.showAutopilot
                            : key === "widgets"     ? root.showWidgets
                            : key === "console"      ? root.showConsole
                            : key === "profiles"     ? root.showProfiles
@@ -2170,6 +2199,7 @@ Item {
                                    : key === "bottomTrack"  ? qaBottomTrackComp
                                    : key === "contact"      ? qaContactComp
                                    : key === "mission"      ? qaMissionComp
+                                   : key === "autopilot"    ? qaAutopilotComp
                                    : key === "widgets"      ? qaWidgetsComp
                                    : key === "console"      ? qaConsoleComp
                                    : key === "profiles"     ? qaProfilesComp

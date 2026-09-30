@@ -21,6 +21,7 @@ Column {
              : key === "bottomTrack" ? qsTr("Bottom track editing")
              : key === "contact"     ? qsTr("Contact")
              : key === "mission"     ? qsTr("Mission planner")
+             : key === "autopilot"   ? qsTr("Autopilot")
              : key === "widgets"     ? qsTr("Widget panels")
              : key === "console"     ? qsTr("Console")
              : key === "profiles"    ? qsTr("Profiles")
@@ -37,6 +38,7 @@ Column {
              : key === "bottomTrack" ? store.quickActionBottomTrackEnabled
              : key === "contact"     ? store.quickActionContactEnabled
              : key === "mission"     ? store.quickActionMissionEnabled
+             : key === "autopilot"   ? store.quickActionAutopilotEnabled
              : key === "widgets"     ? store.quickActionWidgetsEnabled
              : key === "console"     ? store.quickActionConsoleEnabled
              : key === "profiles"    ? store.quickActionProfilesEnabled
@@ -66,6 +68,9 @@ Column {
         } else if (key === "mission") {
             store.quickActionMissionEnabled = v
             store.requestHotkeysReveal("mission")
+        } else if (key === "autopilot") {
+            store.quickActionAutopilotEnabled = v
+            store.requestHotkeysReveal("autopilot")
         } else if (key === "widgets") {
             store.quickActionWidgetsEnabled = v
             store.requestHotkeysReveal("widgets")

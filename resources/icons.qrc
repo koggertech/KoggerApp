@@ -101,6 +101,11 @@
         <file>icons/ui/arrow-back-up.svg</file>
         <file>icons/ui/arrow-forward-up.svg</file>
         <file>icons/ui/shield.svg</file>
+        <file>icons/ui/mode-manual.svg</file>
+        <file>icons/ui/mode-hold.svg</file>
+        <file>icons/ui/mode-loiter.svg</file>
+        <file>icons/ui/mode-auto.svg</file>
+        <file>icons/ui/mode-rtl.svg</file>
         <file>icons/ui/folder_full.svg</file>
         <file>icons/ui/folder.svg</file>
         <file>icons/ui/external-link.svg</file>

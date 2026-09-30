@@ -5,6 +5,43 @@
 #include "core.h"
 extern Core core;
 
+namespace {
+
+constexpr qint64 kAutopilotHeartbeatTimeoutMs = 3000;
+
+QByteArray mavlinkFrame(int version, uint8_t seq, uint32_t msgId, const uint8_t* payload, uint8_t len)
+{
+    QByteArray out;
+    if (version == 1) {
+        out.append(char(0xFE));
+        out.append(char(len));
+        out.append(char(seq));
+        out.append(char(kMavGcsSystemId));
+        out.append(char(kMavGcsComponentId));
+        out.append(char(msgId & 0xFF));
+    } else {
+        out.append(char(0xFD));
+        out.append(char(len));
+        out.append(char(0));
+        out.append(char(0));
+        out.append(char(seq));
+        out.append(char(kMavGcsSystemId));
+        out.append(char(kMavGcsComponentId));
+        out.append(char(msgId & 0xFF));
+        out.append(char((msgId >> 8) & 0xFF));
+        out.append(char((msgId >> 16) & 0xFF));
+    }
+    out.append(reinterpret_cast<const char*>(payload), len);
+    uint16_t crc = CRC16_MCRF4XX(reinterpret_cast<uint8_t*>(out.data()) + 1, uint16_t(out.size() - 1), 0xFFFF);
+    uint8_t extra = getMAVLinkExtra(msgId);
+    crc = CRC16_MCRF4XX(&extra, 1, crc);
+    out.append(char(crc & 0xFF));
+    out.append(char(crc >> 8));
+    return out;
+}
+
+} // namespace
+
 
 DeviceManager::DeviceManager()
     : lastDevs_(nullptr),
@@ -34,6 +71,10 @@ DeviceManager::DeviceManager()
     qRegisterMetaType<IDBinDVL::DVLSolution>("IDBinDVL::DVLSolution");
     qRegisterMetaType<uint32_t>("uint32_t");
     qRegisterMetaType<FrameParser>("FrameParser");
+
+    heartbeatClock_.start();
+    autopilotTimer_.setInterval(1000);
+    QObject::connect(&autopilotTimer_, &QTimer::timeout, this, &DeviceManager::checkAutopilotOnline);
 }
 
 DeviceManager::~DeviceManager()
@@ -64,6 +105,108 @@ int DeviceManager::pilotArmState()
 int DeviceManager::pilotModeState()
 {
     return vru_.flightMode;
+}
+
+int DeviceManager::vruBatteryPercent()
+{
+    return vru_.batteryPercent;
+}
+
+bool DeviceManager::autopilotOnline()
+{
+    return vru_.online;
+}
+
+int DeviceManager::autopilotSystemId()
+{
+    return vru_.systemId;
+}
+
+void DeviceManager::autopilotArm(bool arm, bool force)
+{
+    sendCommandLong(MavCmdComponentArmDisarm, arm ? 1.0f : 0.0f, force ? kMavArmForceMagic : 0.0f);
+}
+
+void DeviceManager::autopilotSetMode(int customMode)
+{
+    if (customMode < 0) {
+        return;
+    }
+    sendCommandLong(MavCmdDoSetMode, float(kMavModeFlagCustomModeEnabled), float(customMode));
+}
+
+void DeviceManager::autopilotStartMission()
+{
+    sendCommandLong(MavCmdMissionStart);
+}
+
+void DeviceManager::sendCommandLong(uint16_t command, float p1, float p2, float p3, float p4, float p5, float p6, float p7)
+{
+    if (!vru_.online || vru_.systemId < 0 || autopilotLink_ == nullptr) {
+        emit autopilotCommandAcked(command, MavResultNotSent);
+        return;
+    }
+
+    MAVLink_MSG_COMMAND_LONG cmd;
+    cmd.param1 = p1;
+    cmd.param2 = p2;
+    cmd.param3 = p3;
+    cmd.param4 = p4;
+    cmd.param5 = p5;
+    cmd.param6 = p6;
+    cmd.param7 = p7;
+    cmd.command = command;
+    cmd.target_system = uint8_t(vru_.systemId);
+    cmd.target_component = uint8_t(vru_.componentId);
+    cmd.confirmation = 0;
+
+    const QByteArray bytes = mavlinkFrame(vru_.mavlinkVersion, mavlinkSeq_++, MAVLink_MSG_COMMAND_LONG::getID(),
+                                          reinterpret_cast<const uint8_t*>(&cmd), uint8_t(sizeof(cmd)));
+    emit writeMavlinkBytes(bytes);
+#ifndef SEPARATE_READING
+    core.consoleInfo(QString("<< MAVLink: COMMAND_LONG %1 (%2, %3) to sys %4").arg(command).arg(p1).arg(p2).arg(vru_.systemId));
+#endif
+}
+
+void DeviceManager::checkAutopilotOnline()
+{
+    if (!vru_.online) {
+        autopilotTimer_.stop();
+        return;
+    }
+    if (heartbeatClock_.elapsed() - vru_.lastHeartbeatMs > kAutopilotHeartbeatTimeoutMs) {
+        vru_.online = false;
+        autopilotTimer_.stop();
+        unbindAutopilotLink();
+        emit vruChanged();
+    }
+}
+
+void DeviceManager::bindAutopilotLink(QUuid uuid, Link* link)
+{
+    if (autopilotLink_ == link && autopilotLinkUuid_ == uuid) {
+        return;
+    }
+    unbindAutopilotLink();
+    autopilotLink_ = link;
+    autopilotLinkUuid_ = uuid;
+    connect(this, &DeviceManager::writeMavlinkBytes, autopilotLink_, &Link::write, Qt::UniqueConnection);
+}
+
+void DeviceManager::resetAutopilot()
+{
+    autopilotTimer_.stop();
+    unbindAutopilotLink();
+    vru_.cleanVru();
+}
+
+void DeviceManager::unbindAutopilotLink()
+{
+    if (autopilotLink_ != nullptr) {
+        disconnect(this, &DeviceManager::writeMavlinkBytes, autopilotLink_, &Link::write);
+    }
+    autopilotLink_ = nullptr;
+    autopilotLinkUuid_ = QUuid();
 }
 
 int DeviceManager::calcAverageChartLosses()
@@ -365,6 +508,8 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 }
 
                 ProtoMAVLink& mavlink_frame = (ProtoMAVLink&)frame;
+                const bool fromAutopilot = !vru_.online
+                                           || (uuid == autopilotLinkUuid_ && int(mavlink_frame.systemID()) == vru_.systemId);
 
                 // if (mavlink_frame.msgId() == 24) { // GLOBAL_POSITION_INT
                 //     MAVLink_MSG_GPS_RAW_INT pos = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
@@ -386,8 +531,17 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     }
                 }
 
-                if (mavlink_frame.msgId() == 0) { // SYS_STATUS
-                    MAVLink_MSG_HEARTBEAT heartbeat = mavlink_frame.read<MAVLink_MSG_HEARTBEAT>();
+                MAVLink_MSG_HEARTBEAT heartbeat;
+                bool isAutopilotHeartbeat = false;
+                if (fromAutopilot && mavlink_frame.msgId() == MAVLink_MSG_HEARTBEAT::getID()
+                    && mavlink_frame.componentID() == kMavCompIdAutopilot1) {
+                    heartbeat = mavlink_frame.read<MAVLink_MSG_HEARTBEAT>();
+                    isAutopilotHeartbeat = heartbeat.isVehicle();
+                }
+                if (isAutopilotHeartbeat) {
+                    if (link != nullptr && !vru_.online) {
+                        bindAutopilotLink(uuid, link);
+                    }
                     vru_.armState = (int)heartbeat.isArmed();
                     int flight_mode = (int)heartbeat.customMode();
                     if (flight_mode != vru_.flightMode) {
@@ -396,13 +550,35 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 #endif
                     }
                     vru_.flightMode = flight_mode;
+                    vru_.systemId = mavlink_frame.systemID();
+                    vru_.componentId = mavlink_frame.componentID();
+                    vru_.mavlinkVersion = mavlink_frame.MAVLinkVersion();
+                    vru_.lastHeartbeatMs = heartbeatClock_.elapsed();
+                    vru_.online = link != nullptr;
+                    if (vru_.online && !autopilotTimer_.isActive()) {
+                        autopilotTimer_.start();
+                    }
                     emit vruChanged();
                 }
 
-                if (mavlink_frame.msgId() == 147) { // BATTERY_STATUS
+                if (fromAutopilot && vru_.online && mavlink_frame.msgId() == MAVLink_MSG_COMMAND_ACK::getID()
+                    && int(mavlink_frame.componentID()) == vru_.componentId) {
+                    MAVLink_MSG_COMMAND_ACK ack = mavlink_frame.read<MAVLink_MSG_COMMAND_ACK>();
+                    const bool addressedToUs = (ack.target_system == 0 || ack.target_system == kMavGcsSystemId)
+                                               && (ack.target_component == 0 || ack.target_component == kMavGcsComponentId);
+                    if (addressedToUs) {
+#ifndef SEPARATE_READING
+                        core.consoleInfo(QString(">> MAVLink: COMMAND_ACK %1 result %2").arg(ack.command).arg(ack.result));
+#endif
+                        emit autopilotCommandAcked(ack.command, ack.result);
+                    }
+                }
+
+                if (fromAutopilot && mavlink_frame.msgId() == 147) { // BATTERY_STATUS
                     MAVLink_MSG_BATTERY_STATUS battery_status = mavlink_frame.read<MAVLink_MSG_BATTERY_STATUS>();
                     vru_.voltage = battery_status.voltage();
                     vru_.current = battery_status.current();
+                    vru_.batteryPercent = battery_status.battery_remaining >= 0 ? int(battery_status.battery_remaining) : -1;
                     emit vruChanged();
                 }
 
@@ -542,7 +718,7 @@ void DeviceManager::openFile(QString filePath)
     }
     file.close();
 
-    vru_.cleanVru();
+    resetAutopilot();
     delAllDev();
     emit vruChanged();
 
@@ -556,7 +732,7 @@ void DeviceManager::closeFile(bool onOpen)
     onOpen_ = onOpen;
     break_ = true;
 
-    vru_.cleanVru();
+    resetAutopilot();
     delAllDev();
     emit vruChanged();
 }
@@ -564,7 +740,7 @@ void DeviceManager::closeFile(bool onOpen)
 void DeviceManager::closeFile()
 {
     delAllDev();
-    vru_.cleanVru();
+    resetAutopilot();
     emit vruChanged();
 }
 #endif
@@ -595,6 +771,11 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
         otherProtocolStat_.remove(uuid);
         if(uuid == mavlinUuid_) {
             mavlinUuid_ = QUuid();
+            mavlinkLink_ = nullptr;
+        }
+        if(uuid == autopilotLinkUuid_) {
+            resetAutopilot();
+            emit vruChanged();
         }
     }
 }
@@ -609,6 +790,11 @@ void DeviceManager::onLinkDeleted(QUuid uuid, Link *link)
         otherProtocolStat_.remove(uuid);
         if(uuid == mavlinUuid_) {
             mavlinUuid_ = QUuid();
+            mavlinkLink_ = nullptr;
+        }
+        if(uuid == autopilotLinkUuid_) {
+            resetAutopilot();
+            emit vruChanged();
         }
     }
 }
