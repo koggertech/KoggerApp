@@ -36,6 +36,8 @@ class MissionController : public QObject
     Q_PROPERTY(int     draftCount     READ draftCount                       NOTIFY draftChanged)
     Q_PROPERTY(bool    draftReady     READ draftReady                       NOTIFY draftChanged)
     Q_PROPERTY(bool    draftFenceInclusion READ draftFenceInclusion WRITE setDraftFenceInclusion NOTIFY draftChanged)
+    Q_PROPERTY(bool    homeOffscreen  READ homeOffscreen                    NOTIFY homeScreenChanged)
+    Q_PROPERTY(QPointF homeScreen     READ homeScreen                       NOTIFY homeScreenChanged)
 
 public:
     enum Tool : int
@@ -63,6 +65,8 @@ public:
     int tool() const { return tool_; }
     void setTool(int tool);
     QString selectedId() const { return selectedId_; }
+    bool homeOffscreen() const { return homeOffscreen_; }
+    QPointF homeScreen() const { return homeScreen_; }
     int selectedVertex() const { return selectedVertex_; }
     bool dragging() const { return dragging_; }
     int draftCount() const { return draft_.size(); }
@@ -99,6 +103,7 @@ signals:
     void selectionChanged();
     void draggingChanged();
     void draftChanged();
+    void homeScreenChanged();
 
 private:
     enum class HitKind : int
@@ -146,6 +151,7 @@ private:
     void appendGeneratedMarkers(MissionLayer::RenderData& rd, const mission::GeneratedPath& g, int ordinal, const QColor& color) const;
     Hit hitTest(qreal x, qreal y) const;
     QPointF toScreen(const QVector3D& world) const;
+    void updateHomeScreen();
     QVector3D toScene(const mission::GeoPoint& p) const;
     mission::GeoPoint toGeo(const QVector3D& p) const;
     QVector<mission::GeoPoint> itemVertices(const QString& id) const;
@@ -167,6 +173,9 @@ private:
     mission::MissionPlanController* plan_{nullptr};
 
     bool editing_{false};
+    bool homeOffscreen_{false};
+    QPointF homeScreen_;
+    bool homeNotifyQueued_{false};
     bool dirty_{true};
     int tool_{ToolNone};
     QString selectedId_;

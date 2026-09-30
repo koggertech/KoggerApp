@@ -806,6 +806,67 @@ Rectangle {
                 }
 
                 Item {
+                    id: homeIndicator
+                    readonly property bool shown: root.active && !!root.ctl && root.ctl.editing && root.ctl.homeOffscreen && !!root.view
+                    readonly property int size: Math.round(40 * root._s)
+                    readonly property real margin: Math.round(32 * root._s)
+                    readonly property point target: {
+                        if (!root.ctl || !root.view) return Qt.point(0, 0)
+                        var p = root.ctl.homeScreen
+                        return sceneArea.mapFromItem(root.view, p.x, p.y)
+                    }
+                    readonly property real cx: sceneArea.width / 2
+                    readonly property real cy: sceneArea.height / 2
+                    readonly property real dx: target.x - cx
+                    readonly property real dy: target.y - cy
+                    readonly property real reach: {
+                        var hx = Math.max(1, cx - margin)
+                        var hy = Math.max(1, cy - margin)
+                        var tx = Math.abs(dx) > 1e-6 ? hx / Math.abs(dx) : Infinity
+                        var ty = Math.abs(dy) > 1e-6 ? hy / Math.abs(dy) : Infinity
+                        return Math.min(tx, ty, 1)
+                    }
+                    width: size
+                    height: size
+                    x: cx + dx * reach - width / 2
+                    y: cy + dy * reach - height / 2
+                    z: 3
+                    visible: shown
+
+                    Item {
+                        anchors.fill: parent
+                        rotation: Math.atan2(homeIndicator.dy, homeIndicator.dx) * 180 / Math.PI
+
+                        Rectangle {
+                            width: Math.round(parent.width * 0.46)
+                            height: width
+                            x: parent.width - width * 0.8
+                            y: (parent.height - height) / 2
+                            rotation: 45
+                            antialiasing: true
+                            color: AppPalette.accentBgStrong
+                            border.color: AppPalette.bg
+                            border.width: Math.max(1, Math.round(1.5 * root._s))
+                        }
+                    }
+
+                    KCircleIconButton {
+                        anchors.fill: parent
+                        hitPadding: Math.round(6 * root._s)
+                        iconSource: "qrc:/icons/ui/home.svg"
+                        iconTintColor: AppPalette.textStrong
+                        fillColor: AppPalette.card
+                        fillHoverColor: AppPalette.cardHover
+                        fillPressedColor: AppPalette.bgDeep
+                        borderColor: AppPalette.border
+                        borderHoverColor: AppPalette.borderHover
+                        borderWidth: 1
+                        toolTipText: qsTr("Back to the start point")
+                        onClicked: if (root.ctl) root.ctl.showItem("home")
+                    }
+                }
+
+                Item {
                     id: layerSwitch
                     anchors.fill: parent
                     z: 2

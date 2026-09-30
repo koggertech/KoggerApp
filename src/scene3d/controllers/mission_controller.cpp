@@ -543,6 +543,7 @@ void MissionController::rebuildIfNeeded()
     if (!view_ || !view_->m_camera) {
         return;
     }
+    updateHomeScreen();
     const bool persp = view_->m_camera->getIsPerspective();
     const bool viewRefChanged = (lastViewRef_ != view_->m_camera->viewLlaRef_);
     const bool perspChanged = (lastPerspective_ != persp);
@@ -1122,6 +1123,31 @@ QVector<MissionController::Anchors> MissionController::routeAnchors() const
         prevExit = exit;
     }
     return out;
+}
+
+void MissionController::updateHomeScreen()
+{
+    bool offscreen = false;
+    QPointF screen = homeScreen_;
+    const bool hasHome = plan_ && plan_->plan().home && plan_->plan().home->isValid();
+    if (editing_ && hasHome && view_->width() > 0 && view_->height() > 0) {
+        screen = toScreen(toScene(*plan_->plan().home));
+        offscreen = !std::isfinite(screen.x()) || !std::isfinite(screen.y())
+                    || screen.x() < 0.0 || screen.y() < 0.0 || screen.x() > view_->width() || screen.y() > view_->height();
+    }
+    const bool moved = offscreen && QLineF(screen, homeScreen_).length() > 0.5;
+    if (offscreen == homeOffscreen_ && !moved) {
+        return;
+    }
+    homeOffscreen_ = offscreen;
+    homeScreen_ = screen;
+    if (!homeNotifyQueued_) {
+        homeNotifyQueued_ = true;
+        QMetaObject::invokeMethod(this, [this]() {
+            homeNotifyQueued_ = false;
+            emit homeScreenChanged();
+        }, Qt::QueuedConnection);
+    }
 }
 
 QPointF MissionController::toScreen(const QVector3D& world) const
