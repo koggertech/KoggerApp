@@ -6,6 +6,7 @@ target_sources(KoggerApp PRIVATE
     mission_expander.h        mission_expander.cpp
     mission_file_io.h         mission_file_io.cpp
     mission_export.h          mission_export.cpp
+    mission_vehicle.h         mission_vehicle.cpp
     mission_plan_controller.h mission_plan_controller.cpp)
 
 target_include_directories(KoggerApp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

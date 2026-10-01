@@ -14,6 +14,7 @@ Rectangle {
     readonly property var plan: typeof missionPlan !== "undefined" ? missionPlan : null
     readonly property real _s: AppPalette.scale
     readonly property int toolSize: Tokens.controlHXl
+    readonly property int _scrollReserve: Tokens.spaceXl
     readonly property int headerBtn: toolSize
     readonly property bool tracing: ctl ? (ctl.tool === 6 || ctl.tool === 7 || ctl.tool === 9) : false
     readonly property int panelWidth: Math.min(Math.round(340 * _s), Math.round(width * 0.42))
@@ -39,6 +40,26 @@ Rectangle {
         borderColor: armed ? AppPalette.accentBorder : AppPalette.border
         borderHoverColor: armed ? AppPalette.accentBorder : AppPalette.borderHover
         borderWidth: 1
+    }
+
+    component ScrollArrow: KCircleIconButton {
+        width: toolsColumn.width - Tokens.spaceSm * 2
+        height: toolsColumn.arrowH - Tokens.spaceXs
+        anchors.horizontalCenter: parent.horizontalCenter
+        rounded: false
+        cornerRadius: Tokens.radiusMd
+        hitPadding: Math.round(4 * root._s)
+        iconPixelSize: Math.round(18 * root._s)
+        iconTintColor: AppPalette.textSecond
+        property bool available: true
+        opacity: available ? 1.0 : 0.3
+        fillColor: "transparent"
+        fillHoverColor: available ? AppPalette.cardHover : "transparent"
+        fillPressedColor: available ? AppPalette.card : "transparent"
+        borderColor: "transparent"
+        borderHoverColor: "transparent"
+        borderWidth: 0
+        z: 5
     }
 
     visible: active
@@ -205,6 +226,9 @@ Rectangle {
             if (plan.saveFileAs(target)) {
                 if (typeof notifications !== "undefined" && notifications) notifications.info(qsTr("Saved to %1").arg(target))
                 if (after) after()
+            } else if (after) {
+                closePrompt.afterAction = after
+                closePrompt.visible = true
             }
             return
         }
@@ -238,6 +262,7 @@ Rectangle {
 
     function requestClose() {
         if (plan && plan.dirty) {
+            closePrompt.afterAction = null
             closePrompt.visible = true
             return
         }
@@ -249,9 +274,187 @@ Rectangle {
         if (typeof core !== "undefined" && core) core.setMissionEditorActive(false)
     }
 
+    readonly property var _dmw: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
+    readonly property bool _vehicleOnline: _dmw ? _dmw.autopilotOnline : false
+    readonly property bool _uploading: _dmw ? _dmw.missionTransferActive : false
+    readonly property string _uploadTag: "mission-upload"
+    readonly property string _downloadTag: "mission-download"
+
+    function pushVehicleHome() {
+        if (!ctl) return
+        if (_vehicleOnline && _dmw) ctl.setVehicleHome(_dmw.vehicleHomeLat, _dmw.vehicleHomeLon)
+        else ctl.setVehicleHome(NaN, NaN)
+    }
+
+    onCtlChanged: pushVehicleHome()
+    on_VehicleOnlineChanged: pushVehicleHome()
+    Component.onCompleted: pushVehicleHome()
+
+    property bool _downloadDiscardAccepted: false
+    property int _downloadPartialType: 0
+    property string _downloadPartialReason: ""
+
+    function _anyDialogOpen() {
+        return closePrompt.visible || uploadPrompt.visible || !!pendingAfterSave
+            || openDialog.visible || saveDialog.visible || exportPlanDialog.visible || exportWplDialog.visible
+    }
+
+    function _partialReadWarning(opened) {
+        if (_downloadPartialType === 0 || typeof notifications === "undefined" || !notifications) return
+        var reason = _downloadPartialReason
+        if (_downloadPartialType === 1)
+            notifications.warning(opened ? qsTr("The route was read, but the geofence could not be read: %1. The vehicle's geofence and rally points are left as they are on the next upload.").arg(reason)
+                                         : qsTr("The route was read, but the geofence could not be read: %1").arg(reason))
+        else
+            notifications.warning(opened ? qsTr("The route and geofence were read, but the rally points could not be read: %1. The vehicle's rally points are left as they are on the next upload.").arg(reason)
+                                         : qsTr("The route and geofence were read, but the rally points could not be read: %1").arg(reason))
+        _downloadPartialType = 0
+        _downloadPartialReason = ""
+    }
+
+    function requestDownload() {
+        if (!_dmw || _uploading) return
+        guardUnsaved(function() {
+            if (!root._dmw || root._uploading) return
+            root._downloadDiscardAccepted = !!root.plan && root.plan.dirty
+            root._dmw.downloadMission()
+        })
+    }
+
+    function openVehicleMission(routePoints, fenceCount, rallyCount, skipped) {
+        if (!plan || !plan.openVehicleMission()) return
+        if (ctl && active) ctl.fitToPlan()
+        _partialReadWarning(true)
+        if (typeof notifications === "undefined" || !notifications) return
+        notifications.info(qsTr("Loaded from the vehicle: route %1 points, geofence %2 zones, rally %3 points").arg(routePoints).arg(fenceCount).arg(rallyCount))
+        if (skipped > 0) notifications.warning(qsTr("%1 items the editor does not support were dropped.").arg(skipped))
+    }
+
+    function uploadWarnings() {
+        var w = []
+        if (_dmw && _dmw.pilotArmState > 0)
+            w.push(qsTr("The boat is armed. The uploaded mission replaces the one on the vehicle; in Auto the boat switches to the new route at once."))
+        if (_dmw && _dmw.proxyLinkActive)
+            w.push(qsTr("A ground station is connected through the proxy link. Two stations must not upload missions at the same time."))
+        return w
+    }
+
+    function requestUpload() {
+        if (!plan || _uploading) return
+        if (!plan.exportable) {
+            if (typeof notifications !== "undefined" && notifications)
+                notifications.warning(qsTr("Cannot upload: %1").arg(plan.exportBlocker))
+            return
+        }
+        var w = uploadWarnings()
+        if (w.length) {
+            uploadPrompt.warnings = w
+            uploadPrompt.visible = true
+            return
+        }
+        startUpload()
+    }
+
+    function startUpload() {
+        uploadPrompt.visible = false
+        if (plan) plan.uploadToVehicle()
+    }
+
+    function uploadResultText(r) {
+        switch (r) {
+        case -1: return qsTr("no autopilot connected")
+        case -2: return qsTr("the vehicle does not respond")
+        case -3: return qsTr("the vehicle asked for an item that is not in the mission")
+        case -4: return qsTr("the connection to the vehicle was lost")
+        case -5: return qsTr("another upload is in progress")
+        case -6: return qsTr("the vehicle ended the transfer before receiving all items")
+        case -7: return qsTr("the link uses MAVLink 1; geofence and rally points need MAVLink 2")
+        case 1:  return qsTr("error on the vehicle")
+        case 2:  return qsTr("unsupported coordinate frame")
+        case 3:  return qsTr("unsupported command")
+        case 4:  return qsTr("no space for the mission on the vehicle")
+        case 5:  return qsTr("invalid item")
+        case 13: return qsTr("items out of sequence")
+        case 14: return qsTr("denied by the vehicle")
+        case 15: return qsTr("cancelled")
+        }
+        if (r >= 6 && r <= 12) return qsTr("invalid parameter %1").arg(r - 5)
+        return String(r)
+    }
+
+    Connections {
+        target: root._dmw
+        ignoreUnknownSignals: true
+        function onVruChanged() { root.pushVehicleHome() }
+        function onMissionTransferChanged() {
+            if (!root._dmw.missionTransferActive || typeof notifications === "undefined" || !notifications) return
+            var percent = Math.round(root._dmw.missionTransferProgress * 100)
+            if (root._dmw.missionDownloading) notifications.progress(qsTr("Reading the mission from the vehicle"), root._downloadTag, percent)
+            else notifications.progress(qsTr("Uploading mission to the vehicle"), root._uploadTag, percent)
+        }
+        function onMissionDownloadFinished(ok, result, missionType) {
+            if (typeof notifications === "undefined" || !notifications) return
+            notifications.dismiss(root._downloadTag)
+            root._downloadPartialType = 0
+            if (ok) return
+            var reason = root.uploadResultText(result)
+            if (missionType === 1 || missionType === 2) {
+                root._downloadPartialType = missionType
+                root._downloadPartialReason = reason
+                return
+            }
+            root._downloadDiscardAccepted = false
+            notifications.warning(qsTr("Could not read the mission from the vehicle: %1").arg(reason))
+        }
+        function onMissionUploadFinished(ok, result, missionType) {
+            if (typeof notifications === "undefined" || !notifications) return
+            notifications.dismiss(root._uploadTag)
+            var reason = root.uploadResultText(result)
+            if (ok) notifications.info(qsTr("Mission uploaded to the vehicle"))
+            else if (missionType === 1) notifications.warning(qsTr("The route is on the vehicle, but the geofence upload failed: %1").arg(reason))
+            else if (missionType === 2) notifications.warning(qsTr("The route and geofence are on the vehicle, but the rally points upload failed: %1").arg(reason))
+            else notifications.warning(qsTr("Mission upload failed: %1").arg(reason))
+        }
+    }
+
+    Connections {
+        target: root.plan
+        ignoreUnknownSignals: true
+        function onVehicleMissionReceived(empty, matches, routePoints, fenceCount, rallyCount, skipped) {
+            if (empty || matches) {
+                root._downloadDiscardAccepted = false
+                root._partialReadWarning(false)
+            }
+            if (empty) {
+                if (typeof notifications !== "undefined" && notifications) notifications.info(qsTr("The vehicle has no mission"))
+                return
+            }
+            if (matches) {
+                if (typeof notifications !== "undefined" && notifications) notifications.info(qsTr("The vehicle has this plan"))
+                return
+            }
+            var skipGuard = root._downloadDiscardAccepted
+            root._downloadDiscardAccepted = false
+            var hasNotes = typeof notifications !== "undefined" && notifications
+            if (!root.active) {
+                if (hasNotes) notifications.info(qsTr("The vehicle mission was read while the editor was closed and was not opened"))
+                root._partialReadWarning(false)
+                return
+            }
+            if (root._anyDialogOpen()) {
+                if (hasNotes) notifications.info(qsTr("The vehicle mission was read but not opened because a dialog is open; read it again when done"))
+                root._partialReadWarning(false)
+                return
+            }
+            if (skipGuard) root.openVehicleMission(routePoints, fenceCount, rallyCount, skipped)
+            else root.guardUnsaved(function() { root.openVehicleMission(routePoints, fenceCount, rallyCount, skipped) })
+        }
+    }
+
     function handleEscape(sweep) {
         if (!active) return false
-        if (closePrompt.visible) { closePrompt.visible = false; return true }
+        if (uploadPrompt.visible) { uploadPrompt.visible = false; return true }
+        if (closePrompt.visible) { closePrompt.visible = false; closePrompt.afterAction = null; return true }
         if (ctl && ctl.tool !== 0) { ctl.tool = 0; return true }
         if (ctl && ctl.selectedId && ctl.selectedId.length) { ctl.clearSelection(); return true }
         if (sweep) return false
@@ -297,13 +500,15 @@ Rectangle {
     Connections {
         target: root.plan
         ignoreUnknownSignals: true
-        function onPlanChanged() { if (root.active) root.refreshFromPlan() }
+        function onPlanChanged() {
+            if (root._uploading && root._dmw && root._dmw.missionDownloading) root._downloadDiscardAccepted = false
+            if (root.active) root.refreshFromPlan()
+        }
         function onLastErrorChanged() {
             if (root.plan && root.plan.lastError && root.plan.lastError.length && typeof notifications !== "undefined" && notifications)
                 notifications.warning(root.plan.lastError)
         }
     }
-
 
     Timer {
         id: revealTimer
@@ -515,6 +720,24 @@ Rectangle {
                     onClicked: root.saveAction()
                 }
                 KCircleIconButton {
+                    Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
+                    iconSource: "qrc:/icons/ui/upload.svg"; iconTintColor: AppPalette.text
+                    enabled: root._vehicleOnline && !!root.plan && !root._uploading
+                    opacity: enabled && root.plan.exportable ? 1.0 : 0.5
+                    fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
+                    toolTipText: root._uploading ? qsTr("Uploading mission to the vehicle") : qsTr("Upload to vehicle")
+                    onClicked: root.requestUpload()
+                }
+                KCircleIconButton {
+                    Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
+                    iconSource: "qrc:/icons/ui/download.svg"; iconTintColor: AppPalette.text
+                    enabled: root._vehicleOnline && !root._uploading
+                    opacity: enabled ? 1.0 : 0.5
+                    fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
+                    toolTipText: qsTr("Read mission from vehicle")
+                    onClicked: root.requestDownload()
+                }
+                KCircleIconButton {
                     id: moreBtn
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/menu-2.svg"; iconTintColor: AppPalette.text
@@ -553,9 +776,54 @@ Rectangle {
                 Layout.fillHeight: true
                 color: AppPalette.bgDeep
 
+                readonly property bool needArrows: toolsList.implicitHeight > height + 1
+                readonly property int arrowH: Math.round(30 * root._s)
+                readonly property int scrollStep: root.toolSize + Tokens.spaceSm + Math.round(14 * root._s)
+
+                function scrollBy(direction) {
+                    var maxY = Math.max(0, toolsFlick.contentHeight - toolsFlick.height)
+                    var from = toolsScrollAnim.running ? toolsScrollAnim.to : toolsFlick.contentY
+                    var to = Math.max(0, Math.min(maxY, from + direction * scrollStep))
+                    toolsScrollAnim.stop()
+                    toolsScrollAnim.from = toolsFlick.contentY
+                    toolsScrollAnim.to = to
+                    toolsScrollAnim.start()
+                }
+
+                NumberAnimation {
+                    id: toolsScrollAnim
+                    target: toolsFlick
+                    property: "contentY"
+                    duration: Anim.controlMs * 2
+                    easing.type: Easing.OutCubic
+                }
+
+                ScrollArrow {
+                    anchors.top: parent.top
+                    anchors.topMargin: Tokens.spaceXs
+                    visible: toolsColumn.needArrows
+                    available: !toolsFlick.atTop
+                    iconSource: "qrc:/icons/ui/chevron-up.svg"
+                    onClicked: toolsColumn.scrollBy(-1)
+                }
+
+                ScrollArrow {
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: Tokens.spaceXs
+                    visible: toolsColumn.needArrows
+                    available: !toolsFlick.atBottom
+                    iconSource: "qrc:/icons/ui/chevron-down.svg"
+                    onClicked: toolsColumn.scrollBy(1)
+                }
+
                 Flickable {
                     id: toolsFlick
-                    anchors.fill: parent
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: toolsColumn.needArrows ? toolsColumn.arrowH + Tokens.spaceXs : 0
+                    anchors.bottomMargin: toolsColumn.needArrows ? toolsColumn.arrowH + Tokens.spaceXs : 0
                     contentWidth: width
                     contentHeight: toolsList.implicitHeight
                     clip: true
@@ -575,32 +843,49 @@ Rectangle {
 
                         Repeater {
                             model: [
-                                { tool: 1, icon: "qrc:/icons/ui/home.svg",              tip: qsTr("Start point") },
-                                { tool: 2, icon: "qrc:/icons/ui/map-pin-plus.svg",      tip: qsTr("Waypoint") },
-                                { tool: 3, icon: "qrc:/icons/ui/lasso-polygon.svg",     tip: qsTr("Survey area") },
-                                { tool: 4, icon: "qrc:/icons/ui/vector-bezier-arc.svg", tip: qsTr("Corridor") },
-                                { tool: 5, icon: "qrc:/icons/ui/pennant.svg",           tip: qsTr("Rally point") },
-                                { tool: 8, icon: "qrc:/icons/ui/shield.svg",            tip: qsTr("Geofence") }
+                                { tool: 1, icon: "qrc:/icons/ui/home.svg",              tip: qsTr("Start point"), caption: qsTr("Start") },
+                                { tool: 2, icon: "qrc:/icons/ui/map-pin-plus.svg",      tip: qsTr("Waypoint"),    caption: qsTr("Waypoint", "tool caption") },
+                                { tool: 3, icon: "qrc:/icons/ui/lasso-polygon.svg",     tip: qsTr("Survey area"), caption: qsTr("Survey") },
+                                { tool: 4, icon: "qrc:/icons/ui/vector-bezier-arc.svg", tip: qsTr("Corridor"),    caption: qsTr("Corridor") },
+                                { tool: 5, icon: "qrc:/icons/ui/pennant.svg",           tip: qsTr("Rally point"), caption: qsTr("Rally") },
+                                { tool: 8, icon: "qrc:/icons/ui/shield.svg",            tip: qsTr("Geofence"),    caption: qsTr("Geofence") }
                             ]
-                            delegate: ToolButton {
-                                id: toolBtn
+                            delegate: Column {
+                                id: toolSlot
                                 required property var modelData
-                                readonly property bool attention: modelData.tool === 1 && root.plan && !root.plan.hasHome && !armed
-                                readonly property bool shapeTool: modelData.tool === 3 || modelData.tool === 4 || modelData.tool === 8
-                                readonly property int traceTool: modelData.tool === 3 ? 6 : modelData.tool === 4 ? 7 : 9
-                                armed: root.ctl && (root.ctl.tool === modelData.tool || (shapeTool && root.ctl.tool === traceTool))
-                                iconSource: modelData.icon
-                                toolTipText: modelData.tip
-                                borderColor: armed ? AppPalette.accentBorder : (attention ? AppPalette.linkIdleBorder : AppPalette.border)
-                                borderWidth: attention ? 2 : 1
-                                onClicked: {
-                                    if (!root.ctl) return
-                                    if (shapeTool) {
-                                        if (root.ctl.tool === traceTool) { root.ctl.cancelDraft(); return }
-                                        root.openShapeChooser(toolBtn, modelData.tool)
-                                        return
+                                spacing: Math.round(2 * root._s)
+
+                                ToolButton {
+                                    id: toolBtn
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    readonly property bool attention: toolSlot.modelData.tool === 1 && root.plan && !root.plan.hasHome && !armed
+                                    readonly property bool shapeTool: toolSlot.modelData.tool === 3 || toolSlot.modelData.tool === 4 || toolSlot.modelData.tool === 8
+                                    readonly property int traceTool: toolSlot.modelData.tool === 3 ? 6 : toolSlot.modelData.tool === 4 ? 7 : 9
+                                    armed: root.ctl && (root.ctl.tool === toolSlot.modelData.tool || (shapeTool && root.ctl.tool === traceTool))
+                                    iconSource: toolSlot.modelData.icon
+                                    toolTipText: toolSlot.modelData.tip
+                                    borderColor: armed ? AppPalette.accentBorder : (attention ? AppPalette.linkIdleBorder : AppPalette.border)
+                                    borderWidth: attention ? 2 : 1
+                                    onClicked: {
+                                        if (!root.ctl) return
+                                        if (shapeTool) {
+                                            if (root.ctl.tool === traceTool) { root.ctl.cancelDraft(); return }
+                                            root.openShapeChooser(toolBtn, toolSlot.modelData.tool)
+                                            return
+                                        }
+                                        root.ctl.tool = armed ? 0 : toolSlot.modelData.tool
                                     }
-                                    root.ctl.tool = armed ? 0 : modelData.tool
+                                }
+
+                                Text {
+                                    width: root.toolSize
+                                    horizontalAlignment: Text.AlignHCenter
+                                    text: toolSlot.modelData.caption
+                                    color: toolBtn.armed ? AppPalette.accent : AppPalette.textSecond
+                                    font.pixelSize: Tokens.fontXxs
+                                    font.bold: toolBtn.armed
+                                    fontSizeMode: Text.HorizontalFit
+                                    minimumPixelSize: Math.round(8 * root._s)
                                 }
                             }
                         }
@@ -693,7 +978,7 @@ Rectangle {
                 Rectangle {
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.top: parent.top
+                    anchors.top: toolsFlick.top
                     height: Math.round(36 * root._s)
                     visible: toolsFlick.overflow && !toolsFlick.atTop
                     gradient: Gradient {
@@ -704,7 +989,7 @@ Rectangle {
                 Rectangle {
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.bottom: parent.bottom
+                    anchors.bottom: toolsFlick.bottom
                     height: Math.round(36 * root._s)
                     visible: toolsFlick.overflow && !toolsFlick.atBottom
                     gradient: Gradient {
@@ -992,7 +1277,10 @@ Rectangle {
                 Flickable {
                     id: panelFlick
                     anchors.fill: parent
-                    anchors.margins: Tokens.spaceMd
+                    anchors.leftMargin: Tokens.spaceMd
+                    anchors.topMargin: Tokens.spaceMd
+                    anchors.bottomMargin: Tokens.spaceMd
+                    anchors.rightMargin: 0
                     contentWidth: width
                     contentHeight: panelColumn.implicitHeight
                     clip: true
@@ -1004,7 +1292,7 @@ Rectangle {
 
                     Column {
                         id: panelColumn
-                        width: panelFlick.width
+                        width: panelFlick.width - root._scrollReserve
                         spacing: Tokens.spaceMd
 
                         KIsland {
@@ -1030,9 +1318,9 @@ Rectangle {
                                 label: qsTr("At the end")
                                 KCombo {
                                     id: endActionCombo
-                                    readonly property var actions: [2, 0, 1]
+                                    readonly property var actions: [2, 0, 1, 3]
                                     width: Math.round(190 * root._s)
-                                    model: [qsTr("Return to start point"), qsTr("Return to launch (RTL)"), qsTr("Hold position")]
+                                    model: [qsTr("Return to start point"), qsTr("Return to launch (RTL)"), qsTr("Hold position"), qsTr("Nothing (autopilot setting)")]
                                     onActivated: function(i) { if (root.plan) root.plan.endAction = actions[i] }
                                 }
                                 Binding {
@@ -1048,11 +1336,17 @@ Rectangle {
                                 stacked: true
                             }
                             KIslandRow {
+                                visible: root.plan && root.plan.endAction === 3
+                                caption: qsTr("No end command is added: after the last point the autopilot does what its MIS_DONE_BEHAVE parameter says (Hold by default)")
+                                captionColor: AppPalette.linkIdleText
+                                stacked: true
+                            }
+                            KIslandRow {
                                 id: homeRow
                                 readonly property bool missing: root.plan ? !root.plan.hasHome : false
                                 property real pulse: 0.0
                                 label: qsTr("Start point")
-                                caption: missing ? qsTr("not set — tap here or use the tool on the left") : qsTr("placed")
+                                caption: missing ? qsTr("not set — tap the tool") : qsTr("placed")
                                 labelColor: missing ? AppPalette.linkIdleText : AppPalette.textStrong
                                 captionColor: missing ? AppPalette.linkIdleText : AppPalette.textSecond
                                 fillColor: missing ? Qt.rgba(AppPalette.linkIdleBorder.r, AppPalette.linkIdleBorder.g, AppPalette.linkIdleBorder.b, pulse) : "transparent"
@@ -1241,6 +1535,16 @@ Rectangle {
                     }
                 }
 
+                KScrollBar {
+                    id: panelScroll
+                    flickable: panelFlick
+                    anchors.top: panelFlick.top
+                    anchors.bottom: panelFlick.bottom
+                    anchors.right: panelFlick.right
+                    anchors.rightMargin: Math.round((root._scrollReserve - thumbWidth) / 2)
+                    onPressedChanged: if (pressed) revealAnim.stop()
+                }
+
                 Rectangle {
                     anchors.left: parent.left
                     anchors.right: parent.right
@@ -1301,16 +1605,16 @@ Rectangle {
 
             Repeater {
                 model: shapeChooser.tool === 3
-                       ? [ { label: qsTr("Rectangle here, then drag the corners"), mode: "template" },
-                           { label: qsTr("Circle here, then drag the handles"),     mode: "circle" },
+                       ? [ { label: qsTr("Rectangle"),                              mode: "template" },
+                           { label: qsTr("Circle"),                                 mode: "circle" },
                            { label: qsTr("Outline it point by point"),              mode: "trace" } ]
                        : shapeChooser.tool === 4
-                       ? [ { label: qsTr("Axis here, then drag the ends"),          mode: "template" },
-                           { label: qsTr("Draw the axis point by point"),           mode: "trace" } ]
-                       : [ { label: qsTr("Inclusion zone: rectangle here"),         mode: "template", inclusion: true },
+                       ? [ { label: qsTr("Straight line"),                          mode: "template" },
+                           { label: qsTr("Draw point by point"),                    mode: "trace" } ]
+                       : [ { label: qsTr("Inclusion zone: rectangle"),              mode: "template", inclusion: true },
                            { label: qsTr("Inclusion zone: outline point by point"), mode: "trace",    inclusion: true },
-                           { label: qsTr("Exclusion zone: rectangle here"),         mode: "template", inclusion: false },
-                           { label: qsTr("Exclusion zone: circle here"),            mode: "circle",   inclusion: false },
+                           { label: qsTr("Exclusion zone: rectangle"),              mode: "template", inclusion: false },
+                           { label: qsTr("Exclusion zone: circle"),                 mode: "circle",   inclusion: false },
                            { label: qsTr("Exclusion zone: outline point by point"), mode: "trace",    inclusion: false } ]
                 delegate: Rectangle {
                     required property var modelData
@@ -1425,13 +1729,75 @@ Rectangle {
     }
 
     Rectangle {
+        id: uploadPrompt
+        anchors.fill: parent
+        color: AppPalette.dim
+        visible: false
+        property var warnings: []
+
+        MouseArea { anchors.fill: parent; onClicked: uploadPrompt.visible = false }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: Math.min(parent.width - Tokens.spaceXl * 2, Math.round(460 * root._s))
+            height: uploadColumn.implicitHeight + Tokens.spaceXl * 2
+            radius: Tokens.radiusLg
+            color: AppPalette.card
+            border.color: AppPalette.border
+
+            MouseArea { anchors.fill: parent }
+
+            Column {
+                id: uploadColumn
+                anchors.fill: parent
+                anchors.margins: Tokens.spaceXl
+                spacing: Tokens.spaceLg
+
+                Text {
+                    width: parent.width
+                    text: qsTr("Upload the mission to the vehicle?")
+                    color: AppPalette.textStrong
+                    font.pixelSize: Tokens.fontLg
+                    font.bold: true
+                    wrapMode: Text.WordWrap
+                }
+
+                Repeater {
+                    model: uploadPrompt.warnings
+                    delegate: Text {
+                        required property var modelData
+                        width: uploadColumn.width
+                        text: "• " + modelData
+                        color: AppPalette.dangerText
+                        font.pixelSize: Tokens.fontBase
+                        wrapMode: Text.WordWrap
+                    }
+                }
+
+                Row {
+                    spacing: Tokens.spaceMd
+                    KButton {
+                        text: qsTr("Upload")
+                        danger: true
+                        onClicked: root.startUpload()
+                    }
+                    KButton {
+                        text: qsTr("Cancel")
+                        onClicked: uploadPrompt.visible = false
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
         id: closePrompt
         anchors.fill: parent
         color: AppPalette.dim
         visible: false
         property var afterAction: null
 
-        MouseArea { anchors.fill: parent; onClicked: closePrompt.visible = false }
+        MouseArea { anchors.fill: parent; onClicked: { closePrompt.visible = false; closePrompt.afterAction = null } }
 
         Rectangle {
             anchors.centerIn: parent

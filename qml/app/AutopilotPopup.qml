@@ -22,23 +22,19 @@ BasePanePopup {
     readonly property real _speed: _dmw ? _dmw.vruVelocityH : NaN
     readonly property real _current: _dmw ? _dmw.vruCurrent : NaN
     readonly property int _batteryPct: _dmw ? _dmw.vruBatteryPercent : -1
-    readonly property int _linkQuality: _dmw ? _dmw.averageChartLosses : -1
-    readonly property bool _hasSonar: {
-        var list = _dmw ? _dmw.devs : null
-        if (!list) return false
-        for (var i = 0; i < list.length; ++i)
-            if (list[i] && list[i].isBoardInited) return true
-        return false
-    }
+    readonly property int _linkQuality: _dmw ? _dmw.autopilotLinkQuality : -1
+    readonly property bool _rssiValid: _dmw ? _dmw.radioRssiValid : false
+    readonly property int _rssi: _dmw ? _dmw.radioRssi : 0
     readonly property bool _armed: _arm > 0
 
     readonly property string _statsText: {
         var parts = []
         if (_batteryPct >= 0) parts.push(qsTr("Bat. %1 %").arg(_batteryPct))
         if (isFinite(_voltage)) parts.push(_voltage.toFixed(1) + " V")
-        if (isFinite(_current)) parts.push(_current.toFixed(1) + " A")
+        if (_linkQuality >= 0) parts.push(qsTr("Link %1 %").arg(_linkQuality))
         if (isFinite(_speed)) parts.push(_speed.toFixed(1) + " " + qsTr("m/s"))
-        if (_hasSonar && _linkQuality >= 0) parts.push(qsTr("Link %1 %").arg(_linkQuality))
+        if (isFinite(_current)) parts.push(_current.toFixed(1) + " A")
+        if (_rssiValid) parts.push(qsTr("%1 dBm").arg(_rssi))
         return parts.join("  ·  ")
     }
     property real _statsW: 0
@@ -261,7 +257,7 @@ BasePanePopup {
             anchors.left: statusDot.right
             anchors.leftMargin: Math.round(8 * root._s)
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.min(Math.round(240 * root._s),
+            width: Math.min(Math.round(300 * root._s),
                             Math.max(Math.round(84 * root._s), titleText.implicitWidth, root._statsW))
 
             Text {

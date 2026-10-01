@@ -151,7 +151,7 @@ ExpandResult expandPlan(const MissionPlan& plan)
         if (homeValid) {
             pushNav(waypointAt(*plan.home, kHomeItemId));
         }
-    } else {
+    } else if (plan.settings.endAction != EndAction::None) {
         FlatItem end;
         end.frame = MavFrame::GlobalRelativeAltInt;
         if (plan.settings.endAction == EndAction::Rtl) {
@@ -208,11 +208,11 @@ ExpandResult expandPlan(const MissionPlan& plan)
         }
         const GeoPoint p(f.lat, f.lon);
         if (anyInclusion) {
-            bool inside = false;
-            for (int i = 0; i < inclusionLocal.size() && !inside; ++i) {
-                inside = pointInLocalPolygon(inclusionPlanes[i].toLocal(p), inclusionLocal[i]);
+            bool insideAll = true;
+            for (int i = 0; i < inclusionLocal.size() && insideAll; ++i) {
+                insideAll = pointInLocalPolygon(inclusionPlanes[i].toLocal(p), inclusionLocal[i]);
             }
-            if (!inside) {
+            if (!insideAll) {
                 ++outsideInclusion;
             }
         }

@@ -1,5 +1,6 @@
 #include "device_manager_wrapper.h"
 #include "device_defs.h"
+#include "autopilot_messages.h"
 
 
 DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
@@ -10,6 +11,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     USBLBeaconDirectAskState_(false)
 {
     workerObject_ = std::make_unique<DeviceManager>();
+    qRegisterMetaType<AutopilotState>("AutopilotState");
 
 #ifdef SEPARATE_READING
     workerThread_ = std::make_unique<QThread>(this);
@@ -19,9 +21,10 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::devChanged,           this,                &DeviceManagerWrapper::devChanged,             ct));
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::standAvailableChanged, this,                &DeviceManagerWrapper::standAvailableChanged,   ct));
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::streamChanged,        this,                &DeviceManagerWrapper::streamChanged,          ct));
-    deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::vruChanged,             ct));
+    deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::onAutopilotState,       ct));
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::autopilotCommandAcked, this,               &DeviceManagerWrapper::autopilotCommandAcked,  ct));
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::chartLossesChanged,   this,                &DeviceManagerWrapper::calcAverageChartLosses, ct));
+    deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::devChanged,           this,                &DeviceManagerWrapper::calcAverageChartLosses, ct));
 
     workerObject_->moveToThread(workerThread_.get());
     workerThread_->setObjectName("DevManThread");
@@ -32,14 +35,41 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(workerObject_.get(), &DeviceManager::devChanged,           this,                &DeviceManagerWrapper::devChanged,             ct);
     QObject::connect(workerObject_.get(), &DeviceManager::standAvailableChanged, this,                &DeviceManagerWrapper::standAvailableChanged,   ct);
     QObject::connect(workerObject_.get(), &DeviceManager::streamChanged,        this,                &DeviceManagerWrapper::streamChanged,          ct);
-    QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::vruChanged,             ct);
+    QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::onAutopilotState,       ct);
     QObject::connect(workerObject_.get(), &DeviceManager::autopilotCommandAcked, this,               &DeviceManagerWrapper::autopilotCommandAcked,  ct);
     QObject::connect(workerObject_.get(), &DeviceManager::chartLossesChanged,   this,                &DeviceManagerWrapper::calcAverageChartLosses, ct);
+    QObject::connect(workerObject_.get(), &DeviceManager::devChanged,           this,                &DeviceManagerWrapper::calcAverageChartLosses, ct);
 #endif
+
+    qRegisterMetaType<autopilot::MissionItems>("autopilot::MissionItems");
+    qRegisterMetaType<autopilot::MissionBatches>("autopilot::MissionBatches");
+    missionThread_ = std::make_unique<QThread>();
+    missionThread_->setObjectName("AutopilotMissionThread");
+    missionTransfer_ = new autopilot::MissionTransfer();
+    missionTransfer_->moveToThread(missionThread_.get());
+    QObject::connect(missionThread_.get(), &QThread::finished, missionTransfer_, &QObject::deleteLater);
+
+    DeviceManager* dm = workerObject_.get();
+    QObject::connect(dm, &DeviceManager::missionFrameReceived, missionTransfer_, &autopilot::MissionTransfer::handleFrame);
+    QObject::connect(dm, &DeviceManager::missionUploadStart,   missionTransfer_, &autopilot::MissionTransfer::startUpload);
+    QObject::connect(dm, &DeviceManager::missionDownloadStart, missionTransfer_, &autopilot::MissionTransfer::startDownload);
+    QObject::connect(dm, &DeviceManager::missionTransferAbort, missionTransfer_, &autopilot::MissionTransfer::abort);
+    QObject::connect(missionTransfer_, &autopilot::MissionTransfer::sendMessage,     dm,   &DeviceManager::sendAutopilotMessage);
+    QObject::connect(missionTransfer_, &autopilot::MissionTransfer::progressChanged,  this, &DeviceManagerWrapper::onMissionTransferProgress);
+    QObject::connect(missionTransfer_, &autopilot::MissionTransfer::uploadFinished,   this, &DeviceManagerWrapper::onMissionUploadFinished);
+    QObject::connect(missionTransfer_, &autopilot::MissionTransfer::downloadFinished, this, &DeviceManagerWrapper::onMissionDownloadFinished);
+    QObject::connect(dm, &DeviceManager::missionUploadRefused, this, [this](int result, int missionType) { onMissionUploadFinished(false, result, missionType); });
+    QObject::connect(dm, &DeviceManager::missionDownloadRefused, this, [this](int result) { onMissionDownloadFinished(false, result, 0, {}); });
+    missionThread_->start();
 }
 
 DeviceManagerWrapper::~DeviceManagerWrapper()
 {
+    if (missionThread_) {
+        missionThread_->quit();
+        missionThread_->wait();
+    }
+
 #ifdef SEPARATE_READING
     if (workerObject_) {
         QMetaObject::invokeMethod(workerObject_.get(), "shutdown", Qt::BlockingQueuedConnection);
@@ -172,8 +202,97 @@ void DeviceManagerWrapper::autopilotStartMission()
 #endif
 }
 
+bool DeviceManagerWrapper::beginMissionTransfer(bool download)
+{
+    if (missionTransferActive_) {
+        return false;
+    }
+    missionTransferActive_ = true;
+    missionDownloading_ = download;
+    missionTransferProgress_ = 0.0;
+    emit missionTransferChanged();
+    return true;
+}
+
+void DeviceManagerWrapper::endMissionTransfer(bool ok)
+{
+    missionTransferActive_ = false;
+    missionDownloading_ = false;
+    if (ok) {
+        missionTransferProgress_ = 1.0;
+    }
+    emit missionTransferChanged();
+}
+
+void DeviceManagerWrapper::downloadMission()
+{
+    if (!beginMissionTransfer(true)) {
+        emit missionDownloadFinished(false, autopilot::MissionTransfer::ResultBusy, 0);
+        return;
+    }
+#ifdef SEPARATE_READING
+    DeviceManager* worker = workerObject_.get();
+    QMetaObject::invokeMethod(worker, [worker]() { worker->startMissionDownload(); }, Qt::QueuedConnection);
+#else
+    workerObject_->startMissionDownload();
+#endif
+}
+
+void DeviceManagerWrapper::uploadMission(const autopilot::MissionBatches& batches)
+{
+    if (!beginMissionTransfer(false)) {
+        emit missionUploadFinished(false, autopilot::MissionTransfer::ResultBusy, 0);
+        return;
+    }
+#ifdef SEPARATE_READING
+    DeviceManager* worker = workerObject_.get();
+    QMetaObject::invokeMethod(worker, [worker, batches]() { worker->startMissionUpload(batches); }, Qt::QueuedConnection);
+#else
+    workerObject_->startMissionUpload(batches);
+#endif
+}
+
+void DeviceManagerWrapper::onAutopilotState(const AutopilotState& state)
+{
+    autopilotState_ = state;
+    emit vruChanged();
+}
+
+void DeviceManagerWrapper::onMissionTransferProgress(int done, int total)
+{
+    if (!missionTransferActive_) {
+        return;
+    }
+    missionTransferProgress_ = total > 0 ? qreal(done) / qreal(total) : 0.0;
+    emit missionTransferChanged();
+}
+
+void DeviceManagerWrapper::onMissionUploadFinished(bool ok, int result, int missionType)
+{
+    if (!missionTransferActive_ || missionDownloading_) {
+        return;
+    }
+    endMissionTransfer(ok);
+    emit missionUploadFinished(ok, result, missionType);
+}
+
+void DeviceManagerWrapper::onMissionDownloadFinished(bool ok, int result, int missionType, const autopilot::MissionBatches& batches)
+{
+    if (!missionTransferActive_ || !missionDownloading_) {
+        return;
+    }
+    endMissionTransfer(ok);
+    const bool haveRoute = !batches.isEmpty() && batches.first().missionType == MavMissionTypeMission;
+    emit missionDownloadFinished(ok, result, missionType);
+    if (haveRoute) {
+        emit missionDownloaded(batches);
+    }
+}
+
 void DeviceManagerWrapper::calcAverageChartLosses()
 {
-    averageChartLosses_ = std::max(0, std::min(100, 100 - getWorker()->calcAverageChartLosses()));
+    const int losses = getWorker()->calcAverageChartLosses();
+    echogramDeliveryKnown_ = losses >= 0;
+    averageChartLosses_ = echogramDeliveryKnown_ ? std::clamp(100 - losses, 0, 100) : 0;
     emit this->chartLossesChanged();
 }

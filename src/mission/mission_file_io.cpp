@@ -165,6 +165,7 @@ QString endActionName(EndAction a)
     case EndAction::Hold:          return QStringLiteral("hold");
     case EndAction::ReturnToStart: return QStringLiteral("start");
     case EndAction::Rtl:           return QStringLiteral("rtl");
+    case EndAction::None:          return QStringLiteral("none");
     }
     return QStringLiteral("start");
 }
@@ -177,24 +178,10 @@ EndAction endActionFromName(const QString& s)
     if (s == QStringLiteral("rtl")) {
         return EndAction::Rtl;
     }
+    if (s == QStringLiteral("none")) {
+        return EndAction::None;
+    }
     return EndAction::ReturnToStart;
-}
-
-bool migrate(QJsonObject& root, int fromVersion, QString* err)
-{
-    if (fromVersion > kFormatVersion) {
-        if (err) *err = QStringLiteral("formatVersion %1 is newer than supported %2").arg(fromVersion).arg(kFormatVersion);
-        return false;
-    }
-    if (fromVersion < 2) {
-        QJsonObject settings = root.value(QStringLiteral("settings")).toObject();
-        if (settings.value(QStringLiteral("endAction")).toString() == QStringLiteral("rtl")) {
-            settings.insert(QStringLiteral("endAction"), QStringLiteral("start"));
-            root.insert(QStringLiteral("settings"), settings);
-        }
-    }
-    root.insert(QStringLiteral("formatVersion"), kFormatVersion);
-    return true;
 }
 
 std::optional<double> readSpeed(const QJsonObject& o)
@@ -468,9 +455,6 @@ bool fromJson(const QJsonObject& input, MissionPlan* outPlan, QString* outError)
     const int version = root.value(QStringLiteral("formatVersion")).toInt(0);
     if (version < 1) {
         if (outError) *outError = QStringLiteral("parse: missing formatVersion");
-        return false;
-    }
-    if (!migrate(root, version, outError)) {
         return false;
     }
 

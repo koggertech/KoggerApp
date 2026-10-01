@@ -13,8 +13,10 @@
 #include <QSettings>
 #include <QUrl>
 
+#include "autopilot_messages.h"
 #include "mission_export.h"
 #include "mission_file_io.h"
+#include "mission_vehicle.h"
 
 namespace mission {
 
@@ -205,6 +207,7 @@ void MissionPlanController::setEndAction(int action)
 {
     const EndAction a = action == static_cast<int>(EndAction::Hold) ? EndAction::Hold
                       : action == static_cast<int>(EndAction::ReturnToStart) ? EndAction::ReturnToStart
+                      : action == static_cast<int>(EndAction::None) ? EndAction::None
                       : EndAction::Rtl;
     if (plan_.settings.endAction == a) {
         return;
@@ -228,6 +231,7 @@ void MissionPlanController::setDirectoryOverride(const QString& dir)
 
 void MissionPlanController::newPlan()
 {
+    uploadSkipTypes_.clear();
     plan_ = MissionPlan();
     plan_.name = QStringLiteral("Mission");
     plan_.created = nowIso();
@@ -249,6 +253,7 @@ bool MissionPlanController::openFile(const QString& path)
         setLastError(r.error);
         return false;
     }
+    uploadSkipTypes_.clear();
     plan_ = r.plan;
     expanded_ = expandPlan(plan_);
     undo_.clear();
@@ -301,6 +306,73 @@ bool MissionPlanController::saveFileAs(const QString& path)
     markClean();
     setLastError(QString());
     emit planChanged();
+    return true;
+}
+
+bool MissionPlanController::uploadToVehicle()
+{
+    const QString blocker = exportBlocker();
+    if (!blocker.isEmpty()) {
+        setLastError(tr("upload: %1").arg(blocker));
+        return false;
+    }
+    autopilot::MissionBatches batches = toVehicleUpload(expanded_.mission);
+    batches.removeIf([this](const autopilot::MissionBatch& b) {
+        return b.items.isEmpty() && uploadSkipTypes_.contains(b.missionType);
+    });
+    emit uploadRequested(batches);
+    return true;
+}
+
+void MissionPlanController::receiveVehicleMission(const autopilot::MissionBatches& batches)
+{
+    VehicleImport imported = fromVehicle(batches, plan_.settings.cruiseSpeed);
+    const bool matches = !imported.empty && exportable() && sameOnVehicle(batches, toVehicleUpload(expanded_.mission));
+    const int routePoints = (imported.plan.home ? 1 : 0) + int(imported.plan.items.size());
+    imported.plan.name = tr("From vehicle");
+    vehiclePlan_ = imported.plan;
+    vehicleUnreadTypes_ = { MavMissionTypeFence, MavMissionTypeRally };
+    for (const auto& b : batches) {
+        const bool nothingImported = (b.missionType == MavMissionTypeFence && imported.plan.fence.isEmpty())
+                                     || (b.missionType == MavMissionTypeRally && imported.plan.rally.isEmpty());
+        if (b.items.isEmpty() || !nothingImported) {
+            vehicleUnreadTypes_.removeAll(b.missionType);
+        }
+    }
+    emit vehicleMissionReceived(imported.empty, matches, routePoints, int(imported.plan.fence.size()), int(imported.plan.rally.size()),
+                                imported.skippedRouteCommands + imported.skippedFenceItems);
+}
+
+bool MissionPlanController::openVehicleMission()
+{
+    if (!vehiclePlan_) {
+        setLastError(tr("No mission has been read from the vehicle"));
+        return false;
+    }
+    plan_ = *vehiclePlan_;
+    vehiclePlan_.reset();
+    uploadSkipTypes_ = vehicleUnreadTypes_;
+    plan_.created = nowIso();
+    plan_.modified = plan_.created;
+    for (auto& item : plan_.items) {
+        std::visit([this](auto& it) { it.id = newId(); }, item);
+    }
+    for (auto& r : plan_.rally) {
+        r.id = newId();
+    }
+    for (auto& f : plan_.fence) {
+        f.id = newId();
+    }
+    expanded_ = expandPlan(plan_);
+    undo_.clear();
+    redo_.clear();
+    cleanSnapshot_.clear();
+    lastDirty_ = true;
+    setLastError(QString());
+    emit dirtyChanged();
+    emit planChanged();
+    emit undoChanged();
+    setFilePath(QString());
     return true;
 }
 
@@ -385,6 +457,7 @@ bool MissionPlanController::loadPlanJson(const QString& json)
     }
     pushUndo();
     plan_ = plan;
+    uploadSkipTypes_.clear();
     afterChange();
     setLastError(QString());
     return true;

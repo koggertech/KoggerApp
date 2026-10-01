@@ -273,6 +273,10 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysController", nullptr);
 #endif
     connect(this, &Core::languageChanged, missionPlanControllerPtr_.get(), &mission::MissionPlanController::retranslate);
+    connect(missionPlanControllerPtr_.get(), &mission::MissionPlanController::uploadRequested,
+            deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::uploadMission);
+    connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::missionDownloaded,
+            missionPlanControllerPtr_.get(), &mission::MissionPlanController::receiveVehicleMission);
 }
 
 Console* Core::getConsolePtr()

@@ -585,59 +585,8 @@ struct __attribute__((packed)) MAVLink_MSG_VFR_HUD
     float climb; // m/s
 };
 
-constexpr uint8_t kMavCompIdAutopilot1 = 1;
-constexpr uint8_t kMavGcsSystemId = 255;
-constexpr uint8_t kMavGcsComponentId = 190;
-constexpr uint8_t kMavModeFlagCustomModeEnabled = 1;
-constexpr float kMavArmForceMagic = 21196.0f;
 constexpr uint8_t kMavAutopilotInvalid = 8;
 constexpr uint8_t kMavTypeGcs = 6;
-
-enum MavCommandId : uint16_t {
-    MavCmdDoSetMode = 176,
-    MavCmdMissionStart = 300,
-    MavCmdComponentArmDisarm = 400
-};
-
-enum MavResult : int {
-    MavResultNotSent = -1,
-    MavResultAccepted = 0,
-    MavResultTemporarilyRejected = 1,
-    MavResultDenied = 2,
-    MavResultUnsupported = 3,
-    MavResultFailed = 4,
-    MavResultInProgress = 5,
-    MavResultCancelled = 6
-};
-
-struct __attribute__((packed)) MAVLink_MSG_COMMAND_LONG
-{
-    float param1 = 0.0f;
-    float param2 = 0.0f;
-    float param3 = 0.0f;
-    float param4 = 0.0f;
-    float param5 = 0.0f;
-    float param6 = 0.0f;
-    float param7 = 0.0f;
-    uint16_t command = 0;
-    uint8_t target_system = 0;
-    uint8_t target_component = 0;
-    uint8_t confirmation = 0;
-
-    static uint32_t getID() { return 76; }
-};
-
-struct __attribute__((packed)) MAVLink_MSG_COMMAND_ACK
-{
-    uint16_t command = 0;
-    uint8_t result = 0;
-    uint8_t progress = 0;
-    int32_t result_param2 = 0;
-    uint8_t target_system = 0;
-    uint8_t target_component = 0;
-
-    static uint32_t getID() { return 77; }
-};
 
 struct __attribute__((packed)) MAVLink_MSG_HEARTBEAT
 {

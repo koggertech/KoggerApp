@@ -35,7 +35,7 @@ Item {
 
     function pushProgress(text, tag, percent) {
         for (var i = 0; i < notificationsModel.count; ++i) {
-            if (notificationsModel.get(i).kind === 2 && notificationsModel.get(i).tag === tag) {
+            if (notificationsModel.get(i).kind === 2 && notificationsModel.get(i).tag === tag && !notificationsModel.get(i).closing) {
                 notificationsModel.setProperty(i, "text", text)
                 notificationsModel.setProperty(i, "percent", percent)
                 return

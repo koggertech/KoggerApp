@@ -11,6 +11,7 @@
 
 #include "mission_expander.h"
 #include "mission_model.h"
+#include "mission_transfer.h"
 
 namespace mission {
 
@@ -84,6 +85,8 @@ public:
     Q_INVOKABLE bool    saveFileAs(const QString& path);
     Q_INVOKABLE bool    exportPlanFile(const QString& path);
     Q_INVOKABLE bool    exportWplFile(const QString& path);
+    Q_INVOKABLE bool    uploadToVehicle();
+    Q_INVOKABLE bool    openVehicleMission();
     Q_INVOKABLE QString defaultFileName() const;
     Q_INVOKABLE QString directoryUrl() const;
     Q_INVOKABLE QString suggestedFilePath() const;
@@ -126,6 +129,7 @@ public:
 
 public slots:
     void retranslate();
+    void receiveVehicleMission(const autopilot::MissionBatches& batches);
 
 signals:
     void planChanged();
@@ -135,6 +139,8 @@ signals:
     void lastErrorChanged();
     void directoryChanged();
     void lastFileChanged();
+    void uploadRequested(const autopilot::MissionBatches& batches);
+    void vehicleMissionReceived(bool empty, bool matches, int routePoints, int fenceCount, int rallyCount, int skipped);
 
 private:
     enum class VertexOwner { None, Waypoint, Survey, Corridor, Rally };
@@ -168,6 +174,9 @@ private:
     QString          frozenTime_;
     QByteArray       cleanSnapshot_;
     bool             lastDirty_ = false;
+    std::optional<MissionPlan> vehiclePlan_;
+    QVector<int> vehicleUnreadTypes_;
+    QVector<int> uploadSkipTypes_;
     int              transactionDepth_ = 0;
     QByteArray       transactionSnapshot_;
     QVector<QByteArray> undo_;

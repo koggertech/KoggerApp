@@ -443,6 +443,23 @@ void GraphicsScene3dRenderer::drawCompass(int x, int y, int sizePx)
     }
 }
 
+namespace {
+
+const QColor kScaleBarCasingColor(26, 28, 33);
+
+const QVector2D kScaleBarCasingOffsets[] = {
+    QVector2D( 1.000f,  0.000f),
+    QVector2D(-1.000f,  0.000f),
+    QVector2D( 0.000f,  1.000f),
+    QVector2D( 0.000f, -1.000f),
+    QVector2D( 0.707f,  0.707f),
+    QVector2D( 0.707f, -0.707f),
+    QVector2D(-0.707f,  0.707f),
+    QVector2D(-0.707f, -0.707f)
+};
+
+} // namespace
+
 void GraphicsScene3dRenderer::drawScaleBar(const QRect& vportRect, const QMatrix4x4& view)
 {
     // fixed bottom-right map scale bar (independent of UI scale / DPI)
@@ -451,6 +468,7 @@ void GraphicsScene3dRenderer::drawScaleBar(const QRect& vportRect, const QMatrix
     const float tickH        = 6.0f;
     const float labelGap     = 3.0f;
     const float maxBarPx     = 120.0f;
+    const float casingPx     = qMax(1.0f, std::round(static_cast<float>(renderScale())));
 
     const float centerX = vportRect.x() + vportRect.width() - sideMargin - maxBarPx * 0.5f; // shifted center
     const float barY    = vportRect.y() + bottomMargin; // line; ticks point up
@@ -511,16 +529,25 @@ void GraphicsScene3dRenderer::drawScaleBar(const QRect& vportRect, const QMatrix
         auto ndc = [&](float px, float py) -> QVector2D {
             return QVector2D(px / halfW - 1.0f, py / halfH - 1.0f);
         };
-        QVector<QVector2D> lines = {
-            ndc(leftX,  barY),  ndc(rightX, barY),
-            ndc(leftX,  barY),  ndc(leftX,  barY + tickH),
-            ndc(rightX, barY),  ndc(rightX, barY + tickH)
+        auto barLines = [&](float dx, float dy) -> QVector<QVector2D> {
+            return {
+                ndc(leftX + dx,  barY + dy),  ndc(rightX + dx, barY + dy),
+                ndc(leftX + dx,  barY + dy),  ndc(leftX + dx,  barY + tickH + dy),
+                ndc(rightX + dx, barY + dy),  ndc(rightX + dx, barY + tickH + dy)
+            };
         };
         const int colorLoc = sp->uniformLocation("color");
-        sp->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(255, 255, 255)));
         sp->enableAttributeArray(0);
-        sp->setAttributeArray(0, lines.constData());
         glLineWidth(2.0f);
+        sp->setUniformValue(colorLoc, DrawUtils::colorToVector4d(kScaleBarCasingColor));
+        for (const auto& offset : kScaleBarCasingOffsets) {
+            const QVector<QVector2D> casing = barLines(offset.x() * casingPx, offset.y() * casingPx);
+            sp->setAttributeArray(0, casing.constData());
+            glDrawArrays(GL_LINES, 0, casing.size());
+        }
+        const QVector<QVector2D> lines = barLines(0.0f, 0.0f);
+        sp->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(255, 255, 255)));
+        sp->setAttributeArray(0, lines.constData());
         glDrawArrays(GL_LINES, 0, lines.size());
         glLineWidth(1.0f);
         sp->disableAttributeArray(0);
@@ -544,6 +571,10 @@ void GraphicsScene3dRenderer::drawScaleBar(const QRect& vportRect, const QMatrix
 
     QMatrix4x4 textProjection;
     textProjection.ortho(vportRect);
+    TextRenderer::instance().setColor(kScaleBarCasingColor);
+    for (const auto& offset : kScaleBarCasingOffsets) {
+        TextRenderer::instance().render(label, 1.0f, QVector2D(labelX, labelY) + offset * casingPx, false, this, textProjection, m_shaderProgramMap);
+    }
     TextRenderer::instance().setColor(QColor(255, 255, 255));
     TextRenderer::instance().render(label, 1.0f, QVector2D(labelX, labelY), false, this, textProjection, m_shaderProgramMap);
 }

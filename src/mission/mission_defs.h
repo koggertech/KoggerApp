@@ -22,7 +22,8 @@ enum class MavFrame : int {
 enum class EndAction : int {
     Rtl           = 0,
     Hold          = 1,
-    ReturnToStart = 2
+    ReturnToStart = 2,
+    None          = 3
 };
 
 struct GeoPoint {
@@ -35,7 +36,7 @@ struct GeoPoint {
     bool isValid() const { return std::isfinite(lat) && std::isfinite(lon) && std::fabs(lat) <= 90.0 && std::fabs(lon) <= 180.0; }
 };
 
-constexpr int    kFormatVersion       = 2;
+constexpr int    kFormatVersion       = 1;
 constexpr int    kMaxSurveyLines      = 500;
 constexpr int    kMaxCorridorLines    = 200;
 constexpr double kMinLineSpacing      = 0.5;

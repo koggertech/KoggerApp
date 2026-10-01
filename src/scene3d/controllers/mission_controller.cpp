@@ -52,6 +52,7 @@ const QColor kCorridorFill(168, 85, 247, 40);
 const QColor kCorridorStroke(147, 51, 234, 230);
 const QColor kWaypointColor(255, 255, 255, 240);
 const QColor kHomeColor(245, 158, 11, 240);
+const QColor kVehicleHomeColor(22, 163, 74, 240);
 const QColor kRallyColor(20, 184, 166, 240);
 const QColor kSelectedColor(250, 204, 21, 240);
 const QColor kHandleColor(255, 255, 255, 235);
@@ -874,6 +875,22 @@ void MissionController::placeCorridorTemplate()
     }
 }
 
+void MissionController::setVehicleHome(double lat, double lon)
+{
+    const mission::GeoPoint p(lat, lon);
+    std::optional<mission::GeoPoint> next;
+    if (p.isValid() && !(lat == 0.0 && lon == 0.0)) {
+        next = p;
+    }
+    const bool same = next.has_value() == vehicleHome_.has_value()
+                      && (!next || (next->lat == vehicleHome_->lat && next->lon == vehicleHome_->lon));
+    if (same) {
+        return;
+    }
+    vehicleHome_ = next;
+    markDirty();
+}
+
 void MissionController::fitToPlan()
 {
     if (view_) {
@@ -1313,7 +1330,8 @@ void MissionController::rebuild()
 
     const auto& plan = plan_->plan();
     const auto& expanded = plan_->expanded();
-    const bool hasContent = plan.home.has_value() || !plan.items.isEmpty() || !plan.rally.isEmpty() || !plan.fence.isEmpty() || !draft_.isEmpty();
+    const bool hasContent = plan.home.has_value() || !plan.items.isEmpty() || !plan.rally.isEmpty() || !plan.fence.isEmpty() || !draft_.isEmpty()
+                            || vehicleHome_.has_value();
     rd.enabled = editing_ && hasContent;
     if (!rd.enabled) {
         layer_->setRenderData(rd);
@@ -1415,9 +1433,13 @@ void MissionController::rebuild()
         dimFrom(id, fillsFrom, linesFrom, arrowsFrom, markersFrom);
     }
 
+    if (vehicleHome_) {
+        appendHandle(rd, toScene(*vehicleHome_), kVehicleHomeColor, kHandleSizePx, QStringLiteral("H"), false);
+    }
+
     if (plan.home && plan.home->isValid()) {
         const int markersFrom = rd.markers.size();
-        appendHandle(rd, toScene(*plan.home), kHomeColor, kHandleSizePx + 1.0f, QStringLiteral("H"), selectedIsHome);
+        appendHandle(rd, toScene(*plan.home), kHomeColor, kHandleSizePx + 1.0f, QStringLiteral("S"), selectedIsHome);
         dimFrom(kHomeId, rd.fills.size(), rd.lines.size(), rd.arrows.size(), markersFrom);
     }
 

@@ -93,6 +93,7 @@ public:
     Q_INVOKABLE void placeFenceTemplate(bool inclusion);
     Q_INVOKABLE void placeFenceCircle(bool inclusion);
     Q_INVOKABLE void fitToPlan();
+    Q_INVOKABLE void setVehicleHome(double lat, double lon);
     Q_INVOKABLE void finishDraft();
     Q_INVOKABLE void cancelDraft();
     Q_INVOKABLE void undoDraftVertex();
@@ -193,6 +194,7 @@ private:
     bool lastPerspective_{false};
 
     QString flashId_;
+    std::optional<mission::GeoPoint> vehicleHome_;
     QElapsedTimer flashClock_;
     QTimer flashTimer_;
 };
