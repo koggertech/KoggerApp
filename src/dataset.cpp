@@ -871,6 +871,18 @@ void Dataset::addPositionRTK(Position position) {
     pool_.last().setExternalPosition(position);
 }
 
+void Dataset::addGnssAltitudeMsl(double altitudeMsl) {
+    if (activeZeroing_) {
+        return;
+    }
+
+    QWriteLocker wl(&poolMtx_);
+    if (pool_.isEmpty()) {
+        pool_.resize(1);
+    }
+    pool_.last().setGnssAltitudeMsl(altitudeMsl);
+}
+
 void Dataset::addDepth(float depth) {
     {
         QWriteLocker wl(&poolMtx_);

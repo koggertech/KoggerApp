@@ -1752,6 +1752,14 @@
         <translation>Rangefinder distance (red line)</translation>
     </message>
     <message>
+        <source>GNSS altitude (MSL)</source>
+        <translation>GNSS altitude (MSL)</translation>
+    </message>
+    <message>
+        <source>GNSS altitude from MAVLink, UBX, NMEA GGA; RTK fixed only</source>
+        <translation>GNSS altitude from MAVLink, UBX, NMEA GGA; RTK fixed only</translation>
+    </message>
+    <message>
         <source>Post-processing distance (green line)</source>
         <translation>Post-processing distance (green line)</translation>
     </message>

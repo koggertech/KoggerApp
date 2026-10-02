@@ -111,6 +111,7 @@ signals:
     void rangefinderComplete(const ChannelId& channelId, float distance);
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void positionCompleteRTK(Position position);
+    void gnssAltitudeMslComplete(double altitudeMsl);
     void depthComplete(float depth);
     void gnssVelocityComplete(double hSpeed, double course);
     void simpleNavV2Complete(uint8_t gnssFixType,

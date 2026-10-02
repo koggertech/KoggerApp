@@ -1538,6 +1538,7 @@ static const CsvFieldDef kCsvFieldDefs[] = {
     {"bottom_height",    true},
     {"contact_info",     true},
     {"contact_distance", true},
+    {"gnss_altitude_msl", true},
 };
 }
 
@@ -1629,6 +1630,9 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
 
     bool contactInfo     = csvExportFieldEnabled("contact_info");
     bool contactDistance = csvExportFieldEnabled("contact_distance");
+    bool gnssAltitudeMsl = csvExportFieldEnabled("gnss_altitude_msl");
+
+    bool gnssAltitudeMslFind = false;
 
     int row_cnt = datasetPtr_->size();
 
@@ -1642,7 +1646,10 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         Position position = epoch->getExternalPosition();
         ext_pos_lla_find |= position.lla.isValid();
         ext_pos_ned_find |= position.ned.isValid();
+        gnssAltitudeMslFind |= std::isfinite(epoch->gnssAltitudeMsl());
     }
+
+    gnssAltitudeMsl = gnssAltitudeMsl && gnssAltitudeMslFind;
 
     if (meas_nbr)
         logger_.dataExport("Number,");
@@ -1684,16 +1691,21 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     if (bottom_height)
         logger_.dataExport("BottomHeight,");
 
+    QStringList tailHeader;
     if (contactInfo) {
-        logger_.dataExport("ContactTitle,");
+        tailHeader << QStringLiteral("ContactTitle");
     }
     if (contactDistance) {
-        logger_.dataExport(rangefinder ? "ContactDistance," : "ContactDistance");
+        tailHeader << QStringLiteral("ContactDistance");
     }
     if (rangefinder) {
-        logger_.dataExport("Rangefinder");
+        tailHeader << QStringLiteral("Rangefinder");
+    }
+    if (gnssAltitudeMsl) {
+        tailHeader << QStringLiteral("GNSS Altitude MSL");
     }
 
+    logger_.dataExport(tailHeader.join(QLatin1Char(',')));
     logger_.dataExport("\n");
 
     int prev_timestamp = 0;
@@ -1838,30 +1850,22 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
             row_data.append(",");
         }
 
-        auto& contact = epoch->contact_;
-        if (contact.isValid()) {
-            if (contactInfo) {
-                row_data.append(contact.info);
-                row_data.append(",");
-            }
-            if (contactDistance) {
-                row_data.append(QString::number(contact.echogramDistance, 'f', 4));
-                if (rangefinder) {
-                    row_data.append(",");
-                }
-            }
-        } else if (rangefinder) {
-            if (contactInfo) row_data.append(",");
-            if (contactDistance) row_data.append(",");
+        const auto& contact = epoch->contact_;
+        const bool hasContact = contact.isValid();
+        QStringList tailRow;
+        if (contactInfo) {
+            tailRow << (hasContact ? contact.info : QString());
         }
-
+        if (contactDistance) {
+            tailRow << (hasContact ? QString::number(contact.echogramDistance, 'f', 4) : QString());
+        }
         if (rangefinder) {
-            if (epoch->distAvail()) {
-                row_data.append(QString::number((float)epoch->rangeFinder()));
-            } else {
-                row_data.append("0");
-            }
+            tailRow << (epoch->distAvail() ? QString::number((float)epoch->rangeFinder()) : QStringLiteral("0"));
         }
+        if (gnssAltitudeMsl) {
+            tailRow << (std::isfinite(epoch->gnssAltitudeMsl()) ? QString::number(epoch->gnssAltitudeMsl(), 'f', 3) : QString());
+        }
+        row_data.append(tailRow.join(QLatin1Char(',')));
 
         row_data.append("\n");
         logger_.dataExport(row_data);
@@ -2800,6 +2804,7 @@ void Core::createDeviceManagerConnections()
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rangefinderComplete,    datasetPtr_, &Dataset::addRangefinder,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionComplete,       datasetPtr_, &Dataset::addPosition,     deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionCompleteRTK,    datasetPtr_, &Dataset::addPositionRTK,  deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssAltitudeMslComplete, datasetPtr_, &Dataset::addGnssAltitudeMsl, deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssVelocityComplete,   datasetPtr_, &Dataset::addGnssVelocity, deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::simpleNavV2Complete,   datasetPtr_, &Dataset::addSimpleNavV2,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::boatStatusComplete,     datasetPtr_, &Dataset::addBoatStatus,   deviceManagerConnection));
@@ -2848,6 +2853,7 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rangefinderComplete,    datasetPtr_, &Dataset::addRangefinder,  deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionComplete,       datasetPtr_, &Dataset::addPosition,     deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionCompleteRTK,    datasetPtr_, &Dataset::addPositionRTK,  deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssAltitudeMslComplete, datasetPtr_, &Dataset::addGnssAltitudeMsl, deviceManagerConnection);
 
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::depthComplete,          datasetPtr_, &Dataset::addDepth,        deviceManagerConnection);
 

@@ -274,6 +274,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
                     if(q == '4') {
                         emit positionCompleteRTK(pos);
+                        if (isfinite(height_msl)) {
+                            emit gnssAltitudeMslComplete(height_msl);
+                        }
                     }
                 }
             }
@@ -318,7 +321,6 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
                 uint8_t fix_type = ubx_frame.read<U1>();
                 uint8_t fix_flags = ubx_frame.read<U1>();
-                Q_UNUSED(fix_flags);
 
                 ubx_frame.read<U1>();
                 uint8_t satellites_in_used = ubx_frame.read<U1>();
@@ -326,6 +328,13 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
                 int32_t lon_int = ubx_frame.read<S4>();
                 int32_t lat_int = ubx_frame.read<S4>();
+
+                ubx_frame.readSkip(4);
+                const bool is_rtk_fixed = (fix_flags & 0x01) && (fix_flags >> 6) == 2;
+                if (is_rtk_fixed && ubx_frame.readAvailable() >= 4) {
+                    const int32_t hmsl_mm = ubx_frame.read<S4>();
+                    emit gnssAltitudeMslComplete(double(hmsl_mm) * 0.001);
+                }
 
                 QDate date(year, month, day);
                 QTime time(h, m, s);
@@ -390,13 +399,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 if (mavlink_frame.msgId() == MAVLink_MSG_GPS_RAW_INT::getID()) {
                     MAVLink_MSG_GPS_RAW_INT raw = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
                     if (raw.isValid() && raw.isRtkFixed()) {
-                        Position pos;
-                        pos.lla.latitude = raw.latitude();
-                        pos.lla.longitude = raw.longitude();
-                        pos.lla.altitude = raw.altitudeMsl();
-                        pos.lla.source = PositionSourceRTK;
-                        pos.lla.altSource = AltitudeSourceRTK;
-                        emit positionCompleteRTK(pos);
+                        emit gnssAltitudeMslComplete(raw.altitudeMsl());
                     }
                 }
 

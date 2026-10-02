@@ -63,7 +63,7 @@ public:
                 Position boatPos = epoch->getPositionGNSS();
 
                 Position pos;
-                if(ext_pos.lla.isCoordinatesValid() && ext_pos.time.sec > 0) {
+                if(ext_pos.lla.isCoordinatesValid()) {
                     pos = ext_pos;
                 } else if(boatPos.lla.isCoordinatesValid()){
                     pos = boatPos;

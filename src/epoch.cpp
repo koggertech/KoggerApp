@@ -202,6 +202,10 @@ void Epoch::setExternalPosition(Position position) {
     _positionExternal = position;
 }
 
+void Epoch::setGnssAltitudeMsl(double altitudeMsl) {
+    gnssAltitudeMsl_ = altitudeMsl;
+}
+
 void Epoch::setPositionRef(LLARef* ref) {
     if (ref != nullptr && ref->isInit) {
         _positionGNSS.LLA2NED(ref);

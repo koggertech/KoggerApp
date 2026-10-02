@@ -1887,6 +1887,14 @@
         <translation>Odległość z głębokościomierza (czerwona linia)</translation>
     </message>
     <message>
+        <source>GNSS altitude (MSL)</source>
+        <translation>Wysokość GNSS (n.p.m.)</translation>
+    </message>
+    <message>
+        <source>GNSS altitude from MAVLink, UBX, NMEA GGA; RTK fixed only</source>
+        <translation>Wysokość GNSS z MAVLink, UBX, NMEA GGA; tylko RTK Fixed</translation>
+    </message>
+    <message>
         <source>Post-processing distance (green line)</source>
         <translation>Odległość z postprzetwarzania (zielona linia)</translation>
     </message>

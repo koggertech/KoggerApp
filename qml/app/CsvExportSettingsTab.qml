@@ -36,7 +36,8 @@ Column {
         { key: "bottom_height",    label: qsTr("Bottom height"),                 tip: qsTr("Absolute height of the bottom") + " — BottomHeight" },
         { key: "contact_info",     label: qsTr("Contact title"),                 tip: qsTr("Title of the marked contact") + " — ContactTitle" },
         { key: "contact_distance", label: qsTr("Contact distance"),              tip: qsTr("Distance to the marked contact") + " — ContactDistance" },
-        { key: "rangefinder",      label: qsTr("Rangefinder"),                   tip: qsTr("Rangefinder distance (red line)") + " — Rangefinder" }
+        { key: "rangefinder",      label: qsTr("Rangefinder"),                   tip: qsTr("Rangefinder distance (red line)") + " — Rangefinder" },
+        { key: "gnss_altitude_msl", label: qsTr("GNSS altitude (MSL)"),          tip: qsTr("GNSS altitude from MAVLink, UBX, NMEA GGA; RTK fixed only") + " — GNSS Altitude MSL" }
     ]
 
     function doExport() {

@@ -227,6 +227,7 @@ public:
     void setPositionLLA(const LLA& lla);
     void setPositionNED(const NED& ned);
     void setExternalPosition(Position position);
+    void setGnssAltitudeMsl(double altitudeMsl);
     void setPositionRef(LLARef* ref);
 
     void setDepth(float depth);
@@ -499,6 +500,7 @@ public:
 
     Position getPositionGNSS() { return _positionGNSS; }
     Position getExternalPosition() { return _positionExternal; }
+    double gnssAltitudeMsl() const { return gnssAltitudeMsl_; }
     Position getSonarPosition() { return sonarPosition_; }
     const Position& getSonarPositionCRef() const { return sonarPosition_; }
 
@@ -707,6 +709,7 @@ protected:
     Position _positionGNSS;
     Position _positionExternal;
     Position sonarPosition_;
+    double gnssAltitudeMsl_ = NAN;
 
     struct {
         double hspeed = NAN;

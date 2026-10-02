@@ -1887,6 +1887,14 @@
         <translation>Дистанция по глубиномеру (красная линия)</translation>
     </message>
     <message>
+        <source>GNSS altitude (MSL)</source>
+        <translation>Высота GNSS (над уровнем моря)</translation>
+    </message>
+    <message>
+        <source>GNSS altitude from MAVLink, UBX, NMEA GGA; RTK fixed only</source>
+        <translation>Высота GNSS из MAVLink, UBX, NMEA GGA; только RTK Fixed</translation>
+    </message>
+    <message>
         <source>Post-processing distance (green line)</source>
         <translation>Дистанция по постпроцессингу (зелёная линия)</translation>
     </message>
