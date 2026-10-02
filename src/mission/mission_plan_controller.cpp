@@ -22,6 +22,19 @@ namespace mission {
 
 namespace {
 
+QVector<int> unreadVehicleTypes(const autopilot::MissionBatches& batches, const VehicleImport& imported)
+{
+    QVector<int> unread = { MavMissionTypeFence, MavMissionTypeRally };
+    for (const auto& b : batches) {
+        const bool nothingImported = (b.missionType == MavMissionTypeFence && imported.plan.fence.isEmpty())
+                                     || (b.missionType == MavMissionTypeRally && imported.plan.rally.isEmpty());
+        if (b.items.isEmpty() || !nothingImported) {
+            unread.removeAll(b.missionType);
+        }
+    }
+    return unread;
+}
+
 const char* kSettingsDirectory = "main/missionDirectory";
 const char* kSettingsLastFile = "main/missionLastFile";
 const char kIdAlphabet[] = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -327,18 +340,13 @@ bool MissionPlanController::uploadToVehicle()
 void MissionPlanController::receiveVehicleMission(const autopilot::MissionBatches& batches)
 {
     VehicleImport imported = fromVehicle(batches, plan_.settings.cruiseSpeed);
-    const bool matches = !imported.empty && exportable() && sameOnVehicle(batches, toVehicleUpload(expanded_.mission));
+    const bool matches = !imported.empty && exportable()
+                         && (sameOnVehicle(batches, toVehicleUpload(expanded_.mission)) || matchesVehicleOrigin(batches));
     const int routePoints = (imported.plan.home ? 1 : 0) + int(imported.plan.items.size());
     imported.plan.name = tr("From vehicle");
     vehiclePlan_ = imported.plan;
-    vehicleUnreadTypes_ = { MavMissionTypeFence, MavMissionTypeRally };
-    for (const auto& b : batches) {
-        const bool nothingImported = (b.missionType == MavMissionTypeFence && imported.plan.fence.isEmpty())
-                                     || (b.missionType == MavMissionTypeRally && imported.plan.rally.isEmpty());
-        if (b.items.isEmpty() || !nothingImported) {
-            vehicleUnreadTypes_.removeAll(b.missionType);
-        }
-    }
+    vehicleBatches_ = batches;
+    vehicleUnreadTypes_ = unreadVehicleTypes(batches, imported);
     emit vehicleMissionReceived(imported.empty, matches, routePoints, int(imported.plan.fence.size()), int(imported.plan.rally.size()),
                                 imported.skippedRouteCommands + imported.skippedFenceItems);
 }
@@ -349,9 +357,43 @@ bool MissionPlanController::openVehicleMission()
         setLastError(tr("No mission has been read from the vehicle"));
         return false;
     }
-    plan_ = *vehiclePlan_;
+    const MissionPlan opened = *vehiclePlan_;
     vehiclePlan_.reset();
-    uploadSkipTypes_ = vehicleUnreadTypes_;
+    applyVehiclePlan(opened, vehicleUnreadTypes_, false, vehicleBatches_);
+    return true;
+}
+
+bool MissionPlanController::isBlank() const
+{
+    return plan_.items.isEmpty() && !plan_.home && plan_.rally.isEmpty() && plan_.fence.isEmpty()
+        && filePath_.isEmpty() && !dirty();
+}
+
+bool MissionPlanController::adoptVehicleMission(const autopilot::MissionBatches& batches)
+{
+    if (!isBlank()) {
+        return false;
+    }
+    VehicleImport imported = fromVehicle(batches, plan_.settings.cruiseSpeed);
+    if (imported.empty) {
+        return false;
+    }
+    imported.plan.name = tr("From vehicle");
+    applyVehiclePlan(imported.plan, unreadVehicleTypes(batches, imported), true, batches);
+    return true;
+}
+
+bool MissionPlanController::matchesVehicleOrigin(const autopilot::MissionBatches& vehicle) const
+{
+    return hasOrigin_ && sameReadOnVehicle(vehicle, originRead_)
+        && sameOnVehicle(toVehicleUpload(expanded_.mission), originPlanned_);
+}
+
+void MissionPlanController::applyVehiclePlan(const MissionPlan& plan, const QVector<int>& unreadTypes, bool clean,
+                                             const autopilot::MissionBatches& origin)
+{
+    plan_ = plan;
+    uploadSkipTypes_ = unreadTypes;
     plan_.created = nowIso();
     plan_.modified = plan_.created;
     for (auto& item : plan_.items) {
@@ -364,16 +406,22 @@ bool MissionPlanController::openVehicleMission()
         f.id = newId();
     }
     expanded_ = expandPlan(plan_);
+    originRead_ = origin;
+    originPlanned_ = toVehicleUpload(expanded_.mission);
+    hasOrigin_ = true;
     undo_.clear();
     redo_.clear();
-    cleanSnapshot_.clear();
-    lastDirty_ = true;
+    if (clean) {
+        markClean();
+    } else {
+        cleanSnapshot_.clear();
+        lastDirty_ = true;
+        emit dirtyChanged();
+    }
     setLastError(QString());
-    emit dirtyChanged();
     emit planChanged();
     emit undoChanged();
     setFilePath(QString());
-    return true;
 }
 
 bool MissionPlanController::exportPlanFile(const QString& path)

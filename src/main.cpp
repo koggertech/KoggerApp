@@ -505,6 +505,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceTopology", core.getDeviceTopologyModelPtr());
     engine.rootContext()->setContextProperty("missionPlan", core.getMissionPlanControllerPtr());
+    engine.rootContext()->setContextProperty("missionRun", core.getMissionRunTrackerPtr());
     videoStreams.setSourceModel(core.getLinkManagerWrapperPtr()->getModelPtr());
     QObject::connect(&videoStreams, &VideoStreamPool::streamingChanged,
                      core.getLinkManagerWrapperPtr(), &LinkManagerWrapper::setVideoStreaming);

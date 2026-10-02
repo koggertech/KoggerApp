@@ -28,6 +28,7 @@
 #include "geojson_controller.h"
 #include "mission_layer.h"
 #include "mission_controller.h"
+#include "mission_run_controller.h"
 #include "data_processor.h"
 #include "animator.h"
 #include "smoother.h"
@@ -47,6 +48,7 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(bool geoJsonEnabled READ geoJsonEnabled WRITE setGeoJsonEnabled NOTIFY geoJsonEnabledChanged)
     Q_PROPERTY(QObject* geoJsonController READ geoJsonController CONSTANT)
     Q_PROPERTY(QObject* missionController READ missionController CONSTANT)
+    Q_PROPERTY(QObject* missionRunController READ missionRunController CONSTANT)
     Q_PROPERTY(QObject* usblLayer READ usblLayer CONSTANT)
     Q_PROPERTY(bool cameraPerspective READ cameraPerspective NOTIFY cameraPerspectiveChanged)
     Q_PROPERTY(bool updateSurface READ updateSurface NOTIFY updateSurfaceChanged)
@@ -127,6 +129,7 @@ public:
         friend class RulerController;
         friend class UsblLayerController;
         friend class MissionController;
+        friend class MissionRunController;
 
         Camera* cameraListener_ = nullptr;
 
@@ -260,7 +263,9 @@ public:
     QObject* ruler() const;
     QObject* geoJsonController() const;
     QObject* missionController() const;
+    QObject* missionRunController() const;
     void setMissionPlan(mission::MissionPlanController* plan);
+    void setMissionRun(mission::MissionRunTracker* tracker);
     void setMissionEditorActive(bool active);
     void missionFitInView();
     void missionFocusBounds(const QVector3D& minB, const QVector3D& maxB);
@@ -428,6 +433,7 @@ private:
     friend class RulerController;
     friend class UsblLayerController;
     friend class MissionController;
+    friend class MissionRunController;
 
     bool getViewQuadNed(std::array<QPointF, 4>* quad) const;
     std::tuple<float, float, float, float> getFieldViewDim() const;
@@ -445,7 +451,9 @@ private:
     std::shared_ptr<GeoJsonLayer> geoJsonLayer_;
     GeoJsonController* geoJsonController_{nullptr};
     std::shared_ptr<MissionLayer> missionLayer_;
+    std::shared_ptr<MissionLayer> missionRunLayer_;
     MissionController* missionController_{nullptr};
+    MissionRunController* missionRunController_{nullptr};
     bool missionEditorActive_{false};
     bool missionBlockCameraMove_{false};
     QVector2D missionSavedRotAngle_;

@@ -43,6 +43,7 @@ qt_add_qml_module(kogger_app
         MissionCoordFields.qml
         MissionEditorOverlay.qml
         MissionItemCard.qml
+        MissionRunPointCard.qml
         MissionSliderRow.qml
         ModeSettingsPanel.qml
         MosaicPipelineStatus.qml

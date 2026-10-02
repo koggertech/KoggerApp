@@ -1273,11 +1273,48 @@ property Settings scene3dLayerVisibility: Settings {
     property bool bottomTrackCheckButton: false
     property bool isobathsCheckButton: false
     property bool mosaicViewCheckButton: false
+    property bool missionRunCheckButton: true
 }
 property alias boatTrackVisible:   scene3dLayerVisibility.boatTrackCheckButton
 property alias bottomTrackVisible: scene3dLayerVisibility.bottomTrackCheckButton
 property alias isobathsVisible:    scene3dLayerVisibility.isobathsCheckButton
 property alias mosaicVisible:      scene3dLayerVisibility.mosaicViewCheckButton
+property alias missionRunVisible:  scene3dLayerVisibility.missionRunCheckButton
+
+property Settings missionRunPrefs: Settings {
+    id: missionRunPrefs
+    category: "scene3d/missionRun"
+    property bool showFence: true
+    property bool showRally: true
+    property bool showHome: true
+    property bool showVehicleLine: true
+    property bool showLabels: true
+}
+property alias missionRunShowFence:       missionRunPrefs.showFence
+property alias missionRunShowRally:       missionRunPrefs.showRally
+property alias missionRunShowHome:        missionRunPrefs.showHome
+property alias missionRunShowVehicleLine: missionRunPrefs.showVehicleLine
+property alias missionRunShowLabels:      missionRunPrefs.showLabels
+
+property Settings missionRunBehaviour: Settings {
+    id: missionRunBehaviour
+    category: "main/missionRun"
+    property bool readAutomatically: true
+    property bool restartAfterUpload: true
+}
+property alias missionRunReadAutomatically:  missionRunBehaviour.readAutomatically
+property alias missionRunRestartAfterUpload: missionRunBehaviour.restartAfterUpload
+
+property Binding _missionRunReadBinding: Binding {
+    target: (typeof missionRun !== "undefined") ? missionRun : null
+    property: "readAutomatically"
+    value: store.missionRunReadAutomatically
+}
+property Binding _missionRestartBinding: Binding {
+    target: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
+    property: "restartMissionAfterUpload"
+    value: store.missionRunRestartAfterUpload
+}
 
 property Settings videoStore: Settings {
     id: videoStore

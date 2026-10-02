@@ -2319,6 +2319,142 @@ Column {
     }
 
     SettingsGroup {
+        id: missionRunGroup
+        visible: instruments >= 1
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Vehicle mission")
+        description: qsTr("The mission read from the autopilot, followed in the 3D scene while it runs.")
+        stateStore: root.store
+        stateKey: "app.missionrun"
+        headerActions: ShowIn3DAction {
+            active: root.store ? root.store.missionRunVisible : false
+            onClicked: if (root.store) root.store.missionRunVisible = !root.store.missionRunVisible
+        }
+        collapsedByDefault: true
+
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            Text {
+                width: parent.width
+                text: qsTr("In the 3D scene") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                topPadding: Tokens.spaceXs
+            }
+
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Geofence")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunFenceSwitch.click()
+
+                    KSwitch {
+                        id: missionRunFenceSwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunShowFence : true
+                        onToggled: if (root.store) root.store.missionRunShowFence = checked
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Rally points")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunRallySwitch.click()
+
+                    KSwitch {
+                        id: missionRunRallySwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunShowRally : true
+                        onToggled: if (root.store) root.store.missionRunShowRally = checked
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Vehicle home (H)")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunHomeSwitch.click()
+
+                    KSwitch {
+                        id: missionRunHomeSwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunShowHome : true
+                        onToggled: if (root.store) root.store.missionRunShowHome = checked
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Line from the boat to the target")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunLineSwitch.click()
+
+                    KSwitch {
+                        id: missionRunLineSwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunShowVehicleLine : true
+                        onToggled: if (root.store) root.store.missionRunShowVehicleLine = checked
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Point numbers")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunLabelsSwitch.click()
+
+                    KSwitch {
+                        id: missionRunLabelsSwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunShowLabels : true
+                        onToggled: if (root.store) root.store.missionRunShowLabels = checked
+                    }
+                }
+            }
+
+            Text {
+                width: parent.width
+                text: qsTr("Behaviour") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                topPadding: Tokens.spaceXs
+            }
+
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Read the mission automatically")
+                    caption: qsTr("When the vehicle connects and when its mission changes. Off: read it by hand from the editor or the autopilot card")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunReadSwitch.click()
+
+                    KSwitch {
+                        id: missionRunReadSwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunReadAutomatically : true
+                        onToggled: if (root.store) root.store.missionRunReadAutomatically = checked
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Start an uploaded mission from its beginning")
+                    caption: qsTr("After an upload outside Auto the vehicle's current item is reset, so Auto starts at the first point instead of the item number left from an earlier run")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunRestartSwitch.click()
+
+                    KSwitch {
+                        id: missionRunRestartSwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunRestartAfterUpload : true
+                        onToggled: if (root.store) root.store.missionRunRestartAfterUpload = checked
+                    }
+                }
+            }
+        }
+    }
+
+    SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("3D scene")

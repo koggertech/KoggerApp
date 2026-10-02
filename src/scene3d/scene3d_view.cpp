@@ -110,6 +110,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     geoJsonLayer_(std::make_shared<GeoJsonLayer>(this)),
     geoJsonController_(new GeoJsonController(this)),
     missionLayer_(std::make_shared<MissionLayer>(this)),
+    missionRunLayer_(std::make_shared<MissionLayer>(this)),
     boatTrack_(std::make_shared<BoatTrack>(this, this)),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
     m_polygonGroup(std::make_shared<PolygonGroup>()),
@@ -220,6 +221,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     geoJsonLayer_->setVisible(false);
     missionController_ = new MissionController(this, missionLayer_.get(), this);
     QObject::connect(missionLayer_.get(), &MissionLayer::changed, this, &QQuickFramebufferObject::update);
+    missionRunController_ = new MissionRunController(this, missionRunLayer_.get(), this);
+    QObject::connect(missionRunLayer_.get(), &MissionLayer::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(boatTrack_.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::changed, this, &QQuickFramebufferObject::update);
@@ -936,6 +939,13 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
         switchedToBottomTrackVertexComboSelectionMode_ = false;
         wasMoved_ = false;
         wasMovedMouseButton_ = Qt::MouseButton::NoButton;
+        return;
+    }
+
+    if (!wasMoved_ && !switchedToBottomTrackVertexComboSelectionMode_ && mouseButton.testFlag(Qt::LeftButton)
+        && missionRunController_->onTap(x, y)) {
+        wasMovedMouseButton_ = Qt::MouseButton::NoButton;
+        QQuickFramebufferObject::update();
         return;
     }
 
@@ -2202,9 +2212,19 @@ QObject* GraphicsScene3dView::missionController() const
     return missionController_;
 }
 
+QObject* GraphicsScene3dView::missionRunController() const
+{
+    return missionRunController_;
+}
+
 void GraphicsScene3dView::setMissionPlan(mission::MissionPlanController* plan)
 {
     missionController_->setPlan(plan);
+}
+
+void GraphicsScene3dView::setMissionRun(mission::MissionRunTracker* tracker)
+{
+    missionRunController_->setTracker(tracker);
 }
 
 void GraphicsScene3dView::setMissionEditorActive(bool active)
@@ -2214,6 +2234,7 @@ void GraphicsScene3dView::setMissionEditorActive(bool active)
     }
     missionEditorActive_ = active;
     missionBlockCameraMove_ = false;
+    missionRunController_->setEditorActive(active);
 
     cancelCameraPoseAnim();
     animator_.cancel(ChHeading);
@@ -3846,6 +3867,8 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     view->ruler_->rebuildIfNeeded();
     view->missionController_->rebuildIfNeeded();
     m_renderer->missionLayerRenderImpl_     = *(dynamic_cast<MissionLayer::MissionLayerRenderImplementation*>(view->missionLayer_->m_renderImpl));
+    view->missionRunController_->rebuildIfNeeded();
+    m_renderer->missionRunLayerRenderImpl_  = *(dynamic_cast<MissionLayer::MissionLayerRenderImplementation*>(view->missionRunLayer_->m_renderImpl));
     m_renderer->rulerToolRenderImpl_        = *(dynamic_cast<RulerTool::RulerToolRenderImplementation*>(view->rulerTool_->m_renderImpl));
     // Re-projected BEFORE the copy, for the same reason the ruler is: a frame change this frame
     // must reach the renderer this frame, or the layer lags the camera by one.

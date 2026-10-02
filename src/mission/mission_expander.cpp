@@ -43,6 +43,18 @@ bool pointInLocalPolygon(const QPointF& p, const QVector<QPointF>& poly)
     return inside;
 }
 
+FlatItem holdAt(const std::optional<GeoPoint>& p)
+{
+    FlatItem f;
+    f.command = MavCmd::NavLoiterUnlim;
+    f.frame = MavFrame::GlobalRelativeAltInt;
+    if (p) {
+        f.lat = p->lat;
+        f.lon = p->lon;
+    }
+    return f;
+}
+
 FlatItem changeSpeed(double speed, const QString& sourceId)
 {
     FlatItem f;
@@ -81,8 +93,12 @@ ExpandResult expandPlan(const MissionPlan& plan)
             res.issues.append(PlanIssue{id, QCoreApplication::translate("MissionPlan", "Generated points leave the valid coordinate range"), IssueLevel::Error});
             return;
         }
-        for (const auto& p : g.points) {
-            pushNav(waypointAt(p, id));
+        for (int line = 0; line < g.lines.size(); ++line) {
+            for (const auto& p : g.lines.at(line)) {
+                FlatItem f = waypointAt(p, id);
+                f.segment = line;
+                pushNav(f);
+            }
         }
     };
 
@@ -150,6 +166,7 @@ ExpandResult expandPlan(const MissionPlan& plan)
     } else if (plan.settings.endAction == EndAction::ReturnToStart) {
         if (homeValid) {
             pushNav(waypointAt(*plan.home, kHomeItemId));
+            m.items.append(holdAt(plan.home));
         }
     } else if (plan.settings.endAction != EndAction::None) {
         FlatItem end;
@@ -162,6 +179,9 @@ ExpandResult expandPlan(const MissionPlan& plan)
             end.lon = previous ? previous->lon : 0.0;
         }
         m.items.append(end);
+        if (plan.settings.endAction == EndAction::Rtl) {
+            m.items.append(holdAt(std::nullopt));
+        }
     }
 
     for (const auto& r : plan.rally) {

@@ -87,6 +87,22 @@ public:
     Q_INVOKABLE bool    exportWplFile(const QString& path);
     Q_INVOKABLE bool    uploadToVehicle();
     Q_INVOKABLE bool    openVehicleMission();
+    /** True for a new plan nothing was added to: no items, start point, rally or fence, no file, no unsaved changes. */
+    bool isBlank() const;
+    /**
+     * Shows the vehicle's mission in a blank plan, the QGroundControl rule for an empty Plan view:
+     * imported as receiveVehicleMission + openVehicleMission would, but left without unsaved
+     * changes. Does nothing and returns false when the plan is not blank or the vehicle has no mission.
+     */
+    bool adoptVehicleMission(const autopilot::MissionBatches& batches);
+    /**
+     * True when the plan was opened from the vehicle's lists @p vehicle (still the same lists, compared
+     * with sameReadOnVehicle) and its upload has not changed since — renaming or saving keep it. An
+     * imported mission does not always expand back to the very same lists (a trailing speed change,
+     * an ending written by an older build, a mission made elsewhere), so this is what tells "the plan
+     * read from this vehicle" apart from "a different plan".
+     */
+    bool matchesVehicleOrigin(const autopilot::MissionBatches& vehicle) const;
     Q_INVOKABLE QString defaultFileName() const;
     Q_INVOKABLE QString directoryUrl() const;
     Q_INVOKABLE QString suggestedFilePath() const;
@@ -162,6 +178,7 @@ private:
     bool        idTaken(const QString& id) const;
     bool        parsePoints(const QVariantList& list, QVector<GeoPoint>* out, int minCount);
     int         clampInsertIndex(int index) const;
+    void        applyVehiclePlan(const MissionPlan& plan, const QVector<int>& unreadTypes, bool clean, const autopilot::MissionBatches& origin);
 
     MissionPlan        plan_;
     ExpandResult     expanded_;
@@ -175,6 +192,10 @@ private:
     QByteArray       cleanSnapshot_;
     bool             lastDirty_ = false;
     std::optional<MissionPlan> vehiclePlan_;
+    autopilot::MissionBatches vehicleBatches_;
+    autopilot::MissionBatches originRead_;
+    autopilot::MissionBatches originPlanned_;
+    bool hasOrigin_ = false;
     QVector<int> vehicleUnreadTypes_;
     QVector<int> uploadSkipTypes_;
     int              transactionDepth_ = 0;

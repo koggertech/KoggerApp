@@ -61,7 +61,8 @@ public:
         ResultLinkLost = -4,
         ResultBusy = -5,
         ResultIncomplete = -6,
-        ResultMavlink1 = -7
+        ResultMavlink1 = -7,
+        ResultCancelled = -8
     };
 
     static constexpr int kAckTimeoutMs = 1500;

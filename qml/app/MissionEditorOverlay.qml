@@ -276,7 +276,17 @@ Rectangle {
 
     readonly property var _dmw: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
     readonly property bool _vehicleOnline: _dmw ? _dmw.autopilotOnline : false
-    readonly property bool _uploading: _dmw ? _dmw.missionTransferActive : false
+    readonly property bool _uploading: _dmw ? (_dmw.missionTransferActive && !_dmw.missionTransferSilent) : false
+    readonly property var _run: (typeof missionRun !== "undefined") ? missionRun : null
+    readonly property int _vehicleBadgeState: {
+        if (!_vehicleOnline || !_run) return 0
+        if (_run.reading) return 1
+        if (!_run.known) return 0
+        if (_run.stale) return 5
+        if (_run.vehicleEmpty) return 2
+        if (_run.matchesPlan) return 3
+        return 4
+    }
     readonly property string _uploadTag: "mission-upload"
     readonly property string _downloadTag: "mission-download"
 
@@ -319,6 +329,13 @@ Rectangle {
             root._downloadDiscardAccepted = !!root.plan && root.plan.dirty
             root._dmw.downloadMission()
         })
+    }
+
+    function openVehicleSnapshot() {
+        if (!_run || _uploading) return
+        _downloadDiscardAccepted = false
+        _downloadPartialType = 0
+        _run.openInEditor()
     }
 
     function openVehicleMission(routePoints, fenceCount, rallyCount, skipped) {
@@ -369,6 +386,7 @@ Rectangle {
         case -5: return qsTr("another upload is in progress")
         case -6: return qsTr("the vehicle ended the transfer before receiving all items")
         case -7: return qsTr("the link uses MAVLink 1; geofence and rally points need MAVLink 2")
+        case -8: return qsTr("cancelled")
         case 1:  return qsTr("error on the vehicle")
         case 2:  return qsTr("unsupported coordinate frame")
         case 3:  return qsTr("unsupported command")
@@ -387,7 +405,7 @@ Rectangle {
         ignoreUnknownSignals: true
         function onVruChanged() { root.pushVehicleHome() }
         function onMissionTransferChanged() {
-            if (!root._dmw.missionTransferActive || typeof notifications === "undefined" || !notifications) return
+            if (!root._dmw.missionTransferActive || root._dmw.missionTransferSilent || typeof notifications === "undefined" || !notifications) return
             var percent = Math.round(root._dmw.missionTransferProgress * 100)
             if (root._dmw.missionDownloading) notifications.progress(qsTr("Reading the mission from the vehicle"), root._downloadTag, percent)
             else notifications.progress(qsTr("Uploading mission to the vehicle"), root._uploadTag, percent)
@@ -693,6 +711,61 @@ Rectangle {
                     font.pixelSize: Tokens.fontSm
                     elide: Text.ElideMiddle
                     Layout.fillWidth: true
+                }
+
+                Rectangle {
+                    id: vehicleBadge
+                    readonly property int badgeState: root._vehicleBadgeState
+                    readonly property bool actionable: (badgeState === 4 || badgeState === 5) && !root._uploading
+                    visible: badgeState > 0
+                    Layout.preferredHeight: Tokens.controlHMd
+                    Layout.preferredWidth: badgeRow.width + Tokens.spaceLg * 2
+                    radius: height / 2
+                    color: badgeState === 3 ? AppPalette.linkOkBg
+                         : (actionable && badgeTap.pressed ? AppPalette.cardHover : AppPalette.card)
+                    border.width: 1
+                    border.color: badgeState === 3 ? AppPalette.linkOkBorder
+                                : (actionable ? AppPalette.accentBorder : AppPalette.border)
+
+                    Row {
+                        id: badgeRow
+                        anchors.centerIn: parent
+                        spacing: Tokens.spaceSm
+
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.round(8 * root._s)
+                            height: width
+                            radius: width / 2
+                            color: vehicleBadge.badgeState === 3 ? AppPalette.linkOkBorder
+                                 : (vehicleBadge.actionable ? AppPalette.accent : AppPalette.textMuted)
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.min(implicitWidth, Math.round(240 * root._s))
+                            text: vehicleBadge.badgeState === 1 ? qsTr("Reading the vehicle mission…")
+                                : vehicleBadge.badgeState === 2 ? qsTr("No mission on the vehicle")
+                                : vehicleBadge.badgeState === 3 ? qsTr("This plan is on the vehicle")
+                                : vehicleBadge.badgeState === 5 ? qsTr("The vehicle mission changed · Read again")
+                                : qsTr("The vehicle has another mission · Open")
+                            color: vehicleBadge.badgeState === 3 ? AppPalette.linkOkText
+                                 : (vehicleBadge.actionable ? AppPalette.textStrong : AppPalette.textMuted)
+                            font.pixelSize: Tokens.fontSm
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    MouseArea {
+                        id: badgeTap
+                        anchors.fill: parent
+                        enabled: vehicleBadge.actionable
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (vehicleBadge.badgeState === 5) { if (root._run) root._run.refresh() }
+                            else root.openVehicleSnapshot()
+                        }
+                    }
                 }
 
                 KCircleIconButton {
@@ -1331,13 +1404,13 @@ Rectangle {
                             }
                             KIslandRow {
                                 visible: root.plan && root.plan.endAction === 0
-                                caption: qsTr("RTL goes to the autopilot's arming position, which may differ from the start point")
+                                caption: qsTr("RTL goes to the autopilot's arming position, which may differ from the start point; the boat then holds position there")
                                 captionColor: AppPalette.linkIdleText
                                 stacked: true
                             }
                             KIslandRow {
                                 visible: root.plan && root.plan.endAction === 3
-                                caption: qsTr("No end command is added: after the last point the autopilot does what its MIS_DONE_BEHAVE parameter says (Hold by default)")
+                                caption: qsTr("No end command is added: after the last point the autopilot follows its MIS_DONE_BEHAVE parameter. By default (0) the boat cuts the throttle and drifts; 1 makes it hold position (Loiter)")
                                 captionColor: AppPalette.linkIdleText
                                 stacked: true
                             }

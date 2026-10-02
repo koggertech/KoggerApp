@@ -18,6 +18,29 @@
 
 
 class LocationReader;
+struct MAVLink_MSG_STATUSTEXT;
+
+/**
+ * Mission execution as the vehicle reports it. seq / total / state / missionId come from
+ * MISSION_CURRENT: total is -1 when the vehicle does not report it, 65535 when it has no mission,
+ * otherwise the MAVLink total (the last seq; home excluded when the autopilot keeps it in the
+ * list); state is MAV MISSION_STATE (0 = not reported); missionId 0 = not supported; reports
+ * counts the MISSION_CURRENT messages received, so a reader can tell a fresh report from a cached one.
+ * reachedSeq is the last MISSION_ITEM_REACHED. waypointDistance (m) and crossTrackError (m) come
+ * from NAV_CONTROLLER_OUTPUT and are valid only while navValid (reset after 3 s without one).
+ */
+struct MissionTelemetry
+{
+    int seq = -1;
+    int total = -1;
+    int state = 0;
+    quint32 missionId = 0;
+    quint32 reports = 0;
+    int reachedSeq = -1;
+    bool navValid = false;
+    float waypointDistance = NAN;
+    float crossTrackError = NAN;
+};
 
 /** Copy of the autopilot telemetry published with every change, so readers in other threads never touch DeviceManager's own fields. */
 struct AutopilotState
@@ -35,6 +58,13 @@ struct AutopilotState
     int linkQuality = -1;
     bool radioRssiValid = false;
     int radioRssi = 0;
+    double latitude = NAN;
+    double longitude = NAN;
+    /** GPS_RAW_INT of the latched vehicle: MAVLink GPS_FIX_TYPE (-1 = not received), satellites (-1 = unknown), HDOP (NaN = unknown). */
+    int gpsFixType = -1;
+    int gpsSatellites = -1;
+    double gpsHdop = NAN;
+    MissionTelemetry mission;
 };
 
 Q_DECLARE_METATYPE(AutopilotState)
@@ -111,6 +141,13 @@ public slots:
     void autopilotArm(bool arm, bool force);
     void autopilotSetMode(int customMode);
     void autopilotStartMission();
+    /**
+     * Makes mission item @p seq (vehicle list index, 0 = home slot) the current one: the vehicle
+     * goes to it on the shortest path, skipping the items in between. Sends
+     * MAV_CMD_DO_SET_MISSION_CURRENT and falls back to MISSION_SET_CURRENT once the vehicle
+     * answers UNSUPPORTED, remembered until the next vehicle binds (QGroundControl behaviour).
+     */
+    void autopilotSetMissionCurrent(int seq);
     void startMissionUpload(const autopilot::MissionBatches& batches);
     void startMissionDownload();
     void sendAutopilotMessage(quint32 msgId, const QByteArray& payload, int v1Length);
@@ -119,6 +156,8 @@ signals:
     void sendFrameInputToLogger(QUuid uuid, Link* link, Parsers::FrameParser frame);
     void writeMavlinkBytes(QByteArray data);
     void autopilotCommandAcked(int command, int result);
+    void autopilotStatusText(int severity, const QString& text);
+    void autopilotMissionItemReached(int seq);
     void missionFrameReceived(quint32 msgId, const QByteArray& payload);
     void missionUploadStart(const autopilot::MissionBatches& batches, int targetSystem, int targetComponent);
     void missionUploadRefused(int result, int missionType);
@@ -199,6 +238,13 @@ private:
     void countAutopilotFrame(int seq);
     void updateLinkQuality();
     void requestVehicleHome();
+    void resetMissionTelemetry();
+    void requestAutopilotStreams();
+    void sendDataStreamRequest();
+    void sendMissionSetCurrent(int seq);
+    void handleStatusText(const MAVLink_MSG_STATUSTEXT& message);
+    void emitStatusText(int severity, const QString& text);
+    void flushStatusText();
     void bindAutopilotLink(QUuid uuid, Link* link);
     void unbindAutopilotLink();
     void resetAutopilot();
@@ -212,6 +258,8 @@ private:
             batteryPercent(-1),
             homeLat(NAN),
             homeLon(NAN),
+            latitude(NAN),
+            longitude(NAN),
             armState(-1),
             flightMode(-1),
             systemId(-1),
@@ -229,6 +277,8 @@ private:
             batteryPercent = -1;
             homeLat = NAN;
             homeLon = NAN;
+            latitude = NAN;
+            longitude = NAN;
             armState = -1;
             flightMode = -1;
             systemId = -1;
@@ -244,6 +294,8 @@ private:
         int batteryPercent;
         double homeLat;
         double homeLon;
+        double latitude;
+        double longitude;
         int armState;
         int flightMode;
         int systemId;
@@ -285,6 +337,21 @@ private:
     int linkQuality_ = -1;
     int radioRssi_ = 0;
     qint64 radioRssiMs_ = -1;
+    MissionTelemetry missionTelemetry_;
+    qint64 navOutputMs_ = -1;
+    int pendingMissionCurrentSeq_ = -1;
+    bool missionSetCurrentUnsupported_ = false;
+    qint64 lastMissionCurrentMs_ = -1;
+    int gpsFixType_ = -1;
+    int gpsSatellites_ = -1;
+    double gpsHdop_ = NAN;
+    qint64 gpsMs_ = -1;
+    qint64 streamRequestMs_ = -1;
+    int streamRequests_ = 0;
+    bool streamIntervalUnsupported_ = false;
+    int statusTextId_ = 0;
+    int statusTextSeverity_ = 0;
+    QString statusText_;
     QTimer beacon_timer;
     QTimer autopilotTimer_{ this };
     QElapsedTimer heartbeatClock_;

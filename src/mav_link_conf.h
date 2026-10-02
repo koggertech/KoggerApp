@@ -552,6 +552,8 @@ struct __attribute__((packed)) MAVLink_MSG_GPS_RAW_INT
     uint8_t fix_type;
     uint8_t satellites_visible = UINT8_MAX; // Number of satellites visible. If unknown, set to UINT8_MAX
 
+    static uint32_t getID() { return 24; }
+
     double latitude() {
         return double(lat)/1.0e7;
     }

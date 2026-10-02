@@ -581,6 +581,37 @@ Item {
                     setSyncLoupeUiAllowed(workspace.store.threeDLoupeAllowed)
             }
 
+            Binding {
+                target: scene3dView.missionRunController
+                property: "layerVisible"
+                value: workspace.store ? workspace.store.missionRunVisible : true
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "showFence"
+                value: workspace.store ? workspace.store.missionRunShowFence : true
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "showRally"
+                value: workspace.store ? workspace.store.missionRunShowRally : true
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "showHome"
+                value: workspace.store ? workspace.store.missionRunShowHome : true
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "showVehicleLine"
+                value: workspace.store ? workspace.store.missionRunShowVehicleLine : true
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "showLabels"
+                value: workspace.store ? workspace.store.missionRunShowLabels : true
+            }
+
             Connections {
                 target: workspace.store
                 function onThreeDLoupeAllowedChanged() { scene3dView._applyLoupeGate() }
