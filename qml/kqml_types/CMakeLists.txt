@@ -22,6 +22,7 @@ qt_add_qml_module(kogger_kqml_types
         KIslandRow.qml
         KIslandSection.qml
         KParamGrid.qml
+        KScrollBar.qml
         KSlider.qml
         KSpinBox.qml
         KSwitch.qml

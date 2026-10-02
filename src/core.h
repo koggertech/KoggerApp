@@ -41,6 +41,7 @@
 #include "data_horizon.h"
 #include "mosaic_index_provider.h"
 #include "ui_keepalive.h"
+#include "mission_plan_controller.h"
 
 
 class Core : public QObject
@@ -90,6 +91,7 @@ public:
     // fragment export can cut on. 0 means there is nothing to cut: no file, or a build that
     // cannot index one.
     Q_PROPERTY(int               klfEpochIndexSize            READ klfEpochIndexSize                                                     NOTIFY klfEpochIndexSizeChanged)
+    Q_PROPERTY(bool              missionEditorActive          READ getMissionEditorActive          WRITE setMissionEditorActive          NOTIFY missionEditorActiveChanged)
 
     MosaicIndexProvider* getMosaicIndexProviderPtr();
     void setEngine(QQmlApplicationEngine *engine);
@@ -99,6 +101,7 @@ public:
     DeviceManagerWrapper* getDeviceManagerWrapperPtr() const;
     LinkManagerWrapper* getLinkManagerWrapperPtr() const;
     DeviceTopologyModel* getDeviceTopologyModelPtr() const;
+    mission::MissionPlanController* getMissionPlanControllerPtr() const;
 #ifdef SEPARATE_READING
     QString getTryOpenedfilePath() const;
     void stopDeviceManagerThread() const;
@@ -217,6 +220,9 @@ public slots:
     Q_INVOKABLE void setBottomTrackEditTool(int tool);
     bool getContactPlacementArmed() const { return contactPlacementArmed_; }
     Q_INVOKABLE void setContactPlacementArmed(bool armed);
+    bool getMissionEditorActive() const { return missionEditorActive_; }
+    Q_INVOKABLE void setMissionEditorActive(bool active);
+    QString missionDirectoryFor(const QString& logDir) const;
 
     int klfEpochIndexSize() const;
     // Writes epochs [firstEpoch, lastEpoch] of the opened .klf to a new .klf in `filePath`.
@@ -254,6 +260,7 @@ public slots:
     Q_INVOKABLE void setIsAttitudeExpected(bool state);
     Q_INVOKABLE void setMapTileProvider(int providerId);
     Q_INVOKABLE void toggleMapTileProvider();
+    Q_INVOKABLE void switchToPreviousMapTileProvider();
     Q_INVOKABLE int getMapTileProviderId() const;
     Q_INVOKABLE QString getMapTileProviderName() const;
     Q_INVOKABLE QVariantList getMapTileProviders() const;
@@ -304,6 +311,7 @@ signals:
     void bottomTrackEditToolChanged();
     void contactPlacementArmedChanged();
     void klfEpochIndexSizeChanged();
+    void missionEditorActiveChanged();
     void languageChanged();
 
 #ifdef SEPARATE_READING
@@ -358,6 +366,7 @@ private:
     void loadCameraViewFromSettings();
     void onTgcParamsChanged();
     int loadSavedMapTileProviderId() const;
+    void rememberPreviousMapTileProvider(int providerId);
     void resetRealtimeSessionState();
     void restoreRealtimeProcessingFlags();
     void releasePlotCaches();
@@ -389,6 +398,7 @@ private:
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
     std::unique_ptr<DeviceTopologyModel> deviceTopologyModelPtr_;
+    std::unique_ptr<mission::MissionPlanController> missionPlanControllerPtr_;
     InternetManager* internetManager_;
     QThread* internetThread_;
     std::unique_ptr<map::TileManager> tileManager_;
@@ -449,6 +459,8 @@ private:
     bool isBottomTrackZeroing_;
     int  bottomTrackEditTool_ = 0;
     bool contactPlacementArmed_ = false;
+    bool missionEditorActive_ = false;
+    int  previousMapTileProviderId_ = -1;
 
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)

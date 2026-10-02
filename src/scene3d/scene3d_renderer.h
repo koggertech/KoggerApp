@@ -10,6 +10,7 @@
 #include "contacts.h"
 #include "usbl_layer.h"
 #include "geojson_layer.h"
+#include "mission_layer.h"
 #include "ruler_tool.h"
 #include "point_group.h"
 #include "polygon_group.h"
@@ -74,6 +75,7 @@ private:
     Contacts::ContactsRenderImplementation contactsRenderImpl_;
     UsblLayer::UsblLayerRenderImplementation usblLayerRenderImpl_;
     GeoJsonLayer::GeoJsonLayerRenderImplementation geoJsonLayerRenderImpl_;
+    MissionLayer::MissionLayerRenderImplementation missionLayerRenderImpl_;
     RulerTool::RulerToolRenderImplementation rulerToolRenderImpl_;
     BottomTrack::BottomTrackRenderImplementation m_bottomTrackRenderImpl;
     PolygonGroup::PolygonGroupRenderImplementation m_polygonGroupRenderImpl;

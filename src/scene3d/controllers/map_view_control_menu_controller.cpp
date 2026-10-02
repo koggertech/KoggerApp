@@ -25,10 +25,24 @@ void MapViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sce
 void MapViewControlMenuController::onVisibilityChanged(bool state)
 {
     visibility_ = state;
+    applyVisibility();
+}
 
+void MapViewControlMenuController::setForcedVisible(bool forced)
+{
+    if (forcedVisible_ == forced) {
+        return;
+    }
+    forcedVisible_ = forced;
+    applyVisibility();
+}
+
+void MapViewControlMenuController::applyVisibility()
+{
+    const bool effective = visibility_ || forcedVisible_;
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getMapViewPtr()->setVisible(visibility_);
-        if (visibility_) {
+        graphicsSceneViewPtr_->getMapViewPtr()->setVisible(effective);
+        if (effective) {
             graphicsSceneViewPtr_->updateMapView();
         }
     }
@@ -65,7 +79,7 @@ void MapViewControlMenuController::tryInitPendingLambda()
         pendingLambda_ = [this] () -> void {
             if (graphicsSceneViewPtr_) {
                 if (auto mapPtr = graphicsSceneViewPtr_->getMapViewPtr(); mapPtr) {
-                    mapPtr->setVisible(visibility_);
+                    mapPtr->setVisible(visibility_ || forcedVisible_);
                     mapPtr->update();
                 }
             }

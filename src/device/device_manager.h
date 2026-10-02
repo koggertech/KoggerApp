@@ -7,14 +7,38 @@
 #include <QHash>
 #include <QGeoPositionInfoSource>
 #include <QUuid>
+#include <QTimer>
+#include <QElapsedTimer>
 #include "link.h"
 #include "stream_list.h"
 #include "dev_q_property.h"
 #include "proto_binnary.h"
 #include "id_binnary.h"
+#include "mission_transfer.h"
 
 
 class LocationReader;
+
+/** Copy of the autopilot telemetry published with every change, so readers in other threads never touch DeviceManager's own fields. */
+struct AutopilotState
+{
+    float voltage = NAN;
+    float current = NAN;
+    float velocityH = NAN;
+    int batteryPercent = -1;
+    int armState = -1;
+    int flightMode = -1;
+    bool online = false;
+    bool proxyTraffic = false;
+    double homeLat = NAN;
+    double homeLon = NAN;
+    int linkQuality = -1;
+    bool radioRssiValid = false;
+    int radioRssi = 0;
+};
+
+Q_DECLARE_METATYPE(AutopilotState)
+
 class DeviceManager : public QObject
 {
     Q_OBJECT
@@ -29,6 +53,12 @@ public:
     Q_INVOKABLE float vruVelocityH();
     Q_INVOKABLE int pilotArmState();
     Q_INVOKABLE int pilotModeState();
+    Q_INVOKABLE int vruBatteryPercent();
+    Q_INVOKABLE bool autopilotOnline();
+    Q_INVOKABLE int autopilotSystemId();
+    double vehicleHomeLat();
+    double vehicleHomeLon();
+    bool proxyLinkActive();
     QList<DevQProperty*> getDevList();
     // True while any connected device has answered the stand probe. The stand panel kind is
     // hidden everywhere this is false, so it has to follow the devices rather than a snapshot.
@@ -91,8 +121,23 @@ public slots:
 
     void setUseGPS(bool state);
 
+    void autopilotArm(bool arm, bool force);
+    void autopilotSetMode(int customMode);
+    void autopilotStartMission();
+    void startMissionUpload(const autopilot::MissionBatches& batches);
+    void startMissionDownload();
+    void sendAutopilotMessage(quint32 msgId, const QByteArray& payload, int v1Length);
+
 signals:
     void sendFrameInputToLogger(QUuid uuid, Link* link, Parsers::FrameParser frame);
+    void writeMavlinkBytes(QByteArray data);
+    void autopilotCommandAcked(int command, int result);
+    void missionFrameReceived(quint32 msgId, const QByteArray& payload);
+    void missionUploadStart(const autopilot::MissionBatches& batches, int targetSystem, int targetComponent);
+    void missionUploadRefused(int result, int missionType);
+    void missionDownloadStart(const QVector<int>& missionTypes, int targetSystem, int targetComponent);
+    void missionDownloadRefused(int result);
+    void missionTransferAbort(int result);
 
     //
     void sendChartSetup (const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset);
@@ -117,7 +162,7 @@ signals:
     void devChanged();
     void standAvailableChanged();
     void streamChanged();
-    void vruChanged();
+    void vruChanged(const AutopilotState& state);
     void writeProxyFrame(Parsers::FrameParser frame);
     void writeMavlinkFrame(Parsers::FrameParser frame);
     void eventComplete(int timestamp, int id, int unixt);
@@ -160,6 +205,16 @@ private:
     void delAllDev();
     void deleteDevicesByLink(QUuid uuid);
     DevQProperty* createDev(QUuid uuid, Link* link, uint8_t addr);
+    void sendCommandLong(uint16_t command, float p1 = 0.0f, float p2 = 0.0f, float p3 = 0.0f, float p4 = 0.0f, float p5 = 0.0f, float p6 = 0.0f, float p7 = 0.0f);
+    void checkAutopilotOnline();
+    void publishVru();
+    void resetLinkQuality();
+    void countAutopilotFrame(int seq);
+    void updateLinkQuality();
+    void requestVehicleHome();
+    void bindAutopilotLink(QUuid uuid, Link* link);
+    void unbindAutopilotLink();
+    void resetAutopilot();
 
     /*data*/
     QVector<qint64> epochFileOffsets_;
@@ -169,8 +224,16 @@ private:
             voltage(NAN),
             current(NAN),
             velocityH(NAN),
+            batteryPercent(-1),
+            homeLat(NAN),
+            homeLon(NAN),
             armState(-1),
-            flightMode(-1)
+            flightMode(-1),
+            systemId(-1),
+            componentId(-1),
+            mavlinkVersion(2),
+            online(false),
+            lastHeartbeatMs(0)
         {};
 
         void cleanVru()
@@ -178,21 +241,39 @@ private:
             voltage = NAN;
             current = NAN;
             velocityH = NAN;
+            batteryPercent = -1;
+            homeLat = NAN;
+            homeLon = NAN;
             armState = -1;
             flightMode = -1;
+            systemId = -1;
+            componentId = -1;
+            mavlinkVersion = 2;
+            online = false;
+            lastHeartbeatMs = 0;
         };
 
         float voltage;
         float current;
         float velocityH;
+        int batteryPercent;
+        double homeLat;
+        double homeLon;
         int armState;
         int flightMode;
+        int systemId;
+        int componentId;
+        int mavlinkVersion;
+        bool online;
+        qint64 lastHeartbeatMs;
     };
 
     VruData vru_;
     DevQProperty* lastDevs_;
     DevQProperty* lastDevice_;
     Link* mavlinkLink_;
+    Link* autopilotLink_ = nullptr;
+    QUuid autopilotLinkUuid_;
     QList<DevQProperty*> devList_;
     QHash<QUuid, QHash<int, DevQProperty*>> devTree_;
     QHash<QUuid, int> otherProtocolStat_;
@@ -211,7 +292,19 @@ private:
 #endif
 
     bool isUSBLBeaconDirectAsk = false;
+    bool proxyTraffic_ = false;
+    qint64 proxyTrafficMs_ = -1;
+    int linkLastSeq_ = -1;
+    int linkReceived_ = 0;
+    int linkLost_ = 0;
+    QVector<QPair<int, int>> linkWindow_;
+    int linkQuality_ = -1;
+    int radioRssi_ = 0;
+    qint64 radioRssiMs_ = -1;
     QTimer beacon_timer;
+    QTimer autopilotTimer_{ this };
+    QElapsedTimer heartbeatClock_;
+    uint8_t mavlinkSeq_ = 0;
     QUuid upgradeUuid_;
     uint8_t upgradeAddr_;
     QByteArray upgradeData_;

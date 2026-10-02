@@ -585,8 +585,13 @@ struct __attribute__((packed)) MAVLink_MSG_VFR_HUD
     float climb; // m/s
 };
 
+constexpr uint8_t kMavAutopilotInvalid = 8;
+constexpr uint8_t kMavTypeGcs = 6;
+
 struct __attribute__((packed)) MAVLink_MSG_HEARTBEAT
 {
+    static uint32_t getID() { return 0; }
+
     enum class MAVLink_CustomMode : uint8_t {
         Manual = 0,
         Acro,
@@ -616,6 +621,7 @@ struct __attribute__((packed)) MAVLink_MSG_HEARTBEAT
     uint8_t mavlink_version;
 
     bool isArmed() { return (base_mode & 128) != 0; }
+    bool isVehicle() const { return autopilot != kMavAutopilotInvalid && type != kMavTypeGcs; }
     bool isRemoteControl() { return (base_mode & 64) != 0; }
     bool isCustomMode() { return (base_mode & 1) != 0; }
     uint32_t customMode() { return custom_mode; }

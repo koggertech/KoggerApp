@@ -504,6 +504,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceTopology", core.getDeviceTopologyModelPtr());
+    engine.rootContext()->setContextProperty("missionPlan", core.getMissionPlanControllerPtr());
     videoStreams.setSourceModel(core.getLinkManagerWrapperPtr()->getModelPtr());
     QObject::connect(&videoStreams, &VideoStreamPool::streamingChanged,
                      core.getLinkManagerWrapperPtr(), &LinkManagerWrapper::setVideoStreaming);
@@ -615,6 +616,7 @@ int main(int argc, char *argv[])
                 controlServer.registerObject(QStringLiteral("linkManagerWrapper"),   core.getLinkManagerWrapperPtr());
                 controlServer.registerObject(QStringLiteral("deviceManagerWrapper"), core.getDeviceManagerWrapperPtr());
                 controlServer.registerObject(QStringLiteral("deviceTopology"),       core.getDeviceTopologyModelPtr());
+                controlServer.registerObject(QStringLiteral("missionPlan"),            core.getMissionPlanControllerPtr());
                 controlServer.registerObject(QStringLiteral("videoStreams"),         &videoStreams);
                 controlServer.registerObject(QStringLiteral("linkDiscovery"),        &linkDiscovery);
                 controlServer.registerObject(QStringLiteral("logViewer"),            core.getConsolePtr());

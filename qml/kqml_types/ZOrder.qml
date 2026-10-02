@@ -17,9 +17,11 @@ QtObject {
     readonly property int globalPopup:      1400    // GlobalPanePopup (floating window)
     readonly property int bottomTrackEditPopup: 1500 // bottom-track tool palette (above window popups)
     readonly property int profilesPopup:        1510 // settings-profile palette (tool level, with bt-edit)
+    readonly property int autopilotPopup:       1515 // autopilot control card (tool level, with bt-edit/profiles)
     readonly property int widgetPopup:           1520 // panels — base of the reserved stack band 1520..1539; most-recently-moved on top. 20 slots for WorkspaceStore.widgetStackSlots (widgetLimit 10 + the 3 pinned domain panels), with room left so a fourth pinned panel does not need this file changed
     readonly property int hotActions:       1540    // HotActionsPanel — above the whole panel band + tool palettes so its buttons + hotkey dropdowns stay on top and clickable
     readonly property int widgetEditorOverlay:   1900 // widget editor: dim + real widget (below settings sidebar)
+    readonly property int missionEditor:         1950 // mission planner scenario: opaque full-window overlay hosting the 3D view
 
     readonly property int settingsSidebar:  2000    // AppSettings sidebar
     readonly property int modeSettings:     2001    // ModeSettingsPanel

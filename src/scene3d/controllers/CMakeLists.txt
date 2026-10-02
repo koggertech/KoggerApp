@@ -3,6 +3,7 @@ target_sources(KoggerApp PRIVATE
     bottom_track_control_menu_controller.h    bottom_track_control_menu_controller.cpp
     geojson_controller.h                      geojson_controller.cpp
     geojson_tree_model.h                      geojson_tree_model.cpp
+    mission_controller.h                      mission_controller.cpp
     image_view_control_menu_controller.h      image_view_control_menu_controller.cpp
     map_view_control_menu_controller.h        map_view_control_menu_controller.cpp
     mpc_filter_control_menu_controller.h      mpc_filter_control_menu_controller.cpp

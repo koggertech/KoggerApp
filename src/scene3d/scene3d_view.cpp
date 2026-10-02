@@ -109,6 +109,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     rulerTool_(std::make_shared<RulerTool>(this)),
     geoJsonLayer_(std::make_shared<GeoJsonLayer>(this)),
     geoJsonController_(new GeoJsonController(this)),
+    missionLayer_(std::make_shared<MissionLayer>(this)),
     boatTrack_(std::make_shared<BoatTrack>(this, this)),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
     m_polygonGroup(std::make_shared<PolygonGroup>()),
@@ -217,6 +218,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     });
 
     geoJsonLayer_->setVisible(false);
+    missionController_ = new MissionController(this, missionLayer_.get(), this);
+    QObject::connect(missionLayer_.get(), &MissionLayer::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(boatTrack_.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::changed, this, &QQuickFramebufferObject::update);
@@ -602,6 +605,18 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
         compassPressed_ = (radius > 0.0 && (dx * dx + dy * dy) <= radius * radius);
     }
 
+    if (missionEditorActive_) {
+        if (mouseButton == Qt::MouseButton::RightButton) {
+            QQuickFramebufferObject::update();
+            return;
+        }
+        if (mouseButton.testFlag(Qt::MouseButton::LeftButton) && missionController_->onPress(x, y)) {
+            missionBlockCameraMove_ = true;
+            QQuickFramebufferObject::update();
+            return;
+        }
+    }
+
     if (geoJsonEnabled_) {
         if (mouseButton == Qt::MouseButton::RightButton) {
             // right-click menu is handled in QML
@@ -721,6 +736,23 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     m_ray.setOrigin(toOrig);
     m_ray.setDirection(toDir);
 
+    if (missionEditorActive_) {
+        if (missionController_->dragging() && mouseButton.testFlag(Qt::LeftButton)) {
+            QVector3D p;
+            if (tryProjectScreenToPlane(x, y, 0.0f, p)) {
+                missionController_->onDrag(p);
+            }
+            m_lastMousePos = { x, y };
+            QQuickFramebufferObject::update();
+            return;
+        }
+        if (missionBlockCameraMove_ && mouseButton.testFlag(Qt::LeftButton)) {
+            m_lastMousePos = { x, y };
+            QQuickFramebufferObject::update();
+            return;
+        }
+    }
+
     if (geoJsonEnabled_) {
         if (geoJsonDragging_ && mouseButton.testFlag(Qt::LeftButton)) {
             const auto movedWorld = calculateIntersectionPoint(toOrig, toDir, geoJsonDragPlaneZ_);
@@ -765,7 +797,8 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
 #else
         if (mouseButton.testFlag(Qt::LeftButton) && (keyboardKey == Qt::Key_Control)) {
             if (m_camera->getIsPerspective() && !isNorth_) {
-                m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
+                const qreal rotY = missionEditorActive_ ? m_lastMousePos.y() : y;
+                m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x, rotY));
                 m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
                 m_startMousePos = { x, y };
                 cameraWasMoved = true;
@@ -807,6 +840,21 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
     clearComboSelectionRect();
 
     m_lastMousePos = { x, y };
+
+    if (missionEditorActive_) {
+        if (mouseButton.testFlag(Qt::LeftButton)) {
+            const bool blocked = missionBlockCameraMove_;
+            missionBlockCameraMove_ = false;
+            QVector3D p;
+            const bool hasPoint = tryProjectScreenToPlane(x, y, 0.0f, p);
+            missionController_->onRelease(p, hasPoint, wasMoved_ || blocked);
+        }
+        switchedToBottomTrackVertexComboSelectionMode_ = false;
+        wasMoved_ = false;
+        wasMovedMouseButton_ = Qt::MouseButton::NoButton;
+        QQuickFramebufferObject::update();
+        return;
+    }
 
     if (geoJsonEnabled_) {
         if (mouseButton.testFlag(Qt::LeftButton)) {
@@ -933,6 +981,8 @@ void GraphicsScene3dView::cancelPointerInteraction()
 
     geoJsonBlockCameraMove_ = false;
     geoJsonIgnoreNextLeftRelease_ = false;
+    missionBlockCameraMove_ = false;
+    missionController_->onPointerCanceled();
     ruler_->onPointerCanceled();
 
     QQuickFramebufferObject::update();
@@ -960,7 +1010,7 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
     }
     else if (keyboardKey == Qt::Key_Shift) {
         cancelWheelZoom();
-        if (!isNorth_) {
+        if (!isNorth_ && !missionEditorActive_) {
             angleDelta.y() > 0.0f ? shiftCameraZAxis(5) : shiftCameraZAxis(-5);
             cameraWasMoved = true;
         }
@@ -999,7 +1049,9 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
         pinchRotateWeight_ = 0.0;
     }
 
-    const bool canRotateOrTilt = !isNorth_ && m_camera->getIsPerspective();
+    const bool canRotate = !isNorth_ && m_camera->getIsPerspective();
+    const bool canTilt = canRotate && !missionEditorActive_;
+    const bool canRotateOrTilt = canRotate || canTilt;
     const qreal absDx = std::fabs(dx);
     const qreal absDy = std::fabs(dy);
 
@@ -1011,8 +1063,10 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
 
     qreal tiltEvidence = 0.0;
     qreal rotateEvidence = 0.0;
-    if (canRotateOrTilt) {
+    if (canTilt) {
         tiltEvidence = normDy * verticalDominance * (1.0 - normScale) * (1.0 - normAngle);
+    }
+    if (canRotate) {
         rotateEvidence = normAngle * (1.0 - normScale * 0.5);
     }
 
@@ -1070,12 +1124,12 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
     }
 
     bool updateAxesRotation = false;
-    if (canRotateOrTilt && tiltWeight > 0.08 && absDy > 0.2) {
+    if (canTilt && tiltWeight > 0.08 && absDy > 0.2) {
         const QPointF tiltCenter(currCenter.x(), prevCenter.y() + dy * tiltWeight * kPinchTiltSpeedBoost);
         m_camera->rotate(prevCenter, tiltCenter, 0.0, height());
         updateAxesRotation = true;
     }
-    if (canRotateOrTilt && rotateWeight > 0.08 && absAngle > 0.05) {
+    if (canRotate && rotateWeight > 0.08 && absAngle > 0.05) {
         m_camera->rotate(currCenter, currCenter, -angleDelta * rotateWeight, height());
         updateAxesRotation = true;
     }
@@ -1093,6 +1147,11 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
 
 bool GraphicsScene3dView::keyPressTrigger(Qt::Key key)
 {
+    if (missionEditorActive_ && missionController_->onKey(key)) {
+        QQuickFramebufferObject::update();
+        return true;
+    }
+
     if (geoJsonEnabled_) {
         if (key == Qt::Key_Delete || key == Qt::Key_Backspace) {
             geojsonDeleteSelectedFeature();
@@ -2187,6 +2246,123 @@ bool GraphicsScene3dView::geoJsonEnabled() const
 QObject* GraphicsScene3dView::geoJsonController() const
 {
     return geoJsonController_;
+}
+
+QObject* GraphicsScene3dView::missionController() const
+{
+    return missionController_;
+}
+
+void GraphicsScene3dView::setMissionPlan(mission::MissionPlanController* plan)
+{
+    missionController_->setPlan(plan);
+}
+
+void GraphicsScene3dView::setMissionEditorActive(bool active)
+{
+    if (missionEditorActive_ == active) {
+        return;
+    }
+    missionEditorActive_ = active;
+    missionBlockCameraMove_ = false;
+
+    cancelCameraPoseAnim();
+    animator_.cancel(ChHeading);
+    cancelVScaleAnim();
+    cancelWheelZoom();
+    cancelFollowReturn();
+
+    if (active) {
+        missionSavedRotAngle_ = m_camera->getRotAngle();
+        missionSavedDist_ = m_camera->m_distToFocusPoint;
+        missionSavedLookAt_ = m_camera->m_lookAt;
+
+        m_camera->resetZAxis();
+        updateProjection();
+        missionController_->setEditing(true);
+
+        QVector3D minB;
+        QVector3D maxB;
+        if (missionController_->sceneBounds(minB, maxB)) {
+            missionFitInView();
+        } else {
+            resetHeadingToNorth();
+        }
+    } else {
+        missionController_->setEditing(false);
+        m_camera->setRotAngle(missionSavedRotAngle_);
+        m_axesThumbnailCamera->setRotAngle(missionSavedRotAngle_);
+        m_camera->setDistance(missionSavedDist_);
+        m_camera->focusOnPosition(missionSavedLookAt_);
+        updateProjection();
+    }
+
+    dataZoomIndx_ = -1;
+    updatePlaneGrid();
+    updateMapView();
+    refreshSceneContentVisible();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+}
+
+void GraphicsScene3dView::missionFitInView()
+{
+    QVector3D minB;
+    QVector3D maxB;
+    if (!missionController_->sceneBounds(minB, maxB)) {
+        return;
+    }
+    missionFocusBounds(minB, maxB);
+}
+
+void GraphicsScene3dView::missionFocusBounds(const QVector3D& minB, const QVector3D& maxB)
+{
+    const QVector3D center = (minB + maxB) * 0.5f;
+    const float extent = std::max(maxB.x() - minB.x(), maxB.y() - minB.y());
+    constexpr float kMinFitDistance = 250.0f;
+    constexpr float kDegenerateExtent = 50.0f;
+
+    cancelCameraPoseAnim();
+    cancelWheelZoom();
+
+    const QVector2D startRot = m_camera->getRotAngle();
+    const float twoPi = 2.0f * static_cast<float>(M_PI);
+    const float targetRotX = twoPi * std::round(startRot.x() / twoPi);
+    const float startDist = static_cast<float>(m_camera->m_distToFocusPoint);
+    const QVector3D startLookAt = m_camera->m_lookAt;
+    float targetDist = kMinFitDistance;
+    if (extent >= kDegenerateExtent) {
+        targetDist = std::max(static_cast<float>((extent * 0.5f) / std::tan(m_camera->fov() / 2.0f) * 1.6f), kMinFitDistance);
+    } else {
+        targetDist = std::max(startDist, kMinFitDistance);
+    }
+    const QVector3D targetLookAt(center.x(), center.y(), 0.0f);
+
+    animator_.start(ChPose, anim::MapReset,
+                    [this, startRot, targetRotX, startDist, targetDist, startLookAt, targetLookAt](qreal value) -> void {
+        if (!m_camera) {
+            return;
+        }
+        const float t = static_cast<float>(value);
+        const float dist = startDist + (targetDist - startDist) * t;
+        const QVector3D lookAt = startLookAt * (1.0f - t) + targetLookAt * t;
+        m_camera->setDistance(dist);
+        m_camera->setRotAngle(QVector2D(startRot.x() + (targetRotX - startRot.x()) * t, startRot.y() * (1.0f - t)));
+        m_camera->focusOnPosition(lookAt);
+        if (m_axesThumbnailCamera) {
+            m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
+        }
+        updateProjection();
+        updatePlaneGrid();
+        QQuickFramebufferObject::update();
+        onCameraMoved();
+    },
+                    [this]() -> void {
+        updateProjection();
+        updatePlaneGrid();
+        QQuickFramebufferObject::update();
+        onCameraMoved();
+    });
 }
 
 QObject* GraphicsScene3dView::usblLayer() const
@@ -3719,6 +3895,8 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->contactsRenderImpl_         = *(dynamic_cast<Contacts::ContactsRenderImplementation*>(view->contacts_->m_renderImpl));
     m_renderer->geoJsonLayerRenderImpl_     = *(dynamic_cast<GeoJsonLayer::GeoJsonLayerRenderImplementation*>(view->geoJsonLayer_->m_renderImpl));
     view->ruler_->rebuildIfNeeded();
+    view->missionController_->rebuildIfNeeded();
+    m_renderer->missionLayerRenderImpl_     = *(dynamic_cast<MissionLayer::MissionLayerRenderImplementation*>(view->missionLayer_->m_renderImpl));
     m_renderer->rulerToolRenderImpl_        = *(dynamic_cast<RulerTool::RulerToolRenderImplementation*>(view->rulerTool_->m_renderImpl));
     // Re-projected BEFORE the copy, for the same reason the ruler is: a frame change this frame
     // must reach the renderer this frame, or the layer lags the camera by one.

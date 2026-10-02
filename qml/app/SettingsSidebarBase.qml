@@ -493,55 +493,16 @@ Item {
         // This standalone ScrollBar binds bidirectionally to contentFlick
         // via size/position and writes contentY when dragged. Full control
         // over geometry, width and styling.
-        ScrollBar {
+        KScrollBar {
             id: vScroll
-            orientation: Qt.Vertical
-            policy: contentFlick.contentHeight > contentFlick.height + 1
-                    ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-
+            flickable: contentFlick
             parent: panel
             anchors.top: contentFlick.top
             anchors.bottom: contentFlick.bottom
             anchors.right: contentFlick.right
             anchors.rightMargin: Math.round((panelRoot.scrollBarReservePx - panelRoot._scrollThumbW) / 2)
-            width: panelRoot._scrollThumbW
-            implicitWidth: panelRoot._scrollThumbW
-            z: 4
-
-            size: contentFlick.contentHeight > 0
-                  ? Math.min(1, contentFlick.height / contentFlick.contentHeight) : 0
-            position: contentFlick.contentHeight > 0
-                      ? contentFlick.contentY / contentFlick.contentHeight : 0
-            stepSize: 0.04
-            active: contentFlick.movingVertically || pressed || hovered
-
-            property bool _shown: false
-            Timer { id: vScrollHideTimer; interval: panelRoot.scrollAutoHideMs; onTriggered: vScroll._shown = false }
-            onActiveChanged: { if (active) { vScrollHideTimer.stop(); vScroll._shown = true } else vScrollHideTimer.restart() }
-            onVisibleChanged: if (visible) { vScroll._shown = true; vScrollHideTimer.restart() }
-            Connections {
-                target: contentFlick
-                function onContentYChanged() { vScroll._shown = true; if (!vScroll.active) vScrollHideTimer.restart() }
-            }
-
-            onPositionChanged: {
-                if (vScroll.pressed) {
-                    contentFlick.contentY = vScroll.position * contentFlick.contentHeight
-                }
-            }
-
-            contentItem: Rectangle {
-                implicitWidth: vScroll.width
-                radius: width / 2
-                color: vScroll.pressed
-                       ? AppPalette.text
-                       : (vScroll.hovered ? AppPalette.textSecond : AppPalette.textMuted)
-                opacity: !vScroll._shown ? 0.0
-                         : (vScroll.pressed ? 0.85 : (vScroll.hovered ? 0.65 : 0.45))
-                Behavior on color   { ColorAnimation { duration: 120 } }
-                Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-            }
-            background: Item {}
+            thumbWidth: panelRoot._scrollThumbW
+            autoHideMs: panelRoot.scrollAutoHideMs
         }
 
         // ── Scroll-edge fade overlays ─────────────────────────────────────
@@ -659,54 +620,16 @@ Item {
                 }
             }
 
-            ScrollBar {
+            KScrollBar {
                 id: subVScroll
-                orientation: Qt.Vertical
-                policy: subFlick.contentHeight > subFlick.height + 1
-                        ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-
+                flickable: subFlick
                 parent: subPageHost
                 anchors.top: subFlick.top
                 anchors.bottom: subFlick.bottom
                 anchors.right: subFlick.right
                 anchors.rightMargin: Math.round((panelRoot.scrollBarReservePx - panelRoot._scrollThumbW) / 2)
-                width: panelRoot._scrollThumbW
-                implicitWidth: panelRoot._scrollThumbW
-                z: 4
-
-                size: subFlick.contentHeight > 0
-                      ? Math.min(1, subFlick.height / subFlick.contentHeight) : 0
-                position: subFlick.contentHeight > 0
-                          ? subFlick.contentY / subFlick.contentHeight : 0
-                stepSize: 0.04
-                active: subFlick.movingVertically || pressed || hovered
-
-                property bool _shown: false
-                Timer { id: subVScrollHideTimer; interval: panelRoot.scrollAutoHideMs; onTriggered: subVScroll._shown = false }
-                onActiveChanged: { if (active) { subVScrollHideTimer.stop(); subVScroll._shown = true } else subVScrollHideTimer.restart() }
-                onVisibleChanged: if (visible) { subVScroll._shown = true; subVScrollHideTimer.restart() }
-                Connections {
-                    target: subFlick
-                    function onContentYChanged() { subVScroll._shown = true; if (!subVScroll.active) subVScrollHideTimer.restart() }
-                }
-
-                onPositionChanged: {
-                    if (subVScroll.pressed)
-                        subFlick.contentY = subVScroll.position * subFlick.contentHeight
-                }
-
-                contentItem: Rectangle {
-                    implicitWidth: subVScroll.width
-                    radius: width / 2
-                    color: subVScroll.pressed
-                           ? AppPalette.text
-                           : (subVScroll.hovered ? AppPalette.textSecond : AppPalette.textMuted)
-                    opacity: !subVScroll._shown ? 0.0
-                             : (subVScroll.pressed ? 0.85 : (subVScroll.hovered ? 0.65 : 0.45))
-                    Behavior on color   { ColorAnimation { duration: 120 } }
-                    Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                }
-                background: Item {}
+                thumbWidth: panelRoot._scrollThumbW
+                autoHideMs: panelRoot.scrollAutoHideMs
             }
         }
     }

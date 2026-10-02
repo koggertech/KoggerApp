@@ -109,6 +109,8 @@ property bool quickActionConnectionStatusEnabled: true
 property bool quickActionLoggingEnabled: true
 property bool quickActionBottomTrackEnabled: true
 property bool quickActionContactEnabled: true
+property bool quickActionMissionEnabled: true
+property bool quickActionAutopilotEnabled: true
 property bool quickActionProfilesEnabled: true
 property bool quickActionWidgetsEnabled: true
 property bool quickActionConsoleEnabled: true
@@ -129,7 +131,7 @@ function toggleInputLock() { setInputLocked(!inputLocked) }
 property string quickActionDraggingKey: ""
 
 readonly property var quickActionKeys: {
-    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "contact", "profiles", "inputLock"]
+    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "contact", "mission", "autopilot", "profiles", "inputLock"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
     if (Qt.platform.os === "linux" || (typeof manualTesting !== "undefined" && manualTesting === true))
@@ -145,6 +147,8 @@ property var quickActionOrderModel: ListModel {
     ListElement { key: "console" }
     ListElement { key: "bottomTrack" }
     ListElement { key: "contact" }
+    ListElement { key: "mission" }
+    ListElement { key: "autopilot" }
     ListElement { key: "profiles" }
     ListElement { key: "inputLock" }
     ListElement { key: "secondWindow" }
@@ -168,6 +172,10 @@ function normalizeQuickActionOrder(list) {
                 out.splice(out.indexOf("widgets") + 1, 0, "console")   // keep console right after widgets
             else if (quickActionKeys[j] === "contact" && out.indexOf("bottomTrack") !== -1)
                 out.splice(out.indexOf("bottomTrack") + 1, 0, "contact")   // keep the contact pin right after bottom-track editing
+            else if (quickActionKeys[j] === "mission" && out.indexOf("contact") !== -1)
+                out.splice(out.indexOf("contact") + 1, 0, "mission")
+            else if (quickActionKeys[j] === "autopilot" && out.indexOf("mission") !== -1)
+                out.splice(out.indexOf("mission") + 1, 0, "autopilot")
             else if (quickActionKeys[j] === "inputLock" && out.indexOf("secondWindow") !== -1)
                 out.splice(out.indexOf("secondWindow"), 0, "inputLock") // keep the lock right before the second window
             else
@@ -473,6 +481,22 @@ property var globalPopupState: ({
 
 property bool bottomTrackEditorOpen: false
 property var btEditPopupState: ({ x: -1, y: -1 })
+property bool autopilotPopupOpen: false
+property var autopilotPopupState: ({ x: -1, y: -1 })
+readonly property bool autopilotOnline: (typeof deviceManagerWrapper !== "undefined" && deviceManagerWrapper) ? deviceManagerWrapper.autopilotOnline : false
+property bool _autopilotWasOnline: false
+property bool _autopilotDismissed: false
+property bool _autopilotAutoOpening: false
+onAutopilotOnlineChanged: {
+    if (autopilotOnline && !_autopilotWasOnline && quickActionAutopilotEnabled && !_autopilotDismissed && !autopilotPopupOpen) {
+        _autopilotAutoOpening = true
+        autopilotPopupOpen = true
+        _autopilotAutoOpening = false
+    } else if (!autopilotOnline && _autopilotWasOnline && autopilotPopupOpen) {
+        autopilotPopupOpen = false
+    }
+    _autopilotWasOnline = autopilotOnline
+}
 
 property bool profilesPopupOpen: false
 property var settingsProfiles: []
@@ -1209,6 +1233,12 @@ function _reconcileWidgetMaps() {
 }
 
 onBottomTrackEditorOpenChanged: layoutStore.bottomTrackEditorOpenStored = bottomTrackEditorOpen
+onAutopilotPopupOpenChanged: {
+    if (_autopilotAutoOpening)
+        return
+    _autopilotDismissed = !autopilotPopupOpen && autopilotOnline
+    layoutStore.autopilotPopupOpenStored = autopilotPopupOpen
+}
 onProfilesPopupOpenChanged: layoutStore.profilesPopupOpenStored = profilesPopupOpen
 
 readonly property real splitterThickness: 0
@@ -1713,6 +1743,8 @@ property Settings layoutStore: Settings {
     property bool quickActionLoggingEnabledStored: true
     property bool quickActionBottomTrackEnabledStored: true
     property bool quickActionContactEnabledStored: true
+    property bool quickActionMissionEnabledStored: true
+    property bool quickActionAutopilotEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
     property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,contact,widgets,console,profiles,inputLock,secondWindow,powerOff"
     property string rememberedLinksJson: "[]"
@@ -1732,6 +1764,8 @@ property Settings layoutStore: Settings {
     property string profilesPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool profilesPopupOpenStored: false
     property bool bottomTrackEditorOpenStored: false
+    property bool autopilotPopupOpenStored: false
+    property string autopilotPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property string widgetsJson: "[]"
     property string widgetInstancesJson: "{}"
     property string widgetShownJson: "{}"
@@ -2796,6 +2830,31 @@ function setProfilesPopupPosition(x, y, popupWidth, popupHeight) {
     var b = _btEditPopupBounds(popupWidth, popupHeight)
     profilesPopupState = { x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) }
     layoutStore.profilesPopupStateJson = JSON.stringify(profilesPopupState)
+}
+
+function autopilotPopupPosition(popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    var s = autopilotPopupState || { x: -1, y: -1 }
+    var x = (typeof s.x === "number" && s.x >= 0) ? s.x : Math.round((b.minX + b.maxX) / 2)
+    var y = (typeof s.y === "number" && s.y >= 0) ? s.y : b.minY
+    return Qt.point(clamp(x, b.minX, b.maxX), clamp(y, b.minY, b.maxY))
+}
+
+function setAutopilotPopupPosition(x, y, popupWidth, popupHeight) {
+    var b = _btEditPopupBounds(popupWidth, popupHeight)
+    autopilotPopupState = { x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) }
+    layoutStore.autopilotPopupStateJson = JSON.stringify(autopilotPopupState)
+}
+
+function loadAutopilotPopupPreferences() {
+    var parsed = { x: -1, y: -1 }
+    if (layoutStore.autopilotPopupStateJson && layoutStore.autopilotPopupStateJson !== "") {
+        try { parsed = JSON.parse(layoutStore.autopilotPopupStateJson) } catch (e) { parsed = { x: -1, y: -1 } }
+    }
+    autopilotPopupState = {
+        x: (typeof parsed.x === "number") ? parsed.x : -1,
+        y: (typeof parsed.y === "number") ? parsed.y : -1
+    }
 }
 
 function loadProfilesPopupPreferences() {
@@ -3985,6 +4044,8 @@ function saveLayoutState() {
     layoutStore.quickActionLoggingEnabledStored = quickActionLoggingEnabled
     layoutStore.quickActionBottomTrackEnabledStored = quickActionBottomTrackEnabled
     layoutStore.quickActionContactEnabledStored = quickActionContactEnabled
+    layoutStore.quickActionMissionEnabledStored = quickActionMissionEnabled
+    layoutStore.quickActionAutopilotEnabledStored = quickActionAutopilotEnabled
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
     layoutStore.quickActionWidgetsEnabledStored = quickActionWidgetsEnabled
     layoutStore.quickActionConsoleEnabledStored = quickActionConsoleEnabled
@@ -4006,6 +4067,8 @@ function restoreLayoutState() {
     quickActionLoggingEnabled = layoutStore.quickActionLoggingEnabledStored
     quickActionBottomTrackEnabled = layoutStore.quickActionBottomTrackEnabledStored
     quickActionContactEnabled = layoutStore.quickActionContactEnabledStored
+    quickActionMissionEnabled = layoutStore.quickActionMissionEnabledStored
+    quickActionAutopilotEnabled = layoutStore.quickActionAutopilotEnabledStored
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
     quickActionWidgetsEnabled = layoutStore.quickActionWidgetsEnabledStored
     quickActionConsoleEnabled = layoutStore.quickActionConsoleEnabledStored
@@ -5489,10 +5552,12 @@ function loadPersistedUiState() {
     loadSettingsProfiles()
     loadRememberedLinks()
     loadProfilesPopupPreferences()
+    loadAutopilotPopupPreferences()
     loadServoPanelPreferences()
     loadUsblPanelPreferences()
     loadStandPanelPreferences()
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
+    autopilotPopupOpen = layoutStore.autopilotPopupOpenStored
     bottomTrackEditorOpen = layoutStore.bottomTrackEditorOpenStored
     loadPopupDocks()
     loadWidgets()
